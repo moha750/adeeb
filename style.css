@@ -28,14 +28,7 @@
     font-family: fbb;
     src: url(COMM\ -\ Lyon\ Arabic\ Display\ Black.otf);
   }
-
-body {
-    margin: 0;
-    font-family: 'Tajawal', sans-serif;
-    direction: rtl;
-    background-color: #ffffff;
-  }
-
+  
   /************************************* header **************************************/
   
   .header {
@@ -308,7 +301,7 @@ body {
   }
   
   .vision-mission-goals {
-    background: #22c55e;
+    background: #335c81;
     text-align: center;
   }
 
