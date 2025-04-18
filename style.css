@@ -1,7 +1,8 @@
 * {
     margin: 0;
     padding: 0;
-}
+    box-sizing: border-box;
+  }
 
 @font-face {
     font-family: fl;
@@ -44,7 +45,7 @@ body {
     position: relative;
   }
   
-  .container {
+  .headercontainer {
     max-width: 1200px;
     margin: auto;
     padding: 0 20px;
@@ -139,7 +140,7 @@ body {
   }
   
   @media (max-width: 768px) {
-    .container {
+    .headercontainer {
       flex-direction: row;
       flex-wrap: wrap;
       align-items: center;
@@ -196,4 +197,327 @@ body {
     color: #274060;
     font-size: clamp(0.9rem, 2.5vw, 1.2rem);
     padding: 0px 10%;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  :root {
+    --primary-blue: #2563eb;
+    --primary-red: #dc2626;
+    --primary-green: #16a34a;
+    --dark: #1e293b;
+    --light: #f8fafc;
+    --gray: #64748b;
+  }
+  
+  .vision-mission-goals {
+    background: #22c55e;
+    text-align: center;
+  }
+
+  .vision-mission-goalscontainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .vm-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+  }
+
+  .vm-card {
+    flex: 1;
+    min-width: 320px;
+    max-width: 380px;
+    background: #f9f9f9;
+    padding: 40px 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+  }
+  
+  .vm-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 5px;
+    z-index: 2;
+  }
+  
+  .vision::before {
+    background: linear-gradient(90deg, #274060, #3d8fd6);
+  }
+  
+  .mission::before {
+    background: linear-gradient(90deg, #274060, #3d8fd6);
+  }
+  
+  .goals::before {
+    background: linear-gradient(90deg, #274060, #3d8fd6);
+  }
+
+  .vm-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+  }
+
+  .vm-icon {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: white;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+  
+  .vm-icon::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    opacity: 0.2;
+  }
+
+  .vision .vm-icon {
+    background: linear-gradient(90deg, #274060, #3d8fd6);
+  }
+  
+  .mission .vm-icon {
+    background: linear-gradient(90deg, #274060, #3d8fd6);
+  }
+
+  .goals .vm-icon {
+    background: linear-gradient(90deg, #274060, #3d8fd6);
+  }
+
+  .vision .vm-icon::after {
+    background: var(--primary-blue);
+  }
+
+  .vm-card h3 {
+    font-size: 1.8rem;
+    margin-bottom: 25px;
+    color: #335c81;
+    position: relative;
+    padding-bottom: 15px;
+    font-family: fm;
+  }
+  
+  .vm-card h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 50%;
+    transform: translateX(50%);
+    width: 50px;
+    height: 2px;
+    background: rgba(0,0,0,0.1);
+  }
+
+  .vm-card p {
+    font-size: 1.1rem;
+    line-height: 1.9;
+    color: #274060;
+    margin-bottom: 20px;
+    font-family: fb;
+  }
+
+  .goals ul {
+    text-align: right;
+    padding-right: 5px;
+    list-style-type: none;
+    font-family: fb;
+  }
+
+  .goals li {
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    color: var(--gray);
+    position: relative;
+    padding-right: 30px;
+    line-height: 1.7;
+    transition: all 0.3s ease;
+  }
+  
+  .goals li:hover {
+    color: var(--dark);
+    transform: translateX(-5px);
+  }
+
+  .goals li::before {
+    content: '\f058';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: var(--primary-green);
+    font-size: 1.2rem;
+    position: absolute;
+    right: 0;
+    top: 3px;
+  }
+  
+  .vm-card .decorative-circle {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    opacity: 0.05;
+    z-index: -1;
+  }
+  
+  .vision .decorative-circle {
+    background: #0088ff;
+    bottom: -50px;
+    left: -50px;
+  }
+  
+  .mission .decorative-circle {
+    background: #0088ff;
+    top: -50px;
+    right: -50px;
+  }
+  
+  .goals .decorative-circle {
+    background: #0088ff;
+    bottom: -50px;
+    right: -50px;
+  }
+
+  @media (max-width: 1024px) {
+    .vm-card {
+      min-width: 280px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .vision-mission-goals {
+      padding: 70px 0;
+    }
+    
+    .section-header h2 {
+      font-size: 2.2rem;
+    }
+    
+    .section-header p {
+      font-size: 1.1rem;
+    }
+    
+    .vm-content {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .vm-card {
+      min-width: 100%;
+      max-width: 100%;
+    }
   }
