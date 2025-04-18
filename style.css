@@ -6,27 +6,27 @@
 
 @font-face {
     font-family: fl;
-    src: url(/COMM\ -\ Lyon\ Arabic\ Display\ Light.otf);
+    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Light.otf);
   }
   
   @font-face {
     font-family: fr;
-    src: url(/COMM\ -\ Lyon\ Arabic\ Display\ Regular.otf);
+    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Regular.otf);
   }
 
   @font-face {
     font-family: fm;
-    src: url(/COMM\ -\ Lyon\ Arabic\ Display\ Medium.otf);
+    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Medium.otf);
   }
 
   @font-face {
     font-family: fb;
-    src: url(/COMM\ -\ Lyon\ Arabic\ Display\ Bold.otf);
+    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Bold.otf);
   }
 
   @font-face {
     font-family: fbb;
-    src: url(/COMM\ -\ Lyon\ Arabic\ Display\ Black.otf);
+    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Black.otf);
   }
 
 body {
