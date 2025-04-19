@@ -1079,12 +1079,6 @@
   margin-bottom: 20px;
 }
 
-.achievement-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 .achievement-number {
   font-size: 3rem;
   font-weight: bold;
@@ -1092,13 +1086,8 @@
   font-family: 'fbb';
   display: inline-block;
   line-height: 1;
-}
-
-.plus-sign {
-  font-size: 2rem;
-  color: #3d8fd6;
-  font-family: 'fbb';
-  margin-right: 5px;
+  transition: all 0.3s ease;
+  min-width: 80px; /* لمنع تغيير الحجم أثناء العد */
 }
 
 .achievement-text {
@@ -1335,6 +1324,11 @@ body {
     transform: rotateY(360deg);
 }
 
+.achievement-card:hover .achievement-number {
+  transform: scale(1.1);
+  color: #3d8fd6;
+}
+
 .progress-bar {
     width: 80%;
     height: 6px;
@@ -1345,23 +1339,17 @@ body {
 }
 
 .achievement-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.achievement-number {
-    font-size: 3rem;
-    font-weight: bold;
-    color: white;
-    display: inline-block;
-    line-height: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
 }
 
 .plus-sign {
-    font-size: 2rem;
-    color: var(--accent-blue);
-    margin-right: 5px;
+  font-size: 2rem;
+  color: #3d8fd6;
+  font-family: 'fbb';
+  margin-right: 5px;
 }
 
 .achievement-text {
@@ -1424,3 +1412,34 @@ body {
         font-size: 1rem;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
