@@ -42,3 +42,81 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // Animation for cards
+    document.addEventListener('DOMContentLoaded', function() {
+      const cards = document.querySelectorAll('.work-card');
+      
+      const animateCards = () => {
+        cards.forEach((card, index) => {
+          setTimeout(() => {
+            card.classList.add('animated');
+          }, 200 * index);
+        });
+      };
+      
+      // Intersection Observer for better performance
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            animateCards();
+            observer.unobserve(entry.target);
+          }
+        });
+      }, {threshold: 0.1});
+      
+      observer.observe(document.querySelector('.our-works'));
+    });
+
+document.addEventListener("DOMContentLoaded", function () {
+  new Swiper(".swiper", {
+    slidesPerView: 1,
+    spaceBetween: 30,
+    loop: true,
+    breakpoints: {
+      768: { slidesPerView: 2 },
+      1024: { slidesPerView: 3 }
+    },
+    pagination: { el: ".swiper-pagination", clickable: true },
+    navigation: {
+      nextEl: ".swiper-button-next",
+      prevEl: ".swiper-button-prev"
+    }
+  });
+});

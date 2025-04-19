@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>نادي أديب</title>
+<style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /************************************* أعمالنا المطورة **************************************/
+    .our-works {
+      background: linear-gradient(135deg, #f9f9f9 0%, #e6f0f9 100%);
+      padding: 100px 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .our-works::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(61, 143, 214, 0.1) 0%, rgba(61, 143, 214, 0) 70%);
+      z-index: 0;
+    }
+
+    .our-works::after {
+      content: '';
+      position: absolute;
+      bottom: -50px;
+      left: -50px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(39, 64, 96, 0.1) 0%, rgba(39, 64, 96, 0) 70%);
+      z-index: 0;
+    }
+
+    .our-works-container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 0 30px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-header {
+      margin-bottom: 60px;
+    }
+
+    .works-title {
+      color: #274060;
+      font-size: 2.8rem;
+      margin-bottom: 15px;
+      font-weight: 700;
+      position: relative;
+      display: inline-block;
+    }
+
+    .works-title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      right: 50%;
+      transform: translateX(50%);
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, #3d8fd6, #274060);
+      border-radius: 2px;
+    }
+
+    .works-subtitle {
+      color: #64748b;
+      font-size: 1.3rem;
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    .works-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 40px;
+      margin-top: 60px;
+    }
+
+    .work-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      text-align: right;
+      position: relative;
+      z-index: 1;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .work-card.animated {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .work-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, #3d8fd6, #274060);
+      z-index: 2;
+    }
+
+    .work-card:hover {
+      transform: translateY(-15px) scale(1.02);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .work-img-container {
+      height: 280px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .work-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.8s ease, filter 0.5s ease;
+    }
+
+    .work-card:hover .work-img {
+      transform: scale(1.1);
+      filter: brightness(1.05);
+    }
+
+    .work-category {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #274060;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      z-index: 2;
+    }
+
+    .work-info {
+      padding: 30px;
+      position: relative;
+    }
+
+    .work-info h3 {
+      color: #274060;
+      font-size: 1.6rem;
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+
+    .work-info p {
+      color: #64748b;
+      font-size: 1.05rem;
+      line-height: 1.8;
+      margin-bottom: 25px;
+    }
+
+    .work-link {
+      display: inline-flex;
+      align-items: center;
+      color: #3d8fd6;
+      text-decoration: none;
+      font-size: 1.1rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      padding: 8px 20px;
+      border-radius: 30px;
+      background: rgba(61, 143, 214, 0.1);
+    }
+
+    .work-link:hover {
+      color: white;
+      background: linear-gradient(90deg, #3d8fd6, #274060);
+      box-shadow: 0 5px 15px rgba(61, 143, 214, 0.3);
+    }
+
+    .work-link i {
+      margin-right: 8px;
+      transition: transform 0.3s ease;
+    }
+
+    .work-link:hover i {
+      transform: translateX(-5px);
+    }
+
+    .view-all {
+      margin-top: 60px;
+    }
+
+    .view-all-btn {
+      display: inline-block;
+      padding: 12px 35px;
+      background: linear-gradient(90deg, #3d8fd6, #274060);
+      color: white;
+      text-decoration: none;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      box-shadow: 0 5px 20px rgba(61, 143, 214, 0.3);
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+
+    .view-all-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(61, 143, 214, 0.4);
+    }
+
+    @media (max-width: 1200px) {
+      .works-grid {
+        gap: 30px;
+      }
+    }
+
+    @media (max-width: 992px) {
+      .our-works {
+        padding: 80px 0;
+      }
+      
+      .works-title {
+        font-size: 2.4rem;
+      }
+      
+      .works-subtitle {
+        font-size: 1.15rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .works-grid {
+        grid-template-columns: 1fr;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      
+      .work-card {
+        max-width: 100%;
+      }
+      
+      .works-title {
+        font-size: 2.2rem;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .our-works {
+        padding: 60px 0;
+      }
+      
+      .our-works-container {
+        padding: 0 20px;
+      }
+      
+      .works-title {
+        font-size: 2rem;
+      }
+      
+      .works-subtitle {
+        font-size: 1rem;
+      }
+      
+      .work-info {
+        padding: 20px;
+      }
+      
+      .work-info h3 {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" rel="stylesheet"/><script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<style>
+.swiper-nav-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.swiper-button-next, .swiper-button-prev {
+  position: relative;
+  top: 0;
+  margin: 0;
+  width: 42px;
+  height: 42px;
+  background: white;
+  color: #274060;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.swiper-button-next::after, .swiper-button-prev::after {
+  font-size: 14px;
+}
+
+.swiper-button-next:hover, .swiper-button-prev:hover {
+  background: #3d8fd6;
+  color: white;
+}
+</style>
+</head>
+<body>
+<section class="our-works">
+<div class="our-works-container">
+<div class="section-header">
+<h2 class="works-title">إبداعاتنا الأدبية</h2>
+<p class="works-subtitle">اكتشف عالمنا الإبداعي حيث تلتقي الكلمات بالجمال، ونقدم لكم أبرز أعمالنا التي نفتخر بها</p>
+</div>
+<div class="swiper"><div class="swiper-wrapper">
+<!-- العمل 1 -->
+<div class="work-card swiper-slide">
+<div class="work-img-container">
+<span class="work-category">ورشة عمل</span>
+<img alt="ورشة الكتابة الإبداعية" class="work-img" src="https://images.unsplash.com/photo-1544717305-2782549b5136?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+</div>
+<div class="work-info">
+<h3>الكتابة الإبداعية</h3>
+<p>ورشة متخصصة لتعليم فنون الكتابة الإبداعية بمشاركة نخبة من الأدباء والكتاب المحترفين</p>
+<a class="work-link" href="#">استكشف الورشة <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<!-- العمل 2 -->
+<div class="work-card swiper-slide">
+<div class="work-img-container">
+<span class="work-category">مسابقة</span>
+<img alt="مسابقة القصة القصيرة" class="work-img" src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+</div>
+<div class="work-info">
+<h3>مسابقة القصة القصيرة</h3>
+<p>منافسة أدبية سنوية تجمع المواهب الواعدة تحت إشراف لجنة تحكيم من كبار الأدباء</p>
+<a class="work-link" href="#">تعرف على المسابقة <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<!-- العمل 3 -->
+<div class="work-card swiper-slide">
+<div class="work-img-container">
+<span class="work-category">إصدار</span>
+<img alt="المجلة الأدبية" class="work-img" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+</div>
+<div class="work-info">
+<h3>مجلة أديب الفصلية</h3>
+<p>إصدارنا الفصلي الذي يضم إبداعات الأعضاء وأحدث المقالات والنقد الأدبي</p>
+<a class="work-link" href="#">تصفح المجلة <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<!-- العمل 3 -->
+<div class="work-card swiper-slide">
+  <div class="work-img-container">
+  <span class="work-category">إصدار</span>
+  <img alt="المجلة الأدبية" class="work-img" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+  </div>
+  <div class="work-info">
+  <h3>مجلة أديب الفصلية</h3>
+  <p>إصدارنا الفصلي الذي يضم إبداعات الأعضاء وأحدث المقالات والنقد الأدبي</p>
+  <a class="work-link" href="#">تصفح المجلة <i class="fas fa-arrow-left"></i></a>
+  </div>
+  </div>
+  <!-- العمل 3 -->
+<div class="work-card swiper-slide">
+  <div class="work-img-container">
+  <span class="work-category">إصدار</span>
+  <img alt="المجلة الأدبية" class="work-img" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+  </div>
+  <div class="work-info">
+  <h3>مجلة أديب الفصلية</h3>
+  <p>إصدارنا الفصلي الذي يضم إبداعات الأعضاء وأحدث المقالات والنقد الأدبي</p>
+  <a class="work-link" href="#">تصفح المجلة <i class="fas fa-arrow-left"></i></a>
+  </div>
+  </div>
+  <!-- العمل 3 -->
+<div class="work-card swiper-slide">
+  <div class="work-img-container">
+  <span class="work-category">إصدار</span>
+  <img alt="المجلة الأدبية" class="work-img" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+  </div>
+  <div class="work-info">
+  <h3>مجلة أديب الفصلية</h3>
+  <p>إصدارنا الفصلي الذي يضم إبداعات الأعضاء وأحدث المقالات والنقد الأدبي</p>
+  <a class="work-link" href="#">تصفح المجلة <i class="fas fa-arrow-left"></i></a>
+  </div>
+  </div>
+</div><div class="swiper-nav-wrapper" style="text-align:center; margin-top: 20px;"><div class="swiper-button-prev"></div><div class="swiper-button-next"></div></div></div>
+<div class="view-all">
+<a class="view-all-btn" href="#">عرض جميع الأعمال</a>
+</div>
+</div>
+</section>
+<script>
+    // Animation for cards
+    document.addEventListener('DOMContentLoaded', function() {
+      const cards = document.querySelectorAll('.work-card');
+      
+      const animateCards = () => {
+        cards.forEach((card, index) => {
+          setTimeout(() => {
+            card.classList.add('animated');
+          }, 200 * index);
+        });
+      };
+      
+      // Intersection Observer for better performance
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            animateCards();
+            observer.unobserve(entry.target);
+          }
+        });
+      }, {threshold: 0.1});
+      
+      observer.observe(document.querySelector('.our-works'));
+    });
+  </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  new Swiper(".swiper", {
+    slidesPerView: 1,
+    spaceBetween: 30,
+    loop: true,
+    breakpoints: {
+      768: { slidesPerView: 2 },
+      1024: { slidesPerView: 3 }
+    },
+    pagination: { el: ".swiper-pagination", clickable: true },
+    navigation: {
+      nextEl: ".swiper-button-next",
+      prevEl: ".swiper-button-prev"
+    }
+  });
+});
+</script>
+</body>
+</html>
