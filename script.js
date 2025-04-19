@@ -123,3 +123,153 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // أضف هذا الكود في ملف script.js
+// Counter Animation for Achievements
+document.addEventListener('DOMContentLoaded', function() {
+  const counters = document.querySelectorAll('.achievement-number');
+  const speed = 2500; // Animation duration in ms
+  
+  function animateCounters() {
+    counters.forEach(counter => {
+      const target = +counter.getAttribute('data-count');
+      const count = +counter.innerText;
+      const increment = target / speed;
+      
+      if (count < target) {
+        counter.innerText = Math.ceil(count + increment);
+        setTimeout(animateCounters, 1);
+      } else {
+        counter.innerText = target;
+      }
+    });
+  }
+  
+  // Start animation when section is in view
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounters();
+        observer.unobserve(entry.target);
+      }
+    });
+  }, {threshold: 0.5});
+  
+  observer.observe(document.querySelector('.achievements'));
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    // تسجيل ScrollTrigger مع GSAP
+    gsap.registerPlugin(ScrollTrigger);
+    
+    // تأثيرات الظهور للبطاقات
+    gsap.to(".achievement-card", {
+        opacity: 1,
+        y: 0,
+        duration: 1,
+        stagger: 0.2,
+        ease: "back.out",
+        scrollTrigger: {
+            trigger: ".achievements",
+            start: "top 70%",
+            toggleActions: "play none none none"
+        },
+        onComplete: animateAll
+    });
+    
+    function animateAll() {
+        animateCounters();
+        animateProgressBars();
+    }
+    
+    // عداد الأرقام
+    function animateCounters() {
+        document.querySelectorAll('.achievement-number').forEach(counter => {
+            const target = +counter.getAttribute('data-count');
+            const duration = 2;
+            const start = 0;
+            const increment = target / (duration * 60);
+            
+            const updateCounter = () => {
+                const current = +counter.textContent;
+                if (current < target) {
+                    counter.textContent = Math.ceil(current + increment);
+                    setTimeout(updateCounter, 1000/60);
+                } else {
+                    counter.textContent = target;
+                }
+            };
+            
+            updateCounter();
+        });
+    }
+    
+    // شريط التقدم
+    function animateProgressBars() {
+        gsap.to(".progress-fill", {
+            width: (i, el) => el.getAttribute("data-width"),
+            duration: 2,
+            ease: "power3.out",
+            stagger: 0.2
+        });
+    }
+    
+    // تأثير الدوران للأيقونات عند hover
+    document.querySelectorAll('.achievement-card').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            const icon = card.querySelector('.achievement-icon');
+            gsap.to(icon, {
+                rotationY: 360,
+                duration: 0.8,
+                ease: "back.out"
+            });
+        });
+    });
+});
