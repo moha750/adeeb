@@ -847,16 +847,6 @@
     }
   }
 
-
-
-.swiper-nav-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 30px;
-  margin-top: 30px;
-}
-
 .swiper-button-next,
 .swiper-button-prev {
   all: unset;
@@ -1581,15 +1571,11 @@ body {
   text-align: center;
   position: relative;
   z-index: 1;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
   height: auto;
   border: 1px solid rgba(0,0,0,0.05);
 }
 
-.sponsor-card:hover {
-  transform: translateY(-10px) scale(1.02);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.12);
-}
+
 
 .sponsor-badge {
   position: absolute;
@@ -1852,7 +1838,6 @@ body {
   color: #274060;
   font-size: 2.8rem;
   margin-bottom: 15px;
-  font-weight: 700;
   position: relative;
   display: inline-block;
   font-family: 'fb';
@@ -1891,9 +1876,7 @@ body {
   text-align: center;
   position: relative;
   z-index: 1;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
   height: auto;
-  margin-bottom: 40px;
   padding-top: 0;
   display: flex;
   flex-direction: column;
@@ -1902,7 +1885,6 @@ body {
 
 .board-card:hover {
   transform: translateY(-10px);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.12);
 }
 
 .board-img-container {
@@ -1926,17 +1908,14 @@ body {
 
 .board-card:hover .board-img {
   transform: scale(1.05);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
 .social-links {
-  position: absolute;
-  bottom: 20px;
-  right: 0;
-  left: 0;
   display: flex;
   justify-content: center;
   gap: 15px;
+  padding: 10px;
+  border-top: 1px solid rgba(0,0,0,0.05);
 }
 
 .social-links a {
@@ -1950,6 +1929,7 @@ body {
   color: #274060;
   font-size: 1rem;
   transition: all 0.3s ease;
+  text-decoration: none;
 }
 
 .social-links a:hover {
@@ -1974,16 +1954,7 @@ body {
   display: block;
   color: #3d8fd6;
   font-size: 1.1rem;
-  margin-bottom: 15px;
   font-family: 'fb';
-}
-
-.board-info p {
-  color: #64748b;
-  font-size: 1rem;
-  line-height: 1.6;
-  margin-bottom: 15px;
-  font-family: 'fr';
 }
 
 /* تعديلات السلايدر */
@@ -1996,7 +1967,7 @@ body {
   justify-content: center;
   align-items: center;
   gap: 30px;
-  margin-top: 20px;
+  margin-top: 50px;
 }
 
 .swiper-pagination {
@@ -2039,7 +2010,6 @@ body {
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
   margin: 0;
 }
 
