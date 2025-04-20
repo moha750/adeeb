@@ -160,3 +160,68 @@ document.querySelectorAll('.achievement-card').forEach(card => {
 
 
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // Initialize Sponsors Swiper
+  new Swiper(".sponsors-swiper", {
+    slidesPerView: 1,
+    spaceBetween: 30,
+    loop: true,
+    autoplay: {
+      delay: 3000,
+      disableOnInteraction: false,
+    },
+    breakpoints: {
+      640: { slidesPerView: 2 },
+      1024: { slidesPerView: 3 }
+    },
+    navigation: {
+      nextEl: ".sponsors-swiper .swiper-button-next",
+      prevEl: ".sponsors-swiper .swiper-button-prev"
+    }
+  });
+
+  // Sponsor Cards Animation
+  const sponsorCards = document.querySelectorAll('.sponsor-card');
+  sponsorCards.forEach((card, index) => {
+    gsap.from(card, {
+      opacity: 0,
+      y: 50,
+      duration: 0.8,
+      delay: index * 0.1,
+      scrollTrigger: {
+        trigger: card,
+        start: "top 80%",
+        toggleActions: "play none none none"
+      }
+    });
+  });

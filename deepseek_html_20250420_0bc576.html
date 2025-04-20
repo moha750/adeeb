@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="تعرف على رعاة نادي أديب الأدبي وشركاء النجاح الذين يدعمون مسيرتنا الثقافية">
+  <title>رعاة نادي أديب | شركاء النجاح</title>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+  <style>
+    :root {
+      --primary-color: #274060;
+      --secondary-color: #3d8fd6;
+      --text-color: #64748b;
+      --light-gray: #f5f5f5;
+      --white: #ffffff;
+      --shadow: 0 5px 15px rgba(0,0,0,0.05);
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--light-gray);
+      padding: 20px;
+      line-height: 1.6;
+      color: var(--primary-color);
+    }
+
+    /****** قسم الرعاة بالسلايدر ******/
+    .sponsors {
+      background: var(--white);
+      padding: 60px 0;
+      border-radius: 15px;
+      margin: 30px auto;
+      max-width: 1200px;
+      box-shadow: var(--shadow);
+    }
+
+    .sponsors-container {
+      padding: 0 20px;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .sponsors-title {
+      color: var(--primary-color);
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      position: relative;
+      display: inline-block;
+    }
+
+    .sponsors-title span {
+      color: var(--secondary-color);
+    }
+
+    .sponsors-title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      right: 50%;
+      transform: translateX(50%);
+      width: 80px;
+      height: 3px;
+      background: var(--secondary-color);
+    }
+
+    .sponsors-subtitle {
+      color: var(--text-color);
+      font-size: 1.2rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* ستايلات السلايدر */
+    .sponsors-slider {
+      padding: 30px;
+      position: relative;
+    }
+
+    .sponsor-card {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      border: 1px solid #eee;
+    }
+
+    .sponsor-card:focus-within {
+      outline: 2px solid var(--secondary-color);
+      outline-offset: 2px;
+    }
+
+    .sponsor-logo {
+      height: 100px;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+      margin-bottom: 20px;
+      filter: grayscale(100%);
+      transition: var(--transition);
+    }
+
+    .sponsor-info h3 {
+      color: var(--primary-color);
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+
+    .sponsor-info p {
+      color: var(--secondary-color);
+      font-weight: bold;
+      font-size: 1rem;
+    }
+
+    /* تأثيرات السلايدر */
+    .sponsors-slider .swiper-slide {
+      opacity: 0.7;
+      transform: scale(0.9);
+      transition: var(--transition);
+    }
+
+    .sponsors-slider .swiper-slide-active {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .sponsors-slider .swiper-slide-active .sponsor-logo {
+      filter: grayscale(0%);
+    }
+
+    /* أزرار التنقل */
+    .swiper-nav-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .swiper-button-next,
+    .swiper-button-prev {
+      width: 50px;
+      height: 50px;
+      background: var(--secondary-color);
+      color: var(--white);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+    }
+
+    .swiper-button-next:hover,
+    .swiper-button-prev:hover,
+    .swiper-button-next:focus,
+    .swiper-button-prev:focus {
+      background: var(--primary-color);
+      transform: scale(1.1);
+      outline: none;
+    }
+
+    .swiper-pagination {
+      position: relative;
+      bottom: auto;
+      width: auto;
+    }
+
+    .swiper-pagination-bullet {
+      width: 12px;
+      height: 12px;
+      background: #ccc;
+      opacity: 1;
+    }
+
+    .swiper-pagination-bullet-active {
+      background: var(--secondary-color);
+    }
+
+    /* التصميم المتجاوب */
+    @media (max-width: 1024px) {
+      .sponsors {
+        padding: 50px 0;
+      }
+      
+      .sponsor-card {
+        padding: 25px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sponsors {
+        padding: 40px 0;
+        margin: 20px auto;
+      }
+      
+      .sponsors-title {
+        font-size: 2rem;
+      }
+      
+      .sponsors-subtitle {
+        font-size: 1rem;
+      }
+      
+      .sponsor-logo {
+        height: 80px;
+      }
+      
+      .swiper-button-next,
+      .swiper-button-prev {
+        width: 40px;
+        height: 40px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .sponsors {
+        padding: 30px 0;
+        border-radius: 10px;
+      }
+      
+      .sponsors-slider {
+        padding: 15px;
+      }
+      
+      .sponsors-title {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- قسم الرعاة بالسلايدر -->
+<section class="sponsors" aria-labelledby="sponsors-heading">
+  <div class="sponsors-container">
+    <div class="section-header">
+      <h1 id="sponsors-heading" class="sponsors-title">رعاة نادي <span>أديب</span></h1>
+      <p class="sponsors-subtitle">شركاء النجاح الذين يدعمون مسيرتنا الأدبية</p>
+    </div>
+
+    <div class="swiper sponsors-slider">
+      <div class="swiper-wrapper">
+        <!-- راعي 1 -->
+        <div class="sponsor-card swiper-slide" tabindex="0" role="group" aria-label="راعي ذهبي">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/2560px-Amazon_logo.svg.png" alt="شعار أمازون للكتب" class="sponsor-logo">
+          <div class="sponsor-info">
+            <h2>أمازون للكتب</h2>
+            <p>راعي ذهبي</p>
+          </div>
+        </div>
+
+        <!-- راعي 2 -->
+        <div class="sponsor-card swiper-slide" tabindex="0" role="group" aria-label="راعي فضّي">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/LEGO_logo.svg/2048px-LEGO_logo.svg.png" alt="شعار ليغو التعليمية" class="sponsor-logo">
+          <div class="sponsor-info">
+            <h2>ليغو التعليمية</h2>
+            <p>راعي فضّي</p>
+          </div>
+        </div>
+
+        <!-- راعي 3 -->
+        <div class="sponsor-card swiper-slide" tabindex="0" role="group" aria-label="راعي برونزي">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/National_Geographic_logo.svg/2560px-National_Geographic_logo.svg.png" alt="شعار ناشيونال جيوغرافيك" class="sponsor-logo">
+          <div class="sponsor-info">
+            <h2>ناشيونال جيوغرافيك</h2>
+            <p>راعي برونزي</p>
+          </div>
+        </div>
+
+        <!-- راعي 4 -->
+        <div class="sponsor-card swiper-slide" tabindex="0" role="group" aria-label="راعي داعم">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Starbucks_Corporation_Logo_2011.svg/1200px-Starbucks_Corporation_Logo_2011.svg.png" alt="شعار ستاربكس الثقافية" class="sponsor-logo">
+          <div class="sponsor-info">
+            <h2>ستاربكس الثقافية</h2>
+            <p>راعي داعم</p>
+          </div>
+        </div>
+
+        <!-- راعي 5 -->
+        <div class="sponsor-card swiper-slide" tabindex="0" role="group" aria-label="راعي معرفي">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png" alt="شعار جوجل للتعليم" class="sponsor-logo">
+          <div class="sponsor-info">
+            <h2>جوجل للتعليم</h2>
+            <p>راعي معرفي</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="swiper-nav-wrapper">
+        <button class="swiper-button-prev" aria-label="الشريحة السابقة"><i class="fas fa-chevron-right"></i></button>
+        <div class="swiper-pagination" aria-label="تنقل بين الشرائح"></div>
+        <button class="swiper-button-next" aria-label="الشريحة التالية"><i class="fas fa-chevron-left"></i></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    try {
+      // تهيئة سلايدر الرعاة
+      const sponsorsSlider = new Swiper(".sponsors-slider", {
+        slidesPerView: 1,
+        spaceBetween: 30,
+        loop: true,
+        autoplay: {
+          delay: 3000,
+          disableOnInteraction: false,
+        },
+        pagination: {
+          el: ".swiper-pagination",
+          clickable: true,
+          renderBullet: function (index, className) {
+            return '<span class="' + className + '" role="button" aria-label="انتقل إلى الشريحة ' + (index + 1) + '"></span>';
+          },
+        },
+        navigation: {
+          nextEl: ".swiper-button-next",
+          prevEl: ".swiper-button-prev",
+        },
+        breakpoints: {
+          640: {
+            slidesPerView: 2,
+          },
+          1024: {
+            slidesPerView: 3,
+          },
+        },
+        a11y: {
+          prevSlideMessage: 'الشريحة السابقة',
+          nextSlideMessage: 'الشريحة التالية',
+          firstSlideMessage: 'هذه هي الشريحة الأولى',
+          lastSlideMessage: 'هذه هي الشريحة الأخيرة',
+          paginationBulletMessage: 'انتقل إلى الشريحة {{index}}',
+        }
+      });
+
+      // إضافة تأثير التركيز للوحة المفاتيح
+      document.querySelectorAll('.sponsor-card').forEach(card => {
+        card.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            const slideIndex = this.getAttribute('data-swiper-slide-index');
+            if (slideIndex) {
+              sponsorsSlider.slideTo(parseInt(slideIndex));
+            }
+          }
+        });
+      });
+    } catch (error) {
+      console.error('حدث خطأ أثناء تحميل سلايدر الرعاة:', error);
+    }
+  });
+</script>
+
+</body>
+</html>
