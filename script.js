@@ -225,3 +225,63 @@ document.querySelectorAll('.achievement-card').forEach(card => {
       }
     });
   });
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  new Swiper(".board-swiper", {
+    slidesPerView: 1,
+    spaceBetween: 30,
+    loop: true,
+    autoplay: {
+      delay: 5000,
+      disableOnInteraction: false,
+    },
+    breakpoints: {
+      640: { 
+        slidesPerView: 2,
+        spaceBetween: 20
+      },
+      1024: { 
+        slidesPerView: 3,
+        spaceBetween: 30
+      }
+    },
+    pagination: {
+      el: ".board-swiper .swiper-pagination",
+      clickable: true,
+    },
+    navigation: {
+      nextEl: ".board-swiper .swiper-button-next",
+      prevEl: ".board-swiper .swiper-button-prev"
+    }
+  });

@@ -1776,3 +1776,321 @@ body {
     padding: 6px 12px;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/************************************* المجلس الإداري - تصميم السلايدر **************************************/
+.board-members {
+  background: linear-gradient(135deg, #f8fafc 0%, #e6f0f9 100%);
+  padding: 100px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.board-members::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(61, 143, 214, 0.08) 0%, rgba(61, 143, 214, 0) 70%);
+  z-index: 0;
+}
+
+.board-members::after {
+  content: '';
+  position: absolute;
+  bottom: -50px;
+  left: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(39, 64, 96, 0.08) 0%, rgba(39, 64, 96, 0) 70%);
+  z-index: 0;
+}
+
+.board-members-container {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 30px;
+  position: relative;
+  z-index: 1;
+}
+
+.board-members-title {
+  color: #274060;
+  font-size: 2.8rem;
+  margin-bottom: 15px;
+  font-weight: 700;
+  position: relative;
+  display: inline-block;
+  font-family: 'fb';
+}
+
+.board-members-title span {
+  color: #3d8fd6;
+}
+
+.board-members-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  right: 50%;
+  transform: translateX(50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #3d8fd6, #274060);
+  border-radius: 2px;
+}
+
+.board-members-subtitle {
+  color: #64748b;
+  font-size: 1.3rem;
+  max-width: 700px;
+  margin: 0 auto 40px;
+  line-height: 1.7;
+  font-family: 'fr';
+}
+
+.board-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+  height: auto;
+  margin-bottom: 40px;
+  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* لجعل جميع الكروت بنفس الارتفاع */
+}
+
+.board-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+}
+
+.board-img-container {
+  width: 100%;
+  aspect-ratio: 1/1; /* نسبة العرض إلى الارتفاع 1:1 لضمان شكل مربع */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: #f9f9f9;
+  position: relative;
+  overflow: hidden;
+}
+
+.board-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* لتغطية المساحة مع الحفاظ على النسبة */
+  transition: all 0.5s ease;
+}
+
+.board-card:hover .board-img {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.social-links {
+  position: absolute;
+  bottom: 20px;
+  right: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.social-links a {
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #274060;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.social-links a:hover {
+  background: #3d8fd6;
+  color: white;
+  transform: translateY(-3px);
+}
+
+.board-info {
+  padding: 25px 20px;
+  background: white;
+}
+
+.board-info h3 {
+  color: #274060;
+  font-size: 1.5rem;
+  margin-bottom: 5px;
+  font-family: 'fm';
+}
+
+.board-position {
+  display: block;
+  color: #3d8fd6;
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  font-family: 'fb';
+}
+
+.board-info p {
+  color: #64748b;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 15px;
+  font-family: 'fr';
+}
+
+/* تعديلات السلايدر */
+.board-swiper {
+  padding: 20px 0 50px;
+}
+
+.swiper-nav-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  margin-top: 20px;
+}
+
+.swiper-pagination {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  width: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.swiper-pagination-bullet {
+  width: 12px;
+  height: 12px;
+  background: #ccc;
+  opacity: 1;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.swiper-pagination-bullet-active {
+  background: #3d8fd6;
+  transform: scale(1.2);
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  position: relative;
+  top: auto;
+  right: auto;
+  left: auto;
+  width: 50px;
+  height: 50px;
+  background: white;
+  border-radius: 50%;
+  color: #274060;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  margin: 0;
+}
+
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+  background: #3d8fd6;
+  color: white;
+}
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 20px !important;
+}
+
+@media (max-width: 768px) {
+  .board-members {
+    padding: 80px 0;
+  }
+
+  .board-img-container {
+    height: auto; /* السماح بالتكيف مع نسبة 1:1 */
+  }
+  
+  .board-members-title {
+    font-size: 2.4rem;
+  }
+  
+  .board-members-subtitle {
+    font-size: 1.15rem;
+    margin-bottom: 30px;
+  }
+  
+  .board-info h3 {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .board-members {
+    padding: 60px 0;
+  }
+  
+  .board-members-title {
+    font-size: 2rem;
+  }
+  
+  .board-members-subtitle {
+    font-size: 1rem;
+  }
+  
+  .board-info {
+    padding: 20px 15px;
+  }
+}
