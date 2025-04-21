@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
       slidesPerView: 1,
       spaceBetween: 30,
       loop: true,
-      autoplay: true,
+      // autoplay: true,
       breakpoints: {
           768: { slidesPerView: 2 },
           1024: { slidesPerView: 3 }
@@ -158,8 +158,45 @@ document.querySelectorAll('.achievement-card').forEach(card => {
     });
 });
 
-// Update copyright year automatically
+
+
+
+// Update copyright year
 document.getElementById('year').textContent = new Date().getFullYear();
+
+// Back to top button
+const backToTopBtn = document.getElementById('back-to-top');
+backToTopBtn.addEventListener('click', () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+});
+
+// Show/hide back to top button based on scroll position
+window.addEventListener('scroll', () => {
+  if (window.pageYOffset > 300) {
+    backToTopBtn.style.opacity = '1';
+    backToTopBtn.style.visibility = 'visible';
+  } else {
+    backToTopBtn.style.opacity = '0';
+    backToTopBtn.style.visibility = 'hidden';
+  }
+});
+
+// Initialize tooltips for social icons
+const socialIcons = document.querySelectorAll('.social-icon');
+socialIcons.forEach(icon => {
+  icon.addEventListener('mouseenter', function() {
+    const tooltip = this.querySelector('.social-wave');
+    tooltip.style.top = '0';
+  });
+  
+  icon.addEventListener('mouseleave', function() {
+    const tooltip = this.querySelector('.social-wave');
+    tooltip.style.top = '100%';
+  });
+});
 
 
 });
