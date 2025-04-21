@@ -82,42 +82,62 @@ document.addEventListener('DOMContentLoaded', function() {
 // Achievements Counter Animation
 gsap.registerPlugin(ScrollTrigger);
 
-// تهيئة العداد
+// استبدال كود العداد الحالي بهذا الكود المحسن
 function initAchievementCounters() {
-    const counters = document.querySelectorAll('.achievement-number');
-    
-    counters.forEach(counter => {
-        counter.setAttribute('data-original', counter.getAttribute('data-count'));
-        counter.textContent = '0';
-    });
+  const counters = document.querySelectorAll('.achievement-number');
+  
+  counters.forEach(counter => {
+      const target = +counter.getAttribute('data-count');
+      counter.setAttribute('data-original', target);
+      counter.textContent = '0';
+      
+      // إضافة فاصلة كل 3 أرقام للتنسيق
+      if (target >= 1000) {
+          counter.style.fontSize = '2.4rem';
+      }
+  });
 }
 
-// تشغيل العداد
+// تشغيل العداد مع تأثيرات GSAP
 function animateAchievementCounters() {
-    const counters = document.querySelectorAll('.achievement-number');
-    const speed = 2000; // مدة الحركة بالمللي ثانية
-    
-    counters.forEach(counter => {
-        const target = +counter.getAttribute('data-original');
-        const duration = speed;
-        const startTime = Date.now();
-        const endTime = startTime + duration;
-
-        const updateCounter = () => {
-            const now = Date.now();
-            const progress = Math.min((now - startTime) / duration, 1);
-            const value = Math.floor(progress * target);
-            counter.textContent = value.toLocaleString();
-
-            if (progress < 1) {
-                requestAnimationFrame(updateCounter);
-            } else {
-                counter.textContent = target.toLocaleString();
-            }
-        };
-
-        requestAnimationFrame(updateCounter);
-    });
+  const counters = document.querySelectorAll('.achievement-number');
+  
+  counters.forEach(counter => {
+      const target = +counter.getAttribute('data-original');
+      const duration = 2; // المدة بالثواني
+      
+      gsap.fromTo(counter, 
+          { textContent: 0 },
+          {
+              textContent: target,
+              duration: duration,
+              ease: "power1.out",
+              snap: { textContent: 1 },
+              onUpdate: function() {
+                  const value = Math.floor(this.targets()[0].textContent);
+                  counter.textContent = value.toLocaleString();
+              },
+              onComplete: function() {
+                  counter.textContent = target.toLocaleString();
+              }
+          }
+      );
+  });
+  
+  // إضافة تأثيرات للبطاقات
+  gsap.to(".achievement-card", {
+      opacity: 1,
+      y: 0,
+      rotationY: 0,
+      duration: 1,
+      stagger: 0.2,
+      ease: "back.out",
+      onComplete: function() {
+          document.querySelectorAll('.achievement-card').forEach(card => {
+              card.classList.add('animated');
+          });
+      }
+  });
 }
 
 // تهيئة العداد عند التحميل
@@ -125,37 +145,39 @@ initAchievementCounters();
 
 // إنشاء ScrollTrigger لإعادة التشغيل عند التمرير
 ScrollTrigger.create({
-    trigger: ".achievements",
-    start: "top 70%",
-    onEnter: animateAchievementCounters,
-    onEnterBack: animateAchievementCounters,
-    markers: false // يمكنك تغييرها لـ true للتصحيح
+  trigger: ".achievements",
+  start: "top 70%",
+  onEnter: animateAchievementCounters,
+  onEnterBack: animateAchievementCounters,
+  markers: false
 });
 
-// تأثيرات الظهور للبطاقات
-gsap.to(".achievement-card", {
-    opacity: 1,
-    y: 0,
-    duration: 1,
-    stagger: 0.2,
-    ease: "back.out",
-    scrollTrigger: {
-        trigger: ".achievements",
-        start: "top 80%",
-        toggleActions: "play none none none"
-    }
-});
-
-// Rotate icons on hover
+// تأثيرات hover للبطاقات
 document.querySelectorAll('.achievement-card').forEach(card => {
-    card.addEventListener('mouseenter', () => {
-        const icon = card.querySelector('.achievement-icon');
-        gsap.to(icon, {
-            rotationY: 360,
-            duration: 0.8,
-            ease: "back.out"
-        });
-    });
+  card.addEventListener('mouseenter', () => {
+      gsap.to(card, {
+          y: -10,
+          scale: 1.03,
+          boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
+          duration: 0.5
+      });
+      
+      const icon = card.querySelector('.achievement-icon');
+      gsap.to(icon, {
+          rotationY: 360,
+          duration: 0.8,
+          ease: "back.out"
+      });
+  });
+  
+  card.addEventListener('mouseleave', () => {
+      gsap.to(card, {
+          y: 0,
+          scale: 1,
+          boxShadow: "0 15px 30px rgba(0,0,0,0.3)",
+          duration: 0.5
+      });
+  });
 });
 
 
