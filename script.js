@@ -158,6 +158,9 @@ document.querySelectorAll('.achievement-card').forEach(card => {
     });
 });
 
+// Update copyright year automatically
+document.getElementById('year').textContent = new Date().getFullYear();
+
 
 });
 
@@ -285,3 +288,16 @@ document.querySelectorAll('.achievement-card').forEach(card => {
       prevEl: ".board-swiper .swiper-button-prev"
     }
   });
+
+
+
+
+
+
+
+
+
+
+
+
+
