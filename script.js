@@ -237,34 +237,66 @@ socialIcons.forEach(icon => {
 
 
 
-// Animate emojis in the title
-const emojis = document.querySelectorAll('.titlebook .emoji');
-if (emojis.length > 0) {
-  emojis.forEach((emoji, index) => {
-    gsap.to(emoji, {
-      y: -10,
-      duration: 2,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-      delay: index * 0.3
-    });
-  });
-}
-
-// Animate feature cards on scroll
-const featureCards = document.querySelectorAll('.feature-card');
-featureCards.forEach((card, index) => {
+// تأثيرات ثلاثية الأبعاد للبطاقات
+gsap.utils.toArray(".feature-card").forEach((card, index) => {
+  // تأثير الظهور
   gsap.from(card, {
     opacity: 0,
     y: 50,
+    rotationX: 15,
     duration: 0.8,
-    delay: index * 0.2,
+    delay: index * 0.15,
     scrollTrigger: {
       trigger: card,
       start: "top 80%",
       toggleActions: "play none none none"
     }
+  });
+
+  // تأثيرات التحويم
+  card.addEventListener("mousemove", (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    const rotateY = (x - centerX) / 20;
+    const rotateX = (centerY - y) / 20;
+    
+    gsap.to(card, {
+      rotateX: rotateX,
+      rotateY: rotateY,
+      duration: 0.5
+    });
+  });
+
+  card.addEventListener("mouseleave", () => {
+    gsap.to(card, {
+      rotateX: 0,
+      rotateY: 0,
+      duration: 0.5
+    });
+  });
+
+  // تأثير الأيقونة
+  const icon = card.querySelector(".feature-icon");
+  card.addEventListener("mouseenter", () => {
+    gsap.to(icon, {
+      y: -10,
+      scale: 1.1,
+      duration: 0.5,
+      ease: "back.out"
+    });
+  });
+
+  card.addEventListener("mouseleave", () => {
+    gsap.to(icon, {
+      y: 0,
+      scale: 1,
+      duration: 0.5,
+      ease: "back.in"
+    });
   });
 });
 
