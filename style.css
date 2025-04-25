@@ -6,27 +6,47 @@
 
 @font-face {
     font-family: fl;
-    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Light.otf);
+    src: url(/fonts/COMM\ -\ Lyon\ Arabic\ Display\ Light.otf);
   }
   
   @font-face {
     font-family: fr;
-    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Regular.otf);
+    src: url(/fonts/COMM\ -\ Lyon\ Arabic\ Display\ Regular.otf);
   }
 
   @font-face {
     font-family: fm;
-    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Medium.otf);
+    src: url(/fonts/COMM\ -\ Lyon\ Arabic\ Display\ Medium.otf);
   }
 
   @font-face {
     font-family: fb;
-    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Bold.otf);
+    src: url(/fonts/COMM\ -\ Lyon\ Arabic\ Display\ Bold.otf);
   }
 
   @font-face {
     font-family: fbb;
-    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Black.otf);
+    src: url(/fonts/COMM\ -\ Lyon\ Arabic\ Display\ Black.otf);
+  }
+
+  @font-face {
+    font-family: a;
+    src: url(/fonts/ERASLGHT.TTF);
+  }
+
+  @font-face {
+    font-family: b;
+    src: url(/fonts/ERASDEMI.TTF);
+  }
+
+  @font-face {
+    font-family: c;
+    src: url(/fonts/ERASMD.TTF);
+  }
+
+  @font-face {
+    font-family: d;
+    src: url(/fonts/ERASBD.TTF);
   }
 
   /************************************* header **************************************/
@@ -252,6 +272,12 @@
   display: inline-block;
 }
 
+.emoji {
+  font-family: 'fbb';
+  color: #274060;
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+}
+
 .titlebook::after {
   content: '';
   position: absolute;
@@ -409,39 +435,6 @@
   margin-bottom: 0;
   flex-grow: 1;
   text-shadow: 0 1px 3px rgba(255, 255, 255, 0.5);
-}
-
-.feature-link {
-  display: inline-flex;
-  align-items: center;
-  margin-top: 25px;
-  color: #274060;
-  text-decoration: none;
-  font-family: 'fb';
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  padding: 8px 20px;
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(39, 64, 96, 0.2);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-}
-
-.feature-link:hover {
-  color: white;
-  background: linear-gradient(90deg, #3d8fd6, #274060);
-  box-shadow: 0 5px 15px rgba(61, 143, 214, 0.3);
-  transform: translateY(-3px);
-}
-
-.feature-link i {
-  margin-right: 8px;
-  transition: transform 0.3s ease;
-}
-
-.feature-link:hover i {
-  transform: translateX(-5px);
 }
 
 /* تأثيرات للهواتف */
@@ -694,6 +687,7 @@
   }
 
   .works-title {
+    font-family: fbb;
     color: #274060;
     font-size: 2.8rem;
     margin-bottom: 15px;
@@ -715,7 +709,8 @@
   }
 
   .works-subtitle {
-    color: #64748b;
+    font-family: fr;
+    color: #335c81;
     font-size: 1.3rem;
     max-width: 700px;
     margin: 0 auto;
@@ -1167,11 +1162,6 @@ body {
     font-weight: 700;
 }
 
-.achievements-title span {
-    color: var(--accent-blue);
-    font-weight: 800;
-}
-
 .achievements-title::after {
     content: '';
     position: absolute;
@@ -1333,8 +1323,8 @@ body {
 }
 
 .achievements-title span {
-  color: var(--accent-blue);
-  font-weight: 800;
+  color: #2a7bc8;
+  font-family: fbb;
 }
 
 .achievements-title::after {
@@ -1661,6 +1651,7 @@ body {
 
 .sponsors-title span {
   color: #3d8fd6;
+  font-family: fbb;
 }
 
 .sponsors-title::after {
@@ -1966,6 +1957,7 @@ body {
 
 .board-members-title span {
   color: #3d8fd6;
+  font-family: fbb;
 }
 
 .board-members-title::after {
@@ -2284,6 +2276,7 @@ body {
 }
 
 .footer-about-text {
+  font-family: fl;
   line-height: 1.9;
   margin-bottom: 30px;
   opacity: 0.85;
@@ -2391,7 +2384,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: 'fm';
+  font-family: 'fbb';
 }
 
 .footer-title i {
@@ -2415,6 +2408,7 @@ body {
   align-items: center;
   gap: 8px;
   font-size: 1.05rem;
+  font-family: fr;
 }
 
 .footer-links a i {
@@ -2506,7 +2500,7 @@ body {
 }
 
 .footer-newsletter button {
-  padding: 0 25px;
+  padding: 0 5px;
   background: linear-gradient(90deg, #3d8fd6, #6ba8e2);
   color: white;
   border: none;
@@ -2515,7 +2509,8 @@ body {
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
+  font-family: fbb;
 }
 
 .footer-newsletter button:hover {
@@ -2531,9 +2526,6 @@ body {
 }
 
 .newsletter-agreement {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   margin-top: 15px;
 }
 
@@ -2547,6 +2539,7 @@ body {
   font-size: 0.85rem;
   opacity: 0.8;
   cursor: pointer;
+  font-family: fl;
 }
 
 .download-app {
@@ -2657,7 +2650,6 @@ body {
   padding: 12px 25px;
   border-radius: 30px;
   cursor: pointer;
-  font-family: 'fb';
   display: flex;
   align-items: center;
   gap: 10px;
@@ -2669,6 +2661,10 @@ body {
   background: linear-gradient(90deg, #2a7bc8, #3d8fd6);
   transform: translateY(-3px);
   box-shadow: 0 8px 20px rgba(61, 143, 214, 0.4);
+}
+
+.back-to-top {
+  font-family: 'fr';
 }
 
 @media (max-width: 1200px) {
@@ -2765,7 +2761,7 @@ body {
   left: 0;
   width: 100%;
   height: 60px;
-  background: url('adeeb pattern.png') repeat-x;
+  background: url('/elements/adeeb\ pattern.png') repeat-x;
   background-size: auto 100%;
   background-position: center;
   opacity: 0.5;
@@ -2778,3 +2774,20 @@ body {
   position: relative;
   z-index: 1;
 }
+
+.copyright, .footer-legal a {
+  font-family: fl;
+}
+
+.title-footer {
+  font-family: fbb;
+}
+
+.footer-newsletter-text, .contact-text {
+  font-family: fr;
+}
+
+.contact-sub {
+  font-family: fl;
+}
+
