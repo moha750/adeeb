@@ -752,10 +752,6 @@
     z-index: 2;
   }
 
-  .work-card:hover {
-    transform: translateY(-15px) scale(1.02);
-  }
-
   .work-img-container {
     height: 280px;
     overflow: hidden;
@@ -1181,12 +1177,6 @@ body {
     line-height: 1.7;
 }
 
-.achievements-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 30px;
-}
-
 .achievement-card {
     background: rgba(255,255,255,0.08);
     backdrop-filter: blur(10px);
@@ -1260,10 +1250,10 @@ body {
 }
 
 
-@media (max-width: 992px) {
-    .achievements-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+@media (max-width: 600px) {
+  .achievements-grid {
+    grid-template-columns: 1fr !important;
+  }
     
     .achievements-title {
         font-size: 2.4rem;
@@ -1350,10 +1340,11 @@ body {
 
 .achievements-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 30px;
   perspective: 1000px;
 }
+
 
 .achievement-card {
   background: rgba(255,255,255,0.1);
@@ -1436,7 +1427,7 @@ body {
   color: white;
   font-size: 2.8rem;
   font-weight: 700;
-  font-family: 'fb';
+  font-family: 'd';
   margin-bottom: 10px;
   transition: all 0.3s ease;
 }
@@ -1446,6 +1437,7 @@ body {
   font-size: 2rem;
   font-weight: bold;
   margin-right: 5px;
+  font-family: 'd';
 }
 
 .achievement-text {
@@ -1493,7 +1485,7 @@ body {
   }
   
   .achievement-number {
-    font-size: 2.5rem;
+    font-size: 2.5rem !important;
   }
 }
 
@@ -2457,6 +2449,7 @@ body {
   color: white;
   text-decoration: none;
   transition: all 0.3s ease;
+  font-family: "c" ;
 }
 
 .contact-text a:hover {
@@ -2776,7 +2769,7 @@ body {
 }
 
 .copyright, .footer-legal a {
-  font-family: fl;
+  font-family: "fl";
 }
 
 .title-footer {
