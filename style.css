@@ -31,22 +31,22 @@
 
   @font-face {
     font-family: a;
-    src: url(./fonts/ERASLGHT.TTF);
+    src: url(../fonts/ERASLGHT.TTF);
   }
 
   @font-face {
     font-family: b;
-    src: url(./fonts/ERASDEMI.TTF);
+    src: url(../fonts/ERASDEMI.TTF);
   }
 
   @font-face {
     font-family: c;
-    src: url(./fonts/ERASMD.TTF);
+    src: url(../fonts/ERASMD.TTF);
   }
 
   @font-face {
     font-family: d;
-    src: url(./fonts/ERASBD.TTF);
+    src: url(../fonts/ERASBD.TTF);
   }
 
   /************************************* header **************************************/
