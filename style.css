@@ -1421,26 +1421,6 @@ body {
     box-shadow: 0 15px 30px rgba(0,0,0,0.3);
 }
 
-.achievement-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 20px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    color: white;
-    position: relative;
-    transition: all 0.3s ease;
-}
-
-.achievement-card:hover .achievement-icon {
-    background: var(--accent-blue);
-    transform: rotateY(360deg);
-}
-
 .achievement-card:hover .achievement-number {
   transform: scale(1.1);
   color: #3d8fd6;
@@ -1631,7 +1611,6 @@ body {
 
 .achievement-card:hover .achievement-icon {
   background: var(--accent-blue);
-  transform: rotateY(360deg);
   box-shadow: 0 5px 20px rgba(61, 143, 214, 0.5);
 }
 

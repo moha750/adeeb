@@ -231,12 +231,7 @@ document.querySelectorAll('.achievement-card').forEach(card => {
           duration: 0.5
       });
       
-      const icon = card.querySelector('.achievement-icon');
-      gsap.to(icon, {
-          rotationY: 360,
-          duration: 0.8,
-          ease: "back.out"
-      });
+
   });
   
   card.addEventListener('mouseleave', () => {
