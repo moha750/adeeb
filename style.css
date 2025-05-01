@@ -6,47 +6,47 @@
 
 @font-face {
     font-family: fl;
-    src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Light.otf);
+    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Light.otf);
   }
   
   @font-face {
     font-family: fr;
-    src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Regular.otf);
+    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Regular.otf);
   }
 
   @font-face {
     font-family: fm;
-    src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Medium.otf);
+    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Medium.otf);
   }
 
   @font-face {
     font-family: fb;
-    src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Bold.otf);
+    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Bold.otf);
   }
 
   @font-face {
     font-family: fbb;
-    src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Black.otf);
+    src: url(COMM\ -\ Lyon\ Arabic\ Display\ Black.otf);
   }
 
   @font-face {
     font-family: a;
-    src: url(../fonts/ERASLGHT.TTF) format('truetype');
+    src: url(ERASLGHT.TTF) format('truetype');
   }
 
   @font-face {
     font-family: b;
-    src: url(../fonts/ERASDEMI.TTF) format('truetype');
+    src: url(ERASDEMI.TTF) format('truetype');
   }
 
   @font-face {
     font-family: c;
-    src: url(../fonts/ERASMD.TTF) format('truetype');
+    src: url(ERASMD.TTF) format('truetype');
   }
 
   @font-face {
     font-family: d;
-    src: url(../fonts/ERASBD.TTF) format('truetype');
+    src: url(ERASBD.TTF) format('truetype');
   }
 
 
