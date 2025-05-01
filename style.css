@@ -1005,7 +1005,7 @@ body.menu-open {
     color: #274060;
     font-size: 1.6rem;
     margin-bottom: 15px;
-    font-weight: 700;
+    font-family: fb;
   }
 
   .work-info p {
@@ -1026,6 +1026,7 @@ body.menu-open {
     padding: 8px 20px;
     border-radius: 30px;
     background: rgba(61, 143, 214, 0.1);
+    font-family: fr;
   }
 
   .work-link:hover {
