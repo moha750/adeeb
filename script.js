@@ -1,43 +1,56 @@
+// Menu Toggle Functionality
+const menuToggle = document.getElementById('menuToggle');
+const nav = document.querySelector('.nav');
+const body = document.body;
+
+menuToggle.addEventListener('click', function() {
+    // Toggle active class on menu toggle
+    this.classList.toggle('active');
+    
+    // Toggle active class on navigation
+    nav.classList.toggle('active');
+    
+    // Toggle overflow hidden on body to prevent scrolling when menu is open
+    if (nav.classList.contains('active')) {
+        body.style.overflow = 'hidden';
+    } else {
+        body.style.overflow = '';
+    }
+});
+
+// Close menu when clicking on a nav link
+const navLinks = document.querySelectorAll('.nav-link');
+navLinks.forEach(link => {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 992) { // Only for mobile view
+            menuToggle.classList.remove('active');
+            nav.classList.remove('active');
+            body.style.overflow = '';
+        }
+    });
+});
+
+// Close menu when clicking outside
+document.addEventListener('click', function(e) {
+    if (!nav.contains(e.target) && !menuToggle.contains(e.target)) {
+        if (window.innerWidth <= 992) { // Only for mobile view
+            menuToggle.classList.remove('active');
+            nav.classList.remove('active');
+            body.style.overflow = '';
+        }
+    }
+});
+
+
+
+
+
+
+
+
+
+
 document.addEventListener('DOMContentLoaded', function() {
-  // GSAP Animation for Menu
-  const menuToggle = document.getElementById('menuToggle');
-  const nav = document.getElementById('nav');
-  const navItems = document.querySelectorAll('.nav a, .nav .mobile-only');
-  
-  const menuAnimation = gsap.timeline({paused: true})
-      .to(nav, {
-          right: 0,
-          duration: 0.5,
-          ease: "power2.out"
-      })
-      .to(navItems, {
-          opacity: 1,
-          x: 0,
-          stagger: 0.1,
-          duration: 0.3,
-          ease: "back.out"
-      }, "-=0.4");
-  
-  menuToggle.addEventListener('click', function() {
-      this.classList.toggle('active');
-      if (this.classList.contains('active')) {
-          document.body.style.overflow = 'hidden';
-          menuAnimation.play();
-      } else {
-          document.body.style.overflow = '';
-          menuAnimation.reverse();
-      }
-  });
-  
-  document.addEventListener('click', function(e) {
-      if (!nav.contains(e.target) && e.target !== menuToggle && !menuToggle.contains(e.target)) {
-          if (menuToggle.classList.contains('active')) {
-              menuToggle.classList.remove('active');
-              document.body.style.overflow = '';
-              menuAnimation.reverse();
-          }
-      }
-  });
 
   // Swiper Slider
   new Swiper(".swiper", {
@@ -489,76 +502,20 @@ window.addEventListener('scroll', () => {
   }
 });
 
-// Mobile Menu Toggle with GSAP Animation
-const menuToggle = document.getElementById('menuToggle');
-const nav = document.querySelector('.nav');
-const navLinks = document.querySelectorAll('.nav-link');
 
-const menuTimeline = gsap.timeline({paused: true})
-  .to(nav, {
-    right: 0,
-    duration: 0.6,
-    ease: "power2.out"
-  })
-  .from(navLinks, {
-    x: 50,
-    opacity: 0,
-    stagger: 0.1,
-    duration: 0.4,
-    ease: "back.out"
-  }, "-=0.4");
 
-menuToggle.addEventListener('click', () => {
-  menuToggle.classList.toggle('active');
-  
-  if (menuToggle.classList.contains('active')) {
-    document.body.style.overflow = 'hidden';
-    menuTimeline.play();
-  } else {
-    document.body.style.overflow = '';
-    menuTimeline.reverse();
-  }
-});
 
-// Close menu when clicking outside
-document.addEventListener('click', (e) => {
-  if (!nav.contains(e.target) && e.target !== menuToggle && !menuToggle.contains(e.target)) {
-    if (menuToggle.classList.contains('active')) {
-      menuToggle.classList.remove('active');
-      document.body.style.overflow = '';
-      menuTimeline.reverse();
-    }
-  }
-});
 
-// Close menu when clicking on a link
-navLinks.forEach(link => {
-  link.addEventListener('click', () => {
-    if (menuToggle.classList.contains('active')) {
-      menuToggle.classList.remove('active');
-      document.body.style.overflow = '';
-      menuTimeline.reverse();
-    }
-  });
-});
 
-// Hover Effects for Desktop
-if (window.innerWidth > 992) {
-  navLinks.forEach(link => {
-    link.addEventListener('mouseenter', () => {
-      gsap.to(link, {
-        y: -3,
-        boxShadow: "0 10px 20px rgba(61, 143, 214, 0.2)",
-        duration: 0.3
-      });
-    });
-    
-    link.addEventListener('mouseleave', () => {
-      gsap.to(link, {
-        y: 0,
-        boxShadow: "none",
-        duration: 0.3
-      });
-    });
-  });
-}
+
+
+
+
+
+
+
+
+
+
+
+

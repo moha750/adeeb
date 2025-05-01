@@ -267,17 +267,6 @@
   transform: translateY(-9px) rotate(-45deg);
 }
 
-/* شريط التقدم */
-.progress-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #3d8fd6, #274060);
-  transition: width 0.1s linear;
-}
-
 /* تأثير التمرير */
 .header.scrolled {
   height: 70px;
@@ -378,7 +367,31 @@
   }
 }
 
-  
+  /* تحسينات إضافية للقائمة المختصرة */
+.nav {
+  transition: right 0.4s ease-in-out;
+}
+
+/* إضافة تأثير ظل عند فتح القائمة */
+.nav.active {
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+}
+
+/* منع التمرير عند فتح القائمة */
+body.menu-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* تحسينات للروابط في القائمة المختصرة */
+.nav-link {
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+  transform: translateX(-5px);
+}
 
 
 
