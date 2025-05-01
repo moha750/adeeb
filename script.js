@@ -113,7 +113,7 @@ window.addEventListener("scroll", () => {
       slidesPerView: 1,
       spaceBetween: 30,
       loop: true,
-      autoplay: true,
+      // autoplay: true,
       breakpoints: {
           768: { slidesPerView: 2 },
           1024: { slidesPerView: 3 }
@@ -565,3 +565,256 @@ window.addEventListener('scroll', () => {
 
   lastScroll = currentScroll;
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ======================== تأثيرات Scroll لبقية الأقسام ========================
+gsap.registerPlugin(ScrollTrigger);
+
+// تأثير تمرير لقسم "من هو أديب"
+gsap.from(".feature-card", {
+  opacity: 0,
+  y: 50,
+  duration: 1,
+  stagger: 0.2,
+  scrollTrigger: {
+    trigger: ".adeebbook",
+    start: "top 70%",
+    toggleActions: "play none none none"
+  }
+});
+
+// تأثير تمرير لقسم أعمالنا
+ScrollTrigger.create({
+  trigger: ".our-works",
+  start: "top 75%",
+  once: true,
+  onEnter: () => {
+    document.querySelectorAll('.work-card').forEach((card, index) => {
+      gsap.to(card, {
+        opacity: 1,
+        y: 0,
+        duration: 1,
+        delay: index * 0.2,
+        ease: "power2.out"
+      });
+    });
+  }
+});
+
+// تأثير تمرير لقسم الرعاة
+gsap.utils.toArray(".sponsor-card").forEach((card, index) => {
+  gsap.from(card, {
+    opacity: 0,
+    y: 50,
+    duration: 0.8,
+    delay: index * 0.15,
+    scrollTrigger: {
+      trigger: card,
+      start: "top 80%",
+      toggleActions: "play none none none"
+    }
+  });
+});
+
+// تأثير تمرير لقسم المجلس الإداري
+gsap.utils.toArray(".board-card").forEach((card, index) => {
+  gsap.from(card, {
+    opacity: 0,
+    y: 60,
+    duration: 1,
+    delay: index * 0.1,
+    scrollTrigger: {
+      trigger: card,
+      start: "top 85%",
+      toggleActions: "play none none none"
+    }
+  });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// إضافة هذا الكود لمعالجة نموذج التواصل
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  // جمع بيانات النموذج
+  const formData = {
+    name: document.getElementById('name').value,
+    email: document.getElementById('email').value,
+    subject: document.getElementById('subject').value,
+    message: document.getElementById('message').value
+  };
+  
+  // هنا يمكنك إضافة كود إرسال البيانات إلى الخادم
+  console.log('تم إرسال النموذج:', formData);
+  
+  // عرض رسالة نجاح
+  Swal.fire({
+    title: 'تم الإرسال بنجاح!',
+    text: 'شكراً لتواصلك معنا، سنرد عليك في أقرب وقت ممكن.',
+    icon: 'success',
+    confirmButtonText: 'حسناً',
+    confirmButtonColor: '#3d8fd6'
+  });
+  
+  // إعادة تعيين النموذج
+  this.reset();
+});
+
+// تأثيرات GSAP للقسم
+gsap.utils.toArray(".contact-item").forEach((item, index) => {
+  gsap.from(item, {
+    opacity: 0,
+    y: 50,
+    duration: 0.8,
+    delay: index * 0.15,
+    scrollTrigger: {
+      trigger: item,
+      start: "top 80%",
+      toggleActions: "play none none none"
+    }
+  });
+});
+
+gsap.from(".contact-form", {
+  opacity: 0,
+  y: 50,
+  duration: 1,
+  scrollTrigger: {
+    trigger: ".contact-form",
+    start: "top 80%",
+    toggleActions: "play none none none"
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
