@@ -10,28 +10,77 @@
   </head>
 <body>
 
-  <header class="header">
-    <div class="headercontainer">
-      <img src="./elements/adeeb logo.png" alt="شعار نادي أديب" class="logo" />
-      <button class="menu-toggle" id="menuToggle">
-        <span class="hamburger"></span>
-      </button>
-      <nav class="nav" id="nav">
-        <a href="#">الرئيسية</a>
-        <a href="#">المقالات</a>
-        <a href="#">تواصل معنا</a>
-        <button class="login-btn mobile-only">تسجيل الدخول</button>
-      </nav>
-      <button class="login-btn desktop-only">تسجيل الدخول</button>
-    </div>
-  </header>
-
 
   
 
 
 
-
+  <header class="header">
+    <div class="header-container">
+      <!-- الشعار مع تأثيرات -->
+      <div class="logo">
+        <a href="#" class="logo-link">
+          <img src="./elements/adeeb logo.png" alt="شعار نادي أديب" class="logo-img">
+        </a>
+      </div>
+      
+      <!-- القائمة الرئيسية مع تأثيرات ثلاثية الأبعاد -->
+      <nav class="nav">
+        <ul class="nav-links">
+          <li class="nav-item">
+            <a href="#" class="nav-link active">
+              <i class="fas fa-home nav-icon"></i>
+              <span class="nav-text">الرئيسية</span>
+              <span class="nav-wave"></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="fas fa-info-circle nav-icon"></i>
+              <span class="nav-text">عن النادي</span>
+              <span class="nav-wave"></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="fas fa-trophy nav-icon"></i>
+              <span class="nav-text">أعمالنا</span>
+              <span class="nav-wave"></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="fas fa-calendar-alt nav-icon"></i>
+              <span class="nav-text">الفعاليات</span>
+              <span class="nav-wave"></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="fas fa-envelope nav-icon"></i>
+              <span class="nav-text">تواصل معنا</span>
+              <span class="nav-wave"></span>
+            </a>
+          </li>
+        </ul>
+        
+        <!-- زر الاشتراك -->
+        <a href="#" class="subscribe-btn">
+          <span>انضم إلينا</span>
+          <i class="fas fa-user-plus"></i>
+        </a>
+      </nav>
+      
+      <!-- زر القائمة المختصرة مع تأثيرات -->
+      <div class="menu-toggle" id="menuToggle">
+        <div class="hamburger">
+          <span class="line line1"></span>
+          <span class="line line2"></span>
+          <span class="line line3"></span>
+        </div>
+      </div>
+    </div>
+  </header>
 
 
 
@@ -147,7 +196,7 @@
     <div class="work-card swiper-slide">
     <div class="work-img-container">
     <span class="work-category">مُبادرة ثقافية</span>
-    <img alt="ورشة الكتابة الإبداعية" class="work-img" src="gsdfgsfdgsfdg.png"/>
+    <img alt="ورشة الكتابة الإبداعية" class="work-img" src="./works/gsdfgsfdgsfdg.png"/>
     </div>
     <div class="work-info">
     <h3>مُعجم أدِيب</h3>
@@ -159,23 +208,23 @@
     <div class="work-card swiper-slide">
     <div class="work-img-container">
     <span class="work-category">فلم قصير</span>
-    <img alt="مسابقة القصة القصيرة" class="work-img" src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+    <img alt="مسابقة القصة القصيرة" class="work-img" src="./works/‏‏لقطة الشاشة (261).png"/>
     </div>
     <div class="work-info">
     <h3>إبداع بجريرة</h3>
-    <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p>
+    <!-- <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p> -->
     <a class="work-link" target="_blank" href="https://x.com/AB_KFU/status/1734926267722367064">مُشاهدة الفلم <i class="fas fa-arrow-left"></i></a>
     </div>
     </div>
     <!-- العمل 3 -->
     <div class="work-card swiper-slide">
     <div class="work-img-container">
-    <span class="work-category">مدري شنو اصنفه</span>
-    <img alt="المجلة الأدبية" class="work-img" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+    <span class="work-category">قصص</span>
+    <img alt="المجلة الأدبية" class="work-img" src="./works/‏‏لقطة الشاشة (263).png"/>
     </div>
     <div class="work-info">
     <h3>قصص نفخر بها</h3>
-    <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p>
+    <!-- <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p> -->
     <a class="work-link" target="_blank" href="https://x.com/AB_KFU/status/1766180150499049817">مُشاهدة القصص<i class="fas fa-arrow-left"></i></a>
     </div>
     </div>
@@ -183,11 +232,11 @@
     <div class="work-card swiper-slide">
       <div class="work-img-container">
       <span class="work-category">مُبادرة دينية</span>
-      <img alt="المجلة الأدبية" class="work-img" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+      <img alt="المجلة الأدبية" class="work-img" src="./works/ذكرى.png"/>
       </div>
       <div class="work-info">
       <h3>ذَكِّــــــــرْ</h3>
-      <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p>
+      <!-- <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p> -->
       <a class="work-link" target="_blank" href="https://x.com/AB_KFU/status/1781257849751957520">استكشف المُبادرة <i class="fas fa-arrow-left"></i></a>
       </div>
       </div>
@@ -195,11 +244,11 @@
     <div class="work-card swiper-slide">
       <div class="work-img-container">
       <span class="work-category">الهوية الجديدة</span>
-      <img alt="المجلة الأدبية" class="work-img" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+      <img alt="المجلة الأدبية" class="work-img" src="./works/أدِيب.png"/>
       </div>
       <div class="work-info">
       <h3>أدِيب وجهتك الإبداعية الأولى</h3>
-      <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p>
+      <!-- <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p> -->
       <a class="work-link" target="_blank" href="https://x.com/AB_KFU/status/1838277205484581150">استكشف الهوية <i class="fas fa-arrow-left"></i></a>
       </div>
       </div>
@@ -207,11 +256,11 @@
     <div class="work-card swiper-slide">
       <div class="work-img-container">
       <span class="work-category">مُبادرة</span>
-      <img alt="المجلة الأدبية" class="work-img" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+      <img alt="المجلة الأدبية" class="work-img" src="./works/بوصلة.png"/>
       </div>
       <div class="work-info">
       <h3>بوصلة</h3>
-      <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p>
+      <!-- <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p> -->
       <a class="work-link" target="_blank" href="https://x.com/AB_KFU/status/1860411289874346477">أستكشف المُبادرة <i class="fas fa-arrow-left"></i></a>
       </div>
       </div>
@@ -219,11 +268,11 @@
     <div class="work-card swiper-slide">
       <div class="work-img-container">
       <span class="work-category">فديو</span>
-      <img alt="المجلة الأدبية" class="work-img" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+      <img alt="المجلة الأدبية" class="work-img" src="./works/العمري.JPG"/>
       </div>
       <div class="work-info">
       <h3>كفو تُبدع</h3>
-      <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p>
+      <!-- <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p> -->
       <a class="work-link" target="_blank" href="https://x.com/AB_KFU/status/1860681872105177102">مُشاهدة الفديو <i class="fas fa-arrow-left"></i></a>
       </div>
       </div>
@@ -231,11 +280,11 @@
     <div class="work-card swiper-slide">
       <div class="work-img-container">
       <span class="work-category">ورشة تدريبية</span>
-      <img alt="المجلة الأدبية" class="work-img" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+      <img alt="المجلة الأدبية" class="work-img" src="./works/صناعة المحتوى الإبداعي1.png"/>
       </div>
       <div class="work-info">
       <h3>صناعة المحتوى الإبداعي</h3>
-      <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p>
+      <!-- <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p> -->
       <a class="work-link" target="_blank" href="https://x.com/AB_KFU/status/1858637724171071520">اسكتشف الورشة <i class="fas fa-arrow-left"></i></a>
       </div>
       </div>
@@ -243,11 +292,11 @@
     <div class="work-card swiper-slide">
       <div class="work-img-container">
       <span class="work-category">توقيع شراكة</span>
-      <img alt="المجلة الأدبية" class="work-img" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+      <img alt="المجلة الأدبية" class="work-img" src="./works/توقيع الشراكة.png"/>
       </div>
       <div class="work-info">
       <h3>أدِيب يُعمِّق الصُّورة</h3>
-      <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p>
+      <!-- <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p> -->
       <a class="work-link" target="_blank" href="https://x.com/AB_KFU/status/1864014785089528186">اسكتشف الشراكة <i class="fas fa-arrow-left"></i></a>
       </div>
       </div>
@@ -255,11 +304,11 @@
     <div class="work-card swiper-slide">
       <div class="work-img-container">
       <span class="work-category">فلم قصير</span>
-      <img alt="المجلة الأدبية" class="work-img" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+      <img alt="المجلة الأدبية" class="work-img" src="./works/ظهير في الظهيرة.png"/>
       </div>
       <div class="work-info">
       <h3>ظهير في الظهيرة</h3>
-      <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p>
+      <!-- <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p> -->
       <a class="work-link" target="_blank" href="https://x.com/AB_KFU/status/1866562368047559043">مُشاهدة الفلم <i class="fas fa-arrow-left"></i></a>
       </div>
       </div>
@@ -267,11 +316,11 @@
     <div class="work-card swiper-slide">
       <div class="work-img-container">
       <span class="work-category">فلم قصير</span>
-      <img alt="المجلة الأدبية" class="work-img" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+      <img alt="المجلة الأدبية" class="work-img" src="./works/نجم الآداب.png"/>
       </div>
       <div class="work-info">
       <h3>نجم الآداب</h3>
-      <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p>
+      <!-- <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p> -->
       <a class="work-link" target="_blank" href="https://x.com/AB_KFU/status/1881395225622720931">مُشاهدة الفلم <i class="fas fa-arrow-left"></i></a>
       </div>
       </div>
@@ -279,11 +328,11 @@
     <div class="work-card swiper-slide">
       <div class="work-img-container">
       <span class="work-category">تغطية مُصورة</span>
-      <img alt="المجلة الأدبية" class="work-img" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=600&amp;q=80"/>
+      <img alt="المجلة الأدبية" class="work-img" src="./works/ليالي كفو.png"/>
       </div>
       <div class="work-info">
       <h3>ليالي كفو الرمضانية 2025</h3>
-      <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p>
+      <!-- <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores distinctio.</p> -->
       <a class="work-link" target="_blank" href="https://x.com/AB_KFU/status/1903880080692330613">مُشاهدة التغطية <i class="fas fa-arrow-left"></i></a>
       </div>
       </div>
@@ -392,45 +441,45 @@
       <div class="swiper-wrapper">
         <!-- راعي 1 -->
         <div class="sponsor-card swiper-slide">
-          <div class="sponsor-badge gold">الراعي الذهبي</div>
+          <div class="sponsor-badge gold">راعي تعليمي</div>
           <div class="sponsor-img-container">
-            <img alt="راعي 1" class="sponsor-img" src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/6a/Ministry_of_finance_new_logo.svg/512px-Ministry_of_finance_new_logo.svg.png?20171115193300"/>
+            <img alt="معهد رسيم للتدريب" class="sponsor-img" src="./sponsors/معهد رسيم.png"/>
           </div>
           <div class="sponsor-info">
-            <h3>وزارة الثقافة</h3>
-            <p>الداعم الرئيسي لفعاليات النادي ومسابقاته الأدبية</p>
-            <a href="#" class="sponsor-link">زيارة الموقع <i class="fas fa-arrow-left"></i></a>
+            <h3>معهد رسيم للتدريب</h3>
+            <p>الداعم الرئيسي لتطوير مهارات أعضاء أدِيب</p>
+            <a target="_blank" href="https://www.instagram.com/raseem144/" class="sponsor-link">زيارة المعهد <i class="fas fa-arrow-left"></i></a>
           </div>
         </div>
         
         <!-- راعي 2 -->
         <div class="sponsor-card swiper-slide">
-          <div class="sponsor-badge silver">الراعي الفضي</div>
+          <div class="sponsor-badge silver">راعي الضيافة</div>
           <div class="sponsor-img-container">
-            <img alt="راعي 2" class="sponsor-img" src="https://maaal.com/wp-content/uploads/2018/02/%D8%A7%D9%84%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF-%D9%88%D8%A7%D9%84%D8%AA%D8%AE%D8%B7%D9%8A%D8%B7.png"/>
+            <img alt="أكواب التوت" class="sponsor-img" src="./sponsors/أكواب التوت.png"/>
           </div>
           <div class="sponsor-info">
-            <h3>وزارة الاقتصاد</h3>
-            <p>راعي ورش العمل والندوات الأدبية</p>
-            <a href="#" class="sponsor-link">زيارة الموقع <i class="fas fa-arrow-left"></i></a>
+            <h3>أكواب التوت</h3>
+            <!-- <p>راعي ورش العمل والندوات الأدبية</p> -->
+            <a target="_blank" href="https://www.instagram.com/akwabaltot/" class="sponsor-link">زيارة الموقع <i class="fas fa-arrow-left"></i></a>
           </div>
         </div>
         
         <!-- راعي 3 -->
         <div class="sponsor-card swiper-slide">
-          <div class="sponsor-badge bronze">الراعي البرونزي</div>
+          <div class="sponsor-badge bronze">شريك استراتيجي</div>
           <div class="sponsor-img-container">
-            <img alt="راعي 3" class="sponsor-img" src="https://expro.gov.sa/images/hrsd.png"/>
+            <img alt="مؤسسة عمق الصورة لتأجير المعدات" class="sponsor-img" src="./sponsors/عمق الصورة.png"/>
           </div>
           <div class="sponsor-info">
-            <h3>وزارة الداخلية</h3>
-            <p>داعم للإصدارات والمطبوعات الأدبية</p>
-            <a href="#" class="sponsor-link">زيارة الموقع <i class="fas fa-arrow-left"></i></a>
+            <h3>مؤسسة عمق الصورة لتأجير المعدات</h3>
+            <p>الراعي الرئيسي لتقديم مُعدات الإنتاج</p>
+            <a target="_blank" href="https://www.instagram.com/deep_of_picture/" class="sponsor-link">زيارة الموقع <i class="fas fa-arrow-left"></i></a>
           </div>
         </div>
         
         <!-- راعي 4 -->
-        <div class="sponsor-card swiper-slide">
+        <!-- <div class="sponsor-card swiper-slide">
           <div class="sponsor-badge knowledge">راعي المعرفة</div>
           <div class="sponsor-img-container">
             <img alt="راعي 4" class="sponsor-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Logo_Ministry_of_Commerce.svg/2560px-Logo_Ministry_of_Commerce.svg.png"/>
@@ -440,7 +489,7 @@
             <p>داعم للمكتبة والموارد الأدبية</p>
             <a href="#" class="sponsor-link">زيارة الموقع <i class="fas fa-arrow-left"></i></a>
           </div>
-        </div>
+        </div> -->
       </div>
       
       <div class="swiper-nav-wrapper">
@@ -529,7 +578,7 @@
         </div>
 
                 <!-- عضو 5 -->
-                <div class="board-card swiper-slide">
+                <!-- <div class="board-card swiper-slide">
                   <div class="board-img-container">
                     <img alt="عضو المجلس الإداري" class="board-img" src="./imgs/حصة.png"/>
                   </div>
@@ -537,12 +586,12 @@
                     <h3>حصة وليد الشويهين</h3>
                     <span class="board-position">قائدة السُفراء</span>
                   </div>
-                  <!-- <div class="social-links">
+                  <div class="social-links">
                     <a target="_blank" href="#"><i class="fab fa-twitter"></i></a>
                     <a target="_blank" href="#"><i class="fab fa-linkedin"></i></a>
                     <a target="_blank" href="#"><i class="fas fa-envelope"></i></a>
-                  </div> -->
-                </div>
+                  </div>
+                </div> -->
 
                         <!-- عضو 6 -->
         <div class="board-card swiper-slide">
@@ -576,7 +625,7 @@
                 </div>
 
                         <!-- عضو 9 -->
-        <div class="board-card swiper-slide">
+        <!-- <div class="board-card swiper-slide">
           <div class="board-img-container">
             <img alt="عضو المجلس الإداري" class="board-img" src="./imgs/زهراء.png"/>
           </div>
@@ -584,12 +633,12 @@
             <h3>الزهراء علي المطلق</h3>
             <span class="board-position">قائدة الفعاليات</span>
           </div>
-          <!-- <div class="social-links">
+          <div class="social-links">
             <a target="_blank" href="#"><i class="fab fa-twitter"></i></a>
             <a target="_blank" href="#"><i class="fab fa-linkedin"></i></a>
             <a target="_blank" href="#"><i class="fas fa-envelope"></i></a>
-          </div> -->
-        </div>
+          </div>
+        </div> -->
 
                 <!-- عضو 10 -->
                 <div class="board-card swiper-slide">
@@ -600,14 +649,29 @@
                     <h3>محمد عبدالعزيز العبدالمحسن</h3>
                     <span class="board-position">المسؤول التقني</span>
                   </div>
-                  <!-- <div class="social-links">
-                    <a target="_blank" href="#"><i class="fab fa-twitter"></i></a>
-                    <a target="_blank" href="#"><i class="fab fa-linkedin"></i></a>
-                    <a target="_blank" href="#"><i class="fas fa-envelope"></i></a>
-                  </div> -->
+                  <div class="social-links">
+                    <a target="_blank" href="https://x.com/Xor01A"><i class="fab fa-twitter"></i></a>
+                    <a target="_blank" href="https://www.linkedin.com/in/xor01/"><i class="fab fa-linkedin"></i></a>
+                    <a target="_blank" href="mailto:m.abdulmuhsin@outlook.com"><i class="fas fa-envelope"></i></a>
+                  </div>
                 </div>
 
-                        <!-- عضو 11 -->
+             <!-- عضو 11 -->
+             <div class="board-card swiper-slide">
+               <div class="board-img-container">
+                 <img alt="عضو المجلس الإداري" class="board-img" src="./imgs/علي.png"/>
+               </div>
+               <div class="board-info">
+                 <h3>علي سعيد العيسى</h3>
+                 <span class="board-position">مسؤول التحرير</span>
+               </div>
+               <div class="social-links">
+                <a target="_blank" href="https://x.com/ali_alessa14"><i class="fab fa-twitter"></i></a>
+                <a target="_blank" href="mailto:mralialessa99@gmail.com"><i class="fas fa-envelope"></i></a>
+               </div>
+             </div>
+
+                        <!-- عضو 12 -->
         <div class="board-card swiper-slide">
           <div class="board-img-container">
             <img alt="عضو المجلس الإداري" class="board-img" src="./imgs/رنيم.png"/>
@@ -617,7 +681,7 @@
             <span class="board-position">مسؤولة الأرشيف</span>
           </div>
           <div class="social-links">
-            <a target="_blank" href="https://x.com/raneem41666323"><i class="fab fa-twitter"></i></a>
+            <a target="_blank" href="https://x.com/ali_alessa14"><i class="fab fa-twitter"></i></a>
             <a target="_blank" href="mailto:rneemaldryweesh@icloud.com"><i class="fas fa-envelope"></i></a>
           </div>
         </div>
@@ -630,6 +694,47 @@
     </div>
   </div>
 </section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

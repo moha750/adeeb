@@ -49,147 +49,336 @@
     src: url(../fonts/ERASBD.TTF) format('truetype');
   }
 
-  /************************************* header **************************************/
-  
-  .header {
-    background: linear-gradient(45deg, rgba(39, 64, 96, 1) 0%, rgba(51, 92, 129, 1) 100%);
-    padding: 15px 0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    position: relative;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/************************************* Header Modern **************************************/
+.header {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 5px 30px rgba(39, 64, 96, 0.1);
+  z-index: 1000;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform: translateY(0);
+}
+
+.header.hidden {
+  transform: translateY(-100%);
+}
+
+.header-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 80px;
+  position: relative;
+}
+
+/* الشعار */
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.logo-img {
+  height: 50px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* القائمة */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 25px;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-item {
+  position: relative;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #274060;
+  text-decoration: none;
+  font-size: 1.1rem;
+  font-family: 'fm';
+  padding: 10px 15px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  background: rgba(61, 143, 214, 0.05);
+}
+
+.nav-link .nav-wave {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(61, 143, 214, 0.8), rgba(39, 64, 96, 0.8));
+  top: 100%;
+  left: 0;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: -1;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: white;
+  transform: translateY(-3px);
+}
+
+.nav-link:hover .nav-wave,
+.nav-link.active .nav-wave {
+  top: 0;
+}
+
+.nav-link:hover .nav-icon,
+.nav-link.active .nav-icon {
+  transform: scale(1.2);
+}
+
+.nav-icon {
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.nav-text {
+  position: relative;
+}
+
+/* زر الاشتراك */
+.subscribe-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #3d8fd6, #274060);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 30px;
+  text-decoration: none;
+  font-family: 'fb';
+  font-size: 1rem;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 5px 15px rgba(61, 143, 214, 0.3);
+  margin-right: 20px;
+}
+
+.subscribe-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(61, 143, 214, 0.4);
+}
+
+.subscribe-btn i {
+  transition: transform 0.3s ease;
+}
+
+.subscribe-btn:hover i {
+  transform: translateX(-5px);
+}
+
+/* زر القائمة المختصرة */
+.menu-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  z-index: 1001;
+  position: relative;
+}
+
+.hamburger {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.line {
+  width: 100%;
+  height: 3px;
+  background: #274060;
+  border-radius: 3px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-origin: center;
+}
+
+.menu-toggle.active .line1 {
+  transform: translateY(9px) rotate(45deg);
+}
+
+.menu-toggle.active .line2 {
+  opacity: 0;
+}
+
+.menu-toggle.active .line3 {
+  transform: translateY(-9px) rotate(-45deg);
+}
+
+/* شريط التقدم */
+.progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3d8fd6, #274060);
+  transition: width 0.1s linear;
+}
+
+/* تأثير التمرير */
+.header.scrolled {
+  height: 70px;
+  box-shadow: 0 5px 30px rgba(39, 64, 96, 0.15);
+}
+
+.header.scrolled .logo-img {
+  height: 40px;
+}
+
+/* القائمة المختصرة للجوال */
+@media (max-width: 1200px) {
+  .header-container {
+    padding: 0 30px;
   }
   
-  .headercontainer {
-    max-width: 1200px;
-    margin: auto;
-    padding: 0 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
+  .nav-links {
+    gap: 15px;
   }
   
-  .logo {
-    height: 60px;
+  .nav-link {
+    padding: 8px 12px;
+    font-size: 1rem;
   }
   
+  .subscribe-btn {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 992px) {
   .nav {
-    display: flex;
-    gap: 100px;
-    flex-direction: row;
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 320px;
+    height: 100vh;
+    background: white;
+    box-shadow: -5px 0 30px rgba(0, 0, 0, 0.1);
+    transition: right 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    padding: 100px 30px 30px;
+    z-index: 999;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
   }
   
-  .nav a {
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-    transition: color 0.3s;
-    font-family: fr;
+  .nav.active {
+    right: 0;
   }
   
-  .nav a:hover {
-    color: #dddddd;
+  .nav-links {
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
   }
   
-  .login-btn {
-    background-color: #ffffff;
-    color: #274060;
-    border: none;
-    padding: 8px 20px;
+  .nav-item {
+    width: 100%;
+  }
+  
+  .nav-link {
+    justify-content: flex-start;
+    padding: 15px 20px;
     border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    transition: background-color 0.3s;
-    margin-right: 15px;
-    font-family: fb;
   }
   
-  .login-btn:hover {
-    background-color: #f0f0f0;
+  .subscribe-btn {
+    margin: 30px 0 0;
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
   }
   
   .menu-toggle {
-    display: none;
-    background: none;
-    border: none;
-    color: #ffffff;
-    cursor: pointer;
-    padding: 10px;
-    z-index: 101;
+    display: flex;
   }
-  
-  .hamburger {
-    width: 30px;
-    height: 3px;
-    background: #ffffff;
-    position: relative;
-    transition: all 0.3s;
-    display: block;
-  }
-  
-  .hamburger:before, .hamburger:after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: #ffffff;
-    right: 0;
-    transition: all 0.3s;
-  }
-  
-  .hamburger:before { top: -8px; }
-  .hamburger:after { top: 8px; }
-  
-  .menu-toggle.active .hamburger { background: transparent; }
-  .menu-toggle.active .hamburger:before { transform: rotate(45deg); top: 0; }
-  .menu-toggle.active .hamburger:after { transform: rotate(-45deg); top: 0; }
-  
-  .desktop-only {
-    display: block;
-  }
-  
-  .mobile-only {
-    display: none;
-  }
-  
-  @media (max-width: 768px) {
-    .headercontainer {
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-    }
-  
-    .menu-toggle {
-      display: block;
-    }
-  
-    .nav {
-      position: fixed;
-      top: 90px;
-      right: -100%;
-      width: 50%;
-      height: calc(100vh - 80px);
-      flex-direction: column;
-      background: hsla(208, 43%, 35%, 0.7);
-      backdrop-filter: blur(10px);
-      gap: 15px;
-      padding: 20px;
-      transition: none;
-      z-index: 100;
-    }
-  
-    .mobile-only {
-      display: block;
-      margin: 15px 0;
-    }
-  
-    .desktop-only {
-      display: none;
-    }
-  }
+}
 
+@media (max-width: 576px) {
+  .header-container {
+    padding: 0 20px;
+    height: 70px;
+  }
+  
+  .nav {
+    width: 280px;
+    padding: 80px 20px 20px;
+  }
+  
+  .header.scrolled {
+    height: 60px;
+  }
+  
+  .header.scrolled .logo-img {
+    height: 35px;
+  }
+}
 
+  
 
 
 
@@ -2785,3 +2974,387 @@ body {
   font-family: fl;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/************************************* آخر تغريدات النادي المطورة **************************************/
+.twitter-feed {
+  background: linear-gradient(135deg, #f0f6fc 0%, #d9e7f7 100%);
+  padding: 120px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.twitter-feed::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path fill="rgba(29, 161, 242, 0.03)" d="M0,0 L100,0 L100,100 L0,100 Z" /></svg>');
+  background-size: 50px 50px;
+  opacity: 0.3;
+  z-index: 0;
+}
+
+.twitter-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 30px;
+  position: relative;
+  z-index: 1;
+}
+
+.twitter-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.twitter-logo {
+  font-size: 2.5rem;
+  color: #1da1f2;
+  animation: float 3s ease-in-out infinite;
+}
+
+.twitter-title {
+  color: #15202b;
+  font-size: 3rem;
+  margin: 0;
+  position: relative;
+  display: inline-block;
+  font-family: 'fbb';
+}
+
+.twitter-title span {
+  color: #1da1f2;
+  font-family: fbb;
+}
+
+.twitter-title::after {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  right: 50%;
+  transform: translateX(50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(90deg, #1da1f2, #15202b);
+  border-radius: 2px;
+}
+
+.twitter-subtitle {
+  color: #657786;
+  font-size: 1.3rem;
+  max-width: 700px;
+  margin: 0 auto 60px;
+  line-height: 1.8;
+  font-family: 'fr';
+  text-align: center;
+}
+
+.tweets-slider {
+  padding: 20px 10px 60px;
+  position: relative;
+}
+
+.tweet-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 15px 40px rgba(29, 161, 242, 0.1);
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  height: auto;
+  position: relative;
+}
+
+.tweet-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  transition: opacity 0.3s ease;
+}
+
+.tweet-card.loaded .tweet-loader {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #1da1f2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.twitter-cta {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.twitter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #1da1f2, #1a91da);
+  color: white;
+  padding: 14px 35px;
+  border-radius: 30px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.2rem;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 25px rgba(29, 161, 242, 0.3);
+  font-family: 'fb';
+  position: relative;
+  overflow: hidden;
+}
+
+.twitter-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: 0.5s;
+}
+
+.twitter-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(29, 161, 242, 0.4);
+}
+
+.twitter-btn:hover::before {
+  left: 100%;
+}
+
+.twitter-btn i {
+  font-size: 1.3rem;
+  transition: transform 0.3s ease;
+}
+
+.twitter-btn:hover i {
+  transform: scale(1.2);
+}
+
+/* Swiper Navigation */
+.swiper-nav-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  margin-top: 30px;
+}
+
+.swiper-pagination {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  width: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.swiper-pagination-bullet {
+  width: 12px;
+  height: 12px;
+  background: #e1e8ed;
+  opacity: 1;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.swiper-pagination-bullet-active {
+  background: #1da1f2;
+  transform: scale(1.2);
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  position: relative;
+  top: auto;
+  right: auto;
+  left: auto;
+  width: 50px;
+  height: 50px;
+  background: white;
+  border-radius: 50%;
+  color: #1da1f2;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+  background: #1da1f2;
+  color: white;
+}
+
+/* Twitter widget adjustments */
+.twitter-tweet {
+  margin: 0 !important;
+  width: 100% !important;
+  min-height: 350px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.twitter-tweet-rendered {
+  opacity: 1 !important;
+}
+
+/* Animations */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .twitter-title {
+    font-size: 2.6rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .twitter-feed {
+    padding: 80px 0;
+  }
+  
+  .twitter-header {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .twitter-title {
+    font-size: 2.2rem;
+  }
+  
+  .twitter-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 40px;
+  }
+  
+  .twitter-btn {
+    font-size: 1.1rem;
+    padding: 12px 25px;
+  }
+}
+
+@media (max-width: 480px) {
+  .twitter-title {
+    font-size: 2rem;
+  }
+  
+  .twitter-subtitle {
+    font-size: 1rem;
+  }
+  
+  .swiper-nav-wrapper {
+    gap: 15px;
+  }
+  
+  .swiper-button-next,
+  .swiper-button-prev {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+}
+
+
+.header.scrolled {
+  background: white;
+  color: #274060;
+}
+
+.header.scrolled .nav-link,
+.header.scrolled .subscribe-btn {
+  color: #274060 !important;
+}
+
+.header.scrolled .subscribe-btn {
+  background: linear-gradient(135deg, #3d8fd6, #274060);
+  color: white !important;
+}
+
+/* تعديل لون الهيدر عند التمرير */
+.header.scrolled {
+  background: white !important;
+  color: #274060 !important;
+}
+
+.header.scrolled .nav-link {
+  color: #274060 !important;
+  background: rgba(61, 143, 214, 0.05) !important;
+}
+
+.header.scrolled .subscribe-btn {
+  background: linear-gradient(135deg, #3d8fd6, #274060) !important;
+  color: white !important;
+}
+
+/* === إصلاح ألوان الهيدر عند التمرير === */
+.header.scrolled {
+  background: white !important;
+}
+
+.header.scrolled .nav-link {
+  color: #274060 !important;
+  background: rgba(61, 143, 214, 0.05) !important;
+}
+
+.header.scrolled .subscribe-btn {
+  background: linear-gradient(135deg, #3d8fd6, #274060) !important;
+  color: white !important;
+}
+
+.header.scrolled .nav-link:hover {
+  color: white !important;
+}

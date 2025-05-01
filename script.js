@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
       slidesPerView: 1,
       spaceBetween: 30,
       loop: true,
-      // autoplay: true,
+      autoplay: true,
       breakpoints: {
           768: { slidesPerView: 2 },
           1024: { slidesPerView: 3 }
@@ -421,3 +421,144 @@ gsap.utils.toArray(".feature-card").forEach((card, index) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // Header Scroll Effects
+const header = document.querySelector('.header');
+const logoImg = document.querySelector('.logo-img');
+const logoText = document.querySelector('.logo-text');
+const progressBar = document.querySelector('.progress-bar');
+let lastScroll = 0;
+
+// Show/Hide Header on Scroll
+window.addEventListener('scroll', () => {
+  const currentScroll = window.scrollY;
+  
+  // Scroll Direction Detection
+  if (currentScroll <= 0) {
+    header.classList.remove('hidden');
+  }
+  
+  if (currentScroll > lastScroll && !header.classList.contains('hidden') && currentScroll > 100) {
+    header.classList.add('hidden');
+  } else if (currentScroll < lastScroll && header.classList.contains('hidden')) {
+    header.classList.remove('hidden');
+  }
+  
+  lastScroll = currentScroll;
+  
+  // Progress Bar
+  const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+  const scrolled = (window.scrollY / scrollHeight) * 100;
+  progressBar.style.width = scrolled + '%';
+  
+  // Scrolled Class
+  if (window.scrollY > 50) {
+    header.classList.add('scrolled');
+  } else {
+    header.classList.remove('scrolled');
+  }
+});
+
+// Mobile Menu Toggle with GSAP Animation
+const menuToggle = document.getElementById('menuToggle');
+const nav = document.querySelector('.nav');
+const navLinks = document.querySelectorAll('.nav-link');
+
+const menuTimeline = gsap.timeline({paused: true})
+  .to(nav, {
+    right: 0,
+    duration: 0.6,
+    ease: "power2.out"
+  })
+  .from(navLinks, {
+    x: 50,
+    opacity: 0,
+    stagger: 0.1,
+    duration: 0.4,
+    ease: "back.out"
+  }, "-=0.4");
+
+menuToggle.addEventListener('click', () => {
+  menuToggle.classList.toggle('active');
+  
+  if (menuToggle.classList.contains('active')) {
+    document.body.style.overflow = 'hidden';
+    menuTimeline.play();
+  } else {
+    document.body.style.overflow = '';
+    menuTimeline.reverse();
+  }
+});
+
+// Close menu when clicking outside
+document.addEventListener('click', (e) => {
+  if (!nav.contains(e.target) && e.target !== menuToggle && !menuToggle.contains(e.target)) {
+    if (menuToggle.classList.contains('active')) {
+      menuToggle.classList.remove('active');
+      document.body.style.overflow = '';
+      menuTimeline.reverse();
+    }
+  }
+});
+
+// Close menu when clicking on a link
+navLinks.forEach(link => {
+  link.addEventListener('click', () => {
+    if (menuToggle.classList.contains('active')) {
+      menuToggle.classList.remove('active');
+      document.body.style.overflow = '';
+      menuTimeline.reverse();
+    }
+  });
+});
+
+// Hover Effects for Desktop
+if (window.innerWidth > 992) {
+  navLinks.forEach(link => {
+    link.addEventListener('mouseenter', () => {
+      gsap.to(link, {
+        y: -3,
+        boxShadow: "0 10px 20px rgba(61, 143, 214, 0.2)",
+        duration: 0.3
+      });
+    });
+    
+    link.addEventListener('mouseleave', () => {
+      gsap.to(link, {
+        y: 0,
+        boxShadow: "none",
+        duration: 0.3
+      });
+    });
+  });
+}
