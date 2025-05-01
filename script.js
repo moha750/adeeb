@@ -52,6 +52,62 @@ document.addEventListener('click', function(e) {
 
 document.addEventListener('DOMContentLoaded', function() {
 
+  // Smooth scrolling for navigation links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    const targetId = this.getAttribute('href');
+    if (targetId === '#') return;
+    
+    const targetElement = document.querySelector(targetId);
+    if (targetElement) {
+      // Close mobile menu if open
+      if (window.innerWidth <= 992) {
+        menuToggle.classList.remove('active');
+        nav.classList.remove('active');
+        body.style.overflow = '';
+      }
+      
+      // Smooth scroll to target
+      window.scrollTo({
+        top: targetElement.offsetTop - 80, // Adjust for header height
+        behavior: 'smooth'
+      });
+      
+      // Update active link
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+      });
+      this.classList.add('active');
+    }
+  });
+});
+
+// Highlight nav link on scroll
+const sections = document.querySelectorAll("section[id]");
+const navLinksArray = document.querySelectorAll(".nav-link");
+
+window.addEventListener("scroll", () => {
+  let current = "";
+
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop - 100;
+    const sectionHeight = section.offsetHeight;
+    if (pageYOffset >= sectionTop && pageYOffset < sectionTop + sectionHeight) {
+      current = section.getAttribute("id");
+    }
+  });
+
+  navLinksArray.forEach(link => {
+    link.classList.remove("active");
+    if (link.getAttribute("href") === `#${current}`) {
+      link.classList.add("active");
+    }
+  });
+});
+
+
   // Swiper Slider
   new Swiper(".swiper", {
       slidesPerView: 1,
@@ -466,56 +522,51 @@ gsap.utils.toArray(".feature-card").forEach((card, index) => {
 
 
   // Header Scroll Effects
-const header = document.querySelector('.header');
 const logoImg = document.querySelector('.logo-img');
 const logoText = document.querySelector('.logo-text');
 const progressBar = document.querySelector('.progress-bar');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const header = document.querySelector('.header');
+header.classList.add('blue');
 let lastScroll = 0;
 
-// Show/Hide Header on Scroll
 window.addEventListener('scroll', () => {
   const currentScroll = window.scrollY;
-  
-  // Scroll Direction Detection
-  if (currentScroll <= 0) {
-    header.classList.remove('hidden');
-  }
-  
-  if (currentScroll > lastScroll && !header.classList.contains('hidden') && currentScroll > 100) {
-    header.classList.add('hidden');
-  } else if (currentScroll < lastScroll && header.classList.contains('hidden')) {
-    header.classList.remove('hidden');
-  }
-  
-  lastScroll = currentScroll;
-  
-  // Progress Bar
-  const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-  const scrolled = (window.scrollY / scrollHeight) * 100;
-  progressBar.style.width = scrolled + '%';
-  
-  // Scrolled Class
-  if (window.scrollY > 50) {
+
+  // تغيير لون الهيدر
+  if (currentScroll > 100) {
     header.classList.add('scrolled');
+    header.classList.remove('blue');
   } else {
     header.classList.remove('scrolled');
+    header.classList.add('blue');
   }
+
+  // إخفاء الهيدر عند النزول وإظهاره عند الصعود
+  if (currentScroll > lastScroll && currentScroll > 100) {
+    header.classList.add('hidden');
+  } else {
+    header.classList.remove('hidden');
+  }
+
+  lastScroll = currentScroll;
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
