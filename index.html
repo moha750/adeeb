@@ -781,7 +781,7 @@
 
 
 <!-- قسم الأسئلة الشائعة -->
-<section class="faq-section">
+<section id="faq-section" class="faq-section">
   <div class="faq-container">
     <div class="section-header">
       <h2 class="faq-title">الأسئلة <span>الشائعة</span></h2>
@@ -969,12 +969,11 @@
     <div class="footer-bottom">
       <div class="footer-bottom-content">
         <p class="copyright">
-          جميع الحقوق محفوظة لنادي أدِيب <span id="year"></span> ©
+          جميع الحقوق محفوظة لنادي أدِيب <span style="font-family: a;" id="year"></span> ©
         </p>
         <div class="footer-legal">
-          <a href="#">سياسة الخصوصية</a>
-          <a href="#">شروط الاستخدام</a>
-          <a href="#">الأسئلة الشائعة</a>
+          <a href="#">دستور أدِيب</a>
+          <a href="#faq-section">الأسئلة الشائعة</a>
         </div>
       </div>
       <div class="footer-back-top">
@@ -997,6 +996,79 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Enhanced Chat Assistant -->
+<div class="chat-assistant">
+  <div class="chat-icon">
+    <i class="fas fa-robot"></i>
+    <span class="notification-badge pulse">1</span>
+  </div>
+  <div class="chat-box">
+    <div class="chat-header">
+      <div class="header-content">
+        <div class="avatar">
+          <img src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" alt="أديب بوت">
+        </div>
+        <div class="header-info">
+          <h3>مساعد أديب</h3>
+          <p>متصل الآن</p>
+        </div>
+      </div>
+      <div class="chat-actions">
+        <button class="close-chat" title="إغلاق"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div class="chat-messages">
+      <div class="message bot-message">
+      </div>
+    </div>
+    <div class="typing-indicator">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <div class="chat-input-area">
+      <div class="input-wrapper">
+        <input type="text" placeholder="اكتب رسالتك هنا..." dir="rtl">
+      </div>
+      <button class="send-btn" title="إرسال"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- Emoji Picker (hidden by default) -->
+<div class="emoji-picker">
+  <div class="emoji-categories">
+    <button class="category-btn active" data-category="people">😀</button>
+    <button class="category-btn" data-category="nature">🐻</button>
+    <button class="category-btn" data-category="food">🍎</button>
+    <button class="category-btn" data-category="activities">⚽</button>
+  </div>
+  <div class="emoji-container"></div>
+</div>
 
 
 

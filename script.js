@@ -52,6 +52,26 @@ document.addEventListener('click', function(e) {
 
 document.addEventListener('DOMContentLoaded', function() {
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
 // تفعيل أكورديون الأسئلة الشائعة - محسن
 document.querySelectorAll('.faq-question').forEach(question => {
   question.addEventListener('click', () => {
@@ -316,6 +336,210 @@ socialIcons.forEach(icon => {
     tooltip.style.top = '100%';
   });
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Enhanced Chat Assistant
+const chatAssistant = document.querySelector('.chat-assistant');
+const chatIcon = document.querySelector('.chat-icon');
+const chatBox = document.querySelector('.chat-box');
+const closeChat = document.querySelector('.close-chat');
+const chatMessages = document.querySelector('.chat-messages');
+const chatInput = document.querySelector('.chat-input-area input');
+const sendBtn = document.querySelector('.send-btn');
+const attachBtn = document.querySelector('.attach-btn');
+const emojiBtn = document.querySelector('.emoji-btn');
+const emojiPicker = document.querySelector('.emoji-picker');
+const typingIndicator = document.querySelector('.typing-indicator');
+
+// Toggle chat box
+chatIcon.addEventListener('click', () => {
+  chatAssistant.classList.add('active');
+  document.querySelector('.notification-badge').style.display = 'none';
+  chatInput.focus();
+
+  // ✅ الرسالة الترحيبية بعد فتح الشات لأول مرة
+  if (!chatAssistant.dataset.welcomed) {
+    setTimeout(() => {
+      addMessage('مرحبًا بك! 😊<br>يمكنك أن تسألني عن:<br>- فعاليات النادي<br>- كيفية الانضمام<br>- لجان النادي<br>أو أي استفسار آخر.', 'bot');
+      chatAssistant.dataset.welcomed = 'true';
+    }, 700); // نصف ثانية بعد فتح الشات
+  }
+});
+
+
+closeChat.addEventListener('click', () => {
+  chatAssistant.classList.remove('active');
+});
+
+// Close emoji picker when clicking outside
+document.addEventListener('click', (e) => {
+  if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
+    emojiPicker.classList.remove('active');
+  }
+});
+
+// Sample questions for quick replies
+const quickQuestions = [
+  "ما هي فعاليات النادي القادمة؟",
+  "كيف أنضم إلى النادي؟",
+  "ما هي لجان النادي؟",
+  "أين يقع مقر النادي؟"
+];
+
+// Bot responses
+const botResponses = {
+  "ما هي فعاليات النادي القادمة؟": "لدينا عدة فعاليات قادمة:\n- ورشة كتابة إبداعية يوم 15 مايو\n- أمسية شعرية يوم 22 مايو\n- معرض فنون يوم 30 مايو\n\nيمكنك متابعة صفحتنا على تويتر لمعرفة التفاصيل.",
+  "كيف أنضم إلى النادي؟": "يمكنك الانضمام إلينا عن طريق:\n1. تعبئة نموذج العضوية على موقعنا\n2. زيارة مقر النادي في جامعة الملك فيصل\n3. التواصل معنا عبر البريد الإلكتروني\n\nالعضوية مجانية لجميع الطلاب.",
+  "ما هي لجان النادي؟": "لجان نادي أديب:\n- لجنة التأليف\n- لجنة الرواة\n- لجنة الفعاليات\n- لجنة السفراء\n- لجنة الإنتاج\n- لجنة التسويق\n- لجنة التصميم\n\nيمكنك الانضمام لأي لجنة تناسب مهاراتك.",
+  "أين يقع مقر النادي؟": "مقر نادي أديب:\nجامعة الملك فيصل - عمادة شؤون الطلاب\nالأحساء، المملكة العربية السعودية\n\nساعات العمل: من الأحد إلى الخميس، 8 صباحاً إلى 3 مساءً."
+};
+
+// Send message function
+function sendMessage() {
+  const message = chatInput.value.trim();
+  if (message) {
+    // Add user message
+    addMessage(message, 'user');
+    chatInput.value = '';
+    
+    // Hide emoji picker if open
+    emojiPicker.classList.remove('active');
+    
+    // Show typing indicator
+    typingIndicator.classList.add('active');
+    
+    // Simulate bot typing delay
+    setTimeout(() => {
+      typingIndicator.classList.remove('active');
+      
+      // Check if message matches any quick question
+      let botResponse = botResponses[message] || 
+        "شكراً لرسالتك! يمكنني مساعدتك في:\n- معلومات عن النادي\n- الفعاليات القادمة\n- كيفية الانضمام\n- لجان النادي\n\nأو يمكنك طرح سؤالك مباشرة.";
+      
+      // Add bot response
+      addMessage(botResponse, 'bot');
+      
+      // Add quick questions if it's a generic response
+      if (!botResponses[message]) {
+        setTimeout(() => {
+          addQuickQuestions();
+        }, 500);
+      }
+    }, 1500 + Math.random() * 2000); // Random delay between 1.5-3.5 seconds
+  }
+}
+
+// Add quick reply buttons
+function addQuickQuestions() {
+  const quickReplies = document.createElement('div');
+  quickReplies.classList.add('quick-replies');
+  
+  quickQuestions.forEach(question => {
+    const btn = document.createElement('button');
+    btn.classList.add('quick-reply-btn');
+    btn.textContent = question;
+    btn.addEventListener('click', () => {
+      chatInput.value = question;
+      sendMessage();
+      quickReplies.remove();
+    });
+    quickReplies.appendChild(btn);
+  });
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.classList.add('message', 'bot-message');
+  messageDiv.appendChild(quickReplies);
+  chatMessages.appendChild(messageDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Add message to chat
+function addMessage(text, sender) {
+  const now = new Date();
+  const timeString = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.classList.add('message', `${sender}-message`);
+  
+  const messageContent = document.createElement('div');
+  messageContent.classList.add('message-content');
+  messageContent.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
+  
+  const messageTime = document.createElement('div');
+  messageTime.classList.add('message-time');
+  messageTime.textContent = timeString;
+  
+  messageDiv.appendChild(messageContent);
+  messageDiv.appendChild(messageTime);
+  
+  chatMessages.appendChild(messageDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Send message on button click or Enter key
+sendBtn.addEventListener('click', sendMessage);
+chatInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    sendMessage();
+  }
+});
+
+// Play notification sound
+function playNotificationSound() {
+  const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3');
+  audio.volume = 0.3;
+  audio.play().catch(e => console.log('Audio play failed:', e));
+}
+
+// Show welcome message after 5 seconds if chat hasn't been opened
+setTimeout(() => {
+  if (!chatAssistant.classList.contains('active')) {
+    document.querySelector('.notification-badge').style.display = 'flex';
+    playNotificationSound();
+  }
+}, 5000);
+
+// Initialize emoji picker when DOM is loaded
+document.addEventListener('DOMContentLoaded', initEmojiPicker);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 });
@@ -967,6 +1191,41 @@ gsap.utils.toArray(".faq-item").forEach((item, index) => {
     }
   });
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
