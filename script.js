@@ -361,8 +361,6 @@ const chatMessages = document.querySelector('.chat-messages');
 const chatInput = document.querySelector('.chat-input-area input');
 const sendBtn = document.querySelector('.send-btn');
 const attachBtn = document.querySelector('.attach-btn');
-const emojiBtn = document.querySelector('.emoji-btn');
-const emojiPicker = document.querySelector('.emoji-picker');
 const typingIndicator = document.querySelector('.typing-indicator');
 
 // Toggle chat box
@@ -383,13 +381,6 @@ chatIcon.addEventListener('click', () => {
 
 closeChat.addEventListener('click', () => {
   chatAssistant.classList.remove('active');
-});
-
-// Close emoji picker when clicking outside
-document.addEventListener('click', (e) => {
-  if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
-    emojiPicker.classList.remove('active');
-  }
 });
 
 // Sample questions for quick replies
@@ -415,9 +406,6 @@ function sendMessage() {
     // Add user message
     addMessage(message, 'user');
     chatInput.value = '';
-    
-    // Hide emoji picker if open
-    emojiPicker.classList.remove('active');
     
     // Show typing indicator
     typingIndicator.classList.add('active');
@@ -513,8 +501,7 @@ setTimeout(() => {
   }
 }, 5000);
 
-// Initialize emoji picker when DOM is loaded
-document.addEventListener('DOMContentLoaded', initEmojiPicker);
+
 
 
 
