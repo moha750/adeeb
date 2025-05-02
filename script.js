@@ -52,6 +52,39 @@ document.addEventListener('click', function(e) {
 
 document.addEventListener('DOMContentLoaded', function() {
 
+// تفعيل أكورديون الأسئلة الشائعة - محسن
+document.querySelectorAll('.faq-question').forEach(question => {
+  question.addEventListener('click', () => {
+    const faqItem = question.parentElement;
+    const isActive = faqItem.classList.contains('active');
+    
+    // إغلاق جميع العناصر أولاً
+    document.querySelectorAll('.faq-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    
+    // إذا لم يكن العنصر نشطاً، افتحه
+    if (!isActive) {
+      faqItem.classList.add('active');}
+  });
+});
+
+// تأثيرات GSAP للقسم - محسن
+gsap.utils.toArray(".faq-item").forEach((item, index) => {
+  gsap.from(item, {
+    opacity: 0,
+    y: 50,
+    duration: 0.8,
+    delay: index * 0.1,
+    ease: "back.out(1.2)",
+    scrollTrigger: {
+      trigger: item,
+      start: "top 85%",
+      toggleActions: "play none none none"
+    }
+  });
+});
+
   // Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   anchor.addEventListener('click', function(e) {
@@ -798,6 +831,142 @@ gsap.from(".contact-form", {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// إضافة هذا الكود لمعالجة نموذج النشرة البريدية
+document.getElementById('newsletterForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const emailInput = this.querySelector('input[type="email"]');
+  const email = emailInput.value;
+  
+  // هنا يمكنك إضافة كود إرسال البيانات إلى الخادم
+  console.log('تم الاشتراك بنجاح:', email);
+  
+  // عرض رسالة نجاح
+  Swal.fire({
+    title: 'تم الاشتراك بنجاح!',
+    text: 'شكراً لانضمامك إلى مجتمعنا، ستتلقى آخر الأخبار والعروض الحصرية قريباً.',
+    icon: 'success',
+    confirmButtonText: 'حسناً',
+    confirmButtonColor: '#3d8fd6'
+  });
+  
+  // إعادة تعيين النموذج
+  this.reset();
+});
+
+// تأثيرات GSAP للقسم
+gsap.utils.toArray(".benefit-item").forEach((item, index) => {
+  gsap.from(item, {
+    opacity: 0,
+    y: 50,
+    duration: 0.8,
+    delay: index * 0.15,
+    scrollTrigger: {
+      trigger: item,
+      start: "top 80%",
+      toggleActions: "play none none none"
+    }
+  });
+});
+
+gsap.from(".newsletter-form", {
+  opacity: 0,
+  y: 50,
+  duration: 1,
+  scrollTrigger: {
+    trigger: ".newsletter-form",
+    start: "top 80%",
+    toggleActions: "play none none none"
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// تفعيل أكورديون الأسئلة الشائعة
+document.querySelectorAll('.faq-question').forEach(question => {
+  question.addEventListener('click', () => {
+    const faqItem = question.parentElement;
+    faqItem.classList.toggle('active');
+    
+    // إغلاق العناصر الأخرى عند فتح عنصر جديد
+    if (faqItem.classList.contains('active')) {
+      document.querySelectorAll('.faq-item').forEach(item => {
+        if (item !== faqItem && item.classList.contains('active')) {
+          item.classList.remove('active');
+        }
+      });
+    }
+  });
+});
+
+// تأثيرات GSAP للقسم
+gsap.utils.toArray(".faq-item").forEach((item, index) => {
+  gsap.from(item, {
+    opacity: 0,
+    y: 50,
+    duration: 0.8,
+    delay: index * 0.1,
+    scrollTrigger: {
+      trigger: item,
+      start: "top 80%",
+      toggleActions: "play none none none"
+    }
+  });
+});
 
 
 
