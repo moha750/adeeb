@@ -4618,6 +4618,15 @@ body {
   animation: messageIn 0.3s ease-out;
 }
 
+/* تغيير جميع رسائل البوت */
+.bot-message .message-content p {
+  font-family: 'fm' !important;
+}
+
+.user-message .message-content p {
+  font-family: 'fr' !important; /* الخط المتوسط (Medium) */
+}
+
 @keyframes messageIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -4774,7 +4783,6 @@ body {
     bottom: 60px;
   }
 }
-
 
 
 
