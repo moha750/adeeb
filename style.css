@@ -4914,3 +4914,149 @@ body {
     min-width: 140px;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* تحسينات SweetAlert Premium */
+.swal2-container {
+  backdrop-filter: blur(5px);
+}
+
+.swal2-popup {
+  font-family: "fr", sans-serif !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 30px rgba(39, 64, 96, 0.2) !important;
+  border: none !important;
+  overflow: hidden !important;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%) !important;
+}
+
+.swal2-title {
+  font-family: "fbb", sans-serif !important;
+  color: #274060 !important;
+  font-size: 2rem !important;
+  position: relative;
+  padding-bottom: 15px;
+}
+
+.swal2-html-container {
+  font-family: "fr", sans-serif !important;
+  color: #64748b !important;
+  font-size: 1.2rem !important;
+  line-height: 1.8 !important;
+}
+
+.swal2-confirm {
+  background: linear-gradient(135deg, #3d8fd6, #274060) !important;
+  font-family: "fb", sans-serif !important;
+  border-radius: 50px !important;
+  padding: 12px 30px !important;
+  border: none !important;
+  box-shadow: 0 4px 15px rgba(61, 143, 214, 0.3) !important;
+  transition: all 0.3s ease !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.swal2-confirm:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 6px 20px rgba(61, 143, 214, 0.4) !important;
+}
+
+.swal2-confirm:active {
+  transform: translateY(1px) !important;
+}
+
+.swal2-success {
+  border-color: #3d8fd6 !important;
+  color: #3d8fd6 !important;
+}
+
+.swal2-success [class^=swal2-success-line] {
+  background-color: #3d8fd6 !important;
+}
+
+.swal2-icon.swal2-success .swal2-success-ring {
+  border-color: rgba(61, 143, 214, 0.3) !important;
+}
+
+/* أضف هذه الأنماط في ملف style.css */
+.loading-spinner {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto;
+}
+
+.spinner-circle {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 4px solid rgba(61, 143, 214, 0.2);
+  border-radius: 50%;
+  border-top-color: #3d8fd6;
+  animation: spin 1.5s linear infinite;
+}
+
+.spinner-logo {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.8;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* تأثير النبض للشعار */
+@keyframes pulse {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+  50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+}
+
+.spinner-logo {
+  animation: pulse 2s ease-in-out infinite;
+}

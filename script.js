@@ -166,7 +166,7 @@ window.addEventListener("scroll", () => {
       slidesPerView: 1,
       spaceBetween: 30,
       loop: true,
-      // autoplay: true,
+      autoplay: true,
       breakpoints: {
           768: { slidesPerView: 2 },
           1024: { slidesPerView: 3 }
@@ -500,6 +500,207 @@ setTimeout(() => {
     playNotificationSound();
   }
 }, 5000);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  const scriptURLform = 'https://script.google.com/macros/s/AKfycbwW--KhgxMltR6sko0Fl8ENJ9gwGlUWRfdsG6e_-8pGXFGxtGlJA00rcLf69hMV-sjm/exec'
+  const formform = document.forms['contactForm']
+
+  // إرسال النموذج مع تأثيرات متقدمة
+  formform.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+
+
+
+
+
+
+  
+  // رسالة تحميل متحركة
+  const loadingAlert = Swal.fire({
+    html: `<div style="font-family:'fm';color:#274060;margin-top:15px">جاري معالجة طلبك...</div>
+          <div class="progress-bar" style="height:6px;background:#f1f5f9;border-radius:3px;margin-top:20px;overflow:hidden">
+            <div class="progress" style="height:100%;width:0%;background:linear-gradient(90deg,#3d8fd6,#274060);transition:width 0.4s ease"></div>
+          </div>`,
+    showConfirmButton: false,
+    allowOutsideClick: false,
+    didOpen: () => {
+      // تأثير شريط التقدم
+      const progressBar = document.querySelector('.progress');
+      let width = 0;
+      const interval = setInterval(() => {
+        width += 5;
+        progressBar.style.width = width + '%';
+        if (width >= 90) clearInterval(interval);
+      }, 200);
+    }
+  });
+
+  try {
+    const response = await fetch(scriptURLform, { 
+      method: 'POST', 
+      body: new FormData(formform) 
+    });
+    
+    // إغلاق رسالة التحميل
+    await Swal.close();
+    
+    if (response.ok) {
+    // رسالة نجاح متحركة
+    Swal.fire({
+      html: `<div style="margin-top:20px">
+            <h3 style="font-family:'fbb';color:#274060">تم الإرسال بنجاح!</h3>
+            <p style="font-family:'fr';color:#64748b">سيتم الرد عليك خلال 24 ساعة</p>
+          </div>`,
+      showConfirmButton: true,
+      confirmButtonText: 'حسناً',
+      icon: "success",
+      timer: 5000,
+      timerProgressBar: true,
+      willClose: () => {
+        formform.reset();
+      }
+    });
+    } else {
+      throw new Error('فشل في إرسال النموذج');
+    }
+  } catch (error) {
+    await Swal.close();
+    // رسالة خطأ متحركة
+    Swal.fire({
+      title: '<i class="fas fa-times-circle" style="color:#f27474;font-size:60px"></i>',
+      html: `<div style="margin-top:20px">
+            <h3 style="font-family:'fbb';color:#274060">حدث خطأ!</h3>
+            <p style="font-family:'fr';color:#64748b">${error.message || 'يرجى المحاولة مرة أخرى لاحقًا'}</p>
+          </div>`,
+      confirmButtonText: 'حاول مرة أخرى',
+      showCancelButton: true,
+      cancelButtonText: 'إلغاء'
+    });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const scriptURL = 'https://script.google.com/macros/s/AKfycbzEr92YPUxGOant4pbvI5NEqStWJ1APtHg1jwa3a3Z9vovUmC5XbkjVlxzVDi6ufi7-bA/exec'
+const form = document.forms['newsletterForm']
+
+// إرسال النموذج مع تأثيرات متقدمة
+form.addEventListener('submit', async (e) => {
+e.preventDefault();
+
+
+
+
+
+
+
+
+// رسالة تحميل متحركة
+const loadingAlert = Swal.fire({
+  html: `<div style="font-family:'fm';color:#274060;margin-top:15px">جاري معالجة طلبك...</div>
+        <div class="progress-bar" style="height:6px;background:#f1f5f9;border-radius:3px;margin-top:20px;overflow:hidden">
+          <div class="progress" style="height:100%;width:0%;background:linear-gradient(90deg,#3d8fd6,#274060);transition:width 0.4s ease"></div>
+        </div>`,
+  showConfirmButton: false,
+  allowOutsideClick: false,
+  didOpen: () => {
+    // تأثير شريط التقدم
+    const progressBar = document.querySelector('.progress');
+    let width = 0;
+    const interval = setInterval(() => {
+      width += 5;
+      progressBar.style.width = width + '%';
+      if (width >= 90) clearInterval(interval);
+    }, 200);
+  }
+});
+
+try {
+  const response = await fetch(scriptURL, { 
+    method: 'POST', 
+    body: new FormData(form) 
+  });
+  
+  // إغلاق رسالة التحميل
+  await Swal.close();
+  
+  if (response.ok) {
+  // رسالة نجاح متحركة
+  Swal.fire({
+    html: `<div style="margin-top:20px">
+          <h3 style="font-family:'fbb';color:#274060">تم الإرسال بنجاح!</h3>
+          <p style="font-family:'fr';color:#64748b">سيتم الرد عليك خلال 24 ساعة</p>
+        </div>`,
+    showConfirmButton: true,
+    confirmButtonText: 'حسناً',
+    icon: "success",
+    timer: 5000,
+    timerProgressBar: true,
+    willClose: () => {
+      form.reset();
+    }
+  });
+  } else {
+    throw new Error('فشل في إرسال النموذج');
+  }
+} catch (error) {
+  await Swal.close();
+  // رسالة خطأ متحركة
+  Swal.fire({
+    title: '<i class="fas fa-times-circle" style="color:#f27474;font-size:60px"></i>',
+    html: `<div style="margin-top:20px">
+          <h3 style="font-family:'fbb';color:#274060">حدث خطأ!</h3>
+          <p style="font-family:'fr';color:#64748b">${error.message || 'يرجى المحاولة مرة أخرى لاحقًا'}</p>
+        </div>`,
+    confirmButtonText: 'حاول مرة أخرى',
+    showCancelButton: true,
+    cancelButtonText: 'إلغاء'
+  });
+}
+});
+
+
+
 
 
 
