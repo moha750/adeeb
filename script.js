@@ -668,8 +668,8 @@ try {
   // رسالة نجاح متحركة
   Swal.fire({
     html: `<div style="margin-top:20px">
-          <h3 style="font-family:'fbb';color:#274060">تم الإرسال بنجاح!</h3>
-          <p style="font-family:'fr';color:#64748b">سيتم الرد عليك خلال 24 ساعة</p>
+          <h3 style="font-family:'fbb';color:#274060">تمّ الإشتراك بِنجاح!🥳</h3>
+          <p style="font-family:'fr';color:#64748b">ستصلك النشرة البريدية</p>
         </div>`,
     showConfirmButton: true,
     confirmButtonText: 'حسناً',
@@ -720,7 +720,21 @@ try {
 
 
 
-
+// Handle Join Us Button Click
+document.getElementById('joinBtn').addEventListener('click', function(e) {
+  e.preventDefault();
+  
+  Swal.fire({
+    title: '<span style="font-family:\'fbb\';color:#274060">التسجيل مغلق حالياً</span>',
+    html: '<div style="font-family:\'fr\';color:#64748b">سيتم فتح باب التسجيل قريباً في بداية الفصل الدراسي القادم.<br><br>تابعنا على وسائل التواصل الاجتماعي لمعرفة المواعيد.</div>',
+    icon: 'info',
+    confirmButtonText: 'حسناً',
+    confirmButtonColor: '#3d8fd6',
+    customClass: {
+      popup: 'custom-swal-popup'
+    }
+  });
+});
 
 
 

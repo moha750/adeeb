@@ -166,14 +166,13 @@
   background: linear-gradient(135deg, rgba(61, 143, 214, 0.8), rgba(39, 64, 96, 0.8));
   top: 100%;
   left: 0;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1);
   z-index: -1;
 }
 
 .nav-link:hover,
 .nav-link.active {
   color: white;
-  transform: translateY(-3px);
 }
 
 .nav-link:hover .nav-wave,
@@ -236,8 +235,8 @@
 }
 
 .hamburger {
-  width: 100%;
-  height: 100%;
+  width: 80%;
+  height: 80%;
   display: flex;
   flex-direction: column;
   justify-content: center;
