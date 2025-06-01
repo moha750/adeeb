@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+
+<head>
+  <!-- معلومات أساسية -->
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>نادي أديب</title>
+
+  <!-- روابط CSS -->
+  <link href="adeeb.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" rel="stylesheet">
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+</head>
+
+<body>
+  <!------------------------------ Header Section ------------------------------>
+  <header class="header">
+    <div class="header-container">
+      <div class="menu-toggle" id="menuToggle">
+        <div class="hamburger">
+          <span class="line line1"></span>
+          <span class="line line2"></span>
+          <span class="line line3"></span>
+        </div>
+      </div>
+      <div class="logo">
+        <a class="logo-link" href="#">
+          <img alt="شعار نادي أديب" class="logo-img"
+            src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" />
+        </a>
+      </div>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li class="nav-item">
+            <a class="nav-link active" href="/index.html">
+              <i class="fas fa-home nav-icon"></i>
+              <span class="nav-text">الرئيسية</span>
+              <span class="nav-wave"></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="/news/adeeb.html">
+              <i class="fa-solid fa-newspaper"></i>
+              <span class="nav-text">أخبار أدِيب</span>
+              <span class="nav-wave"></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="/news/adeeb.html">
+              <i class="fa-solid fa-anchor"></i>
+              <span class="nav-text">مدونة مرافئ</span>
+              <span class="nav-wave"></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#our-works">
+              <i class="fa-solid fa-briefcase"></i>
+              <span class="nav-text">أعمالنا</span>
+              <span class="nav-wave"></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#achievements">
+              <i class="fa-solid fa-trophy"></i>
+              <span class="nav-text">انجازتنا</span>
+              <span class="nav-wave"></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#contact">
+              <i class="fas fa-envelope nav-icon"></i>
+              <span class="nav-text">تواصل معنا</span>
+              <span class="nav-wave"></span>
+            </a>
+          </li>
+        </ul>
+        <!-- زر الاشتراك -->
+        <a class="subscribe-btn" href="/admin/admin.html">
+          <span>تسجيل الدخول</span>
+          <i class="fas fa-cog"></i>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+
+  <!------------------------------ News Section ------------------------------>
+  <section class="news-section" id="news">
+    <div class="news-container">
+      <div class="section-header">
+        <h2 class="news-title">آخر <span>الأخبار</span></h2>
+        <p class="news-subtitle">تابع أحدث أخبار وأنشطة نادي أدِيب</p>
+        <div class="news-filter">
+          <button class="filter-btn active" data-filter="all">الكل</button>
+          <button class="filter-btn" data-filter="أخبار عامة">أخبار عامة</button>
+          <button class="filter-btn" data-filter="أخبار الجامعة">أخبار الجامعة</button>
+          <button class="filter-btn" data-filter="أخبار أدِيب">أخبار أدِيب</button>
+        </div>
+      </div>
+
+      <div class="news-list" id="newsContainer">
+        <!-- سيتم ملء الأخبار هنا عبر JavaScript -->
+      </div>
+
+      <div class="news-actions">
+        <div id="pagination" class="pagination"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!------------------------------ Sponsors Section ------------------------------>
+  <section class="sponsors" id="sponsors">
+    <div class="sponsors-container">
+      <div class="section-header">
+        <h2 class="sponsors-title">شركاء <span>النجاح</span></h2>
+        <p class="sponsors-subtitle">نحن فخورون بأن نكون تبياناً لكل تميز وإبداع</p>
+      </div>
+      <div class="swiper sponsors-swiper">
+        <div class="swiper-wrapper">
+          <!-- راعي 1 -->
+          <div class="sponsor-card swiper-slide">
+            <div class="sponsor-badge gold">راعي تعليمي</div>
+            <div class="sponsor-img-container">
+              <img alt="معهد رسيم للتدريب" class="sponsor-img"
+                src="https://lh3.googleusercontent.com/d/1i9gWEWoeKIEq89mcY6IJd_SBfYujkU5V" />
+            </div>
+            <div class="sponsor-info">
+              <h3>معهد رسيم للتدريب</h3>
+              <p>الداعم الرئيسي لتطوير مهارات أعضاء أدِيب</p>
+              <a class="sponsor-link" href="https://www.instagram.com/raseem144/" target="_blank">زيارة المعهد <i
+                  class="fas fa-arrow-left"></i></a>
+            </div>
+          </div>
+          <!-- راعي 2 -->
+          <div class="sponsor-card swiper-slide">
+            <div class="sponsor-badge silver">راعي الضيافة</div>
+            <div class="sponsor-img-container">
+              <img alt="أكواب التوت" class="sponsor-img"
+                src="https://lh3.googleusercontent.com/d/14pBwvt62a4UDUtbFox3wIuGJ-_QVDHm6" />
+            </div>
+            <div class="sponsor-info">
+              <h3>أكواب التوت</h3>
+              <p>راعي الضيافة لمعارض نادي أدِيب</p>
+              <a class="sponsor-link" href="https://www.instagram.com/akwabaltot/" target="_blank">زيارة الموقع <i
+                  class="fas fa-arrow-left"></i></a>
+            </div>
+          </div>
+          <!-- راعي 3 -->
+          <div class="sponsor-card swiper-slide">
+            <div class="sponsor-badge bronze">شريك استراتيجي</div>
+            <div class="sponsor-img-container">
+              <img alt="مؤسسة عمق الصورة لتأجير المعدات" class="sponsor-img"
+                src="https://lh3.googleusercontent.com/d/1tWyttaSeKhbaeHF6LQLB07Vz1d227Rxt" />
+            </div>
+            <div class="sponsor-info">
+              <h3>مؤسسة عمق الصورة لتأجير المعدات</h3>
+              <p>الراعي الرئيسي لتقديم مُعدات الإنتاج</p>
+              <a class="sponsor-link" href="https://www.instagram.com/deep_of_picture/" target="_blank">زيارة الموقع <i
+                  class="fas fa-arrow-left"></i></a>
+            </div>
+          </div>
+          <!-- راعي 4 -->
+          <!-- <div class="sponsor-card swiper-slide">
+          <div class="sponsor-badge knowledge">راعي المعرفة</div>
+          <div class="sponsor-img-container">
+            <img alt="راعي 4" class="sponsor-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Logo_Ministry_of_Commerce.svg/2560px-Logo_Ministry_of_Commerce.svg.png"/>
+          </div>
+          <div class="sponsor-info">
+            <h3>جامعة الملك سعود</h3>
+            <p>داعم للمكتبة والموارد الأدبية</p>
+            <a href="#" class="sponsor-link">زيارة الموقع <i class="fas fa-arrow-left"></i></a>
+          </div>
+        </div> -->
+        </div>
+        <div class="swiper-nav-wrapper">
+          <div class="swiper-button-prev"></div>
+          <div class="swiper-button-next"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!------------------------------ Contact Section ------------------------------>
+  <section id="contact" class="contact-section" id="contact">
+    <div class="contact-container">
+      <div class="section-header">
+        <h2 class="contact-title">تواصل <span>معنا</span></h2>
+        <p class="contact-subtitle">نحن هنا للإجابة على جميع استفساراتك ومقترحاتك</p>
+      </div>
+
+      <div class="contact-content">
+        <div class="contact-info">
+          <div class="contact-item">
+            <div class="contact-icon">
+              <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div class="contact-text">
+              <h3>موقعنا</h3>
+              <p>المملكة العربية السعودية، الأحساء</p>
+              <span>جامعة الملك فيصل - عمادة شؤون الطلاب</span>
+            </div>
+          </div>
+
+          <div class="contact-item">
+            <div class="contact-icon">
+              <i class="fas fa-phone-alt"></i>
+            </div>
+            <div class="contact-text">
+              <h3>اتصل بنا</h3>
+              <a id="phone" href="tel:+966543837775">+966 54 383 7775</a>
+              <span>للتواصل واتساب فقط</span>
+            </div>
+          </div>
+
+          <div class="contact-item">
+            <div class="contact-icon">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div class="contact-text">
+              <h3>البريد الإلكتروني</h3>
+              <a id="email" href="mailto:adeab.kfu@gmail.com">adeab.kfu@gmail.com</a>
+              <span>للاستفسارات العامة والتعاون</span>
+            </div>
+          </div>
+
+          <div class="contact-social">
+            <h3>تابعنا على</h3>
+            <div class="social-icons">
+              <a href="https://x.com/AB_KFU" target="_blank" class="social-icon">
+                <i class="fa-brands fa-x-twitter"></i>
+              </a>
+              <a href="https://www.instagram.com/ab_kfu/" target="_blank" class="social-icon">
+                <i class="fab fa-instagram"></i>
+              </a>
+              <a href="https://www.youtube.com/@ab_kfu" target="_blank" class="social-icon">
+                <i class="fab fa-youtube"></i>
+              </a>
+              <a href="https://www.tiktok.com/@ab_kfu" target="_blank" class="social-icon">
+                <i class="fab fa-tiktok"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-form">
+          <form id="contactForm">
+            <div class="form-group">
+              <label for="name">الاسم الكامل</label>
+              <input type="text" id="name" name="الأسم" placeholder="أدخل اسمك الكامل" required>
+            </div>
+
+            <div class="form-group">
+              <label for="email">البريد الإلكتروني</label>
+              <input type="email" id="email-contect" name="البريد الإلكتروني" placeholder="أدخل بريدك الإلكتروني"
+                required>
+            </div>
+
+            <div class="form-group">
+              <label for="subject">الموضوع</label>
+              <input type="text" id="subject" name="موضوع الرسالة" placeholder="ما هو موضوع رسالتك؟">
+            </div>
+
+            <div class="form-group">
+              <label for="message">الرسالة</label>
+              <textarea id="message" name="الرسالة" rows="5" placeholder="أدخل رسالتك هنا..." required></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">
+              <span>إرسال الرسالة</span>
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!------------------------------ Newsletter Section ------------------------------>
+  <section class="newsletter-section">
+    <div class="newsletter-container">
+      <div class="section-header">
+        <h2 class="newsletter-title">انضم إلى <span>مجتمعنا</span></h2>
+        <p class="newsletter-subtitle">احصل على آخر الأخبار والعروض الحصرية مباشرة إلى بريدك</p>
+      </div>
+
+      <div class="newsletter-content">
+        <div class="newsletter-benefits">
+          <div class="benefit-item">
+            <div class="benefit-icon">
+              <i class="fas fa-bell"></i>
+            </div>
+            <p>إشعارات بالفعاليات القادمة</p>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-icon">
+              <i class="fas fa-gift"></i>
+            </div>
+            <p>عروض حصرية للأعضاء</p>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-icon">
+              <i class="fas fa-newspaper"></i>
+            </div>
+            <p>محتوى إبداعي حصري</p>
+          </div>
+        </div>
+
+        <form class="newsletter-form" id="newsletterForm">
+          <div class="input-group">
+            <input type="email" name="البريد الإلكتروني" placeholder="بريدك الإلكتروني" required>
+            <button type="submit">
+              <span>اشتراك</span>
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+          <div class="agreement">
+            <input type="checkbox" id="agree" required>
+            <label for="agree">أوافق على على تلقي الرسائل في بريدي الخاص.</label>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!------------------------------ Footer Section ------------------------------>
+  <footer class="footer" id="footer">
+    <div class="footer-container">
+      <!-- Main Footer Content -->
+      <div class="footer-grid">
+        <!-- Column 1: Logo & About -->
+        <div class="footer-col footer-main">
+          <div class="footer-logo-box">
+            <img alt="شعار نادي أدِيب" class="footer-logo"
+              src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" />
+          </div>
+          <p class="footer-about-text">
+            منصة أدِيبية رائدة تهدف إلى إثراء المحتوى الإبداعي ودعم المواهب الإبداعية الشابة في مختلف المجالات.
+          </p>
+          <div class="footer-badges">
+            <span class="footer-badge">نادي طلابي</span>
+            <span class="footer-badge">جامعة الملك فيصل</span>
+          </div>
+        </div>
+
+        <!-- Column 2: Quick Links -->
+        <div class="footer-col">
+          <h3 class="footer-title">
+            <i class="fas fa-bolt"></i>
+            <span class="title-footer">روابط سريعة</span>
+          </h3>
+          <ul class="footer-links">
+            <li>
+              <a href="#adeebbook">
+                <i class="fas fa-home"></i>
+                الرئيسية
+              </a>
+            </li>
+            <li>
+              <a href="#our-works">
+                <i class="fas fa-briefcase"></i>
+                أعمالنا
+              </a>
+            </li>
+            <li>
+              <a href="#achievements">
+                <i class="fas fa-trophy"></i>
+                انجازاتنا
+              </a>
+            </li>
+            <li>
+              <a href="#sponsors">
+                <i class="fas fa-handshake"></i>
+                شركائنا
+              </a>
+            </li>
+            <li>
+              <a href="#contact">
+                <i class="fas fa-envelope"></i>
+                تواصل معنا
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Column 3: Committees -->
+        <div class="footer-col">
+          <h3 class="footer-title">
+            <i class="fas fa-sitemap"></i>
+            <span class="title-footer">لجان نادي أدِيب</span>
+          </h3>
+          <div class="committees-container">
+            <div class="committee-category">
+              <ul class="committee-list">
+                <li><i class="fas fa-pen-fancy"></i>لجنة التأليف</li>
+                <li><i class="fa-solid fa-microphone-lines"></i>لجنة الرواة</li>
+                <li><i class="fa-solid fa-calendar-days"></i>لجنة الفعاليات</li>
+                <li><i class="fa-solid fa-handshake"></i>لجنة السفراء</li>
+                <li><i class="fa-solid fa-camera-retro"></i>لجنة الإنتاج</li>
+                <li><i class="fa-solid fa-bullhorn"></i>لجنة التسويق</li>
+                <li><i class="fa-solid fa-bezier-curve"></i>لجنة التصميم</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Bottom -->
+      <div class="footer-bottom">
+        <div class="footer-bottom-content">
+          <p class="copyright">
+            جميع الحقوق محفوظة لنادي أدِيب <span style="font-family: a;" id="year"></span> ©
+          </p>
+          <div class="footer-legal">
+            <a href="#">دستور أدِيب</a>
+            <a href="#faq-section">الأسئلة الشائعة</a>
+          </div>
+        </div>
+        <div class="footer-back-top">
+          <button id="back-to-top">
+            <i class="fas fa-arrow-up"></i>
+            <span class="back-to-top">العودة للأعلى</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </footer>
+
+  <!------------------------------ Chat Assistant ------------------------------>
+  <div class="chat-assistant">
+    <div class="chat-icon">
+      <i class="fas fa-robot"></i>
+      <span class="notification-badge pulse">1</span>
+    </div>
+    <div class="chat-box">
+      <div class="chat-header">
+        <div class="header-content">
+          <div class="avatar">
+            <img src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" alt="أديب بوت">
+          </div>
+          <div class="header-info">
+            <h3>مساعد أديب</h3>
+            <p>متصل الآن</p>
+          </div>
+        </div>
+        <div class="chat-actions">
+          <button class="close-chat" title="إغلاق"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+      <div class="chat-messages">
+        <div class="message bot-message">
+        </div>
+      </div>
+      <div class="typing-indicator">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <div class="chat-input-area">
+        <div class="input-wrapper">
+          <input type="text" placeholder="اكتب رسالتك هنا..." dir="rtl">
+        </div>
+        <button class="send-btn" title="إرسال"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="adeeb.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+</body>
+
+</html>

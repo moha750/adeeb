@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>تسجيل الدخول / تسجيل حساب جديد</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f9f9f9;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .tab-buttons {
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-buttons button {
+            background: #ddd;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .tab-buttons button.active {
+            background: #4285f4;
+            color: white;
+        }
+
+        .auth-form {
+            max-width: 320px;
+            margin: auto;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background: #4285f4;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button[type="submit"]:hover {
+            background: #357ae8;
+        }
+
+        p a {
+            color: #4285f4;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="tab-buttons">
+        <button id="showLoginBtn" class="active">تسجيل الدخول</button>
+        <button id="showSignupBtn">تسجيل حساب جديد</button>
+    </div>
+
+    <!-- نموذج تسجيل الدخول -->
+    <div id="loginContainer" class="auth-form">
+        <h2><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <input type="email" id="loginEmail" placeholder="البريد الإلكتروني" required />
+            </div>
+            <div class="form-group">
+                <input type="password" id="loginPassword" placeholder="كلمة المرور" required />
+            </div>
+            <button type="submit"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
+        </form>
+    </div>
+
+    <!-- نموذج تسجيل حساب جديد -->
+    <div id="signupContainer" class="auth-form" style="display: none;">
+        <h2><i class="fas fa-user-plus"></i> تسجيل حساب جديد</h2>
+        <form id="signupForm">
+            <div class="form-group">
+                <input type="email" id="signupEmail" placeholder="البريد الإلكتروني" required />
+            </div>
+            <div class="form-group">
+                <input type="password" id="signupPassword" placeholder="كلمة المرور" required minlength="6" />
+            </div>
+            <button type="submit"><i class="fas fa-user-plus"></i> تسجيل</button>
+        </form>
+    </div>
+
+    <script>
+        // إعداد Supabase
+        const supabaseUrl = 'https://ihawihvbhynxexawjajz.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImloYXdpaHZiaHlueGV4YXdqYWp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4MzgyOTksImV4cCI6MjA2MzQxNDI5OX0.19-qWfJUqv8Y5WYkts36dXsx_kxDBCGbJDBnx2hQUNg';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // تبديل النماذج
+        const showLoginBtn = document.getElementById('showLoginBtn');
+        const showSignupBtn = document.getElementById('showSignupBtn');
+        const loginContainer = document.getElementById('loginContainer');
+        const signupContainer = document.getElementById('signupContainer');
+
+        showLoginBtn.addEventListener('click', () => {
+            loginContainer.style.display = 'block';
+            signupContainer.style.display = 'none';
+            showLoginBtn.classList.add('active');
+            showSignupBtn.classList.remove('active');
+        });
+
+        showSignupBtn.addEventListener('click', () => {
+            loginContainer.style.display = 'none';
+            signupContainer.style.display = 'block';
+            showSignupBtn.classList.add('active');
+            showLoginBtn.classList.remove('active');
+        });
+
+        // تسجيل الدخول
+        // تسجيل الدخول
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                alert('يرجى إدخال البريد الإلكتروني وكلمة المرور');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) {
+                    console.error('خطأ تسجيل الدخول:', error);
+                    alert("فشل تسجيل الدخول: " + error.message);
+                    return;
+                }
+                window.location.href = "../admin/admin.html";
+            } catch (error) {
+                console.error('خطأ غير متوقع:', error);
+                alert("حدث خطأ غير متوقع أثناء تسجيل الدخول");
+            }
+        });
+
+        // تسجيل حساب جديد
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+
+            if (!email || !password) {
+                alert('يرجى إدخال البريد الإلكتروني وكلمة المرور');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                if (error) {
+                    console.error('خطأ التسجيل:', error);
+                    alert('فشل التسجيل: ' + error.message);
+                    return;
+                }
+
+                // إضافة السجل في جدول profiles مع الدور الافتراضي
+                await supabaseClient.from('profiles').insert([{ id: data.user.id, email: email, role: 'viewer' }]);
+
+                alert('تم إنشاء الحساب بنجاح، سيتم تحويلك إلى لوحة التحكم.');
+                window.location.href = "../admin/admin.html";
+            } catch (error) {
+                console.error('خطأ غير متوقع:', error);
+                alert('حدث خطأ غير متوقع أثناء التسجيل');
+            }
+        });
+
+
+        // تسجيل حساب جديد
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                if (error) throw error;
+
+                // إضافة سجل المستخدم مع الدور الافتراضي
+                await supabaseClient.from('profiles').insert([{ id: data.user.id, email: email, role: 'viewer' }]);
+
+                alert('تم إنشاء الحساب بنجاح، سيتم تحويلك إلى لوحة التحكم.');
+                window.location.href = "../admin/admin.html";
+            } catch (error) {
+                alert('حدث خطأ أثناء التسجيل: ' + error.message);
+            }
+        });
+    </script>
+
+</body>
+
+</html>

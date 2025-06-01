@@ -725,13 +725,59 @@ document.getElementById('joinBtn').addEventListener('click', function(e) {
   e.preventDefault();
   
   Swal.fire({
-    title: '<span style="font-family:\'fbb\';color:#274060">التسجيل مغلق حالياً</span>',
-    html: '<div style="font-family:\'fr\';color:#64748b">سيتم فتح باب التسجيل قريباً في بداية الفصل الدراسي القادم.<br><br>تابعنا على وسائل التواصل الاجتماعي لمعرفة المواعيد.</div>',
-    icon: 'info',
-    confirmButtonText: 'حسناً',
-    confirmButtonColor: '#3d8fd6',
+    title: '<span style="font-family:\'fbb\';color:#274060">انضم إلى أدِيب</span>',
+    html: `
+      <div style="font-family:'fr';color:#64748b;margin-bottom:20px">
+        اختر الطريقة التي تريد الانضمام بها إلى مجتمع أدِيب
+      </div>
+      <div style="display:flex;flex-direction:column;gap:15px;margin-top:20px">
+        <button id="registerBtn" style="
+          background: linear-gradient(135deg, #3d8fd6, #274060);
+          color: white;
+          border: none;
+          padding: 12px;
+          border-radius: 8px;
+          font-family: 'fb';
+          cursor: pointer;
+          transition: all 0.3s ease;
+        ">
+          التسجيل في العضوية
+        </button>
+        <button id="loginBtn" style="
+          background: white;
+          color: #274060;
+          border: 1px solid #3d8fd6;
+          padding: 12px;
+          border-radius: 8px;
+          font-family: 'fb';
+          cursor: pointer;
+          transition: all 0.3s ease;
+        ">
+          تسجيل الدخول
+        </button>
+      </div>
+    `,
+    showConfirmButton: false,
+    showCancelButton: false,
     customClass: {
       popup: 'custom-swal-popup'
+    },
+    didOpen: () => {
+      // Handle Register Button Click
+      document.getElementById('registerBtn').addEventListener('click', function() {
+        Swal.fire({
+          title: '<span style="font-family:\'fbb\';color:#274060">التسجيل مغلق حالياً</span>',
+          html: '<div style="font-family:\'fr\';color:#64748b">سيتم فتح باب التسجيل قريباً في بداية الفصل الدراسي القادم.<br><br>تابعنا على وسائل التواصل الاجتماعي لمعرفة المواعيد.</div>',
+          icon: 'info',
+          confirmButtonText: 'حسناً',
+          confirmButtonColor: '#3d8fd6'
+        });
+      });
+      
+      // Handle Login Button Click
+      document.getElementById('loginBtn').addEventListener('click', function() {
+        window.location.href = '/admin/admin.html'; // تغيير هذا الرابط حسب صفحة تسجيل الدخول الخاصة بك
+      });
     }
   });
 });
