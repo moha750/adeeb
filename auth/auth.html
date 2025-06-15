@@ -331,9 +331,10 @@
             font-size: 1.2rem;
         }
         
-        .social-btn.google { color: #DB4437; }
-        .social-btn.facebook { color: #4267B2; }
-        .social-btn.twitter { color: #1DA1F2; }
+        .social-btn.google { background: #DB4437; color: white; }
+        .social-btn.facebook { background: #4267B2; color: white; }
+        .social-btn.twitter { background: #1DA1F2; color: white; }
+        .social-btn.github { background: #333; color: white; }
         
         .social-btn:hover {
             transform: translateY(-3px);
@@ -479,6 +480,10 @@
             .form-section {
                 padding: 30px 20px;
             }
+            
+            .social-login {
+                flex-wrap: wrap;
+            }
         }
     </style>
 </head>
@@ -552,14 +557,17 @@
                     
                     <p style="text-align: center; color: var(--gray);">سجل الدخول باستخدام</p>
                     <div class="social-login">
-                        <div class="social-btn google">
+                        <div class="social-btn google" title="تسجيل الدخول عبر جوجل">
                             <i class="fab fa-google"></i>
                         </div>
-                        <div class="social-btn facebook">
+                        <div class="social-btn facebook" title="تسجيل الدخول عبر فيسبوك">
                             <i class="fab fa-facebook-f"></i>
                         </div>
-                        <div class="social-btn twitter">
+                        <div class="social-btn twitter" title="تسجيل الدخول عبر تويتر">
                             <i class="fab fa-twitter"></i>
+                        </div>
+                        <div class="social-btn github" title="تسجيل الدخول عبر جيت هب">
+                            <i class="fab fa-github"></i>
                         </div>
                     </div>
                 </div>
@@ -603,6 +611,24 @@
                         
                         <button type="submit" class="submit-btn"><i class="fas fa-user-plus"></i> إنشاء حساب</button>
                     </form>
+                    
+                    <div class="divider"><span>أو</span></div>
+                    
+                    <p style="text-align: center; color: var(--gray);">سجل حساب جديد باستخدام</p>
+                    <div class="social-login">
+                        <div class="social-btn google" title="التسجيل عبر جوجل">
+                            <i class="fab fa-google"></i>
+                        </div>
+                        <div class="social-btn facebook" title="التسجيل عبر فيسبوك">
+                            <i class="fab fa-facebook-f"></i>
+                        </div>
+                        <div class="social-btn twitter" title="التسجيل عبر تويتر">
+                            <i class="fab fa-twitter"></i>
+                        </div>
+                        <div class="social-btn github" title="التسجيل عبر جيت هب">
+                            <i class="fab fa-github"></i>
+                        </div>
+                    </div>
                     
                     <div class="form-footer">
                         <p>بإنشائك حساب، فإنك توافق على <a href="#">شروط الخدمة</a> و<a href="#">سياسة الخصوصية</a></p>
@@ -933,16 +959,65 @@
         });
         
         // إعداد تسجيل الدخول عبر وسائل التواصل الاجتماعي
+        function signInWithOAuth(provider) {
+            showLoading();
+            supabaseClient.auth.signInWithOAuth({
+                provider: provider,
+                options: {
+                    redirectTo: window.location.origin
+                }
+            }).then(({ error }) => {
+                hideLoading();
+                if (error) {
+                    console.error(`خطأ في تسجيل الدخول عبر ${provider}:`, error);
+                    const currentAlert = signupContainer.classList.contains('active') ? signupAlert : loginAlert;
+                    showAlert(currentAlert, `حدث خطأ أثناء تسجيل الدخول عبر ${provider}: ${error.message}`);
+                }
+            });
+        }
+        
+        // إضافة معالجات الأحداث لأزرار وسائل التواصل الاجتماعي
         document.querySelector('.social-btn.google').addEventListener('click', () => {
-            alert('تسجيل الدخول عبر جوجل قيد التطوير حالياً');
+            signInWithOAuth('google');
         });
         
         document.querySelector('.social-btn.facebook').addEventListener('click', () => {
-            alert('تسجيل الدخول عبر فيسبوك قيد التطوير حالياً');
+            signInWithOAuth('facebook');
         });
         
         document.querySelector('.social-btn.twitter').addEventListener('click', () => {
-            alert('تسجيل الدخول عبر تويتر قيد التطوير حالياً');
+            signInWithOAuth('twitter');
+        });
+        
+        document.querySelector('.social-btn.github').addEventListener('click', () => {
+            signInWithOAuth('github');
+        });
+        
+        // إضافة نفس الدعم لصفحة التسجيل
+        document.querySelectorAll('#signupContainer .social-btn.google').forEach(btn => {
+            btn.addEventListener('click', () => signInWithOAuth('google'));
+        });
+        
+        document.querySelectorAll('#signupContainer .social-btn.facebook').forEach(btn => {
+            btn.addEventListener('click', () => signInWithOAuth('facebook'));
+        });
+        
+        document.querySelectorAll('#signupContainer .social-btn.twitter').forEach(btn => {
+            btn.addEventListener('click', () => signInWithOAuth('twitter'));
+        });
+        
+        document.querySelectorAll('#signupContainer .social-btn.github').forEach(btn => {
+            btn.addEventListener('click', () => signInWithOAuth('github'));
+        });
+        
+        // متابعة حالة المصادقة
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN') {
+                // إعادة التوجيه إلى صفحة المشرف بعد تسجيل الدخول
+                setTimeout(() => {
+                    window.location.href = "../admin/admin.html";
+                }, 1000);
+            }
         });
     </script>
 </body>
