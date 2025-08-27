@@ -1,732 +1,946 @@
+/* 
+  ملف وظائف الواجهة (JavaScript)
+  يحتوي على: قائمة الجوال، الروابط والتنقل السلس، الأكورديون للأسئلة الشائعة،
+  عدادات الإنجازات، تهيئة سوايبر، الرسوم باستخدام GSAP، النماذج (تواصل/نشرة)، ومساعد المحادثة.
+  ملاحظة: يرجى الحفاظ على أسماء المعرفات والكلاسات كما هي لتوافقها مع HTML/CSS.
+*/
 // Menu Toggle Functionality
-const menuToggle = document.getElementById('menuToggle');
-const nav = document.querySelector('.nav');
+const menuToggle = document.getElementById("menuToggle");
+const nav = document.querySelector(".nav");
 const body = document.body;
 
-menuToggle.addEventListener('click', function() {
-    // Toggle active class on menu toggle
-    this.classList.toggle('active');
-    
-    // Toggle active class on navigation
-    nav.classList.toggle('active');
-    
-    // Toggle overflow hidden on body to prevent scrolling when menu is open
-    if (nav.classList.contains('active')) {
-        body.style.overflow = 'hidden';
-    } else {
-        body.style.overflow = '';
-    }
+menuToggle.addEventListener("click", function () {
+  // Toggle active class on menu toggle
+  this.classList.toggle("active");
+
+  // Toggle active class on navigation
+  nav.classList.toggle("active");
+
+  // Toggle overflow hidden on body to prevent scrolling when menu is open
+  if (nav.classList.contains("active")) {
+    body.style.overflow = "hidden";
+  } else {
+    body.style.overflow = "";
+  }
 });
 
 // Close menu when clicking on a nav link
-const navLinks = document.querySelectorAll('.nav-link');
-navLinks.forEach(link => {
-    link.addEventListener('click', function() {
-        if (window.innerWidth <= 992) { // Only for mobile view
-            menuToggle.classList.remove('active');
-            nav.classList.remove('active');
-            body.style.overflow = '';
-        }
-    });
+const navLinks = document.querySelectorAll(".nav-link");
+navLinks.forEach((link) => {
+  link.addEventListener("click", function () {
+    if (window.innerWidth <= 992) {
+      // Only for mobile view
+      menuToggle.classList.remove("active");
+      nav.classList.remove("active");
+      body.style.overflow = "";
+    }
+  });
 });
 
 // Close menu when clicking outside
-document.addEventListener('click', function(e) {
-    if (!nav.contains(e.target) && !menuToggle.contains(e.target)) {
-        if (window.innerWidth <= 992) { // Only for mobile view
-            menuToggle.classList.remove('active');
-            nav.classList.remove('active');
-            body.style.overflow = '';
-        }
+document.addEventListener("click", function (e) {
+  if (!nav.contains(e.target) && !menuToggle.contains(e.target)) {
+    if (window.innerWidth <= 992) {
+      // Only for mobile view
+      menuToggle.classList.remove("active");
+      nav.classList.remove("active");
+      body.style.overflow = "";
     }
+  }
 });
 
+//
+//
+//
 
-
-
-
-
-
-
-
-
-document.addEventListener('DOMContentLoaded', function() {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-// تفعيل أكورديون الأسئلة الشائعة - محسن
-document.querySelectorAll('.faq-question').forEach(question => {
-  question.addEventListener('click', () => {
-    const faqItem = question.parentElement;
-    const isActive = faqItem.classList.contains('active');
-    
-    // إغلاق جميع العناصر أولاً
-    document.querySelectorAll('.faq-item').forEach(item => {
-      item.classList.remove('active');
-    });
-    
-    // إذا لم يكن العنصر نشطاً، افتحه
-    if (!isActive) {
-      faqItem.classList.add('active');}
-  });
-});
-
-// تأثيرات GSAP للقسم - محسن
-gsap.utils.toArray(".faq-item").forEach((item, index) => {
-  gsap.from(item, {
-    opacity: 0,
-    y: 50,
-    duration: 0.8,
-    delay: index * 0.1,
-    ease: "back.out(1.2)",
-    scrollTrigger: {
-      trigger: item,
-      start: "top 85%",
-      toggleActions: "play none none none"
-    }
-  });
-});
+document.addEventListener("DOMContentLoaded", function () {
+  // Initialize FAQ accordion (will be re-initialized after dynamic loading)
+  initFaqAccordion();
 
   // Smooth scrolling for navigation links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-  anchor.addEventListener('click', function(e) {
-    e.preventDefault();
-    
-    const targetId = this.getAttribute('href');
-    if (targetId === '#') return;
-    
-    const targetElement = document.querySelector(targetId);
-    if (targetElement) {
-      // Close mobile menu if open
-      if (window.innerWidth <= 992) {
-        menuToggle.classList.remove('active');
-        nav.classList.remove('active');
-        body.style.overflow = '';
+  document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+    anchor.addEventListener("click", function (e) {
+      e.preventDefault();
+
+      const targetId = this.getAttribute("href");
+      if (targetId === "#") return;
+
+      const targetElement = document.querySelector(targetId);
+      if (targetElement) {
+        // Close mobile menu if open
+        if (window.innerWidth <= 992) {
+          menuToggle.classList.remove("active");
+          nav.classList.remove("active");
+          body.style.overflow = "";
+        }
+
+        // Smooth scroll to target
+        window.scrollTo({
+          top: targetElement.offsetTop - 80, // Adjust for header height
+          behavior: "smooth",
+        });
+
+        // Update active link
+        document.querySelectorAll(".nav-link").forEach((link) => {
+          link.classList.remove("active");
+        });
+        this.classList.add("active");
       }
-      
-      // Smooth scroll to target
-      window.scrollTo({
-        top: targetElement.offsetTop - 80, // Adjust for header height
-        behavior: 'smooth'
-      });
-      
-      // Update active link
-      document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-      });
-      this.classList.add('active');
-    }
-  });
-});
-
-// Highlight nav link on scroll
-const sections = document.querySelectorAll("section[id]");
-const navLinksArray = document.querySelectorAll(".nav-link");
-
-window.addEventListener("scroll", () => {
-  let current = "";
-
-  sections.forEach(section => {
-    const sectionTop = section.offsetTop - 100;
-    const sectionHeight = section.offsetHeight;
-    if (pageYOffset >= sectionTop && pageYOffset < sectionTop + sectionHeight) {
-      current = section.getAttribute("id");
-    }
+    });
   });
 
-  navLinksArray.forEach(link => {
-    link.classList.remove("active");
-    if (link.getAttribute("href") === `#${current}`) {
-      link.classList.add("active");
-    }
+  // Highlight nav link on scroll
+  const sections = document.querySelectorAll("section[id]");
+  const navLinksArray = document.querySelectorAll(".nav-link");
+
+  window.addEventListener("scroll", () => {
+    let current = "";
+
+    sections.forEach((section) => {
+      const sectionTop = section.offsetTop - 100;
+      const sectionHeight = section.offsetHeight;
+      if (pageYOffset >= sectionTop && pageYOffset < sectionTop + sectionHeight) {
+        current = section.getAttribute("id");
+      }
+    });
+
+    navLinksArray.forEach((link) => {
+      link.classList.remove("active");
+      if (link.getAttribute("href") === `#${current}`) {
+        link.classList.add("active");
+      }
+    });
   });
-});
 
+  // Works (أعمالنا) - Dynamic Render
+  async function fetchWorks() {
+    try {
+      const sb = window.sbClient;
+      if (sb) {
+        const { data, error } = await sb
+          .from('works')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        return Array.isArray(data) ? data : [];
+      }
+    } catch (e) {
+      console.warn('Supabase works fetch failed, will try localStorage.', e);
+    }
+    try {
+      const raw = localStorage.getItem('adeeb_works');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      console.warn('LocalStorage works parse failed.', e);
+      return [];
+    }
+  }
 
-  // Swiper Slider
-  new Swiper(".swiper", {
+  function renderWorks(list) {
+    const wrapper = document.querySelector('.works-swiper .swiper-wrapper');
+    if (!wrapper) return;
+    wrapper.innerHTML = '';
+    list.forEach((item) => {
+      const image = item.image || item.image_url || '';
+      const title = item.title || '';
+      const category = item.category || '';
+      const link = item.link || item.link_url || '';
+      const slide = document.createElement('div');
+      slide.className = 'work-card swiper-slide';
+      slide.innerHTML = `
+        <div class="work-img-container">
+          ${category ? `<span class="work-category">${category}</span>` : ''}
+          <img alt="${title}" class="work-img" src="${image}" />
+        </div>
+        <div class="work-info">
+          <h3>${title}</h3>
+          ${link ? `<a class="work-link" href="${link}" target="_blank">استكشف <i class=\"fas fa-arrow-left\"></i></a>` : ''}
+        </div>`;
+      wrapper.appendChild(slide);
+    });
+  }
+
+  let worksSwiperInstance = null;
+  function initWorksSwiper() {
+    if (worksSwiperInstance && typeof worksSwiperInstance.destroy === 'function') {
+      worksSwiperInstance.destroy(true, true);
+    }
+    worksSwiperInstance = new Swiper('.works-swiper', {
       slidesPerView: 1,
       spaceBetween: 30,
       loop: true,
       autoplay: true,
       breakpoints: {
-          768: { slidesPerView: 2 },
-          1024: { slidesPerView: 3 }
+        768: { slidesPerView: 2 },
+        1024: { slidesPerView: 3 },
       },
-      pagination: { el: ".swiper-pagination", clickable: true },
+      // optional pagination if needed in HTML
+      // pagination: { el: '.works-swiper .swiper-pagination', clickable: true },
       navigation: {
-          nextEl: ".swiper-button-next",
-          prevEl: ".swiper-button-prev"
-      }
-  });
-
-  // Work Cards Animation
-  const workCards = document.querySelectorAll('.work-card');
-  const animateCards = () => {
-      workCards.forEach((card, index) => {
-          setTimeout(() => {
-              card.classList.add('animated');
-          }, 200 * index);
-      });
-  };
-  
-  const workObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-          if (entry.isIntersecting) {
-              animateCards();
-              workObserver.unobserve(entry.target);
-          }
-      });
-  }, {threshold: 0.1});
-  
-  workObserver.observe(document.querySelector('.our-works'));
-
-// استبدال قسم Achievements Counter Animation بالكود التالي:
-
-// Achievements Counter Animation
-gsap.registerPlugin(ScrollTrigger);
-
-// استبدال كود العداد الحالي بهذا الكود المحسن
-function initAchievementCounters() {
-  const counters = document.querySelectorAll('.achievement-number');
-  
-  counters.forEach(counter => {
-      const target = +counter.getAttribute('data-count');
-      counter.setAttribute('data-original', target);
-      counter.textContent = '0';
-      
-      // إضافة فاصلة كل 3 أرقام للتنسيق
-      if (target >= 1000) {
-          counter.style.fontSize = '2.4rem';
-      }
-  });
-}
-
-// تشغيل العداد مع تأثيرات GSAP
-function animateAchievementCounters() {
-  const counters = document.querySelectorAll('.achievement-number');
-  
-  counters.forEach(counter => {
-      const target = +counter.getAttribute('data-original');
-      const duration = 2; // المدة بالثواني
-      
-      gsap.fromTo(counter, 
-          { textContent: 0 },
-          {
-              textContent: target,
-              duration: duration,
-              ease: "power1.out",
-              snap: { textContent: 1 },
-              onUpdate: function() {
-                  const value = Math.floor(this.targets()[0].textContent);
-                  counter.textContent = value.toLocaleString();
-              },
-              onComplete: function() {
-                  counter.textContent = target.toLocaleString();
-              }
-          }
-      );
-  });
-  
-  // إضافة تأثيرات للبطاقات
-  gsap.to(".achievement-card", {
-      opacity: 1,
-      y: 0,
-      rotationY: 0,
-      duration: 1,
-      stagger: 0.2,
-      ease: "back.out",
-      onComplete: function() {
-          document.querySelectorAll('.achievement-card').forEach(card => {
-              card.classList.add('animated');
-          });
-      }
-  });
-}
-
-// تهيئة العداد عند التحميل
-initAchievementCounters();
-
-// إنشاء ScrollTrigger لإعادة التشغيل عند التمرير
-ScrollTrigger.create({
-  trigger: ".achievements",
-  start: "top 70%",
-  onEnter: animateAchievementCounters,
-  onEnterBack: animateAchievementCounters,
-  markers: false
-});
-
-// تأثيرات hover للبطاقات
-document.querySelectorAll('.achievement-card').forEach(card => {
-  card.addEventListener('mouseenter', () => {
-      gsap.to(card, {
-          y: -10,
-          scale: 1.03,
-          boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
-          duration: 0.5
-      });
-      
-
-  });
-  
-  card.addEventListener('mouseleave', () => {
-      gsap.to(card, {
-          y: 0,
-          scale: 1,
-          boxShadow: "0 15px 30px rgba(0,0,0,0.3)",
-          duration: 0.5
-      });
-  });
-});
-
-
-
-
-// Update copyright year
-document.getElementById('year').textContent = new Date().getFullYear();
-
-// Back to top button
-const backToTopBtn = document.getElementById('back-to-top');
-backToTopBtn.addEventListener('click', () => {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
-});
-
-// Show/hide back to top button based on scroll position
-window.addEventListener('scroll', () => {
-  if (window.pageYOffset > 300) {
-    backToTopBtn.style.opacity = '1';
-    backToTopBtn.style.visibility = 'visible';
-  } else {
-    backToTopBtn.style.opacity = '0';
-    backToTopBtn.style.visibility = 'hidden';
-  }
-});
-
-// Initialize tooltips for social icons
-const socialIcons = document.querySelectorAll('.social-icon');
-socialIcons.forEach(icon => {
-  icon.addEventListener('mouseenter', function() {
-    const tooltip = this.querySelector('.social-wave');
-    tooltip.style.top = '0';
-  });
-  
-  icon.addEventListener('mouseleave', function() {
-    const tooltip = this.querySelector('.social-wave');
-    tooltip.style.top = '100%';
-  });
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Enhanced Chat Assistant
-const chatAssistant = document.querySelector('.chat-assistant');
-const chatIcon = document.querySelector('.chat-icon');
-const chatBox = document.querySelector('.chat-box');
-const closeChat = document.querySelector('.close-chat');
-const chatMessages = document.querySelector('.chat-messages');
-const chatInput = document.querySelector('.chat-input-area input');
-const sendBtn = document.querySelector('.send-btn');
-const attachBtn = document.querySelector('.attach-btn');
-const typingIndicator = document.querySelector('.typing-indicator');
-
-// Toggle chat box
-chatIcon.addEventListener('click', () => {
-  chatAssistant.classList.add('active');
-  document.querySelector('.notification-badge').style.display = 'none';
-  chatInput.focus();
-
-  // ✅ الرسالة الترحيبية بعد فتح الشات لأول مرة
-  if (!chatAssistant.dataset.welcomed) {
-    setTimeout(() => {
-      addMessage('أهلاً أهلاً منور موقعنا!🤩<br>كيف أقدر أساعدك؟🤔', 'bot');
-      chatAssistant.dataset.welcomed = 'true';
-    }, 700); // نصف ثانية بعد فتح الشات
-  }
-});
-
-
-closeChat.addEventListener('click', () => {
-  chatAssistant.classList.remove('active');
-});
-
-// Sample questions for quick replies
-const quickQuestions = [
-  "شنو هو أدِيب🤔",
-  "كيف أصير في أدِيب🪶",
-  "شنو هي لجان النادي📃",
-  "كيف مُمكن أتواصل معكم💬"
-];
-
-// Bot responses
-const botResponses = {
-  "شنو هو أدِيب🤔": "نادي طلابي في جامعة الملك فيصل.",
-  "كيف أصير في أدِيب🪶": "نفتح التسجيل كل سمستر دراسي.",
-  "شنو هي لجان النادي📃": "لجان نادي أديب:\n- لجنة التأليف\n- لجنة الرواة\n- لجنة الفعاليات\n- لجنة السفراء\n- لجنة الإنتاج\n- لجنة التسويق\n- لجنة التصميم\n\nيمكنك الانضمام لأي لجنة تناسب مهاراتك.",
-  "كيف مُمكن أتواصل معكم💬": "مقر نادي أديب:\nجامعة الملك فيصل - عمادة شؤون الطلاب\nالأحساء، المملكة العربية السعودية\n\nساعات العمل: من الأحد إلى الخميس، 8 صباحاً إلى 3 مساءً."
-};
-
-// Send message function
-function sendMessage() {
-  const message = chatInput.value.trim();
-  if (message) {
-    // Add user message
-    addMessage(message, 'user');
-    chatInput.value = '';
-    
-    // Show typing indicator
-    typingIndicator.classList.add('active');
-    
-    // Simulate bot typing delay
-    setTimeout(() => {
-      typingIndicator.classList.remove('active');
-      
-      // Check if message matches any quick question
-      let botResponse = botResponses[message] || 
-        "شُكرًا لرسالتك☺️ <br><br> تقدر تسألني عن: <br> - شنو هو أدِيب🤔 <br> - كيف أصير في أدِيب🪶 <br> - شنو هي لجان النادي📃 <br> - كيف مُمكن أتواصل معكم💬 <br>";
-      
-      // Add bot response
-      addMessage(botResponse, 'bot');
-      
-      // Add quick questions if it's a generic response
-      if (!botResponses[message]) {
-        setTimeout(() => {
-          addQuickQuestions();
-        }, 500);
-      }
-    }, 1500 + Math.random() * 2000); // Random delay between 1.5-3.5 seconds
-  }
-}
-
-// Add quick reply buttons
-function addQuickQuestions() {
-  const quickReplies = document.createElement('div');
-  quickReplies.classList.add('quick-replies');
-  
-  quickQuestions.forEach(question => {
-    const btn = document.createElement('button');
-    btn.classList.add('quick-reply-btn');
-    btn.textContent = question;
-    btn.addEventListener('click', () => {
-      chatInput.value = question;
-      sendMessage();
-      quickReplies.remove();
+        nextEl: '.works-swiper .swiper-button-next',
+        prevEl: '.works-swiper .swiper-button-prev',
+      },
     });
-    quickReplies.appendChild(btn);
+  }
+
+  async function loadWorksSection() {
+    const data = await fetchWorks();
+    renderWorks(data);
+    initWorksSwiper();
+  }
+
+  // Kick off dynamic works rendering
+  loadWorksSection();
+
+  // Board Members (المجلس الإداري) - Dynamic Render
+  async function fetchBoardMembers() {
+    try {
+      const sb = window.sbClient;
+      if (sb) {
+        const { data, error } = await sb
+          .from('board_members')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        return Array.isArray(data) ? data : [];
+      }
+    } catch (e) {
+      console.warn('Supabase board fetch failed, will try localStorage.', e);
+    }
+    try {
+      const raw = localStorage.getItem('adeeb_board');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      console.warn('LocalStorage board parse failed.', e);
+      return [];
+    }
+  }
+
+  function renderBoardMembers(list) {
+    const wrapper = document.querySelector('.board-swiper .swiper-wrapper');
+    if (!wrapper) return;
+    wrapper.innerHTML = '';
+    list.forEach((m) => {
+      const img = m.image || m.image_url || '';
+      const name = m.name || '';
+      const pos = m.position || '';
+      const twitter = m.twitter || m.twitter_url || '';
+      const linkedin = m.linkedin || m.linkedin_url || '';
+      const email = m.email || '';
+      const slide = document.createElement('div');
+      slide.className = 'board-card swiper-slide';
+      slide.innerHTML = `
+        <div class="board-img-container">
+          <img alt="عضو المجلس الإداري" class="board-img" src="${img}" />
+        </div>
+        <div class="board-info">
+          <h3>${name}</h3>
+          ${pos ? `<span class=\"board-position\">${pos}</span>` : ''}
+        </div>
+        <div class="social-links-Administrators">
+          ${twitter ? `<a href=\"${twitter}\" target=\"_blank\"><i class=\"fab fa-twitter\"></i></a>` : ''}
+          ${linkedin ? `<a href=\"${linkedin}\" target=\"_blank\"><i class=\"fab fa-linkedin\"></i></a>` : ''}
+          ${email ? `<a href=\"mailto:${email}\" target=\"_blank\"><i class=\"fas fa-envelope\"></i></a>` : ''}
+        </div>`;
+      wrapper.appendChild(slide);
+    });
+  }
+
+  let boardSwiperInstance = null;
+  function initBoardSwiper() {
+    if (boardSwiperInstance && typeof boardSwiperInstance.destroy === 'function') {
+      boardSwiperInstance.destroy(true, true);
+    }
+    boardSwiperInstance = new Swiper('.board-swiper', {
+      slidesPerView: 1,
+      spaceBetween: 30,
+      loop: true,
+      autoplay: {
+        delay: 3000,
+        disableOnInteraction: false,
+      },
+      breakpoints: {
+        768: { slidesPerView: 2 },
+        1024: { slidesPerView: 3 },
+      },
+      navigation: {
+        nextEl: '.board-swiper .swiper-button-next',
+        prevEl: '.board-swiper .swiper-button-prev',
+      },
+    });
+  }
+
+
+
+  async function loadBoardSection() {
+    const members = await fetchBoardMembers();
+    renderBoardMembers(members);
+    initBoardSwiper();
+  }
+
+  // Kick off dynamic board rendering
+  loadBoardSection();
+
+  // Work Cards Animation - Removed
+
+  // استبدال قسم Achievements Counter Animation بالكود التالي:
+
+  // Achievements Counter Animation (بدون GSAP)
+
+  // استبدال كود العداد الحالي بهذا الكود المحسن
+  // عدّادات متحركة تعمل كلما ظهر قسم الإنجازات للمستخدم
+  let achievementsObserver = null;
+  let achievementsAnimating = false;
+
+  function initAchievementCounters() {
+    const section = document.getElementById('achievements');
+    if (!section) return;
+
+    // أنشئ مراقب الظهور مرة واحدة فقط
+    if (achievementsObserver) return;
+
+    achievementsObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          // عند الدخول إلى الشاشة: أعد التهيئة وابدأ العد
+          if (!achievementsAnimating) {
+            resetAchievementCounters();
+            animateAchievementCounters();
+          }
+        } else {
+          // عند الخروج من الشاشة: اسمح بإعادة التشغيل عند الظهور مجددًا
+          achievementsAnimating = false;
+        }
+      });
+    }, { threshold: 0.25 });
+
+    achievementsObserver.observe(section);
+  }
+
+  // تشغيل العداد مع تأثيرات بسيطة بالـ JS
+  function animateAchievementCounters() {
+    const numbers = document.querySelectorAll('#achievements .achievement-number');
+    if (!numbers.length) return;
+
+    achievementsAnimating = true;
+
+    const duration = 3000; // ms
+    const startTime = performance.now();
+
+    const targets = Array.from(numbers).map((el) => {
+      const target = Number(el.dataset.count || el.textContent.replace(/\D/g, '') || 0);
+      return { el, target };
+    });
+
+    function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+    function tick(now) {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = easeOutCubic(progress);
+
+      targets.forEach(({ el, target }) => {
+        const value = Math.floor(target * eased);
+        el.textContent = Number(value).toLocaleString();
+      });
+
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        // تأكد من القيمة النهائية بدقة
+        targets.forEach(({ el, target }) => {
+          el.textContent = Number(target).toLocaleString();
+        });
+        // اترك العلامة تعمل حتى الخروج من الشاشة
+        achievementsAnimating = true;
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  // إعادة ضبط العدادات لإعادة العد من جديد
+  function resetAchievementCounters() {
+    const numbers = document.querySelectorAll('#achievements .achievement-number');
+    numbers.forEach((el) => {
+      el.textContent = '0';
+    });
+  }
+
+  // ===================== Achievements (الإنجازات) - Dynamic Render =====================
+  async function fetchAchievements() {
+    try {
+      const sb = window.sbClient;
+      if (sb) {
+        const { data, error } = await sb
+          .from('achievements')
+          .select('*')
+          .order('order', { ascending: true, nullsFirst: false });
+        if (error) throw error;
+        return Array.isArray(data) ? data : [];
+      }
+    } catch (e) {
+      console.warn('Supabase achievements fetch failed, will try localStorage.', e);
+    }
+    try {
+      const raw = localStorage.getItem('adeeb_achievements');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      console.warn('LocalStorage achievements parse failed.', e);
+      return [];
+    }
+  }
+
+  function renderAchievementsSection(list) {
+    const grid = document.querySelector('.achievements-grid');
+    if (!grid) return;
+    if (!list || list.length === 0) return; // اترك القسم فارغاً إن لم توجد بيانات
+
+    grid.innerHTML = '';
+    list.forEach((a) => {
+      const icon = a.icon_class || a.icon || 'fa-solid fa-trophy';
+      const label = a.label || '';
+      const count = typeof a.count_number === 'number' ? a.count_number : (typeof a.count === 'number' ? a.count : Number(a.count_number || a.count || 0));
+      const plus = typeof a.plus_flag === 'boolean' ? a.plus_flag : (typeof a.plus === 'boolean' ? a.plus : true);
+
+      const card = document.createElement('div');
+      card.className = 'achievement-card';
+      card.innerHTML = `
+        <div class="achievement-icon">
+          <i class="${icon}"></i>
+        </div>
+        <span class="achievement-number" data-count="${count}">0</span>
+        ${plus ? '<span class="plus-sign">+</span>' : ''}
+        <p class="achievement-text">${label}</p>
+      `;
+      grid.appendChild(card);
+    });
+    // لا تأثيرات hover أو دخول
+  }
+
+  async function loadAchievementsSection() {
+    const list = await fetchAchievements();
+    renderAchievementsSection(list);
+    // بعد الرسم الديناميكي، فعّل مراقبة الظهور لتشغيل العدادات
+    initAchievementCounters();
+  }
+
+  // Kick off dynamic achievements rendering
+  loadAchievementsSection();
+
+  // لا مراقبة تمرير لقسم الإنجازات — القيم ثابتة بدون تأثيرات
+
+  // لا تأثيرات hover لقسم الإنجازات
+
+  // Update copyright year
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  // Back to top button
+  const backToTopBtn = document.getElementById("back-to-top");
+  backToTopBtn.addEventListener("click", () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   });
-  
-  const messageDiv = document.createElement('div');
-  messageDiv.classList.add('message', 'bot-message');
-  messageDiv.appendChild(quickReplies);
-  chatMessages.appendChild(messageDiv);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
 
-// Add message to chat
-function addMessage(text, sender) {
-  const now = new Date();
-  const timeString = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
-  
-  const messageDiv = document.createElement('div');
-  messageDiv.classList.add('message', `${sender}-message`);
-  
-  const messageContent = document.createElement('div');
-  messageContent.classList.add('message-content');
-  messageContent.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
-  
-  const messageTime = document.createElement('div');
-  messageTime.classList.add('message-time');
-  messageTime.textContent = timeString;
-  
-  messageDiv.appendChild(messageContent);
-  messageDiv.appendChild(messageTime);
-  
-  chatMessages.appendChild(messageDiv);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
+  // Show/hide back to top button based on scroll position
+  window.addEventListener("scroll", () => {
+    if (window.pageYOffset > 300) {
+      backToTopBtn.style.opacity = "1";
+      backToTopBtn.style.visibility = "visible";
+    } else {
+      backToTopBtn.style.opacity = "0";
+      backToTopBtn.style.visibility = "hidden";
+    }
+  });
 
-// Send message on button click or Enter key
-sendBtn.addEventListener('click', sendMessage);
-chatInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    sendMessage();
+  // Initialize tooltips for social icons
+  const socialIcons = document.querySelectorAll(".social-icon");
+  socialIcons.forEach((icon) => {
+    icon.addEventListener("mouseenter", function () {
+      const tooltip = this.querySelector(".social-wave");
+      tooltip.style.top = "0";
+    });
+
+    icon.addEventListener("mouseleave", function () {
+      const tooltip = this.querySelector(".social-wave");
+      tooltip.style.top = "100%";
+    });
+  });
+
+  // Enhanced Chat Assistant
+  const chatAssistant = document.querySelector(".chat-assistant");
+  const chatIcon = document.querySelector(".chat-icon");
+  const chatBox = document.querySelector(".chat-box");
+  const closeChat = document.querySelector(".close-chat");
+  const chatMessages = document.querySelector(".chat-messages");
+  const chatInput = document.querySelector(".chat-input-area input");
+  const sendBtn = document.querySelector(".send-btn");
+  const attachBtn = document.querySelector(".attach-btn");
+  const typingIndicator = document.querySelector(".typing-indicator");
+
+  // Toggle chat box
+  chatIcon.addEventListener("click", () => {
+    chatAssistant.classList.add("active");
+    document.querySelector(".notification-badge").style.display = "none";
+    chatInput.focus();
+
+    // ✅ الرسالة الترحيبية بعد فتح الشات لأول مرة
+    if (!chatAssistant.dataset.welcomed) {
+      setTimeout(() => {
+        addMessage("أهلاً أهلاً منور موقعنا!🤩<br>كيف أقدر أساعدك؟🤔", "bot");
+        chatAssistant.dataset.welcomed = "true";
+      }, 700); // نصف ثانية بعد فتح الشات
+    }
+  });
+
+  closeChat.addEventListener("click", () => {
+    chatAssistant.classList.remove("active");
+  });
+
+  // Sample questions for quick replies
+  const quickQuestions = [
+    "شنو هو أدِيب🤔",
+    "كيف أصير في أدِيب🪶",
+    "شنو هي لجان النادي📃",
+    "كيف مُمكن أتواصل معكم💬",
+  ];
+
+  // Bot responses
+  const botResponses = {
+    "شنو هو أدِيب🤔": "نادي طلابي في جامعة الملك فيصل.",
+    "كيف أصير في أدِيب🪶": "نفتح التسجيل كل سمستر دراسي.",
+    "شنو هي لجان النادي📃":
+      "لجان نادي أديب:\n- لجنة التأليف\n- لجنة الرواة\n- لجنة الفعاليات\n- لجنة السفراء\n- لجنة الإنتاج\n- لجنة التسويق\n- لجنة التصميم\n\nيمكنك الانضمام لأي لجنة تناسب مهاراتك.",
+    "كيف مُمكن أتواصل معكم💬":
+      "مقر نادي أديب:\nجامعة الملك فيصل - عمادة شؤون الطلاب\nالأحساء، المملكة العربية السعودية\n\nساعات العمل: من الأحد إلى الخميس، 8 صباحاً إلى 3 مساءً.",
+  };
+
+  // Send message function
+  function sendMessage() {
+    const message = chatInput.value.trim();
+    if (message) {
+      // Add user message
+      addMessage(message, "user");
+      chatInput.value = "";
+
+      // Show typing indicator
+      typingIndicator.classList.add("active");
+
+      // Simulate bot typing delay
+      setTimeout(
+        () => {
+          typingIndicator.classList.remove("active");
+
+          // Check if message matches any quick question
+          let botResponse =
+            botResponses[message] ||
+            "شُكرًا لرسالتك☺️ <br><br> تقدر تسألني عن: <br> - شنو هو أدِيب🤔 <br> - كيف أصير في أدِيب🪶 <br> - شنو هي لجان النادي📃 <br> - كيف مُمكن أتواصل معكم💬 <br>";
+
+          // Add bot response
+          addMessage(botResponse, "bot");
+
+          // Add quick questions if it's a generic response
+          if (!botResponses[message]) {
+            setTimeout(() => {
+              addQuickQuestions();
+            }, 500);
+          }
+        },
+        1500 + Math.random() * 2000
+      ); // Random delay between 1.5-3.5 seconds
+    }
   }
-});
 
-// Play notification sound
-function playNotificationSound() {
-  const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3');
-  audio.volume = 0.3;
-  audio.play().catch(e => console.log('Audio play failed:', e));
-}
+  // Add quick reply buttons
+  function addQuickQuestions() {
+    const quickReplies = document.createElement("div");
+    quickReplies.classList.add("quick-replies");
 
-// Show welcome message after 5 seconds if chat hasn't been opened
-setTimeout(() => {
-  if (!chatAssistant.classList.contains('active')) {
-    document.querySelector('.notification-badge').style.display = 'flex';
-    playNotificationSound();
+    quickQuestions.forEach((question) => {
+      const btn = document.createElement("button");
+      btn.classList.add("quick-reply-btn");
+      btn.textContent = question;
+      btn.addEventListener("click", () => {
+        chatInput.value = question;
+        sendMessage();
+        quickReplies.remove();
+      });
+      quickReplies.appendChild(btn);
+    });
+
+    const messageDiv = document.createElement("div");
+    messageDiv.classList.add("message", "bot-message");
+    messageDiv.appendChild(quickReplies);
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   }
-}, 5000);
+
+  // Add message to chat
+  function addMessage(text, sender) {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
+
+    const messageDiv = document.createElement("div");
+    messageDiv.classList.add("message", `${sender}-message`);
+
+    const messageContent = document.createElement("div");
+    messageContent.classList.add("message-content");
+    messageContent.innerHTML = `<p>${text.replace(/\n/g, "<br>")}</p>`;
+
+    const messageTime = document.createElement("div");
+    messageTime.classList.add("message-time");
+    messageTime.textContent = timeString;
+
+    messageDiv.appendChild(messageContent);
+    messageDiv.appendChild(messageTime);
+
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  // Send message on button click or Enter key
+  sendBtn.addEventListener("click", sendMessage);
+  chatInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      sendMessage();
+    }
+  });
+
+  // Play notification sound
+  function playNotificationSound() {
+    const audio = new Audio(
+      "https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3"
+    );
+    audio.volume = 0.3;
+    audio.play().catch((e) => console.log("Audio play failed:", e));
+  }
+
+  // Show welcome message after 5 seconds if chat hasn't been opened
+  setTimeout(() => {
+    if (!chatAssistant.classList.contains("active")) {
+      document.querySelector(".notification-badge").style.display = "flex";
+      playNotificationSound();
+    }
+  }, 5000);
+
+  // ===================== Sponsors (شركاء النجاح) - Dynamic Render =====================
+  async function fetchSponsors() {
+    try {
+      const sb = window.sbClient;
+      if (sb) {
+        const { data, error } = await sb.from('sponsors').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        return Array.isArray(data) ? data : [];
+      }
+    } catch (e) {
+      console.warn('Supabase sponsors fetch failed, will try localStorage.', e);
+    }
+    try {
+      const raw = localStorage.getItem('adeeb_sponsors');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      console.warn('LocalStorage sponsors parse failed.', e);
+      return [];
+    }
+  }
+
+  function badgeClassFromText(txt) {
+    if (!txt) return '';
+    const t = (txt + '').toLowerCase();
+    if (t.includes('ذه') || t.includes('gold')) return 'gold';
+    if (t.includes('فض') || t.includes('silver')) return 'silver';
+    if (t.includes('برون') || t.includes('bronze')) return 'bronze';
+    return '';
+  }
+
+  function renderSponsors(list) {
+    const wrapper = document.querySelector('.sponsors-swiper .swiper-wrapper');
+    if (!wrapper) return;
+    wrapper.innerHTML = '';
+    list.forEach((item) => {
+      const logo = item.logo || item.logo_url || '';
+      const name = item.name || '';
+      const desc = item.description || '';
+      const link = item.link || item.link_url || '';
+      const badge = item.badge || '';
+      const badgeClass = badgeClassFromText(badge);
+      const slide = document.createElement('div');
+      slide.className = 'sponsor-card swiper-slide';
+      slide.innerHTML = `
+        ${badge ? `<div class="sponsor-badge ${badgeClass}">${badge}</div>` : ''}
+        <div class="sponsor-img-container">
+          <img alt="${name}" class="sponsor-img" src="${logo}" />
+        </div>
+        <div class="sponsor-info">
+          <h3>${name}</h3>
+          ${desc ? `<p>${desc}</p>` : ''}
+          ${link ? `<a class="sponsor-link" href="${link}" target="_blank">زيارة الموقع <i class="fas fa-arrow-left"></i></a>` : ''}
+        </div>`;
+      wrapper.appendChild(slide);
+    });
+  }
+
+  let sponsorsSwiperInstance = null;
+  function initSponsorsSwiper() {
+    if (sponsorsSwiperInstance && typeof sponsorsSwiperInstance.destroy === 'function') {
+      sponsorsSwiperInstance.destroy(true, true);
+    }
+    sponsorsSwiperInstance = new Swiper('.sponsors-swiper', {
+      slidesPerView: 1,
+      spaceBetween: 30,
+      loop: true,
+      autoplay: { delay: 3000, disableOnInteraction: false },
+      breakpoints: { 640: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } },
+      navigation: {
+        nextEl: '.sponsors-swiper .swiper-button-next',
+        prevEl: '.sponsors-swiper .swiper-button-prev',
+      },
+    });
+  }
 
 
 
+  async function loadSponsorsSection() {
+    const data = await fetchSponsors();
+    renderSponsors(data);
+    initSponsorsSwiper();
+  }
 
+  // Kick off dynamic sponsors rendering
+  loadSponsorsSection();
 
+  // ===================== FAQ (الأسئلة الشائعة) - Dynamic Render =====================
+  async function fetchFaq() {
+    try {
+      const sb = window.sbClient;
+      if (sb) {
+        const { data, error } = await sb.from('faq').select('*').order('order', { ascending: true });
+        if (error) throw error;
+        return Array.isArray(data) ? data : [];
+      }
+    } catch (e) {
+      console.warn('Supabase faq fetch failed, will try localStorage.', e);
+    }
+    try {
+      const raw = localStorage.getItem('adeeb_faq');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      console.warn('LocalStorage faq parse failed.', e);
+      return [];
+    }
+  }
 
+  function renderFaq(list) {
+    const accordion = document.querySelector('.faq-accordion');
+    if (!accordion) return;
+    
+    // If no FAQ data, keep the static content
+    if (!list || list.length === 0) return;
+    
+    // Clear existing content and render dynamic FAQ
+    accordion.innerHTML = '';
+    list.forEach((item, index) => {
+      const faqItem = document.createElement('div');
+      faqItem.className = 'faq-item';
+      faqItem.innerHTML = `
+        <div class="faq-question">
+          <h3>${item.question || ''}</h3>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          <p>${(item.answer || '').replace(/\n/g, '<br>')}</p>
+        </div>`;
+      accordion.appendChild(faqItem);
+    });
+    
+    // Re-initialize FAQ accordion functionality
+    initFaqAccordion();
+  }
 
+  function initFaqAccordion() {
+    document.querySelectorAll(".faq-question").forEach((question) => {
+      // Remove existing event listeners
+      question.replaceWith(question.cloneNode(true));
+    });
+    
+    document.querySelectorAll(".faq-question").forEach((question) => {
+      question.addEventListener("click", () => {
+        const faqItem = question.parentElement;
+        const isActive = faqItem.classList.contains("active");
 
+        // إغلاق جميع العناصر أولاً
+        document.querySelectorAll(".faq-item").forEach((item) => {
+          item.classList.remove("active");
+        });
 
+        // إذا لم يكن العنصر نشطاً، افتحه
+        if (!isActive) {
+          faqItem.classList.add("active");
+        }
+      });
+    });
+  }
 
+  async function loadFaqSection() {
+    const data = await fetchFaq();
+    renderFaq(data);
+  }
 
+  // Kick off dynamic FAQ rendering
+  loadFaqSection();
 
-
-
-  const scriptURLform = 'https://script.google.com/macros/s/AKfycbwW--KhgxMltR6sko0Fl8ENJ9gwGlUWRfdsG6e_-8pGXFGxtGlJA00rcLf69hMV-sjm/exec'
-  const formform = document.forms['contactForm']
+  const scriptURLform =
+    "https://script.google.com/macros/s/AKfycbwW--KhgxMltR6sko0Fl8ENJ9gwGlUWRfdsG6e_-8pGXFGxtGlJA00rcLf69hMV-sjm/exec";
+  const formform = document.forms["contactForm"];
 
   // إرسال النموذج مع تأثيرات متقدمة
-  formform.addEventListener('submit', async (e) => {
-  e.preventDefault();
+  formform.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-
-
-
-
-
-
-  
-  // رسالة تحميل متحركة
-  const loadingAlert = Swal.fire({
-    html: `<div style="font-family:'fm';color:#274060;margin-top:15px">جاري معالجة طلبك...</div>
+    // رسالة تحميل متحركة
+    const loadingAlert = Swal.fire({
+      html: `<div style="font-family:'fm';color:#274060;margin-top:15px">جاري معالجة طلبك...</div>
           <div class="progress-bar" style="height:6px;background:#f1f5f9;border-radius:3px;margin-top:20px;overflow:hidden">
             <div class="progress" style="height:100%;width:0%;background:linear-gradient(90deg,#3d8fd6,#274060);transition:width 0.4s ease"></div>
           </div>`,
-    showConfirmButton: false,
-    allowOutsideClick: false,
-    didOpen: () => {
-      // تأثير شريط التقدم
-      const progressBar = document.querySelector('.progress');
-      let width = 0;
-      const interval = setInterval(() => {
-        width += 5;
-        progressBar.style.width = width + '%';
-        if (width >= 90) clearInterval(interval);
-      }, 200);
-    }
-  });
-
-  try {
-    const response = await fetch(scriptURLform, { 
-      method: 'POST', 
-      body: new FormData(formform) 
+      showConfirmButton: false,
+      allowOutsideClick: false,
+      didOpen: () => {
+        // تأثير شريط التقدم
+        const progressBar = document.querySelector(".progress");
+        let width = 0;
+        const interval = setInterval(() => {
+          width += 5;
+          progressBar.style.width = width + "%";
+          if (width >= 90) clearInterval(interval);
+        }, 200);
+      },
     });
-    
-    // إغلاق رسالة التحميل
-    await Swal.close();
-    
-    if (response.ok) {
-    // رسالة نجاح متحركة
-    Swal.fire({
-      html: `<div style="margin-top:20px">
+
+    try {
+      const response = await fetch(scriptURLform, {
+        method: "POST",
+        body: new FormData(formform),
+      });
+
+      // إغلاق رسالة التحميل
+      await Swal.close();
+
+      if (response.ok) {
+        // رسالة نجاح متحركة
+        Swal.fire({
+          html: `<div style="margin-top:20px">
             <h3 style="font-family:'fbb';color:#274060">تم الإرسال بنجاح!</h3>
             <p style="font-family:'fr';color:#64748b">سيتم الرد عليك خلال 24 ساعة</p>
           </div>`,
-      showConfirmButton: true,
-      confirmButtonText: 'حسناً',
-      icon: "success",
-      timer: 5000,
-      timerProgressBar: true,
-      willClose: () => {
-        formform.reset();
+          showConfirmButton: true,
+          confirmButtonText: "حسناً",
+          icon: "success",
+          timer: 5000,
+          timerProgressBar: true,
+          willClose: () => {
+            formform.reset();
+          },
+        });
+      } else {
+        throw new Error("فشل في إرسال النموذج");
       }
-    });
-    } else {
-      throw new Error('فشل في إرسال النموذج');
-    }
-  } catch (error) {
-    await Swal.close();
-    // رسالة خطأ متحركة
-    Swal.fire({
-      title: '<i class="fas fa-times-circle" style="color:#f27474;font-size:60px"></i>',
-      html: `<div style="margin-top:20px">
+    } catch (error) {
+      await Swal.close();
+      // رسالة خطأ متحركة
+      Swal.fire({
+        title: '<i class="fas fa-times-circle" style="color:#f27474;font-size:60px"></i>',
+        html: `<div style="margin-top:20px">
             <h3 style="font-family:'fbb';color:#274060">حدث خطأ!</h3>
-            <p style="font-family:'fr';color:#64748b">${error.message || 'يرجى المحاولة مرة أخرى لاحقًا'}</p>
+            <p style="font-family:'fr';color:#64748b">${error.message || "يرجى المحاولة مرة أخرى لاحقًا"}</p>
           </div>`,
-      confirmButtonText: 'حاول مرة أخرى',
-      showCancelButton: true,
-      cancelButtonText: 'إلغاء'
-    });
-  }
-});
+        confirmButtonText: "حاول مرة أخرى",
+        showCancelButton: true,
+        cancelButtonText: "إلغاء",
+      });
+    }
+  });
 
+  const scriptURL =
+    "https://script.google.com/macros/s/AKfycbzEr92YPUxGOant4pbvI5NEqStWJ1APtHg1jwa3a3Z9vovUmC5XbkjVlxzVDi6ufi7-bA/exec";
+  const form = document.forms["newsletterForm"];
 
+  // إرسال النموذج مع تأثيرات متقدمة
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const scriptURL = 'https://script.google.com/macros/s/AKfycbzEr92YPUxGOant4pbvI5NEqStWJ1APtHg1jwa3a3Z9vovUmC5XbkjVlxzVDi6ufi7-bA/exec'
-const form = document.forms['newsletterForm']
-
-// إرسال النموذج مع تأثيرات متقدمة
-form.addEventListener('submit', async (e) => {
-e.preventDefault();
-
-
-
-
-
-
-
-
-// رسالة تحميل متحركة
-const loadingAlert = Swal.fire({
-  html: `<div style="font-family:'fm';color:#274060;margin-top:15px">جاري معالجة طلبك...</div>
+    // رسالة تحميل متحركة
+    const loadingAlert = Swal.fire({
+      html: `<div style="font-family:'fm';color:#274060;margin-top:15px">جاري معالجة طلبك...</div>
         <div class="progress-bar" style="height:6px;background:#f1f5f9;border-radius:3px;margin-top:20px;overflow:hidden">
           <div class="progress" style="height:100%;width:0%;background:linear-gradient(90deg,#3d8fd6,#274060);transition:width 0.4s ease"></div>
         </div>`,
-  showConfirmButton: false,
-  allowOutsideClick: false,
-  didOpen: () => {
-    // تأثير شريط التقدم
-    const progressBar = document.querySelector('.progress');
-    let width = 0;
-    const interval = setInterval(() => {
-      width += 5;
-      progressBar.style.width = width + '%';
-      if (width >= 90) clearInterval(interval);
-    }, 200);
-  }
-});
+      showConfirmButton: false,
+      allowOutsideClick: false,
+      didOpen: () => {
+        // تأثير شريط التقدم
+        const progressBar = document.querySelector(".progress");
+        let width = 0;
+        const interval = setInterval(() => {
+          width += 5;
+          progressBar.style.width = width + "%";
+          if (width >= 90) clearInterval(interval);
+        }, 200);
+      },
+    });
 
-try {
-  const response = await fetch(scriptURL, { 
-    method: 'POST', 
-    body: new FormData(form) 
-  });
-  
-  // إغلاق رسالة التحميل
-  await Swal.close();
-  
-  if (response.ok) {
-  // رسالة نجاح متحركة
-  Swal.fire({
-    html: `<div style="margin-top:20px">
+    try {
+      const response = await fetch(scriptURL, {
+        method: "POST",
+        body: new FormData(form),
+      });
+
+      // إغلاق رسالة التحميل
+      await Swal.close();
+
+      if (response.ok) {
+        // رسالة نجاح متحركة
+        Swal.fire({
+          html: `<div style="margin-top:20px">
           <h3 style="font-family:'fbb';color:#274060">تمّ الإشتراك بِنجاح!🥳</h3>
           <p style="font-family:'fr';color:#64748b">ستصلك النشرة البريدية</p>
         </div>`,
-    showConfirmButton: true,
-    confirmButtonText: 'حسناً',
-    icon: "success",
-    timer: 5000,
-    timerProgressBar: true,
-    willClose: () => {
-      form.reset();
+          showConfirmButton: true,
+          confirmButtonText: "حسناً",
+          icon: "success",
+          timer: 5000,
+          timerProgressBar: true,
+          willClose: () => {
+            form.reset();
+          },
+        });
+      } else {
+        throw new Error("فشل في إرسال النموذج");
+      }
+    } catch (error) {
+      await Swal.close();
+      // رسالة خطأ متحركة
+      Swal.fire({
+        title: '<i class="fas fa-times-circle" style="color:#f27474;font-size:60px"></i>',
+        html: `<div style="margin-top:20px">
+          <h3 style="font-family:'fbb';color:#274060">حدث خطأ!</h3>
+          <p style="font-family:'fr';color:#64748b">${error.message || "يرجى المحاولة مرة أخرى لاحقًا"}</p>
+        </div>`,
+        confirmButtonText: "حاول مرة أخرى",
+        showCancelButton: true,
+        cancelButtonText: "إلغاء",
+      });
     }
   });
-  } else {
-    throw new Error('فشل في إرسال النموذج');
-  }
-} catch (error) {
-  await Swal.close();
-  // رسالة خطأ متحركة
-  Swal.fire({
-    title: '<i class="fas fa-times-circle" style="color:#f27474;font-size:60px"></i>',
-    html: `<div style="margin-top:20px">
-          <h3 style="font-family:'fbb';color:#274060">حدث خطأ!</h3>
-          <p style="font-family:'fr';color:#64748b">${error.message || 'يرجى المحاولة مرة أخرى لاحقًا'}</p>
-        </div>`,
-    confirmButtonText: 'حاول مرة أخرى',
-    showCancelButton: true,
-    cancelButtonText: 'إلغاء'
-  });
-}
-});
 
+  // Handle Join Us Button Click
+  document.getElementById("joinBtn").addEventListener("click", function (e) {
+    e.preventDefault();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Handle Join Us Button Click
-document.getElementById('joinBtn').addEventListener('click', function(e) {
-  e.preventDefault();
-  
-  Swal.fire({
-    title: '<span style="font-family:\'fbb\';color:#274060">انضم إلى أدِيب</span>',
-    html: `
+    Swal.fire({
+      title: "<span style=\"font-family:'fbb';color:#274060\">انضم إلى أدِيب</span>",
+      html: `
       <div style="font-family:'fr';color:#64748b;margin-bottom:20px">
         اختر الطريقة التي تريد الانضمام بها إلى مجتمع أدِيب
       </div>
@@ -757,620 +971,126 @@ document.getElementById('joinBtn').addEventListener('click', function(e) {
         </button>
       </div>
     `,
-    showConfirmButton: false,
-    showCancelButton: false,
-    customClass: {
-      popup: 'custom-swal-popup'
-    },
-    didOpen: () => {
-      // Handle Register Button Click
-      document.getElementById('registerBtn').addEventListener('click', function() {
-        Swal.fire({
-          title: '<span style="font-family:\'fbb\';color:#274060">التسجيل مغلق حالياً</span>',
-          html: '<div style="font-family:\'fr\';color:#64748b">سيتم فتح باب التسجيل قريباً في بداية الفصل الدراسي القادم.<br><br>تابعنا على وسائل التواصل الاجتماعي لمعرفة المواعيد.</div>',
-          icon: 'info',
-          confirmButtonText: 'حسناً',
-          confirmButtonColor: '#3d8fd6'
-        });
-      });
-      
-      // Handle Login Button Click
-      document.getElementById('loginBtn').addEventListener('click', function() {
-        window.location.href = '/admin/admin.html'; // تغيير هذا الرابط حسب صفحة تسجيل الدخول الخاصة بك
-      });
-    }
-  });
-});
-
-
-
-
-
-
-
-
-
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// تأثيرات ثلاثية الأبعاد للبطاقات
-gsap.utils.toArray(".feature-card").forEach((card, index) => {
-  // تأثير الظهور
-  gsap.from(card, {
-    opacity: 0,
-    y: 50,
-    rotationX: 15,
-    duration: 0.8,
-    delay: index * 0.15,
-    scrollTrigger: {
-      trigger: card,
-      start: "top 80%",
-      toggleActions: "play none none none"
-    }
-  });
-
-  // تأثيرات التحويم
-  card.addEventListener("mousemove", (e) => {
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    
-    const rotateY = (x - centerX) / 20;
-    const rotateX = (centerY - y) / 20;
-    
-    gsap.to(card, {
-      rotateX: rotateX,
-      rotateY: rotateY,
-      duration: 0.5
-    });
-  });
-
-  card.addEventListener("mouseleave", () => {
-    gsap.to(card, {
-      rotateX: 0,
-      rotateY: 0,
-      duration: 0.5
-    });
-  });
-
-  // تأثير الأيقونة
-  const icon = card.querySelector(".feature-icon");
-  card.addEventListener("mouseenter", () => {
-    gsap.to(icon, {
-      y: -10,
-      scale: 1.1,
-      duration: 0.5,
-      ease: "back.out"
-    });
-  });
-
-  card.addEventListener("mouseleave", () => {
-    gsap.to(icon, {
-      y: 0,
-      scale: 1,
-      duration: 0.5,
-      ease: "back.in"
-    });
-  });
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // Initialize Sponsors Swiper
-  new Swiper(".sponsors-swiper", {
-    slidesPerView: 1,
-    spaceBetween: 30,
-    loop: true,
-    autoplay: {
-      delay: 3000,
-      disableOnInteraction: false,
-    },
-    breakpoints: {
-      640: { slidesPerView: 2 },
-      1024: { slidesPerView: 3 }
-    },
-    navigation: {
-      nextEl: ".sponsors-swiper .swiper-button-next",
-      prevEl: ".sponsors-swiper .swiper-button-prev"
-    }
-  });
-
-  // Sponsor Cards Animation
-  const sponsorCards = document.querySelectorAll('.sponsor-card');
-  sponsorCards.forEach((card, index) => {
-    gsap.from(card, {
-      opacity: 0,
-      y: 50,
-      duration: 0.8,
-      delay: index * 0.1,
-      scrollTrigger: {
-        trigger: card,
-        start: "top 80%",
-        toggleActions: "play none none none"
-      }
-    });
-  });
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  new Swiper(".board-swiper", {
-    slidesPerView: 1,
-    spaceBetween: 30,
-    loop: true,
-    autoplay: {
-      delay: 5000,
-      disableOnInteraction: false,
-    },
-    breakpoints: {
-      640: { 
-        slidesPerView: 2,
-        spaceBetween: 20
+      showConfirmButton: false,
+      showCancelButton: false,
+      customClass: {
+        popup: "custom-swal-popup",
       },
-      1024: { 
-        slidesPerView: 3,
-        spaceBetween: 30
-      }
-    },
-    pagination: {
-      el: ".board-swiper .swiper-pagination",
-      clickable: true,
-    },
-    navigation: {
-      nextEl: ".board-swiper .swiper-button-next",
-      prevEl: ".board-swiper .swiper-button-prev"
-    }
+      didOpen: () => {
+        // Handle Register Button Click
+        document.getElementById("registerBtn").addEventListener("click", function () {
+          Swal.fire({
+            title: "<span style=\"font-family:'fbb';color:#274060\">التسجيل مغلق حالياً</span>",
+            html: "<div style=\"font-family:'fr';color:#64748b\">سيتم فتح باب التسجيل قريباً في بداية الفصل الدراسي القادم.<br><br>تابعنا على وسائل التواصل الاجتماعي لمعرفة المواعيد.</div>",
+            icon: "info",
+            confirmButtonText: "حسناً",
+            confirmButtonColor: "#3d8fd6",
+          });
+        });
+
+        // Handle Login Button Click
+        document.getElementById("loginBtn").addEventListener("click", function () {
+          window.location.href = "/admin/admin.html"; // تغيير هذا الرابط حسب صفحة تسجيل الدخول الخاصة بك
+        });
+      },
+    });
   });
+});
 
+// Sponsors Swiper and animations are initialized dynamically after data render
 
+// Header Scroll Effects
+const logoImg = document.querySelector(".logo-img");
+const logoText = document.querySelector(".logo-text");
+const progressBar = document.querySelector(".progress-bar");
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // Header Scroll Effects
-const logoImg = document.querySelector('.logo-img');
-const logoText = document.querySelector('.logo-text');
-const progressBar = document.querySelector('.progress-bar');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const header = document.querySelector('.header');
-header.classList.add('blue');
+const header = document.querySelector(".header");
+header.classList.add("blue");
 let lastScroll = 0;
 
-window.addEventListener('scroll', () => {
+window.addEventListener("scroll", () => {
   const currentScroll = window.scrollY;
 
   // تغيير لون الهيدر
   if (currentScroll > 100) {
-    header.classList.add('scrolled');
-    header.classList.remove('blue');
+    header.classList.add("scrolled");
+    header.classList.remove("blue");
   } else {
-    header.classList.remove('scrolled');
-    header.classList.add('blue');
+    header.classList.remove("scrolled");
+    header.classList.add("blue");
   }
 
   // إخفاء الهيدر عند النزول وإظهاره عند الصعود
   if (currentScroll > lastScroll && currentScroll > 100) {
-    header.classList.add('hidden');
+    header.classList.add("hidden");
   } else {
-    header.classList.remove('hidden');
+    header.classList.remove("hidden");
   }
 
   lastScroll = currentScroll;
 });
 
+// ======================== تأثيرات Scroll لبقية الأقسام (بدون GSAP) ========================
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ======================== تأثيرات Scroll لبقية الأقسام ========================
-gsap.registerPlugin(ScrollTrigger);
-
-// تأثير تمرير لقسم "من هو أديب"
-gsap.from(".feature-card", {
-  opacity: 0,
-  y: 50,
-  duration: 1,
-  stagger: 0.2,
-  scrollTrigger: {
-    trigger: ".adeebbook",
-    start: "top 70%",
-    toggleActions: "play none none none"
-  }
-});
-
-// تأثير تمرير لقسم أعمالنا
-ScrollTrigger.create({
-  trigger: ".our-works",
-  start: "top 75%",
-  once: true,
-  onEnter: () => {
-    document.querySelectorAll('.work-card').forEach((card, index) => {
-      gsap.to(card, {
-        opacity: 1,
-        y: 0,
-        duration: 1,
-        delay: index * 0.2,
-        ease: "power2.out"
-      });
-    });
-  }
-});
+// استدعاء المراقب بعد زمن قصير لضمان تهيئة العناصر (بعد Swiper)
+setTimeout(observeWorksSection, 500);
 
 // تأثير تمرير لقسم الرعاة
-gsap.utils.toArray(".sponsor-card").forEach((card, index) => {
-  gsap.from(card, {
-    opacity: 0,
-    y: 50,
-    duration: 0.8,
-    delay: index * 0.15,
-    scrollTrigger: {
-      trigger: card,
-      start: "top 80%",
-      toggleActions: "play none none none"
-    }
-  });
-});
-
-// تأثير تمرير لقسم المجلس الإداري
-gsap.utils.toArray(".board-card").forEach((card, index) => {
-  gsap.from(card, {
-    opacity: 0,
-    y: 60,
-    duration: 1,
-    delay: index * 0.1,
-    scrollTrigger: {
-      trigger: card,
-      start: "top 85%",
-      toggleActions: "play none none none"
-    }
-  });
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// Moved to attachSponsorAnimations() which runs after dynamic render
 
 // إضافة هذا الكود لمعالجة نموذج التواصل
-document.getElementById('contactForm').addEventListener('submit', function(e) {
+document.getElementById("contactForm").addEventListener("submit", function (e) {
   e.preventDefault();
-  
+
   // جمع بيانات النموذج
   const formData = {
-    name: document.getElementById('name').value,
-    email: document.getElementById('email').value,
-    subject: document.getElementById('subject').value,
-    message: document.getElementById('message').value
+    name: document.getElementById("name").value,
+    email: document.getElementById("email").value,
+    subject: document.getElementById("subject").value,
+    message: document.getElementById("message").value,
   };
-  
+
   // هنا يمكنك إضافة كود إرسال البيانات إلى الخادم
-  console.log('تم إرسال النموذج:', formData);
-  
+  console.log("تم إرسال النموذج:", formData);
+
   // عرض رسالة نجاح
   Swal.fire({
-    title: 'تم الإرسال بنجاح!',
-    text: 'شكراً لتواصلك معنا، سنرد عليك في أقرب وقت ممكن.',
-    icon: 'success',
-    confirmButtonText: 'حسناً',
-    confirmButtonColor: '#3d8fd6'
+    title: "تم الإرسال بنجاح!",
+    text: "شكراً لتواصلك معنا، سنرد عليك في أقرب وقت ممكن.",
+    icon: "success",
+    confirmButtonText: "حسناً",
+    confirmButtonColor: "#3d8fd6",
   });
-  
+
   // إعادة تعيين النموذج
   this.reset();
 });
-
-// تأثيرات GSAP للقسم
-gsap.utils.toArray(".contact-item").forEach((item, index) => {
-  gsap.from(item, {
-    opacity: 0,
-    y: 50,
-    duration: 0.8,
-    delay: index * 0.15,
-    scrollTrigger: {
-      trigger: item,
-      start: "top 80%",
-      toggleActions: "play none none none"
-    }
-  });
-});
-
-gsap.from(".contact-form", {
-  opacity: 0,
-  y: 50,
-  duration: 1,
-  scrollTrigger: {
-    trigger: ".contact-form",
-    start: "top 80%",
-    toggleActions: "play none none none"
-  }
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // إضافة هذا الكود لمعالجة نموذج النشرة البريدية
-document.getElementById('newsletterForm').addEventListener('submit', function(e) {
+document.getElementById("newsletterForm").addEventListener("submit", function (e) {
   e.preventDefault();
-  
+
   const emailInput = this.querySelector('input[type="email"]');
   const email = emailInput.value;
-  
+
   // هنا يمكنك إضافة كود إرسال البيانات إلى الخادم
-  console.log('تم الاشتراك بنجاح:', email);
-  
+  console.log("تم الاشتراك بنجاح:", email);
+
   // عرض رسالة نجاح
   Swal.fire({
-    title: 'تم الاشتراك بنجاح!',
-    text: 'شكراً لانضمامك إلى مجتمعنا، ستتلقى آخر الأخبار والعروض الحصرية قريباً.',
-    icon: 'success',
-    confirmButtonText: 'حسناً',
-    confirmButtonColor: '#3d8fd6'
+    title: "تم الاشتراك بنجاح!",
+    text: "شكراً لانضمامك إلى مجتمعنا، ستتلقى آخر الأخبار والعروض الحصرية قريباً.",
+    icon: "success",
+    confirmButtonText: "حسناً",
+    confirmButtonColor: "#3d8fd6",
   });
-  
+
   // إعادة تعيين النموذج
   this.reset();
 });
 
-// تأثيرات GSAP للقسم
-gsap.utils.toArray(".benefit-item").forEach((item, index) => {
-  gsap.from(item, {
-    opacity: 0,
-    y: 50,
-    duration: 0.8,
-    delay: index * 0.15,
-    scrollTrigger: {
-      trigger: item,
-      start: "top 80%",
-      toggleActions: "play none none none"
-    }
-  });
-});
-
-gsap.from(".newsletter-form", {
-  opacity: 0,
-  y: 50,
-  duration: 1,
-  scrollTrigger: {
-    trigger: ".newsletter-form",
-    start: "top 80%",
-    toggleActions: "play none none none"
-  }
-});
 
 
 
@@ -1408,34 +1128,19 @@ gsap.from(".newsletter-form", {
 
 
 
-// تفعيل أكورديون الأسئلة الشائعة
-document.querySelectorAll('.faq-question').forEach(question => {
-  question.addEventListener('click', () => {
-    const faqItem = question.parentElement;
-    faqItem.classList.toggle('active');
-    
-    // إغلاق العناصر الأخرى عند فتح عنصر جديد
-    if (faqItem.classList.contains('active')) {
-      document.querySelectorAll('.faq-item').forEach(item => {
-        if (item !== faqItem && item.classList.contains('active')) {
-          item.classList.remove('active');
-        }
-      });
-    }
-  });
-});
 
-// تأثيرات GSAP للقسم
-gsap.utils.toArray(".faq-item").forEach((item, index) => {
-  gsap.from(item, {
-    opacity: 0,
-    y: 50,
-    duration: 0.8,
-    delay: index * 0.1,
-    scrollTrigger: {
-      trigger: item,
-      start: "top 80%",
-      toggleActions: "play none none none"
-    }
-  });
-});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
