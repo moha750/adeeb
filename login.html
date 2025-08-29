@@ -100,7 +100,7 @@
         try {
           const { data: { session } } = await sb.auth.getSession();
           const params = new URLSearchParams(location.search);
-          const redirect = params.get('redirect') || 'admin.html';
+          const redirect = params.get('redirect') || 'blogger/dashboard.html';
           if (session) {
             location.replace(redirect);
             return;
@@ -116,7 +116,7 @@
           form.querySelector('button').style.opacity = .7;
           try {
             const params = new URLSearchParams(location.search);
-            const redirect = params.get('redirect') || 'admin.html';
+            const redirect = params.get('redirect') || 'blogger/dashboard.html';
             const { error } = await sb.auth.signInWithOtp({
               email,
               options: { emailRedirectTo: new URL(redirect, location.origin).href }

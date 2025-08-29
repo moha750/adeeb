@@ -171,7 +171,7 @@ document.addEventListener("DOMContentLoaded", function () {
       loop: true,
       autoplay: true,
       breakpoints: {
-        768: { slidesPerView: 2 },
+        700: { slidesPerView: 2 },
         1024: { slidesPerView: 3 },
       },
       // optional pagination if needed in HTML
@@ -260,7 +260,7 @@ document.addEventListener("DOMContentLoaded", function () {
         disableOnInteraction: false,
       },
       breakpoints: {
-        768: { slidesPerView: 2 },
+        700: { slidesPerView: 2 },
         1024: { slidesPerView: 3 },
       },
       navigation: {
@@ -288,82 +288,69 @@ document.addEventListener("DOMContentLoaded", function () {
   // Achievements Counter Animation (بدون GSAP)
 
   // استبدال كود العداد الحالي بهذا الكود المحسن
-  // عدّادات متحركة تعمل كلما ظهر قسم الإنجازات للمستخدم
-  let achievementsObserver = null;
-  let achievementsAnimating = false;
+  // عدّادات متحركة تعمل كلما ظهرت كروت الإنجازات للمستخدم (لكل كرت على حدة)
+  let achievementNumObserver = null;
+  const achievementsAnimatingMap = new WeakMap(); // el -> boolean
 
   function initAchievementCounters() {
-    const section = document.getElementById('achievements');
-    if (!section) return;
-
-    // أنشئ مراقب الظهور مرة واحدة فقط
-    if (achievementsObserver) return;
-
-    achievementsObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          // عند الدخول إلى الشاشة: أعد التهيئة وابدأ العد
-          if (!achievementsAnimating) {
-            resetAchievementCounters();
-            animateAchievementCounters();
-          }
-        } else {
-          // عند الخروج من الشاشة: اسمح بإعادة التشغيل عند الظهور مجددًا
-          achievementsAnimating = false;
-        }
-      });
-    }, { threshold: 0.25 });
-
-    achievementsObserver.observe(section);
-  }
-
-  // تشغيل العداد مع تأثيرات بسيطة بالـ JS
-  function animateAchievementCounters() {
     const numbers = document.querySelectorAll('#achievements .achievement-number');
     if (!numbers.length) return;
 
-    achievementsAnimating = true;
+    // أنشئ مراقب العناصر إن لم يكن موجودًا
+    if (!achievementNumObserver) {
+      achievementNumObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const el = entry.target;
+          if (entry.isIntersecting) {
+            // عند رؤية العنصر: أعدّه للصفر ثم ابدأ عدّه فقط إذا لم يكن قيد التشغيل
+            if (!achievementsAnimatingMap.get(el)) {
+              resetAchievementCounter(el);
+              animateAchievementCounter(el);
+            }
+          } else {
+            // عند الخروج: اسمح بإعادة التشغيل في المرة القادمة
+            achievementsAnimatingMap.set(el, false);
+          }
+        });
+      }, { threshold: 0.6, rootMargin: '0px 0px -10% 0px' });
+    }
 
+    // اربط جميع الأرقام بالمراقب (يشمل العناصر الجديدة بعد إعادة الرسم)
+    numbers.forEach((el) => {
+      achievementNumObserver.observe(el);
+    });
+  }
+
+  // تشغيل عدّاد عنصر واحد
+  function animateAchievementCounter(el) {
+    const target = Number(el.dataset.count || el.textContent.replace(/\D/g, '') || 0);
     const duration = 3000; // ms
     const startTime = performance.now();
-
-    const targets = Array.from(numbers).map((el) => {
-      const target = Number(el.dataset.count || el.textContent.replace(/\D/g, '') || 0);
-      return { el, target };
-    });
+    achievementsAnimatingMap.set(el, true);
 
     function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
     function tick(now) {
       const progress = Math.min((now - startTime) / duration, 1);
       const eased = easeOutCubic(progress);
+      const value = Math.floor(target * eased);
+      el.textContent = Number(value).toLocaleString();
 
-      targets.forEach(({ el, target }) => {
-        const value = Math.floor(target * eased);
-        el.textContent = Number(value).toLocaleString();
-      });
-
-      if (progress < 1) {
+      if (progress < 1 && achievementsAnimatingMap.get(el)) {
         requestAnimationFrame(tick);
       } else {
-        // تأكد من القيمة النهائية بدقة
-        targets.forEach(({ el, target }) => {
-          el.textContent = Number(target).toLocaleString();
-        });
-        // اترك العلامة تعمل حتى الخروج من الشاشة
-        achievementsAnimating = true;
+        el.textContent = Number(target).toLocaleString();
+        // تظل True حتى يخرج العنصر من الشاشة، حينها نعيدها False في المراقب
+        achievementsAnimatingMap.set(el, true);
       }
     }
 
     requestAnimationFrame(tick);
   }
 
-  // إعادة ضبط العدادات لإعادة العد من جديد
-  function resetAchievementCounters() {
-    const numbers = document.querySelectorAll('#achievements .achievement-number');
-    numbers.forEach((el) => {
-      el.textContent = '0';
-    });
+  // إعادة ضبط عدّاد عنصر واحد
+  function resetAchievementCounter(el) {
+    el.textContent = '0';
   }
 
   // ===================== Achievements (الإنجازات) - Dynamic Render =====================
@@ -691,7 +678,10 @@ document.addEventListener("DOMContentLoaded", function () {
       spaceBetween: 30,
       loop: true,
       autoplay: { delay: 3000, disableOnInteraction: false },
-      breakpoints: { 640: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } },
+      breakpoints: {
+        700: { slidesPerView: 2 },
+        1024: { slidesPerView: 3 }
+      },
       navigation: {
         nextEl: '.sponsors-swiper .swiper-button-next',
         prevEl: '.sponsors-swiper .swiper-button-prev',

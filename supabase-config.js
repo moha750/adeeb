@@ -11,5 +11,12 @@ if (typeof window.supabase === 'undefined') {
 }
 
 window.sbClient = window.supabase
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: 'adeeb_blogger_auth',
+      },
+    })
   : null;

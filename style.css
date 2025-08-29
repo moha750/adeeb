@@ -464,7 +464,7 @@ body.menu-open {
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 30px;
   margin-top: 50px;
 }
@@ -607,7 +607,7 @@ body.menu-open {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 825px) {
   .adeebbook {
     padding: 120px 0;
   }
@@ -1135,6 +1135,14 @@ body.menu-open {
 
   .achievement-text {
     font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1.5rem;
   }
 }
 
@@ -3060,7 +3068,7 @@ body.menu-open {
 .faq-item {
   background: white;
   border-radius: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 0.8rem;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.05);

@@ -1,0 +1,303 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لوحة تحكم — نادي أديب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body class="admin-body" style="display:none">
+    <header class="admin-header">
+      <div class="admin-header__container">
+        <div class="admin-header__actions">
+          <button id="loginBtn" class="btn btn-outline"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</button>
+          <button id="toggleSidebar" class="btn btn-outline"><i class="fa-solid fa-bars"></i></button>
+        </div>
+        <div id="adminUserBadge" class="user-badge" aria-live="polite"></div>
+      </div>
+    </header>
+
+    <div class="admin-layout">
+      <aside id="sidebar" class="admin-sidebar">
+        <div class="admin-sidebar__brand">
+          <span>لوحة التحكم</span>
+          <button id="closeSidebarBtn" class="btn sidebar-close-btn" title="إغلاق" aria-label="إغلاق الشريط">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <nav class="admin-menu">
+          <a href="#section-home" class="admin-menu__item active"><i class="fa-solid fa-sitemap"></i> إدارة الموقع</a>
+          <a href="#section-blog" class="admin-menu__item"><i class="fa-solid fa-anchor"></i> إدارة مرافئ</a>
+          <div class="admin-menu__footer">
+            <button type="button" class="btn btn-outline" data-logout><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+            <a class="btn btn-primary" href="../index.html" target="_blank"><i class="fa-solid fa-globe"></i> عرض الموقع</a>
+          </div>
+        </nav>
+      </aside>
+
+      <main class="admin-main">
+        <section id="section-home" class="admin-section">
+          <div class="section-head">
+            <h2><i class="fa-solid fa-sitemap"></i> إدارة الموقع</h2>
+          </div>
+          <div class="cards-grid">
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-solid fa-briefcase"></i> إدارة الأعمال</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">إضافة وتعديل وحذف الأعمال مع الصورة والفئة والرابط الخارجي.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-works"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-solid fa-handshake"></i> إدارة الرعاة</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">إدارة الرعاة بإضافة الشعار والاسم والوسم والوصف ورابط الموقع.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-sponsors"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-solid fa-trophy"></i> إدارة الإنجازات</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">إنشاء أرقام إنجاز مع الأيقونة والترتيب وإظهار علامة + اختياريًا.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-achievements"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-solid fa-users"></i> إدارة المجلس الإداري</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">إضافة الأعضاء والمناصب وصورة العضو وروابط التواصل والبريد.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-board"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-solid fa-question-circle"></i> إدارة الأسئلة الشائعة</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">تنظيم الأسئلة مع الإجابات وتحديد ترتيب العرض.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-faq"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-solid fa-anchor"></i> إدارة مرافئ (المدونة)</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">إنشاء وتعديل وحذف تدوينات مرافئ مع الصورة والتاريخ والحالة.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-blog"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section id="section-works" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-briefcase"></i> إدارة الأعمال</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addWorkBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة عمل</button>
+            </div>
+          </div>
+          <div id="worksList" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        <section id="section-sponsors" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-handshake"></i> إدارة الرعاة</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addSponsorBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة راعٍ</button>
+            </div>
+          </div>
+          <div id="sponsorsList" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        <section id="section-achievements" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-trophy"></i> إدارة الإنجازات</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addAchievementBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة إنجاز</button>
+            </div>
+          </div>
+          <div id="achievementsList" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        <section id="section-board" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-users"></i> إدارة المجلس الإداري</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addBoardBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة عضو</button>
+            </div>
+          </div>
+          <div id="boardList" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        <section id="section-faq" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-question-circle"></i> إدارة الأسئلة الشائعة</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addFaqBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة سؤال</button>
+            </div>
+          </div>
+          <div id="faqList" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        <section id="section-blog" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-anchor"></i> إدارة مرافئ</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addPostBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة تدوينة</button>
+            </div>
+          </div>
+          <div id="blogList" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        
+      </main>
+    </div>
+
+    <!-- Dialogs -->
+    <dialog id="workDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="workForm">
+        <h3>إضافة/تعديل عمل</h3>
+        <div class="form-grid">
+          <label>العنوان<input name="title" required /></label>
+          <label>الفئة<input name="category" placeholder="فلم قصير، مبادرة.." /></label>
+          <label>رابط الصورة<input name="image" type="url" placeholder="https://..." required /></label>
+          <label>رابط خارجي<input name="link" type="url" placeholder="https://..." /></label>
+        </div>
+        <menu class="dialog-actions">
+          <button value="cancel" class="btn">إلغاء</button>
+          <button value="submit" class="btn btn-primary">حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="sponsorDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="sponsorForm">
+        <h3>إضافة/تعديل راعٍ</h3>
+        <div class="form-grid">
+          <label>الاسم<input name="name" required /></label>
+          <label>الوسم<input name="badge" placeholder="راعي تعليمي.." /></label>
+          <label>الوصف<textarea name="description" rows="3" placeholder="نص قصير يظهر في كارد الراعي"></textarea></label>
+          <label>شعار (رابط صورة)<input name="logo" type="url" required /></label>
+          <label>رابط الموقع<input name="link" type="url" /></label>
+        </div>
+        <menu class="dialog-actions">
+          <button value="cancel" class="btn">إلغاء</button>
+          <button value="submit" class="btn btn-primary">حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="achievementDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="achievementForm">
+        <h3>إضافة/تعديل إنجاز</h3>
+        <div class="form-grid">
+          <label>النص الظاهر تحت الرقم<input name="label" required placeholder="مثل: ورش تدريبية" /></label>
+          <label>أيقونة Font Awesome<input name="icon" placeholder="مثال: fa-solid fa-trophy" /></label>
+          <label>العدد<input name="count" type="number" min="0" required placeholder="0" /></label>
+          <label>الترتيب (اختياري)<input name="order" type="number" min="1" placeholder="1" /></label>
+          <label style="display:flex;align-items:center;gap:8px"><input name="plus" type="checkbox" checked /> إظهار علامة + بجانب الرقم</label>
+        </div>
+        <menu class="dialog-actions">
+          <button value="cancel" class="btn">إلغاء</button>
+          <button value="submit" class="btn btn-primary">حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="boardDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="boardForm">
+        <h3>إضافة/تعديل عضو</h3>
+        <div class="form-grid">
+          <label>الاسم<input name="name" required /></label>
+          <label>المنصب<input name="position" required /></label>
+          <label>الصورة (رابط)<input name="image" type="url" required /></label>
+          <label>تويتر<input name="twitter" type="url" /></label>
+          <label>لينكدإن<input name="linkedin" type="url" /></label>
+          <label>البريد<input name="email" type="email" /></label>
+        </div>
+        <menu class="dialog-actions">
+          <button value="cancel" class="btn">إلغاء</button>
+          <button value="submit" class="btn btn-primary">حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="faqDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="faqForm">
+        <h3>إضافة/تعديل سؤال</h3>
+        <div class="form-grid">
+          <label>السؤال<input name="question" required /></label>
+          <label>الإجابة<textarea name="answer" rows="4" required placeholder="اكتب الإجابة هنا..."></textarea></label>
+          <label>ترتيب العرض<input name="order" type="number" min="1" placeholder="1" /></label>
+        </div>
+        <menu class="dialog-actions">
+          <button value="cancel" class="btn">إلغاء</button>
+          <button value="submit" class="btn btn-primary">حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="blogDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="blogForm">
+        <h3>إضافة/تعديل تدوينة</h3>
+        <div class="form-grid">
+          <label>العنوان<input name="title" required /></label>
+          <label>صورة الغلاف (رابط)<input name="image" type="url" placeholder="https://..." /></label>
+          <label>الكاتب<input name="author" placeholder="اسم الكاتب" /></label>
+          <label>تاريخ النشر<input name="published_at" type="date" /></label>
+          <label>حالة النشر
+            <select name="status">
+              <option value="published">منشور</option>
+              <option value="draft">مسودة</option>
+            </select>
+          </label>
+          <label>مقتطف قصير<textarea name="excerpt" rows="3" placeholder="نبذة مختصرة"></textarea></label>
+          <label>المحتوى الكامل<textarea name="content" rows="6" placeholder="نص التدوينة"></textarea></label>
+        </div>
+        <menu class="dialog-actions">
+          <button value="cancel" class="btn">إلغاء</button>
+          <button value="submit" class="btn btn-primary">حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script>
+      (async () => {
+        const redirectToLogin = () => {
+          const url = new URL('../login.html', location.href);
+          url.searchParams.set('redirect', 'admin/admin.html');
+          location.replace(url.toString());
+        };
+        const sb = window.sbClient;
+        if (!sb) { redirectToLogin(); return; }
+        try {
+          const { data: { session } } = await sb.auth.getSession();
+          if (!session) { redirectToLogin(); return; }
+        } catch (e) {
+          redirectToLogin(); return;
+        }
+        // Auth OK -> reveal UI
+        document.body.style.display = '';
+      })();
+    </script>
+    <script src="admin.js"></script>
+  </body>
+</html>

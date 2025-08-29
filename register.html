@@ -1,0 +1,125 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>إنشاء حساب مدون — نادي أديب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body { min-height:100vh; display:grid; place-items:center; background:#0b0b0c; color:#fff; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; }
+      .card { width:min(560px, 94vw); background:#121214; border:1px solid #222; border-radius:14px; padding:28px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
+      header { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+      header img { width:42px; height:42px; border-radius:8px; object-fit:cover; }
+      h1 { font-size:1.15rem; margin:0; }
+      p { color:#bbb; margin:6px 0 0; font-size:.95rem; }
+      form { display:grid; gap:12px; margin-top:14px; }
+      label { display:grid; gap:6px; font-size:.95rem; color:#ddd; }
+      input[type=email], input[type=password], input[type=text] { background:#0f0f11; color:#fff; border:1px solid #2a2a2e; border-radius:10px; padding:12px 14px; }
+      .actions { display:flex; gap:10px; align-items:center; }
+      .btn-primary { display:inline-flex; align-items:center; gap:8px; background:#16a34a; color:#fff; border:none; border-radius:10px; padding:10px 14px; cursor:pointer; }
+      .muted { color:#9aa; font-size:.9rem; }
+      .alert { background:#0d1b0d; border:1px solid #1b3a1b; color:#b5f7b5; padding:10px 12px; border-radius:10px; }
+      .error { background:#2a1212; border-color:#612; color:#ffb0b0; }
+      .footer-links { display:flex; justify-content:space-between; margin-top:10px; }
+      a { color:#9ecbff; }
+    </style>
+  </head>
+  <body>
+    <div class="card" role="main">
+      <header>
+        <img alt="شعار نادي أديب" src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" />
+        <div>
+          <h1>إنشاء حساب مدون</h1>
+          <p>سجّل بريدك وكلمة مرور لإنشاء حساب. سنرسل رسالة تأكيد إلى بريدك.</p>
+        </div>
+      </header>
+
+      <div id="status" class="muted"></div>
+
+      <form id="registerForm">
+        <label>
+          الاسم (اختياري)
+          <input id="displayName" name="displayName" type="text" placeholder="اسمك" />
+        </label>
+        <label>
+          البريد الإلكتروني
+          <input id="email" name="email" type="email" required placeholder="name@example.com" />
+        </label>
+        <label>
+          كلمة المرور
+          <input id="password" name="password" type="password" required placeholder="••••••••" minlength="6" />
+        </label>
+        <div class="actions">
+          <button type="submit" class="btn-primary"><i class="fa-solid fa-user-plus"></i> إنشاء الحساب</button>
+          <span id="msg" class="muted" aria-live="polite"></span>
+        </div>
+      </form>
+
+      <div class="footer-links">
+        <a href="login.html"><i class="fa-solid fa-right-to-bracket"></i> لدي حساب بالفعل</a>
+        <a href="index.html"><i class="fa-solid fa-globe"></i> الرجوع للموقع</a>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+      (async function() {
+        const sb = window.sbClient;
+        const status = document.getElementById('status');
+        const form = document.getElementById('registerForm');
+        const btn = form.querySelector('button');
+
+        if (!sb) {
+          status.className = 'alert error';
+          status.textContent = 'Supabase غير مفعّل. تأكد من تحميل المكتبة وإعداد المفاتيح.';
+          btn.disabled = true;
+          return;
+        }
+
+        // إذا كان مسجلاً بالفعل، اعد توجيهه للوحة التحكم
+        try {
+          const { data: { session } } = await sb.auth.getSession();
+          const params = new URLSearchParams(location.search);
+          const redirect = params.get('redirect') || 'blogger/dashboard.html';
+          if (session) {
+            location.replace(redirect);
+            return;
+          }
+        } catch {}
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          status.className = 'muted';
+          status.textContent = '';
+          btn.disabled = true; btn.style.opacity = .7;
+          const email = document.getElementById('email').value.trim();
+          const password = document.getElementById('password').value;
+          const displayName = document.getElementById('displayName').value.trim();
+
+          try {
+            const params = new URLSearchParams(location.search);
+            const redirect = params.get('redirect') || 'blogger/dashboard.html';
+            const { data, error } = await sb.auth.signUp({
+              email,
+              password,
+              options: {
+                data: { role: 'blogger', name: displayName || null },
+                emailRedirectTo: new URL(redirect, location.origin).href,
+              }
+            });
+            if (error) throw error;
+            status.className = 'alert';
+            status.textContent = 'تم إنشاء الحساب. تحقق من بريدك الإلكتروني لتأكيد الحساب ثم سجّل الدخول.';
+          } catch (err) {
+            status.className = 'alert error';
+            status.textContent = 'تعذّر إنشاء الحساب: ' + (err?.message || 'حدث خطأ غير متوقع');
+          } finally {
+            btn.disabled = false; btn.style.opacity = 1;
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

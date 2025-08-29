@@ -1,4 +1,4 @@
-// Admin Panel Logic
+// Admin Panel Logic (moved under /admin)
 // - Stores data in localStorage under keys: adeeb_works, adeeb_sponsors, adeeb_board
 // - Provides basic CRUD via <dialog> forms
 // - Export/Import JSON of all data
@@ -13,6 +13,7 @@
   const achievementsList = $('#achievementsList');
   const boardList = $('#boardList');
   const faqList = $('#faqList');
+  const blogList = $('#blogList');
 
   const KEYS = {
     works: 'adeeb_works',
@@ -20,10 +21,38 @@
     board: 'adeeb_board',
     faq: 'adeeb_faq',
     achievements: 'adeeb_achievements',
+    blog: 'adeeb_blog_posts',
   };
 
   // Supabase client (if configured)
   const sb = window.sbClient || null;
+
+  // User badge helpers
+  function timeGreeting() {
+    const h = new Date().getHours();
+    // Arabic greeting to match UI language
+    return h < 12 ? 'صباح الخير' : 'مساء الخير';
+  }
+  function renderUserBadge(user) {
+    const host = document.getElementById('adminUserBadge');
+    if (!host) return;
+    if (!user) { host.innerHTML = ''; return; }
+    const md = user.user_metadata || {};
+    const name = md.display_name || user.email || 'مستخدم';
+    const avatarUrl = md.avatar_url && String(md.avatar_url).trim() ? md.avatar_url : null;
+    const svg = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" fill="#cbd5e1"/>
+        <circle cx="12" cy="10" r="3.2" fill="#64748b"/>
+        <path d="M5.5 18.2c1.9-3 5-4.2 6.5-4.2s4.6 1.2 6.5 4.2c-2.1 1.7-4.6 2.8-6.5 2.8s-4.4-1.1-6.5-2.8z" fill="#64748b"/>
+      </svg>`;
+    host.innerHTML = `
+      <div class="avatar">${avatarUrl ? `<img src="${avatarUrl}" alt="${name}" onerror="this.remove()" />` : svg}</div>
+      <div class="meta">
+        <span class="greet">${timeGreeting()}</span>
+        <strong class="name">${name}</strong>
+      </div>`;
+  }
 
   function load(key) {
     try {
@@ -33,6 +62,131 @@
       console.error('Failed to parse localStorage for', key, e);
       return [];
     }
+
+  // Blog (Marafe) CRUD + renderer
+  function renderBlog() {
+    if (!blogList) return;
+    blogList.innerHTML = '';
+    const sorted = [...blogPosts].sort((a, b) => {
+      const da = new Date(a.published_at || a.created_at || 0).getTime();
+      const db = new Date(b.published_at || b.created_at || 0).getTime();
+      return db - da;
+    });
+    sorted.forEach((item) => {
+      const idx = blogPosts.indexOf(item);
+      const status = item.status || 'draft';
+      const badge = status === 'published' ? 'منشور' : 'مسودة';
+      const node = el(`
+        <div class="card">
+          <div class="card__media">
+            <img src="${(item.image || item.image_url) || ''}" alt="${item.title || ''}" />
+            <span class="card__badge">${badge}</span>
+          </div>
+          <div class="card__body">
+            <div class="card__title">${item.title || ''}</div>
+            ${item.excerpt ? `<p class="card__text">${item.excerpt}</p>` : ''}
+            <div class="card__actions">
+              <button class="btn btn-outline" data-act="edit" data-idx="${idx}"><i class="fa-solid fa-pen"></i> تعديل</button>
+              <button class="btn btn-outline" data-act="del" data-idx="${idx}"><i class="fa-solid fa-trash"></i> حذف</button>
+            </div>
+          </div>
+        </div>`);
+      blogList.appendChild(node);
+    });
+  }
+
+  const blogDialog = $('#blogDialog');
+  const blogForm = $('#blogForm');
+  let blogEditingIndex = null;
+
+  $('#addPostBtn')?.addEventListener('click', () => {
+    blogEditingIndex = null;
+    blogForm.reset();
+    openDialog(blogDialog);
+  });
+
+  blogList?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const idx = Number(btn.dataset.idx);
+    const act = btn.dataset.act;
+    if (act === 'edit') {
+      blogEditingIndex = idx;
+      const cur = blogPosts[idx];
+      blogForm.title.value = cur.title || '';
+      blogForm.image.value = (cur.image || cur.image_url) || '';
+      blogForm.author.value = cur.author || '';
+      blogForm.published_at.value = (cur.published_at ? cur.published_at.substring(0, 10) : '');
+      blogForm.status.value = cur.status || 'draft';
+      blogForm.excerpt.value = cur.excerpt || '';
+      blogForm.content.value = cur.content || '';
+      openDialog(blogDialog);
+    } else if (act === 'del') {
+      if (!confirm('تأكيد الحذف؟')) return;
+      const cur = blogPosts[idx];
+      if (sb && cur.id) {
+        sb.from('blog_posts').delete().eq('id', cur.id).then(({ error }) => {
+          if (error) return alert('فشل الحذف: ' + error.message);
+          blogPosts.splice(idx, 1);
+          renderBlog();
+        });
+      } else {
+        blogPosts.splice(idx, 1);
+        save(KEYS.blog, blogPosts);
+        renderBlog();
+      }
+    }
+  });
+
+  blogForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const data = {
+      title: blogForm.title.value.trim(),
+      image: blogForm.image.value.trim(),
+      author: blogForm.author.value.trim() || null,
+      published_at: blogForm.published_at.value ? new Date(blogForm.published_at.value).toISOString() : null,
+      status: blogForm.status.value || 'draft',
+      excerpt: blogForm.excerpt.value.trim() || null,
+      content: blogForm.content.value.trim() || null,
+    };
+    if (sb) {
+      sb.auth.getSession().then(({ data: { session } }) => {
+        if (!session) return alert('يلزم تسجيل الدخول لإجراء التعديلات');
+        const payload = {
+          title: data.title,
+          image_url: data.image || null,
+          author: data.author,
+          published_at: data.published_at,
+          status: data.status,
+          excerpt: data.excerpt,
+          content: data.content,
+        };
+        if (blogEditingIndex === null) {
+          sb.from('blog_posts').insert(payload).select('*').single().then(({ data: row, error }) => {
+            if (error) return alert('فشل الحفظ: ' + error.message);
+            blogPosts.unshift(row);
+            renderBlog();
+            closeDialog(blogDialog);
+          });
+        } else {
+          const id = blogPosts[blogEditingIndex]?.id;
+          if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
+          sb.from('blog_posts').update(payload).eq('id', id).select('*').single().then(({ data: row, error }) => {
+            if (error) return alert('فشل التحديث: ' + error.message);
+            blogPosts[blogEditingIndex] = row;
+            renderBlog();
+            closeDialog(blogDialog);
+          });
+        }
+      });
+    } else {
+      if (blogEditingIndex === null) blogPosts.unshift(data);
+      else blogPosts[blogEditingIndex] = data;
+      save(KEYS.blog, blogPosts);
+      renderBlog();
+      closeDialog(blogDialog);
+    }
+  });
 
   }
 
@@ -77,27 +231,28 @@
   let board = load(KEYS.board);
   let faq = load(KEYS.faq);
   let achievements = load(KEYS.achievements);
+  let blogPosts = load(KEYS.blog);
 
   // Auth UI controls
   const loginBtn = $('#loginBtn');
-  const logoutBtn = $('#logoutBtn');
+  const sidebarLogoutBtn = document.querySelector('[data-logout]');
 
   async function refreshAuthUI() {
     if (!sb) return; // no supabase
     const { data: { session } } = await sb.auth.getSession();
     if (session) {
       loginBtn && (loginBtn.style.display = 'none');
-      logoutBtn && (logoutBtn.style.display = 'inline-flex');
+      renderUserBadge(session.user);
     } else {
       loginBtn && (loginBtn.style.display = 'inline-flex');
-      logoutBtn && (logoutBtn.style.display = 'none');
+      renderUserBadge(null);
     }
   }
 
   loginBtn?.addEventListener('click', () => {
     // Navigate to dedicated login page with redirect back to admin
-    const url = new URL('login.html', location.href);
-    url.searchParams.set('redirect', 'admin.html');
+    const url = new URL('../login.html', location.href);
+    url.searchParams.set('redirect', 'admin/admin.html');
     location.href = url.toString();
   });
 
@@ -192,26 +347,61 @@
     }
   });
 
-  logoutBtn?.addEventListener('click', async () => {
+  async function doLogout() {
     if (!sb) {
       // Fallback: just go to login
-      const url = new URL('login.html', location.href);
-      url.searchParams.set('redirect', 'admin.html');
+      const url = new URL('../login.html', location.href);
+      url.searchParams.set('redirect', 'admin/admin.html');
       location.replace(url.toString());
       return;
     }
     await sb.auth.signOut();
     await refreshAuthUI();
-    const url = new URL('login.html', location.href);
-    url.searchParams.set('redirect', 'admin.html');
+    const url = new URL('../login.html', location.href);
+    url.searchParams.set('redirect', 'admin/admin.html');
     location.replace(url.toString());
-  });
+  }
+
+  sidebarLogoutBtn?.addEventListener('click', doLogout);
 
   // Sidebar toggle (mobile)
   const sidebar = $('#sidebar');
   const toggleSidebarBtn = $('#toggleSidebar');
-  toggleSidebarBtn?.addEventListener('click', () => {
-    sidebar?.classList.toggle('open');
+  const closeSidebarBtn = $('#closeSidebarBtn');
+  // Backdrop element for off-canvas sidebar (mobile only styles)
+  const sidebarBackdrop = document.createElement('div');
+  sidebarBackdrop.className = 'sidebar-backdrop';
+  document.body.appendChild(sidebarBackdrop);
+
+  const isMobile = () => window.matchMedia('(max-width: 992px)').matches;
+  function openSidebar() {
+    if (!sidebar) return;
+    sidebar.classList.add('open');
+    if (isMobile()) {
+      sidebarBackdrop.classList.add('show');
+      document.body.classList.add('no-scroll');
+    }
+  }
+  function closeSidebar() {
+    if (!sidebar) return;
+    sidebar.classList.remove('open');
+    sidebarBackdrop.classList.remove('show');
+    document.body.classList.remove('no-scroll');
+  }
+  function toggleSidebar() {
+    if (!sidebar) return;
+    if (sidebar.classList.contains('open')) closeSidebar();
+    else openSidebar();
+  }
+
+  toggleSidebarBtn?.addEventListener('click', toggleSidebar);
+  closeSidebarBtn?.addEventListener('click', closeSidebar);
+  sidebarBackdrop.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSidebar();
+  });
+  window.addEventListener('resize', () => {
+    if (!isMobile()) closeSidebar();
   });
 
   // Menu navigation
@@ -229,7 +419,26 @@
       $$('.admin-section').forEach((sec) => (sec.hidden = true));
       const target = $(id);
       if (target) target.hidden = false;
+
+      // Close sidebar after navigating on mobile
+      if (isMobile()) closeSidebar();
     });
+  });
+
+  // Dashboard card navigation (from إدارة الموقع cards)
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-go]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-go');
+    if (!id) return;
+    // hide all and show target
+    $$('.admin-section').forEach((sec) => (sec.hidden = true));
+    const target = $(id);
+    if (target) target.hidden = false;
+    // keep sidebar active on the single Home tab
+    if (isMobile()) closeSidebar();
+    // optional: scroll to top for better context
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   // Renderers
@@ -712,6 +921,7 @@
       achievements,
       board,
       faq,
+      blogPosts,
       exportedAt: new Date().toISOString(),
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -744,6 +954,9 @@
       if (Array.isArray(data.faq)) {
         faq = data.faq; save(KEYS.faq, faq); renderFaq();
       }
+      if (Array.isArray(data.blogPosts)) {
+        blogPosts = data.blogPosts; save(KEYS.blog, blogPosts); renderBlog();
+      }
       alert('تم الاستيراد بنجاح');
     } catch (err) {
       alert('فشل الاستيراد: ملف غير صالح');
@@ -752,169 +965,7 @@
       e.target.value = '';
     }
   });
-
-  // Seed static data (from index.html) into Supabase
-  async function seedStaticData() {
-    try {
-      if (!sb) { alert('Supabase غير مفعّل. تأكد من تحميل supabase-config.js'); return; }
-      const { data: { session } } = await sb.auth.getSession();
-      if (!session) { alert('يلزم تسجيل الدخول لتنفيذ الترحيل'); return; }
-      const seededStatic = localStorage.getItem('seeded_static_v1') === 'done';
-      const seededBoard = localStorage.getItem('seeded_board_v1') === 'done';
-      const seededFaq = localStorage.getItem('seeded_faq_v1') === 'done';
-      const seededAch = localStorage.getItem('seeded_achievements_v1') === 'done';
-
-      // الأعمال الثابتة من قسم our-works في index.html
-      const staticWorks = [
-        { title: 'مُعجم أدِيب', category: 'مُبادرة ثقافية', image_url: 'https://lh3.googleusercontent.com/d/1eq5qdc1KrTRLqAMTYGvJw-rKw7B2QBdM', link_url: 'https://x.com/AB_KFU/status/1716445053051191659' },
-        { title: 'إبداع بجريرة', category: 'فلم قصير', image_url: 'https://lh3.googleusercontent.com/d/1ZLgJUjaJN02yq95Zh38v_81SK3ZpZ7or', link_url: 'https://x.com/AB_KFU/status/1734926267722367064' },
-        { title: 'قصص نفخر بها', category: 'قصص', image_url: 'https://lh3.googleusercontent.com/d/1KEv1mdFWpfMBKRJW5SutBsc5Erhbv4Rn', link_url: 'https://x.com/AB_KFU/status/1766180150499049817' },
-        { title: 'ذَكِّــــــــرْ', category: 'مُبادرة دينية', image_url: 'https://lh3.googleusercontent.com/d/1HrXbNy3d5JNeIIpzcNZK6TPeoIpRhiUB', link_url: 'https://x.com/AB_KFU/status/1781257849751957520' },
-        { title: 'أدِيب وجهتك الإبداعية الأولى', category: 'الهوية الجديدة', image_url: 'https://lh3.googleusercontent.com/d/1eUP6KSkao_-HrcveLlkbnXBcb_po9EBr', link_url: 'https://x.com/AB_KFU/status/1838277205484581150' },
-        { title: 'بوصلة', category: 'مُبادرة', image_url: 'https://lh3.googleusercontent.com/d/1BVpwxxlLXMbKkGS_UX2PTglzfVDgH_sG', link_url: 'https://x.com/AB_KFU/status/1860411289874346477' },
-        { title: 'كفو تُبدع', category: 'فديو', image_url: 'https://lh3.googleusercontent.com/d/1dW7iXqxv2OXdtXEWTUJaWBQnrrtG-jUX', link_url: 'https://x.com/AB_KFU/status/1860681872105177102' },
-        { title: 'صناعة المحتوى الإبداعي', category: 'ورشة تدريبية', image_url: 'https://lh3.googleusercontent.com/d/1FxEXQOy6UExLjutoj0f47qtgH3n-_eVd', link_url: 'https://x.com/AB_KFU/status/1858637724171071520' },
-        { title: 'أدِيب يُعمِّق الصُّورة', category: 'توقيع شراكة', image_url: 'https://lh3.googleusercontent.com/d/18rs51qRjkSK-iYjG3Mnf_3dEInDksvkA', link_url: 'https://x.com/AB_KFU/status/1864014785089528186' },
-        { title: 'ظهير في الظهيرة', category: 'فلم قصير', image_url: 'https://lh3.googleusercontent.com/d/1fJ6a7QFNvX1WhiCSvwkqSA0w_sKdt0KN', link_url: 'https://x.com/AB_KFU/status/1866562368047559043' },
-        { title: 'نجم الآداب', category: 'فلم قصير', image_url: 'https://lh3.googleusercontent.com/d/1wGor11Qd2j4598twMGstARq--BkDAkVT', link_url: 'https://x.com/AB_KFU/status/1881395225622720931' },
-        { title: 'ليالي كفو الرمضانية 2025', category: 'تغطية مُصورة', image_url: 'https://lh3.googleusercontent.com/d/1g5hqun2CPqdaanhr1BrwQaRM0fF2vJfd', link_url: 'https://x.com/AB_KFU/status/1903880080692330613' },
-      ];
-
-      // الرعاة الثابتون من قسم sponsors في index.html
-      const staticSponsors = [
-        { name: 'معهد رسيم للتدريب', badge: 'راعي تعليمي', logo_url: 'https://lh3.googleusercontent.com/d/1i9gWEWoeKIEq89mcY6IJd_SBfYujkU5V', link_url: 'https://www.instagram.com/raseem144/' },
-        { name: 'أكواب التوت', badge: 'راعي الضيافة', logo_url: 'https://lh3.googleusercontent.com/d/14pBwvt62a4UDUtbFox3wIuGJ-_QVDHm6', link_url: 'https://www.instagram.com/akwabaltot/' },
-        { name: 'مؤسسة عمق الصورة لتأجير المعدات', badge: 'شريك استراتيجي', logo_url: 'https://lh3.googleusercontent.com/d/1tWyttaSeKhbaeHF6LQLB07Vz1d227Rxt', link_url: 'https://www.instagram.com/deep_of_picture/' },
-      ];
-
-      // أعضاء المجلس من index.html
-      const staticBoardMembers = [
-        { name: 'محمد إسماعيل المطر', position: 'رئيس أدِيب', image_url: 'https://lh3.googleusercontent.com/d/17L-IKuMXlGv3z7rpqJ0i890djmG1iSa_', twitter_url: 'https://x.com/M7_ALMATTAR', linkedin_url: null, email: 'mohammad.bin.ismael@gmail.com' },
-        { name: 'حوراء عبدالرزاق العاشور', position: 'نائب الرئيس', image_url: 'https://lh3.googleusercontent.com/d/16VmYRaPl4GcnekmJL7_0vBcAUdL-qbSI', twitter_url: 'https://x.com/Ha_10re', linkedin_url: 'https://www.linkedin.com/in/hawra-al-ashour-b37344329?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', email: 'hawraabdulrazaq100@gmail.com' },
-        { name: 'مهدي عبدالله', position: 'نائب الرئيس', image_url: 'https://lh3.googleusercontent.com/d/16iMjgbrDIkAi5GYX6PrOUhfFdQKFCB0x', twitter_url: 'https://x.com/AlsheikhMahdii', linkedin_url: 'https://www.linkedin.com/in/mahdi-a-940a5b309?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app', email: 'mahdiajs@hotmail.com' },
-        { name: 'قصايد أحمد النصيب', position: 'قائدة الرُواة', image_url: 'https://lh3.googleusercontent.com/d/14upqEEnsfBjK9bkm3Dc0YJ0XKfRuJuCf', twitter_url: null, linkedin_url: null, email: null },
-        { name: 'حصة وليد الشويهين', position: 'قائدة السُفراء', image_url: 'https://lh3.googleusercontent.com/d/1x-vqnZqQ0qpjZrepowZ5Tu4rVrQljUN4', twitter_url: null, linkedin_url: null, email: null },
-        { name: 'رغد داوّد العُويّد', position: 'قائدة التأليف', image_url: 'https://lh3.googleusercontent.com/d/16yy2bCa-g2iXb51aJpGv7QTDYbFU90xg', twitter_url: 'https://x.com/Rd_Alowayyid', linkedin_url: null, email: 'raghadalowayyid6@gmail.com' },
-        { name: 'نورة خالد الشمري', position: 'قائدة التصميم', image_url: 'https://lh3.googleusercontent.com/d/1dxYmTW6v1nyisB5SLla1Ajtk32YEfZGB', twitter_url: 'https://x.com/Nawari1i', linkedin_url: 'https://www.linkedin.com/in/norah-alshammari-4754b5316?', email: null },
-        { name: 'محمد عبدالعزيز العبدالمحسن', position: 'المسؤول التقني', image_url: 'https://lh3.googleusercontent.com/d/16s8yyXbBpqPqwYjpnVmt5DoeL3_zG8yQ', twitter_url: 'https://x.com/Xor01A', linkedin_url: 'https://www.linkedin.com/in/xor01/', email: 'm.abdulmuhsin@outlook.com' },
-        { name: 'علي سعيد العيسى', position: 'مسؤول التحرير', image_url: 'https://lh3.googleusercontent.com/d/1tRctgCHx_tYj090VeXVpy2_u6-9TC2ET', twitter_url: 'https://x.com/ali_alessa14', linkedin_url: null, email: 'mralialessa99@gmail.com' },
-        { name: 'رنيم احمد الدريويش', position: 'مسؤولة الأرشيف', image_url: 'https://lh3.googleusercontent.com/d/1fvCbCdATA9DQ9LuwtKlZJiD1fzuaw8z9', twitter_url: 'https://x.com/ali_alessa14', linkedin_url: null, email: 'rneemaldryweesh@icloud.com' },
-      ];
-
-      // اجلب الموجود حالياً لتجنب التكرار
-      const [
-        { data: wRows, error: ew },
-        { data: sRows, error: es },
-        { data: bRows, error: eb },
-        { data: fRows, error: ef },
-      ] = await Promise.all([
-        sb.from('works').select('id,title'),
-        sb.from('sponsors').select('id,name'),
-        sb.from('board_members').select('id,name'),
-        sb.from('faq').select('id,question'),
-      ]);
-      if (ew) throw ew; if (es) throw es; if (eb) throw eb; if (ef) throw ef;
-
-      const existingWorkTitles = new Set((wRows || []).map((r) => (r.title || '').trim()));
-      const existingSponsorNames = new Set((sRows || []).map((r) => (r.name || '').trim()));
-      const existingBoardNames = new Set((bRows || []).map((r) => (r.name || '').trim()));
-      const existingFaqQuestions = new Set((fRows || []).map((r) => (r.question || '').trim()));
-
-      // الأسئلة الشائعة الافتراضية
-      const staticFaq = [
-        { question: 'كيف يمكنني الانضمام إلى نادي أديب؟', answer: 'يمكنك الانضمام إلينا عن طريق تعبئة نموذج الاشتراك الموجود في أعلى الصفحة أو زيارة مقر النادي في جامعة الملك فيصل خلال أوقات العمل الرسمية. نحن نرحب بجميع المواهب الإبداعية من طلاب الجامعة.', order: 1 },
-        { question: 'هل هناك رسوم للعضوية في النادي؟', answer: 'لا، العضوية في نادي أديب مجانية لجميع طلاب جامعة الملك فيصل. نحن نقدم جميع خدماتنا وبرامجنا بدون أي رسوم على الأعضاء.', order: 2 },
-        { question: 'ما هي مجالات الإبداع التي يركز عليها النادي؟', answer: 'يركز نادي أديب على مجالات متعددة تشمل الكتابة الإبداعية (شعر، قصة، مقال)، الإنتاج المرئي (تصوير، أفلام قصيرة)، التصميم الجرافيكي، والخطابة والإلقاء. كما نقدم ورش عمل في جميع هذه المجالات.', order: 3 },
-        { question: 'هل يمكن المشاركة في فعاليات النادي بدون عضوية؟', answer: 'نعم، بعض الفعاليات مفتوحة لجميع الطلاب حتى غير الأعضاء، خاصة الورش التدريبية والمعارض. لكن العضوية تمنحك أولوية في التسجيل وحق المشاركة في المسابقات والبرامج الحصرية.', order: 4 },
-        { question: 'كيف يمكنني التواصل مع المسؤولين عن لجنة معينة؟', answer: 'يمكنك التواصل عبر البريد الإلكتروني الرسمي للنادي أو عبر حساباتنا على وسائل التواصل الاجتماعي. سنقوم بتوجيهك للشخص المسؤول عن اللجنة التي تريد التواصل معها.', order: 5 }
-      ];
-
-      // الإنجازات الافتراضية (نُقلت من index.html سابقاً)
-      const staticAchievements = [
-        { label: 'ظهور إعلامي', icon_class: 'fa-solid fa-hashtag', count_number: 500000, order: 1, plus_flag: true },
-        { label: 'ورش تدريبية', icon_class: 'fa-solid fa-chalkboard', count_number: 6, order: 2, plus_flag: true },
-        { label: 'مُشاركة', icon_class: 'fas fa-trophy', count_number: 12, order: 3, plus_flag: true },
-        { label: 'مادة مرئية', icon_class: 'fa-solid fa-photo-film', count_number: 100, order: 4, plus_flag: true },
-      ];
-
-      const toInsertWorks = seededStatic ? [] : staticWorks.filter((w) => !existingWorkTitles.has((w.title || '').trim()));
-      const toInsertSponsors = seededStatic ? [] : staticSponsors.filter((s) => !existingSponsorNames.has((s.name || '').trim()));
-      const toInsertBoard = seededBoard ? [] : staticBoardMembers.filter((m) => !existingBoardNames.has((m.name || '').trim()));
-      const toInsertFaq = seededFaq ? [] : staticFaq.filter((f) => !existingFaqQuestions.has((f.question || '').trim()));
-
-      let insertedWorks = 0, insertedSponsors = 0, insertedBoard = 0, insertedFaq = 0, insertedAchievements = 0;
-
-      if (toInsertWorks.length) {
-        const { error } = await sb.from('works').insert(toInsertWorks);
-        if (error) throw error; insertedWorks = toInsertWorks.length;
-      }
-      if (toInsertSponsors.length) {
-        const { error } = await sb.from('sponsors').insert(toInsertSponsors);
-        if (error) throw error; insertedSponsors = toInsertSponsors.length;
-      }
-      if (toInsertBoard.length) {
-        const { error } = await sb.from('board_members').insert(toInsertBoard);
-        if (error) throw error; insertedBoard = toInsertBoard.length;
-      }
-      if (toInsertFaq.length) {
-        const { error } = await sb.from('faq').insert(toInsertFaq);
-        if (error) throw error; insertedFaq = toInsertFaq.length;
-      }
-
-      // الإنجازات: حاول إدراجها إذا كان الجدول موجوداً؛ وإلا خزّنها محلياً
-      try {
-        if (!seededAch) {
-          // تحقق من وجود الجدول عبر استعلام بسيط
-          const { data: aRows, error: ea } = await sb.from('achievements').select('id,label');
-          if (ea) throw ea;
-          const existingAchLabels = new Set((aRows || []).map((r) => (r.label || '').trim()));
-          const toInsertAchievements = staticAchievements.filter((a) => !existingAchLabels.has((a.label || '').trim()));
-          if (toInsertAchievements.length) {
-            const { error: insErr } = await sb.from('achievements').insert(toInsertAchievements);
-            if (insErr) throw insErr;
-            insertedAchievements = toInsertAchievements.length;
-          }
-        }
-      } catch (achErr) {
-        // إن لم يوجد الجدول (PGRST205) أو فشل الاستعلام، استخدم localStorage
-        if (achErr?.code === 'PGRST205' || /Could not find the table '.+achievements'/.test(achErr?.message || '')) {
-          if (!seededAch) {
-            // دمج مع الموجود محلياً وتفادي التكرار بحسب label
-            const local = Array.isArray(achievements) ? achievements : [];
-            const labels = new Set(local.map((x) => (x.label || '').trim()));
-            const merged = [...local];
-            staticAchievements.forEach((a) => { if (!labels.has((a.label || '').trim())) merged.push(a); });
-            achievements = merged;
-            save(KEYS.achievements, achievements);
-            insertedAchievements = staticAchievements.filter((a) => !labels.has((a.label || '').trim())).length;
-          }
-        } else {
-          console.warn('Achievements seed failed', achErr);
-        }
-      }
-
-      // أعد التحميل من Supabase وحدّث الواجهة
-      const ok = await loadFromSupabase();
-      renderWorks();
-      renderSponsors();
-      renderAchievements();
-      renderBoard();
-      renderFaq();
-
-      if (!seededStatic) localStorage.setItem('seeded_static_v1', 'done');
-      if (!seededBoard) localStorage.setItem('seeded_board_v1', 'done');
-      if (!seededFaq) localStorage.setItem('seeded_faq_v1', 'done');
-      if (!seededAch) localStorage.setItem('seeded_achievements_v1', 'done');
-      alert(`تم الترحيل بنجاح:\nأُضيف ${insertedWorks} عمل\nأُضيف ${insertedSponsors} راعٍ\nأُضيف ${insertedBoard} عضو مجلس\nأُضيف ${insertedFaq} سؤال شائع\nأُضيف ${insertedAchievements} إنجاز`);
-    } catch (err) {
-      console.error(err);
-      alert('فشل الترحيل: ' + (err?.message || 'خطأ غير معروف'));
-    }
-  }
-
-  document.getElementById('seedStaticDataBtn')?.addEventListener('click', seedStaticData);
-  // استدعاء مباشر الآن كما طلبت
-  seedStaticData();
+  // تم إزالة منطق الترحيل/الترصيد من لوحة التحكم
 
   // Fetch from Supabase on load if available
   async function loadFromSupabase() {
@@ -924,18 +975,21 @@
         { data: w, error: ew },
         { data: s, error: es },
         { data: b, error: eb },
-        { data: f, error: ef }
+        { data: f, error: ef },
+        { data: posts, error: eposts }
       ] = await Promise.all([
         sb.from('works').select('*').order('created_at', { ascending: false }),
         sb.from('sponsors').select('*').order('created_at', { ascending: false }),
         sb.from('board_members').select('*').order('created_at', { ascending: false }),
         sb.from('faq').select('*').order('order', { ascending: true }),
+        sb.from('blog_posts').select('*').order('published_at', { ascending: false }),
       ]);
-      if (ew) throw ew; if (es) throw es; if (eb) throw eb; if (ef) throw ef;
+      if (ew) throw ew; if (es) throw es; if (eb) throw eb; if (ef) throw ef; if (eposts) throw eposts;
       works = w || [];
       sponsors = s || [];
       board = b || [];
       faq = f || [];
+      blogPosts = posts || [];
 
       // Try achievements separately; ignore 404 table-not-found
       try {
@@ -965,14 +1019,15 @@
         refreshAuthUI();
       });
     }
-    const ok = await loadFromSupabase();
-    if (!ok) {
-      // fallback remains localStorage-loaded arrays
+
+    const loaded = await loadFromSupabase();
+    if (!loaded) {
+      renderWorks();
+      renderSponsors();
+      renderBoard();
+      renderFaq();
+      renderAchievements();
+      renderBlog();
     }
-    renderWorks();
-    renderSponsors();
-    renderAchievements();
-    renderBoard();
-    renderFaq();
   })();
 })();

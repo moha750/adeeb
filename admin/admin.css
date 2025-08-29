@@ -10,10 +10,16 @@
   --border: #e5e7eb;
 }
 
+/* Disable page scroll when sidebar slider is open */
+body.no-scroll { overflow: hidden; }
+
 .admin-body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  max-width: 1100px;
+  margin: 0.8rem auto;
+  padding: 0 16px;
 }
 
 /* Header */
@@ -25,6 +31,8 @@
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   z-index: 50;
+  border-radius: 14px;
+    margin-bottom: 1rem;
 }
 .admin-header__container {
   max-width: 1400px;
@@ -46,29 +54,70 @@
 }
 .admin-header__actions { display: flex; gap: 10px; }
 
+/* Hide open button on desktop; show only on mobile */
+#toggleSidebar {
+  display: none;
+}
+
+/* Ensure the sidebar close button is hidden on large screens */
+@media (min-width: 993px) {
+  .sidebar-close-btn { display: none !important; }
+}
+
 /* Layout */
 .admin-layout {
   display: grid;
   grid-template-columns: 260px 1fr;
   gap: 20px;
-  max-width: 1400px;
-  margin: 20px auto;
-  padding: 0 20px 40px;
 }
 
 .admin-sidebar {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 14px;
-  height: fit-content;
   position: sticky;
   top: 90px;
+  /* Make it full-height under the header and allow inner scrolling */
+  height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Brand block inside sidebar */
+.admin-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--main-blue);
+  font-family: fb, system-ui, -apple-system, sans-serif;
+}
+.sidebar-close-btn { margin-inline-start: auto; display: none; }
+.admin-sidebar__brand .logo-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 6px;
 }
 
 .admin-menu {
   display: flex;
   flex-direction: column;
   padding: 12px;
+  /* take remaining height and scroll */
+  flex: 1;
+  overflow: auto;
+}
+.admin-menu__footer {
+  margin-top: auto;
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+@media (max-width: 992px) {
+  .admin-menu__footer .btn { width: 100%; justify-content: center; }
 }
 .admin-menu__item {
   display: flex;
@@ -154,8 +203,55 @@
 /* Responsive */
 @media (max-width: 992px) {
   .admin-layout { grid-template-columns: 1fr; }
-  .admin-sidebar { position: static; order: 0; }
+  /* Turn sidebar into off-canvas slider on mobile */
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0; /* RTL: slide from the right */
+    width: 280px;
+    height: 100vh;
+    border-radius: 0;
+    box-shadow: -12px 0 28px rgba(0,0,0,.06);
+    transform: translateX(110%);
+    transition: transform .28s ease, box-shadow .28s ease;
+    z-index: 60; /* above header */
+  }
+  .admin-sidebar.open {
+    transform: translateX(0);
+  }
+  /* Improve tap targets */
+  .admin-menu__item { padding: 14px 16px; }
+
+  /* Backdrop behind the off-canvas sidebar */
+  .sidebar-backdrop {
+    position: fixed;
+    top: 0; /* cover full screen */
+    right: 0; left: 0; bottom: 0;
+    background: rgba(0,0,0,.25);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .28s ease;
+    z-index: 55; /* below sidebar, above content */
+  }
+  .sidebar-backdrop.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Show open/close buttons on mobile */
+  #toggleSidebar { display: inline-flex; }
+  .sidebar-close-btn { display: inline-flex; }
+  .admin-sidebar__brand { justify-content: space-between; }
 }
 @media (max-width: 640px) {
   .form-grid { grid-template-columns: 1fr; }
 }
+
+/* User badge (avatar + greeting + name) */
+.user-badge { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.user-badge .avatar { width: 36px; height: 36px; border-radius: 999px; overflow: hidden; background: #e2e8f0; display: grid; place-items: center; flex: 0 0 36px; }
+.user-badge .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.user-badge .meta { display: grid; line-height: 1.1; }
+.user-badge .greet { font-size: .85rem; color: var(--muted); }
+.user-badge .name { font-family: fb, system-ui; color: var(--main-blue); font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

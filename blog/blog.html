@@ -1,0 +1,163 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>مرافئ — مدونة نادي أديب</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="blog.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+  </head>
+  <body>
+    <!-- الهيدر (مطابق للرئيسية مع مسارات نسبية من داخل مجلد blog/) -->
+    <header class="header">
+      <div class="header-container">
+        <div class="menu-toggle" id="menuToggle">
+          <div class="hamburger">
+            <span class="line line1"></span>
+            <span class="line line2"></span>
+            <span class="line line3"></span>
+          </div>
+        </div>
+        <div class="logo">
+          <a class="logo-link" href="../index.html">
+            <img alt="شعار نادي أديب" class="logo-img" src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" />
+          </a>
+        </div>
+        <nav class="nav">
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#adeebbook">
+                <i class="fas fa-home nav-icon"></i>
+                <span class="nav-text">الرئيسية</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#our-works">
+                <i class="fa-solid fa-briefcase"></i>
+                <span class="nav-text">أعمالنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#achievements">
+                <i class="fa-solid fa-trophy"></i>
+                <span class="nav-text">انجازتنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#sponsors">
+                <i class="fa-solid fa-briefcase"></i>
+                <span class="nav-text">شُركائنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#contact">
+                <i class="fas fa-envelope nav-icon"></i>
+                <span class="nav-text">تواصل معنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="blog.html">
+                <i class="fa-solid fa-anchor"></i>
+                <span class="nav-text">مرافئ</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+          </ul>
+          <a class="subscribe-btn" href="#" id="joinBtn">
+            <span>انضم إلينا</span>
+            <i class="fas fa-user-plus"></i>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- بطل الصفحة -->
+    <section class="blog-hero">
+      <div class="container">
+        <h1>مرافئ</h1>
+        <p>مدونة نادي أديب — محطات من الإلهام والإبداع.</p>
+        <div class="blog-actions" style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+          <a class="btn btn-primary" href="#posts"><i class="fa-solid fa-compass"></i> استكشف التدوينات</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- شبكة المقالات -->
+    <main id="posts" class="blog-container">
+      <div class="posts-grid" id="postsGrid">
+      </div>
+    </main>
+
+    <!-- Footer Section (مطابق للرئيسية مع روابط تشير للرئيسية) -->
+    <footer class="footer" id="footer">
+      <div class="footer-container">
+        <div class="footer-grid">
+          <div class="footer-col footer-main">
+            <div class="footer-logo-box">
+              <img alt="شعار نادي أدِيب" class="footer-logo" src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" />
+            </div>
+            <p class="footer-about-text">منصة أدِيبية رائدة تهدف إلى إثراء المحتوى الإبداعي ودعم المواهب الإبداعية الشابة في مختلف المجالات.</p>
+            <div class="footer-badges">
+              <span class="footer-badge">نادي طلابي</span>
+              <span class="footer-badge">جامعة الملك فيصل</span>
+            </div>
+          </div>
+          <div class="footer-col">
+            <h3 class="footer-title"><i class="fas fa-bolt"></i><span class="title-footer">روابط سريعة</span></h3>
+            <ul class="footer-links">
+              <li><a href="../index.html#adeebbook"><i class="fas fa-home"></i>الرئيسية</a></li>
+              <li><a href="../index.html#our-works"><i class="fas fa-briefcase"></i>أعمالنا</a></li>
+              <li><a href="../index.html#achievements"><i class="fas fa-trophy"></i>انجازاتنا</a></li>
+              <li><a href="../index.html#sponsors"><i class="fas fa-handshake"></i>شركائنا</a></li>
+              <li><a href="blog.html"><i class="fa-solid fa-anchor"></i>مرافئ</a></li>
+              <li><a href="../index.html#contact"><i class="fas fa-envelope"></i>تواصل معنا</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h3 class="footer-title"><i class="fas fa-sitemap"></i><span class="title-footer">لجان نادي أدِيب</span></h3>
+            <div class="committees-container">
+              <div class="committee-category">
+                <ul class="committee-list">
+                  <li><i class="fas fa-pen-fancy"></i>لجنة التأليف</li>
+                  <li><i class="fa-solid fa-microphone-lines"></i>لجنة الرواة</li>
+                  <li><i class="fa-solid fa-calendar-days"></i>لجنة الفعاليات</li>
+                  <li><i class="fa-solid fa-handshake"></i>لجنة السفراء</li>
+                  <li><i class="fa-solid fa-camera-retro"></i>لجنة الإنتاج</li>
+                  <li><i class="fa-solid fa-bullhorn"></i>لجنة التسويق</li>
+                  <li><i class="fa-solid fa-bezier-curve"></i>لجنة التصميم</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="copyright">جميع الحقوق محفوظة لنادي أدِيب <span style="font-family: a" id="year"></span> ©</p>
+            <div class="footer-legal">
+              <a href="#">دستور أدِيب</a>
+              <a href="../index.html#faq-section">الأسئلة الشائعة</a>
+            </div>
+          </div>
+          <div class="footer-back-top">
+            <button id="back-to-top">
+              <i class="fas fa-arrow-up"></i>
+              <span class="back-to-top">العودة للأعلى</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- مكاتب خارجية أساسية فقط -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="blog.js"></script>
+  </body>
+</html>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>قراءة التدوينة — مرافئ</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="blog.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <style>
+      /* تحسينات بسيطة لصفحة التدوينة */
+      .post-wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+      .post-header { margin-bottom: 16px; }
+      .post-title { font-size: clamp(24px, 3vw, 38px); margin: 8px 0; }
+      .post-meta { color: var(--muted-color,#666); display:flex; gap:12px; align-items:center; font-size: 14px; }
+      .post-cover { width: 100%; border-radius: 12px; margin: 16px 0 24px; object-fit: cover; max-height: 520px; }
+      .post-content { line-height: 2; font-size: 18px; }
+      .post-content img { max-width: 100%; border-radius: 8px; }
+      .post-toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin: 18px 0 26px; }
+      .post-toolbar .btn { display:flex; gap:8px; align-items:center; }
+      .tag { background:#f1f3f5; color:#333; padding:4px 10px; border-radius: 999px; font-size: 12px; }
+      .tags { display:flex; gap:6px; flex-wrap: wrap; margin-top: 6px; }
+      .divider { height:1px; background: #eee; margin: 24px 0; }
+      /* التعليقات */
+      .comments-box { background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 16px; }
+      .comment-item { border-bottom: 1px dashed #e5e7eb; padding: 10px 0; }
+      .comment-item:last-child { border-bottom: 0; }
+      .comment-meta { font-size: 13px; color:#666; display:flex; gap:8px; align-items:center; }
+      .comment-body { margin-top: 6px; white-space: pre-wrap; }
+      .comment-form { display:grid; gap:10px; margin-top: 12px; }
+      .comment-form input, .comment-form textarea { padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+      .comment-form button { justify-self: start; }
+    </style>
+  </head>
+  <body>
+    <!-- Header مطابق للمدونة -->
+    <header class="header">
+      <div class="header-container">
+        <div class="menu-toggle" id="menuToggle">
+          <div class="hamburger">
+            <span class="line line1"></span>
+            <span class="line line2"></span>
+            <span class="line line3"></span>
+          </div>
+        </div>
+        <div class="logo">
+          <a class="logo-link" href="../index.html">
+            <img alt="شعار نادي أديب" class="logo-img" src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" />
+          </a>
+        </div>
+        <nav class="nav">
+          <ul class="nav-links">
+            <li class="nav-item"><a class="nav-link" href="blog.html"><i class="fa-solid fa-anchor"></i><span class="nav-text">مرافئ</span><span class="nav-wave"></span></a></li>
+            <li class="nav-item"><a class="nav-link" href="../index.html#contact"><i class="fas fa-envelope"></i><span class="nav-text">تواصل معنا</span><span class="nav-wave"></span></a></li>
+          </ul>
+          <a class="subscribe-btn" href="#" id="joinBtn"><span>انضم إلينا</span><i class="fas fa-user-plus"></i></a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="post-wrap">
+      <nav style="margin-bottom:10px; font-size:14px; color:#666; display:flex; gap:8px; align-items:center">
+        <a href="blog.html" style="color:inherit"><i class="fa-solid fa-arrow-right"></i> العودة للمدونة</a>
+      </nav>
+
+      <article id="postArticle">
+        <header class="post-header">
+          <div class="tags" id="postTags"></div>
+          <h1 class="post-title" id="postTitle">…</h1>
+          <div class="post-meta">
+            <span id="postDate"></span>
+            <span>•</span>
+            <span id="postAuthor"></span>
+            <span>•</span>
+            <span><i class="fa-regular fa-eye"></i> <span id="postViews">0</span></span>
+          </div>
+        </header>
+        <img id="postCover" class="post-cover" alt="" style="display:none" />
+        <div class="post-toolbar">
+          <button id="likeBtn" class="btn btn-primary"><i class="fa-regular fa-heart"></i><span id="likesCount">0</span> إعجاب</button>
+          <button id="shareBtn" class="btn btn-outline"><i class="fa-solid fa-share-nodes"></i> مشاركة</button>
+          <button id="copyLinkBtn" class="btn btn-outline"><i class="fa-regular fa-copy"></i> نسخ الرابط</button>
+        </div>
+        <section class="post-content" id="postContent">جاري التحميل…</section>
+      </article>
+
+      <div class="divider"></div>
+
+      <section class="comments-box" id="commentsSection">
+        <h3 style="margin:0 0 8px"><i class="fa-regular fa-comments"></i> التعليقات</h3>
+        <div id="commentsList" aria-live="polite">لا توجد تعليقات بعد.</div>
+        <form id="commentForm" class="comment-form">
+          <input type="text" id="commentName" placeholder="اسمك" maxlength="80" />
+          <textarea id="commentBody" rows="4" placeholder="اكتب تعليقك…" required></textarea>
+          <button class="btn btn-primary" type="submit"><i class="fa-solid fa-paper-plane"></i> إرسال</button>
+          <small id="commentHint" style="color:#666"></small>
+        </form>
+      </section>
+    </main>
+
+    <!-- Footer مبسط -->
+    <footer class="footer" id="footer">
+      <div class="footer-container">
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="copyright">جميع الحقوق محفوظة لنادي أدِيب <span style="font-family: a" id="year"></span> ©</p>
+            <div class="footer-legal">
+              <a href="../index.html#faq-section">الأسئلة الشائعة</a>
+            </div>
+          </div>
+          <div class="footer-back-top">
+            <button id="back-to-top"><i class="fas fa-arrow-up"></i><span class="back-to-top">العودة للأعلى</span></button>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="post.js"></script>
+  </body>
+</html>
