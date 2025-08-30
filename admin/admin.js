@@ -1020,14 +1020,13 @@
       });
     }
 
-    const loaded = await loadFromSupabase();
-    if (!loaded) {
-      renderWorks();
-      renderSponsors();
-      renderBoard();
-      renderFaq();
-      renderAchievements();
-      renderBlog();
-    }
+    await loadFromSupabase();
+    // Always render after attempting to load (even if arrays are empty)
+    renderWorks();
+    renderSponsors();
+    renderBoard();
+    renderFaq();
+    renderAchievements();
+    renderBlog();
   })();
 })();

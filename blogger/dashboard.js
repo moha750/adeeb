@@ -68,7 +68,7 @@
     const userName = document.getElementById('profileUserName');
     if (!currentUser || !preview || !userName) return;
     const md = currentUser.user_metadata || {};
-    const name = md.display_name || currentUser.email || 'مستخدم';
+    const name = md.display_name || md.name || currentUser.email || 'مستخدم';
     const avatarUrl = md.avatar_url && String(md.avatar_url).trim() ? md.avatar_url : null;
     // تحديث الاسم
     userName.textContent = name;
@@ -250,7 +250,7 @@
     if (!host) return;
     if (!user) { host.innerHTML = ''; return; }
     const md = user.user_metadata || {};
-    const name = md.display_name || user.email || 'مستخدم';
+    const name = md.display_name || md.name || user.email || 'مستخدم';
     const avatarUrl = md.avatar_url && String(md.avatar_url).trim() ? md.avatar_url : null;
     const svg = `
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -325,6 +325,23 @@
     }
   }
 
+  // Migrate legacy user_metadata.name -> display_name if needed
+  async function migrateNameToDisplayNameIfNeeded() {
+    try {
+      if (!currentUser) return;
+      const md = currentUser.user_metadata || {};
+      const hasDisplay = !!(md.display_name && String(md.display_name).trim());
+      const hasName = !!(md.name && String(md.name).trim());
+      if (!hasDisplay && hasName) {
+        await sb.auth.updateUser({ data: { display_name: md.name } });
+        try {
+          const { data: { user } } = await sb.auth.getUser();
+          if (user) currentUser = user;
+        } catch {}
+      }
+    } catch {}
+  }
+
   async function loadMyActivity() {
     if (!currentUser || !activityList) return;
     try {
@@ -391,6 +408,8 @@
           renderUserBadge(currentUser);
         }
       } catch {}
+      // Migrate legacy name -> display_name if needed, then re-render
+      try { await migrateNameToDisplayNameIfNeeded(); renderUserBadge(currentUser); updateProfileAvatarPreview(); } catch {}
       // Optional: enforce blogger role
       const role = currentUser?.user_metadata?.role;
       if (!role) {
@@ -411,7 +430,7 @@
     profileEmail && (profileEmail.value = currentUser.email || '');
     currentEmailDisplay && (currentEmailDisplay.value = currentUser.email || '');
     const md = currentUser.user_metadata || {};
-    if (displayNameInput) displayNameInput.value = md.display_name || '';
+    if (displayNameInput) displayNameInput.value = md.display_name || md.name || '';
     // تحديث المعاينة (الاسم/الصورة)
     updateProfileAvatarPreview();
   }
@@ -425,6 +444,8 @@
       display_name: (displayNameInput?.value || '').trim() || null,
       role: 'blogger',
     };
+    // Mirror legacy `name` for backward compatibility
+    payload.name = payload.display_name;
     // Keep existing avatar unless a new file is uploaded
     let avatarUrl = currentUser?.user_metadata?.avatar_url || null;
     try {
