@@ -135,6 +135,22 @@
       }
     }
 
+    // يجلب بروفايل عام للكاتب من View عامة (auth_users_public) باستخدام user_id
+    async function fetchAuthorProfile(userId) {
+      if (!sb || !userId) return null;
+      try {
+        const { data, error } = await sb
+          .from('auth_users_public')
+          .select('display_name, avatar_url')
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (error) throw error;
+        return data || null;
+      } catch (e) {
+        return null;
+      }
+    }
+
     function fetchPostFromLocal(id) {
       const arr = lsGet('adeeb_blog_posts', []);
       const match = arr.find(p => String(p.id) === String(id));
@@ -364,6 +380,16 @@
         if ((post.status || 'draft') !== 'published' || isFuture) {
           window.location.replace('blog.html');
           return;
+        }
+      } catch {}
+      // محاولة جلب اسم الكاتب ديناميكيًا عبر user_id من View عامة
+      try {
+        if (post.user_id) {
+          const profile = await fetchAuthorProfile(post.user_id);
+          if (profile && (profile.display_name || profile.avatar_url)) {
+            post.author_name = profile.display_name || post.author_name || post.author;
+            // يمكن لاحقًا استخدام avatar_url لعرض صورة الكاتب إن رغبت
+          }
         }
       } catch {}
       renderPost(post);

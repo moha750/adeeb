@@ -62,6 +62,32 @@
     return h < 12 ? 'صباح الخير' : 'مساء الخير';
   }
 
+  // Helpers: safely insert/update blog_posts with optional author_name
+  async function safeInsertPost(payload) {
+    // Attempt with author_name, then retry without if column not present
+    let res = await sb.from('blog_posts').insert(payload).select();
+    if (res?.error && shouldRetryWithoutAuthorName(res.error)) {
+      const { author_name, ...rest } = payload || {};
+      res = await sb.from('blog_posts').insert(rest).select();
+    }
+    return res;
+  }
+
+  async function safeUpdatePost(id, payload) {
+    let res = await sb.from('blog_posts').update(payload).eq('id', id).select();
+    if (res?.error && shouldRetryWithoutAuthorName(res.error)) {
+      const { author_name, ...rest } = payload || {};
+      res = await sb.from('blog_posts').update(rest).eq('id', id).select();
+    }
+    return res;
+  }
+
+  function shouldRetryWithoutAuthorName(error) {
+    const msg = (error?.message || '').toLowerCase();
+    // Covers common PostgREST / Postgres messages when a column is missing
+    return msg.includes('author_name') || msg.includes('column') || msg.includes('does not exist');
+  }
+
   // دالة لعرض الصورة الرمزية في قسم الملف الشخصي ومعاينة الاسم
   function updateProfileAvatarPreview() {
     const preview = document.getElementById('avatarPreview');
@@ -524,6 +550,7 @@
       excerpt: document.getElementById('excerpt').value,
       content: document.getElementById('content').value,
       author: currentUser.email,
+      author_name: (currentUser.user_metadata?.display_name || currentUser.user_metadata?.name || currentUser.email),
     };
     try { payload.user_id = currentUser.id; } catch {}
     if (id) {
@@ -719,8 +746,9 @@
       quickBtn.addEventListener('click', async () => {
         if (!confirm('نشر الآن؟')) return;
         try {
-          const payload = { status: 'published', published_at: new Date().toISOString() };
-          const { error } = await sb.from('blog_posts').update(payload).eq('id', post.id);
+          const authorName = (currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.name || currentUser?.email);
+          const payload = { status: 'published', published_at: new Date().toISOString(), author_name: authorName };
+          const { error } = await safeUpdatePost(post.id, payload);
           if (error) throw error;
           setAlert('تم نشر المسودة بنجاح');
           try { await logActivity('post_publish', { post_id: post.id }); } catch {}
@@ -756,8 +784,9 @@
           }
           const when = new Date(whenStr);
           if (isNaN(when.getTime())) { setAlert('تاريخ غير صالح', true); return; }
-          const payload = { status: 'published', published_at: when.toISOString() };
-          const { error } = await sb.from('blog_posts').update(payload).eq('id', post.id);
+          const authorName = (currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.name || currentUser?.email);
+          const payload = { status: 'published', published_at: when.toISOString(), author_name: authorName };
+          const { error } = await safeUpdatePost(post.id, payload);
           if (error) throw error;
           setAlert('تمت الجدولة بنجاح');
           try { await logActivity('post_schedule', { post_id: post.id, when: payload.published_at }); } catch {}
@@ -963,6 +992,7 @@
       excerpt: document.getElementById('excerpt').value,
       content: document.getElementById('content').value,
       author: currentUser.email,
+      author_name: (currentUser.user_metadata?.display_name || currentUser.user_metadata?.name || currentUser.email),
     };
     // Always set published_at for publish-now
     payload.published_at = new Date().toISOString();
@@ -973,12 +1003,12 @@
       let res;
       let created = false;
       if (id) {
-        res = await sb.from('blog_posts').update(payload).eq('id', id).select();
+        res = await safeUpdatePost(id, payload);
       } else {
         // attach user_id if column exists via upsert try-catch
         try { payload.user_id = currentUser.id; } catch {}
         created = true;
-        res = await sb.from('blog_posts').insert(payload).select();
+        res = await safeInsertPost(payload);
       }
       const { error, data } = res;
       if (error) throw error;
@@ -1027,15 +1057,16 @@
       content: document.getElementById('content').value,
       author: currentUser.email,
       published_at: when.toISOString(),
+      author_name: (currentUser.user_metadata?.display_name || currentUser.user_metadata?.name || currentUser.email),
     };
     try { payload.user_id = currentUser.id; } catch {}
     const id = document.getElementById('postId').value;
     try {
       if (id) {
-        const { error } = await sb.from('blog_posts').update(payload).eq('id', id);
+        const { error } = await safeUpdatePost(id, payload);
         if (error) throw error;
       } else {
-        const { error } = await sb.from('blog_posts').insert(payload);
+        const { error } = await safeInsertPost(payload);
         if (error) throw error;
       }
       setAlert('تمت الجدولة بنجاح');
