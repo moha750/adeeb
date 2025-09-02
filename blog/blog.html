@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="../style.css" />
     <link rel="stylesheet" href="blog.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   </head>
   <body>
     <!-- الهيدر (مطابق للرئيسية مع مسارات نسبية من داخل مجلد blog/) -->
@@ -77,8 +79,16 @@
       </div>
     </header>
 
-    <!-- بطل الصفحة -->
+    <!-- بطل الصفحة - النسخة المحسنة -->
     <section class="blog-hero">
+      <!-- طبقات تأثير Parallax -->
+      <div class="parallax-layer layer-1" data-depth="0.10"></div>
+      <div class="parallax-layer layer-2" data-depth="0.20"></div>
+      <div class="parallax-layer layer-3" data-depth="0.30"></div>
+
+      <!-- عناصر الجسيمات المتحركة -->
+      <div class="particles-container" id="particles"></div>
+
       <div class="container">
         <div class="hero-orbit">
           <div class="hero-logo">
@@ -99,11 +109,25 @@
             <li class="orbit-item orbit-emoji p12" aria-hidden="true">🎨</li>
           </ul>
         </div>
-        <h1 class="blog-title">مرافئ</h1>
-        <p class="blog-subtitle">محطات من الإلهام والإبداع — مقالات، خواطر، وتجارب من مجتمع أدِيب.</p>
+
+        <div class="hero-content">
+          <h1 class="blog-title">مرافئ الفكر والإبداع</h1>
+          <div class="blog-subtitle-wrapper">
+            <p class="blog-subtitle">محطات إبداعية تستقبل أفكاركم، مقالاتكم، وخواطركم. نرحب بكم في رحلة عبر عالم الأدب والفنون.</p>
+          </div>
+        </div>
+
         <div class="blog-actions">
-          <a class="btn btn-primary" href="#posts"><i class="fa-solid fa-compass"></i> استكشف التدوينات</a>
-          <a class="btn btn-outline" href="../register.html"><i class="fa-solid fa-user-pen"></i> سجل حساب مدون</a>
+          <a class="btn btn-primary" href="#posts">
+            <i class="fa-solid fa-compass"></i>
+            <span>استكشف التدوينات</span>
+            <div class="btn-hover-effect"></div>
+          </a>
+          <a class="btn btn-outline" href="../register.html">
+            <i class="fa-solid fa-user-pen"></i>
+            <span>سجل حساب مدون</span>
+            <div class="btn-hover-effect"></div>
+          </a>
         </div>
       </div>
     </section>
@@ -177,6 +201,8 @@
     <!-- مكاتب خارجية أساسية فقط -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="../supabase-config.js"></script>
     <script src="blog.js"></script>
   </body>

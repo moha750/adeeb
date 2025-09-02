@@ -120,6 +120,13 @@
       blogForm.status.value = cur.status || 'draft';
       blogForm.excerpt.value = cur.excerpt || '';
       blogForm.content.value = cur.content || '';
+      // categories: support array or comma-separated, fallback to legacy tags
+      try {
+        if (blogForm.categories) {
+          const cats = cur.categories ?? cur.tags ?? '';
+          blogForm.categories.value = Array.isArray(cats) ? cats.join(', ') : (cats || '');
+        }
+      } catch {}
       openDialog(blogDialog);
     } else if (act === 'del') {
       if (!confirm('تأكيد الحذف؟')) return;
@@ -148,6 +155,13 @@
       status: blogForm.status.value || 'draft',
       excerpt: blogForm.excerpt.value.trim() || null,
       content: blogForm.content.value.trim() || null,
+      // parse categories from input (Arabic/English commas)
+      categories: (() => {
+        const raw = (blogForm.categories?.value || '').trim();
+        if (!raw) return null;
+        const arr = raw.split(/[،,]/).map(s => s.trim()).filter(Boolean);
+        return arr.length ? arr : null;
+      })(),
     };
     if (sb) {
       sb.auth.getSession().then(({ data: { session } }) => {
@@ -160,20 +174,41 @@
           status: data.status,
           excerpt: data.excerpt,
           content: data.content,
+          categories: data.categories,
         };
+        const payloadNoCats = { ...payload }; delete payloadNoCats.categories;
         if (blogEditingIndex === null) {
-          sb.from('blog_posts').insert(payload).select('*').single().then(({ data: row, error }) => {
-            if (error) return alert('فشل الحفظ: ' + error.message);
-            blogPosts.unshift(row);
+          sb.from('blog_posts').insert(payload).select('*').single().then(async ({ data: row, error }) => {
+            if (error) {
+              // retry without categories if column doesn't exist
+              if (/(column\s+categories|unknown column|invalid input)/i.test(error.message || '')) {
+                const { data: row2, error: e2 } = await sb.from('blog_posts').insert(payloadNoCats).select('*').single();
+                if (e2) return alert('فشل الحفظ: ' + e2.message);
+                blogPosts.unshift({ ...row2, categories: data.categories || null });
+              } else {
+                return alert('فشل الحفظ: ' + error.message);
+              }
+            } else {
+              blogPosts.unshift(row);
+            }
             renderBlog();
             closeDialog(blogDialog);
           });
         } else {
           const id = blogPosts[blogEditingIndex]?.id;
           if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
-          sb.from('blog_posts').update(payload).eq('id', id).select('*').single().then(({ data: row, error }) => {
-            if (error) return alert('فشل التحديث: ' + error.message);
-            blogPosts[blogEditingIndex] = row;
+          sb.from('blog_posts').update(payload).eq('id', id).select('*').single().then(async ({ data: row, error }) => {
+            if (error) {
+              if (/(column\s+categories|unknown column|invalid input)/i.test(error.message || '')) {
+                const { data: row2, error: e2 } = await sb.from('blog_posts').update(payloadNoCats).eq('id', id).select('*').single();
+                if (e2) return alert('فشل التحديث: ' + e2.message);
+                blogPosts[blogEditingIndex] = { ...row2, categories: data.categories || null };
+              } else {
+                return alert('فشل التحديث: ' + error.message);
+              }
+            } else {
+              blogPosts[blogEditingIndex] = row;
+            }
             renderBlog();
             closeDialog(blogDialog);
           });

@@ -543,11 +543,15 @@
       setAlert('فشل رفع الصورة: ' + (e?.message || 'غير معروف'), true);
       return;
     }
+    // parse categories from input (supports Arabic and English commas)
+    const catsRaw = (document.getElementById('categories')?.value || '').trim();
+    const categories = catsRaw ? catsRaw.split(/[،,]/).map(s => s.trim()).filter(Boolean) : null;
     const payload = {
       title: document.getElementById('title').value.trim(),
       image_url: (uploadedUrl || document.getElementById('image_url').value.trim() || null),
       status: 'draft',
       excerpt: document.getElementById('excerpt').value,
+      categories,
       content: document.getElementById('content').value,
       author: currentUser.email,
       author_name: (currentUser.user_metadata?.display_name || currentUser.user_metadata?.name || currentUser.email),
@@ -833,6 +837,15 @@
       }
     }
     document.getElementById('excerpt').value = p.excerpt || '';
+    // categories: supports array or comma-separated string (fallback to legacy tags)
+    try {
+      const catEl = document.getElementById('categories');
+      if (catEl) {
+        const cats = p.categories ?? p.tags ?? '';
+        if (Array.isArray(cats)) catEl.value = cats.join(', ');
+        else catEl.value = cats || '';
+      }
+    } catch {}
     document.getElementById('content').value = p.content || '';
     // schedule_at: إذا كان تاريخ النشر في المستقبل، أظهره
     try {
@@ -985,11 +998,16 @@
       return;
     }
 
+    // parse categories from input
+    const catsRaw = (document.getElementById('categories')?.value || '').trim();
+    const categories = catsRaw ? catsRaw.split(/[،,]/).map(s => s.trim()).filter(Boolean) : null;
+
     const payload = {
       title: document.getElementById('title').value.trim(),
       image_url: (uploadedUrl || document.getElementById('image_url').value.trim() || null),
       status: 'published',
       excerpt: document.getElementById('excerpt').value,
+      categories,
       content: document.getElementById('content').value,
       author: currentUser.email,
       author_name: (currentUser.user_metadata?.display_name || currentUser.user_metadata?.name || currentUser.email),
@@ -1049,11 +1067,15 @@
     // Upload image if a new file is selected
     let uploadedUrl = null;
     try { uploadedUrl = await uploadSelectedImage(currentUser); } catch (e) { setAlert('فشل رفع الصورة: ' + (e?.message || 'غير معروف'), true); return; }
+    // parse categories from input
+    const catsRaw = (document.getElementById('categories')?.value || '').trim();
+    const categories = catsRaw ? catsRaw.split(/[،,]/).map(s => s.trim()).filter(Boolean) : null;
     const payload = {
       title: document.getElementById('title').value.trim(),
       image_url: (uploadedUrl || document.getElementById('image_url').value.trim() || null),
       status: 'published',
       excerpt: document.getElementById('excerpt').value,
+      categories,
       content: document.getElementById('content').value,
       author: currentUser.email,
       published_at: when.toISOString(),
