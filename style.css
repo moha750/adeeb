@@ -1214,42 +1214,6 @@ body.menu-open {
   box-shadow: 0 0 0 3px rgba(61, 143, 214, 0.15), 0 12px 30px rgba(39, 64, 96, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .rating-summary {
-    background: rgba(20, 30, 48, 0.6);
-    border-color: rgba(61, 143, 214, 0.32);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  }
-  .rating-summary::before {
-    background: linear-gradient(135deg, rgba(61, 143, 214, 0.5), rgba(39, 64, 96, 0.5));
-  }
-  .average-rating {
-    color: #9ec9ff;
-    text-shadow: none;
-  }
-  .rating-summary .rating-label,
-  .total-reviews {
-    color: #b2c3d6;
-  }
-  .rating-summary .testimonial-stars {
-    background: linear-gradient(180deg, rgba(241,179,7,0.2), rgba(241,179,7,0.12));
-    border-color: rgba(241, 179, 7, 0.35);
-  }
-  .rating-summary .quote-bg {
-    color: rgba(158, 201, 255, 0.08);
-  }
-  .rating-summary:hover .quote-bg {
-    color: rgba(158, 201, 255, 0.12);
-  }
-  .rating-summary .quote-bg--br {
-    color: rgba(158, 201, 255, 0.06);
-  }
-  .rating-summary:hover .quote-bg--br {
-    color: rgba(158, 201, 255, 0.1);
-  }
-}
-
 /* Keyframes */
 @keyframes pulseHalo {
   0%, 100% { opacity: 0.45; transform: translate(-50%, -50%) scale(1); }
