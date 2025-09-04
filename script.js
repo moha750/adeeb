@@ -160,27 +160,35 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Unified Swiper configuration helper
+  function buildUnifiedSwiperConfig(containerSelector, slidesCount) {
+    const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    return {
+      slidesPerView: 1,
+      spaceBetween: 24,
+      loop: true,
+      autoplay: prefersReduced ? false : { delay: 3500, disableOnInteraction: false },
+      speed: prefersReduced ? 0 : 550,
+      breakpoints: {
+        700: { slidesPerView: 2 },
+        1024: { slidesPerView: 3 },
+      },
+      keyboard: { enabled: true, onlyInViewport: true },
+      navigation: {
+        nextEl: `${containerSelector} .swiper-button-next`,
+        prevEl: `${containerSelector} .swiper-button-prev`,
+      },
+    };
+  }
+
   let worksSwiperInstance = null;
   function initWorksSwiper() {
     if (worksSwiperInstance && typeof worksSwiperInstance.destroy === 'function') {
       worksSwiperInstance.destroy(true, true);
     }
-    worksSwiperInstance = new Swiper('.works-swiper', {
-      slidesPerView: 1,
-      spaceBetween: 30,
-      loop: true,
-      autoplay: true,
-      breakpoints: {
-        700: { slidesPerView: 2 },
-        1024: { slidesPerView: 3 },
-      },
-      // optional pagination if needed in HTML
-      // pagination: { el: '.works-swiper .swiper-pagination', clickable: true },
-      navigation: {
-        nextEl: '.works-swiper .swiper-button-next',
-        prevEl: '.works-swiper .swiper-button-prev',
-      },
-    });
+    const selector = '.works-swiper';
+    const slidesCount = document.querySelectorAll(`${selector} .swiper-slide`).length;
+    worksSwiperInstance = new Swiper(selector, buildUnifiedSwiperConfig(selector, slidesCount));
   }
 
   async function loadWorksSection() {
@@ -251,23 +259,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (boardSwiperInstance && typeof boardSwiperInstance.destroy === 'function') {
       boardSwiperInstance.destroy(true, true);
     }
-    boardSwiperInstance = new Swiper('.board-swiper', {
-      slidesPerView: 1,
-      spaceBetween: 30,
-      loop: true,
-      autoplay: {
-        delay: 3000,
-        disableOnInteraction: false,
-      },
-      breakpoints: {
-        700: { slidesPerView: 2 },
-        1024: { slidesPerView: 3 },
-      },
-      navigation: {
-        nextEl: '.board-swiper .swiper-button-next',
-        prevEl: '.board-swiper .swiper-button-prev',
-      },
-    });
+    const selector = '.board-swiper';
+    const slidesCount = document.querySelectorAll(`${selector} .swiper-slide`).length;
+    boardSwiperInstance = new Swiper(selector, buildUnifiedSwiperConfig(selector, slidesCount));
   }
 
 
@@ -280,6 +274,190 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Kick off dynamic board rendering
   loadBoardSection();
+
+  // ===================== Testimonials (آراء الأعضاء) - Swiper Init =====================
+  let testimonialsSwiperInstance = null;
+  function initTestimonialsSwiper() {
+    const selector = '.testimonials-swiper';
+    const container = document.querySelector(selector);
+    if (!container) return;
+    if (testimonialsSwiperInstance && typeof testimonialsSwiperInstance.destroy === 'function') {
+      testimonialsSwiperInstance.destroy(true, true);
+    }
+    const slidesCount = container.querySelectorAll('.swiper-slide').length;
+    testimonialsSwiperInstance = new Swiper(selector, buildUnifiedSwiperConfig(selector, slidesCount));
+  }
+  // Cache original testimonials slides and setup filters/animations
+  let testimonialsOriginalSlides = [];
+  function cacheOriginalTestimonials() {
+    const wrapper = document.querySelector('.testimonials-swiper .swiper-wrapper');
+    if (!wrapper) return;
+    // Cache as HTML strings to allow clean rebuilds
+    testimonialsOriginalSlides = Array.from(wrapper.querySelectorAll('.swiper-slide')).map((el) => el.outerHTML);
+  }
+
+  function rebuildTestimonialsSlides(filterFn) {
+    const wrapper = document.querySelector('.testimonials-swiper .swiper-wrapper');
+    if (!wrapper || !testimonialsOriginalSlides.length) return;
+    // Destroy current swiper before DOM mutations
+    if (testimonialsSwiperInstance && typeof testimonialsSwiperInstance.destroy === 'function') {
+      testimonialsSwiperInstance.destroy(true, true);
+    }
+
+    const temp = document.createElement('div');
+    temp.innerHTML = testimonialsOriginalSlides.join('');
+    const allSlides = Array.from(temp.children);
+    const filtered = typeof filterFn === 'function' ? allSlides.filter(filterFn) : allSlides;
+
+    // Rebuild wrapper with filtered slides
+    wrapper.innerHTML = '';
+    filtered.forEach((slide) => wrapper.appendChild(slide));
+
+    // Re-init swiper
+    initTestimonialsSwiper();
+    // Re-attach animations for new cards
+    initTestimonialCardsObserver();
+    // Update rating summary after rebuild
+    updateTestimonialsSummary();
+  }
+
+  // IntersectionObserver animations for testimonial cards
+  let testimonialCardsObserver = null;
+  function initTestimonialCardsObserver() {
+    const cards = document.querySelectorAll('.testimonial-card');
+    if (!cards.length) return;
+    if (!testimonialCardsObserver) {
+      testimonialCardsObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+            testimonialCardsObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.2, rootMargin: '0px 0px -10% 0px' });
+    }
+    cards.forEach((card) => testimonialCardsObserver.observe(card));
+  }
+
+  // --- Dynamic Rating Summary ---
+  function arabicReviewsLabel(n) {
+    if (n === 0) return '0 تقييم';
+    if (n === 1) return 'تقييم واحد';
+    if (n === 2) return 'تقييمان';
+    if (n >= 3 && n <= 10) return `${n} تقييمات`;
+    return `${n} تقييمًا`;
+  }
+
+  function buildStarsHTML(avg) {
+    const stars = [];
+    const full = Math.floor(avg);
+    const fraction = avg - full;
+    const half = fraction >= 0.25 && fraction < 0.75 ? 1 : 0;
+    const extraFull = fraction >= 0.75 ? 1 : 0;
+    const totalFull = Math.min(5, full + extraFull);
+    for (let i = 0; i < totalFull; i++) stars.push('<i class="fa-solid fa-star"></i>');
+    if (half && stars.length < 5) stars.push('<i class="fa-solid fa-star-half-stroke"></i>');
+    while (stars.length < 5) stars.push('<i class="fa-regular fa-star"></i>');
+    return stars.join('');
+  }
+
+  // --- Generic Animated Counter (supports decimals) ---
+  let avgRatingObserver = null;
+  const avgAnimatingMap = new WeakMap();
+
+  function resetCounter(el, decimals = 0) {
+    const zero = (0).toFixed(decimals);
+    el.textContent = zero;
+  }
+
+  function animateCounter(el, target, { duration = 2000, decimals = 0 } = {}) {
+    const startTime = performance.now();
+    const t = Number(target);
+    avgAnimatingMap.set(el, true);
+
+    function easeOutCubic(p) { return 1 - Math.pow(1 - p, 3); }
+
+    function step(now) {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = easeOutCubic(progress);
+      const value = t * eased;
+      el.textContent = value.toFixed(decimals);
+      if (progress < 1 && avgAnimatingMap.get(el)) {
+        requestAnimationFrame(step);
+      } else {
+        el.textContent = t.toFixed(decimals);
+        avgAnimatingMap.set(el, true);
+      }
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  function initAvgRatingCounter(decimals = 1) {
+    const el = document.querySelector('.rating-summary .average-rating');
+    if (!el) return;
+
+    // Create observer once
+    if (!avgRatingObserver) {
+      avgRatingObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const node = entry.target;
+          if (entry.isIntersecting) {
+            if (!avgAnimatingMap.get(node)) {
+              // reset and animate to target
+              resetCounter(node, decimals);
+              const target = Number(node.dataset.target || node.textContent || 0);
+              animateCounter(node, target, { duration: 2000, decimals });
+            }
+          } else {
+            // allow re-animate when leaves viewport
+            avgAnimatingMap.set(node, false);
+          }
+        });
+      }, { threshold: 0.6, rootMargin: '0px 0px -10% 0px' });
+    }
+
+    avgRatingObserver.observe(el);
+  }
+
+  function updateTestimonialsSummary() {
+    const summary = document.querySelector('.rating-summary');
+    if (!summary) return;
+    const avgEl = summary.querySelector('.average-rating');
+    const starsEl = summary.querySelector('.testimonial-stars');
+    const totalEl = summary.querySelector('.total-reviews');
+
+    const slides = Array.from(document.querySelectorAll('.testimonials-swiper .swiper-wrapper > .swiper-slide'))
+      .filter((el) => !el.classList.contains('swiper-slide-duplicate'));
+    const ratings = slides.map((s) => Number(s.getAttribute('data-rating'))).filter((n) => !Number.isNaN(n));
+    const count = ratings.length;
+    if (!count) return;
+    const sum = ratings.reduce((a, b) => a + b, 0);
+    const avg = Math.round((sum / count) * 10) / 10; // 1 decimal
+
+    if (avgEl) {
+      // Store target and prepare animated counter
+      const targetStr = avg.toFixed(1);
+      avgEl.dataset.target = targetStr;
+      // Reset display if not animated yet
+      if (!avgAnimatingMap.get(avgEl)) {
+        resetCounter(avgEl, 1);
+      }
+    }
+    if (starsEl) {
+      starsEl.setAttribute('aria-label', `${avg.toFixed(1)} من 5`);
+      starsEl.innerHTML = buildStarsHTML(avg);
+    }
+    if (totalEl) totalEl.textContent = `بناءً على ${arabicReviewsLabel(count)}`;
+    // Initialize observer-driven counter (once)
+    initAvgRatingCounter(1);
+  }
+
+  // Initialize testimonials on load
+  cacheOriginalTestimonials();
+  initTestimonialsSwiper();
+  initTestimonialCardsObserver();
+  updateTestimonialsSummary();
 
   // Work Cards Animation - Removed
 
@@ -673,20 +851,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (sponsorsSwiperInstance && typeof sponsorsSwiperInstance.destroy === 'function') {
       sponsorsSwiperInstance.destroy(true, true);
     }
-    sponsorsSwiperInstance = new Swiper('.sponsors-swiper', {
-      slidesPerView: 1,
-      spaceBetween: 30,
-      loop: true,
-      autoplay: { delay: 3000, disableOnInteraction: false },
-      breakpoints: {
-        700: { slidesPerView: 2 },
-        1024: { slidesPerView: 3 }
-      },
-      navigation: {
-        nextEl: '.sponsors-swiper .swiper-button-next',
-        prevEl: '.sponsors-swiper .swiper-button-prev',
-      },
-    });
+    const selector = '.sponsors-swiper';
+    const slidesCount = document.querySelectorAll(`${selector} .swiper-slide`).length;
+    sponsorsSwiperInstance = new Swiper(selector, buildUnifiedSwiperConfig(selector, slidesCount));
   }
 
 

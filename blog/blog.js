@@ -106,15 +106,18 @@ function initCategorySwiper(rootEl) {
     const nextEl = el.querySelector('.swiper-button-next');
     const prevEl = el.querySelector('.swiper-button-prev');
     // تهيئة
+    const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const instance = new Swiper(el, {
       slidesPerView: 1,
       spaceBetween: 24,
-      loop: slidesCount > 3,
-      autoplay: { delay: 3500, disableOnInteraction: false },
+      loop: true,
+      autoplay: prefersReduced ? false : { delay: 3500, disableOnInteraction: false },
+      speed: prefersReduced ? 0 : 550,
       breakpoints: {
         700: { slidesPerView: 2 },
         1024: { slidesPerView: 3 },
       },
+      keyboard: { enabled: true, onlyInViewport: true },
       navigation: {
         nextEl,
         prevEl,
