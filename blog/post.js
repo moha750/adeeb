@@ -157,15 +157,45 @@
       return match || null;
     }
 
-    async function incrementViews(id, current) {
-      if (!sb) return;
+    // منع احتساب المشاهدة مع كل تحديث للصفحة عبر فترة سماح محلية
+    const VIEW_COOLDOWN_MS = 60 * 60 * 1000; // ساعة واحدة
+    function viewedKey(id) { return `adeeb_post_viewed_${id}`; }
+    function shouldCountView(id) {
       try {
-        // محاولة زيادة المشاهدات بشكل مبسط
-        const next = (typeof current === 'number' ? current : 0) + 1;
-        await sb.from('blog_posts').update({ views: next }).eq('id', id);
-        el.views.textContent = next;
+        const raw = localStorage.getItem(viewedKey(id));
+        if (!raw) return true;
+        const last = Number(raw) || 0;
+        return (Date.now() - last) > VIEW_COOLDOWN_MS;
+      } catch { return true; }
+    }
+    function markViewRecorded(id) {
+      try { localStorage.setItem(viewedKey(id), String(Date.now())); } catch {}
+    }
+
+    async function incrementViews(id) {
+      if (!sb) { markViewRecorded(id); return; }
+      try {
+        // المحاولة الأولى: استدعاء RPC ذرّي إن كان مُنشأً في قاعدة البيانات
+        const { error: rpcErr } = await sb.rpc('increment_post_views', { p_post_id: id });
+        if (rpcErr) {
+          // بديل: قراءة العدد الحالي ثم تحديثه +1 (قد يفشل ذرّياً في السباقات الشديدة)
+          const { data: row, error: selErr } = await sb
+            .from('blog_posts')
+            .select('views')
+            .eq('id', id)
+            .single();
+          if (!selErr) {
+            const curDb = typeof row?.views === 'number' ? row.views : 0;
+            await sb.from('blog_posts').update({ views: curDb + 1 }).eq('id', id);
+          }
+        }
+        // تحديث واجهة المستخدم تفاؤليًا بزيادة واحدة
+        const cur = parseInt(el.views.textContent, 10) || 0;
+        el.views.textContent = String(cur + 1);
       } catch (e) {
         // تجاهل الخطأ بهدوء
+      } finally {
+        markViewRecorded(id);
       }
     }
 
@@ -393,8 +423,10 @@
         }
       } catch {}
       renderPost(post);
-      // زيادة المشاهدات بشكل غير حصري
-      incrementViews(postId, post.views);
+      // زيادة المشاهدات مع فترة سماح محلية لمنع العد مع كل تحديث صفحة
+      if (shouldCountView(postId)) {
+        incrementViews(postId);
+      }
       // تجهيز الإعجابات والتعليقات
       await refreshLikesUI(postId);
       await loadComments(postId);

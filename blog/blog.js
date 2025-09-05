@@ -77,21 +77,64 @@ function createParticles() {
 // مُركِّب بطاقة المقال
 function card(post) {
   const dateStr = post.published_at ? new Date(post.published_at).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+  const relTime = post.published_at ? formatRelativeTime(post.published_at) : '';
   const img = (post.image || post.image_url || post.thumbnail_url) || 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1400&auto=format&fit=crop';
   const title = post.title || '';
   const excerptSrc = (post.excerpt || post.content || '').toString();
   const excerpt = excerptSrc.slice(0, 160);
   const href = post.id ? `post.html?id=${encodeURIComponent(post.id)}` : '#';
+  const categories = Array.isArray(post.categories) ? post.categories.filter(Boolean).map(String) : [];
+  const categoryLabel = categories.length ? categories[0] : '';
+  const authorName = (post.author_name || post.author || '').toString();
+  const authorAvatar = (post.author_avatar || '').toString() || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(authorName || 'A') + '&background=E2E8F0&color=334155&size=64&rounded=true';
+  const views = typeof post.views === 'number' ? post.views : 0;
+  // قراءة المدة التقريبية (دقيقة/دقائق) — نحسبها من عدد الكلمات إن لم تتوفر قيمة في البيانات
+  const explicitReadMin = typeof post.reading_time === 'number' ? post.reading_time : (typeof post.reading_time_minutes === 'number' ? post.reading_time_minutes : null);
+  let readingMinutes = explicitReadMin;
+  if (readingMinutes == null) {
+    const plain = excerptSrc.replace(/<[^>]*>/g, ' ').trim();
+    const words = plain ? plain.split(/\s+/).length : 0;
+    readingMinutes = Math.max(1, Math.round(words / 200)); // 200 كلمة/دقيقة تقريباً
+  }
+  const commentsCount = typeof post.comments_count === 'number' ? post.comments_count : (typeof post.comments === 'number' ? post.comments : 0);
+  const likesCount = typeof post.likes_count === 'number' ? post.likes_count : (typeof post.likes === 'number' ? post.likes : 0);
   const el = document.createElement('article');
   el.className = 'post-card';
   el.innerHTML = `
-    <img class="post-thumb" src="${img}" alt="${title}" />
+    <div class="post-media">
+      <img class="post-thumb" src="${img}" alt="${title}" />
+      ${categoryLabel ? `<span class="post-badge" aria-label="التصنيف"><i class="fa-solid fa-tag"></i><span class="label">${categoryLabel}</span></span>` : ''}
+      <button class="post-share" type="button" aria-label="مشاركة"><i class="fa-solid fa-share-nodes"></i><span class="label">مشاركة</span></button>
+    </div>
     <div class="post-content">
-      <div class="post-meta"><i class="fa-regular fa-calendar"></i><span>${dateStr}</span></div>
+      <div class="post-meta">
+        <div class="post-author">
+          <img class="author-avatar" src="${authorAvatar}" alt="${authorName}" />
+          <span class="author-name">${authorName}</span>
+        </div>
+        ${relTime ? `<span class="dot">•</span><div class="post-readtime"><i class="fa-regular fa-clock"></i><span>${relTime}</span></div>` : ''}
+      </div>
       <h3 class="post-title">${title}</h3>
       ${excerpt ? `<p class="post-excerpt">${excerpt}${excerptSrc.length > 160 ? '…' : ''}</p>` : ''}
-      <a class="post-readmore" href="${href}"><i class="fa-solid fa-arrow-left"></i> قراءة المزيد</a>
+      <div class="post-engagement">
+        <span class="eng-item eng-views"><i class="fa-regular fa-eye"></i><span>${views}</span></span>
+        <span class="eng-item eng-likes"><i class="fa-regular fa-heart"></i><span>${likesCount}</span></span>
+        <span class="eng-item eng-comments"><i class="fa-regular fa-comments"></i><span>${commentsCount}</span></span>
+      </div>
+      <div class="post-footer">
+        <a class="post-readmore" href="${href}"><i class="fa-solid fa-arrow-left"></i> قراءة المزيد</a>
+        <div class="post-time-bottom"><i class="fa-solid fa-hourglass-half"></i><span>مدة القراءة: ${readingMinutes} دقيقة</span></div>
+      </div>
     </div>`;
+  const shareBtn = el.querySelector('.post-share');
+  if (shareBtn) {
+    const urlAbs = new URL(href, location.href).toString();
+    shareBtn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      sharePost({ title, url: urlAbs, text: excerpt });
+    });
+  }
   return el;
 }
 
@@ -241,6 +284,54 @@ async function loadPosts() {
     if (error) throw error;
 
     const posts = (data || []).filter(p => !p.published_at || new Date(p.published_at) <= new Date());
+
+    // جلب بروفايل الكاتب لكل user_id مرة واحدة وتعزيز البيانات بالاسم والصورة
+    try {
+      const userIds = Array.from(new Set(posts.map(p => p.user_id).filter(Boolean)));
+      if (sb && userIds.length) {
+        const { data: profiles, error: profErr } = await sb
+          .from('auth_users_public')
+          .select('user_id, display_name, avatar_url')
+          .in('user_id', userIds);
+        if (!profErr && Array.isArray(profiles)) {
+          const map = new Map(profiles.map(pr => [pr.user_id, pr]));
+          posts.forEach(p => {
+            const pr = map.get(p.user_id);
+            if (pr) {
+              p.author_name = pr.display_name || p.author_name || p.author || '';
+              if (pr.avatar_url) p.author_avatar = pr.avatar_url;
+            }
+          });
+        }
+      }
+    } catch {}
+
+    // جلب عدد الإعجابات والتعليقات لكل تدوينة دفعة واحدة لإظهارها في البطاقات
+    try {
+      const ids = Array.from(new Set(posts.map(p => p.id).filter(id => id != null)));
+      if (sb && ids.length) {
+        // جلب جميع صفوف الإعجابات لهذه التدوينات ثم حساب العدد لكل post_id
+        const [{ data: likesRows, error: likesErr }, { data: commentsRows, error: commentsErr }] = await Promise.all([
+          sb.from('blog_likes').select('post_id').in('post_id', ids),
+          sb.from('blog_comments').select('post_id').in('post_id', ids),
+        ]);
+        if (!likesErr && Array.isArray(likesRows)) {
+          const likeMap = new Map();
+          likesRows.forEach(r => {
+            const pid = r.post_id; likeMap.set(pid, (likeMap.get(pid) || 0) + 1);
+          });
+          posts.forEach(p => { p.likes_count = likeMap.get(p.id) || 0; });
+        }
+        if (!commentsErr && Array.isArray(commentsRows)) {
+          const comMap = new Map();
+          commentsRows.forEach(r => {
+            const pid = r.post_id; comMap.set(pid, (comMap.get(pid) || 0) + 1);
+          });
+          posts.forEach(p => { p.comments_count = comMap.get(p.id) || 0; });
+        }
+      }
+    } catch {}
+
     if (!posts.length) { container.innerHTML = ''; return; }
 
     // إنشاء شجرة التصنيفات ثم عرضها
@@ -356,4 +447,59 @@ if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     el.style.animation = 'none';
     el.style.transition = 'none';
   });
+}
+
+// تنسيق نسبي للوقت مثل "منذ 3 ساعات"
+function formatRelativeTime(dateInput) {
+  try {
+    const d = typeof dateInput === 'string' || typeof dateInput === 'number' ? new Date(dateInput) : dateInput;
+    const now = new Date();
+    const diffMs = now - d;
+    if (!isFinite(diffMs)) return '';
+    const sec = Math.floor(diffMs / 1000);
+    const min = Math.floor(sec / 60);
+    const hr = Math.floor(min / 60);
+    const day = Math.floor(hr / 24);
+    if (sec < 60) return 'الآن';
+    if (min < 60) return `منذ ${min} دقيقة`;
+    if (hr < 24) return `منذ ${hr} ساعة`;
+    if (day < 30) return `منذ ${day} يوم`;
+    // fallback إلى تاريخ قصير بالعربية
+    return d.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+  } catch {
+    return '';
+  }
+}
+
+// مشاركة رابط المقال باستخدام Web Share API مع بديل النسخ إلى الحافظة
+function sharePost({ title, url, text }) {
+  try {
+    if (navigator.share) {
+      navigator.share({ title: title || document.title, text: text || '', url }).catch(() => {});
+      return;
+    }
+  } catch {}
+  const toCopy = url;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(toCopy).then(() => {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire({
+          icon: 'success',
+          title: 'تم نسخ الرابط',
+          text: 'يمكنك الآن لصقه ومشاركته',
+          confirmButtonText: 'حسناً',
+          customClass: { popup: 'custom-swal-popup' }
+        });
+      } else {
+        alert('تم نسخ رابط المقال.');
+      }
+    }).catch(() => alert(toCopy));
+  } else {
+    // حل أخير
+    try {
+      prompt('انسخ الرابط التالي:', toCopy);
+    } catch {
+      alert(toCopy);
+    }
+  }
 }
