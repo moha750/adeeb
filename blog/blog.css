@@ -1640,12 +1640,17 @@ background-color: #fff;  overflow: hidden;
 }
 
 /* Footer Styles */
+.blog-page {
+  /* منع التمرير الأفقي الذي قد ينتج عن عناصر مطلقة التموضع */
+  overflow-x: hidden;
+}
 .site-footer {
   background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
   padding: 3rem 0 1rem;
-  margin-top: 4rem;
   border-top: 1px solid #e2e8f0;
   position: relative;
+  /* قص أي تجاوز رأسي/أفقي من الزخارف (::before/::after) حتى لا تُنشئ مساحة بيضاء إضافية أسفل الصفحة */
+  overflow: clip;
 }
 
 .site-footer::before {
