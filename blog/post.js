@@ -52,6 +52,8 @@
 
     // أدوات مساعدة
     const sb = window.sbClient || null; // من supabase-config.js
+    let currentUser = null;
+    let isBlogger = false;
     const q = new URLSearchParams(window.location.search);
     const postId = q.get('id');
 
@@ -73,6 +75,51 @@
       commentBody: document.getElementById('commentBody'),
       commentHint: document.getElementById('commentHint')
     };
+
+    // --- Auth helpers: fetch current session and determine blogger role ---
+    async function refreshAuth() {
+      try {
+        if (!sb) { currentUser = null; isBlogger = false; return; }
+        const { data: { session } } = await sb.auth.getSession();
+        currentUser = session?.user || null;
+        const role = currentUser?.user_metadata?.role || '';
+        isBlogger = role === 'blogger';
+      } catch {
+        currentUser = null; isBlogger = false;
+      }
+    }
+
+    function displayNameFromUser(user) {
+      if (!user) return '';
+      const md = user.user_metadata || {};
+      return md.display_name || md.name || user.email || '';
+    }
+    function avatarFromUser(user) {
+      if (!user) return '';
+      const md = user.user_metadata || {};
+      return (md.avatar_url && String(md.avatar_url).trim()) || '';
+    }
+
+    function enforceCommentAccessUI() {
+      if (!el.commentForm) return;
+      const submitBtn = el.commentForm.querySelector('button[type="submit"]');
+      if (isBlogger && currentUser) {
+        // Blogger: allow typing, hide name field and show identity hint
+        if (el.commentName) el.commentName.style.display = 'none';
+        el.commentBody.disabled = false;
+        if (submitBtn) submitBtn.disabled = false;
+        const dn = displayNameFromUser(currentUser);
+        const av = avatarFromUser(currentUser);
+        const avatarImg = av ? `<img src="${av}" alt="${dn}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;margin-inline-start:6px" onerror="this.remove()" />` : '';
+        el.commentHint.innerHTML = `سوف يتم النشر باسم <strong>${dn || 'مدون'}</strong> ${avatarImg}`;
+      } else {
+        // Not blogger: disable
+        el.commentBody.disabled = true;
+        if (submitBtn) submitBtn.disabled = true;
+        if (el.commentName) el.commentName.disabled = true;
+        el.commentHint.innerHTML = `التعليقات متاحة للمدونين فقط. <a href="../blogger/login.html">سجّل الدخول</a> أو <a href="../blogger/register.html">أنشئ حساب مدون</a>.`;
+      }
+    }
 
     if (!postId) {
       // إذا فُتحت الصفحة مباشرة دون id نعيد المستخدم لقائمة المدونة
@@ -297,18 +344,48 @@
     function getCommentsLS(id) { return lsGet(commentsLSKey(id), []); }
     function setCommentsLS(id, arr) { lsSet(commentsLSKey(id), arr); }
 
-    function renderComments(items) {
+    // جلب ملفات المعلقين دفعة واحدة عبر user_id
+    async function fetchProfilesByUserIds(userIds) {
+      if (!sb || !userIds || !userIds.length) return new Map();
+      try {
+        const { data, error } = await sb
+          .from('auth_users_public')
+          .select('user_id, display_name, avatar_url')
+          .in('user_id', Array.from(new Set(userIds)));
+        if (error) throw error;
+        return new Map((data || []).map(r => [r.user_id, r]));
+      } catch {
+        return new Map();
+      }
+    }
+
+    function safeAvatarForName(name, avatarUrl) {
+      if (avatarUrl && String(avatarUrl).trim()) return avatarUrl;
+      const n = encodeURIComponent(name || 'U');
+      return `https://ui-avatars.com/api/?name=${n}&background=E2E8F0&color=334155&size=64&rounded=true`;
+    }
+
+    async function renderComments(items) {
       if (!Array.isArray(items) || items.length === 0) {
         el.commentsList.textContent = 'لا توجد تعليقات بعد.';
         return;
       }
       el.commentsList.innerHTML = '';
+      // Resolve profiles for commenters that have user_id
+      const uids = items.map(c => c.user_id).filter(Boolean);
+      const profMap = await fetchProfilesByUserIds(uids);
       items.forEach(c => {
+        const pr = c.user_id ? profMap.get(c.user_id) : null;
+        const name = pr?.display_name || c.author_name || 'مجهول';
+        const avatar = safeAvatarForName(name, pr?.avatar_url || c.author_avatar);
+        const when = c.created_at ? new Date(c.created_at).toLocaleString('ar-SA') : '';
         const div = document.createElement('div');
         div.className = 'comment-item';
-        const when = c.created_at ? new Date(c.created_at).toLocaleString('ar-SA') : '';
         div.innerHTML = `
-          <div class="comment-meta"><i class="fa-regular fa-user"></i><strong>${(c.author_name||'مجهول')}</strong><span>•</span><span>${when}</span></div>
+          <div class="comment-meta">
+            <img src="${avatar}" alt="${name}" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.remove()" />
+            <strong>${name}</strong><span>•</span><span>${when}</span>
+          </div>
           <div class="comment-body">${(c.body||'').toString().replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
         `;
         el.commentsList.appendChild(div);
@@ -327,7 +404,16 @@
     async function addCommentSB(id, name, body) {
       if (!sb) return false;
       try {
-        const payload = { post_id: id, author_name: name || 'مجهول', body: body };
+        // enforce blogger identity
+        const payload = { post_id: id, body: body };
+        if (currentUser) {
+          payload.user_id = currentUser.id; // if column exists
+          payload.author_name = displayNameFromUser(currentUser);
+          const av = avatarFromUser(currentUser);
+          if (av) payload.author_avatar = av; // if column exists
+        } else {
+          payload.author_name = name || 'مجهول';
+        }
         const { error } = await sb.from('blog_comments').insert(payload);
         if (error) throw error;
         return true;
@@ -336,9 +422,9 @@
 
     async function loadComments(id) {
       const sbItems = await fetchCommentsSB(id);
-      if (Array.isArray(sbItems)) { renderComments(sbItems); return { mode: 'sb', items: sbItems }; }
+      if (Array.isArray(sbItems)) { await renderComments(sbItems); return { mode: 'sb', items: sbItems }; }
       const lsItems = getCommentsLS(id);
-      renderComments(lsItems);
+      await renderComments(lsItems);
       return { mode: 'ls', items: lsItems };
     }
 
@@ -384,8 +470,13 @@
     if (el.commentForm) {
       el.commentForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        // Disallow if not blogger
+        if (!isBlogger) {
+          el.commentHint.innerHTML = 'التعليقات متاحة للمدونين فقط.';
+          return;
+        }
         el.commentHint.textContent = 'جارٍ الإرسال…';
-        const ok = await submitComment(postId, el.commentName.value, el.commentBody.value);
+        const ok = await submitComment(postId, el.commentName ? el.commentName.value : '', el.commentBody.value);
         el.commentHint.textContent = ok ? 'تم الإرسال بنجاح' : 'تعذر الإرسال، حاول لاحقاً';
         if (ok) { el.commentBody.value = ''; }
         setTimeout(() => { el.commentHint.textContent = ''; }, 2000);
@@ -394,6 +485,9 @@
 
     // جلب التدوينة وعرضها
     (async () => {
+      // Prepare auth and comment access state
+      await refreshAuth();
+      enforceCommentAccessUI();
       el.content.textContent = 'جاري التحميل…';
       let post = await fetchPostFromSupabase(postId);
       if (!post) post = fetchPostFromLocal(postId);

@@ -37,16 +37,42 @@ if (menuToggle && nav) {
 
 // تأثير Parallax للطبقات
 function initParallax() {
+  const hero = document.querySelector('.blog-hero');
   const layers = document.querySelectorAll('.parallax-layer');
-  if (!layers.length) return;
-  window.addEventListener('scroll', () => {
-    const scrollY = window.scrollY;
-    layers.forEach(layer => {
+  if (!hero || !layers.length) return;
+
+  const update = () => {
+    const rect = hero.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const inView = rect.bottom > 0 && rect.top < vh;
+    // مقدار التمرير داخل البطل فقط: عندما يكون أعلى البطل قد تجاوز أعلى الشاشة
+    // نقيّده بين 0 وارتفاع البطل حتى لا يستمر التحريك بعد الخروج من البطل
+    const visibleProgress = Math.min(
+      Math.max(-rect.top, 0),
+      Math.max(rect.height, 0)
+    );
+
+    // حدد أقصى مقدار إزاحة لمنع التكرار البصري عند الحواف
+    const maxShift = Math.min(120, Math.max(60, rect.height * 0.25));
+    layers.forEach((layer) => {
       const depth = parseFloat(layer.getAttribute('data-depth') || '0');
-      const movement = -(scrollY * depth);
-      layer.style.transform = `translateY(${movement}px)`;
+      const movement = -(
+        Math.min(visibleProgress, maxShift) * depth
+      );
+      // حرّك خلفية الطبقة لإبقاء الموج مثبتاً أسفل البطل ومنع التكرار البصري عند الحافة
+      layer.style.backgroundPosition = `center calc(100% + ${movement}px)`;
+      // أزل أي ترجمات سابقة إن وُجدت
+      layer.style.transform = 'translateZ(0)';
+      layer.style.opacity = inView ? '1' : '0';
+      layer.style.visibility = inView ? 'visible' : 'hidden';
     });
-  });
+  };
+
+  // حدث التمرير وتغيير الحجم
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  // استدعاء أولي لضبط القيم
+  update();
 }
 
 // إنشاء جسيمات متحركة في الخلفية
@@ -377,9 +403,66 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
+  // تمييز رابط النافبار النشط حسب موضع التمرير (مماثل للرئيسية)
+  (function initBlogScrollSpy() {
+    const headerEl = document.querySelector('.header');
+    const headerHeight = headerEl ? headerEl.offsetHeight : 80;
+    const links = Array.from(document.querySelectorAll('.nav-link'));
+    const linkByHref = new Map(links.map(a => [a.getAttribute('href') || '', a]));
+
+    const postsSection = document.getElementById('posts');
+
+    function setActiveLinkByHref(href) {
+      links.forEach(l => l.classList.remove('active'));
+      const el = linkByHref.get(href);
+      if (el) el.classList.add('active');
+    }
+
+    function updateActiveOnScroll() {
+      const scrollY = window.scrollY + headerHeight + 10; // تعويض ارتفاع الهيدر
+      if (postsSection) {
+        const rect = postsSection.getBoundingClientRect();
+        const top = rect.top + window.scrollY;
+        const bottom = top + postsSection.offsetHeight;
+        if (scrollY >= top && scrollY < bottom) {
+          // داخل قسم التدوينات
+          setActiveLinkByHref('#posts');
+          return;
+        }
+      }
+      // الوضع الافتراضي قرب الأعلى: فعل "مرافئ"
+      // ابحث عن رابط مرافئ (قد يكون blog.html أو ./blog.html)
+      const candidates = ['blog.html', './blog.html'];
+      let set = false;
+      for (const href of candidates) { if (linkByHref.has(href)) { setActiveLinkByHref(href); set = true; break; } }
+      if (!set) {
+        // كخيار أخير، إن لم نجد مرافئ، لا نفعل شيئًا
+      }
+    }
+
+    // تفعيل أولي
+    updateActiveOnScroll();
+    // عند التمرير
+    window.addEventListener('scroll', updateActiveOnScroll, { passive: true });
+
+    // عند الضغط على روابط نفس الصفحة، حدّث الحالة مباشرة
+    links.forEach(a => {
+      const href = a.getAttribute('href') || '';
+      if (href.startsWith('#')) {
+        a.addEventListener('click', () => setActiveLinkByHref(href));
+      }
+    });
+  })();
+
   // تحديث سنة الحقوق
   const yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
+  // تحديث سنة الحقوق في الفوتر الجديد
+  const footerYearEl = document.getElementById('footerYear');
+  if (footerYearEl) footerYearEl.textContent = new Date().getFullYear();
+
+  // تهيئة نموذج النشرة البريدية
+  initNewsletterForm();
 
   // زر العودة للأعلى
   const backToTopBtn = document.getElementById('back-to-top');
@@ -414,6 +497,50 @@ document.addEventListener('DOMContentLoaded', function() {
       if (fx) fx.style.transform = 'translateY(100%)';
     });
   });
+
+  // تبديل زر الدعوة (Outline) بحسب حالة تسجيل الدخول
+  (function initBlogHeroCtaAuthAware() {
+    const sb = window.sbClient || null;
+    const cta = document.getElementById('blogCtaBtn');
+    if (!cta) return;
+
+    const iconEl = cta.querySelector('i');
+    const textEl = cta.querySelector('span');
+    const setLoggedIn = () => {
+      if (iconEl) {
+        iconEl.className = 'fa-solid fa-feather-pointed';
+      }
+      if (textEl) {
+        textEl.textContent = 'أنشر تدوينتك';
+      }
+      cta.setAttribute('href', '../blogger/dashboard.html');
+    };
+    const setLoggedOut = () => {
+      if (iconEl) {
+        iconEl.className = 'fa-solid fa-user-pen';
+      }
+      if (textEl) {
+        textEl.textContent = 'سجل حساب مدون';
+      }
+      cta.setAttribute('href', '../register.html');
+    };
+
+    // الحالة الأولية
+    if (!sb) {
+      setLoggedOut();
+      return;
+    }
+    sb.auth.getUser().then(({ data }) => {
+      if (data && data.user) setLoggedIn(); else setLoggedOut();
+    }).catch(() => setLoggedOut());
+
+    // الاستماع لتغيرات الجلسة
+    try {
+      sb.auth.onAuthStateChange((_event, session) => {
+        if (session && session.user) setLoggedIn(); else setLoggedOut();
+      });
+    } catch {}
+  })();
 
   // انضم إلينا: إظهار خيارات إنشاء حساب/تسجيل الدخول للمدونين
   const joinBtn = document.getElementById('joinBtn');
@@ -503,3 +630,82 @@ function sharePost({ title, url, text }) {
     }
   }
 }
+
+// تهيئة نموذج النشرة البريدية + رسائل الحالة
+function initNewsletterForm() {
+  const form = document.getElementById('newsletterForm');
+  const messageEl = document.getElementById('newsletterMessage');
+  if (!form || !messageEl) return;
+
+  let submitting = false;
+  const emailInputEl = form.querySelector('input[type="email"]');
+  const submitBtn = form.querySelector('.newsletter-btn');
+
+  const isValidEmail = (val) => {
+    // RFC5322-like simple validation
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val);
+  };
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    if (submitting) return; // امنع الإرسال المكرر
+    const email = (emailInputEl?.value || '').trim();
+
+    if (!email || !isValidEmail(email)) {
+      showNewsletterMessage('يرجى إدخال بريد إلكتروني صحيح', 'error');
+      return;
+    }
+
+    showNewsletterMessage('جاري الإشتراك...', 'loading');
+    submitting = true;
+    if (submitBtn) {
+      submitBtn.setAttribute('disabled', 'true');
+      submitBtn.style.cursor = 'not-allowed';
+    }
+    try {
+      // موضع الاتصال بمزود الخدمة (Supabase/خدمة بريد)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      showNewsletterMessage('تم الاشتراك بنجاح! شكراً لك.', 'success');
+      if (emailInputEl) emailInputEl.value = '';
+      setTimeout(() => {
+        messageEl.textContent = '';
+        messageEl.className = 'newsletter-message';
+      }, 3000);
+    } catch (err) {
+      showNewsletterMessage('حدث خطأ أثناء الاشتراك. يرجى المحاولة لاحقاً.', 'error');
+    } finally {
+      submitting = false;
+      if (submitBtn) submitBtn.removeAttribute('disabled');
+    }
+  });
+}
+
+function showNewsletterMessage(message, type) {
+  const messageEl = document.getElementById('newsletterMessage');
+  if (!messageEl) return;
+  messageEl.textContent = message;
+  messageEl.className = `newsletter-message ${type}`;
+}
+
+// Header Scroll Effects
+const logoImg = document.querySelector(".logo-img");
+const logoText = document.querySelector(".logo-text");
+const progressBar = document.querySelector(".progress-bar");
+
+const header = document.querySelector(".header");
+header.classList.add("blue");
+let lastScroll = 0;
+
+window.addEventListener("scroll", () => {
+  const currentScroll = window.scrollY;
+
+  // إخفاء الهيدر عند النزول وإظهاره عند الصعود
+  if (currentScroll > lastScroll && currentScroll > 100) {
+    header.classList.add("hidden");
+  } else {
+    header.classList.remove("hidden");
+  }
+
+  lastScroll = currentScroll;
+});

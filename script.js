@@ -1168,15 +1168,6 @@ let lastScroll = 0;
 window.addEventListener("scroll", () => {
   const currentScroll = window.scrollY;
 
-  // تغيير لون الهيدر
-  if (currentScroll > 100) {
-    header.classList.add("scrolled");
-    header.classList.remove("blue");
-  } else {
-    header.classList.remove("scrolled");
-    header.classList.add("blue");
-  }
-
   // إخفاء الهيدر عند النزول وإظهاره عند الصعود
   if (currentScroll > lastScroll && currentScroll > 100) {
     header.classList.add("hidden");
