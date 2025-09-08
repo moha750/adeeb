@@ -1493,28 +1493,51 @@ background-color: #fff;  overflow: hidden;
   position: relative;
 }
 
+.swiper-button {
+  display: flex;
+  justify-content: center;
+  flex-direction: row-reverse;
+  margin: 3rem 0 1rem;
+  gap: 1rem;
+}
+
+.swiper .swiper-button-next,
+.swiper .swiper-button-prev {
+  position: static !important;
+}
+
+.swiper-button-next:after,
+.swiper-button-prev:after {
+  font-size: 20px !important;
+}
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 20px !important;
+}
+
 .swiper-button-next,
 .swiper-button-prev {
-  width: 48px;
-  height: 48px;
-  background: #fff;
+  color: #fff !important;
+  background: #52b69a;
   border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 44px !important;
+  height: 44px !important;
+  margin-top: -22px ;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-  color: #274060;
-  top: 45%;
 }
 
 .swiper-button-next:hover,
 .swiper-button-prev:hover {
-  background: #274060;
-  color: #fff;
+  background: #1e6091;
+  color: white ;
   transform: scale(1.1);
 }
 
 .swiper-button-next::after,
 .swiper-button-prev::after {
-  font-size: 1.2rem;
+  font-size: 16px !important;
   font-weight: bold;
 }
 
