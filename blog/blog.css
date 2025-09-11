@@ -450,6 +450,40 @@ body.menu-open {
   font-family: 'Lyon Arabic Display', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif !important;
 }
 
+/* شاشة التحميل العامة للمدونة */
+.page-loader {
+  position: fixed;
+  inset: 0;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  z-index: 2000;
+  transition: opacity 400ms ease, visibility 400ms ease;
+}
+
+.page-loader.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loader-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.lottie-logo {
+  width: clamp(120px, 22vw, 220px);
+  height: clamp(120px, 22vw, 220px);
+}
+
+.loader-text {
+  font-family: 'fb';
+  color: #274060;
+}
+
 /* تأثير Parallax في الخلفية */
 .blog-hero {
   padding: 6rem 0rem 2rem;
@@ -881,7 +915,8 @@ body.menu-open {
   /* حاوية بمظهر بطاقة أنيق مع خلفيات طبقية وزخارف ناعمة */
   padding: 2rem clamp(1rem, 4vw, 2rem);
   position: relative;
-background-color: #fff;  overflow: hidden;
+background-color: #fff; 
+overflow: hidden;
   isolation: isolate;
 }
 
@@ -1669,7 +1704,7 @@ background-color: #fff;  overflow: hidden;
 }
 .site-footer {
   background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
-  padding: 3rem 0 1rem;
+  padding-top: 3rem;
   border-top: 1px solid #e2e8f0;
   position: relative;
   /* قص أي تجاوز رأسي/أفقي من الزخارف (::before/::after) حتى لا تُنشئ مساحة بيضاء إضافية أسفل الصفحة */
@@ -2100,7 +2135,7 @@ background-color: #fff;  overflow: hidden;
 /* قسم حقوق النشر */
 .footer-bottom {
   text-align: center;
-  padding-top: 2rem;
+  padding: 1.5rem 0;
   border-top: 1px solid #e2e8f0;
 }
 

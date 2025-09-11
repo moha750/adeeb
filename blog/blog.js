@@ -5,6 +5,34 @@ const menuToggle = document.getElementById("menuToggle");
 const nav = document.querySelector(".nav");
 const body = document.body;
 
+// شاشة التحميل باستخدام Lottie
+let __adeebLoaderHidden = false;
+function initPageLoader() {
+  try {
+    const container = document.getElementById('lottieLogo');
+    if (container && window.lottie) {
+      window.lottie.loadAnimation({
+        container,
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: '../logo.json'
+      });
+    }
+    // إخفاء آمن بعد مهلة قصوى
+    setTimeout(() => hidePageLoader(), 5000);
+  } catch {}
+}
+
+function hidePageLoader() {
+  if (__adeebLoaderHidden) return;
+  const el = document.getElementById('pageLoader');
+  if (el) {
+    el.classList.add('hidden');
+    __adeebLoaderHidden = true;
+  }
+}
+
 if (menuToggle && nav) {
   menuToggle.addEventListener("click", function () {
     this.classList.toggle("active");
@@ -296,6 +324,7 @@ async function loadPosts() {
         </p>
       </div>
     `;
+    hidePageLoader();
     return;
   }
 
@@ -358,7 +387,7 @@ async function loadPosts() {
       }
     } catch {}
 
-    if (!posts.length) { container.innerHTML = ''; return; }
+    if (!posts.length) { container.innerHTML = ''; hidePageLoader(); return; }
 
     // إنشاء شجرة التصنيفات ثم عرضها
     const tree = buildCategoryTree(posts);
@@ -368,6 +397,8 @@ async function loadPosts() {
     topEntries.forEach(([name, node]) => renderCategoryNode(container, name, node, 1));
     // تأكيد تهيئة أي سلايدرات أنشئت على المستوى الأعلى
     initCategorySwiper(container);
+    // انتهى التحميل بنجاح
+    hidePageLoader();
   } catch (error) {
     console.warn('Failed to fetch blog posts from Supabase', error);
     container.innerHTML = `
@@ -385,11 +416,14 @@ async function loadPosts() {
         </button>
       </div>
     `;
+    hidePageLoader();
   }
 }
 
 // تهيئة جميع الوظائف عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
+  // تهيئة شاشة التحميل
+  initPageLoader();
   // تمرير سلس لروابط نفس الصفحة
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function(e) {
@@ -484,7 +518,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // إنشاء الجسيمات المتحركة
   createParticles();
   // تحميل المقالات
-  loadPosts();
+  const lp = loadPosts();
+  if (lp && typeof lp.finally === 'function') {
+    lp.finally(() => hidePageLoader());
+  }
 
   // إضافة تأثيرات تفاعلية للأزرار
   document.querySelectorAll('.btn').forEach(btn => {
