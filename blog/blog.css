@@ -8,6 +8,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  scroll-behavior: smooth;
 }
 
 /* Local font families matching the names used across the styles (fl, fr, fm, fb, fbb) */
@@ -448,40 +449,6 @@ body.menu-open {
 /* تطبيق الخط على صفحة المدونة مع استثناء عناصر Font Awesome حتى لا تختفي الأيقونات */
 .blog-page :not(.fa):not(.fas):not(.far):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-brands) {
   font-family: 'Lyon Arabic Display', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif !important;
-}
-
-/* شاشة التحميل العامة للمدونة */
-.page-loader {
-  position: fixed;
-  inset: 0;
-  background: #ffffff;
-  display: grid;
-  place-items: center;
-  z-index: 2000;
-  transition: opacity 400ms ease, visibility 400ms ease;
-}
-
-.page-loader.hidden {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.loader-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-}
-
-.lottie-logo {
-  width: clamp(120px, 22vw, 220px);
-  height: clamp(120px, 22vw, 220px);
-}
-
-.loader-text {
-  font-family: 'fb';
-  color: #274060;
 }
 
 /* تأثير Parallax في الخلفية */
@@ -2264,4 +2231,39 @@ overflow: hidden;
   .newsletter-content p {
     font-size: 1rem;
   }
+}
+
+/* ====== Global Loader Overlay (Lottie) ====== */
+.adeeb-loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: none; /* toggled via JS */
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.adeeb-loader-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 24px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 30px rgba(39, 64, 96, 0.15);
+}
+
+.adeeb-loader-anim {
+  width: 120px;
+  height: 120px;
+}
+
+.adeeb-loader-text {
+  font-family: 'fb';
+  color: #274060;
 }

@@ -5,31 +5,39 @@ const menuToggle = document.getElementById("menuToggle");
 const nav = document.querySelector(".nav");
 const body = document.body;
 
-// شاشة التحميل باستخدام Lottie
-let __adeebLoaderHidden = false;
-function initPageLoader() {
-  try {
-    const container = document.getElementById('lottieLogo');
-    if (container && window.lottie) {
-      window.lottie.loadAnimation({
+// ===== Loader (Lottie) Helpers =====
+let __adeebLottie = null;
+let __adeebLoaderEl = null;
+function ensureLoaderInit() {
+  if (!__adeebLoaderEl) __adeebLoaderEl = document.getElementById('adeebLoader');
+  const container = document.getElementById('adeebLottie');
+  if (container && !__adeebLottie && typeof lottie !== 'undefined') {
+    try {
+      __adeebLottie = lottie.loadAnimation({
         container,
         renderer: 'svg',
         loop: true,
         autoplay: true,
         path: '../logo.json'
       });
-    }
-    // إخفاء آمن بعد مهلة قصوى
-    setTimeout(() => hidePageLoader(), 5000);
-  } catch {}
+    } catch {}
+  }
 }
-
+function showPageLoader(text) {
+  ensureLoaderInit();
+  try {
+    const t = document.querySelector('.adeeb-loader-text');
+    if (t && text) t.textContent = text;
+  } catch {}
+  if (__adeebLoaderEl) {
+    __adeebLoaderEl.style.display = 'flex';
+    __adeebLoaderEl.setAttribute('aria-hidden', 'false');
+  }
+}
 function hidePageLoader() {
-  if (__adeebLoaderHidden) return;
-  const el = document.getElementById('pageLoader');
-  if (el) {
-    el.classList.add('hidden');
-    __adeebLoaderHidden = true;
+  if (__adeebLoaderEl) {
+    __adeebLoaderEl.style.display = 'none';
+    __adeebLoaderEl.setAttribute('aria-hidden', 'true');
   }
 }
 
@@ -324,7 +332,6 @@ async function loadPosts() {
         </p>
       </div>
     `;
-    hidePageLoader();
     return;
   }
 
@@ -387,7 +394,7 @@ async function loadPosts() {
       }
     } catch {}
 
-    if (!posts.length) { container.innerHTML = ''; hidePageLoader(); return; }
+    if (!posts.length) { container.innerHTML = ''; return; }
 
     // إنشاء شجرة التصنيفات ثم عرضها
     const tree = buildCategoryTree(posts);
@@ -397,8 +404,6 @@ async function loadPosts() {
     topEntries.forEach(([name, node]) => renderCategoryNode(container, name, node, 1));
     // تأكيد تهيئة أي سلايدرات أنشئت على المستوى الأعلى
     initCategorySwiper(container);
-    // انتهى التحميل بنجاح
-    hidePageLoader();
   } catch (error) {
     console.warn('Failed to fetch blog posts from Supabase', error);
     container.innerHTML = `
@@ -416,14 +421,13 @@ async function loadPosts() {
         </button>
       </div>
     `;
-    hidePageLoader();
   }
 }
 
 // تهيئة جميع الوظائف عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
-  // تهيئة شاشة التحميل
-  initPageLoader();
+  // تهيئة اللودر
+  ensureLoaderInit();
   // تمرير سلس لروابط نفس الصفحة
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function(e) {
@@ -517,11 +521,11 @@ document.addEventListener('DOMContentLoaded', function() {
   initParallax();
   // إنشاء الجسيمات المتحركة
   createParticles();
-  // تحميل المقالات
-  const lp = loadPosts();
-  if (lp && typeof lp.finally === 'function') {
-    lp.finally(() => hidePageLoader());
-  }
+  // تحميل المقالات مع شاشة التحميل
+  (async () => {
+    showPageLoader('جاري تحميل المقالات…');
+    try { await loadPosts(); } finally { hidePageLoader(); }
+  })();
 
   // إضافة تأثيرات تفاعلية للأزرار
   document.querySelectorAll('.btn').forEach(btn => {

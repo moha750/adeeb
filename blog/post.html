@@ -6,17 +6,8 @@
     <title>قراءة التدوينة — مرافئ</title>
     <link rel="stylesheet" href="post.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
-    <!-- Lottie for loader -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
   </head>
   <body class="blog-page">
-    <!-- شاشة التحميل -->
-    <div id="pageLoader" class="page-loader" aria-live="polite" aria-busy="true">
-      <div class="loader-inner">
-        <div id="lottieLogo" class="lottie-logo" aria-hidden="true"></div>
-        <div class="loader-text">جارٍ التحميل…</div>
-      </div>
-    </div>
     <!-- قسم: الهيدر (مطابق للرئيسية) -->
     <header class="header">
       <div class="header-container">
@@ -274,7 +265,15 @@
         </div>
       </div>
     </footer>
+    <!-- شاشة التحميل العامة للمدونة -->
+    <div id="adeebLoader" class="adeeb-loader-overlay" aria-hidden="true" style="display:none">
+      <div class="adeeb-loader-box">
+        <div id="adeebLottie" class="adeeb-loader-anim" aria-label="جاري التحميل" role="img"></div>
+        <div class="adeeb-loader-text">جاري التحميل…</div>
+      </div>
+    </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../supabase-config.js"></script>
     <script src="post.js"></script>

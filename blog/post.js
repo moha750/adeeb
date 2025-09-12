@@ -6,32 +6,39 @@
   const menuToggle = document.getElementById('menuToggle');
   const nav = document.querySelector('.nav');
   const body = document.body;
-
-  // شاشة التحميل باستخدام Lottie
-  let __adeebLoaderHidden = false;
-  function initPageLoader() {
-    try {
-      const container = document.getElementById('lottieLogo');
-      if (container && window.lottie) {
-        window.lottie.loadAnimation({
+  // ===== Loader (Lottie) Helpers =====
+  let __adeebLottie = null;
+  let __adeebLoaderEl = null;
+  function ensureLoaderInit() {
+    if (!__adeebLoaderEl) __adeebLoaderEl = document.getElementById('adeebLoader');
+    const container = document.getElementById('adeebLottie');
+    if (container && !__adeebLottie && typeof lottie !== 'undefined') {
+      try {
+        __adeebLottie = lottie.loadAnimation({
           container,
           renderer: 'svg',
           loop: true,
           autoplay: true,
           path: '../logo.json'
         });
-      }
-      // إخفاء آمن بعد مهلة قصوى
-      setTimeout(() => hidePageLoader(), 6000);
-    } catch {}
+      } catch {}
+    }
   }
-
+  function showPageLoader(text) {
+    ensureLoaderInit();
+    try {
+      const t = document.querySelector('.adeeb-loader-text');
+      if (t && text) t.textContent = text;
+    } catch {}
+    if (__adeebLoaderEl) {
+      __adeebLoaderEl.style.display = 'flex';
+      __adeebLoaderEl.setAttribute('aria-hidden', 'false');
+    }
+  }
   function hidePageLoader() {
-    if (__adeebLoaderHidden) return;
-    const el = document.getElementById('pageLoader');
-    if (el) {
-      el.classList.add('hidden');
-      __adeebLoaderHidden = true;
+    if (__adeebLoaderEl) {
+      __adeebLoaderEl.style.display = 'none';
+      __adeebLoaderEl.setAttribute('aria-hidden', 'true');
     }
   }
   if (menuToggle && nav) {
@@ -61,8 +68,8 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    // تهيئة شاشة التحميل
-    initPageLoader();
+    // تهيئة اللودر
+    ensureLoaderInit();
     // تحديث سنة الحقوق + زر العودة للأعلى
     const yearEl = document.getElementById('year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
@@ -203,7 +210,6 @@
 
     if (!postId) {
       // إذا فُتحت الصفحة مباشرة دون id نعيد المستخدم لقائمة المدونة
-      hidePageLoader();
       window.location.replace('blog.html');
       return;
     }
@@ -1107,6 +1113,7 @@
 
     // جلب التدوينة وعرضها
     (async () => {
+      showPageLoader('جاري تحميل التدوينة…');
       // Prepare auth and comment access state
       await refreshAuth();
       enforceCommentAccessUI();
@@ -1125,8 +1132,8 @@
       if (!post) post = fetchPostFromLocal(postId);
       if (!post) {
         // في حال فشل تحميل التدوينة نعيد التوجيه إلى صفحة المدونة
-        hidePageLoader();
         window.location.replace('blog.html');
+        hidePageLoader();
         return;
       }
       // منع عرض التدوينات غير المنشورة أو المجدولة للمستقبل
@@ -1135,7 +1142,6 @@
         const pubAt = post.published_at ? new Date(post.published_at) : null;
         const isFuture = pubAt && !isNaN(pubAt.getTime()) && pubAt > now;
         if ((post.status || 'draft') !== 'published' || isFuture) {
-          hidePageLoader();
           window.location.replace('blog.html');
           return;
         }
@@ -1161,8 +1167,6 @@
       if (post.title) document.title = `${post.title} — مرافئ`;
       // تشغيل/إيقاف التحديث الزمني لصيغة "منذ" بحسب رؤية التبويب
       startCommentDatesInterval();
-      // الانتهاء من التحميل
-      hidePageLoader();
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           stopCommentDatesInterval();
@@ -1171,7 +1175,8 @@
           startCommentDatesInterval();
         }
       });
-    })();
+      hidePageLoader();
+    })().catch(() => { hidePageLoader(); });
 
     // ===== Helpers: comment counter =====
     function updateCommentCounter() {
