@@ -72,6 +72,8 @@
       const db = new Date(b.published_at || b.created_at || 0).getTime();
       return db - da;
     });
+
+  // Sponsors: up/down and drag-n-drop
     sorted.forEach((item) => {
       const idx = blogPosts.indexOf(item);
       const status = item.status || 'draft';
@@ -236,7 +238,7 @@
       const number = typeof rawCount === 'number' ? rawCount : Number(rawCount || 0);
       const plus = 'plus' in item ? !!item.plus : ('plus_flag' in item ? !!item.plus_flag : true);
       const node = el(`
-        <div class="card">
+        <div class="card draggable-card" data-idx="${originalIdx}" draggable="true">
           <div class="card__body" style="display:flex;gap:14px;align-items:center;">
             <div class="card__media" style="width:auto">
               <i class="${iconClass}" style="font-size:28px;color:#0ea5e9"></i>
@@ -244,8 +246,11 @@
             <div style="flex:1">
               <div class="card__title">${item.label || ''}</div>
               <p class="card__text" style="margin:6px 0;color:#64748b">${number}${plus ? '+' : ''}</p>
-              ${item.order ? `<span class="card__badge">ترتيب: ${item.order}</span>` : ''}
-              <div class="card__actions" style="margin-top:8px">
+              ${item.order ? `<span class=\"card__badge\">ترتيب: ${item.order}</span>` : ''}
+              <div class="card__actions" style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="btn btn-outline" data-act="up" data-idx="${originalIdx}" title="تحريك لأعلى"><i class="fa-solid fa-arrow-up"></i></button>
+                <button class="btn btn-outline" data-act="down" data-idx="${originalIdx}" title="تحريك لأسفل"><i class="fa-solid fa-arrow-down"></i></button>
+                <button class="btn btn-outline drag-handle" title="سحب لإعادة الترتيب"><i class="fa-solid fa-grip-vertical"></i></button>
                 <button class="btn btn-outline" data-act="edit" data-idx="${originalIdx}"><i class="fa-solid fa-pen"></i> تعديل</button>
                 <button class="btn btn-outline" data-act="del" data-idx="${originalIdx}"><i class="fa-solid fa-trash"></i> حذف</button>
               </div>
@@ -254,6 +259,7 @@
         </div>`);
       achievementsList.appendChild(node);
     });
+    setupListDnD(achievementsList, achievements, KEYS.achievements, 'achievements', renderAchievements);
   }
 
   function save(key, data) {
@@ -309,6 +315,17 @@
     if (!btn) return;
     const idx = Number(btn.dataset.idx);
     const act = btn.dataset.act;
+    if (act === 'up' || act === 'down') {
+      if (!Number.isInteger(idx) || idx < 0 || idx >= achievements.length) return;
+      const newIndex = act === 'up' ? Math.max(0, idx - 1) : Math.min(achievements.length - 1, idx + 1);
+      if (newIndex === idx) return;
+      const [moved] = achievements.splice(idx, 1);
+      achievements.splice(newIndex, 0, moved);
+      normalizeAndPersistOrder(achievements, KEYS.achievements, 'achievements').then(() => {
+        renderAchievements();
+      });
+      return;
+    }
     if (act === 'edit') {
       achievementEditingIndex = idx;
       const cur = achievements[idx];
@@ -484,20 +501,103 @@
     return template.content.firstElementChild;
   }
 
+  // Reordering helpers
+  async function normalizeAndPersistOrder(list, storageKey, tableName) {
+    // Normalize order to 1..N
+    list.forEach((item, i) => { item.order = i + 1; });
+    // Save locally
+    save(storageKey, list);
+    // Persist to Supabase if available and ids exist
+    if (sb && tableName) {
+      try {
+        const updates = list
+          .filter(it => it && typeof it.id !== 'undefined' && it.id !== null)
+          .map(it => sb.from(tableName).update({ order: it.order }).eq('id', it.id));
+        if (updates.length) await Promise.all(updates);
+      } catch (e) {
+        console.warn('Failed to persist order to Supabase for', tableName, e);
+      }
+    }
+  }
+
+  function setupListDnD(containerEl, arrayRef, storageKey, tableName, renderFn) {
+    if (!containerEl) return;
+    if (containerEl._dndSetup) return; // avoid double-binding
+    containerEl._dndSetup = true;
+    let dragIdx = null;
+
+    containerEl.addEventListener('dragstart', (e) => {
+      const card = e.target.closest('.draggable-card');
+      if (!card) return;
+      // allow dragging only from handle if exists
+      const handle = e.target.closest('.drag-handle');
+      if (!handle && e.target.closest('.card__actions')) {
+        // If started from actions but not handle, block to avoid unintended drags when clicking buttons
+        e.preventDefault();
+        return;
+      }
+      dragIdx = Number(card.dataset.idx);
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', dragIdx.toString()); } catch {}
+    });
+
+    containerEl.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      const overCard = e.target.closest('.draggable-card');
+      if (!overCard) return;
+      overCard.classList.add('drag-over');
+      e.dataTransfer.dropEffect = 'move';
+    });
+
+    containerEl.addEventListener('dragleave', (e) => {
+      const card = e.target.closest('.draggable-card');
+      if (card) card.classList.remove('drag-over');
+    });
+
+    containerEl.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      const targetCard = e.target.closest('.draggable-card');
+      containerEl.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+      const from = dragIdx;
+      const to = targetCard ? Number(targetCard.dataset.idx) : null;
+      dragIdx = null;
+      if (!Number.isInteger(from) || !Number.isInteger(to)) return;
+      if (from === to) return;
+      const [moved] = arrayRef.splice(from, 1);
+      const insertAt = to >= arrayRef.length ? arrayRef.length : (to < 0 ? 0 : to);
+      arrayRef.splice(insertAt, 0, moved);
+      await normalizeAndPersistOrder(arrayRef, storageKey, tableName);
+      renderFn();
+    });
+
+    containerEl.addEventListener('dragend', () => {
+      containerEl.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+      containerEl.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+      dragIdx = null;
+    });
+  }
+
   function renderWorks() {
     if (!worksList) return;
     worksList.innerHTML = '';
-    works.forEach((item, idx) => {
+    const sorted = [...works].sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000));
+    sorted.forEach((item) => {
+      const idx = works.indexOf(item);
       const node = el(`
-        <div class="card">
+        <div class="card draggable-card" data-idx="${idx}" draggable="true">
           <div class="card__media">
             <img src="${(item.image || item.image_url) || ''}" alt="${item.title || ''}" />
             ${(item.category) ? `<span class=\"card__badge\">${item.category}</span>` : ''}
           </div>
           <div class="card__body">
             <div class="card__title">${item.title || ''}</div>
+            ${item.order ? `<span class=\"card__badge\">ترتيب: ${item.order}</span>` : ''}
             ${(item.link || item.link_url) ? `<a class=\"btn btn-outline\" target=\"_blank\" href=\"${item.link || item.link_url}\"><i class=\"fa-solid fa-link\"></i> رابط</a>` : ''}
             <div class="card__actions">
+              <button class="btn btn-outline" data-act="up" data-idx="${idx}" title="تحريك لأعلى"><i class="fa-solid fa-arrow-up"></i></button>
+              <button class="btn btn-outline" data-act="down" data-idx="${idx}" title="تحريك لأسفل"><i class="fa-solid fa-arrow-down"></i></button>
+              <button class="btn btn-outline drag-handle" title="سحب لإعادة الترتيب"><i class="fa-solid fa-grip-vertical"></i></button>
               <button class="btn btn-outline" data-act="edit" data-idx="${idx}"><i class="fa-solid fa-pen"></i> تعديل</button>
               <button class="btn btn-outline" data-act="del" data-idx="${idx}"><i class="fa-solid fa-trash"></i> حذف</button>
             </div>
@@ -505,23 +605,196 @@
         </div>`);
       worksList.appendChild(node);
     });
+    setupListDnD(worksList, works, KEYS.works, 'works', renderWorks);
+  }
+
+  // Image cropping helpers (Cropper.js)
+  const imageCropDialog = document.getElementById('imageCropDialog');
+  const cropperImage = document.getElementById('cropperImage');
+  const cropConfirmBtn = document.getElementById('cropConfirmBtn');
+  const cropCancelBtn = document.getElementById('cropCancelBtn');
+  const cropAspectSelect = document.getElementById('cropAspectSelect');
+  const cropZoomIn = document.getElementById('cropZoomIn');
+  const cropZoomOut = document.getElementById('cropZoomOut');
+  const cropRotateL = document.getElementById('cropRotateL');
+  const cropRotateR = document.getElementById('cropRotateR');
+  const cropFlipH = document.getElementById('cropFlipH');
+  const cropFlipV = document.getElementById('cropFlipV');
+  const cropReset = document.getElementById('cropReset');
+  const cropBusy = document.getElementById('cropBusy');
+  let activeCropper = null;
+  let flipState = { x: 1, y: 1 };
+
+  function destroyActiveCropper() {
+    try { activeCropper?.destroy?.(); } catch {}
+    activeCropper = null;
+  }
+
+  function dataUrlFromFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function getExtFromType(type, fallbackExt = 'jpg') {
+    if (!type) return fallbackExt;
+    if (type.includes('png')) return 'png';
+    if (type.includes('webp')) return 'webp';
+    if (type.includes('gif')) return 'gif';
+    if (type.includes('svg')) return 'svg';
+    return 'jpg';
+  }
+
+  function openImageCropper(file, opts = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (!imageCropDialog || !cropperImage || typeof Cropper === 'undefined') {
+          // If Cropper not loaded for any reason, fallback: resolve original file
+          resolve(file);
+          return;
+        }
+        // Load image preview
+        cropperImage.src = await dataUrlFromFile(file);
+        // Open dialog
+        if (!imageCropDialog.open) imageCropDialog.showModal();
+        // Init Cropper
+        destroyActiveCropper();
+        flipState = { x: 1, y: 1 };
+        const initialAspect = (opts.aspectRatio && !Number.isNaN(opts.aspectRatio)) ? opts.aspectRatio : NaN;
+        const lockAspect = !!opts.lockAspect;
+        if (cropAspectSelect) {
+          // preset dropdown based on requested aspect
+          const map = { 1: '1', [4/3]: '4/3', [16/9]: '16/9' };
+          const val = map[initialAspect] || 'auto';
+          cropAspectSelect.value = val;
+          // lock aspect selection if requested
+          cropAspectSelect.disabled = lockAspect;
+        }
+        activeCropper = new Cropper(cropperImage, {
+          viewMode: 1,
+          aspectRatio: initialAspect,
+          dragMode: 'move',
+          autoCropArea: 1,
+          responsive: true,
+          background: false,
+        });
+
+        const onCancel = () => {
+          cleanup();
+          reject(new Error('crop-cancelled'));
+        };
+        const onConfirm = async (e) => {
+          e?.preventDefault?.();
+          try {
+            cropBusy && (cropBusy.style.display = 'inline');
+            const cropData = activeCropper.getData(true);
+            const naturalW = Math.round(cropData.width);
+            const naturalH = Math.round(cropData.height);
+            const maxW = Number.isFinite(opts.maxWidth) ? opts.maxWidth : naturalW;
+            const maxH = Number.isFinite(opts.maxHeight) ? opts.maxHeight : naturalH;
+            // Scale to fit within maxW x maxH
+            const scale = Math.min(1, maxW / naturalW, maxH / naturalH);
+            const targetW = Math.max(1, Math.round(naturalW * scale));
+            const targetH = Math.max(1, Math.round(naturalH * scale));
+            const canvas = activeCropper.getCroppedCanvas({
+              width: targetW,
+              height: targetH,
+              imageSmoothingEnabled: true,
+              imageSmoothingQuality: 'high',
+            });
+            const type = opts.mimeType || (file.type && /^image\//.test(file.type) ? file.type : 'image/jpeg');
+            const quality = typeof opts.quality === 'number' ? opts.quality : 0.92;
+            canvas.toBlob((blob) => {
+              if (!blob) {
+                onCancel();
+                return;
+              }
+              // Create a File-like object for upload
+              const ext = getExtFromType(type);
+              const croppedFile = new File([blob], `crop-${Date.now()}.${ext}`, { type });
+              cleanup();
+              resolve(croppedFile);
+            }, type, quality);
+          } catch (err) {
+            cleanup();
+            reject(err);
+          }
+        };
+        function cleanup() {
+          try { imageCropDialog.close(); } catch {}
+          destroyActiveCropper();
+          cropConfirmBtn?.removeEventListener('click', onConfirm);
+          cropCancelBtn?.removeEventListener('click', onCancel);
+          cropAspectSelect?.removeEventListener('change', onAspectChange);
+          cropZoomIn?.removeEventListener('click', onZoomIn);
+          cropZoomOut?.removeEventListener('click', onZoomOut);
+          cropRotateL?.removeEventListener('click', onRotateL);
+          cropRotateR?.removeEventListener('click', onRotateR);
+          cropFlipH?.removeEventListener('click', onFlipH);
+          cropFlipV?.removeEventListener('click', onFlipV);
+          cropReset?.removeEventListener('click', onReset);
+          if (cropBusy) cropBusy.style.display = 'none';
+        }
+        const onAspectChange = () => {
+          if (!activeCropper) return;
+          const val = cropAspectSelect.value;
+          let ar = NaN;
+          if (val === '1') ar = 1;
+          else if (val === '4/3') ar = 4/3;
+          else if (val === '16/9') ar = 16/9;
+          activeCropper.setAspectRatio(ar);
+        };
+        const onZoomIn = () => activeCropper && activeCropper.zoom(0.1);
+        const onZoomOut = () => activeCropper && activeCropper.zoom(-0.1);
+        const onRotateL = () => activeCropper && activeCropper.rotate(-90);
+        const onRotateR = () => activeCropper && activeCropper.rotate(90);
+        const onFlipH = () => { if (!activeCropper) return; flipState.x *= -1; activeCropper.scaleX(flipState.x); };
+        const onFlipV = () => { if (!activeCropper) return; flipState.y *= -1; activeCropper.scaleY(flipState.y); };
+        const onReset = () => { if (!activeCropper) return; activeCropper.reset(); flipState = { x: 1, y: 1 }; };
+        if (!lockAspect) cropAspectSelect?.addEventListener('change', onAspectChange);
+        cropZoomIn?.addEventListener('click', onZoomIn);
+        cropZoomOut?.addEventListener('click', onZoomOut);
+        cropRotateL?.addEventListener('click', onRotateL);
+        cropRotateR?.addEventListener('click', onRotateR);
+        cropFlipH?.addEventListener('click', onFlipH);
+        cropFlipV?.addEventListener('click', onFlipV);
+        cropReset?.addEventListener('click', onReset);
+        cropConfirmBtn?.addEventListener('click', onConfirm);
+        cropCancelBtn?.addEventListener('click', onCancel);
+        imageCropDialog.addEventListener('close', () => {
+          // Ensure cropper destroyed
+          destroyActiveCropper();
+        }, { once: true });
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   function renderSponsors() {
     if (!sponsorsList) return;
     sponsorsList.innerHTML = '';
-    sponsors.forEach((item, idx) => {
+    const sorted = [...sponsors].sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000));
+    sorted.forEach((item) => {
+      const idx = sponsors.indexOf(item);
       const node = el(`
-        <div class="card">
+        <div class="card draggable-card" data-idx="${idx}" draggable="true">
           <div class="card__media">
             <img src="${(item.logo || item.logo_url) || ''}" alt="${item.name || ''}" />
             ${item.badge ? `<span class="card__badge">${item.badge}</span>` : ''}
           </div>
           <div class="card__body">
             <div class="card__title">${item.name || ''}</div>
+            ${item.order ? `<span class=\"card__badge\">ترتيب: ${item.order}</span>` : ''}
             ${item.description ? `<p class="card__text">${item.description}</p>` : ''}
             ${(item.link || item.link_url) ? `<a class=\"btn btn-outline\" target=\"_blank\" href=\"${item.link || item.link_url}\"><i class=\"fa-solid fa-arrow-up-right-from-square\"></i> موقع</a>` : ''}
             <div class="card__actions">
+              <button class="btn btn-outline" data-act="up" data-idx="${idx}" title="تحريك لأعلى"><i class="fa-solid fa-arrow-up"></i></button>
+              <button class="btn btn-outline" data-act="down" data-idx="${idx}" title="تحريك لأسفل"><i class="fa-solid fa-arrow-down"></i></button>
+              <button class="btn btn-outline drag-handle" title="سحب لإعادة الترتيب"><i class="fa-solid fa-grip-vertical"></i></button>
               <button class="btn btn-outline" data-act="edit" data-idx="${idx}"><i class="fa-solid fa-pen"></i> تعديل</button>
               <button class="btn btn-outline" data-act="del" data-idx="${idx}"><i class="fa-solid fa-trash"></i> حذف</button>
             </div>
@@ -529,26 +802,33 @@
         </div>`);
       sponsorsList.appendChild(node);
     });
+    setupListDnD(sponsorsList, sponsors, KEYS.sponsors, 'sponsors', renderSponsors);
   }
 
   function renderBoard() {
     if (!boardList) return;
     boardList.innerHTML = '';
-    board.forEach((item, idx) => {
+    const sorted = [...board].sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000));
+    sorted.forEach((item) => {
+      const idx = board.indexOf(item);
       const node = el(`
-        <div class="card">
+        <div class="card draggable-card" data-idx="${idx}" draggable="true">
           <div class="card__media">
             <img src="${(item.image || item.image_url) || ''}" alt="${item.name || ''}" />
             ${(item.position) ? `<span class="card__badge">${item.position}</span>` : ''}
           </div>
           <div class="card__body">
             <div class="card__title">${item.name || ''}</div>
+            ${item.order ? `<span class=\"card__badge\">ترتيب: ${item.order}</span>` : ''}
             <div class="card__actions">
               ${(item.twitter || item.twitter_url) ? `<a class="btn btn-outline" target="_blank" href="${item.twitter || item.twitter_url}"><i class="fab fa-twitter"></i> تويتر</a>` : ''}
               ${(item.linkedin || item.linkedin_url) ? `<a class="btn btn-outline" target="_blank" href="${item.linkedin || item.linkedin_url}"><i class="fab fa-linkedin"></i> لينكدإن</a>` : ''}
               ${item.email ? `<a class="btn btn-outline" href="mailto:${item.email}"><i class="fa-solid fa-envelope"></i> بريد</a>` : ''}
             </div>
             <div class="card__actions">
+              <button class="btn btn-outline" data-act="up" data-idx="${idx}" title="تحريك لأعلى"><i class="fa-solid fa-arrow-up"></i></button>
+              <button class="btn btn-outline" data-act="down" data-idx="${idx}" title="تحريك لأسفل"><i class="fa-solid fa-arrow-down"></i></button>
+              <button class="btn btn-outline drag-handle" title="سحب لإعادة الترتيب"><i class="fa-solid fa-grip-vertical"></i></button>
               <button class="btn btn-outline" data-act="edit" data-idx="${idx}"><i class="fa-solid fa-pen"></i> تعديل</button>
               <button class="btn btn-outline" data-act="del" data-idx="${idx}"><i class="fa-solid fa-trash"></i> حذف</button>
             </div>
@@ -556,47 +836,170 @@
         </div>`);
       boardList.appendChild(node);
     });
+    setupListDnD(boardList, board, KEYS.board, 'board_members', renderBoard);
   }
 
   function renderFaq() {
     if (!faqList) return;
     faqList.innerHTML = '';
-    // Sort FAQ by order field
-    const sortedFaq = [...faq].sort((a, b) => (a.order || 999) - (b.order || 999));
-    sortedFaq.forEach((item, idx) => {
-      const originalIdx = faq.indexOf(item);
+    const sorted = [...faq].sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000));
+    sorted.forEach((item) => {
+      const idx = faq.indexOf(item);
       const node = el(`
-        <div class="card">
+        <div class="card draggable-card" data-idx="${idx}" draggable="true">
           <div class="card__body">
             <div class="card__title">${item.question || ''}</div>
             <p class="card__text" style="margin: 10px 0; color: #666; line-height: 1.5;">${(item.answer || '').substring(0, 150)}${(item.answer || '').length > 150 ? '...' : ''}</p>
-            ${item.order ? `<span class="card__badge">ترتيب: ${item.order}</span>` : ''}
+            ${item.order ? `<span class=\"card__badge\">ترتيب: ${item.order}</span>` : ''}
             <div class="card__actions">
-              <button class="btn btn-outline" data-act="edit" data-idx="${originalIdx}"><i class="fa-solid fa-pen"></i> تعديل</button>
-              <button class="btn btn-outline" data-act="del" data-idx="${originalIdx}"><i class="fa-solid fa-trash"></i> حذف</button>
+              <button class="btn btn-outline" data-act="up" data-idx="${idx}" title="تحريك لأعلى"><i class="fa-solid fa-arrow-up"></i></button>
+              <button class="btn btn-outline" data-act="down" data-idx="${idx}" title="تحريك لأسفل"><i class="fa-solid fa-arrow-down"></i></button>
+              <button class="btn btn-outline drag-handle" title="سحب لإعادة الترتيب"><i class="fa-solid fa-grip-vertical"></i></button>
+              <button class="btn btn-outline" data-act="edit" data-idx="${idx}"><i class="fa-solid fa-pen"></i> تعديل</button>
+              <button class="btn btn-outline" data-act="del" data-idx="${idx}"><i class="fa-solid fa-trash"></i> حذف</button>
             </div>
           </div>
         </div>`);
       faqList.appendChild(node);
     });
+    setupListDnD(faqList, faq, KEYS.faq, 'faq', renderFaq);
   }
 
   // Dialog helpers
   function openDialog(dialog) {
+    if (!dialog) return;
     if (!dialog.open) dialog.showModal();
+    // prevent background scroll while any dialog is open
+    document.body.classList.add('no-scroll');
   }
   function closeDialog(dialog) {
+    if (!dialog) return;
     if (dialog.open) dialog.close();
+    // remove no-scroll only if no other dialogs are still open
+    const anyOpen = Array.from(document.querySelectorAll('.admin-dialog')).some(d => d.open);
+    if (!anyOpen) document.body.classList.remove('no-scroll');
   }
+
+  // Ensure no-scroll is removed when dialogs are closed directly (e.g., via inline close buttons)
+  Array.from(document.querySelectorAll('.admin-dialog')).forEach(dlg => {
+    dlg.addEventListener('close', () => {
+      const anyOpen = Array.from(document.querySelectorAll('.admin-dialog')).some(d => d.open);
+      if (!anyOpen) document.body.classList.remove('no-scroll');
+    });
+  });
 
   // Works CRUD
   const workDialog = $('#workDialog');
   const workForm = $('#workForm');
   let workEditingIndex = null; // number | null
+  // Works image upload elements
+  const workImageFile = document.getElementById('work_image_file');
+  const workImageUrl = document.getElementById('work_image_url');
+  const workImagePreview = document.getElementById('work_image_preview');
+  const workDropzone = document.getElementById('workDropzone');
+  const workBrowseBtn = document.getElementById('workBrowseBtn');
+  let workCroppedFile = null; // File | null
+
+  // Reusable: handle a selected/dropped file -> crop -> preview
+  async function handleWorkImageFile(file) {
+    if (!file) return;
+    // Basic validation (type + size hint ~5MB)
+    if (!(file.type || '').startsWith('image/')) {
+      alert('الملف ليس صورة');
+      return;
+    }
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      if (!confirm('حجم الصورة يتجاوز 5MB. هل تريد المتابعة على أي حال؟')) return;
+    }
+    try {
+      const cropped = await openImageCropper(file, { aspectRatio: 16/9, lockAspect: true, maxWidth: 1600, maxHeight: 1600, mimeType: 'image/webp', quality: 0.9 });
+      workCroppedFile = cropped;
+      const url = URL.createObjectURL(cropped);
+      if (workImagePreview) {
+        workImagePreview.src = url;
+        workImagePreview.style.display = 'block';
+      }
+    } catch (err) {
+      // if cancelled, clear selection
+      if (workImageFile) workImageFile.value = '';
+    }
+  }
+
+  // Input change -> handle
+  workImageFile?.addEventListener('change', async () => {
+    const file = workImageFile.files && workImageFile.files[0];
+    await handleWorkImageFile(file);
+  });
+
+  // Dropzone interactions (click, keyboard, drag & drop)
+  // Explicit browse click (span with id=workBrowseBtn)
+  workBrowseBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    workImageFile?.click();
+  });
+  // Clicking the dropzone itself
+  workDropzone?.addEventListener('click', (e) => {
+    // Prevent implicit label->file input activation to avoid double dialogs
+    e.preventDefault();
+    e.stopPropagation();
+    // If clicking the inner browse span, the handler above already runs, so no need here
+    if ((e.target instanceof HTMLElement) && e.target.closest('#workBrowseBtn')) return;
+    workImageFile?.click();
+  });
+  workDropzone?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      workImageFile?.click();
+    }
+  });
+  workDropzone?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    workDropzone.classList.add('dragover');
+  });
+  workDropzone?.addEventListener('dragleave', () => {
+    workDropzone.classList.remove('dragover');
+  });
+  workDropzone?.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    workDropzone.classList.remove('dragover');
+    const dt = e.dataTransfer;
+    if (!dt) return;
+    let file = null;
+    if (dt.files && dt.files.length) file = dt.files[0];
+    if (!file && dt.items && dt.items.length) {
+      const item = Array.from(dt.items).find(i => i.kind === 'file');
+      if (item) file = item.getAsFile();
+    }
+    await handleWorkImageFile(file);
+  });
+
+  // Helper: upload selected Works image file to Supabase Storage and return public URL
+  async function uploadSelectedWorkImage() {
+    const file = workCroppedFile || (workImageFile?.files && workImageFile.files[0]);
+    if (!file) return null; // nothing to upload
+    if (!sb) return null; // cannot upload without Supabase
+    const bucket = 'adeeb-site'; // dedicated site bucket
+    const ext = (file.name.split('.').pop() || getExtFromType(file.type, 'jpg')).toLowerCase();
+    const safeExt = ext.replace(/[^a-z0-9]/gi, '') || 'jpg';
+    const path = `works/work-${Date.now()}-${Math.random().toString(36).slice(2,8)}.${safeExt}`; // store under works/
+    const { error: upErr } = await sb.storage.from(bucket).upload(path, file, { cacheControl: '3600', upsert: false });
+    if (upErr) throw upErr;
+    const { data } = sb.storage.from(bucket).getPublicUrl(path);
+    const publicUrl = data?.publicUrl;
+    if (!publicUrl) throw new Error('تعذر الحصول على رابط الصورة');
+    return publicUrl;
+  }
 
   $('#addWorkBtn')?.addEventListener('click', () => {
     workEditingIndex = null;
     workForm.reset();
+    // clear preview and hidden url when adding
+    if (workImagePreview) { workImagePreview.src = ''; workImagePreview.style.display = 'none'; }
+    if (workImageUrl) workImageUrl.value = '';
+    workCroppedFile = null;
     openDialog(workDialog);
   });
 
@@ -605,12 +1008,33 @@
     if (!btn) return;
     const idx = Number(btn.dataset.idx);
     const act = btn.dataset.act;
+    if (act === 'up' || act === 'down') {
+      if (!Number.isInteger(idx) || idx < 0 || idx >= works.length) return;
+      const newIndex = act === 'up' ? Math.max(0, idx - 1) : Math.min(works.length - 1, idx + 1);
+      if (newIndex === idx) return;
+      const [moved] = works.splice(idx, 1);
+      works.splice(newIndex, 0, moved);
+      normalizeAndPersistOrder(works, KEYS.works, 'works').then(() => {
+        renderWorks();
+      });
+      return;
+    }
     if (act === 'edit') {
       workEditingIndex = idx;
       const cur = works[idx];
       workForm.title.value = cur.title || '';
       workForm.category.value = cur.category || '';
-      workForm.image.value = (cur.image || cur.image_url) || '';
+      if (workForm.order) workForm.order.value = cur.order || '';
+      // fill hidden url and preview instead of URL input
+      const imgUrl = (cur.image || cur.image_url) || '';
+      if (workImageUrl) workImageUrl.value = imgUrl;
+      if (workImagePreview) {
+        if (imgUrl) { workImagePreview.src = imgUrl; workImagePreview.style.display = 'block'; }
+        else { workImagePreview.src = ''; workImagePreview.style.display = 'none'; }
+      }
+      // clear any selected file
+      if (workImageFile) workImageFile.value = '';
+      workCroppedFile = null;
       workForm.link.value = (cur.link || cur.link_url) || '';
       openDialog(workDialog);
     } else if (act === 'del') {
@@ -630,37 +1054,61 @@
     }
   });
 
-  workForm?.addEventListener('submit', (e) => {
+  workForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    // Determine final image URL: upload if a new file is selected, else use hidden value
+    let finalImageUrl = (workImageUrl?.value || '').trim();
+    try {
+      const uploaded = await uploadSelectedWorkImage();
+      if (uploaded) finalImageUrl = uploaded;
+    } catch (upErr) {
+      return alert('فشل رفع الصورة: ' + (upErr?.message || 'غير معروف'));
+    }
+    workCroppedFile = null;
     const data = {
       title: workForm.title.value.trim(),
       category: workForm.category.value.trim(),
-      image: workForm.image.value.trim(),
+      image: finalImageUrl,
       link: workForm.link.value.trim(),
+      order: workForm.order?.value ? Number(workForm.order.value) : null,
     };
     if (sb) {
       // require auth for write
-      sb.auth.getSession().then(({ data: { session } }) => {
-        if (!session) return alert('يلزم تسجيل الدخول لإجراء التعديلات');
-        const payload = { title: data.title, category: data.category || null, image_url: data.image, link_url: data.link || null };
-        if (workEditingIndex === null) {
-          sb.from('works').insert(payload).select('*').single().then(({ data: row, error }) => {
-            if (error) return alert('فشل الحفظ: ' + error.message);
-            works.unshift(row);
-            renderWorks();
-            closeDialog(workDialog);
-          });
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return alert('يلزم تسجيل الدخول لإجراء التعديلات');
+      const payload = { title: data.title, category: data.category || null, image_url: data.image || null, link_url: data.link || null, order: data.order };
+      const payloadNoOrder = { title: data.title, category: data.category || null, image_url: data.image || null, link_url: data.link || null };
+      if (workEditingIndex === null) {
+        let row, error;
+        ({ data: row, error } = await sb.from('works').insert(payload).select('*').single());
+        if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+          const res2 = await sb.from('works').insert(payloadNoOrder).select('*').single();
+          if (res2.error) return alert('فشل الحفظ: ' + res2.error.message);
+          works.unshift({ ...res2.data, order: data.order });
+        } else if (error) {
+          return alert('فشل الحفظ: ' + error.message);
         } else {
-          const id = works[workEditingIndex]?.id;
-          if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
-          sb.from('works').update(payload).eq('id', id).select('*').single().then(({ data: row, error }) => {
-            if (error) return alert('فشل التحديث: ' + error.message);
-            works[workEditingIndex] = row;
-            renderWorks();
-            closeDialog(workDialog);
-          });
+          works.unshift(row);
         }
-      });
+        renderWorks();
+        closeDialog(workDialog);
+      } else {
+        const id = works[workEditingIndex]?.id;
+        if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
+        let row, error;
+        ({ data: row, error } = await sb.from('works').update(payload).eq('id', id).select('*').single());
+        if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+          const res2 = await sb.from('works').update(payloadNoOrder).eq('id', id).select('*').single();
+          if (res2.error) return alert('فشل التحديث: ' + res2.error.message);
+          works[workEditingIndex] = { ...res2.data, order: data.order };
+        } else if (error) {
+          return alert('فشل التحديث: ' + error.message);
+        } else {
+          works[workEditingIndex] = row;
+        }
+        renderWorks();
+        closeDialog(workDialog);
+      }
     } else {
       if (workEditingIndex === null) {
         works.unshift(data);
@@ -677,10 +1125,80 @@
   const sponsorDialog = $('#sponsorDialog');
   const sponsorForm = $('#sponsorForm');
   let sponsorEditingIndex = null;
+  // Sponsor logo upload elements
+  const sponsorLogoFile = document.getElementById('sponsor_logo_file');
+  const sponsorLogoUrl = document.getElementById('sponsor_logo_url');
+  const sponsorLogoPreview = document.getElementById('sponsor_logo_preview');
+  const sponsorDropzone = document.getElementById('sponsorDropzone');
+  const sponsorBrowseBtn = document.getElementById('sponsorBrowseBtn');
+  let sponsorCroppedFile = null;
+
+  // Reusable: handle sponsor logo file (crop 1:1) -> preview
+  async function handleSponsorLogoFile(file) {
+    if (!file) return;
+    if (!(file.type || '').startsWith('image/')) { alert('الملف ليس صورة'); return; }
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) { if (!confirm('حجم الشعار يتجاوز 5MB. المتابعة؟')) return; }
+    try {
+      const preferPng = /png/i.test(file.type || '') || /\.(png)$/i.test(file.name || '');
+      const cropped = await openImageCropper(file, { aspectRatio: 1, lockAspect: true, maxWidth: 800, maxHeight: 800, mimeType: preferPng ? 'image/png' : 'image/webp', quality: preferPng ? 1.0 : 0.9 });
+      sponsorCroppedFile = cropped;
+      const url = URL.createObjectURL(cropped);
+      if (sponsorLogoPreview) { sponsorLogoPreview.src = url; sponsorLogoPreview.style.display = 'block'; }
+    } catch (err) {
+      if (sponsorLogoFile) sponsorLogoFile.value = '';
+    }
+  }
+  // Input change -> handle
+  sponsorLogoFile?.addEventListener('change', async () => {
+    const file = sponsorLogoFile.files && sponsorLogoFile.files[0];
+    await handleSponsorLogoFile(file);
+  });
+
+  // Dropzone interactions for sponsor
+  sponsorBrowseBtn?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sponsorLogoFile?.click(); });
+  sponsorDropzone?.addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if ((e.target instanceof HTMLElement) && e.target.closest('#sponsorBrowseBtn')) return;
+    sponsorLogoFile?.click();
+  });
+  sponsorDropzone?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sponsorLogoFile?.click(); }
+  });
+  sponsorDropzone?.addEventListener('dragover', (e) => { e.preventDefault(); sponsorDropzone.classList.add('dragover'); });
+  sponsorDropzone?.addEventListener('dragleave', () => { sponsorDropzone.classList.remove('dragover'); });
+  sponsorDropzone?.addEventListener('drop', async (e) => {
+    e.preventDefault(); e.stopPropagation(); sponsorDropzone.classList.remove('dragover');
+    const dt = e.dataTransfer; if (!dt) return;
+    let file = null;
+    if (dt.files && dt.files.length) file = dt.files[0];
+    if (!file && dt.items && dt.items.length) { const item = Array.from(dt.items).find(i => i.kind === 'file'); if (item) file = item.getAsFile(); }
+    await handleSponsorLogoFile(file);
+  });
+
+  // Upload sponsor logo to Supabase Storage
+  async function uploadSponsorLogo() {
+    const file = sponsorCroppedFile || (sponsorLogoFile?.files && sponsorLogoFile.files[0]);
+    if (!file) return null;
+    if (!sb) return null;
+    const bucket = 'adeeb-site';
+    const ext = (file.name.split('.').pop() || getExtFromType(file.type, 'png')).toLowerCase();
+    const safeExt = ext.replace(/[^a-z0-9]/gi, '') || 'png';
+    const path = `sponsors/sponsor-${Date.now()}-${Math.random().toString(36).slice(2,8)}.${safeExt}`;
+    const { error: upErr } = await sb.storage.from(bucket).upload(path, file, { cacheControl: '3600', upsert: false });
+    if (upErr) throw upErr;
+    const { data } = sb.storage.from(bucket).getPublicUrl(path);
+    const publicUrl = data?.publicUrl;
+    if (!publicUrl) throw new Error('تعذر الحصول على رابط الشعار');
+    return publicUrl;
+  }
 
   $('#addSponsorBtn')?.addEventListener('click', () => {
     sponsorEditingIndex = null;
     sponsorForm.reset();
+    if (sponsorLogoPreview) { sponsorLogoPreview.src = ''; sponsorLogoPreview.style.display = 'none'; }
+    if (sponsorLogoUrl) sponsorLogoUrl.value = '';
+    sponsorCroppedFile = null;
     openDialog(sponsorDialog);
   });
 
@@ -689,13 +1207,32 @@
     if (!btn) return;
     const idx = Number(btn.dataset.idx);
     const act = btn.dataset.act;
+    if (act === 'up' || act === 'down') {
+      if (!Number.isInteger(idx) || idx < 0 || idx >= sponsors.length) return;
+      const newIndex = act === 'up' ? Math.max(0, idx - 1) : Math.min(sponsors.length - 1, idx + 1);
+      if (newIndex === idx) return;
+      const [moved] = sponsors.splice(idx, 1);
+      sponsors.splice(newIndex, 0, moved);
+      normalizeAndPersistOrder(sponsors, KEYS.sponsors, 'sponsors').then(() => {
+        renderSponsors();
+      });
+      return;
+    }
     if (act === 'edit') {
       sponsorEditingIndex = idx;
       const cur = sponsors[idx];
       sponsorForm.name.value = cur.name || '';
       sponsorForm.badge.value = cur.badge || '';
       sponsorForm.description.value = cur.description || '';
-      sponsorForm.logo.value = (cur.logo || cur.logo_url) || '';
+      if (sponsorForm.order) sponsorForm.order.value = cur.order || '';
+      const logoUrl = (cur.logo || cur.logo_url) || '';
+      if (sponsorLogoUrl) sponsorLogoUrl.value = logoUrl;
+      if (sponsorLogoPreview) {
+        if (logoUrl) { sponsorLogoPreview.src = logoUrl; sponsorLogoPreview.style.display = 'block'; }
+        else { sponsorLogoPreview.src = ''; sponsorLogoPreview.style.display = 'none'; }
+      }
+      if (sponsorLogoFile) sponsorLogoFile.value = '';
+      sponsorCroppedFile = null;
       sponsorForm.link.value = (cur.link || cur.link_url) || '';
       openDialog(sponsorDialog);
     } else if (act === 'del') {
@@ -715,57 +1252,70 @@
     }
   });
 
-  sponsorForm?.addEventListener('submit', (e) => {
+  sponsorForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    // determine final logo url
+    let finalLogoUrl = (sponsorLogoUrl?.value || '').trim();
+    try {
+      const uploaded = await uploadSponsorLogo();
+      if (uploaded) finalLogoUrl = uploaded;
+    } catch (err) {
+      return alert('فشل رفع الشعار: ' + (err?.message || 'غير معروف'));
+    }
+    sponsorCroppedFile = null;
     const data = {
       name: sponsorForm.name.value.trim(),
       badge: sponsorForm.badge.value.trim(),
       description: sponsorForm.description.value.trim(),
-      logo: sponsorForm.logo.value.trim(),
+      logo: finalLogoUrl,
       link: sponsorForm.link.value.trim(),
+      order: sponsorForm.order?.value ? Number(sponsorForm.order.value) : null,
     };
     if (sb) {
-      sb.auth.getSession().then(({ data: { session } }) => {
-        if (!session) return alert('يلزم تسجيل الدخول لإجراء التعديلات');
-        const payload = { name: data.name, badge: data.badge || null, description: data.description || null, logo_url: data.logo, link_url: data.link || null };
-        const payloadNoDesc = { name: data.name, badge: data.badge || null, logo_url: data.logo, link_url: data.link || null };
-        if (sponsorEditingIndex === null) {
-          sb.from('sponsors').insert(payload).select('*').single().then(async ({ data: row, error }) => {
-            if (error) {
-              // fallback if column doesn't exist in DB
-              if (/(column\s+description|invalid input|unknown column)/i.test(error.message || '')) {
-                const { data: row2, error: e2 } = await sb.from('sponsors').insert(payloadNoDesc).select('*').single();
-                if (e2) return alert('فشل الحفظ: ' + e2.message);
-                sponsors.unshift({ ...row2, description: data.description || '' });
-              } else {
-                return alert('فشل الحفظ: ' + error.message);
-              }
-            } else {
-              sponsors.unshift({ ...row, description: data.description || '' });
-            }
-            renderSponsors();
-            closeDialog(sponsorDialog);
-          });
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return alert('يلزم تسجيل الدخول لإجراء التعديلات');
+      const payload = { name: data.name, badge: data.badge || null, description: data.description || null, logo_url: data.logo || null, link_url: data.link || null, order: data.order };
+      const payloadNoDesc = { name: data.name, badge: data.badge || null, logo_url: data.logo || null, link_url: data.link || null, order: data.order };
+      const payloadNoDescNoOrder = { name: data.name, badge: data.badge || null, logo_url: data.logo || null, link_url: data.link || null };
+      if (sponsorEditingIndex === null) {
+        let row, error;
+        ({ data: row, error } = await sb.from('sponsors').insert(payload).select('*').single());
+        if (error && /(column\s+description|invalid input|unknown column)/i.test(error.message || '')) {
+          const res2 = await sb.from('sponsors').insert(payloadNoDesc).select('*').single();
+          if (res2.error) return alert('فشل الحفظ: ' + res2.error.message);
+          sponsors.unshift({ ...res2.data, description: data.description || '' });
+        } else if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+          const res3 = await sb.from('sponsors').insert(payloadNoDescNoOrder).select('*').single();
+          if (res3.error) return alert('فشل الحفظ: ' + res3.error.message);
+          sponsors.unshift({ ...res3.data, description: data.description || '', order: data.order });
+        } else if (error) {
+          return alert('فشل الحفظ: ' + error.message);
         } else {
-          const id = sponsors[sponsorEditingIndex]?.id;
-          if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
-          sb.from('sponsors').update(payload).eq('id', id).select('*').single().then(async ({ data: row, error }) => {
-            if (error) {
-              if (/(column\s+description|invalid input|unknown column)/i.test(error.message || '')) {
-                const { data: row2, error: e2 } = await sb.from('sponsors').update(payloadNoDesc).eq('id', id).select('*').single();
-                if (e2) return alert('فشل التحديث: ' + e2.message);
-                sponsors[sponsorEditingIndex] = { ...row2, description: data.description || '' };
-              } else {
-                return alert('فشل التحديث: ' + error.message);
-              }
-            } else {
-              sponsors[sponsorEditingIndex] = { ...row, description: data.description || '' };
-            }
-            renderSponsors();
-            closeDialog(sponsorDialog);
-          });
+          sponsors.unshift({ ...row, description: data.description || '' });
         }
-      });
+        renderSponsors();
+        closeDialog(sponsorDialog);
+      } else {
+        const id = sponsors[sponsorEditingIndex]?.id;
+        if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
+        let row, error;
+        ({ data: row, error } = await sb.from('sponsors').update(payload).eq('id', id).select('*').single());
+        if (error && /(column\s+description|invalid input|unknown column)/i.test(error.message || '')) {
+          const res2 = await sb.from('sponsors').update(payloadNoDesc).eq('id', id).select('*').single();
+          if (res2.error) return alert('فشل التحديث: ' + res2.error.message);
+          sponsors[sponsorEditingIndex] = { ...res2.data, description: data.description || '' };
+        } else if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+          const res3 = await sb.from('sponsors').update(payloadNoDescNoOrder).eq('id', id).select('*').single();
+          if (res3.error) return alert('فشل التحديث: ' + res3.error.message);
+          sponsors[sponsorEditingIndex] = { ...res3.data, description: data.description || '', order: data.order };
+        } else if (error) {
+          return alert('فشل التحديث: ' + error.message);
+        } else {
+          sponsors[sponsorEditingIndex] = { ...row, description: data.description || '' };
+        }
+        renderSponsors();
+        closeDialog(sponsorDialog);
+      }
     } else {
       if (sponsorEditingIndex === null) sponsors.unshift(data);
       else sponsors[sponsorEditingIndex] = data;
@@ -779,10 +1329,78 @@
   const boardDialog = $('#boardDialog');
   const boardForm = $('#boardForm');
   let boardEditingIndex = null;
+  // Board image upload elements
+  const boardImageFile = document.getElementById('board_image_file');
+  const boardImageUrl = document.getElementById('board_image_url');
+  const boardImagePreview = document.getElementById('board_image_preview');
+  const boardDropzone = document.getElementById('boardDropzone');
+  const boardBrowseBtn = document.getElementById('boardBrowseBtn');
+  let boardCroppedFile = null;
+
+  // Reusable: handle board image file (crop 1:1) -> preview
+  async function handleBoardImageFile(file) {
+    if (!file) return;
+    if (!(file.type || '').startsWith('image/')) { alert('الملف ليس صورة'); return; }
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) { if (!confirm('حجم الصورة يتجاوز 5MB. المتابعة؟')) return; }
+    try {
+      const cropped = await openImageCropper(file, { aspectRatio: 1, lockAspect: true, maxWidth: 1200, maxHeight: 1200, mimeType: 'image/webp', quality: 0.9 });
+      boardCroppedFile = cropped;
+      const url = URL.createObjectURL(cropped);
+      if (boardImagePreview) { boardImagePreview.src = url; boardImagePreview.style.display = 'block'; }
+    } catch (err) {
+      if (boardImageFile) boardImageFile.value = '';
+    }
+  }
+  // Input change -> handle
+  boardImageFile?.addEventListener('change', async () => {
+    const file = boardImageFile.files && boardImageFile.files[0];
+    await handleBoardImageFile(file);
+  });
+  // Dropzone interactions for board
+  boardBrowseBtn?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); boardImageFile?.click(); });
+  boardDropzone?.addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if ((e.target instanceof HTMLElement) && e.target.closest('#boardBrowseBtn')) return;
+    boardImageFile?.click();
+  });
+  boardDropzone?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); boardImageFile?.click(); }
+  });
+  boardDropzone?.addEventListener('dragover', (e) => { e.preventDefault(); boardDropzone.classList.add('dragover'); });
+  boardDropzone?.addEventListener('dragleave', () => { boardDropzone.classList.remove('dragover'); });
+  boardDropzone?.addEventListener('drop', async (e) => {
+    e.preventDefault(); e.stopPropagation(); boardDropzone.classList.remove('dragover');
+    const dt = e.dataTransfer; if (!dt) return;
+    let file = null;
+    if (dt.files && dt.files.length) file = dt.files[0];
+    if (!file && dt.items && dt.items.length) { const item = Array.from(dt.items).find(i => i.kind === 'file'); if (item) file = item.getAsFile(); }
+    await handleBoardImageFile(file);
+  });
+
+  // Upload board member image to Supabase Storage
+  async function uploadBoardImage() {
+    const file = boardCroppedFile || (boardImageFile?.files && boardImageFile.files[0]);
+    if (!file) return null;
+    if (!sb) return null;
+    const bucket = 'adeeb-site';
+    const ext = (file.name.split('.').pop() || getExtFromType(file.type, 'jpg')).toLowerCase();
+    const safeExt = ext.replace(/[^a-z0-9]/gi, '') || 'jpg';
+    const path = `board/member-${Date.now()}-${Math.random().toString(36).slice(2,8)}.${safeExt}`;
+    const { error: upErr } = await sb.storage.from(bucket).upload(path, file, { cacheControl: '3600', upsert: false });
+    if (upErr) throw upErr;
+    const { data } = sb.storage.from(bucket).getPublicUrl(path);
+    const publicUrl = data?.publicUrl;
+    if (!publicUrl) throw new Error('تعذر الحصول على رابط الصورة');
+    return publicUrl;
+  }
 
   $('#addBoardBtn')?.addEventListener('click', () => {
     boardEditingIndex = null;
     boardForm.reset();
+    if (boardImagePreview) { boardImagePreview.src = ''; boardImagePreview.style.display = 'none'; }
+    if (boardImageUrl) boardImageUrl.value = '';
+    boardCroppedFile = null;
     openDialog(boardDialog);
   });
 
@@ -791,12 +1409,31 @@
     if (!btn) return;
     const idx = Number(btn.dataset.idx);
     const act = btn.dataset.act;
+    if (act === 'up' || act === 'down') {
+      if (!Number.isInteger(idx) || idx < 0 || idx >= board.length) return;
+      const newIndex = act === 'up' ? Math.max(0, idx - 1) : Math.min(board.length - 1, idx + 1);
+      if (newIndex === idx) return;
+      const [moved] = board.splice(idx, 1);
+      board.splice(newIndex, 0, moved);
+      normalizeAndPersistOrder(board, KEYS.board, 'board_members').then(() => {
+        renderBoard();
+      });
+      return;
+    }
     if (act === 'edit') {
       boardEditingIndex = idx;
       const cur = board[idx];
       boardForm.name.value = cur.name || '';
       boardForm.position.value = cur.position || '';
-      boardForm.image.value = (cur.image || cur.image_url) || '';
+      if (boardForm.order) boardForm.order.value = cur.order || '';
+      const imgUrl = (cur.image || cur.image_url) || '';
+      if (boardImageUrl) boardImageUrl.value = imgUrl;
+      if (boardImagePreview) {
+        if (imgUrl) { boardImagePreview.src = imgUrl; boardImagePreview.style.display = 'block'; }
+        else { boardImagePreview.src = ''; boardImagePreview.style.display = 'none'; }
+      }
+      if (boardImageFile) boardImageFile.value = '';
+      boardCroppedFile = null;
       boardForm.twitter.value = (cur.twitter || cur.twitter_url) || '';
       boardForm.linkedin.value = (cur.linkedin || cur.linkedin_url) || '';
       boardForm.email.value = cur.email || '';
@@ -818,45 +1455,70 @@
     }
   });
 
-  boardForm?.addEventListener('submit', (e) => {
+  boardForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    // determine final image url
+    let finalImgUrl = (boardImageUrl?.value || '').trim();
+    try {
+      const uploaded = await uploadBoardImage();
+      if (uploaded) finalImgUrl = uploaded;
+    } catch (err) {
+      return alert('فشل رفع الصورة: ' + (err?.message || 'غير معروف'));
+    }
+    boardCroppedFile = null;
     const data = {
       name: boardForm.name.value.trim(),
       position: boardForm.position.value.trim(),
-      image: boardForm.image.value.trim(),
+      image: finalImgUrl,
       twitter: boardForm.twitter.value.trim(),
       linkedin: boardForm.linkedin.value.trim(),
       email: boardForm.email.value.trim(),
+      order: boardForm.order?.value ? Number(boardForm.order.value) : null,
     };
     if (sb) {
-      sb.auth.getSession().then(({ data: { session } }) => {
-        if (!session) return alert('يلزم تسجيل الدخول لإجراء التعديلات');
-        const payload = {
-          name: data.name,
-          position: data.position,
-          image_url: data.image,
-          twitter_url: data.twitter || null,
-          linkedin_url: data.linkedin || null,
-          email: data.email || null,
-        };
-        if (boardEditingIndex === null) {
-          sb.from('board_members').insert(payload).select('*').single().then(({ data: row, error }) => {
-            if (error) return alert('فشل الحفظ: ' + error.message);
-            board.unshift(row);
-            renderBoard();
-            closeDialog(boardDialog);
-          });
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return alert('يلزم تسجيل الدخول لإجراء التعديلات');
+      const payload = {
+        name: data.name,
+        position: data.position,
+        image_url: data.image || null,
+        twitter_url: data.twitter || null,
+        linkedin_url: data.linkedin || null,
+        email: data.email || null,
+        order: data.order,
+      };
+      const payloadNoOrder = { ...payload }; delete payloadNoOrder.order;
+      if (boardEditingIndex === null) {
+        let row, error;
+        ({ data: row, error } = await sb.from('board_members').insert(payload).select('*').single());
+        if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+          const res2 = await sb.from('board_members').insert(payloadNoOrder).select('*').single();
+          if (res2.error) return alert('فشل الحفظ: ' + res2.error.message);
+          board.unshift({ ...res2.data, order: data.order });
+        } else if (error) {
+          return alert('فشل الحفظ: ' + error.message);
         } else {
-          const id = board[boardEditingIndex]?.id;
-          if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
-          sb.from('board_members').update(payload).eq('id', id).select('*').single().then(({ data: row, error }) => {
-            if (error) return alert('فشل التحديث: ' + error.message);
-            board[boardEditingIndex] = row;
-            renderBoard();
-            closeDialog(boardDialog);
-          });
+          board.unshift(row);
         }
-      });
+        renderBoard();
+        closeDialog(boardDialog);
+      } else {
+        const id = board[boardEditingIndex]?.id;
+        if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
+        let row, error;
+        ({ data: row, error } = await sb.from('board_members').update(payload).eq('id', id).select('*').single());
+        if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+          const res2 = await sb.from('board_members').update(payloadNoOrder).eq('id', id).select('*').single();
+          if (res2.error) return alert('فشل التحديث: ' + res2.error.message);
+          board[boardEditingIndex] = { ...res2.data, order: data.order };
+        } else if (error) {
+          return alert('فشل التحديث: ' + error.message);
+        } else {
+          board[boardEditingIndex] = row;
+        }
+        renderBoard();
+        closeDialog(boardDialog);
+      }
     } else {
       if (boardEditingIndex === null) board.unshift(data);
       else board[boardEditingIndex] = data;
@@ -882,12 +1544,23 @@
     if (!btn) return;
     const idx = Number(btn.dataset.idx);
     const act = btn.dataset.act;
+    if (act === 'up' || act === 'down') {
+      if (!Number.isInteger(idx) || idx < 0 || idx >= faq.length) return;
+      const newIndex = act === 'up' ? Math.max(0, idx - 1) : Math.min(faq.length - 1, idx + 1);
+      if (newIndex === idx) return;
+      const [moved] = faq.splice(idx, 1);
+      faq.splice(newIndex, 0, moved);
+      normalizeAndPersistOrder(faq, KEYS.faq, 'faq').then(() => {
+        renderFaq();
+      });
+      return;
+    }
     if (act === 'edit') {
       faqEditingIndex = idx;
       const cur = faq[idx];
       faqForm.question.value = cur.question || '';
       faqForm.answer.value = cur.answer || '';
-      faqForm.order.value = cur.order || '';
+      if (faqForm.order) faqForm.order.value = cur.order || '';
       openDialog(faqDialog);
     } else if (act === 'del') {
       if (!confirm('تأكيد الحذف؟')) return;
@@ -911,7 +1584,7 @@
     const data = {
       question: faqForm.question.value.trim(),
       answer: faqForm.answer.value.trim(),
-      order: faqForm.order.value ? Number(faqForm.order.value) : null,
+      order: faqForm.order?.value ? Number(faqForm.order.value) : null,
     };
     if (sb) {
       sb.auth.getSession().then(({ data: { session } }) => {
@@ -921,19 +1594,34 @@
           answer: data.answer,
           order: data.order,
         };
+        const payloadNoOrder = { question: data.question, answer: data.answer };
         if (faqEditingIndex === null) {
-          sb.from('faq').insert(payload).select('*').single().then(({ data: row, error }) => {
-            if (error) return alert('فشل الحفظ: ' + error.message);
-            faq.unshift(row);
+          sb.from('faq').insert(payload).select('*').single().then(async ({ data: row, error }) => {
+            if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+              const { data: row2, error: e2 } = await sb.from('faq').insert(payloadNoOrder).select('*').single();
+              if (e2) return alert('فشل الحفظ: ' + e2.message);
+              faq.unshift({ ...row2, order: data.order });
+            } else if (error) {
+              return alert('فشل الحفظ: ' + error.message);
+            } else {
+              faq.unshift(row);
+            }
             renderFaq();
             closeDialog(faqDialog);
           });
         } else {
           const id = faq[faqEditingIndex]?.id;
           if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
-          sb.from('faq').update(payload).eq('id', id).select('*').single().then(({ data: row, error }) => {
-            if (error) return alert('فشل التحديث: ' + error.message);
-            faq[faqEditingIndex] = row;
+          sb.from('faq').update(payload).eq('id', id).select('*').single().then(async ({ data: row, error }) => {
+            if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+              const { data: row2, error: e2 } = await sb.from('faq').update(payloadNoOrder).eq('id', id).select('*').single();
+              if (e2) return alert('فشل التحديث: ' + e2.message);
+              faq[faqEditingIndex] = { ...row2, order: data.order };
+            } else if (error) {
+              return alert('فشل التحديث: ' + error.message);
+            } else {
+              faq[faqEditingIndex] = row;
+            }
             renderFaq();
             closeDialog(faqDialog);
           });
@@ -1013,9 +1701,9 @@
         { data: f, error: ef },
         { data: posts, error: eposts }
       ] = await Promise.all([
-        sb.from('works').select('*').order('created_at', { ascending: false }),
-        sb.from('sponsors').select('*').order('created_at', { ascending: false }),
-        sb.from('board_members').select('*').order('created_at', { ascending: false }),
+        sb.from('works').select('*').order('order', { ascending: true, nullsFirst: true }).order('created_at', { ascending: false }),
+        sb.from('sponsors').select('*').order('order', { ascending: true, nullsFirst: true }).order('created_at', { ascending: false }),
+        sb.from('board_members').select('*').order('order', { ascending: true, nullsFirst: true }).order('created_at', { ascending: false }),
         sb.from('faq').select('*').order('order', { ascending: true }),
         sb.from('blog_posts').select('*').order('published_at', { ascending: false }),
       ]);

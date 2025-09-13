@@ -1,13 +1,14 @@
 <!doctype html>
 <html dir="rtl" lang="ar">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>لوحة تحكم — نادي أديب</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
-    <link rel="stylesheet" href="../style.css" />
-    <link rel="stylesheet" href="admin.css" />
-  </head>
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>لوحة تحكم — نادي أديب</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" />
+      <link rel="stylesheet" href="../style.css" />
+      <link rel="stylesheet" href="admin.css" />
+    </head>
   <body class="admin-body" style="display:none">
     <header class="admin-header">
       <div class="admin-header__container">
@@ -30,11 +31,6 @@
         <nav class="admin-menu">
           <a href="#section-home" class="admin-menu__item active"><i class="fa-solid fa-sitemap"></i> إدارة الموقع</a>
           <a href="#section-blog" class="admin-menu__item"><i class="fa-solid fa-anchor"></i> إدارة مرافئ</a>
-          <a href="#section-works" class="admin-menu__item"><i class="fa-solid fa-briefcase"></i> إدارة الأعمال</a>
-          <a href="#section-sponsors" class="admin-menu__item"><i class="fa-solid fa-handshake"></i> إدارة الرعاة</a>
-          <a href="#section-achievements" class="admin-menu__item"><i class="fa-solid fa-trophy"></i> إدارة الإنجازات</a>
-          <a href="#section-board" class="admin-menu__item"><i class="fa-solid fa-users"></i> إدارة المجلس الإداري</a>
-          <a href="#section-faq" class="admin-menu__item"><i class="fa-solid fa-question-circle"></i> إدارة الأسئلة الشائعة</a>
           <div class="admin-menu__footer">
             <button type="button" class="btn btn-outline" data-logout><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
             <a class="btn btn-primary" href="../index.html" target="_blank"><i class="fa-solid fa-globe"></i> عرض الموقع</a>
@@ -175,17 +171,79 @@
     </div>
 
     <!-- Dialogs -->
-    <dialog id="workDialog" class="admin-dialog">
-      <form method="dialog" class="dialog-form" id="workForm">
-        <h3>إضافة/تعديل عمل</h3>
-        <div class="form-grid">
-          <label>العنوان<input name="title" required /></label>
-          <label>الفئة<input name="category" placeholder="فلم قصير، مبادرة.." /></label>
-          <label>رابط الصورة<input name="image" type="url" placeholder="https://..." required /></label>
-          <label>رابط خارجي<input name="link" type="url" placeholder="https://..." /></label>
+    <!-- Image Cropper Dialog -->
+    <dialog id="imageCropDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="imageCropForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">قص الصورة</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div id="cropToolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+            <label style="display:flex;align-items:center;gap:6px">
+              نسبة القص
+              <select id="cropAspectSelect">
+                <option value="auto">تلقائي</option>
+                <option value="1">1:1</option>
+                <option value="4/3">4:3</option>
+                <option value="16/9">16:9</option>
+              </select>
+            </label>
+            <div style="flex:1"></div>
+            <button type="button" class="btn btn-outline" id="cropZoomIn" title="تكبير"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+            <button type="button" class="btn btn-outline" id="cropZoomOut" title="تصغير"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+            <button type="button" class="btn btn-outline" id="cropRotateL" title="تدوير يسار"><i class="fa-solid fa-rotate-left"></i></button>
+            <button type="button" class="btn btn-outline" id="cropRotateR" title="تدوير يمين"><i class="fa-solid fa-rotate-right"></i></button>
+            <button type="button" class="btn btn-outline" id="cropFlipH" title="عكس أفقي"><i class="fa-solid fa-arrows-left-right"></i></button>
+            <button type="button" class="btn btn-outline" id="cropFlipV" title="عكس عمودي"><i class="fa-solid fa-arrows-up-down"></i></button>
+            <button type="button" class="btn" id="cropReset" title="إعادة الضبط"><i class="fa-solid fa-undo"></i> إعادة</button>
+          </div>
+          <div id="cropperArea">
+            <img id="cropperImage" alt="معاينة القص" />
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+            <small class="field-help">اسحب وحدد الإطار ثم اضغط تأكيد للحفظ.</small>
+            <small id="cropBusy" class="field-help" style="display:none;color:#0ea5e9">جارٍ المعالجة...</small>
+          </div>
         </div>
         <menu class="dialog-actions">
-          <button value="cancel" class="btn">إلغاء</button>
+          <button type="button" class="btn" id="cropCancelBtn">إلغاء</button>
+          <button value="submit" class="btn btn-primary" id="cropConfirmBtn">تأكيد</button>
+        </menu>
+      </form>
+    </dialog>
+    <dialog id="workDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="workForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">إضافة/تعديل عمل</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>العنوان<input name="title" required /></label>
+            <label>الفئة<input name="category" placeholder="فلم قصير، مبادرة.." /></label>
+            <label>صورة العمل
+              <div id="workDropzone" class="upload-dropzone" tabindex="0" role="button" aria-label="رفع صورة بالضغط أو السحب والإفلات">
+                <i class="fa-regular fa-image" aria-hidden="true"></i>
+                <div class="dz-text">
+                  <strong>اسحب وأفلت الصورة هنا</strong>
+                  <span id="workBrowseBtn">أو اضغط لأختيار الصورة من جهازك</span>
+                </div>
+                <!-- <span class="dz-hint">الامتدادات المدعومة: JPG, PNG, WEBP • حتى 5MB</span> -->
+              </div>
+              <input id="work_image_file" type="file" accept="image/*" style="display:none" />
+              <input id="work_image_url" name="image_url" type="hidden" />
+              <small class="field-help">يمكنك السحب والإفلات أو الضغط للاختيار. ستُرفع الصورة ثم يُحفظ رابطها تلقائيًا.</small>
+              <div>
+                <img id="work_image_preview" alt="معاينة الصورة" class="image-preview" />
+              </div>
+            </label>
+            <label>رابط خارجي<input name="link" class="link" type="url" placeholder="https://..." /></label>
+            <label>الترتيب (اختياري)<input name="order" type="number" min="1" placeholder="1" /></label>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
           <button value="submit" class="btn btn-primary">حفظ</button>
         </menu>
       </form>
@@ -193,16 +251,36 @@
 
     <dialog id="sponsorDialog" class="admin-dialog">
       <form method="dialog" class="dialog-form" id="sponsorForm">
-        <h3>إضافة/تعديل راعٍ</h3>
-        <div class="form-grid">
-          <label>الاسم<input name="name" required /></label>
-          <label>الوسم<input name="badge" placeholder="راعي تعليمي.." /></label>
-          <label>الوصف<textarea name="description" rows="3" placeholder="نص قصير يظهر في كارد الراعي"></textarea></label>
-          <label>شعار (رابط صورة)<input name="logo" type="url" required /></label>
-          <label>رابط الموقع<input name="link" type="url" /></label>
+        <div class="dialog-header">
+          <h3 class="dialog-title">إضافة/تعديل راعٍ</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>الاسم<input name="name" required /></label>
+            <label>الوسم<input name="badge" placeholder="راعي تعليمي.." /></label>
+            <label>الوصف<textarea name="description" rows="3" placeholder="نص قصير يظهر في كارد الراعي"></textarea></label>
+            <label>شعار الراعي
+              <div id="sponsorDropzone" class="upload-dropzone" tabindex="0" role="button" aria-label="رفع الشعار بالضغط أو السحب والإفلات">
+                <i class="fa-regular fa-image" aria-hidden="true"></i>
+                <div class="dz-text">
+                  <strong>اسحب وأفلت الشعار هنا</strong>
+                  <span id="sponsorBrowseBtn">أو اضغط لاختيار الشعار من جهازك</span>
+                </div>
+              </div>
+              <input id="sponsor_logo_file" type="file" accept="image/*" style="display:none" />
+              <input id="sponsor_logo_url" name="logo_url" type="hidden" />
+              <small class="field-help">يدعم PNG وWEBP. سيتم رفع الشعار وحفظ رابطه تلقائيًا.</small>
+              <div>
+                <img id="sponsor_logo_preview" alt="معاينة الشعار" class="image-preview" />
+              </div>
+            </label>
+            <label>رابط الموقع<input name="link" type="url" /></label>
+            <label>الترتيب (اختياري)<input name="order" type="number" min="1" placeholder="1" /></label>
+          </div>
         </div>
         <menu class="dialog-actions">
-          <button value="cancel" class="btn">إلغاء</button>
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
           <button value="submit" class="btn btn-primary">حفظ</button>
         </menu>
       </form>
@@ -210,16 +288,21 @@
 
     <dialog id="achievementDialog" class="admin-dialog">
       <form method="dialog" class="dialog-form" id="achievementForm">
-        <h3>إضافة/تعديل إنجاز</h3>
-        <div class="form-grid">
-          <label>النص الظاهر تحت الرقم<input name="label" required placeholder="مثل: ورش تدريبية" /></label>
-          <label>أيقونة Font Awesome<input name="icon" placeholder="مثال: fa-solid fa-trophy" /></label>
-          <label>العدد<input name="count" type="number" min="0" required placeholder="0" /></label>
-          <label>الترتيب (اختياري)<input name="order" type="number" min="1" placeholder="1" /></label>
-          <label style="display:flex;align-items:center;gap:8px"><input name="plus" type="checkbox" checked /> إظهار علامة + بجانب الرقم</label>
+        <div class="dialog-header">
+          <h3 class="dialog-title">إضافة/تعديل إنجاز</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>النص الظاهر تحت الرقم<input name="label" required placeholder="مثل: ورش تدريبية" /></label>
+            <label>أيقونة Font Awesome<input name="icon" placeholder="مثال: fa-solid fa-trophy" /></label>
+            <label>العدد<input name="count" type="number" min="0" required placeholder="0" /></label>
+            <label>الترتيب (اختياري)<input name="order" type="number" min="1" placeholder="1" /></label>
+            <label style="display:flex;align-items:center;gap:8px"><input name="plus" type="checkbox" checked /> إظهار علامة + بجانب الرقم</label>
+          </div>
         </div>
         <menu class="dialog-actions">
-          <button value="cancel" class="btn">إلغاء</button>
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
           <button value="submit" class="btn btn-primary">حفظ</button>
         </menu>
       </form>
@@ -227,17 +310,37 @@
 
     <dialog id="boardDialog" class="admin-dialog">
       <form method="dialog" class="dialog-form" id="boardForm">
-        <h3>إضافة/تعديل عضو</h3>
-        <div class="form-grid">
-          <label>الاسم<input name="name" required /></label>
-          <label>المنصب<input name="position" required /></label>
-          <label>الصورة (رابط)<input name="image" type="url" required /></label>
-          <label>تويتر<input name="twitter" type="url" /></label>
-          <label>لينكدإن<input name="linkedin" type="url" /></label>
-          <label>البريد<input name="email" type="email" /></label>
+        <div class="dialog-header">
+          <h3 class="dialog-title">إضافة/تعديل عضو</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>الاسم<input name="name" required /></label>
+            <label>المنصب<input name="position" required /></label>
+            <label>صورة العضو
+              <div id="boardDropzone" class="upload-dropzone" tabindex="0" role="button" aria-label="رفع صورة العضو بالضغط أو السحب والإفلات">
+                <i class="fa-regular fa-image" aria-hidden="true"></i>
+                <div class="dz-text">
+                  <strong>اسحب وأفلت الصورة هنا</strong>
+                  <span id="boardBrowseBtn">أو اضغط لاختيار الصورة من جهازك</span>
+                </div>
+              </div>
+              <input id="board_image_file" type="file" accept="image/*" style="display:none" />
+              <input id="board_image_url" name="image_url" type="hidden" />
+              <small class="field-help">سيتم فتح أداة القص بنسبة 1:1 وحفظ الرابط تلقائيًا بعد الرفع.</small>
+              <div>
+                <img id="board_image_preview" alt="معاينة الصورة" class="image-preview" />
+              </div>
+            </label>
+            <label>تويتر<input name="twitter" type="url" /></label>
+            <label>لينكدإن<input name="linkedin" type="url" /></label>
+            <label>البريد<input name="email" type="email" /></label>
+            <label>الترتيب (اختياري)<input name="order" type="number" min="1" placeholder="1" /></label>
+          </div>
         </div>
         <menu class="dialog-actions">
-          <button value="cancel" class="btn">إلغاء</button>
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
           <button value="submit" class="btn btn-primary">حفظ</button>
         </menu>
       </form>
@@ -245,14 +348,19 @@
 
     <dialog id="faqDialog" class="admin-dialog">
       <form method="dialog" class="dialog-form" id="faqForm">
-        <h3>إضافة/تعديل سؤال</h3>
-        <div class="form-grid">
-          <label>السؤال<input name="question" required /></label>
-          <label>الإجابة<textarea name="answer" rows="4" required placeholder="اكتب الإجابة هنا..."></textarea></label>
-          <label>ترتيب العرض<input name="order" type="number" min="1" placeholder="1" /></label>
+        <div class="dialog-header">
+          <h3 class="dialog-title">إضافة/تعديل سؤال</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>السؤال<input name="question" required /></label>
+            <label>الإجابة<textarea name="answer" rows="4" required placeholder="اكتب الإجابة هنا..."></textarea></label>
+            <label>الترتيب (اختياري)<input name="order" type="number" min="1" placeholder="1" /></label>
+          </div>
         </div>
         <menu class="dialog-actions">
-          <button value="cancel" class="btn">إلغاء</button>
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
           <button value="submit" class="btn btn-primary">حفظ</button>
         </menu>
       </form>
@@ -260,30 +368,36 @@
 
     <dialog id="blogDialog" class="admin-dialog">
       <form method="dialog" class="dialog-form" id="blogForm">
-        <h3>إضافة/تعديل تدوينة</h3>
-        <div class="form-grid">
-          <label>العنوان<input name="title" required /></label>
-          <label>صورة الغلاف (رابط)<input name="image" type="url" placeholder="https://..." /></label>
-          <label>الكاتب<input name="author" placeholder="اسم الكاتب" /></label>
-          <label>تاريخ النشر<input name="published_at" type="date" /></label>
-          <label>حالة النشر
-            <select name="status">
-              <option value="published">منشور</option>
-              <option value="draft">مسودة</option>
-            </select>
-          </label>
-          <label>التصنيفات<input name="categories" placeholder="مثال: أدب، مبادرات، شعر" /></label>
-          <label>مقتطف قصير<textarea name="excerpt" rows="3" placeholder="نبذة مختصرة"></textarea></label>
-          <label>المحتوى الكامل<textarea name="content" rows="6" placeholder="نص التدوينة"></textarea></label>
+        <div class="dialog-header">
+          <h3 class="dialog-title">إضافة/تعديل تدوينة</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>العنوان<input name="title" required /></label>
+            <label>صورة الغلاف (رابط)<input name="image" type="url" placeholder="https://..." /></label>
+            <label>الكاتب<input name="author" placeholder="اسم الكاتب" /></label>
+            <label>تاريخ النشر<input name="published_at" type="date" /></label>
+            <label>حالة النشر
+              <select name="status">
+                <option value="published">منشور</option>
+                <option value="draft">مسودة</option>
+              </select>
+            </label>
+            <label>التصنيفات<input name="categories" placeholder="مثال: أدب، مبادرات، شعر" /></label>
+            <label>مقتطف قصير<textarea name="excerpt" rows="3" placeholder="نبذة مختصرة"></textarea></label>
+            <label>المحتوى الكامل<textarea name="content" rows="6" placeholder="نص التدوينة"></textarea></label>
+          </div>
         </div>
         <menu class="dialog-actions">
-          <button value="cancel" class="btn">إلغاء</button>
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
           <button value="submit" class="btn btn-primary">حفظ</button>
         </menu>
       </form>
     </dialog>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
     <script src="../supabase-config.js"></script>
     <script>
       (async () => {

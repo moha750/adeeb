@@ -301,11 +301,7 @@
     }
 }
 
-/* Page spacing below fixed header */
-main,
-.blog-container {
-    padding-top: 90px;
-}
+
 
 /* Blog container background + decorations (subset) */
 .blog-container {

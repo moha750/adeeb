@@ -33,12 +33,33 @@ function showPageLoader(text) {
     __adeebLoaderEl.style.display = 'flex';
     __adeebLoaderEl.setAttribute('aria-hidden', 'false');
   }
+  // prevent page scroll while loader is visible
+  try {
+    const b = document.body;
+    if (b && !b.hasAttribute('data-adeeb-prev-overflow')) {
+      b.setAttribute('data-adeeb-prev-overflow', b.style.overflow || '');
+    }
+    if (b) b.style.overflow = 'hidden';
+  } catch {}
 }
 function hidePageLoader() {
   if (__adeebLoaderEl) {
     __adeebLoaderEl.style.display = 'none';
     __adeebLoaderEl.setAttribute('aria-hidden', 'true');
   }
+  // restore page scroll
+  try {
+    const b = document.body;
+    if (b) {
+      const prev = b.getAttribute('data-adeeb-prev-overflow');
+      if (prev !== null) {
+        b.style.overflow = prev;
+        b.removeAttribute('data-adeeb-prev-overflow');
+      } else {
+        b.style.overflow = '';
+      }
+    }
+  } catch {}
 }
 
 if (menuToggle && nav) {
