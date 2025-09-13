@@ -120,16 +120,22 @@ document.addEventListener("DOMContentLoaded", function () {
         const { data, error } = await sb
           .from('works')
           .select('*')
+          .order('order', { ascending: true, nullsFirst: true })
           .order('created_at', { ascending: false });
         if (error) throw error;
-        return Array.isArray(data) ? data : [];
+        const arr = Array.isArray(data) ? data : [];
+        return arr;
       }
     } catch (e) {
       console.warn('Supabase works fetch failed, will try localStorage.', e);
     }
     try {
       const raw = localStorage.getItem('adeeb_works');
-      return raw ? JSON.parse(raw) : [];
+      const arr = raw ? JSON.parse(raw) : [];
+      // local fallback: order by `order` asc, then created_at desc
+      return Array.isArray(arr)
+        ? arr.slice().sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000) || (new Date(b.created_at || 0) - new Date(a.created_at || 0)))
+        : [];
     } catch (e) {
       console.warn('LocalStorage works parse failed.', e);
       return [];
@@ -208,16 +214,21 @@ document.addEventListener("DOMContentLoaded", function () {
         const { data, error } = await sb
           .from('board_members')
           .select('*')
+          .order('order', { ascending: true, nullsFirst: true })
           .order('created_at', { ascending: false });
         if (error) throw error;
-        return Array.isArray(data) ? data : [];
+        const arr = Array.isArray(data) ? data : [];
+        return arr;
       }
     } catch (e) {
       console.warn('Supabase board fetch failed, will try localStorage.', e);
     }
     try {
       const raw = localStorage.getItem('adeeb_board');
-      return raw ? JSON.parse(raw) : [];
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr)
+        ? arr.slice().sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000) || (new Date(b.created_at || 0) - new Date(a.created_at || 0)))
+        : [];
     } catch (e) {
       console.warn('LocalStorage board parse failed.', e);
       return [];
@@ -794,16 +805,24 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       const sb = window.sbClient;
       if (sb) {
-        const { data, error } = await sb.from('sponsors').select('*').order('created_at', { ascending: false });
+        const { data, error } = await sb
+          .from('sponsors')
+          .select('*')
+          .order('order', { ascending: true, nullsFirst: true })
+          .order('created_at', { ascending: false });
         if (error) throw error;
-        return Array.isArray(data) ? data : [];
+        const arr = Array.isArray(data) ? data : [];
+        return arr;
       }
     } catch (e) {
       console.warn('Supabase sponsors fetch failed, will try localStorage.', e);
     }
     try {
       const raw = localStorage.getItem('adeeb_sponsors');
-      return raw ? JSON.parse(raw) : [];
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr)
+        ? arr.slice().sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000) || (new Date(b.created_at || 0) - new Date(a.created_at || 0)))
+        : [];
     } catch (e) {
       console.warn('LocalStorage sponsors parse failed.', e);
       return [];
