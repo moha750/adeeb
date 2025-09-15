@@ -7,13 +7,14 @@
   const obForm = $('#obForm');
   const fullName = $('#fullName');
   const phoneInput = $('#phone');
-  const positionDisplay = $('#positionDisplay');
   const password = $('#password');
   const avatarFile = $('#avatarFile');
   const avatarPreview = $('#avatarPreview');
   const avatarFileName = $('#avatarFileName');
   const statusEl = $('#status');
   const submitBtn = $('#submitBtn');
+  const displayNameReadout = $('#displayNameReadout');
+  const positionReadout = $('#positionReadout');
 
   function setStatus(type, msg) {
     if (!statusEl) return;
@@ -79,11 +80,23 @@
         obGate.hidden = false;
         return;
       }
-      // Have session -> show form and prefill name/position/phone from metadata
+      // Have session -> show form and prefill name from metadata/email
       const md = session.user?.user_metadata || {};
       fullName.value = md.display_name || '';
-      if (positionDisplay) positionDisplay.value = md.position || '';
       if (phoneInput) phoneInput.value = md.phone || '';
+      if (displayNameReadout) displayNameReadout.textContent = md.display_name || session.user?.email || '—';
+      // Try to get position from metadata first; if missing, try admins table
+      let position = md.position || '';
+      try {
+        if (!position) {
+          const uid = session.user?.id;
+          if (uid) {
+            const { data, error } = await sb.from('admins').select('position').eq('user_id', uid).maybeSingle();
+            if (!error && data && typeof data.position !== 'undefined') position = data.position || '';
+          }
+        }
+      } catch {}
+      if (positionReadout) positionReadout.textContent = position || '—';
       if (!avatarPreview.src) {
         const avatar = md.avatar_url || '';
         if (avatar) avatarPreview.src = avatar;
@@ -109,15 +122,10 @@
     e?.preventDefault?.();
     if (!sb) return;
     const name = fullName.value.trim();
-    const phone = (phoneInput?.value || '').trim();
     const pwd = password.value;
+    const phone = (phoneInput?.value || '').trim();
     if (!name || !pwd || !phone) {
       setStatus('error', 'يرجى تعبئة الاسم ورقم الجوال وكلمة المرور');
-      return;
-    }
-    // Basic KSA-like mobile format check (starts with 05 and 10 digits) but keep it lenient
-    if (!/^0?5\d{8}$/.test(phone)) {
-      setStatus('error', 'صيغة رقم الجوال غير صحيحة. مثال: 05xxxxxxxx');
       return;
     }
     submitBtn.disabled = true;
@@ -134,7 +142,7 @@
         console.warn('avatar upload failed', e);
       }
 
-      // Update user profile: password + metadata (do not change position here)
+      // Update user profile: password + metadata
       const meta = { display_name: name, phone };
       if (avatarUrl) meta.avatar_url = avatarUrl;
       const { error: updErr } = await sb.auth.updateUser({ password: pwd, data: meta });

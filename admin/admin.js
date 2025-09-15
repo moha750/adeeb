@@ -2120,7 +2120,9 @@
     if (!email) return;
     adminsStatus && (adminsStatus.className = 'muted', adminsStatus.textContent = 'جاري إرسال الدعوة...');
     try {
-      await callFunction('invite-admin', { method: 'POST', body: { email, display_name, position } });
+      // Build absolute onboarding URL (production-friendly)
+      const onboardingUrl = new URL('/admin/onboarding.html', location.origin).href;
+      await callFunction('invite-admin', { method: 'POST', body: { email, display_name, position, redirectTo: onboardingUrl, redirect_to: onboardingUrl } });
       if (newAdminEmail) newAdminEmail.value = '';
       try { const n = document.getElementById('newAdminName'); if (n) n.value = ''; } catch {}
       try { const p = document.getElementById('newAdminPosition'); if (p) p.value = ''; } catch {}
