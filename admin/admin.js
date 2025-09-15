@@ -95,6 +95,10 @@
       return db - da;
     });
 
+  // Cache fields for admin invite
+  const newAdminName = document.getElementById('newAdminName');
+  const newAdminPosition = document.getElementById('newAdminPosition');
+
   // ===== Change Password (Admin) =====
   const adminChangePasswordForm = document.getElementById('adminChangePasswordForm');
   const adminCurrentPasswordInput = document.getElementById('admin_current_password');
@@ -800,6 +804,7 @@
       if (!user) { alert('يلزم تسجيل الدخول'); return; }
       const payload = {
         display_name: (adminDisplayNameInput?.value || '').trim() || null,
+        // position is locked by owner; do not update from profile form
         phone: (adminPhoneInput?.value || '').trim() || null,
       };
       payload.name = payload.display_name; // Back-compat
@@ -2115,17 +2120,11 @@
   addAdminForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = (newAdminEmail?.value || '').trim();
-    const display_name = (document.getElementById('newAdminName')?.value || '').trim() || null;
-    const position = (document.getElementById('newAdminPosition')?.value || '').trim() || null;
     if (!email) return;
     adminsStatus && (adminsStatus.className = 'muted', adminsStatus.textContent = 'جاري إرسال الدعوة...');
     try {
-      // Build absolute onboarding URL (production-friendly)
-      const onboardingUrl = new URL('/admin/onboarding.html', location.origin).href;
-      await callFunction('invite-admin', { method: 'POST', body: { email, display_name, position, redirectTo: onboardingUrl, redirect_to: onboardingUrl } });
+      await callFunction('invite-admin', { method: 'POST', body: { email } });
       if (newAdminEmail) newAdminEmail.value = '';
-      try { const n = document.getElementById('newAdminName'); if (n) n.value = ''; } catch {}
-      try { const p = document.getElementById('newAdminPosition'); if (p) p.value = ''; } catch {}
       await fetchAdmins();
       if (adminsStatus) { adminsStatus.className = 'alert success'; adminsStatus.textContent = 'تم إرسال دعوة عبر البريد الإلكتروني. سيكتمل التفعيل بعد قبول الدعوة.'; }
     } catch (err) {

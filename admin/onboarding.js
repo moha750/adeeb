@@ -6,15 +6,12 @@
   const obGate = $('#obGate');
   const obForm = $('#obForm');
   const fullName = $('#fullName');
-  const phoneInput = $('#phone');
   const password = $('#password');
   const avatarFile = $('#avatarFile');
   const avatarPreview = $('#avatarPreview');
   const avatarFileName = $('#avatarFileName');
   const statusEl = $('#status');
   const submitBtn = $('#submitBtn');
-  const displayNameReadout = $('#displayNameReadout');
-  const positionReadout = $('#positionReadout');
 
   function setStatus(type, msg) {
     if (!statusEl) return;
@@ -83,20 +80,6 @@
       // Have session -> show form and prefill name from metadata/email
       const md = session.user?.user_metadata || {};
       fullName.value = md.display_name || '';
-      if (phoneInput) phoneInput.value = md.phone || '';
-      if (displayNameReadout) displayNameReadout.textContent = md.display_name || session.user?.email || '—';
-      // Try to get position from metadata first; if missing, try admins table
-      let position = md.position || '';
-      try {
-        if (!position) {
-          const uid = session.user?.id;
-          if (uid) {
-            const { data, error } = await sb.from('admins').select('position').eq('user_id', uid).maybeSingle();
-            if (!error && data && typeof data.position !== 'undefined') position = data.position || '';
-          }
-        }
-      } catch {}
-      if (positionReadout) positionReadout.textContent = position || '—';
       if (!avatarPreview.src) {
         const avatar = md.avatar_url || '';
         if (avatar) avatarPreview.src = avatar;
@@ -123,9 +106,8 @@
     if (!sb) return;
     const name = fullName.value.trim();
     const pwd = password.value;
-    const phone = (phoneInput?.value || '').trim();
-    if (!name || !pwd || !phone) {
-      setStatus('error', 'يرجى تعبئة الاسم ورقم الجوال وكلمة المرور');
+    if (!name || !pwd) {
+      setStatus('error', 'يرجى تعبئة الاسم وكلمة المرور');
       return;
     }
     submitBtn.disabled = true;
@@ -143,7 +125,7 @@
       }
 
       // Update user profile: password + metadata
-      const meta = { display_name: name, phone };
+      const meta = { display_name: name };
       if (avatarUrl) meta.avatar_url = avatarUrl;
       const { error: updErr } = await sb.auth.updateUser({ password: pwd, data: meta });
       if (updErr) throw updErr;
