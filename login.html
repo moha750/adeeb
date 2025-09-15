@@ -55,14 +55,21 @@
           return;
         }
 
-        // If already logged in, redirect to admin (or given redirect)
+        // Read params for any notices
+        const params = new URLSearchParams(location.search);
+        const notice = params.get('notice');
+        if (notice === 'not_admin') {
+          status.className = 'alert error';
+          status.textContent = 'حسابك ليس إداريًا. يمكنك استخدام حساب إداري للدخول إلى لوحة التحكم.';
+        }
+
+        // If already logged in, do NOT auto-redirect. Keep this page visible.
+        // This lets bloggers open the admin login page without being pushed to the blogger dashboard.
         try {
           const { data: { session } } = await sb.auth.getSession();
-          const params = new URLSearchParams(location.search);
-          const redirect = params.get('redirect') || 'blogger/dashboard.html';
           if (session) {
-            location.replace(redirect);
-            return;
+            status.className = 'muted';
+            status.textContent = 'أنت مسجل دخولًا بالفعل. يمكنك المتابعة إذا رغبت بتسجيل الدخول كحساب مختلف.';
           }
         } catch {}
 
@@ -77,10 +84,29 @@
           form.querySelector('button').style.opacity = .7;
           try {
             const params = new URLSearchParams(location.search);
-            const redirect = params.get('redirect') || 'blogger/dashboard.html';
+            const redirect = params.get('redirect') || 'admin/admin.html';
             const { data, error } = await sb.auth.signInWithPassword({ email, password });
             if (error) throw error;
             if (data?.user) {
+              // Role check: must be admin to proceed to admin panel
+              try {
+                const userId = data.user.id;
+                const { data: adminRow, error: adminErr } = await sb
+                  .from('admins')
+                  .select('user_id,is_admin')
+                  .eq('user_id', userId)
+                  .eq('is_admin', true)
+                  .maybeSingle();
+                if (adminErr || !adminRow) {
+                  status.className = 'alert error';
+                  status.textContent = 'ليس لديك الصلاحية لدخول لوحة التحكم.';
+                  return; // keep user on this page, do not redirect
+                }
+              } catch (roleErr) {
+                status.className = 'alert error';
+                status.textContent = 'ليس لديك الصلاحية لدخول لوحة التحكم.';
+                return;
+              }
               location.replace(redirect);
               return;
             }

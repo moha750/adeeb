@@ -27,6 +27,28 @@
   // Supabase client (if configured)
   const sb = window.sbClient || null;
 
+  // Edge Functions base URL (derived from project URL)
+  const FUNCTIONS_BASE = (window.SUPABASE_URL || '').replace('.supabase.co', '.functions.supabase.co');
+
+  async function callFunction(name, { method = 'GET', body = null } = {}) {
+    if (!sb) throw new Error('Supabase not initialized');
+    if (!FUNCTIONS_BASE) throw new Error('Functions base URL not configured');
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw new Error('not-authenticated');
+    const headers = {
+      'Authorization': `Bearer ${session.access_token}`,
+      'Content-Type': 'application/json',
+    };
+    const res = await fetch(`${FUNCTIONS_BASE}/${name}`, { method, headers, body: body ? JSON.stringify(body) : null });
+    const text = await res.text();
+    let json = null; try { json = text ? JSON.parse(text) : null; } catch {}
+    if (!res.ok) {
+      const msg = json?.error || res.statusText || `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+    return json;
+  }
+
   // User badge helpers
   function timeGreeting() {
     const h = new Date().getHours();
@@ -231,14 +253,16 @@
     if (!achievementsList) return;
     achievementsList.innerHTML = '';
     const sorted = [...achievements].sort((a, b) => (a.order || 999) - (b.order || 999));
-    sorted.forEach((item) => {
+    sorted.forEach((item, sortedIndex) => {
       const originalIdx = achievements.indexOf(item);
       const iconClass = item.icon || item.icon_class || 'fa-solid fa-trophy';
       const rawCount = (item.count ?? item.count_number ?? 0);
       const number = typeof rawCount === 'number' ? rawCount : Number(rawCount || 0);
       const plus = 'plus' in item ? !!item.plus : ('plus_flag' in item ? !!item.plus_flag : true);
+      const displayOrder = (item.order ? Number(item.order) : (sortedIndex + 1));
       const node = el(`
         <div class="card draggable-card" data-idx="${originalIdx}" draggable="true">
+          <span class="order-chip">#${displayOrder}</span>
           <div class="card__body" style="display:flex;gap:14px;align-items:center;">
             <div class="card__media" style="width:auto">
               <i class="${iconClass}" style="font-size:28px;color:#0ea5e9"></i>
@@ -246,7 +270,6 @@
             <div style="flex:1">
               <div class="card__title">${item.label || ''}</div>
               <p class="card__text" style="margin:6px 0;color:#64748b">${number}${plus ? '+' : ''}</p>
-              ${item.order ? `<span class=\"card__badge\">ترتيب: ${item.order}</span>` : ''}
               <div class="card__actions" style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
                 <button class="btn btn-outline" data-act="up" data-idx="${originalIdx}" title="تحريك لأعلى"><i class="fa-solid fa-arrow-up"></i></button>
                 <button class="btn btn-outline" data-act="down" data-idx="${originalIdx}" title="تحريك لأسفل"><i class="fa-solid fa-arrow-down"></i></button>
@@ -333,7 +356,6 @@
       achievementForm.icon.value = cur.icon || cur.icon_class || '';
       const rawCount = (cur.count ?? cur.count_number ?? 0);
       achievementForm.count.value = typeof rawCount === 'number' ? rawCount : Number(rawCount || 0);
-      achievementForm.order.value = cur.order || '';
       achievementForm.plus.checked = 'plus' in cur ? !!cur.plus : ('plus_flag' in cur ? !!cur.plus_flag : true);
       openDialog(achievementDialog);
     } else if (act === 'del') {
@@ -359,7 +381,6 @@
       label: achievementForm.label.value.trim(),
       icon: achievementForm.icon.value.trim(),
       count: achievementForm.count.value ? Number(achievementForm.count.value) : 0,
-      order: achievementForm.order.value ? Number(achievementForm.order.value) : null,
       plus: !!achievementForm.plus.checked,
     };
     if (sb) {
@@ -369,7 +390,6 @@
           label: data.label,
           icon_class: data.icon || null,
           count_number: data.count,
-          order: data.order,
           plus_flag: data.plus,
         };
         if (achievementEditingIndex === null) {
@@ -471,6 +491,11 @@
       $$('.admin-section').forEach((sec) => (sec.hidden = true));
       const target = $(id);
       if (target) target.hidden = false;
+
+      // If admins tab is opened, load admins list
+      if (id === '#section-admins') {
+        try { fetchAdmins?.(); } catch {}
+      }
 
       // Close sidebar after navigating on mobile
       if (isMobile()) closeSidebar();
@@ -582,17 +607,18 @@
     if (!worksList) return;
     worksList.innerHTML = '';
     const sorted = [...works].sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000));
-    sorted.forEach((item) => {
+    sorted.forEach((item, sortedIndex) => {
       const idx = works.indexOf(item);
+      const displayOrder = (item.order ? Number(item.order) : (sortedIndex + 1));
       const node = el(`
         <div class="card draggable-card" data-idx="${idx}" draggable="true">
+          <span class="order-chip">#${displayOrder}</span>
           <div class="card__media">
             <img src="${(item.image || item.image_url) || ''}" alt="${item.title || ''}" />
             ${(item.category) ? `<span class=\"card__badge\">${item.category}</span>` : ''}
           </div>
           <div class="card__body">
             <div class="card__title">${item.title || ''}</div>
-            ${item.order ? `<span class=\"card__badge\">ترتيب: ${item.order}</span>` : ''}
             ${(item.link || item.link_url) ? `<a class=\"btn btn-outline\" target=\"_blank\" href=\"${item.link || item.link_url}\"><i class=\"fa-solid fa-link\"></i> رابط</a>` : ''}
             <div class="card__actions">
               <button class="btn btn-outline" data-act="up" data-idx="${idx}" title="تحريك لأعلى"><i class="fa-solid fa-arrow-up"></i></button>
@@ -778,17 +804,18 @@
     if (!sponsorsList) return;
     sponsorsList.innerHTML = '';
     const sorted = [...sponsors].sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000));
-    sorted.forEach((item) => {
+    sorted.forEach((item, sortedIndex) => {
       const idx = sponsors.indexOf(item);
+      const displayOrder = (item.order ? Number(item.order) : (sortedIndex + 1));
       const node = el(`
         <div class="card draggable-card" data-idx="${idx}" draggable="true">
+          <span class="order-chip">#${displayOrder}</span>
           <div class="card__media">
             <img src="${(item.logo || item.logo_url) || ''}" alt="${item.name || ''}" />
             ${item.badge ? `<span class="card__badge">${item.badge}</span>` : ''}
           </div>
           <div class="card__body">
             <div class="card__title">${item.name || ''}</div>
-            ${item.order ? `<span class=\"card__badge\">ترتيب: ${item.order}</span>` : ''}
             ${item.description ? `<p class="card__text">${item.description}</p>` : ''}
             ${(item.link || item.link_url) ? `<a class=\"btn btn-outline\" target=\"_blank\" href=\"${item.link || item.link_url}\"><i class=\"fa-solid fa-arrow-up-right-from-square\"></i> موقع</a>` : ''}
             <div class="card__actions">
@@ -809,17 +836,18 @@
     if (!boardList) return;
     boardList.innerHTML = '';
     const sorted = [...board].sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000));
-    sorted.forEach((item) => {
+    sorted.forEach((item, sortedIndex) => {
       const idx = board.indexOf(item);
+      const displayOrder = (item.order ? Number(item.order) : (sortedIndex + 1));
       const node = el(`
         <div class="card draggable-card" data-idx="${idx}" draggable="true">
+          <span class="order-chip">#${displayOrder}</span>
           <div class="card__media">
             <img src="${(item.image || item.image_url) || ''}" alt="${item.name || ''}" />
             ${(item.position) ? `<span class="card__badge">${item.position}</span>` : ''}
           </div>
           <div class="card__body">
             <div class="card__title">${item.name || ''}</div>
-            ${item.order ? `<span class=\"card__badge\">ترتيب: ${item.order}</span>` : ''}
             <div class="card__actions">
               ${(item.twitter || item.twitter_url) ? `<a class="btn btn-outline" target="_blank" href="${item.twitter || item.twitter_url}"><i class="fab fa-twitter"></i> تويتر</a>` : ''}
               ${(item.linkedin || item.linkedin_url) ? `<a class="btn btn-outline" target="_blank" href="${item.linkedin || item.linkedin_url}"><i class="fab fa-linkedin"></i> لينكدإن</a>` : ''}
@@ -843,14 +871,14 @@
     if (!faqList) return;
     faqList.innerHTML = '';
     const sorted = [...faq].sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000));
-    sorted.forEach((item) => {
+    sorted.forEach((item, sortedIndex) => {
       const idx = faq.indexOf(item);
       const node = el(`
         <div class="card draggable-card" data-idx="${idx}" draggable="true">
+          <span class="order-chip">#${item.order ? Number(item.order) : (sortedIndex + 1)}</span>
           <div class="card__body">
             <div class="card__title">${item.question || ''}</div>
             <p class="card__text" style="margin: 10px 0; color: #666; line-height: 1.5;">${(item.answer || '').substring(0, 150)}${(item.answer || '').length > 150 ? '...' : ''}</p>
-            ${item.order ? `<span class=\"card__badge\">ترتيب: ${item.order}</span>` : ''}
             <div class="card__actions">
               <button class="btn btn-outline" data-act="up" data-idx="${idx}" title="تحريك لأعلى"><i class="fa-solid fa-arrow-up"></i></button>
               <button class="btn btn-outline" data-act="down" data-idx="${idx}" title="تحريك لأسفل"><i class="fa-solid fa-arrow-down"></i></button>
@@ -898,6 +926,10 @@
   const workImagePreview = document.getElementById('work_image_preview');
   const workDropzone = document.getElementById('workDropzone');
   const workBrowseBtn = document.getElementById('workBrowseBtn');
+  const workImageHelp = document.getElementById('work_image_help');
+  const workImageActions = document.getElementById('workImageActions');
+  const workEditImageBtn = document.getElementById('work_edit_image_btn');
+  const workChangeImageBtn = document.getElementById('work_change_image_btn');
   let workCroppedFile = null; // File | null
 
   // Reusable: handle a selected/dropped file -> crop -> preview
@@ -920,10 +952,23 @@
         workImagePreview.src = url;
         workImagePreview.style.display = 'block';
       }
+      // When a new file is chosen, prefer showing actions instead of dropzone (useful during edit)
+      if (workImageActions) workImageActions.style.display = 'flex';
+      if (workDropzone) workDropzone.style.display = 'none';
+      if (workImageHelp) workImageHelp.style.display = 'none';
     } catch (err) {
       // if cancelled, clear selection
       if (workImageFile) workImageFile.value = '';
     }
+  }
+
+  // Utility: fetch an image URL and return a File for cropping
+  async function fetchUrlAsFile(url, filenameBase = 'image') {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const blob = await res.blob();
+    const ext = getExtFromType(blob.type || 'image/jpeg', 'jpg');
+    return new File([blob], `${filenameBase}.${ext}`, { type: blob.type || 'image/jpeg' });
   }
 
   // Input change -> handle
@@ -976,6 +1021,31 @@
     await handleWorkImageFile(file);
   });
 
+  // Image actions in edit mode
+  workChangeImageBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    workImageFile?.click();
+  });
+
+  workEditImageBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      const src = (workImagePreview && workImagePreview.src) || (workImageUrl && workImageUrl.value) || '';
+      if (!src) { alert('لا توجد صورة لتحريرها'); return; }
+      const file = await fetchUrlAsFile(src, 'current');
+      const cropped = await openImageCropper(file, { aspectRatio: 16/9, lockAspect: true, maxWidth: 1600, maxHeight: 1600, mimeType: 'image/webp', quality: 0.9 });
+      workCroppedFile = cropped;
+      const url = URL.createObjectURL(cropped);
+      if (workImagePreview) { workImagePreview.src = url; workImagePreview.style.display = 'block'; }
+      if (workImageActions) workImageActions.style.display = 'flex';
+      if (workDropzone) workDropzone.style.display = 'none';
+      if (workImageHelp) workImageHelp.style.display = 'none';
+    } catch (err) {
+      if (String(err?.message || '').includes('crop-cancelled')) return; // ignore cancel
+      alert('تعذر تحرير الصورة الحالية. جرّب تغيير الصورة بدلًا من ذلك.');
+    }
+  });
+
   // Helper: upload selected Works image file to Supabase Storage and return public URL
   async function uploadSelectedWorkImage() {
     const file = workCroppedFile || (workImageFile?.files && workImageFile.files[0]);
@@ -1000,6 +1070,10 @@
     if (workImagePreview) { workImagePreview.src = ''; workImagePreview.style.display = 'none'; }
     if (workImageUrl) workImageUrl.value = '';
     workCroppedFile = null;
+    // Show dropzone in add mode, hide actions
+    if (workDropzone) workDropzone.style.display = '';
+    if (workImageActions) workImageActions.style.display = 'none';
+    if (workImageHelp) workImageHelp.style.display = '';
     openDialog(workDialog);
   });
 
@@ -1036,6 +1110,16 @@
       if (workImageFile) workImageFile.value = '';
       workCroppedFile = null;
       workForm.link.value = (cur.link || cur.link_url) || '';
+      // In edit mode: if we have an image, hide dropzone and show actions; otherwise, show dropzone
+      if (imgUrl) {
+        if (workDropzone) workDropzone.style.display = 'none';
+        if (workImageActions) workImageActions.style.display = 'flex';
+        if (workImageHelp) workImageHelp.style.display = 'none';
+      } else {
+        if (workDropzone) workDropzone.style.display = '';
+        if (workImageActions) workImageActions.style.display = 'none';
+        if (workImageHelp) workImageHelp.style.display = '';
+      }
       openDialog(workDialog);
     } else if (act === 'del') {
       if (!confirm('تأكيد الحذف؟')) return;
@@ -1065,12 +1149,25 @@
       return alert('فشل رفع الصورة: ' + (upErr?.message || 'غير معروف'));
     }
     workCroppedFile = null;
+    // Determine order to keep when editing: if item has no order, compute from current sorted position
+    let orderToKeep = null;
+    if (workEditingIndex !== null) {
+      const existingOrder = works[workEditingIndex]?.order ?? null;
+      if (existingOrder === null || existingOrder === undefined) {
+        const sortedForOrder = [...works].sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000));
+        const curItem = works[workEditingIndex];
+        const pos = sortedForOrder.indexOf(curItem);
+        orderToKeep = pos >= 0 ? (pos + 1) : null;
+      } else {
+        orderToKeep = existingOrder;
+      }
+    }
     const data = {
       title: workForm.title.value.trim(),
       category: workForm.category.value.trim(),
       image: finalImageUrl,
       link: workForm.link.value.trim(),
-      order: workForm.order?.value ? Number(workForm.order.value) : null,
+      order: orderToKeep,
     };
     if (sb) {
       // require auth for write
@@ -1131,6 +1228,9 @@
   const sponsorLogoPreview = document.getElementById('sponsor_logo_preview');
   const sponsorDropzone = document.getElementById('sponsorDropzone');
   const sponsorBrowseBtn = document.getElementById('sponsorBrowseBtn');
+  const sponsorImageActions = document.getElementById('sponsorImageActions');
+  const sponsorEditLogoBtn = document.getElementById('sponsor_edit_logo_btn');
+  const sponsorChangeLogoBtn = document.getElementById('sponsor_change_logo_btn');
   let sponsorCroppedFile = null;
 
   // Reusable: handle sponsor logo file (crop 1:1) -> preview
@@ -1145,6 +1245,9 @@
       sponsorCroppedFile = cropped;
       const url = URL.createObjectURL(cropped);
       if (sponsorLogoPreview) { sponsorLogoPreview.src = url; sponsorLogoPreview.style.display = 'block'; }
+      // Toggle UI like Works: show actions, hide dropzone
+      if (sponsorImageActions) sponsorImageActions.style.display = 'flex';
+      if (sponsorDropzone) sponsorDropzone.style.display = 'none';
     } catch (err) {
       if (sponsorLogoFile) sponsorLogoFile.value = '';
     }
@@ -1176,6 +1279,31 @@
     await handleSponsorLogoFile(file);
   });
 
+  // Sponsor image actions
+  sponsorChangeLogoBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    sponsorLogoFile?.click();
+  });
+
+  sponsorEditLogoBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      const src = (sponsorLogoPreview && sponsorLogoPreview.src) || (sponsorLogoUrl && sponsorLogoUrl.value) || '';
+      if (!src) { alert('لا يوجد شعار لتحريره'); return; }
+      const file = await fetchUrlAsFile(src, 'current-logo');
+      const preferPng = /png/i.test(file.type || '') || /\.(png)$/i.test(file.name || '');
+      const cropped = await openImageCropper(file, { aspectRatio: 1, lockAspect: true, maxWidth: 800, maxHeight: 800, mimeType: preferPng ? 'image/png' : 'image/webp', quality: preferPng ? 1.0 : 0.9 });
+      sponsorCroppedFile = cropped;
+      const url = URL.createObjectURL(cropped);
+      if (sponsorLogoPreview) { sponsorLogoPreview.src = url; sponsorLogoPreview.style.display = 'block'; }
+      if (sponsorImageActions) sponsorImageActions.style.display = 'flex';
+      if (sponsorDropzone) sponsorDropzone.style.display = 'none';
+    } catch (err) {
+      if (String(err?.message || '').includes('crop-cancelled')) return;
+      alert('تعذر تحرير الشعار الحالي. جرّب تغيير الشعار بدلًا من ذلك.');
+    }
+  });
+
   // Upload sponsor logo to Supabase Storage
   async function uploadSponsorLogo() {
     const file = sponsorCroppedFile || (sponsorLogoFile?.files && sponsorLogoFile.files[0]);
@@ -1199,6 +1327,9 @@
     if (sponsorLogoPreview) { sponsorLogoPreview.src = ''; sponsorLogoPreview.style.display = 'none'; }
     if (sponsorLogoUrl) sponsorLogoUrl.value = '';
     sponsorCroppedFile = null;
+    // Show dropzone in add mode, hide actions
+    if (sponsorDropzone) sponsorDropzone.style.display = '';
+    if (sponsorImageActions) sponsorImageActions.style.display = 'none';
     openDialog(sponsorDialog);
   });
 
@@ -1234,6 +1365,14 @@
       if (sponsorLogoFile) sponsorLogoFile.value = '';
       sponsorCroppedFile = null;
       sponsorForm.link.value = (cur.link || cur.link_url) || '';
+      // Toggle actions/dropzone depending on existing image
+      if (logoUrl) {
+        if (sponsorDropzone) sponsorDropzone.style.display = 'none';
+        if (sponsorImageActions) sponsorImageActions.style.display = 'flex';
+      } else {
+        if (sponsorDropzone) sponsorDropzone.style.display = '';
+        if (sponsorImageActions) sponsorImageActions.style.display = 'none';
+      }
       openDialog(sponsorDialog);
     } else if (act === 'del') {
       if (!confirm('تأكيد الحذف؟')) return;
@@ -1269,7 +1408,10 @@
       description: sponsorForm.description.value.trim(),
       logo: finalLogoUrl,
       link: sponsorForm.link.value.trim(),
-      order: sponsorForm.order?.value ? Number(sponsorForm.order.value) : null,
+      // Keep existing order when editing so we don't reset it to null
+      order: (sponsorEditingIndex !== null)
+        ? (sponsors[sponsorEditingIndex]?.order ?? null)
+        : null,
     };
     if (sb) {
       const { data: { session } } = await sb.auth.getSession();
@@ -1335,6 +1477,9 @@
   const boardImagePreview = document.getElementById('board_image_preview');
   const boardDropzone = document.getElementById('boardDropzone');
   const boardBrowseBtn = document.getElementById('boardBrowseBtn');
+  const boardImageActions = document.getElementById('boardImageActions');
+  const boardEditImageBtn = document.getElementById('board_edit_image_btn');
+  const boardChangeImageBtn = document.getElementById('board_change_image_btn');
   let boardCroppedFile = null;
 
   // Reusable: handle board image file (crop 1:1) -> preview
@@ -1348,6 +1493,8 @@
       boardCroppedFile = cropped;
       const url = URL.createObjectURL(cropped);
       if (boardImagePreview) { boardImagePreview.src = url; boardImagePreview.style.display = 'block'; }
+      if (boardImageActions) boardImageActions.style.display = 'flex';
+      if (boardDropzone) boardDropzone.style.display = 'none';
     } catch (err) {
       if (boardImageFile) boardImageFile.value = '';
     }
@@ -1378,6 +1525,30 @@
     await handleBoardImageFile(file);
   });
 
+  // Board image actions
+  boardChangeImageBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    boardImageFile?.click();
+  });
+
+  boardEditImageBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      const src = (boardImagePreview && boardImagePreview.src) || (boardImageUrl && boardImageUrl.value) || '';
+      if (!src) { alert('لا توجد صورة لتحريرها'); return; }
+      const file = await fetchUrlAsFile(src, 'current');
+      const cropped = await openImageCropper(file, { aspectRatio: 1, lockAspect: true, maxWidth: 1200, maxHeight: 1200, mimeType: 'image/webp', quality: 0.9 });
+      boardCroppedFile = cropped;
+      const url = URL.createObjectURL(cropped);
+      if (boardImagePreview) { boardImagePreview.src = url; boardImagePreview.style.display = 'block'; }
+      if (boardImageActions) boardImageActions.style.display = 'flex';
+      if (boardDropzone) boardDropzone.style.display = 'none';
+    } catch (err) {
+      if (String(err?.message || '').includes('crop-cancelled')) return;
+      alert('تعذر تحرير الصورة الحالية. جرّب تغيير الصورة بدلًا من ذلك.');
+    }
+  });
+
   // Upload board member image to Supabase Storage
   async function uploadBoardImage() {
     const file = boardCroppedFile || (boardImageFile?.files && boardImageFile.files[0]);
@@ -1401,6 +1572,8 @@
     if (boardImagePreview) { boardImagePreview.src = ''; boardImagePreview.style.display = 'none'; }
     if (boardImageUrl) boardImageUrl.value = '';
     boardCroppedFile = null;
+    if (boardDropzone) boardDropzone.style.display = '';
+    if (boardImageActions) boardImageActions.style.display = 'none';
     openDialog(boardDialog);
   });
 
@@ -1437,6 +1610,13 @@
       boardForm.twitter.value = (cur.twitter || cur.twitter_url) || '';
       boardForm.linkedin.value = (cur.linkedin || cur.linkedin_url) || '';
       boardForm.email.value = cur.email || '';
+      if (imgUrl) {
+        if (boardDropzone) boardDropzone.style.display = 'none';
+        if (boardImageActions) boardImageActions.style.display = 'flex';
+      } else {
+        if (boardDropzone) boardDropzone.style.display = '';
+        if (boardImageActions) boardImageActions.style.display = 'none';
+      }
       openDialog(boardDialog);
     } else if (act === 'del') {
       if (!confirm('تأكيد الحذف؟')) return;
@@ -1473,7 +1653,10 @@
       twitter: boardForm.twitter.value.trim(),
       linkedin: boardForm.linkedin.value.trim(),
       email: boardForm.email.value.trim(),
-      order: boardForm.order?.value ? Number(boardForm.order.value) : null,
+      // Keep existing order when editing so we don't reset it to null
+      order: (boardEditingIndex !== null)
+        ? (board[boardEditingIndex]?.order ?? null)
+        : null,
     };
     if (sb) {
       const { data: { session } } = await sb.auth.getSession();
@@ -1584,7 +1767,10 @@
     const data = {
       question: faqForm.question.value.trim(),
       answer: faqForm.answer.value.trim(),
-      order: faqForm.order?.value ? Number(faqForm.order.value) : null,
+      // Keep existing order when editing so we don't reset it to null
+      order: (faqEditingIndex !== null)
+        ? (faq[faqEditingIndex]?.order ?? null)
+        : null,
     };
     if (sb) {
       sb.auth.getSession().then(({ data: { session } }) => {
@@ -1689,6 +1875,78 @@
     }
   });
   // تم إزالة منطق الترحيل/الترصيد من لوحة التحكم
+
+  // ========== Admins Management (list/add/remove) ==========
+  const adminsTable = document.getElementById('adminsTable');
+  const addAdminForm = document.getElementById('addAdminForm');
+  const newAdminEmail = document.getElementById('newAdminEmail');
+  const adminsStatus = document.getElementById('adminsStatus');
+  let adminsList = [];
+
+  function renderAdmins() {
+    if (!adminsTable) return;
+    adminsTable.innerHTML = '';
+    adminsList.forEach((row) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding:12px" data-label="البريد">${row.email || '<span class="muted">بدون بريد</span>'}</td>
+        <td style="padding:12px" data-label="منذ">${row.created_at ? new Date(row.created_at).toLocaleString('ar') : '-'}</td>
+        <td style="padding:12px" data-label="إجراءات">
+          <button class="btn btn-outline" data-act="remove" data-id="${row.user_id}"><i class="fa-solid fa-user-minus"></i> إزالة كإداري</button>
+        </td>`;
+      adminsTable.appendChild(tr);
+    });
+  }
+
+  async function fetchAdmins() {
+    if (!adminsStatus) return;
+    adminsStatus.className = 'muted';
+    adminsStatus.textContent = 'جاري تحميل قائمة الإداريين...';
+    try {
+      const data = await callFunction('list-admins', { method: 'GET' });
+      adminsList = Array.isArray(data) ? data : [];
+      adminsStatus.className = 'muted';
+      adminsStatus.textContent = `عدد الإداريين: ${adminsList.length}`;
+      renderAdmins();
+    } catch (err) {
+      adminsStatus.className = 'alert error';
+      adminsStatus.textContent = 'فشل تحميل الإداريين: ' + (err?.message || 'غير معروف');
+    }
+  }
+
+  addAdminForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = (newAdminEmail?.value || '').trim();
+    if (!email) return;
+    adminsStatus && (adminsStatus.className = 'muted', adminsStatus.textContent = 'جاري إرسال الدعوة...');
+    try {
+      await callFunction('invite-admin', { method: 'POST', body: { email } });
+      if (newAdminEmail) newAdminEmail.value = '';
+      await fetchAdmins();
+      if (adminsStatus) { adminsStatus.className = 'alert success'; adminsStatus.textContent = 'تم إرسال دعوة عبر البريد الإلكتروني. سيكتمل التفعيل بعد قبول الدعوة.'; }
+    } catch (err) {
+      if (adminsStatus) { adminsStatus.className = 'alert error'; adminsStatus.textContent = 'فشل إرسال الدعوة: ' + (err?.message || 'غير معروف'); }
+    }
+  });
+
+  adminsTable?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const act = btn.getAttribute('data-act');
+    const userId = btn.getAttribute('data-id');
+    if (!userId) return;
+    if (act === 'remove') {
+      if (!confirm('هل تريد إزالة صلاحية الإداري؟')) return;
+      adminsStatus && (adminsStatus.className = 'muted', adminsStatus.textContent = 'جاري التنفيذ...');
+      try {
+        await callFunction('toggle-admin', { method: 'POST', body: { user_id: userId, make_admin: false } });
+        await fetchAdmins();
+        if (adminsStatus) { adminsStatus.className = 'alert success'; adminsStatus.textContent = 'تمت إزالة الصلاحية'; }
+      } catch (err) {
+        if (adminsStatus) { adminsStatus.className = 'alert error'; adminsStatus.textContent = 'فشل العملية: ' + (err?.message || 'غير معروف'); }
+      }
+    }
+  });
 
   // Fetch from Supabase on load if available
   async function loadFromSupabase() {
