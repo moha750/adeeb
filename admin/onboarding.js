@@ -6,12 +6,15 @@
   const obGate = $('#obGate');
   const obForm = $('#obForm');
   const fullName = $('#fullName');
+  const phoneInput = $('#phone');
   const password = $('#password');
   const avatarFile = $('#avatarFile');
   const avatarPreview = $('#avatarPreview');
   const avatarFileName = $('#avatarFileName');
   const statusEl = $('#status');
   const submitBtn = $('#submitBtn');
+  const currentEmailReadout = $('#currentEmailReadout');
+  const positionReadout = $('#positionReadout');
 
   function setStatus(type, msg) {
     if (!statusEl) return;
@@ -79,7 +82,10 @@
       }
       // Have session -> show form and prefill name from metadata/email
       const md = session.user?.user_metadata || {};
-      fullName.value = md.display_name || '';
+      fullName.value = md.display_name || md.name || '';
+      if (phoneInput) phoneInput.value = md.phone || '';
+      if (currentEmailReadout) currentEmailReadout.textContent = session.user?.email || '—';
+      if (positionReadout) positionReadout.textContent = md.position || '—';
       if (!avatarPreview.src) {
         const avatar = md.avatar_url || '';
         if (avatar) avatarPreview.src = avatar;
@@ -105,11 +111,14 @@
     e?.preventDefault?.();
     if (!sb) return;
     const name = fullName.value.trim();
+    const phone = (phoneInput?.value || '').trim();
     const pwd = password.value;
     if (!name || !pwd) {
       setStatus('error', 'يرجى تعبئة الاسم وكلمة المرور');
       return;
     }
+    if (pwd.length < 8) { setStatus('error', 'الحد الأدنى لكلمة المرور 8 أحرف'); return; }
+    if (phone && !/^0\d{9}$/.test(phone)) { setStatus('error', 'صيغة رقم الجوال غير صحيحة (مثال: 05xxxxxxxx)'); return; }
     submitBtn.disabled = true;
     setStatus('', 'جارٍ الحفظ...');
     try {
@@ -125,7 +134,8 @@
       }
 
       // Update user profile: password + metadata
-      const meta = { display_name: name };
+      const meta = { display_name: name, name };
+      if (phone) meta.phone = phone;
       if (avatarUrl) meta.avatar_url = avatarUrl;
       const { error: updErr } = await sb.auth.updateUser({ password: pwd, data: meta });
       if (updErr) throw updErr;
