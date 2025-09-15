@@ -194,7 +194,7 @@
               <label>
                 المسمى الوظيفي / المنصب
                 <input id="admin_position" type="text" placeholder="مثال: مشرف عام" readonly />
-                <small class="field-help">المنصب يُحدده مالك النظام عند إضافة الإداري ولا يمكن تغييره من هنا.</small>
+                <small class="field-help">يتم تحديد المنصب عند إضافة الإداري ولا يمكن تغييره من قبل الإداري.</small>
               </label>
               <label>
                 رقم الجوال
@@ -271,16 +271,16 @@
           <div class="panel" style="padding:16px">
             <form id="addAdminForm" class="form-grid" style="grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items:end">
               <label>
-                الاسم الكامل
-                <input id="newAdminName" placeholder="اسم الإداري" />
-              </label>
-              <label>
-                المسمى الوظيفي / المنصب
-                <input id="newAdminPosition" placeholder="مثال: مشرف عام" />
-              </label>
-              <label>
                 البريد الإلكتروني
                 <input id="newAdminEmail" type="email" placeholder="name@example.com" required />
+              </label>
+              <label>
+                الاسم الكامل
+                <input id="newAdminName" placeholder="الاسم كما سيظهر" />
+              </label>
+              <label>
+                المنصب
+                <input id="newAdminPosition" placeholder="مثال: مشرف عام" />
               </label>
               <button class="btn btn-primary" type="submit"><i class="fa-solid fa-paper-plane"></i> إرسال دعوة كإداري</button>
             </form>

@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
     <link rel="stylesheet" href="../style.css" />
     <style>
-      body { background: #0080ff; }
+      body { background: #f8fafc; }
       .onboarding { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; }
       .ob-card { width: 100%; max-width: 560px; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.06); }
       .ob-header { padding: 20px 24px; border-bottom: 1px solid #e5e7eb; }
@@ -33,9 +33,17 @@
         </div>
         <div class="ob-body">
           <form id="obForm" class="form-grid">
+            <div class="muted" style="margin-bottom:4px">
+              <div><strong>الاسم:</strong> <span id="displayNameReadout">—</span></div>
+              <div><strong>المنصب:</strong> <span id="positionReadout">—</span></div>
+            </div>
             <label>
               الاسم الكامل
               <input id="fullName" required placeholder="الاسم كما سيظهر في الحساب" />
+            </label>
+            <label>
+              رقم الجوال
+              <input id="phone" type="tel" inputmode="tel" required placeholder="05xxxxxxxx" />
             </label>
             <div>
               <label>

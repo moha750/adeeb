@@ -180,9 +180,9 @@ serve(async (req) => {
 ## 4) Edge Function: invite-admin
 
 - Method: POST
-- Body: `{ email: string }`
+- Body: `{ email: string, name?: string, position?: string }`
 - Auth: Bearer user access_token
-- Checks caller is admin, then sends an email invitation and ensures `public.admins` has `is_admin=true` for that user.
+- Checks caller is admin, then sends an email invitation, grants admin access, and sets initial `user_metadata` for the invited user (display name, position, role).
 
 ```ts
 // supabase/functions/invite-admin/index.ts
@@ -203,6 +203,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const frontendUrl = Deno.env.get("FRONTEND_URL") || "https://www.adeeb.club";
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const accessToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
@@ -219,12 +220,15 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
 
-    const { email } = await req.json();
+    const body = await req.json();
+    const email = body?.email as string;
+    const name = (body?.name ?? null) as string | null;
+    const position = (body?.position ?? null) as string | null;
     if (!email || typeof email !== "string") {
       return new Response(JSON.stringify({ error: "Invalid email" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
 
-    // Try to send an invitation email. This creates the user if not exists (requires SMTP configured).
+    // Invite by email (creates user if not exists)
     let invitedUserId: string | null = null;
     let invitationSent = false;
     try {
@@ -235,7 +239,7 @@ serve(async (req) => {
       invitedUserId = inviteRes?.user?.id ?? null;
       invitationSent = true;
     } catch (inviteError) {
-      // Fallback: generate a magic link and send via anon client for existing users
+      // Fallback for existing users: generate magic link and send via anon client
       const { data: gen, error: genErr } = await adminClient.auth.admin.generateLink({
         type: 'magiclink',
         email,
@@ -243,7 +247,6 @@ serve(async (req) => {
       });
       if (genErr) return new Response(JSON.stringify({ error: genErr.message }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
       invitedUserId = gen?.user?.id ?? null;
-      // Send the magic link email using anon client (server-side) so the user still receives an email
       const anonClient = createClient(supabaseUrl, anonKey);
       const { error: otpErr } = await anonClient.auth.signInWithOtp({
         email,
@@ -253,13 +256,28 @@ serve(async (req) => {
       invitationSent = true;
     }
 
-    // Ensure admin role is granted
     if (!invitedUserId) return new Response(JSON.stringify({ error: "Could not determine user id" }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+
+    // Grant admin access
     const { error: upErr } = await adminClient.from("admins").upsert({ user_id: invitedUserId, is_admin: true }).eq("user_id", invitedUserId);
     if (upErr) return new Response(JSON.stringify({ error: upErr.message }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
 
+    // Seed initial user metadata (display name, position, role) so UI can show it on first login
+    try {
+      await adminClient.auth.admin.updateUserById(invitedUserId, {
+        user_metadata: {
+          display_name: name,
+          name,
+          position,
+          role: 'admin',
+        },
+      });
+    } catch {
+      // ignore metadata update errors
+    }
+
     return new Response(
-      JSON.stringify({ ok: true, user_id: invitedUserId, email, invitation_sent: invitationSent }),
+      JSON.stringify({ ok: true, user_id: invitedUserId, email, invitation_sent: invitationSent, name, position }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (err) {

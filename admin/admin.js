@@ -95,10 +95,6 @@
       return db - da;
     });
 
-  // Cache fields for admin invite
-  const newAdminName = document.getElementById('newAdminName');
-  const newAdminPosition = document.getElementById('newAdminPosition');
-
   // ===== Change Password (Admin) =====
   const adminChangePasswordForm = document.getElementById('adminChangePasswordForm');
   const adminCurrentPasswordInput = document.getElementById('admin_current_password');
@@ -804,7 +800,7 @@
       if (!user) { alert('يلزم تسجيل الدخول'); return; }
       const payload = {
         display_name: (adminDisplayNameInput?.value || '').trim() || null,
-        // position is locked by owner; do not update from profile form
+        // position is locked by admin; don't allow updating here
         phone: (adminPhoneInput?.value || '').trim() || null,
       };
       payload.name = payload.display_name; // Back-compat
@@ -2120,13 +2116,17 @@
   addAdminForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = (newAdminEmail?.value || '').trim();
+    const name = (document.getElementById('newAdminName')?.value || '').trim();
+    const position = (document.getElementById('newAdminPosition')?.value || '').trim();
     if (!email) return;
     adminsStatus && (adminsStatus.className = 'muted', adminsStatus.textContent = 'جاري إرسال الدعوة...');
     try {
-      await callFunction('invite-admin', { method: 'POST', body: { email } });
+      await callFunction('invite-admin', { method: 'POST', body: { email, name: name || null, position: position || null } });
       if (newAdminEmail) newAdminEmail.value = '';
+      const nameEl = document.getElementById('newAdminName'); if (nameEl) nameEl.value = '';
+      const posEl = document.getElementById('newAdminPosition'); if (posEl) posEl.value = '';
       await fetchAdmins();
-      if (adminsStatus) { adminsStatus.className = 'alert success'; adminsStatus.textContent = 'تم إرسال دعوة عبر البريد الإلكتروني. سيكتمل التفعيل بعد قبول الدعوة.'; }
+      if (adminsStatus) { adminsStatus.className = 'alert success'; adminsStatus.textContent = 'تم إرسال الدعوة مع الاسم والمنصب. سيكتمل التفعيل بعد قبول الدعوة.'; }
     } catch (err) {
       if (adminsStatus) { adminsStatus.className = 'alert error'; adminsStatus.textContent = 'فشل إرسال الدعوة: ' + (err?.message || 'غير معروف'); }
     }
