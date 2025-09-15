@@ -77,6 +77,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const frontendUrl = Deno.env.get("FRONTEND_URL") || "https://www.adeeb.club";
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const accessToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
@@ -227,16 +228,29 @@ serve(async (req) => {
     let invitedUserId: string | null = null;
     let invitationSent = false;
     try {
-      const { data: inviteRes, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(email);
+      const { data: inviteRes, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(email, {
+        redirectTo: `${frontendUrl}/admin/onboarding.html`
+      });
       if (inviteErr) throw inviteErr;
       invitedUserId = inviteRes?.user?.id ?? null;
       invitationSent = true;
     } catch (inviteError) {
-      // If user already exists (or invite API not available), fall back to lookup by email
-      const { data: userByEmail, error: getErr } = await adminClient.auth.admin.getUserByEmail(email);
-      if (getErr) return new Response(JSON.stringify({ error: getErr.message }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
-      if (!userByEmail?.user?.id) return new Response(JSON.stringify({ error: "User not found and invitation failed" }), { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } });
-      invitedUserId = userByEmail.user.id;
+      // Fallback: generate a magic link and send via anon client for existing users
+      const { data: gen, error: genErr } = await adminClient.auth.admin.generateLink({
+        type: 'magiclink',
+        email,
+        options: { redirectTo: `${frontendUrl}/admin/onboarding.html` }
+      });
+      if (genErr) return new Response(JSON.stringify({ error: genErr.message }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+      invitedUserId = gen?.user?.id ?? null;
+      // Send the magic link email using anon client (server-side) so the user still receives an email
+      const anonClient = createClient(supabaseUrl, anonKey);
+      const { error: otpErr } = await anonClient.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: `${frontendUrl}/admin/onboarding.html` }
+      });
+      if (otpErr) return new Response(JSON.stringify({ error: otpErr.message }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+      invitationSent = true;
     }
 
     // Ensure admin role is granted
@@ -262,6 +276,7 @@ serve(async (req) => {
   - `SUPABASE_URL`
   - `SUPABASE_ANON_KEY`
   - `SUPABASE_SERVICE_ROLE_KEY`
+  - `FRONTEND_URL` (e.g. `https://www.adeeb.club`)
 - CORS is enabled with `Access-Control-Allow-Origin: *`.
 - Frontend calls functions using the user access token via `Authorization: Bearer <token>`.
 

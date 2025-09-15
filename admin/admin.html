@@ -31,6 +31,7 @@
         <nav class="admin-menu">
           <a href="#section-home" class="admin-menu__item active"><i class="fa-solid fa-sitemap"></i> إدارة الموقع</a>
           <a href="#section-blog" class="admin-menu__item"><i class="fa-solid fa-anchor"></i> إدارة مرافئ</a>
+          <a href="#section-profile" class="admin-menu__item"><i class="fa-solid fa-id-card"></i> ملفي</a>
           <a href="#section-admins" class="admin-menu__item"><i class="fa-solid fa-user-shield"></i> إدارة الإداريين</a>
           <div class="admin-menu__footer">
             <button type="button" class="btn btn-outline" data-logout><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
@@ -167,6 +168,97 @@
           <div id="blogList" class="cards-grid" aria-live="polite"></div>
         </section>
 
+        <!-- ملفي -->
+        <section id="section-profile" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-id-card"></i> ملفي</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+            </div>
+          </div>
+          <div class="panel" style="padding:16px">
+            <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap">
+              <div id="adminAvatarPreview" class="avatar" style="width:64px; height:64px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f1f5f9"></div>
+              <div>
+                <div id="adminProfileUserName" style="font-weight:700; font-size:18px"></div>
+                <div id="adminProfileEmail" class="muted" style="font-size:13px"></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel" style="padding:16px; margin-top:16px">
+            <form id="adminProfileForm" class="form-grid" style="grid-template-columns: 1fr; gap: 12px">
+              <label>
+                الاسم المعروض
+                <input id="admin_display_name" type="text" placeholder="اسمك" />
+              </label>
+              <label>
+                المسمى الوظيفي / المنصب
+                <input id="admin_position" type="text" placeholder="مثال: مشرف عام" disabled />
+                <small class="field-help">لا يمكن تعديل المنصب إلا من خلال مسؤول النظام.</small>
+              </label>
+              <label>
+                رقم الجوال
+                <input id="admin_phone" type="tel" inputmode="tel" placeholder="05xxxxxxxx" />
+              </label>
+              <label>
+                صورة الحساب
+                <input id="admin_avatar_file" type="file" accept="image/*" />
+                <small class="field-help">اختر صورة جديدة لتحديث الصورة الرمزية.</small>
+              </label>
+              <div>
+                <button type="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ الملف</button>
+                <span id="adminProfileMsg" class="muted" style="margin-inline-start:10px"></span>
+              </div>
+            </form>
+          </div>
+
+          <!-- تغيير كلمة المرور -->
+          <div class="panel" style="padding:16px; margin-top:16px">
+            <h3 style="margin-top:0"><i class="fa-solid fa-key"></i> تغيير كلمة المرور</h3>
+            <form id="adminChangePasswordForm" class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 12px">
+              <label>
+                الكلمة الحالية
+                <input id="admin_current_password" type="password" autocomplete="current-password" />
+              </label>
+              <label>
+                الكلمة الجديدة
+                <input id="admin_new_password" type="password" autocomplete="new-password" />
+              </label>
+              <label>
+                تأكيد الكلمة الجديدة
+                <input id="admin_confirm_password" type="password" autocomplete="new-password" />
+              </label>
+              <div style="display:flex;align-items:end;gap:8px">
+                <button type="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
+                <span id="adminPasswordMsg" class="muted"></span>
+              </div>
+            </form>
+          </div>
+
+          <!-- تغيير البريد الإلكتروني -->
+          <div class="panel" style="padding:16px; margin-top:16px">
+            <h3 style="margin-top:0"><i class="fa-solid fa-at"></i> تغيير البريد الإلكتروني</h3>
+            <form id="adminChangeEmailForm" class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 12px">
+              <label>
+                بريدك الحالي
+                <input id="admin_current_email_display" type="email" readonly />
+              </label>
+              <label>
+                البريد الجديد
+                <input id="admin_new_email" type="email" placeholder="name@example.com" />
+              </label>
+              <label>
+                كلمة المرور الحالية للتحقق
+                <input id="admin_current_password_email" type="password" autocomplete="current-password" />
+              </label>
+              <div style="display:flex;align-items:end;gap:8px">
+                <button type="submit" class="btn btn-primary"><i class="fa-regular fa-paper-plane"></i> إرسال تأكيد</button>
+                <span id="adminEmailMsg" class="muted"></span>
+              </div>
+            </form>
+          </div>
+        </section>
+
         <!-- إدارة الإداريين -->
         <section id="section-admins" class="admin-section" hidden>
           <div class="section-head">
@@ -177,10 +269,18 @@
           </div>
 
           <div class="panel" style="padding:16px">
-            <form id="addAdminForm" class="form-grid" style="grid-template-columns: 1fr auto; gap: 8px; align-items:end">
+            <form id="addAdminForm" class="form-grid" style="grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items:end">
               <label>
                 البريد الإلكتروني
                 <input id="newAdminEmail" type="email" placeholder="name@example.com" required />
+              </label>
+              <label>
+                الاسم الظاهر
+                <input id="newAdminName" type="text" placeholder="اسم الإداري" />
+              </label>
+              <label>
+                المنصب
+                <input id="newAdminPosition" type="text" placeholder="مثال: مشرف عام" />
               </label>
               <button class="btn btn-primary" type="submit"><i class="fa-solid fa-paper-plane"></i> إرسال دعوة كإداري</button>
             </form>

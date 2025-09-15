@@ -95,6 +95,78 @@
       return db - da;
     });
 
+  // ===== Change Password (Admin) =====
+  const adminChangePasswordForm = document.getElementById('adminChangePasswordForm');
+  const adminCurrentPasswordInput = document.getElementById('admin_current_password');
+  const adminNewPasswordInput = document.getElementById('admin_new_password');
+  const adminConfirmPasswordInput = document.getElementById('admin_confirm_password');
+  const adminPasswordMsg = document.getElementById('adminPasswordMsg');
+
+  adminChangePasswordForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!sb) return;
+    adminPasswordMsg && (adminPasswordMsg.textContent = '');
+    const curr = (adminCurrentPasswordInput?.value || '').trim();
+    const next = (adminNewPasswordInput?.value || '').trim();
+    const conf = (adminConfirmPasswordInput?.value || '').trim();
+    if (!curr || !next || !conf) { adminPasswordMsg && (adminPasswordMsg.textContent = 'يرجى تعبئة جميع الحقول'); return; }
+    if (next !== conf) { adminPasswordMsg && (adminPasswordMsg.textContent = 'كلمتا المرور غير متطابقتين'); return; }
+    if (next.length < 6) { adminPasswordMsg && (adminPasswordMsg.textContent = 'الحد الأدنى 6 أحرف'); return; }
+    const btn = adminChangePasswordForm.querySelector('button[type="submit"]');
+    if (btn) { btn.disabled = true; btn.style.opacity = .7; }
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user || !user.email) throw new Error('لا يوجد بريد مسجل');
+      const { error: signInErr } = await sb.auth.signInWithPassword({ email: user.email, password: curr });
+      if (signInErr) throw new Error('كلمة المرور الحالية غير صحيحة');
+      const { error: updErr } = await sb.auth.updateUser({ password: next });
+      if (updErr) throw updErr;
+      adminPasswordMsg && (adminPasswordMsg.textContent = 'تم تغيير كلمة المرور. سيتم تسجيل الخروج...');
+      // تنظيف الحقول
+      try { adminCurrentPasswordInput.value = ''; adminNewPasswordInput.value = ''; adminConfirmPasswordInput.value = ''; } catch {}
+      // تسجيل الخروج لإعادة الدخول بالكلمة الجديدة
+      try { await sb.auth.signOut(); } catch {}
+      location.replace('../login.html?redirect=admin/admin.html');
+    } catch (err) {
+      adminPasswordMsg && (adminPasswordMsg.textContent = 'تعذر التغيير: ' + (err?.message || 'غير معروف'));
+    } finally {
+      if (btn) { btn.disabled = false; btn.style.opacity = 1; }
+    }
+  });
+
+  // ===== Change Email (Admin) =====
+  const adminChangeEmailForm = document.getElementById('adminChangeEmailForm');
+  const adminNewEmailInput = document.getElementById('admin_new_email');
+  const adminCurrentPasswordEmailInput = document.getElementById('admin_current_password_email');
+  const adminEmailMsg = document.getElementById('adminEmailMsg');
+
+  adminChangeEmailForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!sb) return;
+    adminEmailMsg && (adminEmailMsg.textContent = '');
+    const newEmail = (adminNewEmailInput?.value || '').trim();
+    const currPwd = (adminCurrentPasswordEmailInput?.value || '').trim();
+    if (!newEmail || !currPwd) { adminEmailMsg && (adminEmailMsg.textContent = 'يرجى إدخال البريد وكلمة المرور'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) { adminEmailMsg && (adminEmailMsg.textContent = 'صيغة البريد غير صحيحة'); return; }
+    const btn = adminChangeEmailForm.querySelector('button[type="submit"]');
+    if (btn) { btn.disabled = true; btn.style.opacity = .7; }
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user || !user.email) throw new Error('لا يوجد بريد مسجل');
+      const { error: signInErr } = await sb.auth.signInWithPassword({ email: user.email, password: currPwd });
+      if (signInErr) throw new Error('كلمة المرور الحالية غير صحيحة');
+      const redirectTo = new URL('../login.html', location.origin).href;
+      const { error: updErr } = await sb.auth.updateUser({ email: newEmail }, { emailRedirectTo: redirectTo });
+      if (updErr) throw updErr;
+      adminEmailMsg && (adminEmailMsg.textContent = 'تم إرسال رسالة تأكيد إلى بريدك الجديد. الرجاء فتح الرابط لتأكيد التغيير.');
+      try { adminCurrentPasswordEmailInput.value = ''; } catch {}
+    } catch (err) {
+      adminEmailMsg && (adminEmailMsg.textContent = 'تعذر تغيير البريد: ' + (err?.message || 'غير معروف'));
+    } finally {
+      if (btn) { btn.disabled = false; btn.style.opacity = 1; }
+    }
+  });
+
   // Sponsors: up/down and drag-n-drop
     sorted.forEach((item) => {
       const idx = blogPosts.indexOf(item);
@@ -497,6 +569,11 @@
         try { fetchAdmins?.(); } catch {}
       }
 
+      // If profile tab is opened, load admin profile info
+      if (id === '#section-profile') {
+        try { adminLoadProfileIntoForm?.(); } catch {}
+      }
+
       // Close sidebar after navigating on mobile
       if (isMobile()) closeSidebar();
     });
@@ -633,6 +710,127 @@
     });
     setupListDnD(worksList, works, KEYS.works, 'works', renderWorks);
   }
+
+  // ===== Admin Profile (My Profile) =====
+  const adminProfileForm = document.getElementById('adminProfileForm');
+  const adminDisplayNameInput = document.getElementById('admin_display_name');
+  const adminPositionInput = document.getElementById('admin_position');
+  const adminPhoneInput = document.getElementById('admin_phone');
+  const adminAvatarFileInput = document.getElementById('admin_avatar_file');
+  const adminProfileMsg = document.getElementById('adminProfileMsg');
+  const adminAvatarPreview = document.getElementById('adminAvatarPreview');
+  const adminProfileUserName = document.getElementById('adminProfileUserName');
+  const adminProfileEmail = document.getElementById('adminProfileEmail');
+
+  function updateAdminProfilePreview() {
+    if (!sb) return;
+    sb.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      const md = user.user_metadata || {};
+      const name = md.display_name || user.email || 'مستخدم';
+      const avatarUrl = md.avatar_url && String(md.avatar_url).trim() ? md.avatar_url : null;
+      if (adminProfileUserName) adminProfileUserName.textContent = name;
+      if (adminProfileEmail) adminProfileEmail.textContent = user.email || '';
+      if (adminAvatarPreview) {
+        if (avatarUrl) {
+          adminAvatarPreview.innerHTML = `<img src="${avatarUrl}" alt="${name}" onerror="this.remove()" />`;
+        } else {
+          adminAvatarPreview.innerHTML = `
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" fill="#cbd5e1"/>
+              <circle cx="12" cy="10" r="3.2" fill="#64748b"/>
+              <path d="M5.5 18.2c1.9-3 5-4.2 6.5-4.2s4.6 1.2 6.5 4.2c-2.1 1.7-4.6 2.8-6.5 2.8s-4.4-1.1-6.5-2.8z" fill="#64748b"/>
+            </svg>`;
+        }
+      }
+    }).catch(() => {});
+  }
+
+  function adminLoadProfileIntoForm() {
+    if (!sb) return;
+    sb.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      const md = user.user_metadata || {};
+      if (adminDisplayNameInput) adminDisplayNameInput.value = md.display_name || md.name || '';
+      if (adminPositionInput) adminPositionInput.value = md.position || '';
+      if (adminPhoneInput) adminPhoneInput.value = md.phone || '';
+      if (adminProfileEmail) adminProfileEmail.textContent = user.email || '';
+      // Fill current email in the change-email panel
+      const adminCurrentEmailDisplay = document.getElementById('admin_current_email_display');
+      if (adminCurrentEmailDisplay) adminCurrentEmailDisplay.value = user.email || '';
+      updateAdminProfilePreview();
+    }).catch(() => {});
+  }
+
+  // Local preview for avatar file selection
+  adminAvatarFileInput?.addEventListener('change', function () {
+    const file = this.files && this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      if (adminAvatarPreview) {
+        adminAvatarPreview.innerHTML = `<img src="${e.target.result}" alt="معاينة الصورة" />`;
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  async function uploadAdminAvatarFile(user) {
+    const file = adminAvatarFileInput?.files && adminAvatarFileInput.files[0];
+    if (!file) return null;
+    if (!sb || !user) return null;
+    const bucket = 'avatars';
+    const ext = (file.name.split('.').pop() || getExtFromType(file.type, 'jpg')).toLowerCase();
+    const safeExt = ext.replace(/[^a-z0-9]/gi, '') || 'jpg';
+    const path = `${user.id}/avatar-${Date.now()}-${Math.random().toString(36).slice(2,8)}.${safeExt}`;
+    const { error: upErr } = await sb.storage.from(bucket).upload(path, file, { cacheControl: '3600', upsert: false });
+    if (upErr) throw upErr;
+    const { data } = sb.storage.from(bucket).getPublicUrl(path);
+    const publicUrl = data?.publicUrl;
+    if (!publicUrl) throw new Error('تعذر الحصول على رابط الصورة');
+    return publicUrl;
+  }
+
+  adminProfileForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!sb) return;
+    if (adminProfileMsg) adminProfileMsg.textContent = '';
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) { alert('يلزم تسجيل الدخول'); return; }
+      const payload = {
+        display_name: (adminDisplayNameInput?.value || '').trim() || null,
+        phone: (adminPhoneInput?.value || '').trim() || null,
+      };
+      payload.name = payload.display_name; // Back-compat
+      let avatarUrl = user.user_metadata?.avatar_url || null;
+      try {
+        const newUrl = await uploadAdminAvatarFile(user);
+        if (newUrl) avatarUrl = newUrl;
+      } catch (upErr) {
+        if (adminProfileMsg) adminProfileMsg.textContent = 'فشل رفع الصورة: ' + (upErr?.message || 'غير معروف');
+        return;
+      }
+      payload.avatar_url = avatarUrl;
+      const btn = adminProfileForm.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.style.opacity = .7; }
+      const { error } = await sb.auth.updateUser({ data: payload });
+      if (error) throw error;
+      // Refresh and update UI
+      try {
+        const { data: { user: fresh } } = await sb.auth.getUser();
+        if (fresh) renderUserBadge(fresh);
+      } catch {}
+      updateAdminProfilePreview();
+      if (adminAvatarFileInput) adminAvatarFileInput.value = '';
+      if (adminProfileMsg) adminProfileMsg.textContent = 'تم حفظ الملف بنجاح';
+    } catch (err) {
+      if (adminProfileMsg) adminProfileMsg.textContent = 'تعذر الحفظ: ' + (err?.message || 'غير معروف');
+    } finally {
+      const btn = adminProfileForm?.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = false; btn.style.opacity = 1; }
+    }
+  });
 
   // Image cropping helpers (Cropper.js)
   const imageCropDialog = document.getElementById('imageCropDialog');
@@ -1917,11 +2115,15 @@
   addAdminForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = (newAdminEmail?.value || '').trim();
+    const display_name = (document.getElementById('newAdminName')?.value || '').trim() || null;
+    const position = (document.getElementById('newAdminPosition')?.value || '').trim() || null;
     if (!email) return;
     adminsStatus && (adminsStatus.className = 'muted', adminsStatus.textContent = 'جاري إرسال الدعوة...');
     try {
-      await callFunction('invite-admin', { method: 'POST', body: { email } });
+      await callFunction('invite-admin', { method: 'POST', body: { email, display_name, position } });
       if (newAdminEmail) newAdminEmail.value = '';
+      try { const n = document.getElementById('newAdminName'); if (n) n.value = ''; } catch {}
+      try { const p = document.getElementById('newAdminPosition'); if (p) p.value = ''; } catch {}
       await fetchAdmins();
       if (adminsStatus) { adminsStatus.className = 'alert success'; adminsStatus.textContent = 'تم إرسال دعوة عبر البريد الإلكتروني. سيكتمل التفعيل بعد قبول الدعوة.'; }
     } catch (err) {
@@ -2009,5 +2211,11 @@
     renderFaq();
     renderAchievements();
     renderBlog();
+    // If page opened directly on profile tab, load profile info
+    try {
+      if (location.hash === '#section-profile') {
+        adminLoadProfileIntoForm?.();
+      }
+    } catch {}
   })();
 })();
