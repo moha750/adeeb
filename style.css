@@ -504,13 +504,13 @@ body.menu-open {
 }
 
 .quote-icon.left {
-  top: -20px;
-  right: 0;
+  bottom: -20px;
+  left: 0;
 }
 
 .quote-icon.right {
-  bottom: -40px;
-  left: 0;
+  top: -20px;
+  right: 0;
 }
 
 .features-grid {
@@ -4672,42 +4672,6 @@ body.menu-open {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+.pbook i {
+  font-size: 7rem;
+}

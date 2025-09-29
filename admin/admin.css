@@ -335,10 +335,11 @@ body.no-scroll { overflow: hidden; }
   #achievementsList .card__media,
   #blogList .card__media { width: 100%; height: 150px; }
 }
+
 .panel__body { padding: 14px; color: var(--muted); }
 .export-import { display: flex; gap: 10px; flex-wrap: wrap; }
 
-/* Table base styles (used in إدارة الإداريين) */
+/* Table base styles (used in إدارة الأعضاء الإداريين) */
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -356,7 +357,9 @@ body.no-scroll { overflow: hidden; }
 
 /* Responsive table: stack rows on small screens */
 @media (max-width: 640px) {
+  .table { display: block; width: 100%; }
   .table thead { display: none; }
+  .table tbody { display: block; width: 100%; }
   .table tbody tr {
     display: grid;
     gap: 8px;
@@ -368,17 +371,22 @@ body.no-scroll { overflow: hidden; }
   }
   .table tbody tr td {
     display: grid;
-    grid-template-columns: 120px 1fr;
+    grid-template-columns: 110px 1fr;
     align-items: center;
     gap: 8px;
     padding: 0 !important;
     border: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .table tbody tr td::before {
     content: attr(data-label);
     color: var(--muted);
     font-size: .9rem;
   }
+
+  /* Admin actions: full-width button for better tap targets */
+  #adminsTable .btn { width: 100%; justify-content: center; white-space: normal; }
 }
 
 /* Dialog */
@@ -638,6 +646,23 @@ body.no-scroll { overflow: hidden; }
   #sponsorForm .form-grid > label:nth-child(4) { grid-area: logo; }
   #sponsorForm .form-grid > label:nth-child(3) { grid-area: desc; }
   #sponsorForm .form-grid > label:nth-child(5) { grid-area: link; }
+}
+
+/* Admin profile and admins management forms (large screens) */
+@media (min-width: 641px) {
+  /* Keep profile fields single column even on desktop */
+  #adminProfileForm.form-grid { grid-template-columns: 1fr; }
+
+  /* Two columns for password and email forms on desktop */
+  #adminChangePasswordForm.form-grid,
+  #adminChangeEmailForm.form-grid { grid-template-columns: 1fr 1fr; }
+
+  /* Admins add form: three fields + submit button aligned at end */
+  #addAdminForm.form-grid {
+    grid-template-columns: 1fr 1fr 1fr auto;
+    align-items: end;
+    gap: 8px;
+  }
 }
 
 /* Board dialog layout (large screens):

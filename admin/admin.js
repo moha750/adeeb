@@ -2121,12 +2121,14 @@
     if (!email) return;
     adminsStatus && (adminsStatus.className = 'muted', adminsStatus.textContent = 'جاري إرسال الدعوة...');
     try {
-      await callFunction('invite-admin', { method: 'POST', body: { email, name: name || null, position: position || null } });
+      // Dynamic redirect: use current origin (works for local Live Server and production)
+      const redirectTo = `${location.origin}/admin/onboarding.html`;
+      await callFunction('invite-admin', { method: 'POST', body: { email, name: name || null, position: position || null, redirectTo } });
       if (newAdminEmail) newAdminEmail.value = '';
       const nameEl = document.getElementById('newAdminName'); if (nameEl) nameEl.value = '';
       const posEl = document.getElementById('newAdminPosition'); if (posEl) posEl.value = '';
       await fetchAdmins();
-      if (adminsStatus) { adminsStatus.className = 'alert success'; adminsStatus.textContent = 'تم إرسال الدعوة مع الاسم والمنصب. سيكتمل التفعيل بعد قبول الدعوة.'; }
+      if (adminsStatus) { adminsStatus.className = 'alert success'; adminsStatus.textContent = `تم إرسال الدعوة مع الاسم والمنصب. صفحة الإكمال: ${redirectTo}`; }
     } catch (err) {
       if (adminsStatus) { adminsStatus.className = 'alert error'; adminsStatus.textContent = 'فشل إرسال الدعوة: ' + (err?.message || 'غير معروف'); }
     }

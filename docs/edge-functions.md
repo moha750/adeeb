@@ -180,7 +180,7 @@ serve(async (req) => {
 ## 4) Edge Function: invite-admin
 
 - Method: POST
-- Body: `{ email: string, name?: string, position?: string }`
+- Body: `{ email: string, name?: string, position?: string, redirectTo?: string }`
 - Auth: Bearer user access_token
 - Checks caller is admin, then sends an email invitation, grants admin access, and sets initial `user_metadata` for the invited user (display name, position, role).
 
@@ -224,16 +224,18 @@ serve(async (req) => {
     const email = body?.email as string;
     const name = (body?.name ?? null) as string | null;
     const position = (body?.position ?? null) as string | null;
+    const redirectToOverride = (body?.redirectTo && typeof body.redirectTo === 'string') ? body.redirectTo as string : null;
     if (!email || typeof email !== "string") {
       return new Response(JSON.stringify({ error: "Invalid email" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
+    const redirectToUrl = redirectToOverride || `${frontendUrl}/admin/onboarding.html`;
 
     // Invite by email (creates user if not exists)
     let invitedUserId: string | null = null;
     let invitationSent = false;
     try {
       const { data: inviteRes, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(email, {
-        redirectTo: `${frontendUrl}/admin/onboarding.html`
+        redirectTo: redirectToUrl
       });
       if (inviteErr) throw inviteErr;
       invitedUserId = inviteRes?.user?.id ?? null;
@@ -243,14 +245,14 @@ serve(async (req) => {
       const { data: gen, error: genErr } = await adminClient.auth.admin.generateLink({
         type: 'magiclink',
         email,
-        options: { redirectTo: `${frontendUrl}/admin/onboarding.html` }
+        options: { redirectTo: redirectToUrl }
       });
       if (genErr) return new Response(JSON.stringify({ error: genErr.message }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
       invitedUserId = gen?.user?.id ?? null;
       const anonClient = createClient(supabaseUrl, anonKey);
       const { error: otpErr } = await anonClient.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: `${frontendUrl}/admin/onboarding.html` }
+        options: { emailRedirectTo: redirectToUrl }
       });
       if (otpErr) return new Response(JSON.stringify({ error: otpErr.message }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
       invitationSent = true;
@@ -277,7 +279,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ ok: true, user_id: invitedUserId, email, invitation_sent: invitationSent, name, position }),
+      JSON.stringify({ ok: true, user_id: invitedUserId, email, invitation_sent: invitationSent, name, position, redirectTo: redirectToUrl }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (err) {

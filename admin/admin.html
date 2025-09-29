@@ -24,7 +24,6 @@
       <aside id="sidebar" class="admin-sidebar">
         <div class="admin-sidebar__brand">
           <span>لوحة التحكم</span>
-          <button id="closeSidebarBtn" class="btn sidebar-close-btn" title="إغلاق" aria-label="إغلاق الشريط">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
@@ -32,7 +31,7 @@
           <a href="#section-home" class="admin-menu__item active"><i class="fa-solid fa-sitemap"></i> إدارة الموقع</a>
           <a href="#section-blog" class="admin-menu__item"><i class="fa-solid fa-anchor"></i> إدارة مرافئ</a>
           <a href="#section-profile" class="admin-menu__item"><i class="fa-solid fa-id-card"></i> ملفي</a>
-          <a href="#section-admins" class="admin-menu__item"><i class="fa-solid fa-user-shield"></i> إدارة الإداريين</a>
+          <a href="#section-admins" class="admin-menu__item"><i class="fa-solid fa-user-shield"></i> إدارة الأعضاء الإداريين</a>
           <div class="admin-menu__footer">
             <button type="button" class="btn btn-outline" data-logout><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
             <a class="btn btn-primary" href="../index.html" target="_blank"><i class="fa-solid fa-globe"></i> عرض الموقع</a>
@@ -186,7 +185,7 @@
             </div>
           </div>
           <div class="panel" style="padding:16px; margin-top:16px">
-            <form id="adminProfileForm" class="form-grid" style="grid-template-columns: 1fr; gap: 12px">
+            <form id="adminProfileForm" class="form-grid">
               <label>
                 الاسم المعروض
                 <input id="admin_display_name" type="text" placeholder="اسمك" />
@@ -215,7 +214,7 @@
           <!-- تغيير كلمة المرور -->
           <div class="panel" style="padding:16px; margin-top:16px">
             <h3 style="margin-top:0"><i class="fa-solid fa-key"></i> تغيير كلمة المرور</h3>
-            <form id="adminChangePasswordForm" class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 12px">
+            <form id="adminChangePasswordForm" class="form-grid">
               <label>
                 الكلمة الحالية
                 <input id="admin_current_password" type="password" autocomplete="current-password" />
@@ -238,7 +237,7 @@
           <!-- تغيير البريد الإلكتروني -->
           <div class="panel" style="padding:16px; margin-top:16px">
             <h3 style="margin-top:0"><i class="fa-solid fa-at"></i> تغيير البريد الإلكتروني</h3>
-            <form id="adminChangeEmailForm" class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 12px">
+            <form id="adminChangeEmailForm" class="form-grid">
               <label>
                 بريدك الحالي
                 <input id="admin_current_email_display" type="email" readonly />
@@ -259,17 +258,17 @@
           </div>
         </section>
 
-        <!-- إدارة الإداريين -->
+        <!-- إدارة الأعضاء الإداريين -->
         <section id="section-admins" class="admin-section" hidden>
           <div class="section-head">
-            <h2><i class="fa-solid fa-user-shield"></i> إدارة الإداريين</h2>
+            <h2><i class="fa-solid fa-user-shield"></i> إدارة الأعضاء الإداريين</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
             </div>
           </div>
 
           <div class="panel" style="padding:16px">
-            <form id="addAdminForm" class="form-grid" style="grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items:end">
+            <form id="addAdminForm" class="form-grid">
               <label>
                 البريد الإلكتروني
                 <input id="newAdminEmail" type="email" placeholder="name@example.com" required />
@@ -280,7 +279,21 @@
               </label>
               <label>
                 المنصب
-                <input id="newAdminPosition" placeholder="مثال: مشرف عام" />
+                <select id="newAdminPosition">
+                  <option value="">اختر المنصب</option>
+                  <option>رئيس أدِيب</option>
+                  <option>نائب الرئيس - شطر الطالبات</option>
+                  <option>نائب الرئيس - شطر الطلاب</option>
+                  <option>قائد الرواة</option>
+                  <option>قائد التأليف</option>
+                  <option>قائد السفراء</option>
+                  <option>قائد الفعاليات</option>
+                  <option>قائد الإنتاج</option>
+                  <option>قائد التصميم</option>
+                  <option>مُشرف التحرير</option>
+                  <option>مُشرف التسويق</option>
+                  <option>مُشرف الأرشيف</option>
+                </select>
               </label>
               <button class="btn btn-primary" type="submit"><i class="fa-solid fa-paper-plane"></i> إرسال دعوة كإداري</button>
             </form>
@@ -292,8 +305,7 @@
               <table class="table" style="width:100%; border-collapse:collapse">
                 <thead>
                   <tr>
-                    <th style="text-align:right; padding:12px">البريد</th>
-                    <th style="text-align:right; padding:12px">منذ</th>
+                    <th style="text-align:right; padding:12px">الإداري</th>
                     <th style="text-align:right; padding:12px">إجراءات</th>
                   </tr>
                 </thead>
