@@ -14,6 +14,13 @@
   const boardList = $('#boardList');
   const faqList = $('#faqList');
   const blogList = $('#blogList');
+  // Schedule elements
+  const calendarGrid = $('#calendarGrid');
+  const calendarDaysHead = $('#calendarDaysHead');
+  const calMonthLabel = $('#calMonthLabel');
+  const calPrevBtn = $('#calPrevBtn');
+  const calNextBtn = $('#calNextBtn');
+  const calTodayBtn = $('#calTodayBtn');
 
   const KEYS = {
     works: 'adeeb_works',
@@ -22,6 +29,7 @@
     faq: 'adeeb_faq',
     achievements: 'adeeb_achievements',
     blog: 'adeeb_blog_posts',
+    schedule: 'adeeb_schedule',
   };
 
   // Supabase client (if configured)
@@ -48,6 +56,342 @@
     }
     return json;
   }
+
+  // ===== Schedule (Monthly Calendar) =====
+  // Load schedule as a map { 'YYYY-MM-DD': Array<{ title, notes } > }
+  let schedule = (() => {
+    try {
+      const raw = localStorage.getItem(KEYS.schedule);
+      const obj = raw ? JSON.parse(raw) : {};
+      return (obj && typeof obj === 'object' && !Array.isArray(obj)) ? obj : {};
+    } catch (e) { return {}; }
+  })();
+  function saveSchedule() { try { localStorage.setItem(KEYS.schedule, JSON.stringify(schedule)); } catch {}
+  }
+
+  // Normalize legacy schedule values (object -> array)
+  function itemsFrom(val) {
+    if (Array.isArray(val)) {
+      return val.filter(Boolean).map((it) => ({ title: (it?.title || null), notes: (it?.notes || null) }));
+    }
+    if (val && typeof val === 'object') {
+      return [{ title: (val.title || null), notes: (val.notes || null) }];
+    }
+    return [];
+  }
+  (function migrateScheduleToArrays() {
+    let changed = false;
+    for (const k in schedule) {
+      if (!Array.isArray(schedule[k])) { schedule[k] = itemsFrom(schedule[k]); changed = true; }
+    }
+    if (changed) saveSchedule();
+  })();
+
+  // Calendar view state (month index 0-11)
+  let viewYear = (new Date()).getFullYear();
+  let viewMonth = (new Date()).getMonth();
+
+  function arMonthLabel(y, m) {
+    try { return new Date(y, m, 1).toLocaleDateString('ar', { month: 'long', year: 'numeric' }); } catch { return `${y}/${m+1}`; }
+  }
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateKey(y, m, d) { return `${y}-${pad2(m+1)}-${pad2(d)}`; }
+  function isSameDate(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+  function keyFromDate(dt) { return dateKey(dt.getFullYear(), dt.getMonth(), dt.getDate()); }
+  function getGridRange(y, m) {
+    const first = new Date(y, m, 1);
+    const offset = (first.getDay() + 1) % 7; // Saturday-first
+    const start = new Date(y, m, 1 - offset);
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 41);
+    return { start, end };
+  }
+
+  async function loadScheduleForCurrentGrid() {
+    if (!sb) return; // local only
+    const { start, end } = getGridRange(viewYear, viewMonth);
+    const startKey = keyFromDate(start);
+    const endKey = keyFromDate(end);
+    try {
+      const { data, error } = await sb
+        .from('schedule_entries')
+        .select('date, title, notes, position')
+        .gte('date', startKey)
+        .lte('date', endKey)
+        .order('date', { ascending: true })
+        .order('position', { ascending: true })
+      ;
+      if (error) throw error;
+      // Clear the range
+      const keysInRange = [];
+      for (let i=0;i<42;i++) {
+        const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+        keysInRange.push(keyFromDate(d));
+      }
+      keysInRange.forEach(k => { delete schedule[k]; });
+      // Fill from DB
+      if (Array.isArray(data)) {
+        for (const row of data) {
+          const k = String(row.date).slice(0,10);
+          const arr = schedule[k] = schedule[k] || [];
+          arr.push({ title: row.title || null, notes: row.notes || null, position: row.position ?? null });
+        }
+      }
+      saveSchedule();
+      renderSchedule();
+    } catch (err) {
+      console.error('Failed to load schedule from DB:', err);
+    }
+  }
+  function buildDaysHeadOnce() {
+    if (!calendarDaysHead || calendarDaysHead._built) return;
+    const days = ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+    calendarDaysHead.innerHTML = days.map(d => `<div class="day">${d}</div>`).join('');
+    calendarDaysHead._built = true;
+  }
+  function truncate(str, n) { if (!str) return ''; const s = String(str); return s.length>n ? s.slice(0,n)+'…' : s; }
+
+  function renderSchedule() {
+    if (!calendarGrid) return;
+    buildDaysHeadOnce();
+    // Update month label
+    if (calMonthLabel) calMonthLabel.textContent = arMonthLabel(viewYear, viewMonth);
+    calendarGrid.innerHTML = '';
+    const first = new Date(viewYear, viewMonth, 1);
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    // Saturday-first offset: JS getDay(): 0=Sunday..6=Saturday -> offset=(day+1)%7
+    const offset = (first.getDay() + 1) % 7;
+    const totalCells = 42; // 6 rows * 7 cols
+    const startDate = new Date(viewYear, viewMonth, 1 - offset);
+    const today = new Date();
+
+    for (let i=0;i<totalCells;i++) {
+      const cur = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i);
+      const inThisMonth = cur.getMonth() === viewMonth;
+      const key = dateKey(cur.getFullYear(), cur.getMonth(), cur.getDate());
+      const items = itemsFrom(schedule[key]);
+      const cell = document.createElement('div');
+      cell.className = 'calendar-cell' + (inThisMonth ? '' : ' other-month') + (isSameDate(cur, today) ? ' today' : '') + (items.length ? ' has-content' : '');
+      cell.setAttribute('data-date', key);
+      const firstItem = items[0] || null;
+      const restCount = Math.max(0, items.length - 1);
+      cell.innerHTML = `
+        <div class="date-badge">${cur.getDate()}</div>
+        ${restCount ? `<span class="count-chip" title="${items.length} عناصر">+${restCount}</span>` : ''}
+        ${firstItem ? `<div class="content" title="${((firstItem.title || firstItem.notes || '') + '').replace(/"/g,'&quot;')}">${firstItem.title ? truncate(firstItem.title, 40) : truncate(firstItem.notes || '', 50)}</div>` : ''}
+      `;
+      calendarGrid.appendChild(cell);
+    }
+  }
+
+  calPrevBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    viewMonth -= 1; if (viewMonth < 0) { viewMonth = 11; viewYear -= 1; }
+    renderSchedule();
+    loadScheduleForCurrentGrid();
+  });
+  calNextBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    viewMonth += 1; if (viewMonth > 11) { viewMonth = 0; viewYear += 1; }
+    renderSchedule();
+    loadScheduleForCurrentGrid();
+  });
+  calTodayBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const now = new Date(); viewYear = now.getFullYear(); viewMonth = now.getMonth();
+    renderSchedule();
+    loadScheduleForCurrentGrid();
+  });
+
+  // Day dialog handlers
+  const scheduleDayDialog = document.getElementById('scheduleDayDialog');
+  const scheduleDayForm = document.getElementById('scheduleDayForm');
+  const scheduleSelectedDate = document.getElementById('scheduleSelectedDate');
+  const dayDeleteBtn = document.getElementById('dayDeleteBtn');
+  // Multiple items UI
+  const dayItemTitle = document.getElementById('dayItemTitle');
+  const dayItemNotes = document.getElementById('dayItemNotes');
+  const dayAddBtn = document.getElementById('dayAddBtn');
+  const dayCancelEditBtn = document.getElementById('dayCancelEditBtn');
+  const dayEditState = document.getElementById('dayEditState');
+  const dayItemsList = document.getElementById('dayItemsList');
+  let dayItemsTemp = [];
+  let dayEditingIndex = -1;
+
+  function resetDayInputs() {
+    if (dayItemTitle) dayItemTitle.value = '';
+    if (dayItemNotes) dayItemNotes.value = '';
+  }
+  function setEditing(idx) {
+    dayEditingIndex = idx;
+    const isEdit = idx >= 0;
+    if (dayCancelEditBtn) dayCancelEditBtn.style.display = isEdit ? '' : 'none';
+    if (dayEditState) dayEditState.style.display = isEdit ? '' : 'none';
+    if (dayAddBtn) dayAddBtn.innerHTML = isEdit ? '<i class="fa-solid fa-check"></i> تحديث' : '<i class="fa-solid fa-plus"></i> إضافة';
+  }
+  function renderDayItemsList() {
+    if (!dayItemsList) return;
+    dayItemsList.innerHTML = '';
+    dayItemsTemp.forEach((it, idx) => {
+      const div = document.createElement('div');
+      div.className = 'day-item';
+      const titleText = (it.title || '').trim();
+      const notesText = (it.notes || '').trim();
+      div.innerHTML = `
+        <div class="day-item__text">
+          ${titleText ? `<div class="day-item__title"><strong>${titleText}</strong></div>` : ''}
+          ${notesText ? `<div class="day-item__notes">${notesText.replace(/</g,'&lt;')}</div>` : ''}
+        </div>
+        <div class="day-item__actions">
+          <button type="button" class="btn btn-outline" data-act="edit" data-idx="${idx}"><i class="fa-solid fa-pen"></i></button>
+          <button type="button" class="btn btn-outline" data-act="del" data-idx="${idx}"><i class="fa-solid fa-trash"></i></button>
+        </div>`;
+      dayItemsList.appendChild(div);
+    });
+  }
+
+  function arFullDateLabel(key) {
+    const [y,m,d] = key.split('-').map(Number);
+    try { return new Date(y, m-1, d).toLocaleDateString('ar', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); } catch { return key; }
+  }
+
+  function openDayEditor(key) {
+    if (!scheduleDayForm) return;
+    scheduleDayForm.dataset.date = key;
+    if (scheduleSelectedDate) scheduleSelectedDate.textContent = arFullDateLabel(key);
+    // Load items into temp list
+    dayItemsTemp = itemsFrom(schedule[key]).slice();
+    renderDayItemsList();
+    resetDayInputs();
+    setEditing(-1);
+    if (dayDeleteBtn) dayDeleteBtn.style.display = dayItemsTemp.length ? '' : 'none';
+    openDialog?.(scheduleDayDialog);
+  }
+
+  calendarGrid?.addEventListener('click', (e) => {
+    const cell = e.target.closest('.calendar-cell');
+    if (!cell) return;
+    const key = cell.getAttribute('data-date');
+    if (!key) return;
+    openDayEditor(key);
+  });
+
+  scheduleDayForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const key = scheduleDayForm.dataset.date;
+    if (!key) return;
+    if (sb) {
+      // require auth for write
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { alert('يلزم تسجيل الدخول لإجراء التعديلات'); return; }
+      try {
+        // Delete all existing for this date
+        const { error: delErr } = await sb.from('schedule_entries').delete().eq('date', key);
+        if (delErr) throw delErr;
+        if (dayItemsTemp.length) {
+          const rows = dayItemsTemp.map((it, i) => ({ date: key, title: it.title || null, notes: it.notes || null, position: i + 1 }));
+          let insErr = null;
+          let res = await sb.from('schedule_entries').insert(rows).select('*');
+          if (res.error && /(column\s+position|unknown column|invalid input)/i.test(res.error.message || '')) {
+            // Retry without position column
+            const rows2 = dayItemsTemp.map((it) => ({ date: key, title: it.title || null, notes: it.notes || null }));
+            const res2 = await sb.from('schedule_entries').insert(rows2).select('*');
+            insErr = res2.error || null;
+          } else {
+            insErr = res.error || null;
+          }
+          if (insErr) throw insErr;
+        }
+        // update local and UI
+        if (!dayItemsTemp.length) delete schedule[key];
+        else schedule[key] = itemsFrom(dayItemsTemp);
+        saveSchedule();
+        renderSchedule();
+        closeDialog?.(scheduleDayDialog);
+      } catch (err) {
+        alert('فشل الحفظ: ' + (err?.message || 'غير معروف'));
+      }
+    } else {
+      // local fallback
+      if (!dayItemsTemp.length) {
+        if (schedule[key]) delete schedule[key];
+      } else {
+        schedule[key] = itemsFrom(dayItemsTemp);
+      }
+      saveSchedule();
+      renderSchedule();
+      closeDialog?.(scheduleDayDialog);
+    }
+  });
+
+  dayDeleteBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const key = scheduleDayForm?.dataset.date;
+    if (!key) return;
+    if (sb) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { alert('يلزم تسجيل الدخول لإجراء التعديلات'); return; }
+      try {
+        const { error } = await sb.from('schedule_entries').delete().eq('date', key);
+        if (error) throw error;
+        delete schedule[key];
+        dayItemsTemp = [];
+        saveSchedule();
+        renderSchedule();
+        closeDialog?.(scheduleDayDialog);
+      } catch (err) {
+        alert('فشل الحذف: ' + (err?.message || 'غير معروف'));
+      }
+    } else {
+      if (schedule[key]) delete schedule[key];
+      dayItemsTemp = [];
+      saveSchedule();
+      renderSchedule();
+      closeDialog?.(scheduleDayDialog);
+    }
+  });
+
+  dayAddBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const t = (dayItemTitle?.value || '').trim();
+    const n = (dayItemNotes?.value || '').trim();
+    if (!t && !n) { alert('أدخل العنوان أو الملاحظات'); return; }
+    const item = { title: t || null, notes: n || null };
+    if (dayEditingIndex >= 0) {
+      dayItemsTemp[dayEditingIndex] = item;
+    } else {
+      dayItemsTemp.push(item);
+    }
+    renderDayItemsList();
+    resetDayInputs();
+    setEditing(-1);
+    if (dayDeleteBtn) dayDeleteBtn.style.display = dayItemsTemp.length ? '' : 'none';
+  });
+
+  dayCancelEditBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    resetDayInputs();
+    setEditing(-1);
+  });
+
+  dayItemsList?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const idx = Number(btn.dataset.idx);
+    const act = btn.dataset.act;
+    if (!Number.isInteger(idx) || idx < 0 || idx >= dayItemsTemp.length) return;
+    if (act === 'edit') {
+      const it = dayItemsTemp[idx];
+      if (dayItemTitle) dayItemTitle.value = it.title || '';
+      if (dayItemNotes) dayItemNotes.value = it.notes || '';
+      setEditing(idx);
+    } else if (act === 'del') {
+      if (!confirm('تأكيد حذف العنصر؟')) return;
+      dayItemsTemp.splice(idx, 1);
+      renderDayItemsList();
+      if (dayItemsTemp.length === 0) setEditing(-1);
+      if (dayDeleteBtn) dayDeleteBtn.style.display = dayItemsTemp.length ? '' : 'none';
+    }
+  });
 
   // User badge helpers
   function timeGreeting() {
@@ -652,6 +996,12 @@
         try { adminLoadProfileIntoForm?.(); } catch {}
       }
 
+      // If schedule tab is opened, render the calendar
+      if (id === '#section-schedule') {
+        try { renderSchedule?.(); } catch {}
+        try { loadScheduleForCurrentGrid?.(); } catch {}
+      }
+
       // Close sidebar after navigating on mobile
       if (isMobile()) closeSidebar();
     });
@@ -667,6 +1017,11 @@
     $$('.admin-section').forEach((sec) => (sec.hidden = true));
     const target = $(id);
     if (target) target.hidden = false;
+    // If navigating via dashboard card to schedule, render it
+    if (id === '#section-schedule') {
+      try { renderSchedule?.(); } catch {}
+      try { loadScheduleForCurrentGrid?.(); } catch {}
+    }
     // keep sidebar active on the single Home tab
     if (isMobile()) closeSidebar();
     // optional: scroll to top for better context
@@ -2108,6 +2463,7 @@
       board,
       faq,
       blogPosts,
+      schedule,
       exportedAt: new Date().toISOString(),
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -2142,6 +2498,9 @@
       }
       if (Array.isArray(data.blogPosts)) {
         blogPosts = data.blogPosts; save(KEYS.blog, blogPosts); renderBlog();
+      }
+      if (data.schedule && typeof data.schedule === 'object' && !Array.isArray(data.schedule)) {
+        schedule = data.schedule; saveSchedule(); renderSchedule();
       }
       alert('تم الاستيراد بنجاح');
     } catch (err) {
