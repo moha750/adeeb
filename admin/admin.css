@@ -389,6 +389,12 @@ body.no-scroll { overflow: hidden; }
   #adminsTable .btn { width: 100%; justify-content: center; white-space: normal; }
 }
 
+/* Compact user cell for admins table */
+.user-mini { display: flex; align-items: center; gap: 10px; }
+.user-mini .avatar { width: 32px; height: 32px; border-radius: 999px; overflow: hidden; background: #e2e8f0; display: grid; place-items: center; flex: 0 0 32px; }
+.user-mini .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.user-mini .name { font-family: fb, system-ui; color: var(--main-blue); }
+
 /* Dialog */
 .admin-dialog { 
   border: none; 

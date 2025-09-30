@@ -305,7 +305,7 @@
               <table class="table" style="width:100%; border-collapse:collapse">
                 <thead>
                   <tr>
-                    <th style="text-align:right; padding:12px">الإداري</th>
+                    <th style="text-align:right; padding:12px">العضو</th>
                     <th style="text-align:right; padding:12px">إجراءات</th>
                   </tr>
                 </thead>
@@ -548,6 +548,22 @@
         <menu class="dialog-actions">
           <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
           <button value="submit" class="btn btn-primary">حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- Admin Details Dialog -->
+    <dialog id="adminDetailsDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form">
+        <div class="dialog-header">
+          <h3 class="dialog-title"><i class="fa-regular fa-id-card"></i> تفاصيل الإداري</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div id="adminDetailsBody" style="display:grid; gap:12px"></div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إغلاق</button>
         </menu>
       </form>
     </dialog>

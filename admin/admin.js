@@ -385,6 +385,84 @@
     }
   }
 
+  async function getAdminExtra(userId) {
+    if (!sb || !userId) return { position: null, phone: null, created_at: null };
+    let position = null, phone = null, created_at = null;
+    try {
+      const { data: row, error } = await sb
+        .from('admins')
+        .select('position, phone, created_at')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (!error && row) {
+        position = row.position ?? position;
+        phone = row.phone ?? phone;
+        created_at = row.created_at ?? created_at;
+      }
+    } catch {}
+    // Try public profile for phone/position if available in the view
+    try {
+      if (!position || !phone) {
+        const { data: pr2, error: e2 } = await sb
+          .from('auth_users_public')
+          .select('user_id, phone, position')
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (!e2 && pr2) {
+          position = position ?? pr2.position ?? null;
+          phone = phone ?? pr2.phone ?? null;
+        }
+      }
+    } catch {}
+    return { position, phone, created_at };
+  }
+
+  function formatArDate(val) {
+    try { return val ? new Date(val).toLocaleString('ar') : '—'; } catch { return '—'; }
+  }
+
+  async function showAdminDetails(userId) {
+    const pr = adminsProfilesMap.get(userId) || {};
+    const row = adminsList.find(r => r && r.user_id === userId) || {};
+    const name = (pr.display_name && String(pr.display_name).trim()) || 'مستخدم';
+    const avatarUrl = (pr.avatar_url && String(pr.avatar_url).trim()) ? pr.avatar_url : '';
+    const email = row.email || '—';
+    const created = row.created_at || null;
+    const extra = await getAdminExtra(userId);
+    const position = extra.position || '—';
+    const phone = extra.phone || '—';
+    const createdAt = formatArDate(created || extra.created_at || null);
+
+    const avatar = avatarUrl
+      ? `<img src="${avatarUrl}" alt="${name}" onerror="this.remove()" style="width:48px;height:48px;border-radius:999px;object-fit:cover" />`
+      : `<div class="avatar" style="width:48px;height:48px;border-radius:999px;overflow:hidden;background:#e2e8f0;display:grid;place-items:center">
+           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+             <circle cx="12" cy="12" r="10" fill="#cbd5e1"/>
+             <circle cx="12" cy="10" r="3.2" fill="#64748b"/>
+             <path d="M5.5 18.2c1.9-3 5-4.2 6.5-4.2s4.6 1.2 6.5 4.2c-2.1 1.7-4.6 2.8-6.5 2.8s-4.4-1.1-6.5-2.8z" fill="#64748b"/>
+           </svg>
+         </div>`;
+
+    const html = `
+      <div style="display:flex; align-items:center; gap:12px;">
+        ${avatar}
+        <div>
+          <div style="font-family: fb; color: var(--main-blue); font-size: 16px;">${name}</div>
+          <div class="muted" style="font-size:12px">${email}</div>
+        </div>
+      </div>
+      <div class="panel__body" style="padding:0; margin-top:12px">
+        <div style="display:grid; gap:8px; grid-template-columns: 140px 1fr; align-items:center;">
+          <div class="muted">المنصب</div><div>${position}</div>
+          <div class="muted">رقم الجوال</div><div>${phone}</div>
+          <div class="muted">وقت إنشاء الحساب</div><div>${createdAt}</div>
+          <div class="muted">المعرّف</div><div style="direction:ltr">${userId}</div>
+        </div>
+      </div>`;
+    if (adminDetailsBody) adminDetailsBody.innerHTML = html;
+    openDialog?.(adminDetailsDialog);
+  }
+
   loginBtn?.addEventListener('click', () => {
     // Navigate to dedicated login page with redirect back to admin
     const url = new URL('../login.html', location.href);
@@ -2081,17 +2159,34 @@
   const newAdminEmail = document.getElementById('newAdminEmail');
   const adminsStatus = document.getElementById('adminsStatus');
   let adminsList = [];
+  let adminsProfilesMap = new Map();
+  const adminDetailsDialog = document.getElementById('adminDetailsDialog');
+  const adminDetailsBody = document.getElementById('adminDetailsBody');
 
   function renderAdmins() {
     if (!adminsTable) return;
     adminsTable.innerHTML = '';
     adminsList.forEach((row) => {
       const tr = document.createElement('tr');
+      const pr = adminsProfilesMap.get(row.user_id) || {};
+      const name = (pr.display_name && String(pr.display_name).trim()) || 'مستخدم';
+      const avatarUrl = (pr.avatar_url && String(pr.avatar_url).trim()) ? pr.avatar_url : null;
+      const avatar = avatarUrl
+        ? `<img src="${avatarUrl}" alt="${name}" onerror="this.remove()" />`
+        : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+             <circle cx="12" cy="12" r="10" fill="#cbd5e1"/>
+             <circle cx="12" cy="10" r="3.2" fill="#64748b"/>
+             <path d="M5.5 18.2c1.9-3 5-4.2 6.5-4.2s4.6 1.2 6.5 4.2c-2.1 1.7-4.6 2.8-6.5 2.8s-4.4-1.1-6.5-2.8z" fill="#64748b"/>
+           </svg>`;
       tr.innerHTML = `
-        <td style="padding:12px" data-label="البريد">${row.email || '<span class="muted">بدون بريد</span>'}</td>
-        <td style="padding:12px" data-label="منذ">${row.created_at ? new Date(row.created_at).toLocaleString('ar') : '-'}</td>
+        <td style="padding:12px" data-label="العضو">
+          <div class="user-mini">
+            <div class="avatar">${avatar}</div>
+            <div class="name">${name}</div>
+          </div>
+        </td>
         <td style="padding:12px" data-label="إجراءات">
-          <button class="btn btn-outline" data-act="remove" data-id="${row.user_id}"><i class="fa-solid fa-user-minus"></i> إزالة كإداري</button>
+          <button class="btn btn-outline" data-act="details" data-id="${row.user_id}"><i class="fa-solid fa-circle-info"></i> تفاصيل</button>
         </td>`;
       adminsTable.appendChild(tr);
     });
@@ -2104,6 +2199,22 @@
     try {
       const data = await callFunction('list-admins', { method: 'GET' });
       adminsList = Array.isArray(data) ? data : [];
+      // Enrich with public profiles (display_name, avatar_url)
+      adminsProfilesMap = new Map();
+      try {
+        if (sb && adminsList.length) {
+          const userIds = Array.from(new Set(adminsList.map(r => r && r.user_id).filter(Boolean)));
+          if (userIds.length) {
+            const { data: profiles, error: profErr } = await sb
+              .from('auth_users_public')
+              .select('user_id, display_name, avatar_url')
+              .in('user_id', userIds);
+            if (!profErr && Array.isArray(profiles)) {
+              adminsProfilesMap = new Map(profiles.map(pr => [pr.user_id, pr]));
+            }
+          }
+        }
+      } catch {}
       adminsStatus.className = 'muted';
       adminsStatus.textContent = `عدد الإداريين: ${adminsList.length}`;
       renderAdmins();
@@ -2140,6 +2251,10 @@
     const act = btn.getAttribute('data-act');
     const userId = btn.getAttribute('data-id');
     if (!userId) return;
+    if (act === 'details') {
+      await showAdminDetails(userId);
+      return;
+    }
     if (act === 'remove') {
       if (!confirm('هل تريد إزالة صلاحية الإداري؟')) return;
       adminsStatus && (adminsStatus.className = 'muted', adminsStatus.textContent = 'جاري التنفيذ...');
