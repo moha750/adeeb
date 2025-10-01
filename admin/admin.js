@@ -21,6 +21,14 @@
   const calPrevBtn = $('#calPrevBtn');
   const calNextBtn = $('#calNextBtn');
   const calTodayBtn = $('#calTodayBtn');
+  const calIntlBtn = $('#calIntlBtn');
+  const intlDaysSection = document.getElementById('intlDaysSection');
+  const intlDaysTableBody = document.getElementById('intlDaysTableBody');
+  const intlAddCustomBtn = document.getElementById('intlAddCustomBtn');
+  const intlCustomDialog = document.getElementById('intlCustomDialog');
+  const intlCustomForm = document.getElementById('intlCustomForm');
+  const intlCustomDate = document.getElementById('intlCustomDate');
+  const intlCustomTitle = document.getElementById('intlCustomTitle');
 
   const KEYS = {
     works: 'adeeb_works',
@@ -181,6 +189,8 @@
       `;
       calendarGrid.appendChild(cell);
     }
+    // Also refresh the International Days table below the grid
+    renderIntlDaysTable();
   }
 
   calPrevBtn?.addEventListener('click', (e) => {
@@ -200,6 +210,309 @@
     const now = new Date(); viewYear = now.getFullYear(); viewMonth = now.getMonth();
     renderSchedule();
     loadScheduleForCurrentGrid();
+  });
+
+  // ===== International Days (Fixed-date subset) =====
+  // A curated subset of widely recognized international/UN days (Arabic titles).
+  // Only fixed dates are included; variable weekday-based observances are omitted for simplicity.
+  const INTL_DAYS_FIXED = {
+    '01': [
+      ['24', 'اليوم الدولي للتعليم'],
+      ['27', 'اليوم الدولي لإحياء ذكرى ضحايا الهولوكوست']
+    ],
+    '02': [
+      ['04', 'اليوم العالمي للسرطان'],
+      ['11', 'اليوم الدولي للمرأة والفتاة في ميدان العلوم'],
+      ['13', 'اليوم العالمي للإذاعة'],
+      ['20', 'اليوم العالمي للعدالة الاجتماعية'],
+      ['21', 'اليوم الدولي للغة الأم']
+    ],
+    '03': [
+      ['03', 'اليوم العالمي للحياة البرية'],
+      ['08', 'اليوم العالمي للمرأة'],
+      ['15', 'اليوم العالمي لحقوق المستهلك'],
+      ['20', 'اليوم الدولي للسعادة'],
+      ['21', 'اليوم العالمي لمتلازمة داون'],
+      ['22', 'اليوم العالمي للمياه'],
+      ['23', 'اليوم العالمي للأرصاد الجوية'],
+      ['24', 'اليوم العالمي لمكافحة السل'],
+      ['27', 'اليوم العالمي للمسرح']
+    ],
+    '04': [
+      ['02', 'اليوم العالمي للتوعية بالتوحد'],
+      ['07', 'اليوم العالمي للصحة'],
+      ['21', 'اليوم العالمي للإبداع والابتكار'],
+      ['22', 'يوم الأرض'],
+      ['23', 'اليوم العالمي للكتاب وحقوق المؤلف'],
+      ['25', 'اليوم العالمي لمكافحة الملاريا']
+    ],
+    '05': [
+      ['01', 'اليوم العالمي للعمال'],
+      ['03', 'اليوم العالمي لحرية الصحافة'],
+      ['08', 'اليوم العالمي للصليب الأحمر والهلال الأحمر'],
+      ['12', 'اليوم الدولي للممرضات والممرضين'],
+      ['15', 'اليوم الدولي للأسر'],
+      ['17', 'اليوم العالمي للاتصالات ومجتمع المعلومات'],
+      ['20', 'اليوم العالمي للقياس'],
+      ['21', 'اليوم العالمي للتنوع الثقافي'],
+      ['22', 'اليوم الدولي للتنوع البيولوجي'],
+      ['31', 'اليوم العالمي للامتناع عن تعاطي التبغ']
+    ],
+    '06': [
+      ['03', 'اليوم العالمي للدراجة الهوائية'],
+      ['05', 'اليوم العالمي للبيئة'],
+      ['08', 'اليوم العالمي للمحيطات'],
+      ['12', 'اليوم العالمي لمكافحة عمل الأطفال'],
+      ['14', 'اليوم العالمي للمتبرعين بالدم'],
+      ['20', 'اليوم العالمي للاجئين'],
+      ['21', 'اليوم العالمي لليوغا'],
+      ['26', 'اليوم الدولي لمكافحة تعاطي المخدرات والاتجار غير المشروع بها']
+    ],
+    '07': [
+      ['11', 'اليوم العالمي للسكان'],
+      ['15', 'اليوم العالمي لمهارات الشباب'],
+      ['18', 'يوم نيلسون مانديلا الدولي']
+    ],
+    '08': [
+      ['09', 'اليوم الدولي للشعوب الأصلية في العالم'],
+      ['12', 'اليوم الدولي للشباب'],
+      ['19', 'اليوم العالمي للعمل الإنساني'],
+      ['23', 'اليوم الدولي لإحياء ذكرى تجارة الرقيق وإلغائها']
+    ],
+    '09': [
+      ['05', 'اليوم الدولي للعمل الخيري'],
+      ['08', 'اليوم الدولي لمحو الأمية'],
+      ['15', 'اليوم الدولي للديمقراطية'],
+      ['21', 'اليوم الدولي للسلام'],
+      ['27', 'اليوم العالمي للسياحة'],
+      ['28', 'اليوم الدولي للوصول إلى المعلومات']
+    ],
+    '10': [
+      ['01', 'اليوم الدولي لكبار السن'],
+      ['02', 'اليوم الدولي للاعنف'],
+      ['05', 'اليوم العالمي للمعلمين'],
+      ['10', 'اليوم العالمي للصحة النفسية'],
+      ['11', 'اليوم الدولي للطفلة'],
+      ['13', 'اليوم الدولي للحد من مخاطر الكوارث'],
+      ['15', 'اليوم العالمي لغسل اليدين'],
+      ['16', 'اليوم العالمي للأغذية'],
+      ['17', 'اليوم الدولي للقضاء على الفقر'],
+      ['24', 'يوم الأمم المتحدة'],
+      ['31', 'اليوم العالمي للمدن']
+    ],
+    '11': [
+      ['10', 'اليوم العالمي للعلم من أجل السلام والتنمية'],
+      ['14', 'اليوم العالمي لمرض السكري'],
+      ['16', 'اليوم الدولي للتسامح'],
+      ['19', 'اليوم العالمي لدورات المياه'],
+      ['20', 'اليوم العالمي للطفل'],
+      ['25', 'اليوم الدولي للقضاء على العنف ضد المرأة']
+    ],
+    '12': [
+      ['01', 'اليوم العالمي للإيدز'],
+      ['03', 'اليوم الدولي للأشخاص ذوي الإعاقة'],
+      ['05', 'اليوم الدولي للمتطوعين'],
+      ['10', 'اليوم العالمي لحقوق الإنسان'],
+      ['18', 'اليوم العالمي للغة العربية'],
+      ['20', 'اليوم الدولي للتضامن الإنساني']
+    ]
+  };
+
+  function getIntlDaysForMonth(year, monthIdx /* 0-11 */) {
+    const mm = String(monthIdx + 1).padStart(2, '0');
+    const list = (INTL_DAYS_FIXED[mm] || []).map(([dd, title]) => {
+      const d = Number(dd);
+      const dt = new Date(year, monthIdx, d);
+      if (dt.getMonth() !== monthIdx) return null; // skip invalid dates
+      return { key: dateKey(year, monthIdx, d), title };
+    }).filter(Boolean);
+    return list;
+  }
+
+  async function importIntlDaysForVisibleMonth() {
+    const intl = getIntlDaysForMonth(viewYear, viewMonth);
+    if (!intl.length) { alert('لا توجد أيام عالمية ثابتة لهذا الشهر في القائمة.'); return; }
+    const changed = new Set();
+    for (const it of intl) {
+      const k = it.key;
+      const arr = schedule[k] = schedule[k] || [];
+      const exists = arr.some(x => (x?.title || '').trim() === it.title.trim());
+      if (!exists) {
+        arr.push({ title: it.title, notes: null });
+        changed.add(k);
+      }
+    }
+    if (!changed.size) { alert('لا توجد عناصر جديدة لإضافتها.'); return; }
+    saveSchedule();
+    // Sync with Supabase if available and authenticated
+    if (sb) {
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+          for (const k of changed) {
+            try {
+              const arr = itemsFrom(schedule[k]);
+              // Delete existing for k
+              const { error: delErr } = await sb.from('schedule_entries').delete().eq('date', k);
+              if (delErr) throw delErr;
+              if (arr.length) {
+                const rows = arr.map((it, i) => ({ date: k, title: it.title || null, notes: it.notes || null, position: i + 1 }));
+                let res = await sb.from('schedule_entries').insert(rows).select('*');
+                if (res.error && /(column\s+position|unknown column|invalid input)/i.test(res.error.message || '')) {
+                  const rows2 = arr.map((it) => ({ date: k, title: it.title || null, notes: it.notes || null }));
+                  const res2 = await sb.from('schedule_entries').insert(rows2).select('*');
+                  if (res2.error) throw res2.error;
+                } else if (res.error) {
+                  throw res.error;
+                }
+              }
+            } catch (e) {
+              console.error('Sync failed for', k, e);
+            }
+          }
+        }
+      } catch {}
+    }
+    renderSchedule();
+    renderIntlDaysTable();
+    alert('تمت إضافة الأيام العالمية لهذا الشهر');
+  }
+
+  calIntlBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    await importIntlDaysForVisibleMonth();
+  });
+
+  // Open custom international day dialog
+  intlAddCustomBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    try {
+      if (intlCustomDate) {
+        const d = new Date(viewYear, viewMonth, 1);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        intlCustomDate.value = `${yyyy}-${mm}-${dd}`;
+      }
+      if (intlCustomTitle) intlCustomTitle.value = '';
+      if (typeof openDialog === 'function') openDialog(intlCustomDialog);
+      else intlCustomDialog?.showModal?.();
+    } catch {}
+  });
+
+  // Save custom international day
+  intlCustomForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const dateStr = (intlCustomDate?.value || '').trim();
+    const title = (intlCustomTitle?.value || '').trim();
+    if (!dateStr || !title) { alert('يرجى إدخال التاريخ والعنوان'); return; }
+    const key = dateStr.slice(0, 10);
+    const arr = schedule[key] = itemsFrom(schedule[key]);
+    const exists = arr.some(x => (x?.title || '').trim() === title);
+    if (exists) {
+      alert('هذا اليوم موجود مسبقًا في هذا التاريخ');
+    } else {
+      arr.push({ title, notes: null });
+      saveSchedule();
+      if (sb) {
+        try {
+          const { data: { session } } = await sb.auth.getSession();
+          if (session) {
+            const curArr = itemsFrom(schedule[key]);
+            const { error: delErr } = await sb.from('schedule_entries').delete().eq('date', key);
+            if (delErr) throw delErr;
+            if (curArr.length) {
+              const rows = curArr.map((it, i) => ({ date: key, title: it.title || null, notes: it.notes || null, position: i + 1 }));
+              let res = await sb.from('schedule_entries').insert(rows).select('*');
+              if (res.error && /(column\s+position|unknown column|invalid input)/i.test(res.error.message || '')) {
+                const rows2 = curArr.map((it) => ({ date: key, title: it.title || null, notes: it.notes || null }));
+                const res2 = await sb.from('schedule_entries').insert(rows2).select('*');
+                if (res2.error) throw res2.error;
+              } else if (res.error) {
+                throw res.error;
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Failed to sync custom intl day', key, err);
+        }
+      }
+    }
+    renderSchedule();
+    renderIntlDaysTable();
+    try { if (typeof closeDialog === 'function') closeDialog(intlCustomDialog); else intlCustomDialog?.close?.(); } catch {}
+  });
+
+  function formatDateShortAr(key) {
+    const [y, m, d] = key.split('-').map(Number);
+    try { return new Date(y, m - 1, d).toLocaleDateString('ar', { day: 'numeric', month: 'long' }); } catch { return key; }
+  }
+
+  function renderIntlDaysTable() {
+    if (!intlDaysTableBody) return;
+    const list = getIntlDaysForMonth(viewYear, viewMonth);
+    // Keep header and "Add" button visible; hide only the table when no fixed days
+    const wrap = document.getElementById('intlDaysTableWrap');
+    if (wrap) wrap.style.display = list.length ? '' : 'none';
+    intlDaysTableBody.innerHTML = '';
+    list.forEach(({ key, title }) => {
+      const exists = itemsFrom(schedule[key]).some(x => (x?.title || '').trim() === title.trim());
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td data-label="التاريخ" style="padding:12px">${formatDateShortAr(key)}</td>
+        <td data-label="العنوان" style="padding:12px">${title}</td>
+        <td data-label="إجراء" style="padding:12px">
+          ${exists
+            ? `<button class="btn btn-outline" data-act="open" data-date="${key}"><i class="fa-solid fa-eye"></i> فتح اليوم</button>`
+            : `<button class="btn btn-outline" data-act="add" data-date="${key}" data-title="${title}"><i class="fa-solid fa-plus"></i> إضافة</button>`
+          }
+        </td>`;
+      intlDaysTableBody.appendChild(tr);
+    });
+  }
+
+  intlDaysTableBody?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const key = btn.dataset.date;
+    const act = btn.dataset.act;
+    if (!key || !act) return;
+    if (act === 'open') { openDayEditor(key); return; }
+    if (act === 'add') {
+      const title = (btn.dataset.title || '').trim();
+      if (!title) return;
+      const arr = schedule[key] = itemsFrom(schedule[key]);
+      const exists = arr.some(x => (x?.title || '').trim() === title);
+      if (!exists) {
+        arr.push({ title, notes: null });
+        saveSchedule();
+        if (sb) {
+          try {
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) {
+              const curArr = itemsFrom(schedule[key]);
+              const { error: delErr } = await sb.from('schedule_entries').delete().eq('date', key);
+              if (delErr) throw delErr;
+              if (curArr.length) {
+                const rows = curArr.map((it, i) => ({ date: key, title: it.title || null, notes: it.notes || null, position: i + 1 }));
+                let res = await sb.from('schedule_entries').insert(rows).select('*');
+                if (res.error && /(column\s+position|unknown column|invalid input)/i.test(res.error.message || '')) {
+                  const rows2 = curArr.map((it) => ({ date: key, title: it.title || null, notes: it.notes || null }));
+                  const res2 = await sb.from('schedule_entries').insert(rows2).select('*');
+                  if (res2.error) throw res2.error;
+                } else if (res.error) {
+                  throw res.error;
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Failed to sync intl day add', key, err);
+          }
+        }
+        renderSchedule();
+        renderIntlDaysTable();
+      }
+    }
   });
 
   // Day dialog handlers

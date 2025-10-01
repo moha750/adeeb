@@ -183,16 +183,41 @@
               <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
             </div>
           </div>
-          <div class="panel" style="padding:16px">
+          <div id="schedulePanel" class="panel" style="padding:16px">
             <div class="calendar-toolbar">
               <button id="calPrevBtn" class="btn btn-outline" title="الشهر السابق"><i class="fa-solid fa-chevron-right"></i></button>
               <div id="calMonthLabel" class="calendar-month"></div>
               <button id="calNextBtn" class="btn btn-outline" title="الشهر التالي"><i class="fa-solid fa-chevron-left"></i></button>
               <div style="flex:1"></div>
-              <button id="calTodayBtn" class="btn"><i class="fa-solid fa-location-crosshairs"></i> اليوم</button>
+              <button id="calTodayBtn" class="btn"><i class="fa-solid fa-location-crosshairs"></i> عرض اليوم </button>
+              <button id="calIntlBtn" class="btn btn-outline" title="إضافة الأيام العالمية لهذا الشهر"><i class="fa-solid fa-earth-asia"></i> عرض الأيام العالمية </button>
             </div>
             <div class="calendar-days-head" id="calendarDaysHead"></div>
             <div id="calendarGrid" class="calendar-grid" aria-live="polite"></div>
+          </div>
+          <!-- International Days: separate panel -->
+          <div id="intlDaysPanel" class="panel" style="padding:16px; margin-top:16px">
+            <div id="intlDaysSection">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 12px">
+                <h3 style="margin:0;font-size:1rem;color:var(--main-blue)"><i class="fa-solid fa-earth-asia"></i> الأيام العالمية لهذا الشهر</h3>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <button id="intlAddCustomBtn" class="btn btn-outline"><i class="fa-solid fa-plus"></i> إضافة يوم عالمي</button>
+                </div>
+              </div>
+              <div id="intlDaysTableWrap" style="overflow:auto">
+                <table class="table" style="width:100%; border-collapse:collapse">
+                  <thead>
+                    <tr>
+                      <th style="text-align:right; padding:12px">التاريخ</th>
+                      <th style="text-align:right; padding:12px">العنوان</th>
+                      <th style="text-align:right; padding:12px">إجراء</th>
+                    </tr>
+                  </thead>
+                  <tbody id="intlDaysTableBody"></tbody>
+                </table>
+                <div class="muted" id="intlDaysFootnote" style="margin-top:8px">قائمة ثابتة؛ قد لا تشمل جميع المناسبات</div>
+              </div>
+            </div>
           </div>
         </section>
         
@@ -387,6 +412,30 @@
         <menu class="dialog-actions">
           <button type="button" class="btn" id="cropCancelBtn">إلغاء</button>
           <button value="submit" class="btn btn-primary" id="cropConfirmBtn">تأكيد</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- International Day: Add Custom Dialog -->
+    <dialog id="intlCustomDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="intlCustomForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title"><i class="fa-solid fa-earth-asia"></i> إضافة يوم عالمي</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>التاريخ
+              <input id="intlCustomDate" type="date" required />
+            </label>
+            <label>العنوان
+              <input id="intlCustomTitle" type="text" required placeholder="اسم اليوم العالمي" />
+            </label>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
         </menu>
       </form>
     </dialog>

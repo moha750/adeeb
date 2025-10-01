@@ -719,13 +719,37 @@ body.no-scroll { overflow: hidden; }
   color: var(--main-blue);
   font-weight: 700;
 }
+
+/* Mobile layout for calendar toolbar: center month and stack action buttons */
+@media (max-width: 641px) {
+  #section-schedule #schedulePanel .calendar-toolbar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-areas:
+      "prev month next"
+      "today today today"
+      "intl intl intl";
+    row-gap: 8px;
+    column-gap: 8px;
+  }
+  #section-schedule #schedulePanel #calPrevBtn { grid-area: prev; justify-self: end; }
+  #section-schedule #schedulePanel #calNextBtn { grid-area: next; justify-self: start; }
+  #section-schedule #schedulePanel #calMonthLabel { grid-area: month; text-align: center; }
+  #section-schedule #schedulePanel #calTodayBtn { grid-area: today; width: 100%; }
+  #section-schedule #schedulePanel #calIntlBtn { grid-area: intl; width: 100%; }
+  /* hide spacer div inside toolbar on mobile (keep month label visible) */
+  #section-schedule #schedulePanel .calendar-toolbar > div:not(#calMonthLabel) { display: none; }
+}
 .calendar-days-head {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
   margin-bottom: 8px;
 }
 .calendar-days-head .day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   padding: 8px 6px;
   border: 1px solid var(--border);
@@ -735,10 +759,23 @@ body.no-scroll { overflow: hidden; }
   font-family: fr, system-ui, sans-serif;
   font-size: .9rem;
 }
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+/* Mobile: use single-letter day abbreviations in header (Saturday-first) */
+@media (max-width: 640px) {
+  #section-schedule .calendar-days-head .day {
+    font-size: 0; /* hide full label visually but keep it in DOM for a11y */
+    padding: 6px 4px; /* tighter padding on small screens */
+  }
+  #section-schedule .calendar-days-head .day::after {
+    font-size: .95rem;
+    font-family: fr, system-ui, sans-serif;
+  }
+  #section-schedule .calendar-days-head .day:nth-child(1)::after { content: 'س'; } /* السبت */
+  #section-schedule .calendar-days-head .day:nth-child(2)::after { content: 'ح'; } /* الأحد */
+  #section-schedule .calendar-days-head .day:nth-child(3)::after { content: 'ن'; } /* الإثنين */
+  #section-schedule .calendar-days-head .day:nth-child(4)::after { content: 'ث'; } /* الثلاثاء */
+  #section-schedule .calendar-days-head .day:nth-child(5)::after { content: 'ر'; } /* الأربعاء */
+  #section-schedule .calendar-days-head .day:nth-child(6)::after { content: 'خ'; } /* الخميس */
+  #section-schedule .calendar-days-head .day:nth-child(7)::after { content: 'ج'; } /* الجمعة */
 }
 .calendar-cell {
   position: relative;
@@ -789,6 +826,13 @@ body.no-scroll { overflow: hidden; }
   font-family: fr, system-ui, sans-serif;
 }
 
+@media (max-width: 641px) {
+  .calendar-cell .count-chip {
+    top: unset;
+    bottom: 6px;
+  }
+}
+
 /* ===== Day dialog items list ===== */
 .day-items-list {
   display: grid;
@@ -806,4 +850,22 @@ body.no-scroll { overflow: hidden; }
 .day-item__text { flex: 1; min-width: 0; }
 .day-item__title { color: var(--text); margin-bottom: 4px; }
 .day-item__notes { color: var(--muted); white-space: pre-wrap; }
+.day-item__actions { display: flex; gap: 6px; }
+
+/* Unify calendar header and grid tracks only for the main schedule panel */
+@supports (display: contents) {
+  #section-schedule #schedulePanel {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    column-gap: 6px;
+    row-gap: 8px;
+  }
+  #section-schedule #schedulePanel .calendar-toolbar {
+    grid-column: 1 / -1;
+  }
+  #section-schedule #schedulePanel .calendar-days-head,
+  #section-schedule #schedulePanel .calendar-grid {
+    display: contents;
+  }
+}
 .day-item__actions { display: flex; gap: 6px; }
