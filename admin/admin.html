@@ -31,6 +31,7 @@
           <a href="#section-home" class="admin-menu__item active"><i class="fa-solid fa-sitemap"></i> إدارة الموقع</a>
           <a href="#section-blog" class="admin-menu__item"><i class="fa-solid fa-anchor"></i> إدارة مرافئ</a>
           <a href="#section-schedule" class="admin-menu__item"><i class="fa-solid fa-calendar-days"></i> جدول أدِيب</a>
+          <a href="#section-todos" class="admin-menu__item"><i class="fa-solid fa-list-check"></i> المهام</a>
           <a href="#section-profile" class="admin-menu__item"><i class="fa-solid fa-id-card"></i> ملفي</a>
           <a href="#section-admins" class="admin-menu__item"><i class="fa-solid fa-user-shield"></i> إدارة الأعضاء الإداريين</a>
           <div class="admin-menu__footer">
@@ -100,15 +101,7 @@
                 </div>
               </div>
             </div>
-            <div class="card">
-              <div class="card__body">
-                <div class="card__title"><i class="fa-solid fa-calendar-days"></i> إدارة جدول أدِيب</div>
-                <p class="card__text" style="color:#64748b; line-height:1.6">تقويم شهري لإضافة محتوى لكل يوم.</p>
-                <div class="card__actions">
-                  <button class="btn btn-primary" data-go="#section-schedule"><i class="fa-solid fa-arrow-left"></i> فتح</button>
-                </div>
-              </div>
-            </div>
+            <!-- removed schedule and todos home cards -->
           </div>
         </section>
         <section id="section-works" class="admin-section" hidden>
@@ -215,10 +208,20 @@
                   </thead>
                   <tbody id="intlDaysTableBody"></tbody>
                 </table>
-                <div class="muted" id="intlDaysFootnote" style="margin-top:8px">قائمة ثابتة؛ قد لا تشمل جميع المناسبات</div>
+                <div class="muted" id="intlDaysFootnote" style="margin-top:8px">القائمة ثابتة؛ وقد لا تشمل جميع الأيام العالمية</div>
               </div>
             </div>
           </div>
+        </section>
+        <section id="section-todos" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-list-check"></i> المهام</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addTodoBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة مهمة</button>
+            </div>
+          </div>
+          <div id="todosList" class="cards-grid" aria-live="polite"></div>
         </section>
         
         <!-- ملفي -->
@@ -327,10 +330,7 @@
                 البريد الإلكتروني
                 <input id="newAdminEmail" type="email" placeholder="name@example.com" required />
               </label>
-              <label>
-                الاسم الكامل
-                <input id="newAdminName" placeholder="الاسم كما سيظهر" />
-              </label>
+              <!-- removed full name input -->
               <label>
                 المنصب
                 <select id="newAdminPosition">
@@ -354,7 +354,11 @@
             <div id="adminsStatus" class="muted" style="margin-top:10px"></div>
           </div>
 
-          <div class="panel" style="padding:0; margin-top:16px">
+          <!-- High Council Table -->
+          <div class="panel" style="padding:16px; margin-top:16px">
+            <h3 style="margin:0 0 12px; font-family: fb; color: var(--main-blue); display:flex; align-items:center; gap:8px">
+              <i class="fa-solid fa-crown" aria-hidden="true"></i> المجلس الأعلى
+            </h3>
             <div style="overflow:auto">
               <table class="table" style="width:100%; border-collapse:collapse">
                 <thead>
@@ -363,7 +367,25 @@
                     <th style="text-align:right; padding:12px">إجراءات</th>
                   </tr>
                 </thead>
-                <tbody id="adminsTable"></tbody>
+                <tbody id="adminsHighCouncilTable"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Administrative Council Table -->
+          <div class="panel" style="padding:16px; margin-top:16px">
+            <h3 style="margin:0 0 12px; font-family: fb; color: var(--main-blue); display:flex; align-items:center; gap:8px">
+              <i class="fa-solid fa-users-gear" aria-hidden="true"></i> المجلس الإداري
+            </h3>
+            <div style="overflow:auto">
+              <table class="table" style="width:100%; border-collapse:collapse">
+                <thead>
+                  <tr>
+                    <th style="text-align:right; padding:12px">العضو</th>
+                    <th style="text-align:right; padding:12px">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="adminsAdminCouncilTable"></tbody>
               </table>
             </div>
           </div>
@@ -600,6 +622,33 @@
       </form>
     </dialog>
 
+    <dialog id="todoDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="todoForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title"><i class="fa-solid fa-list-check"></i> إضافة/تعديل مهمة</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>العنوان<input name="title" required placeholder="عنوان المهمة" /></label>
+            <label>تاريخ الاستحقاق<input name="due" type="date" /></label>
+            <label>الحالة
+              <select name="status">
+                <option value="pending">قيد الانتظار</option>
+                <option value="in_progress">قيد التنفيذ</option>
+                <option value="done">منجزة</option>
+              </select>
+            </label>
+            <label>ملاحظات<textarea name="notes" rows="4" placeholder="تفاصيل إضافية"></textarea></label>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
     <dialog id="blogDialog" class="admin-dialog">
       <form method="dialog" class="dialog-form" id="blogForm">
         <div class="dialog-header">
@@ -659,7 +708,7 @@
           <button type="button" class="btn" id="dayDeleteBtn"><i class="fa-solid fa-trash"></i> حذف اليوم</button>
           <div style="flex:1"></div>
           <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
-          <button value="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
+          <button value="submit " class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
         </menu>
       </form>
     </dialog>
@@ -675,6 +724,8 @@
           <div id="adminDetailsBody" style="display:grid; gap:12px"></div>
         </div>
         <menu class="dialog-actions">
+          <button type="button" class="btn btn-outline" id="adminRemoveBtn"><i class="fa-solid fa-user-slash"></i> حذف من الإداريين</button>
+          <div style="flex:1"></div>
           <button type="button" class="btn" onclick="this.closest('dialog').close()">إغلاق</button>
         </menu>
       </form>
