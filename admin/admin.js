@@ -12,9 +12,15 @@
   const sponsorsList = $('#sponsorsList');
   const achievementsList = $('#achievementsList');
   const boardList = $('#boardList');
+  const membersList = $('#membersList');
   const faqList = $('#faqList');
   const blogList = $('#blogList');
   const todosList = $('#todosList');
+  const statsGrid = $('#statsGrid');
+  // Idea Board (admin) elements
+  const ideaBoardTableBody = document.getElementById('ideaBoardTableBody');
+  const ideaBoardEmpty = document.getElementById('ideaBoardEmpty');
+  const ideaBoardRefreshBtn = document.getElementById('ideaBoardRefreshBtn');
   // Schedule elements
   const calendarGrid = $('#calendarGrid');
   const calendarDaysHead = $('#calendarDaysHead');
@@ -31,15 +37,33 @@
   const intlCustomDate = document.getElementById('intlCustomDate');
   const intlCustomTitle = document.getElementById('intlCustomTitle');
 
+  // Chat elements
+  const chatContactsEl = document.getElementById('chatContacts');
+  const chatSearchInput = document.getElementById('chatSearch');
+  const chatMessagesEl = document.getElementById('chatMessages');
+  const chatComposerForm = document.getElementById('chatComposer');
+  const chatInputEl = document.getElementById('chatInput');
+  const chatPeerAvatar = document.getElementById('chatPeerAvatar');
+  const chatPartnerName = document.getElementById('chatPartnerName');
+  const chatPeerMeta = document.getElementById('chatPeerMeta');
+  const chatFiltersEl = document.getElementById('chatFilters');
+  const chatNoContactsEl = document.getElementById('chatNoContacts');
+  const chatTypingEl = document.getElementById('chatTyping');
+  const chatLoadMoreBtn = document.getElementById('chatLoadMore');
+  const chatEmptyEl = document.getElementById('chatEmpty');
+  const chatScrollBottomBtn = document.getElementById('chatScrollBottom');
+
   const KEYS = {
     works: 'adeeb_works',
     sponsors: 'adeeb_sponsors',
     board: 'adeeb_board',
+    members: 'adeeb_members',
     faq: 'adeeb_faq',
     achievements: 'adeeb_achievements',
     blog: 'adeeb_blog_posts',
     schedule: 'adeeb_schedule',
     todos: 'adeeb_todos',
+    ideas: 'adeeb_ideas_public',
   };
 
   // Supabase client (if configured)
@@ -200,6 +224,448 @@
     viewMonth -= 1; if (viewMonth < 0) { viewMonth = 11; viewYear -= 1; }
     renderSchedule();
     loadScheduleForCurrentGrid();
+  });
+
+  // ===== Idea Board (Admin Moderation) =====
+  function localIdeasGet() { try { const raw = localStorage.getItem(KEYS.ideas); const arr = raw ? JSON.parse(raw) : []; return Array.isArray(arr) ? arr : []; } catch { return []; } }
+  function localIdeasSet(arr) { try { localStorage.setItem(KEYS.ideas, JSON.stringify(Array.isArray(arr) ? arr : [])); } catch {} }
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function fmtArDateTime(iso){ try { return new Date(iso).toLocaleString('ar'); } catch { return iso || ''; } }
+
+  async function fetchIdeasAdmin() {
+    if (sb) {
+      try {
+        const { data, error } = await sb
+          .from('idea_board')
+          .select('id, content, author_name, image_url, image_key, visible, pinned, created_at')
+          .order('pinned', { ascending: false })
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        return Array.isArray(data) ? data : [];
+      } catch (e) {
+        console.warn('idea_board fetch (admin) failed', e);
+      }
+    }
+    return localIdeasGet();
+  }
+
+  function renderIdeaBoardTableRows(rows) {
+    if (!ideaBoardTableBody) return;
+    ideaBoardTableBody.innerHTML = '';
+    const list = Array.isArray(rows) ? rows : [];
+    if (ideaBoardEmpty) ideaBoardEmpty.style.display = list.length ? 'none' : '';
+    list.forEach((row, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding:10px" data-label="التاريخ">${fmtArDateTime(row.created_at)}</td>
+        <td style="padding:10px" data-label="الاسم">${escapeHtml(row.author_name || 'مجهول')}</td>
+        <td style="padding:10px" data-label="الفكرة">${escapeHtml(row.content || '')}</td>
+        <td style="padding:10px" data-label="صورة">${row.image_url ? `<a href="${escapeHtml(row.image_url)}" target="_blank" rel="noopener"><img src="${escapeHtml(row.image_url)}" alt="img" style="width:64px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" onerror="this.style.display='none'"/></a>` : '—'}</td>
+        <td style="padding:10px" data-label="مثبت">${row.pinned ? '<span class="chip active">نعم</span>' : '<span class="chip">لا</span>'}</td>
+        <td style="padding:10px" data-label="ظاهر">${row.visible ? '<span class="chip active">نعم</span>' : '<span class="chip">لا</span>'}</td>
+        <td style="padding:10px;white-space:nowrap" data-label="إجراءات">
+          <button class="btn btn-outline btn-xs" data-act="pin" data-id="${row.id}" title="تبديل التثبيت"><i class="fa-solid fa-thumbtack"></i></button>
+          <button class="btn btn-outline btn-xs" data-act="toggle" data-id="${row.id}" title="إظهار/إخفاء"><i class="fa-solid fa-eye"></i></button>
+          <button class="btn btn-outline btn-xs" data-act="del" data-id="${row.id}" title="حذف"><i class="fa-regular fa-trash-can"></i></button>
+        </td>
+      `;
+      ideaBoardTableBody.appendChild(tr);
+    });
+  }
+
+  async function loadIdeaBoardAdmin() {
+    const rows = await fetchIdeasAdmin();
+    renderIdeaBoardTableRows(rows);
+  }
+
+  ideaBoardRefreshBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    await loadIdeaBoardAdmin();
+  });
+
+  if (ideaBoardTableBody) {
+    ideaBoardTableBody.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const id = btn.dataset.id;
+      const act = btn.dataset.act;
+      if (!id || !act) return;
+      try {
+        if (!sb) {
+          // local fallback: mutate local list
+          let arr = localIdeasGet();
+          const idx = arr.findIndex(r => String(r.id) === String(id));
+          if (idx === -1) return;
+          if (act === 'pin') arr[idx].pinned = !arr[idx].pinned;
+          else if (act === 'toggle') arr[idx].visible = !arr[idx].visible;
+          else if (act === 'del') { if (!confirm('تأكيد الحذف؟')) return; arr.splice(idx, 1); }
+          localIdeasSet(arr);
+          renderIdeaBoardTableRows(arr);
+          return;
+        }
+        if (act === 'pin') {
+          const { data: row } = await sb.from('idea_board').select('pinned').eq('id', id).maybeSingle();
+          const cur = !!(row?.pinned);
+          const { error } = await sb.from('idea_board').update({ pinned: !cur }).eq('id', id);
+          if (error) throw error;
+        } else if (act === 'toggle') {
+          const { data: row } = await sb.from('idea_board').select('visible').eq('id', id).maybeSingle();
+          const cur = !!(row?.visible);
+          const { error } = await sb.from('idea_board').update({ visible: !cur }).eq('id', id);
+          if (error) throw error;
+        } else if (act === 'del') {
+          if (!confirm('تأكيد الحذف؟')) return;
+          // fetch image key before deletion
+          let imgKey = null;
+          try {
+            const f = await sb.from('idea_board').select('image_key').eq('id', id).maybeSingle();
+            imgKey = f?.data?.image_key || null;
+          } catch {}
+          const { error } = await sb.from('idea_board').delete().eq('id', id);
+          if (error) throw error;
+          if (imgKey) {
+            try { await sb.storage.from('idea-board').remove([imgKey]); } catch {}
+          }
+        }
+        await loadIdeaBoardAdmin();
+      } catch (err) {
+        alert('فشل العملية: ' + (err?.message || 'غير معروف'));
+      }
+    });
+  }
+
+  function openMemberDetails(idx) {
+    const m = members?.[idx];
+    if (!m) return;
+    const safe = (v) => (v && String(v).trim()) ? String(v) : '—';
+    const fmtDate = (v) => {
+      try { return v ? (formatArDate?.(v) || new Date(v).toLocaleDateString('ar')) : '—'; } catch { return safe(v); }
+    };
+    const xh = m.x_handle || '';
+    const ig = m.instagram_handle || '';
+    const tk = m.tiktok_handle || '';
+    const xUrl = xh ? `https://x.com/${String(xh).replace(/^@/, '')}` : '';
+    const igUrl = ig ? `https://instagram.com/${String(ig).replace(/^@/, '')}` : '';
+    const tkUrl = tk ? `https://tiktok.com/@${String(tk).replace(/^@/, '')}` : '';
+    const colorBox = (hex) => hex ? `<span style="display:inline-flex;align-items:center;gap:8px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${hex};border:1px solid var(--border)"></span><code>${hex}</code></span>` : '—';
+    const html = `
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px">
+        <img src="${(m.avatar || m.avatar_url) || ''}" alt="${safe(m.full_name || m.name)}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#f1f5f9" />
+        <div>
+          <div style="font-weight:700;color:var(--main-blue);font-size:18px">${safe(m.full_name || m.name)}</div>
+          ${m.committee ? `<div class="muted">${safe(m.committee)}</div>` : ''}
+        </div>
+      </div>
+      <div class="form-grid" style="--grid-cols: 2">
+        <label>البريد الإلكتروني <div class="muted">${safe(m.email)}</div></label>
+        <label>رقم الجوال <div class="muted">${safe(m.phone)}</div></label>
+        <label>الرقم الأكاديمي <div class="muted">${safe(m.academic_number)}</div></label>
+        <label>رقم الهوية الوطنية <div class="muted">${safe(m.national_id)}</div></label>
+        <label>الكلية <div class="muted">${safe(m.college)}</div></label>
+        <label>التخصص <div class="muted">${safe(m.major)}</div></label>
+        <label>الدرجة العلمية <div class="muted">${safe(m.degree)}</div></label>
+        <label>تاريخ الميلاد <div class="muted">${fmtDate(m.birth_date)}</div></label>
+        <label>حساب أكس <div class="muted">${xUrl ? `<a href="${xUrl}" target="_blank" rel="noopener">${safe(xh)}</a>` : '—'}</div></label>
+        <label>الإنستقرام <div class="muted">${igUrl ? `<a href="${igUrl}" target="_blank" rel="noopener">${safe(ig)}</a>` : '—'}</div></label>
+        <label>تيك توك <div class="muted">${tkUrl ? `<a href="${tkUrl}" target="_blank" rel="noopener">${safe(tk)}</a>` : '—'}</div></label>
+        <label>اللون الأساسي <div>${colorBox(m.primary_color)}</div></label>
+        <label>اللون الثانوي <div>${colorBox(m.secondary_color)}</div></label>
+      </div>
+    `;
+    if (memberDetailsContent) memberDetailsContent.innerHTML = html;
+    openDialog?.(memberDetailsDialog);
+  }
+
+  // Members CRUD
+  const memberDialog = $('#memberDialog');
+  const memberForm = $('#memberForm');
+  let memberEditingIndex = null;
+  // Member image upload elements
+  const memberImageFile = document.getElementById('member_image_file');
+  const memberImageUrl = document.getElementById('member_image_url');
+  const memberImagePreview = document.getElementById('member_image_preview');
+  const memberDropzone = document.getElementById('memberDropzone');
+  const memberBrowseBtn = document.getElementById('memberBrowseBtn');
+  const memberImageActions = document.getElementById('memberImageActions');
+  const memberEditImageBtn = document.getElementById('member_edit_image_btn');
+  const memberChangeImageBtn = document.getElementById('member_change_image_btn');
+  let memberCroppedFile = null;
+  // Member details dialog elements
+  const memberDetailsDialog = document.getElementById('memberDetailsDialog');
+  const memberDetailsContent = document.getElementById('memberDetailsContent');
+
+  async function handleMemberImageFile(file) {
+    if (!file) return;
+    if (!(file.type || '').startsWith('image/')) { alert('الملف ليس صورة'); return; }
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) { if (!confirm('حجم الصورة يتجاوز 5MB. المتابعة؟')) return; }
+    try {
+      const cropped = await openImageCropper(file, { aspectRatio: 1, lockAspect: true, maxWidth: 1200, maxHeight: 1200, mimeType: 'image/webp', quality: 0.9 });
+      memberCroppedFile = cropped;
+      const url = URL.createObjectURL(cropped);
+      if (memberImagePreview) { memberImagePreview.src = url; memberImagePreview.style.display = 'block'; }
+      if (memberImageActions) memberImageActions.style.display = 'flex';
+      if (memberDropzone) memberDropzone.style.display = 'none';
+    } catch (err) {
+      if (memberImageFile) memberImageFile.value = '';
+    }
+  }
+  memberImageFile?.addEventListener('change', async () => {
+    const file = memberImageFile.files && memberImageFile.files[0];
+    await handleMemberImageFile(file);
+  });
+  memberBrowseBtn?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); memberImageFile?.click(); });
+  memberDropzone?.addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if ((e.target instanceof HTMLElement) && e.target.closest('#memberBrowseBtn')) return;
+    memberImageFile?.click();
+  });
+  memberDropzone?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); memberImageFile?.click(); } });
+  memberDropzone?.addEventListener('dragover', (e) => { e.preventDefault(); memberDropzone.classList.add('dragover'); });
+  memberDropzone?.addEventListener('dragleave', () => { memberDropzone.classList.remove('dragover'); });
+  memberDropzone?.addEventListener('drop', async (e) => {
+    e.preventDefault(); e.stopPropagation(); memberDropzone.classList.remove('dragover');
+    const dt = e.dataTransfer; if (!dt) return;
+    let file = null;
+    if (dt.files && dt.files.length) file = dt.files[0];
+    if (!file && dt.items && dt.items.length) { const item = Array.from(dt.items).find(i => i.kind === 'file'); if (item) file = item.getAsFile(); }
+    await handleMemberImageFile(file);
+  });
+  memberChangeImageBtn?.addEventListener('click', (e) => { e.preventDefault(); memberImageFile?.click(); });
+  memberEditImageBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      const src = (memberImagePreview && memberImagePreview.src) || (memberImageUrl && memberImageUrl.value) || '';
+      if (!src) { alert('لا توجد صورة لتحريرها'); return; }
+      const file = await fetchUrlAsFile(src, 'current');
+      const cropped = await openImageCropper(file, { aspectRatio: 1, lockAspect: true, maxWidth: 1200, maxHeight: 1200, mimeType: 'image/webp', quality: 0.9 });
+      memberCroppedFile = cropped;
+      const url = URL.createObjectURL(cropped);
+      if (memberImagePreview) { memberImagePreview.src = url; memberImagePreview.style.display = 'block'; }
+      if (memberImageActions) memberImageActions.style.display = 'flex';
+      if (memberDropzone) memberDropzone.style.display = 'none';
+    } catch (err) {
+      if (String(err?.message || '').includes('crop-cancelled')) return;
+      alert('تعذر تحرير الصورة الحالية. جرّب تغيير الصورة بدلًا من ذلك.');
+    }
+  });
+
+  async function uploadMemberImage() {
+    const file = memberCroppedFile || (memberImageFile?.files && memberImageFile.files[0]);
+    if (!file) return null;
+    if (!sb) return null;
+    const bucket = 'adeeb-site';
+    const ext = (file.name.split('.').pop() || getExtFromType(file.type, 'jpg')).toLowerCase();
+    const safeExt = ext.replace(/[^a-z0-9]/gi, '') || 'jpg';
+    const path = `members/member-${Date.now()}-${Math.random().toString(36).slice(2,8)}.${safeExt}`;
+    const { error: upErr } = await sb.storage.from(bucket).upload(path, file, { cacheControl: '3600', upsert: false });
+    if (upErr) throw upErr;
+    const { data } = sb.storage.from(bucket).getPublicUrl(path);
+    const publicUrl = data?.publicUrl;
+    if (!publicUrl) throw new Error('تعذر الحصول على رابط الصورة');
+    return publicUrl;
+  }
+
+  $('#addMemberBtn')?.addEventListener('click', () => {
+    memberEditingIndex = null;
+    memberForm?.reset?.();
+    if (memberImagePreview) { memberImagePreview.src = ''; memberImagePreview.style.display = 'none'; }
+    if (memberImageUrl) memberImageUrl.value = '';
+    memberCroppedFile = null;
+    if (memberDropzone) memberDropzone.style.display = '';
+    if (memberImageActions) memberImageActions.style.display = 'none';
+    openDialog?.(memberDialog);
+  });
+
+  membersList?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const idx = Number(btn.dataset.idx);
+    const act = btn.dataset.act;
+    if (act === 'view') {
+      openMemberDetails(idx);
+      return;
+    }
+    if (act === 'up' || act === 'down') {
+      if (!Number.isInteger(idx) || idx < 0 || idx >= members.length) return;
+      const newIndex = act === 'up' ? Math.max(0, idx - 1) : Math.min(members.length - 1, idx + 1);
+      if (newIndex === idx) return;
+      const [moved] = members.splice(idx, 1);
+      members.splice(newIndex, 0, moved);
+      normalizeAndPersistOrder(members, KEYS.members, 'members').then(() => {
+        renderMembers();
+      });
+      return;
+    }
+    if (act === 'edit') {
+      memberEditingIndex = idx;
+      const cur = members[idx];
+      memberForm.full_name.value = cur.full_name || cur.name || '';
+      memberForm.email.value = cur.email || '';
+      memberForm.phone.value = cur.phone || '';
+      memberForm.college.value = cur.college || '';
+      memberForm.major.value = cur.major || '';
+      memberForm.academic_number.value = cur.academic_number || '';
+      memberForm.national_id.value = cur.national_id || '';
+      // Ensure degree select preserves existing custom values not in the list
+      try {
+        const selDeg = memberForm.degree;
+        const valDeg = cur.degree || '';
+        if (selDeg && selDeg.tagName === 'SELECT') {
+          const hasDeg = Array.from(selDeg.options || []).some(o => o.value === valDeg);
+          if (valDeg && !hasDeg) {
+            selDeg.add(new Option(valDeg, valDeg, true, true));
+          }
+          selDeg.value = valDeg;
+        } else if (selDeg) {
+          selDeg.value = valDeg;
+        }
+      } catch {
+        memberForm.degree.value = cur.degree || '';
+      }
+      memberForm.birth_date.value = (cur.birth_date || '').slice(0,10);
+      // Ensure committee select preserves existing custom values not in the list
+      try {
+        const sel = memberForm.committee;
+        const val = cur.committee || '';
+        if (sel && sel.tagName === 'SELECT') {
+          const has = Array.from(sel.options || []).some(o => o.value === val);
+          if (val && !has) {
+            sel.add(new Option(val, val, true, true));
+          }
+          sel.value = val;
+        } else if (sel) {
+          sel.value = val;
+        }
+      } catch {
+        memberForm.committee.value = cur.committee || '';
+      }
+      memberForm.x_handle.value = cur.x_handle || '';
+      memberForm.instagram_handle.value = cur.instagram_handle || '';
+      memberForm.tiktok_handle.value = cur.tiktok_handle || '';
+      memberForm.primary_color.value = cur.primary_color || '#3D8FD6';
+      memberForm.secondary_color.value = cur.secondary_color || '#274060';
+      const imgUrl = (cur.avatar || cur.avatar_url) || '';
+      if (memberImageUrl) memberImageUrl.value = imgUrl;
+      if (memberImagePreview) {
+        if (imgUrl) { memberImagePreview.src = imgUrl; memberImagePreview.style.display = 'block'; }
+        else { memberImagePreview.src = ''; memberImagePreview.style.display = 'none'; }
+      }
+      if (memberImageFile) memberImageFile.value = '';
+      memberCroppedFile = null;
+      if (imgUrl) { if (memberDropzone) memberDropzone.style.display = 'none'; if (memberImageActions) memberImageActions.style.display = 'flex'; }
+      else { if (memberDropzone) memberDropzone.style.display = ''; if (memberImageActions) memberImageActions.style.display = 'none'; }
+      openDialog?.(memberDialog);
+    } else if (act === 'del') {
+      if (!confirm('تأكيد الحذف؟')) return;
+      const cur = members[idx];
+      if (sb && cur.id) {
+        sb.from('members').delete().eq('id', cur.id).then(({ error }) => {
+          if (error) return alert('فشل الحذف: ' + error.message);
+          members.splice(idx, 1);
+          renderMembers();
+        });
+      } else {
+        members.splice(idx, 1);
+        save(KEYS.members, members);
+        renderMembers();
+      }
+    }
+  });
+
+  memberForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    // determine final image url
+    let finalImgUrl = (memberImageUrl?.value || '').trim();
+    try {
+      const uploaded = await uploadMemberImage();
+      if (uploaded) finalImgUrl = uploaded;
+    } catch (err) {
+      return alert('فشل رفع الصورة: ' + (err?.message || 'غير معروف'));
+    }
+    memberCroppedFile = null;
+    const data = {
+      full_name: memberForm.full_name.value.trim(),
+      email: memberForm.email.value.trim(),
+      phone: memberForm.phone.value.trim(),
+      college: memberForm.college.value.trim(),
+      major: memberForm.major.value.trim(),
+      academic_number: memberForm.academic_number.value.trim(),
+      national_id: memberForm.national_id.value.trim(),
+      degree: memberForm.degree.value.trim(),
+      birth_date: memberForm.birth_date.value.trim(),
+      committee: memberForm.committee.value.trim(),
+      x_handle: memberForm.x_handle.value.trim(),
+      instagram_handle: memberForm.instagram_handle.value.trim(),
+      tiktok_handle: memberForm.tiktok_handle.value.trim(),
+      primary_color: memberForm.primary_color.value || null,
+      secondary_color: memberForm.secondary_color.value || null,
+      avatar: finalImgUrl,
+      order: (memberEditingIndex !== null)
+        ? (members[memberEditingIndex]?.order ?? null)
+        : null,
+    };
+    if (sb) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return alert('يلزم تسجيل الدخول لإجراء التعديلات');
+      const payload = {
+        full_name: data.full_name,
+        email: data.email || null,
+        phone: data.phone || null,
+        college: data.college || null,
+        major: data.major || null,
+        academic_number: data.academic_number || null,
+        national_id: data.national_id || null,
+        degree: data.degree || null,
+        birth_date: data.birth_date || null,
+        committee: data.committee || null,
+        x_handle: data.x_handle || null,
+        instagram_handle: data.instagram_handle || null,
+        tiktok_handle: data.tiktok_handle || null,
+        primary_color: data.primary_color || null,
+        secondary_color: data.secondary_color || null,
+        avatar_url: data.avatar || null,
+        order: data.order,
+      };
+      const payloadNoOrder = { ...payload }; delete payloadNoOrder.order;
+      if (memberEditingIndex === null) {
+        let row, error;
+        ({ data: row, error } = await sb.from('members').insert(payload).select('*').single());
+        if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+          const res2 = await sb.from('members').insert(payloadNoOrder).select('*').single();
+          if (res2.error) return alert('فشل الحفظ: ' + res2.error.message);
+          members.unshift({ ...res2.data, order: data.order });
+        } else if (error) {
+          return alert('فشل الحفظ: ' + error.message);
+        } else {
+          members.unshift(row);
+        }
+        renderMembers();
+        closeDialog?.(memberDialog);
+      } else {
+        const id = members[memberEditingIndex]?.id;
+        if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
+        let row, error;
+        ({ data: row, error } = await sb.from('members').update(payload).eq('id', id).select('*').single());
+        if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+          const res2 = await sb.from('members').update(payloadNoOrder).eq('id', id).select('*').single();
+          if (res2.error) return alert('فشل التحديث: ' + res2.error.message);
+          members[memberEditingIndex] = { ...res2.data, order: data.order };
+        } else if (error) {
+          return alert('فشل التحديث: ' + error.message);
+        } else {
+          members[memberEditingIndex] = row;
+        }
+        renderMembers();
+        closeDialog?.(memberDialog);
+      }
+    } else {
+      if (memberEditingIndex === null) members.unshift(data);
+      else members[memberEditingIndex] = data;
+      save(KEYS.members, members);
+      renderMembers();
+      closeDialog?.(memberDialog);
+    }
   });
   calNextBtn?.addEventListener('click', (e) => {
     e.preventDefault();
@@ -1024,14 +1490,136 @@
   let works = load(KEYS.works);
   let sponsors = load(KEYS.sponsors);
   let board = load(KEYS.board);
+  let members = load(KEYS.members);
   let faq = load(KEYS.faq);
   let achievements = load(KEYS.achievements);
   let blogPosts = load(KEYS.blog);
   let todos = load(KEYS.todos);
+  let visitStats = { total: 0, new: 0, returning: 0 };
 
   // Auth UI controls
   const loginBtn = $('#loginBtn');
   const sidebarLogoutBtn = document.querySelector('[data-logout]');
+
+  // ===== Notifications (Header) =====
+  const notifBtn = document.getElementById('notifBtn');
+  const notifBadge = document.getElementById('notifBadge');
+  const notifDropdown = document.getElementById('notifDropdown');
+  const notifList = document.getElementById('notifList');
+  const notifEmpty = document.getElementById('notifEmpty');
+  const notifMarkAllBtn = document.getElementById('notifMarkAll');
+  const notifClearAllBtn = document.getElementById('notifClearAll');
+  const NOTIF_KEY = 'adeeb_admin_notifications';
+  let notifications = (() => {
+    try {
+      const raw = localStorage.getItem(NOTIF_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch { return []; }
+  })();
+  function saveNotifications() { try { localStorage.setItem(NOTIF_KEY, JSON.stringify(notifications)); } catch {} }
+  function notifUnreadCount() { try { return notifications.reduce((a, n) => a + (n && n.unread ? 1 : 0), 0); } catch { return 0; } }
+  function renderNotifBadge() {
+    if (!notifBadge) return;
+    const c = notifUnreadCount();
+    if (c > 0) { notifBadge.textContent = String(c); notifBadge.style.display = 'inline-flex'; }
+    else { notifBadge.style.display = 'none'; }
+  }
+  function truncateText(s, n = 120) { const t = String(s || ''); return t.length > n ? t.slice(0, n) + '…' : t; }
+  function getPeerMeta(uid) {
+    try {
+      const c = (chatContacts || []).find(x => x && x.user_id === uid);
+      if (c) return { name: c.name || 'مستخدم', avatar_url: c.avatar_url || null, position: c.position || '' };
+    } catch {}
+    return { name: 'مستخدم', avatar_url: null, position: '' };
+  }
+  function renderNotificationsList() {
+    if (!notifList || !notifEmpty) return;
+    notifList.innerHTML = '';
+    const list = notifications.slice(0, 50);
+    if (!list.length) { notifEmpty.style.display = ''; return; }
+    notifEmpty.style.display = 'none';
+    list.forEach((n, idx) => {
+      const meta = getPeerMeta(n.sender_id);
+      const avatarInner = meta.avatar_url ? `<img src="${meta.avatar_url}" alt="${meta.name}" onerror="this.remove()" />` : '';
+      const item = document.createElement('div');
+      item.className = 'notif-item' + (n.unread ? ' unread' : '');
+      item.innerHTML = `
+        <div class="avatar">${avatarInner}</div>
+        <div class="meta">
+          <div class="title">${n.title || ''}</div>
+          ${n.text ? `<div class="sub">${truncateText(n.text, 140)}</div>` : ''}
+        </div>
+        <div class="notif-acts">
+          <button class="btn btn-outline small" data-act="open" data-idx="${idx}"><i class="fa-solid fa-arrow-left"></i></button>
+          <button class="btn btn-outline small" data-act="dismiss" data-idx="${idx}"><i class="fa-regular fa-trash-can"></i></button>
+        </div>`;
+      notifList.appendChild(item);
+    });
+  }
+  function openNotifDropdown(forceOpen) {
+    if (!notifDropdown || !notifBtn) return;
+    const willOpen = typeof forceOpen === 'boolean' ? forceOpen : !!notifDropdown.hidden;
+    notifDropdown.hidden = !willOpen;
+    notifBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  }
+  function addNotification(n) {
+    notifications.unshift({ ...n, id: n.id || ('loc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)), unread: true });
+    saveNotifications();
+    renderNotifBadge();
+    if (notifDropdown && !notifDropdown.hidden) renderNotificationsList();
+  }
+  function notifyChatMessage(row) {
+    const meta = getPeerMeta(row.sender_id);
+    addNotification({
+      type: 'chat',
+      sender_id: row.sender_id,
+      title: `رسالة جديدة من ${meta.name}`,
+      text: String(row.content || ''),
+      created_at: row.created_at || new Date().toISOString(),
+    });
+  }
+  // Events
+  notifBtn?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openNotifDropdown(); if (!notifDropdown.hidden) renderNotificationsList(); });
+  document.addEventListener('click', (e) => { const wrap = e.target.closest && e.target.closest('.notif-wrap'); if (!wrap) openNotifDropdown(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') openNotifDropdown(false); });
+  notifMarkAllBtn?.addEventListener('click', (e) => { e.preventDefault(); notifications.forEach(n => n.unread = false); saveNotifications(); renderNotifBadge(); renderNotificationsList(); });
+  notifClearAllBtn?.addEventListener('click', (e) => { e.preventDefault(); notifications = []; saveNotifications(); renderNotifBadge(); renderNotificationsList(); });
+  notifList?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const idx = Number(btn.dataset.idx);
+    const act = btn.dataset.act;
+    if (!Number.isInteger(idx) || idx < 0 || idx >= notifications.length) return;
+    const n = notifications[idx];
+    if (act === 'dismiss') {
+      notifications.splice(idx, 1);
+      saveNotifications(); renderNotifBadge(); renderNotificationsList();
+      return;
+    }
+    if (act === 'open') {
+      (async () => {
+        try {
+          n.unread = false; saveNotifications(); renderNotifBadge(); renderNotificationsList();
+          if (n.type === 'chat' && n.sender_id) {
+            if (!hasPermBySectionId('#section-chat')) { alert('لا تملك صلاحية الوصول لتبويب المحادثات'); return; }
+            const link = document.querySelector('.admin-menu__item[href="#section-chat"]');
+            if (link) link.dispatchEvent(new Event('click', { bubbles: true }));
+            else {
+              document.querySelectorAll('.admin-section').forEach(sec => sec.hidden = true);
+              const target = document.getElementById('section-chat'); if (target) target.hidden = false;
+            }
+            openNotifDropdown(false);
+            try { await initChatSection?.(); } catch {}
+            try { await openChatWith?.(n.sender_id); } catch {}
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        } catch {}
+      })();
+    }
+  });
+  // Initialize badge on load
+  try { renderNotifBadge(); } catch {}
 
   async function refreshAuthUI() {
     if (!sb) return; // no supabase
@@ -1040,6 +1628,7 @@
       loginBtn && (loginBtn.style.display = 'none');
       renderUserBadge(session.user);
       try { await applyCurrentUserPermissions(); } catch {}
+      try { await chatEnsureAuth?.(); chatEnsureRealtime?.(); } catch {}
     } else {
       loginBtn && (loginBtn.style.display = 'inline-flex');
       renderUserBadge(null);
@@ -1088,14 +1677,21 @@
     '#section-sponsors': 'sponsors',
     '#section-achievements': 'achievements',
     '#section-board': 'board',
+    '#section-members': 'members',
     '#section-faq': 'faq',
     '#section-blog': 'blog',
     '#section-schedule': 'schedule',
+    '#section-idea-board': 'idea_board',
+    '#section-chat': 'chat',
     '#section-todos': 'todos',
     '#section-admins': 'admins',
   };
   function defaultAdminPerms() {
-    return { works: true, sponsors: true, achievements: true, board: true, faq: true, blog: true, schedule: true, todos: true, admins: true };
+    return { works: true, sponsors: true, achievements: true, board: true, members: true, faq: true, blog: true, schedule: true, idea_board: true, chat: true, todos: true, admins: true };
+  }
+  function normalizePermsShape(perms) {
+    const base = defaultAdminPerms();
+    try { return { ...base, ...(perms || {}) }; } catch { return base; }
   }
   async function getAdminPerms(userId) {
     if (!sb || !userId) return null;
@@ -1130,10 +1726,10 @@
       if (!uid) return;
       const perms = await getAdminPerms(uid);
       if (perms) {
-        currentUserAdminPerms = perms;
+        currentUserAdminPerms = normalizePermsShape(perms);
       } else {
         const lvl = await getCallerLevel();
-        currentUserAdminPerms = fallbackPermsForLevel(lvl);
+        currentUserAdminPerms = normalizePermsShape(fallbackPermsForLevel(lvl));
       }
       // Hide disallowed sidebar items
       document.querySelectorAll('.admin-menu__item').forEach((link) => {
@@ -1176,7 +1772,7 @@
   }
   function fallbackPermsForLevel(lv) {
     // الرئيس/النائب: كل التبويبات مسموحة. القادة: كل شيء ما عدا إدارة الإداريين.
-    const base = { works: true, sponsors: true, achievements: true, board: true, faq: true, blog: true, schedule: true, todos: true, admins: true };
+    const base = { works: true, sponsors: true, achievements: true, board: true, members: true, faq: true, blog: true, schedule: true, idea_board: true, chat: true, todos: true, admins: true };
     if (lv === ADMIN_LEVELS.manager) return { ...base, admins: false };
     return base;
   }
@@ -1274,6 +1870,9 @@
           <div class="muted" style="font-size:12px">${email}</div>
         </div>
       </div>
+      <div style="display:flex; gap:8px; margin-top:8px">
+        <button type="button" class="btn" id="startChatWithAdminBtn"><i class="fa-solid fa-comments"></i> بدء محادثة</button>
+      </div>
       <div class="panel__body" style="padding:0; margin-top:12px">
         <div style="display:grid; gap:8px; grid-template-columns: 140px 1fr; align-items:center;">
           <div class="muted">المنصب</div><div>${position}</div>
@@ -1289,8 +1888,11 @@
           <label><input type="checkbox" id="perm-sponsors" /> إدارة الرعاة</label>
           <label><input type="checkbox" id="perm-achievements" /> إدارة الإنجازات</label>
           <label><input type="checkbox" id="perm-board" /> المجلس الإداري</label>
+          <label><input type="checkbox" id="perm-members" /> أعضاء النادي</label>
           <label><input type="checkbox" id="perm-faq" /> الأسئلة الشائعة</label>
           <label><input type="checkbox" id="perm-blog" /> مرافئ (المدونة)</label>
+          <label><input type="checkbox" id="perm-idea_board" /> سبورة أدِيب</label>
+          <label><input type="checkbox" id="perm-chat" /> المحادثات</label>
           <label><input type="checkbox" id="perm-schedule" /> جدول أدِيب</label>
           <label><input type="checkbox" id="perm-todos" /> المهام</label>
           <label><input type="checkbox" id="perm-admins" /> إدارة الأعضاء الإداريين</label>
@@ -1324,13 +1926,37 @@
     if (adminDetailsBody) adminDetailsBody.innerHTML = html;
     // Initialize permissions UI
     try {
+      // Start chat button
+      document.getElementById('startChatWithAdminBtn')?.addEventListener('click', async () => {
+        try {
+          if (!hasPermBySectionId('#section-chat')) { alert('لا تملك صلاحية الوصول لتبويب المحادثات'); return; }
+          // Switch to chat tab
+          const link = document.querySelector('.admin-menu__item[href="#section-chat"]');
+          if (link) {
+            link.dispatchEvent(new Event('click', { bubbles: true }));
+          } else {
+            // Fallback: directly show the section
+            document.querySelectorAll('.admin-section').forEach(sec => sec.hidden = true);
+            const target = document.getElementById('section-chat'); if (target) target.hidden = false;
+          }
+          closeDialog?.(adminDetailsDialog);
+          // Ensure chat is initialized then open conversation
+          try { await initChatSection?.(); } catch {}
+          try { await openChatWith?.(userId); } catch {}
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch {}
+      });
+
       const setPerm = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
       setPerm('perm-works', perms.works);
       setPerm('perm-sponsors', perms.sponsors);
       setPerm('perm-achievements', perms.achievements);
       setPerm('perm-board', perms.board);
+      setPerm('perm-members', perms.members);
       setPerm('perm-faq', perms.faq);
       setPerm('perm-blog', perms.blog);
+      setPerm('perm-idea_board', perms.idea_board);
+      setPerm('perm-chat', perms.chat);
       setPerm('perm-schedule', perms.schedule);
       setPerm('perm-todos', perms.todos);
       setPerm('perm-admins', perms.admins);
@@ -1350,8 +1976,11 @@
           sponsors: !!document.getElementById('perm-sponsors')?.checked,
           achievements: !!document.getElementById('perm-achievements')?.checked,
           board: !!document.getElementById('perm-board')?.checked,
+          members: !!document.getElementById('perm-members')?.checked,
           faq: !!document.getElementById('perm-faq')?.checked,
           blog: !!document.getElementById('perm-blog')?.checked,
+          idea_board: !!document.getElementById('perm-idea_board')?.checked,
+          chat: !!document.getElementById('perm-chat')?.checked,
           schedule: !!document.getElementById('perm-schedule')?.checked,
           todos: !!document.getElementById('perm-todos')?.checked,
           admins: !!document.getElementById('perm-admins')?.checked,
@@ -1590,7 +2219,7 @@
 
   // Menu navigation
   $$('.admin-menu__item').forEach((link) => {
-    link.addEventListener('click', (e) => {
+    link.addEventListener('click', async (e) => {
       e.preventDefault();
       const id = link.getAttribute('href');
       if (!id) return;
@@ -1621,9 +2250,30 @@
         try { loadScheduleForCurrentGrid?.(); } catch {}
       }
 
+      // If stats tab is opened, render statistics
+      if (id === '#section-stats') {
+        try { await fetchVisitStats?.(); } catch {}
+        try { renderStats?.(); } catch {}
+      }
+
+      // If chat tab is opened, init chat
+      if (id === '#section-chat') {
+        try { initChatSection?.(); } catch {}
+      }
+
       // If to-dos tab is opened, render tasks
       if (id === '#section-todos') {
         try { renderTodos?.(); } catch {}
+      }
+
+      // If idea board tab is opened, load ideas
+      if (id === '#section-idea-board') {
+        try { loadIdeaBoardAdmin?.(); } catch {}
+      }
+
+      // If members tab is opened, render members
+      if (id === '#section-members') {
+        try { renderMembers?.(); } catch {}
       }
 
       // Close sidebar after navigating on mobile
@@ -1647,9 +2297,21 @@
       try { renderSchedule?.(); } catch {}
       try { loadScheduleForCurrentGrid?.(); } catch {}
     }
+    // If navigating via dashboard card to chat, init it
+    if (id === '#section-chat') {
+      try { initChatSection?.(); } catch {}
+    }
     // If navigating via dashboard card to to-dos, render them
     if (id === '#section-todos') {
       try { renderTodos?.(); } catch {}
+    }
+    // If navigating via dashboard card to idea board, load it
+    if (id === '#section-idea-board') {
+      try { loadIdeaBoardAdmin?.(); } catch {}
+    }
+    // If navigating via dashboard card to members, render them
+    if (id === '#section-members') {
+      try { renderMembers?.(); } catch {}
     }
     // keep sidebar active on the single Home tab
     if (isMobile()) closeSidebar();
@@ -1657,12 +2319,448 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
+  // ===== Admin Chat Logic =====
+  let chatInitialized = false;
+  let chatMyId = null;
+  let chatActivePeerId = null;
+  let chatContacts = [];
+  let chatRtChannel = null;
+  let chatTypingChannel = null;
+  let chatTypingTimeout = null;
+  let chatTypingDebounce = null;
+  let chatFilter = 'all';
+  let chatUnreadMap = new Map(); // user_id -> count
+  const chatPageSize = 50;
+  let chatHistoryOldest = null; // ISO string
+  let chatHistoryLoadedAll = false;
+
+  function chatTimeLabel(ts) {
+    try { return new Date(ts).toLocaleString('ar', { hour: '2-digit', minute: '2-digit' }); } catch { return ts; }
+  }
+  function chatRenderContacts(filter = '') {
+    if (!chatContactsEl) return;
+    const q = (filter || '').trim();
+    const qn = normalizeAr?.(q) || q;
+    chatContactsEl.innerHTML = '';
+    let list = chatContacts;
+    // apply search
+    if (q) {
+      list = list.filter(c => {
+        const n = normalizeAr?.(c.name || '') || (c.name || '');
+        const p = normalizeAr?.(c.position || '') || (c.position || '');
+        return n.includes(qn) || p.includes(qn);
+      });
+    }
+    // apply filter chips
+    if (chatFilter === 'high') {
+      list = list.filter(c => c.level === ADMIN_LEVELS.president || c.level === ADMIN_LEVELS.vice);
+    } else if (chatFilter === 'admins') {
+      list = list.filter(c => c.level === ADMIN_LEVELS.manager);
+    }
+    // empty state toggle
+    if (chatNoContactsEl) chatNoContactsEl.style.display = list.length ? 'none' : '';
+    list.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'chat-contact' + (c.user_id === chatActivePeerId ? ' active' : '');
+      div.dataset.uid = c.user_id;
+      const avatar = c.avatar_url
+        ? `<img src="${c.avatar_url}" alt="${c.name}" onerror="this.remove()" />`
+        : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+             <circle cx="12" cy="12" r="10" fill="#cbd5e1"/>
+             <circle cx="12" cy="10" r="3.2" fill="#64748b"/>
+             <path d="M5.5 18.2c1.9-3 5-4.2 6.5-4.2s4.6 1.2 6.5 4.2c-2.1 1.7-4.6 2.8-6.5 2.8s-4.4-1.1-6.5-2.8z" fill="#64748b"/>
+           </svg>`;
+      const unread = Number(chatUnreadMap.get(c.user_id) || 0);
+      const badge = unread > 0 ? `<div class="badge" aria-label="غير مقروء">${unread}</div>` : '';
+      div.innerHTML = `
+        <div class="avatar">${avatar}</div>
+        <div class="meta">
+          <div class="name">${c.name || 'مستخدم'}</div>
+          ${c.position ? `<div class="sub">${c.position}</div>` : ''}
+        </div>${badge}`;
+      chatContactsEl.appendChild(div);
+    });
+  }
+  function chatRenderHeader(peer) {
+    if (chatPartnerName) chatPartnerName.textContent = peer?.name || '—';
+    if (chatPeerMeta) chatPeerMeta.textContent = peer?.position || '';
+    if (chatPeerAvatar) {
+      if (peer?.avatar_url) {
+        chatPeerAvatar.innerHTML = `<img src="${peer.avatar_url}" alt="${peer.name || ''}" onerror="this.remove()" />`;
+      } else {
+        chatPeerAvatar.innerHTML = '';
+      }
+    }
+  }
+  function chatAppendMessage(row, isMine) {
+    if (!chatMessagesEl) return;
+    const div = document.createElement('div');
+    div.className = 'msg' + (isMine ? ' me' : '');
+    const contentRaw = String(row.content || '');
+    const html = chatRenderMessageContent(contentRaw);
+    div.innerHTML = `${html}<span class="time">${chatTimeLabel(row.created_at)}</span>`;
+    chatMessagesEl.appendChild(div);
+  }
+  function chatClearMessages() { if (chatMessagesEl) chatMessagesEl.innerHTML = ''; }
+  function chatScrollToBottom() { try { chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight; } catch {} }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function linkifyText(s) {
+    const esc = escapeHtml(s);
+    return esc.replace(/(https?:\/\/[^\s<>]+)/g, (m) => `<a href="${m}" target="_blank" rel="noopener">${m}</a>`);
+  }
+  function chatRenderMessageContent(content) {
+    if (content.startsWith('image:')) {
+      const url = content.slice(6).trim();
+      if (/^https?:\/\//.test(url)) {
+        return `<img src="${url}" alt="image" loading="lazy" />`;
+      }
+    }
+    return linkifyText(content);
+  }
+
+  function isNearBottom(el, thresh = 24) {
+    if (!el) return true;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < thresh;
+  }
+  function toggleScrollBottomBtn() {
+    if (!chatMessagesEl || !chatScrollBottomBtn) return;
+    const show = !isNearBottom(chatMessagesEl, 24);
+    chatScrollBottomBtn.style.display = show ? '' : 'none';
+  }
+
+  async function chatEnsureAuth() {
+    if (!sb) throw new Error('no-supabase');
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) throw new Error('not-authenticated');
+    chatMyId = user.id;
+    return user;
+  }
+  async function chatLoadContacts() {
+    if (!sb) return;
+    try {
+      // Use Edge Function to bypass RLS on public.admins and get current admins
+      let rows = [];
+      try { rows = await callFunction('list-admins', { method: 'GET' }); } catch (e) { throw e; }
+      const ids = Array.from(new Set((rows || []).map(r => r && r.user_id).filter(Boolean)));
+      const filtered = ids.filter(id => id !== chatMyId);
+      if (!filtered.length) { chatContacts = []; chatRenderContacts(); return; }
+      let profiles = null; let perr = null;
+      try {
+        const q = await sb
+          .from('auth_users_public')
+          .select('user_id, display_name, avatar_url, position, admin_level')
+          .in('user_id', filtered);
+        profiles = q.data; perr = q.error || null;
+      } catch (e) { perr = e; }
+      if (perr) {
+        // Fallback: select without admin_level if column doesn't exist in the view
+        try {
+          const q2 = await sb
+            .from('auth_users_public')
+            .select('user_id, display_name, avatar_url, position')
+            .in('user_id', filtered);
+          profiles = q2.data; perr = q2.error || null;
+        } catch (e2) { perr = e2; }
+        if (perr) throw perr;
+      }
+      const map = new Map((profiles || []).map(pr => [pr.user_id, pr]));
+      chatContacts = filtered.map(uid => {
+        const pr = map.get(uid) || {};
+        const rawLv = Number(pr.admin_level);
+        const level = Number.isFinite(rawLv) ? rawLv : levelFromPositionAr(pr.position || '');
+        return {
+          user_id: uid,
+          name: pr.display_name || 'مستخدم',
+          avatar_url: pr.avatar_url || null,
+          position: pr.position || '',
+          level
+        };
+      });
+      chatRenderContacts(chatSearchInput?.value || '');
+    } catch (err) {
+      console.error('chat contacts load failed', err);
+      chatContacts = [];
+      chatRenderContacts();
+    }
+  }
+  async function chatLoadLatest(peerId) {
+    if (!sb || !peerId || !chatMyId) return [];
+    const or = `and(sender_id.eq.${chatMyId},recipient_id.eq.${peerId}),and(sender_id.eq.${peerId},recipient_id.eq.${chatMyId})`;
+    const { data, error } = await sb
+      .from('admin_messages')
+      .select('id,sender_id,recipient_id,content,created_at')
+      .or(or)
+      .order('created_at', { ascending: false })
+      .limit(chatPageSize);
+    if (error) throw error;
+    const rows = Array.isArray(data) ? data : [];
+    // determine oldest timestamp loaded
+    chatHistoryLoadedAll = rows.length < chatPageSize;
+    const sortedAsc = rows.slice().reverse();
+    chatHistoryOldest = sortedAsc.length ? sortedAsc[0].created_at : null;
+    return sortedAsc;
+  }
+  async function chatLoadOlder() {
+    if (!sb || !chatActivePeerId || !chatMyId || !chatHistoryOldest || chatHistoryLoadedAll) return [];
+    const or = `and(sender_id.eq.${chatMyId},recipient_id.eq.${chatActivePeerId}),and(sender_id.eq.${chatActivePeerId},recipient_id.eq.${chatMyId})`;
+    const { data, error } = await sb
+      .from('admin_messages')
+      .select('id,sender_id,recipient_id,content,created_at')
+      .or(or)
+      .lt('created_at', chatHistoryOldest)
+      .order('created_at', { ascending: false })
+      .limit(chatPageSize);
+    if (error) throw error;
+    const rows = Array.isArray(data) ? data : [];
+    if (!rows.length) { chatHistoryLoadedAll = true; return []; }
+    const sortedAsc = rows.slice().reverse();
+    chatHistoryOldest = sortedAsc[0]?.created_at || chatHistoryOldest;
+    if (rows.length < chatPageSize) chatHistoryLoadedAll = true;
+    return sortedAsc;
+  }
+  async function openChatWith(peerId) {
+    chatActivePeerId = peerId;
+    // active class
+    try {
+      chatContactsEl?.querySelectorAll('.chat-contact').forEach(el => {
+        el.classList.toggle('active', el.dataset.uid === String(peerId));
+      });
+    } catch {}
+    const peer = chatContacts.find(c => c.user_id === peerId) || null;
+    chatRenderHeader(peer);
+    chatClearMessages();
+    if (chatEmptyEl) chatEmptyEl.style.display = 'none';
+    try {
+      chatHistoryLoadedAll = false; chatHistoryOldest = null;
+      const rows = await chatLoadLatest(peerId);
+      rows.forEach(r => chatAppendMessage(r, r.sender_id === chatMyId));
+      chatScrollToBottom();
+      // clear unread for this peer
+      chatUnreadMap.delete(peerId);
+      chatRenderContacts(chatSearchInput?.value || '');
+      // toggle load more
+      if (chatLoadMoreBtn) chatLoadMoreBtn.style.display = chatHistoryLoadedAll ? 'none' : '';
+    } catch (err) {
+      alert('تعذر تحميل المحادثة: ' + (err?.message || 'غير معروف'));
+    }
+  }
+  function chatEnsureRealtime() {
+    if (!sb || !chatMyId) return;
+    if (chatRtChannel) return;
+    chatRtChannel = sb.channel(`admin-messages-${chatMyId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'admin_messages', filter: `recipient_id=eq.${chatMyId}` }, (payload) => {
+        const row = payload?.new || {};
+        // Append only if this conversation is open
+        if (row && row.sender_id && row.sender_id === chatActivePeerId) {
+          chatAppendMessage(row, false);
+          chatScrollToBottom();
+        } else {
+          // increase unread counter for sender
+          const cur = Number(chatUnreadMap.get(row.sender_id) || 0);
+          chatUnreadMap.set(row.sender_id, cur + 1);
+          chatRenderContacts(chatSearchInput?.value || '');
+          try { notifyChatMessage?.(row); } catch {}
+        }
+      })
+      .subscribe();
+
+    // Typing indicator broadcast (Realtime channel)
+    if (!chatTypingChannel) {
+      chatTypingChannel = sb.channel('admin-chat-typing')
+        .on('broadcast', { event: 'typing' }, (payload) => {
+          const p = payload?.payload || {};
+          if (p && p.recipient_id === chatMyId) {
+            // show typing only when open on that sender
+            if (p.sender_id && p.sender_id === chatActivePeerId) {
+              if (chatTypingEl) {
+                chatTypingEl.style.display = '';
+                clearTimeout(chatTypingTimeout);
+                chatTypingTimeout = setTimeout(() => { chatTypingEl.style.display = 'none'; }, 2500);
+              }
+            } else {
+              // could mark a subtle hint on contact (skipped)
+            }
+          }
+        })
+        .subscribe();
+    }
+  }
+  async function initChatSection() {
+    if (!sb) return;
+    try {
+      await chatEnsureAuth();
+      await chatLoadContacts();
+      if (!chatInitialized) {
+        // Bind contacts click
+        chatContactsEl?.addEventListener('click', (e) => {
+          const el = e.target.closest('.chat-contact');
+          if (!el) return;
+          const uid = el.dataset.uid;
+          if (uid) openChatWith(uid);
+        });
+        // Search filter
+        chatSearchInput?.addEventListener('input', () => {
+          chatRenderContacts(chatSearchInput.value);
+        });
+        // Filter chips
+        chatFiltersEl?.addEventListener('click', (e) => {
+          const btn = e.target.closest('.chip');
+          if (!btn) return;
+          chatFiltersEl.querySelectorAll('.chip').forEach(ch => ch.classList.remove('active'));
+          btn.classList.add('active');
+          chatFilter = btn.getAttribute('data-filter') || 'all';
+          chatRenderContacts(chatSearchInput?.value || '');
+        });
+        // Load older history
+        chatLoadMoreBtn?.addEventListener('click', async () => {
+          try {
+            if (!chatActivePeerId) return;
+            const atTop = chatMessagesEl ? chatMessagesEl.scrollTop : 0;
+            const prevHeight = chatMessagesEl ? chatMessagesEl.scrollHeight : 0;
+            const rows = await chatLoadOlder();
+            if (rows.length) {
+              const frag = document.createDocumentFragment();
+              rows.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'msg' + (r.sender_id === chatMyId ? ' me' : '');
+                div.innerHTML = `${chatRenderMessageContent(String(r.content || ''))}<span class="time">${chatTimeLabel(r.created_at)}</span>`;
+                frag.appendChild(div);
+              });
+              if (chatMessagesEl) {
+                chatMessagesEl.insertBefore(frag, chatMessagesEl.firstChild);
+                // keep scroll position stable
+                const newHeight = chatMessagesEl.scrollHeight;
+                chatMessagesEl.scrollTop = (newHeight - prevHeight) + atTop;
+              }
+            }
+            if (chatLoadMoreBtn) chatLoadMoreBtn.style.display = chatHistoryLoadedAll ? 'none' : '';
+          } catch (err) {
+            alert('تعذر تحميل رسائل أقدم: ' + (err?.message || 'غير معروف'));
+          }
+        });
+        // Scroll behavior
+        chatMessagesEl?.addEventListener('scroll', toggleScrollBottomBtn);
+        chatScrollBottomBtn?.addEventListener('click', () => chatScrollToBottom());
+        // Typing: broadcast while typing (debounced)
+        chatInputEl?.addEventListener('input', () => {
+          if (!chatActivePeerId || !chatTypingChannel) return;
+          clearTimeout(chatTypingDebounce);
+          chatTypingDebounce = setTimeout(() => {
+            try {
+              chatTypingChannel.send({ type: 'broadcast', event: 'typing', payload: { sender_id: chatMyId, recipient_id: chatActivePeerId } });
+            } catch {}
+          }, 200);
+        });
+        // Send
+        chatComposerForm?.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const txt = (chatInputEl?.value || '').trim();
+          if (!txt) return;
+          if (!chatActivePeerId) { alert('اختر جهة اتصال لبدء المحادثة'); return; }
+          try {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { alert('يلزم تسجيل الدخول'); return; }
+            const payload = { sender_id: chatMyId, recipient_id: chatActivePeerId, content: txt };
+            const { data: row, error } = await sb.from('admin_messages').insert(payload).select('*').single();
+            if (error) throw error;
+            chatAppendMessage(row || payload, true);
+            chatScrollToBottom();
+            if (chatInputEl) chatInputEl.value = '';
+          } catch (err) {
+            alert('تعذر إرسال الرسالة: ' + (err?.message || 'غير معروف'));
+          }
+        });
+        chatInitialized = true;
+      }
+      chatEnsureRealtime();
+      // Open first contact by default
+      if (chatContacts.length && !chatActivePeerId) openChatWith(chatContacts[0].user_id);
+      if (!chatContacts.length && chatEmptyEl) chatEmptyEl.style.display = '';
+    } catch (err) {
+      console.warn('chat init failed', err);
+    }
+  }
+
+
   // Renderers
 
   function el(html) {
     const template = document.createElement('template');
     template.innerHTML = html.trim();
     return template.content.firstElementChild;
+  }
+
+  async function fetchVisitStats() {
+    if (!sb) { visitStats = { total: 0, new: 0, returning: 0 }; return; }
+    try {
+      const [tot, ret, neu] = await Promise.all([
+        sb.from('site_visits').select('*', { count: 'exact', head: true }),
+        sb.from('site_visits').select('*', { count: 'exact', head: true }).eq('is_returning', true),
+        sb.from('site_visits').select('*', { count: 'exact', head: true }).eq('is_returning', false),
+      ]);
+      visitStats = {
+        total: Number(tot?.count || 0),
+        returning: Number(ret?.count || 0),
+        new: Number(neu?.count || 0),
+      };
+    } catch (e) {
+      console.warn('visit stats fetch failed', e);
+      visitStats = { total: 0, new: 0, returning: 0 };
+    }
+  }
+
+  function renderStats() {
+    if (!statsGrid) return;
+    const num = (v) => {
+      const n = Number(v || 0);
+      try { return n.toLocaleString('ar'); } catch { return String(n); }
+    };
+    const vs = visitStats || { total: 0, new: 0, returning: 0 };
+    // Build committee cards from members' committee field
+    const committeeItems = (() => {
+      try {
+        const map = new Map();
+        (members || []).forEach((m) => {
+          const raw = (m?.committee || '').trim();
+          if (!raw) return;
+          const key = raw.replace(/\s+/g, ' ');
+          map.set(key, (map.get(key) || 0) + 1);
+        });
+        // sort by Arabic label
+        const labels = Array.from(map.entries()).sort((a, b) => {
+          try { return a[0].localeCompare(b[0], 'ar'); } catch { return String(a[0]).localeCompare(String(b[0])); }
+        });
+        return labels.map(([label, count]) => ({
+          title: `أعضاء ${label}`,
+          value: num(count),
+          icon: 'fa-solid fa-users',
+        }));
+      } catch {
+        return [];
+      }
+    })();
+    const items = [
+      { title: 'أعضاء النادي', value: num((members || []).length), icon: 'fa-solid fa-users-rectangle' },
+      { title: 'زيارات الموقع', value: num(vs.total), icon: 'fa-solid fa-eye' },
+      { title: 'زائرون جدد', value: num(vs.new), icon: 'fa-solid fa-user-plus' },
+      { title: 'زائرون عائدون', value: num(vs.returning), icon: 'fa-solid fa-user-clock' },
+      ...committeeItems,
+    ];
+    statsGrid.innerHTML = '';
+    items.forEach((it) => {
+      const node = el(`
+        <div class="card">
+          <div class="card__body">
+            <div class="card__title"><i class="${it.icon}"></i> ${it.title}</div>
+            <div class="stat-number">${it.value}</div>
+          </div>
+        </div>
+      `);
+      statsGrid.appendChild(node);
+    });
   }
 
   // Reordering helpers
@@ -2126,6 +3224,66 @@
       boardList.appendChild(node);
     });
     setupListDnD(boardList, board, KEYS.board, 'board_members', renderBoard);
+  }
+
+  function renderMembers() {
+    if (!membersList) return;
+    membersList.innerHTML = '';
+    // Group by committee
+    const byCommittee = new Map();
+    const sortedGlobal = [...members].sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000));
+    for (const m of sortedGlobal) {
+      const key = (m.committee && String(m.committee).trim()) ? String(m.committee).trim() : 'بدون لجنة';
+      if (!byCommittee.has(key)) byCommittee.set(key, []);
+      byCommittee.get(key).push(m);
+    }
+    // Render each committee block with a table: Member + View
+    for (const [committeeName, items] of byCommittee) {
+      const block = el(`
+        <div class="panel" style="grid-column:1 / -1; padding:16px;">
+          <h3 style="margin:0 0 12px; font-family: fb; color: var(--main-blue); display:flex; align-items:center; gap:8px">
+            <i class="fa-solid fa-people-group"></i> ${committeeName}
+          </h3>
+          <div style="overflow:auto">
+            <table class="table" style="width:100%; border-collapse:collapse">
+              <thead>
+                <tr>
+                  <th style="text-align:right; padding:12px">العضو</th>
+                  <th style="text-align:right; padding:12px; width:1%">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>`);
+      const tbody = block.querySelector('tbody');
+      items.forEach((item, sortedIndex) => {
+        const idx = members.indexOf(item);
+        const name = item.full_name || item.name || '';
+        const avatar = (item.avatar || item.avatar_url) || '';
+        const row = el(`
+          <tr data-idx="${idx}">
+            <td style="padding:12px; min-width:260px">
+              <div style="display:flex; align-items:center; gap:10px">
+                <img src="${avatar || ''}" alt="${name}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; background:#f1f5f9" />
+                <div>
+                  <div class="card__title" style="margin:0">${name}</div>
+                </div>
+              </div>
+            </td>
+            <td style="padding:12px; white-space:nowrap">
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="btn btn-primary" data-act="view" data-idx="${idx}"><i class="fa-regular fa-eye"></i> عرض</button>
+                <button class="btn btn-outline" data-act="edit" data-idx="${idx}"><i class="fa-solid fa-pen"></i> تعديل</button>
+                <button class="btn btn-outline" data-act="del" data-idx="${idx}"><i class="fa-solid fa-trash"></i> حذف</button>
+              </div>
+            </td>
+          </tr>`);
+        tbody.appendChild(row);
+      });
+      membersList.appendChild(block);
+    }
+    // no DnD in simplified grouped view
   }
 
   function renderFaq() {
@@ -3204,6 +4362,7 @@
       sponsors,
       achievements,
       board,
+      members,
       faq,
       blogPosts,
       schedule,
@@ -3236,6 +4395,9 @@
       }
       if (Array.isArray(data.board)) {
         board = data.board; save(KEYS.board, board); renderBoard();
+      }
+      if (Array.isArray(data.members)) {
+        members = data.members; save(KEYS.members, members); renderMembers();
       }
       if (Array.isArray(data.faq)) {
         faq = data.faq; save(KEYS.faq, faq); renderFaq();
@@ -3375,6 +4537,16 @@
               adminsProfilesMap = new Map(profiles.map(pr => [pr.user_id, pr]));
             }
           }
+          // Fallback merge: take position/admin_level from list-admins response if missing in public view
+          for (const r of adminsList) {
+            const uid = r && r.user_id; if (!uid) continue;
+            const pr = adminsProfilesMap.get(uid) || { user_id: uid };
+            if (pr.position == null && typeof r.position === 'string') pr.position = r.position;
+            const prLv = Number(pr.admin_level);
+            const rLv = Number(r.admin_level);
+            if (!Number.isFinite(prLv) && Number.isFinite(rLv)) pr.admin_level = rLv;
+            adminsProfilesMap.set(uid, pr);
+          }
         }
       } catch {}
       adminsStatus.className = 'muted';
@@ -3441,19 +4613,22 @@
         { data: w, error: ew },
         { data: s, error: es },
         { data: b, error: eb },
+        { data: m, error: em },
         { data: f, error: ef },
         { data: posts, error: eposts }
       ] = await Promise.all([
         sb.from('works').select('*').order('order', { ascending: true, nullsFirst: true }).order('created_at', { ascending: false }),
         sb.from('sponsors').select('*').order('order', { ascending: true, nullsFirst: true }).order('created_at', { ascending: false }),
         sb.from('board_members').select('*').order('order', { ascending: true, nullsFirst: true }).order('created_at', { ascending: false }),
+        sb.from('members').select('*').order('order', { ascending: true, nullsFirst: true }).order('created_at', { ascending: false }),
         sb.from('faq').select('*').order('order', { ascending: true }),
         sb.from('blog_posts').select('*').order('published_at', { ascending: false }),
       ]);
-      if (ew) throw ew; if (es) throw es; if (eb) throw eb; if (ef) throw ef; if (eposts) throw eposts;
+      if (ew) throw ew; if (es) throw es; if (eb) throw eb; if (em) throw em; if (ef) throw ef; if (eposts) throw eposts;
       works = w || [];
       sponsors = s || [];
       board = b || [];
+      members = m || [];
       faq = f || [];
       blogPosts = posts || [];
 
@@ -3493,10 +4668,13 @@
     renderWorks();
     renderSponsors();
     renderBoard();
+    renderMembers();
     renderFaq();
     renderAchievements();
     renderBlog();
     renderTodos();
+    try { await fetchVisitStats(); } catch {}
+    renderStats();
     // If page opened directly on profile tab, load profile info
     try {
       if (location.hash === '#section-profile') {

@@ -50,10 +50,72 @@ document.addEventListener("click", function (e) {
 });
 
 //
+// Analytics: site visits (new vs returning)
 //
-//
+function adeebUuid() {
+  try { return crypto.randomUUID(); } catch { return 'v-' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
+}
+function getVisitorId() {
+  try {
+    const key = 'adeeb_visitor_id';
+    let id = localStorage.getItem(key);
+    if (!id) {
+      id = adeebUuid();
+      localStorage.setItem(key, id);
+      localStorage.setItem('adeeb_first_seen', new Date().toISOString());
+    }
+    return id;
+  } catch { return adeebUuid(); }
+}
+function getSessionId() {
+  try {
+    const key = 'adeeb_session_id';
+    let sid = sessionStorage.getItem(key);
+    if (!sid) { sid = adeebUuid(); sessionStorage.setItem(key, sid); }
+    return sid;
+  } catch { return adeebUuid(); }
+}
+function isReturningVisitor() {
+  try {
+    const hasId = !!localStorage.getItem('adeeb_visitor_id');
+    return hasId; // if we already have an id in localStorage then it's a returning visit
+  } catch { return false; }
+}
+async function trackVisit() {
+  try {
+    const sb = window.sbClient;
+    if (!sb) return; // Supabase not initialized
+    const wasKnown = !!(function(){ try { return localStorage.getItem('adeeb_visitor_id'); } catch { return null; } })();
+    const vid = getVisitorId();
+    const sid = getSessionId();
+    const url = new URL(location.href);
+    const utm = Object.fromEntries(['utm_source','utm_medium','utm_campaign'].map(k => [k, url.searchParams.get(k) || null]));
+    const payload = {
+      visitor_id: vid,
+      session_id: sid,
+      is_returning: wasKnown === true || wasKnown === 'true' || (typeof wasKnown === 'string' && wasKnown.length > 0),
+      path: location.pathname + location.search + location.hash,
+      referrer: document.referrer || null,
+      user_agent: (navigator.userAgent || '').slice(0, 500),
+      language: navigator.language || null,
+      screen_w: (window.screen && window.screen.width) || null,
+      screen_h: (window.screen && window.screen.height) || null,
+      tz: (Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || null,
+      utm_source: utm.utm_source,
+      utm_medium: utm.utm_medium,
+      utm_campaign: utm.utm_campaign
+    };
+    // Fire-and-forget insert; ignore errors (table might not exist yet or RLS not set)
+    sb.from('site_visits').insert(payload).then(({ error }) => {
+      if (error) console.warn('site_visits insert failed:', error.message);
+      try { localStorage.setItem('adeeb_last_visit', new Date().toISOString()); } catch {}
+    }).catch(() => {});
+  } catch {}
+}
 
 document.addEventListener("DOMContentLoaded", function () {
+  // Record a site visit (new vs returning)
+  try { trackVisit(); } catch {}
   // Initialize FAQ accordion (will be re-initialized after dynamic loading)
   initFaqAccordion();
 

@@ -15,6 +15,115 @@ Keep this file for future updates.
 
 ---
 
+## 9) Idea Board (سبورة أدِيب)
+
+Public page `board/board.html` lets anyone submit ideas and view visible ones. Admins can moderate in `admin/admin.html` → tab "سبورة أدِيب" (pin/unpin, show/hide, delete).
+
+SQL schema and RLS:
+
+```sql
+-- Table
+create table if not exists public.idea_board (
+  id uuid primary key default gen_random_uuid(),
+  title text,         -- optional title
+  content text not null,
+  author_name text,
+  image_url text,     -- public URL for display
+  image_key text,     -- storage path for deletion (idea-board bucket)
+  visible boolean not null default true,
+  pinned boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table public.idea_board enable row level security;
+
+-- Public can read only visible rows; admins can read all
+drop policy if exists "Read visible ideas" on public.idea_board;
+create policy "Read visible ideas"
+on public.idea_board for select
+  to anon, authenticated
+  using (
+    visible = true
+    or exists (
+      select 1 from public.admins a
+      where a.user_id = auth.uid() and a.is_admin = true
+    )
+  );
+
+-- Allow anyone to insert (consider adding rate limits via Edge Function or DB triggers)
+drop policy if exists "Anyone can insert idea" on public.idea_board;
+create policy "Anyone can insert idea"
+on public.idea_board for insert
+  to anon, authenticated
+  with check (true);
+
+-- Only admins can update/delete (moderation)
+drop policy if exists "Admins update" on public.idea_board;
+create policy "Admins update"
+on public.idea_board for update
+  to authenticated
+  using (exists (select 1 from public.admins a where a.user_id = auth.uid() and a.is_admin = true))
+  with check (exists (select 1 from public.admins a where a.user_id = auth.uid() and a.is_admin = true));
+
+drop policy if exists "Admins delete" on public.idea_board;
+create policy "Admins delete"
+on public.idea_board for delete
+  to authenticated
+  using (exists (select 1 from public.admins a where a.user_id = auth.uid() and a.is_admin = true));
+
+-- Realtime (optional but recommended for live updates)
+alter publication supabase_realtime add table public.idea_board;
+```
+
+Notes:
+- Consider adding server-side spam/rate-limiting (e.g., simple IP count per hour in an Edge Function) if the board becomes public at scale.
+- The frontend uses `@supabase/supabase-js@2` and subscribes to `postgres_changes` on `public.idea_board`.
+
+If your table already exists, run this migration:
+
+```sql
+alter table public.idea_board add column if not exists title text;
+alter table public.idea_board add column if not exists image_url text;
+alter table public.idea_board add column if not exists image_key text;
+```
+
+### Storage: idea-board bucket
+
+Create a Storage bucket named `idea-board` (Dashboard → Storage → New bucket). You can keep it Private and rely on policies below, or mark it Public. Policies assume bucket id is `idea-board`.
+
+```sql
+-- Public read (allow everyone to view images in idea-board bucket)
+drop policy if exists "Public read idea-board" on storage.objects;
+create policy "Public read idea-board"
+on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'idea-board');
+
+-- Public insert (allow anyone to upload to idea-board; consider limits)
+drop policy if exists "Public insert idea-board" on storage.objects;
+create policy "Public insert idea-board"
+on storage.objects for insert
+  to anon, authenticated
+  with check (bucket_id = 'idea-board');
+
+-- Admins update/delete (moderation)
+drop policy if exists "Admins update idea-board" on storage.objects;
+create policy "Admins update idea-board"
+on storage.objects for update
+  to authenticated
+  using (bucket_id = 'idea-board' and exists (select 1 from public.admins a where a.user_id = auth.uid() and a.is_admin = true))
+  with check (bucket_id = 'idea-board' and exists (select 1 from public.admins a where a.user_id = auth.uid() and a.is_admin = true));
+
+drop policy if exists "Admins delete idea-board" on storage.objects;
+create policy "Admins delete idea-board"
+on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'idea-board' and exists (select 1 from public.admins a where a.user_id = auth.uid() and a.is_admin = true));
+```
+
+Frontend uploads to this bucket and stores `image_url` and `image_key` in `idea_board`. Admin deletion removes both DB row and the storage object.
+
+
 ## 1) SQL: Admins table + RLS
 
 ```sql
@@ -58,7 +167,7 @@ on conflict (user_id) do update set is_admin = excluded.is_admin;
 
 - Method: GET
 - Auth: Bearer user access_token
-- Checks caller is admin, then returns array of `{ user_id, email, is_admin, created_at }`.
+- Checks caller is admin, then returns array of `{ user_id, email, is_admin, created_at, position, admin_level }`.
 
 ```ts
 // supabase/functions/list-admins/index.ts
@@ -70,6 +179,23 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, OPTIONS"
 };
+
+// Helpers to derive admin level from Arabic position when metadata level is missing
+const ADMIN = { president: 1, vice: 2, manager: 3 } as const;
+function normalizeAr(s?: string | null) {
+  if (!s) return '';
+  let t = String(s);
+  t = t.replace(/[\u0610-\u061A\u064B-\u065F\u06D6-\u06ED]/g, '').replace(/\u0640/g, '');
+  t = t.replace(/[أإآ]/g, 'ا');
+  t = t.replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+  return t;
+}
+function levelFromPositionAr(position?: string | null) {
+  const p = normalizeAr(position);
+  if (p.includes('رئيس') && p.includes('اديب')) return ADMIN.president;
+  if (p.includes('نائب') && p.includes('الرئيس')) return ADMIN.vice;
+  return ADMIN.manager;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -131,19 +257,42 @@ serve(async (req) => {
       });
     }
 
-    // إلحاق البريد الإلكتروني لكل مستخدم عبر Admin API
-    const result: Array<{ user_id: string; email?: string; is_admin: boolean; created_at: string; }> = [];
+    // إلحاق البريد الإلكتروني + المسمى والمستوى الإداري لكل مستخدم
+    const result: Array<{ user_id: string; email?: string; is_admin: boolean; created_at: string; position?: string | null; admin_level?: number | null; }> = [];
     for (const r of rows || []) {
       let email: string | undefined = undefined;
+      let position: string | null | undefined = undefined;
+      let admin_level: number | null | undefined = undefined;
       try {
         const { data: u } = await adminClient.auth.admin.getUserById(r.user_id);
         email = u?.user?.email || undefined;
+        const md = (u?.user?.user_metadata || {}) as Record<string, unknown>;
+        position = (typeof md.position === 'string' && md.position) ? md.position : null;
+        const mdLv = Number((md as any).admin_level);
+        admin_level = Number.isFinite(mdLv) ? mdLv : null;
       } catch {}
+      // Fallback: try admins table "position" if metadata missing
+      if (!position) {
+        try {
+          const { data: row } = await adminClient
+            .from('admins')
+            .select('position')
+            .eq('user_id', r.user_id)
+            .maybeSingle();
+          position = (row && typeof row.position === 'string') ? row.position : null;
+        } catch {}
+      }
+      // Derive admin_level from position if still missing
+      if (!Number.isFinite(admin_level as number)) {
+        admin_level = levelFromPositionAr(position);
+      }
       result.push({
         user_id: r.user_id,
         email,
         is_admin: r.is_admin,
-        created_at: r.created_at
+        created_at: r.created_at,
+        position,
+        admin_level
       });
     }
 
@@ -513,7 +662,7 @@ serve(async (req) => {
 ## 5) Edge Function: set-admin-perms
 
 - Method: POST
-- Body: `{ user_id: string, perms: { works: boolean, sponsors: boolean, achievements: boolean, board: boolean, faq: boolean, blog: boolean, schedule: boolean, todos: boolean, admins: boolean } }`
+- Body: `{ user_id: string, perms: { works: boolean, sponsors: boolean, achievements: boolean, board: boolean, faq: boolean, blog: boolean, schedule: boolean, chat: boolean, todos: boolean, admins: boolean } }`
 - Auth: Bearer user access_token
 - Logic: Caller must be an admin. Hierarchy rules enforced:
   - President (1) can edit others' permissions (not self). President target cannot be edited.
@@ -542,6 +691,8 @@ const ALLOWED = [
   'faq',
   'blog',
   'schedule',
+  'idea_board',
+  'chat',
   'todos',
   'admins'
 ];
@@ -930,7 +1081,65 @@ serve(async (req)=>{
   - `callFunction(name, { method, body })`
   - `fetchAdmins()`, `renderAdmins()` and click handlers for add/remove.
   - `showAdminDetails()` uses `set-admin-perms` (save section permissions) and `set-admin-level` (change hierarchy level for Vice/Manager).
-- `admin/admin.html` contains `#section-admins` UI.
+
+---
+
+## 9) SQL: Site visits tracking (public.site_visits)
+
+Client-side code on the public site (`index.html` → `script.js`) records a visit on each page load with a persisted `visitor_id` (localStorage) and `session_id` (sessionStorage), and classifies users as new vs returning. Create the table and RLS policies below.
+
+```sql
+-- Table to store aggregated visit events
+create table if not exists public.site_visits (
+  id bigint primary key generated always as identity,
+  visitor_id text not null,
+  session_id text not null,
+  is_returning boolean not null default false,
+  path text not null,
+  referrer text,
+  user_agent text,
+  language text,
+  screen_w integer,
+  screen_h integer,
+  tz text,
+  utm_source text,
+  utm_medium text,
+  utm_campaign text,
+  created_at timestamp with time zone not null default now()
+);
+
+-- Enable RLS
+alter table public.site_visits enable row level security;
+
+-- Allow public inserts from the website (anon and authenticated)
+drop policy if exists "Allow public insert" on public.site_visits;
+create policy "Allow public insert"
+on public.site_visits for insert
+  to anon, authenticated
+  with check (true);
+
+-- Restrict reads to Admins only (authenticated callers with admins.is_admin = true)
+drop policy if exists "Admins can select" on public.site_visits;
+create policy "Admins can select"
+on public.site_visits for select
+  to authenticated
+  using (exists (
+    select 1 from public.admins a
+    where a.user_id = auth.uid() and a.is_admin = true
+  ));
+
+-- No update/delete policies → default deny
+
+-- Recommended indexes (for faster counts and filtering)
+create index if not exists site_visits_is_returning_idx on public.site_visits(is_returning);
+create index if not exists site_visits_created_at_idx on public.site_visits(created_at);
+```
+
+Notes:
+- Frontend inserts use the anon key under RLS; no PII like IP is stored by default. You may add `ip inet` if desired and set an appropriate policy.
+- Admin Dashboard reads counts directly from `public.site_visits` via `admin/admin.js` and requires the caller to be authenticated and an Admin (enforced both in UI and via RLS above).
+  - Admin Chat logic: loads admin contacts from `admins` + `auth_users_public`, reads/writes `admin_messages`, and subscribes to Realtime inserts for incoming messages.
+- `admin/admin.html` contains `#section-admins` and the new `#section-chat` UI.
 - Make sure `supabase-config.js` exposes `window.SUPABASE_URL`.
 
 ---
@@ -940,3 +1149,57 @@ serve(async (req)=>{
 - 403 Forbidden from functions: ensure caller is already inserted in `public.admins` with `is_admin = true`.
 - 401 Unauthorized: ensure you pass `Authorization: Bearer <access_token>` and that a session exists in the browser.
 - Table not found errors: confirm table `public.admins` exists and RLS is enabled with the read policy above.
+
+---
+
+## 10) Admin Chat (two-way messaging between admins)
+
+This section creates the backing table and security for the Admin Chat feature used in `admin/admin.js` and the `#section-chat` UI.
+
+```sql
+-- Messages table
+create table if not exists public.admin_messages (
+  id           bigint generated by default as identity primary key,
+  sender_id    uuid not null references auth.users(id) on delete cascade,
+  recipient_id uuid not null references auth.users(id) on delete cascade,
+  content      text not null check (char_length(trim(content)) > 0),
+  created_at   timestamptz not null default now()
+);
+
+-- Enable Row Level Security
+alter table public.admin_messages enable row level security;
+
+-- Read: only participants (sender or recipient) can read rows
+drop policy if exists "participants can read" on public.admin_messages;
+create policy "participants can read"
+on public.admin_messages for select
+to authenticated
+using (sender_id = auth.uid() or recipient_id = auth.uid());
+
+-- Insert: only admins can send messages; sender_id must be self
+drop policy if exists "admins can send" on public.admin_messages;
+create policy "admins can send"
+on public.admin_messages for insert
+to authenticated
+with check (
+  sender_id = auth.uid()
+  and exists (
+    select 1 from public.admins a where a.user_id = auth.uid() and a.is_admin = true
+  )
+);
+
+-- Optional: block updates/deletes by default (no UPDATE/DELETE policies defined)
+
+-- Indexes for performance
+create index if not exists admin_messages_recipient_created_idx
+  on public.admin_messages (recipient_id, created_at desc);
+create index if not exists admin_messages_sender_created_idx
+  on public.admin_messages (sender_id, created_at desc);
+
+-- Enable Realtime (if not yet included)
+alter publication supabase_realtime add table public.admin_messages;
+```
+
+Notes:
+- Frontend listens to `INSERT` events for rows where `recipient_id = auth.uid()` and appends messages in the active conversation.
+- Contacts list is derived from `public.admins` (is_admin = true) enriched via `auth_users_public`.
