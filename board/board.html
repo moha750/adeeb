@@ -7,12 +7,31 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
     <link rel="stylesheet" href="../style.css" />
     <link rel="stylesheet" href="board.css" />
+    <style>
+      /* Topics grid and cards (embedded) */
+      .topics-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); align-items: start; }
+      .topic-card { border:1px solid var(--border); border-radius: 14px; background:#fff; overflow:hidden; box-shadow: 0 6px 18px rgba(39,64,96,.06); transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; cursor: pointer; }
+      .topic-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(39,64,96,.12); }
+      .topic-card .card-media {
+        height: 190px;
+        background: linear-gradient(135deg, rgba(61, 143, 214, .12), rgba(39, 64, 96, .08));
+      }
+      .card-media i {font-size: 4rem !important;}
+      .topic-card .card-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .topic-card .card-body { padding: 12px 14px; display: grid; gap: 6px; text-align: center; }
+      .topic-card .title { font-family: fb, system-ui; color: var(--main-blue); font-size: 1.05rem; }
+      .topic-card .desc { color: var(--muted); font-size: .9rem; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .topics-filter { display: flex; gap: 8px; flex-wrap: wrap; }
+      .topics-filter .chip { cursor: pointer; }
+      .topics-filter .chip.active { background: rgba(61,143,214,.10); border-color: rgba(61,143,214,.35); color: var(--main-blue); }
+      @media (max-width: 640px) { .topics-grid { grid-template-columns: 1fr; } }
+    </style>
   </head>
   <body class="board-body">
     <header class="board-header">
       <div class="container">
         <h1 class="board-title"><i class="fa-solid fa-lightbulb"></i> سبورة أدِيب</h1>
-        <p class="board-sub">مساحة مفتوحة لمشاركة الأفكار والمقترحات. كل ما يُنشر هنا ظاهر للجميع.</p>
+        <p class="board-sub">مساحة مفتوحة لمشاركة الأفكار والمقتراحات. كل ما يُنشر هنا ظاهر للجميع.</p>
         <div class="board-actions">
           <a class="btn btn-outline" href="../index.html"><i class="fa-solid fa-arrow-right"></i> رجوع للموقع</a>
         </div>
@@ -20,12 +39,32 @@
     </header>
 
     <main class="board-main">
-      <section class="panel" style="padding:16px">
+      <!-- Topics Landing -->
+      <section id="topicsPanel" class="panel" style="padding:16px">
+        <div style="display:flex;align-items:center;gap:8px; margin-bottom:10px">
+          <h2 style="margin:0;font-size:rem;color:var(--main-blue)"><i class="fa-solid fa-book-open"></i> المواضيع</h2>
+          <div style="flex:1"></div>
+          <button id="topicsRefreshBtn" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+        </div>
+        <div id="topicsGrid" class="topics-grid" aria-live="polite"></div>
+        <div id="topicsEmpty" class="empty-state muted" style="display:none">لا توجد مواضيع بعد.</div>
+      </section>
+
+      <section id="submitPanel" class="panel" style="padding:16px; display:none">
+        <div style="display:flex;align-items:center;gap:8px; margin-bottom:10px">
+          <button id="backToTopicsBtn" class="btn btn-outline" style="display:none"><i class="fa-solid fa-arrow-right"></i> كل المواضيع</button>
+          <div id="currentTopicHeader" class="muted" style="display:none"></div>
+        </div>
         <form id="ideaForm" class="form-grid" style="grid-template-columns: 1fr">
           <label>
             عنوان الفكرة
             <input id="ideaTitle" type="text" maxlength="120" placeholder="اكتب عنوانًا موجزًا للفكرة" />
             <small id="titleCharLeft" class="field-help">الحد الأقصى 120 حرف</small>
+          </label>
+          <label>
+            الموضوع
+            <select id="ideaTopicSelect" required></select>
+            <small class="field-help">اختر موضوعًا لنشر فكرتك ضمنه</small>
           </label>
           <label>
             فكرتك أو اقتراحك
@@ -53,12 +92,13 @@
         </form>
       </section>
 
-      <section class="panel" style="padding:16px; margin-top:16px">
+      <section id="listPanel" class="panel" style="padding:16px; margin-top:16px; display:none">
         <div style="display:flex;align-items:center;gap:8px; margin-bottom:10px">
           <h2 style="margin:0;font-size:1rem;color:var(--main-blue)"><i class="fa-solid fa-chalkboard"></i> الأفكار المنشورة</h2>
           <div style="flex:1"></div>
           <button id="refreshBtn" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
         </div>
+        <div id="topicsFilter" class="topics-filter" style="display:none"></div>
         <div id="boardList" class="board-list" aria-live="polite"></div>
         <div id="emptyState" class="empty-state muted" style="display:none">لا توجد أفكار بعد. كن أول من يشارك فكرة!</div>
       </section>
@@ -103,3 +143,5 @@
     <script src="../supabase-config.js"></script>
     <script src="board.js"></script>
   </body>
+  
+</html>

@@ -268,6 +268,17 @@
               <button id="ideaBoardRefreshBtn" class="btn"><i class="fa-solid fa-rotate"></i> تحديث</button>
             </div>
           </div>
+          <!-- Topics manager -->
+          <div class="panel" style="padding:16px; margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:8px; margin-bottom:10px">
+              <h3 style="margin:0;font-size:1rem;color:var(--main-blue)"><i class="fa-solid fa-book-open"></i> المواضيع</h3>
+              <div style="flex:1"></div>
+              <button id="addTopicBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة موضوع</button>
+              <button id="ideaTopicsRefreshBtn" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+            </div>
+            <div id="ideaTopicsList" class="cards-grid" aria-live="polite"></div>
+            <div id="ideaTopicsEmpty" class="empty-state muted" style="display:none">لا توجد مواضيع بعد</div>
+          </div>
           <div class="panel" style="padding:16px">
             <div style="overflow:auto">
               <table class="table" style="width:100%; border-collapse:collapse">
@@ -287,6 +298,44 @@
               <div id="ideaBoardEmpty" class="empty-state muted" style="display:none">لا توجد أفكار بعد</div>
             </div>
           </div>
+          <!-- Topic Dialog -->
+          <dialog id="topicDialog" class="admin-dialog">
+            <form method="dialog" class="dialog-form" id="topicForm">
+              <div class="dialog-header">
+                <h3 class="dialog-title">إضافة/تعديل موضوع</h3>
+                <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="dialog-body">
+                <div class="form-grid">
+                  <label>
+                    العنوان
+                    <input id="topicTitle" type="text" placeholder="عنوان الموضوع" required />
+                  </label>
+                  <label>
+                    الوصف (اختياري)
+                    <textarea id="topicDesc" rows="3" placeholder="نبذة مختصرة"></textarea>
+                  </label>
+                  <label>
+                    صورة (اختياري)
+                    <input id="topicImageFile" type="file" accept="image/*" />
+                    <small class="field-help">PNG/JPG/WebP حتى 5MB</small>
+                  </label>
+                  <div id="topicImagePreviewWrap" class="img-preview" style="display:none">
+                    <img id="topicImagePreview" alt="معاينة" />
+                    <button type="button" class="btn btn-outline btn-xs" id="topicClearImageBtn"><i class="fa-solid fa-xmark"></i> إزالة</button>
+                  </div>
+                  <label style="display:flex;align-items:center;gap:8px">
+                    <input id="topicVisible" type="checkbox" checked />
+                    ظاهر للجميع
+                  </label>
+                </div>
+              </div>
+              <menu class="dialog-actions">
+                <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+                <button value="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
+              </menu>
+            </form>
+          </dialog>
         </section>
         <!-- المحادثات بين الإداريين -->
         <section id="section-chat" class="admin-section" hidden>

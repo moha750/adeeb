@@ -21,6 +21,20 @@
   const ideaBoardTableBody = document.getElementById('ideaBoardTableBody');
   const ideaBoardEmpty = document.getElementById('ideaBoardEmpty');
   const ideaBoardRefreshBtn = document.getElementById('ideaBoardRefreshBtn');
+  // Idea Topics (admin)
+  const ideaTopicsList = document.getElementById('ideaTopicsList');
+  const ideaTopicsEmpty = document.getElementById('ideaTopicsEmpty');
+  const ideaTopicsRefreshBtn = document.getElementById('ideaTopicsRefreshBtn');
+  const addTopicBtn = document.getElementById('addTopicBtn');
+  const topicDialog = document.getElementById('topicDialog');
+  const topicForm = document.getElementById('topicForm');
+  const topicTitleInput = document.getElementById('topicTitle');
+  const topicDescInput = document.getElementById('topicDesc');
+  const topicImageFileInput = document.getElementById('topicImageFile');
+  const topicImagePreview = document.getElementById('topicImagePreview');
+  const topicImagePreviewWrap = document.getElementById('topicImagePreviewWrap');
+  const topicClearImageBtn = document.getElementById('topicClearImageBtn');
+  const topicVisibleInput = document.getElementById('topicVisible');
   // Schedule elements
   const calendarGrid = $('#calendarGrid');
   const calendarDaysHead = $('#calendarDaysHead');
@@ -64,6 +78,7 @@
     schedule: 'adeeb_schedule',
     todos: 'adeeb_todos',
     ideas: 'adeeb_ideas_public',
+    topics: 'adeeb_idea_topics',
   };
 
   // Supabase client (if configured)
@@ -90,6 +105,195 @@
     }
     return json;
   }
+
+  // ===== Idea Topics (Admin CRUD) =====
+  function localTopicsGet() { try { const raw = localStorage.getItem(KEYS.topics); const arr = raw ? JSON.parse(raw) : []; return Array.isArray(arr) ? arr : []; } catch { return []; } }
+  function localTopicsSet(arr) { try { localStorage.setItem(KEYS.topics, JSON.stringify(Array.isArray(arr) ? arr : [])); } catch {} }
+  async function fetchTopicsAdmin() {
+    if (sb) {
+      try {
+        const { data, error } = await sb
+          .from('idea_topics')
+          .select('id, title, description, image_url, visible, order, created_at')
+          .order('order', { ascending: true, nullsFirst: true })
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        return Array.isArray(data) ? data : [];
+      } catch (e) {
+        console.warn('idea_topics fetch (admin) failed', e);
+      }
+    }
+    return localTopicsGet();
+  }
+  function renderIdeaTopicsList(rows) {
+    if (!ideaTopicsList) return;
+    ideaTopicsList.innerHTML = '';
+    const list = Array.isArray(rows) ? rows : [];
+    if (ideaTopicsEmpty) ideaTopicsEmpty.style.display = list.length ? 'none' : '';
+    list.forEach((row, idx) => {
+      const node = el(`
+        <div class="card draggable-card" data-idx="${idx}" draggable="true">
+          <span class="order-chip">#${(row.order ?? (idx+1))}</span>
+          <div class="card__media">${row.image_url ? `<img src="${escapeHtml(row.image_url)}" alt="${escapeHtml(row.title||'موضوع')}" onerror="this.style.display='none'"/>` : ''}</div>
+          <div class="card__body">
+            <div class="card__title"><i class="fa-solid fa-book-open"></i> ${escapeHtml(row.title || '')}</div>
+            ${row.description ? `<p class="card__text" style="color:#64748b; line-height:1.6">${escapeHtml(row.description)}</p>` : ''}
+            <div class="card__actions">
+              <button class="btn btn-outline" data-act="up" data-idx="${idx}"><i class="fa-solid fa-arrow-up"></i></button>
+              <button class="btn btn-outline" data-act="down" data-idx="${idx}"><i class="fa-solid fa-arrow-down"></i></button>
+              <button class="btn btn-outline" data-act="edit" data-idx="${idx}"><i class="fa-solid fa-pen"></i> تعديل</button>
+              <button class="btn btn-outline" data-act="del" data-idx="${idx}"><i class="fa-regular fa-trash-can"></i> حذف</button>
+            </div>
+          </div>
+        </div>
+      `);
+      ideaTopicsList.appendChild(node);
+    });
+    setupListDnD?.(ideaTopicsList, topics, KEYS.topics, 'idea_topics', loadIdeaTopicsAdmin);
+  }
+  async function loadIdeaTopicsAdmin() {
+    const rows = await fetchTopicsAdmin();
+    topics = rows.slice();
+    renderIdeaTopicsList(rows);
+  }
+  async function uploadTopicImageIfAny() {
+    const file = topicImageFileInput?.files && topicImageFileInput.files[0];
+    if (!file) return null;
+    if (!sb) return null;
+    const bucket = 'adeeb-site';
+    const ext = (file.name.split('.').pop() || getExtFromType(file.type, 'jpg')).toLowerCase();
+    const safeExt = ext.replace(/[^a-z0-9]/gi, '') || 'jpg';
+    const path = `topics/topic-${Date.now()}-${Math.random().toString(36).slice(2,8)}.${safeExt}`;
+    const { error: upErr } = await sb.storage.from(bucket).upload(path, file, { cacheControl: '3600', upsert: false });
+    if (upErr) throw upErr;
+    const { data } = sb.storage.from(bucket).getPublicUrl(path);
+    const publicUrl = data?.publicUrl;
+    if (!publicUrl) throw new Error('تعذر الحصول على رابط الصورة');
+    return publicUrl;
+  }
+  addTopicBtn?.addEventListener('click', () => {
+    topicEditingIndex = null;
+    topicForm?.reset?.();
+    if (topicImagePreview) { topicImagePreview.src = ''; }
+    if (topicImagePreviewWrap) topicImagePreviewWrap.style.display = 'none';
+    openDialog?.(topicDialog);
+  });
+  topicImageFileInput?.addEventListener('change', () => {
+    const file = topicImageFileInput.files && topicImageFileInput.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      if (topicImagePreview) topicImagePreview.src = url;
+      if (topicImagePreviewWrap) topicImagePreviewWrap.style.display = '';
+    } else {
+      if (topicImagePreviewWrap) topicImagePreviewWrap.style.display = 'none';
+    }
+  });
+  topicClearImageBtn?.addEventListener('click', (e)=>{ e.preventDefault(); if (topicImageFileInput) topicImageFileInput.value = ''; if (topicImagePreviewWrap) topicImagePreviewWrap.style.display='none'; });
+  let topicEditingIndex = null;
+  ideaTopicsList?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const idx = Number(btn.dataset.idx);
+    const act = btn.dataset.act;
+    if (!Number.isInteger(idx) || idx < 0 || idx >= topics.length) return;
+    if (act === 'up' || act === 'down') {
+      const newIndex = act === 'up' ? Math.max(0, idx - 1) : Math.min(topics.length - 1, idx + 1);
+      if (newIndex === idx) return;
+      const [moved] = topics.splice(idx, 1);
+      topics.splice(newIndex, 0, moved);
+      normalizeAndPersistOrder(topics, KEYS.topics, 'idea_topics').then(() => {
+        renderIdeaTopicsList(topics);
+      });
+      return;
+    }
+    if (act === 'edit') {
+      topicEditingIndex = idx;
+      const cur = topics[idx];
+      if (topicTitleInput) topicTitleInput.value = cur.title || '';
+      if (topicDescInput) topicDescInput.value = cur.description || '';
+      if (topicVisibleInput) topicVisibleInput.checked = (cur.visible ?? true);
+      if (topicImagePreview && cur.image_url) topicImagePreview.src = cur.image_url;
+      if (topicImagePreviewWrap) topicImagePreviewWrap.style.display = cur.image_url ? '' : 'none';
+      openDialog?.(topicDialog);
+      return;
+    }
+    if (act === 'del') {
+      if (!confirm('تأكيد الحذف؟')) return;
+      const cur = topics[idx];
+      if (sb && cur.id) {
+        sb.from('idea_topics').delete().eq('id', cur.id).then(({ error }) => {
+          if (error) return alert('فشل الحذف: ' + error.message);
+          topics.splice(idx, 1);
+          renderIdeaTopicsList(topics);
+        });
+      } else {
+        topics.splice(idx, 1);
+        save(KEYS.topics, topics);
+        renderIdeaTopicsList(topics);
+      }
+      return;
+    }
+  });
+  topicForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+      title: (topicTitleInput?.value || '').trim(),
+      description: (topicDescInput?.value || '').trim() || null,
+      visible: !!(topicVisibleInput?.checked),
+    };
+    if (!data.title) { alert('الرجاء إدخال العنوان'); return; }
+    try {
+      let finalImageUrl = null;
+      const uploaded = await uploadTopicImageIfAny();
+      if (uploaded) finalImageUrl = uploaded;
+      if (sb) {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) return alert('يلزم تسجيل الدخول لإجراء التعديلات');
+        const payload = { title: data.title, description: data.description, image_url: finalImageUrl, visible: data.visible, order: (topicEditingIndex !== null) ? (topics[topicEditingIndex]?.order ?? null) : null };
+        const payloadNoOrder = { title: data.title, description: data.description, image_url: finalImageUrl, visible: data.visible };
+        if (topicEditingIndex === null) {
+          let row, error;
+          ({ data: row, error } = await sb.from('idea_topics').insert(payload).select('*').single());
+          if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+            const res2 = await sb.from('idea_topics').insert(payloadNoOrder).select('*').single();
+            if (res2.error) return alert('فشل الحفظ: ' + res2.error.message);
+            topics.unshift({ ...res2.data, order: payload.order });
+          } else if (error) {
+            return alert('فشل الحفظ: ' + error.message);
+          } else {
+            topics.unshift(row);
+          }
+          renderIdeaTopicsList(topics);
+          closeDialog?.(topicDialog);
+        } else {
+          const id = topics[topicEditingIndex]?.id;
+          if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
+          let row, error;
+          ({ data: row, error } = await sb.from('idea_topics').update(payload).eq('id', id).select('*').single());
+          if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+            const res2 = await sb.from('idea_topics').update(payloadNoOrder).eq('id', id).select('*').single();
+            if (res2.error) return alert('فشل التحديث: ' + res2.error.message);
+            topics[topicEditingIndex] = { ...res2.data, order: payload.order };
+          } else if (error) {
+            return alert('فشل التحديث: ' + error.message);
+          } else {
+            topics[topicEditingIndex] = row;
+          }
+          renderIdeaTopicsList(topics);
+          closeDialog?.(topicDialog);
+        }
+      } else {
+        const item = { title: data.title, description: data.description, image_url: finalImageUrl, visible: data.visible, order: (topicEditingIndex !== null) ? (topics[topicEditingIndex]?.order ?? null) : null };
+        if (topicEditingIndex === null) topics.unshift(item); else topics[topicEditingIndex] = item;
+        save(KEYS.topics, topics);
+        renderIdeaTopicsList(topics);
+        closeDialog?.(topicDialog);
+      }
+    } catch (err) {
+      alert('فشل الحفظ: ' + (err?.message || 'غير معروف'));
+    }
+  });
+  ideaTopicsRefreshBtn?.addEventListener('click', async (e) => { e.preventDefault(); await loadIdeaTopicsAdmin(); });
 
   // ===== Schedule (Monthly Calendar) =====
   // Load schedule as a map { 'YYYY-MM-DD': Array<{ title, notes } > }
@@ -1491,6 +1695,7 @@
   let sponsors = load(KEYS.sponsors);
   let board = load(KEYS.board);
   let members = load(KEYS.members);
+  let topics = load(KEYS.topics);
   let faq = load(KEYS.faq);
   let achievements = load(KEYS.achievements);
   let blogPosts = load(KEYS.blog);
@@ -2269,6 +2474,7 @@
       // If idea board tab is opened, load ideas
       if (id === '#section-idea-board') {
         try { loadIdeaBoardAdmin?.(); } catch {}
+        try { loadIdeaTopicsAdmin?.(); } catch {}
       }
 
       // If members tab is opened, render members
@@ -4367,6 +4573,7 @@
       blogPosts,
       schedule,
       todos,
+      topics,
       exportedAt: new Date().toISOString(),
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -4404,6 +4611,9 @@
       }
       if (Array.isArray(data.blogPosts)) {
         blogPosts = data.blogPosts; save(KEYS.blog, blogPosts); renderBlog();
+      }
+      if (Array.isArray(data.topics)) {
+        topics = data.topics; save(KEYS.topics, topics); renderIdeaTopicsList(topics);
       }
       if (data.schedule && typeof data.schedule === 'object' && !Array.isArray(data.schedule)) {
         schedule = data.schedule; saveSchedule(); renderSchedule();

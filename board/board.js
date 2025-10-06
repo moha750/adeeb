@@ -28,6 +28,17 @@
   const ideaModalDownloadBtn = document.getElementById('ideaModalDownloadBtn');
   const ideaModalCopyBtn = document.getElementById('ideaModalCopyBtn');
   const ideaModalCopyLinkBtn = document.getElementById('ideaModalCopyLinkBtn');
+  // Topics UI elements
+  const topicsPanel = document.getElementById('topicsPanel');
+  const topicsGrid = document.getElementById('topicsGrid');
+  const topicsEmpty = document.getElementById('topicsEmpty');
+  const topicsRefreshBtn = document.getElementById('topicsRefreshBtn');
+  const submitPanel = document.getElementById('submitPanel');
+  const listPanel = document.getElementById('listPanel');
+  const backToTopicsBtn = document.getElementById('backToTopicsBtn');
+  const currentTopicHeader = document.getElementById('currentTopicHeader');
+  const ideaTopicSelect = document.getElementById('ideaTopicSelect');
+  const topicsFilter = document.getElementById('topicsFilter');
 
   let rtChan = null;
   let selectedFile = null;
@@ -35,21 +46,32 @@
   let currentModalIdea = null;
   let copyBtnResetTimer = null;
   let copyLinkBtnResetTimer = null;
-  let suppressPushState = false; // prevent pushing history while responding to popstate
   let initialURLProcessed = false; // ensure auto-open from URL runs once
+  let selectedTopicId = null; // currently selected topic
+  let topicList = []; // cached topics
+  let suppressPushState = false; // guard pushState during internal navigation
 
   function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  function fmtArDateTime(iso){ try { return new Date(iso).toLocaleString('ar'); } catch { return iso || ''; } }
-
+  function fmtArDateTime(iso){
+    try {
+      return new Date(iso).toLocaleString('ar', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+    } catch { return iso || ''; }
+  }
+  
   function timeAgoAr(iso){
     try {
       const d = new Date(iso);
       if (isNaN(d.getTime())) return '';
       const now = Date.now();
-      let diff = Math.max(0, now - d.getTime());
+      const diff = Math.max(0, now - d.getTime());
       const sec = Math.floor(diff / 1000);
-      if (sec < 5) return 'نُشر للتو';
-      if (sec < 60) return 'نُشر منذ ثوانٍ';
+      if (sec < 60) return 'نُشر للتو';
       const min = Math.floor(sec / 60);
       if (min < 60) {
         if (min === 1) return 'نُشر منذ دقيقة';
@@ -88,11 +110,104 @@
       return '';
     }
   }
+  // Build a URL-friendly slug from a title (keeps Unicode letters/numbers, converts spaces/underscores to dashes)
+  function titleToSlug(s){
+    try {
+      return String(s || '')
+        .trim()
+        .slice(0, 120)
+        .replace(/[^\p{L}\p{N}\-\s_]/gu, '') // keep letters, numbers, dash, space, underscore
+        .replace(/[\s_]+/g, '-')               // spaces/underscores to dash
+        .replace(/-+/g, '-')                    // collapse multiple dashes
+        .replace(/^-+|-+$/g, '')                // trim leading/trailing dashes
+        .toLowerCase();
+    } catch {
+      return '';
+    }
+  }
+
+  // Build the sharable key that goes into ?idea= (slug-id)
+  function buildIdeaShareKey(row){
+    const slug = titleToSlug(row?.title || 'فكرة');
+    return `${slug}-${row?.id}`;
+  }
+
+  // ===== Topics: fetch + render + UI selection (top-level) =====
+  function findTopicById(id){ return (topicList || []).find(t => String(t.id) === String(id)); }
+  function setTopicHeader(t){
+    if (!currentTopicHeader) return;
+    if (t){ currentTopicHeader.textContent = `الموضوع: ${t.title || ''}`; currentTopicHeader.style.display = ''; }
+    else { currentTopicHeader.textContent = ''; currentTopicHeader.style.display = 'none'; }
+  }
+  function showTopicsLanding(){
+    if (topicsPanel) topicsPanel.style.display = '';
+    if (submitPanel) submitPanel.style.display = 'none';
+    if (listPanel) listPanel.style.display = 'none';
+    if (backToTopicsBtn) backToTopicsBtn.style.display = 'none';
+    setTopicHeader(null);
+  }
+  function showTopicView(topic){
+    if (topicsPanel) topicsPanel.style.display = 'none';
+    if (submitPanel) submitPanel.style.display = '';
+    if (listPanel) listPanel.style.display = '';
+    if (backToTopicsBtn) backToTopicsBtn.style.display = '';
+    setTopicHeader(topic || null);
+  }
+  function fillTopicSelect(){
+    if (!ideaTopicSelect) return;
+    const items = (topicList || []).filter(t => t && (t.visible ?? true));
+    const cur = String(selectedTopicId || '');
+    ideaTopicSelect.innerHTML = items.map(t => `<option value="${String(t.id)}">${(t.title || '').toString()}</option>`).join('');
+    if (cur){ try { ideaTopicSelect.value = cur; } catch {} }
+  }
+  function renderTopicsGrid(){
+    if (!topicsGrid) return;
+    topicsGrid.innerHTML = '';
+    const vis = (topicList || []).filter(t => t && (t.visible ?? true));
+    if (!vis.length){ if (topicsEmpty) topicsEmpty.style.display=''; return; } else { if (topicsEmpty) topicsEmpty.style.display='none'; }
+    vis.sort((a,b)=>{
+      const ao = a.order ?? 1_000_000, bo = b.order ?? 1_000_000;
+      if (ao !== bo) return ao - bo;
+      return new Date(b.created_at||0) - new Date(a.created_at||0);
+    }).forEach(t => {
+      const card = document.createElement('div');
+      card.className = 'topic-card';
+      card.setAttribute('data-id', String(t.id));
+      const imgHtml = t.image_url
+        ? `<div class="card-media"><img src="${escapeHtml(t.image_url)}" alt="${escapeHtml(t.title||'موضوع')}" loading="lazy" onerror="this.remove()"/></div>`
+        : `<div class="card-media" style="display:grid;place-items:center;color:var(--accent-blue);"><i class="fa-solid fa-book" style="font-size:2rem"></i></div>`;
+      const desc = (t.description || '').toString();
+      card.innerHTML = `${imgHtml}<div class="card-body"><div class="title">${escapeHtml(t.title||'')}</div>${desc ? `<div class="desc">${escapeHtml(desc)}</div>` : ''}</div>`;
+      topicsGrid.appendChild(card);
+    });
+  }
+  async function fetchTopics(){
+    if (sb){
+      try {
+        const { data, error } = await sb
+          .from('idea_topics')
+          .select('id, title, description, image_url, visible, order, created_at')
+          .eq('visible', true)
+          .order('order', { ascending: true, nullsFirst: true })
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        topicList = Array.isArray(data) ? data : [];
+        renderTopicsGrid();
+        fillTopicSelect();
+        return;
+      } catch (e){ console.warn('idea_topics fetch failed', e); }
+    }
+    topicList = getLocalTopics();
+    renderTopicsGrid();
+    fillTopicSelect();
+  }
 
   function setMsg(text, type='muted'){ if (ideaMsg){ ideaMsg.className = type === 'error' ? 'alert error' : 'muted'; ideaMsg.textContent = text || ''; } }
 
   function getLocalIdeas(){ try { const raw = localStorage.getItem('adeeb_ideas_public'); const arr = raw ? JSON.parse(raw) : []; return Array.isArray(arr) ? arr : []; } catch { return []; } }
   function setLocalIdeas(arr){ try { localStorage.setItem('adeeb_ideas_public', JSON.stringify(Array.isArray(arr) ? arr : [])); } catch {} }
+  function getLocalTopics(){ try { const raw = localStorage.getItem('adeeb_idea_topics'); const arr = raw ? JSON.parse(raw) : []; return Array.isArray(arr) ? arr : []; } catch { return []; } }
+  function setLocalTopics(arr){ try { localStorage.setItem('adeeb_idea_topics', JSON.stringify(Array.isArray(arr) ? arr : [])); } catch {} }
 
   // ===== Likes helpers (Supabase with LocalStorage fallback) =====
   const deviceIdKey = 'adeeb_device_id';
@@ -140,18 +255,19 @@
 
   async function refreshIdeaLikeUI(id, btnEl){
     if (!btnEl) return { mode: 'none', liked: false, count: 0 };
+    const viewOnly = btnEl.classList.contains('view-only') || btnEl.hasAttribute('data-view-only');
     const did = getDeviceId();
     // Prefer Supabase
     const [countSB, likedSB] = await Promise.all([getIdeaLikesCountSB(id), isIdeaLikedSB(id, did)]);
     if (typeof countSB === 'number' && likedSB !== null){
       const cntEl = btnEl.querySelector('.like-count');
       if (cntEl) cntEl.textContent = String(countSB);
-      btnEl.classList.toggle('active', likedSB);
+      if (!viewOnly) btnEl.classList.toggle('active', likedSB);
       const icon = btnEl.querySelector('i');
-      if (icon) icon.className = likedSB ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
-      btnEl.setAttribute('aria-pressed', likedSB ? 'true' : 'false');
+      if (icon) icon.className = viewOnly ? 'fa-regular fa-heart' : (likedSB ? 'fa-solid fa-heart' : 'fa-regular fa-heart');
+      if (!viewOnly) btnEl.setAttribute('aria-pressed', likedSB ? 'true' : 'false');
       btnEl.dataset.mode = 'sb';
-      btnEl.title = likedSB ? 'إزالة الإعجاب' : 'إعجاب';
+      btnEl.title = viewOnly ? 'الإعجابات' : (likedSB ? 'إزالة الإعجاب' : 'إعجاب');
       return { mode: 'sb', liked: likedSB, count: countSB };
     }
     // Fallback: LocalStorage
@@ -159,13 +275,21 @@
     const liked = isIdeaLikedLS(id);
     const cntEl = btnEl.querySelector('.like-count');
     if (cntEl) cntEl.textContent = String(c);
-    btnEl.classList.toggle('active', liked);
+    if (!viewOnly) btnEl.classList.toggle('active', liked);
     const icon2 = btnEl.querySelector('i');
-    if (icon2) icon2.className = liked ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
-    btnEl.setAttribute('aria-pressed', liked ? 'true' : 'false');
+    if (icon2) icon2.className = viewOnly ? 'fa-regular fa-heart' : (liked ? 'fa-solid fa-heart' : 'fa-regular fa-heart');
+    if (!viewOnly) btnEl.setAttribute('aria-pressed', liked ? 'true' : 'false');
     btnEl.dataset.mode = 'ls';
-    btnEl.title = liked ? 'إزالة الإعجاب' : 'إعجاب';
+    btnEl.title = viewOnly ? 'الإعجابات' : (liked ? 'إزالة الإعجاب' : 'إعجاب');
     return { mode: 'ls', liked, count: c };
+  }
+
+  // Refresh all view-only like buttons (list cards) for a given idea id
+  function refreshAllViewOnlyLikeButtons(ideaId){
+    try {
+      const nodes = $$(`.like-btn.view-only[data-id="${CSS.escape(String(ideaId))}"]`);
+      nodes.forEach((el)=>{ try { refreshIdeaLikeUI(ideaId, el); } catch {} });
+    } catch {}
   }
 
   async function toggleIdeaLike(id, btnEl){
@@ -182,6 +306,8 @@
         else { setIdeaLikedLS(id, true); setIdeaLikesLS(id, getIdeaLikesLS(id) + 1); }
       }
       await refreshIdeaLikeUI(id, btnEl);
+      // Also refresh counts on list cards instantly
+      try { refreshAllViewOnlyLikeButtons(id); } catch {}
     } catch {}
   }
 
@@ -221,7 +347,7 @@
       }
       const titleBlock = `<div class="title">${safeTitle}</div>`;
 
-      const likeBtnHtml = `<button class=\"like-btn\" data-id=\"${escapeHtml(row.id)}\" aria-pressed=\"false\" title=\"إعجاب\"><i class=\"fa-regular fa-heart\"></i><span class=\"like-count\">0</span></button>`;
+      const likeBtnHtml = `<button class=\"like-btn view-only\" data-view-only=\"1\" data-id=\"${escapeHtml(row.id)}\" aria-pressed=\"false\" title=\"الإعجابات\"><i class=\"fa-regular fa-heart\"></i><span class=\"like-count\">0</span></button>`;
       const bodyHtml = `
         <div class="card-body">
           <div class="card-head">
@@ -255,19 +381,24 @@
   async function fetchIdeas(){
     if (sb){
       try {
-        const { data, error } = await sb
+        let q = sb
           .from('idea_board')
-          .select('id, title, content, author_name, image_url, visible, pinned, created_at')
-          .eq('visible', true)
+          .select('id, title, content, author_name, image_url, visible, pinned, created_at, topic_id')
+          .eq('visible', true);
+        if (selectedTopicId) q = q.eq('topic_id', selectedTopicId);
+        const { data, error } = await q
           .order('pinned', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false });
         if (error) throw error;
-        renderList(Array.isArray(data) ? data : []);
+        const rows = Array.isArray(data) ? data : [];
+        renderList(rows);
         return;
       } catch (e){ console.warn('idea_board fetch failed', e); }
     }
     // fallback
-    renderList(getLocalIdeas());
+    const all = getLocalIdeas();
+    const filteredLS = selectedTopicId ? all.filter(r => String(r.topic_id) === String(selectedTopicId)) : all;
+    renderList(filteredLS);
   }
 
   function canPostNow(){ try { const last = Number(localStorage.getItem('adeeb_idea_last_ts')||'0'); const now = Date.now(); return (now - last) > 60_000; } catch { return true; } }
@@ -309,6 +440,7 @@
     try {
       if (!ideaModal) return;
       ideaModal.setAttribute('hidden', '');
+      try { if (document && document.body) document.body.classList.remove('modal-open'); } catch {}
       if (ideaModalTitle) ideaModalTitle.textContent = '';
       if (ideaModalMeta) ideaModalMeta.innerHTML = '';
       if (ideaModalContent) ideaModalContent.textContent = '';
@@ -395,17 +527,22 @@
     // Modal like button wiring
     if (ideaModalLikeBtn){
       ideaModalLikeBtn.setAttribute('data-id', row.id);
+      // Modal like button: label only, no count; ensure it's actionable (not view-only)
+      try { ideaModalLikeBtn.classList.remove('view-only'); ideaModalLikeBtn.removeAttribute('data-view-only'); } catch {}
+      ideaModalLikeBtn.innerHTML = '<i class="fa-regular fa-heart"></i> <span class="like-label">إعجاب بالفكرة</span>';
       try { refreshIdeaLikeUI(row.id, ideaModalLikeBtn); } catch {}
     }
     ideaModal.removeAttribute('hidden');
+    try { if (document && document.body) document.body.classList.add('modal-open'); } catch {}
     document.addEventListener('keydown', onEscClose);
-    // Push ?idea=<id> to URL so it can be shared/back-button aware
+    // Push ?idea=<slug-id> to URL so it can be shared/back-button aware
     try {
       if (!suppressPushState) {
         const url = new URL(window.location.href);
         const current = url.searchParams.get('idea');
-        if (String(current) !== String(row.id)){
-          url.searchParams.set('idea', row.id);
+        const shareKey = buildIdeaShareKey(row);
+        if (String(current) !== String(shareKey)){
+          url.searchParams.set('idea', shareKey);
           history.pushState({ ideaId: row.id }, '', url.toString());
         }
       }
@@ -426,8 +563,10 @@
     const name = (ideaName?.value || '').trim().slice(0,80);
     const title = (ideaTitle?.value || '').trim().slice(0,120);
     const content = (ideaContent?.value || '').trim().slice(0,500);
+    const topicId = (ideaTopicSelect?.value || selectedTopicId || '').toString();
     if (!content){ setMsg('الرجاء كتابة الفكرة.', 'error'); return; }
     if (!name){ setMsg('الاسم مطلوب لحفظ حقوق الفكرة', 'error'); try { ideaName?.focus(); } catch {} return; }
+    if (!topicId){ setMsg('الرجاء اختيار الموضوع.', 'error'); try { ideaTopicSelect?.focus(); } catch {} return; }
     if (!canPostNow()){ setMsg('الرجاء الانتظار دقيقة قبل إرسال فكرة أخرى.', 'error'); return; }
     setMsg('جارٍ الإرسال...');
     try {
@@ -442,7 +581,7 @@
           const pub = sb.storage.from('idea-board').getPublicUrl(image_key);
           image_url = pub?.data?.publicUrl || null;
         }
-        const payload = { title: title || null, content, author_name: name, image_url, image_key, visible: true, pinned: false };
+        const payload = { title: title || null, content, author_name: name, image_url, image_key, visible: true, pinned: false, topic_id: topicId };
         const { error } = await sb.from('idea_board').insert(payload);
         if (error) throw error;
         setMsg('تم نشر الفكرة. شكراً لمشاركتك!');
@@ -460,7 +599,7 @@
         if (selectedFile) {
           try { image_url = String(await readFileAsDataURL(selectedFile)); } catch {}
         }
-        arr.unshift({ id: 'local-'+Date.now(), title: title || null, content, author_name: name, image_url, visible: true, pinned: false, created_at: new Date().toISOString() });
+        arr.unshift({ id: 'local-'+Date.now(), title: title || null, content, author_name: name, image_url, visible: true, pinned: false, created_at: new Date().toISOString(), topic_id: topicId });
         setLocalIdeas(arr);
         setMsg('تم حفظ الفكرة محلياً (وحدك تراها). لتظهر للجميع فعّل Supabase.');
         ideaForm.reset();
@@ -491,6 +630,7 @@
   listEl?.addEventListener('click', (e)=>{
     const btn = e.target && e.target.closest ? e.target.closest('.like-btn') : null;
     if (!btn) return;
+    if (btn.classList.contains('view-only') || btn.hasAttribute('data-view-only')) return;
     e.preventDefault();
     const id = btn.getAttribute('data-id');
     toggleIdeaLike(id, btn);
@@ -594,7 +734,8 @@
     e.preventDefault();
     const row = currentModalIdea;
     if (!row) return;
-    const shareUrl = `${location.origin}${location.pathname}?idea=${encodeURIComponent(row.id)}`;
+    const shareKey = buildIdeaShareKey(row);
+    const shareUrl = `${location.origin}${location.pathname}?idea=${encodeURIComponent(shareKey)}`;
     const origHtml = ideaModalCopyLinkBtn.innerHTML;
     const ok = await copyTextToClipboard(shareUrl);
     try { if (copyLinkBtnResetTimer) { clearTimeout(copyLinkBtnResetTimer); copyLinkBtnResetTimer = null; } } catch {}
@@ -613,28 +754,59 @@
   function ensureRealtime(){
     if (!sb || rtChan) return;
     try {
-      rtChan = sb.channel('rb:idea_board').on('postgres_changes', { event: '*', schema: 'public', table: 'idea_board' }, (payload)=>{
-        // Simple strategy: re-fetch on any change
-        fetchIdeas();
-      }).subscribe();
+      rtChan = sb
+        .channel('rb:idea_board')
+        // Re-fetch ideas on any board change
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'idea_board' }, (payload)=>{
+          fetchIdeas();
+        })
+        // Live-update like counts on any like/unlike
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'idea_likes' }, (payload)=>{
+          try {
+            const ideaId = (payload.new && payload.new.idea_id) || (payload.old && payload.old.idea_id) || null;
+            if (ideaId) refreshAllViewOnlyLikeButtons(String(ideaId));
+          } catch {}
+        })
+        .subscribe();
     } catch {}
   }
 
   // URL helpers for deep-linking
-  function getIdeaIdFromURL(){
+  function getIdeaParamFromURL(){
     try {
       const url = new URL(window.location.href);
-      const id = url.searchParams.get('idea');
+      const v = url.searchParams.get('idea');
+      return v ? String(v) : null;
+    } catch { return null; }
+  }
+
+  // Parse ?idea value into { id, slug } where format is "<slug>-<id>".
+  function parseIdeaParam(val){
+    if (!val) return { id: null, slug: null };
+    // If the entire value is numeric, treat as id (backward compatibility: ?idea=123)
+    if (/^[0-9]+$/.test(val)) return { slug: null, id: val };
+    // Extract trailing numeric id if present
+    const m = val.match(/^(.*)-([0-9]+)$/);
+    if (m) return { slug: m[1] || null, id: m[2] || null };
+    return { slug: val, id: null };
+  }
+  function getTopicIdFromURL(){
+    try {
+      const url = new URL(window.location.href);
+      const id = url.searchParams.get('topic');
       return id ? String(id) : null;
     } catch { return null; }
   }
 
   function maybeOpenIdeaFromURL(){
     if (initialURLProcessed) return;
-    const id = getIdeaIdFromURL();
+    const raw = getIdeaParamFromURL();
     initialURLProcessed = true;
-    if (!id) return;
-    const row = (lastItems || []).find(r => String(r.id) === String(id));
+    if (!raw) return;
+    const { id, slug } = parseIdeaParam(raw);
+    let row = null;
+    if (id) row = (lastItems || []).find(r => String(r.id) === String(id));
+    if (!row && slug) row = (lastItems || []).find(r => titleToSlug(r.title || '') === String(slug));
     if (row){
       suppressPushState = true;
       try { openIdeaModal(row); } finally { suppressPushState = false; }
@@ -644,10 +816,32 @@
   window.addEventListener('popstate', ()=>{
     suppressPushState = true;
     try {
-      const id = getIdeaIdFromURL();
-      if (id){
-        const row = (lastItems || []).find(r => String(r.id) === String(id));
+      // Handle topic navigation
+      const tId = getTopicIdFromURL();
+      selectedTopicId = tId || null;
+      if (selectedTopicId){
+        showTopicView(findTopicById(selectedTopicId));
+        fetchIdeas();
+      } else {
+        showTopicsLanding();
+      }
+      // Handle idea deep-link
+      const raw = getIdeaParamFromURL();
+      if (raw){
+        const { id, slug } = parseIdeaParam(raw);
+        let row = null;
+        if (id) row = (lastItems || []).find(r => String(r.id) === String(id));
+        if (!row && slug) row = (lastItems || []).find(r => titleToSlug(r.title || '') === String(slug));
         if (row) { openIdeaModal(row); }
+        // If not found in current list, try fetching single idea (id only, to ensure accuracy)
+        else if (sb && id){
+          sb.from('idea_board').select('id, title, content, author_name, image_url, visible, pinned, created_at, topic_id').eq('id', id).maybeSingle().then(({ data })=>{
+            if (data){
+              if (!selectedTopicId && data.topic_id){ selectedTopicId = String(data.topic_id); showTopicView(findTopicById(selectedTopicId)); fetchIdeas(); }
+              openIdeaModal(data);
+            }
+          }).catch(()=>{});
+        }
       } else {
         closeIdeaModal();
       }
@@ -664,23 +858,58 @@
   async function fetchIdeas(){
     if (sb){
       try {
-        const { data, error } = await sb
+        let q = sb
           .from('idea_board')
-          .select('id, title, content, author_name, image_url, visible, pinned, created_at')
-          .eq('visible', true)
+          .select('id, title, content, author_name, image_url, visible, pinned, created_at, topic_id')
+          .eq('visible', true);
+        if (selectedTopicId) q = q.eq('topic_id', selectedTopicId);
+        const { data, error } = await q
           .order('pinned', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false });
         if (error) throw error;
-        renderList(Array.isArray(data) ? data : []);
+        const rows = Array.isArray(data) ? data : [];
+        renderList(rows);
         maybeOpenIdeaFromURL();
         return;
       } catch (e){ console.warn('idea_board fetch failed', e); }
     }
     // fallback
-    renderList(getLocalIdeas());
+    const all = getLocalIdeas();
+    const filteredLS = selectedTopicId ? all.filter(r => String(r.topic_id) === String(selectedTopicId)) : all;
+    renderList(filteredLS);
     maybeOpenIdeaFromURL();
   }
 
-  fetchIdeas();
+  // Bind topics UI
+  topicsRefreshBtn?.addEventListener('click', (e)=>{ e.preventDefault(); fetchTopics(); });
+  topicsGrid?.addEventListener('click', (e)=>{
+    const card = e.target && e.target.closest ? e.target.closest('.topic-card') : null;
+    if (!card) return;
+    const id = card.getAttribute('data-id');
+    if (!id) return;
+    selectedTopicId = String(id);
+    showTopicView(findTopicById(selectedTopicId));
+    try {
+      if (!suppressPushState){ const url = new URL(window.location.href); url.searchParams.set('topic', selectedTopicId); history.pushState({ topicId: selectedTopicId }, '', url.toString()); }
+    } catch {}
+    fillTopicSelect();
+    fetchIdeas();
+  });
+  backToTopicsBtn?.addEventListener('click', (e)=>{
+    e.preventDefault();
+    selectedTopicId = null;
+    showTopicsLanding();
+    try { const url = new URL(window.location.href); url.searchParams.delete('topic'); history.pushState({}, '', url.toString()); } catch {}
+  });
+
+  async function initBoard(){
+    await fetchTopics();
+    const tId = getTopicIdFromURL();
+    if (tId){ selectedTopicId = String(tId); showTopicView(findTopicById(selectedTopicId)); fillTopicSelect(); }
+    else { showTopicsLanding(); }
+    await fetchIdeas();
+  }
+
+  initBoard();
   ensureRealtime();
 })();
