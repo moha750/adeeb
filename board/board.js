@@ -43,12 +43,13 @@
   let rtChan = null;
   let selectedFile = null;
   let lastItems = [];
+  let currentModalIdea = null;
   let copyBtnResetTimer = null;
   let copyLinkBtnResetTimer = null;
   let initialURLProcessed = false; // ensure auto-open from URL runs once
   let selectedTopicId = null; // currently selected topic
   let topicList = []; // cached topics
-  let suppressPushState = false; // guard pushState during programmatic navigation
+
   function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function fmtArDateTime(iso){
     try {
@@ -61,7 +62,7 @@
       });
     } catch { return iso || ''; }
   }
-
+  
   function timeAgoAr(iso){
     try {
       const d = new Date(iso);
@@ -106,25 +107,6 @@
       return `نُشر منذ ${year} سنوات`;
     } catch {
       return '';
-    }
-  }
-
-  // Create a URL-safe alias from title, with a short random suffix to reduce collisions
-  function makeAlias(title){
-    try {
-      const base = String(title || '')
-        .normalize('NFKC')
-        .trim()
-        .slice(0, 60)
-        .replace(/[^\p{L}\p{N}]+/gu, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '')
-        .toLowerCase();
-      const rnd = Math.random().toString(36).slice(2, 6);
-      const core = base || 'idea';
-      return `${core}-${rnd}`;
-    } catch {
-      return `idea-${Math.random().toString(36).slice(2, 6)}`;
     }
   }
 
@@ -379,7 +361,7 @@
       try {
         let q = sb
           .from('idea_board')
-          .select('*')
+          .select('id, title, content, author_name, image_url, visible, pinned, created_at, topic_id')
           .eq('visible', true);
         if (selectedTopicId) q = q.eq('topic_id', selectedTopicId);
         const { data, error } = await q
@@ -450,7 +432,7 @@
           const url = new URL(window.location.href);
           if (url.searchParams.has('idea')){
             url.searchParams.delete('idea');
-            history.replaceState({}, '', decodeURI(url.toString()));
+            history.replaceState({}, '', url.toString());
           }
         }
       } catch {}
@@ -531,15 +513,14 @@
     ideaModal.removeAttribute('hidden');
     try { if (document && document.body) document.body.classList.add('modal-open'); } catch {}
     document.addEventListener('keydown', onEscClose);
-    // Push ?idea=<alias or id> to URL so it can be shared/back-button aware
+    // Push ?idea=<id> to URL so it can be shared/back-button aware
     try {
       if (!suppressPushState) {
         const url = new URL(window.location.href);
         const current = url.searchParams.get('idea');
-        const keyForUrl = (row.alias && String(row.alias).trim()) ? String(row.alias).trim() : String(row.id);
-        if (String(current) !== keyForUrl){
-          url.searchParams.set('idea', keyForUrl);
-          history.pushState({ ideaId: row.id, ideaKey: keyForUrl }, '', decodeURI(url.toString()));
+        if (String(current) !== String(row.id)){
+          url.searchParams.set('idea', row.id);
+          history.pushState({ ideaId: row.id }, '', url.toString());
         }
       }
     } catch {}
@@ -578,29 +559,8 @@
           image_url = pub?.data?.publicUrl || null;
         }
         const payload = { title: title || null, content, author_name: name, image_url, image_key, visible: true, pinned: false, topic_id: topicId };
-        const aliasCandidate = title ? makeAlias(title) : null;
-        let inserted = false;
-        // Try insert with alias (if column exists). If it fails due to missing column, retry without alias.
-        if (aliasCandidate){
-          try {
-            const { error: e1 } = await sb.from('idea_board').insert({ ...payload, alias: aliasCandidate });
-            if (e1) throw e1;
-            inserted = true;
-          } catch (e) {
-            const msg = String(e?.message || '').toLowerCase();
-            if (msg.includes('alias') && msg.includes('column') && msg.includes('does not exist')){
-              const { error: e2 } = await sb.from('idea_board').insert(payload);
-              if (e2) throw e2;
-              inserted = true;
-            } else {
-              throw e;
-            }
-          }
-        }
-        if (!inserted){
-          const { error: e } = await sb.from('idea_board').insert(payload);
-          if (e) throw e;
-        }
+        const { error } = await sb.from('idea_board').insert(payload);
+        if (error) throw error;
         setMsg('تم نشر الفكرة. شكراً لمشاركتك!');
         ideaForm.reset();
         ideaContent.dispatchEvent(new Event('input'));
@@ -751,8 +711,7 @@
     e.preventDefault();
     const row = currentModalIdea;
     if (!row) return;
-    const keyForUrl = (row.alias && String(row.alias).trim()) ? String(row.alias).trim() : String(row.id);
-    const shareUrl = `${location.origin}${location.pathname}?idea=${keyForUrl}`;
+    const shareUrl = `${location.origin}${location.pathname}?idea=${encodeURIComponent(row.id)}`;
     const origHtml = ideaModalCopyLinkBtn.innerHTML;
     const ok = await copyTextToClipboard(shareUrl);
     try { if (copyLinkBtnResetTimer) { clearTimeout(copyLinkBtnResetTimer); copyLinkBtnResetTimer = null; } } catch {}
@@ -803,63 +762,16 @@
       return id ? String(id) : null;
     } catch { return null; }
   }
-  
-  // Helpers to support alias-based deep links
-  function splitIdeaParam(raw){
-    try {
-      const s = String(raw);
-      const idx = s.lastIndexOf('~');
-      if (idx >= 0) {
-        return { id: s.slice(idx+1), alias: s.slice(0, idx) };
-      }
-      return { id: s, alias: s };
-    } catch {
-      return { id: raw, alias: raw };
-    }
-  }
-  function findIdeaInListByParam(raw){
-    try {
-      const sp = splitIdeaParam(raw);
-      return (lastItems || []).find(r => String(r.id) === String(sp.id) || (r.alias && String(r.alias) === String(sp.alias))) || null;
-    } catch { return null; }
-  }
 
   function maybeOpenIdeaFromURL(){
     if (initialURLProcessed) return;
-    const key = getIdeaIdFromURL();
+    const id = getIdeaIdFromURL();
     initialURLProcessed = true;
-    if (!key) return;
-    const row = findIdeaInListByParam(key);
+    if (!id) return;
+    const row = (lastItems || []).find(r => String(r.id) === String(id));
     if (row){
       suppressPushState = true;
       try { openIdeaModal(row); } finally { suppressPushState = false; }
-    } else if (sb){
-      const sp = splitIdeaParam(key);
-      const isNumericId = /^[0-9]+$/.test(String(sp.id || ''));
-      try {
-        if (isNumericId) {
-          sb.from('idea_board').select('*').eq('id', sp.id).maybeSingle().then(({ data })=>{
-            if (data){
-              if (!selectedTopicId && data.topic_id){ selectedTopicId = String(data.topic_id); showTopicView(findTopicById(selectedTopicId)); fetchIdeas(); }
-              openIdeaModal(data);
-            } else {
-              sb.from('idea_board').select('*').eq('alias', sp.alias).maybeSingle().then(({ data })=>{
-                if (data){
-                  if (!selectedTopicId && data.topic_id){ selectedTopicId = String(data.topic_id); showTopicView(findTopicById(selectedTopicId)); fetchIdeas(); }
-                  openIdeaModal(data);
-                }
-              }).catch(()=>{});
-            }
-          }).catch(()=>{});
-        } else {
-          sb.from('idea_board').select('*').eq('alias', sp.alias).maybeSingle().then(({ data })=>{
-            if (data){
-              if (!selectedTopicId && data.topic_id){ selectedTopicId = String(data.topic_id); showTopicView(findTopicById(selectedTopicId)); fetchIdeas(); }
-              openIdeaModal(data);
-            }
-          }).catch(()=>{});
-        }
-      } catch {}
     }
   }
 
@@ -876,36 +788,18 @@
         showTopicsLanding();
       }
       // Handle idea deep-link
-      const key = getIdeaIdFromURL();
-      if (key){
-        const row = findIdeaInListByParam(key);
+      const id = getIdeaIdFromURL();
+      if (id){
+        const row = (lastItems || []).find(r => String(r.id) === String(id));
         if (row) { openIdeaModal(row); }
-        // If not found in current list, try fetching single idea (by id first, then alias)
+        // If not found in current list, try fetching single idea
         else if (sb){
-          const sp = splitIdeaParam(key);
-          const isNumericId = /^[0-9]+$/.test(String(sp.id || ''));
-          if (isNumericId){
-            sb.from('idea_board').select('*').eq('id', sp.id).maybeSingle().then(({ data })=>{
-              if (data){
-                if (!selectedTopicId && data.topic_id){ selectedTopicId = String(data.topic_id); showTopicView(findTopicById(selectedTopicId)); fetchIdeas(); }
-                openIdeaModal(data);
-              } else {
-                sb.from('idea_board').select('*').eq('alias', sp.alias).maybeSingle().then(({ data })=>{
-                  if (data){
-                    if (!selectedTopicId && data.topic_id){ selectedTopicId = String(data.topic_id); showTopicView(findTopicById(selectedTopicId)); fetchIdeas(); }
-                    openIdeaModal(data);
-                  }
-                }).catch(()=>{});
-              }
-            }).catch(()=>{});
-          } else {
-            sb.from('idea_board').select('*').eq('alias', sp.alias).maybeSingle().then(({ data })=>{
-              if (data){
-                if (!selectedTopicId && data.topic_id){ selectedTopicId = String(data.topic_id); showTopicView(findTopicById(selectedTopicId)); fetchIdeas(); }
-                openIdeaModal(data);
-              }
-            }).catch(()=>{});
-          }
+          sb.from('idea_board').select('id, title, content, author_name, image_url, visible, pinned, created_at, topic_id').eq('id', id).maybeSingle().then(({ data })=>{
+            if (data){
+              if (!selectedTopicId && data.topic_id){ selectedTopicId = String(data.topic_id); showTopicView(findTopicById(selectedTopicId)); fetchIdeas(); }
+              openIdeaModal(data);
+            }
+          }).catch(()=>{});
         }
       } else {
         closeIdeaModal();
@@ -925,7 +819,7 @@
       try {
         let q = sb
           .from('idea_board')
-          .select('*')
+          .select('id, title, content, author_name, image_url, visible, pinned, created_at, topic_id')
           .eq('visible', true);
         if (selectedTopicId) q = q.eq('topic_id', selectedTopicId);
         const { data, error } = await q
