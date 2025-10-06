@@ -619,7 +619,8 @@ body.no-scroll { overflow: hidden; }
   padding: 12px 16px; 
   border-top: 1px solid var(--border);
   background: #fff; 
-  position: sticky; bottom: 0; 
+  position: sticky; bottom: 0;
+  justify-content: space-around; 
 }
 
 /* Responsive */
@@ -1023,6 +1024,65 @@ body.no-scroll { overflow: hidden; }
 .chip { border: 1px solid var(--border); background: #fff; border-radius: 999px; padding: 4px 10px; font-size: .85rem; cursor: pointer; }
 .chip.active { background: rgba(61,143,214,.07); border-color: rgba(61,143,214,.5); color: var(--main-blue); }
 .empty-state { text-align: center; padding: 12px; }
+
+/* Simple list for Idea Board (admin) */
+.simple-list { display: grid; gap: 8px; }
+.simple-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+}
+.simple-list__title {
+  font-family: fb, system-ui, sans-serif;
+  color: var(--main-blue);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.simple-list__actions { display: flex; gap: 6px; }
+
+/* Topic groups (Idea Board admin) */
+.topic-group {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+.topic-group + .topic-group { margin-top: 14px; }
+.topic-group__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  background: linear-gradient(0deg, rgba(61,143,214,.06), rgba(61,143,214,.06)), #fff;
+  border-bottom: 1px solid var(--border);
+}
+.topic-group__title {
+  font-family: fb, system-ui, sans-serif;
+  color: var(--main-blue);
+  font-size: 1.05rem;
+}
+.topic-group__meta { display: flex; align-items: center; gap: 8px; }
+.topic-group__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: var(--main-blue);
+  font-weight: 600;
+}
+.topic-group__desc { padding: 10px 14px; color: var(--muted); }
+.topic-group__list { padding: 12px 14px; display: grid; gap: 8px; }
 
 .chat-history-tools { padding: 6px 12px; border-bottom: 1px solid var(--border); background: #fff; }
 .btn.small { padding: 6px 10px; font-size: .85rem; }

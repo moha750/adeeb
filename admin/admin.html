@@ -280,24 +280,32 @@
             <div id="ideaTopicsEmpty" class="empty-state muted" style="display:none">لا توجد مواضيع بعد</div>
           </div>
           <div class="panel" style="padding:16px">
-            <div style="overflow:auto">
-              <table class="table" style="width:100%; border-collapse:collapse">
-                <thead>
-                  <tr>
-                    <th style="text-align:right; padding:12px">التاريخ</th>
-                    <th style="text-align:right; padding:12px">الاسم</th>
-                    <th style="text-align:right; padding:12px">الفكرة</th>
-                    <th style="text-align:right; padding:12px">صورة</th>
-                    <th style="text-align:right; padding:12px">مثبت</th>
-                    <th style="text-align:right; padding:12px">ظاهر</th>
-                    <th style="text-align:right; padding:12px">إجراءات</th>
-                  </tr>
-                </thead>
-                <tbody id="ideaBoardTableBody"></tbody>
-              </table>
-              <div id="ideaBoardEmpty" class="empty-state muted" style="display:none">لا توجد أفكار بعد</div>
-            </div>
+            <div id="ideaBoardList" class="simple-list" aria-live="polite"></div>
+            <div id="ideaBoardEmpty" class="empty-state muted" style="display:none">لا توجد أفكار بعد</div>
           </div>
+          <!-- Idea Details Dialog -->
+          <dialog id="ideaDetailsDialog" class="admin-dialog">
+            <form method="dialog" class="dialog-form" id="ideaDetailsForm">
+              <div class="dialog-header">
+                <h3 class="dialog-title">تفاصيل الفكرة</h3>
+                <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="dialog-body">
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr">
+                  <label>العنوان<div id="ideaDetailsTitle" class="muted"></div></label>
+                  <label>الاسم<div id="ideaDetailsAuthor" class="muted"></div></label>
+                  <label>التاريخ<div id="ideaDetailsDate" class="muted"></div></label>
+                  <label>الموضوع<div id="ideaDetailsTopic" class="muted"></div></label>
+                  <label style="grid-column: 1 / -1">المحتوى<div id="ideaDetailsContent" class="muted" style="white-space:pre-wrap"></div></label>
+                </div>
+              </div>
+              <menu class="dialog-actions">
+                <button type="button" class="btn btn-outline" id="ideaPinToggleBtn"><i class="fa-solid fa-thumbtack"></i> تبديل التثبيت</button>
+                <button type="button" class="btn btn-outline" id="ideaVisToggleBtn"><i class="fa-solid fa-eye"></i> إظهار/إخفاء</button>
+                <button type="button" class="btn btn-outline" id="ideaDeleteBtn"><i class="fa-regular fa-trash-can"></i> حذف</button>
+              </menu>
+            </form>
+          </dialog>
           <!-- Topic Dialog -->
           <dialog id="topicDialog" class="admin-dialog">
             <form method="dialog" class="dialog-form" id="topicForm">

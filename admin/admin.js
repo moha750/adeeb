@@ -21,6 +21,17 @@
   const ideaBoardTableBody = document.getElementById('ideaBoardTableBody');
   const ideaBoardEmpty = document.getElementById('ideaBoardEmpty');
   const ideaBoardRefreshBtn = document.getElementById('ideaBoardRefreshBtn');
+  const ideaBoardList = document.getElementById('ideaBoardList');
+  // Idea Details dialog elements
+  const ideaDetailsDialog = document.getElementById('ideaDetailsDialog');
+  const ideaDetailsTitle = document.getElementById('ideaDetailsTitle');
+  const ideaDetailsAuthor = document.getElementById('ideaDetailsAuthor');
+  const ideaDetailsDate = document.getElementById('ideaDetailsDate');
+  const ideaDetailsTopic = document.getElementById('ideaDetailsTopic');
+  const ideaDetailsContent = document.getElementById('ideaDetailsContent');
+  const ideaPinToggleBtn = document.getElementById('ideaPinToggleBtn');
+  const ideaVisToggleBtn = document.getElementById('ideaVisToggleBtn');
+  const ideaDeleteBtn = document.getElementById('ideaDeleteBtn');
   // Idea Topics (admin)
   const ideaTopicsList = document.getElementById('ideaTopicsList');
   const ideaTopicsEmpty = document.getElementById('ideaTopicsEmpty');
@@ -155,6 +166,8 @@
     const rows = await fetchTopicsAdmin();
     topics = rows.slice();
     renderIdeaTopicsList(rows);
+    // Re-render ideas to reflect updated topic titles/grouping
+    try { if (ideaBoardList) renderIdeaBoardSimpleList(lastIdeaRows); } catch {}
   }
   async function uploadTopicImageIfAny() {
     const file = topicImageFileInput?.files && topicImageFileInput.files[0];
@@ -441,7 +454,7 @@
       try {
         const { data, error } = await sb
           .from('idea_board')
-          .select('id, content, author_name, image_url, image_key, visible, pinned, created_at')
+          .select('id, title, content, author_name, image_url, image_key, visible, pinned, created_at, topic_id')
           .order('pinned', { ascending: false })
           .order('created_at', { ascending: false });
         if (error) throw error;
@@ -453,33 +466,121 @@
     return localIdeasGet();
   }
 
-  function renderIdeaBoardTableRows(rows) {
-    if (!ideaBoardTableBody) return;
-    ideaBoardTableBody.innerHTML = '';
+  // ===== Idea Board (Admin): Simplified list + details modal =====
+  let lastIdeaRows = [];
+
+  function renderIdeaBoardSimpleList(rows) {
+    if (!ideaBoardList) return;
+    ideaBoardList.innerHTML = '';
     const list = Array.isArray(rows) ? rows : [];
+    lastIdeaRows = list.slice();
     if (ideaBoardEmpty) ideaBoardEmpty.style.display = list.length ? 'none' : '';
-    list.forEach((row, idx) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="padding:10px" data-label="التاريخ">${fmtArDateTime(row.created_at)}</td>
-        <td style="padding:10px" data-label="الاسم">${escapeHtml(row.author_name || 'مجهول')}</td>
-        <td style="padding:10px" data-label="الفكرة">${escapeHtml(row.content || '')}</td>
-        <td style="padding:10px" data-label="صورة">${row.image_url ? `<a href="${escapeHtml(row.image_url)}" target="_blank" rel="noopener"><img src="${escapeHtml(row.image_url)}" alt="img" style="width:64px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" onerror="this.style.display='none'"/></a>` : '—'}</td>
-        <td style="padding:10px" data-label="مثبت">${row.pinned ? '<span class="chip active">نعم</span>' : '<span class="chip">لا</span>'}</td>
-        <td style="padding:10px" data-label="ظاهر">${row.visible ? '<span class="chip active">نعم</span>' : '<span class="chip">لا</span>'}</td>
-        <td style="padding:10px;white-space:nowrap" data-label="إجراءات">
-          <button class="btn btn-outline btn-xs" data-act="pin" data-id="${row.id}" title="تبديل التثبيت"><i class="fa-solid fa-thumbtack"></i></button>
-          <button class="btn btn-outline btn-xs" data-act="toggle" data-id="${row.id}" title="إظهار/إخفاء"><i class="fa-solid fa-eye"></i></button>
-          <button class="btn btn-outline btn-xs" data-act="del" data-id="${row.id}" title="حذف"><i class="fa-regular fa-trash-can"></i></button>
-        </td>
-      `;
-      ideaBoardTableBody.appendChild(tr);
+
+    // Build groups by topic_id
+    const tlist = Array.isArray(topics) ? topics.slice() : [];
+    const tmap = new Map(tlist.map(t => [String(t.id), t]));
+    const groups = new Map();
+    list.forEach((row) => {
+      const key = row.topic_id ? String(row.topic_id) : '__none__';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(row);
     });
+    const sortItems = (arr) => arr.sort((a,b) => {
+      const p = (b.pinned === true) - (a.pinned === true);
+      if (p) return p;
+      try { return new Date(b.created_at) - new Date(a.created_at); } catch { return 0; }
+    });
+
+    function renderGroup(title, desc, key) {
+      const items = sortItems(groups.get(key) || []);
+      if (!items.length) return;
+      const wrap = document.createElement('section');
+      wrap.className = 'topic-group';
+      const safeTitle = escapeHtml(title || 'بدون موضوع');
+      wrap.innerHTML = `
+        <header class="topic-group__head">
+          <div class="topic-group__title">${safeTitle}</div>
+          <div class="topic-group__meta">
+            <span class="topic-group__count">${items.length}</span>
+          </div>
+        </header>
+        <div class="topic-group__list"></div>
+      `;
+      const listEl = wrap.querySelector('.topic-group__list');
+      items.forEach((row) => {
+        const item = document.createElement('div');
+        item.className = 'simple-list__item';
+        const title = String(row.title || 'فكرة');
+        const chips = [
+          row.pinned ? '<span class="chip active">مثبّت</span>' : '',
+          (row.visible === false) ? '<span class="chip">مخفي</span>' : ''
+        ].filter(Boolean).join(' ');
+        item.innerHTML = `
+          <div class="simple-list__title" title="${escapeHtml(title)}">${escapeHtml(title)} ${chips ? ('&nbsp;' + chips) : ''}</div>
+          <div class="simple-list__actions">
+            <button class="btn btn-outline btn-xs view-idea" data-id="${row.id}" aria-label="عرض التفاصيل"><i class="fa-solid fa-eye"></i></button>
+          </div>
+        `;
+        listEl.appendChild(item);
+      });
+      ideaBoardList.appendChild(wrap);
+    }
+
+    // Render groups in topics order
+    tlist.forEach(t => {
+      const key = String(t.id);
+      renderGroup(t.title || 'موضوع', t.description || '', key);
+    });
+    // Render groups not present in topics list (unknown topics)
+    groups.forEach((arr, key) => {
+      if (key === '__none__') return;
+      if (!tmap.has(String(key))) {
+        renderGroup('موضوع غير معروف', '', key);
+      }
+    });
+    // Finally, render unassigned group
+    if (groups.has('__none__')) {
+      renderGroup('بدون موضوع', '', '__none__');
+    }
+  }
+
+  function openIdeaDetails(row){
+    if (!row) return;
+    try {
+      if (ideaDetailsTitle) ideaDetailsTitle.textContent = row.title || 'فكرة';
+      if (ideaDetailsAuthor) ideaDetailsAuthor.textContent = row.author_name || 'مجهول';
+      if (ideaDetailsDate) ideaDetailsDate.textContent = fmtArDateTime(row.created_at);
+      if (ideaDetailsTopic) {
+        let t = '—';
+        try {
+          const tlist = Array.isArray(topics) ? topics : [];
+          const found = tlist.find(tp => String(tp.id) === String(row.topic_id));
+          t = found?.title ? String(found.title) : '—';
+        } catch {}
+        ideaDetailsTopic.textContent = t;
+      }
+      if (ideaDetailsContent) ideaDetailsContent.textContent = row.content || '';
+      // Stash current id on the action buttons for convenience
+      const id = row.id;
+      if (ideaPinToggleBtn) ideaPinToggleBtn.dataset.id = id;
+      if (ideaVisToggleBtn) ideaVisToggleBtn.dataset.id = id;
+      if (ideaDeleteBtn) ideaDeleteBtn.dataset.id = id;
+      // Update buttons' labels according to state
+      try {
+        if (ideaPinToggleBtn) ideaPinToggleBtn.innerHTML = row.pinned
+          ? '<i class="fa-solid fa-thumbtack"></i> إزالة التثبيت'
+          : '<i class="fa-solid fa-thumbtack"></i> تثبيت';
+        if (ideaVisToggleBtn) ideaVisToggleBtn.innerHTML = row.visible
+          ? '<i class="fa-solid fa-eye-slash"></i> إخفاء'
+          : '<i class="fa-solid fa-eye"></i> إظهار';
+      } catch {}
+      openDialog?.(ideaDetailsDialog);
+    } catch {}
   }
 
   async function loadIdeaBoardAdmin() {
     const rows = await fetchIdeasAdmin();
-    renderIdeaBoardTableRows(rows);
+    renderIdeaBoardSimpleList(rows);
   }
 
   ideaBoardRefreshBtn?.addEventListener('click', async (e) => {
@@ -487,56 +588,109 @@
     await loadIdeaBoardAdmin();
   });
 
-  if (ideaBoardTableBody) {
-    ideaBoardTableBody.addEventListener('click', async (e) => {
-      const btn = e.target.closest('button');
+  // Delegated: open details from simplified list
+  if (ideaBoardList) {
+    ideaBoardList.addEventListener('click', (e) => {
+      const btn = e.target.closest?.('.view-idea');
       if (!btn) return;
       const id = btn.dataset.id;
-      const act = btn.dataset.act;
-      if (!id || !act) return;
-      try {
-        if (!sb) {
-          // local fallback: mutate local list
-          let arr = localIdeasGet();
-          const idx = arr.findIndex(r => String(r.id) === String(id));
-          if (idx === -1) return;
-          if (act === 'pin') arr[idx].pinned = !arr[idx].pinned;
-          else if (act === 'toggle') arr[idx].visible = !arr[idx].visible;
-          else if (act === 'del') { if (!confirm('تأكيد الحذف؟')) return; arr.splice(idx, 1); }
-          localIdeasSet(arr);
-          renderIdeaBoardTableRows(arr);
-          return;
-        }
-        if (act === 'pin') {
-          const { data: row } = await sb.from('idea_board').select('pinned').eq('id', id).maybeSingle();
-          const cur = !!(row?.pinned);
-          const { error } = await sb.from('idea_board').update({ pinned: !cur }).eq('id', id);
-          if (error) throw error;
-        } else if (act === 'toggle') {
-          const { data: row } = await sb.from('idea_board').select('visible').eq('id', id).maybeSingle();
-          const cur = !!(row?.visible);
-          const { error } = await sb.from('idea_board').update({ visible: !cur }).eq('id', id);
-          if (error) throw error;
-        } else if (act === 'del') {
-          if (!confirm('تأكيد الحذف؟')) return;
-          // fetch image key before deletion
-          let imgKey = null;
-          try {
-            const f = await sb.from('idea_board').select('image_key').eq('id', id).maybeSingle();
-            imgKey = f?.data?.image_key || null;
-          } catch {}
-          const { error } = await sb.from('idea_board').delete().eq('id', id);
-          if (error) throw error;
-          if (imgKey) {
-            try { await sb.storage.from('idea-board').remove([imgKey]); } catch {}
-          }
-        }
-        await loadIdeaBoardAdmin();
-      } catch (err) {
-        alert('فشل العملية: ' + (err?.message || 'غير معروف'));
-      }
+      const row = lastIdeaRows.find(r => String(r.id) === String(id));
+      if (row) openIdeaDetails(row);
     });
   }
+
+  // Dialog actions
+
+  ideaPinToggleBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const id = ideaPinToggleBtn?.dataset?.id;
+    if (!id) return;
+    try {
+      if (!sb) {
+        const arr = localIdeasGet();
+        const idx = arr.findIndex(r => String(r.id) === String(id));
+        if (idx === -1) return;
+        arr[idx].pinned = !arr[idx].pinned;
+        localIdeasSet(arr);
+        await loadIdeaBoardAdmin();
+        // reflect in dialog
+        const row = arr[idx];
+        openIdeaDetails(row);
+        return;
+      }
+      const { data: row } = await sb.from('idea_board').select('pinned').eq('id', id).maybeSingle();
+      const cur = !!(row?.pinned);
+      const { error } = await sb.from('idea_board').update({ pinned: !cur }).eq('id', id);
+      if (error) throw error;
+      await loadIdeaBoardAdmin();
+      const updated = lastIdeaRows.find(r => String(r.id) === String(id));
+      if (updated) openIdeaDetails(updated);
+    } catch (err) {
+      alert('فشل العملية: ' + (err?.message || 'غير معروف'));
+    }
+  });
+
+  ideaVisToggleBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const id = ideaVisToggleBtn?.dataset?.id;
+    if (!id) return;
+    try {
+      if (!sb) {
+        const arr = localIdeasGet();
+        const idx = arr.findIndex(r => String(r.id) === String(id));
+        if (idx === -1) return;
+        arr[idx].visible = !arr[idx].visible;
+        localIdeasSet(arr);
+        await loadIdeaBoardAdmin();
+        const row = arr[idx];
+        openIdeaDetails(row);
+        return;
+      }
+      const { data: row } = await sb.from('idea_board').select('visible').eq('id', id).maybeSingle();
+      const cur = !!(row?.visible);
+      const { error } = await sb.from('idea_board').update({ visible: !cur }).eq('id', id);
+      if (error) throw error;
+      await loadIdeaBoardAdmin();
+      const updated = lastIdeaRows.find(r => String(r.id) === String(id));
+      if (updated) openIdeaDetails(updated);
+    } catch (err) {
+      alert('فشل العملية: ' + (err?.message || 'غير معروف'));
+    }
+  });
+
+  ideaDeleteBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const id = ideaDeleteBtn?.dataset?.id;
+    if (!id) return;
+    if (!confirm('تأكيد الحذف؟')) return;
+    try {
+      if (!sb) {
+        const arr = localIdeasGet();
+        const idx = arr.findIndex(r => String(r.id) === String(id));
+        if (idx === -1) return;
+        arr.splice(idx, 1);
+        localIdeasSet(arr);
+        await loadIdeaBoardAdmin();
+        closeDialog?.(ideaDetailsDialog);
+        return;
+      }
+      // fetch image key before deletion
+      let imgKey = null;
+      try {
+        const f = await sb.from('idea_board').select('image_key').eq('id', id).maybeSingle();
+        imgKey = f?.data?.image_key || null;
+      } catch {}
+      const { error } = await sb.from('idea_board').delete().eq('id', id);
+      if (error) throw error;
+      if (imgKey) {
+        try { await sb.storage.from('idea-board').remove([imgKey]); } catch {}
+      }
+      await loadIdeaBoardAdmin();
+      closeDialog?.(ideaDetailsDialog);
+    } catch (err) {
+      alert('فشل العملية: ' + (err?.message || 'غير معروف'));
+    }
+  });
 
   function openMemberDetails(idx) {
     const m = members?.[idx];
