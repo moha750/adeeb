@@ -1,0 +1,23 @@
+{
+  "dir": "rtl",
+  "lang": "ar",
+  "name": "لوحة تحكم أدِيب",
+  "short_name": "أدِيب — إدارة",
+  "description": "لوحة التحكم الإدارية لنادي أدِيب.",
+  "id": "/admin/",
+  "start_url": "/admin/admin.html",
+  "scope": "/admin/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#274060",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "icons/icon-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "الإحصائيات", "short_name": "الإحصائيات", "url": "/admin/admin.html#section-stats" },
+    { "name": "المحادثات", "short_name": "المحادثات", "url": "/admin/admin.html#section-chat" }
+  ]
+}

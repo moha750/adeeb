@@ -6,11 +6,17 @@
       <title>لوحة تحكم — نادي أديب</title>
       <meta name="robots" content="noindex, nofollow" />
       <meta name="googlebot" content="noindex, nofollow" />
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      <meta name="apple-mobile-web-app-title" content="أدِيب — إدارة" />
+      <meta name="theme-color" content="#274060" />
       <link rel="canonical" href="https://www.adeeb.club/admin/admin.html" />
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" />
       <link rel="stylesheet" href="../style.css" />
       <link rel="stylesheet" href="admin.css" />
+      <link rel="manifest" href="manifest.webmanifest" />
+      <link rel="apple-touch-icon" href="/admin/icons/icons/icon-512x512.png" />
     </head>
   <body class="admin-body" style="display:none">
     <header class="admin-header">
@@ -414,6 +420,7 @@
           <div class="section-head">
             <h2><i class="fa-solid fa-id-card"></i> ملفي</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button id="installAppBtn" class="btn btn-primary" style="display:none"><i class="fa-solid fa-download"></i> تثبيت التطبيق</button>
               <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
             </div>
           </div>
@@ -1010,6 +1017,11 @@
     <script src="../supabase-config.js"></script>
     <script>
       (async () => {
+        const VERIFIED_KEY = 'adeeb_admin_verified_ts';
+        const wasVerifiedRecently = (days = 30) => {
+          try { const ts = Number(localStorage.getItem(VERIFIED_KEY) || 0); return (Date.now() - ts) < days * 864e5; } catch { return false; }
+        };
+        const markVerifiedNow = () => { try { localStorage.setItem(VERIFIED_KEY, String(Date.now())); } catch {} };
         const redirectToLogin = () => {
           const url = new URL('../login.html', location.href);
           url.searchParams.set('redirect', 'admin/admin.html');
@@ -1030,6 +1042,12 @@
             .eq('is_admin', true)
             .maybeSingle();
           if (adminErr || !adminRow) {
+            // Offline fallback: if previously verified and currently offline, allow opening the shell
+            if (!navigator.onLine && wasVerifiedRecently()) {
+              document.body.style.display = '';
+              try { if ('serviceWorker' in navigator) { await navigator.serviceWorker.register('./sw.js', { scope: './' }); } } catch {}
+              return;
+            }
             // Logged-in but not admin -> show inline access denied and stop
             document.body.style.display = '';
             document.body.innerHTML = `
@@ -1047,11 +1065,28 @@
             `;
             return;
           }
+          // Mark success to enable offline opening later
+          markVerifiedNow();
         } catch (e) {
+          // If offline and recently verified, allow opening the shell for limited offline use
+          try {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!navigator.onLine && session && wasVerifiedRecently()) {
+              document.body.style.display = '';
+              try { if ('serviceWorker' in navigator) { await navigator.serviceWorker.register('./sw.js', { scope: './' }); } } catch {}
+              return;
+            }
+          } catch {}
           redirectToLogin(); return;
         }
         // Admin verified -> reveal UI
         document.body.style.display = '';
+        // Register service worker (PWA) after access is verified
+        try {
+          if ('serviceWorker' in navigator) {
+            await navigator.serviceWorker.register('./sw.js', { scope: './' });
+          }
+        } catch (e) { console.warn('SW registration failed', e); }
       })();
     </script>
     <script src="admin.js"></script>

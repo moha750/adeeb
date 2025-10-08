@@ -95,6 +95,59 @@
   // Supabase client (if configured)
   const sb = window.sbClient || null;
 
+  // ===== PWA Install (Profile tab) =====
+  const installAppBtn = document.getElementById('installAppBtn');
+  let deferredInstallPrompt = null;
+  function isAppInstalled() {
+    try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch { return false; }
+  }
+  function isIOSLike() {
+    try { return /iphone|ipad|ipod/i.test(navigator.userAgent || ''); } catch { return false; }
+  }
+  function updateInstallButtonVisibility() {
+    if (!installAppBtn) return;
+    const installed = isAppInstalled();
+    // Show if not installed and we either have a prompt (Android/desktop) or we're on iOS (show guide)
+    installAppBtn.style.display = (!installed && (!!deferredInstallPrompt || isIOSLike())) ? '' : 'none';
+  }
+  installAppBtn?.addEventListener('click', async () => {
+    try {
+      if (!deferredInstallPrompt) {
+        // iOS fallback: show guidance to add to home screen
+        if (isIOSLike()) {
+          alert('لتثبيت التطبيق على iOS: افتح الصفحة في Safari، ثم اضغط على زر المشاركة واختر "إضافة إلى الشاشة الرئيسية".');
+        }
+        return;
+      }
+      installAppBtn.disabled = true;
+      const evt = deferredInstallPrompt;
+      deferredInstallPrompt = null; // can only be used once
+      await evt.prompt();
+      const { outcome } = await evt.userChoice;
+      // If dismissed, keep the button hidden until another event fires
+      updateInstallButtonVisibility();
+    } catch {
+      // ignore
+    } finally {
+      if (installAppBtn) installAppBtn.disabled = false;
+    }
+  });
+  window.addEventListener('beforeinstallprompt', (e) => {
+    try {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      updateInstallButtonVisibility();
+    } catch {}
+  });
+  window.addEventListener('appinstalled', () => {
+    try {
+      deferredInstallPrompt = null;
+      updateInstallButtonVisibility();
+    } catch {}
+  });
+  // Initial visibility check
+  try { updateInstallButtonVisibility(); } catch {}
+
   // Edge Functions base URL (derived from project URL)
   const FUNCTIONS_BASE = (window.SUPABASE_URL || '').replace('.supabase.co', '.functions.supabase.co');
 
@@ -2601,6 +2654,7 @@
       // If profile tab is opened, load admin profile info
       if (id === '#section-profile') {
         try { adminLoadProfileIntoForm?.(); } catch {}
+        try { updateInstallButtonVisibility?.(); } catch {}
       }
 
       // If schedule tab is opened, render the calendar
