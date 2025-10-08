@@ -336,6 +336,112 @@
       }
     }
 
+    // ===== Dynamic SEO for Blog Post =====
+    function upsertLink(rel, href) {
+      try {
+        let link = document.head.querySelector(`link[rel="${rel}"]`);
+        if (!link) {
+          link = document.createElement('link');
+          link.setAttribute('rel', rel);
+          document.head.appendChild(link);
+        }
+        if (href) link.setAttribute('href', href);
+        return link;
+      } catch { return null; }
+    }
+    function upsertMetaByName(name, content) {
+      try {
+        let m = document.head.querySelector(`meta[name="${name}"]`);
+        if (!m) { m = document.createElement('meta'); m.setAttribute('name', name); document.head.appendChild(m); }
+        if (content != null) m.setAttribute('content', content);
+        return m;
+      } catch { return null; }
+    }
+    function upsertMetaByProp(prop, content) {
+      try {
+        let m = document.head.querySelector(`meta[property="${prop}"]`);
+        if (!m) { m = document.createElement('meta'); m.setAttribute('property', prop); document.head.appendChild(m); }
+        if (content != null) m.setAttribute('content', content);
+        return m;
+      } catch { return null; }
+    }
+    function stripHtmlToText(html, max = 160) {
+      try {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html || '';
+        const text = (tmp.textContent || tmp.innerText || '').replace(/\s+/g, ' ').trim();
+        return text.length > max ? text.slice(0, max - 1).trim() + '…' : text;
+      } catch { return ''; }
+    }
+    function updatePostSEO(postId, p) {
+      try {
+        const base = 'https://www.adeeb.club/';
+        const canonicalUrl = `${base}blog/post.html?id=${encodeURIComponent(postId)}`;
+        const title = (p.title || '').toString().trim();
+        const description = (p.excerpt && String(p.excerpt).trim())
+          || (p.content_html ? stripHtmlToText(p.content_html, 180) : (p.content ? stripHtmlToText(String(p.content), 180) : ''))
+          || 'تدوينة من منصة مرافئ — مدونة نادي أدِيب.';
+        const image = p.image || p.image_url || p.cover_url || 'https://www.adeeb.club/LOGO.png';
+        const authorName = p.author_name || p.author || 'مدون في نادي أدِيب';
+        const publishedAt = p.published_at ? new Date(p.published_at).toISOString() : undefined;
+
+        upsertLink('canonical', canonicalUrl);
+        upsertMetaByName('description', description);
+        upsertMetaByName('robots', 'index, follow');
+        // Open Graph
+        upsertMetaByProp('og:type', 'article');
+        upsertMetaByProp('og:site_name', 'نادي أدِيب');
+        upsertMetaByProp('og:locale', 'ar_SA');
+        upsertMetaByProp('og:title', title ? `${title} — مرافئ` : 'مرافئ — تدوينة');
+        upsertMetaByProp('og:description', description);
+        upsertMetaByProp('og:url', canonicalUrl);
+        upsertMetaByProp('og:image', image);
+        upsertMetaByProp('og:image:alt', title || 'شعار نادي أدِيب');
+        if (publishedAt) upsertMetaByProp('article:published_time', publishedAt);
+        upsertMetaByProp('article:author', authorName);
+        // Twitter
+        upsertMetaByName('twitter:card', 'summary_large_image');
+        upsertMetaByName('twitter:site', '@AB_KFU');
+        upsertMetaByName('twitter:title', title ? `${title} — مرافئ` : 'مرافئ — تدوينة');
+        upsertMetaByName('twitter:description', description);
+        upsertMetaByName('twitter:image', image);
+
+        // JSON-LD BlogPosting
+        try {
+          const old = document.getElementById('post-jsonld');
+          if (old && old.parentNode) old.parentNode.removeChild(old);
+        } catch {}
+        const json = {
+          '@context': 'https://schema.org',
+          '@type': 'BlogPosting',
+          'headline': title || 'تدوينة — مرافئ',
+          'description': description,
+          'image': image,
+          'mainEntityOfPage': canonicalUrl,
+          'url': canonicalUrl,
+          'inLanguage': 'ar',
+          'publisher': {
+            '@type': 'Organization',
+            'name': 'نادي أدِيب',
+            'logo': {
+              '@type': 'ImageObject',
+              'url': 'https://www.adeeb.club/LOGO.png'
+            }
+          },
+          'author': {
+            '@type': 'Person',
+            'name': authorName
+          }
+        };
+        if (publishedAt) json.datePublished = publishedAt;
+        const script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.id = 'post-jsonld';
+        script.textContent = JSON.stringify(json);
+        document.head.appendChild(script);
+      } catch {}
+    }
+
     async function fetchPostFromSupabase(id) {
       if (!sb) return null;
       try {
@@ -1178,12 +1284,13 @@
         }
       } catch {}
       renderPost(post);
+      // Update SEO after content is known
+      try { updatePostSEO(postId, post); } catch {}
       // تجهيز الإعجابات والتعليقات
       await refreshLikesUI(postId);
       await refreshViewsUI(postId);
       // سجل مشاهدة (مرة لكل جهاز في 60 دقيقة)
       trackView(postId);
-      await loadComments(postId);
       // تحديث العنوان
       if (post.title) document.title = `${post.title} — مرافئ`;
       // تشغيل/إيقاف التحديث الزمني لصيغة "منذ" بحسب رؤية التبويب
