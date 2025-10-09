@@ -737,7 +737,7 @@ body.menu-open {
   color: #335c81;
   font-size: 1.3rem;
   max-width: 700px;
-  margin: 0 auto;
+  margin: 0 auto 40px;
   line-height: 1.7;
 }
 
@@ -1387,7 +1387,7 @@ body.menu-open {
   color: rgba(255, 255, 255, 0.9);
   font-size: 1.3rem;
   max-width: 700px;
-  margin: 0 auto;
+  margin: 0 auto 40px;
   line-height: 1.8;
   font-family: "fr";
 }

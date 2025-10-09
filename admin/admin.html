@@ -77,6 +77,73 @@
           </div>
           <div class="cards-grid" id="statsGrid" aria-live="polite"></div>
         </section>
+        
+        <!-- Testimonials Management -->
+        <section id="section-testimonials" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-regular fa-comment-dots"></i> آراء الأعضاء</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addTestimonialBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة رأي</button>
+              <button id="testimonialsRefreshBtn" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+            </div>
+          </div>
+          <div id="testimonialsList" class="cards-grid" aria-live="polite"></div>
+          <div id="testimonialsEmpty" class="empty-state muted" style="display:none">لا توجد آراء بعد</div>
+          
+          <!-- Add/Edit Testimonial Dialog -->
+          <dialog id="testimonialDialog" class="admin-dialog">
+            <form method="dialog" class="dialog-form" id="testimonialForm">
+              <div class="dialog-header">
+                <h3 class="dialog-title">إضافة/تعديل رأي</h3>
+                <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="dialog-body">
+                <div class="form-grid">
+                  <label>
+                    الاسم
+                    <input id="testiAuthor" type="text" placeholder="اسم العضو" required />
+                  </label>
+                  <label>
+                    اللجنة (اختياري)
+                    <input id="testiCommittee" type="text" placeholder="مثال: لجنة التأليف" />
+                  </label>
+                  <label>
+                    التقييم
+                    <select id="testiRating" required>
+                      <option value="5">5</option>
+                      <option value="4">4</option>
+                      <option value="3">3</option>
+                      <option value="2">2</option>
+                      <option value="1">1</option>
+                    </select>
+                  </label>
+                  <label style="grid-column:1/-1">
+                    النص
+                    <textarea id="testiContent" rows="4" placeholder="اكتب الرأي" required></textarea>
+                  </label>
+                  <label>
+                    صورة رمزية (اختياري)
+                    <input id="testiAvatarFile" type="file" accept="image/*" />
+                    <small class="field-help">PNG/JPG/WebP حتى 3MB</small>
+                  </label>
+                  <div id="testiAvatarPreviewWrap" class="img-preview" style="display:none">
+                    <img id="testiAvatarPreview" alt="معاينة" />
+                    <button type="button" class="btn btn-outline btn-xs" id="testiClearAvatarBtn"><i class="fa-solid fa-xmark"></i> إزالة</button>
+                  </div>
+                  <label style="display:flex;align-items:center;gap:8px">
+                    <input id="testiVisible" type="checkbox" checked />
+                    ظاهر للجميع
+                  </label>
+                </div>
+              </div>
+              <menu class="dialog-actions">
+                <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+                <button value="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
+              </menu>
+            </form>
+          </dialog>
+        </section>
         <section id="section-home" class="admin-section" hidden>
           <div class="section-head">
             <h2><i class="fa-solid fa-sitemap"></i> إدارة الموقع</h2>
@@ -142,6 +209,15 @@
                 <p class="card__text" style="color:#64748b; line-height:1.6">إنشاء وتعديل وحذف تدوينات مرافئ مع الصورة والتاريخ والحالة.</p>
                 <div class="card__actions">
                   <button class="btn btn-primary" data-go="#section-blog"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-regular fa-comment-dots"></i> آراء الأعضاء</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">إدارة تقييمات وآراء الأعضاء المعروضة في الصفحة الرئيسية.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-testimonials"><i class="fa-solid fa-arrow-left"></i> فتح</button>
                 </div>
               </div>
             </div>
