@@ -2,7 +2,7 @@
   "dir": "rtl",
   "lang": "ar",
   "name": "لوحة تحكم أدِيب",
-  "short_name": "أدِيب — إدارة",
+  "short_name": "إدارة أدِيب",
   "description": "لوحة التحكم الإدارية لنادي أدِيب.",
   "id": "/admin/",
   "start_url": "/admin/admin.html",
