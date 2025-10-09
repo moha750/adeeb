@@ -46,22 +46,6 @@
   const topicImagePreviewWrap = document.getElementById('topicImagePreviewWrap');
   const topicClearImageBtn = document.getElementById('topicClearImageBtn');
   const topicVisibleInput = document.getElementById('topicVisible');
-  // Testimonials (admin)
-  const testimonialsList = document.getElementById('testimonialsList');
-  const testimonialsEmpty = document.getElementById('testimonialsEmpty');
-  const testimonialsRefreshBtn = document.getElementById('testimonialsRefreshBtn');
-  const addTestimonialBtn = document.getElementById('addTestimonialBtn');
-  const testimonialDialog = document.getElementById('testimonialDialog');
-  const testimonialForm = document.getElementById('testimonialForm');
-  const testiAuthorInput = document.getElementById('testiAuthor');
-  const testiCommitteeInput = document.getElementById('testiCommittee');
-  const testiRatingSelect = document.getElementById('testiRating');
-  const testiContentInput = document.getElementById('testiContent');
-  const testiAvatarFileInput = document.getElementById('testiAvatarFile');
-  const testiAvatarPreview = document.getElementById('testiAvatarPreview');
-  const testiAvatarPreviewWrap = document.getElementById('testiAvatarPreviewWrap');
-  const testiClearAvatarBtn = document.getElementById('testiClearAvatarBtn');
-  const testiVisibleInput = document.getElementById('testiVisible');
   // Schedule elements
   const calendarGrid = $('#calendarGrid');
   const calendarDaysHead = $('#calendarDaysHead');
@@ -106,7 +90,6 @@
     todos: 'adeeb_todos',
     ideas: 'adeeb_ideas_public',
     topics: 'adeeb_idea_topics',
-    testimonials: 'adeeb_testimonials',
   };
 
   // Supabase client (if configured)
@@ -396,235 +379,6 @@
     }
   });
   ideaTopicsRefreshBtn?.addEventListener('click', async (e) => { e.preventDefault(); await loadIdeaTopicsAdmin(); });
-
-  // ===== Testimonials (Members' Opinions) =====
-  // Dialog compatibility helpers
-  function openDlg(dlg) {
-    try {
-      if (!dlg) return;
-      if (typeof openDialog === 'function') return openDialog(dlg);
-      if (typeof dlg.showModal === 'function') return dlg.showModal();
-      dlg.open = true;
-    } catch {}
-  }
-  function closeDlg(dlg) {
-    try {
-      if (!dlg) return;
-      if (typeof closeDialog === 'function') return closeDialog(dlg);
-      if (typeof dlg.close === 'function') return dlg.close();
-      dlg.open = false;
-    } catch {}
-  }
-  function localTestimonialsGet() { try { const raw = localStorage.getItem(KEYS.testimonials); const arr = raw ? JSON.parse(raw) : []; return Array.isArray(arr) ? arr : []; } catch { return []; } }
-  function localTestimonialsSet(arr) { try { localStorage.setItem(KEYS.testimonials, JSON.stringify(Array.isArray(arr) ? arr : [])); } catch {} }
-  async function fetchTestimonialsAdmin() {
-    if (sb) {
-      try {
-        const { data, error } = await sb
-          .from('testimonials')
-          .select('id, author_name, committee, rating, content, avatar_url, visible, order, created_at')
-          .order('order', { ascending: true, nullsFirst: true })
-          .order('created_at', { ascending: false });
-        if (error) throw error;
-        return Array.isArray(data) ? data : [];
-      } catch (e) { console.warn('testimonials fetch (admin) failed', e); }
-    }
-    return localTestimonialsGet();
-  }
-  function renderTestimonialsList(rows) {
-    if (!testimonialsList) return;
-    testimonialsList.innerHTML = '';
-    const list = Array.isArray(rows) ? rows : [];
-    if (testimonialsEmpty) testimonialsEmpty.style.display = list.length ? 'none' : '';
-    list.forEach((row, idx) => {
-      const media = row.avatar_url ? `<img src="${escapeHtml(row.avatar_url)}" alt="${escapeHtml(row.author_name||'عضو')}" onerror="this.style.display='none'"/>` : '';
-      const committee = row.committee ? `<span class="chip">${escapeHtml(row.committee)}</span>` : '';
-      const rating = Math.max(0, Math.min(5, Math.round(Number(row.rating)||0)));
-      const stars = new Array(5).fill(0).map((_,i)=> i<rating? '<i class="fa-solid fa-star"></i>' : '<i class="fa-regular fa-star"></i>').join('');
-      const node = el(`
-        <div class="card draggable-card" data-idx="${idx}" draggable="true">
-          <span class="order-chip">#${(row.order ?? (idx+1))}</span>
-          <div class="card__media">${media}</div>
-          <div class="card__body">
-            <div class="card__title"><i class="fa-regular fa-comment-dots"></i> ${escapeHtml(row.author_name || 'عضو')}</div>
-            <p class="card__text" style="color:#64748b; line-height:1.7">${committee} <span class="testimonial-stars" style="color:#f1b307">${stars}</span><br/>${escapeHtml((row.content||'').toString()).slice(0,180)}</p>
-            <div class="card__actions">
-              <button class="btn btn-outline" data-act="up" data-idx="${idx}" title="تحريك لأعلى"><i class="fa-solid fa-arrow-up"></i></button>
-              <button class="btn btn-outline" data-act="down" data-idx="${idx}" title="تحريك لأسفل"><i class="fa-solid fa-arrow-down"></i></button>
-              <button class="btn btn-outline" data-act="edit" data-idx="${idx}"><i class="fa-solid fa-pen"></i> تعديل</button>
-              <button class="btn btn-outline" data-act="del" data-idx="${idx}"><i class="fa-regular fa-trash-can"></i> حذف</button>
-            </div>
-          </div>
-        </div>
-      `);
-      testimonialsList.appendChild(node);
-    });
-    setupListDnD?.(testimonialsList, testimonials, KEYS.testimonials, 'testimonials', renderTestimonialsList);
-  }
-  async function loadTestimonialsAdmin() {
-    const rows = await fetchTestimonialsAdmin();
-    testimonials = rows.slice();
-    renderTestimonialsList(rows);
-  }
-  async function uploadTestimonialAvatarIfAny() {
-    const file = testiAvatarFileInput?.files && testiAvatarFileInput.files[0];
-    if (!file) return null;
-    if (!sb) return null;
-    const bucket = 'adeeb-site';
-    const ext = (file.name.split('.').pop() || getExtFromType(file.type, 'jpg')).toLowerCase();
-    const safeExt = ext.replace(/[^a-z0-9]/gi, '') || 'jpg';
-    const path = `testimonials/testi-${Date.now()}-${Math.random().toString(36).slice(2,8)}.${safeExt}`;
-    const { error: upErr } = await sb.storage.from(bucket).upload(path, file, { cacheControl: '3600', upsert: false });
-    if (upErr) throw upErr;
-    const { data } = sb.storage.from(bucket).getPublicUrl(path);
-    const publicUrl = data?.publicUrl;
-    if (!publicUrl) throw new Error('تعذر الحصول على رابط الصورة');
-    return publicUrl;
-  }
-  addTestimonialBtn?.addEventListener('click', () => {
-    testiEditingIndex = null;
-    testimonialForm?.reset?.();
-    if (testiAvatarPreview) testiAvatarPreview.src = '';
-    if (testiAvatarPreviewWrap) testiAvatarPreviewWrap.style.display = 'none';
-    openDlg(testimonialDialog);
-  });
-  // Delegated fallback: ensure the Add button always opens the dialog
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest?.('#addTestimonialBtn');
-    if (!btn) return;
-    e.preventDefault();
-    try {
-      testiEditingIndex = null;
-      testimonialForm?.reset?.();
-      if (testiAvatarPreview) testiAvatarPreview.src = '';
-      if (testiAvatarPreviewWrap) testiAvatarPreviewWrap.style.display = 'none';
-      openDlg(testimonialDialog);
-    } catch (err) {
-      console.error('Failed to open testimonial dialog', err);
-      alert('تعذّر فتح نافذة إضافة الرأي. الرجاء تحديث الصفحة ثم المحاولة، أو إرسال لقطة من "الكونسول".');
-    }
-  });
-  testiAvatarFileInput?.addEventListener('change', () => {
-    const file = testiAvatarFileInput.files && testiAvatarFileInput.files[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      if (testiAvatarPreview) testiAvatarPreview.src = url;
-      if (testiAvatarPreviewWrap) testiAvatarPreviewWrap.style.display = '';
-    } else {
-      if (testiAvatarPreviewWrap) testiAvatarPreviewWrap.style.display = 'none';
-    }
-  });
-  testiClearAvatarBtn?.addEventListener('click', (e)=>{ e.preventDefault(); if (testiAvatarFileInput) testiAvatarFileInput.value = ''; if (testiAvatarPreviewWrap) testiAvatarPreviewWrap.style.display='none'; });
-  let testiEditingIndex = null;
-  testimonialsList?.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    const idx = Number(btn.dataset.idx);
-    const act = btn.dataset.act;
-    if (!Number.isInteger(idx) || idx < 0 || idx >= testimonials.length) return;
-    if (act === 'up' || act === 'down') {
-      const newIndex = act === 'up' ? Math.max(0, idx - 1) : Math.min(testimonials.length - 1, idx + 1);
-      if (newIndex === idx) return;
-      const [moved] = testimonials.splice(idx, 1);
-      testimonials.splice(newIndex, 0, moved);
-      normalizeAndPersistOrder(testimonials, KEYS.testimonials, 'testimonials').then(() => {
-        renderTestimonialsList(testimonials);
-      });
-      return;
-    }
-    if (act === 'edit') {
-      testiEditingIndex = idx;
-      const cur = testimonials[idx];
-      if (testiAuthorInput) testiAuthorInput.value = cur.author_name || '';
-      if (testiCommitteeInput) testiCommitteeInput.value = cur.committee || '';
-      if (testiRatingSelect) testiRatingSelect.value = String(cur.rating || 5);
-      if (testiContentInput) testiContentInput.value = cur.content || '';
-      if (testiVisibleInput) testiVisibleInput.checked = (cur.visible ?? true);
-      if (testiAvatarPreview) testiAvatarPreview.src = cur.avatar_url || '';
-      if (testiAvatarPreviewWrap) testiAvatarPreviewWrap.style.display = cur.avatar_url ? '' : 'none';
-      openDlg(testimonialDialog);
-      return;
-    }
-    if (act === 'del') {
-      if (!confirm('تأكيد الحذف؟')) return;
-      const cur = testimonials[idx];
-      if (sb && cur.id) {
-        sb.from('testimonials').delete().eq('id', cur.id).then(({ error }) => {
-          if (error) return alert('فشل الحذف: ' + error.message);
-          testimonials.splice(idx, 1);
-          renderTestimonialsList(testimonials);
-        });
-      } else {
-        testimonials.splice(idx, 1);
-        localTestimonialsSet(testimonials);
-        renderTestimonialsList(testimonials);
-      }
-      return;
-    }
-  });
-  testimonialForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = {
-      author_name: (testiAuthorInput?.value || '').trim(),
-      committee: (testiCommitteeInput?.value || '').trim() || null,
-      rating: Math.max(1, Math.min(5, Number(testiRatingSelect?.value || 5))),
-      content: (testiContentInput?.value || '').trim(),
-      visible: !!(testiVisibleInput?.checked),
-    };
-    if (!data.author_name) { alert('الرجاء إدخال الاسم'); return; }
-    if (!data.content) { alert('الرجاء إدخال النص'); return; }
-    try {
-      let finalAvatarUrl = testiEditingIndex !== null ? (testimonials[testiEditingIndex]?.avatar_url || null) : null;
-      const uploaded = await uploadTestimonialAvatarIfAny();
-      if (uploaded) finalAvatarUrl = uploaded;
-      if (sb) {
-        const { data: { session } } = await sb.auth.getSession();
-        if (!session) return alert('يلزم تسجيل الدخول لإجراء التعديلات');
-        const payload = { author_name: data.author_name, committee: data.committee, rating: data.rating, content: data.content, avatar_url: finalAvatarUrl, visible: data.visible, order: (testiEditingIndex !== null) ? (testimonials[testiEditingIndex]?.order ?? null) : null };
-        const payloadNoOrder = { author_name: data.author_name, committee: data.committee, rating: data.rating, content: data.content, avatar_url: finalAvatarUrl, visible: data.visible };
-        if (testiEditingIndex === null) {
-          let row, error;
-          ({ data: row, error } = await sb.from('testimonials').insert(payload).select('*').single());
-          if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
-            const res2 = await sb.from('testimonials').insert(payloadNoOrder).select('*').single();
-            if (res2.error) return alert('فشل الحفظ: ' + res2.error.message);
-            testimonials.unshift({ ...res2.data, order: payload.order });
-          } else if (error) {
-            return alert('فشل الحفظ: ' + error.message);
-          } else {
-            testimonials.unshift(row);
-          }
-          renderTestimonialsList(testimonials);
-          closeDlg(testimonialDialog);
-        } else {
-          const id = testimonials[testiEditingIndex]?.id;
-          if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
-          let row, error;
-          ({ data: row, error } = await sb.from('testimonials').update(payload).eq('id', id).select('*').single());
-          if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
-            const res2 = await sb.from('testimonials').update(payloadNoOrder).eq('id', id).select('*').single();
-            if (res2.error) return alert('فشل التحديث: ' + res2.error.message);
-            testimonials[testiEditingIndex] = { ...res2.data, order: payload.order };
-          } else if (error) {
-            return alert('فشل التحديث: ' + error.message);
-          } else {
-            testimonials[testiEditingIndex] = row;
-          }
-          renderTestimonialsList(testimonials);
-          closeDlg(testimonialDialog);
-        }
-      } else {
-        const item = { author_name: data.author_name, committee: data.committee, rating: data.rating, content: data.content, avatar_url: finalAvatarUrl, visible: data.visible, order: (testiEditingIndex !== null) ? (testimonials[testiEditingIndex]?.order ?? null) : null };
-        if (testiEditingIndex === null) testimonials.unshift(item); else testimonials[testiEditingIndex] = item;
-        localTestimonialsSet(testimonials);
-        renderTestimonialsList(testimonials);
-        closeDlg(testimonialDialog);
-      }
-    } catch (err) {
-      alert('فشل الحفظ: ' + (err?.message || 'غير معروف'));
-    }
-  });
-  testimonialsRefreshBtn?.addEventListener('click', async (e) => { e.preventDefault(); await loadTestimonialsAdmin(); });
 
   // ===== Schedule (Monthly Calendar) =====
   // Load schedule as a map { 'YYYY-MM-DD': Array<{ title, notes } > }
@@ -2168,7 +1922,6 @@
   let board = load(KEYS.board);
   let members = load(KEYS.members);
   let topics = load(KEYS.topics);
-  let testimonials = load(KEYS.testimonials);
   let faq = load(KEYS.faq);
   let achievements = load(KEYS.achievements);
   let blogPosts = load(KEYS.blog);
@@ -2363,10 +2116,9 @@
     '#section-chat': 'chat',
     '#section-todos': 'todos',
     '#section-admins': 'admins',
-    '#section-testimonials': 'testimonials',
   };
   function defaultAdminPerms() {
-    return { works: true, sponsors: true, achievements: true, board: true, members: true, faq: true, blog: true, schedule: true, idea_board: true, chat: true, todos: true, admins: true, testimonials: true };
+    return { works: true, sponsors: true, achievements: true, board: true, members: true, faq: true, blog: true, schedule: true, idea_board: true, chat: true, todos: true, admins: true };
   }
   function normalizePermsShape(perms) {
     const base = defaultAdminPerms();
@@ -2570,7 +2322,6 @@
           <label><input type="checkbox" id="perm-members" /> أعضاء النادي</label>
           <label><input type="checkbox" id="perm-faq" /> الأسئلة الشائعة</label>
           <label><input type="checkbox" id="perm-blog" /> مرافئ (المدونة)</label>
-          <label><input type="checkbox" id="perm-testimonials" /> آراء الأعضاء</label>
           <label><input type="checkbox" id="perm-idea_board" /> سبورة أدِيب</label>
           <label><input type="checkbox" id="perm-chat" /> المحادثات</label>
           <label><input type="checkbox" id="perm-schedule" /> جدول أدِيب</label>
@@ -2635,7 +2386,6 @@
       setPerm('perm-members', perms.members);
       setPerm('perm-faq', perms.faq);
       setPerm('perm-blog', perms.blog);
-      setPerm('perm-testimonials', perms.testimonials);
       setPerm('perm-idea_board', perms.idea_board);
       setPerm('perm-chat', perms.chat);
       setPerm('perm-schedule', perms.schedule);
@@ -2660,7 +2410,6 @@
           members: !!document.getElementById('perm-members')?.checked,
           faq: !!document.getElementById('perm-faq')?.checked,
           blog: !!document.getElementById('perm-blog')?.checked,
-          testimonials: !!document.getElementById('perm-testimonials')?.checked,
           idea_board: !!document.getElementById('perm-idea_board')?.checked,
           chat: !!document.getElementById('perm-chat')?.checked,
           schedule: !!document.getElementById('perm-schedule')?.checked,
@@ -2959,10 +2708,6 @@
       if (id === '#section-members') {
         try { renderMembers?.(); } catch {}
       }
-      // If testimonials tab is opened, load testimonials
-      if (id === '#section-testimonials') {
-        try { loadTestimonialsAdmin?.(); } catch {}
-      }
 
       // Close sidebar after navigating on mobile
       if (isMobile()) closeSidebar();
@@ -3000,10 +2745,6 @@
     // If navigating via dashboard card to members, render them
     if (id === '#section-members') {
       try { renderMembers?.(); } catch {}
-    }
-    // If navigating via dashboard card to testimonials, load them
-    if (id === '#section-testimonials') {
-      try { loadTestimonialsAdmin?.(); } catch {}
     }
     // keep sidebar active on the single Home tab
     if (isMobile()) closeSidebar();
