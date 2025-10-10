@@ -287,30 +287,11 @@
       if (!confirm('تأكيد الحذف؟')) return;
       const cur = topics[idx];
       if (sb && cur.id) {
-        try {
-          // Check if there are ideas referencing this topic
-          const { count, error: cntErr } = await sb
-            .from('idea_board')
-            .select('id', { count: 'exact', head: true })
-            .eq('topic_id', cur.id);
-          if (cntErr) throw cntErr;
-          if ((count || 0) > 0) {
-            const proceed = confirm(`لا يمكن حذف الموضوع لوجود ${count} فكرة مرتبطة به.\nهل تريد نقلها إلى "بدون موضوع" ثم حذف الموضوع؟`);
-            if (!proceed) return;
-            const { error: upErr } = await sb
-              .from('idea_board')
-              .update({ topic_id: null })
-              .eq('topic_id', cur.id);
-            if (upErr) throw upErr;
-          }
-          const { error: delErr } = await sb.from('idea_topics').delete().eq('id', cur.id);
-          if (delErr) throw delErr;
+        sb.from('idea_topics').delete().eq('id', cur.id).then(({ error }) => {
+          if (error) return alert('فشل الحذف: ' + error.message);
           topics.splice(idx, 1);
           renderIdeaTopicsList(topics);
-          try { await loadIdeaBoardAdmin(); } catch {}
-        } catch (err) {
-          alert('فشل الحذف: ' + (err?.message || 'غير معروف'));
-        }
+        });
       } else {
         topics.splice(idx, 1);
         save(KEYS.topics, topics);
