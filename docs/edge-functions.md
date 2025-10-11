@@ -684,6 +684,11 @@ const ADMIN = {
   manager: 3
 };
 const ALLOWED = [
+  'stats',
+  'home',
+  'members',
+  'idea-board',
+  'profile',
   'works',
   'sponsors',
   'achievements',
