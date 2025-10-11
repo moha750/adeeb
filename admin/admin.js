@@ -5361,7 +5361,10 @@
     adminsStatus && (adminsStatus.className = 'muted', adminsStatus.textContent = 'جاري إرسال الدعوة...');
     try {
       // Dynamic redirect: use current origin (works for local Live Server and production)
-      const redirectTo = `${location.origin}/admin/onboarding.html`;
+      const baseOrigin = location.origin;
+      const redirectTo = (baseOrigin.includes('localhost') || baseOrigin.includes('127.0.0.1'))
+        ? 'https://www.adeeb.club/admin/onboarding.html'
+        : `${baseOrigin}/admin/onboarding.html`;
       await callFunction('invite-admin', { method: 'POST', body: { email, position: position || null, admin_level, redirectTo } });
       if (newAdminEmail) newAdminEmail.value = '';
       const posEl = document.getElementById('newAdminPosition'); if (posEl) posEl.value = '';
