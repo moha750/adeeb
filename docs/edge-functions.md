@@ -699,6 +699,7 @@ const ALLOWED = [
   'idea_board',
   'chat',
   'todos',
+  'testimonials',
   'admins'
 ];
 function normalizeAr(s) {
