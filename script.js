@@ -360,6 +360,121 @@ document.addEventListener("DOMContentLoaded", function () {
     const slidesCount = container.querySelectorAll('.swiper-slide').length;
     testimonialsSwiperInstance = new Swiper(selector, buildUnifiedSwiperConfig(selector, slidesCount));
   }
+  
+  // Fetch testimonials from Supabase with graceful local fallback
+  async function fetchTestimonials() {
+    try {
+      const sb = window.sbClient;
+      if (sb) {
+        const { data, error } = await sb
+          .from('testimonials')
+          .select('id, rating, text, member_name, committee, avatar_url, created_at, visible')
+          .eq('visible', true)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        return Array.isArray(data) ? data : [];
+      }
+    } catch (e) {
+      console.warn('Supabase testimonials fetch failed, will try localStorage.', e);
+    }
+    try {
+      const raw = localStorage.getItem('adeeb_testimonials');
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      console.warn('LocalStorage testimonials parse failed.', e);
+      return [];
+    }
+  }
+  
+  function buildFixedStars(rating) {
+    const r = Math.max(0, Math.min(5, Number(rating) || 0));
+    let html = '';
+    for (let i = 0; i < r; i++) html += '<i class="fa-solid fa-star"></i>';
+    for (let i = r; i < 5; i++) html += '<i class="fa-regular fa-star"></i>';
+    return html;
+  }
+  
+  function fmtRelativeAr(iso) {
+    try {
+      const dt = new Date(iso);
+      const diff = Math.max(0, Date.now() - dt.getTime());
+      const sec = Math.floor(diff / 1000);
+      if (sec < 60) return 'الآن';
+      const min = Math.floor(sec / 60);
+      if (min < 60) return `منذ ${min} دقيقة${min === 2 ? 'ين' : (min > 2 && min < 11 ? 'ً' : '')}`;
+      const hr = Math.floor(min / 60);
+      if (hr < 24) return `منذ ${hr} ساعة`;
+      const day = Math.floor(hr / 24);
+      if (day < 30) return `منذ ${day} يومًا`;
+      // fallback to date string
+      return dt.toLocaleDateString('ar');
+    } catch { return '—'; }
+  }
+  
+  function renderTestimonials(rows) {
+    const wrapper = document.querySelector('.testimonials-swiper .swiper-wrapper');
+    if (!wrapper) return;
+    wrapper.innerHTML = '';
+    const list = Array.isArray(rows) ? rows : [];
+    list.forEach((row) => {
+      const rating = Math.max(1, Math.min(5, Number(row.rating) || 5));
+      const text = String(row.text || '').trim();
+      const name = String(row.member_name || 'عضو').trim();
+      const committee = String(row.committee || '').trim();
+      const neutralAvatar = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#e5e7eb"/><stop offset="1" stop-color="#cbd5e1"/></linearGradient></defs><rect width="64" height="64" fill="url(#g)"/><circle cx="32" cy="24" r="12" fill="#94a3b8"/><path d="M12 54c0-10 10-16 20-16s20 6 20 16" fill="#94a3b8"/></svg>');
+      const avatar = String(row.avatar_url || '').trim() || neutralAvatar;
+      const dateLabel = row.created_at ? fmtRelativeAr(row.created_at) : '—';
+      const slide = document.createElement('div');
+      slide.className = 'swiper-slide';
+      slide.setAttribute('data-rating', String(rating));
+      slide.setAttribute('data-committee', committee || '');
+      slide.innerHTML = `
+        <div class="testimonial-card">
+          <div class="testimonial-header">
+            <div class="testimonial-stars" aria-label="${rating} من 5">${buildFixedStars(rating)}</div>
+            <div class="testimonial-date">${dateLabel}</div>
+          </div>
+          <i class="fas fa-quote-right quote-bg"></i>
+          <p class="testimonial-text">${text.replace(/</g, '&lt;')}</p>
+          <div class="testimonial-user">
+            <img src="${avatar}" alt="عضو" loading="lazy" onerror="this.onerror=null;this.src='${neutralAvatar}'" />
+            <div>
+              <strong>${name}</strong>
+              ${committee ? `<span>${committee}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+      wrapper.appendChild(slide);
+    });
+  }
+  
+  async function loadTestimonialsSection() {
+    try {
+      const rows = await fetchTestimonials();
+      if (Array.isArray(rows) && rows.length) {
+        renderTestimonials(rows);
+        cacheOriginalTestimonials();
+        initTestimonialsSwiper();
+        initTestimonialCardsObserver();
+        updateTestimonialsSummary();
+      } else {
+        // Fallback to existing static slides
+        cacheOriginalTestimonials();
+        initTestimonialsSwiper();
+        initTestimonialCardsObserver();
+        updateTestimonialsSummary();
+      }
+    } catch (e) {
+      console.warn('Testimonials load failed:', e);
+      // Safely initialize whatever is in DOM
+      cacheOriginalTestimonials();
+      initTestimonialsSwiper();
+      initTestimonialCardsObserver();
+      updateTestimonialsSummary();
+    }
+  }
   // Cache original testimonials slides and setup filters/animations
   let testimonialsOriginalSlides = [];
   function cacheOriginalTestimonials() {
@@ -526,11 +641,8 @@ document.addEventListener("DOMContentLoaded", function () {
     initAvgRatingCounter(1);
   }
 
-  // Initialize testimonials on load
-  cacheOriginalTestimonials();
-  initTestimonialsSwiper();
-  initTestimonialCardsObserver();
-  updateTestimonialsSummary();
+  // Initialize testimonials: try Supabase, else keep static content
+  loadTestimonialsSection();
 
   // Work Cards Animation - Removed
 

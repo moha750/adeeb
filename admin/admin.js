@@ -14,6 +14,7 @@
   const boardList = $('#boardList');
   const membersList = $('#membersList');
   const faqList = $('#faqList');
+  const testimonialsList = $('#testimonialsList');
   const blogList = $('#blogList');
   const todosList = $('#todosList');
   const statsGrid = $('#statsGrid');
@@ -90,6 +91,7 @@
     todos: 'adeeb_todos',
     ideas: 'adeeb_ideas_public',
     topics: 'adeeb_idea_topics',
+    testimonials: 'adeeb_testimonials',
   };
 
   // Supabase client (if configured)
@@ -1906,6 +1908,7 @@
   let faq = load(KEYS.faq);
   let achievements = load(KEYS.achievements);
   let blogPosts = load(KEYS.blog);
+  let testimonials = load(KEYS.testimonials);
   let todos = load(KEYS.todos);
   let visitStats = { total: 0, new: 0, returning: 0 };
 
@@ -2097,9 +2100,10 @@
     '#section-chat': 'chat',
     '#section-todos': 'todos',
     '#section-admins': 'admins',
+    '#section-testimonials': 'testimonials',
   };
   function defaultAdminPerms() {
-    return { works: true, sponsors: true, achievements: true, board: true, members: true, faq: true, blog: true, schedule: true, idea_board: true, chat: true, todos: true, admins: true };
+    return { works: true, sponsors: true, achievements: true, board: true, members: true, faq: true, blog: true, schedule: true, idea_board: true, chat: true, todos: true, admins: true, testimonials: true };
   }
   function normalizePermsShape(perms) {
     const base = defaultAdminPerms();
@@ -2308,6 +2312,7 @@
           <label><input type="checkbox" id="perm-schedule" /> جدول أدِيب</label>
           <label><input type="checkbox" id="perm-todos" /> المهام</label>
           <label><input type="checkbox" id="perm-admins" /> إدارة الأعضاء الإداريين</label>
+          <label><input type="checkbox" id="perm-testimonials" /> آراء الأعضاء</label>
         </div>
         <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
           <button type="button" class="btn" id="permsSelectAll">تحديد الكل</button>
@@ -2372,6 +2377,7 @@
       setPerm('perm-schedule', perms.schedule);
       setPerm('perm-todos', perms.todos);
       setPerm('perm-admins', perms.admins);
+      setPerm('perm-testimonials', perms.testimonials);
 
       document.getElementById('permsSelectAll')?.addEventListener('click', () => {
         adminDetailsBody?.querySelectorAll('#adminPermsGrid input[type="checkbox"]:not(:disabled)')
@@ -2396,6 +2402,7 @@
           schedule: !!document.getElementById('perm-schedule')?.checked,
           todos: !!document.getElementById('perm-todos')?.checked,
           admins: !!document.getElementById('perm-admins')?.checked,
+          testimonials: !!document.getElementById('perm-testimonials')?.checked,
         });
         try {
           if (msg) { msg.className = 'muted'; msg.textContent = ''; }
@@ -2689,6 +2696,10 @@
       if (id === '#section-members') {
         try { renderMembers?.(); } catch {}
       }
+      // If testimonials tab is opened, render testimonials
+      if (id === '#section-testimonials') {
+        try { renderTestimonials?.(); } catch {}
+      }
 
       // Close sidebar after navigating on mobile
       if (isMobile()) closeSidebar();
@@ -2726,6 +2737,10 @@
     // If navigating via dashboard card to members, render them
     if (id === '#section-members') {
       try { renderMembers?.(); } catch {}
+    }
+    // If navigating via dashboard card to testimonials, render them
+    if (id === '#section-testimonials') {
+      try { renderTestimonials?.(); } catch {}
     }
     // keep sidebar active on the single Home tab
     if (isMobile()) closeSidebar();
@@ -3699,7 +3714,54 @@
     }
     // no DnD in simplified grouped view
   }
-
+  
+  function renderTestimonials() {
+    if (!testimonialsList) return;
+    testimonialsList.innerHTML = '';
+    const sorted = [...testimonials].sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000));
+    sorted.forEach((item, sortedIndex) => {
+      const idx = testimonials.indexOf(item);
+      const displayOrder = (item.order ? Number(item.order) : (sortedIndex + 1));
+      const name = item.member_name || item.name || 'عضو';
+      const committee = (item.committee || '').toString().trim();
+      const neutralAvatar = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#e5e7eb"/><stop offset="1" stop-color="#cbd5e1"/></linearGradient></defs><rect width="64" height="64" fill="url(#g)"/><circle cx="32" cy="24" r="12" fill="#94a3b8"/><path d="M12 54c0-10 10-16 20-16s20 6 20 16" fill="#94a3b8"/></svg>');
+      const avatar = ((item.avatar || item.avatar_url) || '').toString().trim() || neutralAvatar;
+      const rating = Math.max(0, Math.min(5, Number(item.rating || 0)));
+      const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+      const text = (item.text || '').toString();
+      const snippet = text.length > 200 ? (text.slice(0, 200) + '...') : text;
+      const visible = (item.visible === undefined) ? true : !!item.visible;
+      const node = el(`
+        <div class="card draggable-card" data-idx="${idx}" draggable="true">
+          <span class="order-chip">#${displayOrder}</span>
+          <div class="card__body" style="display:flex;gap:14px;align-items:flex-start;">
+            <div class="card__media" style="width:auto">
+              <img src="${avatar}" alt="${name}" style="width:56px; height:56px; border-radius:50%; object-fit:cover; background:#f1f5f9" onerror="this.onerror=null;this.src='${neutralAvatar}'" />
+            </div>
+            <div style="flex:1">
+              <div class="card__title" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <span>${name}</span>
+                ${committee ? `<span class="chip">${committee}</span>` : ''}
+                ${!visible ? `<span style="background:#ef4444;color:#fff;border-radius:999px;padding:0 8px;font-size:12px">مخفي</span>` : ''}
+              </div>
+              <div class="muted" style="margin:4px 0">${stars}</div>
+              ${snippet ? `<p class="card__text" style="margin:6px 0;color:#64748b;white-space:pre-wrap">${snippet}</p>` : ''}
+              <div class="card__actions" style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="btn btn-outline" data-act="up" data-idx="${idx}" title="تحريك لأعلى"><i class="fa-solid fa-arrow-up"></i></button>
+                <button class="btn btn-outline" data-act="down" data-idx="${idx}" title="تحريك لأسفل"><i class="fa-solid fa-arrow-down"></i></button>
+                <button class="btn btn-outline drag-handle" title="سحب لإعادة الترتيب"><i class="fa-solid fa-grip-vertical"></i></button>
+                <button class="btn btn-outline" data-act="vis" data-idx="${idx}" title="إظهار/إخفاء"><i class="fa-regular fa-eye"></i></button>
+                <button class="btn btn-outline" data-act="edit" data-idx="${idx}"><i class="fa-solid fa-pen"></i> تعديل</button>
+                <button class="btn btn-outline" data-act="del" data-idx="${idx}"><i class="fa-solid fa-trash"></i> حذف</button>
+              </div>
+            </div>
+          </div>
+        </div>`);
+      testimonialsList.appendChild(node);
+    });
+    setupListDnD(testimonialsList, testimonials, KEYS.testimonials, 'testimonials', renderTestimonials);
+  }
+  
   function renderFaq() {
     if (!faqList) return;
     faqList.innerHTML = '';
@@ -4769,6 +4831,316 @@
     }
   });
 
+  // ===== Testimonials CRUD =====
+  const testimonialDialog = document.getElementById('testimonialDialog');
+  const testimonialForm = document.getElementById('testimonialForm');
+  const addTestimonialBtn = document.getElementById('addTestimonialBtn');
+  let testimonialEditingIndex = null;
+  // Image upload elements
+  const testimonialImageFile = document.getElementById('testimonial_image_file');
+  const testimonialImageUrl = document.getElementById('testimonial_image_url');
+  const testimonialImagePreview = document.getElementById('testimonial_image_preview');
+  const testimonialDropzone = document.getElementById('testimonialDropzone');
+  const testimonialBrowseBtn = document.getElementById('testimonialBrowseBtn');
+  const testimonialImageActions = document.getElementById('testimonialImageActions');
+  const testimonialEditImageBtn = document.getElementById('testimonial_edit_image_btn');
+  const testimonialChangeImageBtn = document.getElementById('testimonial_change_image_btn');
+  let testimonialCroppedFile = null;
+
+  async function handleTestimonialImageFile(file) {
+    if (!file) return;
+    if (!(file.type || '').startsWith('image/')) { alert('الملف ليس صورة'); return; }
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) { if (!confirm('حجم الصورة يتجاوز 5MB. المتابعة؟')) return; }
+    try {
+      const cropped = await openImageCropper(file, { aspectRatio: 1, lockAspect: true, maxWidth: 1200, maxHeight: 1200, mimeType: 'image/webp', quality: 0.9 });
+      testimonialCroppedFile = cropped;
+      const url = URL.createObjectURL(cropped);
+      if (testimonialImagePreview) { testimonialImagePreview.src = url; testimonialImagePreview.style.display = 'block'; }
+      if (testimonialImageActions) testimonialImageActions.style.display = 'flex';
+      if (testimonialDropzone) testimonialDropzone.style.display = 'none';
+    } catch (err) {
+      if (testimonialImageFile) testimonialImageFile.value = '';
+    }
+  }
+  testimonialImageFile?.addEventListener('change', async () => {
+    const file = testimonialImageFile.files && testimonialImageFile.files[0];
+    await handleTestimonialImageFile(file);
+  });
+  testimonialBrowseBtn?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); testimonialImageFile?.click(); });
+  testimonialDropzone?.addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if ((e.target instanceof HTMLElement) && e.target.closest('#testimonialBrowseBtn')) return;
+    testimonialImageFile?.click();
+  });
+  testimonialDropzone?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); testimonialImageFile?.click(); } });
+  testimonialDropzone?.addEventListener('dragover', (e) => { e.preventDefault(); testimonialDropzone.classList.add('dragover'); });
+  testimonialDropzone?.addEventListener('dragleave', () => { testimonialDropzone.classList.remove('dragover'); });
+  testimonialDropzone?.addEventListener('drop', async (e) => {
+    e.preventDefault(); e.stopPropagation(); testimonialDropzone.classList.remove('dragover');
+    const dt = e.dataTransfer; if (!dt) return;
+    let file = null;
+    if (dt.files && dt.files.length) file = dt.files[0];
+    if (!file && dt.items && dt.items.length) { const item = Array.from(dt.items).find(i => i.kind === 'file'); if (item) file = item.getAsFile(); }
+    await handleTestimonialImageFile(file);
+  });
+  testimonialChangeImageBtn?.addEventListener('click', (e) => { e.preventDefault(); testimonialImageFile?.click(); });
+  testimonialEditImageBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      const src = (testimonialImagePreview && testimonialImagePreview.src) || (testimonialImageUrl && testimonialImageUrl.value) || '';
+      if (!src) { alert('لا توجد صورة لتحريرها'); return; }
+      const file = await fetchUrlAsFile(src, 'current');
+      const cropped = await openImageCropper(file, { aspectRatio: 1, lockAspect: true, maxWidth: 1200, maxHeight: 1200, mimeType: 'image/webp', quality: 0.9 });
+      testimonialCroppedFile = cropped;
+      const url = URL.createObjectURL(cropped);
+      if (testimonialImagePreview) { testimonialImagePreview.src = url; testimonialImagePreview.style.display = 'block'; }
+      if (testimonialImageActions) testimonialImageActions.style.display = 'flex';
+      if (testimonialDropzone) testimonialDropzone.style.display = 'none';
+    } catch (err) {
+      if (String(err?.message || '').includes('crop-cancelled')) return;
+      alert('تعذر تحرير الصورة الحالية. جرّب تغيير الصورة بدلًا من ذلك.');
+    }
+  });
+
+  async function uploadTestimonialImage() {
+    const file = testimonialCroppedFile || (testimonialImageFile?.files && testimonialImageFile.files[0]);
+    if (!file) return null;
+    if (!sb) return null;
+    const bucket = 'adeeb-site';
+    const ext = (file.name.split('.').pop() || getExtFromType(file.type, 'jpg')).toLowerCase();
+    const safeExt = ext.replace(/[^a-z0-9]/gi, '') || 'jpg';
+    const path = `testimonials/testimonial-${Date.now()}-${Math.random().toString(36).slice(2,8)}.${safeExt}`;
+    const { error: upErr } = await sb.storage.from(bucket).upload(path, file, { cacheControl: '3600', upsert: false });
+    if (upErr) throw upErr;
+    const { data } = sb.storage.from(bucket).getPublicUrl(path);
+    const publicUrl = data?.publicUrl;
+    if (!publicUrl) throw new Error('تعذر الحصول على رابط الصورة');
+    return publicUrl;
+  }
+
+  addTestimonialBtn?.addEventListener('click', () => {
+    testimonialEditingIndex = null;
+    try { testimonialForm?.reset?.(); } catch {}
+    try { if (testimonialForm?.rating) testimonialForm.rating.value = '5'; } catch {}
+    try { if (testimonialForm?.visible) testimonialForm.visible.checked = true; } catch {}
+    if (testimonialImagePreview) { testimonialImagePreview.src = ''; testimonialImagePreview.style.display = 'none'; }
+    if (testimonialImageUrl) testimonialImageUrl.value = '';
+    testimonialCroppedFile = null;
+    if (testimonialDropzone) testimonialDropzone.style.display = '';
+    if (testimonialImageActions) testimonialImageActions.style.display = 'none';
+    if (typeof openDialog === 'function') openDialog(testimonialDialog); else testimonialDialog?.showModal?.();
+  });
+
+  // Fallback delegated handler in case direct binding missed for any reason
+  document.getElementById('section-testimonials')?.addEventListener('click', (e) => {
+    const btn = e.target?.closest?.('#addTestimonialBtn');
+    if (!btn) return;
+    try {
+      testimonialEditingIndex = null;
+      try { testimonialForm?.reset?.(); } catch {}
+      try { if (testimonialForm?.rating) testimonialForm.rating.value = '5'; } catch {}
+      try { if (testimonialForm?.visible) testimonialForm.visible.checked = true; } catch {}
+      if (testimonialImagePreview) { testimonialImagePreview.src = ''; testimonialImagePreview.style.display = 'none'; }
+      if (testimonialImageUrl) testimonialImageUrl.value = '';
+      testimonialCroppedFile = null;
+      if (testimonialDropzone) testimonialDropzone.style.display = '';
+      if (testimonialImageActions) testimonialImageActions.style.display = 'none';
+      if (typeof openDialog === 'function') openDialog(testimonialDialog); else testimonialDialog?.showModal?.();
+    } catch {}
+  });
+
+  testimonialsList?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const idx = Number(btn.dataset.idx);
+    const act = btn.dataset.act;
+    if (!Number.isInteger(idx) || idx < 0 || idx >= testimonials.length) return;
+    if (act === 'up' || act === 'down') {
+      const newIndex = act === 'up' ? Math.max(0, idx - 1) : Math.min(testimonials.length - 1, idx + 1);
+      if (newIndex === idx) return;
+      const [moved] = testimonials.splice(idx, 1);
+      testimonials.splice(newIndex, 0, moved);
+      normalizeAndPersistOrder(testimonials, KEYS.testimonials, 'testimonials').then(() => {
+        renderTestimonials();
+      });
+      return;
+    }
+    if (act === 'vis') {
+      const cur = testimonials[idx];
+      const curVis = (cur.visible === undefined) ? true : !!cur.visible;
+      const nextVis = !curVis;
+      if (sb && cur.id) {
+        const { data: row, error } = await sb.from('testimonials').update({ visible: nextVis }).eq('id', cur.id).select('*').single();
+        if (error) return alert('فشل التحديث: ' + error.message);
+        testimonials[idx] = row || { ...cur, visible: nextVis };
+        renderTestimonials();
+      } else {
+        cur.visible = nextVis;
+        save(KEYS.testimonials, testimonials);
+        renderTestimonials();
+      }
+      return;
+    }
+    if (act === 'edit') {
+      testimonialEditingIndex = idx;
+      const cur = testimonials[idx];
+      if (testimonialForm) {
+        testimonialForm.member_name.value = cur.member_name || cur.name || '';
+        try {
+          const sel = testimonialForm.committee;
+          const val = cur.committee || '';
+          if (sel && sel.tagName === 'SELECT') {
+            const has = Array.from(sel.options || []).some(o => o.value === val);
+            if (val && !has) {
+              const opt = document.createElement('option');
+              opt.value = val;
+              opt.textContent = val;
+              sel.appendChild(opt);
+            }
+            sel.value = val;
+          } else {
+            testimonialForm.committee.value = val;
+          }
+        } catch {
+          testimonialForm.committee.value = cur.committee || '';
+        }
+        testimonialForm.rating.value = String(cur.rating ?? '5');
+        testimonialForm.text.value = cur.text || '';
+        try { testimonialForm.visible.checked = (cur.visible === undefined) ? true : !!cur.visible; } catch {}
+      }
+      const imgUrl = (cur.avatar || cur.avatar_url) || '';
+      if (testimonialImageUrl) testimonialImageUrl.value = imgUrl;
+      if (testimonialImagePreview) {
+        if (imgUrl) { testimonialImagePreview.src = imgUrl; testimonialImagePreview.style.display = 'block'; }
+        else { testimonialImagePreview.src = ''; testimonialImagePreview.style.display = 'none'; }
+      }
+      if (testimonialImageFile) testimonialImageFile.value = '';
+      testimonialCroppedFile = null;
+      if (imgUrl) { if (testimonialDropzone) testimonialDropzone.style.display = 'none'; if (testimonialImageActions) testimonialImageActions.style.display = 'flex'; }
+      else { if (testimonialDropzone) testimonialDropzone.style.display = ''; if (testimonialImageActions) testimonialImageActions.style.display = 'none'; }
+      openDialog?.(testimonialDialog);
+      return;
+    }
+    if (act === 'del') {
+      if (!confirm('تأكيد الحذف؟')) return;
+      const cur = testimonials[idx];
+      if (sb && cur.id) {
+        sb.from('testimonials').delete().eq('id', cur.id).then(({ error }) => {
+          if (error) return alert('فشل الحذف: ' + error.message);
+          testimonials.splice(idx, 1);
+          renderTestimonials();
+        });
+      } else {
+        testimonials.splice(idx, 1);
+        save(KEYS.testimonials, testimonials);
+        renderTestimonials();
+      }
+      return;
+    }
+  });
+
+  testimonialForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    // determine final image url
+    let finalImgUrl = (testimonialImageUrl?.value || '').trim();
+    try {
+      const uploaded = await uploadTestimonialImage();
+      if (uploaded) finalImgUrl = uploaded;
+    } catch (err) {
+      return alert('فشل رفع الصورة: ' + (err?.message || 'غير معروف'));
+    }
+    testimonialCroppedFile = null;
+    const data = {
+      member_name: (testimonialForm.member_name.value || '').trim(),
+      committee: (testimonialForm.committee.value || '').trim() || null,
+      rating: testimonialForm.rating.value ? Number(testimonialForm.rating.value) : 5,
+      text: (testimonialForm.text.value || '').trim(),
+      visible: !!testimonialForm.visible.checked,
+      avatar: finalImgUrl || null,
+      // Keep existing order when editing so we don't reset it to null
+      order: (testimonialEditingIndex !== null)
+        ? (testimonials[testimonialEditingIndex]?.order ?? null)
+        : null,
+    };
+    if (!data.member_name || !data.text) { alert('يرجى إدخال الاسم والنص'); return; }
+    if (sb) {
+      if (testimonialEditingIndex === null) {
+        // insert with fallback if `order` column is missing
+        const payload = {
+          member_name: data.member_name,
+          committee: data.committee,
+          rating: data.rating,
+          text: data.text,
+          visible: data.visible,
+          avatar_url: data.avatar,
+          order: data.order,
+        };
+        const payloadNoOrder = {
+          member_name: data.member_name,
+          committee: data.committee,
+          rating: data.rating,
+          text: data.text,
+          visible: data.visible,
+          avatar_url: data.avatar,
+        };
+        let row, error;
+        ({ data: row, error } = await sb.from('testimonials').insert(payload).select('*').single());
+        if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+          const res2 = await sb.from('testimonials').insert(payloadNoOrder).select('*').single();
+          if (res2.error) return alert('فشل الحفظ: ' + res2.error.message);
+          testimonials.unshift({ ...res2.data, order: data.order });
+        } else if (error) {
+          return alert('فشل الحفظ: ' + error.message);
+        } else {
+          testimonials.unshift(row);
+        }
+        renderTestimonials();
+        closeDialog?.(testimonialDialog);
+      } else {
+        // update by id with fallback if `order` column is missing
+        const id = testimonials[testimonialEditingIndex]?.id;
+        if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
+        const payload = {
+          member_name: data.member_name,
+          committee: data.committee,
+          rating: data.rating,
+          text: data.text,
+          visible: data.visible,
+          avatar_url: data.avatar,
+          order: data.order,
+        };
+        const payloadNoOrder = {
+          member_name: data.member_name,
+          committee: data.committee,
+          rating: data.rating,
+          text: data.text,
+          visible: data.visible,
+          avatar_url: data.avatar,
+        };
+        let row, error;
+        ({ data: row, error } = await sb.from('testimonials').update(payload).eq('id', id).select('*').single());
+        if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+          const res2 = await sb.from('testimonials').update(payloadNoOrder).eq('id', id).select('*').single();
+          if (res2.error) return alert('فشل التحديث: ' + res2.error.message);
+          testimonials[testimonialEditingIndex] = { ...res2.data, order: data.order };
+        } else if (error) {
+          return alert('فشل التحديث: ' + error.message);
+        } else {
+          testimonials[testimonialEditingIndex] = row;
+        }
+        renderTestimonials();
+        closeDialog?.(testimonialDialog);
+      }
+    } else {
+      if (testimonialEditingIndex === null) testimonials.unshift(data);
+      else testimonials[testimonialEditingIndex] = data;
+      save(KEYS.testimonials, testimonials);
+      renderTestimonials();
+      closeDialog?.(testimonialDialog);
+    }
+  });
+
   // Export / Import
   $('#exportData')?.addEventListener('click', () => {
     const data = {
@@ -4778,6 +5150,7 @@
       board,
       members,
       faq,
+      testimonials,
       blogPosts,
       schedule,
       todos,
@@ -4816,6 +5189,9 @@
       }
       if (Array.isArray(data.faq)) {
         faq = data.faq; save(KEYS.faq, faq); renderFaq();
+      }
+      if (Array.isArray(data.testimonials)) {
+        testimonials = data.testimonials; save(KEYS.testimonials, testimonials); renderTestimonials();
       }
       if (Array.isArray(data.blogPosts)) {
         blogPosts = data.blogPosts; save(KEYS.blog, blogPosts); renderBlog();
@@ -5064,6 +5440,22 @@
         }
       }
 
+      // Fetch testimonials by created_at only; sort by `order` client-side
+      try {
+        const { data: tRows, error: et } = await sb
+          .from('testimonials')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (et) throw et;
+        testimonials = tRows || [];
+      } catch (e3) {
+        if (e3?.code === 'PGRST205' || /Could not find the table '.+testimonials'/.test(e3?.message || '')) {
+          console.warn('Testimonials table missing, falling back to localStorage');
+        } else {
+          console.warn('Testimonials fetch failed', e3);
+        }
+      }
+
       return true;
     } catch (err) {
       console.error('Supabase fetch failed', err);
@@ -5088,6 +5480,7 @@
     renderBoard();
     renderMembers();
     renderFaq();
+    renderTestimonials();
     renderAchievements();
     renderBlog();
     renderTodos();
