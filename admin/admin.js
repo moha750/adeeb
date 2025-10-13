@@ -18,6 +18,9 @@
   const blogList = $('#blogList');
   const todosList = $('#todosList');
   const statsGrid = $('#statsGrid');
+  const membershipAppsTableBody = document.getElementById('membershipAppsTableBody');
+  const membershipAppsEmpty = document.getElementById('membershipAppsEmpty');
+  const membershipRefreshBtn = document.getElementById('membershipRefreshBtn');
   // Idea Board (admin) elements
   const ideaBoardTableBody = document.getElementById('ideaBoardTableBody');
   const ideaBoardEmpty = document.getElementById('ideaBoardEmpty');
@@ -92,6 +95,7 @@
     ideas: 'adeeb_ideas_public',
     topics: 'adeeb_idea_topics',
     testimonials: 'adeeb_testimonials',
+    membership_apps: 'adeeb_membership_applications',
   };
 
   // Supabase client (if configured)
@@ -103,6 +107,67 @@
   function isAppInstalled() {
     try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch { return false; }
   }
+  
+  function renderMembershipApps(rows) {
+    if (!membershipAppsTableBody) return;
+    membershipAppsTableBody.innerHTML = '';
+    const list = Array.isArray(rows) ? rows : [];
+    if (membershipAppsEmpty) membershipAppsEmpty.style.display = list.length ? 'none' : '';
+    list.forEach((r) => {
+      const created = formatArDate(r.created_at || r.createdAt || null);
+      const name = escapeHtml(r.full_name || r.name || '—');
+      const phone = escapeHtml(r.phone || '—');
+      const email = escapeHtml(r.email || '—');
+      const degree = escapeHtml(r.degree || '—');
+      const college = escapeHtml(r.college || '—');
+      const major = escapeHtml(r.major || '—');
+      const skills = escapeHtml(r.skills || '');
+      const committee = escapeHtml(r.preferred_committee || r.committee || '');
+      const portfolio = (r.portfolio_url || '').toString().trim();
+      const status = escapeHtml(r.status || 'new');
+      const tr = el(`
+        <tr>
+          <td style="padding:12px; white-space:nowrap">${created}</td>
+          <td style="padding:12px; min-width:160px">${name}</td>
+          <td style="padding:12px">${phone || '—'}</td>
+          <td style="padding:12px">${email || '—'}</td>
+          <td style="padding:12px">${degree || '—'}</td>
+          <td style="padding:12px">${college || '—'}</td>
+          <td style="padding:12px">${major || '—'}</td>
+          <td style="padding:12px; min-width:200px">${skills || '—'}</td>
+          <td style="padding:12px">${committee || '—'}</td>
+          <td style="padding:12px">${portfolio ? `<a class="btn btn-outline btn-xs" href="${portfolio}" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> فتح</a>` : '—'}</td>
+          <td style="padding:12px">${status}</td>
+        </tr>
+      `);
+      membershipAppsTableBody.appendChild(tr);
+    });
+  }
+
+  async function loadMembershipApps() {
+    let rows = [];
+    if (sb) {
+      try {
+        const { data, error } = await sb
+          .from('membership_applications')
+          .select('id, created_at, full_name, phone, email, degree, college, major, skills, preferred_committee, portfolio_url, status')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        rows = Array.isArray(data) ? data : [];
+      } catch (e) {
+        console.warn('membership_applications fetch failed', e);
+        rows = localMembershipAppsGet();
+      }
+    } else {
+      rows = localMembershipAppsGet();
+    }
+    membershipApps = rows.slice();
+    renderMembershipApps(membershipApps);
+  }
+  membershipRefreshBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try { await loadMembershipApps(); } catch {}
+  });
   function isIOSLike() {
     try { return /iphone|ipad|ipod/i.test(navigator.userAgent || ''); } catch { return false; }
   }
@@ -1899,6 +1964,17 @@
     localStorage.setItem(key, JSON.stringify(data));
   }
 
+  // Membership applications: local fallback
+  function localMembershipAppsGet() {
+    try {
+      const raw = localStorage.getItem(KEYS.membership_apps);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }
+
   // Initial Data
   let works = load(KEYS.works);
   let sponsors = load(KEYS.sponsors);
@@ -1907,6 +1983,7 @@
   let topics = load(KEYS.topics);
   let faq = load(KEYS.faq);
   let achievements = load(KEYS.achievements);
+  let membershipApps = localMembershipAppsGet();
   let blogPosts = load(KEYS.blog);
   let testimonials = load(KEYS.testimonials);
   let todos = load(KEYS.todos);
@@ -2093,6 +2170,7 @@
     '#section-achievements': 'achievements',
     '#section-board': 'board',
     '#section-members': 'members',
+    '#section-membership-apps': 'membership_apps',
     '#section-faq': 'faq',
     '#section-blog': 'blog',
     '#section-schedule': 'schedule',
@@ -2103,7 +2181,7 @@
     '#section-testimonials': 'testimonials',
   };
   function defaultAdminPerms() {
-    return { works: true, sponsors: true, achievements: true, board: true, members: true, faq: true, blog: true, schedule: true, idea_board: true, chat: true, todos: true, admins: true, testimonials: true };
+    return { works: true, sponsors: true, achievements: true, board: true, members: true, membership_apps: true, faq: true, blog: true, schedule: true, idea_board: true, chat: true, todos: true, admins: true, testimonials: true };
   }
   function normalizePermsShape(perms) {
     const base = defaultAdminPerms();
@@ -2188,7 +2266,7 @@
   }
   function fallbackPermsForLevel(lv) {
     // الرئيس/النائب: كل التبويبات مسموحة. القادة: كل شيء ما عدا إدارة الإداريين.
-    const base = { works: true, sponsors: true, achievements: true, board: true, members: true, faq: true, blog: true, schedule: true, idea_board: true, chat: true, todos: true, admins: true };
+    const base = { works: true, sponsors: true, achievements: true, board: true, members: true, membership_apps: true, faq: true, blog: true, schedule: true, idea_board: true, chat: true, todos: true, admins: true };
     if (lv === ADMIN_LEVELS.manager) return { ...base, admins: false };
     return base;
   }
@@ -2305,6 +2383,7 @@
           <label><input type="checkbox" id="perm-achievements" /> إدارة الإنجازات</label>
           <label><input type="checkbox" id="perm-board" /> المجلس الإداري</label>
           <label><input type="checkbox" id="perm-members" /> أعضاء النادي</label>
+          <label><input type="checkbox" id="perm-membership_apps" /> طلبات العضوية</label>
           <label><input type="checkbox" id="perm-faq" /> الأسئلة الشائعة</label>
           <label><input type="checkbox" id="perm-blog" /> مرافئ (المدونة)</label>
           <label><input type="checkbox" id="perm-idea_board" /> سبورة أدِيب</label>
@@ -2370,6 +2449,7 @@
       setPerm('perm-achievements', perms.achievements);
       setPerm('perm-board', perms.board);
       setPerm('perm-members', perms.members);
+      setPerm('perm-membership_apps', perms.membership_apps);
       setPerm('perm-faq', perms.faq);
       setPerm('perm-blog', perms.blog);
       setPerm('perm-idea_board', perms.idea_board);
@@ -2395,6 +2475,7 @@
           achievements: !!document.getElementById('perm-achievements')?.checked,
           board: !!document.getElementById('perm-board')?.checked,
           members: !!document.getElementById('perm-members')?.checked,
+          membership_apps: !!document.getElementById('perm-membership_apps')?.checked,
           faq: !!document.getElementById('perm-faq')?.checked,
           blog: !!document.getElementById('perm-blog')?.checked,
           idea_board: !!document.getElementById('perm-idea_board')?.checked,
@@ -2696,6 +2777,10 @@
       if (id === '#section-members') {
         try { renderMembers?.(); } catch {}
       }
+      // If membership apps tab is opened, load applications
+      if (id === '#section-membership-apps') {
+        try { await loadMembershipApps?.(); } catch {}
+      }
       // If testimonials tab is opened, render testimonials
       if (id === '#section-testimonials') {
         try { renderTestimonials?.(); } catch {}
@@ -2737,6 +2822,10 @@
     // If navigating via dashboard card to members, render them
     if (id === '#section-members') {
       try { renderMembers?.(); } catch {}
+    }
+    // If navigating to membership apps, load them
+    if (id === '#section-membership-apps') {
+      try { loadMembershipApps?.(); } catch {}
     }
     // If navigating via dashboard card to testimonials, render them
     if (id === '#section-testimonials') {
@@ -5412,7 +5501,8 @@
         { data: b, error: eb },
         { data: m, error: em },
         { data: f, error: ef },
-        { data: posts, error: eposts }
+        { data: posts, error: eposts },
+        { data: apps, error: eapps }
       ] = await Promise.all([
         sb.from('works').select('*').order('order', { ascending: true, nullsFirst: true }).order('created_at', { ascending: false }),
         sb.from('sponsors').select('*').order('order', { ascending: true, nullsFirst: true }).order('created_at', { ascending: false }),
@@ -5420,14 +5510,16 @@
         sb.from('members').select('*').order('order', { ascending: true, nullsFirst: true }).order('created_at', { ascending: false }),
         sb.from('faq').select('*').order('order', { ascending: true }),
         sb.from('blog_posts').select('*').order('published_at', { ascending: false }),
+        sb.from('membership_applications').select('id, created_at, full_name, phone, email, degree, college, major, skills, preferred_committee, portfolio_url, status').order('created_at', { ascending: false }),
       ]);
-      if (ew) throw ew; if (es) throw es; if (eb) throw eb; if (em) throw em; if (ef) throw ef; if (eposts) throw eposts;
+      if (ew) throw ew; if (es) throw es; if (eb) throw eb; if (em) throw em; if (ef) throw ef; if (eposts) throw eposts; if (eapps) throw eapps;
       works = w || [];
       sponsors = s || [];
       board = b || [];
       members = m || [];
       faq = f || [];
       blogPosts = posts || [];
+      membershipApps = apps || [];
 
       // Try achievements separately; ignore 404 table-not-found
       try {
