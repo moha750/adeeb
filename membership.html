@@ -96,6 +96,30 @@
       .chips .add-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; box-shadow: none; }
       @keyframes chip-in { from { transform: scale(.96); opacity: .0; } to { transform: scale(1); opacity: 1; } }
       .step-hint { margin:10px 0 0; text-align:center; color:#274060; opacity:.9; font-size:.98rem; }
+      /* Committee Info Modal */
+      .committee-info-btn { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; background:linear-gradient(180deg, #ffffff, #f8fbff); border:1px solid rgba(61,143,214,0.35); color:var(--main-blue); font-size:.85rem; cursor:pointer; transition: transform .15s ease, box-shadow .2s ease; }
+      .committee-info-btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(61,143,214,0.15); }
+      .committee-info-btn i { font-size:.9em; }
+      .modal-overlay { display:none; position:fixed; inset:0; background:rgba(39,64,96,0.5); backdrop-filter:blur(4px); z-index:9999; animation:fadeIn .2s ease; }
+      .modal-overlay.active { display:flex; align-items:center; justify-content:center; padding:20px; }
+      @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+      .modal-content { background:#ffffff; border-radius:16px; max-width:680px; width:100%; max-height:85vh; overflow:hidden; box-shadow:0 20px 60px rgba(39,64,96,0.3), 0 0 0 1px rgba(61,143,214,0.1); animation:slideUp .3s ease; }
+      @keyframes slideUp { from { transform:translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+      .modal-header { padding:20px 24px; border-bottom:1px solid rgba(61,143,214,0.1); background:linear-gradient(180deg, #f8fbff, #ffffff); }
+      .modal-header h2 { margin:0; color:#274060; font-size:1.3rem; font-family:fb; display:flex; align-items:center; gap:10px; }
+      .modal-header h2 i { color:#3d8fd6; font-size:.9em; }
+      .modal-body { padding:20px 24px; overflow-y:auto; max-height:calc(85vh - 140px); }
+      .committee-item { margin-bottom:20px; padding:16px; border-radius:12px; background:linear-gradient(180deg, rgba(61,143,214,0.03), rgba(61,143,214,0.01)); border:1px solid rgba(61,143,214,0.15); transition:transform .2s ease, box-shadow .2s ease; }
+      .committee-item:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(61,143,214,0.12); }
+      .committee-item h3 { margin:0 0 8px; color:#274060; font-size:1.1rem; font-family:fb; display:flex; align-items:center; gap:8px; }
+      .committee-item h3 i { color:#3d8fd6; font-size:.85em; }
+      .committee-item p { margin:0; color:#335c81; line-height:1.6; }
+      .committee-item ol { margin:8px 0 0; padding-right:20px; color:#335c81; }
+      .committee-item ol li { margin:4px 0; }
+      .modal-footer { padding:16px 24px; border-top:1px solid rgba(61,143,214,0.1); background:linear-gradient(180deg, #ffffff, #f8fbff); display:flex; justify-content:center; }
+      .modal-close-btn { padding:10px 24px; border-radius:10px; background:linear-gradient(135deg, var(--accent-blue), var(--main-blue)); color:#fff; border:none; font-family:fb; font-size:.95rem; cursor:pointer; transition:transform .15s ease, box-shadow .2s ease; }
+      .modal-close-btn:hover { transform:translateY(-1px); box-shadow:0 8px 18px rgba(61,143,214,0.25); }
+      .modal-close-btn:active { transform:translateY(0); }
     </style>
   </head>
   <body>
@@ -184,6 +208,10 @@
             </label>
             <label>
               اللجنة المرغوب بها👤
+              <button type="button" class="committee-info-btn" id="committeeInfoBtn">
+                <i class="fa-solid fa-info-circle"></i>
+                <span>اضغط للتعرف على لجان أدِيب</span>
+              </button>
               <select id="preferredCommittee" name="preferredCommittee" required>
                 <option value="">اختر اللجنة</option>
                 <option>لجنة التأليف</option>
@@ -232,6 +260,49 @@
           <button type="submit" class="btn btn-primary" id="submitBtn" style="display:none"><i class="fa-solid fa-paper-plane"></i> إكمال طلب التسجيل</button>
         </div>
       </form>
+    </div>
+
+    <!-- Committee Info Modal -->
+    <div class="modal-overlay" id="committeeModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fa-solid fa-users"></i> لجان نادي أدِيب</h2>
+        </div>
+        <div class="modal-body">
+          <div class="committee-item">
+            <h3><i class="fa-solid fa-pen-fancy"></i> لجنة التأليف</h3>
+            <p>تتولى لجنة التأليف إعداد المحتوى الكتابي وصياغة أفكار الأركان والمشاركات بأسلوب يعكس هوية النادي ورسائله، لتكون الكلمة وسيلة للتأثير والإبداع.</p>
+          </div>
+          <div class="committee-item">
+            <h3><i class="fa-solid fa-microphone"></i> لجنة الرواة</h3>
+            <p>تمثل لجنة الرواة الواجهة الإعلامية للنادي، حيث تنقل صوته في الفعاليات والأنشطة، متحدثةً عن جوهر المشاركة ومعبّرةً عن روح وحدته.</p>
+          </div>
+          <div class="committee-item">
+            <h3><i class="fa-solid fa-calendar-days"></i> لجنة الفعاليات</h3>
+            <p>تُعنى لجنة الفعاليات بالتخطيط والتنظيم الميداني، وتشمل مهامها:</p>
+            <ol>
+              <li>إعداد جدول المشاركات في الأحداث المستقبلية.</li>
+              <li>تنسيق وتصميم ديكور الأركان.</li>
+              <li>تنظيم حركة الزوار وإدارة الازدحام بما يضمن انسيابية التجربة.</li>
+            </ol>
+          </div>
+          <div class="committee-item">
+            <h3><i class="fa-solid fa-video"></i> لجنة الإنتاج</h3>
+            <p>تختص لجنة الإنتاج بتصوير وتوثيق أنشطة وفعاليات النادي، من خلال التقاط الصور والمقاطع المرئية، وإنتاجها بمونتاجٍ يعكس جمالية المشاركة وأثرها.</p>
+          </div>
+          <div class="committee-item">
+            <h3><i class="fa-solid fa-handshake"></i> لجنة السفراء</h3>
+            <p>تُعد لجنة السفراء حلقة الوصل بين النادي والرعاة والجهات الداعمة، وتُسهم في تعزيز العلاقات العامة وبناء صورة إيجابية للنادي في المجتمع.</p>
+          </div>
+          <div class="committee-item">
+            <h3><i class="fa-solid fa-palette"></i> لجنة التصميم</h3>
+            <p>تتولى لجنة التصميم تنفيذ الهوية البصرية للنادي، من خلال تصميم المنشورات والمواد الإعلانية الخاصة بالأنشطة والمشاركات، بما يعكس التميز والإبداع.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="modal-close-btn" id="closeModalBtn">إغلاق</button>
+        </div>
+      </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -696,6 +767,40 @@
         updateCollegeMajorVisibility();
 
         showStep(0);
+
+        // Committee Info Modal
+        const committeeInfoBtn = document.getElementById('committeeInfoBtn');
+        const committeeModal = document.getElementById('committeeModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+
+        if(committeeInfoBtn && committeeModal){
+          committeeInfoBtn.addEventListener('click', (e)=>{
+            e.preventDefault();
+            committeeModal.classList.add('active');
+          });
+        }
+
+        if(closeModalBtn && committeeModal){
+          closeModalBtn.addEventListener('click', ()=>{
+            committeeModal.classList.remove('active');
+          });
+        }
+
+        if(committeeModal){
+          // Close on backdrop click
+          committeeModal.addEventListener('click', (e)=>{
+            if(e.target === committeeModal){
+              committeeModal.classList.remove('active');
+            }
+          });
+
+          // Close on ESC key
+          document.addEventListener('keydown', (e)=>{
+            if(e.key === 'Escape' && committeeModal.classList.contains('active')){
+              committeeModal.classList.remove('active');
+            }
+          });
+        }
       })();
     </script>
   </body>
