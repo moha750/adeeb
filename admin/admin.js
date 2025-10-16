@@ -21,6 +21,30 @@
   const membershipAppsTableBody = document.getElementById('membershipAppsTableBody');
   const membershipAppsEmpty = document.getElementById('membershipAppsEmpty');
   const membershipRefreshBtn = document.getElementById('membershipRefreshBtn');
+  const membershipAppDetailsDialog = document.getElementById('membershipAppDetailsDialog');
+  const membershipStatsGrid = document.getElementById('membershipStatsGrid');
+  const membershipAppsGroups = document.getElementById('membershipAppsGroups');
+  const membershipAppDetailsName = document.getElementById('membershipAppDetailsName');
+  const membershipAppDetailsDate = document.getElementById('membershipAppDetailsDate');
+  const membershipAppDetailsPhone = document.getElementById('membershipAppDetailsPhone');
+  const membershipAppDetailsEmail = document.getElementById('membershipAppDetailsEmail');
+  const membershipAppDetailsDegree = document.getElementById('membershipAppDetailsDegree');
+  const membershipAppDetailsCollege = document.getElementById('membershipAppDetailsCollege');
+  const membershipAppDetailsMajor = document.getElementById('membershipAppDetailsMajor');
+  const membershipAppDetailsCommittee = document.getElementById('membershipAppDetailsCommittee');
+  const membershipAppDetailsSkills = document.getElementById('membershipAppDetailsSkills');
+  const membershipAppDetailsPortfolio = document.getElementById('membershipAppDetailsPortfolio');
+  const membershipAppDetailsStatus = document.getElementById('membershipAppDetailsStatus');
+  const membershipAppDetailsTwitter = document.getElementById('membershipAppDetailsTwitter');
+  const membershipAppDetailsInstagram = document.getElementById('membershipAppDetailsInstagram');
+  const membershipAppDetailsLinkedin = document.getElementById('membershipAppDetailsLinkedin');
+  const membershipAppStatusSelect = document.getElementById('membershipAppStatusSelect');
+  const membershipAppDetailsAbout = document.getElementById('membershipAppDetailsAbout');
+  const membershipFilters = document.getElementById('membershipFilters');
+  const membershipFilterName = document.getElementById('membershipFilterName');
+  const membershipFilterStatus = document.getElementById('membershipFilterStatus');
+  const membershipFilterPctBand = document.getElementById('membershipFilterPctBand');
+  const membershipFiltersClear = document.getElementById('membershipFiltersClear');
   // Idea Board (admin) elements
   const ideaBoardTableBody = document.getElementById('ideaBoardTableBody');
   const ideaBoardEmpty = document.getElementById('ideaBoardEmpty');
@@ -100,6 +124,7 @@
 
   // Supabase client (if configured)
   const sb = window.sbClient || null;
+  let membershipAppDetailsIndex = -1;
 
   // ===== PWA Install (Profile tab) =====
   const installAppBtn = document.getElementById('installAppBtn');
@@ -107,41 +132,228 @@
   function isAppInstalled() {
     try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch { return false; }
   }
+
+  function applyMembershipFilters() {
+    const list = Array.isArray(membershipApps) ? membershipApps : [];
+    const nameQ = (membershipFilterName?.value || '').toString().trim().toLowerCase();
+    const statusQ = (membershipFilterStatus?.value || 'all');
+    const bandQ = (membershipFilterPctBand?.value || 'all');
+    const normalize = (raw) => {
+      const v = (raw || '').toString().trim().toLowerCase();
+      if (['accepted','approved','accept','ok','done','مقبول'].includes(v)) return 'accepted';
+      if (['rejected','declined','رفض','مرفوض','reject'].includes(v)) return 'rejected';
+      if (['interview','interviewing','scheduled','مقابلة','موعد','مُقابلة'].includes(v)) return 'interview';
+      if (['review','under_review','in_review','pending_review','مراجعة','قيد المراجعة'].includes(v)) return 'review';
+      return 'pending';
+    };
+    const pctOf = (r) => {
+      const fields = ['phone','email','degree','college','major','skills','preferred_committee','portfolio_url','status','social_twitter','social_instagram','social_linkedin','about'];
+      let filled = 0;
+      for (const k of fields) {
+        let v = r[k];
+        if (!v && k === 'preferred_committee') v = r.committee;
+        if (typeof v === 'string') v = v.trim();
+        if (v) filled++;
+      }
+      return Math.round((filled * 100) / (fields.length || 1));
+    };
+    const filtered = list.filter((r) => {
+      if (nameQ) {
+        const n = (r.full_name || r.name || '').toString().toLowerCase();
+        if (!n.includes(nameQ)) return false;
+      }
+      if (statusQ && statusQ !== 'all') {
+        if (normalize(r.status) !== statusQ) return false;
+      }
+      const p = pctOf(r);
+      if (bandQ && bandQ !== 'all') {
+        const base = parseInt(bandQ, 10);
+        if (base === 100) {
+          if (p !== 100) return false;
+        } else if (!Number.isNaN(base)) {
+          if (p < base || p > (base + 9)) return false;
+        }
+      }
+      return true;
+    });
+    renderMembershipApps(filtered);
+  }
   
   function renderMembershipApps(rows) {
-    if (!membershipAppsTableBody) return;
-    membershipAppsTableBody.innerHTML = '';
+    const container = membershipAppsGroups || document.getElementById('membershipAppsGroups');
+    if (!container) return;
+    container.innerHTML = '';
     const list = Array.isArray(rows) ? rows : [];
     if (membershipAppsEmpty) membershipAppsEmpty.style.display = list.length ? 'none' : '';
+    const groups = new Map();
     list.forEach((r) => {
-      const created = formatArDate(r.created_at || r.createdAt || null);
-      const name = escapeHtml(r.full_name || r.name || '—');
-      const phone = escapeHtml(r.phone || '—');
-      const email = escapeHtml(r.email || '—');
-      const degree = escapeHtml(r.degree || '—');
-      const college = escapeHtml(r.college || '—');
-      const major = escapeHtml(r.major || '—');
-      const skills = escapeHtml(r.skills || '');
-      const committee = escapeHtml(r.preferred_committee || r.committee || '');
-      const portfolio = (r.portfolio_url || '').toString().trim();
-      const status = escapeHtml(r.status || 'new');
-      const tr = el(`
-        <tr>
-          <td style="padding:12px; white-space:nowrap">${created}</td>
-          <td style="padding:12px; min-width:160px">${name}</td>
-          <td style="padding:12px">${phone || '—'}</td>
-          <td style="padding:12px">${email || '—'}</td>
-          <td style="padding:12px">${degree || '—'}</td>
-          <td style="padding:12px">${college || '—'}</td>
-          <td style="padding:12px">${major || '—'}</td>
-          <td style="padding:12px; min-width:200px">${skills || '—'}</td>
-          <td style="padding:12px">${committee || '—'}</td>
-          <td style="padding:12px">${portfolio ? `<a class="btn btn-outline btn-xs" href="${portfolio}" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> فتح</a>` : '—'}</td>
-          <td style="padding:12px">${status}</td>
-        </tr>
-      `);
-      membershipAppsTableBody.appendChild(tr);
+      const raw = (r?.preferred_committee || r?.committee || '').toString().trim();
+      const key = raw.replace(/\s+/g, ' ') || 'بدون لجنة';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(r);
     });
+
+  
+    const labels = Array.from(groups.keys()).sort((a, b) => { try { return a.localeCompare(b, 'ar'); } catch { return String(a).localeCompare(String(b)); } });
+    labels.forEach((label) => {
+      const items = groups.get(label) || [];
+      const panel = el(`
+        <div class="panel" style="padding:16px; overflow:auto">
+          <div class="panel-head">
+            <h3 style="margin:0;font-size:1rem;color:var(--main-blue)"><i class="fa-solid fa-users"></i> ${escapeHtml(label)}</h3>
+            <span class="count-badge">${items.length}</span>
+          </div>
+          <table class="table" style="width:100%; border-collapse:collapse">
+            <thead>
+              <tr>
+                <th style="text-align:right; padding:12px">الاسم</th>
+                <th style="text-align:right; padding:12px">الحالة</th>
+                <th style="text-align:right; padding:12px">نسبة الإكمال</th>
+                <th style="text-align:right; padding:12px">عرض</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      `);
+      const tbody = panel.querySelector('tbody');
+      items.forEach((r) => {
+        const idx = (membershipApps || []).indexOf(r);
+        const name = escapeHtml(r.full_name || r.name || '—');
+        const rawStatus = (r.status || '').toString().trim().toLowerCase();
+        let statusKey = 'pending';
+        if (['accepted','approved','accept','ok','done','مقبول'].includes(rawStatus)) statusKey = 'accepted';
+        else if (['rejected','declined','رفض','مرفوض','reject'].includes(rawStatus)) statusKey = 'rejected';
+        else if (['interview','interviewing','scheduled','مقابلة','موعد','مُقابلة'].includes(rawStatus)) statusKey = 'interview';
+        else if (['review','under_review','in_review','pending_review','مراجعة','قيد المراجعة'].includes(rawStatus)) statusKey = 'review';
+        const statusLabel = (
+          statusKey === 'accepted' ? 'مقبول' :
+          statusKey === 'rejected' ? 'مرفوض' :
+          statusKey === 'interview' ? 'مُقابلة' :
+          statusKey === 'review' ? 'مراجعة' :
+          'قيد الانتظار'
+        );
+        const statusBadge = `<span class="status-badge status-${statusKey}" data-role="status-badge">${statusLabel}</span>`;
+        const fields = ['phone','email','degree','college','major','skills','preferred_committee','portfolio_url','status','social_twitter','social_instagram','social_linkedin','about'];
+        const total = fields.length;
+        let filled = 0;
+        for (const k of fields) {
+          let v = r[k];
+          if (!v && k === 'preferred_committee') v = r.committee;
+          if (typeof v === 'string') v = v.trim();
+          if (v) filled++;
+        }
+        const pct = Math.round((filled * 100) / (total || 1));
+        const row = el(`
+          <tr data-idx="${idx}">
+            <td style="padding:12px; min-width:200px" data-label="الاسم">${name}</td>
+            <td style="padding:12px" data-label="الحالة">${statusBadge}</td>
+            <td style="padding:12px" data-label="نسبة الإكمال">${pct}%</td>
+            <td style="padding:12px; white-space:nowrap" data-label="عرض"><button class="btn btn-outline btn-xs" type="button" data-act="view" data-idx="${idx}"><i class="fa-regular fa-eye"></i> عرض</button></td>
+          </tr>
+        `);
+        tbody.appendChild(row);
+      });
+      container.appendChild(panel);
+    });
+  }
+
+  function renderMembershipStats(rows) {
+    const grid = membershipStatsGrid || document.getElementById('membershipStatsGrid');
+    if (!grid) return;
+    const list = Array.isArray(rows) ? rows : (Array.isArray(membershipApps) ? membershipApps : []);
+    const num = (v) => {
+      const n = Number(v || 0);
+      try { return n.toLocaleString('ar'); } catch { return String(n); }
+    };
+    const map = new Map();
+    list.forEach((r) => {
+      const raw = (r?.preferred_committee || r?.committee || '').toString().trim();
+      if (!raw) return;
+      const key = raw.replace(/\s+/g, ' ');
+      map.set(key, (map.get(key) || 0) + 1);
+    });
+    const labels = Array.from(map.entries()).sort((a, b) => {
+      try { return a[0].localeCompare(b[0], 'ar'); } catch { return String(a[0]).localeCompare(String(b[0])); }
+    });
+    const committeeItems = labels.slice(0, 6).map(([label, count]) => ({ title: label, value: num(count), icon: 'fa-solid fa-users' }));
+    const items = [
+      { title: 'إجمالي المتقدمين', value: num(list.length), icon: 'fa-solid fa-users' },
+      ...committeeItems,
+    ];
+    grid.innerHTML = '';
+    items.forEach((it, idx) => {
+      const node = el(`
+        <div class="card${idx === 0 ? ' span-all' : ''}">
+          <div class="card__body">
+            <div class="card__title"><i class="${it.icon}"></i> ${it.title}</div>
+            <div class="stat-number">${it.value}</div>
+          </div>
+        </div>
+      `);
+      grid.appendChild(node);
+    });
+    const normalize = (raw) => {
+      const v = (raw || '').toString().trim().toLowerCase();
+      if (['accepted','approved','accept','ok','done','مقبول'].includes(v)) return 'accepted';
+      if (['rejected','declined','رفض','مرفوض','reject'].includes(v)) return 'rejected';
+      if (['interview','interviewing','scheduled','مقابلة','موعد','مُقابلة'].includes(v)) return 'interview';
+      if (['review','under_review','in_review','pending_review','مراجعة','قيد المراجعة'].includes(v)) return 'review';
+      return 'pending';
+    };
+    const counts = { pending: 0, review: 0, interview: 0, rejected: 0, accepted: 0 };
+    list.forEach((r) => { const k = normalize(r?.status); counts[k] = (counts[k] || 0) + 1; });
+    // Row 1: Pending (single card)
+    grid.appendChild(el(`
+      <div class="span-all">
+        <div class="cards-grid status-cards-1">
+          <div class="card">
+            <div class="card__body">
+              <div class="card__title"><i class="fa-solid fa-hourglass-half"></i> قيد الانتظار</div>
+              <div class="stat-number">${num(counts.pending)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `));
+    // Row 2: Review | Interview (two cards)
+    grid.appendChild(el(`
+      <div class="span-all">
+        <div class="cards-grid status-cards-2">
+          <div class="card">
+            <div class="card__body">
+              <div class="card__title"><i class="fa-solid fa-magnifying-glass"></i> مراجعة</div>
+              <div class="stat-number">${num(counts.review)}</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card__body">
+              <div class="card__title"><i class="fa-solid fa-user-check"></i> مُقابلة</div>
+              <div class="stat-number">${num(counts.interview)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `));
+    // Row 3: Rejected | Accepted (two cards)
+    grid.appendChild(el(`
+      <div class="span-all">
+        <div class="cards-grid status-cards-2">
+          <div class="card">
+            <div class="card__body">
+              <div class="card__title"><i class="fa-solid fa-xmark"></i> مرفوض</div>
+              <div class="stat-number">${num(counts.rejected)}</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card__body">
+              <div class="card__title"><i class="fa-solid fa-check"></i> مقبول</div>
+              <div class="stat-number">${num(counts.accepted)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `));
   }
 
   async function loadMembershipApps() {
@@ -150,7 +362,7 @@
       try {
         const { data, error } = await sb
           .from('membership_applications')
-          .select('id, created_at, full_name, phone, email, degree, college, major, skills, preferred_committee, portfolio_url, status')
+          .select('id, created_at, full_name, phone, email, degree, college, major, skills, preferred_committee, portfolio_url, status, social_twitter, social_instagram, social_linkedin, about')
           .order('created_at', { ascending: false });
         if (error) throw error;
         rows = Array.isArray(data) ? data : [];
@@ -162,11 +374,119 @@
       rows = localMembershipAppsGet();
     }
     membershipApps = rows.slice();
-    renderMembershipApps(membershipApps);
+    applyMembershipFilters();
+    renderMembershipStats(membershipApps);
   }
   membershipRefreshBtn?.addEventListener('click', async (e) => {
     e.preventDefault();
     try { await loadMembershipApps(); } catch {}
+  });
+  membershipFilters?.addEventListener('input', () => { applyMembershipFilters(); });
+  membershipFilterStatus?.addEventListener('change', () => { applyMembershipFilters(); });
+  membershipFilterPctBand?.addEventListener('change', () => { applyMembershipFilters(); });
+  membershipFiltersClear?.addEventListener('click', () => {
+    if (membershipFilterName) membershipFilterName.value = '';
+    if (membershipFilterStatus) membershipFilterStatus.value = 'all';
+    if (membershipFilterPctBand) membershipFilterPctBand.value = 'all';
+    applyMembershipFilters();
+  });
+  membershipAppsGroups?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-act="view"]');
+    if (!btn) return;
+    const idx = Number(btn.dataset.idx);
+    if (!Number.isInteger(idx) || idx < 0 || idx >= (membershipApps?.length || 0)) return;
+    const r = membershipApps[idx] || {};
+    try {
+      membershipAppDetailsIndex = idx;
+      const name = r.full_name || r.name || '—';
+      const created = formatArDate(r.created_at || r.createdAt || null) || '—';
+      const phone = r.phone || '—';
+      const email = r.email || '—';
+      const degree = r.degree || '—';
+      const college = r.college || '—';
+      const major = r.major || '—';
+      const skills = r.skills || '—';
+      const committee = r.preferred_committee || r.committee || '—';
+      const portfolio = (r.portfolio_url || '').toString().trim();
+      const rawStatus = (r.status || '').toString().trim().toLowerCase();
+      let statusKey = 'pending';
+      if (['accepted','approved','accept','ok','done','مقبول'].includes(rawStatus)) statusKey = 'accepted';
+      else if (['rejected','declined','رفض','مرفوض','reject'].includes(rawStatus)) statusKey = 'rejected';
+      else if (['interview','interviewing','scheduled','مقابلة','موعد','مُقابلة'].includes(rawStatus)) statusKey = 'interview';
+      else if (['review','under_review','in_review','pending_review','مراجعة','قيد المراجعة'].includes(rawStatus)) statusKey = 'review';
+      const twitter = (r.social_twitter || '').toString().trim();
+      const instagram = (r.social_instagram || '').toString().trim();
+      const linkedin = (r.social_linkedin || '').toString().trim();
+      const about = r.about || '—';
+      if (membershipAppDetailsName) membershipAppDetailsName.textContent = name;
+      if (membershipAppDetailsDate) membershipAppDetailsDate.textContent = created;
+      if (membershipAppDetailsPhone) membershipAppDetailsPhone.textContent = phone;
+      if (membershipAppDetailsEmail) membershipAppDetailsEmail.textContent = email;
+      if (membershipAppDetailsDegree) membershipAppDetailsDegree.textContent = degree;
+      if (membershipAppDetailsCollege) membershipAppDetailsCollege.textContent = college;
+      if (membershipAppDetailsMajor) membershipAppDetailsMajor.textContent = major;
+      if (membershipAppDetailsCommittee) membershipAppDetailsCommittee.textContent = committee;
+      if (membershipAppDetailsSkills) membershipAppDetailsSkills.textContent = skills;
+      if (membershipAppDetailsPortfolio) membershipAppDetailsPortfolio.innerHTML = portfolio ? `<a class="btn btn-outline btn-xs" href="${escapeHtml(portfolio)}" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> فتح</a>` : '—';
+      if (membershipAppStatusSelect) membershipAppStatusSelect.value = statusKey;
+      if (membershipAppDetailsTwitter) membershipAppDetailsTwitter.innerHTML = twitter ? `<a class="btn btn-outline btn-xs" href="${escapeHtml(twitter)}" target="_blank"><i class=\"fa-solid fa-arrow-up-right-from-square\"></i> فتح</a>` : '—';
+      if (membershipAppDetailsInstagram) membershipAppDetailsInstagram.innerHTML = instagram ? `<a class="btn btn-outline btn-xs" href="${escapeHtml(instagram)}" target="_blank"><i class=\"fa-solid fa-arrow-up-right-from-square\"></i> فتح</a>` : '—';
+      if (membershipAppDetailsLinkedin) membershipAppDetailsLinkedin.innerHTML = linkedin ? `<a class="btn btn-outline btn-xs" href="${escapeHtml(linkedin)}" target="_blank"><i class=\"fa-solid fa-arrow-up-right-from-square\"></i> فتح</a>` : '—';
+      if (membershipAppDetailsAbout) membershipAppDetailsAbout.textContent = about || '—';
+      openDialog?.(membershipAppDetailsDialog);
+    } catch {}
+  });
+
+  membershipAppStatusSelect?.addEventListener('change', async (e) => {
+    const idx = membershipAppDetailsIndex;
+    if (!Number.isInteger(idx) || idx < 0 || idx >= (membershipApps?.length || 0)) return;
+    const r = membershipApps[idx];
+    const newKey = membershipAppStatusSelect.value;
+    const oldRaw = (r.status || '').toString().trim().toLowerCase();
+    r.status = newKey;
+    try { save(KEYS.membership_apps, membershipApps); } catch {}
+    try {
+      if (sb && r.id != null) {
+        await sb.from('membership_applications').update({ status: newKey }).eq('id', r.id);
+      }
+    } catch {
+      r.status = oldRaw;
+      try { save(KEYS.membership_apps, membershipApps); } catch {}
+      try {
+        membershipAppStatusSelect.value = (oldRaw === 'accepted' || oldRaw === 'approved' || oldRaw === 'accept' || oldRaw === 'ok' || oldRaw === 'done' || oldRaw === 'مقبول') ? 'accepted'
+          : (oldRaw === 'rejected' || oldRaw === 'declined' || oldRaw === 'رفض' || oldRaw === 'مرفوض' || oldRaw === 'reject') ? 'rejected'
+          : (oldRaw === 'interview' || oldRaw === 'interviewing' || oldRaw === 'scheduled' || oldRaw === 'مقابلة' || oldRaw === 'موعد' || oldRaw === 'مُقابلة') ? 'interview'
+          : (oldRaw === 'review' || oldRaw === 'under_review' || oldRaw === 'in_review' || oldRaw === 'pending_review' || oldRaw === 'مراجعة' || oldRaw === 'قيد المراجعة') ? 'review'
+          : 'pending';
+      } catch {}
+      try { alert('تعذر حفظ الحالة. حاول مرة أخرى.'); } catch {}
+      return;
+    }
+    const row = document.querySelector(`tr[data-idx="${idx}"]`);
+    if (row) {
+      const badge = row.querySelector('[data-role="status-badge"]');
+      if (badge) {
+        const label = (newKey === 'accepted') ? 'مقبول' : (newKey === 'rejected') ? 'مرفوض' : (newKey === 'interview') ? 'مُقابلة' : (newKey === 'review') ? 'مراجعة' : 'قيد الانتظار';
+        badge.textContent = label;
+        badge.className = `status-badge status-${newKey}`;
+      }
+      const pctCell = row.querySelector('td[data-label="نسبة الإكمال"]');
+      if (pctCell) {
+        const fields = ['phone','email','degree','college','major','skills','preferred_committee','portfolio_url','status','social_twitter','social_instagram','social_linkedin','about'];
+        const total = fields.length;
+        let filled = 0;
+        for (const k of fields) {
+          let v = r[k];
+          if (!v && k === 'preferred_committee') v = r.committee;
+          if (typeof v === 'string') v = v.trim();
+          if (v) filled++;
+        }
+        const pct = Math.round((filled * 100) / (total || 1));
+        pctCell.textContent = `${pct}%`;
+      }
+    }
+    try { applyMembershipFilters(); } catch {}
+    try { renderMembershipStats(membershipApps); } catch {}
   });
   function isIOSLike() {
     try { return /iphone|ipad|ipod/i.test(navigator.userAgent || ''); } catch { return false; }

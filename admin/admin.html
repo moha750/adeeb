@@ -230,27 +230,95 @@
               <button id="membershipRefreshBtn" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
             </div>
           </div>
-          <div class="panel" style="padding:16px; overflow:auto">
-            <table class="table" style="width:100%; border-collapse:collapse">
-              <thead>
-                <tr>
-                  <th style="text-align:right; padding:12px">التاريخ</th>
-                  <th style="text-align:right; padding:12px">الاسم</th>
-                  <th style="text-align:right; padding:12px">الجوال</th>
-                  <th style="text-align:right; padding:12px">البريد</th>
-                  <th style="text-align:right; padding:12px">الدرجة</th>
-                  <th style="text-align:right; padding:12px">الكلية</th>
-                  <th style="text-align:right; padding:12px">التخصص</th>
-                  <th style="text-align:right; padding:12px">المهارات</th>
-                  <th style="text-align:right; padding:12px">اللجنة</th>
-                  <th style="text-align:right; padding:12px">أعمال</th>
-                  <th style="text-align:right; padding:12px">الحالة</th>
-                </tr>
-              </thead>
-              <tbody id="membershipAppsTableBody"></tbody>
-            </table>
-            <div id="membershipAppsEmpty" class="empty-state muted" style="display:none">لا توجد طلبات بعد</div>
+          <div class="cards-grid" id="membershipStatsGrid" aria-live="polite" style="margin-bottom:16px"></div>
+          <div id="membershipFilters" class="filters-bar" aria-label="فلاتر طلبات العضوية" style="margin-bottom:12px">
+            <div class="filter-field">
+              <i class="icon fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              <input id="membershipFilterName" class="filter-input with-icon" type="text" placeholder="بحث بالاسم" />
+            </div>
+            <div class="filter-field">
+              <i class="icon fa-solid fa-layer-group" aria-hidden="true"></i>
+              <select id="membershipFilterStatus" class="filter-select with-icon" title="تصفية حسب الحالة">
+                <option value="all">كل الحالات</option>
+                <option value="pending">قيد الانتظار</option>
+                <option value="review">مراجعة</option>
+                <option value="interview">مُقابلة</option>
+                <option value="accepted">مقبول</option>
+                <option value="rejected">مرفوض</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <i class="icon fa-solid fa-percent" aria-hidden="true"></i>
+              <select id="membershipFilterPctBand" class="filter-select with-icon" title="تصفية حسب نسبة الإكمال">
+                <option value="all">كل النسب</option>
+                <option value="50">50% - 59%</option>
+                <option value="60">60% - 69%</option>
+                <option value="70">70% - 79%</option>
+                <option value="80">80% - 89%</option>
+                <option value="90">90% - 99%</option>
+                <option value="100">100%</option>
+              </select>
+            </div>
+            <button id="membershipFiltersClear" class="btn btn-outline btn-xs" type="button" title="مسح الفلاتر"><i class="fa-solid fa-eraser"></i> مسح</button>
           </div>
+          <div id="membershipAppsGroups" class="groups-grid"></div>
+          <div id="membershipAppsEmpty" class="empty-state muted" style="display:none">لا توجد طلبات بعد</div>
+          <dialog id="membershipAppDetailsDialog" class="admin-dialog">
+            <form method="dialog" class="dialog-form" id="membershipAppDetailsForm">
+              <div class="dialog-header">
+                <h3 class="dialog-title">تفاصيل طلب العضوية</h3>
+                <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="dialog-body">
+                <div class="membership-details">
+                  <div class="details-row cols-1">
+                    <label class="detail">الأسم الثلاثي<div id="membershipAppDetailsName" class="muted"></div></label>
+                  </div>
+                  <div class="details-row cols-2">
+                    <label class="detail">الجوال<div id="membershipAppDetailsPhone" class="muted"></div></label>
+                    <label class="detail">البريد الإلكتروني<div id="membershipAppDetailsEmail" class="muted"></div></label>
+                  </div>
+                  <div class="details-row cols-3">
+                    <label class="detail">الدرجة العلمية<div id="membershipAppDetailsDegree" class="muted"></div></label>
+                    <label class="detail">الكلية<div id="membershipAppDetailsCollege" class="muted"></div></label>
+                    <label class="detail">التخصص<div id="membershipAppDetailsMajor" class="muted"></div></label>
+                  </div>
+                  <div class="details-row cols-1">
+                    <label class="detail">اللجنة<div id="membershipAppDetailsCommittee" class="muted"></div></label>
+                  </div>
+                  <div class="details-row cols-1">
+                    <label class="detail">المهارات<div id="membershipAppDetailsSkills" class="muted" style="white-space:pre-wrap"></div></label>
+                  </div>
+                  <div class="details-row cols-1">
+                    <label class="detail">أعمال سابقة<div id="membershipAppDetailsPortfolio" class="muted"></div></label>
+                  </div>
+                  <div class="details-row cols-3">
+                    <label class="detail">تويتر<div id="membershipAppDetailsTwitter" class="muted"></div></label>
+                    <label class="detail">إنستقرام<div id="membershipAppDetailsInstagram" class="muted"></div></label>
+                    <label class="detail">تيك توك<div id="membershipAppDetailsLinkedin" class="muted"></div></label>
+                  </div>
+                  <div class="details-row cols-1">
+                    <label class="detail">النبذة<div id="membershipAppDetailsAbout" class="muted" style="white-space:pre-wrap"></div></label>
+                  </div>
+                  <div class="details-row cols-1">
+                    <label class="detail">التاريخ<div id="membershipAppDetailsDate" class="muted"></div></label>
+                  </div>
+                  <div class="details-row cols-1">
+                    <label class="detail">الحالة<select id="membershipAppStatusSelect">
+                      <option value="pending">قيد الانتظار</option>
+                      <option value="review">مراجعة</option>
+                      <option value="interview">مُقابلة</option>
+                      <option value="accepted">مقبول</option>
+                      <option value="rejected">مرفوض</option>
+                    </select></label>
+                  </div>
+                </div>
+              </div>
+              <menu class="dialog-actions">
+                <button type="button" class="btn" onclick="this.closest('dialog').close()">إغلاق</button>
+              </menu>
+            </form>
+          </dialog>
         </section>
 
         <section id="section-faq" class="admin-section" hidden>
