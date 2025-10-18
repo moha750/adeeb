@@ -18,6 +18,45 @@
   const blogList = $('#blogList');
   const todosList = $('#todosList');
   const statsGrid = $('#statsGrid');
+  const joinStatusLabel = document.getElementById('joinStatusLabel');
+  const toggleJoinBtn = document.getElementById('toggleJoinBtn');
+  const joinStatusInline = document.getElementById('joinStatusInline');
+  const joinSettingsForm = document.getElementById('joinSettingsForm');
+  const joinOpenCheckbox = document.getElementById('joinOpenCheckbox');
+  const joinControlTypeManual = document.getElementById('joinControlTypeManual');
+  const joinControlTypeSchedule = document.getElementById('joinControlTypeSchedule');
+  const joinManualGroup = document.getElementById('joinManualGroup');
+  const joinScheduleGroup = document.getElementById('joinScheduleGroup');
+  const joinScheduleOpenAt = document.getElementById('joinScheduleOpenAt');
+  const joinScheduleCloseAt = document.getElementById('joinScheduleCloseAt');
+  const joinScheduleModeRange = document.getElementById('joinScheduleModeRange');
+  const joinScheduleModeOpenOnly = document.getElementById('joinScheduleModeOpenOnly');
+  const joinScheduleModeCloseOnly = document.getElementById('joinScheduleModeCloseOnly');
+  const joinClosedTitleInput = document.getElementById('joinClosedTitle');
+  const joinClosedMessageInput = document.getElementById('joinClosedMessage');
+  const joinClosedButtonInput = document.getElementById('joinClosedButtonText');
+  const joinOpenToggleLabel = document.querySelector('#joinManualGroup .toggle-label');
+  const joinMembershipCountdown = document.getElementById('joinMembershipCountdown');
+  const joinSettingsMsg = document.getElementById('joinSettingsMsg');
+  const DEFAULT_JOIN_CLOSED_TITLE = 'التسجيل مغلق';
+  const DEFAULT_JOIN_CLOSED_MESSAGE = 'باب التسجيل مغلق حاليًا. تابعنا على منصاتنا لمعرفة موعد الفتح القادم.';
+  const DEFAULT_JOIN_CLOSED_BUTTON = 'حسناً';
+  const previewClosedMsgBtn = document.getElementById('previewClosedMsgBtn');
+  const joinSummaryState = document.getElementById('joinSummaryState');
+  const joinSummaryControl = document.getElementById('joinSummaryControl');
+  const joinSummaryMode = document.getElementById('joinSummaryMode');
+  const joinSummaryTimes = document.getElementById('joinSummaryTimes');
+  const joinSummaryTitle = document.getElementById('joinSummaryTitle');
+  const joinSummaryMessage = document.getElementById('joinSummaryMessage');
+  const joinSummaryButtonText = document.getElementById('joinSummaryButtonText');
+  const joinSummaryCountdown = document.getElementById('joinSummaryCountdown');
+  const joinTimezoneEl = document.getElementById('joinTimezone');
+  // Join hero countdown elements
+  const joinCountdownLabel = document.getElementById('joinCountdownLabel');
+  const cdDays = document.getElementById('cdDays');
+  const cdHours = document.getElementById('cdHours');
+  const cdMinutes = document.getElementById('cdMinutes');
+  const cdSeconds = document.getElementById('cdSeconds');
   const membershipAppsTableBody = document.getElementById('membershipAppsTableBody');
   const membershipAppsEmpty = document.getElementById('membershipAppsEmpty');
   const membershipRefreshBtn = document.getElementById('membershipRefreshBtn');
@@ -120,18 +159,434 @@
     topics: 'adeeb_idea_topics',
     testimonials: 'adeeb_testimonials',
     membership_apps: 'adeeb_membership_applications',
+    settings: 'adeeb_settings',
   };
 
   // Supabase client (if configured)
   const sb = window.sbClient || null;
   let membershipAppDetailsIndex = -1;
 
-  // ===== PWA Install (Profile tab) =====
-  const installAppBtn = document.getElementById('installAppBtn');
-  let deferredInstallPrompt = null;
-  function isAppInstalled() {
-    try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch { return false; }
+  function siteSettingsGet() {
+    try {
+      const raw = localStorage.getItem(KEYS.settings);
+      const obj = raw ? JSON.parse(raw) : {};
+      return (obj && typeof obj === 'object' && !Array.isArray(obj)) ? obj : {};
+    } catch { return {}; }
   }
+  function siteSettingsSet(obj) {
+    try { localStorage.setItem(KEYS.settings, JSON.stringify(obj && typeof obj === 'object' ? obj : {})); } catch {}
+  }
+  function updateJoinOpenToggleLabel() {
+    try {
+      if (!joinOpenToggleLabel) return;
+      const checked = !!(joinOpenCheckbox?.checked);
+      joinOpenToggleLabel.textContent = checked ? 'إغلاق التسجيل' : 'فتح التسجيل';
+    } catch {}
+  }
+  function escapeHtml(s) {
+    try {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    } catch { return ''; }
+  }
+  function toLocalInputVal(iso) {
+    try {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d)) return '';
+      const pad = (n) => String(n).padStart(2, '0');
+      const y = d.getFullYear();
+      const m = pad(d.getMonth() + 1);
+      const day = pad(d.getDate());
+      const hh = pad(d.getHours());
+      const mm = pad(d.getMinutes());
+      return `${y}-${m}-${day}T${hh}:${mm}`;
+    } catch { return ''; }
+  }
+  function toIsoFromLocalInput(val) {
+    try {
+      if (!val) return null;
+      const d = new Date(val);
+      if (isNaN(d)) return null;
+      return d.toISOString();
+    } catch { return null; }
+  }
+  function formatDateTimeReadable(iso) {
+    try {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (isNaN(d)) return '—';
+      return d.toLocaleString('ar-EG', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    } catch { return '—'; }
+  }
+  function getCountdownTarget(s) {
+    try {
+      const control = s.join_control_type || (s.join_schedule_enabled ? 'schedule' : 'manual');
+      if (control !== 'schedule') {
+        return { label: 'وضع يدوي', target: null };
+      }
+      const mode = s.join_schedule_mode || 'range';
+      const now = Date.now();
+      const openTs = s.join_schedule_open_at ? Date.parse(s.join_schedule_open_at) : null;
+      const closeTs = s.join_schedule_close_at ? Date.parse(s.join_schedule_close_at) : null;
+      if (mode === 'range') {
+        if (openTs && now < openTs) return { label: 'يفتح بعد', target: openTs };
+        if (openTs && closeTs && now >= openTs && now < closeTs) return { label: 'يغلق بعد', target: closeTs };
+        if (closeTs && now < closeTs && !openTs) return { label: 'يغلق بعد', target: closeTs };
+        return { label: 'انتهت الفترة', target: null };
+      }
+      if (mode === 'open_only') {
+        if (openTs && now < openTs) return { label: 'يفتح بعد', target: openTs };
+        if (openTs && now >= openTs) return { label: 'مفتوح الآن', target: null };
+        return { label: '—', target: null };
+      }
+      // close_only
+      if (closeTs && now < closeTs) return { label: 'يغلق بعد', target: closeTs };
+      if (closeTs && now >= closeTs) return { label: 'مغلق الآن', target: null };
+      return { label: '—', target: null };
+    } catch { return { label: '—', target: null }; }
+  }
+  function setCountdownValues(d, h, m, s) {
+    if (cdDays) cdDays.textContent = String(Math.max(0, d)).padStart(2, '0');
+    if (cdHours) cdHours.textContent = String(Math.max(0, h)).padStart(2, '0');
+    if (cdMinutes) cdMinutes.textContent = String(Math.max(0, m)).padStart(2, '0');
+    if (cdSeconds) cdSeconds.textContent = String(Math.max(0, s)).padStart(2, '0');
+  }
+  function updateJoinCountdownUI() {
+    try {
+      const s = siteSettingsGet();
+      const res = getCountdownTarget(s);
+      if (joinCountdownLabel) joinCountdownLabel.textContent = res.label || '—';
+      if (res.target && res.target > Date.now()) {
+        const diff = Math.max(0, Math.floor((res.target - Date.now()) / 1000));
+        const d = Math.floor(diff / 86400);
+        const h = Math.floor((diff % 86400) / 3600);
+        const m = Math.floor((diff % 3600) / 60);
+        const sec = diff % 60;
+        setCountdownValues(d, h, m, sec);
+      } else {
+        // No active countdown
+        if (res.label && (res.label.includes('مفتوح') || res.label.includes('مغلق') || res.label.includes('وضع'))) {
+          setCountdownValues(0, 0, 0, 0);
+        } else {
+          if (cdDays) cdDays.textContent = '--';
+          if (cdHours) cdHours.textContent = '--';
+          if (cdMinutes) cdMinutes.textContent = '--';
+          if (cdSeconds) cdSeconds.textContent = '--';
+        }
+      }
+    } catch {}
+  }
+  function scheduleFieldsUpdate(enabled, mode) {
+    try {
+      if (!joinScheduleOpenAt || !joinScheduleCloseAt) return;
+      const en = !!enabled;
+      const m = mode || (joinScheduleModeOpenOnly?.checked ? 'open_only' : (joinScheduleModeCloseOnly?.checked ? 'close_only' : 'range'));
+      const openWrap = joinScheduleOpenAt.closest('label');
+      const closeWrap = joinScheduleCloseAt.closest('label');
+      const tzRow = joinTimezoneEl ? joinTimezoneEl.closest('.full-row') : null;
+      if (!en) {
+        joinScheduleOpenAt.disabled = true;
+        joinScheduleCloseAt.disabled = true;
+        if (openWrap) openWrap.style.display = 'none';
+        if (closeWrap) closeWrap.style.display = 'none';
+        if (tzRow) tzRow.style.display = 'none';
+      } else if (m === 'open_only') {
+        joinScheduleOpenAt.disabled = false;
+        joinScheduleCloseAt.disabled = true;
+        if (openWrap) openWrap.style.display = '';
+        if (closeWrap) closeWrap.style.display = 'none';
+        if (tzRow) tzRow.style.display = '';
+      } else if (m === 'close_only') {
+        joinScheduleOpenAt.disabled = true;
+        joinScheduleCloseAt.disabled = false;
+        if (openWrap) openWrap.style.display = 'none';
+        if (closeWrap) closeWrap.style.display = '';
+        if (tzRow) tzRow.style.display = '';
+      } else {
+        joinScheduleOpenAt.disabled = false;
+        joinScheduleCloseAt.disabled = false;
+        if (openWrap) openWrap.style.display = '';
+        if (closeWrap) closeWrap.style.display = '';
+        if (tzRow) tzRow.style.display = '';
+      }
+    } catch {}
+  }
+  function getSelectedScheduleMode() {
+    try {
+      if (joinScheduleModeOpenOnly?.checked) return 'open_only';
+      if (joinScheduleModeCloseOnly?.checked) return 'close_only';
+      return 'range';
+    } catch { return 'range'; }
+  }
+  function getSelectedControlType() {
+    try { return joinControlTypeSchedule?.checked ? 'schedule' : 'manual'; } catch { return 'manual'; }
+  }
+  function isJoinOpenEffective(s) {
+    try {
+      const sched = !!s.join_schedule_enabled;
+      const openIso = s.join_schedule_open_at || null;
+      const closeIso = s.join_schedule_close_at || null;
+      if (sched && (openIso || closeIso)) {
+        const now = Date.now();
+        const openTs = openIso ? Date.parse(openIso) : null;
+        const closeTs = closeIso ? Date.parse(closeIso) : null;
+        if (openTs && closeTs) return now >= openTs && now < closeTs;
+        if (openTs && !closeTs) return now >= openTs;
+        if (!openTs && closeTs) return now < closeTs;
+      }
+      return s.join_open !== false;
+    } catch { return s && s.join_open !== false; }
+  }
+  async function settingsRemoteFetch() {
+    if (!sb) return null;
+    try {
+      const { data, error } = await sb
+        .from('membership_settings')
+        .select('id, join_open, join_closed_title, join_closed_message, join_closed_button_text, join_membership_countdown, join_control_type, join_schedule_enabled, join_schedule_mode, join_schedule_open_at, join_schedule_close_at, updated_at')
+        .eq('id','default')
+        .maybeSingle();
+      if (error) throw error;
+      return data || null;
+    } catch (e) { return null; }
+  }
+  async function settingsRemoteSave(obj) {
+    if (!sb) return;
+    try {
+      const payload = {
+        id: 'default',
+        join_open: obj?.join_open !== false,
+        join_closed_title: obj?.join_closed_title || null,
+        join_closed_message: obj?.join_closed_message || null,
+        join_closed_button_text: obj?.join_closed_button_text || null,
+        join_membership_countdown: !!obj?.join_membership_countdown,
+        join_control_type: obj?.join_control_type || (obj?.join_schedule_enabled ? 'schedule' : 'manual'),
+        join_schedule_enabled: obj?.join_control_type ? (obj?.join_control_type === 'schedule') : !!obj?.join_schedule_enabled,
+        join_schedule_mode: obj?.join_schedule_mode || 'range',
+        join_schedule_open_at: obj?.join_schedule_open_at || null,
+        join_schedule_close_at: obj?.join_schedule_close_at || null,
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await sb.from('membership_settings').upsert(payload).select('*').single();
+      if (error) throw error;
+    } catch (e) { /* ignore for local-only mode */ }
+  }
+  function refreshJoinUI() {
+    const s = siteSettingsGet();
+    const isOpen = isJoinOpenEffective(s);
+    if (joinStatusLabel) joinStatusLabel.textContent = isOpen ? 'الحالة: مفتوح' : 'الحالة: مغلق';
+    if (joinStatusInline) {
+      joinStatusInline.textContent = isOpen ? 'الحالة: مفتوح' : 'الحالة: مغلق';
+      try {
+        joinStatusInline.classList.remove('pill-open','pill-closed');
+        joinStatusInline.classList.add(isOpen ? 'pill-open' : 'pill-closed');
+      } catch {}
+    }
+    if (toggleJoinBtn) {
+      try {
+        toggleJoinBtn.classList.toggle('btn-primary', !isOpen);
+        toggleJoinBtn.classList.toggle('btn-outline', isOpen);
+      } catch {}
+      toggleJoinBtn.innerHTML = isOpen
+        ? '<i class="fa-solid fa-toggle-off"></i> إغلاق'
+        : '<i class="fa-solid fa-toggle-on"></i> فتح';
+    }
+  }
+  function refreshJoinSummaryUI() {
+    try {
+      const s = siteSettingsGet();
+      const isOpen = isJoinOpenEffective(s);
+      if (joinSummaryState) {
+        joinSummaryState.textContent = isOpen ? 'مفتوح' : 'مغلق';
+        try {
+          joinSummaryState.classList.remove('pill-open','pill-closed');
+          joinSummaryState.classList.add(isOpen ? 'pill-open' : 'pill-closed');
+        } catch {}
+      }
+      if (joinSummaryControl) joinSummaryControl.textContent = (s.join_control_type === 'schedule' || s.join_schedule_enabled) ? 'جدولة' : 'يدوي';
+      const mode = s.join_schedule_mode || 'range';
+      if (joinSummaryMode) joinSummaryMode.textContent = (s.join_control_type === 'schedule' || s.join_schedule_enabled)
+        ? (mode === 'open_only' ? 'فتح فقط' : mode === 'close_only' ? 'إغلاق فقط' : 'فتح وإغلاق')
+        : '—';
+      let times = '—';
+      if (s.join_control_type === 'schedule' || s.join_schedule_enabled) {
+        if (mode === 'range') times = `من: ${formatDateTimeReadable(s.join_schedule_open_at)} · إلى: ${formatDateTimeReadable(s.join_schedule_close_at)}`;
+        else if (mode === 'open_only') times = `يفتح: ${formatDateTimeReadable(s.join_schedule_open_at)}`;
+        else if (mode === 'close_only') times = `يغلق: ${formatDateTimeReadable(s.join_schedule_close_at)}`;
+      }
+      if (joinSummaryTimes) joinSummaryTimes.textContent = times;
+      if (joinSummaryTitle) joinSummaryTitle.textContent = String(s.join_closed_title || DEFAULT_JOIN_CLOSED_TITLE);
+      if (joinSummaryMessage) joinSummaryMessage.textContent = String(s.join_closed_message || DEFAULT_JOIN_CLOSED_MESSAGE);
+      if (joinSummaryButtonText) joinSummaryButtonText.textContent = String(s.join_closed_button_text || DEFAULT_JOIN_CLOSED_BUTTON);
+      if (joinSummaryCountdown) joinSummaryCountdown.textContent = (s.join_membership_countdown ? 'ظاهر' : 'مخفي');
+      if (joinTimezoneEl) {
+        try { joinTimezoneEl.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch { joinTimezoneEl.textContent = 'UTC'; }
+      }
+    } catch {}
+  }
+  toggleJoinBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const s = siteSettingsGet();
+    const isOpen = s.join_open !== false;
+    s.join_open = !isOpen;
+    if (!s.join_closed_title) s.join_closed_title = DEFAULT_JOIN_CLOSED_TITLE;
+    if (!s.join_closed_message) s.join_closed_message = DEFAULT_JOIN_CLOSED_MESSAGE;
+    if (!s.join_closed_button_text) s.join_closed_button_text = DEFAULT_JOIN_CLOSED_BUTTON;
+    siteSettingsSet(s);
+    refreshJoinUI();
+    refreshJoinFormUI();
+    refreshJoinSummaryUI();
+    try { settingsRemoteSave(s); } catch {}
+  });
+  function refreshJoinFormUI() {
+    if (!joinOpenCheckbox && !joinClosedTitleInput && !joinClosedMessageInput && !joinScheduleOpenAt && !joinScheduleCloseAt) return;
+    const s = siteSettingsGet();
+    const isOpen = s.join_open !== false;
+    const control = s.join_control_type || (s.join_schedule_enabled ? 'schedule' : 'manual');
+    if (joinControlTypeManual) joinControlTypeManual.checked = control !== 'schedule';
+    if (joinControlTypeSchedule) joinControlTypeSchedule.checked = control === 'schedule';
+    try {
+      joinManualGroup?.classList.toggle('collapsed', control === 'schedule');
+      joinManualGroup?.setAttribute('aria-hidden', control === 'schedule' ? 'true' : 'false');
+      joinScheduleGroup?.classList.toggle('collapsed', control !== 'schedule');
+      joinScheduleGroup?.setAttribute('aria-hidden', control !== 'schedule' ? 'true' : 'false');
+    } catch {}
+    if (joinOpenCheckbox) joinOpenCheckbox.checked = !!isOpen;
+    try { updateJoinOpenToggleLabel(); } catch {}
+    const mode = s.join_schedule_mode || 'range';
+    if (joinScheduleModeRange) joinScheduleModeRange.checked = mode === 'range';
+    if (joinScheduleModeOpenOnly) joinScheduleModeOpenOnly.checked = mode === 'open_only';
+    if (joinScheduleModeCloseOnly) joinScheduleModeCloseOnly.checked = mode === 'close_only';
+    if (joinScheduleOpenAt) joinScheduleOpenAt.value = toLocalInputVal(s.join_schedule_open_at);
+    if (joinScheduleCloseAt) joinScheduleCloseAt.value = toLocalInputVal(s.join_schedule_close_at);
+    scheduleFieldsUpdate(control === 'schedule', mode);
+    if (joinClosedTitleInput) joinClosedTitleInput.value = String(s.join_closed_title || DEFAULT_JOIN_CLOSED_TITLE);
+    if (joinClosedMessageInput) joinClosedMessageInput.value = String(s.join_closed_message || DEFAULT_JOIN_CLOSED_MESSAGE);
+    if (joinClosedButtonInput) joinClosedButtonInput.value = String(s.join_closed_button_text || DEFAULT_JOIN_CLOSED_BUTTON);
+    if (joinMembershipCountdown) joinMembershipCountdown.checked = !!s.join_membership_countdown;
+  }
+  [joinControlTypeManual, joinControlTypeSchedule].forEach((el) => {
+    try {
+      el?.addEventListener('change', () => {
+        const control = getSelectedControlType();
+        try {
+          joinManualGroup?.classList.toggle('collapsed', control === 'schedule');
+          joinManualGroup?.setAttribute('aria-hidden', control === 'schedule' ? 'true' : 'false');
+          joinScheduleGroup?.classList.toggle('collapsed', control !== 'schedule');
+          joinScheduleGroup?.setAttribute('aria-hidden', control !== 'schedule' ? 'true' : 'false');
+        } catch {}
+        scheduleFieldsUpdate(control === 'schedule', getSelectedScheduleMode());
+        refreshJoinSummaryUI();
+        updateJoinCountdownUI();
+      });
+    } catch {}
+  });
+  [joinScheduleModeRange, joinScheduleModeOpenOnly, joinScheduleModeCloseOnly].forEach((el) => {
+    try {
+      el?.addEventListener('change', () => {
+        scheduleFieldsUpdate(getSelectedControlType() === 'schedule', getSelectedScheduleMode());
+        try { updateJoinOpenToggleLabel(); } catch {}
+        refreshJoinSummaryUI();
+        updateJoinCountdownUI();
+      });
+    } catch {}
+  });
+  const clearJoinSettingsMsg = () => { if (joinSettingsMsg) { joinSettingsMsg.className = 'muted'; joinSettingsMsg.textContent = ''; } };
+  joinScheduleOpenAt?.addEventListener('input', () => { clearJoinSettingsMsg(); refreshJoinSummaryUI(); updateJoinCountdownUI(); });
+  joinScheduleCloseAt?.addEventListener('input', () => { clearJoinSettingsMsg(); refreshJoinSummaryUI(); updateJoinCountdownUI(); });
+  joinOpenCheckbox?.addEventListener('change', () => { updateJoinOpenToggleLabel(); refreshJoinSummaryUI(); updateJoinCountdownUI(); });
+  joinMembershipCountdown?.addEventListener('change', () => { refreshJoinSummaryUI(); });
+  joinClosedButtonInput?.addEventListener('input', refreshJoinSummaryUI);
+  joinClosedTitleInput?.addEventListener('input', refreshJoinSummaryUI);
+  joinClosedMessageInput?.addEventListener('input', refreshJoinSummaryUI);
+  previewClosedMsgBtn?.addEventListener('click', () => {
+    const title = String(joinClosedTitleInput?.value || DEFAULT_JOIN_CLOSED_TITLE);
+    const msg = String(joinClosedMessageInput?.value || DEFAULT_JOIN_CLOSED_MESSAGE);
+    const btn = String(joinClosedButtonInput?.value || DEFAULT_JOIN_CLOSED_BUTTON);
+    try {
+      Swal.fire({ icon: 'info', title, text: msg, confirmButtonText: btn });
+    }
+    catch { alert(`${title}\n\n${msg}`); }
+  });
+  joinSettingsForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const s = siteSettingsGet();
+    const newOpen = !!(joinOpenCheckbox?.checked);
+    const title = String(joinClosedTitleInput?.value || '').trim();
+    const msg = String(joinClosedMessageInput?.value || '').trim();
+    const btnText = String(joinClosedButtonInput?.value || '').trim();
+    const controlType = getSelectedControlType();
+    const openIso = toIsoFromLocalInput(joinScheduleOpenAt?.value || '');
+    const closeIso = toIsoFromLocalInput(joinScheduleCloseAt?.value || '');
+    const mode = getSelectedScheduleMode();
+    const titleOrDefault = title || DEFAULT_JOIN_CLOSED_TITLE;
+    const msgOrDefault = msg || DEFAULT_JOIN_CLOSED_MESSAGE;
+    const btnOrDefault = btnText || DEFAULT_JOIN_CLOSED_BUTTON;
+    const showCountdown = !!(joinMembershipCountdown?.checked);
+    let openOut = openIso, closeOut = closeIso;
+    if (controlType === 'schedule') {
+      if (mode === 'open_only') { closeOut = null; }
+      if (mode === 'close_only') { openOut = null; }
+    }
+    const next = {
+      ...s,
+      join_open: newOpen,
+      join_closed_title: titleOrDefault,
+      join_closed_message: msgOrDefault,
+      join_closed_button_text: btnOrDefault,
+      join_membership_countdown: showCountdown,
+      join_control_type: controlType,
+      join_schedule_enabled: controlType === 'schedule',
+      join_schedule_mode: mode,
+      join_schedule_open_at: openOut,
+      join_schedule_close_at: closeOut,
+    };
+    siteSettingsSet(next);
+    refreshJoinUI();
+    refreshJoinFormUI();
+    refreshJoinSummaryUI();
+    updateJoinCountdownUI();
+    if (joinSettingsMsg) { joinSettingsMsg.className = 'muted'; joinSettingsMsg.textContent = 'جارٍ الحفظ...'; }
+    try { await settingsRemoteSave(next); if (joinSettingsMsg) { joinSettingsMsg.className = 'muted'; joinSettingsMsg.textContent = 'تم الحفظ'; } }
+    catch (err) { if (joinSettingsMsg) { joinSettingsMsg.className = 'alert error'; joinSettingsMsg.textContent = 'فشل الحفظ'; } }
+  });
+  try {
+    refreshJoinUI();
+    refreshJoinFormUI();
+    refreshJoinSummaryUI();
+    updateJoinCountdownUI();
+    settingsRemoteFetch()?.then((row) => {
+      if (row && typeof row === 'object') {
+        const cur = siteSettingsGet();
+        const next = {
+          ...cur,
+          join_open: row.join_open !== false,
+          join_closed_title: row.join_closed_title || cur.join_closed_title,
+          join_closed_message: row.join_closed_message || cur.join_closed_message,
+          join_closed_button_text: row.join_closed_button_text || cur.join_closed_button_text,
+          join_membership_countdown: typeof row.join_membership_countdown === 'boolean' ? row.join_membership_countdown : cur.join_membership_countdown,
+          join_control_type: row.join_control_type || (row.join_schedule_enabled ? 'schedule' : cur.join_control_type || 'manual'),
+          join_schedule_enabled: row.join_control_type ? (row.join_control_type === 'schedule') : !!row.join_schedule_enabled,
+          join_schedule_mode: row.join_schedule_mode || cur.join_schedule_mode,
+          join_schedule_open_at: row.join_schedule_open_at || cur.join_schedule_open_at,
+          join_schedule_close_at: row.join_schedule_close_at || cur.join_schedule_close_at,
+        };
+        siteSettingsSet(next);
+        refreshJoinUI();
+        refreshJoinFormUI();
+        refreshJoinSummaryUI();
+        updateJoinCountdownUI();
+      }
+    }).catch(() => {});
+    if (joinTimezoneEl) { try { joinTimezoneEl.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch { joinTimezoneEl.textContent = 'UTC'; } }
+  } catch {}
+
+  try { setInterval(() => { try { refreshJoinUI(); refreshJoinSummaryUI(); } catch {} }, 60000); } catch {}
+  try { setInterval(() => { try { updateJoinCountdownUI(); } catch {} }, 1000); } catch {}
 
   function applyMembershipFilters() {
     const list = Array.isArray(membershipApps) ? membershipApps : [];
@@ -5564,6 +6019,7 @@
       schedule,
       todos,
       topics,
+      settings: siteSettingsGet(),
       exportedAt: new Date().toISOString(),
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -5613,6 +6069,10 @@
       }
       if (Array.isArray(data.todos)) {
         todos = data.todos; save(KEYS.todos, todos); renderTodos();
+      }
+      if (data.settings && typeof data.settings === 'object') {
+        siteSettingsSet(data.settings);
+        refreshJoinUI();
       }
       alert('تم الاستيراد بنجاح');
     } catch (err) {

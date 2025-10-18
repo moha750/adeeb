@@ -1284,11 +1284,110 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Handle Join Us Button Click
-  document.getElementById("joinBtn").addEventListener("click", function (e) {
-    window.location.href = "membership.html";
-    return;
-  });
+  function publicSettingsGet() {
+    try {
+      const raw = localStorage.getItem('adeeb_settings');
+      const obj = raw ? JSON.parse(raw) : {};
+      return (obj && typeof obj === 'object' && !Array.isArray(obj)) ? obj : {};
+    } catch { return {}; }
+  }
+  function isJoinOpenEffective(s) {
+    try {
+      const sched = !!s.join_schedule_enabled;
+      const openIso = s.join_schedule_open_at || null;
+      const closeIso = s.join_schedule_close_at || null;
+      if (sched && (openIso || closeIso)) {
+        const now = Date.now();
+        const openTs = openIso ? Date.parse(openIso) : null;
+        const closeTs = closeIso ? Date.parse(closeIso) : null;
+        if (openTs && closeTs) return now >= openTs && now < closeTs;
+        if (openTs && !closeTs) return now >= openTs;
+        if (!openTs && closeTs) return now < closeTs;
+      }
+      return s.join_open !== false;
+    } catch { return s && s.join_open !== false; }
+  }
+  const joinEl = document.getElementById('joinBtn');
+  async function publicSettingsSyncFromRemote() {
+    const sb = window.sbClient;
+    if (!sb) return;
+    try {
+      const { data, error } = await sb
+        .from('membership_settings')
+        .select('id, join_open, join_closed_title, join_closed_message, join_closed_button_text, join_membership_countdown, join_schedule_enabled, join_schedule_open_at, join_schedule_close_at, updated_at')
+        .eq('id', 'default')
+        .maybeSingle();
+      if (error) throw error;
+      if (data && typeof data === 'object') {
+        const cur = publicSettingsGet();
+        const next = {
+          ...cur,
+          join_open: data.join_open !== false,
+          join_schedule_enabled: !!data.join_schedule_enabled,
+          join_schedule_open_at: data.join_schedule_open_at || cur.join_schedule_open_at,
+          join_schedule_close_at: data.join_schedule_close_at || cur.join_schedule_close_at,
+          join_closed_title: data.join_closed_title || cur.join_closed_title,
+          join_closed_message: data.join_closed_message || cur.join_closed_message,
+          join_closed_button_text: data.join_closed_button_text || cur.join_closed_button_text,
+          join_membership_countdown: (typeof data.join_membership_countdown === 'boolean') ? data.join_membership_countdown : cur.join_membership_countdown,
+        };
+        try { localStorage.setItem('adeeb_settings', JSON.stringify(next)); } catch {}
+      }
+    } catch {}
+  }
+  let __adeebRtChannel = null;
+  function publicSettingsEnsureRealtime() {
+    try {
+      const sb = window.sbClient;
+      if (!sb || __adeebRtChannel) return;
+      __adeebRtChannel = sb.channel('public:membership_settings');
+      __adeebRtChannel
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'membership_settings', filter: 'id=eq.default' }, (payload) => {
+          try {
+            const data = (payload && (payload.new || payload.old)) || {};
+            const cur = publicSettingsGet();
+            const next = {
+              ...cur,
+              join_open: data.join_open !== false,
+              join_schedule_enabled: !!data.join_schedule_enabled,
+              join_schedule_open_at: data.join_schedule_open_at || cur.join_schedule_open_at,
+              join_schedule_close_at: data.join_schedule_close_at || cur.join_schedule_close_at,
+              join_closed_title: data.join_closed_title || cur.join_closed_title,
+              join_closed_message: data.join_closed_message || cur.join_closed_message,
+              join_closed_button_text: data.join_closed_button_text || cur.join_closed_button_text,
+              join_membership_countdown: (typeof data.join_membership_countdown === 'boolean') ? data.join_membership_countdown : cur.join_membership_countdown,
+              join_control_type: data.join_control_type || cur.join_control_type,
+              join_schedule_mode: data.join_schedule_mode || cur.join_schedule_mode,
+            };
+            try { localStorage.setItem('adeeb_settings', JSON.stringify(next)); } catch {}
+          } catch {}
+        })
+        .subscribe();
+    } catch {}
+  }
+  try { publicSettingsSyncFromRemote(); } catch {}
+  try { publicSettingsEnsureRealtime(); } catch {}
+  if (joinEl) {
+    joinEl.addEventListener('click', function (e) {
+      const s = publicSettingsGet();
+      const isOpen = isJoinOpenEffective(s);
+      if (isOpen) {
+        window.location.href = 'membership.html';
+        return;
+      }
+      e.preventDefault();
+      try {
+        Swal.fire({
+          icon: 'info',
+          title: String(s.join_closed_title || 'التسجيل مغلق'),
+          text: String(s.join_closed_message || 'باب التسجيل مغلق حاليًا. تابعنا على منصاتنا لمعرفة موعد الفتح القادم.'),
+          confirmButtonText: String(s.join_closed_button_text || 'حسناً'),
+        });
+      } catch {
+        alert(String(s.join_closed_message || 'باب التسجيل مغلق حاليًا.'));
+      }
+    });
+  }
 });
 
 // Sponsors Swiper and animations are initialized dynamically after data render

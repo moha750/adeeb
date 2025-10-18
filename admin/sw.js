@@ -1,5 +1,5 @@
 /* Admin PWA Service Worker */
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `admin-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `admin-runtime-${CACHE_VERSION}`;
 
@@ -71,14 +71,18 @@ self.addEventListener('fetch', (event) => {
   }
 
   const isSameOrigin = url.origin === self.location.origin;
-  const isStatic = /\.(?:js|css|png|jpg|jpeg|webp|svg|gif|ico|ttf|otf|woff2?)$/i.test(url.pathname);
+  const isJS = /\.js$/i.test(url.pathname);
+  const isCSS = /\.css$/i.test(url.pathname);
+  const isImageOrFont = /\.(?:png|jpg|jpeg|webp|svg|gif|ico|ttf|otf|woff2?)$/i.test(url.pathname);
 
-  if (isSameOrigin && isStatic) {
+  if (isSameOrigin && (isJS || isCSS)) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+  if (isSameOrigin && isImageOrFont) {
     event.respondWith(cacheFirst(request));
     return;
   }
-
-  // Default: network first with cache fallback for same-origin GETs
   if (isSameOrigin) {
     event.respondWith(networkFirst(request));
   }

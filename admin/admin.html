@@ -13,8 +13,9 @@
       <link rel="canonical" href="https://www.adeeb.club/admin/admin.html" />
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" />
-      <link rel="stylesheet" href="../style.css" />
-      <link rel="stylesheet" href="admin.css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+      <link rel="stylesheet" href="../style.css?v=20251017" />
+      <link rel="stylesheet" href="admin.css?v=20251017" />
       <link rel="manifest" href="manifest.webmanifest" />
       <link rel="apple-touch-icon" href="/admin/icons/icons/icon-512x512.png" />
     </head>
@@ -119,21 +120,13 @@
                 </div>
               </div>
             </div>
+ 
             <div class="card">
               <div class="card__body">
-                <div class="card__title"><i class="fa-solid fa-users-rectangle"></i> أعضاء النادي</div>
-                <p class="card__text" style="color:#64748b; line-height:1.6">إدارة أعضاء النادي وبياناتهم الأساسية وصورة العضو.</p>
+                <div class="card__title"><i class="fa-solid fa-user-plus"></i> زر "انضم إلينا"</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">فتح/إغلاق زر الانضمام في الصفحة الرئيسية. عند الإغلاق سيظهر تنبيه بإغلاق التسجيل.</p>
                 <div class="card__actions">
-                  <button class="btn btn-primary" data-go="#section-members"><i class="fa-solid fa-arrow-left"></i> فتح</button>
-                </div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card__body">
-                <div class="card__title"><i class="fa-solid fa-id-badge"></i> إدارة طلبات العضوية</div>
-                <p class="card__text" style="color:#64748b; line-height:1.6">عرض طلبات تسجيل العضوية ومراجعتها.</p>
-                <div class="card__actions">
-                  <button class="btn btn-primary" data-go="#section-membership-apps"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                  <button class="btn btn-primary" data-go="#section-join"><i class="fa-solid fa-arrow-left"></i> فتح</button>
                 </div>
               </div>
             </div>
@@ -211,11 +204,128 @@
           <div id="boardList" class="cards-grid" aria-live="polite"></div>
         </section>
 
+        <section id="section-join" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-user-plus"></i> زر "انضم إلينا"</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+            </div>
+          </div>
+          <div class="panel join-panel">
+            <div class="join-hero">
+              <div class="hero-countdown" id="joinCountdown" aria-live="polite">
+                <div class="cd-title"><i class="fa-regular fa-hourglass-half"></i> <span id="joinCountdownLabel">—</span></div>
+                <div class="cd-time">
+                  <div class="cd-box"><span id="cdDays">00</span><small>يوم</small></div>
+                  <div class="cd-sep">:</div>
+                  <div class="cd-box"><span id="cdHours">00</span><small>ساعة</small></div>
+                  <div class="cd-sep">:</div>
+                  <div class="cd-box"><span id="cdMinutes">00</span><small>دقيقة</small></div>
+                  <div class="cd-sep">:</div>
+                  <div class="cd-box"><span id="cdSeconds">00</span><small>ثانية</small></div>
+                </div>
+              </div>
+            </div>
+            <div class="join-content">
+              <div class="join-form">
+                <form id="joinSettingsForm" class="form-grid">
+                  <label class="full-row">
+                    طريقة التحكم
+                    <div class="segmented">
+                      <label style="display:inline-flex;align-items:center;gap:6px;margin-inline-end:8px">
+                        <input type="radio" name="joinControlType" id="joinControlTypeManual" value="manual" /> فتح/إغلاق يدوي
+                      </label>
+                      <label style="display:inline-flex;align-items:center;gap:6px">
+                        <input type="radio" name="joinControlType" id="joinControlTypeSchedule" value="schedule" /> الجدولة
+                      </label>
+                    </div>
+                  </label>
+                  <div id="joinManualGroup" class="field-group full-row">
+                    <div class="field-group__title"><i class="fa-solid fa-toggle-on"></i> التحكم اليدوي</div>
+                    <label class="toggle">
+                      <input id="joinOpenCheckbox" type="checkbox" />
+                      <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+                      <span class="toggle-label">فتح التسجيل</span>
+                    </label>
+                  </div>
+                  <div id="joinScheduleGroup" class="field-group full-row">
+                    <div class="field-group__title"><i class="fa-regular fa-clock"></i> إعداد الجدولة</div>
+                    <label class="full-row">
+                      نوع الجدولة
+                      <div class="segmented">
+                        <label style="display:inline-flex;align-items:center;gap:6px;margin-inline-end:8px">
+                          <input type="radio" name="joinScheduleMode" id="joinScheduleModeRange" value="range" /> فتح وإغلاق
+                        </label>
+                        <label style="display:inline-flex;align-items:center;gap:6px;margin-inline-end:8px">
+                          <input type="radio" name="joinScheduleMode" id="joinScheduleModeOpenOnly" value="open_only" /> فتح فقط
+                        </label>
+                        <label style="display:inline-flex;align-items:center;gap:6px">
+                          <input type="radio" name="joinScheduleMode" id="joinScheduleModeCloseOnly" value="close_only" /> إغلاق فقط
+                        </label>
+                      </div>
+                      <small class="field-help">اختر نوع الجدولة الأنسب لطبيعة التسجيل في نادي أدِيب</small>
+                    </label>
+                    <label>
+                      تاريخ ووقت الفتح
+                      <input id="joinScheduleOpenAt" type="datetime-local" />
+                    </label>
+                    <label>
+                      تاريخ ووقت الإغلاق
+                      <input id="joinScheduleCloseAt" type="datetime-local" />
+                    </label>
+                    <label class="toggle full-row" title="إظهار عداد إغلاق التسجيل في صفحة العضوية">
+                      <input id="joinMembershipCountdown" type="checkbox" />
+                      <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+                      <span class="toggle-label">إظهار عداد الإغلاق في صفحة العضوية</span>
+                    </label>
+                    <div class="full-row muted">المنطقة الزمنية: <span id="joinTimezone"></span></div>
+                  </div>
+                  <div class="field-group full-row">
+                    <div class="field-group__title"><i class="fa-regular fa-message"></i> رسالة الإغلاق</div>
+                    <label>
+                      عنوان رسالة الإغلاق
+                      <input id="joinClosedTitle" type="text" placeholder="مثال: التسجيل مغلق حاليًا" />
+                    </label>
+                    <label class="full-row">
+                      رسالة عند إغلاق التسجيل
+                      <textarea id="joinClosedMessage" rows="3" placeholder="اكتب الرسالة التي ستظهر للزوار عند إغلاق التسجيل"></textarea>
+                    </label>
+                    <label>
+                      نص زر التنبيه
+                      <input id="joinClosedButtonText" type="text" placeholder="مثال: حسناً" />
+                    </label>
+                  </div>
+                  <div class="full-row">
+                    <button type="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
+                    <button type="button" id="previewClosedMsgBtn" class="btn btn-outline"><i class="fa-regular fa-eye"></i> معاينة الرسالة</button>
+                    <span id="joinSettingsMsg" class="muted" style="margin-inline-start:10px"></span>
+                  </div>
+                </form>
+              </div>
+              <aside class="settings-summary" aria-live="polite">
+                <div class="summary-head"><i class="fa-solid fa-circle-info"></i> ملخص الإعداد</div>
+                <div class="summary-row"><span class="label">الحالة الفعلية</span><span id="joinSummaryState" class="status-pill"></span></div>
+                <div class="summary-row"><span class="label">طريقة التحكم</span><span id="joinSummaryControl" class="value"></span></div>
+                <div class="summary-row"><span class="label">نوع الجدولة</span><span id="joinSummaryMode" class="value"></span></div>
+                <div class="summary-row"><span class="label">الأوقات</span><span id="joinSummaryTimes" class="value"></span></div>
+                <div class="divider"></div>
+                <div class="summary-row"><span class="label">عنوان الرسالة</span><span id="joinSummaryTitle" class="value"></span></div>
+                <div class="summary-row"><span class="label">نص الرسالة</span><span id="joinSummaryMessage" class="value"></span></div>
+                <div class="summary-row"><span class="label">نص الزر</span><span id="joinSummaryButtonText" class="value"></span></div>
+                <div class="summary-row"><span class="label">عداد الإغلاق (العضوية)</span><span id="joinSummaryCountdown" class="value"></span></div>
+                <div class="summary-actions">
+                  <a class="btn btn-outline" href="../index.html" target="_blank"><i class="fa-solid fa-globe"></i> عرض الصفحة</a>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </section>
+
         <section id="section-members" class="admin-section" hidden>
           <div class="section-head">
             <h2><i class="fa-solid fa-users-rectangle"></i> أعضاء النادي</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              
               <button id="addMemberBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة عضو</button>
             </div>
           </div>
@@ -226,7 +336,7 @@
           <div class="section-head">
             <h2><i class="fa-solid fa-id-badge"></i> طلبات العضوية</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              
               <button id="membershipRefreshBtn" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
             </div>
           </div>
@@ -357,7 +467,7 @@
           <div class="section-head">
             <h2><i class="fa-solid fa-calendar-days"></i> جدول أدِيب</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              
             </div>
           </div>
           <div id="schedulePanel" class="panel" style="padding:16px">
@@ -401,7 +511,7 @@
           <div class="section-head">
             <h2><i class="fa-solid fa-lightbulb"></i> سبورة أدِيب (إدارة)</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              
               <a id="openIdeaBoardBtn" class="btn" href="../board/board.html" target="_blank"><i class="fa-solid fa-globe"></i> فتح الصفحة العامة</a>
               <button id="ideaBoardRefreshBtn" class="btn"><i class="fa-solid fa-rotate"></i> تحديث</button>
             </div>
@@ -488,7 +598,7 @@
           <div class="section-head">
             <h2><i class="fa-solid fa-comments"></i> المحادثات</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              
             </div>
           </div>
           <div class="panel" style="padding:0">
@@ -537,7 +647,7 @@
           <div class="section-head">
             <h2><i class="fa-solid fa-list-check"></i> المهام</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              
               <button id="addTodoBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة مهمة</button>
             </div>
           </div>
@@ -550,7 +660,7 @@
             <h2><i class="fa-solid fa-id-card"></i> ملفي</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <button id="installAppBtn" class="btn btn-primary" style="display:none"><i class="fa-solid fa-download"></i> تثبيت التطبيق</button>
-              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              
             </div>
           </div>
           <div class="panel" style="padding:16px">
@@ -641,7 +751,7 @@
           <div class="section-head">
             <h2><i class="fa-solid fa-user-shield"></i> إدارة الأعضاء الإداريين</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              
             </div>
           </div>
 
@@ -1204,6 +1314,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
     <script src="../supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
       (async () => {
         const VERIFIED_KEY = 'adeeb_admin_verified_ts';
