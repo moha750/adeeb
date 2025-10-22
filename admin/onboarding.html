@@ -1,0 +1,475 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>إكمال التسجيل — نادي أديب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="../style.css" />
+    <style>
+      /* خلفية متناسقة مع هوية أديب */
+      body {
+        background:
+          radial-gradient(1200px 500px at 100% -10%, rgba(61,143,214,0.08), transparent 60%),
+          radial-gradient(800px 400px at -10% 110%, rgba(39,64,96,0.06), transparent 60%),
+          linear-gradient(135deg, #f8fafc 0%, #e6f0f9 100%);
+      }
+      .onboarding { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+
+      /* البطاقة */
+      .ob-card {
+        width: 100%;
+        max-width: 640px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(249,251,255,0.98));
+        border: 1px solid rgba(61, 143, 214, 0.15);
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(39,64,96,0.08);
+        overflow: hidden;
+        position: relative;
+      }
+      .ob-card::before {
+        content: "";
+        position: absolute;
+        top: 0; right: 0; left: 0; height: 5px;
+        background: linear-gradient(90deg, var(--accent-blue), var(--main-blue));
+      }
+
+      .ob-header { padding: 24px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+      .ob-header > div { width: 100%; }
+      .ob-header h1 { margin: 0; font-size: 22px; color: var(--main-blue); font-family: fb; display: flex; align-items: center; justify-content: center; gap: 8px; }
+      .ob-header .subtitle { color: #5b708d; margin: 6px 0 0; font-size: 14px; }
+
+      .ob-body { padding: 20px 24px; }
+      .ob-actions {padding: 16px 24px; border-top: 1px solid #e5e7eb; display: flex; gap: 8px; justify-content: center; align-items: center; }
+
+      /* شريط معلومات البريد والمنصب */
+      .meta-row {
+        display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 10px;
+      }
+      @media (min-width: 560px) {
+        .meta-row { grid-template-columns: repeat(2, 1fr); }
+      }
+      .meta-pill {
+        display: inline-flex; align-items: center; gap: 10px;
+        padding: 8px 12px; border-radius: 999px;
+        background: rgba(61,143,214,0.07);
+        border: 1px solid rgba(61, 143, 214, 0.22);
+        color: #274060; font-size: 13px;
+        box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 2px 10px rgba(61,143,214,0.08);
+        transition: transform .15s ease, box-shadow .2s ease, background-color .2s ease, border-color .2s ease;
+      }
+      .meta-pill:hover {
+        background: rgba(61,143,214,0.1);
+        border-color: rgba(61,143,214,0.35);
+        box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 4px 14px rgba(61,143,214,0.12);
+        transform: translateY(-1px);
+      }
+      .meta-pill i {
+        color: var(--accent-blue);
+        background: rgba(61,143,214,0.12);
+        border: 1px solid rgba(61,143,214,0.25);
+        width: 22px; height: 22px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 12px;
+      }
+      .meta-pill strong { font-family: fm; color: #274060; }
+      .meta-pill span { color: #335c81; }
+
+      /* الشبكة والنماذج */
+      .form-grid { display: grid; grid-template-columns: 1fr; }
+      label { color: #274060; font-family: fr; font-size: 14px; display: grid; gap: 8px; margin-bottom: 1.5rem;}
+      input[type="text"], input[type="tel"], input[type="password"], input[type="email"], input:not([type]) {
+        appearance: none; -webkit-appearance: none;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 15px;
+        color: #1f2937;
+        transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+      }
+      input::placeholder { color: #94a3b8; }
+      input:focus { outline: none; border-color: rgba(61,143,214,0.6); box-shadow: 0 0 0 3px rgba(61,143,214,0.15); background: #fcfdff; }
+
+      /* حقل كلمة المرور + زر إظهار/إخفاء */
+      .password-field { display: grid; }
+      .input-wrap { position: relative; display: grid; }
+      .toggle-eye {
+        position: absolute; top: 50%; left: 8px; transform: translateY(-50%);
+        border: 1px solid #e2e8f0; background: #fff; color: #274060; cursor: pointer;
+        border-radius: 10px; padding: 6px 10px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;
+      }
+      .toggle-eye:hover { background: #f8fafc; }
+      .toggle-eye i { color: #3d8fd6; }
+
+      /* مؤشر قوة كلمة المرور */
+      .pwd-meter { height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin-top: 10px; }
+      .pwd-meter .bar { height: 100%; width: 0%; background: #ef4444; transition: width .25s ease, background-color .25s ease; }
+      .pwd-hint { font-size: 12px; color: #64748b; }
+
+      /* متطلبات كلمة المرور */
+      .pwd-reqs { display: grid; gap: 6px; margin-top: 10px; }
+      .pwd-reqs .req-item { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #6b7280; }
+      .pwd-reqs .req-item i { font-size: 12px; }
+      .pwd-reqs .req-item.ok { color: #16a34a; }
+      .pwd-reqs .req-item.ok i { color: #16a34a; }
+      .pwd-reqs .req-item.bad i { color: #ef4444; }
+
+      /* رسالة تحذير قريبة من الحقل */
+      .pwd-notice {
+        display: flex; justify-content: center; align-items: center; gap: 6px;
+        font-size: 12px; color: #b45309; /* warning */
+        background: #fff7ed; border: 1px solid rgba(245, 158, 11, 0.4);
+        border-radius: 8px; padding: 6px 10px; pointer-events: none;
+        min-height: 24px; width: 100%; margin-top: 6px;
+      }
+      .pwd-notice i { color: #d97706; }
+      .pwd-notice.hidden { display: none; }
+
+        /* رسالة تحذير قريبة من الحقل */
+        .alert.error {
+        display: flex; justify-content: center; align-items: center; gap: 6px;
+        font-size: 12px; color: #b45309; /* warning */
+        background: #fff7ed; border: 1px solid rgba(245, 158, 11, 0.4);
+        border-radius: 8px; padding: 6px 10px; pointer-events: none;
+        min-height: 24px; width: 100%; margin-top: 6px;
+      }
+      .alert.error i { color: #991b1b; }
+      /* إضافة أيقونة تنبيه تلقائية لكل رسائل الخطأ */
+      .onboarding .alert.error::before {
+        content: "\f071"; /* fa-triangle-exclamation */
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        color: #991b1b;
+        margin-inline-end: 6px;
+        display: inline-block;
+      }
+      .alert.error.hidden { display: none; }
+
+      /* رافع الصورة الشخصية */
+      .avatar-uploader {
+        display: grid; justify-items: center; grid-template-columns: 84px 1fr; gap: 14px; align-items: center;
+        padding: 12px; border: 1px dashed rgba(61,143,214,0.35); border-radius: 14px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(249,251,255,0.98));
+        transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+        cursor: pointer;
+      }
+      .avatar-uploader:hover { border-color: rgba(61,143,214,0.6); box-shadow: 0 6px 18px rgba(39,64,96,0.07); }
+      .avatar-uploader.dragover { border-color: var(--accent-blue); background: #f0f7ff; }
+      .avatar-preview {
+        width: 84px; height: 84px; border-radius: 50%; object-fit: cover;
+        border: 2px solid #e2e8f0; background: #f1f5f9;
+        box-shadow: 0 0 0 4px rgba(61,143,214,0.10); /* ring */
+      }
+      .avatar-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      .avatar-filename { color: #64748b; font-size: 12px; }
+      .btn-xs { padding: 6px 10px; font-size: 12px; border-radius: 8px; }
+      .avatar-hint { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; color: #6b7280; font-size: 12px; margin-bottom: 6px; }
+      .avatar-hint i { color: var(--accent-blue); }
+
+      .muted { color: #64748b; }
+      .alert { border-radius: 10px; font-size: 14px; border: 1px solid transparent; background: #f8fafc; color: #334155; }
+      .alert.success { color: #065f46; background: #ecfdf5; border-color: #a7f3d0; }
+      .alert.error { color: #991b1b; background: #fef2f2; border-color: #fecaca; }
+      .field-help { color: #64748b; font-size: 12px; }
+      .field-help.warn { color: #b45309; }
+
+      /* خطوات المعالج — تصميم جديد جذاب */
+      .steps-indicator {
+        width: 100%;
+        display: flex; align-items: center; justify-content: center;
+        padding: 16px 10px 0;
+      }
+      .steps-dots {
+        --dot-size: 34px;
+        --line-pad: 22px; /* مسافة الخط من طرفيّ المكون */
+        position: relative;
+        display: inline-flex; align-items: center; justify-content: space-between;
+        gap: 22px; width: 100%; padding-inline: 2px;
+      }
+      /* خط الخلفية */
+      .steps-dots::before {
+        content: ""; position: absolute; z-index: 0;
+        inset-inline: var(--line-pad); height: 4px;
+        background: linear-gradient(90deg, #e5e7eb, #e2e8f0);
+        border-radius: 999px; box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+      }
+      /* خط التقدم */
+      .steps-dots::after {
+        content: ""; position: absolute; z-index: 0;
+        inset-inline-start: var(--line-pad); height: 4px; width: var(--progress, 0%);
+        background: linear-gradient(90deg, var(--accent-blue), #5aa9e6);
+        border-radius: 999px; box-shadow: 0 0 0 2px rgba(61,143,214,0.05);
+        transition: width .5s cubic-bezier(.22,.61,.36,1);
+      }
+      /* النقطة */
+      .steps-dots .dot {
+        position: relative; z-index: 1;
+        width: var(--dot-size); height: var(--dot-size); border-radius: 50%;
+        background: #fff;
+        border: 2px solid #e2e8f0;
+        box-shadow:
+          0 1px 0 rgba(255,255,255,.9) inset,
+          0 8px 20px rgba(39,64,96,.08);
+        display: inline-flex; align-items: center; justify-content: center;
+        transition: transform .2s ease, box-shadow .25s ease, border-color .25s ease, background-color .25s ease;
+      }
+      /* الرقم داخل النقطة */
+      .steps-dots .dot::before {
+        content: attr(data-step);
+        position: absolute; inset: 0; display: grid; place-items: center;
+        font-weight: 800; font-size: 13px; color: #64748b; font-family: fb;
+        transition: opacity .25s ease, transform .25s ease, color .25s ease;
+      }
+      /* الحالة النشطة */
+      .steps-dots .dot.active {
+        border-color: rgba(61,143,214,.6);
+        box-shadow: 0 0 0 6px rgba(61,143,214,0.12), 0 10px 24px rgba(61,143,214,.16);
+        transform: translateY(-1px);
+        background: linear-gradient(180deg, #ffffff, #f7fbff);
+      }
+      .steps-dots .dot.active::before { color: var(--accent-blue); }
+      /* الحالة المُنجَزة */
+      .steps-dots .dot.completed {
+        background: linear-gradient(180deg, #e6f6ff, #d8edff);
+        border-color: rgba(61,143,214,.55);
+      }
+      .steps-dots .dot.completed::before { opacity: 0; transform: scale(.8); }
+      .steps-dots .dot.completed::after {
+        content: "✓";
+        position: absolute; inset: 0; display: grid; place-items: center;
+        width: 100%; height: 100%; border-radius: 50%;
+        color: #fff; font-weight: 900; font-size: 14px;
+        background: linear-gradient(135deg, var(--accent-blue), var(--main-blue));
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 8px 20px rgba(61,143,214,.35);
+      }
+      /* عناوين الخطوات أسفل الدوائر للأجهزة الأوسع */
+      @media (min-width: 560px) {
+        .steps-dots .dot { margin-bottom: 22px; }
+        .steps-dots .dot::after { pointer-events: none; }
+        .steps-dots .dot::marker { content: none; }
+        .steps-dots .dot[data-title]::after {
+          /* شارة عنوان صغيرة تحت الدائرة */
+          content: attr(data-title);
+          position: absolute; bottom: -22px; inset-inline: 50%; transform: translateX(-50%);
+          padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+          font-size: 11px; font-family: fr;
+          color: #5b708d; background: rgba(248,250,252,.7);
+          border: 1px solid rgba(226,232,240,.8);
+          box-shadow: 0 1px 0 rgba(255,255,255,.75) inset;
+        }
+        .steps-dots .dot.active[data-title]::after { color: var(--accent-blue); border-color: rgba(61,143,214,.35); background: #f1f7ff; }
+        .steps-dots .dot.completed[data-title]::after { color: #2563eb; }
+      }
+      /* نبض لطيف عند التفعيل */
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(61,143,214,.24); }
+        70% { box-shadow: 0 0 0 10px rgba(61,143,214,0); }
+        100% { box-shadow: 0 0 0 0 rgba(61,143,214,0); }
+      }
+      .steps-dots .dot.active { animation: pulse 1.4s ease-out infinite; }
+      .step { display: none; }
+      .step.active { display: block; }
+
+      /* تجاوب */
+      @media (min-width: 700px) {
+        .form-grid { grid-template-columns: 1fr; }
+      }
+
+      /* أزرار المعالج (خاصة بصفحة الإكمال فقط) */
+      /* تأكيد إخفاء أي عنصر يحمل [hidden] في هذه الصفحة */
+      .onboarding [hidden] { display: none !important; }
+
+      .onboarding .btn {
+        -webkit-appearance: none; appearance: none;
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 10px 16px;
+        border-radius: 12px;
+        font-family: fb; font-size: 14px; line-height: 1;
+        text-decoration: none;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: transform .15s ease, background-color .2s ease, color .2s ease, box-shadow .2s ease, border-color .2s ease;
+        user-select: none;
+      }
+      .onboarding .btn i { font-size: 0.95em; }
+      .onboarding .btn:disabled,
+      .onboarding .btn[aria-disabled="true"] {
+        opacity: .6; cursor: not-allowed; pointer-events: none;
+      }
+      .onboarding .btn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(61,143,214,0.18);
+      }
+
+      /* Primary */
+      .onboarding .btn-primary {
+        color: #fff;
+        background: linear-gradient(135deg, var(--accent-blue), var(--main-blue));
+        border-color: rgba(61,143,214,0.35);
+        box-shadow: 0 8px 18px rgba(61,143,214,0.25), inset 0 1px 0 rgba(255,255,255,0.25);
+        transition: all 0.5s;
+      }
+      .onboarding .btn-primary:hover { transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(61,143,214,0.3), inset 0 1px 0 rgba(255,255,255,0.25);
+        filter: brightness(1.02);
+      }
+      .onboarding .btn-primary:active { transform: translateY(0);
+        box-shadow: 0 6px 14px rgba(61,143,214,0.24) inset;
+      }
+
+      /* Outline */
+      .onboarding .btn-outline {
+        color: var(--main-blue);
+        background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(249,251,255,0.98));
+        border-color: rgba(61,143,214,0.35);
+        box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset, 0 2px 10px rgba(39,64,96,0.06);
+        transition: all 0.5s;
+      }
+      .onboarding .btn-outline:hover {
+        color: #fff;
+        background: linear-gradient(135deg, var(--accent-blue), #5aa9e6);
+        border-color: rgba(61,143,214,0.5);
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(61,143,214,0.2);
+      }
+      .onboarding .btn-outline:active { transform: translateY(0);
+        box-shadow: 0 5px 12px rgba(61,143,214,0.18) inset;
+      }
+
+      /* أحجام إضافية صغيرة تستخدمها رافع الصورة */
+      .onboarding .btn-xs { padding: 6px 10px; font-size: 12px; border-radius: 8px; }
+      .onboarding .btn-xs i { font-size: 0.9em; }
+      /* محاذاة أيقونة السهم العربية بشكل جيد */
+      .onboarding .btn i { margin-inline-start: 0; margin-inline-end: 4px; }
+      .onboarding .btn a { text-decoration: none; }
+      /* تنظيم الأزرار: إظهار الأساسي يسارًا والرجوع يمينًا (متوافق مع RTL) */
+      .onboarding .ob-actions > div { display: flex; gap: 8px; flex-direction: row-reverse; flex-wrap: wrap; }
+
+      
+    </style>
+  </head>
+  <body>
+    <div class="onboarding">
+      <div class="ob-card" id="obCard" hidden>
+        <div class="ob-header">
+          <div>
+            <h1><i class="fa-solid fa-user-plus"></i> تسجيل حساب إداري</h1>
+            <div class="steps-indicator">
+              <div class="steps-dots" role="list" aria-label="مراحل الإكمال">
+                <span class="dot" id="dot1" data-step="1" data-title="ترحيب" role="listitem" aria-label="الخطوة 1: ترحيب"></span>
+                <span class="dot" id="dot2" data-step="2" data-title="الاسم" role="listitem" aria-label="الخطوة 2: الاسم"></span>
+                <span class="dot" id="dot3" data-step="3" data-title="المعلومات" role="listitem" aria-label="الخطوة 3: المعلومات"></span>
+                <span class="dot" id="dot4" data-step="4" data-title="الصورة" role="listitem" aria-label="الخطوة 4: الصورة"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ob-body">
+          <form id="obForm" class="form-grid">
+            <!-- Step 1: Welcome -->
+            <div id="step1" class="step active">
+              <div class="alert" style="display:grid; gap:8px; justify-items:center; text-align:center;">
+                <div style="font-family: fb; font-size: 20px; color: var(--main-blue);">
+                  أهلاً أهلاً بـ <strong style="font-family: fb; font-size: 20px; color: var(--main-blue);" id="welcomePosition">—</strong>😎💙
+                </div>
+                <div class="muted" style="font-size: 14px;">
+                  منوّر المكان يـ أقوى إداري، أضغط التالي حتى تكمّل باقي بياناتك المُهمّة
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2: Full name only -->
+            <div id="step2" class="step">
+              <label>
+                الاسم الكامل
+                <input id="fullName" required placeholder="الاسم كما سيظهر في الحساب" />
+                <small class="field-help">يُشترط إدخال الاسم الثلاثي بدون أرقام أو رموز.</small>
+              </label>
+            </div>
+
+            <!-- Step 3: Email readout (as input) + Phone + Password -->
+            <div id="step3" class="step">
+              <label>
+                البريد الإلكتروني
+                <input id="currentEmailReadout" type="email" readonly aria-readonly="true" />
+                <small class="field-help">هذا البريد مرتبط بالحساب ولا يمكن تعديله هنا.</small>
+              </label>
+              <label>
+                رقم الجوال
+                <input id="phone" type="tel" inputmode="numeric" maxlength="10" required placeholder="05xxxxxxxx" />
+                <small class="field-help">سيُستخدم للتواصل الداخلي عند الحاجة.</small>
+                <div id="phoneNotice" class="pwd-notice hidden" aria-live="polite">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span id="phoneNoticeText"></span>
+                </div>
+              </label>
+              <div>
+                <label>
+                  كلمة المرور
+                  <div class="password-field">
+                    <div class="input-wrap">
+                      <input id="password" type="password" minlength="8" required placeholder="••••••••" autocomplete="new-password" />
+                      <button type="button" id="togglePwd" class="toggle-eye" aria-label="إظهار كلمة المرور">
+                        <i class="fa-regular fa-eye"></i>
+                        <span>إظهار</span>
+                      </button>
+                    </div>
+                    <div id="pwdNotice" class="pwd-notice hidden" aria-live="polite">
+                      <i class="fa-solid fa-triangle-exclamation"></i>
+                      <span id="pwdNoticeText"></span>
+                    </div>
+                    <div id="pwdMeter" class="pwd-meter" aria-hidden="true"><div class="bar"></div></div>
+                    <div id="pwdHint" class="pwd-hint"></div>
+                    <div id="pwdReqs" class="pwd-reqs" aria-live="polite">
+                      <div id="reqLen" class="req-item bad"><i class="fa-regular fa-circle-xmark"></i> طول لا يقل عن 8 خانات</div>
+                      <div id="reqCase" class="req-item bad"><i class="fa-regular fa-circle-xmark"></i> يحتوي على حرفين على الأقل: كبير وصغير (a-A)</div>
+                      <div id="reqSymbol" class="req-item bad"><i class="fa-regular fa-circle-xmark"></i> يحتوي على رمز واحد على الأقل (مثل ! @ # $ %)</div>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Step 4: Avatar (optional) -->
+            <div id="step4" class="step">
+              <div>
+                <div id="avatarZone" class="avatar-uploader" title="انقر لاختيار صورة أو اسحبها هنا">
+                  <img id="avatarPreview" class="avatar-preview" alt="صورة الملف" />
+                  <div>
+                    <div class="avatar-hint"><i class="fa-solid fa-images"></i> اسحب وأفلت الصورة أو اضغط للاختيار</div>
+                    <input id="avatarFile" type="file" accept="image/*" style="display:none" />
+                    <div id="avatarFileName" class="avatar-filename"></div>
+                  </div>
+                </div>
+                <small class="field-help">يمكن تركها فارغة وسيُستخدم رمز افتراضي.</small>
+              </div>
+            </div>
+
+            <div id="status" class="muted"></div>
+          </form>
+        </div>
+        <div class="ob-actions">
+          <div style="display:flex; gap:8px;">
+            <button id="backBtn" class="btn btn-outline" type="button" hidden><i class="fa-solid fa-arrow-left"></i> رجوع</button>
+            <button id="nextBtn" class="btn btn-primary" type="button"><i class="fa-solid fa-arrow-right"></i> التالي</button>
+            <button id="submitBtn" class="btn btn-primary" type="button" hidden><i class="fa-solid fa-check"></i> حفظ وإنهاء</button>
+          </div>
+        </div>
+      </div>
+      <div id="obGate" class="ob-card" hidden>
+        <div class="ob-body">
+          <div class="alert error" style="margin-bottom:10px"><i class="fa-solid fa-circle-info"></i> لا توجد جلسة صالحة.</div>
+          <p class="muted" style="line-height:1.8">يرجى فتح هذه الصفحة عبر رابط الدعوة الذي وصلك على البريد الإلكتروني حتى نستكمل إعداد حسابك تلقائيًا. إن كانت لديك مشكلة، حاول الضغط مجددًا على رابط الدعوة من الرسالة.</p>
+          <div style="margin-top:12px">
+            <a class="btn btn-outline" href="../login.html"><i class="fa-solid fa-right-to-bracket"></i> الذهاب لصفحة تسجيل الدخول</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="onboarding.js"></script>
+  </body>
+</html>
