@@ -1206,6 +1206,258 @@ create index if not exists admin_messages_sender_created_idx
 alter publication supabase_realtime add table public.admin_messages;
 ```
 
-Notes:
-- Frontend listens to `INSERT` events for rows where `recipient_id = auth.uid()` and appends messages in the active conversation.
-- Contacts list is derived from `public.admins` (is_admin = true) enriched via `auth_users_public`.
+  Notes:
+  - Frontend listens to `INSERT` events for rows where `recipient_id = auth.uid()` and appends messages in the active conversation.
+  - Contacts list is derived from `public.admins` (is_admin = true) enriched via `auth_users_public`.
+
+## 11) Admin Web Push Notifications (إشعارات الهاتف للإداريين)
+
+This section enables system push notifications for Admins via Web Push. It includes the SQL schema, required secrets, Edge Functions, deploy commands, and testing notes.
+
+### A) SQL — Table and RLS
+
+```sql
+-- Table: stores one row per device subscription (endpoint is unique)
+create table if not exists public.push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  endpoint text not null unique,
+  p256dh text,
+  auth text,
+  ua text,
+  created_at timestamptz not null default now()
+);
+
+-- Optional FK (recommended)
+-- alter table public.push_subscriptions
+--   add constraint push_subscriptions_user_fk
+--   foreign key (user_id) references auth.users(id) on delete cascade;
+
+-- Enable RLS (we use Service Role in functions; keep policies strict)
+alter table public.push_subscriptions enable row level security;
+
+-- Optional policy (useful if ever accessed with user token under RLS)
+drop policy if exists "User manages own push subscriptions" on public.push_subscriptions;
+create policy "User manages own push subscriptions"
+on public.push_subscriptions for all
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+-- Indexes (optional)
+create index if not exists push_subscriptions_user_id_idx on public.push_subscriptions(user_id);
+```
+
+### B) Secrets — VAPID and Supabase Keys
+
+Generate VAPID keys locally, then set as Supabase secrets:
+
+```bash
+# Generate once (locally)
+npx web-push generate-vapid-keys
+
+# Set all required secrets for functions
+supabase secrets set \
+  SUPABASE_URL=YOUR_URL \
+  SUPABASE_ANON_KEY=YOUR_ANON_KEY \
+  SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY \
+  VAPID_PUBLIC_KEY=YOUR_VAPID_PUBLIC_KEY \
+  VAPID_PRIVATE_KEY=YOUR_VAPID_PRIVATE_KEY \
+  CONTACT_EMAIL=admin@example.com
+```
+
+### C) Edge Functions
+
+All functions use CORS headers and validate the caller via `Authorization: Bearer <access_token>`.
+
+#### 1) push-public-key (GET)
+
+```ts
+// supabase/functions/push-public-key/index.ts
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  const publicKey = Deno.env.get("VAPID_PUBLIC_KEY") || "";
+  return new Response(JSON.stringify({ publicKey }), {
+    headers: { "content-type": "application/json", ...cors },
+  });
+});
+```
+
+#### 2) push-subscribe (POST)
+
+```ts
+// supabase/functions/push-subscribe/index.ts
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405, headers: cors });
+
+  const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
+  const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: authHeader } }});
+  const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+  const { data: { user } } = await userClient.auth.getUser();
+  if (!user) return new Response("Unauthorized", { status: 401, headers: cors });
+
+  const body = await req.json().catch(() => ({}));
+  const sub = body.subscription || {};
+  const endpoint = sub.endpoint;
+  const keys = sub.keys || {};
+  if (!endpoint || !keys.p256dh || !keys.auth) return new Response("Invalid subscription", { status: 400, headers: cors });
+
+  const ua = req.headers.get("user-agent") || null;
+  const { error } = await adminClient.from("push_subscriptions").upsert({
+    user_id: user.id,
+    endpoint,
+    p256dh: keys.p256dh,
+    auth: keys.auth,
+    ua,
+  }, { onConflict: "endpoint" });
+  if (error) return new Response(error.message, { status: 500, headers: cors });
+  return new Response(JSON.stringify({ ok: true }), { headers: { "content-type": "application/json", ...cors } });
+});
+```
+
+#### 3) push-unsubscribe (POST)
+
+```ts
+// supabase/functions/push-unsubscribe/index.ts
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405, headers: cors });
+
+  const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
+  const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: authHeader } }});
+  const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+  const { data: { user } } = await userClient.auth.getUser();
+  if (!user) return new Response("Unauthorized", { status: 401, headers: cors });
+
+  const { endpoint } = await req.json().catch(() => ({}));
+  if (!endpoint) return new Response("Missing endpoint", { status: 400, headers: cors });
+
+  await adminClient.from("push_subscriptions").delete().eq("endpoint", endpoint);
+  return new Response(JSON.stringify({ ok: true }), { headers: { "content-type": "application/json", ...cors } });
+});
+```
+
+#### 4) push-send-test (POST)
+
+```ts
+// supabase/functions/push-send-test/index.ts
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { setVapidDetails, sendPushNotification } from "https://deno.land/x/webpush@1.1.0/mod.ts";
+
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY")!;
+const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")!;
+const CONTACT_EMAIL = Deno.env.get("CONTACT_EMAIL") || "admin@example.com";
+
+setVapidDetails(`mailto:${CONTACT_EMAIL}`, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405, headers: cors });
+
+  const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
+  const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: authHeader } }});
+  const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+  const { data: { user } } = await userClient.auth.getUser();
+  if (!user) return new Response("Unauthorized", { status: 401, headers: cors });
+
+  // Only Admins can send test notifications
+  const { data: adminRow } = await userClient
+    .from("admins").select("user_id,is_admin").eq("user_id", user.id).maybeSingle();
+  if (!adminRow?.is_admin) return new Response("Forbidden", { status: 403, headers: cors });
+
+  const { data: subs } = await adminClient
+    .from("push_subscriptions")
+    .select("endpoint,p256dh,auth")
+    .eq("user_id", user.id);
+
+  const payload = JSON.stringify({
+    title: "اختبار إشعارات أدِيب (إدارة)",
+    body: "تم إرسال اختبار الإشعار بنجاح.",
+    url: "./admin/admin.html#section-stats"
+  });
+
+  const results: unknown[] = [];
+  for (const s of subs || []) {
+    try {
+      await sendPushNotification(
+        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+        payload
+      );
+      results.push({ endpoint: s.endpoint, ok: true });
+    } catch (e) {
+      results.push({ endpoint: s.endpoint, ok: false, error: String(e?.message || e) });
+      if (String(e?.message || "").includes("410") || String(e?.message || "").includes("404")) {
+        await adminClient.from("push_subscriptions").delete().eq("endpoint", s.endpoint);
+      }
+    }
+  }
+
+  return new Response(JSON.stringify({ sent: (subs||[]).length, results }), {
+    headers: { "content-type": "application/json", ...cors },
+  });
+});
+```
+
+### D) Deploy
+
+```bash
+# Deploy functions
+supabase functions deploy push-public-key --no-verify
+supabase functions deploy push-subscribe --no-verify
+supabase functions deploy push-unsubscribe --no-verify
+supabase functions deploy push-send-test --no-verify
+
+# (Optional) Check secrets
+supabase secrets list
+```
+
+### E) Frontend integration (already wired)
+
+- Admin Profile tab (`admin/admin.html` → `#section-profile`) contains:
+  - `#enablePushBtn`, `#disablePushBtn`, `#testPushBtn`, and `#pushStatusHint`.
+- `admin/admin.js` uses `callFunction(name, { method, body })` to talk to the above functions and manages subscription via the registered Service Worker (`admin/sw.js`).
+- iOS requires installing the PWA from Safari (iOS 16.4+) to receive Web Push.

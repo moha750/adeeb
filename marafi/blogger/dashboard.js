@@ -11,6 +11,7 @@
   const imageFileInput = document.getElementById('image_file');
   const imageUrlHidden = document.getElementById('image_url');
   const imagePreview = document.getElementById('image_preview');
+  const editorImageFileInput = document.getElementById('editor_image_file');
   const titleInput = document.getElementById('title');
   const excerptInput = document.getElementById('excerpt');
   const titleCounter = document.getElementById('titleCounter');
@@ -399,18 +400,38 @@
     } catch {}
   }
 
-  // Image preview on file select
-  imageFileInput?.addEventListener('change', () => {
+  // Image preview on file select with free cropping (no fixed aspect)
+  imageFileInput?.addEventListener('change', async () => {
     const file = imageFileInput.files && imageFileInput.files[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      if (imagePreview) {
-        imagePreview.src = url;
-        imagePreview.style.display = 'block';
-      }
-      // Do not set imageUrlHidden yet; set after upload
+    if (!file) return;
+    try {
+      const cropped = await openImageCropper(file, { aspectRatio: NaN, lockAspect: false, maxWidth: 1600, maxHeight: 1600, mimeType: 'image/webp', quality: 0.9 });
+      coverCroppedFile = cropped || file;
+      const url = URL.createObjectURL(coverCroppedFile);
+      if (imagePreview) { imagePreview.src = url; imagePreview.style.display = 'block'; }
+      if (imageUrlHidden) imageUrlHidden.value = '';
       if (!programmaticUpdate) isDirty = true;
+    } catch (_) {
+      // Cancelled/closed: clear selection and do not update preview or dirty state
+      coverCroppedFile = null;
+      if (imageFileInput) imageFileInput.value = '';
     }
+  });
+
+  // Allow re-cropping by clicking the preview image
+  imagePreview?.addEventListener('click', async () => {
+    try {
+      const src = imagePreview && imagePreview.src;
+      if (!src) return;
+      const file = await fetchUrlAsFile(src, 'current');
+      const cropped = await openImageCropper(file, { aspectRatio: NaN, lockAspect: false, maxWidth: 1600, maxHeight: 1600, mimeType: 'image/webp', quality: 0.9 });
+      coverCroppedFile = cropped || file;
+      const url = URL.createObjectURL(coverCroppedFile);
+      imagePreview.src = url;
+      imagePreview.style.display = 'block';
+      if (imageUrlHidden) imageUrlHidden.value = '';
+      if (!programmaticUpdate) isDirty = true;
+    } catch {}
   });
   function renderUserBadge(user) {
     const host = document.getElementById('bloggerUserBadge');
@@ -558,12 +579,11 @@
   // Rich Text Editor Variables
   let richEditor = null;
   let markdownEditor = null; // legacy ref now points to hidden #content input
-  let previewPane = null;
-  let editorMode = 'rich'; // 'rich', 'preview'
   let undoStack = [];
   let redoStack = [];
   const MAX_UNDO_STACK = 50;
   let isEditor = false;
+  let coverCroppedFile = null; // holds cropped cover image file if available
 
   async function ensureAuth() {
     try {
@@ -1070,6 +1090,7 @@
     document.getElementById('image_preview').style.display = 'none';
     document.getElementById('image_preview').src = '';
     document.getElementById('image_url').value = '';
+    coverCroppedFile = null;
     
     // Clear Rich Editor
     if (richEditor) {
@@ -1099,7 +1120,6 @@
   function initRichEditor() {
     richEditor = document.getElementById('richEditor');
     markdownEditor = document.getElementById('content');
-    previewPane = document.getElementById('previewPane');
     
     if (!richEditor) return;
     
@@ -1129,13 +1149,6 @@
     }
     
     // Toggle preview
-    const togglePreview = document.getElementById('togglePreview');
-    if (togglePreview) {
-      togglePreview.addEventListener('click', (e) => {
-        e.preventDefault();
-        toggleEditorMode('preview');
-      });
-    }
     
     // Rich editor events
     richEditor.addEventListener('input', () => {
@@ -1205,13 +1218,42 @@
         }
         break;
       case 'insertImage':
-        const imgUrl = prompt('أدخل عنوان الصورة:');
-        if (imgUrl) {
-          document.execCommand('insertImage', false, imgUrl);
+        if (editorImageFileInput) {
+          const onChange = async () => {
+            try {
+              const file = editorImageFileInput.files && editorImageFileInput.files[0];
+              editorImageFileInput.value = '';
+              editorImageFileInput.removeEventListener('change', onChange);
+              if (!file) return;
+              let picked = null;
+              try {
+                picked = await openImageCropper(file, { aspectRatio: NaN, lockAspect: false, maxWidth: 1600, maxHeight: 1600, mimeType: 'image/webp', quality: 0.9 });
+              } catch (_) {
+                picked = file;
+              }
+              const publicUrl = await uploadInlineImage(picked || file, currentUser);
+              if (richEditor) richEditor.focus();
+              document.execCommand('insertImage', false, publicUrl);
+              saveUndoState();
+              syncRichToTextarea();
+              updateEditorStatus();
+              if (!programmaticUpdate) isDirty = true;
+            } catch (err) {
+              const imgUrl = prompt('أدخل عنوان الصورة:');
+              if (imgUrl) {
+                if (richEditor) richEditor.focus();
+                document.execCommand('insertImage', false, imgUrl);
+              }
+            }
+          };
+          editorImageFileInput.addEventListener('change', onChange);
+          editorImageFileInput.click();
+        } else {
+          const imgUrl = prompt('أدخل عنوان الصورة:');
+          if (imgUrl) {
+            document.execCommand('insertImage', false, imgUrl);
+          }
         }
-        break;
-      case 'insertQuote':
-        document.execCommand('formatBlock', false, 'blockquote');
         break;
       case 'insertCode':
         break;
@@ -1231,37 +1273,7 @@
     syncRichToTextarea();
   }
   
-  // Toggle editor mode
-  function toggleEditorMode(mode) {
-    if (mode === editorMode) {
-      // If clicking the same mode, go back to rich editor
-      mode = 'rich';
-    }
-    const prev = editorMode;
-    editorMode = mode;
-    
-    if (mode === 'preview') {
-      // Switch to preview
-      richEditor.style.display = 'none';
-      previewPane.style.display = 'block';
-      
-      // Get content based on current mode
-      const html = richEditor.innerHTML;
-      previewPane.innerHTML = sanitizeHTML(html);
-      
-      document.getElementById('togglePreview').classList.add('active');
-    } else {
-      // Switch to rich editor
-      richEditor.style.display = 'block';
-      previewPane.style.display = 'none';
-      
-      document.getElementById('togglePreview').classList.remove('active');
-    }
-    
-    // Update status bar
-    const modeText = mode === 'rich' ? 'محرر غني' : 'معاينة';
-    document.getElementById('editorMode').textContent = modeText;
-  }
+  
   
   // Sync rich editor content to hidden textarea
   function syncRichToTextarea() {
@@ -1356,8 +1368,11 @@
     document.getElementById('wordCount').textContent = `${words} كلمة`;
     
     // Count characters
-    const chars = text.length;
+    const spaceMatches = text.match(/[ \u00A0]/g) || [];
+    const chars = text.replace(/[ \u00A0]/g, '').length;
     document.getElementById('charCount').textContent = `${chars} حرف`;
+    const spaceEl = document.getElementById('spaceCount');
+    if (spaceEl) spaceEl.textContent = `${spaceMatches.length} مسافة`;
   }
   
   // Undo/Redo functionality
@@ -1396,7 +1411,7 @@
       const container = document.createElement('div');
       container.innerHTML = String(html || '');
       // unwrap disallowed tags but keep inner HTML structure
-      container.querySelectorAll('em,i,u,s,strike,del,code,pre').forEach(el => {
+      container.querySelectorAll('em,i,u,s,strike,del,code,pre,blockquote').forEach(el => {
         const frag = document.createDocumentFragment();
         while (el.firstChild) frag.appendChild(el.firstChild);
         el.replaceWith(frag);
@@ -1696,14 +1711,16 @@
 
   // Helper: upload selected image file to Supabase Storage and return public URL
   async function uploadSelectedImage(user) {
-    const file = imageFileInput?.files && imageFileInput.files[0];
-    if (!file) return null; // nothing to upload
+    const raw = coverCroppedFile || (imageFileInput?.files && imageFileInput.files[0]);
+    if (!raw) return null; // nothing to upload
     const bucket = 'blog-images';
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const name = (raw && raw.name) || `cover-${Date.now()}`;
+    const fallbackExt = (raw && raw.type && raw.type.split('/')[1]) || 'jpg';
+    const ext = (name.split('.').pop() || fallbackExt).toLowerCase();
     const safeExt = ext.replace(/[^a-z0-9]/gi, '') || 'jpg';
     const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${safeExt}`;
     // Upload
-    const { error: upErr } = await sb.storage.from(bucket).upload(path, file, {
+    const { error: upErr } = await sb.storage.from(bucket).upload(path, raw, {
       cacheControl: '3600',
       upsert: false,
     });
@@ -1714,6 +1731,26 @@
     if (!publicUrl) throw new Error('تعذر الحصول على رابط الصورة');
     // Persist in hidden field for subsequent saves
     if (imageUrlHidden) imageUrlHidden.value = publicUrl;
+    return publicUrl;
+  }
+
+  async function uploadInlineImage(file, user) {
+    if (!file) throw new Error('لا يوجد ملف للرفع');
+    if (!user) throw new Error('المستخدم غير معروف');
+    const bucket = 'blog-images';
+    const name = (file && file.name) || `inline-${Date.now()}`;
+    const fallbackExt = (file && file.type && file.type.split('/')[1]) || 'jpg';
+    const ext = (name.split('.').pop() || fallbackExt).toLowerCase();
+    const safeExt = ext.replace(/[^a-z0-9]/gi, '') || 'jpg';
+    const path = `${user.id}/inline-${Date.now()}-${Math.random().toString(36).slice(2,8)}.${safeExt}`;
+    const { error: upErr } = await sb.storage.from(bucket).upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+    });
+    if (upErr) throw upErr;
+    const { data } = sb.storage.from(bucket).getPublicUrl(path);
+    const publicUrl = data?.publicUrl;
+    if (!publicUrl) throw new Error('تعذر الحصول على رابط الصورة');
     return publicUrl;
   }
 
@@ -1874,10 +1911,8 @@
     const btn = deleteAccountForm.querySelector('button[type="submit"]');
     if (btn) { btn.disabled = true; btn.style.opacity = .7; }
     try {
-      // Re-authenticate
       const { error: signInErr } = await sb.auth.signInWithPassword({ email: currentUser.email, password: pwd });
       if (signInErr) throw new Error('كلمة المرور غير صحيحة');
-      // Call Edge Function to delete account hard
       try {
         const { error: fnErr } = await sb.functions.invoke('delete-account', { body: { hard: true } });
         if (fnErr) throw fnErr;
@@ -1893,4 +1928,156 @@
       if (btn) { btn.disabled = false; btn.style.opacity = 1; }
     }
   });
+
+  // Image cropping helpers (Cropper.js)
+  const imageCropDialog = document.getElementById('imageCropDialog');
+  const cropperImage = document.getElementById('cropperImage');
+  const cropConfirmBtn = document.getElementById('cropConfirmBtn');
+  const cropCancelBtn = document.getElementById('cropCancelBtn');
+  const cropAspectSelect = document.getElementById('cropAspectSelect');
+  const cropZoomIn = document.getElementById('cropZoomIn');
+  const cropZoomOut = document.getElementById('cropZoomOut');
+  const cropRotateL = document.getElementById('cropRotateL');
+  const cropRotateR = document.getElementById('cropRotateR');
+  const cropFlipH = document.getElementById('cropFlipH');
+  const cropFlipV = document.getElementById('cropFlipV');
+  const cropReset = document.getElementById('cropReset');
+  const cropBusy = document.getElementById('cropBusy');
+  let activeCropper = null;
+  let flipState = { x: 1, y: 1 };
+
+  function destroyActiveCropper() {
+    try { activeCropper?.destroy?.(); } catch {}
+    activeCropper = null;
+  }
+
+  function dataUrlFromFile(file) {
+    return new Promise((resolve, reject) => {
+      try {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(e);
+        reader.readAsDataURL(file);
+      } catch (err) { reject(err); }
+    });
+  }
+
+  function extensionFromMime(mime) {
+    const m = (mime || '').toLowerCase();
+    if (m.includes('png')) return 'png';
+    if (m.includes('webp')) return 'webp';
+    if (m.includes('gif')) return 'gif';
+    return 'jpg';
+  }
+
+  async function fetchUrlAsFile(url, nameHint) {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const ext = extensionFromMime(blob.type);
+    const name = `${nameHint || 'image'}.${ext}`;
+    try { return new File([blob], name, { type: blob.type || 'image/jpeg' }); } catch { return blob; }
+  }
+
+  function openImageCropper(file, opts = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (!imageCropDialog || !cropperImage || typeof Cropper === 'undefined') { resolve(file); return; }
+        cropperImage.src = await dataUrlFromFile(file);
+        if (!imageCropDialog.open) imageCropDialog.showModal();
+        destroyActiveCropper();
+        flipState = { x: 1, y: 1 };
+        const initialAspect = (opts.aspectRatio && !Number.isNaN(opts.aspectRatio)) ? opts.aspectRatio : NaN;
+        const lockAspect = !!opts.lockAspect;
+        if (cropAspectSelect) {
+          cropAspectSelect.value = (initialAspect === 1) ? '1' : (initialAspect === 4/3) ? '4/3' : (initialAspect === 16/9) ? '16/9' : 'auto';
+          cropAspectSelect.disabled = lockAspect;
+        }
+        let settled = false;
+        const safeResolve = (val) => { if (settled) return; settled = true; cleanup(); resolve(val); };
+        const safeReject = (err) => { if (settled) return; settled = true; cleanup(); reject(err); };
+        activeCropper = new Cropper(cropperImage, {
+          viewMode: 1,
+          aspectRatio: initialAspect,
+          dragMode: 'move',
+          autoCropArea: 1,
+          background: false,
+          responsive: true,
+          checkCrossOrigin: false,
+        });
+
+        const onConfirm = async (e) => {
+          e?.preventDefault?.();
+          try {
+            cropBusy && (cropBusy.style.display = 'inline');
+            const cropData = activeCropper.getData(true);
+            const naturalW = Math.round(cropData.width);
+            const naturalH = Math.round(cropData.height);
+            const maxW = Number.isFinite(opts.maxWidth) ? opts.maxWidth : naturalW;
+            const maxH = Number.isFinite(opts.maxHeight) ? opts.maxHeight : naturalH;
+            const scale = Math.min(1, maxW / naturalW, maxH / naturalH);
+            const targetW = Math.max(1, Math.round(naturalW * scale));
+            const targetH = Math.max(1, Math.round(naturalH * scale));
+            const canvas = activeCropper.getCroppedCanvas({
+              width: targetW,
+              height: targetH,
+              imageSmoothingEnabled: true,
+              imageSmoothingQuality: 'high',
+            });
+            const mime = opts.mimeType || 'image/webp';
+            const quality = Number.isFinite(opts.quality) ? opts.quality : 0.9;
+            const blob = await new Promise((res, rej) => canvas.toBlob((b) => b ? res(b) : rej(new Error('toBlob failed')), mime, quality));
+            const ext = extensionFromMime(blob.type);
+            let outFile = null;
+            try { outFile = new File([blob], `cover-${Date.now()}.${ext}`, { type: blob.type || mime }); } catch { outFile = blob; }
+            safeResolve(outFile);
+          } catch (err) {
+            safeReject(err);
+          } finally {
+            if (cropBusy) cropBusy.style.display = 'none';
+          }
+        };
+        const onCancel = () => { safeReject(new Error('cancelled')); };
+        function cleanup() {
+          try { imageCropDialog.close(); } catch {}
+          destroyActiveCropper();
+          cropConfirmBtn?.removeEventListener('click', onConfirm);
+          cropCancelBtn?.removeEventListener('click', onCancel);
+          if (cropAspectSelect && !lockAspect) cropAspectSelect.removeEventListener('change', onAspectChange);
+          cropZoomIn?.removeEventListener('click', onZoomIn);
+          cropZoomOut?.removeEventListener('click', onZoomOut);
+          cropRotateL?.removeEventListener('click', onRotateL);
+          cropRotateR?.removeEventListener('click', onRotateR);
+          cropFlipH?.removeEventListener('click', onFlipH);
+          cropFlipV?.removeEventListener('click', onFlipV);
+          cropReset?.removeEventListener('click', onReset);
+        }
+        const onAspectChange = () => {
+          if (!activeCropper) return;
+          const val = cropAspectSelect.value;
+          let ar = NaN;
+          if (val === '1') ar = 1; else if (val === '4/3') ar = 4/3; else if (val === '16/9') ar = 16/9;
+          activeCropper.setAspectRatio(ar);
+        };
+        const onZoomIn = () => activeCropper && activeCropper.zoom(0.1);
+        const onZoomOut = () => activeCropper && activeCropper.zoom(-0.1);
+        const onRotateL = () => activeCropper && activeCropper.rotate(-90);
+        const onRotateR = () => activeCropper && activeCropper.rotate(90);
+        const onFlipH = () => { if (!activeCropper) return; flipState.x *= -1; activeCropper.scaleX(flipState.x); };
+        const onFlipV = () => { if (!activeCropper) return; flipState.y *= -1; activeCropper.scaleY(flipState.y); };
+        const onReset = () => { if (!activeCropper) return; activeCropper.reset(); flipState = { x: 1, y: 1 }; };
+        if (!lockAspect) cropAspectSelect?.addEventListener('change', onAspectChange);
+        cropZoomIn?.addEventListener('click', onZoomIn);
+        cropZoomOut?.addEventListener('click', onZoomOut);
+        cropRotateL?.addEventListener('click', onRotateL);
+        cropRotateR?.addEventListener('click', onRotateR);
+        cropFlipH?.addEventListener('click', onFlipH);
+        cropFlipV?.addEventListener('click', onFlipV);
+        cropReset?.addEventListener('click', onReset);
+        cropConfirmBtn?.addEventListener('click', onConfirm);
+        cropCancelBtn?.addEventListener('click', onCancel);
+        imageCropDialog.addEventListener('close', () => { safeReject(new Error('cancelled')); }, { once: true });
+      } catch (err) { reject(err); }
+    });
+  }
+
 })();

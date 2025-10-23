@@ -660,7 +660,11 @@
             <h2><i class="fa-solid fa-id-card"></i> ملفي</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <button id="installAppBtn" class="btn btn-primary" style="display:none"><i class="fa-solid fa-download"></i> تثبيت التطبيق</button>
-              
+              <span id="installAppHint" class="muted" style="font-size:12px; margin-inline-start:8px; display:none"></span>
+              <button id="enablePushBtn" class="btn btn-outline"><i class="fa-solid fa-bell"></i> تفعيل إشعارات الهاتف</button>
+              <button id="disablePushBtn" class="btn btn-outline" style="display:none"><i class="fa-regular fa-bell-slash"></i> إيقاف الإشعارات</button>
+              <button id="testPushBtn" class="btn btn-outline" style="display:none"><i class="fa-solid fa-paper-plane"></i> اختبار الإشعار</button>
+              <span id="pushStatusHint" class="muted" style="font-size:12px; margin-inline-start:8px"></span>
             </div>
           </div>
           <div class="panel" style="padding:16px">

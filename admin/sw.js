@@ -87,3 +87,48 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(networkFirst(request));
   }
 });
+
+// Web Push: display notifications when a push message arrives
+self.addEventListener('push', (event) => {
+  try {
+    const data = (() => {
+      try { return event.data ? event.data.json() : {}; } catch { return {}; }
+    })();
+    const title = data.title || 'إشعار جديد — إدارة أدِيب';
+    const body = data.body || data.message || 'لديك تحديث جديد.';
+    const url = data.url || data.link || './admin.html#section-stats';
+    const icon = data.icon || './icons/icon-192x192.png';
+    const badge = data.badge || './icons/icon-96x96.png';
+    const tag = data.tag || 'adeeb-admin';
+    const actions = Array.isArray(data.actions) ? data.actions : [];
+    event.waitUntil(self.registration.showNotification(title, {
+      body,
+      icon,
+      badge,
+      tag,
+      data: { url },
+      actions,
+      dir: 'rtl',
+      lang: 'ar',
+      renotify: false,
+      requireInteraction: false,
+    }));
+  } catch (e) {
+    // ignore
+  }
+});
+
+// Focus/open on click
+self.addEventListener('notificationclick', (event) => {
+  const url = (event.notification && event.notification.data && event.notification.data.url) || './admin.html';
+  event.notification.close();
+  event.waitUntil((async () => {
+    const allClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of allClients) {
+      try {
+        if (client.url.includes('/admin/admin.html')) { client.focus(); client.navigate(url); return; }
+      } catch {}
+    }
+    try { await clients.openWindow(url); } catch {}
+  })());
+});

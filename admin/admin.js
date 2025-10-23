@@ -948,9 +948,38 @@
   }
   function updateInstallButtonVisibility() {
     if (!installAppBtn) return;
-    const installed = isAppInstalled();
-    // Show if not installed and we either have a prompt (Android/desktop) or we're on iOS (show guide)
-    installAppBtn.style.display = (!installed && (!!deferredInstallPrompt || isIOSLike())) ? '' : 'none';
+    let installed = false;
+    try { if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) installed = true; } catch {}
+    try { if (typeof navigator !== 'undefined' && 'standalone' in navigator && navigator.standalone) installed = true; } catch {}
+    const hasPrompt = (typeof deferredInstallPrompt !== 'undefined' && !!deferredInstallPrompt);
+    const ios = isIOSLike();
+    const showBtn = (!installed && (hasPrompt || ios));
+    installAppBtn.style.display = showBtn ? '' : 'none';
+    const hintEl = document.getElementById('installAppHint');
+    if (!hintEl) return;
+    if (showBtn) { hintEl.style.display = 'none'; hintEl.textContent = ''; return; }
+    let reason = '';
+    if (installed) {
+      reason = 'التطبيق مثبت بالفعل.';
+    } else {
+      const secure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname === '::1';
+      const hasMf = !!document.querySelector('link[rel="manifest"]');
+      if (!secure) reason = 'يجب فتح الصفحة عبر HTTPS أو localhost لظهور زر التثبيت.';
+      else if (!hasMf) reason = 'ملف manifest غير معرف في الصفحة.';
+      else if (!hasPrompt && !ios) reason = 'المتصفح لم يجهّز خيار التثبيت بعد. حاول إعادة فتح الصفحة أو التفاعل معها قليلًا.';
+    }
+    hintEl.textContent = reason;
+    hintEl.style.display = reason ? '' : 'none';
+    try {
+      if (!installed && !hasPrompt && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration('./').then((reg) => {
+          if (!reg && !reason) {
+            hintEl.textContent = 'لم يتم تسجيل Service Worker بعد.';
+            hintEl.style.display = '';
+          }
+        }).catch(()=>{});
+      }
+    } catch {}
   }
   installAppBtn?.addEventListener('click', async () => {
     try {
@@ -1010,6 +1039,95 @@
       throw new Error(msg);
     }
     return json;
+  }
+
+  const enablePushBtn = document.getElementById('enablePushBtn');
+  const disablePushBtn = document.getElementById('disablePushBtn');
+  const testPushBtn = document.getElementById('testPushBtn');
+  const pushStatusHint = document.getElementById('pushStatusHint');
+  async function getSWReg() {
+    if (!('serviceWorker' in navigator)) return null;
+    try {
+      const reg = await navigator.serviceWorker.getRegistration('./');
+      if (reg) return reg;
+      return await navigator.serviceWorker.ready;
+    } catch { return null; }
+  }
+  function urlB64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
+  }
+  async function getExistingSubscription() {
+    const reg = await getSWReg();
+    if (!reg) return null;
+    try { return await reg.pushManager.getSubscription(); } catch { return null; }
+  }
+  function setPushUI({ enabled, busy, message }) {
+    if (enablePushBtn) enablePushBtn.style.display = enabled ? 'none' : '';
+    if (disablePushBtn) disablePushBtn.style.display = enabled ? '' : 'none';
+    if (testPushBtn) testPushBtn.style.display = enabled ? '' : 'none';
+    if (enablePushBtn) enablePushBtn.disabled = !!busy;
+    if (disablePushBtn) disablePushBtn.disabled = !!busy;
+    if (testPushBtn) testPushBtn.disabled = !!busy;
+    if (pushStatusHint) pushStatusHint.textContent = message || '';
+  }
+  async function updatePushUI() {
+    if (!('Notification' in window)) { setPushUI({ enabled: false, message: 'المتصفح لا يدعم الإشعارات.' }); return; }
+    const perm = Notification.permission;
+    const sub = await getExistingSubscription();
+    const enabled = perm === 'granted' && !!sub;
+    let message = '';
+    if (perm === 'denied') message = 'تم رفض الإذن للإشعارات من قبل المتصفح.';
+    else if (perm === 'default') message = 'امنح إذن الإشعارات لتفعيل التنبيهات.';
+    else if (enabled) message = 'الإشعارات مفعلة.';
+    else message = 'الإشعارات غير مفعلة.';
+    setPushUI({ enabled, message });
+  }
+  enablePushBtn?.addEventListener('click', async () => {
+    setPushUI({ enabled: false, busy: true, message: 'جارٍ تفعيل الإشعارات...' });
+    try {
+      if (!('Notification' in window)) { setPushUI({ enabled: false, message: 'غير مدعوم.' }); return; }
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { setPushUI({ enabled: false, message: 'لم يتم منح الإذن.' }); return; }
+      const reg = await getSWReg();
+      if (!reg) { setPushUI({ enabled: false, message: 'Service Worker غير جاهز.' }); return; }
+      let publicKey = null;
+      try { const resp = await callFunction('push-public-key'); publicKey = resp?.publicKey || resp?.key || null; } catch {}
+      const opts = { userVisibleOnly: true };
+      if (publicKey) opts.applicationServerKey = urlB64ToUint8Array(String(publicKey));
+      const sub = await reg.pushManager.subscribe(opts);
+      try { await callFunction('push-subscribe', { method: 'POST', body: { subscription: sub } }); } catch {}
+      await updatePushUI();
+    } catch { setPushUI({ enabled: false, message: 'تعذر التفعيل.' }); }
+  });
+  disablePushBtn?.addEventListener('click', async () => {
+    setPushUI({ enabled: true, busy: true, message: 'جارٍ إيقاف الإشعارات...' });
+    try {
+      const sub = await getExistingSubscription();
+      if (sub) {
+        try { await callFunction('push-unsubscribe', { method: 'POST', body: { endpoint: sub.endpoint } }); } catch {}
+        try { await sub.unsubscribe(); } catch {}
+      }
+      await updatePushUI();
+    } catch { setPushUI({ enabled: true, message: 'تعذر الإيقاف.' }); }
+  });
+  testPushBtn?.addEventListener('click', async () => {
+    setPushUI({ enabled: true, busy: true, message: 'إرسال اختبار...' });
+    try { await callFunction('push-send-test', { method: 'POST', body: {} }); setPushUI({ enabled: true, busy: false, message: 'تم إرسال اختبار (إذا كانت الخلفية مُعدة).' }); }
+    catch { setPushUI({ enabled: true, busy: false, message: 'تعذر إرسال الاختبار.' }); }
+  });
+  try { updatePushUI(); } catch {}
+  const profileSection = document.getElementById('section-profile');
+  if (profileSection) {
+    try {
+      const mo = new MutationObserver(() => { if (!profileSection.hidden) updatePushUI(); });
+      mo.observe(profileSection, { attributes: true, attributeFilter: ['hidden'] });
+      if (!profileSection.hidden) updatePushUI();
+    } catch {}
   }
 
   // ===== Idea Topics (Admin CRUD) =====
