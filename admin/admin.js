@@ -1029,6 +1029,7 @@
     if (!session) throw new Error('not-authenticated');
     const headers = {
       'Authorization': `Bearer ${session.access_token}`,
+      'apikey': window.SUPABASE_ANON_KEY || '',
       'Content-Type': 'application/json',
     };
     const res = await fetch(`${FUNCTIONS_BASE}/${name}`, { method, headers, body: body ? JSON.stringify(body) : null });
@@ -1114,13 +1115,63 @@
       const reg = await getSWReg();
       if (!reg) { setPushUI({ enabled: false, message: 'Service Worker غير جاهز.' }); return; }
       let publicKey = null;
-      try { const resp = await callFunction('push-public-key'); publicKey = resp?.publicKey || resp?.key || null; } catch {}
-      if (!publicKey) { setPushUI({ enabled: false, message: 'مفتاح VAPID غير مُعد. يرجى إعداد وظائف الحافة.' }); return; }
+      try { 
+        // Call push-public-key directly without auth (it's a public endpoint)
+        const functionsUrl = (window.SUPABASE_URL || '').replace('.supabase.co', '.functions.supabase.co');
+        const anonKey = window.SUPABASE_ANON_KEY || '';
+        if (!anonKey) {
+          console.error('SUPABASE_ANON_KEY not found');
+          setPushUI({ enabled: false, message: 'خطأ في التكوين: مفتاح API مفقود.' });
+          return;
+        }
+        const res = await fetch(`${functionsUrl}/push-public-key`, { 
+          method: 'GET',
+          headers: {
+            'apikey': anonKey,
+            'Authorization': `Bearer ${anonKey}`,
+            'Content-Type': 'application/json',
+          }
+        });
+        if (!res.ok) {
+          console.error('Push public key fetch failed:', res.status, res.statusText);
+          const text = await res.text();
+          console.error('Response:', text);
+          setPushUI({ enabled: false, message: `خطأ ${res.status}: تحقق من نشر الوظيفة.` });
+          return;
+        }
+        const data = await res.json();
+        publicKey = data?.publicKey || data?.key || null;
+        console.log('VAPID public key received:', publicKey ? 'Yes' : 'No');
+      } catch (e) {
+        console.error('Failed to get VAPID key:', e);
+        setPushUI({ enabled: false, message: 'فشل جلب مفتاح VAPID. تأكد من نشر push-public-key.' });
+        return;
+      }
+      // Temporary: use a test VAPID key if Edge Function not working
+      if (!publicKey && location.hostname === 'localhost') {
+        console.warn('Using test VAPID key for localhost');
+        publicKey = 'BIbr4Lh0I0P-Eyaz3c4bAzJMZio4c5PFRQy5d5E3tMDTQz3zFrCGLvRdMqcP5TKCGqVA2lTckDL6WJqEwWz_3lE';
+      }
+      if (!publicKey) { setPushUI({ enabled: false, message: 'مفتاح VAPID فارغ. يرجى إعداد VAPID_PUBLIC_KEY في Supabase.' }); return; }
       const opts = { userVisibleOnly: true };
       opts.applicationServerKey = urlB64ToUint8Array(String(publicKey));
+      console.log('Subscribing to push with VAPID...');
       const sub = await withTimeout(reg.pushManager.subscribe(opts), 15000);
-      try { await callFunction('push-subscribe', { method: 'POST', body: { subscription: sub } }); } catch {}
-    } catch (e) { console.warn('push enable failed', e); setPushUI({ enabled: false, message: 'تعذر التفعيل.' }); }
+      console.log('Push subscription successful:', sub.endpoint);
+      try { 
+        await callFunction('push-subscribe', { method: 'POST', body: { subscription: sub } });
+        console.log('Subscription saved to backend');
+      } catch (e) {
+        console.warn('Failed to save subscription to backend:', e);
+      }
+    } catch (e) { 
+      console.error('Push enable error:', e);
+      const msg = e.message || String(e);
+      if (msg.includes('timeout')) setPushUI({ enabled: false, message: 'انتهت مهلة الاشتراك. حاول مجددًا.' });
+      else if (msg.includes('InvalidStateError')) setPushUI({ enabled: false, message: 'اشتراك موجود مسبقًا. جرب إيقافه أولًا.' });
+      else if (msg.includes('NotAllowedError')) setPushUI({ enabled: false, message: 'الإذن مرفوض أو المتصفح لا يدعم Push.' });
+      else setPushUI({ enabled: false, message: `فشل الاشتراك: ${msg}` });
+    }
     finally { try { await updatePushUI(); } catch {} }
   });
   disablePushBtn?.addEventListener('click', async () => {

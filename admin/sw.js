@@ -1,5 +1,5 @@
 /* Admin PWA Service Worker */
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `admin-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `admin-runtime-${CACHE_VERSION}`;
 
@@ -8,8 +8,8 @@ const PRECACHE_ASSETS = [
   './admin.css',
   './admin.js',
   '../style.css',
-  '../supabase-config.js',
-  '../adeeb-logo.png'
+  '../supabase-config.js'
+  // Removed LOGO.png to avoid cache errors
 ];
 
 self.addEventListener('install', (event) => {

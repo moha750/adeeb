@@ -1268,7 +1268,7 @@ supabase secrets set \
 
 ### C) Edge Functions
 
-All functions use CORS headers and validate the caller via `Authorization: Bearer <access_token>`.
+All functions use CORS headers.
 
 #### 1) push-public-key (GET)
 
@@ -1283,9 +1283,17 @@ const cors = {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  
+  // No auth needed - just return public key
   const publicKey = Deno.env.get("VAPID_PUBLIC_KEY") || "";
+  
+  if (!publicKey) {
+    console.warn("VAPID_PUBLIC_KEY not configured in Edge Function secrets");
+  }
+  
   return new Response(JSON.stringify({ publicKey }), {
     headers: { "content-type": "application/json", ...cors },
+    status: 200
   });
 });
 ```
@@ -1377,7 +1385,7 @@ serve(async (req) => {
 // supabase/functions/push-send-test/index.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { setVapidDetails, sendPushNotification } from "https://deno.land/x/webpush@1.1.0/mod.ts";
+import webpush from "https://esm.sh/web-push@3.6.7";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -1391,11 +1399,23 @@ const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY")!;
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")!;
 const CONTACT_EMAIL = Deno.env.get("CONTACT_EMAIL") || "admin@example.com";
 
-setVapidDetails(`mailto:${CONTACT_EMAIL}`, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+// Only set VAPID if keys exist
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(`mailto:${CONTACT_EMAIL}`, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+}
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
-  if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405, headers: cors });
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, { 
+      status: 200,
+      headers: cors 
+    });
+  }
+  
+  if (req.method !== "POST") {
+    return new Response("Method Not Allowed", { status: 405, headers: cors });
+  }
 
   const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
   const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: authHeader } }});
@@ -1423,7 +1443,7 @@ serve(async (req) => {
   const results: unknown[] = [];
   for (const s of subs || []) {
     try {
-      await sendPushNotification(
+      await webpush.sendNotification(
         { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
         payload
       );
