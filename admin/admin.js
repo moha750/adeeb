@@ -1050,8 +1050,18 @@
     try {
       const reg = await navigator.serviceWorker.getRegistration('./');
       if (reg) return reg;
-      return await navigator.serviceWorker.ready;
-    } catch { return null; }
+    } catch {}
+    try {
+      return await withTimeout(navigator.serviceWorker.ready, 8000);
+    } catch {}
+    try {
+      const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+      if (reg) {
+        try { return await withTimeout(navigator.serviceWorker.ready, 8000); } catch {}
+        return reg;
+      }
+    } catch {}
+    return null;
   }
   function urlB64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -1060,6 +1070,12 @@
     const outputArray = new Uint8Array(rawData.length);
     for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
     return outputArray;
+  }
+  function withTimeout(promise, ms) {
+    return new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error('timeout')), ms);
+      promise.then((v) => { clearTimeout(t); resolve(v); }, (e) => { clearTimeout(t); reject(e); });
+    });
   }
   async function getExistingSubscription() {
     const reg = await getSWReg();
@@ -1084,6 +1100,7 @@
     if (perm === 'denied') message = 'تم رفض الإذن للإشعارات من قبل المتصفح.';
     else if (perm === 'default') message = 'امنح إذن الإشعارات لتفعيل التنبيهات.';
     else if (enabled) message = 'الإشعارات مفعلة.';
+    else if (perm === 'granted') message = 'تم منح الإذن لكن لم يتم الاشتراك بعد. حاول مجددًا.';
     else message = 'الإشعارات غير مفعلة.';
     setPushUI({ enabled, message });
   }
@@ -1093,16 +1110,18 @@
       if (!('Notification' in window)) { setPushUI({ enabled: false, message: 'غير مدعوم.' }); return; }
       const perm = await Notification.requestPermission();
       if (perm !== 'granted') { setPushUI({ enabled: false, message: 'لم يتم منح الإذن.' }); return; }
+      if (!('PushManager' in window)) { setPushUI({ enabled: false, message: 'المتصفح لا يدعم PushManager.' }); return; }
       const reg = await getSWReg();
       if (!reg) { setPushUI({ enabled: false, message: 'Service Worker غير جاهز.' }); return; }
       let publicKey = null;
       try { const resp = await callFunction('push-public-key'); publicKey = resp?.publicKey || resp?.key || null; } catch {}
+      if (!publicKey) { setPushUI({ enabled: false, message: 'مفتاح VAPID غير مُعد. يرجى إعداد وظائف الحافة.' }); return; }
       const opts = { userVisibleOnly: true };
-      if (publicKey) opts.applicationServerKey = urlB64ToUint8Array(String(publicKey));
-      const sub = await reg.pushManager.subscribe(opts);
+      opts.applicationServerKey = urlB64ToUint8Array(String(publicKey));
+      const sub = await withTimeout(reg.pushManager.subscribe(opts), 15000);
       try { await callFunction('push-subscribe', { method: 'POST', body: { subscription: sub } }); } catch {}
-      await updatePushUI();
-    } catch { setPushUI({ enabled: false, message: 'تعذر التفعيل.' }); }
+    } catch (e) { console.warn('push enable failed', e); setPushUI({ enabled: false, message: 'تعذر التفعيل.' }); }
+    finally { try { await updatePushUI(); } catch {} }
   });
   disablePushBtn?.addEventListener('click', async () => {
     setPushUI({ enabled: true, busy: true, message: 'جارٍ إيقاف الإشعارات...' });

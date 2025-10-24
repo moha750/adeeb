@@ -88,6 +88,7 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
+// Web Push: display notifications when a push message arrives
 self.addEventListener('push', (event) => {
   try {
     const data = (() => {
@@ -113,9 +114,11 @@ self.addEventListener('push', (event) => {
       requireInteraction: false,
     }));
   } catch (e) {
+    // ignore
   }
 });
 
+// Focus/open on click
 self.addEventListener('notificationclick', (event) => {
   const url = (event.notification && event.notification.data && event.notification.data.url) || './admin.html';
   event.notification.close();
