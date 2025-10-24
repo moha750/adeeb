@@ -63,6 +63,7 @@
           <a href="#section-idea-board" class="admin-menu__item"><i class="fa-solid fa-lightbulb"></i> سبورة أدِيب</a>
           <a href="#section-chat" class="admin-menu__item"><i class="fa-solid fa-comments"></i> المحادثات</a>
           <a href="#section-todos" class="admin-menu__item"><i class="fa-solid fa-list-check"></i> المهام</a>
+          <a href="#section-push" class="admin-menu__item"><i class="fa-solid fa-bell"></i> إرسال الإشعارات</a>
           <a href="#section-profile" class="admin-menu__item"><i class="fa-solid fa-id-card"></i> ملفي</a>
           <a href="#section-admins" class="admin-menu__item"><i class="fa-solid fa-user-shield"></i> إدارة الأعضاء الإداريين</a>
           <div class="admin-menu__footer">
@@ -654,17 +655,59 @@
           <div id="todosList" class="cards-grid" aria-live="polite"></div>
         </section>
         
+        <!-- إرسال الإشعارات -->
+        <section id="section-push" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-bell"></i> إرسال الإشعارات</h2>
+            <button id="testPushBtn" class="btn btn-outline"><i class="fa-solid fa-vial"></i> إرسال إشعار تجريبي لنفسي</button>
+          </div>
+          <div class="panel" style="padding:24px">
+            <form id="pushNotificationForm" class="form-grid" style="gap:16px">
+              <label style="grid-column:1/-1">
+                عنوان الإشعار
+                <input type="text" id="pushTitle" placeholder="مثال: إعلان مهم" required />
+              </label>
+              <label style="grid-column:1/-1">
+                نص الإشعار
+                <textarea id="pushBody" placeholder="اكتب محتوى الإشعار هنا..." rows="3" required></textarea>
+              </label>
+              <label style="grid-column:1/-1">
+                الرابط عند النقر (اختياري)
+                <input type="url" id="pushUrl" placeholder="https://www.adeeb.club/" />
+              </label>
+              <label style="grid-column:1/-1">
+                <input type="checkbox" id="pushToAll" checked /> إرسال لجميع المستخدمين المشتركين
+              </label>
+              <div style="grid-column:1/-1;display:none" id="pushUserSelect">
+                <label>
+                  اختر مستخدمين محددين
+                  <select id="pushUserIds" multiple style="min-height:120px">
+                    <option value="">جاري التحميل...</option>
+                  </select>
+                  <small class="field-help">اضغط Ctrl للاختيار المتعدد</small>
+                </label>
+              </div>
+              <div style="grid-column:1/-1;display:flex;gap:8px">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> إرسال الإشعار</button>
+                <button type="button" id="pushPreviewBtn" class="btn btn-outline"><i class="fa-solid fa-eye"></i> معاينة</button>
+              </div>
+            </form>
+            <div id="pushStats" style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:8px;display:none">
+              <h4 style="margin:0 0 8px">إحصائيات الإرسال</h4>
+              <div id="pushStatsContent"></div>
+            </div>
+          </div>
+        </section>
+        
         <!-- ملفي -->
         <section id="section-profile" class="admin-section" hidden>
           <div class="section-head">
             <h2><i class="fa-solid fa-id-card"></i> ملفي</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <button id="installAppBtn" class="btn btn-primary" style="display:none"><i class="fa-solid fa-download"></i> تثبيت التطبيق</button>
+              <button id="enablePushBtn" class="btn btn-outline" style="display:none"><i class="fa-solid fa-bell"></i> تفعيل الإشعارات</button>
               <span id="installAppHint" class="muted" style="font-size:12px; margin-inline-start:8px; display:none"></span>
-              <button id="enablePushBtn" class="btn btn-outline"><i class="fa-solid fa-bell"></i> تفعيل إشعارات الهاتف</button>
-              <button id="disablePushBtn" class="btn btn-outline" style="display:none"><i class="fa-regular fa-bell-slash"></i> إيقاف الإشعارات</button>
-              <button id="testPushBtn" class="btn btn-outline" style="display:none"><i class="fa-solid fa-paper-plane"></i> اختبار الإشعار</button>
-              <span id="pushStatusHint" class="muted" style="font-size:12px; margin-inline-start:8px"></span>
+              <span id="pushStatus" class="muted" style="font-size:12px; margin-inline-start:8px; display:none"></span>
             </div>
           </div>
           <div class="panel" style="padding:16px">

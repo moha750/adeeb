@@ -1019,6 +1019,480 @@
   // Initial visibility check
   try { updateInstallButtonVisibility(); } catch {}
 
+  // ===== Push Notifications =====
+  const enablePushBtn = document.getElementById('enablePushBtn');
+  const pushStatus = document.getElementById('pushStatus');
+  let pushSubscription = null;
+  
+  // VAPID public key (you'll need to generate this - see instructions below)
+  const VAPID_PUBLIC_KEY = 'BJnyHxX1YJwwukPoKFXH8BikhTuhmj2EY2Gs1x_Q-eSKuHr74s-9a2AUxvC_5JbmOGM0WH2v6E3YoakuQXkiP2c'; // TODO: Replace with your actual VAPID public key
+  
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+  
+  async function checkPushPermission() {
+    if (!('Notification' in window) || !('PushManager' in window)) {
+      if (pushStatus) pushStatus.textContent = 'المتصفح لا يدعم الإشعارات';
+      if (enablePushBtn) enablePushBtn.style.display = 'none';
+      return;
+    }
+    
+    const permission = Notification.permission;
+    if (enablePushBtn) enablePushBtn.style.display = '';
+    
+    if (permission === 'granted') {
+      if (pushStatus) {
+        pushStatus.textContent = 'الإشعارات مفعّلة ✓';
+        pushStatus.style.color = '#10b981';
+        pushStatus.style.display = '';
+      }
+      if (enablePushBtn) {
+        enablePushBtn.innerHTML = '<i class="fa-solid fa-bell-slash"></i> إيقاف الإشعارات';
+        enablePushBtn.classList.remove('btn-outline');
+        enablePushBtn.classList.add('btn-danger');
+      }
+      // Check if we have an active subscription
+      await checkExistingSubscription();
+    } else if (permission === 'denied') {
+      if (pushStatus) {
+        pushStatus.textContent = 'الإشعارات محظورة من إعدادات المتصفح';
+        pushStatus.style.color = '#ef4444';
+        pushStatus.style.display = '';
+      }
+      if (enablePushBtn) {
+        enablePushBtn.disabled = true;
+        enablePushBtn.innerHTML = '<i class="fa-solid fa-bell"></i> الإشعارات محظورة';
+      }
+    } else {
+      if (pushStatus) {
+        pushStatus.textContent = '';
+        pushStatus.style.display = 'none';
+      }
+      if (enablePushBtn) {
+        enablePushBtn.innerHTML = '<i class="fa-solid fa-bell"></i> تفعيل الإشعارات';
+        enablePushBtn.classList.add('btn-outline');
+        enablePushBtn.classList.remove('btn-danger');
+      }
+    }
+  }
+  
+  async function checkExistingSubscription() {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      pushSubscription = await reg.pushManager.getSubscription();
+      return !!pushSubscription;
+    } catch {
+      return false;
+    }
+  }
+  
+  async function subscribeToPush() {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      
+      // Check if already subscribed
+      pushSubscription = await reg.pushManager.getSubscription();
+      if (pushSubscription) {
+        console.log('Already subscribed:', pushSubscription);
+        await savePushSubscription(pushSubscription);
+        return pushSubscription;
+      }
+      
+      // Subscribe to push notifications
+      pushSubscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+      
+      console.log('Push subscription:', pushSubscription);
+      await savePushSubscription(pushSubscription);
+      return pushSubscription;
+    } catch (error) {
+      console.error('Failed to subscribe to push:', error);
+      throw error;
+    }
+  }
+  
+  async function unsubscribeFromPush() {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const subscription = await reg.pushManager.getSubscription();
+      if (subscription) {
+        await subscription.unsubscribe();
+        await removePushSubscription(subscription);
+        pushSubscription = null;
+      }
+    } catch (error) {
+      console.error('Failed to unsubscribe from push:', error);
+      throw error;
+    }
+  }
+  
+  async function savePushSubscription(subscription) {
+    if (!sb) return;
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return;
+      
+      const subscriptionData = subscription.toJSON();
+      const { error } = await sb
+        .from('push_subscriptions')
+        .upsert({
+          user_id: user.id,
+          endpoint: subscriptionData.endpoint,
+          p256dh: subscriptionData.keys?.p256dh,
+          auth: subscriptionData.keys?.auth,
+          user_agent: navigator.userAgent,
+          created_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('Failed to save push subscription:', error);
+      }
+    } catch (e) {
+      console.error('Failed to save push subscription:', e);
+    }
+  }
+  
+  async function removePushSubscription(subscription) {
+    if (!sb) return;
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return;
+      
+      const subscriptionData = subscription.toJSON();
+      const { error } = await sb
+        .from('push_subscriptions')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('endpoint', subscriptionData.endpoint);
+      
+      if (error) {
+        console.error('Failed to remove push subscription:', error);
+      }
+    } catch (e) {
+      console.error('Failed to remove push subscription:', e);
+    }
+  }
+  
+  enablePushBtn?.addEventListener('click', async () => {
+    try {
+      enablePushBtn.disabled = true;
+      
+      const permission = Notification.permission;
+      
+      if (permission === 'default') {
+        // Request permission
+        const result = await Notification.requestPermission();
+        if (result === 'granted') {
+          // Subscribe to push
+          await subscribeToPush();
+          Swal.fire({
+            icon: 'success',
+            title: 'تم تفعيل الإشعارات',
+            text: 'سيتم إرسال الإشعارات المهمة إلى جهازك',
+            confirmButtonText: 'حسناً',
+            confirmButtonColor: '#3d8fd6'
+          });
+        }
+      } else if (permission === 'granted') {
+        // Check if we need to unsubscribe
+        const hasSubscription = await checkExistingSubscription();
+        if (hasSubscription) {
+          // Unsubscribe
+          const result = await Swal.fire({
+            icon: 'warning',
+            title: 'إيقاف الإشعارات؟',
+            text: 'هل تريد إيقاف استلام الإشعارات على هذا الجهاز؟',
+            showCancelButton: true,
+            confirmButtonText: 'نعم، أوقف',
+            cancelButtonText: 'إلغاء',
+            confirmButtonColor: '#ef4444'
+          });
+          
+          if (result.isConfirmed) {
+            await unsubscribeFromPush();
+            Swal.fire({
+              icon: 'success',
+              title: 'تم إيقاف الإشعارات',
+              confirmButtonText: 'حسناً',
+              confirmButtonColor: '#3d8fd6'
+            });
+          }
+        } else {
+          // Subscribe
+          await subscribeToPush();
+          Swal.fire({
+            icon: 'success',
+            title: 'تم تفعيل الإشعارات',
+            text: 'سيتم إرسال الإشعارات المهمة إلى جهازك',
+            confirmButtonText: 'حسناً',
+            confirmButtonColor: '#3d8fd6'
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Push notification error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'خطأ',
+        text: 'حدث خطأ في تفعيل الإشعارات',
+        confirmButtonText: 'حسناً',
+        confirmButtonColor: '#3d8fd6'
+      });
+    } finally {
+      enablePushBtn.disabled = false;
+      await checkPushPermission();
+    }
+  });
+  
+  // Check push permission on page load if profile section is visible
+  try {
+    const profileSection = document.getElementById('section-profile');
+    if (profileSection && !profileSection.hidden) {
+      checkPushPermission();
+    }
+  } catch {}
+  
+  // ===== Push Notification Sending Interface =====
+  const pushNotificationForm = document.getElementById('pushNotificationForm');
+  const testPushBtn = document.getElementById('testPushBtn');
+  const pushPreviewBtn = document.getElementById('pushPreviewBtn');
+  const pushToAll = document.getElementById('pushToAll');
+  const pushUserSelect = document.getElementById('pushUserSelect');
+  const pushStats = document.getElementById('pushStats');
+  const pushStatsContent = document.getElementById('pushStatsContent');
+  
+  // دالة إرسال الإشعارات عبر Edge Function
+  async function sendPushNotification(userIds, title, body, url) {
+    try {
+      const response = await callFunction('send-push-notification', {
+        method: 'POST',
+        body: {
+          user_ids: userIds, // null = إرسال للجميع
+          all_users: !userIds || userIds.length === 0,
+          payload: {
+            title,
+            body,
+            url: url || 'https://www.adeeb.club/admin/admin.html',
+            icon: 'https://www.adeeb.club/LOGO.png',
+            badge: 'https://www.adeeb.club/admin/icons/icon-72x72.png'
+          }
+        }
+      });
+      
+      return response;
+    } catch (error) {
+      console.error('Failed to send push notification:', error);
+      throw error;
+    }
+  }
+  
+  // معالجة تبديل checkbox إرسال للجميع
+  pushToAll?.addEventListener('change', () => {
+    if (pushUserSelect) {
+      pushUserSelect.style.display = pushToAll.checked ? 'none' : '';
+    }
+  });
+  
+  // معالجة إرسال النموذج
+  pushNotificationForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const title = document.getElementById('pushTitle')?.value?.trim();
+    const body = document.getElementById('pushBody')?.value?.trim();
+    const url = document.getElementById('pushUrl')?.value?.trim();
+    const toAll = document.getElementById('pushToAll')?.checked;
+    
+    if (!title || !body) {
+      Swal.fire({
+        icon: 'error',
+        title: 'خطأ',
+        text: 'يرجى إدخال عنوان ونص الإشعار',
+        confirmButtonText: 'حسناً',
+        confirmButtonColor: '#3d8fd6'
+      });
+      return;
+    }
+    
+    let userIds = null;
+    if (!toAll) {
+      const select = document.getElementById('pushUserIds');
+      const selected = Array.from(select?.selectedOptions || []).map(opt => opt.value).filter(v => v);
+      if (selected.length === 0) {
+        Swal.fire({
+          icon: 'error',
+          title: 'خطأ',
+          text: 'يرجى اختيار مستخدمين أو تفعيل الإرسال للجميع',
+          confirmButtonText: 'حسناً',
+          confirmButtonColor: '#3d8fd6'
+        });
+        return;
+      }
+      userIds = selected;
+    }
+    
+    // تأكيد الإرسال
+    const result = await Swal.fire({
+      icon: 'question',
+      title: 'تأكيد الإرسال',
+      html: `
+        <div style="text-align:right">
+          <p><strong>العنوان:</strong> ${escapeHtml(title)}</p>
+          <p><strong>النص:</strong> ${escapeHtml(body)}</p>
+          ${url ? `<p><strong>الرابط:</strong> ${escapeHtml(url)}</p>` : ''}
+          <p><strong>المستلمون:</strong> ${toAll ? 'جميع المستخدمين المشتركين' : `${userIds.length} مستخدم محدد`}</p>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'إرسال',
+      cancelButtonText: 'إلغاء',
+      confirmButtonColor: '#3d8fd6'
+    });
+    
+    if (!result.isConfirmed) return;
+    
+    // إرسال الإشعار
+    try {
+      Swal.fire({
+        title: 'جاري الإرسال...',
+        html: 'يرجى الانتظار',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      
+      const response = await sendPushNotification(userIds, title, body, url);
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'تم الإرسال بنجاح',
+        html: `
+          <div>
+            <p>تم إرسال الإشعارات بنجاح</p>
+            ${response?.sent ? `<p>✅ نجح: ${response.sent}</p>` : ''}
+            ${response?.failed ? `<p>❌ فشل: ${response.failed}</p>` : ''}
+          </div>
+        `,
+        confirmButtonText: 'حسناً',
+        confirmButtonColor: '#3d8fd6'
+      });
+      
+      // عرض الإحصائيات
+      if (pushStats && pushStatsContent) {
+        pushStats.style.display = '';
+        pushStatsContent.innerHTML = `
+          <div style="display:grid;gap:8px">
+            <div>✅ تم الإرسال بنجاح: ${response?.sent || 0}</div>
+            ${response?.failed > 0 ? `<div>❌ فشل الإرسال: ${response.failed}</div>` : ''}
+            <div>📅 التوقيت: ${new Date().toLocaleString('ar-SA')}</div>
+          </div>
+        `;
+      }
+      
+      // مسح النموذج
+      pushNotificationForm.reset();
+      
+    } catch (error) {
+      console.error('Push notification error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'خطأ في الإرسال',
+        text: error.message || 'حدث خطأ أثناء إرسال الإشعارات',
+        confirmButtonText: 'حسناً',
+        confirmButtonColor: '#3d8fd6'
+      });
+    }
+  });
+  
+  // زر الإشعار التجريبي
+  testPushBtn?.addEventListener('click', async () => {
+    try {
+      // تحقق من أن الإشعارات مفعلة
+      if (Notification.permission !== 'granted') {
+        Swal.fire({
+          icon: 'warning',
+          title: 'الإشعارات غير مفعلة',
+          text: 'يرجى تفعيل الإشعارات أولاً من قسم "ملفي"',
+          confirmButtonText: 'حسناً',
+          confirmButtonColor: '#3d8fd6'
+        });
+        return;
+      }
+      
+      testPushBtn.disabled = true;
+      
+      // إرسال إشعار تجريبي لنفسك فقط
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) throw new Error('غير مسجل الدخول');
+      
+      const response = await sendPushNotification(
+        [user.id],
+        '🔔 إشعار تجريبي',
+        'هذا إشعار تجريبي من نادي أديب. إذا وصلك هذا الإشعار فالنظام يعمل بنجاح!',
+        'https://www.adeeb.club/admin/admin.html'
+      );
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'تم إرسال الإشعار التجريبي',
+        text: 'يجب أن يصلك الإشعار خلال ثوانٍ',
+        confirmButtonText: 'حسناً',
+        confirmButtonColor: '#3d8fd6'
+      });
+      
+    } catch (error) {
+      console.error('Test notification error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'خطأ',
+        text: 'حدث خطأ في إرسال الإشعار التجريبي',
+        confirmButtonText: 'حسناً',
+        confirmButtonColor: '#3d8fd6'
+      });
+    } finally {
+      if (testPushBtn) testPushBtn.disabled = false;
+    }
+  });
+  
+  // زر المعاينة
+  pushPreviewBtn?.addEventListener('click', () => {
+    const title = document.getElementById('pushTitle')?.value?.trim() || 'عنوان الإشعار';
+    const body = document.getElementById('pushBody')?.value?.trim() || 'نص الإشعار';
+    
+    // إظهار إشعار محلي للمعاينة
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, {
+        body,
+        icon: 'https://www.adeeb.club/LOGO.png',
+        badge: 'https://www.adeeb.club/admin/icons/icon-72x72.png',
+        dir: 'rtl',
+        lang: 'ar',
+        tag: 'preview'
+      });
+    } else {
+      Swal.fire({
+        title,
+        text: body,
+        imageUrl: 'https://www.adeeb.club/LOGO.png',
+        imageWidth: 80,
+        imageHeight: 80,
+        confirmButtonText: 'حسناً',
+        confirmButtonColor: '#3d8fd6'
+      });
+    }
+  });
+
   // Edge Functions base URL (derived from project URL)
   const FUNCTIONS_BASE = (window.SUPABASE_URL || '').replace('.supabase.co', '.functions.supabase.co');
 
@@ -1029,7 +1503,6 @@
     if (!session) throw new Error('not-authenticated');
     const headers = {
       'Authorization': `Bearer ${session.access_token}`,
-      'apikey': window.SUPABASE_ANON_KEY || '',
       'Content-Type': 'application/json',
     };
     const res = await fetch(`${FUNCTIONS_BASE}/${name}`, { method, headers, body: body ? JSON.stringify(body) : null });
@@ -1040,164 +1513,6 @@
       throw new Error(msg);
     }
     return json;
-  }
-
-  const enablePushBtn = document.getElementById('enablePushBtn');
-  const disablePushBtn = document.getElementById('disablePushBtn');
-  const testPushBtn = document.getElementById('testPushBtn');
-  const pushStatusHint = document.getElementById('pushStatusHint');
-  async function getSWReg() {
-    if (!('serviceWorker' in navigator)) return null;
-    try {
-      const reg = await navigator.serviceWorker.getRegistration('./');
-      if (reg) return reg;
-    } catch {}
-    try {
-      return await withTimeout(navigator.serviceWorker.ready, 8000);
-    } catch {}
-    try {
-      const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
-      if (reg) {
-        try { return await withTimeout(navigator.serviceWorker.ready, 8000); } catch {}
-        return reg;
-      }
-    } catch {}
-    return null;
-  }
-  function urlB64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const rawData = atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
-    return outputArray;
-  }
-  function withTimeout(promise, ms) {
-    return new Promise((resolve, reject) => {
-      const t = setTimeout(() => reject(new Error('timeout')), ms);
-      promise.then((v) => { clearTimeout(t); resolve(v); }, (e) => { clearTimeout(t); reject(e); });
-    });
-  }
-  async function getExistingSubscription() {
-    const reg = await getSWReg();
-    if (!reg) return null;
-    try { return await reg.pushManager.getSubscription(); } catch { return null; }
-  }
-  function setPushUI({ enabled, busy, message }) {
-    if (enablePushBtn) enablePushBtn.style.display = enabled ? 'none' : '';
-    if (disablePushBtn) disablePushBtn.style.display = enabled ? '' : 'none';
-    if (testPushBtn) testPushBtn.style.display = enabled ? '' : 'none';
-    if (enablePushBtn) enablePushBtn.disabled = !!busy;
-    if (disablePushBtn) disablePushBtn.disabled = !!busy;
-    if (testPushBtn) testPushBtn.disabled = !!busy;
-    if (pushStatusHint) pushStatusHint.textContent = message || '';
-  }
-  async function updatePushUI() {
-    if (!('Notification' in window)) { setPushUI({ enabled: false, message: 'المتصفح لا يدعم الإشعارات.' }); return; }
-    const perm = Notification.permission;
-    const sub = await getExistingSubscription();
-    const enabled = perm === 'granted' && !!sub;
-    let message = '';
-    if (perm === 'denied') message = 'تم رفض الإذن للإشعارات من قبل المتصفح.';
-    else if (perm === 'default') message = 'امنح إذن الإشعارات لتفعيل التنبيهات.';
-    else if (enabled) message = 'الإشعارات مفعلة.';
-    else if (perm === 'granted') message = 'تم منح الإذن لكن لم يتم الاشتراك بعد. حاول مجددًا.';
-    else message = 'الإشعارات غير مفعلة.';
-    setPushUI({ enabled, message });
-  }
-  enablePushBtn?.addEventListener('click', async () => {
-    setPushUI({ enabled: false, busy: true, message: 'جارٍ تفعيل الإشعارات...' });
-    try {
-      if (!('Notification' in window)) { setPushUI({ enabled: false, message: 'غير مدعوم.' }); return; }
-      const perm = await Notification.requestPermission();
-      if (perm !== 'granted') { setPushUI({ enabled: false, message: 'لم يتم منح الإذن.' }); return; }
-      if (!('PushManager' in window)) { setPushUI({ enabled: false, message: 'المتصفح لا يدعم PushManager.' }); return; }
-      const reg = await getSWReg();
-      if (!reg) { setPushUI({ enabled: false, message: 'Service Worker غير جاهز.' }); return; }
-      let publicKey = null;
-      try { 
-        // Call push-public-key directly without auth (it's a public endpoint)
-        const functionsUrl = (window.SUPABASE_URL || '').replace('.supabase.co', '.functions.supabase.co');
-        const anonKey = window.SUPABASE_ANON_KEY || '';
-        if (!anonKey) {
-          console.error('SUPABASE_ANON_KEY not found');
-          setPushUI({ enabled: false, message: 'خطأ في التكوين: مفتاح API مفقود.' });
-          return;
-        }
-        const res = await fetch(`${functionsUrl}/push-public-key`, { 
-          method: 'GET',
-          headers: {
-            'apikey': anonKey,
-            'Authorization': `Bearer ${anonKey}`,
-            'Content-Type': 'application/json',
-          }
-        });
-        if (!res.ok) {
-          console.error('Push public key fetch failed:', res.status, res.statusText);
-          const text = await res.text();
-          console.error('Response:', text);
-          setPushUI({ enabled: false, message: `خطأ ${res.status}: تحقق من نشر الوظيفة.` });
-          return;
-        }
-        const data = await res.json();
-        publicKey = data?.publicKey || data?.key || null;
-        console.log('VAPID public key received:', publicKey ? 'Yes' : 'No');
-      } catch (e) {
-        console.error('Failed to get VAPID key:', e);
-        setPushUI({ enabled: false, message: 'فشل جلب مفتاح VAPID. تأكد من نشر push-public-key.' });
-        return;
-      }
-      // Temporary: use a test VAPID key if Edge Function not working
-      if (!publicKey && location.hostname === 'localhost') {
-        console.warn('Using test VAPID key for localhost');
-        publicKey = 'BIbr4Lh0I0P-Eyaz3c4bAzJMZio4c5PFRQy5d5E3tMDTQz3zFrCGLvRdMqcP5TKCGqVA2lTckDL6WJqEwWz_3lE';
-      }
-      if (!publicKey) { setPushUI({ enabled: false, message: 'مفتاح VAPID فارغ. يرجى إعداد VAPID_PUBLIC_KEY في Supabase.' }); return; }
-      const opts = { userVisibleOnly: true };
-      opts.applicationServerKey = urlB64ToUint8Array(String(publicKey));
-      console.log('Subscribing to push with VAPID...');
-      const sub = await withTimeout(reg.pushManager.subscribe(opts), 15000);
-      console.log('Push subscription successful:', sub.endpoint);
-      try { 
-        await callFunction('push-subscribe', { method: 'POST', body: { subscription: sub } });
-        console.log('Subscription saved to backend');
-      } catch (e) {
-        console.warn('Failed to save subscription to backend:', e);
-      }
-    } catch (e) { 
-      console.error('Push enable error:', e);
-      const msg = e.message || String(e);
-      if (msg.includes('timeout')) setPushUI({ enabled: false, message: 'انتهت مهلة الاشتراك. حاول مجددًا.' });
-      else if (msg.includes('InvalidStateError')) setPushUI({ enabled: false, message: 'اشتراك موجود مسبقًا. جرب إيقافه أولًا.' });
-      else if (msg.includes('NotAllowedError')) setPushUI({ enabled: false, message: 'الإذن مرفوض أو المتصفح لا يدعم Push.' });
-      else setPushUI({ enabled: false, message: `فشل الاشتراك: ${msg}` });
-    }
-    finally { try { await updatePushUI(); } catch {} }
-  });
-  disablePushBtn?.addEventListener('click', async () => {
-    setPushUI({ enabled: true, busy: true, message: 'جارٍ إيقاف الإشعارات...' });
-    try {
-      const sub = await getExistingSubscription();
-      if (sub) {
-        try { await callFunction('push-unsubscribe', { method: 'POST', body: { endpoint: sub.endpoint } }); } catch {}
-        try { await sub.unsubscribe(); } catch {}
-      }
-      await updatePushUI();
-    } catch { setPushUI({ enabled: true, message: 'تعذر الإيقاف.' }); }
-  });
-  testPushBtn?.addEventListener('click', async () => {
-    setPushUI({ enabled: true, busy: true, message: 'إرسال اختبار...' });
-    try { await callFunction('push-send-test', { method: 'POST', body: {} }); setPushUI({ enabled: true, busy: false, message: 'تم إرسال اختبار (إذا كانت الخلفية مُعدة).' }); }
-    catch { setPushUI({ enabled: true, busy: false, message: 'تعذر إرسال الاختبار.' }); }
-  });
-  try { updatePushUI(); } catch {}
-  const profileSection = document.getElementById('section-profile');
-  if (profileSection) {
-    try {
-      const mo = new MutationObserver(() => { if (!profileSection.hidden) updatePushUI(); });
-      mo.observe(profileSection, { attributes: true, attributeFilter: ['hidden'] });
-      if (!profileSection.hidden) updatePushUI();
-    } catch {}
   }
 
   // ===== Idea Topics (Admin CRUD) =====
@@ -3706,6 +4021,7 @@
       if (id === '#section-profile') {
         try { adminLoadProfileIntoForm?.(); } catch {}
         try { updateInstallButtonVisibility?.(); } catch {}
+        try { checkPushPermission?.(); } catch {}
       }
 
       // If schedule tab is opened, render the calendar

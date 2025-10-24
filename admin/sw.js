@@ -8,8 +8,8 @@ const PRECACHE_ASSETS = [
   './admin.css',
   './admin.js',
   '../style.css',
-  '../supabase-config.js'
-  // Removed LOGO.png to avoid cache errors
+  '../supabase-config.js',
+  '../LOGO.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -88,47 +88,75 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// Web Push: display notifications when a push message arrives
+// Push notification event listener
 self.addEventListener('push', (event) => {
+  let data = {
+    title: 'إشعار جديد',
+    body: 'لديك إشعار جديد من نادي أدِيب',
+    icon: '../LOGO.png',
+    badge: '../admin/icons/icon-72x72.png',
+    tag: 'adeeb-notification',
+    data: {}
+  };
+
   try {
-    const data = (() => {
-      try { return event.data ? event.data.json() : {}; } catch { return {}; }
-    })();
-    const title = data.title || 'إشعار جديد — إدارة أدِيب';
-    const body = data.body || data.message || 'لديك تحديث جديد.';
-    const url = data.url || data.link || './admin.html#section-stats';
-    const icon = data.icon || './icons/icon-192x192.png';
-    const badge = data.badge || './icons/icon-96x96.png';
-    const tag = data.tag || 'adeeb-admin';
-    const actions = Array.isArray(data.actions) ? data.actions : [];
-    event.waitUntil(self.registration.showNotification(title, {
-      body,
-      icon,
-      badge,
-      tag,
-      data: { url },
-      actions,
-      dir: 'rtl',
-      lang: 'ar',
-      renotify: false,
-      requireInteraction: false,
-    }));
+    if (event.data) {
+      const payload = event.data.json();
+      data = { ...data, ...payload };
+    }
   } catch (e) {
-    // ignore
+    console.error('Error parsing push data:', e);
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon,
+    badge: data.badge,
+    tag: data.tag,
+    data: data.data || {},
+    dir: 'rtl',
+    lang: 'ar',
+    vibrate: [200, 100, 200],
+    requireInteraction: false,
+    actions: data.actions || []
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// Notification click event listener
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const urlToOpen = event.notification.data?.url || './admin.html';
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        // Check if there's already a window/tab open
+        for (const client of windowClients) {
+          if (client.url === urlToOpen && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // If not, open a new window/tab
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});
+
+// Background sync for failed notification sends (optional)
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-notifications') {
+    event.waitUntil(syncNotifications());
   }
 });
 
-// Focus/open on click
-self.addEventListener('notificationclick', (event) => {
-  const url = (event.notification && event.notification.data && event.notification.data.url) || './admin.html';
-  event.notification.close();
-  event.waitUntil((async () => {
-    const allClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (const client of allClients) {
-      try {
-        if (client.url.includes('/admin/admin.html')) { client.focus(); client.navigate(url); return; }
-      } catch {}
-    }
-    try { await clients.openWindow(url); } catch {}
-  })());
-});
+async function syncNotifications() {
+  // Implement retry logic for failed notifications if needed
+  console.log('Syncing notifications...');
+}

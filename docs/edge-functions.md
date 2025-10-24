@@ -1268,7 +1268,7 @@ supabase secrets set \
 
 ### C) Edge Functions
 
-All functions use CORS headers.
+All functions use CORS headers and validate the caller via `Authorization: Bearer <access_token>`.
 
 #### 1) push-public-key (GET)
 
@@ -1283,17 +1283,9 @@ const cors = {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
-  
-  // No auth needed - just return public key
   const publicKey = Deno.env.get("VAPID_PUBLIC_KEY") || "";
-  
-  if (!publicKey) {
-    console.warn("VAPID_PUBLIC_KEY not configured in Edge Function secrets");
-  }
-  
   return new Response(JSON.stringify({ publicKey }), {
     headers: { "content-type": "application/json", ...cors },
-    status: 200
   });
 });
 ```
@@ -1385,7 +1377,7 @@ serve(async (req) => {
 // supabase/functions/push-send-test/index.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import webpush from "https://esm.sh/web-push@3.6.7";
+import webpush from "npm:web-push@3.6.6";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -1399,37 +1391,27 @@ const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY")!;
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")!;
 const CONTACT_EMAIL = Deno.env.get("CONTACT_EMAIL") || "admin@example.com";
 
-// Only set VAPID if keys exist
-if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(`mailto:${CONTACT_EMAIL}`, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-}
+webpush.setVapidDetails(`mailto:${CONTACT_EMAIL}`, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
 serve(async (req) => {
-  // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, { 
-      status: 200,
-      headers: cors 
-    });
-  }
-  
-  if (req.method !== "POST") {
-    return new Response("Method Not Allowed", { status: 405, headers: cors });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405, headers: cors });
 
-  try {
-    const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: authHeader } }});
-    const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+  const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
+  const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: authHeader } }
+  });
+  const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-    const { data: { user } } = await userClient.auth.getUser();
-    if (!user) return new Response("Unauthorized", { status: 401, headers: cors });
+  const { data: { user } } = await userClient.auth.getUser();
+  if (!user) return new Response("Unauthorized", { status: 401, headers: cors });
 
-    // Check if user is admin
-    const { data: adminRow } = await adminClient
-    .from("admins").select("user_id,is_admin").eq("user_id", user.id).maybeSingle();
-  if (!adminRow?.is_admin) return new Response("Forbidden", { status: 403, headers: cors });
+  // تأكد أنه إداري
+  const { data: adminRow } = await adminClient
+    .from("admins").select("user_id,is_admin").eq("user_id", user.id).eq("is_admin", true).maybeSingle();
+  if (!adminRow) return new Response("Forbidden", { status: 403, headers: cors });
 
+  // جلب اشتراكات المستخدم الحالي
   const { data: subs } = await adminClient
     .from("push_subscriptions")
     .select("endpoint,p256dh,auth")
@@ -1451,6 +1433,7 @@ serve(async (req) => {
       results.push({ endpoint: s.endpoint, ok: true });
     } catch (e) {
       results.push({ endpoint: s.endpoint, ok: false, error: String(e?.message || e) });
+      // تنظيف الاشتراكات غير الصالحة
       if (String(e?.message || "").includes("410") || String(e?.message || "").includes("404")) {
         await adminClient.from("push_subscriptions").delete().eq("endpoint", s.endpoint);
       }
