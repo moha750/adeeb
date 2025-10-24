@@ -1417,15 +1417,16 @@ serve(async (req) => {
     return new Response("Method Not Allowed", { status: 405, headers: cors });
   }
 
-  const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
-  const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: authHeader } }});
-  const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+  try {
+    const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
+    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: authHeader } }});
+    const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-  const { data: { user } } = await userClient.auth.getUser();
-  if (!user) return new Response("Unauthorized", { status: 401, headers: cors });
+    const { data: { user } } = await userClient.auth.getUser();
+    if (!user) return new Response("Unauthorized", { status: 401, headers: cors });
 
-  // Only Admins can send test notifications
-  const { data: adminRow } = await userClient
+    // Check if user is admin
+    const { data: adminRow } = await adminClient
     .from("admins").select("user_id,is_admin").eq("user_id", user.id).maybeSingle();
   if (!adminRow?.is_admin) return new Response("Forbidden", { status: 403, headers: cors });
 
