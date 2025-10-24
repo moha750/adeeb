@@ -1,22 +1,55 @@
 /* Admin PWA Service Worker */
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3'; // Updated version to force refresh
 const STATIC_CACHE = `admin-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `admin-runtime-${CACHE_VERSION}`;
 
+// Helper function to clean URLs (remove query params for caching)
+function cleanUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    // Remove query params for caching static assets
+    if (urlObj.pathname.match(/\.(js|css|html|png|jpg|jpeg|svg|ico)$/i)) {
+      urlObj.search = '';
+    }
+    return urlObj.href;
+  } catch {
+    return url;
+  }
+}
+
 const PRECACHE_ASSETS = [
   './admin.html',
-  './admin.css',
+  './admin.css', 
   './admin.js',
   '../style.css',
   '../supabase-config.js',
-  '../LOGO.png'
+  '../LOGO.png',
+  './manifest.webmanifest',
+  './icons/icon-192x192.png',
+  './icons/icon-512x512.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE)
-      .then((cache) => cache.addAll(PRECACHE_ASSETS))
+      .then((cache) => {
+        // Try to cache each file individually to avoid complete failure
+        return Promise.all(
+          PRECACHE_ASSETS.map(url => {
+            return cache.add(url).catch(err => {
+              console.warn(`Failed to cache ${url}:`, err);
+              // Don't fail the entire install if one file fails
+              return Promise.resolve();
+            });
+          })
+        );
+      })
       .then(() => self.skipWaiting())
+      .catch(err => {
+        console.error('Service Worker installation failed:', err);
+        // Still skip waiting even if some caching failed
+        return self.skipWaiting();
+      })
   );
 });
 
@@ -37,11 +70,19 @@ function isSupabaseRequest(url) {
 }
 
 function cacheFirst(request) {
-  return caches.match(request).then((cached) => {
+  const cleanedUrl = cleanUrl(request.url);
+  const cleanedRequest = cleanedUrl !== request.url ? new Request(cleanedUrl) : request;
+  
+  return caches.match(cleanedRequest).then((cached) => {
     if (cached) return cached;
     return fetch(request).then((response) => {
-      const copy = response.clone();
-      caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy)).catch(()=>{});
+      // Only cache successful responses
+      if (response && response.status === 200) {
+        const copy = response.clone();
+        caches.open(RUNTIME_CACHE).then((cache) => {
+          cache.put(cleanedRequest, copy).catch(()=>{});
+        }).catch(()=>{});
+      }
       return response;
     }).catch(() => caches.match('./admin.html'));
   });
@@ -49,10 +90,21 @@ function cacheFirst(request) {
 
 function networkFirst(request) {
   return fetch(request).then((response) => {
-    const copy = response.clone();
-    caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy)).catch(()=>{});
+    // Only cache successful responses
+    if (response && response.status === 200) {
+      const cleanedUrl = cleanUrl(request.url);
+      const cleanedRequest = cleanedUrl !== request.url ? new Request(cleanedUrl) : request;
+      const copy = response.clone();
+      caches.open(RUNTIME_CACHE).then((cache) => {
+        cache.put(cleanedRequest, copy).catch(()=>{});
+      }).catch(()=>{});
+    }
     return response;
-  }).catch(() => caches.match(request).then((cached) => cached || caches.match('./admin.html')));
+  }).catch(() => {
+    const cleanedUrl = cleanUrl(request.url);
+    const cleanedRequest = cleanedUrl !== request.url ? new Request(cleanedUrl) : request;
+    return caches.match(cleanedRequest).then((cached) => cached || caches.match('./admin.html'));
+  });
 }
 
 self.addEventListener('fetch', (event) => {

@@ -1040,43 +1040,42 @@
   
   async function checkPushPermission() {
     if (!('Notification' in window) || !('PushManager' in window)) {
-      if (pushStatus) pushStatus.textContent = 'المتصفح لا يدعم الإشعارات';
+      if (pushStatus) { pushStatus.textContent = 'المتصفح لا يدعم الإشعارات'; pushStatus.style.color = '#ef4444'; pushStatus.style.display = ''; }
       if (enablePushBtn) enablePushBtn.style.display = 'none';
       return;
     }
-    
     const permission = Notification.permission;
     if (enablePushBtn) enablePushBtn.style.display = '';
-    
+    const isSubscribed = await checkExistingSubscription();
     if (permission === 'granted') {
       if (pushStatus) {
-        pushStatus.textContent = 'الإشعارات مفعّلة ✓';
-        pushStatus.style.color = '#10b981';
+        pushStatus.textContent = isSubscribed ? 'الإشعارات مفعّلة ✓' : 'الإشعارات مفعّلة ولكن غير مشترك حالياً';
+        pushStatus.style.color = isSubscribed ? '#10b981' : '#f59e0b';
         pushStatus.style.display = '';
       }
       if (enablePushBtn) {
-        enablePushBtn.innerHTML = '<i class="fa-solid fa-bell-slash"></i> إيقاف الإشعارات';
-        enablePushBtn.classList.remove('btn-outline');
-        enablePushBtn.classList.add('btn-danger');
+        enablePushBtn.innerHTML = isSubscribed ? '<i class="fa-solid fa-bell-slash"></i> إيقاف الإشعارات' : '<i class="fa-solid fa-bell"></i> تفعيل الإشعارات';
+        enablePushBtn.classList.toggle('btn-danger', !!isSubscribed);
+        enablePushBtn.classList.toggle('btn-outline', !isSubscribed);
+        enablePushBtn.disabled = false;
       }
-      // Check if we have an active subscription
-      await checkExistingSubscription();
     } else if (permission === 'denied') {
       if (pushStatus) {
-        pushStatus.textContent = 'الإشعارات محظورة من إعدادات المتصفح';
+        pushStatus.innerHTML = 'الإشعارات محظورة من إعدادات المتصفح. قم بالسماح من إعدادات الموقع ثم أعد المحاولة.';
         pushStatus.style.color = '#ef4444';
         pushStatus.style.display = '';
       }
       if (enablePushBtn) {
-        enablePushBtn.disabled = true;
-        enablePushBtn.innerHTML = '<i class="fa-solid fa-bell"></i> الإشعارات محظورة';
+        enablePushBtn.disabled = false;
+        enablePushBtn.innerHTML = '<i class="fa-solid fa-gear"></i> فتح إعدادات الإشعارات';
+        enablePushBtn.classList.add('btn-outline');
+        enablePushBtn.classList.remove('btn-danger');
       }
     } else {
-      if (pushStatus) {
-        pushStatus.textContent = '';
-        pushStatus.style.display = 'none';
-      }
+      // default
+      if (pushStatus) { pushStatus.textContent = 'قم بتفعيل الإشعارات لتلقي التنبيهات المهمة'; pushStatus.style.color = '#64748b'; pushStatus.style.display = ''; }
       if (enablePushBtn) {
+        enablePushBtn.disabled = false;
         enablePushBtn.innerHTML = '<i class="fa-solid fa-bell"></i> تفعيل الإشعارات';
         enablePushBtn.classList.add('btn-outline');
         enablePushBtn.classList.remove('btn-danger');
@@ -1187,73 +1186,43 @@
   enablePushBtn?.addEventListener('click', async () => {
     try {
       enablePushBtn.disabled = true;
-      
       const permission = Notification.permission;
-      
       if (permission === 'default') {
-        // Request permission
         const result = await Notification.requestPermission();
         if (result === 'granted') {
-          // Subscribe to push
           await subscribeToPush();
-          Swal.fire({
-            icon: 'success',
-            title: 'تم تفعيل الإشعارات',
-            text: 'سيتم إرسال الإشعارات المهمة إلى جهازك',
-            confirmButtonText: 'حسناً',
-            confirmButtonColor: '#3d8fd6'
-          });
         }
       } else if (permission === 'granted') {
-        // Check if we need to unsubscribe
         const hasSubscription = await checkExistingSubscription();
         if (hasSubscription) {
-          // Unsubscribe
-          const result = await Swal.fire({
-            icon: 'warning',
-            title: 'إيقاف الإشعارات؟',
-            text: 'هل تريد إيقاف استلام الإشعارات على هذا الجهاز؟',
-            showCancelButton: true,
-            confirmButtonText: 'نعم، أوقف',
-            cancelButtonText: 'إلغاء',
-            confirmButtonColor: '#ef4444'
-          });
-          
-          if (result.isConfirmed) {
-            await unsubscribeFromPush();
-            Swal.fire({
-              icon: 'success',
-              title: 'تم إيقاف الإشعارات',
-              confirmButtonText: 'حسناً',
-              confirmButtonColor: '#3d8fd6'
-            });
-          }
+          await unsubscribeFromPush();
         } else {
-          // Subscribe
           await subscribeToPush();
-          Swal.fire({
-            icon: 'success',
-            title: 'تم تفعيل الإشعارات',
-            text: 'سيتم إرسال الإشعارات المهمة إلى جهازك',
-            confirmButtonText: 'حسناً',
-            confirmButtonColor: '#3d8fd6'
-          });
+        }
+      } else if (permission === 'denied') {
+        // Show guidance to open site settings
+        if (pushStatus) {
+          pushStatus.innerHTML = 'الإشعارات محظورة. افتح إعدادات الموقع من المتصفح واسمح بها ثم أعد المحاولة.';
+          pushStatus.style.color = '#ef4444';
+          pushStatus.style.display = '';
         }
       }
     } catch (error) {
-      console.error('Push notification error:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'خطأ',
-        text: 'حدث خطأ في تفعيل الإشعارات',
-        confirmButtonText: 'حسناً',
-        confirmButtonColor: '#3d8fd6'
-      });
+      console.error('Push notification toggle error:', error);
     } finally {
       enablePushBtn.disabled = false;
       await checkPushPermission();
     }
   });
+
+  // React to permission changes (if supported)
+  try {
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'notifications' }).then((perm) => {
+        perm.onchange = () => { try { checkPushPermission(); } catch {} };
+      }).catch(()=>{});
+    }
+  } catch {}
   
   // Check push permission on page load if profile section is visible
   try {
