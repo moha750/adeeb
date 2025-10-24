@@ -370,7 +370,15 @@
                 <option value="100">100%</option>
               </select>
             </div>
-            <button id="membershipFiltersClear" class="btn btn-outline btn-xs" type="button" title="مسح الفلاتر"><i class="fa-solid fa-eraser"></i> مسح</button>
+            <div class="filter-field">
+              <i class="icon fa-solid fa-users" aria-hidden="true"></i>
+              <select id="membershipFilterCommittee" class="filter-select with-icon" title="تصفية حسب اللجنة">
+                <option value="all">كل اللجان</option>
+              </select>
+            </div>
+            <div style="flex:1 0 100%; grid-column: 1 / -1;">
+              <button id="membershipFiltersClear" class="btn btn-outline btn-xs" type="button" title="مسح الفلاتر" style="width:100%"><i class="fa-solid fa-eraser"></i> أسمح كل الفلاتر</button>
+            </div>
           </div>
           <div id="membershipAppsGroups" class="groups-grid"></div>
           <div id="membershipAppsEmpty" class="empty-state muted" style="display:none">لا توجد طلبات بعد</div>

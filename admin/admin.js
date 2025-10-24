@@ -83,6 +83,7 @@
   const membershipFilterName = document.getElementById('membershipFilterName');
   const membershipFilterStatus = document.getElementById('membershipFilterStatus');
   const membershipFilterPctBand = document.getElementById('membershipFilterPctBand');
+  const membershipFilterCommittee = document.getElementById('membershipFilterCommittee');
   const membershipFiltersClear = document.getElementById('membershipFiltersClear');
   // Idea Board (admin) elements
   const ideaBoardTableBody = document.getElementById('ideaBoardTableBody');
@@ -593,6 +594,7 @@
     const nameQ = (membershipFilterName?.value || '').toString().trim().toLowerCase();
     const statusQ = (membershipFilterStatus?.value || 'all');
     const bandQ = (membershipFilterPctBand?.value || 'all');
+    const committeeQ = (membershipFilterCommittee?.value || 'all');
     const normalize = (raw) => {
       const v = (raw || '').toString().trim().toLowerCase();
       if (['accepted','approved','accept','ok','done','مقبول'].includes(v)) return 'accepted';
@@ -620,6 +622,10 @@
       if (statusQ && statusQ !== 'all') {
         if (normalize(r.status) !== statusQ) return false;
       }
+      if (committeeQ && committeeQ !== 'all') {
+        const c = (r?.preferred_committee || r?.committee || '').toString().trim().replace(/\s+/g, ' ');
+        if (c !== committeeQ) return false;
+      }
       const p = pctOf(r);
       if (bandQ && bandQ !== 'all') {
         const base = parseInt(bandQ, 10);
@@ -632,6 +638,28 @@
       return true;
     });
     renderMembershipApps(filtered);
+  }
+
+  function refreshMembershipCommitteeFilterOptions() {
+    if (!membershipFilterCommittee) return;
+    const list = Array.isArray(membershipApps) ? membershipApps : [];
+    const set = new Set();
+    list.forEach((r) => {
+      const raw = (r?.preferred_committee || r?.committee || '').toString().trim();
+      if (!raw) return;
+      set.add(raw.replace(/\s+/g, ' '));
+    });
+    const opts = ['all', ...Array.from(set).sort((a, b) => { try { return a.localeCompare(b, 'ar'); } catch { return String(a).localeCompare(String(b)); } })];
+    const prev = membershipFilterCommittee.value || 'all';
+    membershipFilterCommittee.innerHTML = '';
+    opts.forEach((val) => {
+      const op = document.createElement('option');
+      op.value = val;
+      op.textContent = (val === 'all') ? 'كل اللجان' : val;
+      membershipFilterCommittee.appendChild(op);
+    });
+    // Restore selection if still present
+    if (opts.includes(prev)) membershipFilterCommittee.value = prev; else membershipFilterCommittee.value = 'all';
   }
   
   function renderMembershipApps(rows) {
@@ -829,6 +857,7 @@
       rows = localMembershipAppsGet();
     }
     membershipApps = rows.slice();
+    try { refreshMembershipCommitteeFilterOptions(); } catch {}
     applyMembershipFilters();
     renderMembershipStats(membershipApps);
   }
@@ -839,10 +868,12 @@
   membershipFilters?.addEventListener('input', () => { applyMembershipFilters(); });
   membershipFilterStatus?.addEventListener('change', () => { applyMembershipFilters(); });
   membershipFilterPctBand?.addEventListener('change', () => { applyMembershipFilters(); });
+  membershipFilterCommittee?.addEventListener('change', () => { applyMembershipFilters(); });
   membershipFiltersClear?.addEventListener('click', () => {
     if (membershipFilterName) membershipFilterName.value = '';
     if (membershipFilterStatus) membershipFilterStatus.value = 'all';
     if (membershipFilterPctBand) membershipFilterPctBand.value = 'all';
+    if (membershipFilterCommittee) membershipFilterCommittee.value = 'all';
     applyMembershipFilters();
   });
   membershipAppsGroups?.addEventListener('click', (e) => {
