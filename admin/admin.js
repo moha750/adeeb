@@ -3632,6 +3632,23 @@
     const perms = currentUserAdminPerms || defaultAdminPerms();
     return !!perms[key];
   }
+  // Special-case: access to Site Management (الرئيسية/إدارة الموقع) depends on having at least
+  // one permission for its cards (works, sponsors, achievements, board, join, faq, testimonials, blog)
+  function hasAnySiteCardPerm() {
+    try {
+      const targets = [
+        '#section-works',
+        '#section-sponsors',
+        '#section-achievements',
+        '#section-board',
+        '#section-join',
+        '#section-faq',
+        '#section-testimonials',
+        '#section-blog'
+      ];
+      return targets.some((sid) => hasPermBySectionId(sid));
+    } catch { return true; }
+  }
   async function applyCurrentUserPermissions() {
     if (!sb) return;
     try {
@@ -3657,6 +3674,12 @@
         const card = btn.closest('.card');
         if (card) card.style.display = hasPermBySectionId(id) ? '' : 'none';
       });
+      // Hide Site Management tab and section entirely if user has no perms for any of its cards
+      const homeLink = document.querySelector('.admin-menu__item[href="#section-home"]');
+      const homeSection = document.getElementById('section-home');
+      const canHome = hasAnySiteCardPerm();
+      if (homeLink) homeLink.style.display = canHome ? '' : 'none';
+      if (homeSection) homeSection.hidden = !canHome;
     } catch {}
   }
 
@@ -4152,6 +4175,8 @@
       e.preventDefault();
       const id = link.getAttribute('href');
       if (!id) return;
+      // Block navigating to Site Management if user lacks all its card permissions
+      if (id === '#section-home' && !hasAnySiteCardPerm()) { alert('لا تملك صلاحية الوصول لهذا التبويب'); return; }
       if (!hasPermBySectionId(id)) { alert('لا تملك صلاحية الوصول لهذا التبويب'); return; }
 
       // set active

@@ -662,7 +662,7 @@ serve(async (req) => {
 ## 5) Edge Function: set-admin-perms
 
 - Method: POST
-- Body: `{ user_id: string, perms: { works: boolean, sponsors: boolean, achievements: boolean, board: boolean, faq: boolean, blog: boolean, schedule: boolean, chat: boolean, todos: boolean, admins: boolean } }`
+- Body: `{ user_id: string, perms: { works: boolean, sponsors: boolean, achievements: boolean, board: boolean, faq: boolean, blog: boolean, schedule: boolean, chat: boolean, todos: boolean, admins: boolean, join: boolean,} }`
 - Auth: Bearer user access_token
 - Logic: Caller must be an admin. Hierarchy rules enforced:
   - President (1) can edit others' permissions (not self). President target cannot be edited.
@@ -703,7 +703,8 @@ const ALLOWED = [
   'admins',
   'membership-apps',
   'appointments',
-  'push'
+  'push',
+  'join'
 ];
 function normalizeAr(s) {
   if (!s) return '';
