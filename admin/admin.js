@@ -3592,16 +3592,16 @@
     '#section-blog': 'blog',
     '#section-schedule': 'schedule',
     '#section-appointments': 'appointments',
-    '#section-join': 'join',
-    '#section-push': 'push',
     '#section-idea-board': 'idea_board',
     '#section-chat': 'chat',
     '#section-todos': 'todos',
     '#section-admins': 'admins',
     '#section-testimonials': 'testimonials',
+    '#section-join': 'join',
+    '#section-push': 'push',
   };
   function defaultAdminPerms() {
-    return { works: true, sponsors: true, achievements: true, board: true, members: true, membership_apps: true, faq: true, blog: true, schedule: true, appointments: true, join: true, push: true, idea_board: true, chat: true, todos: true, admins: true, testimonials: true };
+    return { works: true, sponsors: true, achievements: true, board: true, members: true, membership_apps: true, faq: true, blog: true, schedule: true, appointments: true, idea_board: true, chat: true, todos: true, admins: true, testimonials: true, join: true, push: true };
   }
   function normalizePermsShape(perms) {
     const base = defaultAdminPerms();
@@ -3686,7 +3686,7 @@
   }
   function fallbackPermsForLevel(lv) {
     // الرئيس/النائب: كل التبويبات مسموحة. القادة: كل شيء ما عدا إدارة الإداريين.
-    const base = { works: true, sponsors: true, achievements: true, board: true, members: true, membership_apps: true, faq: true, blog: true, schedule: true, idea_board: true, chat: true, todos: true, admins: true };
+    const base = { works: true, sponsors: true, achievements: true, board: true, members: true, membership_apps: true, faq: true, blog: true, schedule: true, appointments: true, idea_board: true, chat: true, todos: true, admins: true, testimonials: true, join: true, push: true };
     if (lv === ADMIN_LEVELS.manager) return { ...base, admins: false };
     return base;
   }
@@ -3797,24 +3797,24 @@
       </div>
       <div class="panel__body" id="adminPermsSection" style="padding:0; margin-top:16px">
         <div style="font-weight:700; color: var(--main-blue); margin-bottom:8px"><i class="fa-solid fa-lock"></i> الصلاحيات</div>
-        <div class="form-grid" id="adminPermsGrid">
-          <label><input type="checkbox" id="perm-works" /> إدارة الأعمال</label>
-          <label><input type="checkbox" id="perm-sponsors" /> إدارة الرعاة</label>
-          <label><input type="checkbox" id="perm-achievements" /> إدارة الإنجازات</label>
-          <label><input type="checkbox" id="perm-board" /> المجلس الإداري</label>
-          <label><input type="checkbox" id="perm-members" /> أعضاء النادي</label>
-          <label><input type="checkbox" id="perm-membership_apps" /> طلبات العضوية</label>
-          <label><input type="checkbox" id="perm-faq" /> الأسئلة الشائعة</label>
-          <label><input type="checkbox" id="perm-blog" /> مرافئ (المدونة)</label>
-          <label><input type="checkbox" id="perm-idea_board" /> سبورة أدِيب</label>
-          <label><input type="checkbox" id="perm-chat" /> المحادثات</label>
-          <label><input type="checkbox" id="perm-schedule" /> جدول أدِيب</label>
-          <label><input type="checkbox" id="perm-appointments" /> حجز المواعيد</label>
-          <label><input type="checkbox" id="perm-join" /> زر "انضم إلينا"</label>
-          <label><input type="checkbox" id="perm-push" /> إرسال الإشعارات</label>
-          <label><input type="checkbox" id="perm-todos" /> المهام</label>
-          <label><input type="checkbox" id="perm-admins" /> إدارة الأعضاء الإداريين</label>
-          <label><input type="checkbox" id="perm-testimonials" /> آراء الأعضاء</label>
+        <div class="perm-grid" id="adminPermsGrid">
+          <label class="perm"><input type="checkbox" id="perm-works" /><span class="name">إدارة الأعمال</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-sponsors" /><span class="name">إدارة الرعاة</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-achievements" /><span class="name">إدارة الإنجازات</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-board" /><span class="name">المجلس الإداري</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-members" /><span class="name">أعضاء النادي</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-membership_apps" /><span class="name">طلبات العضوية</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-faq" /><span class="name">الأسئلة الشائعة</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-blog" /><span class="name">مرافئ (المدونة)</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-idea_board" /><span class="name">سبورة أدِيب</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-chat" /><span class="name">المحادثات</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-schedule" /><span class="name">جدول أدِيب</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-appointments" /><span class="name">حجز المواعيد</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-todos" /><span class="name">المهام</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-admins" /><span class="name">إدارة الأعضاء الإداريين</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-testimonials" /><span class="name">آراء الأعضاء</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-join" /><span class="name">زر "انضم إلينا"</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-push" /><span class="name">إرسال الإشعارات</span><span class="switch" aria-hidden="true"></span></label>
         </div>
         <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
           <button type="button" class="btn" id="permsSelectAll">تحديد الكل</button>
@@ -3879,11 +3879,11 @@
       setPerm('perm-chat', perms.chat);
       setPerm('perm-schedule', perms.schedule);
       setPerm('perm-appointments', perms.appointments);
-      setPerm('perm-join', perms.join);
-      setPerm('perm-push', perms.push);
       setPerm('perm-todos', perms.todos);
       setPerm('perm-admins', perms.admins);
       setPerm('perm-testimonials', perms.testimonials);
+      setPerm('perm-join', perms.join);
+      setPerm('perm-push', perms.push);
 
       document.getElementById('permsSelectAll')?.addEventListener('click', () => {
         adminDetailsBody?.querySelectorAll('#adminPermsGrid input[type="checkbox"]:not(:disabled)')
@@ -3908,11 +3908,11 @@
           chat: !!document.getElementById('perm-chat')?.checked,
           schedule: !!document.getElementById('perm-schedule')?.checked,
           appointments: !!document.getElementById('perm-appointments')?.checked,
-          join: !!document.getElementById('perm-join')?.checked,
-          push: !!document.getElementById('perm-push')?.checked,
           todos: !!document.getElementById('perm-todos')?.checked,
           admins: !!document.getElementById('perm-admins')?.checked,
           testimonials: !!document.getElementById('perm-testimonials')?.checked,
+          join: !!document.getElementById('perm-join')?.checked,
+          push: !!document.getElementById('perm-push')?.checked,
         });
         try {
           if (msg) { msg.className = 'muted'; msg.textContent = ''; }
@@ -4192,22 +4192,6 @@
         try { renderStats?.(); } catch {}
       }
 
-      // If join tab is opened, refresh its UI
-      if (id === '#section-join') {
-        try { refreshJoinFormUI?.(); } catch {}
-        try { refreshJoinSummaryUI?.(); } catch {}
-        try { updateJoinCountdownUI?.(); } catch {}
-      }
-
-      // If push tab is opened, ensure UI reflects current selections
-      if (id === '#section-push') {
-        try {
-          const toAll = document.getElementById('pushToAll');
-          const userSel = document.getElementById('pushUserSelect');
-          if (toAll && userSel) userSel.style.display = toAll.checked ? 'none' : '';
-        } catch {}
-      }
-
       // If chat tab is opened, init chat
       if (id === '#section-chat') {
         try { initChatSection?.(); } catch {}
@@ -4261,20 +4245,6 @@
     // If navigating via dashboard card to appointments, render it
     if (id === '#section-appointments') {
       try { renderAppointments?.(); } catch {}
-    }
-    // If navigating via dashboard card to join, refresh its UI
-    if (id === '#section-join') {
-      try { refreshJoinFormUI?.(); } catch {}
-      try { refreshJoinSummaryUI?.(); } catch {}
-      try { updateJoinCountdownUI?.(); } catch {}
-    }
-    // If navigating via dashboard card to push, ensure UI reflects current selections
-    if (id === '#section-push') {
-      try {
-        const toAll = document.getElementById('pushToAll');
-        const userSel = document.getElementById('pushUserSelect');
-        if (toAll && userSel) userSel.style.display = toAll.checked ? 'none' : '';
-      } catch {}
     }
     // If navigating via dashboard card to chat, init it
     if (id === '#section-chat') {
@@ -6926,6 +6896,10 @@
   const addAdminForm = document.getElementById('addAdminForm');
   const newAdminEmail = document.getElementById('newAdminEmail');
   const adminsStatus = document.getElementById('adminsStatus');
+  const invitePermsGrid = document.getElementById('invitePermsGrid');
+  const invPermsSelectAllBtn = document.getElementById('invPermsSelectAll');
+  const invPermsClearAllBtn = document.getElementById('invPermsClearAll');
+  const newAdminPositionEl = document.getElementById('newAdminPosition');
   let adminsList = [];
   let adminsProfilesMap = new Map();
   const adminDetailsDialog = document.getElementById('adminDetailsDialog');
@@ -7057,6 +7031,46 @@
     }
   }
 
+  // Invitation permissions helpers
+  function setInvitePerm(id, val) { const el = document.getElementById(id); if (el) el.checked = !!val; }
+  function applyInvitePermsForLevel(level) {
+    try {
+      const base = normalizePermsShape(fallbackPermsForLevel(level));
+      setInvitePerm('inv-perm-works', base.works);
+      setInvitePerm('inv-perm-sponsors', base.sponsors);
+      setInvitePerm('inv-perm-achievements', base.achievements);
+      setInvitePerm('inv-perm-board', base.board);
+      setInvitePerm('inv-perm-members', base.members);
+      setInvitePerm('inv-perm-membership_apps', base.membership_apps);
+      setInvitePerm('inv-perm-faq', base.faq);
+      setInvitePerm('inv-perm-blog', base.blog);
+      setInvitePerm('inv-perm-idea_board', base.idea_board);
+      setInvitePerm('inv-perm-chat', base.chat);
+      setInvitePerm('inv-perm-schedule', base.schedule);
+      setInvitePerm('inv-perm-appointments', base.appointments);
+      setInvitePerm('inv-perm-todos', base.todos);
+      setInvitePerm('inv-perm-admins', base.admins);
+      setInvitePerm('inv-perm-testimonials', base.testimonials);
+      setInvitePerm('inv-perm-join', base.join);
+      setInvitePerm('inv-perm-push', base.push);
+    } catch {}
+  }
+  invPermsSelectAllBtn?.addEventListener('click', () => {
+    try { invitePermsGrid?.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true); } catch {}
+  });
+  invPermsClearAllBtn?.addEventListener('click', () => {
+    try { invitePermsGrid?.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false); } catch {}
+  });
+  newAdminPositionEl?.addEventListener('change', () => {
+    try {
+      const position = (newAdminPositionEl?.value || '').trim();
+      const level = levelFromPositionAr(position || null);
+      applyInvitePermsForLevel(level);
+    } catch {}
+  });
+  // Initialize defaults on load (manager-level fallback)
+  try { applyInvitePermsForLevel(ADMIN_LEVELS.manager); } catch {}
+
   addAdminForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = (newAdminEmail?.value || '').trim();
@@ -7070,10 +7084,41 @@
       const redirectTo = (baseOrigin.includes('localhost') || baseOrigin.includes('127.0.0.1'))
         ? 'https://www.adeeb.club/admin/onboarding.html'
         : `${baseOrigin}/admin/onboarding.html`;
-      await callFunction('invite-admin', { method: 'POST', body: { email, position: position || null, admin_level, redirectTo } });
+      // Gather invitation permissions (optional)
+      const invGather = () => ({
+        works: !!document.getElementById('inv-perm-works')?.checked,
+        sponsors: !!document.getElementById('inv-perm-sponsors')?.checked,
+        achievements: !!document.getElementById('inv-perm-achievements')?.checked,
+        board: !!document.getElementById('inv-perm-board')?.checked,
+        members: !!document.getElementById('inv-perm-members')?.checked,
+        membership_apps: !!document.getElementById('inv-perm-membership_apps')?.checked,
+        faq: !!document.getElementById('inv-perm-faq')?.checked,
+        blog: !!document.getElementById('inv-perm-blog')?.checked,
+        idea_board: !!document.getElementById('inv-perm-idea_board')?.checked,
+        chat: !!document.getElementById('inv-perm-chat')?.checked,
+        schedule: !!document.getElementById('inv-perm-schedule')?.checked,
+        appointments: !!document.getElementById('inv-perm-appointments')?.checked,
+        todos: !!document.getElementById('inv-perm-todos')?.checked,
+        admins: !!document.getElementById('inv-perm-admins')?.checked,
+        testimonials: !!document.getElementById('inv-perm-testimonials')?.checked,
+        join: !!document.getElementById('inv-perm-join')?.checked,
+        push: !!document.getElementById('inv-perm-push')?.checked,
+      });
+      const invitedPerms = invitePermsGrid ? invGather() : null;
+      await callFunction('invite-admin', { method: 'POST', body: { email, position: position || null, admin_level, redirectTo, perms: invitedPerms || undefined } });
       if (newAdminEmail) newAdminEmail.value = '';
       const posEl = document.getElementById('newAdminPosition'); if (posEl) posEl.value = '';
       await fetchAdmins();
+      // If we have selected perms, ensure they are applied to the invited user (by email lookup)
+      try {
+        if (invitedPerms && Array.isArray(adminsList)) {
+          const invited = adminsList.find(a => (a?.email || '').toLowerCase() === email.toLowerCase());
+          const uid = invited?.user_id || invited?.userId || null;
+          if (uid) {
+            await callFunction('set-admin-perms', { method: 'POST', body: { user_id: uid, perms: invitedPerms } });
+          }
+        }
+      } catch {}
       if (adminsStatus) { adminsStatus.className = 'alert success'; adminsStatus.textContent = `تم إرسال الدعوة وتعيين المستوى حسب المسمى. صفحة الإكمال: ${redirectTo}`; }
     } catch (err) {
       if (adminsStatus) { adminsStatus.className = 'alert error'; adminsStatus.textContent = 'فشل إرسال الدعوة: ' + (err?.message || 'غير معروف'); }

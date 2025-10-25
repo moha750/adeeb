@@ -873,6 +873,34 @@
                   <option>مُشرف الأرشيف</option>
                 </select>
               </label>
+              <div class="field-group" style="grid-column:1/-1">
+                <details id="invitePermsWrap">
+                  <summary class="field-group__title"><i class="fa-solid fa-lock"></i> الصلاحيات عند الدعوة (اختياري)</summary>
+                  <div id="invitePermsGrid" class="perm-grid">
+                  <label class="perm"><input type="checkbox" id="inv-perm-works" /><span class="name">إدارة الأعمال</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-sponsors" /><span class="name">إدارة الرعاة</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-achievements" /><span class="name">إدارة الإنجازات</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-board" /><span class="name">المجلس الإداري</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-members" /><span class="name">أعضاء النادي</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-membership_apps" /><span class="name">طلبات العضوية</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-faq" /><span class="name">الأسئلة الشائعة</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-blog" /><span class="name">مرافئ (المدونة)</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-idea_board" /><span class="name">سبورة أدِيب</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-chat" /><span class="name">المحادثات</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-schedule" /><span class="name">جدول أدِيب</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-appointments" /><span class="name">حجز المواعيد</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-todos" /><span class="name">المهام</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-admins" /><span class="name">إدارة الأعضاء الإداريين</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-testimonials" /><span class="name">آراء الأعضاء</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-join" /><span class="name">زر "انضم إلينا"</span><span class="switch" aria-hidden="true"></span></label>
+                  <label class="perm"><input type="checkbox" id="inv-perm-push" /><span class="name">إرسال الإشعارات</span><span class="switch" aria-hidden="true"></span></label>
+                  </div>
+                  <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+                    <button type="button" class="btn" id="invPermsSelectAll">تحديد الكل</button>
+                    <button type="button" class="btn" id="invPermsClearAll">مسح الكل</button>
+                  </div>
+                </details>
+              </div>
               <button class="btn btn-primary" type="submit"><i class="fa-solid fa-paper-plane"></i> إرسال دعوة كإداري</button>
             </form>
             <div id="adminsStatus" class="muted" style="margin-top:10px"></div>

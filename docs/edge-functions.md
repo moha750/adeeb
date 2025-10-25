@@ -700,7 +700,10 @@ const ALLOWED = [
   'chat',
   'todos',
   'testimonials',
-  'admins'
+  'admins',
+  'membership-apps',
+  'appointments',
+  'push'
 ];
 function normalizeAr(s) {
   if (!s) return '';
