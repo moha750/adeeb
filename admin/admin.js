@@ -3876,7 +3876,7 @@
           // Switch to chat tab
           const link = document.querySelector('.admin-menu__item[href="#section-chat"]');
           if (link) {
-            link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+            link.dispatchEvent(new Event('click', { bubbles: true }));
           } else {
             // Fallback: directly show the section
             document.querySelectorAll('.admin-section').forEach(sec => sec.hidden = true);
@@ -4169,41 +4169,6 @@
   window.addEventListener('resize', () => {
     if (!isMobile()) closeSidebar();
   });
-
-  // Programmatic section opener (mirrors click handler)
-  async function openSectionById(id) {
-    if (!id) return;
-    if (id === '#section-home' && !hasAnySiteCardPerm()) { alert('لا تملك صلاحية الوصول لهذا التبويب'); return; }
-    if (!hasPermBySectionId(id)) { alert('لا تملك صلاحية الوصول لهذا التبويب'); return; }
-
-    // set active
-    $$('.admin-menu__item').forEach((l) => l.classList.remove('active'));
-    const link = document.querySelector(`.admin-menu__item[href="${id}"]`);
-    if (link) link.classList.add('active');
-
-    // show/hide sections
-    $$('.admin-section').forEach((sec) => (sec.hidden = true));
-    const target = $(id);
-    if (target) target.hidden = false;
-
-    if (id === '#section-admins') { try { fetchAdmins?.(); } catch {} }
-    if (id === '#section-profile') {
-      try { adminLoadProfileIntoForm?.(); } catch {}
-      try { updateInstallButtonVisibility?.(); } catch {}
-      try { checkPushPermission?.(); } catch {}
-    }
-    if (id === '#section-schedule') { try { renderSchedule?.(); } catch {} try { loadScheduleForCurrentGrid?.(); } catch {} }
-    if (id === '#section-appointments') { try { renderAppointments?.(); } catch {} }
-    if (id === '#section-stats') { try { await fetchVisitStats?.(); } catch {} try { renderStats?.(); } catch {} }
-    if (id === '#section-chat') { try { initChatSection?.(); } catch {} }
-    if (id === '#section-todos') { try { renderTodos?.(); } catch {} }
-    if (id === '#section-idea-board') { try { loadIdeaBoardAdmin?.(); } catch {} try { loadIdeaTopicsAdmin?.(); } catch {} }
-    if (id === '#section-members') { try { renderMembers?.(); } catch {} }
-    if (id === '#section-membership-apps') { try { await loadMembershipApps?.(); } catch {} }
-    if (id === '#section-testimonials') { try { renderTestimonials?.(); } catch {} }
-
-    if (isMobile()) closeSidebar();
-  }
 
   // Menu navigation
   $$('.admin-menu__item').forEach((link) => {
@@ -7303,17 +7268,6 @@
     renderTodos();
     try { await fetchVisitStats(); } catch {}
     renderStats();
-    // Ensure the active tab initialization path runs at least once (e.g., stats tab)
-    try {
-      const link = location.hash
-        ? document.querySelector(`.admin-menu__item[href="${location.hash}"]`)
-        : document.querySelector('.admin-menu__item.active');
-      if (link) {
-        const href = link.getAttribute('href');
-        if (href) { await openSectionById(href); }
-        else link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-      }
-    } catch {}
     // If profile tab is active/visible on load, initialize it
     try {
       const prof = document.getElementById('section-profile');
@@ -7322,62 +7276,6 @@
         try { updateInstallButtonVisibility?.(); } catch {}
         try { checkPushPermission?.(); } catch {}
       }
-    } catch {}
-
-    // If statistics tab is visible by default, ensure stats are fetched and rendered
-    try {
-      const statsSection = document.getElementById('section-stats');
-      if (statsSection && !statsSection.hidden) {
-        const hasCards = !!(statsGrid && statsGrid.children && statsGrid.children.length);
-        if (!hasCards) {
-          try { await fetchVisitStats(); } catch {}
-          try { renderStats(); } catch {}
-          // Fallback: trigger the normal navigation handler to run any other init tied to the tab
-          try {
-            const statsLink = document.querySelector('.admin-menu__item[href="#section-stats"]');
-            if (statsLink) statsLink.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-          } catch {}
-        }
-      }
-    } catch {}
-
-    // After full page load, trigger navigation to hash or active tab to run tab init paths
-    try {
-      window.addEventListener('load', () => {
-        try {
-          const hashLink = location.hash ? document.querySelector(`.admin-menu__item[href="${location.hash}"]`) : null;
-          const activeLink = document.querySelector('.admin-menu__item.active');
-          const link = hashLink || activeLink;
-          if (!link) return;
-          const href = link.getAttribute('href') || '';
-          if (href === '#section-stats') {
-            const grid = document.getElementById('statsGrid');
-            if (grid && grid.children && grid.children.length > 0) return;
-          }
-          link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-        } catch {}
-      });
-    } catch {}
-
-    // Also try after the gating script reveals the UI (body display != none)
-    try {
-      let fired = false;
-      const tryInit = (n = 0) => {
-        if (fired) return;
-        try {
-          const visible = getComputedStyle(document.body).display !== 'none';
-          const hashLink = location.hash ? document.querySelector(`.admin-menu__item[href="${location.hash}"]`) : null;
-          const activeLink = document.querySelector('.admin-menu__item.active');
-          const link = hashLink || activeLink;
-          if (visible && link) {
-            fired = true;
-            link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-            return;
-          }
-        } catch {}
-        if (n < 50) setTimeout(() => tryInit(n + 1), 100);
-      };
-      tryInit();
     } catch {}
   })();
 })();

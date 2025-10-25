@@ -54,7 +54,7 @@
           </button>
         </div>
         <nav class="admin-menu">
-          <a href="#section-stats" class="admin-menu__item active"><i class="fa-solid fa-chart-column"></i> الإحصائيات</a>
+          <a href="#section-stats" class="admin-menu__item"><i class="fa-solid fa-chart-column"></i> الإحصائيات</a>
           <a href="#section-home" class="admin-menu__item"><i class="fa-solid fa-sitemap"></i> إدارة الموقع</a>
           <a href="#section-blog" class="admin-menu__item"><i class="fa-solid fa-anchor"></i> إدارة مرافئ</a>
           <a href="#section-members" class="admin-menu__item"><i class="fa-solid fa-users-rectangle"></i> أعضاء النادي</a>
@@ -65,7 +65,7 @@
           <a href="#section-chat" class="admin-menu__item"><i class="fa-solid fa-comments"></i> المحادثات</a>
           <a href="#section-todos" class="admin-menu__item"><i class="fa-solid fa-list-check"></i> المهام</a>
           <a href="#section-push" class="admin-menu__item"><i class="fa-solid fa-bell"></i> إرسال الإشعارات</a>
-          <a href="#section-profile" class="admin-menu__item"><i class="fa-solid fa-id-card"></i> ملفي</a>
+          <a href="#section-profile" class="admin-menu__item active"><i class="fa-solid fa-id-card"></i> ملفي</a>
           <a href="#section-admins" class="admin-menu__item"><i class="fa-solid fa-user-shield"></i> إدارة الأعضاء الإداريين</a>
           <div class="admin-menu__footer">
             <button type="button" class="btn btn-outline" data-logout><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
@@ -75,7 +75,7 @@
       </aside>
 
       <main class="admin-main">
-        <section id="section-stats" class="admin-section">
+        <section id="section-stats" class="admin-section" hidden>
           <div class="section-head">
             <h2><i class="fa-solid fa-chart-column"></i> الإحصائيات</h2>
           </div>
@@ -746,7 +746,7 @@
         </section>
         
         <!-- ملفي -->
-        <section id="section-profile" class="admin-section" hidden>
+        <section id="section-profile" class="admin-section">
           <div class="section-head">
             <h2><i class="fa-solid fa-id-card"></i> ملفي</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -1530,16 +1530,8 @@
             await navigator.serviceWorker.register('./sw.js', { scope: './' });
           }
         } catch (e) { console.warn('SW registration failed', e); }
-        try {
-          window.addEventListener('load', () => {
-            try {
-              const link = document.querySelector('.admin-menu__item[href="#section-stats"]') || document.querySelector('.admin-menu__item.active');
-              if (link) link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-            } catch {}
-          });
-        } catch {}
       })();
     </script>
-    <script src="admin.js?v=20251025"></script>
+    <script src="admin.js?v=20251011"></script>
   </body>
 </html>
