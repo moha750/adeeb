@@ -85,6 +85,11 @@
   const membershipFilterPctBand = document.getElementById('membershipFilterPctBand');
   const membershipFilterCommittee = document.getElementById('membershipFilterCommittee');
   const membershipFiltersClear = document.getElementById('membershipFiltersClear');
+  const membershipExportBtn = document.getElementById('membershipExportBtn');
+  const membershipExportDialog = document.getElementById('membershipExportDialog');
+  const membershipExportForm = document.getElementById('membershipExportForm');
+  const membershipExportCommittee = document.getElementById('membershipExportCommittee');
+  const membershipExportFields = document.getElementById('membershipExportFields');
   // Idea Board (admin) elements
   const ideaBoardTableBody = document.getElementById('ideaBoardTableBody');
   const ideaBoardEmpty = document.getElementById('ideaBoardEmpty');
@@ -146,6 +151,14 @@
   const chatEmptyEl = document.getElementById('chatEmpty');
   const chatScrollBottomBtn = document.getElementById('chatScrollBottom');
 
+  // Appointments elements
+  const appointmentsList = document.getElementById('appointmentsList');
+  const addAppointmentBtn = document.getElementById('addAppointmentBtn');
+  const appointmentDialog = document.getElementById('appointmentDialog');
+  const appointmentForm = document.getElementById('appointmentForm');
+  const appointmentSlots = document.getElementById('appointmentSlots');
+  const addSlotBtn = document.getElementById('addSlotBtn');
+
   const KEYS = {
     works: 'adeeb_works',
     sponsors: 'adeeb_sponsors',
@@ -160,6 +173,8 @@
     topics: 'adeeb_idea_topics',
     testimonials: 'adeeb_testimonials',
     membership_apps: 'adeeb_membership_applications',
+    appointments: 'adeeb_appointments',
+    appointment_bookings: 'adeeb_appointment_bookings',
     settings: 'adeeb_settings',
   };
 
@@ -661,6 +676,113 @@
     // Restore selection if still present
     if (opts.includes(prev)) membershipFilterCommittee.value = prev; else membershipFilterCommittee.value = 'all';
   }
+  function refreshMembershipExportCommitteeOptions() {
+    if (!membershipExportCommittee) return;
+    const list = Array.isArray(membershipApps) ? membershipApps : [];
+    const set = new Set();
+    list.forEach((r) => {
+      const raw = (r?.preferred_committee || r?.committee || '').toString().trim();
+      if (!raw) return;
+      set.add(raw.replace(/\s+/g, ' '));
+    });
+    const opts = ['all', ...Array.from(set).sort((a, b) => { try { return a.localeCompare(b, 'ar'); } catch { return String(a).localeCompare(String(b)); } })];
+    const prev = membershipExportCommittee.value || 'all';
+    membershipExportCommittee.innerHTML = '';
+    opts.forEach((val) => {
+      const op = document.createElement('option');
+      op.value = val;
+      op.textContent = (val === 'all') ? 'كل اللجان' : val;
+      membershipExportCommittee.appendChild(op);
+    });
+    if (opts.includes(prev)) membershipExportCommittee.value = prev; else membershipExportCommittee.value = 'all';
+  }
+  function buildMembershipExportFieldsUI() {
+    if (!membershipExportFields) return;
+    const defs = [
+      { key: 'id', label: 'المعرف' },
+      { key: 'created_at', label: 'التاريخ' },
+      { key: 'full_name', label: 'الاسم' },
+      { key: 'phone', label: 'الجوال' },
+      { key: 'email', label: 'البريد الإلكتروني' },
+      { key: 'degree', label: 'الدرجة العلمية' },
+      { key: 'college', label: 'الكلية' },
+      { key: 'major', label: 'التخصص' },
+      { key: 'skills', label: 'المهارات' },
+      { key: 'preferred_committee', label: 'اللجنة' },
+      { key: 'portfolio_url', label: 'أعمال سابقة' },
+      { key: 'status', label: 'الحالة' },
+      { key: 'social_twitter', label: 'تويتر' },
+      { key: 'social_instagram', label: 'إنستقرام' },
+      { key: 'social_linkedin', label: 'تيك توك' },
+      { key: 'about', label: 'نبذة' },
+    ];
+    membershipExportFields.innerHTML = '';
+    defs.forEach((f) => {
+      const id = `export-field-${f.key}`;
+      const wrap = document.createElement('label');
+      wrap.className = 'checkbox';
+      wrap.innerHTML = `<input type="checkbox" id="${id}" name="fields" value="${f.key}" checked> <span>${f.label}</span>`;
+      membershipExportFields.appendChild(wrap);
+    });
+  }
+  function membershipCsvEscape(val) {
+    try {
+      const s = (val == null ? '' : String(val));
+      if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    } catch { return ''; }
+  }
+  function performMembershipExport() {
+    const list = Array.isArray(membershipApps) ? membershipApps : [];
+    const committeeSel = membershipExportCommittee ? membershipExportCommittee.value : 'all';
+    const selected = Array.from(membershipExportFields?.querySelectorAll('input[name="fields"]:checked') || []).map((i) => i.value);
+    if (!selected.length) return;
+    const fieldsMap = {
+      id: 'المعرف',
+      created_at: 'التاريخ',
+      full_name: 'الاسم',
+      phone: 'الجوال',
+      email: 'البريد الإلكتروني',
+      degree: 'الدرجة العلمية',
+      college: 'الكلية',
+      major: 'التخصص',
+      skills: 'المهارات',
+      preferred_committee: 'اللجنة',
+      portfolio_url: 'أعمال سابقة',
+      status: 'الحالة',
+      social_twitter: 'تويتر',
+      social_instagram: 'إنستقرام',
+      social_linkedin: 'تيك توك',
+      about: 'نبذة',
+    };
+    const rows = list.filter((r) => {
+      if (!committeeSel || committeeSel === 'all') return true;
+      const c = (r?.preferred_committee || r?.committee || '').toString().trim().replace(/\s+/g, ' ');
+      return c === committeeSel;
+    }).map((r) => {
+      const obj = {};
+      selected.forEach((k) => {
+        if (k === 'preferred_committee') obj[k] = (r.preferred_committee || r.committee || '') || '';
+        else obj[k] = r[k] != null ? r[k] : '';
+      });
+      return obj;
+    });
+    const header = selected.map((k) => membershipCsvEscape(fieldsMap[k] || k)).join(',');
+    const body = rows.map((row) => selected.map((k) => membershipCsvEscape(row[k])).join(',')).join('\r\n');
+    const csv = '\uFEFF' + header + '\r\n' + body;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const ts = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const name = `membership_apps_${ts.getFullYear()}-${pad(ts.getMonth()+1)}-${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}.csv`;
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
   
   function renderMembershipApps(rows) {
     const container = membershipAppsGroups || document.getElementById('membershipAppsGroups');
@@ -875,6 +997,17 @@
     if (membershipFilterPctBand) membershipFilterPctBand.value = 'all';
     if (membershipFilterCommittee) membershipFilterCommittee.value = 'all';
     applyMembershipFilters();
+  });
+  membershipExportBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    try { refreshMembershipExportCommitteeOptions(); } catch {}
+    try { buildMembershipExportFieldsUI(); } catch {}
+    try { openDialog?.(membershipExportDialog); } catch { membershipExportDialog?.showModal?.(); }
+  });
+  membershipExportForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    try { performMembershipExport(); } catch {}
+    try { membershipExportDialog?.close?.(); } catch {}
   });
   membershipAppsGroups?.addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-act="view"]');
@@ -2671,6 +2804,10 @@
     const [y, m, d] = key.split('-').map(Number);
     try { return new Date(y, m - 1, d).toLocaleDateString('ar', { day: 'numeric', month: 'long' }); } catch { return key; }
   }
+  // Simple ID generator
+  function genId() {
+    try { return crypto.randomUUID(); } catch { return 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
+  }
 
   function renderIntlDaysTable() {
     if (!intlDaysTableBody) return;
@@ -3265,6 +3402,8 @@
   let blogPosts = load(KEYS.blog);
   let testimonials = load(KEYS.testimonials);
   let todos = load(KEYS.todos);
+  let appointments = load(KEYS.appointments);
+  let appointmentBookings = load(KEYS.appointment_bookings);
   let visitStats = { total: 0, new: 0, returning: 0 };
 
   // Auth UI controls
@@ -3452,6 +3591,9 @@
     '#section-faq': 'faq',
     '#section-blog': 'blog',
     '#section-schedule': 'schedule',
+    '#section-appointments': 'appointments',
+    '#section-join': 'join',
+    '#section-push': 'push',
     '#section-idea-board': 'idea_board',
     '#section-chat': 'chat',
     '#section-todos': 'todos',
@@ -3459,7 +3601,7 @@
     '#section-testimonials': 'testimonials',
   };
   function defaultAdminPerms() {
-    return { works: true, sponsors: true, achievements: true, board: true, members: true, membership_apps: true, faq: true, blog: true, schedule: true, idea_board: true, chat: true, todos: true, admins: true, testimonials: true };
+    return { works: true, sponsors: true, achievements: true, board: true, members: true, membership_apps: true, faq: true, blog: true, schedule: true, appointments: true, join: true, push: true, idea_board: true, chat: true, todos: true, admins: true, testimonials: true };
   }
   function normalizePermsShape(perms) {
     const base = defaultAdminPerms();
@@ -3667,6 +3809,9 @@
           <label><input type="checkbox" id="perm-idea_board" /> سبورة أدِيب</label>
           <label><input type="checkbox" id="perm-chat" /> المحادثات</label>
           <label><input type="checkbox" id="perm-schedule" /> جدول أدِيب</label>
+          <label><input type="checkbox" id="perm-appointments" /> حجز المواعيد</label>
+          <label><input type="checkbox" id="perm-join" /> زر "انضم إلينا"</label>
+          <label><input type="checkbox" id="perm-push" /> إرسال الإشعارات</label>
           <label><input type="checkbox" id="perm-todos" /> المهام</label>
           <label><input type="checkbox" id="perm-admins" /> إدارة الأعضاء الإداريين</label>
           <label><input type="checkbox" id="perm-testimonials" /> آراء الأعضاء</label>
@@ -3733,6 +3878,9 @@
       setPerm('perm-idea_board', perms.idea_board);
       setPerm('perm-chat', perms.chat);
       setPerm('perm-schedule', perms.schedule);
+      setPerm('perm-appointments', perms.appointments);
+      setPerm('perm-join', perms.join);
+      setPerm('perm-push', perms.push);
       setPerm('perm-todos', perms.todos);
       setPerm('perm-admins', perms.admins);
       setPerm('perm-testimonials', perms.testimonials);
@@ -3759,6 +3907,9 @@
           idea_board: !!document.getElementById('perm-idea_board')?.checked,
           chat: !!document.getElementById('perm-chat')?.checked,
           schedule: !!document.getElementById('perm-schedule')?.checked,
+          appointments: !!document.getElementById('perm-appointments')?.checked,
+          join: !!document.getElementById('perm-join')?.checked,
+          push: !!document.getElementById('perm-push')?.checked,
           todos: !!document.getElementById('perm-todos')?.checked,
           admins: !!document.getElementById('perm-admins')?.checked,
           testimonials: !!document.getElementById('perm-testimonials')?.checked,
@@ -4030,10 +4181,31 @@
         try { loadScheduleForCurrentGrid?.(); } catch {}
       }
 
+      // If appointments tab is opened, render appointments
+      if (id === '#section-appointments') {
+        try { renderAppointments?.(); } catch {}
+      }
+
       // If stats tab is opened, render statistics
       if (id === '#section-stats') {
         try { await fetchVisitStats?.(); } catch {}
         try { renderStats?.(); } catch {}
+      }
+
+      // If join tab is opened, refresh its UI
+      if (id === '#section-join') {
+        try { refreshJoinFormUI?.(); } catch {}
+        try { refreshJoinSummaryUI?.(); } catch {}
+        try { updateJoinCountdownUI?.(); } catch {}
+      }
+
+      // If push tab is opened, ensure UI reflects current selections
+      if (id === '#section-push') {
+        try {
+          const toAll = document.getElementById('pushToAll');
+          const userSel = document.getElementById('pushUserSelect');
+          if (toAll && userSel) userSel.style.display = toAll.checked ? 'none' : '';
+        } catch {}
       }
 
       // If chat tab is opened, init chat
@@ -4085,6 +4257,24 @@
     if (id === '#section-schedule') {
       try { renderSchedule?.(); } catch {}
       try { loadScheduleForCurrentGrid?.(); } catch {}
+    }
+    // If navigating via dashboard card to appointments, render it
+    if (id === '#section-appointments') {
+      try { renderAppointments?.(); } catch {}
+    }
+    // If navigating via dashboard card to join, refresh its UI
+    if (id === '#section-join') {
+      try { refreshJoinFormUI?.(); } catch {}
+      try { refreshJoinSummaryUI?.(); } catch {}
+      try { updateJoinCountdownUI?.(); } catch {}
+    }
+    // If navigating via dashboard card to push, ensure UI reflects current selections
+    if (id === '#section-push') {
+      try {
+        const toAll = document.getElementById('pushToAll');
+        const userSel = document.getElementById('pushUserSelect');
+        if (toAll && userSel) userSel.style.display = toAll.checked ? 'none' : '';
+      } catch {}
     }
     // If navigating via dashboard card to chat, init it
     if (id === '#section-chat') {
@@ -5268,6 +5458,148 @@
     save(KEYS.todos, todos);
     renderTodos();
     closeDialog?.(todoDialog);
+  });
+
+  // ===== Appointments (حجز المواعيد) =====
+  let appointmentEditingIndex = null;
+
+  function slotRowTemplate(slot, idx) {
+    const date = slot?.date || '';
+    const day = slot?.day || '';
+    const time = slot?.time || '';
+    return `
+      <div class="slot-row" data-idx="${idx}" style="display:grid; gap:8px; grid-template-columns: 1fr 1fr 1fr auto; align-items:end">
+        <label>التاريخ<input type="date" name="slot_date_${idx}" value="${date}" /></label>
+        <label>اليوم<input type="text" name="slot_day_${idx}" value="${day}" placeholder="مثال: الأحد" /></label>
+        <label>الوقت<input type="time" name="slot_time_${idx}" value="${time}" /></label>
+        <button type="button" class="btn btn-outline" data-act="del-slot" data-idx="${idx}"><i class="fa-solid fa-trash"></i></button>
+      </div>`;
+  }
+
+  function rebuildSlotsEditor(slots) {
+    if (!appointmentSlots) return;
+    const list = Array.isArray(slots) ? slots : [];
+    appointmentSlots.innerHTML = list.map((s, i) => slotRowTemplate(s, i)).join('');
+  }
+
+  function renderAppointments() {
+    if (!appointmentsList) return;
+    appointmentsList.innerHTML = '';
+    const sorted = [...appointments].sort((a,b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000));
+    sorted.forEach((item, sortedIndex) => {
+      const idx = appointments.indexOf(item);
+      const displayOrder = item.order ? Number(item.order) : (sortedIndex + 1);
+      const title = item.title || '';
+      const slots = Array.isArray(item.slots) ? item.slots : [];
+      const slotsLabel = slots.length ? `${slots.length} موعد` : 'بدون أوقات';
+      const node = el(`
+        <div class="card draggable-card" data-idx="${idx}" draggable="true">
+          <span class="order-chip">#${displayOrder}</span>
+          <div class="card__body">
+            <div class="card__title">${title}</div>
+            <div class="muted">${slotsLabel}</div>
+            <div class="card__actions" style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+              <a class="btn btn-outline" data-act="open" data-idx="${idx}" title="فتح صفحة الحجز" href="../appointments/appointments.html?id=${item.id}" target="_blank"><i class="fa-solid fa-link"></i> صفحة الحجز</a>
+              <button class="btn btn-outline" data-act="up" data-idx="${idx}" title="تحريك لأعلى"><i class="fa-solid fa-arrow-up"></i></button>
+              <button class="btn btn-outline" data-act="down" data-idx="${idx}" title="تحريك لأسفل"><i class="fa-solid fa-arrow-down"></i></button>
+              <button class="btn btn-outline drag-handle" title="سحب لإعادة الترتيب"><i class="fa-solid fa-grip-vertical"></i></button>
+              <button class="btn btn-outline" data-act="edit" data-idx="${idx}"><i class="fa-solid fa-pen"></i> تعديل</button>
+              <button class="btn btn-outline" data-act="del" data-idx="${idx}"><i class="fa-solid fa-trash"></i> حذف</button>
+            </div>
+          </div>
+        </div>`);
+      appointmentsList.appendChild(node);
+    });
+    setupListDnD(appointmentsList, appointments, KEYS.appointments, null, renderAppointments);
+  }
+
+  addAppointmentBtn?.addEventListener('click', () => {
+    appointmentEditingIndex = null;
+    try { appointmentForm?.reset(); } catch {}
+    rebuildSlotsEditor([]);
+    openDialog?.(appointmentDialog);
+  });
+
+  appointmentSlots?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-act="del-slot"]');
+    if (!btn) return;
+    const idx = Number(btn.dataset.idx);
+    const rows = Array.from(appointmentSlots.querySelectorAll('.slot-row'));
+    if (idx >= 0 && idx < rows.length) {
+      rows[idx].remove();
+      // reindex
+      const cur = Array.from(appointmentSlots.querySelectorAll('.slot-row'));
+      cur.forEach((row, i) => { row.dataset.idx = String(i); });
+    }
+  });
+
+  addSlotBtn?.addEventListener('click', () => {
+    const count = appointmentSlots ? appointmentSlots.querySelectorAll('.slot-row').length : 0;
+    const div = document.createElement('div');
+    div.innerHTML = slotRowTemplate({ date: '', day: '', time: '' }, count);
+    const row = div.firstElementChild;
+    if (appointmentSlots && row) appointmentSlots.appendChild(row);
+  });
+
+  appointmentsList?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const idx = Number(btn.dataset.idx);
+    const act = btn.dataset.act;
+    if (!Number.isInteger(idx) || idx < 0 || idx >= appointments.length) return;
+    if (act === 'up' || act === 'down') {
+      const newIndex = act === 'up' ? Math.max(0, idx - 1) : Math.min(appointments.length - 1, idx + 1);
+      if (newIndex === idx) return;
+      const [moved] = appointments.splice(idx, 1);
+      appointments.splice(newIndex, 0, moved);
+      normalizeAndPersistOrder(appointments, KEYS.appointments, null).then(() => {
+        renderAppointments();
+      });
+      return;
+    }
+    if (act === 'edit') {
+      appointmentEditingIndex = idx;
+      const cur = appointments[idx];
+      if (appointmentForm) {
+        appointmentForm.title.value = cur.title || '';
+        rebuildSlotsEditor(Array.isArray(cur.slots) ? cur.slots : []);
+      }
+      openDialog?.(appointmentDialog);
+      return;
+    }
+    if (act === 'del') {
+      if (!confirm('تأكيد الحذف؟')) return;
+      appointments.splice(idx, 1);
+      save(KEYS.appointments, appointments);
+      renderAppointments();
+      return;
+    }
+  });
+
+  appointmentForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!appointmentForm) return;
+    const title = (appointmentForm.title.value || '').trim();
+    if (!title) { alert('الرجاء إدخال العنوان'); return; }
+    // Collect slots from editor
+    const rows = Array.from(appointmentSlots?.querySelectorAll('.slot-row') || []);
+    const slots = rows.map((row, i) => {
+      const date = row.querySelector(`input[name="slot_date_${i}"]`)?.value?.trim() || '';
+      const day = row.querySelector(`input[name="slot_day_${i}"]`)?.value?.trim() || '';
+      const time = row.querySelector(`input[name="slot_time_${i}"]`)?.value?.trim() || '';
+      return { date, day, time };
+    }).filter(s => s.date && s.time);
+    const payload = {
+      id: appointmentEditingIndex === null ? genId() : (appointments[appointmentEditingIndex]?.id || genId()),
+      title,
+      slots,
+      order: (appointmentEditingIndex !== null) ? (appointments[appointmentEditingIndex]?.order ?? null) : null,
+      created_at: (appointmentEditingIndex !== null) ? (appointments[appointmentEditingIndex]?.created_at || null) : new Date().toISOString(),
+    };
+    if (appointmentEditingIndex === null) appointments.unshift(payload); else appointments[appointmentEditingIndex] = payload;
+    save(KEYS.appointments, appointments);
+    renderAppointments();
+    closeDialog?.(appointmentDialog);
   });
 
   // Dialog helpers

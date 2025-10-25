@@ -60,6 +60,7 @@
           <a href="#section-members" class="admin-menu__item"><i class="fa-solid fa-users-rectangle"></i> أعضاء النادي</a>
           <a href="#section-membership-apps" class="admin-menu__item"><i class="fa-solid fa-id-badge"></i> طلبات العضوية</a>
           <a href="#section-schedule" class="admin-menu__item"><i class="fa-solid fa-calendar-days"></i> جدول أدِيب</a>
+          <a href="#section-appointments" class="admin-menu__item"><i class="fa-solid fa-calendar-check"></i> حجز المواعيد</a>
           <a href="#section-idea-board" class="admin-menu__item"><i class="fa-solid fa-lightbulb"></i> سبورة أدِيب</a>
           <a href="#section-chat" class="admin-menu__item"><i class="fa-solid fa-comments"></i> المحادثات</a>
           <a href="#section-todos" class="admin-menu__item"><i class="fa-solid fa-list-check"></i> المهام</a>
@@ -339,6 +340,7 @@
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               
               <button id="membershipRefreshBtn" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+              <button id="membershipExportBtn" class="btn"><i class="fa-solid fa-file-export"></i> تصدير</button>
             </div>
           </div>
           <div class="cards-grid" id="membershipStatsGrid" aria-live="polite" style="margin-bottom:16px"></div>
@@ -435,6 +437,32 @@
               </div>
               <menu class="dialog-actions">
                 <button type="button" class="btn" onclick="this.closest('dialog').close()">إغلاق</button>
+              </menu>
+            </form>
+          </dialog>
+          <dialog id="membershipExportDialog" class="admin-dialog">
+            <form method="dialog" class="dialog-form" id="membershipExportForm">
+              <div class="dialog-header">
+                <h3 class="dialog-title"><i class="fa-solid fa-file-export"></i> تصدير طلبات العضوية</h3>
+                <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="dialog-body">
+                <div class="details-row cols-1">
+                  <label class="detail">اللجنة
+                    <select id="membershipExportCommittee">
+                      <option value="all">كل اللجان</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="details-row cols-1">
+                  <label class="detail">الحقول المراد تصديرها</label>
+                  <div id="membershipExportFields" class="checkbox-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:8px"></div>
+                </div>
+                <div class="muted" id="membershipExportHint" style="margin-top:8px">سيتم تنزيل ملف CSV يمكن فتحه مباشرةً في Google Sheets.</div>
+              </div>
+              <menu class="dialog-actions">
+                <button type="submit" class="btn btn-primary" id="membershipExportSubmit"><i class="fa-solid fa-download"></i> تنزيل CSV</button>
+                <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إلغاء</button>
               </menu>
             </form>
           </dialog>
@@ -661,6 +689,16 @@
             </div>
           </div>
           <div id="todosList" class="cards-grid" aria-live="polite"></div>
+        </section>
+        
+        <section id="section-appointments" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-calendar-check"></i> حجز المواعيد</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button id="addAppointmentBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة موعد</button>
+            </div>
+          </div>
+          <div id="appointmentsList" class="cards-grid" aria-live="polite"></div>
         </section>
         
         <!-- إرسال الإشعارات -->
@@ -1276,6 +1314,28 @@
             </label>
             <label>ملاحظات<textarea name="notes" rows="4" placeholder="تفاصيل إضافية"></textarea></label>
           </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="appointmentDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="appointmentForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title"><i class="fa-solid fa-calendar-check"></i> إضافة/تعديل موعد</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid" style="grid-template-columns: 1fr">
+            <label>العنوان<input name="title" required placeholder="عنوان الموعد" /></label>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+            <button type="button" class="btn btn-outline" id="addSlotBtn"><i class="fa-solid fa-plus"></i> إضافة وقت</button>
+          </div>
+          <div id="appointmentSlots" class="form-grid" style="margin-top:8px"></div>
         </div>
         <menu class="dialog-actions">
           <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>

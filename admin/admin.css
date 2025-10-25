@@ -438,7 +438,8 @@ body.no-scroll { overflow: hidden; }
 #faqList.cards-grid,
 #achievementsList.cards-grid,
 #blogList.cards-grid,
-#todosList.cards-grid {
+#todosList.cards-grid,
+#appointmentsList.cards-grid {
   grid-template-columns: 1fr; /* single column */
 }
 #worksList .card,
@@ -447,7 +448,8 @@ body.no-scroll { overflow: hidden; }
 #faqList .card,
 #achievementsList .card,
 #blogList .card,
-#todosList .card {
+#todosList .card,
+#appointmentsList .card {
   flex-direction: row; /* horizontal */
 }
 #worksList .card__media,
@@ -456,7 +458,8 @@ body.no-scroll { overflow: hidden; }
 #faqList .card__media,
 #achievementsList .card__media,
 #blogList .card__media,
-#todosList .card__media {
+#todosList .card__media,
+#appointmentsList .card__media {
   width: 260px;
   height: 170px;
 }
@@ -466,7 +469,8 @@ body.no-scroll { overflow: hidden; }
 #faqList .card__body,
 #achievementsList .card__body,
 #blogList .card__body,
-#todosList .card__body {
+#todosList .card__body,
+#appointmentsList .card__body {
   direction: rtl; /* keep Arabic text direction */
   display: grid;
   gap: 10px;
@@ -535,15 +539,21 @@ body.no-scroll { overflow: hidden; }
   #faqList .card,
   #achievementsList .card,
   #blogList .card,
-  #todosList .card { flex-direction: column; direction: rtl; }
+  #todosList .card,
+  #appointmentsList .card { flex-direction: column; direction: rtl; }
   #worksList .card__media,
   #sponsorsList .card__media,
   #boardList .card__media,
   #faqList .card__media,
   #achievementsList .card__media,
   #blogList .card__media,
-  #todosList .card__media { width: 100%; height: 150px; }
+  #todosList .card__media,
+  #appointmentsList .card__media { width: 100%; height: 150px; }
+
+  .slot-row { grid-template-columns: 1fr !important; }
 }
+
+.slot-row { display: grid; gap: 8px; grid-template-columns: 1fr 1fr 1fr auto; align-items: end; }
 
 .panel__body { padding: 14px; color: var(--muted); }
 .export-import { display: flex; gap: 10px; flex-wrap: wrap; }
