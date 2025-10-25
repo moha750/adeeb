@@ -1530,8 +1530,16 @@
             await navigator.serviceWorker.register('./sw.js', { scope: './' });
           }
         } catch (e) { console.warn('SW registration failed', e); }
+        try {
+          window.addEventListener('load', () => {
+            try {
+              const link = document.querySelector('.admin-menu__item[href="#section-stats"]') || document.querySelector('.admin-menu__item.active');
+              if (link) link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+            } catch {}
+          });
+        } catch {}
       })();
     </script>
-    <script src="admin.js?v=20251011"></script>
+    <script src="admin.js?v=20251025"></script>
   </body>
 </html>

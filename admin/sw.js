@@ -1,5 +1,5 @@
 /* Admin PWA Service Worker */
-const CACHE_VERSION = 'v3'; // Updated version to force refresh
+const CACHE_VERSION = 'v4'; // Bump version to force refresh and recache assets
 const STATIC_CACHE = `admin-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `admin-runtime-${CACHE_VERSION}`;
 
