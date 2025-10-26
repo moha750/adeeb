@@ -79,6 +79,15 @@
   const membershipAppDetailsLinkedin = document.getElementById('membershipAppDetailsLinkedin');
   const membershipAppStatusSelect = document.getElementById('membershipAppStatusSelect');
   const membershipAppDetailsAbout = document.getElementById('membershipAppDetailsAbout');
+  const membershipAppAdminNote = document.getElementById('membershipAppAdminNote');
+  const membershipAppAdminNoteSave = document.getElementById('membershipAppAdminNoteSave');
+  const membershipAppAdminNoteStatus = document.getElementById('membershipAppAdminNoteStatus');
+  const membershipAppAdminNoteAuthor = document.getElementById('membershipAppAdminNoteAuthor');
+  const membershipAppNotesList = document.getElementById('membershipAppNotesList');
+  const membershipAppNotesCount = document.getElementById('membershipAppNotesCount');
+  const membershipAppNoteInput = document.getElementById('membershipAppNoteInput');
+  const membershipAppNoteAdd = document.getElementById('membershipAppNoteAdd');
+  const membershipAppNotesStatus = document.getElementById('membershipAppNotesStatus');
   const membershipFilters = document.getElementById('membershipFilters');
   const membershipFilterName = document.getElementById('membershipFilterName');
   const membershipFilterStatus = document.getElementById('membershipFilterStatus');
@@ -189,6 +198,61 @@
       return (obj && typeof obj === 'object' && !Array.isArray(obj)) ? obj : {};
     } catch { return {}; }
   }
+
+  // Add shared note (visible to all admins)
+  membershipAppNoteAdd?.addEventListener('click', async () => {
+    const idx = membershipAppDetailsIndex;
+    if (!Number.isInteger(idx) || idx < 0 || idx >= (membershipApps?.length || 0)) return;
+    const r = membershipApps[idx] || {};
+    const appId = r.id;
+    const text = (membershipAppNoteInput?.value || '').trim();
+    if (!text) {
+      if (membershipAppNotesStatus) { membershipAppNotesStatus.style.display = ''; membershipAppNotesStatus.style.color = '#ef4444'; membershipAppNotesStatus.textContent = 'اكتب ملاحظة أولًا'; }
+      return;
+    }
+    if (membershipAppNotesStatus) { membershipAppNotesStatus.style.display = ''; membershipAppNotesStatus.style.color = '#64748b'; membershipAppNotesStatus.textContent = 'جاري الإضافة...'; }
+    let savedCloud = false;
+    let adminName = 'مستخدم';
+    let uid = null;
+    try {
+      if (sb) {
+        const { data: { user } } = await sb.auth.getUser();
+        uid = user?.id || null;
+        const md = user?.user_metadata || {};
+        adminName = md.display_name || user?.email || adminName;
+      }
+    } catch {}
+    if (sb && appId != null && uid) {
+      try {
+        const payload = { application_id: appId, admin_user_id: uid, admin_name: adminName, note: text };
+        let upErr = null;
+        try {
+          const { error } = await sb.from('membership_app_notes').upsert(payload, { onConflict: 'application_id,admin_user_id' });
+          upErr = error || null;
+        } catch (e1) { upErr = e1; }
+        if (upErr) throw upErr;
+        savedCloud = true;
+      } catch (e) {
+        const msg = e?.message || '';
+        if (!/(relation|table|membership_app_notes|does not exist|PGRST)/i.test(msg)) {
+          if (membershipAppNotesStatus) { membershipAppNotesStatus.style.display = ''; membershipAppNotesStatus.style.color = '#ef4444'; membershipAppNotesStatus.textContent = 'تعذر الحفظ على الخادم'; }
+          return;
+        }
+      }
+    }
+    if (!savedCloud) {
+      // Local fallback: one note per admin per app
+      const now = new Date().toISOString();
+      const arr = localNotesGetByApp(appId);
+      const key = String(uid || 'local');
+      const filtered = arr.filter(n => (n && String(n.admin_user_id || 'local')) !== key);
+      filtered.unshift({ application_id: appId, admin_user_id: uid || 'local', admin_name: adminName, note: text, created_at: now });
+      localNotesSetByApp(appId, filtered);
+    }
+    if (membershipAppNoteInput) membershipAppNoteInput.value = '';
+    try { await reloadMembershipAppNotes(appId); } catch {}
+    if (membershipAppNotesStatus) { membershipAppNotesStatus.style.display = ''; membershipAppNotesStatus.style.color = '#10b981'; membershipAppNotesStatus.textContent = savedCloud ? 'تمت الإضافة ✓' : 'تم الحفظ محليًا'; setTimeout(() => { try { membershipAppNotesStatus.style.display = 'none'; } catch {} }, 2000); }
+  });
   function siteSettingsSet(obj) {
     try { localStorage.setItem(KEYS.settings, JSON.stringify(obj && typeof obj === 'object' ? obj : {})); } catch {}
   }
@@ -715,6 +779,7 @@
       { key: 'social_instagram', label: 'إنستقرام' },
       { key: 'social_linkedin', label: 'تيك توك' },
       { key: 'about', label: 'نبذة' },
+      { key: 'admin_note', label: 'ملاحظة إدارية' },
     ];
     membershipExportFields.innerHTML = '';
     defs.forEach((f) => {
@@ -732,7 +797,7 @@
       return s;
     } catch { return ''; }
   }
-  function performMembershipExport() {
+  async function performMembershipExport() {
     const list = Array.isArray(membershipApps) ? membershipApps : [];
     const committeeSel = membershipExportCommittee ? membershipExportCommittee.value : 'all';
     const selected = Array.from(membershipExportFields?.querySelectorAll('input[name="fields"]:checked') || []).map((i) => i.value);
@@ -754,15 +819,52 @@
       social_instagram: 'إنستقرام',
       social_linkedin: 'تيك توك',
       about: 'نبذة',
+      admin_note: 'ملاحظة إدارية',
     };
-    const rows = list.filter((r) => {
+    const exportList = list.filter((r) => {
       if (!committeeSel || committeeSel === 'all') return true;
       const c = (r?.preferred_committee || r?.committee || '').toString().trim().replace(/\s+/g, ' ');
       return c === committeeSel;
-    }).map((r) => {
+    });
+
+    // Prepare map of my notes keyed by application id if admin_note is selected
+    let myNotesMap = {};
+    if (selected.includes('admin_note')) {
+      try {
+        if (sb) {
+          const { data: { user } } = await sb.auth.getUser();
+          if (user) {
+            const ids = exportList.map(r => r.id).filter(v => v != null);
+            if (ids.length) {
+              try {
+                const { data: noteRows, error: noteErr } = await sb
+                  .from('membership_app_notes')
+                  .select('application_id, note')
+                  .eq('admin_user_id', user.id)
+                  .in('application_id', ids);
+                if (!noteErr && Array.isArray(noteRows)) {
+                  myNotesMap = Object.fromEntries(noteRows.map(n => [n.application_id, n.note || '']));
+                }
+              } catch (e) {
+                // table missing -> fallback to local
+              }
+            }
+            if (!Object.keys(myNotesMap).length) {
+              try {
+                const local = localMyMembershipNotesGet(user.id);
+                if (local && typeof local === 'object') myNotesMap = local;
+              } catch {}
+            }
+          }
+        }
+      } catch {}
+    }
+
+    const rows = exportList.map((r) => {
       const obj = {};
       selected.forEach((k) => {
         if (k === 'preferred_committee') obj[k] = (r.preferred_committee || r.committee || '') || '';
+        else if (k === 'admin_note') obj[k] = (r.id != null && myNotesMap && Object.prototype.hasOwnProperty.call(myNotesMap, r.id)) ? (myNotesMap[r.id] || '') : (r[k] != null ? r[k] : '');
         else obj[k] = r[k] != null ? r[k] : '';
       });
       return obj;
@@ -964,18 +1066,34 @@
   async function loadMembershipApps() {
     let rows = [];
     if (sb) {
-      try {
-        const { data, error } = await sb
-          .from('membership_applications')
-          .select('id, created_at, full_name, phone, email, degree, college, major, skills, preferred_committee, portfolio_url, status, social_twitter, social_instagram, social_linkedin, about')
-          .order('created_at', { ascending: false });
-        if (error) throw error;
-        rows = Array.isArray(data) ? data : [];
-      } catch (e) {
-        console.warn('membership_applications fetch failed', e);
-        rows = localMembershipAppsGet();
-      }
-    } else {
+    try {
+        let rowsData = null;
+        try {
+          const { data, error } = await sb
+            .from('membership_applications')
+            .select('id, created_at, full_name, phone, email, degree, college, major, skills, preferred_committee, portfolio_url, status, social_twitter, social_instagram, social_linkedin, about, admin_note')
+            .order('created_at', { ascending: false });
+          if (error) throw error;
+          rowsData = data || [];
+        } catch (e1) {
+          const msg = e1?.message || '';
+          if (/(column\s+admin_note|PGRST205|Could not find\s+the table|could not find)/i.test(msg)) {
+            const { data: d2, error: e2 } = await sb
+              .from('membership_applications')
+              .select('id, created_at, full_name, phone, email, degree, college, major, skills, preferred_committee, portfolio_url, status, social_twitter, social_instagram, social_linkedin, about')
+              .order('created_at', { ascending: false });
+            if (e2) throw e2;
+            rowsData = d2 || [];
+          } else {
+            throw e1;
+          }
+        }
+        rows = Array.isArray(rowsData) ? rowsData : [];
+    } catch (e) {
+      console.warn('membership_applications fetch failed', e);
+      rows = localMembershipAppsGet();
+    }
+  } else {
       rows = localMembershipAppsGet();
     }
     membershipApps = rows.slice();
@@ -1004,12 +1122,12 @@
     try { buildMembershipExportFieldsUI(); } catch {}
     try { openDialog?.(membershipExportDialog); } catch { membershipExportDialog?.showModal?.(); }
   });
-  membershipExportForm?.addEventListener('submit', (e) => {
+  membershipExportForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    try { performMembershipExport(); } catch {}
+    try { await performMembershipExport(); } catch {}
     try { membershipExportDialog?.close?.(); } catch {}
   });
-  membershipAppsGroups?.addEventListener('click', (e) => {
+  membershipAppsGroups?.addEventListener('click', async (e) => {
     const btn = e.target.closest('button[data-act="view"]');
     if (!btn) return;
     const idx = Number(btn.dataset.idx);
@@ -1037,6 +1155,8 @@
       const instagram = (r.social_instagram || '').toString().trim();
       const linkedin = (r.social_linkedin || '').toString().trim();
       const about = r.about || '—';
+      // Load shared notes visible to all admins
+      try { await reloadMembershipAppNotes(r.id); } catch {}
       if (membershipAppDetailsName) membershipAppDetailsName.textContent = name;
       if (membershipAppDetailsDate) membershipAppDetailsDate.textContent = created;
       if (membershipAppDetailsPhone) membershipAppDetailsPhone.textContent = phone;
@@ -1106,6 +1226,79 @@
     }
     try { applyMembershipFilters(); } catch {}
     try { renderMembershipStats(membershipApps); } catch {}
+  });
+
+  membershipAppAdminNoteSave?.addEventListener('click', async () => {
+    const idx = membershipAppDetailsIndex;
+    if (!Number.isInteger(idx) || idx < 0 || idx >= (membershipApps?.length || 0)) return;
+    const r = membershipApps[idx];
+    const note = (membershipAppAdminNote?.value || '').toString();
+    // show saving state
+    if (membershipAppAdminNoteStatus) {
+      membershipAppAdminNoteStatus.style.display = '';
+      membershipAppAdminNoteStatus.style.color = '#64748b';
+      membershipAppAdminNoteStatus.textContent = 'جاري الحفظ...';
+    }
+    // Update local per-admin notes storage
+    let uid = null, adminName = 'مستخدم';
+    try {
+      if (sb) {
+        const { data: { user } } = await sb.auth.getUser();
+        if (user) {
+          uid = user.id;
+          const md = user.user_metadata || {};
+          adminName = md.display_name || user.email || adminName;
+        }
+      }
+    } catch {}
+    if (membershipAppAdminNoteAuthor) {
+      try { membershipAppAdminNoteAuthor.textContent = adminName; } catch {}
+    }
+    if (uid) {
+      try {
+        const local = localMyMembershipNotesGet(uid);
+        local[String(r.id)] = note;
+        localMyMembershipNotesSet(uid, local);
+      } catch {}
+    }
+    // Keep UI copy
+    r.admin_note = note;
+    try { save(KEYS.membership_apps, membershipApps); } catch {}
+    let remoteOk = false;
+    if (sb && r.id != null && uid) {
+      try {
+        // Upsert per-admin note
+        const payload = { application_id: r.id, admin_user_id: uid, admin_name: adminName, note };
+        let upErr = null;
+        try {
+          const { error } = await sb.from('membership_app_notes').upsert(payload, { onConflict: 'application_id,admin_user_id' });
+          upErr = error || null;
+        } catch (e1) {
+          upErr = e1;
+        }
+        if (upErr) throw upErr;
+        remoteOk = true;
+      } catch (e) {
+        const msg = e?.message || '';
+        // If table/columns don't exist, treat as local-only save
+        if (/(membership_app_notes|relation|table|not exist|PGRST)/i.test(msg)) {
+          remoteOk = false;
+        } else {
+          if (membershipAppAdminNoteStatus) {
+            membershipAppAdminNoteStatus.style.display = '';
+            membershipAppAdminNoteStatus.style.color = '#ef4444';
+            membershipAppAdminNoteStatus.textContent = 'تعذر الحفظ على الخادم';
+          }
+          return;
+        }
+      }
+    }
+    if (membershipAppAdminNoteStatus) {
+      membershipAppAdminNoteStatus.style.display = '';
+      membershipAppAdminNoteStatus.style.color = '#10b981';
+      membershipAppAdminNoteStatus.textContent = remoteOk ? 'تم الحفظ ✓' : 'تم الحفظ محليًا';
+      setTimeout(() => { try { membershipAppAdminNoteStatus.style.display = 'none'; } catch {} }, 2000);
+    }
   });
   function isIOSLike() {
     try { return /iphone|ipad|ipod/i.test(navigator.userAgent || ''); } catch { return false; }
@@ -3389,6 +3582,197 @@
       return [];
     }
   }
+
+  // Per-admin membership notes (local fallback)
+  function localMyMembershipNotesKey(uid) {
+    try { return `adeeb_membership_app_notes_${String(uid || '')}`; } catch { return 'adeeb_membership_app_notes_'; }
+  }
+  function localMyMembershipNotesGet(uid) {
+    try {
+      const raw = localStorage.getItem(localMyMembershipNotesKey(uid));
+      const obj = raw ? JSON.parse(raw) : {};
+      return (obj && typeof obj === 'object' && !Array.isArray(obj)) ? obj : {};
+    } catch { return {}; }
+  }
+  function localMyMembershipNotesSet(uid, map) {
+    try { localStorage.setItem(localMyMembershipNotesKey(uid), JSON.stringify(map && typeof map === 'object' ? map : {})); } catch {}
+  }
+
+  // ===== Shared notes (visible to all admins) =====
+  const LOCAL_SHARED_NOTES_KEY = 'adeeb_membership_shared_notes';
+  function localSharedNotesAllGet() {
+    try {
+      const raw = localStorage.getItem(LOCAL_SHARED_NOTES_KEY);
+      const obj = raw ? JSON.parse(raw) : {};
+      return (obj && typeof obj === 'object' && !Array.isArray(obj)) ? obj : {};
+    } catch { return {}; }
+  }
+  function localSharedNotesAllSet(all) {
+    try { localStorage.setItem(LOCAL_SHARED_NOTES_KEY, JSON.stringify(all && typeof all === 'object' ? all : {})); } catch {}
+  }
+  function localNotesGetByApp(appId) {
+    const all = localSharedNotesAllGet();
+    const key = String(appId || '');
+    const arr = all[key];
+    return Array.isArray(arr) ? arr : [];
+  }
+  function localNotesSetByApp(appId, arr) {
+    const all = localSharedNotesAllGet();
+    const key = String(appId || '');
+    all[key] = Array.isArray(arr) ? arr : [];
+    localSharedNotesAllSet(all);
+  }
+  function renderMembershipAppNotes(rows, myUid) {
+    if (!membershipAppNotesList) return;
+    membershipAppNotesList.innerHTML = '';
+    const list = Array.isArray(rows) ? rows : [];
+    if (membershipAppNotesCount) {
+      try { membershipAppNotesCount.textContent = String(list.length); } catch {}
+    }
+    list.forEach((n) => {
+      const name = escapeHtml(n.admin_name || 'مستخدم');
+      const when = formatArDate(n.created_at || n.updated_at || null) || '';
+      const text = escapeHtml(n.note || '');
+      const isMine = myUid && String(n.admin_user_id || '') === String(myUid);
+      const node = el(`
+        <div class="note-item" data-admin="${String(n.admin_user_id || '')}">
+          <div class="note-item__meta">
+            <span class="note-item__name">${name}</span>
+            <span class="note-item__time">${when}</span>
+          </div>
+          <div class="note-item__text">${text}</div>
+          ${isMine ? `
+          <div class="note-item__actions">
+            <button type="button" class="btn btn-outline btn-xs" data-act="edit"><i class="fa-solid fa-pen"></i> تعديل</button>
+            <button type="button" class="btn btn-outline btn-xs" data-act="delete"><i class="fa-regular fa-trash-can"></i> حذف</button>
+          </div>` : ''}
+        </div>
+      `);
+      membershipAppNotesList.appendChild(node);
+    });
+  }
+  async function fetchMembershipAppNotes(appId) {
+    const empty = [];
+    if (!appId) return empty;
+    if (sb) {
+      try {
+        const { data, error } = await sb
+          .from('membership_app_notes')
+          .select('application_id, admin_user_id, admin_name, note, created_at')
+          .eq('application_id', appId)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        return Array.isArray(data) ? data : empty;
+      } catch (e) {
+        const msg = e?.message || '';
+        if (/(relation|table|membership_app_notes|does not exist|PGRST)/i.test(msg)) {
+          const arr = localNotesGetByApp(appId);
+          return arr.slice().sort((a,b) => String(b.created_at||'').localeCompare(String(a.created_at||'')));
+        }
+        return empty;
+      }
+    }
+    return localNotesGetByApp(appId).slice().sort((a,b) => String(b.created_at||'').localeCompare(String(a.created_at||'')));
+  }
+  async function reloadMembershipAppNotes(appId) {
+    if (!membershipAppNotesList) return;
+    if (membershipAppNotesStatus) { membershipAppNotesStatus.style.display = ''; membershipAppNotesStatus.textContent = 'جاري التحميل...'; membershipAppNotesStatus.style.color = '#64748b'; }
+    const rows = await fetchMembershipAppNotes(appId);
+    let myUid = null;
+    try { if (sb) { const { data: { user } } = await sb.auth.getUser(); myUid = user?.id || null; } } catch {}
+    renderMembershipAppNotes(rows, myUid);
+    if (membershipAppNotesStatus) { membershipAppNotesStatus.style.display = rows.length ? 'none' : ''; membershipAppNotesStatus.textContent = rows.length ? '' : 'لا توجد ملاحظات بعد'; }
+  }
+
+  // Edit/Delete handlers for own notes
+  membershipAppNotesList?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const act = btn.dataset.act;
+    const noteEl = btn.closest('.note-item');
+    if (!noteEl) return;
+    const owner = String(noteEl.getAttribute('data-admin') || '');
+    let myUid = null, adminName = 'مستخدم';
+    try {
+      if (sb) {
+        const { data: { user } } = await sb.auth.getUser();
+        myUid = user?.id || null;
+        const md = user?.user_metadata || {};
+        adminName = md.display_name || user?.email || adminName;
+      }
+    } catch {}
+    const isOwner = (!!myUid && owner === String(myUid)) || (!myUid && owner === 'local');
+    if (!isOwner) return; // safety: only owner can act
+
+    const idx = membershipAppDetailsIndex;
+    if (!Number.isInteger(idx) || idx < 0 || idx >= (membershipApps?.length || 0)) return;
+    const appId = membershipApps[idx]?.id;
+    if (appId == null) return;
+
+    if (act === 'delete') {
+      const ok = confirm('هل تريد حذف ملاحظتك؟');
+      if (!ok) return;
+      let cloudDone = false;
+      if (sb && myUid) {
+        try {
+          const { error } = await sb.from('membership_app_notes')
+            .delete()
+            .eq('application_id', appId)
+            .eq('admin_user_id', myUid);
+          if (error) throw error;
+          cloudDone = true;
+        } catch (e) {
+          const msg = e?.message || '';
+          if (!/(relation|table|membership_app_notes|does not exist|PGRST)/i.test(msg)) {
+            if (membershipAppNotesStatus) { membershipAppNotesStatus.style.display = ''; membershipAppNotesStatus.style.color = '#ef4444'; membershipAppNotesStatus.textContent = 'تعذر الحذف من الخادم'; }
+            return;
+          }
+        }
+      }
+      if (!cloudDone) {
+        const arr = localNotesGetByApp(appId).filter((n) => String(n.admin_user_id || 'local') !== (myUid ? String(myUid) : 'local'));
+        localNotesSetByApp(appId, arr);
+      }
+      await reloadMembershipAppNotes(appId);
+      if (membershipAppNotesStatus) { membershipAppNotesStatus.style.display = ''; membershipAppNotesStatus.style.color = '#10b981'; membershipAppNotesStatus.textContent = cloudDone ? 'تم الحذف ✓' : 'تم الحذف محليًا'; setTimeout(() => { try { membershipAppNotesStatus.style.display = 'none'; } catch {} }, 1600); }
+      return;
+    }
+
+    if (act === 'edit') {
+      const textEl = noteEl.querySelector('.note-item__text');
+      const current = textEl ? textEl.textContent : '';
+      const next = prompt('تحرير الملاحظة:', current || '');
+      if (next == null) return; // canceled
+      const newText = String(next).trim();
+      if (!newText) return;
+      let cloudDone = false;
+      if (sb && myUid) {
+        try {
+          const { error } = await sb.from('membership_app_notes')
+            .update({ note: newText, admin_name: adminName })
+            .eq('application_id', appId)
+            .eq('admin_user_id', myUid);
+          if (error) throw error;
+          cloudDone = true;
+        } catch (e) {
+          const msg = e?.message || '';
+          if (!/(relation|table|membership_app_notes|does not exist|PGRST)/i.test(msg)) {
+            if (membershipAppNotesStatus) { membershipAppNotesStatus.style.display = ''; membershipAppNotesStatus.style.color = '#ef4444'; membershipAppNotesStatus.textContent = 'تعذر التعديل على الخادم'; }
+            return;
+          }
+        }
+      }
+      if (!cloudDone) {
+        const arr = localNotesGetByApp(appId);
+        const key = myUid ? String(myUid) : 'local';
+        const updated = arr.map((n) => (String(n.admin_user_id || 'local') === key) ? { ...n, note: newText, admin_name: adminName, created_at: n.created_at || new Date().toISOString() } : n);
+        localNotesSetByApp(appId, updated);
+      }
+      await reloadMembershipAppNotes(appId);
+      if (membershipAppNotesStatus) { membershipAppNotesStatus.style.display = ''; membershipAppNotesStatus.style.color = '#10b981'; membershipAppNotesStatus.textContent = cloudDone ? 'تم التعديل ✓' : 'تم الحفظ محليًا'; setTimeout(() => { try { membershipAppNotesStatus.style.display = 'none'; } catch {} }, 1600); }
+      return;
+    }
+  });
 
   // Initial Data
   let works = load(KEYS.works);

@@ -433,6 +433,21 @@
                       <option value="rejected">مرفوض</option>
                     </select></label>
                   </div>
+                  <div class="details-row cols-1">
+                    <div class="notes-card" id="membershipAppNotesCard">
+                      <div class="notes-card__head">
+                        <i class="fa-solid fa-comments" aria-hidden="true"></i>
+                        <span class="notes-card__title">ملاحظات الإداريين</span>
+                        <span class="notes-card__count" id="membershipAppNotesCount">0</span>
+                      </div>
+                      <div class="notes-card__composer">
+                        <textarea id="membershipAppNoteInput" rows="2" placeholder="أضف ملاحظة تظهر لجميع الإداريين"></textarea>
+                        <button type="button" class="btn btn-primary" id="membershipAppNoteAdd"><i class="fa-solid fa-paper-plane"></i> إضافة</button>
+                      </div>
+                      <div class="notes-card__list" id="membershipAppNotesList" aria-live="polite"></div>
+                      <small id="membershipAppNotesStatus" class="field-help" style="display:none"></small>
+                    </div>
+                  </div>
                 </div>
               </div>
               <menu class="dialog-actions">
