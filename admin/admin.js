@@ -5846,12 +5846,14 @@
   function slotRowTemplate(slot, idx) {
     const date = slot?.date || '';
     const day = slot?.day || '';
-    const time = slot?.time || '';
+    const start = slot?.start || slot?.time || '';
+    const end = slot?.end || '';
     return `
-      <div class="slot-row" data-idx="${idx}" style="display:grid; gap:8px; grid-template-columns: 1fr 1fr 1fr auto; align-items:end">
+      <div class="slot-row" data-idx="${idx}" style="display:grid; gap:8px; grid-template-columns: 1fr 1fr 1fr 1fr auto; align-items:end">
         <label>التاريخ<input type="date" name="slot_date_${idx}" value="${date}" /></label>
         <label>اليوم<input type="text" name="slot_day_${idx}" value="${day}" placeholder="مثال: الأحد" /></label>
-        <label>الوقت<input type="time" name="slot_time_${idx}" value="${time}" /></label>
+        <label>بداية الوقت<input type="time" step="600" name="slot_start_${idx}" value="${start}" /></label>
+        <label>نهاية الوقت<input type="time" step="600" name="slot_end_${idx}" value="${end}" /></label>
         <button type="button" class="btn btn-outline" data-act="del-slot" data-idx="${idx}"><i class="fa-solid fa-trash"></i></button>
       </div>`;
   }
@@ -5916,9 +5918,27 @@
   addSlotBtn?.addEventListener('click', () => {
     const count = appointmentSlots ? appointmentSlots.querySelectorAll('.slot-row').length : 0;
     const div = document.createElement('div');
-    div.innerHTML = slotRowTemplate({ date: '', day: '', time: '' }, count);
+    div.innerHTML = slotRowTemplate({ date: '', day: '', start: '', end: '' }, count);
     const row = div.firstElementChild;
     if (appointmentSlots && row) appointmentSlots.appendChild(row);
+  });
+
+  appointmentSlots?.addEventListener('change', (e) => {
+    const t = e.target;
+    if (!t || !t.name) return;
+    const m = String(t.name).match(/^slot_date_(\d+)$/);
+    if (!m) return;
+    const idx = Number(m[1]);
+    const val = t.value || '';
+    if (!val) return;
+    let dayName = '';
+    try {
+      const d = new Date(val + 'T00:00:00');
+      const days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+      dayName = days[d.getDay()] || '';
+    } catch {}
+    const dayInput = appointmentSlots.querySelector(`input[name="slot_day_${idx}"]`);
+    if (dayInput && dayName) dayInput.value = dayName;
   });
 
   appointmentsList?.addEventListener('click', (e) => {
@@ -5942,7 +5962,9 @@
       const cur = appointments[idx];
       if (appointmentForm) {
         appointmentForm.title.value = cur.title || '';
-        rebuildSlotsEditor(Array.isArray(cur.slots) ? cur.slots : []);
+        const src = Array.isArray(cur.slots) ? cur.slots : [];
+        const norm = src.map(s => ({ date: s?.date || '', day: s?.day || '', start: s?.start || s?.time || '', end: s?.end || '' }));
+        rebuildSlotsEditor(norm);
       }
       openDialog?.(appointmentDialog);
       return;
@@ -5966,9 +5988,10 @@
     const slots = rows.map((row, i) => {
       const date = row.querySelector(`input[name="slot_date_${i}"]`)?.value?.trim() || '';
       const day = row.querySelector(`input[name="slot_day_${i}"]`)?.value?.trim() || '';
-      const time = row.querySelector(`input[name="slot_time_${i}"]`)?.value?.trim() || '';
-      return { date, day, time };
-    }).filter(s => s.date && s.time);
+      const start = row.querySelector(`input[name="slot_start_${i}"]`)?.value?.trim() || '';
+      const end = row.querySelector(`input[name="slot_end_${i}"]`)?.value?.trim() || '';
+      return { date, day, start, end };
+    }).filter(s => s.date && s.start && s.end && s.start < s.end);
     const payload = {
       id: appointmentEditingIndex === null ? genId() : (appointments[appointmentEditingIndex]?.id || genId()),
       title,
