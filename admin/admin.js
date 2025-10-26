@@ -4591,9 +4591,9 @@
         try { loadScheduleForCurrentGrid?.(); } catch {}
       }
 
-      // If appointments tab is opened, render appointments
+      // If appointments tab is opened, load from Supabase then render (fallback to local)
       if (id === '#section-appointments') {
-        try { renderAppointments?.(); } catch {}
+        try { loadAppointmentsAdmin?.(); } catch { try { renderAppointments?.(); } catch {} }
       }
 
       // If stats tab is opened, render statistics
@@ -4652,9 +4652,9 @@
       try { renderSchedule?.(); } catch {}
       try { loadScheduleForCurrentGrid?.(); } catch {}
     }
-    // If navigating via dashboard card to appointments, render it
+    // If navigating via dashboard card to appointments, load it from Supabase
     if (id === '#section-appointments') {
-      try { renderAppointments?.(); } catch {}
+      try { loadAppointmentsAdmin?.(); } catch { try { renderAppointments?.(); } catch {} }
     }
     // If navigating via dashboard card to chat, init it
     if (id === '#section-chat') {
@@ -5864,6 +5864,33 @@
     appointmentSlots.innerHTML = list.map((s, i) => slotRowTemplate(s, i)).join('');
   }
 
+  async function loadAppointmentsAdmin() {
+    try {
+      if (sb) {
+        const { data, error } = await sb
+          .from('appointments')
+          .select('*')
+          .order('order', { ascending: true });
+        if (error) throw error;
+        appointments = (data || []).map(r => ({
+          id: r.id,
+          title: r.title || '',
+          slots: Array.isArray(r.slots) ? r.slots : (r.slots ? r.slots : []),
+          order: r.order ?? null,
+          created_at: r.created_at || null,
+        }));
+        try { save(KEYS.appointments, appointments); } catch {}
+        renderAppointments();
+        return;
+      }
+    } catch (e) {
+      console.warn('Failed to load appointments from Supabase', e);
+    }
+    // Fallback to local storage
+    try { appointments = load(KEYS.appointments); } catch {}
+    renderAppointments();
+  }
+
   function renderAppointments() {
     if (!appointmentsList) return;
     appointmentsList.innerHTML = '';
@@ -5892,7 +5919,7 @@
         </div>`);
       appointmentsList.appendChild(node);
     });
-    setupListDnD(appointmentsList, appointments, KEYS.appointments, null, renderAppointments);
+    setupListDnD(appointmentsList, appointments, KEYS.appointments, 'appointments', renderAppointments);
   }
 
   addAppointmentBtn?.addEventListener('click', () => {
@@ -5941,7 +5968,7 @@
     if (dayInput && dayName) dayInput.value = dayName;
   });
 
-  appointmentsList?.addEventListener('click', (e) => {
+  appointmentsList?.addEventListener('click', async (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
     const idx = Number(btn.dataset.idx);
@@ -5971,6 +5998,16 @@
     }
     if (act === 'del') {
       if (!confirm('تأكيد الحذف؟')) return;
+      const cur = appointments[idx];
+      if (sb && cur?.id) {
+        try {
+          const { error } = await sb.from('appointments').delete().eq('id', cur.id);
+          if (error) throw error;
+        } catch (err) {
+          alert('فشل الحذف: ' + (err?.message || 'غير معروف'));
+          return;
+        }
+      }
       appointments.splice(idx, 1);
       save(KEYS.appointments, appointments);
       renderAppointments();
@@ -5978,7 +6015,7 @@
     }
   });
 
-  appointmentForm?.addEventListener('submit', (e) => {
+  appointmentForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!appointmentForm) return;
     const title = (appointmentForm.title.value || '').trim();
@@ -5999,6 +6036,49 @@
       order: (appointmentEditingIndex !== null) ? (appointments[appointmentEditingIndex]?.order ?? null) : null,
       created_at: (appointmentEditingIndex !== null) ? (appointments[appointmentEditingIndex]?.created_at || null) : new Date().toISOString(),
     };
+    if (sb) {
+      try {
+        if (appointmentEditingIndex === null) {
+          const payloadNoOrder = { id: payload.id, title: payload.title, slots: payload.slots, created_at: payload.created_at };
+          let row, error;
+          ({ data: row, error } = await sb.from('appointments').insert(payload).select('*').single());
+          if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+            const res2 = await sb.from('appointments').insert(payloadNoOrder).select('*').single();
+            if (res2.error) throw res2.error;
+            appointments.unshift({ ...res2.data, order: payload.order });
+          } else if (error) {
+            throw error;
+          } else {
+            appointments.unshift(row);
+          }
+          // Normalize order after inserting at top
+          await normalizeAndPersistOrder(appointments, KEYS.appointments, 'appointments');
+        } else {
+          const id = appointments[appointmentEditingIndex]?.id;
+          if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
+          const payloadNoOrder = { title: payload.title, slots: payload.slots };
+          let row, error;
+          ({ data: row, error } = await sb.from('appointments').update(payload).eq('id', id).select('*').single());
+          if (error && /(column\s+order|unknown column|invalid input)/i.test(error.message || '')) {
+            const res2 = await sb.from('appointments').update(payloadNoOrder).eq('id', id).select('*').single();
+            if (res2.error) throw res2.error;
+            appointments[appointmentEditingIndex] = { ...res2.data, order: payload.order };
+          } else if (error) {
+            throw error;
+          } else {
+            appointments[appointmentEditingIndex] = row;
+          }
+        }
+        save(KEYS.appointments, appointments);
+        renderAppointments();
+        closeDialog?.(appointmentDialog);
+        return;
+      } catch (err) {
+        alert('فشل الحفظ: ' + (err?.message || 'غير معروف'));
+        return;
+      }
+    }
+    // Fallback to local storage
     if (appointmentEditingIndex === null) appointments.unshift(payload); else appointments[appointmentEditingIndex] = payload;
     save(KEYS.appointments, appointments);
     renderAppointments();

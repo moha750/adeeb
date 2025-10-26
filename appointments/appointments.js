@@ -6,6 +6,8 @@
     appointment_bookings: 'adeeb_appointment_bookings',
   };
 
+  const sb = window.sbClient || null;
+
   function qs(sel){ return document.querySelector(sel); }
   function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstElementChild; }
 
@@ -87,10 +89,39 @@
     if (aptContent) aptContent.style.display = '';
   }
 
-  function render(){
-    const all = loadAppointments();
-    const cur = all.find(a => a && a.id === aptId);
-    if (!cur) { showError('هذا الموعد غير موجود أو تم حذفه.'); return; }
+  async function render(){
+    let cur = null;
+    let bookedSet = new Set();
+    try {
+      if (sb) {
+        const { data: apt, error } = await sb.from('appointments').select('*').eq('id', aptId).maybeSingle();
+        if (error) throw error;
+        if (!apt) { showError('هذا الموعد غير موجود أو تم حذفه.'); return; }
+        cur = { id: apt.id, title: apt.title || 'حجز موعد', slots: Array.isArray(apt.slots) ? apt.slots : (apt.slots ? apt.slots : []) };
+        try {
+          const { data: rows, error: bErr } = await sb
+            .from('appointment_bookings')
+            .select('slot_index, time_start')
+            .eq('appointment_id', cur.id);
+          if (bErr) throw bErr;
+          const bookedList = Array.isArray(rows) ? rows : [];
+          bookedSet = new Set(bookedList.map(e => String(e.slot_index) + '|' + e.time_start));
+        } catch (e) {
+          bookedSet = new Set();
+        }
+      } else {
+        const all = loadAppointments();
+        cur = all.find(a => a && a.id === aptId);
+        if (!cur) { showError('هذا الموعد غير موجود أو تم حذفه.'); return; }
+        const bookings = loadBookings();
+        const bookedList = Array.isArray(bookings[cur.id]) ? bookings[cur.id] : [];
+        bookedSet = new Set(bookedList.map(e => String(e.slot_index) + '|' + e.time_start));
+      }
+    } catch (err) {
+      showError('حدث خطأ أثناء تحميل الموعد.');
+      return;
+    }
+
     if (aptHeader) aptHeader.innerHTML = '<i class="fa-solid fa-calendar-check"></i> ' + (cur.title || 'حجز موعد');
     if (aptSub) aptSub.textContent = 'اختر الوقت واملأ بياناتك لإرسال طلب الحجز.';
 
@@ -112,28 +143,27 @@
       }
     });
     windows = items;
-    const bookings = loadBookings();
-    const bookedList = Array.isArray(bookings[cur.id]) ? bookings[cur.id] : [];
-    const bookedSet = new Set(bookedList.map(e => String(e.slot_index) + '|' + e.time_start));
     if (!items.length) {
       if (noSlots) noSlots.style.display = '';
     } else {
       if (noSlots) noSlots.style.display = 'none';
       const frag = document.createDocumentFragment();
       items.forEach((it, i) => {
-        const lbl = fmtSlotLabel(it.date, it.day, it.start, it.end);
         const key = String(it.slotIdx) + '|' + it.start;
         const isBooked = bookedSet.has(key);
         const btn = el('<button type="button" class="slot-card" data-key="'+key+'" aria-pressed="false"></button>');
-        const title = el('<div><strong>الوقت:</strong> '+lbl+'</div>');
-        const meta = el('<div class="slot-meta">الخيار '+(i+1)+'</div>');
-        btn.appendChild(title);
+        const dateLineText = [it.day, it.date].filter(Boolean).join(' ');
+        const dateLine = el('<div><strong>التاريخ:</strong> ' + dateLineText + '</div>');
+        const timeLine = el('<div class="slot-time"><strong>الوقت:</strong> ' + it.start + ' - ' + it.end + '</div>');
+        const meta = el('<div class="slot-meta">الموعد ' + (i+1) + '</div>');
+        btn.appendChild(dateLine);
+        btn.appendChild(timeLine);
         btn.appendChild(meta);
         if (isBooked) {
           btn.classList.add('booked');
           btn.disabled = true;
           const badge = el('<span class="slot-badge">محجوز</span>');
-          title.appendChild(badge);
+          timeLine.appendChild(badge);
         }
         frag.appendChild(btn);
       });
@@ -167,8 +197,8 @@
     let badge = card.querySelector('.slot-badge');
     if (!badge) {
       badge = el('<span class="slot-badge">محجوز</span>');
-      const head = card.firstElementChild;
-      if (head) head.appendChild(badge);
+      const timeEl = card.querySelector('.slot-time') || card.children[1] || card.firstElementChild;
+      if (timeEl) timeEl.appendChild(badge);
     }
     if (selectionRow && selectionText) {
       selectionText.textContent = 'الوقت المختار: ' + selected.label;
@@ -217,13 +247,12 @@
     if (selectionRow) selectionRow.style.display = 'none';
   });
 
-  bookForm?.addEventListener('submit', (e) => {
+  bookForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     statusMsg.textContent = '';
 
-    const all = loadAppointments();
-    const cur = all.find(a => a && a.id === aptId);
-    if (!cur) { alert('الموعد غير موجود'); return; }
+    let curId = aptId;
+    if (!curId) { alert('الموعد غير موجود'); return; }
     if (!selected) { alert('الرجاء اختيار وقت'); return; }
     const slotIndex = selected.slot_index;
     const startStr = selected.start;
@@ -238,22 +267,49 @@
     if (!name) { alert('الاسم مطلوب'); return; }
     if (!phone) { alert('رقم الجوال مطلوب'); return; }
 
-    const bookings = loadBookings();
-    const id = 'bk_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
-    const entry = {
-      id,
-      appointment_id: cur.id,
-      slot_index: slotIndex,
-      time_start: startStr,
-      time_end: endStr,
-      name,
-      phone,
-      created_at: new Date().toISOString(),
-    };
-    const list = Array.isArray(bookings[cur.id]) ? bookings[cur.id] : [];
-    list.push(entry);
-    bookings[cur.id] = list;
-    saveBookings(bookings);
+    if (sb) {
+      try {
+        // Check not already booked (optimistic, DB should have unique constraint ideally)
+        const { data: exists } = await sb
+          .from('appointment_bookings')
+          .select('id')
+          .eq('appointment_id', curId)
+          .eq('slot_index', slotIndex)
+          .eq('time_start', startStr)
+          .maybeSingle();
+        if (exists) { alert('تم حجز هذا الوقت مسبقًا. الرجاء اختيار وقت آخر.'); return; }
+        const { error } = await sb.from('appointment_bookings').insert({
+          appointment_id: curId,
+          slot_index: slotIndex,
+          time_start: startStr,
+          time_end: endStr,
+          name,
+          phone,
+        });
+        if (error) throw error;
+      } catch (err) {
+        alert('تعذّر إرسال طلب الحجز: ' + (err?.message || 'غير معروف'));
+        return;
+      }
+    } else {
+      // Fallback to local storage
+      const bookings = loadBookings();
+      const id = 'bk_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+      const entry = {
+        id,
+        appointment_id: curId,
+        slot_index: slotIndex,
+        time_start: startStr,
+        time_end: endStr,
+        name,
+        phone,
+        created_at: new Date().toISOString(),
+      };
+      const list = Array.isArray(bookings[curId]) ? bookings[curId] : [];
+      list.push(entry);
+      bookings[curId] = list;
+      saveBookings(bookings);
+    }
 
     statusMsg.style.color = '#10b981';
     statusMsg.textContent = 'تم إرسال طلب الحجز ✓';
