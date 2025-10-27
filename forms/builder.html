@@ -1,0 +1,94 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>منشئ الاستبيانات — نادي أدِيب</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../appointments/appointments.css" />
+    <link rel="stylesheet" href="forms.css" />
+  </head>
+  <body class="forms-body">
+    <header class="board-header">
+      <div class="container">
+        <div class="board-logo">
+          <a class="logo-link" href="../index.html" title="نادي أدِيب">
+            <img alt="شعار نادي أدِيب" class="logo-img" src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" />
+          </a>
+        </div>
+        <h1 class="board-title"><i class="fa-solid fa-list-check"></i> مُنشئ الاستبيانات</h1>
+        <p class="board-sub">أنشئ استبيانك ثم انشره لجمع الردود</p>
+      </div>
+    </header>
+
+    <main class="board-main">
+      <section class="panel" style="padding:16px">
+        <div id="authNotice" class="empty-state" style="display:none"></div>
+        <form id="builderForm" class="form-grid" style="grid-template-columns: 1fr 1fr">
+          <label style="grid-column:1 / -1">
+            عنوان الاستبيان
+            <input id="formTitle" type="text" maxlength="140" required />
+          </label>
+          <label style="grid-column:1 / -1">
+            وصف الاستبيان
+            <input id="formDesc" type="text" maxlength="260" placeholder="وصف قصير يظهر للزوار" />
+          </label>
+          <div style="grid-column:1 / -1; display:flex; gap:10px; align-items:center">
+            <label style="display:flex; gap:8px; align-items:center">
+              <input id="isPublic" type="checkbox" checked /> عام
+            </label>
+            <span class="muted">إذا كان عامًا يمكن لأي شخص تعبئته</span>
+          </div>
+
+          <hr class="divider" style="grid-column:1 / -1" />
+
+          <div style="grid-column:1 / -1; display:flex; gap:8px; align-items:center">
+            <select id="newQType" style="border:1px solid var(--border,#e5e7eb); border-radius:10px; padding:10px 12px">
+              <option value="short_text">نص قصير</option>
+              <option value="long_text">نص طويل</option>
+              <option value="multiple_choice">اختيار من متعدد (راديو)</option>
+              <option value="checkboxes">خيارات متعددة (مربعات)</option>
+            </select>
+            <button id="addQuestionBtn" type="button" class="btn btn-outline"><i class="fa-solid fa-plus"></i> إضافة سؤال</button>
+          </div>
+
+          <div id="questions" style="grid-column:1 / -1; display:grid; gap:12px; margin-top:8px"></div>
+
+          <div class="form-actions" style="grid-column:1 / -1; display:flex; gap:8px; align-items:center; margin-top:6px">
+            <button id="saveDraftBtn" type="button" class="btn btn-outline"><i class="fa-regular fa-floppy-disk"></i> حفظ مسودة</button>
+            <button id="publishBtn" type="button" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> نشر الاستبيان</button>
+            <span id="status" class="muted" aria-live="polite"></span>
+          </div>
+        </form>
+
+        <div id="shareBox" class="empty-state" style="display:none; text-align:start">
+          <h3 style="margin:0 0 8px; color:var(--main-blue,#274060); font-family:fb">تم النشر بنجاح</h3>
+          <div style="display:grid; gap:8px">
+            <div style="display:flex; gap:8px; align-items:center">
+              <span style="min-width:120px">رابط التعبئة:</span>
+              <input id="fillUrl" type="text" readonly style="flex:1; border:1px solid #e5e7eb; border-radius:10px; padding:8px 10px" />
+              <button id="copyFill" class="btn btn-outline" type="button"><i class="fa-regular fa-copy"></i> نسخ</button>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center">
+              <span style="min-width:120px">رابط النتائج:</span>
+              <input id="resultsUrl" type="text" readonly style="flex:1; border:1px solid #e5e7eb; border-radius:10px; padding:8px 10px" />
+              <button id="copyResults" class="btn btn-outline" type="button"><i class="fa-regular fa-copy"></i> نسخ</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="apt-footer">
+      <div class="container">
+        <a href="https://www.adeeb.club/"><p>جميع الحقوق محفوظة لنادي أدِيب <span class="year-fixed">2025</span> ©</p></a>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="builder.js"></script>
+  </body>
+</html>

@@ -79,6 +79,8 @@
   const fillInfoDialog = qs('#fillInfoDialog');
   let windows = [];
   let selected = null;
+  let rtChan = null;
+  const presenceEl = qs('#presenceCount');
 
   function showError(msg){
     if (aptError) { aptError.textContent = msg || 'حدث خطأ غير متوقع.'; aptError.style.display = ''; }
@@ -205,6 +207,94 @@
       selectionRow.style.display = '';
     }
   }
+  function markCardBookedByKey(key){
+    const c = slotsList && slotsList.querySelector('.slot-card[data-key="'+key+'"]');
+    if (!c) return;
+    c.classList.add('booked');
+    c.disabled = true;
+    let badge = c.querySelector('.slot-badge');
+    if (!badge) {
+      const timeEl = c.querySelector('.slot-time') || c.children[1] || c.firstElementChild;
+      if (timeEl) {
+        badge = el('<span class="slot-badge">محجوز</span>');
+        timeEl.appendChild(badge);
+      }
+    }
+    if (selected && selected.key === key) {
+      selected = null;
+      if (selectionRow) selectionRow.style.display = 'none';
+      if (statusMsg) {
+        statusMsg.style.color = '#ef4444';
+        statusMsg.textContent = 'تم حجز الوقت الذي اخترته من مستخدم آخر. الرجاء اختيار وقت آخر.';
+      }
+    }
+  }
+  function unmarkCardBookedByKey(key){
+    const c = slotsList && slotsList.querySelector('.slot-card[data-key="'+key+'"]');
+    if (!c) return;
+    c.classList.remove('booked');
+    if (!c.classList.contains('selected')) c.disabled = false;
+    const b = c.querySelector('.slot-badge');
+    if (b) b.remove();
+  }
+  function ensureRealtime(){
+    if (!sb || rtChan || !aptId) return;
+    try {
+      let did = '';
+      try {
+        did = localStorage.getItem('adeeb_device_id');
+        if (!did) { did = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('adeeb_device_id', did); }
+      } catch { did = String(Math.random()); }
+      rtChan = sb
+        .channel('rb:apt_'+aptId, { config: { presence: { key: did } } })
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'appointment_bookings', filter: 'appointment_id=eq.' + aptId }, (payload)=>{
+          try {
+            const row = payload.new || {};
+            const key = String(row.slot_index) + '|' + row.time_start;
+            markCardBookedByKey(key);
+          } catch {}
+        })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'appointment_bookings', filter: 'appointment_id=eq.' + aptId }, (payload)=>{
+          try {
+            const row = payload.old || {};
+            const key = String(row.slot_index) + '|' + row.time_start;
+            unmarkCardBookedByKey(key);
+          } catch {}
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'appointment_bookings', filter: 'appointment_id=eq.' + aptId }, (payload)=>{
+          try {
+            const oldRow = payload.old || {};
+            const newRow = payload.new || {};
+            const oldKey = String(oldRow.slot_index) + '|' + oldRow.time_start;
+            const newKey = String(newRow.slot_index) + '|' + newRow.time_start;
+            if (oldKey && oldKey !== 'undefined|undefined') unmarkCardBookedByKey(oldKey);
+            if (newKey && newKey !== 'undefined|undefined') markCardBookedByKey(newKey);
+          } catch {}
+        })
+        .on('presence', { event: 'sync' }, () => {
+          try {
+            const st = rtChan.presenceState() || {};
+            const keys = Object.keys(st);
+            let count = 0;
+            for (const k of keys){
+              const arr = Array.isArray(st[k]) ? st[k] : [];
+              count += arr.length;
+            }
+            if (presenceEl){
+              const b = presenceEl.querySelector('b');
+              if (b) b.textContent = String(count);
+              presenceEl.style.display = '';
+            }
+          } catch {}
+        })
+        .subscribe((status)=>{
+          if (status === 'SUBSCRIBED') {
+            try { rtChan.track({ appointment_id: aptId, online_at: new Date().toISOString() }); } catch {}
+            if (presenceEl) presenceEl.style.display = '';
+          }
+        });
+    } catch {}
+  }
 
   slotsList?.addEventListener('click', (e) => {
     const card = e.target.closest('.slot-card');
@@ -328,5 +418,6 @@
   refreshBtn?.addEventListener('click', render);
 
   if (!aptId) { showError('رابط غير صحيح: لا يوجد معرّف للموعد.'); return; }
+  ensureRealtime();
   render();
 })();

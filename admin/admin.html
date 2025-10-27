@@ -714,6 +714,21 @@
             </div>
           </div>
           <div id="appointmentsList" class="cards-grid" aria-live="polite"></div>
+          <div class="panel" style="padding:16px; margin-top:16px" id="bookingsPanel">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+              <h3 style="margin:0;font-size:1rem;color:var(--main-blue)"><i class="fa-solid fa-calendar-check"></i> حجوزات المواعيد</h3>
+              <div style="flex:1"></div>
+              <select id="bookingAppointmentSelect">
+                <option value="all">جميع المواعيد</option>
+              </select>
+              <button id="bookingsRefreshBtn" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+              <button id="bookingsExportBtn" class="btn"><i class="fa-solid fa-file-export"></i> تصدير</button>
+            </div>
+            <div style="overflow:auto">
+              <div id="bookingsCards" class="cards-grid" aria-live="polite"></div>
+              <div id="bookingsEmpty" class="empty-state muted" style="display:none">لا توجد حجوزات</div>
+            </div>
+          </div>
         </section>
         
         <!-- إرسال الإشعارات -->

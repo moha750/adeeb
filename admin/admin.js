@@ -167,6 +167,12 @@
   const appointmentForm = document.getElementById('appointmentForm');
   const appointmentSlots = document.getElementById('appointmentSlots');
   const addSlotBtn = document.getElementById('addSlotBtn');
+  const bookingsPanel = document.getElementById('bookingsPanel');
+  const bookingAppointmentSelect = document.getElementById('bookingAppointmentSelect');
+  const bookingsRefreshBtn = document.getElementById('bookingsRefreshBtn');
+  const bookingsExportBtn = document.getElementById('bookingsExportBtn');
+  const bookingsCards = document.getElementById('bookingsCards');
+  const bookingsEmpty = document.getElementById('bookingsEmpty');
 
   const KEYS = {
     works: 'adeeb_works',
@@ -197,6 +203,52 @@
       const obj = raw ? JSON.parse(raw) : {};
       return (obj && typeof obj === 'object' && !Array.isArray(obj)) ? obj : {};
     } catch { return {}; }
+  }
+
+  async function markBookingCompleted(id, done) {
+    if (!id) return false;
+    if (sb) {
+      // Try updating multiple possible columns to maximize compatibility
+      try {
+        const payload = { is_completed: !!done, status: done ? 'done' : 'pending', completed_at: done ? (new Date()).toISOString() : null };
+        let res = await sb.from('appointment_bookings').update(payload).eq('id', id);
+        if (res.error) {
+          const msg = (res.error.message || '').toLowerCase();
+          // Retry with minimal payloads if some columns don't exist
+          if (/column|unknown/.test(msg)) {
+            res = await sb.from('appointment_bookings').update({ status: done ? 'done' : 'pending' }).eq('id', id);
+            if (res.error) {
+              res = await sb.from('appointment_bookings').update({ is_completed: !!done }).eq('id', id);
+              if (res.error) throw res.error;
+            }
+          } else {
+            throw res.error;
+          }
+        }
+        return true;
+      } catch (e) {
+        alert('فشل تحديث حالة الحجز: ' + (e?.message || 'غير معروف'));
+        return false;
+      }
+    }
+    // Local fallback: mutate stored map
+    try {
+      const map = (appointmentBookings && typeof appointmentBookings === 'object' && !Array.isArray(appointmentBookings)) ? appointmentBookings : {};
+      let changed = false;
+      Object.keys(map).forEach(k => {
+        const arr = Array.isArray(map[k]) ? map[k] : [];
+        arr.forEach(row => {
+          if (String(row.id || '') === String(id)) {
+            row.is_completed = !!done;
+            row.status = done ? 'done' : 'pending';
+            row.completed_at = done ? new Date().toISOString() : null;
+            changed = true;
+          }
+        });
+      });
+      if (changed) { appointmentBookings = map; save(KEYS.appointment_bookings, appointmentBookings); }
+      return changed;
+    } catch { return false; }
   }
 
   // Add shared note (visible to all admins)
@@ -4594,6 +4646,7 @@
       // If appointments tab is opened, load from Supabase then render (fallback to local)
       if (id === '#section-appointments') {
         try { loadAppointmentsAdmin?.(); } catch { try { renderAppointments?.(); } catch {} }
+        try { refreshBookingsPanel?.(); } catch {}
       }
 
       // If stats tab is opened, render statistics
@@ -4655,6 +4708,7 @@
     // If navigating via dashboard card to appointments, load it from Supabase
     if (id === '#section-appointments') {
       try { loadAppointmentsAdmin?.(); } catch { try { renderAppointments?.(); } catch {} }
+      try { refreshBookingsPanel?.(); } catch {}
     }
     // If navigating via dashboard card to chat, init it
     if (id === '#section-chat') {
@@ -5881,6 +5935,7 @@
         }));
         try { save(KEYS.appointments, appointments); } catch {}
         renderAppointments();
+        try { populateBookingAppointmentSelect(); } catch {}
         return;
       }
     } catch (e) {
@@ -5889,6 +5944,7 @@
     // Fallback to local storage
     try { appointments = load(KEYS.appointments); } catch {}
     renderAppointments();
+    try { populateBookingAppointmentSelect(); } catch {}
   }
 
   function renderAppointments() {
@@ -5921,6 +5977,236 @@
     });
     setupListDnD(appointmentsList, appointments, KEYS.appointments, 'appointments', renderAppointments);
   }
+
+  let currentBookingsList = [];
+
+  function findAppointmentById(id) {
+    try { return (appointments || []).find(a => a && a.id === id) || null; } catch { return null; }
+  }
+
+  function populateBookingAppointmentSelect() {
+    if (!bookingAppointmentSelect) return;
+    const prev = bookingAppointmentSelect.value || 'all';
+    const opts = [{ value: 'all', label: 'جميع المواعيد' }];
+    (appointments || []).forEach(a => { if (a && a.id) opts.push({ value: a.id, label: a.title || a.id }); });
+    bookingAppointmentSelect.innerHTML = '';
+    opts.forEach(o => {
+      const op = document.createElement('option');
+      op.value = o.value;
+      op.textContent = o.label;
+      bookingAppointmentSelect.appendChild(op);
+    });
+    try { bookingAppointmentSelect.value = opts.some(o => o.value === prev) ? prev : 'all'; } catch {}
+  }
+
+  function buildBookingDisplay(row) {
+    const appt = findAppointmentById(row.appointment_id);
+    const slot = (appt && Array.isArray(appt.slots)) ? appt.slots[Number(row.slot_index) || 0] : null;
+    const day = (slot && slot.day) ? slot.day : '';
+    const date = (slot && slot.date) ? slot.date : '';
+    const apptTitle = appt ? (appt.title || appt.id || '—') : (row.appointment_id || '—');
+    const statusRaw = (row.status || row.state || '').toString().trim().toLowerCase();
+    const completed = !!(row.is_completed || row.completed || row.completed_at || ['done','completed','complete','finished','تم'].includes(statusRaw));
+    return {
+      id: row.id,
+      name: row.name || '—',
+      phone: row.phone || '—',
+      dayDate: [day, date].filter(Boolean).join(' '),
+      time: `${row.time_start || ''}${row.time_end ? ' - ' + row.time_end : ''}`,
+      apptTitle,
+      createdLabel: typeof formatDateTimeReadable === 'function' ? formatDateTimeReadable(row.created_at) : (row.created_at || '—'),
+      appointment_id: row.appointment_id,
+      completed,
+    };
+  }
+
+  function bookingSortValue(row) {
+    try {
+      const appt = findAppointmentById(row.appointment_id);
+      const slot = (appt && Array.isArray(appt.slots)) ? appt.slots[Number(row.slot_index) || 0] : null;
+      const d = (slot && slot.date) ? String(slot.date) : null;
+      const t = (row && row.time_start) ? String(row.time_start).padStart(5, '0') : '00:00';
+      if (d) {
+        const iso = `${d}T${t}`;
+        const ts = Date.parse(iso);
+        if (!Number.isNaN(ts)) return ts;
+      }
+    } catch {}
+    try {
+      const ts2 = Date.parse(row.created_at || '');
+      if (!Number.isNaN(ts2)) return ts2;
+    } catch {}
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  function renderBookings() {
+    if (!bookingsCards) return;
+    const sel = bookingAppointmentSelect ? (bookingAppointmentSelect.value || 'all') : 'all';
+    const list = Array.isArray(currentBookingsList) ? currentBookingsList : [];
+    const filtered = list.filter(r => !sel || sel === 'all' || String(r.appointment_id) === String(sel));
+    if (!filtered.length) {
+      bookingsCards.innerHTML = '';
+      if (bookingsEmpty) bookingsEmpty.style.display = '';
+      return;
+    }
+    if (bookingsEmpty) bookingsEmpty.style.display = 'none';
+    bookingsCards.innerHTML = '';
+    const sorted = filtered.slice().sort((a, b) => bookingSortValue(a) - bookingSortValue(b));
+    sorted.forEach(r => {
+      const d = buildBookingDisplay(r);
+      const completedStyle = d.completed ? 'opacity:.7; background:#f0fdf4; border-color:#10b981' : '';
+      const titleStyle = d.completed ? 'text-decoration:line-through' : '';
+      const btnLabel = d.completed ? 'إلغاء الشطب' : 'تم';
+      const btnIcon = d.completed ? 'fa-rotate-left' : 'fa-check';
+      const btnVariant = d.completed ? 'btn-outline' : 'btn-primary';
+      const node = el(`
+        <div class="card" data-id="${r.id || ''}" style="${completedStyle}">
+          <div class="card__body">
+            <div class="card__title" style="${titleStyle}">الاسم: ${d.name}</div>
+            <div class="muted">رقم الجوال: ${d.phone || '—'}</div>
+            <div class="muted">نوع الموعد: ${d.apptTitle || '—'}</div>
+            <div class="muted">اليوم التاريخ: ${d.dayDate || '—'}</div>
+            <div class="muted">الوقت: ${d.time || '—'}</div>
+            <div class="muted">انشئ: ${d.createdLabel || '—'}</div>
+            <div class="card__actions" style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+              <button type="button" class="btn ${btnVariant} btn-xs" data-act="toggle-done-booking" data-id="${r.id || ''}" data-done="${d.completed ? '1':'0'}"><i class="fa-solid ${btnIcon}"></i> ${btnLabel}</button>
+              <button type="button" class="btn btn-outline btn-xs" data-act="del-booking" data-id="${r.id || ''}"><i class="fa-solid fa-trash"></i> حذف</button>
+            </div>
+          </div>
+        </div>`);
+      bookingsCards.appendChild(node);
+    });
+  }
+
+  async function loadAppointmentBookingsAdmin() {
+    if (sb) {
+      try {
+        const { data, error } = await sb
+          .from('appointment_bookings')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        return Array.isArray(data) ? data : [];
+      } catch (e) {
+        console.warn('Failed to load appointment_bookings from Supabase', e);
+      }
+    }
+    try {
+      const map = (appointmentBookings && typeof appointmentBookings === 'object' && !Array.isArray(appointmentBookings)) ? appointmentBookings : {};
+      const list = [];
+      Object.keys(map).forEach(k => {
+        const arr = Array.isArray(map[k]) ? map[k] : [];
+        arr.forEach(row => list.push(row));
+      });
+      list.sort((a, b) => {
+        try { return (new Date(b.created_at)) - (new Date(a.created_at)); } catch { return 0; }
+      });
+      return list;
+    } catch { return []; }
+  }
+
+  async function refreshBookingsPanel() {
+    if (!bookingsPanel) return;
+    try { currentBookingsList = await loadAppointmentBookingsAdmin(); } catch { currentBookingsList = []; }
+    try { populateBookingAppointmentSelect(); } catch {}
+    renderBookings();
+  }
+
+  async function deleteBookingById(id) {
+    if (!id) return false;
+    if (sb) {
+      try {
+        const { error } = await sb.from('appointment_bookings').delete().eq('id', id);
+        if (error) throw error;
+        return true;
+      } catch (e) {
+        alert('فشل حذف الحجز: ' + (e?.message || 'غير معروف'));
+        return false;
+      }
+    }
+    try {
+      let changed = false;
+      const map = (appointmentBookings && typeof appointmentBookings === 'object' && !Array.isArray(appointmentBookings)) ? appointmentBookings : {};
+      Object.keys(map).forEach(k => {
+        const arr = Array.isArray(map[k]) ? map[k] : [];
+        const next = arr.filter(row => String(row.id || '') !== String(id));
+        if (next.length !== arr.length) { map[k] = next; changed = true; }
+      });
+      if (changed) {
+        appointmentBookings = map;
+        save(KEYS.appointment_bookings, appointmentBookings);
+      }
+      return changed;
+    } catch { return false; }
+  }
+
+  function bookingsCsvEscape(val) {
+    try { return membershipCsvEscape ? membershipCsvEscape(val) : String(val ?? ''); } catch { return String(val ?? ''); }
+  }
+
+  function performBookingsExport() {
+    const sel = bookingAppointmentSelect ? (bookingAppointmentSelect.value || 'all') : 'all';
+    const list = Array.isArray(currentBookingsList) ? currentBookingsList : [];
+    const filtered = list.filter(r => !sel || sel === 'all' || String(r.appointment_id) === String(sel));
+    if (!filtered.length) return;
+    const rows = filtered.slice().sort((a, b) => bookingSortValue(a) - bookingSortValue(b)).map(r => {
+      const d = buildBookingDisplay(r);
+      return {
+        name: d.name,
+        phone: d.phone,
+        appointment: d.apptTitle,
+        day_date: d.dayDate,
+        time_start: r.time_start || '',
+        time_end: r.time_end || '',
+        created_at: r.created_at || '',
+        status: d.completed ? 'مكتمل' : 'قيد الانتظار',
+      };
+    });
+    const headers = [
+      { key: 'name', label: 'الاسم' },
+      { key: 'phone', label: 'الجوال' },
+      { key: 'appointment', label: 'الموعد' },
+      { key: 'day_date', label: 'اليوم/التاريخ' },
+      { key: 'time_start', label: 'من' },
+      { key: 'time_end', label: 'إلى' },
+      { key: 'created_at', label: 'تاريخ الإنشاء' },
+      { key: 'status', label: 'الحالة' },
+    ];
+    const header = headers.map(h => bookingsCsvEscape(h.label)).join(',');
+    const body = rows.map(row => headers.map(h => bookingsCsvEscape(row[h.key])).join(',')).join('\r\n');
+    const csv = '\uFEFF' + header + '\r\n' + body;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const ts = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const name = `appointment_bookings_${ts.getFullYear()}-${pad(ts.getMonth()+1)}-${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}.csv`;
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  bookingAppointmentSelect?.addEventListener('change', () => { try { renderBookings(); } catch {} });
+  bookingsRefreshBtn?.addEventListener('click', (e) => { e.preventDefault(); try { refreshBookingsPanel(); } catch {} });
+  bookingsExportBtn?.addEventListener('click', (e) => { e.preventDefault(); try { performBookingsExport(); } catch {} });
+  bookingsCards?.addEventListener('click', async (e) => {
+    const btnDel = e.target.closest('button[data-act="del-booking"]');
+    const btnToggle = e.target.closest('button[data-act="toggle-done-booking"]');
+    if (btnDel) {
+      const id = btnDel.getAttribute('data-id');
+      if (!id) return;
+      if (!confirm('تأكيد حذف الحجز؟')) return;
+      const ok = await deleteBookingById(id);
+      if (ok) try { await refreshBookingsPanel(); } catch {}
+      return;
+    }
+    if (btnToggle) {
+      const id = btnToggle.getAttribute('data-id');
+      const done = btnToggle.getAttribute('data-done') === '1' ? false : true; // toggle
+      if (!id) return;
+      const ok = await markBookingCompleted(id, done);
+      if (ok) try { await refreshBookingsPanel(); } catch {}
+      return;
+    }
+  });
 
   addAppointmentBtn?.addEventListener('click', () => {
     appointmentEditingIndex = null;

@@ -1,0 +1,53 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نتائج الاستبيان — نادي أدِيب</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../appointments/appointments.css" />
+    <link rel="stylesheet" href="forms.css" />
+  </head>
+  <body class="forms-body">
+    <header class="board-header">
+      <div class="container">
+        <div class="board-logo">
+          <a class="logo-link" href="../index.html" title="نادي أدِيب">
+            <img alt="شعار نادي أدِيب" class="logo-img" src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" />
+          </a>
+        </div>
+        <h1 id="resHeader" class="board-title"><i class="fa-solid fa-chart-column"></i> النتائج</h1>
+        <p id="resSub" class="board-sub"></p>
+      </div>
+    </header>
+
+    <main class="board-main">
+      <section class="panel" style="padding:16px">
+        <div id="authBox" class="empty-state muted" style="display:none"></div>
+        <div id="errorBox" class="empty-state muted" style="display:none"></div>
+        <div id="resultsBox" style="display:none">
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px">
+            <button id="exportBtn" class="btn btn-outline"><i class="fa-solid fa-file-export"></i> تصدير Excel</button>
+            <span id="stats" class="muted"></span>
+          </div>
+          <div class="table-wrap">
+            <table id="resultsTable" class="results-table"></table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="apt-footer">
+      <div class="container">
+        <a href="https://www.adeeb.club/"><p>جميع الحقوق محفوظة لنادي أدِيب <span class="year-fixed">2025</span> ©</p></a>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="results.js"></script>
+  </body>
+</html>
