@@ -50,11 +50,12 @@
         try {
           const meta = buildMeta();
           const payload = { form_id: f.id, answers, meta };
-          const res = await sb.from('form_responses').insert(payload).select('id').single();
+          const res = await sb.from('form_responses').insert(payload);
           if(res.error){ throw res.error; }
           fillForm.style.display='none';
           thanksBox.style.display='block';
         } catch(err){
+          console.error('Insert error:', err);
           error('تعذر إرسال إجابتك. حاول لاحقًا.');
         }
       });
