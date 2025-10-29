@@ -1,0 +1,87 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>حجز موعد — نادي أدِيب</title>
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#274060" />
+    <link rel="canonical" href="https://www.adeeb.club/appointments/appointments.html" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="appointments.css" />
+  </head>
+  <body class="appointments-body">
+    <header class="board-header">
+      <div class="container">
+        <div class="board-logo">
+          <a class="logo-link" href="../index.html" title="نادي أدِيب">
+            <img alt="شعار نادي أدِيب" class="logo-img" src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" />
+          </a>
+        </div>
+        <h1 class="board-title" id="aptHeader"><i class="fa-solid fa-calendar-check"></i> حجز موعد</h1>
+        <p class="board-sub" id="aptSub"></p>
+                    <span id="presenceCount" class="presence-chip" style="display:none"><i class="fa-solid fa-users"></i> <b>0</b> متصل الآن</span>
+
+      </div>
+    </header>
+
+    <main class="board-main">
+      <section class="panel" style="padding:16px">
+        <div id="aptError" class="empty-state muted" style="display:none"></div>
+        <div id="aptContent" style="display:none">
+          <form id="bookForm" class="form-grid" style="grid-template-columns: 1fr 1fr">
+            <div id="selectionRow" style="grid-column: 1 / -1; display:none; align-items:center; gap:8px">
+              <div id="selectionText" class="muted"></div>
+              <button id="changeSelectionBtn" type="button" class="btn btn-outline btn-xs">تغيير الاختيار</button>
+            </div>
+            <label>
+              اسمك الكامل
+              <input id="custName" type="text" maxlength="120" required />
+            </label>
+            <label>
+              الجوال
+              <input id="custPhone" type="tel" maxlength="30" placeholder="05xxxxxxxx" required />
+            </label>
+            <div class="form-actions" style="grid-column: 1 / -1; display:flex; gap:8px; align-items:center">
+              <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> احجز الآن</button>
+              <span id="statusMsg" class="muted" aria-live="polite"></span>
+            </div>
+          </form>
+          <hr class="divider" />
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <h2 style="margin:0;font-size:1rem;color:var(--main-blue)"><i class="fa-solid fa-clock"></i> الأوقات المتاحة</h2>
+            <div style="flex:1"></div>
+            <button id="refreshBtn" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+          </div>
+          <div id="slotsList" class="cards-grid" aria-live="polite" style="margin-bottom:12px"></div>
+          <div id="noSlots" class="empty-state muted" style="display:none">لا توجد أوقات متاحة حاليًا.</div>
+        </div>
+      </section>
+    </main>
+    <footer class="apt-footer">
+      <div class="container">
+        <a href="https://www.adeeb.club/"><p>جميع الحقوق محفوظة لنادي أدِيب <span class="year-fixed">2025</span> ©</p></a>
+      </div>
+    </footer>
+
+    <dialog id="fillInfoDialog" class="apt-dialog">
+      <form method="dialog" class="dialog-form">
+        <div class="dialog-header">
+          <h3 class="dialog-title"><i class="fa-solid fa-circle-exclamation"></i> تنبيه</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          الرجاء تعبئة الاسم ورقم الجوال قبل اختيار الوقت
+        </div>
+        <menu class="dialog-actions">
+          <button value="ok" class="btn btn-primary">حسناً</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="appointments.js"></script>
+  </body>
+</html>

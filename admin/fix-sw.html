@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إصلاح Service Worker</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      text-align: center;
+      background: #f8f9fa;
+    }
+    button {
+      background: #3d8fd6;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    button:hover {
+      background: #2e7cc3;
+    }
+    #status {
+      margin: 20px 0;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #dee2e6;
+      font-family: monospace;
+      text-align: left;
+      direction: ltr;
+    }
+    .success { color: #28a745; }
+    .error { color: #dc3545; }
+    .info { color: #17a2b8; }
+  </style>
+</head>
+<body>
+  <h1>🔧 إصلاح Service Worker</h1>
+  <p>هذه الصفحة ستصلح مشاكل Service Worker وتعيد تسجيله</p>
+  
+  <button onclick="fixServiceWorker()">إصلاح الآن</button>
+  <button onclick="testNotification()">اختبار الإشعارات</button>
+  <button onclick="window.location.href='./admin.html'">العودة للوحة التحكم</button>
+  
+  <div id="status"></div>
+
+  <script>
+    const status = document.getElementById('status');
+    
+    function log(message, type = 'info') {
+      const time = new Date().toLocaleTimeString();
+      status.innerHTML += `<div class="${type}">[${time}] ${message}</div>`;
+    }
+    
+    async function fixServiceWorker() {
+      try {
+        log('Starting Service Worker fix...', 'info');
+        
+        // 1. Unregister all service workers
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          log(`Found ${registrations.length} service worker(s)`, 'info');
+          
+          for (const registration of registrations) {
+            await registration.unregister();
+            log(`Unregistered: ${registration.scope}`, 'success');
+          }
+        }
+        
+        // 2. Clear all caches
+        if ('caches' in window) {
+          const names = await caches.keys();
+          log(`Found ${names.length} cache(s)`, 'info');
+          
+          for (const name of names) {
+            await caches.delete(name);
+            log(`Deleted cache: ${name}`, 'success');
+          }
+        }
+        
+        // 3. Wait a bit
+        log('Waiting for cleanup...', 'info');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 4. Re-register service worker
+        if ('serviceWorker' in navigator) {
+          const registration = await navigator.serviceWorker.register('./sw.js', { 
+            scope: './',
+            updateViaCache: 'none' // Force update
+          });
+          log('Service Worker registered successfully!', 'success');
+          
+          // 5. Wait for activation
+          if (registration.waiting) {
+            log('New Service Worker waiting...', 'info');
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+          
+          if (registration.active) {
+            log('Service Worker is active!', 'success');
+          }
+          
+          // 6. Force update check
+          await registration.update();
+          log('Update check completed', 'success');
+        }
+        
+        log('✅ Service Worker fixed successfully!', 'success');
+        log('The page will reload in 3 seconds...', 'info');
+        
+        setTimeout(() => {
+          window.location.href = './admin.html';
+        }, 3000);
+        
+      } catch (error) {
+        log(`Error: ${error.message}`, 'error');
+        console.error('Full error:', error);
+      }
+    }
+    
+    async function testNotification() {
+      try {
+        if (!('Notification' in window)) {
+          log('Browser does not support notifications', 'error');
+          return;
+        }
+        
+        let permission = Notification.permission;
+        log(`Current permission: ${permission}`, 'info');
+        
+        if (permission === 'default') {
+          permission = await Notification.requestPermission();
+          log(`New permission: ${permission}`, 'info');
+        }
+        
+        if (permission === 'granted') {
+          // Test basic notification
+          new Notification('🔔 اختبار إشعار', {
+            body: 'إذا رأيت هذا، فالإشعارات تعمل!',
+            icon: '../LOGO.png',
+            dir: 'rtl',
+            lang: 'ar'
+          });
+          log('Basic notification sent', 'success');
+          
+          // Test service worker notification
+          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            const reg = await navigator.serviceWorker.ready;
+            await reg.showNotification('🎉 إشعار Service Worker', {
+              body: 'هذا إشعار من Service Worker',
+              icon: '../LOGO.png',
+              badge: './icons/icon-72x72.png',
+              dir: 'rtl',
+              lang: 'ar',
+              vibrate: [200, 100, 200]
+            });
+            log('Service Worker notification sent', 'success');
+          } else {
+            log('Service Worker not ready for notifications', 'error');
+          }
+          
+        } else {
+          log('Notification permission denied', 'error');
+        }
+      } catch (error) {
+        log(`Error: ${error.message}`, 'error');
+      }
+    }
+    
+    // Auto-check status on load
+    window.addEventListener('load', async () => {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        if (registrations.length > 0) {
+          log(`Service Worker is registered (scope: ${registrations[0].scope})`, 'success');
+        } else {
+          log('No Service Worker registered', 'info');
+        }
+      }
+      
+      if ('Notification' in window) {
+        log(`Notification permission: ${Notification.permission}`, 'info');
+      }
+    });
+  </script>
+</body>
+</html>

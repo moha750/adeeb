@@ -1,0 +1,129 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تسجيل الدخول — نادي أديب</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="googlebot" content="noindex, nofollow" />
+    <link rel="canonical" href="https://www.adeeb.club/login.html" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="blogger/auth.css" />
+  </head>
+  <body>
+    <div class="auth-card" role="main">
+      <header class="auth-header">
+        <img alt="شعار نادي أديب" src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" />
+        <div>
+          <h1 class="auth-title">تسجيل الدخول إلى لوحة التحكم</h1>
+          <p class="auth-subtitle">سجّل دخولك باستخدام البريد الإلكتروني وكلمة المرور.</p>
+        </div>
+      </header>
+
+      <div id="status" class="muted"></div>
+
+      <form id="loginForm" class="auth-form">
+        <label>
+          البريد الإلكتروني
+          <input id="email" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="name@example.com" class="auth-input" />
+        </label>
+        <label>
+          كلمة المرور
+          <input id="password" name="password" type="password" autocomplete="current-password" minlength="6" required placeholder="••••••" class="auth-input" />
+        </label>
+        <div class="auth-actions">
+          <button type="submit" class="btn-primary"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</button>
+        </div>
+      </form>
+
+      <div class="auth-footer">
+        <a href="index.html"><i class="fa-solid fa-globe"></i> الرجوع للموقع</a>
+        <span class="muted">إذا لديك حساب مفعّل فقط ستتمكن من الدخول</span>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+      (async function() {
+        const sb = window.sbClient;
+        const status = document.getElementById('status');
+        const form = document.getElementById('loginForm');
+
+        if (!sb) {
+          status.className = 'alert error';
+          status.textContent = 'Supabase غير مفعّل. تأكد من تحميل المكتبة وإعداد المفاتيح.';
+          form.querySelector('button').disabled = true;
+          return;
+        }
+
+        // Read params for any notices
+        const params = new URLSearchParams(location.search);
+        const notice = params.get('notice');
+        if (notice === 'not_admin') {
+          status.className = 'alert error';
+          status.textContent = 'حسابك ليس إداريًا. يمكنك استخدام حساب إداري للدخول إلى لوحة التحكم.';
+        }
+
+        // If already logged in, do NOT auto-redirect. Keep this page visible.
+        // This lets bloggers open the admin login page without being pushed to the blogger dashboard.
+        try {
+          const { data: { session } } = await sb.auth.getSession();
+          if (session) {
+            status.className = 'muted';
+            status.textContent = 'أنت مسجل دخولًا بالفعل. يمكنك المتابعة إذا رغبت بتسجيل الدخول كحساب مختلف.';
+          }
+        } catch {}
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          status.className = 'muted';
+          status.textContent = '';
+          const email = document.getElementById('email').value.trim();
+          const password = document.getElementById('password').value;
+          if (!email || !password) return;
+          form.querySelector('button').disabled = true;
+          form.querySelector('button').style.opacity = .7;
+          try {
+            const params = new URLSearchParams(location.search);
+            const redirect = params.get('redirect') || 'admin/admin.html';
+            const { data, error } = await sb.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            if (data?.user) {
+              // Role check: must be admin to proceed to admin panel
+              try {
+                const userId = data.user.id;
+                const { data: adminRow, error: adminErr } = await sb
+                  .from('admins')
+                  .select('user_id,is_admin')
+                  .eq('user_id', userId)
+                  .eq('is_admin', true)
+                  .maybeSingle();
+                if (adminErr || !adminRow) {
+                  status.className = 'alert error';
+                  status.textContent = 'ليس لديك الصلاحية لدخول لوحة التحكم.';
+                  return; // keep user on this page, do not redirect
+                }
+              } catch (roleErr) {
+                status.className = 'alert error';
+                status.textContent = 'ليس لديك الصلاحية لدخول لوحة التحكم.';
+                return;
+              }
+              location.replace(redirect);
+              return;
+            }
+            status.className = 'alert error';
+            status.textContent = 'تعذّر تسجيل الدخول. تأكد من البيانات وحاول مرة أخرى.';
+          } catch (err) {
+            status.className = 'alert error';
+            status.textContent = 'فشل تسجيل الدخول: ' + (err?.message || 'حدث خطأ غير متوقع');
+          } finally {
+            form.querySelector('button').disabled = false;
+            form.querySelector('button').style.opacity = 1;
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

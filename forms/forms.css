@@ -1,0 +1,26 @@
+/* أسلوب مبسّط لصفحات الاستبيانات مع الحفاظ على اتساق تصميم الأزرار من appointments.css */
+
+.forms-body { background:#f8fafc; color:#111827; }
+
+/* حاوية الجداول */
+.table-wrap { overflow:auto; border:1px solid var(--border, #e5e7eb); border-radius: 12px; background:#fff; box-shadow: 0 8px 24px rgba(39,64,96,.08); }
+
+/* جدول النتائج */
+.results-table { width:100%; border-collapse: separate; border-spacing:0; min-width:720px; font-family: fr, system-ui, -apple-system, sans-serif; }
+.results-table thead th { position: sticky; top:0; background: #f1f5f9; color:#1f2a37; text-align:start; font-weight:700; padding:12px; border-bottom:1px solid #e5e7eb; }
+.results-table tbody td { padding:12px; border-bottom:1px solid #eef2f7; color:#111827; }
+.results-table tr:hover td { background:#f9fbff; }
+
+/* ملاحظات ونصوص مساعدة */
+.muted { color: var(--muted, #64748b); }
+
+/* حقول إدخال داخل البطاقات */
+.slot-card input[type="text"],
+.slot-card textarea { border:1px solid var(--border, #e5e7eb); border-radius:10px; padding:10px 12px; outline:none; transition: border-color .2s ease, box-shadow .2s ease; }
+.slot-card input[type="text"]:focus,
+.slot-card textarea:focus { border-color: rgba(61,143,214,.55); box-shadow: 0 0 0 3px rgba(61,143,214,.18); }
+
+/* استجابة */
+@media (max-width: 640px) {
+  .results-table { min-width: 600px; }
+}
