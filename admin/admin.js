@@ -5329,7 +5329,7 @@
             ${desc ? `<p class=\"card__text\" style=\"color:#64748b;line-height:1.6;margin:8px 0\">${desc}</p>` : ''}
             
             <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0;font-size:0.75rem;color:#64748b">
-              <span><i class="fa-regular fa-calendar"></i> ${createdDate}</span>
+              <span><i class="fa-regular fa-calendar"></i> نُشر في: ${createdDate}</span>
               <span><i class="fa-solid fa-chart-column"></i> ${responsesCount} رد</span>
             </div>
             
@@ -5340,35 +5340,49 @@
             </div>
             
             <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
-              <!-- مجموعة الروابط والعرض -->
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <button class="btn btn-primary" data-action="fill" data-slug="${slug}" style="flex:1;min-width:120px">
+              <!-- الصف الأول: رابط التعبئة + النتائج -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <button class="btn btn-primary" data-action="fill" data-slug="${slug}">
                   <i class="fa-regular fa-pen-to-square"></i> رابط التعبئة
                 </button>
-                <button class="btn btn-primary" data-action="results" data-slug="${slug}" style="flex:1;min-width:120px">
+                <button class="btn btn-primary" data-action="results" data-slug="${slug}">
                   <i class="fa-solid fa-chart-column"></i> النتائج
                 </button>
-                <button class="btn btn-outline" data-action="copy" data-slug="${slug}" style="flex:1;min-width:120px">
+              </div>
+              
+              <!-- الصف الثاني: نسخ الروابط (معاً) -->
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-outline" data-action="copy-all" data-slug="${slug}" style="flex:1">
                   <i class="fa-regular fa-copy"></i> نسخ الروابط
                 </button>
               </div>
               
-              <!-- مجموعة التحكم في الحالة -->
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <button class="btn btn-outline" data-action="toggle-open" data-id="${id}" style="flex:1;min-width:140px">
+              <!-- الصف الثالث: نسخ رابط التعبئة + نسخ رابط النتائج -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <button class="btn btn-outline" data-action="copy-fill" data-slug="${slug}">
+                  <i class="fa-regular fa-copy"></i> نسخ رابط التعبئة
+                </button>
+                <button class="btn btn-outline" data-action="copy-results" data-slug="${slug}">
+                  <i class="fa-regular fa-copy"></i> نسخ رابط النتائج
+                </button>
+              </div>
+              
+              <!-- الصف الرابع: التحكم في الحالة -->
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+                <button class="btn btn-outline" data-action="toggle-open" data-id="${id}">
                   <i class="fa-solid fa-toggle-${open ? 'on' : 'off'}"></i> ${open ? 'إيقاف الردود' : 'تفعيل الردود'}
                 </button>
-                <button class="btn btn-outline" data-action="toggle-publish" data-id="${id}" style="flex:1;min-width:140px">
+                <button class="btn btn-outline" data-action="toggle-publish" data-id="${id}">
                   <i class="fa-regular fa-newspaper"></i> ${isPub ? 'إلغاء النشر' : 'نشر الاستبيان'}
                 </button>
-                <button class="btn btn-outline" data-action="toggle-public" data-id="${id}" style="flex:1;min-width:140px">
+                <button class="btn btn-outline" data-action="toggle-public" data-id="${id}">
                   <i class="fa-solid fa-eye${isPublic ? '' : '-slash'}"></i> ${isPublic ? 'جعله خاص' : 'جعله عام'}
                 </button>
               </div>
               
-              <!-- زر الحذف منفصل -->
-              <div style="display:flex;justify-content:flex-end">
-                <button class="btn btn-outline" data-action="delete" data-id="${id}" style="color:#ef4444;border-color:#ef4444;min-width:100px">
+              <!-- الصف الخامس: زر الحذف -->
+              <div style="display:flex">
+                <button class="btn btn-outline" data-action="delete" data-id="${id}" style="width:100%">
                   <i class="fa-regular fa-trash-can"></i> حذف
                 </button>
               </div>
@@ -5396,27 +5410,29 @@
     const id = btn.dataset.id || '';
     const slug = btn.dataset.slug || id;
     const origin = location.origin || (location.protocol + '//' + location.host);
-    if (action === 'fill') { window.open(`${origin}/forms/fill.html?form=${encodeURIComponent(slug)}`, '_blank'); return; }
-    if (action === 'results') { window.open(`${origin}/forms/results.html?form=${encodeURIComponent(slug)}`, '_blank'); return; }
-    if (action === 'copy') {
-      const fillUrl = `${origin}/forms/fill.html?form=${encodeURIComponent(slug)}`;
-      const resUrl = `${origin}/forms/results.html?form=${encodeURIComponent(slug)}`;
-      const text = `رابط التعبئة:\n${fillUrl}\n\nرابط النتائج:\n${resUrl}`;
+    const fillUrl = `${origin}/forms/fill.html?form=${encodeURIComponent(slug)}`;
+    const resUrl = `${origin}/forms/results.html?form=${encodeURIComponent(slug)}`;
+    
+    // Helper function to show copy success
+    const showCopySuccess = (button) => {
+      const originalText = button.innerHTML;
+      button.innerHTML = '<i class="fa-solid fa-check"></i> تم النسخ';
+      button.style.background = '#10b981';
+      button.style.borderColor = '#10b981';
+      button.style.color = 'white';
+      setTimeout(() => {
+        button.innerHTML = originalText;
+        button.style.background = '';
+        button.style.borderColor = '';
+        button.style.color = '';
+      }, 2000);
+    };
+    
+    // Helper function to copy text
+    const copyText = async (text, button) => {
       try { 
         await navigator.clipboard.writeText(text);
-        // Show temporary success message
-        const btn = e.target.closest('button');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-check"></i> تم النسخ';
-        btn.style.background = '#10b981';
-        btn.style.borderColor = '#10b981';
-        btn.style.color = 'white';
-        setTimeout(() => {
-          btn.innerHTML = originalText;
-          btn.style.background = '';
-          btn.style.borderColor = '';
-          btn.style.color = '';
-        }, 2000);
+        showCopySuccess(button);
       } catch {
         try {
           const ta = document.createElement('textarea');
@@ -5425,11 +5441,32 @@
           ta.select();
           document.execCommand('copy');
           ta.remove();
-          alert('تم نسخ الروابط');
+          alert('تم نسخ الرابط');
         } catch {
-          alert('تعذر نسخ الروابط');
+          alert('تعذر نسخ الرابط');
         }
       }
+    };
+    
+    if (action === 'fill') { window.open(fillUrl, '_blank'); return; }
+    if (action === 'results') { window.open(resUrl, '_blank'); return; }
+    
+    // نسخ رابط التعبئة فقط
+    if (action === 'copy-fill') {
+      await copyText(fillUrl, btn);
+      return;
+    }
+    
+    // نسخ رابط النتائج فقط
+    if (action === 'copy-results') {
+      await copyText(resUrl, btn);
+      return;
+    }
+    
+    // نسخ كلا الرابطين معاً
+    if (action === 'copy-all') {
+      const text = `رابط التعبئة:\n${fillUrl}\n\nرابط النتائج:\n${resUrl}`;
+      await copyText(text, btn);
       return;
     }
     if (!sb) { alert('Supabase غير مفعّل.'); return; }

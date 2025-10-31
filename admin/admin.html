@@ -995,9 +995,16 @@
           <div id="formsList" class="cards-grid forms-grid" aria-live="polite"></div>
           
           <style>
+            /* تخطيط عمود واحد للاستبيانات */
+            #formsList.cards-grid {
+              grid-template-columns: 1fr;
+              max-width: 900px;
+              margin: 0 auto;
+            }
+            
             .forms-grid .card {
-              min-width: 350px;
-              max-width: 500px;
+              width: 100%;
+              max-width: none;
             }
             
             .status-pill {
@@ -1031,14 +1038,34 @@
               flex-shrink: 0;
             }
             
+            /* أنماط زر الحذف */
+            .forms-grid .btn[data-action="delete"] {
+              color: #ef4444;
+              border-color: #ef4444;
+            }
+            
+            .forms-grid .btn[data-action="delete"]:hover {
+              background: #ef4444;
+              border-color: #ef4444;
+              color: white;
+            }
+            
             @media (max-width: 768px) {
-              .forms-grid .card {
-                min-width: 100%;
+              /* تحويل جميع الصفوف إلى عمود واحد على الشاشات الصغيرة */
+              .forms-grid .card [style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
               }
               
               .forms-grid .btn {
-                min-width: 100% !important;
-                flex: none !important;
+                width: 100%;
+                text-align: center;
+              }
+            }
+            
+            @media (max-width: 480px) {
+              .forms-grid .btn {
+                font-size: 0.8rem;
+                padding: 6px 10px;
               }
             }
           </style>
