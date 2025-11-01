@@ -356,6 +356,30 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 	console.log('🖼️ دعم WebP:', isWebPSupported ? 'مفعّل ✅' : 'غير مدعوم ❌');
 	console.log('📱 الجهاز:', isiOS ? 'iOS 🍎' : 'Android/Desktop 🤖');
 	
+	// على iOS، حمّل جميع الصور مباشرة (بدون lazy loading)
+	if (isiOS) {
+		console.log('🍎 iOS detected - Loading all images immediately');
+		$('img.lazy-page').each(function(index) {
+			var $img = $(this);
+			var dataSrc = $img.attr('data-src');
+			if (dataSrc) {
+				var src = isWebPSupported ? dataSrc.replace('.png', '.webp') : dataSrc;
+				
+				// إضافة معالج onerror للتبديل إلى PNG
+				$img.on('error', function() {
+					if ($(this).attr('src').includes('.webp')) {
+						console.warn('⚠️ WebP failed, switching to PNG:', dataSrc);
+						$(this).attr('src', dataSrc);
+					}
+				});
+				
+				$img.attr('src', src);
+				$img.addClass('loaded');
+				console.log('📄 Preloading:', src);
+			}
+		});
+	}
+	
 	// تحميل صورة مع دعم WebP
 	function loadImage(imgElement, pageNum) {
 		if (loadedImages[pageNum]) return; // تجنب التحميل المكرر
@@ -363,15 +387,22 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 		var $img = $(imgElement);
 		var imageSrc = $img.attr('data-src');
 		
-		if (!imageSrc) return;
+		if (!imageSrc) {
+			console.warn('⚠️ No data-src for page', pageNum);
+			return;
+		}
+		
+		console.log('🔄 Loading page', pageNum, ':', imageSrc);
 		
 		// محاولة تحميل WebP أولاً إذا كان مدعوماً
 		var webpSrc = imageSrc.replace('.png', '.webp');
 		var finalSrc = isWebPSupported ? webpSrc : imageSrc;
 		
 		var tempImg = new Image();
+		var fallbackAttempted = false;
 		
 		tempImg.onload = function() {
+			console.log('✅ Loaded page', pageNum);
 			$img.attr('src', finalSrc);
 			$img.addClass('loaded');
 			loadedImages[pageNum] = true;
@@ -379,11 +410,16 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 		
 		tempImg.onerror = function() {
 			// إذا فشل تحميل WebP، جرب PNG
-			if (isWebPSupported && finalSrc.includes('.webp')) {
+			if (isWebPSupported && finalSrc.includes('.webp') && !fallbackAttempted) {
+				console.warn('⚠️ WebP failed for page', pageNum, ', trying PNG...');
+				fallbackAttempted = true;
+				finalSrc = imageSrc;
 				tempImg.src = imageSrc;
 			} else {
-				console.error('فشل تحميل الصورة:', imageSrc);
-				$img.addClass('loaded'); // إظهار حتى لو فشل
+				console.error('❌ Failed to load page', pageNum, ':', imageSrc);
+				// حاول تحميل مباشر كـ fallback أخير
+				$img.attr('src', imageSrc);
+				$img.addClass('loaded');
 				loadedImages[pageNum] = true;
 			}
 		};
@@ -445,8 +481,17 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 		flipbookWidth = flipbookWidth * scale;
 		flipbookHeight = flipbookHeight * scale;
 		
-		// تحميل الصفحات الأولية
-		loadVisiblePages(1);
+		console.log('📐 Flipbook dimensions:', flipbookWidth, 'x', flipbookHeight);
+		
+		// تحميل الصفحات الأولية فوراً (الصفحات 1-5)
+		console.log('🚀 Loading initial pages...');
+		for (var i = 1; i <= 5; i++) {
+			var $pageDiv = $('[data-page="' + i + '"]');
+			var $img = $pageDiv.find('img.lazy-page');
+			if ($img.length) {
+				loadImage($img[0], i);
+			}
+		}
 		
 		// تهيئة turn.js مع معالجة أخطاء iOS
 		try {
@@ -479,10 +524,36 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 			});
 			
 			console.log('✅ Flipbook initialized successfully');
+			
+			// تحميل باقي الصفحات تدريجياً
+			setTimeout(function() {
+				console.log('🔄 Loading remaining pages...');
+				for (var i = 6; i <= 18; i++) {
+					(function(pageNum) {
+						setTimeout(function() {
+							var $pageDiv = $('[data-page="' + pageNum + '"]');
+							var $img = $pageDiv.find('img.lazy-page');
+							if ($img.length && !$img.attr('src')) {
+								loadImage($img[0], pageNum);
+							}
+						}, (pageNum - 6) * 200); // تأخير 200ms بين كل صفحة
+					})(i);
+				}
+			}, 1000);
+			
 		} catch (error) {
 			console.error('❌ Error initializing flipbook:', error);
-			// حتى لو فشل turn.js، أخفِ شاشة التحميل
+			// حتى لو فشل turn.js، أخفِ شاشة التحميل وحمّل الصور
 			hideLoadingScreen();
+			
+			// تحميل جميع الصور مباشرة
+			for (var i = 1; i <= 18; i++) {
+				var $pageDiv = $('[data-page="' + i + '"]');
+				var $img = $pageDiv.find('img.lazy-page');
+				if ($img.length && !$img.attr('src')) {
+					loadImage($img[0], i);
+				}
+			}
 		}
 		
 		// تحديث عداد الصفحات مع تأثير
