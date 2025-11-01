@@ -354,7 +354,7 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 			
 			for (var i = 1; i <= totalPages; i++) {
 				var pageNum = i;
-				var imageSrc = 'P-' + (i < 10 ? '0' + i : i) + '.png';
+				var imageSrc = 'p-' + (i < 10 ? '0' + i : i) + '.png';
 				var pageName = pageNames[i] || 'صفحة ' + i;
 				
 				var $pageItem = $('<div>', {
@@ -437,4 +437,4 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 		});
 	};
 	
-	img.src = "P-01.png";
+	img.src = "p-01.png";
