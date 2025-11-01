@@ -278,8 +278,8 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 	// تهيئة الصوت
 	initAudio();
 	
-	// وظيفة تغيير حالة زر التحميل
-	function handleDownloadClick() {
+	// وظيفة تحميل مباشر للملف (يعمل على جميع الأنظمة بما فيها iOS)
+	function handleDownloadClick(e) {
 		var $btn = $('.download-pdf-btn');
 		var $icon = $btn.find('i');
 		var $text = $btn.find('span');
@@ -288,19 +288,97 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 		var originalText = $text.text();
 		var originalIcon = $icon.attr('class');
 		
-		// تغيير إلى حالة "تم التحميل" مع تأخير بسيط
-		setTimeout(function() {
-			$btn.addClass('downloaded');
-			$icon.removeClass('fa-download').addClass('fa-check-circle');
-			$text.text('تم التحميل ✓');
-		}, 300);
+		// تحميل الملف مباشرة
+		var pdfUrl = 'دستور أدِيب.pdf';
+		var fileName = 'دستور-أديب.pdf';
 		
-		// إرجاع الزر لحالته الطبيعية بعد 3 ثواني
-		setTimeout(function() {
-			$btn.removeClass('downloaded');
-			$icon.attr('class', originalIcon);
-			$text.text(originalText);
-		}, 3500);
+		console.log('📥 بدء تحميل الملف...');
+		console.log('📱 الجهاز:', isiOS ? 'iOS 🍎' : 'Other');
+		
+		// على iOS: السماح بالسلوك الافتراضي (تحميل مباشر)
+		if (isiOS) {
+			console.log('🍎 iOS: استخدام التحميل الافتراضي');
+			// لا نمنع السلوك الافتراضي على iOS
+			// فقط نعرض التأثير البصري
+			setTimeout(function() {
+				$btn.addClass('downloaded');
+				$icon.removeClass('fa-download').addClass('fa-check-circle');
+				$text.text('تم التحميل ✓');
+			}, 300);
+			
+			setTimeout(function() {
+				$btn.removeClass('downloaded');
+				$icon.attr('class', originalIcon);
+				$text.text(originalText);
+			}, 3500);
+			
+			return; // السماح للرابط بالعمل بشكل طبيعي
+		}
+		
+		// على الأنظمة الأخرى: منع السلوك الافتراضي واستخدام XHR
+		e.preventDefault();
+		
+		// إنشاء XMLHttpRequest لتحميل الملف
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', pdfUrl, true);
+		xhr.responseType = 'blob';
+		
+		xhr.onprogress = function(event) {
+			if (event.lengthComputable) {
+				var percentComplete = (event.loaded / event.total) * 100;
+				console.log('📊 التقدم: ' + Math.round(percentComplete) + '%');
+			}
+		};
+		
+		xhr.onload = function() {
+			if (xhr.status === 200) {
+				var blob = xhr.response;
+				
+				// الطريقة العادية (لن يتم استخدامها على iOS)
+				console.log('💻 استخدام الطريقة العادية...');
+				
+				var link = document.createElement('a');
+				var url = window.URL.createObjectURL(blob);
+				
+				link.href = url;
+				link.download = fileName;
+				link.style.display = 'none';
+				
+				document.body.appendChild(link);
+				link.click();
+				console.log('✅ تم بدء التحميل');
+				
+				// تنظيف
+				setTimeout(function() {
+					document.body.removeChild(link);
+					window.URL.revokeObjectURL(url);
+				}, 100);
+				
+				// تغيير إلى حالة "تم التحميل"
+				setTimeout(function() {
+					$btn.addClass('downloaded');
+					$icon.removeClass('fa-download').addClass('fa-check-circle');
+					$text.text('تم التحميل ✓');
+				}, 300);
+				
+				// إرجاع الزر لحالته الطبيعية بعد 3 ثواني
+				setTimeout(function() {
+					$btn.removeClass('downloaded');
+					$icon.attr('class', originalIcon);
+					$text.text(originalText);
+				}, 3500);
+			} else {
+				console.error('❌ خطأ HTTP:', xhr.status);
+				alert('عذراً، حدث خطأ أثناء التحميل. يرجى المحاولة مرة أخرى.');
+			}
+		};
+		
+		xhr.onerror = function() {
+			console.error('❌ فشل تحميل الملف');
+			alert('عذراً، حدث خطأ أثناء التحميل. يرجى المحاولة مرة أخرى.');
+		};
+		
+		xhr.send();
 	}
 	
 	// ربط زر التحكم بالصوت وزر ملء الشاشة
