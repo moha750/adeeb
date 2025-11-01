@@ -163,9 +163,6 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 				elem.msRequestFullscreen();
 			}
 			
-			// إضافة class لإخفاء الهيدر والفوتر
-			$('body').addClass('fullscreen-mode');
-			
 			$btn.addClass('active');
 			$icon.removeClass('fa-expand').addClass('fa-compress');
 			$btn.attr('title', 'الخروج من ملء الشاشة');
@@ -181,9 +178,6 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 				document.msExitFullscreen();
 			}
 			
-			// إزالة class لإظهار الهيدر والفوتر
-			$('body').removeClass('fullscreen-mode');
-			
 			$btn.removeClass('active');
 			$icon.removeClass('fa-compress').addClass('fa-expand');
 			$btn.attr('title', 'ملء الشاشة');
@@ -197,15 +191,9 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 		
 		if (!document.fullscreenElement && !document.webkitFullscreenElement && 
 			!document.mozFullScreenElement && !document.msFullscreenElement) {
-			// إزالة class لإظهار الهيدر والفوتر
-			$('body').removeClass('fullscreen-mode');
-			
 			$btn.removeClass('active');
 			$icon.removeClass('fa-compress').addClass('fa-expand');
 			$btn.attr('title', 'ملء الشاشة');
-		} else {
-			// إضافة class لإخفاء الهيدر والفوتر
-			$('body').addClass('fullscreen-mode');
 		}
 	}
 	
@@ -245,79 +233,6 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 		});
 	});
 	
-	// ===== نظام Lazy Loading مع دعم WebP =====
-	
-	// فحص دعم WebP
-	function supportsWebP() {
-		var elem = document.createElement('canvas');
-		if (!!(elem.getContext && elem.getContext('2d'))) {
-			return elem.toDataURL('image/webp').indexOf('data:image/webp') == 0;
-		}
-		return false;
-	}
-	
-	var isWebPSupported = supportsWebP();
-	var loadedImages = {}; // تتبع الصور المحملة
-	
-	console.log('🖼️ دعم WebP:', isWebPSupported ? 'مفعّل ✅' : 'غير مدعوم ❌');
-	
-	// تحميل صورة مع دعم WebP
-	function loadImage(imgElement, pageNum) {
-		if (loadedImages[pageNum]) return; // تجنب التحميل المكرر
-		
-		var $img = $(imgElement);
-		var imageSrc = $img.attr('data-src');
-		
-		if (!imageSrc) return;
-		
-		// محاولة تحميل WebP أولاً إذا كان مدعوماً
-		var webpSrc = imageSrc.replace('.png', '.webp');
-		var finalSrc = isWebPSupported ? webpSrc : imageSrc;
-		
-		var tempImg = new Image();
-		
-		tempImg.onload = function() {
-			$img.attr('src', finalSrc);
-			$img.addClass('loaded');
-			loadedImages[pageNum] = true;
-		};
-		
-		tempImg.onerror = function() {
-			// إذا فشل تحميل WebP، جرب PNG
-			if (isWebPSupported && finalSrc.includes('.webp')) {
-				tempImg.src = imageSrc;
-			} else {
-				console.error('فشل تحميل الصورة:', imageSrc);
-				$img.addClass('loaded'); // إظهار حتى لو فشل
-				loadedImages[pageNum] = true;
-			}
-		};
-		
-		tempImg.src = finalSrc;
-	}
-	
-	// تحميل الصفحات المرئية والمجاورة
-	function loadVisiblePages(currentPage) {
-		// تحميل الصفحة الحالية والصفحات المجاورة (±2)
-		var pagesToLoad = [
-			currentPage - 2,
-			currentPage - 1,
-			currentPage,
-			currentPage + 1,
-			currentPage + 2
-		];
-		
-		pagesToLoad.forEach(function(pageNum) {
-			if (pageNum >= 1 && pageNum <= 18) {
-				var $pageDiv = $('[data-page="' + pageNum + '"]');
-				var $img = $pageDiv.find('img.lazy-page');
-				if ($img.length && !$img.attr('src')) {
-					loadImage($img[0], pageNum);
-				}
-			}
-		});
-	}
-	
 	// تحميل الصورة الأولى للحصول على الأبعاد
 	var img = new Image();
 	img.onload = function() {
@@ -337,9 +252,6 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 		flipbookWidth = flipbookWidth * scale;
 		flipbookHeight = flipbookHeight * scale;
 		
-		// تحميل الصفحات الأولية
-		loadVisiblePages(1);
-		
 		$("#flipbook").turn({
 			width: flipbookWidth,
 			height: flipbookHeight,
@@ -356,14 +268,10 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 					playPageFlipSound();
 					updatePageCounter(page);
 					updateNavigationButtons(page);
-					// تحميل الصفحات المجاورة
-					loadVisiblePages(page);
 				},
 				turned: function(event, page, view) {
 					updatePageCounter(page);
 					updateNavigationButtons(page);
-					// تحميل الصفحات المجاورة
-					loadVisiblePages(page);
 				}
 			}
 		});
@@ -446,8 +354,7 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 			
 			for (var i = 1; i <= totalPages; i++) {
 				var pageNum = i;
-				var imageBase = 'p-' + (i < 10 ? '0' + i : i);
-				var imageSrc = isWebPSupported ? imageBase + '.webp' : imageBase + '.png';
+				var imageSrc = 'p-' + (i < 10 ? '0' + i : i) + '.png';
 				var pageName = pageNames[i] || 'صفحة ' + i;
 				
 				var $pageItem = $('<div>', {
@@ -530,5 +437,4 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 		});
 	};
 	
-	// استخدام WebP إذا كان مدعوماً، وإلا PNG
-	img.src = isWebPSupported ? "p-01.webp" : "p-01.png";
+	img.src = "p-01.png";

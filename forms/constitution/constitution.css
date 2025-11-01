@@ -15,13 +15,13 @@
 }
 
 @font-face {
-  font-family: eras;
-  src: url(../fonts/ERASDEMI.TTF);
+  font-family: a;
+  src: url(../fonts/Almarai-Regular.ttf);
 }
 
 @font-face {
-  font-family: eras-s;
-  src: url(../fonts/ERASLGHT.TTF);
+  font-family: eras;
+  src: url(../fonts/ERASDEMI.TTF);
 }
 
 * {
@@ -459,6 +459,7 @@ body::before {
   letter-spacing: 1px;
   background: linear-gradient(135deg, #ffffff 0%, #e0f2ff 100%);
   -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
@@ -818,44 +819,6 @@ body::before {
   display: none;
 }
 
-/* Lazy Loading للصور */
-.lazy-page {
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-}
-
-.lazy-page.loaded {
-  opacity: 1;
-}
-
-.lazy-page:not([src]) {
-  min-height: 400px;
-  display: block;
-}
-
-/* وضع ملء الشاشة */
-body.fullscreen-mode {
-  overflow: hidden;
-}
-
-body.fullscreen-mode .header-bar,
-body.fullscreen-mode .footer {
-  display: none;
-}
-
-body.fullscreen-mode .flipbook-container {
-  margin-top: 0;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-body.fullscreen-mode #flipbook {
-  max-height: 95vh;
-}
-
 /* الفوتر */
 .footer {
   width: 100%;
@@ -956,11 +919,6 @@ body.fullscreen-mode #flipbook {
   color: white;
 }
 
-.footer-date strong {
-  font-family: b;
-  color: white;
-}
-
 .team-item {
   display: flex;
   align-items: center;
@@ -989,8 +947,47 @@ body.fullscreen-mode #flipbook {
   color: white;
 }
 
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-links a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: fr;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.footer-links a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--light-blue);
+  padding-right: 15px;
+  color: white;
+}
+
+.footer-links a i {
+  color: var(--light-blue);
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.footer-links a:hover i {
+  transform: scale(1.2);
+}
+
 .footer-bottom {
   text-align: center;
+  padding-top: 25px;
 }
 
 .footer-divider {
@@ -1007,12 +1004,15 @@ body.fullscreen-mode #flipbook {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.7);
   margin: 0;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.footer-copyright .year {
-  font-family: eras-s;
-  color: rgba(255, 255, 255, 0.8);
+.footer-copyright i {
+  color: var(--light-blue);
+  font-size: 16px;
 }
 
 /* تصميم متجاوب */
@@ -1043,9 +1043,17 @@ body.fullscreen-mode #flipbook {
     font-size: 14px;
   }
   
+  .pages-menu-btn span {
+    display: none;
+  }
+  
   .header-home-btn {
     padding: 10px 18px;
     font-size: 14px;
+  }
+  
+  .header-home-btn span {
+    display: none;
   }
   
   .pages-sidebar {
@@ -1119,7 +1127,8 @@ body.fullscreen-mode #flipbook {
   }
   
   .footer-date,
-  .team-item {
+  .team-item,
+  .footer-links a {
     font-size: 14px;
   }
   
@@ -1166,6 +1175,10 @@ body.fullscreen-mode #flipbook {
   
   .header-home-btn i {
     font-size: 18px;
+  }
+  
+  .header-home-btn span {
+    display: none;
   }
   
   .pages-sidebar {
@@ -1256,7 +1269,8 @@ body.fullscreen-mode #flipbook {
   }
   
   .footer-date,
-  .team-item {
+  .team-item,
+  .footer-links a {
     font-size: 13px;
   }
   
