@@ -143,69 +143,120 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 		}
 	}
 	
-	// وظيفة ملء الشاشة
+	// وظيفة ملء الشاشة (مع دعم الجوال)
 	function toggleFullscreen() {
 		var $btn = $('#fullscreenBtn');
 		var $icon = $btn.find('i');
+		var isInFullscreen = document.fullscreenElement || document.webkitFullscreenElement || 
+			document.mozFullScreenElement || document.msFullscreenElement || 
+			$('body').hasClass('fullscreen-mode');
 		
-		if (!document.fullscreenElement && !document.webkitFullscreenElement && 
-			!document.mozFullScreenElement && !document.msFullscreenElement) {
+		if (!isInFullscreen) {
 			// الدخول في وضع ملء الشاشة
 			var elem = document.documentElement;
+			var fullscreenSuccess = false;
 			
+			// محاولة استخدام Fullscreen API
 			if (elem.requestFullscreen) {
-				elem.requestFullscreen();
+				elem.requestFullscreen().then(function() {
+					fullscreenSuccess = true;
+				}).catch(function() {
+					// فشل API، استخدم CSS fallback
+					enterFullscreenMode();
+				});
 			} else if (elem.webkitRequestFullscreen) {
 				elem.webkitRequestFullscreen();
+				fullscreenSuccess = true;
+			} else if (elem.webkitEnterFullscreen) {
+				// Safari iOS
+				elem.webkitEnterFullscreen();
+				fullscreenSuccess = true;
 			} else if (elem.mozRequestFullScreen) {
 				elem.mozRequestFullScreen();
+				fullscreenSuccess = true;
 			} else if (elem.msRequestFullscreen) {
 				elem.msRequestFullscreen();
+				fullscreenSuccess = true;
+			} else {
+				// المتصفح لا يدعم Fullscreen API (معظم متصفحات الجوال)
+				enterFullscreenMode();
+				fullscreenSuccess = true;
 			}
 			
-			// إضافة class لإخفاء الهيدر والفوتر
-			$('body').addClass('fullscreen-mode');
-			
-			$btn.addClass('active');
-			$icon.removeClass('fa-expand').addClass('fa-compress');
-			$btn.attr('title', 'الخروج من ملء الشاشة');
+			// إذا لم ينجح API، استخدم CSS
+			if (!fullscreenSuccess) {
+				enterFullscreenMode();
+			}
 		} else {
 			// الخروج من وضع ملء الشاشة
 			if (document.exitFullscreen) {
-				document.exitFullscreen();
+				document.exitFullscreen().catch(function() {
+					exitFullscreenMode();
+				});
 			} else if (document.webkitExitFullscreen) {
 				document.webkitExitFullscreen();
+			} else if (document.webkitCancelFullScreen) {
+				document.webkitCancelFullScreen();
 			} else if (document.mozCancelFullScreen) {
 				document.mozCancelFullScreen();
 			} else if (document.msExitFullscreen) {
 				document.msExitFullscreen();
+			} else {
+				exitFullscreenMode();
 			}
-			
-			// إزالة class لإظهار الهيدر والفوتر
-			$('body').removeClass('fullscreen-mode');
-			
-			$btn.removeClass('active');
-			$icon.removeClass('fa-compress').addClass('fa-expand');
-			$btn.attr('title', 'ملء الشاشة');
 		}
+	}
+	
+	// دخول وضع ملء الشاشة (CSS fallback للجوال)
+	function enterFullscreenMode() {
+		$('body').addClass('fullscreen-mode');
+		var $btn = $('#fullscreenBtn');
+		var $icon = $btn.find('i');
+		$btn.addClass('active');
+		$icon.removeClass('fa-expand').addClass('fa-compress');
+		$btn.attr('title', 'الخروج من ملء الشاشة');
+		
+		// منع التمرير
+		document.body.style.overflow = 'hidden';
+		document.body.style.position = 'fixed';
+		document.body.style.width = '100%';
+		
+		// إخفاء شريط العنوان في الجوال
+		setTimeout(function() {
+			window.scrollTo(0, 1);
+		}, 100);
+		
+		// تحديث حجم الكتيب
+		$(window).trigger('resize');
+	}
+	
+	// الخروج من وضع ملء الشاشة (CSS fallback)
+	function exitFullscreenMode() {
+		$('body').removeClass('fullscreen-mode');
+		var $btn = $('#fullscreenBtn');
+		var $icon = $btn.find('i');
+		$btn.removeClass('active');
+		$icon.removeClass('fa-compress').addClass('fa-expand');
+		$btn.attr('title', 'ملء الشاشة');
+		
+		// إعادة التمرير
+		document.body.style.overflow = '';
+		document.body.style.position = '';
+		document.body.style.width = '';
+		
+		// تحديث حجم الكتيب
+		$(window).trigger('resize');
 	}
 	
 	// مراقبة تغيير حالة ملء الشاشة (عند الضغط على ESC)
 	function handleFullscreenChange() {
-		var $btn = $('#fullscreenBtn');
-		var $icon = $btn.find('i');
-		
 		if (!document.fullscreenElement && !document.webkitFullscreenElement && 
 			!document.mozFullScreenElement && !document.msFullscreenElement) {
-			// إزالة class لإظهار الهيدر والفوتر
-			$('body').removeClass('fullscreen-mode');
-			
-			$btn.removeClass('active');
-			$icon.removeClass('fa-compress').addClass('fa-expand');
-			$btn.attr('title', 'ملء الشاشة');
+			// الخروج من ملء الشاشة
+			exitFullscreenMode();
 		} else {
-			// إضافة class لإخفاء الهيدر والفوتر
-			$('body').addClass('fullscreen-mode');
+			// الدخول في ملء الشاشة
+			enterFullscreenMode();
 		}
 	}
 	
@@ -215,13 +266,50 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 	document.addEventListener('mozfullscreenchange', handleFullscreenChange);
 	document.addEventListener('MSFullscreenChange', handleFullscreenChange);
 	
+	// دعم تغيير اتجاه الشاشة على الجوال
+	window.addEventListener('orientationchange', function() {
+		if ($('body').hasClass('fullscreen-mode')) {
+			setTimeout(function() {
+				$(window).trigger('resize');
+			}, 300);
+		}
+	});
+	
 	// تهيئة الصوت
 	initAudio();
+	
+	// وظيفة تغيير حالة زر التحميل
+	function handleDownloadClick() {
+		var $btn = $('.download-pdf-btn');
+		var $icon = $btn.find('i');
+		var $text = $btn.find('span');
+		
+		// حفظ النص الأصلي
+		var originalText = $text.text();
+		var originalIcon = $icon.attr('class');
+		
+		// تغيير إلى حالة "تم التحميل" مع تأخير بسيط
+		setTimeout(function() {
+			$btn.addClass('downloaded');
+			$icon.removeClass('fa-download').addClass('fa-check-circle');
+			$text.text('تم التحميل ✓');
+		}, 300);
+		
+		// إرجاع الزر لحالته الطبيعية بعد 3 ثواني
+		setTimeout(function() {
+			$btn.removeClass('downloaded');
+			$icon.attr('class', originalIcon);
+			$text.text(originalText);
+		}, 3500);
+	}
 	
 	// ربط زر التحكم بالصوت وزر ملء الشاشة
 	$(document).ready(function() {
 		$('#soundToggleBtn').on('click', toggleSound);
 		$('#fullscreenBtn').on('click', toggleFullscreen);
+		
+		// ربط زر التحميل
+		$('.download-pdf-btn').on('click', handleDownloadClick);
 		
 		// تأثير تمرير الهيدر
 		var lastScrollTop = 0;

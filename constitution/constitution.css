@@ -818,6 +818,119 @@ body::before {
   display: none;
 }
 
+/* زر تحميل PDF */
+.download-pdf-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 30px auto 0;
+  padding: 16px 40px;
+  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--light-blue) 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 50px;
+  font-family: fr;
+  font-size: 18px;
+  font-weight: 600;
+  box-shadow: 0 8px 25px rgba(39, 64, 96, 0.3);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  max-width: 300px;
+}
+
+.download-pdf-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.download-pdf-btn:hover::before {
+  left: 100%;
+}
+
+.download-pdf-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(39, 64, 96, 0.4);
+}
+
+.download-pdf-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(39, 64, 96, 0.3);
+}
+
+.download-pdf-btn i {
+  font-size: 20px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.download-pdf-btn span {
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+/* حالة "تم التحميل" */
+.download-pdf-btn.downloaded {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  transform: scale(1.05);
+}
+
+.download-pdf-btn.downloaded:hover {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 12px 35px rgba(16, 185, 129, 0.5);
+}
+
+.download-pdf-btn.downloaded i {
+  animation: checkPulse 0.6s ease;
+}
+
+.download-pdf-btn.downloaded span {
+  animation: fadeInText 0.4s ease;
+}
+
+@keyframes checkPulse {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInText {
+  0% {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Lazy Loading للصور */
 .lazy-page {
   opacity: 0;
@@ -837,23 +950,79 @@ body::before {
 /* وضع ملء الشاشة */
 body.fullscreen-mode {
   overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
 }
 
 body.fullscreen-mode .header-bar,
-body.fullscreen-mode .footer {
-  display: none;
+body.fullscreen-mode .footer,
+body.fullscreen-mode .download-pdf-btn,
+body.fullscreen-mode .pages-sidebar {
+  display: none !important;
 }
 
 body.fullscreen-mode .flipbook-container {
   margin-top: 0;
   height: 100vh;
+  height: 100dvh; /* Dynamic viewport height للجوال */
+  width: 100vw;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  background: var(--dark-blue);
 }
 
 body.fullscreen-mode #flipbook {
   max-height: 95vh;
+  max-height: 95dvh; /* Dynamic viewport height للجوال */
+  max-width: 95vw;
+}
+
+body.fullscreen-mode .navigation-controls {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  background: rgba(39, 64, 96, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 50px;
+  padding: 12px 20px;
+}
+
+/* تحسينات للجوال في وضع ملء الشاشة */
+@media (max-width: 768px) {
+  body.fullscreen-mode .navigation-controls {
+    bottom: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    padding: 10px 15px;
+  }
+  
+  body.fullscreen-mode #flipbook {
+    max-height: 90vh;
+    max-height: 90dvh;
+  }
+}
+
+/* دعم iPhone notch و safe areas */
+@supports (padding: max(0px)) {
+  body.fullscreen-mode .flipbook-container {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  body.fullscreen-mode .navigation-controls {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 /* الفوتر */
@@ -1030,6 +1199,16 @@ body.fullscreen-mode #flipbook {
     font-size: 18px;
   }
   
+  .download-pdf-btn {
+    padding: 14px 30px;
+    font-size: 16px;
+    max-width: 280px;
+  }
+  
+  .download-pdf-btn i {
+    font-size: 18px;
+  }
+  
   .header-bar {
     padding: 15px 20px;
   }
@@ -1128,6 +1307,26 @@ body.fullscreen-mode #flipbook {
   }
 }
 
+@media (max-width: 500px) {
+  
+  /* إخفاء النصوص والاكتفاء بالأيقونات */
+  .pages-menu-btn span,
+  .header-home-btn span {
+    display: none;
+  }
+  
+  .pages-menu-btn,
+  .header-home-btn {
+    padding: 10px 14px;
+    min-width: auto;
+  }
+  
+  .pages-menu-btn i,
+  .header-home-btn i {
+    margin: 0;
+  }
+}
+
 @media (max-width: 480px) {
   
   .sound-toggle-btn {
@@ -1142,6 +1341,21 @@ body.fullscreen-mode #flipbook {
     font-size: 16px;
   }
   
+  .download-pdf-btn {
+    padding: 12px 24px;
+    font-size: 14px;
+    max-width: 250px;
+    gap: 8px;
+  }
+  
+  .download-pdf-btn i {
+    font-size: 16px;
+  }
+  
+  .download-pdf-btn span {
+    font-size: 14px;
+  }
+  
   .header-bar {
     padding: 12px 15px;
   }
@@ -1151,7 +1365,7 @@ body.fullscreen-mode #flipbook {
   }
   
   .pages-menu-btn {
-    padding: 10px 16px;
+    padding: 10px 12px;
     font-size: 14px;
   }
   
@@ -1160,7 +1374,7 @@ body.fullscreen-mode #flipbook {
   }
   
   .header-home-btn {
-    padding: 10px 16px;
+    padding: 10px 12px;
     font-size: 14px;
   }
   
