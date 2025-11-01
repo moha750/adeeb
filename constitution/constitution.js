@@ -344,10 +344,17 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 		return false;
 	}
 	
+	// فحص إذا كان الجهاز iOS
+	function isIOS() {
+		return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+	}
+	
 	var isWebPSupported = supportsWebP();
 	var loadedImages = {}; // تتبع الصور المحملة
+	var isiOS = isIOS();
 	
 	console.log('🖼️ دعم WebP:', isWebPSupported ? 'مفعّل ✅' : 'غير مدعوم ❌');
+	console.log('📱 الجهاز:', isiOS ? 'iOS 🍎' : 'Android/Desktop 🤖');
 	
 	// تحميل صورة مع دعم WebP
 	function loadImage(imgElement, pageNum) {
@@ -408,9 +415,22 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 	
 	// تحميل الصورة الأولى للحصول على الأبعاد
 	var img = new Image();
-	img.onload = function() {
-		var pageWidth = this.width;
-		var pageHeight = this.height;
+	var imageLoaded = false;
+	
+	// Timeout للتأكد من إخفاء شاشة التحميل (iOS fallback)
+	var loadTimeout = setTimeout(function() {
+		if (!imageLoaded) {
+			console.warn('⚠️ Image loading timeout - using default dimensions');
+			initFlipbook(1000, 1414); // أبعاد افتراضية
+		}
+	}, 5000);
+	
+	// دالة تهيئة الكتيب
+	function initFlipbook(pageWidth, pageHeight) {
+		imageLoaded = true;
+		clearTimeout(loadTimeout);
+		
+		console.log('📖 Initializing flipbook:', pageWidth, 'x', pageHeight);
 		
 		// حساب أبعاد الكتيب (صفحتين جنباً إلى جنب)
 		var flipbookWidth = pageWidth * 2;
@@ -428,33 +448,42 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 		// تحميل الصفحات الأولية
 		loadVisiblePages(1);
 		
-		$("#flipbook").turn({
-			width: flipbookWidth,
-			height: flipbookHeight,
-			autoCenter: true,
-			gradients: true, 
-			acceleration: true,
-			elevation: 50,
-			duration: 1000,
-			pages: 18, // عدد الصفحات الفعلي
-			direction: 'rtl', // اتجاه من اليمين لليسار (عربي)
-			when: {
-				turning: function(event, page, view) {
-					// تشغيل صوت التقليب
-					playPageFlipSound();
-					updatePageCounter(page);
-					updateNavigationButtons(page);
-					// تحميل الصفحات المجاورة
-					loadVisiblePages(page);
-				},
-				turned: function(event, page, view) {
-					updatePageCounter(page);
-					updateNavigationButtons(page);
-					// تحميل الصفحات المجاورة
-					loadVisiblePages(page);
+		// تهيئة turn.js مع معالجة أخطاء iOS
+		try {
+			$("#flipbook").turn({
+				width: flipbookWidth,
+				height: flipbookHeight,
+				autoCenter: true,
+				gradients: !isIOS(), // تعطيل gradients على iOS لتحسين الأداء
+				acceleration: !isIOS(), // تعطيل acceleration على iOS
+				elevation: 50,
+				duration: 1000,
+				pages: 18, // عدد الصفحات الفعلي
+				direction: 'rtl', // اتجاه من اليمين لليسار (عربي)
+				when: {
+					turning: function(event, page, view) {
+						// تشغيل صوت التقليب
+						playPageFlipSound();
+						updatePageCounter(page);
+						updateNavigationButtons(page);
+						// تحميل الصفحات المجاورة
+						loadVisiblePages(page);
+					},
+					turned: function(event, page, view) {
+						updatePageCounter(page);
+						updateNavigationButtons(page);
+						// تحميل الصفحات المجاورة
+						loadVisiblePages(page);
+					}
 				}
-			}
-		});
+			});
+			
+			console.log('✅ Flipbook initialized successfully');
+		} catch (error) {
+			console.error('❌ Error initializing flipbook:', error);
+			// حتى لو فشل turn.js، أخفِ شاشة التحميل
+			hideLoadingScreen();
+		}
 		
 		// تحديث عداد الصفحات مع تأثير
 		function updatePageCounter(page) {
@@ -616,7 +645,40 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 			
 			$("#flipbook").turn("size", newWidth, newHeight);
 		});
+		
+		// إخفاء شاشة التحميل
+		hideLoadingScreen();
+	}
+	
+	// معالج onload للصورة
+	img.onload = function() {
+		console.log('✅ Image loaded successfully');
+		initFlipbook(this.width, this.height);
+	};
+	
+	// معالج onerror للصورة (iOS fallback)
+	var triedPNG = false;
+	img.onerror = function() {
+		// إذا فشل WebP، جرب PNG
+		if (isWebPSupported && !triedPNG) {
+			console.warn('⚠️ WebP failed, trying PNG...');
+			triedPNG = true;
+			img.src = "p-01.png";
+		} else {
+			console.error('❌ Failed to load image, using default dimensions');
+			initFlipbook(1000, 1414);
+		}
 	};
 	
 	// استخدام WebP إذا كان مدعوماً، وإلا PNG
-	img.src = isWebPSupported ? "p-01.webp" : "p-01.png";
+	var initialSrc = isWebPSupported ? "p-01.webp" : "p-01.png";
+	console.log('🔄 Loading initial image:', initialSrc);
+	img.src = initialSrc;
+	
+	// Fallback إضافي: إذا لم يتم التحميل خلال 8 ثواني، أخفِ شاشة التحميل
+	setTimeout(function() {
+		if ($('#loadingScreen').is(':visible')) {
+			console.warn('⚠️ Force hiding loading screen after 8s');
+			hideLoadingScreen();
+		}
+	}, 8000);
