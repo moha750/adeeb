@@ -931,35 +931,6 @@ body::before {
   }
 }
 
-/* Lazy Loading للصور */
-.lazy-page {
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.lazy-page.loaded {
-  opacity: 1;
-}
-
-.lazy-page[src] {
-  opacity: 1;
-}
-
-.lazy-page:not([src]) {
-  min-height: 400px;
-  display: block;
-}
-
-/* إصلاح iOS - إظهار الصور فوراً */
-@supports (-webkit-touch-callout: none) {
-  .lazy-page {
-    opacity: 1;
-  }
-}
 
 /* وضع ملء الشاشة */
 body.fullscreen-mode {
