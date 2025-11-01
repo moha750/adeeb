@@ -71,6 +71,8 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 	function hideLoadingScreen() {
 		setTimeout(function() {
 			$('#loadingScreen').addClass('hidden');
+			// السماح بالتمرير بعد إخفاء شاشة التحميل
+			$('body').removeClass('loading');
 		}, 500);
 	}
 	
@@ -561,114 +563,119 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 			};
 			
 			for (var i = 1; i <= totalPages; i++) {
-				var pageNum = i;
-				var imageBase = 'p-' + (i < 10 ? '0' + i : i);
-				var imageSrc = isWebPSupported ? imageBase + '.webp' : imageBase + '.png';
-				var pageName = pageNames[i] || 'صفحة ' + i;
-				
-				var $pageItem = $('<div>', {
-					'class': 'page-item' + (i === 1 ? ' active' : ''),
-					'data-page': pageNum
-				});
-				
-				var $thumbnail = $('<div>', {'class': 'page-thumbnail'});
-				$thumbnail.append($('<img>', {src: imageSrc, alt: 'صفحة ' + pageNum}));
-				
-				var $pageInfo = $('<div>', {'class': 'page-info'});
-				$pageInfo.append($('<div>', {'class': 'page-number', text: pageNum}));
-				$pageInfo.append($('<div>', {'class': 'page-label', text: pageName}));
-				
-				$pageItem.append($thumbnail).append($pageInfo);
-				
-				$pageItem.on('click', function() {
-					var page = $(this).data('page');
-					$("#flipbook").turn("page", page);
-					closeSidebar();
-				});
-				
-				$pagesGrid.append($pageItem);
-			}
-		}
+			var pageNum = i;
+			var imageBase = 'p-' + (i < 10 ? '0' + i : i);
+			var imageSrc = imageBase + '.webp'; // استخدام WebP مباشرة
+			var pageName = pageNames[i] || 'صفحة ' + i;
+			
+			var $pageItem = $('<div>', {
+				'class': 'page-item' + (i === 1 ? ' active' : ''),
+				'data-page': pageNum
+			});
+			
+			var $thumbnail = $('<div>', {'class': 'page-thumbnail'});
+			$thumbnail.append($('<img>', {src: imageSrc, alt: 'صفحة ' + pageNum}));
+			
+			var $pageInfo = $('<div>', {'class': 'page-info'});
+			$pageInfo.append($('<div>', {'class': 'page-number', text: pageNum}));
+			$pageInfo.append($('<div>', {'class': 'page-label', text: pageName}));
+			
+			$pageItem.append($thumbnail).append($pageInfo);
 		
-		// فتح القائمة الجانبية
-		function openSidebar() {
-			$('#pagesSidebar').addClass('active');
-			$('#sidebarOverlay').addClass('active');
-			$('body').css('overflow', 'hidden');
-		}
-		
-		// إغلاق القائمة الجانبية
-		function closeSidebar() {
-			$('#pagesSidebar').removeClass('active');
-			$('#sidebarOverlay').removeClass('active');
-			$('body').css('overflow', '');
-		}
-		
-		// ربط أزرار القائمة الجانبية
-		$('#pagesMenuBtn').on('click', openSidebar);
-		$('#closeSidebarBtn').on('click', closeSidebar);
-		$('#sidebarOverlay').on('click', closeSidebar);
-		
-		// إنشاء القائمة الجانبية
-		createPagesSidebar();
-		
-		// إخفاء شاشة التحميل
-		hideLoadingScreen();
-		
-		// إضافة أزرار التنقل بين الصفحات (معكوس للعربية)
-		$(document).keydown(function(e) {
-			if (e.keyCode == 37) {
-				// السهم الأيسر - الصفحة التالية (في الاتجاه العربي)
-				$("#flipbook").turn("next");
-			} else if (e.keyCode == 39) {
-				// السهم الأيمن - الصفحة السابقة (في الاتجاه العربي)
-				$("#flipbook").turn("previous");
-			} else if (e.keyCode == 27) {
-				// مفتاح Escape - إغلاق القائمة الجانبية
-				closeSidebar();
-			} else if (e.keyCode == 122) {
-				// مفتاح F11 - ملء الشاشة
-				e.preventDefault();
-				toggleFullscreen();
-			}
+		$pageItem.on('click', function() {
+			var page = $(this).data('page');
+			$("#flipbook").turn("page", page);
+			closeSidebar();
+			
+			// التمرير إلى الكتيب
+			$('html, body').animate({
+				scrollTop: $('.flipbook-container').offset().top - 100
+			}, 600);
 		});
 		
-		// إعادة حساب الأبعاد عند تغيير حجم النافذة
-		$(window).resize(function() {
-			var newMaxWidth = window.innerWidth * 0.9;
-			var newMaxHeight = window.innerHeight * 0.85;
-			var newScale = Math.min(newMaxWidth / (pageWidth * 2), newMaxHeight / pageHeight, 1);
-			
-			var newWidth = pageWidth * 2 * newScale;
-			var newHeight = pageHeight * newScale;
-			
-			$("#flipbook").turn("size", newWidth, newHeight);
-		});
-		
-		// إخفاء شاشة التحميل
+		$pagesGrid.append($pageItem);
+	}
+}
+
+// فتح القائمة الجانبية
+function openSidebar() {
+	$('#pagesSidebar').addClass('active');
+	$('#sidebarOverlay').addClass('active');
+	$('body').css('overflow', 'hidden');
+}
+
+// إغلاق القائمة الجانبية
+function closeSidebar() {
+	$('#pagesSidebar').removeClass('active');
+	$('#sidebarOverlay').removeClass('active');
+	$('body').css('overflow', '');
+}
+
+// ربط أزرار القائمة الجانبية
+$('#pagesMenuBtn').on('click', openSidebar);
+$('#closeSidebarBtn').on('click', closeSidebar);
+$('#sidebarOverlay').on('click', closeSidebar);
+
+// إنشاء القائمة الجانبية
+createPagesSidebar();
+
+// إخفاء شاشة التحميل
+hideLoadingScreen();
+
+// إضافة أزرار التنقل بين الصفحات (معكوس للعربية)
+$(document).keydown(function(e) {
+	if (e.keyCode == 37) {
+		// السهم الأيسر - الصفحة التالية (في الاتجاه العربي)
+		$("#flipbook").turn("next");
+	} else if (e.keyCode == 39) {
+		// السهم الأيمن - الصفحة السابقة (في الاتجاه العربي)
+		$("#flipbook").turn("previous");
+	} else if (e.keyCode == 27) {
+		// مفتاح Escape - إغلاق القائمة الجانبية
+		closeSidebar();
+	} else if (e.keyCode == 122) {
+		// مفتاح F11 - ملء الشاشة
+		e.preventDefault();
+		toggleFullscreen();
+	}
+});
+
+// إعادة حساب الأبعاد عند تغيير حجم النافذة
+$(window).resize(function() {
+	var newMaxWidth = window.innerWidth * 0.9;
+	var newMaxHeight = window.innerHeight * 0.85;
+	var newScale = Math.min(newMaxWidth / (pageWidth * 2), newMaxHeight / pageHeight, 1);
+	
+	var newWidth = pageWidth * 2 * newScale;
+	var newHeight = pageHeight * newScale;
+	
+	$("#flipbook").turn("size", newWidth, newHeight);
+});
+
+// إخفاء شاشة التحميل
+hideLoadingScreen();
+}
+
+// معالج onload للصورة
+img.onload = function() {
+	console.log('✅ Image loaded successfully');
+	initFlipbook(this.width, this.height);
+};
+
+// معالج onerror للصورة (iOS fallback)
+img.onerror = function() {
+	console.error('❌ Failed to load image, using default dimensions');
+	initFlipbook(1000, 1414);
+};
+
+// تحميل الصورة الأولى (WebP)
+console.log('🔄 Loading initial image: p-01.webp');
+img.src = "p-01.webp";
+
+// Fallback إضافي: إذا لم يتم التحميل خلال 8 ثواني، أخفِ شاشة التحميل
+setTimeout(function() {
+	if ($('#loadingScreen').is(':visible')) {
+		console.warn('⚠️ Force hiding loading screen after 8s');
 		hideLoadingScreen();
 	}
-	
-	// معالج onload للصورة
-	img.onload = function() {
-		console.log('✅ Image loaded successfully');
-		initFlipbook(this.width, this.height);
-	};
-	
-	// معالج onerror للصورة (iOS fallback)
-	img.onerror = function() {
-		console.error('❌ Failed to load image, using default dimensions');
-		initFlipbook(1000, 1414);
-	};
-	
-	// تحميل الصورة الأولى (WebP)
-	console.log('🔄 Loading initial image: p-01.webp');
-	img.src = "p-01.webp";
-	
-	// Fallback إضافي: إذا لم يتم التحميل خلال 8 ثواني، أخفِ شاشة التحميل
-	setTimeout(function() {
-		if ($('#loadingScreen').is(':visible')) {
-			console.warn('⚠️ Force hiding loading screen after 8s');
-			hideLoadingScreen();
-		}
-	}, 8000);
+}, 8000);
