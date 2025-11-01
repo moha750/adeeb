@@ -21,16 +21,6 @@
     </div>
   </div>
 
-  <!-- زر التحكم بالصوت -->
-  <button class="sound-toggle-btn" id="soundToggleBtn" title="تفعيل/إيقاف الصوت">
-    <i class="fas fa-volume-up"></i>
-  </button>
-
-  <!-- زر ملء الشاشة -->
-  <button class="fullscreen-btn" id="fullscreenBtn" title="ملء الشاشة">
-    <i class="fas fa-expand"></i>
-  </button>
-
   <!-- شريط العنوان -->
   <div class="header-bar">
     <button class="pages-menu-btn" id="pagesMenuBtn" title="عرض الصفحات">
@@ -60,23 +50,6 @@
   </div>
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-  <!-- أزرار التنقل مع العداد -->
-  <div class="navigation-controls">
-    <button class="nav-btn prev-btn" id="prevBtn" title="الصفحة السابقة">
-      <i class="fas fa-chevron-right"></i>
-    </button>
-    
-    <div class="nav-page-counter">
-      <span class="current">1</span>
-      <span class="separator">/</span>
-      <span class="total">18</span>
-    </div>
-    
-    <button class="nav-btn next-btn" id="nextBtn" title="الصفحة التالية">
-      <i class="fas fa-chevron-left"></i>
-    </button>
-  </div>
-
   <!-- تعليمات الاستخدام -->
   <div class="instructions">
     <div class="instruction-item">
@@ -93,7 +66,9 @@
     </div>
   </div>
 
-  <div id="flipbook">
+  <!-- حاوية الكتيب وأزرار التنقل -->
+  <div class="flipbook-container">
+    <div id="flipbook">
 	<!-- الغلاف الأمامي - P-01 -->
 	<div class="hard cover-front">
 		<img src="p-01.png" alt="غلاف الفتح" />
@@ -122,6 +97,47 @@
 		<img src="p-18.png" alt="غلاف الإغلاق" />
 	</div>
 </div>
+
+    <!-- أزرار التنقل مع العداد -->
+    <div class="navigation-controls">
+      <button class="nav-btn prev-btn" id="prevBtn" title="الصفحة السابقة">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+      
+      <!-- زر ملء الشاشة -->
+      <button class="fullscreen-btn" id="fullscreenBtn" title="ملء الشاشة">
+        <i class="fas fa-expand"></i>
+      </button>
+      
+      <div class="nav-page-counter">
+        <span class="current">1</span>
+        <span class="separator">/</span>
+        <span class="total">18</span>
+      </div>
+      
+      <!-- زر التحكم بالصوت -->
+      <button class="sound-toggle-btn" id="soundToggleBtn" title="تفعيل/إيقاف الصوت">
+        <i class="fas fa-volume-up"></i>
+      </button>
+      
+      <button class="nav-btn next-btn" id="nextBtn" title="الصفحة التالية">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- الفوتر -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-info">
+        <p class="footer-date">تاريخ التحرير: <span>1446/4/28 هـ - 2024/11/1 م</span></p>
+        <p class="footer-credit">صياغة: <span>مجلس إدارة نادي أديب الثقافي</span></p>
+        <p class="footer-credit">تصميم وبرمجة: <span>محمد المطر</span></p>
+        <p class="footer-copyright">&copy; 2025 جميع الحقوق محفوظة لنادي أديب الثقافي - جامعة الملك فيصل</p>
+      </div>
+    </div>
+  </footer>
+
     <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/js/all.min.js'></script>
     <script src="constitution.js"></script>
