@@ -16,8 +16,10 @@
   const resultsUrlEl = document.getElementById('resultsUrl');
   const copyFillBtn = document.getElementById('copyFill');
   const copyResultsBtn = document.getElementById('copyResults');
+  const loadingNotice = document.getElementById('loadingNotice');
+  const editModeBadge = document.getElementById('editModeBadge');
 
-  const state = { questions: [] };
+  const state = { questions: [], editingFormId: null, hasUnsavedChanges: false };
 
   function uuid(){ try { return crypto.randomUUID(); } catch { return 'q-' + Math.random().toString(36).slice(2) + Date.now().toString(36); } }
   function slugify(s){ return String(s||'').trim().toLowerCase().replace(/\s+/g,'-').replace(/[^\w\-]+/g,'').replace(/\-+/g,'-').replace(/^-+|-+$/g,''); }
@@ -100,6 +102,10 @@
       questions: state.questions
     };
     try { localStorage.setItem('adeeb_forms_builder_draft', JSON.stringify(draft)); } catch {}
+    // تعليم أن هناك تغييرات غير محفوظة في وضع التعديل
+    if(state.editingFormId){
+      state.hasUnsavedChanges = true;
+    }
   }
   function loadDraft(){
     try {
@@ -119,6 +125,11 @@
     const q = { id: uuid(), type: t, label: '', required: false, options: t==='multiple_choice'||t==='checkboxes' ? ['',''] : [] };
     state.questions.push(q); render(); persistDraft();
   });
+
+  // تتبع التغييرات على العنوان والوصف في وضع التعديل
+  if(titleEl) titleEl.addEventListener('input', () => { if(state.editingFormId) state.hasUnsavedChanges = true; });
+  if(descEl) descEl.addEventListener('input', () => { if(state.editingFormId) state.hasUnsavedChanges = true; });
+  if(isPublicEl) isPublicEl.addEventListener('change', () => { if(state.editingFormId) state.hasUnsavedChanges = true; });
 
   saveDraftBtn.addEventListener('click', () => { persistDraft(); statusEl.textContent = 'تم حفظ المسودة محليًا'; setTimeout(()=>statusEl.textContent='',2000); });
 
@@ -155,19 +166,41 @@
 
     publishBtn.disabled = true; saveDraftBtn.disabled = true;
     try {
-      const slug = buildSlug(title);
       const formRow = {
-        owner_id: session.user.id,
         title,
         description: descEl.value.trim()||null,
-        slug,
         is_public: !!isPublicEl.checked,
         is_published: true,
         accepting_responses: true
       };
-      const ins = await sb.from('forms').insert(formRow).select('id,slug').single();
-      if(ins.error){ throw ins.error; }
-      const formId = ins.data.id;
+      
+      let formId;
+      
+      // إذا كنا في وضع التعديل
+      if(state.editingFormId){
+        formId = state.editingFormId;
+        // تحديث بيانات الاستبيان
+        const upd = await sb.from('forms').update(formRow).eq('id', formId).select('id,slug').single();
+        if(upd.error){ throw upd.error; }
+        
+        // حذف الأسئلة القديمة
+        await sb.from('form_questions').delete().eq('form_id', formId);
+        
+        statusEl.textContent = '✓ تم تحديث الاستبيان بنجاح!';
+        statusEl.style.color = '#16a34a';
+      } else {
+        // إنشاء استبيان جديد
+        const slug = buildSlug(title);
+        formRow.slug = slug;
+        formRow.owner_id = session.user.id;
+        
+        const ins = await sb.from('forms').insert(formRow).select('id,slug').single();
+        if(ins.error){ throw ins.error; }
+        formId = ins.data.id;
+        statusEl.textContent = 'تم النشر.';
+      }
+      
+      // إضافة الأسئلة (جديدة أو محدثة)
       const rows = state.questions.map((q, i) => ({
         form_id: formId,
         order_index: i,
@@ -180,19 +213,202 @@
         const qres = await sb.from('form_questions').insert(rows).select('id');
         if(qres.error){ throw qres.error; }
       }
+      
       const origin = location.origin || (location.protocol + '//' + location.host);
       const fillUrl = origin + '/forms/fill.html?form=' + formId;
       const resultsUrl = origin + '/forms/results.html?form=' + formId;
       fillUrlEl.value = fillUrl; resultsUrlEl.value = resultsUrl;
       shareBox.style.display='block';
-      statusEl.textContent = 'تم النشر.';
       try { localStorage.removeItem('adeeb_forms_builder_draft'); } catch {}
+      
+      // إزالة علامة التغييرات غير المحفوظة
+      state.hasUnsavedChanges = false;
+      
+      // إضافة زر للرجوع إلى لوحة التحكم في وضع التعديل
+      if(state.editingFormId && shareBox){
+        const backBtn = document.createElement('button');
+        backBtn.className = 'btn btn-primary';
+        backBtn.style.marginTop = '12px';
+        backBtn.innerHTML = '<i class="fa-solid fa-arrow-right"></i> العودة إلى لوحة التحكم';
+        backBtn.onclick = () => {
+          window.close();
+          // إذا لم يتم إغلاق النافذة، انتقل إلى لوحة التحكم
+          setTimeout(() => {
+            window.location.href = origin + '/admin/admin.html#section-forms';
+          }, 100);
+        };
+        shareBox.appendChild(backBtn);
+      }
     } catch (e){
-      statusEl.textContent = 'تعذر النشر. يرجى تجهيز جداول Supabase ثم المحاولة.';
+      console.error('خطأ في النشر/التحديث:', e);
+      statusEl.textContent = state.editingFormId ? 'تعذر التحديث: ' + (e.message || 'خطأ غير معروف') : 'تعذر النشر. يرجى تجهيز جداول Supabase ثم المحاولة.';
     } finally {
       publishBtn.disabled = false; saveDraftBtn.disabled = false;
     }
   });
 
-  loadDraft();
+  // تحذير عند المغادرة بدون حفظ
+  window.addEventListener('beforeunload', (e) => {
+    if(state.hasUnsavedChanges && state.editingFormId){
+      e.preventDefault();
+      e.returnValue = 'لديك تغييرات غير محفوظة. هل تريد المغادرة؟';
+      return e.returnValue;
+    }
+  });
+
+  // تحميل الاستبيان للتعديل إذا كان هناك معرف في الرابط
+  async function loadFormForEdit(){
+    try {
+      const params = new URLSearchParams(location.search);
+      const editId = params.get('edit');
+      if(!editId) return;
+      
+      if(!sb){ 
+        statusEl.textContent = 'Supabase غير مفعّل.';
+        return;
+      }
+      
+      // عرض مؤشر التحميل
+      if(loadingNotice) loadingNotice.style.display = 'block';
+      if(formEl) formEl.style.display = 'none';
+      statusEl.textContent = 'جاري تحميل الاستبيان...';
+      publishBtn.disabled = true;
+      saveDraftBtn.disabled = true;
+      
+      const session = await ensureAuth();
+      if(!session){
+        if(loadingNotice) loadingNotice.style.display = 'none';
+        if(formEl) formEl.style.display = '';
+        publishBtn.disabled = false;
+        saveDraftBtn.disabled = false;
+        return;
+      }
+      
+      // تحميل بيانات الاستبيان
+      const { data: formData, error: formError } = await sb
+        .from('forms')
+        .select('*')
+        .eq('id', editId)
+        .single();
+      
+      if(formError || !formData){
+        statusEl.textContent = 'تعذر تحميل الاستبيان.';
+        return;
+      }
+      
+      // التحقق من الصلاحية
+      if(formData.owner_id !== session.user.id){
+        statusEl.textContent = 'ليس لديك صلاحية لتعديل هذا الاستبيان.';
+        return;
+      }
+      
+      // تحميل الأسئلة
+      const { data: questions, error: qError } = await sb
+        .from('form_questions')
+        .select('*')
+        .eq('form_id', editId)
+        .order('order_index', { ascending: true });
+      
+      if(qError){
+        statusEl.textContent = 'تعذر تحميل الأسئلة.';
+        return;
+      }
+      
+      // ملء النموذج
+      state.editingFormId = editId;
+      titleEl.value = formData.title || '';
+      descEl.value = formData.description || '';
+      isPublicEl.checked = !!formData.is_public;
+      
+      // ملء الأسئلة
+      state.questions = (questions || []).map(q => ({
+        id: uuid(),
+        type: q.type || 'short_text',
+        label: q.label || '',
+        required: !!q.required,
+        options: Array.isArray(q.options) ? q.options : []
+      }));
+      
+      render();
+      
+      // التحقق من عدد الردود وإظهار تحذير إذا لزم الأمر
+      const { count: responsesCount } = await sb
+        .from('form_responses')
+        .select('*', { count: 'exact', head: true })
+        .eq('form_id', editId);
+      
+      if(responsesCount && responsesCount > 0){
+        const warningBox = document.createElement('div');
+        warningBox.className = 'empty-state';
+        warningBox.style.cssText = 'background:#fef3c7;border:2px solid #f59e0b;color:#92400e;padding:16px;margin-bottom:16px;text-align:start';
+        warningBox.innerHTML = `
+          <div style="display:flex;align-items:start;gap:12px">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size:24px;color:#f59e0b;margin-top:2px"></i>
+            <div style="flex:1">
+              <h4 style="margin:0 0 8px;color:#92400e;font-size:16px">⚠️ تنبيه مهم</h4>
+              <p style="margin:0 0 8px;line-height:1.6">
+                هذا الاستبيان لديه <strong>${responsesCount}</strong> ${responsesCount === 1 ? 'رد' : 'ردود'} موجودة.
+              </p>
+              <p style="margin:0;line-height:1.6;font-size:14px">
+                <strong>يُرجى الحذر:</strong> تعديل الأسئلة أو حذفها قد يؤثر على تحليل الردود السابقة.
+                يُنصح بإضافة أسئلة جديدة فقط أو تصحيح أخطاء إملائية بسيطة.
+              </p>
+            </div>
+          </div>
+        `;
+        if(editModeBadge && editModeBadge.parentNode){
+          editModeBadge.parentNode.insertBefore(warningBox, editModeBadge.nextSibling);
+        }
+      }
+      
+      // إخفاء مؤشر التحميل وإظهار النموذج
+      if(loadingNotice) loadingNotice.style.display = 'none';
+      if(formEl) formEl.style.display = '';
+      
+      // إظهار شارة وضع التعديل
+      if(editModeBadge) editModeBadge.style.display = 'block';
+      
+      // تغيير نص الزر والعنوان
+      publishBtn.innerHTML = '<i class="fa-solid fa-check"></i> تحديث الاستبيان';
+      publishBtn.disabled = false;
+      saveDraftBtn.disabled = false;
+      
+      // تحديث عنوان الصفحة
+      const pageTitle = document.getElementById('pageTitle');
+      const pageSubtitle = document.getElementById('pageSubtitle');
+      if(pageTitle) pageTitle.innerHTML = '<i class="fa-solid fa-pen"></i> تعديل الاستبيان';
+      if(pageSubtitle) pageSubtitle.textContent = 'عدّل الاستبيان ثم احفظ التغييرات';
+      
+      // رسالة نجاح التحميل
+      statusEl.textContent = '✓ تم تحميل الاستبيان بنجاح - يمكنك الآن إجراء التعديلات';
+      statusEl.style.color = '#16a34a';
+      setTimeout(() => {
+        statusEl.textContent = '';
+        statusEl.style.color = '';
+      }, 3000);
+      
+      // إعادة تعيين حالة التغييرات
+      state.hasUnsavedChanges = false;
+      
+    } catch(e){
+      console.error('خطأ في تحميل الاستبيان:', e);
+      if(loadingNotice) loadingNotice.style.display = 'none';
+      if(formEl) formEl.style.display = '';
+      statusEl.textContent = 'حدث خطأ أثناء التحميل: ' + (e.message || 'خطأ غير معروف');
+      statusEl.style.color = '#dc2626';
+      publishBtn.disabled = false;
+      saveDraftBtn.disabled = false;
+    }
+  }
+
+  // تحميل المسودة أولاً ثم التحقق من وضع التعديل
+  // إذا كان هناك معرف تعديل، سيتم تجاهل المسودة
+  const params = new URLSearchParams(location.search);
+  const editId = params.get('edit');
+  
+  if(!editId){
+    loadDraft();
+  }
+  
+  loadFormForEdit();
 })();

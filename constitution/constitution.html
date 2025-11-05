@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>دستور نادي أدِيب</title>
+    <meta name="description" content="دستور نادي أدِيب">
+    <link rel="stylesheet" href="https://public.codepenassets.com/css/normalize-5.0.0.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="constitution.css">
+  </head>
+    
+  <body class="loading">
+  <!-- شاشة التحميل -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p>جاري تحميل الدستور...</p>
+    </div>
+  </div>
+
+  <!-- شريط العنوان -->
+  <div class="header-bar">
+    <button class="pages-menu-btn" id="pagesMenuBtn" title="عرض الصفحات">
+      <i class="fa-solid fa-images"></i>
+      <span>الصفحات</span>
+    </button>
+    <div class="header-text">
+      <h1>دستور نادي أديب</h1>
+    </div>
+    <a href="../index.html" class="header-home-btn" title="العودة للموقع الرئيسي">
+      <i class="fas fa-home"></i>
+      <span>الرئيسية</span>
+    </a>
+  </div>
+
+  <!-- القائمة الجانبية للصفحات -->
+  <div class="pages-sidebar" id="pagesSidebar">
+    <div class="sidebar-header">
+      <h2>الصفحات</h2>
+      <button class="close-sidebar-btn" id="closeSidebarBtn">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="pages-grid" id="pagesGrid">
+      <!-- سيتم إضافة الصفحات ديناميكياً -->
+    </div>
+  </div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- تعليمات الاستخدام -->
+  <div class="instructions">
+    <div class="instruction-item">
+      <i class="fas fa-hand-pointer"></i>
+      <span>اضغط على الزوايا</span>
+    </div>
+    <div class="instruction-item">
+      <i class="fas fa-keyboard"></i>
+      <span>استخدم الأسهم</span>
+    </div>
+    <div class="instruction-item">
+      <i class="fas fa-mouse"></i>
+      <span>أو الأزرار الجانبية</span>
+    </div>
+  </div>
+
+  <!-- حاوية الكتيب وأزرار التنقل -->
+  <div class="flipbook-container">
+    <div id="flipbook">
+	<!-- الغلاف الأمامي - P-01 -->
+	<div class="hard cover-front" data-page="1">
+		<img src="p-01.webp" alt="غلاف الفتح" />
+	</div>
+	
+	<!-- الصفحات الداخلية -->
+	<div class="pages" data-page="2"><img src="p-02.webp" alt="صفحة 2" /></div>
+	<div class="pages" data-page="3"><img src="p-03.webp" alt="صفحة 3" /></div>
+	<div class="pages" data-page="4"><img src="p-04.webp" alt="صفحة 4" /></div>
+	<div class="pages" data-page="5"><img src="p-05.webp" alt="صفحة 5" /></div>
+	<div class="pages" data-page="6"><img src="p-06.webp" alt="صفحة 6" /></div>
+	<div class="pages" data-page="7"><img src="p-07.webp" alt="صفحة 7" /></div>
+	<div class="pages" data-page="8"><img src="p-08.webp" alt="صفحة 8" /></div>
+	<div class="pages" data-page="9"><img src="p-09.webp" alt="صفحة 9" /></div>
+	<div class="pages" data-page="10"><img src="p-10.webp" alt="صفحة 10" /></div>
+	<div class="pages" data-page="11"><img src="p-11.webp" alt="صفحة 11" /></div>
+	<div class="pages" data-page="12"><img src="p-12.webp" alt="صفحة 12" /></div>
+	<div class="pages" data-page="13"><img src="p-13.webp" alt="صفحة 13" /></div>
+	<div class="pages" data-page="14"><img src="p-14.webp" alt="صفحة 14" /></div>
+	<div class="pages" data-page="15"><img src="p-15.webp" alt="صفحة 15" /></div>
+	<div class="pages" data-page="16"><img src="p-16.webp" alt="صفحة 16" /></div>
+	<div class="pages" data-page="17"><img src="p-17.webp" alt="صفحة 17" /></div>
+	
+	<!-- الغلاف الخلفي - P-18 -->
+	<div class="hard cover-back" data-page="18">
+		<img src="p-18.webp" alt="غلاف الإغلاق" />
+	</div>
+</div>
+
+    <!-- أزرار التنقل مع العداد -->
+    <div class="navigation-controls">
+      <button class="nav-btn prev-btn" id="prevBtn" title="الصفحة السابقة">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+      
+      <!-- زر ملء الشاشة -->
+      <button class="fullscreen-btn" id="fullscreenBtn" title="ملء الشاشة">
+        <i class="fas fa-expand"></i>
+      </button>
+      
+      <div class="nav-page-counter">
+        <span class="current">1</span>
+        <span class="separator">/</span>
+        <span class="total">18</span>
+      </div>
+      
+      <!-- زر التحكم بالصوت -->
+      <button class="sound-toggle-btn" id="soundToggleBtn" title="تفعيل/إيقاف الصوت">
+        <i class="fas fa-volume-up"></i>
+      </button>
+      
+      <button class="nav-btn next-btn" id="nextBtn" title="الصفحة التالية">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+    </div>
+    
+    <!-- زر تحميل PDF -->
+    <a href="دستور أدِيب.pdf" download="دستور-أديب.pdf" class="download-pdf-btn" id="downloadPdfBtn" title="تحميل الدستور PDF">
+      <i class="fas fa-download"></i>
+      <span>تحميل الدستور</span>
+    </a>
+  </div>
+
+  <!-- الفوتر -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-main">
+        <!-- معلومات الدستور -->
+        <div class="footer-section">
+          <div class="footer-icon">
+            <i class="fas fa-file-contract"></i>
+          </div>
+          <h4>حُرر دستور أدِيب في</h4>
+          <p class="footer-date">
+            <i class="far fa-calendar-alt"></i>
+            <span>1447/4/28 <strong>هـ</strong></span>
+          </p>
+          <p class="footer-date">
+            <i class="far fa-calendar"></i>
+            <span>30/10/2025 <strong>م</strong></span>
+          </p>
+        </div>
+
+        <!-- الصياغة والتصميم -->
+        <div class="footer-section">
+          <div class="footer-icon">
+            <i class="fas fa-palette"></i>
+          </div>
+          <h4>صياغة والتصميم</h4>
+          <div class="team-item">
+            <i class="fas fa-pen-nib"></i>
+            <span>حوراء العاشور</span>
+          </div>
+          <div class="team-item">
+            <i class="fas fa-paint-brush"></i>
+            <span>حوراء العاشور</span>
+          </div>
+        </div>
+
+        <!-- البرمجة والتطوير -->
+        <div class="footer-section">
+          <div class="footer-icon">
+            <i class="fas fa-laptop-code"></i>
+          </div>
+          <h4>برمجة وتطوير</h4>
+          <div class="team-item">
+            <i class="fas fa-code"></i>
+            <span>محمد المطر</span>
+          </div>
+          <div class="team-item">
+            <i class="fas fa-rocket"></i>
+            <span>محمد المطر</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- حقوق النشر -->
+      <div class="footer-bottom">
+        <div class="footer-divider"></div>
+        <p class="footer-copyright">
+          جميع الحقوق محفوظة لنادي أدِيب <span class="year">2025</span> ©
+        </p>
+      </div>
+    </div>
+  </footer>
+
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/js/all.min.js'></script>
+    <script src="constitution.js"></script>
+
+  </body>
+  
+</html>

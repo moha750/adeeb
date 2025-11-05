@@ -95,7 +95,20 @@ for select to public using (
 -- form_responses: public insert allowed when form is accepting and public & published
 drop policy if exists "public can insert responses for open public forms" on public.form_responses;
 create policy "public can insert responses for open public forms" on public.form_responses
-for insert to public with check (
+for insert to anon with check (
+  exists (
+    select 1 from public.forms f
+    where f.id = form_responses.form_id
+      and f.accepting_responses = true
+      and f.is_public = true
+      and f.is_published = true
+  )
+);
+
+-- form_responses: authenticated users can also insert responses
+drop policy if exists "authenticated can insert responses for open public forms" on public.form_responses;
+create policy "authenticated can insert responses for open public forms" on public.form_responses
+for insert to authenticated with check (
   exists (
     select 1 from public.forms f
     where f.id = form_responses.form_id

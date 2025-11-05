@@ -15,7 +15,7 @@
   const membersList = $('#membersList');
   const faqList = $('#faqList');
   const testimonialsList = $('#testimonialsList');
-  const blogList = $('#blogList');
+  const formsList = $('#formsList');
   const todosList = $('#todosList');
   const statsGrid = $('#statsGrid');
   const joinStatusLabel = document.getElementById('joinStatusLabel');
@@ -181,7 +181,6 @@
     members: 'adeeb_members',
     faq: 'adeeb_faq',
     achievements: 'adeeb_achievements',
-    blog: 'adeeb_blog_posts',
     schedule: 'adeeb_schedule',
     todos: 'adeeb_todos',
     ideas: 'adeeb_ideas_public',
@@ -1352,6 +1351,307 @@
       setTimeout(() => { try { membershipAppAdminNoteStatus.style.display = 'none'; } catch {} }, 2000);
     }
   });
+
+  // Export membership application to members
+  const exportToMembersBtn = document.getElementById('exportToMembersBtn');
+  exportToMembersBtn?.addEventListener('click', async () => {
+    const idx = membershipAppDetailsIndex;
+    if (!Number.isInteger(idx) || idx < 0 || idx >= (membershipApps?.length || 0)) {
+      alert('لم يتم تحديد طلب صحيح');
+      return;
+    }
+    const app = membershipApps[idx];
+    if (!app) {
+      alert('لم يتم العثور على الطلب');
+      return;
+    }
+
+    // Check if already accepted/exported
+    const rawStatus = (app.status || '').toString().trim().toLowerCase();
+    if (['accepted','approved','accept','ok','done','مقبول'].includes(rawStatus)) {
+      if (!confirm('هذا الطلب مقبول بالفعل. هل تريد تصديره مرة أخرى؟')) {
+        return;
+      }
+    }
+
+    // Confirm export
+    const name = app.full_name || app.name || 'هذا المتقدم';
+    if (!confirm(`هل تريد تصدير "${name}" إلى أعضاء النادي؟\n\nسيتم نقل البيانات التالية:\n• الاسم\n• الجوال\n• البريد الإلكتروني\n• الدرجة العلمية\n• الكلية\n• التخصص\n• اللجنة${app.social_twitter ? '\n• تويتر' : ''}${app.social_instagram ? '\n• إنستقرام' : ''}${app.social_tiktok ? '\n• تيك توك' : ''}${app.social_linkedin ? '\n• لينكد إن' : ''}`)) {
+      return;
+    }
+
+    // Prepare member data (only include social media if available)
+    const memberData = {
+      full_name: app.full_name || app.name || '',
+      phone: app.phone || '',
+      email: app.email || '',
+      degree: app.degree || '',
+      college: app.college || '',
+      major: app.major || '',
+      committee: app.preferred_committee || app.committee || '',
+      created_at: new Date().toISOString(),
+    };
+
+    // Add social media handles only if they exist
+    const twitter = (app.social_twitter || '').toString().trim();
+    const instagram = (app.social_instagram || '').toString().trim();
+    const tiktok = (app.social_tiktok || '').toString().trim();
+    const linkedin = (app.social_linkedin || '').toString().trim();
+    
+    if (twitter) memberData.x_handle = twitter;
+    if (instagram) memberData.instagram_handle = instagram;
+    if (tiktok) memberData.tiktok_handle = tiktok;
+    if (linkedin) memberData.linkedin_handle = linkedin;
+
+    try {
+      // Add to members array
+      members.unshift(memberData);
+      save(KEYS.members, members);
+
+      // If Supabase is available, save there too
+      if (sb) {
+        const { error } = await sb.from('members').insert(memberData);
+        if (error) throw error;
+      }
+
+      // Update application status to accepted
+      app.status = 'accepted';
+      save(KEYS.membership_apps, membershipApps);
+      if (sb && app.id) {
+        await sb.from('membership_applications').update({ status: 'accepted' }).eq('id', app.id);
+      }
+
+      // Update UI
+      if (membershipAppStatusSelect) membershipAppStatusSelect.value = 'accepted';
+      renderMembers();
+      applyMembershipFilters();
+      renderMembershipStats(membershipApps);
+
+      // Show success message
+      if (typeof Swal !== 'undefined') {
+        Swal.fire({
+          icon: 'success',
+          title: 'تم التصدير بنجاح!',
+          text: `تم إضافة ${name} إلى أعضاء النادي`,
+          confirmButtonText: 'حسناً',
+          confirmButtonColor: '#3d8fd6'
+        });
+      } else {
+        alert('تم تصدير العضو بنجاح إلى أعضاء النادي! ✓');
+      }
+      
+      // Close dialog
+      try { membershipAppDetailsDialog?.close?.(); } catch {}
+    } catch (err) {
+      alert('حدث خطأ أثناء التصدير: ' + (err?.message || 'غير معروف'));
+      // Rollback on error
+      members.shift();
+      save(KEYS.members, members);
+      renderMembers();
+    }
+  });
+
+  // ===== Bulk Export to Members =====
+  const bulkExportToMembersBtn = document.getElementById('bulkExportToMembersBtn');
+  const bulkExportToMembersDialog = document.getElementById('bulkExportToMembersDialog');
+  const bulkExportStatusFilter = document.getElementById('bulkExportStatusFilter');
+  const bulkExportCommitteeFilter = document.getElementById('bulkExportCommitteeFilter');
+  const bulkExportCount = document.getElementById('bulkExportCount');
+  const bulkExportList = document.getElementById('bulkExportList');
+  const bulkExportToMembersSubmit = document.getElementById('bulkExportToMembersSubmit');
+
+  // Populate committee filter options
+  function refreshBulkExportCommitteeOptions() {
+    if (!bulkExportCommitteeFilter) return;
+    const list = Array.isArray(membershipApps) ? membershipApps : [];
+    const committees = new Set();
+    list.forEach((r) => {
+      const raw = (r?.preferred_committee || r?.committee || '').toString().trim();
+      if (raw) committees.add(raw);
+    });
+    const sorted = Array.from(committees).sort((a, b) => {
+      try { return a.localeCompare(b, 'ar'); } catch { return String(a).localeCompare(String(b)); }
+    });
+    // Keep "all" option and add others
+    const currentVal = bulkExportCommitteeFilter.value || 'all';
+    bulkExportCommitteeFilter.innerHTML = '<option value="all">كل اللجان</option>';
+    sorted.forEach((c) => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      bulkExportCommitteeFilter.appendChild(opt);
+    });
+    bulkExportCommitteeFilter.value = currentVal;
+  }
+
+  // Get filtered applications based on status and committee
+  function getBulkExportFilteredApps() {
+    const list = Array.isArray(membershipApps) ? membershipApps : [];
+    const statusFilter = bulkExportStatusFilter?.value || 'accepted';
+    const committeeFilter = bulkExportCommitteeFilter?.value || 'all';
+
+    return list.filter((r) => {
+      // Filter by status
+      const rawStatus = (r.status || '').toString().trim().toLowerCase();
+      let statusKey = 'pending';
+      if (['accepted','approved','accept','ok','done','مقبول'].includes(rawStatus)) statusKey = 'accepted';
+      else if (['rejected','declined','رفض','مرفوض','reject'].includes(rawStatus)) statusKey = 'rejected';
+      else if (['interview','interviewing','scheduled','مقابلة','موعد','مُقابلة'].includes(rawStatus)) statusKey = 'interview';
+      else if (['review','under_review','in_review','pending_review','مراجعة','قيد المراجعة'].includes(rawStatus)) statusKey = 'review';
+
+      if (statusFilter !== 'all' && statusKey !== statusFilter) return false;
+
+      // Filter by committee
+      if (committeeFilter !== 'all') {
+        const appCommittee = (r?.preferred_committee || r?.committee || '').toString().trim();
+        if (appCommittee !== committeeFilter) return false;
+      }
+
+      return true;
+    });
+  }
+
+  // Update preview of applications to be exported
+  function updateBulkExportPreview() {
+    const filtered = getBulkExportFilteredApps();
+    if (bulkExportCount) bulkExportCount.textContent = filtered.length;
+    if (bulkExportList) {
+      if (filtered.length === 0) {
+        bulkExportList.innerHTML = '<div style="color:#94a3b8;font-style:italic">لا توجد طلبات متوافقة مع الفلاتر المختارة</div>';
+      } else {
+        const items = filtered.map((r, i) => {
+          const name = escapeHtml(r.full_name || r.name || '—');
+          const committee = escapeHtml((r?.preferred_committee || r?.committee || 'بدون لجنة').toString().trim());
+          return `<div style="padding:6px 0;border-bottom:1px solid #e2e8f0">${i + 1}. ${name} - ${committee}</div>`;
+        }).join('');
+        bulkExportList.innerHTML = items;
+      }
+    }
+  }
+
+  // Open bulk export dialog
+  bulkExportToMembersBtn?.addEventListener('click', () => {
+    refreshBulkExportCommitteeOptions();
+    updateBulkExportPreview();
+    openDialog?.(bulkExportToMembersDialog);
+  });
+
+  // Update preview when filters change
+  bulkExportStatusFilter?.addEventListener('change', updateBulkExportPreview);
+  bulkExportCommitteeFilter?.addEventListener('change', updateBulkExportPreview);
+
+  // Perform bulk export
+  bulkExportToMembersSubmit?.addEventListener('click', async () => {
+    const filtered = getBulkExportFilteredApps();
+    
+    if (filtered.length === 0) {
+      alert('لا توجد طلبات للتصدير');
+      return;
+    }
+
+    // Confirm export
+    const confirmMsg = `هل تريد تصدير ${filtered.length} طلب(ات) إلى قائمة أعضاء النادي؟\n\nسيتم:\n• إضافة الأعضاء إلى قائمة أعضاء النادي\n• تحديث حالة الطلبات إلى "مقبول"`;
+    if (!confirm(confirmMsg)) return;
+
+    // Disable button during export
+    if (bulkExportToMembersSubmit) bulkExportToMembersSubmit.disabled = true;
+
+    let successCount = 0;
+    let failCount = 0;
+    const errors = [];
+
+    try {
+      for (const app of filtered) {
+        try {
+          // Prepare member data
+          const memberData = {
+            full_name: app.full_name || app.name || '',
+            phone: app.phone || '',
+            email: app.email || '',
+            degree: app.degree || '',
+            college: app.college || '',
+            major: app.major || '',
+            committee: app.preferred_committee || app.committee || '',
+            created_at: new Date().toISOString(),
+          };
+
+          // Add social media handles only if they exist
+          const twitter = (app.social_twitter || '').toString().trim();
+          const instagram = (app.social_instagram || '').toString().trim();
+          const tiktok = (app.social_tiktok || '').toString().trim();
+          const linkedin = (app.social_linkedin || '').toString().trim();
+          
+          if (twitter) memberData.x_handle = twitter;
+          if (instagram) memberData.instagram_handle = instagram;
+          if (tiktok) memberData.tiktok_handle = tiktok;
+          if (linkedin) memberData.linkedin_handle = linkedin;
+
+          // Add to members array
+          members.unshift(memberData);
+          save(KEYS.members, members);
+
+          // If Supabase is available, save there too
+          if (sb) {
+            const { error } = await sb.from('members').insert(memberData);
+            if (error) throw error;
+          }
+
+          // Update application status to accepted
+          app.status = 'accepted';
+          if (sb && app.id) {
+            await sb.from('membership_applications').update({ status: 'accepted' }).eq('id', app.id);
+          }
+
+          successCount++;
+        } catch (err) {
+          failCount++;
+          const name = app.full_name || app.name || 'غير معروف';
+          errors.push(`${name}: ${err?.message || 'خطأ غير معروف'}`);
+          // Rollback local changes on error
+          members.shift();
+        }
+      }
+
+      // Save updated membership apps
+      save(KEYS.membership_apps, membershipApps);
+
+      // Update UI
+      renderMembers();
+      applyMembershipFilters();
+      renderMembershipStats(membershipApps);
+
+      // Show result message
+      let resultMsg = `تم التصدير بنجاح!\n\n`;
+      resultMsg += `✅ تم تصدير ${successCount} عضو(أعضاء)`;
+      if (failCount > 0) {
+        resultMsg += `\n❌ فشل تصدير ${failCount} عضو(أعضاء)`;
+        if (errors.length > 0) {
+          resultMsg += `\n\nالأخطاء:\n${errors.slice(0, 5).join('\n')}`;
+          if (errors.length > 5) resultMsg += `\n... و${errors.length - 5} أخطاء أخرى`;
+        }
+      }
+
+      if (typeof Swal !== 'undefined') {
+        Swal.fire({
+          icon: failCount === 0 ? 'success' : 'warning',
+          title: failCount === 0 ? 'تم التصدير بنجاح!' : 'تم التصدير مع بعض الأخطاء',
+          html: resultMsg.replace(/\n/g, '<br>'),
+          confirmButtonText: 'حسناً',
+          confirmButtonColor: '#3d8fd6'
+        });
+      } else {
+        alert(resultMsg);
+      }
+
+      // Close dialog
+      try { bulkExportToMembersDialog?.close?.(); } catch {}
+    } catch (err) {
+      alert('حدث خطأ أثناء التصدير: ' + (err?.message || 'غير معروف'));
+    } finally {
+      if (bulkExportToMembersSubmit) bulkExportToMembersSubmit.disabled = false;
+    }
+  });
+
   function isIOSLike() {
     try { return /iphone|ipad|ipod/i.test(navigator.userAgent || ''); } catch { return false; }
   }
@@ -2473,37 +2773,427 @@
     if (!m) return;
     const safe = (v) => (v && String(v).trim()) ? String(v) : '—';
     const fmtDate = (v) => {
-      try { return v ? (formatArDate?.(v) || new Date(v).toLocaleDateString('ar')) : '—'; } catch { return safe(v); }
+      try {
+        if (!v) return '—';
+        const date = new Date(v);
+        const monthName = date.toLocaleDateString('ar', { month: 'long' });
+        const fullDate = date.toLocaleDateString('ar', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        return `ولد في ${monthName} ${fullDate}`;
+      } catch { return safe(v); }
     };
     const xh = m.x_handle || '';
     const ig = m.instagram_handle || '';
     const tk = m.tiktok_handle || '';
+    const li = m.linkedin_handle || '';
     const xUrl = xh ? `https://x.com/${String(xh).replace(/^@/, '')}` : '';
     const igUrl = ig ? `https://instagram.com/${String(ig).replace(/^@/, '')}` : '';
     const tkUrl = tk ? `https://tiktok.com/@${String(tk).replace(/^@/, '')}` : '';
-    const colorBox = (hex) => hex ? `<span style="display:inline-flex;align-items:center;gap:8px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${hex};border:1px solid var(--border)"></span><code>${hex}</code></span>` : '—';
+    const liUrl = li ? `https://linkedin.com/in/${String(li).replace(/^@/, '')}` : '';
+    
+    const committee = m.committee || 'بدون لجنة';
+    const committeeIcon = getCommitteeIcon(committee);
+    const isComplete = isMemberDataComplete(m);
+    const avatar = (m.avatar || m.avatar_url) || '';
+    const defaultAvatar = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#e5e7eb"/><stop offset="1" stop-color="#cbd5e1"/></linearGradient></defs><rect width="64" height="64" fill="url(#g)"/><circle cx="32" cy="24" r="12" fill="#94a3b8"/><path d="M12 54c0-10 10-16 20-16s20 6 20 16" fill="#94a3b8"/></svg>');
+    
+    // Calculate completion percentage
+    const fields = ['full_name', 'email', 'phone', 'college', 'major', 'academic_number', 'national_id', 'degree', 'birth_date', 'committee'];
+    const filledFields = fields.filter(f => m[f] && String(m[f]).trim()).length;
+    const completionPercentage = Math.round((filledFields / fields.length) * 100);
+    
     const html = `
-      <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px">
-        <img src="${(m.avatar || m.avatar_url) || ''}" alt="${safe(m.full_name || m.name)}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#f1f5f9" />
+      <!-- Header Section -->
+      <div style="background:linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); padding:32px 24px; text-align:center; border-bottom:1px solid #e2e8f0">
+        <div style="position:relative; display:inline-block; margin-bottom:16px">
+          <img src="${avatar || defaultAvatar}" alt="${safe(m.full_name || m.name)}" onerror="this.src='${defaultAvatar}'" style="width:120px; height:120px; border-radius:20px; object-fit:cover; box-shadow:0 4px 16px rgba(0,0,0,0.12); border:4px solid #fff" />
+          <div style="position:absolute; bottom:-8px; right:-8px; background:${isComplete ? '#10b981' : '#ef4444'}; width:32px; height:32px; border-radius:50%; border:4px solid #fff; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.15)">
+            <i class="fa-solid ${isComplete ? 'fa-check' : 'fa-xmark'}" style="font-size:14px; color:#fff"></i>
+          </div>
+        </div>
+        <h3 style="margin:0 0 12px; font-size:1.5rem; font-weight:700; color:#0f172a">${safe(m.full_name || m.name)}</h3>
+        <div style="display:inline-flex; align-items:center; gap:8px; padding:6px 16px; background:#f1f5f9; border-radius:999px; margin-bottom:12px">
+          <i class="${committeeIcon}" style="font-size:14px; color:#3d8fd6"></i>
+          <span style="font-size:0.9rem; color:#475569; font-weight:600">${safe(committee)}</span>
+        </div>
+        
+        <!-- Completion Progress Bar -->
+        <div style="max-width:400px; margin:0 auto 12px">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
+            <span style="font-size:0.8rem; color:#64748b; font-weight:600">اكتمال البيانات</span>
+            <span style="font-size:0.85rem; color:#0f172a; font-weight:700">${completionPercentage}%</span>
+          </div>
+          <div style="width:100%; height:8px; background:#e2e8f0; border-radius:999px; overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,0.1)">
+            <div style="width:${completionPercentage}%; height:100%; background:linear-gradient(90deg, ${completionPercentage >= 100 ? '#10b981' : completionPercentage >= 70 ? '#3b82f6' : completionPercentage >= 40 ? '#f59e0b' : '#ef4444'}, ${completionPercentage >= 100 ? '#34d399' : completionPercentage >= 70 ? '#60a5fa' : completionPercentage >= 40 ? '#fbbf24' : '#f87171'}); transition:width 0.5s ease, background 0.3s ease; border-radius:999px"></div>
+          </div>
+        </div>
+        
         <div>
-          <div style="font-weight:700;color:var(--main-blue);font-size:18px">${safe(m.full_name || m.name)}</div>
-          ${m.committee ? `<div class="muted">${safe(m.committee)}</div>` : ''}
+          <span style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:${isComplete ? 'linear-gradient(135deg, #d1fae5, #a7f3d0)' : 'linear-gradient(135deg, #fee2e2, #fecaca)'}; color:${isComplete ? '#047857' : '#b91c1c'}; border-radius:8px; font-size:0.85rem; font-weight:600; box-shadow:0 2px 4px rgba(0,0,0,0.08)">
+            <i class="fa-solid ${isComplete ? 'fa-circle-check' : 'fa-circle-xmark'}"></i>
+            ${isComplete ? 'بيانات مكتملة' : 'بيانات غير مكتملة'}
+          </span>
         </div>
       </div>
-      <div class="form-grid" style="--grid-cols: 2">
-        <label>البريد الإلكتروني <div class="muted">${safe(m.email)}</div></label>
-        <label>رقم الجوال <div class="muted">${safe(m.phone)}</div></label>
-        <label>الرقم الأكاديمي <div class="muted">${safe(m.academic_number)}</div></label>
-        <label>رقم الهوية الوطنية <div class="muted">${safe(m.national_id)}</div></label>
-        <label>الكلية <div class="muted">${safe(m.college)}</div></label>
-        <label>التخصص <div class="muted">${safe(m.major)}</div></label>
-        <label>الدرجة العلمية <div class="muted">${safe(m.degree)}</div></label>
-        <label>تاريخ الميلاد <div class="muted">${fmtDate(m.birth_date)}</div></label>
-        <label>حساب أكس <div class="muted">${xUrl ? `<a href="${xUrl}" target="_blank" rel="noopener">${safe(xh)}</a>` : '—'}</div></label>
-        <label>الإنستقرام <div class="muted">${igUrl ? `<a href="${igUrl}" target="_blank" rel="noopener">${safe(ig)}</a>` : '—'}</div></label>
-        <label>تيك توك <div class="muted">${tkUrl ? `<a href="${tkUrl}" target="_blank" rel="noopener">${safe(tk)}</a>` : '—'}</div></label>
-        <label>اللون الأساسي <div>${colorBox(m.primary_color)}</div></label>
-        <label>اللون الثانوي <div>${colorBox(m.secondary_color)}</div></label>
+
+      <!-- Content Section -->
+      <div style="padding:24px">
+        
+        <!-- معلومات الاتصال -->
+        ${m.email || m.phone ? `
+        <div style="margin-bottom:24px">
+          <h4 style="font-size:1rem; font-weight:700; color:#1e293b; margin:0 0 16px; padding-bottom:10px; border-bottom:2px solid #e2e8f0; display:flex; align-items:center; gap:10px">
+            <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #10b981, #34d399); display:flex; align-items:center; justify-content:center">
+              <i class="fa-solid fa-address-book" style="color:#fff; font-size:14px"></i>
+            </div>
+            معلومات الاتصال
+          </h4>
+          <div style="display:grid; gap:14px">
+            ${m.email ? `
+              <a href="mailto:${m.email}" 
+                 class="contact-card-link"
+                 style="display:flex; align-items:center; gap:14px; padding:16px; background:linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 2px 4px rgba(0,0,0,0.04); transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); text-decoration:none; cursor:pointer; position:relative; overflow:hidden"
+                 onmouseenter="
+                   this.style.boxShadow='0 8px 20px rgba(61,143,214,0.25)';
+                   this.style.transform='translateY(-3px)';
+                   this.style.borderColor='#3d8fd6';
+                   this.style.background='linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)';
+                   this.querySelector('.email-icon-box').style.transform='scale(1.1) rotate(5deg)';
+                   this.querySelector('.email-icon-box').style.boxShadow='0 6px 16px rgba(61,143,214,0.4)';
+                   this.querySelector('.email-text').style.color='#3d8fd6';
+                   this.querySelector('.email-arrow').style.color='#3d8fd6';
+                   this.querySelector('.email-arrow').style.transform='translate(3px, -3px)';
+                 "
+                 onmouseleave="
+                   this.style.boxShadow='0 2px 4px rgba(0,0,0,0.04)';
+                   this.style.transform='translateY(0)';
+                   this.style.borderColor='#e2e8f0';
+                   this.style.background='linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)';
+                   this.querySelector('.email-icon-box').style.transform='scale(1) rotate(0deg)';
+                   this.querySelector('.email-icon-box').style.boxShadow='0 4px 8px rgba(61,143,214,0.3)';
+                   this.querySelector('.email-text').style.color='#1e293b';
+                   this.querySelector('.email-arrow').style.color='#cbd5e1';
+                   this.querySelector('.email-arrow').style.transform='translate(0, 0)';
+                 "
+                 onmousedown="this.style.transform='translateY(-1px) scale(0.98)'"
+                 onmouseup="this.style.transform='translateY(-3px) scale(1)'">
+                <div class="email-icon-box" style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg, #3d8fd6, #5ba3e0); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 8px rgba(61,143,214,0.3); transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1)">
+                  <i class="fa-solid fa-envelope" style="font-size:20px; color:#fff"></i>
+                </div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:0.7rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px">البريد الإلكتروني</div>
+                  <div class="email-text" style="font-size:1rem; color:#1e293b; font-weight:600; overflow:hidden; text-overflow:ellipsis; display:block; transition:color 0.3s">${safe(m.email)}</div>
+                </div>
+                <i class="fa-solid fa-arrow-up-right-from-square email-arrow" style="color:#cbd5e1; font-size:16px; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"></i>
+              </a>
+            ` : ''}
+            ${m.phone ? `
+              <a href="tel:${m.phone}" 
+                 class="contact-card-link"
+                 style="display:flex; align-items:center; gap:14px; padding:16px; background:linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 2px 4px rgba(0,0,0,0.04); transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); text-decoration:none; cursor:pointer; position:relative; overflow:hidden"
+                 onmouseenter="
+                   this.style.boxShadow='0 8px 20px rgba(16,185,129,0.25)';
+                   this.style.transform='translateY(-3px)';
+                   this.style.borderColor='#10b981';
+                   this.style.background='linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%)';
+                   this.querySelector('.phone-icon-box').style.transform='scale(1.1) rotate(-5deg)';
+                   this.querySelector('.phone-icon-box').style.boxShadow='0 6px 16px rgba(16,185,129,0.4)';
+                   this.querySelector('.phone-icon').style.animation='phone-ring 0.5s ease-in-out';
+                   this.querySelector('.phone-text').style.color='#10b981';
+                   this.querySelector('.phone-arrow').style.color='#10b981';
+                   this.querySelector('.phone-arrow').style.transform='translate(3px, -3px)';
+                 "
+                 onmouseleave="
+                   this.style.boxShadow='0 2px 4px rgba(0,0,0,0.04)';
+                   this.style.transform='translateY(0)';
+                   this.style.borderColor='#e2e8f0';
+                   this.style.background='linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)';
+                   this.querySelector('.phone-icon-box').style.transform='scale(1) rotate(0deg)';
+                   this.querySelector('.phone-icon-box').style.boxShadow='0 4px 8px rgba(16,185,129,0.3)';
+                   this.querySelector('.phone-icon').style.animation='';
+                   this.querySelector('.phone-text').style.color='#1e293b';
+                   this.querySelector('.phone-arrow').style.color='#cbd5e1';
+                   this.querySelector('.phone-arrow').style.transform='translate(0, 0)';
+                 "
+                 onmousedown="this.style.transform='translateY(-1px) scale(0.98)'"
+                 onmouseup="this.style.transform='translateY(-3px) scale(1)'">
+                <div class="phone-icon-box" style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg, #10b981, #34d399); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 8px rgba(16,185,129,0.3); transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1)">
+                  <i class="fa-solid fa-phone phone-icon" style="font-size:20px; color:#fff"></i>
+                </div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:0.7rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px">رقم الجوال</div>
+                  <div class="phone-text" style="font-size:1rem; color:#1e293b; font-weight:600; direction:ltr; text-align:right; display:block; transition:color 0.3s">${safe(m.phone)}</div>
+                </div>
+                <i class="fa-solid fa-arrow-up-right-from-square phone-arrow" style="color:#cbd5e1; font-size:16px; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"></i>
+              </a>
+            ` : ''}
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- المعلومات الشخصية -->
+        <div style="margin-bottom:24px">
+          <h4 style="font-size:1rem; font-weight:700; color:#1e293b; margin:0 0 16px; padding-bottom:10px; border-bottom:2px solid #e2e8f0; display:flex; align-items:center; gap:10px">
+            <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #3b82f6, #60a5fa); display:flex; align-items:center; justify-content:center">
+              <i class="fa-solid fa-user" style="color:#fff; font-size:14px"></i>
+            </div>
+            المعلومات الشخصية
+          </h4>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px">
+            ${m.national_id ? `
+              <div style="padding:16px; background:linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); border-radius:12px; border:1px solid #bae6fd; box-shadow:0 2px 4px rgba(59,130,246,0.1); transition:all 0.2s" onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(59,130,246,0.2)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(59,130,246,0.1)'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-solid fa-id-card" style="color:#3b82f6; font-size:16px"></i>
+                  <div style="font-size:0.7rem; color:#075985; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">رقم الهوية</div>
+                </div>
+                <div style="font-size:1rem; color:#0c4a6e; font-weight:700">${safe(m.national_id)}</div>
+              </div>
+            ` : `
+              <div style="padding:16px; background:repeating-linear-gradient(45deg, #e0f2fe, #e0f2fe 10px, #dbeafe 10px, #dbeafe 20px); border-radius:12px; border:2px dashed #93c5fd; position:relative; overflow:hidden; transition:all 0.2s; opacity:0.7" onmouseenter="this.style.borderColor='#60a5fa'; this.style.transform='translateY(-2px)'; this.style.opacity='0.85'" onmouseleave="this.style.borderColor='#93c5fd'; this.style.transform='translateY(0)'; this.style.opacity='0.7'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-solid fa-id-card" style="color:#3b82f6; font-size:16px; opacity:0.6"></i>
+                  <div style="font-size:0.7rem; color:#075985; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">رقم الهوية</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <i class="fa-solid fa-circle-exclamation" style="color:#0369a1; font-size:14px"></i>
+                  <span style="font-size:0.85rem; color:#0c4a6e; font-weight:600">غير مكتمل</span>
+                </div>
+              </div>
+            `}
+            ${m.birth_date ? `
+              <div style="padding:16px; background:linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); border-radius:12px; border:1px solid #bae6fd; box-shadow:0 2px 4px rgba(59,130,246,0.1); transition:all 0.2s" onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(59,130,246,0.2)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(59,130,246,0.1)'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-solid fa-calendar-days" style="color:#3b82f6; font-size:16px"></i>
+                  <div style="font-size:0.7rem; color:#075985; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">تاريخ الميلاد</div>
+                </div>
+                <div style="font-size:1rem; color:#0c4a6e; font-weight:700">${fmtDate(m.birth_date)}</div>
+              </div>
+            ` : `
+              <div style="padding:16px; background:repeating-linear-gradient(45deg, #e0f2fe, #e0f2fe 10px, #dbeafe 10px, #dbeafe 20px); border-radius:12px; border:2px dashed #93c5fd; position:relative; overflow:hidden; transition:all 0.2s; opacity:0.7" onmouseenter="this.style.borderColor='#60a5fa'; this.style.transform='translateY(-2px)'; this.style.opacity='0.85'" onmouseleave="this.style.borderColor='#93c5fd'; this.style.transform='translateY(0)'; this.style.opacity='0.7'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-solid fa-calendar-days" style="color:#3b82f6; font-size:16px; opacity:0.6"></i>
+                  <div style="font-size:0.7rem; color:#075985; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">تاريخ الميلاد</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <i class="fa-solid fa-circle-exclamation" style="color:#0369a1; font-size:14px"></i>
+                  <span style="font-size:0.85rem; color:#0c4a6e; font-weight:600">غير مكتمل</span>
+                </div>
+              </div>
+            `}
+          </div>
+        </div>
+
+        <!-- المعلومات الأكاديمية -->
+        <div style="margin-bottom:24px">
+          <h4 style="font-size:1rem; font-weight:700; color:#1e293b; margin:0 0 16px; padding-bottom:10px; border-bottom:2px solid #e2e8f0; display:flex; align-items:center; gap:10px">
+            <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #f59e0b, #fbbf24); display:flex; align-items:center; justify-content:center">
+              <i class="fa-solid fa-graduation-cap" style="color:#fff; font-size:14px"></i>
+            </div>
+            المعلومات الأكاديمية
+          </h4>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px">
+            ${m.degree ? `
+              <div style="padding:16px; background:linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%); border-radius:12px; border:1px solid #fde68a; box-shadow:0 2px 4px rgba(245,158,11,0.1); transition:all 0.2s" onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(245,158,11,0.2)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(245,158,11,0.1)'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-solid fa-user-graduate" style="color:#f59e0b; font-size:16px"></i>
+                  <div style="font-size:0.7rem; color:#92400e; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">الدرجة العلمية</div>
+                </div>
+                <div style="font-size:1rem; color:#78350f; font-weight:700">${safe(m.degree)}</div>
+              </div>
+            ` : `
+              <div style="padding:16px; background:repeating-linear-gradient(45deg, #fef3c7, #fef3c7 10px, #fef9c3 10px, #fef9c3 20px); border-radius:12px; border:2px dashed #fde68a; position:relative; overflow:hidden; transition:all 0.2s; opacity:0.7" onmouseenter="this.style.borderColor='#fbbf24'; this.style.transform='translateY(-2px)'; this.style.opacity='0.85'" onmouseleave="this.style.borderColor='#fde68a'; this.style.transform='translateY(0)'; this.style.opacity='0.7'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-solid fa-user-graduate" style="color:#f59e0b; font-size:16px; opacity:0.6"></i>
+                  <div style="font-size:0.7rem; color:#92400e; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">الدرجة العلمية</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <i class="fa-solid fa-circle-exclamation" style="color:#b45309; font-size:14px"></i>
+                  <span style="font-size:0.85rem; color:#92400e; font-weight:600">غير مكتمل</span>
+                </div>
+              </div>
+            `}
+            ${m.college ? `
+              <div style="padding:16px; background:linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%); border-radius:12px; border:1px solid #fde68a; box-shadow:0 2px 4px rgba(245,158,11,0.1); transition:all 0.2s" onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(245,158,11,0.2)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(245,158,11,0.1)'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-solid fa-building-columns" style="color:#f59e0b; font-size:16px"></i>
+                  <div style="font-size:0.7rem; color:#92400e; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">الكلية</div>
+                </div>
+                <div style="font-size:1rem; color:#78350f; font-weight:700; line-height:1.4">${safe(m.college)}</div>
+              </div>
+            ` : `
+              <div style="padding:16px; background:repeating-linear-gradient(45deg, #fef3c7, #fef3c7 10px, #fef9c3 10px, #fef9c3 20px); border-radius:12px; border:2px dashed #fde68a; position:relative; overflow:hidden; transition:all 0.2s; opacity:0.7" onmouseenter="this.style.borderColor='#fbbf24'; this.style.transform='translateY(-2px)'; this.style.opacity='0.85'" onmouseleave="this.style.borderColor='#fde68a'; this.style.transform='translateY(0)'; this.style.opacity='0.7'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-solid fa-building-columns" style="color:#f59e0b; font-size:16px; opacity:0.6"></i>
+                  <div style="font-size:0.7rem; color:#92400e; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">الكلية</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <i class="fa-solid fa-circle-exclamation" style="color:#b45309; font-size:14px"></i>
+                  <span style="font-size:0.85rem; color:#92400e; font-weight:600">غير مكتمل</span>
+                </div>
+              </div>
+            `}
+            ${m.major ? `
+              <div style="padding:16px; background:linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%); border-radius:12px; border:1px solid #fde68a; box-shadow:0 2px 4px rgba(245,158,11,0.1); transition:all 0.2s" onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(245,158,11,0.2)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(245,158,11,0.1)'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-solid fa-book-open" style="color:#f59e0b; font-size:16px"></i>
+                  <div style="font-size:0.7rem; color:#92400e; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">التخصص</div>
+                </div>
+                <div style="font-size:1rem; color:#78350f; font-weight:700; line-height:1.4">${safe(m.major)}</div>
+              </div>
+            ` : `
+              <div style="padding:16px; background:repeating-linear-gradient(45deg, #fef3c7, #fef3c7 10px, #fef9c3 10px, #fef9c3 20px); border-radius:12px; border:2px dashed #fde68a; position:relative; overflow:hidden; transition:all 0.2s; opacity:0.7" onmouseenter="this.style.borderColor='#fbbf24'; this.style.transform='translateY(-2px)'; this.style.opacity='0.85'" onmouseleave="this.style.borderColor='#fde68a'; this.style.transform='translateY(0)'; this.style.opacity='0.7'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-solid fa-book-open" style="color:#f59e0b; font-size:16px; opacity:0.6"></i>
+                  <div style="font-size:0.7rem; color:#92400e; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">التخصص</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <i class="fa-solid fa-circle-exclamation" style="color:#b45309; font-size:14px"></i>
+                  <span style="font-size:0.85rem; color:#92400e; font-weight:600">غير مكتمل</span>
+                </div>
+              </div>
+            `}
+            ${m.academic_number ? `
+              <div style="padding:16px; background:linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%); border-radius:12px; border:1px solid #fde68a; box-shadow:0 2px 4px rgba(245,158,11,0.1); transition:all 0.2s" onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(245,158,11,0.2)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(245,158,11,0.1)'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-solid fa-hashtag" style="color:#f59e0b; font-size:16px"></i>
+                  <div style="font-size:0.7rem; color:#92400e; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">الرقم الأكاديمي</div>
+                </div>
+                <div style="font-size:1rem; color:#78350f; font-weight:700">${safe(m.academic_number)}</div>
+              </div>
+            ` : `
+              <div style="padding:16px; background:repeating-linear-gradient(45deg, #fef3c7, #fef3c7 10px, #fef9c3 10px, #fef9c3 20px); border-radius:12px; border:2px dashed #fde68a; position:relative; overflow:hidden; transition:all 0.2s; opacity:0.7" onmouseenter="this.style.borderColor='#fbbf24'; this.style.transform='translateY(-2px)'; this.style.opacity='0.85'" onmouseleave="this.style.borderColor='#fde68a'; this.style.transform='translateY(0)'; this.style.opacity='0.7'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-solid fa-hashtag" style="color:#f59e0b; font-size:16px; opacity:0.6"></i>
+                  <div style="font-size:0.7rem; color:#92400e; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">الرقم الأكاديمي</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <i class="fa-solid fa-circle-exclamation" style="color:#b45309; font-size:14px"></i>
+                  <span style="font-size:0.85rem; color:#92400e; font-weight:600">غير مكتمل</span>
+                </div>
+              </div>
+            `}
+          </div>
+        </div>
+
+        <!-- حسابات التواصل الاجتماعي -->
+        <div style="margin-bottom:24px">
+          <h4 style="font-size:1rem; font-weight:700; color:#1e293b; margin:0 0 16px; padding-bottom:10px; border-bottom:2px solid #e2e8f0; display:flex; align-items:center; gap:10px">
+            <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #8b5cf6, #a78bfa); display:flex; align-items:center; justify-content:center">
+              <i class="fa-solid fa-hashtag" style="color:#fff; font-size:14px"></i>
+            </div>
+            حسابات التواصل الاجتماعي
+          </h4>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px">
+            ${xUrl ? `
+              <a href="${xUrl}" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px; background:#000; color:#fff; border-radius:12px; text-decoration:none; transition:all 0.3s; box-shadow:0 2px 8px rgba(0,0,0,0.15)" onmouseenter="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.3)'" onmouseleave="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)'">
+                <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:0">
+                  <i class="fa-brands fa-x-twitter" style="font-size:24px"></i>
+                  <div style="flex:1; min-width:0">
+                    <div style="font-size:0.7rem; opacity:0.7; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; font-family:'Eras', sans-serif">X (Twitter)</div>
+                    <div style="font-weight:700; font-size:0.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:'Eras', sans-serif">${safe(xh)}</div>
+                  </div>
+                </div>
+                <i class="fa-solid fa-arrow-up-right" style="font-size:16px; opacity:0.7"></i>
+              </a>
+            ` : `
+              <div style="padding:16px; background:#000; color:#fff; border-radius:12px; position:relative; overflow:hidden; transition:all 0.2s; opacity:0.5" onmouseenter="this.style.transform='translateY(-2px)'; this.style.opacity='0.7'" onmouseleave="this.style.transform='translateY(0)'; this.style.opacity='0.5'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-brands fa-x-twitter" style="font-size:16px; opacity:0.6"></i>
+                  <div style="font-size:0.7rem; color:#a3a3a3; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">X (Twitter)</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <i class="fa-solid fa-circle-exclamation" style="color:#737373; font-size:14px"></i>
+                  <span style="font-size:0.85rem; color:#d4d4d4; font-weight:600">غير مكتمل</span>
+                </div>
+              </div>
+            `}
+            ${igUrl ? `
+              <a href="${igUrl}" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px; background:linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color:#fff; border-radius:12px; text-decoration:none; transition:all 0.3s; box-shadow:0 2px 8px rgba(188,24,136,0.3)" onmouseenter="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 20px rgba(188,24,136,0.5)'" onmouseleave="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(188,24,136,0.3)'">
+                <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:0">
+                  <i class="fa-brands fa-instagram" style="font-size:24px"></i>
+                  <div style="flex:1; min-width:0">
+                    <div style="font-size:0.7rem; opacity:0.9; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; font-family:'Eras', sans-serif">Instagram</div>
+                    <div style="font-weight:700; font-size:0.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:'Eras', sans-serif">${safe(ig)}</div>
+                  </div>
+                </div>
+                <i class="fa-solid fa-arrow-up-right" style="font-size:16px; opacity:0.9"></i>
+              </a>
+            ` : `
+              <div style="padding:16px; background:linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color:#fff; border-radius:12px; position:relative; overflow:hidden; transition:all 0.2s; opacity:0.5" onmouseenter="this.style.transform='translateY(-2px)'; this.style.opacity='0.7'" onmouseleave="this.style.transform='translateY(0)'; this.style.opacity='0.5'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-brands fa-instagram" style="font-size:16px; opacity:0.6"></i>
+                  <div style="font-size:0.7rem; opacity:0.8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">Instagram</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <i class="fa-solid fa-circle-exclamation" style="color:#fff; font-size:14px; opacity:0.7"></i>
+                  <span style="font-size:0.85rem; opacity:0.9; font-weight:600">غير مكتمل</span>
+                </div>
+              </div>
+            `}
+            ${tkUrl ? `
+              <a href="${tkUrl}" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px; background:linear-gradient(135deg, #00f2ea 0%, #ff0050 50%, #000 100%); color:#fff; border-radius:12px; text-decoration:none; transition:all 0.3s; box-shadow:0 2px 8px rgba(0,242,234,0.3)" onmouseenter="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 20px rgba(0,242,234,0.5)'" onmouseleave="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,242,234,0.3)'">
+                <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:0">
+                  <i class="fa-brands fa-tiktok" style="font-size:24px"></i>
+                  <div style="flex:1; min-width:0">
+                    <div style="font-size:0.7rem; opacity:0.9; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; font-family:'Eras', sans-serif">TikTok</div>
+                    <div style="font-weight:700; font-size:0.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:'Eras', sans-serif">${safe(tk)}</div>
+                  </div>
+                </div>
+                <i class="fa-solid fa-arrow-up-right" style="font-size:16px; opacity:0.9"></i>
+              </a>
+            ` : `
+              <div style="padding:16px; background:linear-gradient(135deg, #00f2ea 0%, #ff0050 50%, #000 100%); color:#fff; border-radius:12px; position:relative; overflow:hidden; transition:all 0.2s; opacity:0.5" onmouseenter="this.style.transform='translateY(-2px)'; this.style.opacity='0.7'" onmouseleave="this.style.transform='translateY(0)'; this.style.opacity='0.5'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-brands fa-tiktok" style="font-size:16px; opacity:0.6"></i>
+                  <div style="font-size:0.7rem; opacity:0.8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">TikTok</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <i class="fa-solid fa-circle-exclamation" style="color:#fff; font-size:14px; opacity:0.7"></i>
+                  <span style="font-size:0.85rem; opacity:0.9; font-weight:600">غير مكتمل</span>
+                </div>
+              </div>
+            `}
+            ${liUrl ? `
+              <a href="${liUrl}" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px; background:linear-gradient(135deg, #0077b5 0%, #00a0dc 100%); color:#fff; border-radius:12px; text-decoration:none; transition:all 0.3s; box-shadow:0 2px 8px rgba(0,119,181,0.3)" onmouseenter="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 20px rgba(0,119,181,0.5)'" onmouseleave="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,119,181,0.3)'">
+                <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:0">
+                  <i class="fa-brands fa-linkedin" style="font-size:24px"></i>
+                  <div style="flex:1; min-width:0">
+                    <div style="font-size:0.7rem; opacity:0.9; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; font-family:'Eras', sans-serif">LinkedIn</div>
+                    <div style="font-weight:700; font-size:0.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:'Eras', sans-serif">${safe(li)}</div>
+                  </div>
+                </div>
+                <i class="fa-solid fa-arrow-up-right" style="font-size:16px; opacity:0.9"></i>
+              </a>
+            ` : `
+              <div style="padding:16px; background:linear-gradient(135deg, #0077b5 0%, #00a0dc 100%); color:#fff; border-radius:12px; position:relative; overflow:hidden; transition:all 0.2s; opacity:0.5" onmouseenter="this.style.transform='translateY(-2px)'; this.style.opacity='0.7'" onmouseleave="this.style.transform='translateY(0)'; this.style.opacity='0.5'">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <i class="fa-brands fa-linkedin" style="font-size:16px; opacity:0.6"></i>
+                  <div style="font-size:0.7rem; opacity:0.8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">LinkedIn</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <i class="fa-solid fa-circle-exclamation" style="color:#fff; font-size:14px; opacity:0.7"></i>
+                  <span style="font-size:0.85rem; opacity:0.9; font-weight:600">غير مكتمل</span>
+                </div>
+              </div>
+            `}
+          </div>
+        </div>
+
+        <!-- الألوان الشخصية -->
+        ${m.primary_color || m.secondary_color ? `
+        <div>
+          <h4 style="font-size:1rem; font-weight:700; color:#1e293b; margin:0 0 16px; padding-bottom:10px; border-bottom:2px solid #e2e8f0; display:flex; align-items:center; gap:10px">
+            <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #ec4899, #f472b6); display:flex; align-items:center; justify-content:center">
+              <i class="fa-solid fa-palette" style="color:#fff; font-size:14px"></i>
+            </div>
+            الألوان الشخصية
+          </h4>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px">
+            ${m.primary_color ? `<div style="padding:20px; background:linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-radius:12px; border:1px solid #e2e8f0; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.04); transition:all 0.2s" onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.04)'"><div style="position:relative; width:80px; height:80px; margin:0 auto 12px; border-radius:16px; background:${m.primary_color}; border:3px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.2)"><div style="position:absolute; top:4px; right:4px; width:12px; height:12px; background:rgba(255,255,255,0.4); border-radius:50%; filter:blur(2px)"></div></div><div style="font-size:0.7rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:6px">اللون الأساسي</div><code style="display:inline-block; padding:6px 12px; background:#f1f5f9; border-radius:6px; font-size:0.9rem; color:#1e293b; font-weight:700; font-family:monospace">${m.primary_color}</code></div>` : ''}
+            ${m.secondary_color ? `<div style="padding:20px; background:linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-radius:12px; border:1px solid #e2e8f0; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.04); transition:all 0.2s" onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.04)'"><div style="position:relative; width:80px; height:80px; margin:0 auto 12px; border-radius:16px; background:${m.secondary_color}; border:3px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.2)"><div style="position:absolute; top:4px; right:4px; width:12px; height:12px; background:rgba(255,255,255,0.4); border-radius:50%; filter:blur(2px)"></div></div><div style="font-size:0.7rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:6px">اللون الثانوي</div><code style="display:inline-block; padding:6px 12px; background:#f1f5f9; border-radius:6px; font-size:0.9rem; color:#1e293b; font-weight:700; font-family:monospace">${m.secondary_color}</code></div>` : ''}
+          </div>
+        </div>
+        ` : ''}
+
       </div>
     `;
     if (memberDetailsContent) memberDetailsContent.innerHTML = html;
@@ -2523,6 +3213,9 @@
   const memberImageActions = document.getElementById('memberImageActions');
   const memberEditImageBtn = document.getElementById('member_edit_image_btn');
   const memberChangeImageBtn = document.getElementById('member_change_image_btn');
+  const memberChangeAvatarBtn = document.getElementById('memberChangeAvatarBtn');
+  const memberAvatarPlaceholder = document.getElementById('memberAvatarPlaceholder');
+  const memberDialogTitle = document.getElementById('memberDialogTitle');
   let memberCroppedFile = null;
   // Member details dialog elements
   const memberDetailsDialog = document.getElementById('memberDetailsDialog');
@@ -2537,7 +3230,11 @@
       const cropped = await openImageCropper(file, { aspectRatio: 1, lockAspect: true, maxWidth: 1200, maxHeight: 1200, mimeType: 'image/webp', quality: 0.9 });
       memberCroppedFile = cropped;
       const url = URL.createObjectURL(cropped);
-      if (memberImagePreview) { memberImagePreview.src = url; memberImagePreview.style.display = 'block'; }
+      if (memberImagePreview) { 
+        memberImagePreview.src = url; 
+        memberImagePreview.style.display = 'block'; 
+      }
+      if (memberAvatarPlaceholder) memberAvatarPlaceholder.style.display = 'none';
       if (memberImageActions) memberImageActions.style.display = 'flex';
       if (memberDropzone) memberDropzone.style.display = 'none';
     } catch (err) {
@@ -2547,6 +3244,11 @@
   memberImageFile?.addEventListener('change', async () => {
     const file = memberImageFile.files && memberImageFile.files[0];
     await handleMemberImageFile(file);
+  });
+  memberChangeAvatarBtn?.addEventListener('click', (e) => { 
+    e.preventDefault(); 
+    e.stopPropagation(); 
+    memberImageFile?.click(); 
   });
   memberBrowseBtn?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); memberImageFile?.click(); });
   memberDropzone?.addEventListener('click', (e) => {
@@ -2603,21 +3305,150 @@
   $('#addMemberBtn')?.addEventListener('click', () => {
     memberEditingIndex = null;
     memberForm?.reset?.();
+    if (memberDialogTitle) memberDialogTitle.textContent = 'إضافة عضو جديد';
     if (memberImagePreview) { memberImagePreview.src = ''; memberImagePreview.style.display = 'none'; }
+    if (memberAvatarPlaceholder) memberAvatarPlaceholder.style.display = 'block';
     if (memberImageUrl) memberImageUrl.value = '';
     memberCroppedFile = null;
-    if (memberDropzone) memberDropzone.style.display = '';
+    if (memberDropzone) memberDropzone.style.display = 'none';
     if (memberImageActions) memberImageActions.style.display = 'none';
+    
+    // إعادة تعيين الألوان إلى القيم الافتراضية
+    const defaultPrimaryColor = '#3D8FD6';
+    const defaultSecondaryColor = '#274060';
+    if (memberForm.primary_color) memberForm.primary_color.value = defaultPrimaryColor;
+    if (memberForm.secondary_color) memberForm.secondary_color.value = defaultSecondaryColor;
+    if (primaryColorPreview) primaryColorPreview.style.background = defaultPrimaryColor;
+    if (primaryColorCode) primaryColorCode.textContent = defaultPrimaryColor;
+    if (secondaryColorPreview) secondaryColorPreview.style.background = defaultSecondaryColor;
+    if (secondaryColorCode) secondaryColorCode.textContent = defaultSecondaryColor;
+    
+    // إعادة تعيين ألوان أيقونات القطرة إلى الألوان الافتراضية
+    const primaryDropletIcon = memberForm?.querySelector('label span i.fa-droplet[style*="color"]');
+    const secondaryDropletIcon = memberForm?.querySelectorAll('label span i.fa-droplet[style*="color"]')[1];
+    if (primaryDropletIcon) primaryDropletIcon.style.color = defaultPrimaryColor;
+    if (secondaryDropletIcon) secondaryDropletIcon.style.color = defaultSecondaryColor;
+    
     openDialog?.(memberDialog);
   });
 
-  membersList?.addEventListener('click', (e) => {
+  membersList?.addEventListener('click', async (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
     const idx = Number(btn.dataset.idx);
     const act = btn.dataset.act;
     if (act === 'view') {
       openMemberDetails(idx);
+      return;
+    }
+    if (act === 'change-committee') {
+      if (!Number.isInteger(idx) || idx < 0 || idx >= members.length) return;
+      const member = members[idx];
+      const currentCommittee = member.committee || 'بدون لجنة';
+      
+      // Get all unique committees
+      const committees = new Set();
+      members.forEach(m => {
+        const c = (m.committee || '').toString().trim();
+        if (c) committees.add(c);
+      });
+      const committeesList = Array.from(committees).sort((a, b) => {
+        try { return a.localeCompare(b, 'ar'); } catch { return String(a).localeCompare(String(b)); }
+      });
+      
+      // Open custom dialog
+      const dialog = $('#changeCommitteeDialog');
+      const form = $('#changeCommitteeForm');
+      const memberNameEl = $('#changeCommitteeMemberName');
+      const currentCommitteeEl = $('#changeCommitteeCurrentCommittee');
+      const selectEl = $('#changeCommitteeSelect');
+      const newInputDiv = $('#changeCommitteeNewInput');
+      const newInputEl = $('#changeCommitteeNewName');
+      
+      if (!dialog || !form || !selectEl) return;
+      
+      // Set member info
+      if (memberNameEl) memberNameEl.textContent = member.full_name || member.name || 'العضو';
+      if (currentCommitteeEl) currentCommitteeEl.textContent = currentCommittee;
+      
+      // Populate select options
+      selectEl.innerHTML = '<option value="">اختر اللجنة</option>';
+      committeesList.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c;
+        option.textContent = c;
+        if (c === currentCommittee) option.selected = true;
+        selectEl.appendChild(option);
+      });
+      const newOption = document.createElement('option');
+      newOption.value = '__new__';
+      newOption.textContent = 'لجنة جديدة...';
+      selectEl.appendChild(newOption);
+      
+      // Handle select change
+      const handleSelectChange = () => {
+        if (selectEl.value === '__new__') {
+          newInputDiv.style.display = 'block';
+          newInputEl.focus();
+          newInputEl.required = true;
+        } else {
+          newInputDiv.style.display = 'none';
+          newInputEl.required = false;
+        }
+      };
+      selectEl.removeEventListener('change', handleSelectChange);
+      selectEl.addEventListener('change', handleSelectChange);
+      
+      // Reset form
+      newInputDiv.style.display = 'none';
+      newInputEl.value = '';
+      newInputEl.required = false;
+      
+      // Handle form submit
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        let newCommittee = selectEl.value;
+        if (newCommittee === '__new__') {
+          newCommittee = newInputEl.value.trim();
+          if (!newCommittee) {
+            newInputEl.focus();
+            return;
+          }
+        }
+        
+        if (!newCommittee || newCommittee === currentCommittee) {
+          dialog.close();
+          return;
+        }
+        
+        // Update committee
+        member.committee = newCommittee;
+        save(KEYS.members, members);
+        if (sb && member.id) {
+          await sb.from('members').update({ committee: newCommittee }).eq('id', member.id);
+        }
+        applyMembersFilters();
+        
+        dialog.close();
+        
+        // Show success message
+        if (typeof Swal !== 'undefined') {
+          Swal.fire({
+            icon: 'success',
+            title: 'تم التغيير!',
+            text: `تم نقل ${member.full_name || member.name} إلى ${newCommittee}`,
+            confirmButtonText: 'حسناً',
+            confirmButtonColor: '#3d8fd6',
+            timer: 2000
+          });
+        }
+      };
+      
+      form.removeEventListener('submit', handleSubmit);
+      form.addEventListener('submit', handleSubmit);
+      
+      openDialog?.(dialog);
       return;
     }
     if (act === 'up' || act === 'down') {
@@ -2627,13 +3458,14 @@
       const [moved] = members.splice(idx, 1);
       members.splice(newIndex, 0, moved);
       normalizeAndPersistOrder(members, KEYS.members, 'members').then(() => {
-        renderMembers();
+        applyMembersFilters();
       });
       return;
     }
     if (act === 'edit') {
       memberEditingIndex = idx;
       const cur = members[idx];
+      if (memberDialogTitle) memberDialogTitle.textContent = 'تعديل بيانات العضو';
       memberForm.full_name.value = cur.full_name || cur.name || '';
       memberForm.email.value = cur.email || '';
       memberForm.phone.value = cur.phone || '';
@@ -2677,18 +3509,39 @@
       memberForm.x_handle.value = cur.x_handle || '';
       memberForm.instagram_handle.value = cur.instagram_handle || '';
       memberForm.tiktok_handle.value = cur.tiktok_handle || '';
-      memberForm.primary_color.value = cur.primary_color || '#3D8FD6';
-      memberForm.secondary_color.value = cur.secondary_color || '#274060';
+      memberForm.linkedin_handle.value = cur.linkedin_handle || '';
+      
+      // Update color inputs and previews
+      const primaryColor = (cur.primary_color || '#3D8FD6').toUpperCase();
+      const secondaryColor = (cur.secondary_color || '#274060').toUpperCase();
+      memberForm.primary_color.value = primaryColor;
+      memberForm.secondary_color.value = secondaryColor;
+      
+      // تحديث معاينات الألوان وأكواد الألوان
+      if (primaryColorPreview) primaryColorPreview.style.background = primaryColor;
+      if (primaryColorCode) primaryColorCode.textContent = primaryColor;
+      if (secondaryColorPreview) secondaryColorPreview.style.background = secondaryColor;
+      if (secondaryColorCode) secondaryColorCode.textContent = secondaryColor;
+      
+      // تحديث لون أيقونة القطرة لتعكس اللون المختار
+      const primaryDropletIcon = memberForm.querySelector('label span i.fa-droplet[style*="color:#3d8fd6"]');
+      const secondaryDropletIcon = memberForm.querySelector('label span i.fa-droplet[style*="color:#274060"]');
+      if (primaryDropletIcon) primaryDropletIcon.style.color = primaryColor;
+      if (secondaryDropletIcon) secondaryDropletIcon.style.color = secondaryColor;
       const imgUrl = (cur.avatar || cur.avatar_url) || '';
       if (memberImageUrl) memberImageUrl.value = imgUrl;
       if (memberImagePreview) {
         if (imgUrl) { memberImagePreview.src = imgUrl; memberImagePreview.style.display = 'block'; }
         else { memberImagePreview.src = ''; memberImagePreview.style.display = 'none'; }
       }
+      if (memberAvatarPlaceholder) {
+        if (imgUrl) memberAvatarPlaceholder.style.display = 'none';
+        else memberAvatarPlaceholder.style.display = 'block';
+      }
       if (memberImageFile) memberImageFile.value = '';
       memberCroppedFile = null;
       if (imgUrl) { if (memberDropzone) memberDropzone.style.display = 'none'; if (memberImageActions) memberImageActions.style.display = 'flex'; }
-      else { if (memberDropzone) memberDropzone.style.display = ''; if (memberImageActions) memberImageActions.style.display = 'none'; }
+      else { if (memberDropzone) memberDropzone.style.display = 'none'; if (memberImageActions) memberImageActions.style.display = 'none'; }
       openDialog?.(memberDialog);
     } else if (act === 'del') {
       if (!confirm('تأكيد الحذف؟')) return;
@@ -2697,15 +3550,236 @@
         sb.from('members').delete().eq('id', cur.id).then(({ error }) => {
           if (error) return alert('فشل الحذف: ' + error.message);
           members.splice(idx, 1);
-          renderMembers();
+          applyMembersFilters();
         });
       } else {
         members.splice(idx, 1);
         save(KEYS.members, members);
-        renderMembers();
+        applyMembersFilters();
       }
     }
   });
+
+  // Color picker functionality
+  const primaryColorInput = document.getElementById('primaryColorInput');
+  const primaryColorPreview = document.getElementById('primaryColorPreview');
+  const primaryColorCode = document.getElementById('primaryColorCode');
+  const secondaryColorInput = document.getElementById('secondaryColorInput');
+  const secondaryColorPreview = document.getElementById('secondaryColorPreview');
+  const secondaryColorCode = document.getElementById('secondaryColorCode');
+
+  // تحديث اللون عند التغيير
+  if (primaryColorInput && primaryColorPreview && primaryColorCode) {
+    const updatePrimary = (val) => {
+      const color = (val || primaryColorInput.value || '').toUpperCase();
+      if (!color) return;
+      primaryColorPreview.style.background = color;
+      primaryColorCode.textContent = color;
+    };
+    primaryColorInput.addEventListener('input', (e) => updatePrimary(e.target.value));
+    primaryColorInput.addEventListener('change', (e) => updatePrimary(e.target.value));
+  }
+
+  if (secondaryColorInput && secondaryColorPreview && secondaryColorCode) {
+    const updateSecondary = (val) => {
+      const color = (val || secondaryColorInput.value || '').toUpperCase();
+      if (!color) return;
+      secondaryColorPreview.style.background = color;
+      secondaryColorCode.textContent = color;
+    };
+    secondaryColorInput.addEventListener('input', (e) => updateSecondary(e.target.value));
+    secondaryColorInput.addEventListener('change', (e) => updateSecondary(e.target.value));
+  }
+
+  // وظيفة نسخ كود اللون
+  function copyColorCode(codeId) {
+    const codeElement = document.getElementById(codeId);
+    if (!codeElement) return;
+    
+    const colorCode = codeElement.textContent;
+    const btn = document.querySelector(`[data-color-target="${codeId}"]`);
+    const btnText = btn?.querySelector('.copy-text');
+    const btnIcon = btn?.querySelector('i');
+    const originalBtnText = btnText?.textContent || 'نسخ';
+    
+    // نسخ النص إلى الحافظة
+    const fallbackCopy = () => {
+      // طريقة بديلة للنسخ تعمل بشكل أفضل على iOS وسياقات غير آمنة
+      // المحاولة 1: حقل داخل إطار العرض (Viewport) مع تحديد واضح
+      const textArea = document.createElement('textarea');
+      textArea.value = colorCode;
+      textArea.setAttribute('readonly', '');
+      textArea.setAttribute('aria-hidden', 'true');
+      textArea.style.position = 'fixed';
+      textArea.style.top = '0';
+      textArea.style.left = '0';
+      textArea.style.opacity = '0';
+      textArea.style.fontSize = '16px'; // لتجنب التكبير على iOS
+      textArea.style.padding = '0';
+      textArea.style.margin = '0';
+      textArea.style.border = '0';
+      textArea.style.background = 'transparent';
+      document.body.appendChild(textArea);
+
+      // إزالة أي تحديدات سابقة
+      try { window.getSelection()?.removeAllRanges(); } catch {}
+
+      // تحديد النص (iOS يتطلب setSelectionRange)
+      textArea.focus();
+      textArea.select();
+      try { textArea.setSelectionRange(0, textArea.value.length); } catch {}
+
+      let ok = false;
+      // اعتراض حدث النسخ وحقن البيانات لضمان نجاح النسخ على iOS
+      const onCopy = (e) => {
+        try {
+          e.clipboardData?.setData('text/plain', colorCode);
+          ok = true;
+          e.preventDefault();
+        } catch {}
+      };
+      document.addEventListener('copy', onCopy, true);
+      try {
+        ok = document.execCommand('copy') || ok;
+      } catch (err) {
+        ok = false;
+        console.error('فشل نسخ النص: ', err);
+      }
+      document.removeEventListener('copy', onCopy, true);
+
+      document.body.removeChild(textArea);
+
+      if (!ok) {
+        // المحاولة 2: تحديد العنصر المرئي نفسه ثم النسخ
+        try {
+          const selection = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(codeElement);
+          selection.removeAllRanges();
+          selection.addRange(range);
+          // إعادة استخدام معالج النسخ هنا أيضاً
+          const onCopy2 = (e) => {
+            try {
+              e.clipboardData?.setData('text/plain', colorCode);
+              ok = true;
+              e.preventDefault();
+            } catch {}
+          };
+          document.addEventListener('copy', onCopy2, true);
+          ok = document.execCommand('copy') || ok;
+          document.removeEventListener('copy', onCopy2, true);
+          selection.removeAllRanges();
+        } catch (e) {
+          ok = false;
+        }
+      }
+
+      if (ok) {
+        showCopySuccess();
+      } else {
+        showCopyFailure();
+      }
+    };
+    
+    // إظهار تنبيه نجاح النسخ
+    const showCopySuccess = () => {
+      // تغيير مظهر الزر
+      if (btn) {
+        // تطبيق تنسيق النجاح باللون الأخضر
+        btn.style.background = 'linear-gradient(135deg, #10b981, #34d399)';
+        btn.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+        btn.style.color = '#fff';
+        btn.style.boxShadow = '0 8px 18px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25)';
+      }
+      
+      if (btnText) btnText.textContent = 'تم النسخ';
+      if (btnIcon) {
+        btnIcon.classList.remove('fa-copy');
+        btnIcon.classList.remove('fa-regular');
+        btnIcon.classList.add('fa-check');
+        btnIcon.classList.add('fa-solid');
+      }
+      
+      // تغيير مظهر كود اللون
+      codeElement.style.background = '#ecfdf5';
+      codeElement.style.color = '#065f46';
+      codeElement.style.borderColor = '#10b981';
+      
+      // إعادة المظهر الأصلي بعد ثانية
+      setTimeout(() => {
+        if (btn) {
+          btn.style.background = '';
+          btn.style.borderColor = '';
+          btn.style.color = '';
+          btn.style.boxShadow = '';
+        }
+        
+        if (btnText) btnText.textContent = originalBtnText;
+        if (btnIcon) {
+          btnIcon.classList.remove('fa-check');
+          btnIcon.classList.remove('fa-solid');
+          btnIcon.classList.add('fa-copy');
+          btnIcon.classList.add('fa-regular');
+        }
+        
+        codeElement.style.background = '';
+        codeElement.style.color = '';
+        codeElement.style.borderColor = '';
+      }, 1500);
+    };
+
+    // إظهار فشل النسخ وإتاحة نسخ يدوي سريع
+    const showCopyFailure = () => {
+      if (btn) {
+        btn.style.background = 'linear-gradient(135deg, #ef4444, #f87171)';
+        btn.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+        btn.style.color = '#fff';
+        btn.style.boxShadow = '0 8px 18px rgba(239, 68, 68, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25)';
+      }
+      if (btnText) btnText.textContent = 'لم يتم النسخ';
+      if (btnIcon) {
+        btnIcon.classList.remove('fa-copy');
+        btnIcon.classList.add('fa-triangle-exclamation');
+        btnIcon.classList.add('fa-solid');
+      }
+      try { window.prompt('انسخ هذا الكود:', colorCode); } catch {}
+      setTimeout(() => {
+        if (btn) {
+          btn.style.background = '';
+          btn.style.borderColor = '';
+          btn.style.color = '';
+          btn.style.boxShadow = '';
+        }
+        if (btnText) btnText.textContent = originalBtnText;
+        if (btnIcon) {
+          btnIcon.classList.remove('fa-triangle-exclamation');
+          btnIcon.classList.remove('fa-solid');
+          btnIcon.classList.add('fa-copy');
+          btnIcon.classList.add('fa-regular');
+        }
+      }, 1500);
+    };
+    
+    // محاولة استخدام Clipboard API أولاً
+    if (window.isSecureContext && navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(colorCode)
+        .then(showCopySuccess)
+        .catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+  }
+
+  // إضافة مستمعي أحداث لأزرار النسخ
+  document.querySelectorAll('.color-copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-color-target');
+      if (targetId) copyColorCode(targetId);
+    });
+  });
+
+  // ملاحظة: فتح منتقي اللون على الجوال يعتمد على label[for] المرتبط بالمدخل
+  // لذلك لا حاجة لاستخدام click() برمجياً هنا لضمان عمله على iOS
 
   memberForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -2732,6 +3806,7 @@
       x_handle: memberForm.x_handle.value.trim(),
       instagram_handle: memberForm.instagram_handle.value.trim(),
       tiktok_handle: memberForm.tiktok_handle.value.trim(),
+      linkedin_handle: memberForm.linkedin_handle.value.trim(),
       primary_color: memberForm.primary_color.value || null,
       secondary_color: memberForm.secondary_color.value || null,
       avatar: finalImgUrl,
@@ -2756,6 +3831,7 @@
         x_handle: data.x_handle || null,
         instagram_handle: data.instagram_handle || null,
         tiktok_handle: data.tiktok_handle || null,
+        linkedin_handle: data.linkedin_handle || null,
         primary_color: data.primary_color || null,
         secondary_color: data.secondary_color || null,
         avatar_url: data.avatar || null,
@@ -2774,7 +3850,7 @@
         } else {
           members.unshift(row);
         }
-        renderMembers();
+        applyMembersFilters();
         closeDialog?.(memberDialog);
       } else {
         const id = members[memberEditingIndex]?.id;
@@ -2790,14 +3866,14 @@
         } else {
           members[memberEditingIndex] = row;
         }
-        renderMembers();
+        applyMembersFilters();
         closeDialog?.(memberDialog);
       }
     } else {
       if (memberEditingIndex === null) members.unshift(data);
       else members[memberEditingIndex] = data;
       save(KEYS.members, members);
-      renderMembers();
+      applyMembersFilters();
       closeDialog?.(memberDialog);
     }
   });
@@ -3347,16 +4423,8 @@
       console.error('Failed to parse localStorage for', key, e);
       return [];
     }
+  }
 
-  // Blog (Marafe) CRUD + renderer
-  function renderBlog() {
-    if (!blogList) return;
-    blogList.innerHTML = '';
-    const sorted = [...blogPosts].sort((a, b) => {
-      const da = new Date(a.published_at || a.created_at || 0).getTime();
-      const db = new Date(b.published_at || b.created_at || 0).getTime();
-      return db - da;
-    });
 
   // ===== Change Password (Admin) =====
   const adminChangePasswordForm = document.getElementById('adminChangePasswordForm');
@@ -3430,159 +4498,6 @@
     }
   });
 
-  // Sponsors: up/down and drag-n-drop
-    sorted.forEach((item) => {
-      const idx = blogPosts.indexOf(item);
-      const status = item.status || 'draft';
-      const badge = status === 'published' ? 'منشور' : 'مسودة';
-      const node = el(`
-        <div class="card">
-          <div class="card__media">
-            <img src="${(item.image || item.image_url) || ''}" alt="${item.title || ''}" />
-            <span class="card__badge">${badge}</span>
-          </div>
-          <div class="card__body">
-            <div class="card__title">${item.title || ''}</div>
-            ${item.excerpt ? `<p class="card__text">${item.excerpt}</p>` : ''}
-            <div class="card__actions">
-              <button class="btn btn-outline" data-act="edit" data-idx="${idx}"><i class="fa-solid fa-pen"></i> تعديل</button>
-              <button class="btn btn-outline" data-act="del" data-idx="${idx}"><i class="fa-solid fa-trash"></i> حذف</button>
-            </div>
-          </div>
-        </div>`);
-      blogList.appendChild(node);
-    });
-  }
-
-  const blogDialog = $('#blogDialog');
-  const blogForm = $('#blogForm');
-  let blogEditingIndex = null;
-
-  $('#addPostBtn')?.addEventListener('click', () => {
-    blogEditingIndex = null;
-    blogForm.reset();
-    openDialog(blogDialog);
-  });
-
-  blogList?.addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    const idx = Number(btn.dataset.idx);
-    const act = btn.dataset.act;
-    if (act === 'edit') {
-      blogEditingIndex = idx;
-      const cur = blogPosts[idx];
-      blogForm.title.value = cur.title || '';
-      blogForm.image.value = (cur.image || cur.image_url) || '';
-      blogForm.author.value = cur.author || '';
-      blogForm.published_at.value = (cur.published_at ? cur.published_at.substring(0, 10) : '');
-      blogForm.status.value = cur.status || 'draft';
-      blogForm.excerpt.value = cur.excerpt || '';
-      blogForm.content.value = cur.content || '';
-      // categories: support array or comma-separated, fallback to legacy tags
-      try {
-        if (blogForm.categories) {
-          const cats = cur.categories ?? cur.tags ?? '';
-          blogForm.categories.value = Array.isArray(cats) ? cats.join(', ') : (cats || '');
-        }
-      } catch {}
-      openDialog(blogDialog);
-    } else if (act === 'del') {
-      if (!confirm('تأكيد الحذف؟')) return;
-      const cur = blogPosts[idx];
-      if (sb && cur.id) {
-        sb.from('blog_posts').delete().eq('id', cur.id).then(({ error }) => {
-          if (error) return alert('فشل الحذف: ' + error.message);
-          blogPosts.splice(idx, 1);
-          renderBlog();
-        });
-      } else {
-        blogPosts.splice(idx, 1);
-        save(KEYS.blog, blogPosts);
-        renderBlog();
-      }
-    }
-  });
-
-  blogForm?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const data = {
-      title: blogForm.title.value.trim(),
-      image: blogForm.image.value.trim(),
-      author: blogForm.author.value.trim() || null,
-      published_at: blogForm.published_at.value ? new Date(blogForm.published_at.value).toISOString() : null,
-      status: blogForm.status.value || 'draft',
-      excerpt: blogForm.excerpt.value.trim() || null,
-      content: blogForm.content.value.trim() || null,
-      // parse categories from input (Arabic/English commas)
-      categories: (() => {
-        const raw = (blogForm.categories?.value || '').trim();
-        if (!raw) return null;
-        const arr = raw.split(/[،,]/).map(s => s.trim()).filter(Boolean);
-        return arr.length ? arr : null;
-      })(),
-    };
-    if (sb) {
-      sb.auth.getSession().then(({ data: { session } }) => {
-        if (!session) return alert('يلزم تسجيل الدخول لإجراء التعديلات');
-        const payload = {
-          title: data.title,
-          image_url: data.image || null,
-          author: data.author,
-          published_at: data.published_at,
-          status: data.status,
-          excerpt: data.excerpt,
-          content: data.content,
-          categories: data.categories,
-        };
-        const payloadNoCats = { ...payload }; delete payloadNoCats.categories;
-        if (blogEditingIndex === null) {
-          sb.from('blog_posts').insert(payload).select('*').single().then(async ({ data: row, error }) => {
-            if (error) {
-              // retry without categories if column doesn't exist
-              if (/(column\s+categories|unknown column|invalid input)/i.test(error.message || '')) {
-                const { data: row2, error: e2 } = await sb.from('blog_posts').insert(payloadNoCats).select('*').single();
-                if (e2) return alert('فشل الحفظ: ' + e2.message);
-                blogPosts.unshift({ ...row2, categories: data.categories || null });
-              } else {
-                return alert('فشل الحفظ: ' + error.message);
-              }
-            } else {
-              blogPosts.unshift(row);
-            }
-            renderBlog();
-            closeDialog(blogDialog);
-          });
-        } else {
-          const id = blogPosts[blogEditingIndex]?.id;
-          if (!id) { alert('عنصر بدون معرف، لا يمكن التحديث'); return; }
-          sb.from('blog_posts').update(payload).eq('id', id).select('*').single().then(async ({ data: row, error }) => {
-            if (error) {
-              if (/(column\s+categories|unknown column|invalid input)/i.test(error.message || '')) {
-                const { data: row2, error: e2 } = await sb.from('blog_posts').update(payloadNoCats).eq('id', id).select('*').single();
-                if (e2) return alert('فشل التحديث: ' + e2.message);
-                blogPosts[blogEditingIndex] = { ...row2, categories: data.categories || null };
-              } else {
-                return alert('فشل التحديث: ' + error.message);
-              }
-            } else {
-              blogPosts[blogEditingIndex] = row;
-            }
-            renderBlog();
-            closeDialog(blogDialog);
-          });
-        }
-      });
-    } else {
-      if (blogEditingIndex === null) blogPosts.unshift(data);
-      else blogPosts[blogEditingIndex] = data;
-      save(KEYS.blog, blogPosts);
-      renderBlog();
-      closeDialog(blogDialog);
-    }
-  });
-
-  }
 
   function renderAchievements() {
     if (!achievementsList) return;
@@ -3835,7 +4750,7 @@
   let faq = load(KEYS.faq);
   let achievements = load(KEYS.achievements);
   let membershipApps = localMembershipAppsGet();
-  let blogPosts = load(KEYS.blog);
+  let forms = [];
   let testimonials = load(KEYS.testimonials);
   let todos = load(KEYS.todos);
   let appointments = load(KEYS.appointments);
@@ -4021,11 +4936,11 @@
     '#section-works': 'works',
     '#section-sponsors': 'sponsors',
     '#section-achievements': 'achievements',
+    '#section-forms': 'forms',
     '#section-board': 'board',
     '#section-members': 'members',
     '#section-membership-apps': 'membership_apps',
     '#section-faq': 'faq',
-    '#section-blog': 'blog',
     '#section-schedule': 'schedule',
     '#section-appointments': 'appointments',
     '#section-idea-board': 'idea_board',
@@ -4037,7 +4952,7 @@
     '#section-push': 'push',
   };
   function defaultAdminPerms() {
-    return { works: true, sponsors: true, achievements: true, board: true, members: true, membership_apps: true, faq: true, blog: true, schedule: true, appointments: true, idea_board: true, chat: true, todos: true, admins: true, testimonials: true, join: true, push: true };
+    return { works: true, sponsors: true, achievements: true, forms: true, board: true, members: true, membership_apps: true, faq: true, schedule: true, appointments: true, idea_board: true, chat: true, todos: true, admins: true, testimonials: true, join: true, push: true };
   }
   function normalizePermsShape(perms) {
     const base = defaultAdminPerms();
@@ -4076,11 +4991,8 @@
         '#section-works',
         '#section-sponsors',
         '#section-achievements',
-        '#section-board',
-        '#section-join',
-        '#section-faq',
-        '#section-testimonials',
-        '#section-blog'
+        '#section-forms',
+        '#section-testimonials'
       ];
       return targets.some((sid) => hasPermBySectionId(sid));
     } catch { return true; }
@@ -4137,16 +5049,23 @@
   function levelFromPositionAr(position) {
     if (!position) return ADMIN_LEVELS.manager;
     const p = normalizeAr(position);
-    // رئيس أدِيب: وجود كلمتي رئيس + اديب يكفي
+    
+    // المجلس الأعلى (High Council)
+    // رئيس النادي
+    if (p.includes('رئيس') && p.includes('النادي')) return ADMIN_LEVELS.president;
+    // رئيس أدِيب (للتوافق مع النظام القديم)
     if (p.includes('رئيس') && p.includes('اديب')) return ADMIN_LEVELS.president;
-    // النائب: وجود نائب + الرئيس يكفي (سواء شطر الطلاب/الطالبات)
+    // نائب الرئيس (سواء شطر الطلاب أو الطالبات)
     if (p.includes('نائب') && p.includes('الرئيس')) return ADMIN_LEVELS.vice;
-    // باقي المسميات: قادة/مشرفون
+    
+    // باقي المناصب: المجلس الإداري والمجالس التنفيذية
+    // قائد التأليف، قائد الرواة، قائد السفراء، إلخ...
+    // رئيس تنفيذ مرافئ، رئيس تنفيذ وجيز
     return ADMIN_LEVELS.manager;
   }
   function fallbackPermsForLevel(lv) {
     // الرئيس/النائب: كل التبويبات مسموحة. القادة: كل شيء ما عدا إدارة الإداريين.
-    const base = { works: true, sponsors: true, achievements: true, board: true, members: true, membership_apps: true, faq: true, blog: true, schedule: true, appointments: true, idea_board: true, chat: true, todos: true, admins: true, testimonials: true, join: true, push: true };
+    const base = { works: true, sponsors: true, achievements: true, forms: true, board: true, members: true, membership_apps: true, faq: true, schedule: true, appointments: true, idea_board: true, chat: true, todos: true, admins: true, testimonials: true, join: true, push: true };
     if (lv === ADMIN_LEVELS.manager) return { ...base, admins: false };
     return base;
   }
@@ -4264,8 +5183,8 @@
           <label class="perm"><input type="checkbox" id="perm-board" /><span class="name">المجلس الإداري</span><span class="switch" aria-hidden="true"></span></label>
           <label class="perm"><input type="checkbox" id="perm-members" /><span class="name">أعضاء النادي</span><span class="switch" aria-hidden="true"></span></label>
           <label class="perm"><input type="checkbox" id="perm-membership_apps" /><span class="name">طلبات العضوية</span><span class="switch" aria-hidden="true"></span></label>
+          <label class="perm"><input type="checkbox" id="perm-forms" /><span class="name">الاستبيانات</span><span class="switch" aria-hidden="true"></span></label>
           <label class="perm"><input type="checkbox" id="perm-faq" /><span class="name">الأسئلة الشائعة</span><span class="switch" aria-hidden="true"></span></label>
-          <label class="perm"><input type="checkbox" id="perm-blog" /><span class="name">مرافئ (المدونة)</span><span class="switch" aria-hidden="true"></span></label>
           <label class="perm"><input type="checkbox" id="perm-idea_board" /><span class="name">سبورة أدِيب</span><span class="switch" aria-hidden="true"></span></label>
           <label class="perm"><input type="checkbox" id="perm-chat" /><span class="name">المحادثات</span><span class="switch" aria-hidden="true"></span></label>
           <label class="perm"><input type="checkbox" id="perm-schedule" /><span class="name">جدول أدِيب</span><span class="switch" aria-hidden="true"></span></label>
@@ -4333,8 +5252,8 @@
       setPerm('perm-board', perms.board);
       setPerm('perm-members', perms.members);
       setPerm('perm-membership_apps', perms.membership_apps);
+      setPerm('perm-forms', perms.forms);
       setPerm('perm-faq', perms.faq);
-      setPerm('perm-blog', perms.blog);
       setPerm('perm-idea_board', perms.idea_board);
       setPerm('perm-chat', perms.chat);
       setPerm('perm-schedule', perms.schedule);
@@ -4362,8 +5281,8 @@
           board: !!document.getElementById('perm-board')?.checked,
           members: !!document.getElementById('perm-members')?.checked,
           membership_apps: !!document.getElementById('perm-membership_apps')?.checked,
+          forms: !!document.getElementById('perm-forms')?.checked,
           faq: !!document.getElementById('perm-faq')?.checked,
-          blog: !!document.getElementById('perm-blog')?.checked,
           idea_board: !!document.getElementById('perm-idea_board')?.checked,
           chat: !!document.getElementById('perm-chat')?.checked,
           schedule: !!document.getElementById('perm-schedule')?.checked,
@@ -4700,6 +5619,7 @@
     $$('.admin-section').forEach((sec) => (sec.hidden = true));
     const target = $(id);
     if (target) target.hidden = false;
+
     // If navigating via dashboard card to schedule, render it
     if (id === '#section-schedule') {
       try { renderSchedule?.(); } catch {}
@@ -5047,7 +5967,9 @@
               rows.forEach(r => {
                 const div = document.createElement('div');
                 div.className = 'msg' + (r.sender_id === chatMyId ? ' me' : '');
-                div.innerHTML = `${chatRenderMessageContent(String(r.content || ''))}<span class="time">${chatTimeLabel(r.created_at)}</span>`;
+                div.innerHTML = `
+                  <div class="msg__text">${chatRenderMessageContent(String(r.content || ''))}</div>
+                  <span class="time">${chatTimeLabel(r.created_at)}</span>`;
                 frag.appendChild(div);
               });
               if (chatMessagesEl) {
@@ -5291,6 +6213,339 @@
     });
     setupListDnD(worksList, works, KEYS.works, 'works', renderWorks);
   }
+
+  function renderForms() {
+    if (!formsList) return;
+    formsList.innerHTML = '';
+    const list = Array.isArray(forms) ? forms.slice().sort((a, b) => {
+      try { return new Date(b.created_at || 0) - new Date(a.created_at || 0); } catch { return 0; }
+    }) : [];
+    
+    if (list.length === 0) {
+      formsList.innerHTML = `
+        <div style="text-align:center;padding:40px;color:#64748b">
+          <i class="fa-regular fa-square-check" style="font-size:48px;margin-bottom:16px;opacity:0.5"></i>
+          <h3 style="margin:0 0 8px;font-weight:500">لا توجد استبيانات بعد</h3>
+          <p style="margin:0;font-size:0.875rem">ابدأ بإنشاء أول استبيان لك</p>
+        </div>`;
+      return;
+    }
+    
+    list.forEach((item) => {
+      const id = item.id || '';
+      const title = escapeHtml(item.title || 'استبيان');
+      const desc = escapeHtml(item.description || '');
+      const slug = String(item.slug || id);
+      const isPub = !!item.is_published;
+      const isPublic = !!item.is_public;
+      const open = !!item.accepting_responses;
+      const responsesCount = item.responses_count || 0;
+      const createdDate = item.created_at ? formatArDate(item.created_at) : '';
+      
+      const node = el(`
+        <div class="card" data-id="${id}">
+          <div class="card__body">
+            <div class="card__title"><i class="fa-regular fa-square-check"></i> ${title}</div>
+            ${desc ? `<p class=\"card__text\" style=\"color:#64748b;line-height:1.6;margin:8px 0\">${desc}</p>` : ''}
+            
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0;font-size:0.75rem;color:#64748b">
+              <span><i class="fa-regular fa-calendar"></i> نُشر في: ${createdDate}</span>
+              <span><i class="fa-solid fa-chart-column"></i> ${responsesCount} رد</span>
+            </div>
+            
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0">
+              <span class="status-pill ${isPub ? 'status-ok' : ''}">${isPub ? 'منشور' : 'مسودة'}</span>
+              <span class="status-pill ${isPublic ? 'status-ok' : ''}">${isPublic ? 'عام' : 'خاص'}</span>
+              <span class="status-pill ${open ? 'status-ok' : ''}">${open ? 'يستقبل الردود' : 'مغلق'}</span>
+            </div>
+            
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+              <!-- الصف الأول: رابط التعبئة + النتائج -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <button class="btn btn-primary" data-action="fill" data-slug="${slug}">
+                  <i class="fa-regular fa-pen-to-square"></i> رابط التعبئة
+                </button>
+                <button class="btn btn-primary" data-action="results" data-slug="${slug}">
+                  <i class="fa-solid fa-chart-column"></i> النتائج
+                </button>
+              </div>
+              
+              <!-- الصف الثاني: نسخ الروابط (معاً) -->
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-outline" data-action="copy-all" data-slug="${slug}" style="flex:1">
+                  <i class="fa-regular fa-copy"></i> نسخ الروابط
+                </button>
+              </div>
+              
+              <!-- الصف الثالث: نسخ رابط التعبئة + نسخ رابط النتائج -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <button class="btn btn-outline" data-action="copy-fill" data-slug="${slug}">
+                  <i class="fa-regular fa-copy"></i> نسخ رابط التعبئة
+                </button>
+                <button class="btn btn-outline" data-action="copy-results" data-slug="${slug}">
+                  <i class="fa-regular fa-copy"></i> نسخ رابط النتائج
+                </button>
+              </div>
+              
+              <!-- الصف الرابع: التحكم في الحالة -->
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+                <button class="btn btn-outline" data-action="toggle-open" data-id="${id}">
+                  <i class="fa-solid fa-toggle-${open ? 'on' : 'off'}"></i> ${open ? 'إيقاف الردود' : 'تفعيل الردود'}
+                </button>
+                <button class="btn btn-outline" data-action="toggle-publish" data-id="${id}">
+                  <i class="fa-regular fa-newspaper"></i> ${isPub ? 'إلغاء النشر' : 'نشر الاستبيان'}
+                </button>
+                <button class="btn btn-outline" data-action="toggle-public" data-id="${id}">
+                  <i class="fa-solid fa-eye${isPublic ? '' : '-slash'}"></i> ${isPublic ? 'جعله خاص' : 'جعله عام'}
+                </button>
+              </div>
+              
+              <!-- الصف الخامس: تعديل ونسخ -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <button class="btn btn-outline" data-action="edit" data-id="${id}">
+                  <i class="fa-solid fa-pen"></i> تعديل
+                </button>
+                <button class="btn btn-outline" data-action="duplicate" data-id="${id}">
+                  <i class="fa-regular fa-copy"></i> نسخ
+                </button>
+              </div>
+              
+              <!-- الصف السادس: حذف -->
+              <div style="display:flex">
+                <button class="btn btn-outline" data-action="delete" data-id="${id}" style="width:100%">
+                  <i class="fa-regular fa-trash-can"></i> حذف
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>`);
+      formsList.appendChild(node);
+    });
+  }
+
+  // Forms actions
+  $('#addFormBtn')?.addEventListener('click', () => {
+    try {
+      const origin = location.origin || (location.protocol + '//' + location.host);
+      const url = `${origin}/forms/builder.html`;
+      window.open(url, '_blank');
+    } catch {}
+  });
+
+  formsList?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    if (!action) return;
+    const id = btn.dataset.id || '';
+    const slug = btn.dataset.slug || id;
+    const origin = location.origin || (location.protocol + '//' + location.host);
+    const fillUrl = `${origin}/forms/fill.html?form=${encodeURIComponent(slug)}`;
+    const resUrl = `${origin}/forms/results.html?form=${encodeURIComponent(slug)}`;
+    
+    // Helper function to show copy success
+    const showCopySuccess = (button) => {
+      const originalText = button.innerHTML;
+      button.innerHTML = '<i class="fa-solid fa-check"></i> تم النسخ';
+      button.style.background = '#10b981';
+      button.style.borderColor = '#10b981';
+      button.style.color = 'white';
+      setTimeout(() => {
+        button.innerHTML = originalText;
+        button.style.background = '';
+        button.style.borderColor = '';
+        button.style.color = '';
+      }, 2000);
+    };
+    
+    // Helper function to copy text
+    const copyText = async (text, button) => {
+      try { 
+        await navigator.clipboard.writeText(text);
+        showCopySuccess(button);
+      } catch {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+          alert('تم نسخ الرابط');
+        } catch {
+          alert('تعذر نسخ الرابط');
+        }
+      }
+    };
+    
+    if (action === 'fill') { window.open(fillUrl, '_blank'); return; }
+    if (action === 'results') { window.open(resUrl, '_blank'); return; }
+    
+    // نسخ رابط التعبئة فقط
+    if (action === 'copy-fill') {
+      await copyText(fillUrl, btn);
+      return;
+    }
+    
+    // نسخ رابط النتائج فقط
+    if (action === 'copy-results') {
+      await copyText(resUrl, btn);
+      return;
+    }
+    
+    // نسخ كلا الرابطين معاً
+    if (action === 'copy-all') {
+      const text = `رابط التعبئة:\n${fillUrl}\n\nرابط النتائج:\n${resUrl}`;
+      await copyText(text, btn);
+      return;
+    }
+    if (!sb) { alert('Supabase غير مفعّل.'); return; }
+    const idx = Array.isArray(forms) ? forms.findIndex((x) => String(x.id || '') === String(id)) : -1;
+    if (idx < 0) return;
+    const row = forms[idx];
+    if (action === 'toggle-open') {
+      const next = !row.accepting_responses;
+      const { error } = await sb.from('forms').update({ accepting_responses: next }).eq('id', id);
+      if (error) { 
+        alert(`تعذر ${next ? 'تفعيل' : 'إيقاف'} استقبال الردود: ${error.message}`); 
+        return; 
+      }
+      row.accepting_responses = next; 
+      renderForms(); 
+      return;
+    }
+    if (action === 'toggle-publish') {
+      const next = !row.is_published;
+      const { error } = await sb.from('forms').update({ is_published: next }).eq('id', id);
+      if (error) { 
+        alert(`تعذر ${next ? 'نشر' : 'إلغاء نشر'} الاستبيان: ${error.message}`); 
+        return; 
+      }
+      row.is_published = next; 
+      renderForms(); 
+      return;
+    }
+    if (action === 'toggle-public') {
+      const next = !row.is_public;
+      const { error } = await sb.from('forms').update({ is_public: next }).eq('id', id);
+      if (error) { 
+        alert(`تعذر ${next ? 'جعل الاستبيان عاماً' : 'جعل الاستبيان خاصاً'}: ${error.message}`); 
+        return; 
+      }
+      row.is_public = next; 
+      renderForms(); 
+      return;
+    }
+    if (action === 'edit') {
+      // فتح صفحة التعديل مع معرف الاستبيان
+      const editUrl = `${origin}/forms/builder.html?edit=${encodeURIComponent(id)}`;
+      window.open(editUrl, '_blank');
+      return;
+    }
+    if (action === 'duplicate') {
+      // نسخ الاستبيان
+      if(!confirm('هل تريد نسخ هذا الاستبيان؟\n\nسيتم إنشاء نسخة جديدة بنفس الأسئلة والإعدادات.')){
+        return;
+      }
+      
+      try {
+        const session = await sb.auth.getSession();
+        if(!session?.data?.session){
+          alert('يجب تسجيل الدخول أولاً');
+          return;
+        }
+        
+        // تحميل بيانات الاستبيان الأصلي
+        const { data: originalForm, error: formError } = await sb
+          .from('forms')
+          .select('*')
+          .eq('id', id)
+          .single();
+        
+        if(formError || !originalForm){
+          alert('تعذر تحميل الاستبيان');
+          return;
+        }
+        
+        // تحميل الأسئلة
+        const { data: originalQuestions, error: qError } = await sb
+          .from('form_questions')
+          .select('*')
+          .eq('form_id', id)
+          .order('order_index', { ascending: true });
+        
+        if(qError){
+          alert('تعذر تحميل الأسئلة');
+          return;
+        }
+        
+        // إنشاء نسخة جديدة
+        const newSlug = originalForm.slug + '-copy-' + Math.random().toString(36).slice(2,6);
+        const newFormData = {
+          owner_id: session.data.session.user.id,
+          title: originalForm.title + ' (نسخة)',
+          description: originalForm.description,
+          slug: newSlug,
+          is_public: originalForm.is_public,
+          is_published: false,
+          accepting_responses: false
+        };
+        
+        const { data: newForm, error: insertError } = await sb
+          .from('forms')
+          .insert(newFormData)
+          .select('id')
+          .single();
+        
+        if(insertError || !newForm){
+          alert('تعذر إنشاء النسخة');
+          return;
+        }
+        
+        // نسخ الأسئلة
+        if(originalQuestions && originalQuestions.length > 0){
+          const newQuestions = originalQuestions.map(q => ({
+            form_id: newForm.id,
+            order_index: q.order_index,
+            type: q.type,
+            label: q.label,
+            required: q.required,
+            options: q.options
+          }));
+          
+          const { error: qInsertError } = await sb
+            .from('form_questions')
+            .insert(newQuestions);
+          
+          if(qInsertError){
+            alert('تم إنشاء الاستبيان لكن فشل نسخ الأسئلة');
+            return;
+          }
+        }
+        
+        // تحديث القائمة
+        await loadForms();
+        alert('✓ تم نسخ الاستبيان بنجاح!\n\nيمكنك الآن تعديل النسخة الجديدة بأمان.');
+        
+      } catch(e){
+        console.error('خطأ في نسخ الاستبيان:', e);
+        alert('حدث خطأ أثناء النسخ: ' + (e.message || 'خطأ غير معروف'));
+      }
+      return;
+    }
+    if (action === 'delete') {
+      const formTitle = row.title || 'الاستبيان';
+      if (!confirm(`هل أنت متأكد من حذف "${formTitle}"؟\n\nسيتم حذف الاستبيان وجميع الردود المرتبطة به نهائياً.`)) return;
+      const { error } = await sb.from('forms').delete().eq('id', id);
+      if (error) { 
+        alert(`تعذر حذف الاستبيان: ${error.message}`); 
+        return; 
+      }
+      forms.splice(idx, 1); 
+      renderForms(); 
+      return;
+    }
+  });
 
   // ===== Admin Profile (My Profile) =====
   const adminProfileForm = document.getElementById('adminProfileForm');
@@ -5647,65 +6902,402 @@
     setupListDnD(boardList, board, KEYS.board, 'board_members', renderBoard);
   }
 
-  function renderMembers() {
+  // Get committee icon
+  function getCommitteeIcon(committeeName) {
+    const name = (committeeName || '').toString().trim();
+    const iconMap = {
+      'المجلس الإداري': 'fa-solid fa-user-tie',
+      'بدون لجنة': 'fa-solid fa-user-slash',
+      'لجنة الإنتاج': 'fa-solid fa-clapperboard',
+      'لجنة التأليف': 'fa-solid fa-feather',
+      'لجنة التسويق': 'fa-solid fa-bullhorn',
+      'لجنة التصميم': 'fa-solid fa-palette',
+      'لجنة الرواة': 'fa-solid fa-microphone-lines',
+      'لجنة السفراء': 'fa-solid fa-handshake',
+      'لجنة الفعاليات': 'fa-solid fa-calendar-days'
+    };
+    return iconMap[name] || 'fa-solid fa-people-group';
+  }
+
+  // Render members statistics
+  function renderMembersStats() {
+    const grid = document.getElementById('membersStatsGrid');
+    if (!grid) return;
+    
+    const total = members.length;
+    const complete = members.filter(m => isMemberDataComplete(m)).length;
+    const incomplete = total - complete;
+    const completePercent = total > 0 ? Math.round((complete * 100) / total) : 0;
+    const incompletePercent = total > 0 ? Math.round((incomplete * 100) / total) : 0;
+    
+    // Count by committee
+    const committeeMap = new Map();
+    members.forEach(m => {
+      const committee = (m.committee || '').toString().trim() || 'بدون لجنة';
+      committeeMap.set(committee, (committeeMap.get(committee) || 0) + 1);
+    });
+    
+    const num = (v) => {
+      const n = Number(v || 0);
+      try { return n.toLocaleString('ar'); } catch { return String(n); }
+    };
+    
+    grid.innerHTML = '';
+    
+    // Row 1: Total members (full width)
+    const totalCard = el(`
+      <div class="card" style="grid-column: 1 / -1; background:linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border:1px solid #7dd3fc">
+        <div class="card__body">
+          <div class="card__title" style="color:#0369a1"><i class="fa-solid fa-users"></i> إجمالي الأعضاء</div>
+          <div class="stat-number" style="color:#0369a1">${num(total)}</div>
+        </div>
+      </div>
+    `);
+    grid.appendChild(totalCard);
+    
+    // Row 2: Complete + Incomplete (2 cards side by side)
+    const completeCard = el(`
+      <div class="card" style="background:linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border:1px solid #6ee7b7">
+        <div class="card__body">
+          <div class="card__title" style="color:#047857"><i class="fa-solid fa-circle-check"></i> بيانات مكتملة</div>
+          <div class="stat-number" style="color:#047857">${num(complete)} (${completePercent}%)</div>
+        </div>
+      </div>
+    `);
+    grid.appendChild(completeCard);
+    
+    const incompleteCard = el(`
+      <div class="card" style="background:linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border:1px solid #fca5a5">
+        <div class="card__body">
+          <div class="card__title" style="color:#b91c1c"><i class="fa-solid fa-circle-xmark"></i> بيانات غير مكتملة</div>
+          <div class="stat-number" style="color:#b91c1c">${num(incomplete)} (${incompletePercent}%)</div>
+        </div>
+      </div>
+    `);
+    grid.appendChild(incompleteCard);
+    
+    // Row 3+: Committee stats (all committees)
+    const sortedCommittees = Array.from(committeeMap.entries())
+      .sort((a, b) => {
+        try { return a[0].localeCompare(b[0], 'ar'); } catch { return String(a[0]).localeCompare(String(b[0])); }
+      });
+    
+    sortedCommittees.forEach(([committee, count]) => {
+      const icon = getCommitteeIcon(committee);
+      const card = el(`
+        <div class="card">
+          <div class="card__body">
+            <div class="card__title"><i class="${icon}"></i> ${escapeHtml(committee)}</div>
+            <div class="stat-number">${num(count)}</div>
+          </div>
+        </div>
+      `);
+      grid.appendChild(card);
+    });
+  }
+
+  // Check if member data is complete (all required fields filled)
+  function isMemberDataComplete(member) {
+    const requiredFields = [
+      'full_name',
+      'committee',
+      'email',
+      'phone',
+      'academic_number',
+      'national_id',
+      'college',
+      'major',
+      'degree',
+      'birth_date',
+      'primary_color',
+      'secondary_color'
+    ];
+    
+    for (const field of requiredFields) {
+      const value = member[field];
+      if (!value || (typeof value === 'string' && !value.trim())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Apply filters to members list
+  function applyMembersFilters() {
+    const nameFilter = (document.getElementById('membersFilterName')?.value || '').trim().toLowerCase();
+    const committeeFilter = document.getElementById('membersFilterCommittee')?.value || 'all';
+    const completionFilter = document.getElementById('membersFilterCompletion')?.value || 'all';
+    
+    let filtered = [...members];
+    
+    // Filter by name, membership number, phone, or national ID
+    if (nameFilter) {
+      filtered = filtered.filter(m => {
+        const fullName = (m.full_name || '').toLowerCase();
+        const membershipNumber = (m.membership_number || '').toString().toLowerCase();
+        const phone = (m.phone || '').toString().toLowerCase();
+        const nationalId = (m.national_id || '').toString().toLowerCase();
+        return fullName.includes(nameFilter) || 
+               membershipNumber.includes(nameFilter) ||
+               phone.includes(nameFilter) ||
+               nationalId.includes(nameFilter);
+      });
+    }
+    
+    // Filter by committee
+    if (committeeFilter !== 'all') {
+      filtered = filtered.filter(m => {
+        const committee = (m.committee || '').toString().trim();
+        return committee === committeeFilter;
+      });
+    }
+    
+    // Filter by completion
+    if (completionFilter === 'complete') {
+      filtered = filtered.filter(m => isMemberDataComplete(m));
+    } else if (completionFilter === 'incomplete') {
+      filtered = filtered.filter(m => !isMemberDataComplete(m));
+    }
+    
+    renderMembersStats();
+    renderMembers(filtered);
+  }
+
+  // Refresh committee filter options
+  function refreshMembersCommitteeFilterOptions() {
+    const select = document.getElementById('membersFilterCommittee');
+    if (!select) return;
+    
+    const committees = new Set();
+    members.forEach(m => {
+      const committee = (m.committee || '').toString().trim();
+      if (committee) committees.add(committee);
+    });
+    
+    const current = select.value;
+    select.innerHTML = '<option value="all">الكل</option>';
+    
+    Array.from(committees).sort((a, b) => {
+      try { return a.localeCompare(b, 'ar'); } catch { return String(a).localeCompare(String(b)); }
+    }).forEach(committee => {
+      const opt = document.createElement('option');
+      opt.value = committee;
+      opt.textContent = committee;
+      select.appendChild(opt);
+    });
+    
+    if (current && Array.from(select.options).some(o => o.value === current)) {
+      select.value = current;
+    }
+  }
+
+  function renderMembers(filteredMembers = null) {
     if (!membersList) return;
     membersList.innerHTML = '';
+    
+    // Use filtered members or all members
+    const membersToRender = filteredMembers !== null ? filteredMembers : members;
+    
     // Group by committee
     const byCommittee = new Map();
-    const sortedGlobal = [...members].sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000));
+    const sortedGlobal = [...membersToRender].sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000));
     for (const m of sortedGlobal) {
       const key = (m.committee && String(m.committee).trim()) ? String(m.committee).trim() : 'بدون لجنة';
       if (!byCommittee.has(key)) byCommittee.set(key, []);
       byCommittee.get(key).push(m);
     }
-    // Render each committee block with a table: Member + View
+    // Render each committee block with cards
     for (const [committeeName, items] of byCommittee) {
+      const committeeIcon = getCommitteeIcon(committeeName);
       const block = el(`
-        <div class="panel" style="grid-column:1 / -1; padding:16px;">
-          <h3 style="margin:0 0 12px; font-family: fb; color: var(--main-blue); display:flex; align-items:center; gap:8px">
-            <i class="fa-solid fa-people-group"></i> ${committeeName}
-          </h3>
-          <div style="overflow:auto">
-            <table class="table" style="width:100%; border-collapse:collapse">
-              <thead>
-                <tr>
-                  <th style="text-align:right; padding:12px">العضو</th>
-                  <th style="text-align:right; padding:12px; width:1%">إجراءات</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+        <div class="panel" style="grid-column:1 / -1; padding:20px; background:linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; padding-bottom:12px; border-bottom:2px solid #e2e8f0">
+            <h3 style="margin:0; font-family:fb; color:var(--main-blue); display:flex; align-items:center; gap:10px; font-size:1.1rem">
+              <i class="${committeeIcon}" style="font-size:1.2rem"></i> ${committeeName}
+            </h3>
+            <span style="background:#3d8fd6; color:#fff; padding:4px 12px; border-radius:999px; font-size:0.85rem; font-weight:600">${items.length} عضو</span>
           </div>
+          <div class="members-cards-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px"></div>
         </div>`);
-      const tbody = block.querySelector('tbody');
+      const cardsGrid = block.querySelector('.members-cards-grid');
       items.forEach((item, sortedIndex) => {
         const idx = members.indexOf(item);
         const name = item.full_name || item.name || '';
+        const email = item.email || '';
+        const phone = item.phone || '';
         const avatar = (item.avatar || item.avatar_url) || '';
-        const row = el(`
-          <tr data-idx="${idx}">
-            <td style="padding:12px; min-width:260px">
-              <div style="display:flex; align-items:center; gap:10px">
-                <img src="${avatar || ''}" alt="${name}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; background:#f1f5f9" />
-                <div>
-                  <div class="card__title" style="margin:0">${name}</div>
+        const defaultAvatar = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#e5e7eb"/><stop offset="1" stop-color="#cbd5e1"/></linearGradient></defs><rect width="64" height="64" fill="url(#g)"/><circle cx="32" cy="24" r="12" fill="#94a3b8"/><path d="M12 54c0-10 10-16 20-16s20 6 20 16" fill="#94a3b8"/></svg>');
+        const isComplete = isMemberDataComplete(item);
+        const completionBadge = isComplete 
+          ? '<span style="background:#10b981;color:#fff;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px"><i class="fa-solid fa-circle-check"></i> مكتمل</span>'
+          : '<span style="background:#ef4444;color:#fff;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px"><i class="fa-solid fa-circle-xmark"></i> غير مكتمل</span>';
+        
+        const committee = item.committee || 'بدون لجنة';
+        const committeeIcon = getCommitteeIcon(committee);
+        const college = item.college || '';
+        const major = item.major || '';
+        
+        const card = el(`
+          <div class="member-card" data-idx="${idx}" style="background:linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-radius:16px; padding:0; box-shadow:0 4px 12px rgba(0,0,0,0.08); transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border:1px solid #e2e8f0; position:relative; overflow:hidden">
+            <div style="position:absolute; top:0; right:0; width:100%; height:5px; background:linear-gradient(90deg, #3d8fd6 0%, #5ba3e0 50%, #7ec8f0 100%)"></div>
+            
+            <div style="padding:20px 20px 16px">
+              <div style="display:flex; align-items:flex-start; gap:16px; margin-bottom:16px">
+                <div style="position:relative">
+                  <img src="${avatar || defaultAvatar}" alt="${name}" onerror="this.src='${defaultAvatar}'" style="width:72px; height:72px; border-radius:16px; object-fit:cover; box-shadow:0 4px 12px rgba(0,0,0,0.15); flex-shrink:0; border:3px solid #fff" />
+                  <div style="position:absolute; bottom:-6px; right:-6px; background:${isComplete ? '#10b981' : '#ef4444'}; width:24px; height:24px; border-radius:50%; border:3px solid #fff; display:flex; align-items:center; justify-content:center">
+                    <i class="fa-solid ${isComplete ? 'fa-check' : 'fa-xmark'}" style="font-size:10px; color:#fff"></i>
+                  </div>
+                </div>
+                
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:1.1rem; font-weight:700; color:#0f172a; margin-bottom:8px; line-height:1.3">
+                    ${escapeHtml(name)}
+                  </div>
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px; padding:4px 10px; background:#f1f5f9; border-radius:8px; width:fit-content">
+                    <i class="${committeeIcon}" style="font-size:12px; color:#3d8fd6"></i>
+                    <span style="font-size:0.8rem; color:#475569; font-weight:600">${escapeHtml(committee)}</span>
+                  </div>
+                  ${completionBadge}
                 </div>
               </div>
-            </td>
-            <td style="padding:12px; white-space:nowrap">
-              <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                <button class="btn btn-primary" data-act="view" data-idx="${idx}"><i class="fa-regular fa-eye"></i> عرض</button>
-                <button class="btn btn-outline" data-act="edit" data-idx="${idx}"><i class="fa-solid fa-pen"></i> تعديل</button>
-                <button class="btn btn-outline" data-act="del" data-idx="${idx}"><i class="fa-solid fa-trash"></i> حذف</button>
+              
+              <div style="display:grid; gap:8px; margin-bottom:16px">
+                ${email ? `
+                  <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0">
+                    <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #3d8fd6, #5ba3e0); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                      <i class="fa-solid fa-envelope" style="font-size:14px; color:#fff"></i>
+                    </div>
+                    <div style="flex:1; min-width:0">
+                      <div style="font-size:0.7rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px">البريد الإلكتروني</div>
+                      <div style="font-size:0.85rem; color:#1e293b; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${escapeHtml(email)}</div>
+                    </div>
+                  </div>
+                ` : ''}
+                ${phone ? `
+                  <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0">
+                    <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #10b981, #34d399); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                      <i class="fa-solid fa-phone" style="font-size:14px; color:#fff"></i>
+                    </div>
+                    <div style="flex:1; min-width:0">
+                      <div style="font-size:0.7rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px">رقم الجوال</div>
+                      <div style="font-size:0.85rem; color:#1e293b; font-weight:500; direction:ltr; text-align:right">${escapeHtml(phone)}</div>
+                    </div>
+                  </div>
+                ` : ''}
+                ${college || major ? `
+                  <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0">
+                    <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #f59e0b, #fbbf24); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                      <i class="fa-solid fa-graduation-cap" style="font-size:14px; color:#fff"></i>
+                    </div>
+                    <div style="flex:1; min-width:0">
+                      <div style="font-size:0.7rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px">التخصص</div>
+                      <div style="font-size:0.85rem; color:#1e293b; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${escapeHtml(major || college || 'غير محدد')}</div>
+                    </div>
+                  </div>
+                ` : ''}
               </div>
-            </td>
-          </tr>`);
-        tbody.appendChild(row);
+            </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; border-top:1px solid #e2e8f0; background:#fafbfc">
+              <button class="btn btn-sm member-action-btn" data-act="view" data-idx="${idx}" style="border:none; border-radius:0 0 0 16px; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#3d8fd6; border-right:1px solid #e2e8f0; transition:all 0.2s">
+                <i class="fa-regular fa-eye"></i> عرض
+              </button>
+              <button class="btn btn-sm member-action-btn" data-act="edit" data-idx="${idx}" style="border:none; border-radius:0 0 16px 0; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#64748b; transition:all 0.2s">
+                <i class="fa-solid fa-pen"></i> تعديل
+              </button>
+            </div>
+            
+            <div style="position:absolute; top:16px; left:16px; display:flex; gap:6px">
+              <button class="btn btn-sm member-icon-btn" data-act="change-committee" data-idx="${idx}" title="تغيير اللجنة" style="width:36px; height:36px; padding:0; border-radius:10px; background:#fff; border:1px solid #e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.06); transition:all 0.2s">
+                <i class="fa-solid fa-arrow-right-arrow-left" style="font-size:14px"></i>
+              </button>
+              <button class="btn btn-sm member-delete-btn member-icon-btn" data-act="del" data-idx="${idx}" title="حذف" style="width:36px; height:36px; padding:0; border-radius:10px; background:#fff; border:1px solid #fecaca; color:#ef4444; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.06); transition:all 0.2s">
+                <i class="fa-solid fa-trash" style="font-size:14px"></i>
+              </button>
+            </div>
+          </div>`);
+        
+        // Hover effect for card
+        card.addEventListener('mouseenter', () => {
+          card.style.transform = 'translateY(-6px)';
+          card.style.boxShadow = '0 12px 24px rgba(0,0,0,0.12)';
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'translateY(0)';
+          card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+        });
+        
+        // Hover effects for action buttons
+        const actionBtns = card.querySelectorAll('.member-action-btn');
+        actionBtns.forEach(btn => {
+          btn.addEventListener('mouseenter', () => {
+            btn.style.background = btn.dataset.act === 'view' ? '#3d8fd6' : '#64748b';
+            btn.style.color = '#fff';
+          });
+          btn.addEventListener('mouseleave', () => {
+            btn.style.background = 'transparent';
+            btn.style.color = btn.dataset.act === 'view' ? '#3d8fd6' : '#64748b';
+          });
+        });
+        
+        // Hover effect for delete button
+        const deleteBtn = card.querySelector('.member-delete-btn');
+        if (deleteBtn) {
+          deleteBtn.addEventListener('mouseenter', () => {
+            deleteBtn.style.background = '#ef4444';
+            deleteBtn.style.color = '#fff';
+            deleteBtn.style.borderColor = '#ef4444';
+            deleteBtn.style.transform = 'scale(1.1)';
+          });
+          deleteBtn.addEventListener('mouseleave', () => {
+            deleteBtn.style.background = '#fff';
+            deleteBtn.style.color = '#ef4444';
+            deleteBtn.style.borderColor = '#fecaca';
+            deleteBtn.style.transform = 'scale(1)';
+          });
+        }
+        
+        // Hover effect for change committee button
+        const changeCommitteeBtn = card.querySelector('[data-act="change-committee"]');
+        if (changeCommitteeBtn) {
+          changeCommitteeBtn.addEventListener('mouseenter', () => {
+            changeCommitteeBtn.style.background = '#3d8fd6';
+            changeCommitteeBtn.style.color = '#fff';
+            changeCommitteeBtn.style.borderColor = '#3d8fd6';
+            changeCommitteeBtn.style.transform = 'scale(1.1)';
+          });
+          changeCommitteeBtn.addEventListener('mouseleave', () => {
+            changeCommitteeBtn.style.background = '#fff';
+            changeCommitteeBtn.style.color = '#64748b';
+            changeCommitteeBtn.style.borderColor = '#e2e8f0';
+            changeCommitteeBtn.style.transform = 'scale(1)';
+          });
+        }
+        
+        cardsGrid.appendChild(card);
       });
       membersList.appendChild(block);
     }
     // no DnD in simplified grouped view
+    
+    // Refresh committee filter options after rendering
+    refreshMembersCommitteeFilterOptions();
   }
+
+  // Members filter event listeners
+  document.getElementById('membersFilterName')?.addEventListener('input', applyMembersFilters);
+  document.getElementById('membersFilterCommittee')?.addEventListener('change', applyMembersFilters);
+  document.getElementById('membersFilterCompletion')?.addEventListener('change', applyMembersFilters);
+  document.getElementById('membersClearFilters')?.addEventListener('click', () => {
+    const nameFilter = document.getElementById('membersFilterName');
+    const committeeFilter = document.getElementById('membersFilterCommittee');
+    const completionFilter = document.getElementById('membersFilterCompletion');
+    if (nameFilter) nameFilter.value = '';
+    if (committeeFilter) committeeFilter.value = 'all';
+    if (completionFilter) completionFilter.value = 'all';
+    renderMembers();
+  });
   
   function renderTestimonials() {
     if (!testimonialsList) return;
@@ -6377,6 +7969,11 @@
     if (!dialog.open) dialog.showModal();
     // prevent background scroll while any dialog is open
     document.body.classList.add('no-scroll');
+    // التمرير إلى أعلى النموذج
+    const dialogBody = dialog.querySelector('.dialog-body');
+    if (dialogBody) {
+      dialogBody.scrollTop = 0;
+    }
   }
   function closeDialog(dialog) {
     if (!dialog) return;
@@ -7620,7 +9217,6 @@
       members,
       faq,
       testimonials,
-      blogPosts,
       schedule,
       todos,
       topics,
@@ -7655,16 +9251,13 @@
         board = data.board; save(KEYS.board, board); renderBoard();
       }
       if (Array.isArray(data.members)) {
-        members = data.members; save(KEYS.members, members); renderMembers();
+        members = data.members; save(KEYS.members, members); renderMembersStats(); renderMembers();
       }
       if (Array.isArray(data.faq)) {
         faq = data.faq; save(KEYS.faq, faq); renderFaq();
       }
       if (Array.isArray(data.testimonials)) {
         testimonials = data.testimonials; save(KEYS.testimonials, testimonials); renderTestimonials();
-      }
-      if (Array.isArray(data.blogPosts)) {
-        blogPosts = data.blogPosts; save(KEYS.blog, blogPosts); renderBlog();
       }
       if (Array.isArray(data.topics)) {
         topics = data.topics; save(KEYS.topics, topics); renderIdeaTopicsList(topics);
@@ -7692,6 +9285,7 @@
   // ========== Admins Management (list/add/remove) ==========
   const adminsHighCouncilTable = document.getElementById('adminsHighCouncilTable');
   const adminsAdminCouncilTable = document.getElementById('adminsAdminCouncilTable');
+  const adminsExecutiveCouncilTable = document.getElementById('adminsExecutiveCouncilTable');
   const addAdminForm = document.getElementById('addAdminForm');
   const newAdminEmail = document.getElementById('newAdminEmail');
   const adminsStatus = document.getElementById('adminsStatus');
@@ -7725,14 +9319,16 @@
   });
 
   function renderAdmins() {
-    if (!adminsHighCouncilTable || !adminsAdminCouncilTable) return;
+    if (!adminsHighCouncilTable || !adminsAdminCouncilTable || !adminsExecutiveCouncilTable) return;
     adminsHighCouncilTable.innerHTML = '';
     adminsAdminCouncilTable.innerHTML = '';
+    adminsExecutiveCouncilTable.innerHTML = '';
 
     const presidents = [];
     const vicesFemale = [];
     const vicesMale = [];
-    const managers = [];
+    const administrativeLeaders = [];
+    const executiveLeaders = [];
 
     const rowNode = (row, pr) => {
       const name = (pr?.display_name && String(pr.display_name).trim()) || 'مستخدم';
@@ -7744,6 +9340,7 @@
              <circle cx="12" cy="10" r="3.2" fill="#64748b"/>
              <path d="M5.5 18.2c1.9-3 5-4.2 6.5-4.2s4.6 1.2 6.5 4.2c-2.1 1.7-4.6 2.8-6.5 2.8s-4.4-1.1-6.5-2.8z" fill="#64748b"/>
            </svg>`;
+      const position = (pr?.position || '—').toString().trim();
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="padding:12px" data-label="العضو">
@@ -7752,7 +9349,8 @@
             <div class="name">${name}</div>
           </div>
         </td>
-        <td style="padding:12px" data-label="إجراءات">
+        <td style="padding:12px" data-label="المنصب">${escapeHtml(position)}</td>
+        <td style="padding:12px; text-align:center" data-label="إجراءات">
           <button class="btn btn-outline" data-act="details" data-id="${row.user_id}"><i class="fa-solid fa-circle-info"></i> تفاصيل</button>
         </td>`;
       return tr;
@@ -7764,13 +9362,26 @@
       const lvRaw = Number(pr?.admin_level);
       const level = Number.isFinite(lvRaw) ? lvRaw : levelFromPositionAr(pos);
       const pNorm = normalizeAr(pos || '');
+      
+      // المجلس الأعلى
       if (level === ADMIN_LEVELS.president) {
         presidents.push({ row, pr });
       } else if (level === ADMIN_LEVELS.vice) {
         if (pNorm.includes('الطالبات') || pNorm.includes('طالبات')) vicesFemale.push({ row, pr });
         else vicesMale.push({ row, pr });
       } else {
-        managers.push({ row, pr });
+        // المجلس الإداري والمجالس التنفيذية
+        // تحديد بناءً على المنصب
+        if (pNorm.includes('قائد')) {
+          // المجلس الإداري: قائد التأليف، قائد الرواة، إلخ
+          administrativeLeaders.push({ row, pr });
+        } else if (pNorm.includes('رئيس') && pNorm.includes('تنفيذ')) {
+          // المجالس التنفيذية: رئيس تنفيذ مرافئ، رئيس تنفيذ وجيز
+          executiveLeaders.push({ row, pr });
+        } else {
+          // إذا لم يتم التعرف على المنصب، ضعه في المجلس الإداري افتراضياً
+          administrativeLeaders.push({ row, pr });
+        }
       }
     });
 
@@ -7779,13 +9390,21 @@
     vicesFemale.forEach((it) => adminsHighCouncilTable.appendChild(rowNode(it.row, it.pr)));
     vicesMale.forEach((it) => adminsHighCouncilTable.appendChild(rowNode(it.row, it.pr)));
 
-    // Sort managers by display name (optional)
-    managers.sort((a, b) => {
+    // Sort administrative leaders by display name
+    administrativeLeaders.sort((a, b) => {
       const an = (a.pr?.display_name || '').toString();
       const bn = (b.pr?.display_name || '').toString();
       return an.localeCompare(bn, 'ar');
     });
-    managers.forEach((it) => adminsAdminCouncilTable.appendChild(rowNode(it.row, it.pr)));
+    administrativeLeaders.forEach((it) => adminsAdminCouncilTable.appendChild(rowNode(it.row, it.pr)));
+
+    // Sort executive leaders by display name
+    executiveLeaders.sort((a, b) => {
+      const an = (a.pr?.display_name || '').toString();
+      const bn = (b.pr?.display_name || '').toString();
+      return an.localeCompare(bn, 'ar');
+    });
+    executiveLeaders.forEach((it) => adminsExecutiveCouncilTable.appendChild(rowNode(it.row, it.pr)));
   }
 
   async function fetchAdmins() {
@@ -7841,8 +9460,8 @@
       setInvitePerm('inv-perm-board', base.board);
       setInvitePerm('inv-perm-members', base.members);
       setInvitePerm('inv-perm-membership_apps', base.membership_apps);
+      setInvitePerm('inv-perm-forms', base.forms);
       setInvitePerm('inv-perm-faq', base.faq);
-      setInvitePerm('inv-perm-blog', base.blog);
       setInvitePerm('inv-perm-idea_board', base.idea_board);
       setInvitePerm('inv-perm-chat', base.chat);
       setInvitePerm('inv-perm-schedule', base.schedule);
@@ -7870,6 +9489,16 @@
   // Initialize defaults on load (manager-level fallback)
   try { applyInvitePermsForLevel(ADMIN_LEVELS.manager); } catch {}
 
+  // Auto-update council based on selected position
+  const newAdminPositionSelect = document.getElementById('newAdminPosition');
+  const newAdminCouncilInput = document.getElementById('newAdminCouncil');
+  
+  newAdminPositionSelect?.addEventListener('change', () => {
+    const selectedOption = newAdminPositionSelect.options[newAdminPositionSelect.selectedIndex];
+    const council = selectedOption?.getAttribute('data-council') || '';
+    if (newAdminCouncilInput) newAdminCouncilInput.value = council;
+  });
+
   addAdminForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = (newAdminEmail?.value || '').trim();
@@ -7891,8 +9520,8 @@
         board: !!document.getElementById('inv-perm-board')?.checked,
         members: !!document.getElementById('inv-perm-members')?.checked,
         membership_apps: !!document.getElementById('inv-perm-membership_apps')?.checked,
+        forms: !!document.getElementById('inv-perm-forms')?.checked,
         faq: !!document.getElementById('inv-perm-faq')?.checked,
-        blog: !!document.getElementById('inv-perm-blog')?.checked,
         idea_board: !!document.getElementById('inv-perm-idea_board')?.checked,
         chat: !!document.getElementById('inv-perm-chat')?.checked,
         schedule: !!document.getElementById('inv-perm-schedule')?.checked,
@@ -7950,6 +9579,7 @@
   }
   adminsHighCouncilTable?.addEventListener('click', handleAdminsTableClick);
   adminsAdminCouncilTable?.addEventListener('click', handleAdminsTableClick);
+  adminsExecutiveCouncilTable?.addEventListener('click', handleAdminsTableClick);
 
   // Fetch from Supabase on load if available
   async function loadFromSupabase() {
@@ -7961,7 +9591,6 @@
         { data: b, error: eb },
         { data: m, error: em },
         { data: f, error: ef },
-        { data: posts, error: eposts },
         { data: apps, error: eapps }
       ] = await Promise.all([
         sb.from('works').select('*').order('order', { ascending: true, nullsFirst: true }).order('created_at', { ascending: false }),
@@ -7969,16 +9598,14 @@
         sb.from('board_members').select('*').order('order', { ascending: true, nullsFirst: true }).order('created_at', { ascending: false }),
         sb.from('members').select('*').order('order', { ascending: true, nullsFirst: true }).order('created_at', { ascending: false }),
         sb.from('faq').select('*').order('order', { ascending: true }),
-        sb.from('blog_posts').select('*').order('published_at', { ascending: false }),
         sb.from('membership_applications').select('id, created_at, full_name, phone, email, degree, college, major, skills, preferred_committee, portfolio_url, status').order('created_at', { ascending: false }),
       ]);
-      if (ew) throw ew; if (es) throw es; if (eb) throw eb; if (em) throw em; if (ef) throw ef; if (eposts) throw eposts; if (eapps) throw eapps;
+      if (ew) throw ew; if (es) throw es; if (eb) throw eb; if (em) throw em; if (ef) throw ef; if (eapps) throw eapps;
       works = w || [];
       sponsors = s || [];
       board = b || [];
       members = m || [];
       faq = f || [];
-      blogPosts = posts || [];
       membershipApps = apps || [];
 
       // Try achievements separately; ignore 404 table-not-found
@@ -8011,6 +9638,34 @@
         }
       }
 
+      try {
+        const { data: fms, error: efms } = await sb
+          .from('forms')
+          .select(`
+            id,owner_id,title,description,slug,is_public,is_published,accepting_responses,created_at,
+            form_responses(count)
+          `)
+          .order('created_at', { ascending: false });
+        if (efms) throw efms;
+        forms = (fms || []).map(form => ({
+          ...form,
+          responses_count: form.form_responses?.[0]?.count || 0
+        }));
+      } catch (e4) {
+        console.warn('Forms fetch failed', e4);
+        // Fallback: fetch forms without responses count
+        try {
+          const { data: fms2, error: efms2 } = await sb
+            .from('forms')
+            .select('id,owner_id,title,description,slug,is_public,is_published,accepting_responses,created_at')
+            .order('created_at', { ascending: false });
+          if (efms2) throw efms2;
+          forms = (fms2 || []).map(form => ({ ...form, responses_count: 0 }));
+        } catch (e5) {
+          console.warn('Forms fallback fetch failed', e5);
+        }
+      }
+
       return true;
     } catch (err) {
       console.error('Supabase fetch failed', err);
@@ -8033,11 +9688,12 @@
     renderWorks();
     renderSponsors();
     renderBoard();
+    renderMembersStats();
     renderMembers();
     renderFaq();
     renderTestimonials();
     renderAchievements();
-    renderBlog();
+    renderForms();
     renderTodos();
     try { await fetchVisitStats(); } catch {}
     renderStats();

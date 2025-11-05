@@ -18,14 +18,23 @@
             <img alt="شعار نادي أدِيب" class="logo-img" src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" />
           </a>
         </div>
-        <h1 class="board-title"><i class="fa-solid fa-list-check"></i> مُنشئ الاستبيانات</h1>
-        <p class="board-sub">أنشئ استبيانك ثم انشره لجمع الردود</p>
+        <h1 class="board-title" id="pageTitle"><i class="fa-solid fa-list-check"></i> مُنشئ الاستبيانات</h1>
+        <p class="board-sub" id="pageSubtitle">أنشئ استبيانك ثم انشره لجمع الردود</p>
       </div>
     </header>
 
     <main class="board-main">
       <section class="panel" style="padding:16px">
+        <div id="editModeBadge" class="empty-state" style="display:none;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:white;border:none;padding:12px 20px;margin-bottom:16px">
+          <i class="fa-solid fa-pen-to-square" style="font-size:24px;margin-bottom:8px"></i>
+          <h3 style="margin:0;color:white;font-size:16px">وضع التعديل</h3>
+          <p style="margin:4px 0 0;opacity:0.9;font-size:14px">أنت الآن تقوم بتعديل استبيان موجود</p>
+        </div>
         <div id="authNotice" class="empty-state" style="display:none"></div>
+        <div id="loadingNotice" class="empty-state" style="display:none">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size:48px;color:var(--main-blue);margin-bottom:16px"></i>
+          <h3 style="margin:0;color:var(--main-blue)">جاري تحميل الاستبيان...</h3>
+        </div>
         <form id="builderForm" class="form-grid" style="grid-template-columns: 1fr 1fr">
           <label style="grid-column:1 / -1">
             عنوان الاستبيان
