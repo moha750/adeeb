@@ -1,4 +1,4 @@
-﻿/* أنماط لوحة التحكم */
+/* أنماط لوحة التحكم */
 :root {
   --main-blue: #274060;
   --accent-blue: #3d8fd6;
@@ -1550,4 +1550,44 @@ body.no-scroll { overflow: hidden; }
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
+}
+
+/* Member card icon buttons responsive positioning */
+@media (max-width: 640px) {
+  /* Prevent overflow on mobile */
+  .members-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .member-card {
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  
+  /* Hide the absolute positioned container on mobile */
+  .member-card > div[style*="position:absolute"][style*="top:16px"] {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    display: flex !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 12px !important;
+    background: #f8fafc !important;
+    border-top: 1px solid #e2e8f0 !important;
+    border-radius: 0 !important;
+    order: 10 !important;
+  }
+  
+  /* Make the member card a flex container */
+  .member-card {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Ensure action buttons stay at bottom */
+  .member-card > div[style*="grid-template-columns:1fr 1fr"] {
+    order: 11 !important;
+  }
 }

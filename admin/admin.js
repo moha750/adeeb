@@ -4457,7 +4457,7 @@
       try { adminCurrentPasswordInput.value = ''; adminNewPasswordInput.value = ''; adminConfirmPasswordInput.value = ''; } catch {}
       // تسجيل الخروج لإعادة الدخول بالكلمة الجديدة
       try { await sb.auth.signOut(); } catch {}
-      location.replace('../login.html?redirect=admin/admin.html');
+      location.replace('../auth/login.html?redirect=admin/admin.html');
     } catch (err) {
       adminPasswordMsg && (adminPasswordMsg.textContent = 'تعذر التغيير: ' + (err?.message || 'غير معروف'));
     } finally {
@@ -4486,7 +4486,7 @@
       if (!user || !user.email) throw new Error('لا يوجد بريد مسجل');
       const { error: signInErr } = await sb.auth.signInWithPassword({ email: user.email, password: currPwd });
       if (signInErr) throw new Error('كلمة المرور الحالية غير صحيحة');
-      const redirectTo = new URL('../login.html', location.origin).href;
+      const redirectTo = new URL('../auth/login.html', location.origin).href;
       const { error: updErr } = await sb.auth.updateUser({ email: newEmail }, { emailRedirectTo: redirectTo });
       if (updErr) throw updErr;
       adminEmailMsg && (adminEmailMsg.textContent = 'تم إرسال رسالة تأكيد إلى بريدك الجديد. الرجاء فتح الرابط لتأكيد التغيير.');
@@ -5032,9 +5032,16 @@
     } catch {}
   }
 
-  // ===== Admin Levels (1: President, 2: Vice, 3: Manager) =====
-  const ADMIN_LEVELS = { president: 1, vice: 2, manager: 3 };
-  function levelLabel(l) { return l === 1 ? 'رئيس' : (l === 2 ? 'نائب' : 'قائد/مشرف'); }
+  // ===== Admin Levels (1: President, 2: Vice, 3: Committee Leader, 4: Admin Officer, 5: Executive) =====
+  const ADMIN_LEVELS = { president: 1, vice: 2, committee_leader: 3, admin_officer: 4, executive: 5 };
+  function levelLabel(l) { 
+    if (l === 1) return 'رئيس أديب';
+    if (l === 2) return 'نائب الرئيس';
+    if (l === 3) return 'قائد لجنة';
+    if (l === 4) return 'مسؤول إداري';
+    if (l === 5) return 'رئيس تنفيذي';
+    return 'إداري';
+  }
   function normalizeAr(s) {
     if (!s) return '';
     let t = String(s);
@@ -5047,39 +5054,51 @@
     return t;
   }
   function levelFromPositionAr(position) {
-    if (!position) return ADMIN_LEVELS.manager;
+    if (!position) return ADMIN_LEVELS.executive;
     const p = normalizeAr(position);
     
-    // المجلس الأعلى (High Council)
-    // رئيس النادي
-    if (p.includes('رئيس') && p.includes('النادي')) return ADMIN_LEVELS.president;
-    // رئيس أدِيب (للتوافق مع النظام القديم)
+    // الرتبة الأولى: رئيس أديب
     if (p.includes('رئيس') && p.includes('اديب')) return ADMIN_LEVELS.president;
-    // نائب الرئيس (سواء شطر الطلاب أو الطالبات)
+    // للتوافق مع النظام القديم
+    if (p.includes('رئيس') && p.includes('النادي')) return ADMIN_LEVELS.president;
+    
+    // الرتبة الثانية: نائب الرئيس
     if (p.includes('نائب') && p.includes('الرئيس')) return ADMIN_LEVELS.vice;
     
-    // باقي المناصب: المجلس الإداري والمجالس التنفيذية
-    // قائد التأليف، قائد الرواة، قائد السفراء، إلخ...
-    // رئيس تنفيذ مرافئ، رئيس تنفيذ وجيز
-    return ADMIN_LEVELS.manager;
+    // الرتبة الثالثة: قائد لجنة
+    if (p.includes('قائد') && !p.includes('تنفيذ')) return ADMIN_LEVELS.committee_leader;
+    
+    // الرتبة الرابعة: مسؤول إداري
+    if (p.includes('مسؤول')) return ADMIN_LEVELS.admin_officer;
+    
+    // الرتبة الخامسة: رئيس تنفيذي
+    if (p.includes('رئيس') && p.includes('تنفيذ')) return ADMIN_LEVELS.executive;
+    
+    // افتراضي: رئيس تنفيذي (أقل رتبة)
+    return ADMIN_LEVELS.executive;
   }
   function fallbackPermsForLevel(lv) {
-    // الرئيس/النائب: كل التبويبات مسموحة. القادة: كل شيء ما عدا إدارة الإداريين.
+    // رئيس أديب (1): كل الصلاحيات
+    // نائب الرئيس (2): كل الصلاحيات
+    // قائد لجنة (3): كل شيء ما عدا إدارة الإداريين
+    // مسؤول إداري (4): كل شيء ما عدا إدارة الإداريين
+    // رئيس تنفيذي (5): كل شيء ما عدا إدارة الإداريين
     const base = { works: true, sponsors: true, achievements: true, forms: true, board: true, members: true, membership_apps: true, faq: true, schedule: true, appointments: true, idea_board: true, chat: true, todos: true, admins: true, testimonials: true, join: true, push: true };
-    if (lv === ADMIN_LEVELS.manager) return { ...base, admins: false };
+    // الرئيس ونائبه فقط لهم صلاحية إدارة الإداريين
+    if (lv >= ADMIN_LEVELS.committee_leader) return { ...base, admins: false };
     return base;
   }
   async function getAdminLevelPublic(userId) {
-    if (!sb || !userId) return ADMIN_LEVELS.manager;
+    if (!sb || !userId) return ADMIN_LEVELS.executive;
     try {
       const { data, error } = await sb
         .from('auth_users_public')
         .select('user_id, admin_level, position')
         .eq('user_id', userId)
         .maybeSingle();
-      if (error) return ADMIN_LEVELS.manager;
+      if (error) return ADMIN_LEVELS.executive;
       const lv = Number(data?.admin_level);
-      if (Number.isFinite(lv) && lv >= 1 && lv <= 3) return lv;
+      if (Number.isFinite(lv) && lv >= 1 && lv <= 5) return lv;
       // fallback: derive from position (from view), else from admins table
       let pos = (data?.position || null);
       if (!pos) {
@@ -5089,38 +5108,41 @@
         } catch {}
       }
       return levelFromPositionAr(pos);
-    } catch { return ADMIN_LEVELS.manager; }
+    } catch { return ADMIN_LEVELS.executive; }
   }
   async function getCallerLevel() {
-    if (!sb) return ADMIN_LEVELS.manager;
+    if (!sb) return ADMIN_LEVELS.executive;
     try {
       const { data: { user } } = await sb.auth.getUser();
       const mdLv = Number(user?.user_metadata?.admin_level);
       if (Number.isFinite(mdLv)) return mdLv;
       // fallback to mapping from public view (may derive from position too)
       return await getAdminLevelPublic(user?.id);
-    } catch { return ADMIN_LEVELS.manager; }
+    } catch { return ADMIN_LEVELS.executive; }
   }
   function evalAdminActions(callerLevel, targetLevel, callerId, targetId) {
-    // President (1) can manage everyone except we also avoid self-remove edit for safety
+    // لا يمكن لأحد إدارة رئيس أديب
     if (targetLevel === ADMIN_LEVELS.president) {
       return { canEditPerms: false, canRemove: false, canEditLevel: false };
     }
     const isSelf = callerId && targetId && callerId === targetId;
-    // Vice rules: can manage only managers (lvl3), not self
+    
+    // رئيس أديب (1): يمكنه إدارة الجميع ما عدا نفسه
+    if (callerLevel === ADMIN_LEVELS.president) {
+      return { canEditPerms: !isSelf, canRemove: !isSelf, canEditLevel: !isSelf };
+    }
+    
+    // نائب الرئيس (2): يمكنه إدارة قادة اللجان والمسؤولين والرؤساء التنفيذيين فقط
     if (callerLevel === ADMIN_LEVELS.vice) {
-      const can = targetLevel >= ADMIN_LEVELS.manager && !isSelf;
+      const can = targetLevel >= ADMIN_LEVELS.committee_leader && !isSelf;
       return { canEditPerms: can, canRemove: can, canEditLevel: false };
     }
-    // Manager cannot manage anyone
-    if (callerLevel >= ADMIN_LEVELS.manager) {
+    
+    // قائد لجنة (3) ومن دونه: لا يمكنهم إدارة أي إداري
+    if (callerLevel >= ADMIN_LEVELS.committee_leader) {
       return { canEditPerms: false, canRemove: false, canEditLevel: false };
     }
-    // President managing Vice/Manager
-    if (callerLevel === ADMIN_LEVELS.president) {
-      // Allow editing/removing vice and managers; avoid self-remove
-      return { canEditPerms: !isSelf, canRemove: !isSelf, canEditLevel: !isSelf && targetLevel !== ADMIN_LEVELS.president };
-    }
+    
     return { canEditPerms: false, canRemove: false, canEditLevel: false };
   }
 
@@ -5145,38 +5167,332 @@
     const { canEditPerms, canRemove, canEditLevel } = evalAdminActions(callerLevel, targetLevel, callerId, userId);
     adminDetailsCurrentUserId = userId;
 
+    const safe = (s) => (s ? String(s).replace(/</g, '&lt;').replace(/>/g, '&gt;') : '');
     const avatar = avatarUrl
-      ? `<img src="${avatarUrl}" alt="${name}" onerror="this.remove()" style="width:48px;height:48px;border-radius:999px;object-fit:cover" />`
-      : `<div class="avatar" style="width:48px;height:48px;border-radius:999px;overflow:hidden;background:#e2e8f0;display:grid;place-items:center">
-           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      ? `<img src="${avatarUrl}" alt="${name}" onerror="this.remove()" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:4px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,0.15)" />`
+      : `<div style="width:80px;height:80px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg, #e2e8f0, #cbd5e1);display:grid;place-items:center;border:4px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,0.15)">
+           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
              <circle cx="12" cy="12" r="10" fill="#cbd5e1"/>
              <circle cx="12" cy="10" r="3.2" fill="#64748b"/>
              <path d="M5.5 18.2c1.9-3 5-4.2 6.5-4.2s4.6 1.2 6.5 4.2c-2.1 1.7-4.6 2.8-6.5 2.8s-4.4-1.1-6.5-2.8z" fill="#64748b"/>
            </svg>
          </div>`;
+    
+    // تحديد لون الرتبة
+    const levelColor = targetLevel === 1 ? '#f59e0b' : targetLevel === 2 ? '#3b82f6' : targetLevel === 3 ? '#10b981' : targetLevel === 4 ? '#8b5cf6' : '#6366f1';
+    const levelBg = targetLevel === 1 ? 'linear-gradient(135deg, #fef3c7, #fde68a)' : targetLevel === 2 ? 'linear-gradient(135deg, #dbeafe, #bfdbfe)' : targetLevel === 3 ? 'linear-gradient(135deg, #d1fae5, #a7f3d0)' : targetLevel === 4 ? 'linear-gradient(135deg, #ede9fe, #ddd6fe)' : 'linear-gradient(135deg, #e0e7ff, #c7d2fe)';
 
+    // أيقونة الرتبة
+    const levelIcon = targetLevel === 1 ? 'fa-crown' : targetLevel === 2 ? 'fa-medal' : targetLevel === 3 ? 'fa-star' : targetLevel === 4 ? 'fa-shield-halved' : 'fa-flag';
+    
     const html = `
-      <div style="display:flex; align-items:center; gap:12px;">
-        ${avatar}
-        <div>
-          <div style="font-family: fb; color: var(--main-blue); font-size: 16px;">${name}</div>
-          <div class="muted" style="font-size:12px">${email}</div>
+      <!-- رأس البطاقة مع الصورة والمعلومات الأساسية -->
+      <div style="position:relative; text-align:center; padding:32px 24px 24px; background:linear-gradient(135deg, ${levelColor}08 0%, #ffffff 100%); border-radius:16px; border:2px solid ${levelColor}20; box-shadow:0 4px 16px ${levelColor}15; overflow:hidden">
+        <!-- خلفية زخرفية -->
+        <div style="position:absolute; top:-50px; right:-50px; width:150px; height:150px; background:${levelBg}; border-radius:50%; opacity:0.3; filter:blur(40px)"></div>
+        <div style="position:absolute; bottom:-30px; left:-30px; width:100px; height:100px; background:${levelBg}; border-radius:50%; opacity:0.2; filter:blur(30px)"></div>
+        
+        <!-- الصورة الشخصية -->
+        <div style="position:relative; display:inline-block; margin-bottom:16px">
+          ${avatar}
+          <!-- أيقونة الرتبة على الصورة -->
+          <div style="position:absolute; bottom:-8px; right:-8px; width:36px; height:36px; background:${levelColor}; border-radius:50%; display:flex; align-items:center; justify-content:center; border:3px solid #fff; box-shadow:0 4px 12px ${levelColor}40">
+            <i class="fa-solid ${levelIcon}" style="color:#fff; font-size:14px"></i>
+          </div>
+        </div>
+        
+        <!-- الاسم -->
+        <h3 style="font-size:1.5rem; font-weight:800; color:#1e293b; margin:0 0 12px; font-family:fb; text-shadow:0 2px 4px rgba(0,0,0,0.05)">${safe(name)}</h3>
+        
+        <!-- badge الرتبة والمنصب -->
+        <div style="display:inline-flex; align-items:center; gap:8px; padding:10px 24px; background:${levelBg}; border-radius:24px; font-size:0.95rem; font-weight:700; color:${levelColor}; margin-bottom:20px; box-shadow:0 2px 8px ${levelColor}25; border:1px solid ${levelColor}30">
+          <i class="fa-solid ${levelIcon}" style="font-size:0.9rem"></i>
+          <span>${safe(position !== '—' ? position : levelLabel(targetLevel))}</span>
+        </div>
+        
+        <!-- زر بدء المحادثة -->
+        <div style="position:relative; z-index:1">
+          <button type="button" class="btn btn-primary" id="startChatWithAdminBtn" 
+                  style="width:100%; max-width:320px; padding:12px 24px; font-size:1rem; font-weight:600; box-shadow:0 4px 12px rgba(59,130,246,0.3); transition:all 0.3s"
+                  onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(59,130,246,0.4)'"
+                  onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(59,130,246,0.3)'">
+            <i class="fa-solid fa-comments" style="margin-left:8px"></i>
+            <span>بدء محادثة</span>
+          </button>
         </div>
       </div>
-      <div style="display:flex; gap:8px; margin-top:8px">
-        <button type="button" class="btn" id="startChatWithAdminBtn"><i class="fa-solid fa-comments"></i> بدء محادثة</button>
-      </div>
-      <div class="panel__body" style="padding:0; margin-top:12px">
-        <div style="display:grid; gap:8px; grid-template-columns: 140px 1fr; align-items:center;">
-          <div class="muted">المنصب</div><div>${position}</div>
-          <div class="muted">رقم الجوال</div><div>${phone}</div>
-          <div class="muted">وقت إنشاء الحساب</div><div>${createdAt}</div>
-          <div class="muted">المعرّف</div><div style="direction:ltr">${userId}</div>
+
+      <!-- الرتبة الإدارية -->
+        <div style="margin-bottom:24px; padding:16px; background:${levelBg}; border-radius:12px; border:1px solid ${levelColor}40; box-shadow:0 2px 4px ${levelColor}20">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:${canEditLevel ? '16px' : '0'}">
+            <div style="width:48px; height:48px; border-radius:12px; background:${levelColor}; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 8px ${levelColor}40">
+              <i class="fa-solid fa-crown" style="font-size:20px; color:#fff"></i>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:0.7rem; color:${levelColor}; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px; opacity:0.8">الرتبة الحالية</div>
+              <div style="font-size:1.1rem; color:${levelColor}; font-weight:700">${levelLabel(targetLevel)}</div>
+            </div>
+          </div>
+          <div id="levelEditor" style="${canEditLevel ? '' : 'display:none'}">
+            <div style="padding-top:16px; border-top:1px solid ${levelColor}30">
+              <label style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px">
+                <span style="font-size:0.85rem; font-weight:700; color:${levelColor}; display:flex; align-items:center; gap:6px">
+                  <div style="width:24px; height:24px; border-radius:6px; background:${levelBg}; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px ${levelColor}30">
+                    <i class="fa-solid fa-layer-group" style="font-size:0.7rem; color:${levelColor}"></i>
+                  </div>
+                  <span>تعديل الرتبة</span>
+                </span>
+                <select id="adminLevelSelect" style="padding:12px 14px; border-radius:10px; border:2px solid ${levelColor}; font-size:0.95rem; background:#fff; color:#1e293b; font-weight:600; transition:all 0.3s; box-shadow:0 2px 6px ${levelColor}20" onfocus="this.style.borderColor='${levelColor}'; this.style.boxShadow='0 4px 12px ${levelColor}40'" onblur="this.style.borderColor='${levelColor}'; this.style.boxShadow='0 2px 6px ${levelColor}20'">
+                  <option value="2">نائب الرئيس</option>
+                  <option value="3">قائد لجنة</option>
+                  <option value="4">مسؤول إداري</option>
+                  <option value="5">رئيس تنفيذي</option>
+                </select>
+              </label>
+              
+              <label style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px">
+                <span style="font-size:0.85rem; font-weight:700; color:${levelColor}; display:flex; align-items:center; gap:6px">
+                  <div style="width:24px; height:24px; border-radius:6px; background:${levelBg}; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px ${levelColor}30">
+                    <i class="fa-solid fa-briefcase" style="font-size:0.7rem; color:${levelColor}"></i>
+                  </div>
+                  <span>تعديل المنصب</span>
+                </span>
+                <select id="adminPositionSelect" style="padding:12px 14px; border-radius:10px; border:2px solid ${levelColor}; font-size:0.95rem; background:#fff; color:#1e293b; font-weight:600; transition:all 0.3s; box-shadow:0 2px 6px ${levelColor}20" onfocus="this.style.borderColor='${levelColor}'; this.style.boxShadow='0 4px 12px ${levelColor}40'" onblur="this.style.borderColor='${levelColor}'; this.style.boxShadow='0 2px 6px ${levelColor}20'">
+                  <option value="">اختر المنصب</option>
+                </select>
+              </label>
+              
+              <div style="display:flex;gap:8px;align-items:center">
+                <button type="button" id="adminLevelSaveBtn" 
+                        style="flex:1; padding:12px 20px; border-radius:10px; border:none; background:${levelColor}; color:#fff; font-size:1rem; font-weight:700; cursor:pointer; transition:all 0.3s; box-shadow:0 4px 12px ${levelColor}40; font-family:fb"
+                        onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px ${levelColor}50'"
+                        onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px ${levelColor}40'"
+                        onmousedown="this.style.transform='translateY(0) scale(0.98)'"
+                        onmouseup="this.style.transform='translateY(-2px) scale(1)'">
+                  <i class="fa-regular fa-floppy-disk" style="margin-left:6px"></i>
+                  حفظ التعديلات
+                </button>
+              </div>
+              <div id="adminLevelMsg" style="margin-top:12px; text-align:center"></div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="panel__body" id="adminPermsSection" style="padding:0; margin-top:16px">
-        <div style="font-weight:700; color: var(--main-blue); margin-bottom:8px"><i class="fa-solid fa-lock"></i> الصلاحيات</div>
-        <div class="perm-grid" id="adminPermsGrid">
+
+      <!-- معلومات الاتصال -->
+      <div style="margin-bottom:24px">
+        <h4 style="font-size:1rem; font-weight:700; color:#1e293b; margin:0 0 16px; padding-bottom:10px; border-bottom:2px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between">
+          <div style="display:flex; align-items:center; gap:10px">
+            <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #10b981, #34d399); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(16,185,129,0.3)">
+              <i class="fa-solid fa-address-card" style="color:#fff; font-size:14px"></i>
+            </div>
+            <span>معلومات الاتصال</span>
+          </div>
+          <div style="font-size:0.75rem; color:#64748b; font-weight:500">
+            <i class="fa-solid fa-circle-info" style="font-size:0.7rem; margin-left:4px"></i>
+            انقر للتواصل
+          </div>
+        </h4>
+        <div style="display:grid; gap:14px">
+          ${email && email !== '—' ? `
+            <a href="mailto:${email}" 
+               class="contact-card-link"
+               style="display:flex; align-items:center; gap:14px; padding:16px; background:linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 2px 4px rgba(0,0,0,0.04); transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); text-decoration:none; cursor:pointer; position:relative; overflow:hidden"
+               onmouseenter="
+                 this.style.boxShadow='0 8px 20px rgba(61,143,214,0.25)';
+                 this.style.transform='translateY(-3px)';
+                 this.style.borderColor='#3d8fd6';
+                 this.style.background='linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)';
+                 this.querySelector('.email-icon-box').style.transform='scale(1.1) rotate(5deg)';
+                 this.querySelector('.email-icon-box').style.boxShadow='0 6px 16px rgba(61,143,214,0.4)';
+                 this.querySelector('.email-text').style.color='#3d8fd6';
+                 this.querySelector('.email-arrow').style.color='#3d8fd6';
+                 this.querySelector('.email-arrow').style.transform='translate(3px, -3px)';
+               "
+               onmouseleave="
+                 this.style.boxShadow='0 2px 4px rgba(0,0,0,0.04)';
+                 this.style.transform='translateY(0)';
+                 this.style.borderColor='#e2e8f0';
+                 this.style.background='linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)';
+                 this.querySelector('.email-icon-box').style.transform='scale(1) rotate(0deg)';
+                 this.querySelector('.email-icon-box').style.boxShadow='0 4px 8px rgba(61,143,214,0.3)';
+                 this.querySelector('.email-text').style.color='#1e293b';
+                 this.querySelector('.email-arrow').style.color='#cbd5e1';
+                 this.querySelector('.email-arrow').style.transform='translate(0, 0)';
+               "
+               onmousedown="this.style.transform='translateY(-1px) scale(0.98)'"
+               onmouseup="this.style.transform='translateY(-3px) scale(1)'">
+              <div class="email-icon-box" style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg, #3d8fd6, #5ba3e0); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 8px rgba(61,143,214,0.3); transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1)">
+                <i class="fa-solid fa-envelope" style="font-size:20px; color:#fff"></i>
+              </div>
+              <div style="flex:1; min-width:0">
+                <div style="font-size:0.7rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px">البريد الإلكتروني</div>
+                <div class="email-text" style="font-size:1rem; color:#1e293b; font-weight:600; overflow:hidden; text-overflow:ellipsis; display:block; transition:color 0.3s">${safe(email)}</div>
+              </div>
+              <i class="fa-solid fa-arrow-up-right-from-square email-arrow" style="color:#cbd5e1; font-size:16px; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"></i>
+            </a>
+          ` : ''}
+          ${phone && phone !== '—' ? `
+            <a href="tel:${phone}" 
+               class="contact-card-link"
+               style="display:flex; align-items:center; gap:14px; padding:16px; background:linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 2px 4px rgba(0,0,0,0.04); transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); text-decoration:none; cursor:pointer; position:relative; overflow:hidden"
+               onmouseenter="
+                 this.style.boxShadow='0 8px 20px rgba(16,185,129,0.25)';
+                 this.style.transform='translateY(-3px)';
+                 this.style.borderColor='#10b981';
+                 this.style.background='linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%)';
+                 this.querySelector('.phone-icon-box').style.transform='scale(1.1) rotate(-5deg)';
+                 this.querySelector('.phone-icon-box').style.boxShadow='0 6px 16px rgba(16,185,129,0.4)';
+                 this.querySelector('.phone-icon').style.animation='phone-ring 0.5s ease-in-out';
+                 this.querySelector('.phone-text').style.color='#10b981';
+                 this.querySelector('.phone-arrow').style.color='#10b981';
+                 this.querySelector('.phone-arrow').style.transform='translate(3px, -3px)';
+               "
+               onmouseleave="
+                 this.style.boxShadow='0 2px 4px rgba(0,0,0,0.04)';
+                 this.style.transform='translateY(0)';
+                 this.style.borderColor='#e2e8f0';
+                 this.style.background='linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)';
+                 this.querySelector('.phone-icon-box').style.transform='scale(1) rotate(0deg)';
+                 this.querySelector('.phone-icon-box').style.boxShadow='0 4px 8px rgba(16,185,129,0.3)';
+                 this.querySelector('.phone-icon').style.animation='';
+                 this.querySelector('.phone-text').style.color='#1e293b';
+                 this.querySelector('.phone-arrow').style.color='#cbd5e1';
+                 this.querySelector('.phone-arrow').style.transform='translate(0, 0)';
+               "
+               onmousedown="this.style.transform='translateY(-1px) scale(0.98)'"
+               onmouseup="this.style.transform='translateY(-3px) scale(1)'">
+              <div class="phone-icon-box" style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg, #10b981, #34d399); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 8px rgba(16,185,129,0.3); transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1)">
+                <i class="fa-solid fa-phone phone-icon" style="font-size:20px; color:#fff"></i>
+              </div>
+              <div style="flex:1; min-width:0">
+                <div style="font-size:0.7rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px">رقم الجوال</div>
+                <div class="phone-text" style="font-size:1rem; color:#1e293b; font-weight:600; direction:ltr; text-align:right; display:block; transition:color 0.3s">${safe(phone)}</div>
+              </div>
+              <i class="fa-solid fa-arrow-up-right-from-square phone-arrow" style="color:#cbd5e1; font-size:16px; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"></i>
+            </a>
+          ` : `
+            <div style="display:flex; align-items:center; gap:14px; padding:16px; background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius:12px; border:1px dashed #cbd5e1; opacity:0.7; position:relative; overflow:hidden">
+              <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg, #e2e8f0, #cbd5e1); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                <i class="fa-solid fa-envelope" style="font-size:20px; color:#94a3b8; opacity:0.6"></i>
+              </div>
+              <div style="flex:1; min-width:0">
+                <div style="font-size:0.7rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px">البريد الإلكتروني</div>
+                <div style="font-size:0.9rem; color:#64748b; font-weight:600; display:flex; align-items:center; gap:6px">
+                  <i class="fa-solid fa-circle-exclamation" style="font-size:0.8rem"></i>
+                  <span>غير متوفر</span>
+                </div>
+              </div>
+            </div>
+          `}
+          ${phone && phone !== '—' ? `
+            <a href="tel:${phone}" 
+               class="contact-card-link"
+               style="display:flex; align-items:center; gap:14px; padding:16px; background:linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 2px 4px rgba(0,0,0,0.04); transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); text-decoration:none; cursor:pointer; position:relative; overflow:hidden"
+               onmouseenter="
+                 this.style.boxShadow='0 8px 20px rgba(16,185,129,0.25)';
+                 this.style.transform='translateY(-3px)';
+                 this.style.borderColor='#10b981';
+                 this.style.background='linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%)';
+                 this.querySelector('.phone-icon-box').style.transform='scale(1.1) rotate(-5deg)';
+                 this.querySelector('.phone-icon-box').style.boxShadow='0 6px 16px rgba(16,185,129,0.4)';
+                 this.querySelector('.phone-icon').style.animation='phone-ring 0.5s ease-in-out';
+                 this.querySelector('.phone-text').style.color='#10b981';
+                 this.querySelector('.phone-arrow').style.color='#10b981';
+                 this.querySelector('.phone-arrow').style.transform='translate(3px, -3px)';
+               "
+               onmouseleave="
+                 this.style.boxShadow='0 2px 4px rgba(0,0,0,0.04)';
+                 this.style.transform='translateY(0)';
+                 this.style.borderColor='#e2e8f0';
+                 this.style.background='linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)';
+                 this.querySelector('.phone-icon-box').style.transform='scale(1) rotate(0deg)';
+                 this.querySelector('.phone-icon-box').style.boxShadow='0 4px 8px rgba(16,185,129,0.3)';
+                 this.querySelector('.phone-icon').style.animation='';
+                 this.querySelector('.phone-text').style.color='#1e293b';
+                 this.querySelector('.phone-arrow').style.color='#cbd5e1';
+                 this.querySelector('.phone-arrow').style.transform='translate(0, 0)';
+               "
+               onmousedown="this.style.transform='translateY(-1px) scale(0.98)'"
+               onmouseup="this.style.transform='translateY(-3px) scale(1)'">
+              <div class="phone-icon-box" style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg, #10b981, #34d399); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 8px rgba(16,185,129,0.3); transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1)">
+                <i class="fa-solid fa-phone phone-icon" style="font-size:20px; color:#fff"></i>
+              </div>
+              <div style="flex:1; min-width:0">
+                <div style="font-size:0.7rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px">رقم الجوال</div>
+                <div class="phone-text" style="font-size:1rem; color:#1e293b; font-weight:600; direction:ltr; text-align:right; display:block; transition:color 0.3s">${safe(phone)}</div>
+              </div>
+              <i class="fa-solid fa-arrow-up-right-from-square phone-arrow" style="color:#cbd5e1; font-size:16px; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"></i>
+            </a>
+          ` : `
+            <div style="display:flex; align-items:center; gap:14px; padding:16px; background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius:12px; border:1px dashed #cbd5e1; opacity:0.7; position:relative; overflow:hidden">
+              <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg, #e2e8f0, #cbd5e1); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                <i class="fa-solid fa-phone" style="font-size:20px; color:#94a3b8; opacity:0.6"></i>
+              </div>
+              <div style="flex:1; min-width:0">
+                <div style="font-size:0.7rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px">رقم الجوال</div>
+                <div style="font-size:0.9rem; color:#64748b; font-weight:600; display:flex; align-items:center; gap:6px">
+                  <i class="fa-solid fa-circle-exclamation" style="font-size:0.8rem"></i>
+                  <span>غير متوفر</span>
+                </div>
+              </div>
+            </div>
+          `}
+        </div>
+      </div>
+
+      <!-- معلومات الحساب -->
+      <div style="margin-bottom:24px">
+        <h4 style="font-size:1rem; font-weight:700; color:#1e293b; margin:0 0 16px; padding-bottom:10px; border-bottom:2px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between">
+          <div style="display:flex; align-items:center; gap:10px">
+            <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #8b5cf6, #a78bfa); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(139,92,246,0.3)">
+              <i class="fa-solid fa-info-circle" style="color:#fff; font-size:14px"></i>
+            </div>
+            <span>معلومات الحساب</span>
+          </div>
+          <div style="font-size:0.75rem; color:#8b5cf6; font-weight:600; background:#f3e8ff; padding:4px 12px; border-radius:12px">
+            <i class="fa-solid fa-database" style="font-size:0.7rem; margin-left:4px"></i>
+            بيانات النظام
+          </div>
+        </h4>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px">
+          <div style="position:relative; padding:18px; background:linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%); border-radius:14px; border:1px solid #d8b4fe; box-shadow:0 2px 6px rgba(139,92,246,0.12); transition:all 0.3s; overflow:hidden" onmouseenter="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 16px rgba(139,92,246,0.25)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(139,92,246,0.12)'">
+            <div style="position:absolute; top:-10px; right:-10px; width:60px; height:60px; background:#8b5cf6; border-radius:50%; opacity:0.1"></div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; position:relative">
+              <div style="width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg, #8b5cf6, #a78bfa); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 8px rgba(139,92,246,0.3)">
+                <i class="fa-solid fa-calendar-plus" style="color:#fff; font-size:18px"></i>
+              </div>
+              <div style="font-size:0.75rem; color:#6b21a8; font-weight:700; text-transform:uppercase; letter-spacing:0.8px">تاريخ الإنشاء</div>
+            </div>
+            <div style="font-size:1.05rem; color:#581c87; font-weight:700; padding-right:4px">${createdAt}</div>
+          </div>
+          <div style="position:relative; padding:18px; background:linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%); border-radius:14px; border:1px solid #d8b4fe; box-shadow:0 2px 6px rgba(139,92,246,0.12); transition:all 0.3s; overflow:hidden" onmouseenter="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 16px rgba(139,92,246,0.25)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(139,92,246,0.12)'">
+            <div style="position:absolute; top:-10px; right:-10px; width:60px; height:60px; background:#8b5cf6; border-radius:50%; opacity:0.1"></div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; position:relative">
+              <div style="width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg, #8b5cf6, #a78bfa); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 8px rgba(139,92,246,0.3)">
+                <i class="fa-solid fa-fingerprint" style="color:#fff; font-size:18px"></i>
+              </div>
+              <div style="font-size:0.75rem; color:#6b21a8; font-weight:700; text-transform:uppercase; letter-spacing:0.8px">المعرّف الفريد</div>
+            </div>
+            <div style="font-size:0.75rem; color:#581c87; font-weight:600; direction:ltr; text-align:right; word-break:break-all; font-family:monospace; background:#fff; padding:8px 10px; border-radius:8px; border:1px solid #d8b4fe">${userId}</div>
+          </div>
+        </div>
+      </div>
+      <!-- الصلاحيات -->
+      <div id="adminPermsSection">
+        <h4 style="font-size:1rem; font-weight:700; color:#1e293b; margin:0 0 16px; padding-bottom:10px; border-bottom:2px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between">
+          <div style="display:flex; align-items:center; gap:10px">
+            <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #f59e0b, #fbbf24); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(245,158,11,0.3)">
+              <i class="fa-solid fa-lock" style="color:#fff; font-size:14px"></i>
+            </div>
+            <span>الصلاحيات</span>
+          </div>
+          <div id="permsCounter" style="font-size:0.75rem; color:#f59e0b; font-weight:600; background:#fef3c7; padding:4px 12px; border-radius:12px">
+            <i class="fa-solid fa-check-circle" style="font-size:0.7rem; margin-left:4px"></i>
+            <span id="permsCountText">جاري التحميل...</span>
+          </div>
+        </h4>
+        <div class="perm-grid" id="adminPermsGrid" style="background:linear-gradient(135deg, #fafbfc 0%, #f8fafc 100%); padding:18px; border-radius:14px; border:1px solid #e2e8f0; box-shadow:0 2px 6px rgba(0,0,0,0.04)">
           <label class="perm"><input type="checkbox" id="perm-works" /><span class="name">إدارة الأعمال</span><span class="switch" aria-hidden="true"></span></label>
           <label class="perm"><input type="checkbox" id="perm-sponsors" /><span class="name">إدارة الرعاة</span><span class="switch" aria-hidden="true"></span></label>
           <label class="perm"><input type="checkbox" id="perm-achievements" /><span class="name">إدارة الإنجازات</span><span class="switch" aria-hidden="true"></span></label>
@@ -5195,31 +5511,12 @@
           <label class="perm"><input type="checkbox" id="perm-join" /><span class="name">زر "انضم إلينا"</span><span class="switch" aria-hidden="true"></span></label>
           <label class="perm"><input type="checkbox" id="perm-push" /><span class="name">إرسال الإشعارات</span><span class="switch" aria-hidden="true"></span></label>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-          <button type="button" class="btn" id="permsSelectAll">تحديد الكل</button>
-          <button type="button" class="btn" id="permsClearAll">مسح الكل</button>
-          <div style="flex:1"></div>
-          <button type="button" class="btn btn-primary" id="adminPermsSaveBtn"><i class="fa-regular fa-floppy-disk"></i> حفظ الصلاحيات</button>
-          <span id="adminPermsMsg" class="muted"></span>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:16px;flex-wrap:wrap">
+          <button type="button" class="btn btn-outline" id="permsSelectAll" style="flex:1; min-width:120px"><i class="fa-solid fa-check-double"></i> تحديد الكل</button>
+          <button type="button" class="btn btn-outline" id="permsClearAll" style="flex:1; min-width:120px"><i class="fa-solid fa-xmark"></i> مسح الكل</button>
+          <button type="button" class="btn btn-primary" id="adminPermsSaveBtn" style="flex:2; min-width:150px"><i class="fa-regular fa-floppy-disk"></i> حفظ الصلاحيات</button>
         </div>
-      </div>
-      <div class="panel__body" style="padding:0; margin-top:16px">
-        <div style="display:grid; gap:8px; grid-template-columns: 140px 1fr; align-items:center;">
-          <div class="muted">الرتبة الإدارية</div><div>${levelLabel(targetLevel)}</div>
-        </div>
-        <div id="levelEditor" style="margin-top:8px; ${canEditLevel ? '' : 'display:none'}">
-          <label style="display:flex; gap:8px; align-items:center">
-            <span>تعديل الرتبة</span>
-            <select id="adminLevelSelect">
-              <option value="2">نائب</option>
-              <option value="3">قائد/مشرف</option>
-            </select>
-          </label>
-          <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-            <button type="button" class="btn btn-primary" id="adminLevelSaveBtn"><i class="fa-regular fa-floppy-disk"></i> حفظ المستوى</button>
-            <span id="adminLevelMsg" class="muted"></span>
-          </div>
-        </div>
+        <div id="adminPermsMsg" style="margin-top:8px; text-align:center"></div>
       </div>`;
     if (adminDetailsBody) adminDetailsBody.innerHTML = html;
     // Initialize permissions UI
@@ -5264,12 +5561,32 @@
       setPerm('perm-join', perms.join);
       setPerm('perm-push', perms.push);
 
+      // دالة تحديث عداد الصلاحيات
+      const updatePermsCounter = () => {
+        const total = adminDetailsBody?.querySelectorAll('#adminPermsGrid input[type="checkbox"]').length || 0;
+        const checked = adminDetailsBody?.querySelectorAll('#adminPermsGrid input[type="checkbox"]:checked').length || 0;
+        const counterText = document.getElementById('permsCountText');
+        if (counterText) {
+          counterText.textContent = checked + ' من ' + total + ' مفعّلة';
+        }
+      };
+      
+      // تحديث العداد عند التحميل
+      updatePermsCounter();
+      
+      // تحديث العداد عند تغيير أي صلاحية
+      adminDetailsBody?.querySelectorAll('#adminPermsGrid input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', updatePermsCounter);
+      });
+
       document.getElementById('permsSelectAll')?.addEventListener('click', () => {
         adminDetailsBody?.querySelectorAll('#adminPermsGrid input[type="checkbox"]:not(:disabled)')
           .forEach(cb => cb.checked = true);
+        updatePermsCounter();
       });
       document.getElementById('permsClearAll')?.addEventListener('click', () => {
         adminDetailsBody?.querySelectorAll('#adminPermsGrid input[type="checkbox"]').forEach(cb => cb.checked = false);
+        updatePermsCounter();
       });
       document.getElementById('adminPermsSaveBtn')?.addEventListener('click', async () => {
         const btn = document.getElementById('adminPermsSaveBtn');
@@ -5294,12 +5611,18 @@
           push: !!document.getElementById('perm-push')?.checked,
         });
         try {
-          if (msg) { msg.className = 'muted'; msg.textContent = ''; }
+          if (msg) { msg.className = ''; msg.textContent = ''; msg.style.cssText = ''; }
           if (btn) { btn.disabled = true; btn.style.opacity = .7; }
           await callFunction('set-admin-perms', { method: 'POST', body: { user_id: adminDetailsCurrentUserId, perms: gather() } });
-          if (msg) { msg.className = 'muted'; msg.textContent = 'تم الحفظ'; }
+          if (msg) { 
+            msg.textContent = '✓ تم حفظ الصلاحيات بنجاح'; 
+            msg.style.cssText = 'color:#10b981; font-weight:600; padding:8px 16px; background:#d1fae5; border-radius:8px; display:inline-block';
+          }
         } catch (err) {
-          if (msg) { msg.className = 'alert error'; msg.textContent = 'فشل الحفظ: ' + (err?.message || 'غير معروف'); }
+          if (msg) { 
+            msg.textContent = '✗ فشل الحفظ: ' + (err?.message || 'غير معروف'); 
+            msg.style.cssText = 'color:#ef4444; font-weight:600; padding:8px 16px; background:#fee2e2; border-radius:8px; display:inline-block';
+          }
         } finally {
           if (btn) { btn.disabled = false; btn.style.opacity = 1; }
         }
@@ -5313,9 +5636,9 @@
       if (selectAllBtn) selectAllBtn.style.display = canEditPerms ? '' : 'none';
       if (clearAllBtn) clearAllBtn.style.display = canEditPerms ? '' : 'none';
 
-      // Enforce role-title binding: managers (level 3) can never get 'admins' tab
+      // Enforce role-title binding: قادة اللجان والمسؤولين والرؤساء التنفيذيين لا يمكنهم الحصول على صلاحية إدارة الإداريين
       try {
-        if (targetLevel === ADMIN_LEVELS.manager) {
+        if (targetLevel >= ADMIN_LEVELS.committee_leader) {
           const adminsCb = document.getElementById('perm-admins');
           if (adminsCb) {
             adminsCb.checked = false;
@@ -5325,21 +5648,123 @@
         }
       } catch {}
 
+      // دالة لتحديث قائمة المناصب حسب الرتبة
+      const updatePositionsByLevel = (level) => {
+        const positionSelect = document.getElementById('adminPositionSelect');
+        if (!positionSelect) return;
+        
+        // تعريف المناصب لكل رتبة
+        const positionsByLevel = {
+          2: [ // نائب الرئيس
+            'نائب الرئيس - شطر الطالبات',
+            'نائب الرئيس - شطر الطلاب'
+          ],
+          3: [ // قائد لجنة
+            'قائد التأليف',
+            'قائد الرواة',
+            'قائد السفراء',
+            'قائد الإنتاج',
+            'قائد التصميم',
+            'قائد التسويق',
+            'قائد الفعاليات'
+          ],
+          4: [ // مسؤول إداري
+            'مسؤول الأرشيف',
+            'مسؤول الموارد البشرية'
+          ],
+          5: [ // رئيس تنفيذي
+            'رئيس تنفيذ مرافئ',
+            'رئيس تنفيذ وجيز'
+          ]
+        };
+        
+        const positions = positionsByLevel[level] || [];
+        positionSelect.innerHTML = '<option value="">اختر المنصب</option>';
+        positions.forEach(pos => {
+          const option = document.createElement('option');
+          option.value = pos;
+          option.textContent = pos;
+          positionSelect.appendChild(option);
+        });
+        
+        // تعيين المنصب الحالي إذا كان متطابقاً مع الرتبة
+        if (positions.includes(position)) {
+          positionSelect.value = position;
+        }
+      };
+
       // Init level editor
       const levelSelect = document.getElementById('adminLevelSelect');
-      if (levelSelect) levelSelect.value = String(Math.min(Math.max(targetLevel, 2), 3));
+      const positionSelect = document.getElementById('adminPositionSelect');
+      
+      if (levelSelect) {
+        levelSelect.value = String(Math.min(Math.max(targetLevel, 2), 5));
+        updatePositionsByLevel(targetLevel);
+        
+        // تحديث المناصب عند تغيير الرتبة
+        levelSelect.addEventListener('change', (e) => {
+          const selectedLevel = Number(e.target.value);
+          updatePositionsByLevel(selectedLevel);
+        });
+      }
+      
       document.getElementById('adminLevelSaveBtn')?.addEventListener('click', async () => {
         const btn = document.getElementById('adminLevelSaveBtn');
         const msg = document.getElementById('adminLevelMsg');
-        const newLevel = Number(document.getElementById('adminLevelSelect')?.value || 3);
-        if (newLevel === 1) { if (msg) { msg.className = 'alert error'; msg.textContent = 'لا يمكن تعيين رئيس من هنا'; } return; }
+        const newLevel = Number(document.getElementById('adminLevelSelect')?.value || 5);
+        const newPosition = document.getElementById('adminPositionSelect')?.value || '';
+        
+        if (newLevel === 1) { 
+          if (msg) { 
+            msg.textContent = '✗ لا يمكن تعيين رئيس أديب من هنا'; 
+            msg.style.cssText = 'color:#ef4444; font-weight:600; padding:8px 16px; background:#fee2e2; border-radius:8px; display:inline-block';
+          } 
+          return; 
+        }
+        
+        if (!newPosition) {
+          if (msg) { 
+            msg.textContent = '✗ يرجى اختيار المنصب'; 
+            msg.style.cssText = 'color:#ef4444; font-weight:600; padding:8px 16px; background:#fee2e2; border-radius:8px; display:inline-block';
+          } 
+          return;
+        }
+        
         try {
-          if (msg) { msg.className = 'muted'; msg.textContent = ''; }
+          if (msg) { msg.className = ''; msg.textContent = ''; msg.style.cssText = ''; }
           if (btn) { btn.disabled = true; btn.style.opacity = .7; }
+          
+          // حفظ الرتبة
           await callFunction('set-admin-level', { method: 'POST', body: { user_id: adminDetailsCurrentUserId, admin_level: newLevel } });
-          if (msg) { msg.className = 'muted'; msg.textContent = 'تم حفظ المستوى'; }
+          
+          // حفظ المنصب مباشرة في جدول admins
+          const { error: posError } = await sb
+            .from('admins')
+            .update({ position: newPosition })
+            .eq('user_id', adminDetailsCurrentUserId);
+          
+          if (posError) throw posError;
+          
+          if (msg) { 
+            msg.textContent = '✓ تم حفظ الرتبة والمنصب بنجاح'; 
+            msg.style.cssText = 'color:#10b981; font-weight:600; padding:8px 16px; background:#d1fae5; border-radius:8px; display:inline-block';
+          }
+          
+          // تحديث القائمة المحلية
+          const adminRow = adminsList.find(a => a && a.user_id === adminDetailsCurrentUserId);
+          if (adminRow) {
+            adminRow.position = newPosition;
+          }
+          
+          // تحديث العرض
+          setTimeout(() => {
+            showAdminDetails(adminDetailsCurrentUserId);
+          }, 1500);
         } catch (err) {
-          if (msg) { msg.className = 'alert error'; msg.textContent = 'فشل الحفظ: ' + (err?.message || 'غير معروف'); }
+          if (msg) { 
+            msg.textContent = '✗ فشل الحفظ: ' + (err?.message || 'غير معروف'); 
+            msg.style.cssText = 'color:#ef4444; font-weight:600; padding:8px 16px; background:#fee2e2; border-radius:8px; display:inline-block';
+          }
         } finally {
           if (btn) { btn.disabled = false; btn.style.opacity = 1; }
         }
@@ -5364,7 +5789,7 @@
 
   loginBtn?.addEventListener('click', () => {
     // Navigate to dedicated login page with redirect back to admin
-    const url = new URL('../login.html', location.href);
+    const url = new URL('../auth/login.html', location.href);
     url.searchParams.set('redirect', 'admin/admin.html');
     location.href = url.toString();
   });
@@ -5471,14 +5896,14 @@
   async function doLogout() {
     if (!sb) {
       // Fallback: just go to login
-      const url = new URL('../login.html', location.href);
+      const url = new URL('../auth/login.html', location.href);
       url.searchParams.set('redirect', 'admin/admin.html');
       location.replace(url.toString());
       return;
     }
     await sb.auth.signOut();
     await refreshAuthUI();
-    const url = new URL('../login.html', location.href);
+    const url = new URL('../auth/login.html', location.href);
     url.searchParams.set('redirect', 'admin/admin.html');
     location.replace(url.toString());
   }
@@ -5696,7 +6121,7 @@
     if (chatFilter === 'high') {
       list = list.filter(c => c.level === ADMIN_LEVELS.president || c.level === ADMIN_LEVELS.vice);
     } else if (chatFilter === 'admins') {
-      list = list.filter(c => c.level === ADMIN_LEVELS.manager);
+      list = list.filter(c => c.level >= ADMIN_LEVELS.committee_leader);
     }
     // empty state toggle
     if (chatNoContactsEl) chatNoContactsEl.style.display = list.length ? 'none' : '';
@@ -7117,7 +7542,7 @@
             </h3>
             <span style="background:#3d8fd6; color:#fff; padding:4px 12px; border-radius:999px; font-size:0.85rem; font-weight:600">${items.length} عضو</span>
           </div>
-          <div class="members-cards-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px"></div>
+          <div class="members-cards-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap:16px"></div>
         </div>`);
       const cardsGrid = block.querySelector('.members-cards-grid');
       items.forEach((item, sortedIndex) => {
@@ -9363,25 +9788,26 @@
       const level = Number.isFinite(lvRaw) ? lvRaw : levelFromPositionAr(pos);
       const pNorm = normalizeAr(pos || '');
       
-      // المجلس الأعلى
+      // توزيع حسب الرتب الجديدة
       if (level === ADMIN_LEVELS.president) {
+        // رئيس أديب
         presidents.push({ row, pr });
       } else if (level === ADMIN_LEVELS.vice) {
+        // نواب الرئيس
         if (pNorm.includes('الطالبات') || pNorm.includes('طالبات')) vicesFemale.push({ row, pr });
         else vicesMale.push({ row, pr });
+      } else if (level === ADMIN_LEVELS.committee_leader) {
+        // قادة اللجان
+        administrativeLeaders.push({ row, pr });
+      } else if (level === ADMIN_LEVELS.admin_officer) {
+        // المسؤولين الإداريين
+        administrativeLeaders.push({ row, pr });
+      } else if (level === ADMIN_LEVELS.executive) {
+        // الرؤساء التنفيذيين
+        executiveLeaders.push({ row, pr });
       } else {
-        // المجلس الإداري والمجالس التنفيذية
-        // تحديد بناءً على المنصب
-        if (pNorm.includes('قائد')) {
-          // المجلس الإداري: قائد التأليف، قائد الرواة، إلخ
-          administrativeLeaders.push({ row, pr });
-        } else if (pNorm.includes('رئيس') && pNorm.includes('تنفيذ')) {
-          // المجالس التنفيذية: رئيس تنفيذ مرافئ، رئيس تنفيذ وجيز
-          executiveLeaders.push({ row, pr });
-        } else {
-          // إذا لم يتم التعرف على المنصب، ضعه في المجلس الإداري افتراضياً
-          administrativeLeaders.push({ row, pr });
-        }
+        // افتراضي: ضعه في المجلس الإداري
+        administrativeLeaders.push({ row, pr });
       }
     });
 
@@ -9486,8 +9912,8 @@
       applyInvitePermsForLevel(level);
     } catch {}
   });
-  // Initialize defaults on load (manager-level fallback)
-  try { applyInvitePermsForLevel(ADMIN_LEVELS.manager); } catch {}
+  // Initialize defaults on load (executive-level fallback)
+  try { applyInvitePermsForLevel(ADMIN_LEVELS.executive); } catch {}
 
   // Auto-update council based on selected position
   const newAdminPositionSelect = document.getElementById('newAdminPosition');

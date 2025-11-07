@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin/
-Disallow: /blogger/
-Disallow: /login.html
-Disallow: /register.html
-
-Sitemap: https://www.adeeb.club/sitemap.xml

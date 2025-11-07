@@ -142,7 +142,7 @@
       const { data: { session } } = await sb.auth.getSession();
       if(!session){
         authNotice.style.display='block';
-        authNotice.innerHTML = 'يلزم تسجيل الدخول لنشر الاستبيان. <a href="../login.html?redirect=forms/builder.html">تسجيل الدخول</a>';
+        authNotice.innerHTML = 'يلزم تسجيل الدخول لنشر الاستبيان. <a href="../auth/login.html?redirect=forms/builder.html">تسجيل الدخول</a>';
         return null;
       }
       authNotice.style.display='none';

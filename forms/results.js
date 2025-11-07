@@ -19,7 +19,7 @@
   function needLogin(){
     authBox.style.display='block';
     const q = encodeURIComponent('form='+encodeURIComponent(formParam));
-    authBox.innerHTML = 'يلزم تسجيل الدخول لعرض النتائج. <a href="../login.html?redirect=forms/results.html%3F'+ q +'">تسجيل الدخول</a>';
+    authBox.innerHTML = 'يلزم تسجيل الدخول لعرض النتائج. <a href="../auth/login.html?redirect=forms/results.html%3F'+ q +'">تسجيل الدخول</a>';
   }
 
   async function load(){

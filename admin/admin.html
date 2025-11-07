@@ -967,23 +967,29 @@
                 </span>
                 <select id="newAdminPosition" required style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem">
                   <option value="">اختر المنصب</option>
-                  <optgroup label="👑 المجلس الأعلى">
-                    <option value="رئيس النادي" data-council="high">رئيس النادي</option>
-                    <option value="نائب الرئيس - شطر الطالبات" data-council="high">نائب الرئيس - شطر الطالبات</option>
-                    <option value="نائب الرئيس - شطر الطلاب" data-council="high">نائب الرئيس - شطر الطلاب</option>
+                  <optgroup label="👑 الرتبة الأولى - رئيس أديب">
+                    <option value="رئيس أديب" data-council="president" data-level="1">رئيس أديب</option>
                   </optgroup>
-                  <optgroup label="🛡️ المجلس الإداري">
-                    <option value="قائد التأليف" data-council="administrative">قائد التأليف</option>
-                    <option value="قائد الرواة" data-council="administrative">قائد الرواة</option>
-                    <option value="قائد السفراء" data-council="administrative">قائد السفراء</option>
-                    <option value="قائد الإنتاج" data-council="administrative">قائد الإنتاج</option>
-                    <option value="قائد التصميم" data-council="administrative">قائد التصميم</option>
-                    <option value="قائد التسويق" data-council="administrative">قائد التسويق</option>
-                    <option value="قائد الفعاليات" data-council="administrative">قائد الفعاليات</option>
+                  <optgroup label="🥈 الرتبة الثانية - نائب الرئيس">
+                    <option value="نائب الرئيس - شطر الطالبات" data-council="vice" data-level="2">نائب الرئيس - شطر الطالبات</option>
+                    <option value="نائب الرئيس - شطر الطلاب" data-council="vice" data-level="2">نائب الرئيس - شطر الطلاب</option>
                   </optgroup>
-                  <optgroup label="🎯 المجالس التنفيذية">
-                    <option value="رئيس تنفيذ مرافئ" data-council="executive">رئيس تنفيذ مرافئ</option>
-                    <option value="رئيس تنفيذ وجيز" data-council="executive">رئيس تنفيذ وجيز</option>
+                  <optgroup label="🥉 الرتبة الثالثة - قائد لجنة">
+                    <option value="قائد التأليف" data-council="committee_leader" data-level="3">قائد التأليف</option>
+                    <option value="قائد الرواة" data-council="committee_leader" data-level="3">قائد الرواة</option>
+                    <option value="قائد السفراء" data-council="committee_leader" data-level="3">قائد السفراء</option>
+                    <option value="قائد الإنتاج" data-council="committee_leader" data-level="3">قائد الإنتاج</option>
+                    <option value="قائد التصميم" data-council="committee_leader" data-level="3">قائد التصميم</option>
+                    <option value="قائد التسويق" data-council="committee_leader" data-level="3">قائد التسويق</option>
+                    <option value="قائد الفعاليات" data-council="committee_leader" data-level="3">قائد الفعاليات</option>
+                  </optgroup>
+                  <optgroup label="🎖️ الرتبة الرابعة - مسؤول إداري">
+                    <option value="مسؤول الأرشيف" data-council="admin_officer" data-level="4">مسؤول الأرشيف</option>
+                    <option value="مسؤول الموارد البشرية" data-council="admin_officer" data-level="4">مسؤول الموارد البشرية</option>
+                  </optgroup>
+                  <optgroup label="🎯 الرتبة الخامسة - رئيس تنفيذي">
+                    <option value="رئيس تنفيذ مرافئ" data-council="executive" data-level="5">رئيس تنفيذ مرافئ</option>
+                    <option value="رئيس تنفيذ وجيز" data-council="executive" data-level="5">رئيس تنفيذ وجيز</option>
                   </optgroup>
                 </select>
               </label>
@@ -2431,7 +2437,7 @@
         };
         const markVerifiedNow = () => { try { localStorage.setItem(VERIFIED_KEY, String(Date.now())); } catch {} };
         const redirectToLogin = () => {
-          const url = new URL('../login.html', location.href);
+          const url = new URL('../auth/login.html', location.href);
           url.searchParams.set('redirect', 'admin/admin.html');
           location.replace(url.toString());
         };
@@ -2466,7 +2472,7 @@
                   <p style="margin:0 0 16px;color:#64748b;line-height:1.7">يمكنك استخدام حساب إداري، أو الرجوع للموقع أو إلى صفحة تسجيل الدخول.</p>
                   <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
                     <a class="btn btn-outline" href="../index.html"><i class="fa-solid fa-globe"></i> الرجوع للموقع</a>
-                    <a class="btn btn-primary" href="../login.html?redirect=admin/admin.html"><i class="fa-solid fa-right-to-bracket"></i> تبديل الحساب</a>
+                    <a class="btn btn-primary" href="../auth/login.html?redirect=admin/admin.html"><i class="fa-solid fa-right-to-bracket"></i> تبديل الحساب</a>
                   </div>
                 </div>
               </div>
