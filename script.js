@@ -809,12 +809,16 @@ document.addEventListener("DOMContentLoaded", function () {
   socialIcons.forEach((icon) => {
     icon.addEventListener("mouseenter", function () {
       const tooltip = this.querySelector(".social-wave");
-      tooltip.style.top = "0";
+      if (tooltip) {
+        tooltip.style.top = "0";
+      }
     });
 
     icon.addEventListener("mouseleave", function () {
       const tooltip = this.querySelector(".social-wave");
-      tooltip.style.top = "100%";
+      if (tooltip) {
+        tooltip.style.top = "100%";
+      }
     });
   });
 
@@ -1418,61 +1422,120 @@ window.addEventListener("scroll", () => {
 
 
 // استدعاء المراقب بعد زمن قصير لضمان تهيئة العناصر (بعد Swiper)
-setTimeout(observeWorksSection, 500);
+// setTimeout(observeWorksSection, 500); // تم تعطيله - الدالة غير موجودة
 
 // تأثير تمرير لقسم الرعاة
 // Moved to attachSponsorAnimations() which runs after dynamic render
 
 // إضافة هذا الكود لمعالجة نموذج التواصل
-document.getElementById("contactForm").addEventListener("submit", function (e) {
+document.getElementById("contactForm").addEventListener("submit", async function (e) {
   e.preventDefault();
 
   // جمع بيانات النموذج
   const formData = {
     name: document.getElementById("name").value,
     email: document.getElementById("email").value,
-    subject: document.getElementById("subject").value,
+    subject: document.getElementById("subject").value || null,
     message: document.getElementById("message").value,
   };
 
-  // هنا يمكنك إضافة كود إرسال البيانات إلى الخادم
-  console.log("تم إرسال النموذج:", formData);
+  try {
+    // حفظ في Supabase
+    const sb = window.sbClient;
+    if (sb) {
+      const { error } = await sb.from('contact_messages').insert({
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        status: 'new'
+      });
 
-  // عرض رسالة نجاح
-  Swal.fire({
-    title: "تم الإرسال بنجاح!",
-    text: "شكراً لتواصلك معنا، سنرد عليك في أقرب وقت ممكن.",
-    icon: "success",
-    confirmButtonText: "حسناً",
-    confirmButtonColor: "#3d8fd6",
-  });
+      if (error) {
+        console.error('خطأ في حفظ الرسالة:', error);
+        throw error;
+      }
+    }
 
-  // إعادة تعيين النموذج
-  this.reset();
+    // عرض رسالة نجاح
+    Swal.fire({
+      title: "تم الإرسال بنجاح!",
+      text: "شكراً لتواصلك معنا، سنرد عليك في أقرب وقت ممكن.",
+      icon: "success",
+      confirmButtonText: "حسناً",
+      confirmButtonColor: "#3d8fd6",
+    });
+
+    // إعادة تعيين النموذج
+    this.reset();
+  } catch (error) {
+    console.error('خطأ في إرسال النموذج:', error);
+    Swal.fire({
+      title: "حدث خطأ!",
+      text: "عذراً، حدث خطأ أثناء إرسال رسالتك. يرجى المحاولة مرة أخرى.",
+      icon: "error",
+      confirmButtonText: "حسناً",
+      confirmButtonColor: "#ef4444",
+    });
+  }
 });
 
 
 // إضافة هذا الكود لمعالجة نموذج النشرة البريدية
-document.getElementById("newsletterForm").addEventListener("submit", function (e) {
+document.getElementById("newsletterForm").addEventListener("submit", async function (e) {
   e.preventDefault();
 
   const emailInput = this.querySelector('input[type="email"]');
   const email = emailInput.value;
 
-  // هنا يمكنك إضافة كود إرسال البيانات إلى الخادم
-  console.log("تم الاشتراك بنجاح:", email);
+  try {
+    // حفظ في Supabase
+    const sb = window.sbClient;
+    if (sb) {
+      const { error } = await sb.from('newsletter_subscriptions').insert({
+        email: email,
+        status: 'active'
+      });
 
-  // عرض رسالة نجاح
-  Swal.fire({
-    title: "تم الاشتراك بنجاح!",
-    text: "شكراً لانضمامك إلى مجتمعنا، ستتلقى آخر الأخبار والعروض الحصرية قريباً.",
-    icon: "success",
-    confirmButtonText: "حسناً",
-    confirmButtonColor: "#3d8fd6",
-  });
+      if (error) {
+        // إذا كان البريد مسجل مسبقاً
+        if (error.code === '23505') {
+          Swal.fire({
+            title: "مسجل مسبقاً!",
+            text: "هذا البريد الإلكتروني مسجل بالفعل في قائمتنا البريدية.",
+            icon: "info",
+            confirmButtonText: "حسناً",
+            confirmButtonColor: "#3d8fd6",
+          });
+          this.reset();
+          return;
+        }
+        console.error('خطأ في حفظ الاشتراك:', error);
+        throw error;
+      }
+    }
 
-  // إعادة تعيين النموذج
-  this.reset();
+    // عرض رسالة نجاح
+    Swal.fire({
+      title: "تم الاشتراك بنجاح!",
+      text: "شكراً لانضمامك إلى مجتمعنا، ستتلقى آخر الأخبار والعروض الحصرية قريباً.",
+      icon: "success",
+      confirmButtonText: "حسناً",
+      confirmButtonColor: "#3d8fd6",
+    });
+
+    // إعادة تعيين النموذج
+    this.reset();
+  } catch (error) {
+    console.error('خطأ في إرسال النموذج:', error);
+    Swal.fire({
+      title: "حدث خطأ!",
+      text: "عذراً، حدث خطأ أثناء تسجيل اشتراكك. يرجى المحاولة مرة أخرى.",
+      icon: "error",
+      confirmButtonText: "حسناً",
+      confirmButtonColor: "#ef4444",
+    });
+  }
 });
 
 

@@ -66,6 +66,8 @@
           <a href="#section-chat" class="admin-menu__item"><i class="fa-solid fa-comments"></i> المحادثات</a>
           <a href="#section-todos" class="admin-menu__item"><i class="fa-solid fa-list-check"></i> المهام</a>
           <a href="#section-push" class="admin-menu__item"><i class="fa-solid fa-bell"></i> إرسال الإشعارات</a>
+          <a href="#section-contact-messages" class="admin-menu__item"><i class="fa-solid fa-envelope"></i> رسائل التواصل</a>
+          <a href="#section-newsletter" class="admin-menu__item"><i class="fa-solid fa-newspaper"></i> النشرة البريدية</a>
           <a href="#section-profile" class="admin-menu__item active"><i class="fa-solid fa-id-card"></i> ملفي</a>
           <a href="#section-admins" class="admin-menu__item"><i class="fa-solid fa-user-shield"></i> إدارة الأعضاء الإداريين</a>
           <div class="admin-menu__footer">
@@ -837,6 +839,43 @@
               <div id="pushStatsContent"></div>
             </div>
           </div>
+        </section>
+        
+        <!-- رسائل التواصل -->
+        <section id="section-contact-messages" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-envelope"></i> رسائل التواصل</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button id="refreshContactMessages" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+              <select id="contactStatusFilter" class="btn btn-outline" style="padding:8px 12px">
+                <option value="">جميع الحالات</option>
+                <option value="new">جديدة</option>
+                <option value="read">مقروءة</option>
+                <option value="replied">تم الرد</option>
+                <option value="archived">مؤرشفة</option>
+              </select>
+            </div>
+          </div>
+          <div id="contactMessagesStats" class="cards-grid" style="margin-bottom:20px"></div>
+          <div id="contactMessagesList" class="panel" style="padding:16px"></div>
+        </section>
+        
+        <!-- النشرة البريدية -->
+        <section id="section-newsletter" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-newspaper"></i> النشرة البريدية</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button id="refreshNewsletter" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+              <button id="exportNewsletterEmails" class="btn btn-primary"><i class="fa-solid fa-download"></i> تصدير البريد</button>
+              <select id="newsletterStatusFilter" class="btn btn-outline" style="padding:8px 12px">
+                <option value="">جميع الحالات</option>
+                <option value="active">نشط</option>
+                <option value="unsubscribed">ملغي</option>
+              </select>
+            </div>
+          </div>
+          <div id="newsletterStats" class="cards-grid" style="margin-bottom:20px"></div>
+          <div id="newsletterList" class="panel" style="padding:16px"></div>
         </section>
         
         <!-- ملفي -->

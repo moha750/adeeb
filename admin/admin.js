@@ -10099,6 +10099,385 @@
     }
   }
 
+  // ==================== رسائل التواصل ====================
+  // دالة لتنظيف النصوص من HTML tags
+  const safe = (s) => (s ? String(s).replace(/</g, '&lt;').replace(/>/g, '&gt;') : '');
+  
+  let contactMessages = [];
+  
+  async function loadContactMessages() {
+    try {
+      if (sb) {
+        const { data, error } = await sb
+          .from('contact_messages')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        contactMessages = data || [];
+      }
+    } catch (e) {
+      console.error('خطأ في تحميل رسائل التواصل:', e);
+    }
+  }
+  
+  function renderContactMessagesStats() {
+    const statsContainer = $('#contactMessagesStats');
+    if (!statsContainer) return;
+    
+    const total = contactMessages.length;
+    const newCount = contactMessages.filter(m => m.status === 'new').length;
+    const readCount = contactMessages.filter(m => m.status === 'read').length;
+    const repliedCount = contactMessages.filter(m => m.status === 'replied').length;
+    const archivedCount = contactMessages.filter(m => m.status === 'archived').length;
+    
+    statsContainer.innerHTML = `
+      <div class="card">
+        <div class="card__body">
+          <div class="card__title"><i class="fa-solid fa-envelope"></i> إجمالي الرسائل</div>
+          <div class="card__value">${total}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card__body">
+          <div class="card__title"><i class="fa-solid fa-envelope-open"></i> رسائل جديدة</div>
+          <div class="card__value" style="color:#3b82f6">${newCount}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card__body">
+          <div class="card__title"><i class="fa-solid fa-eye"></i> مقروءة</div>
+          <div class="card__value" style="color:#10b981">${readCount}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card__body">
+          <div class="card__title"><i class="fa-solid fa-reply"></i> تم الرد</div>
+          <div class="card__value" style="color:#8b5cf6">${repliedCount}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card__body">
+          <div class="card__title"><i class="fa-solid fa-archive"></i> مؤرشفة</div>
+          <div class="card__value" style="color:#64748b">${archivedCount}</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  function renderContactMessages(filter = '') {
+    const container = $('#contactMessagesList');
+    if (!container) return;
+    
+    const filtered = filter ? contactMessages.filter(m => m.status === filter) : contactMessages;
+    
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-state">لا توجد رسائل</div>';
+      return;
+    }
+    
+    const statusLabels = {
+      new: { text: 'جديدة', color: '#3b82f6' },
+      read: { text: 'مقروءة', color: '#10b981' },
+      replied: { text: 'تم الرد', color: '#8b5cf6' },
+      archived: { text: 'مؤرشفة', color: '#64748b' }
+    };
+    
+    container.innerHTML = `
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الاسم</th>
+            <th>البريد الإلكتروني</th>
+            <th>الموضوع</th>
+            <th>الحالة</th>
+            <th>التاريخ</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.map(msg => {
+            const status = statusLabels[msg.status] || { text: msg.status, color: '#64748b' };
+            const date = new Date(msg.created_at).toLocaleDateString('ar-SA', { 
+              year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+            });
+            return `
+              <tr>
+                <td style="font-weight:600">${safe(msg.name)}</td>
+                <td><a href="mailto:${safe(msg.email)}" style="color:#3d8fd6">${safe(msg.email)}</a></td>
+                <td>${safe(msg.subject || '-')}</td>
+                <td><span style="padding:4px 12px;border-radius:12px;background:${status.color}20;color:${status.color};font-size:0.85rem;font-weight:600">${status.text}</span></td>
+                <td style="color:#64748b;font-size:0.9rem">${date}</td>
+                <td>
+                  <button class="btn btn-outline small" onclick="viewContactMessage('${msg.id}')">
+                    <i class="fa-solid fa-eye"></i> عرض
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+  
+  window.viewContactMessage = async function(id) {
+    const msg = contactMessages.find(m => m.id === id);
+    if (!msg) return;
+    
+    const statusOptions = {
+      new: 'جديدة',
+      read: 'مقروءة',
+      replied: 'تم الرد',
+      archived: 'مؤرشفة'
+    };
+    
+    const result = await Swal.fire({
+      title: 'تفاصيل الرسالة',
+      html: `
+        <div style="text-align:right;padding:20px">
+          <div style="margin-bottom:16px">
+            <strong>الاسم:</strong> ${safe(msg.name)}
+          </div>
+          <div style="margin-bottom:16px">
+            <strong>البريد الإلكتروني:</strong> <a href="mailto:${safe(msg.email)}">${safe(msg.email)}</a>
+          </div>
+          <div style="margin-bottom:16px">
+            <strong>الموضوع:</strong> ${safe(msg.subject || '-')}
+          </div>
+          <div style="margin-bottom:16px">
+            <strong>الرسالة:</strong>
+            <div style="background:#f8fafc;padding:12px;border-radius:8px;margin-top:8px;white-space:pre-wrap">${safe(msg.message)}</div>
+          </div>
+          <div style="margin-bottom:16px">
+            <strong>الحالة:</strong>
+            <select id="msgStatus" class="swal2-input" style="width:auto;display:inline-block;margin:0">
+              ${Object.entries(statusOptions).map(([key, label]) => 
+                `<option value="${key}" ${msg.status === key ? 'selected' : ''}>${label}</option>`
+              ).join('')}
+            </select>
+          </div>
+          ${msg.admin_note ? `
+            <div style="margin-bottom:16px">
+              <strong>ملاحظة إدارية:</strong>
+              <div style="background:#fef3c7;padding:12px;border-radius:8px;margin-top:8px">${safe(msg.admin_note)}</div>
+            </div>
+          ` : ''}
+          <div>
+            <strong>إضافة ملاحظة:</strong>
+            <textarea id="msgNote" class="swal2-textarea" placeholder="ملاحظة إدارية (اختياري)">${safe(msg.admin_note || '')}</textarea>
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'حفظ',
+      cancelButtonText: 'إلغاء',
+      confirmButtonColor: '#3d8fd6',
+      width: '600px',
+      preConfirm: () => {
+        return {
+          status: document.getElementById('msgStatus').value,
+          note: document.getElementById('msgNote').value
+        };
+      }
+    });
+    
+    if (result.isConfirmed && sb) {
+      try {
+        const { error } = await sb
+          .from('contact_messages')
+          .update({ 
+            status: result.value.status,
+            admin_note: result.value.note || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', id);
+        
+        if (error) throw error;
+        
+        msg.status = result.value.status;
+        msg.admin_note = result.value.note;
+        
+        renderContactMessagesStats();
+        renderContactMessages($('#contactStatusFilter')?.value || '');
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'تم الحفظ',
+          text: 'تم تحديث الرسالة بنجاح',
+          confirmButtonColor: '#3d8fd6'
+        });
+      } catch (e) {
+        Swal.fire({
+          icon: 'error',
+          title: 'خطأ',
+          text: 'فشل تحديث الرسالة: ' + e.message
+        });
+      }
+    }
+  };
+  
+  // ==================== النشرة البريدية ====================
+  let newsletterSubscriptions = [];
+  
+  async function loadNewsletterSubscriptions() {
+    try {
+      if (sb) {
+        const { data, error } = await sb
+          .from('newsletter_subscriptions')
+          .select('*')
+          .order('subscribed_at', { ascending: false });
+        if (error) throw error;
+        newsletterSubscriptions = data || [];
+      }
+    } catch (e) {
+      console.error('خطأ في تحميل اشتراكات النشرة:', e);
+    }
+  }
+  
+  function renderNewsletterStats() {
+    const statsContainer = $('#newsletterStats');
+    if (!statsContainer) return;
+    
+    const total = newsletterSubscriptions.length;
+    const active = newsletterSubscriptions.filter(s => s.status === 'active').length;
+    const unsubscribed = newsletterSubscriptions.filter(s => s.status === 'unsubscribed').length;
+    
+    statsContainer.innerHTML = `
+      <div class="card">
+        <div class="card__body">
+          <div class="card__title"><i class="fa-solid fa-newspaper"></i> إجمالي الاشتراكات</div>
+          <div class="card__value">${total}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card__body">
+          <div class="card__title"><i class="fa-solid fa-check-circle"></i> نشط</div>
+          <div class="card__value" style="color:#10b981">${active}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card__body">
+          <div class="card__title"><i class="fa-solid fa-times-circle"></i> ملغي</div>
+          <div class="card__value" style="color:#ef4444">${unsubscribed}</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  function renderNewsletterList(filter = '') {
+    const container = $('#newsletterList');
+    if (!container) return;
+    
+    const filtered = filter ? newsletterSubscriptions.filter(s => s.status === filter) : newsletterSubscriptions;
+    
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-state">لا توجد اشتراكات</div>';
+      return;
+    }
+    
+    container.innerHTML = `
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>البريد الإلكتروني</th>
+            <th>الحالة</th>
+            <th>تاريخ الاشتراك</th>
+            <th>تاريخ الإلغاء</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.map(sub => {
+            const statusColor = sub.status === 'active' ? '#10b981' : '#ef4444';
+            const statusText = sub.status === 'active' ? 'نشط' : 'ملغي';
+            const subDate = new Date(sub.subscribed_at).toLocaleDateString('ar-SA', { 
+              year: 'numeric', month: 'short', day: 'numeric' 
+            });
+            const unsubDate = sub.unsubscribed_at ? new Date(sub.unsubscribed_at).toLocaleDateString('ar-SA', { 
+              year: 'numeric', month: 'short', day: 'numeric' 
+            }) : '-';
+            
+            return `
+              <tr>
+                <td style="font-weight:600">${safe(sub.email)}</td>
+                <td><span style="padding:4px 12px;border-radius:12px;background:${statusColor}20;color:${statusColor};font-size:0.85rem;font-weight:600">${statusText}</span></td>
+                <td style="color:#64748b;font-size:0.9rem">${subDate}</td>
+                <td style="color:#64748b;font-size:0.9rem">${unsubDate}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+  
+  // Event Listeners
+  const refreshContactBtn = $('#refreshContactMessages');
+  if (refreshContactBtn) {
+    refreshContactBtn.addEventListener('click', async () => {
+      await loadContactMessages();
+      renderContactMessagesStats();
+      renderContactMessages($('#contactStatusFilter')?.value || '');
+    });
+  }
+  
+  const contactStatusFilter = $('#contactStatusFilter');
+  if (contactStatusFilter) {
+    contactStatusFilter.addEventListener('change', (e) => {
+      renderContactMessages(e.target.value);
+    });
+  }
+  
+  const refreshNewsletterBtn = $('#refreshNewsletter');
+  if (refreshNewsletterBtn) {
+    refreshNewsletterBtn.addEventListener('click', async () => {
+      await loadNewsletterSubscriptions();
+      renderNewsletterStats();
+      renderNewsletterList($('#newsletterStatusFilter')?.value || '');
+    });
+  }
+  
+  const newsletterStatusFilter = $('#newsletterStatusFilter');
+  if (newsletterStatusFilter) {
+    newsletterStatusFilter.addEventListener('change', (e) => {
+      renderNewsletterList(e.target.value);
+    });
+  }
+  
+  const exportNewsletterBtn = $('#exportNewsletterEmails');
+  if (exportNewsletterBtn) {
+    exportNewsletterBtn.addEventListener('click', () => {
+      const activeEmails = newsletterSubscriptions
+        .filter(s => s.status === 'active')
+        .map(s => s.email);
+      
+      if (activeEmails.length === 0) {
+        Swal.fire({
+          icon: 'info',
+          title: 'لا توجد بيانات',
+          text: 'لا توجد اشتراكات نشطة للتصدير',
+          confirmButtonColor: '#3d8fd6'
+        });
+        return;
+      }
+      
+      const emailsText = activeEmails.join('\n');
+      const blob = new Blob([emailsText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `newsletter-emails-${new Date().toISOString().split('T')[0]}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'تم التصدير',
+        text: `تم تصدير ${activeEmails.length} بريد إلكتروني`,
+        confirmButtonColor: '#3d8fd6'
+      });
+    });
+  }
+
   (async () => {
     if (sb) {
       await refreshAuthUI();
@@ -10123,6 +10502,15 @@
     renderTodos();
     try { await fetchVisitStats(); } catch {}
     renderStats();
+    
+    // Load contact messages and newsletter
+    await loadContactMessages();
+    await loadNewsletterSubscriptions();
+    renderContactMessagesStats();
+    renderContactMessages();
+    renderNewsletterStats();
+    renderNewsletterList();
+    
     // If profile tab is active/visible on load, initialize it
     try {
       const prof = document.getElementById('section-profile');
