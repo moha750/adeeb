@@ -68,6 +68,7 @@
           <a href="#section-push" class="admin-menu__item"><i class="fa-solid fa-bell"></i> إرسال الإشعارات</a>
           <a href="#section-contact-messages" class="admin-menu__item"><i class="fa-solid fa-envelope"></i> رسائل التواصل</a>
           <a href="#section-newsletter" class="admin-menu__item"><i class="fa-solid fa-newspaper"></i> النشرة البريدية</a>
+          <a href="#section-news" class="admin-menu__item"><i class="fa-solid fa-bullhorn"></i> إدارة الأخبار</a>
           <a href="#section-profile" class="admin-menu__item active"><i class="fa-solid fa-id-card"></i> ملفي</a>
           <a href="#section-admins" class="admin-menu__item"><i class="fa-solid fa-user-shield"></i> إدارة الأعضاء الإداريين</a>
           <div class="admin-menu__footer">
@@ -876,6 +877,48 @@
           </div>
           <div id="newsletterStats" class="cards-grid" style="margin-bottom:20px"></div>
           <div id="newsletterList" class="panel" style="padding:16px"></div>
+        </section>
+        
+        <!-- إدارة الأخبار -->
+        <section id="section-news" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-bullhorn"></i> إدارة الأخبار</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button id="refreshNews" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+              <button id="addNewsBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة خبر جديد</button>
+            </div>
+          </div>
+          <div id="newsStats" class="cards-grid" style="margin-bottom:20px"></div>
+          
+          <!-- شريط الفلاتر المتقدم -->
+          <div id="newsFilters" class="filters-bar" aria-label="فلاتر الأخبار" style="margin-bottom:16px">
+            <div class="filter-field">
+              <i class="icon fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              <input id="newsFilterSearch" class="filter-input with-icon" type="text" placeholder="بحث بالعنوان أو الكاتب أو الملخص" />
+            </div>
+            <div class="filter-field">
+              <i class="icon fa-solid fa-filter" aria-hidden="true"></i>
+              <select id="newsStatusFilter" class="filter-select with-icon" title="تصفية حسب الحالة">
+                <option value="">جميع الحالات</option>
+                <option value="published">منشور</option>
+                <option value="draft">مسودة</option>
+                <option value="archived">مؤرشف</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <i class="icon fa-solid fa-star" aria-hidden="true"></i>
+              <select id="newsFeaturedFilter" class="filter-select with-icon" title="تصفية حسب التمييز">
+                <option value="">الكل</option>
+                <option value="featured">مميز فقط</option>
+                <option value="not-featured">غير مميز</option>
+              </select>
+            </div>
+            <div style="flex:1 0 100%; grid-column: 1 / -1;">
+              <button id="newsClearFilters" class="btn btn-outline btn-xs" type="button" title="مسح جميع الفلاتر" style="width:100%"><i class="fa-solid fa-eraser"></i> مسح كل الفلاتر</button>
+            </div>
+          </div>
+          
+          <div id="newsList" style="padding:0"></div>
         </section>
         
         <!-- ملفي -->
@@ -2030,6 +2073,115 @@
         <menu class="dialog-actions">
           <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إلغاء</button>
           <button value="submit" class="btn btn-primary">حفظ العضو</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- News Dialog -->
+    <dialog id="newsDialog" class="admin-dialog" style="max-width:900px">
+      <form method="dialog" class="dialog-form" id="newsForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">
+            <i class="fa-solid fa-bullhorn"></i>
+            <span id="newsDialogTitle">إضافة خبر جديد</span>
+          </h3>
+          <button type="button" class="dialog-close" onclick="this.closest('dialog').close()">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <input type="hidden" id="news_id" />
+          
+          <label>
+            عنوان الخبر <span style="color:#ef4444">*</span>
+            <input id="news_title" type="text" placeholder="عنوان الخبر" required />
+          </label>
+          
+          <label>
+            محتوى الخبر <span style="color:#ef4444">*</span>
+            <textarea id="news_content" rows="15" placeholder="محتوى الخبر الكامل (يدعم HTML)" required></textarea>
+            <small class="field-help">يمكنك استخدام HTML للتنسيق (مثل: &lt;p&gt;، &lt;h2&gt;، &lt;ul&gt;، &lt;strong&gt;). سيتم أخذ الملخص تلقائياً من أول 75 حرف.</small>
+          </label>
+          
+          <div>
+            <label style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span>صورة الغلاف <span style="color:#ef4444">*</span></span>
+              <button type="button" class="btn btn-outline small" id="removeCoverImageBtn" style="padding:6px 12px;font-size:0.85rem;color:#ef4444;display:none">
+                <i class="fa-solid fa-trash"></i>
+                حذف الصورة
+              </button>
+            </label>
+            <input type="file" id="news_cover_image_file" accept="image/*" style="display:none" />
+            <div id="coverImageUploadArea" style="border:2px dashed #cbd5e1;border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all 0.3s" onclick="document.getElementById('news_cover_image_file').click()">
+              <i class="fa-solid fa-cloud-upload" style="font-size:48px;color:#94a3b8;margin-bottom:12px"></i>
+              <p style="margin:0;color:#64748b;font-size:14px">اضغط لاختيار صورة الغلاف</p>
+              <small style="color:#94a3b8;font-size:12px">PNG, JPG, GIF حتى 5MB</small>
+            </div>
+            <div id="coverImagePreviewArea" style="display:none;margin-top:12px">
+              <img id="coverImagePreview" src="" alt="معاينة صورة الغلاف" style="width:100%;max-height:300px;object-fit:cover;border-radius:8px" />
+            </div>
+            <input type="hidden" id="news_cover_image_url" />
+          </div>
+          
+          <div>
+            <label style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span>صور الخبر (2-4 صور) <span style="color:#ef4444">*</span></span>
+              <button type="button" class="btn btn-outline small" id="addNewsImageBtn" style="padding:6px 12px;font-size:0.85rem">
+                <i class="fa-solid fa-plus"></i>
+                إضافة صورة
+              </button>
+            </label>
+            <small class="field-help" style="display:block;margin-bottom:12px;color:#64748b">أضف من 2 إلى 4 صور مع اسم المصور لكل صورة. ستظهر هذه الصور تحت محتوى الخبر.</small>
+            <div id="newsImagesContainer" style="display:flex;flex-direction:column;gap:16px">
+              <!-- سيتم إضافة الصور هنا ديناميكياً -->
+            </div>
+            <input type="file" id="news_image_file_hidden" accept="image/*" style="display:none" />
+            <div id="uploadProgress" style="display:none;margin-top:8px">
+              <div style="background:#e2e8f0;border-radius:4px;height:8px;overflow:hidden">
+                <div id="uploadProgressBar" style="background:#3b82f6;height:100%;width:0%;transition:width 0.3s"></div>
+              </div>
+              <small id="uploadProgressText" style="color:#64748b;font-size:12px;margin-top:4px;display:block"></small>
+            </div>
+          </div>
+          
+          <div>
+            <label style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span>الكُتّاب</span>
+              <button type="button" class="btn btn-outline small" id="addAuthorBtn" style="padding:6px 12px;font-size:0.85rem">
+                <i class="fa-solid fa-plus"></i>
+                إضافة كاتب
+              </button>
+            </label>
+            <div id="authorsContainer">
+              <div class="author-field" style="display:flex;gap:8px;margin-bottom:8px">
+                <input type="text" class="author-name-input" placeholder="اسم الكاتب" style="flex:1" />
+                <button type="button" class="btn btn-outline small remove-author-btn" style="padding:8px 12px;color:#ef4444;display:none">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <label>
+            حالة الخبر <span style="color:#ef4444">*</span>
+            <select id="news_status" required>
+              <option value="draft">مسودة</option>
+              <option value="published">منشور</option>
+              <option value="archived">مؤرشف</option>
+            </select>
+          </label>
+          
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input id="news_is_featured" type="checkbox" style="width:auto;margin:0" />
+            <span>خبر مميز (يظهر في قسم الأخبار المميزة)</span>
+          </label>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-regular fa-floppy-disk"></i>
+            حفظ
+          </button>
         </menu>
       </form>
     </dialog>

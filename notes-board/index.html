@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>مِرثاة</title>
+    <meta name="description" content="لوحة ملاحظات تفاعلية مع أسئلة تولّد بطاقات معلّقة." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="stylesheet" href="notes-board.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <div class="hero__grid">
+          <div class="hero__panel">
+            <div class="club">
+                <p>مِرثاة أحدى مُبادرات <a href="https://www.adeeb.club/" target="_blank" rel="noopener noreferrer">نادي أدِيب</a></p>
+                </div>
+            <div class="hero-card">
+              <div class="hero-card__badge">لوحة مِرثاة</div>
+              <p class="hero-card__quote">شارِكنا ما نضج في قلبك، فربما جُملة واحدة تُنقذ حلمًا يَتعثر.”</p>
+              <div class="hero-card__meta">
+                <div class="hero-card__count">
+                  <div class="hero-card__count-row">
+                    <span class="hero-card__unit">مشاركة</span>
+                    <span id="noteCountValue">0</span>
+                  </div>
+                  <small>قصة مُلهمة</small>
+                </div>
+                <div>
+                  <span>3 خطوات</span>
+                  <small>لتترك أثرك</small>
+                </div>
+              </div>
+            </div>
+          </div>
+            <div class="hero__actions">
+              <button id="heroAddBtn" class="cta primary">ابدأ الآن</button>
+              <button id="exploreBoardBtn" class="cta ghost">استكشف المُشاركات</button>
+            </div>
+        </div>
+      </div>
+      <div class="hero__decor" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </header>
+
+    <main>
+      <section id="boardSection" class="board-wrapper">
+        <div class="board" aria-live="polite">
+          <div id="notesContainer" class="notes-canvas"></div>
+          <div id="emptyState" class="empty">لا توجد مُشاركات بعد. اضغط الزر العائم لبدء أوّل مُشاركة!</div>
+        </div>
+      </section>
+
+    </main>
+
+    <button id="openFormBtn" class="fab" aria-haspopup="dialog" aria-controls="noteFormSheet">
+      <span class="fab__icon" aria-hidden="true">+</span>
+      <span class="fab__label">شاركنا قصتك</span>
+    </button>
+
+    <div id="noteFormSheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="sheet__backdrop" data-close></div>
+      <div class="sheet__dialog">
+        <button class="sheet__close" id="closeFormBtn" aria-label="إغلاق">
+          <span aria-hidden="true">×</span>
+        </button>
+        <div class="sheet__content">
+          <h2 id="sheetTitle">أجب عن السؤالين</h2>
+          <form id="noteForm" class="sheet__form">
+            <label>
+              <span>الأسم (اختياري)</span>
+              <input id="noteName" type="text" placeholder="اكتب اسمك أو لقبًا تحبّه" />
+            </label>
+            <label>
+              <span>النقطة الأولى: مِصبَاحٌ أنارَ خُطاي</span>
+              <textarea id="questionOne" rows="3" required placeholder="شاركنا أحد النصائح التي سمعتها من عابر وأثرت على رزانة خطواتك"></textarea>
+            </label>
+            <label>
+              <span>النقطة الثانية: لِمنّ فِي أولَى خَطواته</span>
+              <textarea id="questionTwo" rows="4" required placeholder="لو هناك محتاج لنصيحة، بماذا ستنصحه؟"></textarea>
+            </label>
+            <button type="submit" class="btn-primary">أنشر المُشاركة</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div id="noteModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="noteModalTitle">
+      <div class="modal__backdrop" data-close></div>
+      <div class="modal__dialog">
+        <button class="modal__close" id="noteModalClose" aria-label="إغلاق">×</button>
+        <div class="modal__body">
+          <header class="modal__header">
+            <p class="modal__eyebrow">مُشاركة من لوحة مِرثاة</p>
+            <div class="modal__meta" id="noteModalMeta"></div>
+          </header>
+          <div class="modal__section modal__section--q1">
+            <p class="modal__question">السؤال الأول: مِصبَاحٌ أنارَ خُطاي</p>
+            <h3 id="noteModalTitle"></h3>
+          </div>
+          <div class="modal__section modal__section--q2">
+            <p class="modal__question">السؤال الثاني: لِمنّ فِي أولَى خَطواته</p>
+            <p id="noteModalAnswer" class="modal__answer"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="notes-board.js" type="module"></script>
+  </body>
+</html>

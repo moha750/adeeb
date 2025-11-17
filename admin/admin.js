@@ -10511,6 +10511,11 @@
     renderNewsletterStats();
     renderNewsletterList();
     
+    // Load news
+    await loadNews();
+    renderNewsStats();
+    renderNewsList();
+    
     // If profile tab is active/visible on load, initialize it
     try {
       const prof = document.getElementById('section-profile');
@@ -10521,4 +10526,890 @@
       }
     } catch {}
   })();
+
+  // ===== NEWS MANAGEMENT =====
+  let newsList = [];
+  let currentNewsFilter = '';
+
+  // Simple notification function
+  function showNotification(message, type = 'info') {
+    const colors = {
+      success: '#10b981',
+      error: '#ef4444',
+      info: '#3b82f6'
+    };
+    const color = colors[type] || colors.info;
+    
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${color};
+      color: white;
+      padding: 16px 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      font-family: fb, sans-serif;
+      font-size: 14px;
+      animation: slideIn 0.3s ease-out;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOut 0.3s ease-out';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+
+  // Load news from Supabase
+  async function loadNews() {
+    try {
+      const { data, error } = await sb
+        .from('news')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      newsList = data || [];
+    } catch (error) {
+      console.error('Error loading news:', error);
+      newsList = [];
+    }
+  }
+
+  // Render news statistics with enhanced design
+  function renderNewsStats() {
+    const statsContainer = document.getElementById('newsStats');
+    if (!statsContainer) return;
+    
+    const total = newsList.length;
+    const published = newsList.filter(n => n.status === 'published').length;
+    const draft = newsList.filter(n => n.status === 'draft').length;
+    const archived = newsList.filter(n => n.status === 'archived').length;
+    const featured = newsList.filter(n => n.is_featured).length;
+    const totalViews = newsList.reduce((sum, n) => sum + (n.views || 0), 0);
+    
+    const stats = [
+      {
+        icon: 'fa-newspaper',
+        value: total,
+        label: 'إجمالي الأخبار',
+        gradient: 'linear-gradient(135deg, var(--accent-blue), var(--main-blue))',
+        borderColor: 'rgba(61, 143, 214, 0.3)'
+      },
+      {
+        icon: 'fa-circle-check',
+        value: published,
+        label: 'منشور',
+        gradient: 'linear-gradient(135deg, #10b981, #059669)',
+        borderColor: 'rgba(16, 185, 129, 0.3)'
+      },
+      {
+        icon: 'fa-file-pen',
+        value: draft,
+        label: 'مسودة',
+        gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
+        borderColor: 'rgba(245, 158, 11, 0.3)'
+      },
+      {
+        icon: 'fa-box-archive',
+        value: archived,
+        label: 'مؤرشف',
+        gradient: 'linear-gradient(135deg, #64748b, #475569)',
+        borderColor: 'rgba(100, 116, 139, 0.3)'
+      },
+      {
+        icon: 'fa-star',
+        value: featured,
+        label: 'مميز',
+        gradient: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+        borderColor: 'rgba(251, 191, 36, 0.3)'
+      },
+      {
+        icon: 'fa-eye',
+        value: totalViews,
+        label: 'إجمالي المشاهدات',
+        gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+        borderColor: 'rgba(139, 92, 246, 0.3)'
+      }
+    ];
+    
+    statsContainer.innerHTML = stats.map(stat => `
+      <div class="stat-card" style="border-color: ${stat.borderColor}; --card-gradient: ${stat.gradient}">
+        <div class="stat-card__icon" style="background: ${stat.gradient}">
+          <i class="fa-solid ${stat.icon}"></i>
+        </div>
+        <div class="stat-card__content">
+          <div class="stat-card__value">${stat.value}</div>
+          <div class="stat-card__label">${stat.label}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Render news list as cards
+  function renderNewsList(filter = '') {
+    const container = document.getElementById('newsList');
+    if (!container) return;
+    
+    let filtered = [...newsList];
+    if (filter) {
+      filtered = filtered.filter(n => n.status === filter);
+    }
+    
+    // Apply search filter if exists
+    const searchInput = document.getElementById('newsFilterSearch');
+    if (searchInput && searchInput.value.trim()) {
+      const searchTerm = searchInput.value.trim().toLowerCase();
+      filtered = filtered.filter(n => 
+        n.title?.toLowerCase().includes(searchTerm) ||
+        n.summary?.toLowerCase().includes(searchTerm) ||
+        (Array.isArray(n.authors) && n.authors.some(a => a.toLowerCase().includes(searchTerm)))
+      );
+    }
+    
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-state muted" style="text-align:center;padding:40px 20px;color:var(--muted)"><i class="fa-solid fa-newspaper" style="font-size:48px;margin-bottom:12px;opacity:0.3"></i><p>لا توجد أخبار</p></div>';
+      return;
+    }
+    
+    const statusLabels = {
+      published: { text: 'منشور', color: '#10b981', icon: 'fa-check-circle' },
+      draft: { text: 'مسودة', color: '#f59e0b', icon: 'fa-clock' },
+      archived: { text: 'مؤرشف', color: '#64748b', icon: 'fa-box-archive' }
+    };
+    
+    container.innerHTML = `
+    <div class="news-cards-grid">
+      ${filtered.map(news => {
+        const status = statusLabels[news.status] || { text: news.status, color: '#64748b', icon: 'fa-circle' };
+        const publishedDate = news.published_at ? new Date(news.published_at).toLocaleDateString('ar-SA', {
+          year: 'numeric', month: 'short', day: 'numeric'
+        }) : 'غير منشور';
+        const authors = news.authors || (news.author_name ? [news.author_name] : ['نادي أديب']);
+        const authorsDisplay = authors.length > 1 
+          ? `${safe(authors[0])} <span style="color:#64748b;font-size:0.85em">(+${authors.length - 1})</span>`
+          : safe(authors[0]);
+        
+        // Get cover image URL
+        const coverImage = news.image_url || 'https://via.placeholder.com/400x250?text=لا+توجد+صورة';
+        const excerpt = news.summary ? (news.summary.length > 120 ? news.summary.substring(0, 120) + '...' : news.summary) : 'لا يوجد ملخص';
+        
+        return `
+          <div class="news-card" style="background:linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-radius:16px; padding:0; box-shadow:0 4px 12px rgba(0,0,0,0.08); transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border:1px solid #e2e8f0; position:relative; overflow:hidden">
+            <div style="position:absolute; top:0; right:0; width:100%; height:5px; background:${status.color}"></div>
+            
+            <div style="padding:20px 20px 16px">
+              <div style="display:flex; align-items:flex-start; gap:16px; margin-bottom:16px">
+                <div style="position:relative">
+                  <img src="${coverImage}" alt="${safe(news.title)}" onerror="this.src='https://via.placeholder.com/400x250?text=لا+توجد+صورة'" style="width:100px; height:100px; border-radius:16px; object-fit:cover; box-shadow:0 4px 12px rgba(0,0,0,0.15); flex-shrink:0; border:3px solid #fff" />
+                  ${news.is_featured ? '<div style="position:absolute; bottom:-8px; right:-8px; background:linear-gradient(135deg, #fbbf24, #f59e0b); width:32px; height:32px; border-radius:50%; border:3px solid #fff; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(251,191,36,0.4)"><i class="fa-solid fa-star" style="font-size:12px; color:#fff"></i></div>' : ''}
+                </div>
+                
+                <div style="flex:1; min-width:0; padding-left:30px">
+                  <div style="font-size:1.1rem; font-weight:700; color:#0f172a; margin-bottom:8px; line-height:1.3">
+                    ${safe(news.title)}
+                  </div>
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px; padding:4px 10px; background:#f1f5f9; border-radius:8px; width:fit-content">
+                    <i class="fa-solid ${status.icon}" style="font-size:12px; color:${status.color}"></i>
+                    <span style="font-size:0.8rem; color:#475569; font-weight:600">${status.text}</span>
+                  </div>
+                  <p style="font-size:0.85rem; color:#64748b; margin:0; line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden">
+                    ${safe(excerpt)}
+                  </p>
+                </div>
+              </div>
+              
+              <div style="display:grid; gap:8px; margin-bottom:16px">
+                <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0">
+                  <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #3d8fd6, #5ba3e0); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                    <i class="fa-solid fa-user" style="font-size:14px; color:#fff"></i>
+                  </div>
+                  <div style="flex:1; min-width:0">
+                    <div style="font-size:0.7rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px">الكاتب</div>
+                    <div style="font-size:0.85rem; color:#1e293b; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${authorsDisplay}</div>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0">
+                  <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #10b981, #34d399); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                    <i class="fa-solid fa-calendar" style="font-size:14px; color:#fff"></i>
+                  </div>
+                  <div style="flex:1; min-width:0">
+                    <div style="font-size:0.7rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px">تاريخ النشر</div>
+                    <div style="font-size:0.85rem; color:#1e293b; font-weight:500">${publishedDate}</div>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0">
+                  <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #8b5cf6, #7c3aed); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                    <i class="fa-solid fa-eye" style="font-size:14px; color:#fff"></i>
+                  </div>
+                  <div style="flex:1; min-width:0">
+                    <div style="font-size:0.7rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px">المشاهدات</div>
+                    <div style="font-size:0.85rem; color:#1e293b; font-weight:500">${news.views || 0} مشاهدة</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div style="position:absolute; top:16px; left:16px; display:flex; gap:6px">
+                <button class="btn btn-sm news-delete-btn" onclick="deleteNews('${news.id}')" title="حذف الخبر" style="width:36px; height:36px; padding:0; border-radius:10px; background:#fff; border:1px solid #fecaca; color:#ef4444; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.06); transition:all 0.2s">
+                  <i class="fa-solid fa-trash" style="font-size:14px"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; border-top:1px solid #e2e8f0; background:#fafbfc">
+              <button class="btn btn-sm news-action-btn" onclick="window.open('../news-detail.html?id=${news.id}&preview=true', '_blank')" style="border:none; border-radius:0 0 0 16px; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#3d8fd6; border-left:1px solid #e2e8f0; transition:all 0.2s">
+                <i class="fa-regular fa-eye"></i> معاينة
+              </button>
+              <button class="btn btn-sm news-action-btn" onclick="editNews('${news.id}')" style="border:none; border-radius:0 0 16px 0; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#64748b; transition:all 0.2s">
+                <i class="fa-solid fa-pen"></i> تعديل كامل
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+  }
+
+  // Open news dialog for adding
+  function openAddNewsDialog() {
+    const dialog = document.getElementById('newsDialog');
+    const form = document.getElementById('newsForm');
+    const title = document.getElementById('newsDialogTitle');
+    
+    form.reset();
+    document.getElementById('news_id').value = '';
+    title.textContent = 'إضافة خبر جديد';
+    
+    // Reset authors to single field
+    resetAuthorsFields();
+    
+    // Reset cover image and images
+    resetCoverImage();
+    resetNewsImages();
+    
+    // Set default author
+    const user = sb.auth.getUser();
+    if (user?.data?.user) {
+      const adminData = adminsList.find(a => a.user_id === user.data.user.id);
+      if (adminData?.display_name) {
+        const firstAuthorInput = document.querySelector('.author-name-input');
+        if (firstAuthorInput) firstAuthorInput.value = adminData.display_name;
+      }
+    }
+    
+    dialog.showModal();
+  }
+  
+  // News images array and cover image
+  let newsImages = [];
+  let newsCoverImage = null;
+  let currentImageUploadIndex = null;
+  
+  // Reset cover image
+  function resetCoverImage() {
+    newsCoverImage = null;
+    document.getElementById('news_cover_image_url').value = '';
+    document.getElementById('news_cover_image_file').value = '';
+    document.getElementById('coverImageUploadArea').style.display = 'block';
+    document.getElementById('coverImagePreviewArea').style.display = 'none';
+    document.getElementById('removeCoverImageBtn').style.display = 'none';
+  }
+  
+  // Show cover image preview
+  function showCoverImagePreview(url) {
+    newsCoverImage = url;
+    document.getElementById('news_cover_image_url').value = url;
+    document.getElementById('coverImagePreview').src = url;
+    document.getElementById('coverImageUploadArea').style.display = 'none';
+    document.getElementById('coverImagePreviewArea').style.display = 'block';
+    document.getElementById('removeCoverImageBtn').style.display = 'block';
+  }
+  
+  // Reset images
+  function resetNewsImages() {
+    newsImages = [];
+    renderNewsImages();
+    document.getElementById('uploadProgress').style.display = 'none';
+  }
+  
+  // Render news images
+  function renderNewsImages() {
+    const container = document.getElementById('newsImagesContainer');
+    const addBtn = document.getElementById('addNewsImageBtn');
+    
+    // Update add button state
+    if (addBtn) {
+      addBtn.disabled = newsImages.length >= 4;
+      addBtn.style.opacity = newsImages.length >= 4 ? '0.5' : '1';
+      addBtn.style.cursor = newsImages.length >= 4 ? 'not-allowed' : 'pointer';
+    }
+    
+    if (newsImages.length === 0) {
+      container.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px">لم يتم إضافة صور بعد. يجب إضافة من 2 إلى 4 صور.</p>';
+      return;
+    }
+    
+    container.innerHTML = newsImages.map((img, index) => `
+      <div class="news-image-item" style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;background:#f8fafc">
+        <div style="display:flex;gap:12px;align-items:start">
+          <img src="${img.url}" alt="صورة ${index + 1}" style="width:120px;height:80px;object-fit:cover;border-radius:6px;flex-shrink:0" />
+          <div style="flex:1;min-width:0">
+            <label style="display:block;margin-bottom:4px;font-size:0.9rem;font-weight:600;color:#475569">
+              اسم المصور <span style="color:#ef4444">*</span>
+            </label>
+            <input 
+              type="text" 
+              class="photographer-input" 
+              data-index="${index}" 
+              value="${img.photographer || ''}" 
+              placeholder="أدخل اسم المصور" 
+              style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:0.9rem"
+            />
+          </div>
+          <button 
+            type="button" 
+            class="btn btn-outline small remove-news-image-btn" 
+            data-index="${index}" 
+            style="padding:8px 12px;color:#ef4444;flex-shrink:0"
+            title="حذف الصورة"
+          >
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    `).join('');
+    
+    // Add event listeners for photographer inputs
+    container.querySelectorAll('.photographer-input').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const index = parseInt(e.target.dataset.index);
+        newsImages[index].photographer = e.target.value.trim();
+      });
+    });
+    
+    // Add event listeners for remove buttons
+    container.querySelectorAll('.remove-news-image-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const index = parseInt(e.currentTarget.dataset.index);
+        newsImages.splice(index, 1);
+        renderNewsImages();
+      });
+    });
+  }
+  
+  // Handle image file selection
+  async function handleImageUpload(file) {
+    if (!file) return null;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showNotification('يرجى اختيار ملف صورة صحيح', 'error');
+      return null;
+    }
+    
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification('حجم الصورة يجب أن يكون أقل من 5 ميجابايت', 'error');
+      return null;
+    }
+    
+    try {
+      // Show progress
+      const progressDiv = document.getElementById('uploadProgress');
+      const progressBar = document.getElementById('uploadProgressBar');
+      const progressText = document.getElementById('uploadProgressText');
+      progressDiv.style.display = 'block';
+      progressBar.style.width = '0%';
+      progressText.textContent = 'جاري الرفع...';
+      
+      // Generate unique filename
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(2, 8);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `news_${timestamp}_${randomStr}.${fileExt}`;
+      
+      // Upload to Supabase Storage
+      const { data, error } = await sb.storage
+        .from('news-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (error) throw error;
+      
+      // Get public URL
+      const { data: urlData } = sb.storage
+        .from('news-images')
+        .getPublicUrl(fileName);
+      
+      progressBar.style.width = '100%';
+      progressText.textContent = 'تم الرفع بنجاح!';
+      
+      setTimeout(() => {
+        progressDiv.style.display = 'none';
+      }, 1000);
+      
+      return urlData.publicUrl;
+      
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      showNotification('حدث خطأ في رفع الصورة', 'error');
+      document.getElementById('uploadProgress').style.display = 'none';
+      return null;
+    }
+  }
+  
+  // Add image to news images array
+  function addNewsImage(url) {
+    if (newsImages.length >= 4) {
+      showNotification('لا يمكن إضافة أكثر من 4 صور', 'error');
+      return;
+    }
+    newsImages.push({ url, photographer: '' });
+    renderNewsImages();
+  }
+  
+  // Reset authors fields to single field
+  function resetAuthorsFields() {
+    const container = document.getElementById('authorsContainer');
+    container.innerHTML = `
+      <div class="author-field" style="display:flex;gap:8px;margin-bottom:8px">
+        <input type="text" class="author-name-input" placeholder="اسم الكاتب" style="flex:1" />
+        <button type="button" class="btn btn-outline small remove-author-btn" style="padding:8px 12px;color:#ef4444;display:none">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    `;
+    updateRemoveButtons();
+  }
+  
+  // Add new author field
+  function addAuthorField(authorName = '') {
+    const container = document.getElementById('authorsContainer');
+    const newField = document.createElement('div');
+    newField.className = 'author-field';
+    newField.style.cssText = 'display:flex;gap:8px;margin-bottom:8px';
+    newField.innerHTML = `
+      <input type="text" class="author-name-input" placeholder="اسم الكاتب" value="${safe(authorName)}" style="flex:1" />
+      <button type="button" class="btn btn-outline small remove-author-btn" style="padding:8px 12px;color:#ef4444">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    `;
+    container.appendChild(newField);
+    updateRemoveButtons();
+  }
+  
+  // Update visibility of remove buttons
+  function updateRemoveButtons() {
+    const fields = document.querySelectorAll('.author-field');
+    fields.forEach((field, index) => {
+      const removeBtn = field.querySelector('.remove-author-btn');
+      if (removeBtn) {
+        removeBtn.style.display = fields.length > 1 ? 'block' : 'none';
+      }
+    });
+  }
+  
+  // Get all author names
+  function getAuthorNames() {
+    const inputs = document.querySelectorAll('.author-name-input');
+    const names = Array.from(inputs)
+      .map(input => input.value.trim())
+      .filter(name => name.length > 0);
+    return names.length > 0 ? names : ['نادي أديب'];
+  }
+
+  // Edit news
+  async function editNews(newsId) {
+    const news = newsList.find(n => n.id === newsId);
+    if (!news) return;
+    
+    const dialog = document.getElementById('newsDialog');
+    const title = document.getElementById('newsDialogTitle');
+    
+    title.textContent = 'تعديل الخبر';
+    
+    document.getElementById('news_id').value = news.id;
+    document.getElementById('news_title').value = news.title || '';
+    document.getElementById('news_content').value = news.content || '';
+    document.getElementById('news_status').value = news.status || 'draft';
+    document.getElementById('news_is_featured').checked = news.is_featured || false;
+    
+    // Load cover image
+    resetCoverImage();
+    if (news.image_url) {
+      showCoverImagePreview(news.image_url);
+    }
+    
+    // Load additional images
+    resetNewsImages();
+    if (news.images && Array.isArray(news.images) && news.images.length > 0) {
+      newsImages = news.images.map(img => ({ ...img }));
+      renderNewsImages();
+    }
+    
+    // Load authors
+    resetAuthorsFields();
+    const authors = news.authors || (news.author_name ? [news.author_name] : ['نادي أديب']);
+    const firstAuthorInput = document.querySelector('.author-name-input');
+    if (firstAuthorInput && authors.length > 0) {
+      firstAuthorInput.value = authors[0];
+    }
+    for (let i = 1; i < authors.length; i++) {
+      addAuthorField(authors[i]);
+    }
+    
+    dialog.showModal();
+  }
+
+  // Delete news
+  async function deleteNews(newsId) {
+    const news = newsList.find(n => n.id === newsId);
+    if (!news) return;
+    
+    const confirmed = confirm(`هل أنت متأكد من حذف الخبر "${news.title}"؟`);
+    if (!confirmed) return;
+    
+    try {
+      const { error } = await sb
+        .from('news')
+        .delete()
+        .eq('id', newsId);
+      
+      if (error) throw error;
+      
+      await loadNews();
+      renderNewsStats();
+      renderNewsList(currentNewsFilter);
+      
+      showNotification('تم حذف الخبر بنجاح', 'success');
+    } catch (error) {
+      console.error('Error deleting news:', error);
+      showNotification('حدث خطأ في حذف الخبر', 'error');
+    }
+  }
+
+  // Make functions globally accessible for onclick handlers
+  window.editNews = editNews;
+  window.deleteNews = deleteNews;
+
+  // Event Listeners for News Management
+  document.getElementById('addNewsBtn')?.addEventListener('click', openAddNewsDialog);
+  
+  // Cover image upload
+  document.getElementById('news_cover_image_file')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = await handleImageUpload(file);
+      if (url) {
+        showCoverImagePreview(url);
+      }
+      e.target.value = '';
+    }
+  });
+  
+  // Remove cover image button
+  document.getElementById('removeCoverImageBtn')?.addEventListener('click', () => {
+    resetCoverImage();
+  });
+  
+  // Add news image button
+  document.getElementById('addNewsImageBtn')?.addEventListener('click', () => {
+    if (newsImages.length >= 4) {
+      showNotification('لا يمكن إضافة أكثر من 4 صور', 'error');
+      return;
+    }
+    document.getElementById('news_image_file_hidden').click();
+  });
+  
+  // Image upload
+  document.getElementById('news_image_file_hidden')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = await handleImageUpload(file);
+      if (url) {
+        addNewsImage(url);
+      }
+      // Reset file input
+      e.target.value = '';
+    }
+  });
+  
+  // Add author button
+  document.getElementById('addAuthorBtn')?.addEventListener('click', () => {
+    addAuthorField();
+  });
+  
+  // Remove author buttons (event delegation)
+  document.getElementById('authorsContainer')?.addEventListener('click', (e) => {
+    const removeBtn = e.target.closest('.remove-author-btn');
+    if (removeBtn) {
+      const field = removeBtn.closest('.author-field');
+      if (field) {
+        field.remove();
+        updateRemoveButtons();
+      }
+    }
+  });
+
+  document.getElementById('refreshNews')?.addEventListener('click', async () => {
+    await loadNews();
+    renderNewsStats();
+    renderNewsList(currentNewsFilter);
+    showNotification('تم تحديث الأخبار', 'success');
+  });
+
+  document.getElementById('newsStatusFilter')?.addEventListener('change', (e) => {
+    currentNewsFilter = e.target.value;
+    applyNewsFilters();
+  });
+
+  // Advanced news filters
+  document.getElementById('newsFilterSearch')?.addEventListener('input', () => {
+    applyNewsFilters();
+  });
+
+  document.getElementById('newsFeaturedFilter')?.addEventListener('change', () => {
+    applyNewsFilters();
+  });
+
+  document.getElementById('newsClearFilters')?.addEventListener('click', () => {
+    document.getElementById('newsFilterSearch').value = '';
+    document.getElementById('newsStatusFilter').value = '';
+    document.getElementById('newsFeaturedFilter').value = '';
+    currentNewsFilter = '';
+    renderNewsList('');
+  });
+
+  // Apply all news filters
+  function applyNewsFilters() {
+    let filtered = [...newsList];
+    
+    // Status filter
+    const statusFilter = document.getElementById('newsStatusFilter')?.value;
+    if (statusFilter) {
+      filtered = filtered.filter(n => n.status === statusFilter);
+    }
+    
+    // Featured filter
+    const featuredFilter = document.getElementById('newsFeaturedFilter')?.value;
+    if (featuredFilter === 'featured') {
+      filtered = filtered.filter(n => n.is_featured === true);
+    } else if (featuredFilter === 'not-featured') {
+      filtered = filtered.filter(n => !n.is_featured);
+    }
+    
+    // Search filter
+    const searchTerm = document.getElementById('newsFilterSearch')?.value?.trim()?.toLowerCase();
+    if (searchTerm) {
+      filtered = filtered.filter(n => 
+        n.title?.toLowerCase().includes(searchTerm) ||
+        n.summary?.toLowerCase().includes(searchTerm) ||
+        (Array.isArray(n.authors) && n.authors.some(a => a.toLowerCase().includes(searchTerm)))
+      );
+    }
+    
+    // Render filtered results
+    renderFilteredNews(filtered);
+  }
+
+  // Render filtered news (similar to renderNewsList but takes pre-filtered array)
+  function renderFilteredNews(filtered) {
+    const container = document.getElementById('newsList');
+    if (!container) return;
+    
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-state muted" style="text-align:center;padding:40px 20px;color:var(--muted)"><i class="fa-solid fa-newspaper" style="font-size:48px;margin-bottom:12px;opacity:0.3"></i><p>لا توجد نتائج</p></div>';
+      return;
+    }
+    
+    const statusLabels = {
+      published: { text: 'منشور', color: '#10b981', icon: 'fa-check-circle' },
+      draft: { text: 'مسودة', color: '#f59e0b', icon: 'fa-clock' },
+      archived: { text: 'مؤرشف', color: '#64748b', icon: 'fa-box-archive' }
+    };
+    
+    container.innerHTML = `
+    <div class="news-cards-grid">
+      ${filtered.map(news => {
+        const status = statusLabels[news.status] || { text: news.status, color: '#64748b', icon: 'fa-circle' };
+        const publishedDate = news.published_at ? new Date(news.published_at).toLocaleDateString('ar-SA', {
+          year: 'numeric', month: 'short', day: 'numeric'
+        }) : 'غير منشور';
+        const authors = news.authors || (news.author_name ? [news.author_name] : ['نادي أديب']);
+        const authorsDisplay = authors.length > 1 
+          ? `${safe(authors[0])} <span style="color:#64748b;font-size:0.85em">(+${authors.length - 1})</span>`
+          : safe(authors[0]);
+        
+        const coverImage = news.image_url || 'https://via.placeholder.com/400x250?text=لا+توجد+صورة';
+        const excerpt = news.summary ? (news.summary.length > 120 ? news.summary.substring(0, 120) + '...' : news.summary) : 'لا يوجد ملخص';
+        
+        return `
+          <div class="news-card" style="background:linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-radius:16px; padding:0; box-shadow:0 4px 12px rgba(0,0,0,0.08); transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border:1px solid #e2e8f0; position:relative; overflow:hidden">
+            <div style="position:absolute; top:0; right:0; width:100%; height:5px; background:${status.color}"></div>
+            
+            <div style="padding:20px 20px 16px">
+              <div style="display:flex; align-items:flex-start; gap:16px; margin-bottom:16px">
+                <div style="position:relative">
+                  <img src="${coverImage}" alt="${safe(news.title)}" onerror="this.src='https://via.placeholder.com/400x250?text=لا+توجد+صورة'" style="width:100px; height:100px; border-radius:16px; object-fit:cover; box-shadow:0 4px 12px rgba(0,0,0,0.15); flex-shrink:0; border:3px solid #fff" />
+                  ${news.is_featured ? '<div style="position:absolute; bottom:-8px; right:-8px; background:linear-gradient(135deg, #fbbf24, #f59e0b); width:32px; height:32px; border-radius:50%; border:3px solid #fff; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(251,191,36,0.4)"><i class="fa-solid fa-star" style="font-size:12px; color:#fff"></i></div>' : ''}
+                </div>
+                
+                <div style="flex:1; min-width:0; padding-left:60px">
+                  <div style="font-size:1.1rem; font-weight:700; color:#0f172a; margin-bottom:8px; line-height:1.3">
+                    ${safe(news.title)}
+                  </div>
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px; padding:4px 10px; background:#f1f5f9; border-radius:8px; width:fit-content">
+                    <i class="fa-solid ${status.icon}" style="font-size:12px; color:${status.color}"></i>
+                    <span style="font-size:0.8rem; color:#475569; font-weight:600">${status.text}</span>
+                  </div>
+                  <p style="font-size:0.85rem; color:#64748b; margin:0; line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden">
+                    ${safe(excerpt)}
+                  </p>
+                </div>
+              </div>
+              
+              <div style="display:grid; gap:8px; margin-bottom:16px">
+                <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0">
+                  <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #3d8fd6, #5ba3e0); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                    <i class="fa-solid fa-user" style="font-size:14px; color:#fff"></i>
+                  </div>
+                  <div style="flex:1; min-width:0">
+                    <div style="font-size:0.7rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px">الكاتب</div>
+                    <div style="font-size:0.85rem; color:#1e293b; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${authorsDisplay}</div>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0">
+                  <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #10b981, #34d399); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                    <i class="fa-solid fa-calendar" style="font-size:14px; color:#fff"></i>
+                  </div>
+                  <div style="flex:1; min-width:0">
+                    <div style="font-size:0.7rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px">تاريخ النشر</div>
+                    <div style="font-size:0.85rem; color:#1e293b; font-weight:500">${publishedDate}</div>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0">
+                  <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #8b5cf6, #7c3aed); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                    <i class="fa-solid fa-eye" style="font-size:14px; color:#fff"></i>
+                  </div>
+                  <div style="flex:1; min-width:0">
+                    <div style="font-size:0.7rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px">المشاهدات</div>
+                    <div style="font-size:0.85rem; color:#1e293b; font-weight:500">${news.views || 0} مشاهدة</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div style="position:absolute; top:16px; left:16px; display:flex; gap:6px">
+                <button class="btn btn-sm news-delete-btn" onclick="deleteNews('${news.id}')" title="حذف الخبر" style="width:36px; height:36px; padding:0; border-radius:10px; background:#fff; border:1px solid #fecaca; color:#ef4444; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.06); transition:all 0.2s">
+                  <i class="fa-solid fa-trash" style="font-size:14px"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; border-top:1px solid #e2e8f0; background:#fafbfc">
+              <button class="btn btn-sm news-action-btn" onclick="window.open('../news-detail.html?id=${news.id}&preview=true', '_blank')" style="border:none; border-radius:0 0 0 16px; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#3d8fd6; border-left:1px solid #e2e8f0; transition:all 0.2s">
+                <i class="fa-regular fa-eye"></i> معاينة
+              </button>
+              <button class="btn btn-sm news-action-btn" onclick="editNews('${news.id}')" style="border:none; border-radius:0 0 16px 0; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#64748b; transition:all 0.2s">
+                <i class="fa-solid fa-pen"></i> تعديل كامل
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+  }
+
+  document.getElementById('newsForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const newsId = document.getElementById('news_id').value;
+    const title = document.getElementById('news_title').value.trim();
+    const content = document.getElementById('news_content').value.trim();
+    const authors = getAuthorNames();
+    const status = document.getElementById('news_status').value;
+    const isFeatured = document.getElementById('news_is_featured').checked;
+    
+    if (!title || !content) {
+      showNotification('يرجى ملء جميع الحقول المطلوبة', 'error');
+      return;
+    }
+    
+    // Validate cover image
+    if (!newsCoverImage) {
+      showNotification('يرجى إضافة صورة الغلاف', 'error');
+      return;
+    }
+    
+    // Validate additional images
+    if (newsImages.length < 2 || newsImages.length > 4) {
+      showNotification('يجب إضافة من 2 إلى 4 صور للخبر', 'error');
+      return;
+    }
+    
+    // Validate photographer names
+    const missingPhotographers = newsImages.some(img => !img.photographer || img.photographer.trim() === '');
+    if (missingPhotographers) {
+      showNotification('يرجى إدخال اسم المصور لجميع الصور', 'error');
+      return;
+    }
+    
+    // Generate summary from content (first 75 characters)
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+    const summary = textContent.substring(0, 75).trim() + (textContent.length > 75 ? '...' : '');
+    
+    try {
+      const user = await sb.auth.getUser();
+      const newsData = {
+        title,
+        summary,
+        content,
+        image_url: newsCoverImage, // Cover image
+        images: newsImages, // Array of additional images with photographers
+        author_id: user?.data?.user?.id || null,
+        author_name: authors[0], // First author for backward compatibility
+        authors: authors, // Array of all authors
+        status,
+        is_featured: isFeatured,
+        published_at: status === 'published' ? new Date().toISOString() : null
+      };
+      
+      if (newsId) {
+        // Update existing news
+        const { error } = await sb
+          .from('news')
+          .update(newsData)
+          .eq('id', newsId);
+        
+        if (error) throw error;
+        showNotification('تم تحديث الخبر بنجاح', 'success');
+      } else {
+        // Insert new news
+        const { error } = await sb
+          .from('news')
+          .insert([newsData]);
+        
+        if (error) throw error;
+        showNotification('تم إضافة الخبر بنجاح', 'success');
+      }
+      
+      document.getElementById('newsDialog').close();
+      await loadNews();
+      renderNewsStats();
+      renderNewsList(currentNewsFilter);
+      
+    } catch (error) {
+      console.error('Error saving news:', error);
+      showNotification('حدث خطأ في حفظ الخبر', 'error');
+    }
+  });
 })();

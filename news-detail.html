@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل الخبر - نادي أديب</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="news-detail.css">
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+</head>
+<body>
+    <!-- قسم: الهيدر -->
+    <header class="header">
+      <div class="header-container">
+        <div class="menu-toggle" id="menuToggle">
+          <div class="hamburger">
+            <span class="line line1"></span>
+            <span class="line line2"></span>
+            <span class="line line3"></span>
+          </div>
+        </div>
+        <div class="logo">
+          <a class="logo-link" href="index.html">
+            <img
+              alt="شعار نادي أديب"
+              class="logo-img"
+              src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e"
+            />
+          </a>
+        </div>
+        <nav class="nav">
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html#adeebbook">
+                <i class="fas fa-home nav-icon"></i>
+                <span class="nav-text">الرئيسية</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="news.html">
+                <i class="fa-solid fa-newspaper"></i>
+                <span class="nav-text">الأخبار</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="index.html#our-works">
+                <i class="fa-solid fa-briefcase"></i>
+                <span class="nav-text">أعمالنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="index.html#sponsors">
+                <i class="fa-solid fa-briefcase"></i>
+                <span class="nav-text">شُركائنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="index.html#board-members">
+                <i class="fa-solid fa-trophy"></i>
+                <span class="nav-text">المجلس الإداري</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="index.html#contact">
+                <i class="fas fa-envelope nav-icon"></i>
+                <span class="nav-text">تواصل معنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+          </ul>
+          <!-- زر تسجيل الدخول للوحة التحكم -->
+          <a class="subscribe-btn" href="admin/admin.html" id="adminLoginBtn">
+            <span>تسجيل الدخول</span>
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Loading State -->
+    <div id="newsLoading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>جاري تحميل الخبر...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="newsError" class="error-container" style="display: none;">
+      <i class="fas fa-exclamation-circle"></i>
+      <h2>عذراً، لم يتم العثور على الخبر</h2>
+      <p>الخبر المطلوب غير موجود أو تم حذفه</p>
+      <a href="news.html" class="btn-back">
+        <i class="fas fa-arrow-right"></i>
+        العودة إلى الأخبار
+      </a>
+    </div>
+
+    <!-- News Detail Content -->
+    <main id="newsDetailContent" style="display: none;">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb-container">
+        <div class="container">
+          <nav class="breadcrumb">
+            <a href="index.html">
+              <i class="fas fa-home"></i>
+              الرئيسية
+            </a>
+            <i class="fas fa-chevron-left"></i>
+            <a href="news.html">الأخبار</a>
+            <i class="fas fa-chevron-left"></i>
+            <span id="breadcrumbTitle">تفاصيل الخبر</span>
+          </nav>
+        </div>
+      </div>
+
+      <!-- News Article -->
+      <article class="news-article">
+        <div class="container">
+          <!-- Back Button -->
+          <a href="news.html" class="back-button">
+            <i class="fas fa-arrow-right"></i>
+            العودة إلى الأخبار
+          </a>
+
+          <!-- News Header -->
+          <header class="article-header">
+            <div id="featuredBadge" class="featured-badge" style="display: none;">
+              <i class="fas fa-star"></i>
+              خبر مميز
+            </div>
+            <h1 id="newsTitle" class="article-title"></h1>
+            
+            <div class="article-meta">
+              <div class="meta-item">
+                <i class="fas fa-calendar"></i>
+                <span id="newsDate"></span>
+              </div>
+              <div class="meta-item">
+                <i id="authorsIcon" class="fas fa-user"></i>
+                <span id="newsAuthors"></span>
+              </div>
+              <div class="meta-item">
+                <i class="fas fa-eye"></i>
+                <span id="newsViews"></span> مشاهدة
+              </div>
+            </div>
+          </header>
+
+          <!-- News Cover Image -->
+          <div id="newsCoverImageContainer" class="article-image-container" style="display: none;">
+            <img id="newsCoverImage" src="" alt="" class="article-image">
+          </div>
+
+          <!-- News Content -->
+          <div id="newsContent" class="article-content"></div>
+
+          <!-- News Images Gallery (below content) -->
+          <div id="newsImagesGallery" class="article-images-gallery" style="display: none;">
+            <h3 class="gallery-title">صور الخبر</h3>
+            <div id="newsImagesGrid" class="images-grid">
+              <!-- سيتم إضافة الصور هنا ديناميكياً -->
+            </div>
+          </div>
+
+          <!-- Share Section -->
+          <div class="article-share">
+            <h3>شارك هذا الخبر</h3>
+            <div class="share-buttons">
+              <button class="share-btn twitter" id="shareTwitter">
+                <i class="fab fa-twitter"></i>
+                تويتر
+              </button>
+              <button class="share-btn facebook" id="shareFacebook">
+                <i class="fab fa-facebook"></i>
+                فيسبوك
+              </button>
+              <button class="share-btn whatsapp" id="shareWhatsapp">
+                <i class="fab fa-whatsapp"></i>
+                واتساب
+              </button>
+              <button class="share-btn copy" id="copyLink">
+                <i class="fas fa-link"></i>
+                نسخ الرابط
+              </button>
+            </div>
+          </div>
+
+          <!-- Related News -->
+          <div id="relatedNewsSection" class="related-news" style="display: none;">
+            <h3>اطلع على المزيد من الأخبار</h3>
+            <div id="relatedNewsGrid" class="related-news-grid"></div>
+          </div>
+        </div>
+      </article>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <p>&copy; 2024 نادي أديب. جميع الحقوق محفوظة.</p>
+      </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+    <script src="news-detail.js"></script>
+</body>
+</html>
