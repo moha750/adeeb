@@ -272,9 +272,11 @@
             }
             
             if (data?.user) {
-              // Role check: must be admin to proceed to admin panel
+              // التحقق من نوع الحساب: إداري أم عضو عادي
               try {
                 const userId = data.user.id;
+                
+                // التحقق من الإداريين
                 const { data: adminRow, error: adminErr } = await sb
                   .from('admins')
                   .select('user_id,is_admin')
@@ -282,30 +284,58 @@
                   .eq('is_admin', true)
                   .maybeSingle();
                 
-                if (adminErr) {
-                  status.className = 'alert error';
-                  status.textContent = 'حدث خطأ أثناء التحقق من الصلاحيات: ' + translateError(adminErr);
+                // التحقق من الأعضاء
+                const { data: memberRow, error: memberErr } = await sb
+                  .from('members')
+                  .select('id,user_id,account_status')
+                  .eq('user_id', userId)
+                  .maybeSingle();
+                
+                // إذا كان إداري
+                if (adminRow) {
+                  status.className = 'alert success';
+                  status.textContent = 'تم تسجيل الدخول بنجاح! جاري التحويل للوحة الإدارية...';
+                  setTimeout(() => {
+                    location.replace(redirectPath || '/admin/admin.html');
+                  }, 500);
                   return;
                 }
                 
-                if (!adminRow) {
-                  status.className = 'alert error';
-                  status.textContent = 'ليس لديك الصلاحية لدخول لوحة التحكم. هذه الصفحة مخصصة للإداريين فقط.';
+                // إذا كان عضو عادي
+                if (memberRow) {
+                  // التحقق من حالة الحساب
+                  if (memberRow.account_status !== 'active') {
+                    status.className = 'alert error';
+                    status.textContent = 'حسابك غير نشط. يرجى التواصل مع الإدارة.';
+                    await sb.auth.signOut();
+                    return;
+                  }
+                  
+                  status.className = 'alert success';
+                  status.textContent = 'تم تسجيل الدخول بنجاح! جاري التحويل للوحة التحكم...';
+                  setTimeout(() => {
+                    // إذا كان هناك redirect محدد وليس للوحة الإدارية، استخدمه
+                    if (redirectParam && !redirectParam.includes('admin')) {
+                      location.replace(redirectPath);
+                    } else {
+                      // وإلا، وجه للوحة الأعضاء
+                      location.replace('/members/dashboard.html');
+                    }
+                  }, 500);
                   return;
                 }
+                
+                // إذا لم يكن إداري ولا عضو
+                status.className = 'alert error';
+                status.textContent = 'حسابك غير مسجل في النظام. يرجى التواصل مع الإدارة.';
+                await sb.auth.signOut();
+                return;
+                
               } catch (roleErr) {
                 status.className = 'alert error';
                 status.textContent = 'حدث خطأ أثناء التحقق من الصلاحيات: ' + translateError(roleErr);
                 return;
               }
-              
-              // تسجيل دخول ناجح
-              status.className = 'alert success';
-              status.textContent = 'تم تسجيل الدخول بنجاح! جاري التحويل...';
-              setTimeout(() => {
-                location.replace(redirectPath);
-              }, 500);
-              return;
             }
             
             // في حالة عدم وجود بيانات مستخدم

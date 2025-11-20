@@ -59,6 +59,7 @@
           <a href="#section-home" class="admin-menu__item"><i class="fa-solid fa-sitemap"></i> إدارة الموقع</a>
           <a href="#section-members" class="admin-menu__item"><i class="fa-solid fa-users-rectangle"></i> أعضاء النادي</a>
           <a href="#section-membership-apps" class="admin-menu__item"><i class="fa-solid fa-id-badge"></i> طلبات العضوية</a>
+          <a href="#section-membership-archive" class="admin-menu__item"><i class="fa-solid fa-archive"></i> سجل فترات التسجيل</a>
           <a href="#section-schedule" class="admin-menu__item"><i class="fa-solid fa-calendar-days"></i> جدول أدِيب</a>
           <a href="#section-appointments" class="admin-menu__item"><i class="fa-solid fa-calendar-check"></i> حجز المواعيد</a>
           <a href="#section-forms" class="admin-menu__item"><i class="fa-solid fa-list-check"></i> الاستبيانات</a>
@@ -215,6 +216,13 @@
             <h2><i class="fa-solid fa-user-plus"></i> زر "انضم إلينا"</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button class="btn" data-go="#section-membership-archive"><i class="fa-solid fa-archive"></i> عرض السجل</button>
+            </div>
+          </div>
+          <div class="alert info" style="margin-bottom:16px" id="joinArchiveInfo">
+            <i class="fa-solid fa-info-circle"></i>
+            <div>
+              <strong>تذكير:</strong> عند انتهاء فترة التسجيل، يمكنك <a href="#section-membership-archive" style="color:#3d8fd6;text-decoration:underline">أرشفة الطلبات</a> لحفظها كملف وحذفها من قاعدة البيانات لتخفيف العبء.
             </div>
           </div>
           <div class="panel join-panel">
@@ -331,7 +339,8 @@
           <div class="section-head">
             <h2><i class="fa-solid fa-users-rectangle"></i> أعضاء النادي</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              
+              <button id="membersBulkInvitationsBtn" class="btn" style="background:#10b981;color:#fff;border-color:#10b981"><i class="fa-solid fa-envelope-open-text"></i> إرسال دعوات جماعية</button>
+              <button id="membersExportBtn" class="btn"><i class="fa-solid fa-file-export"></i> تصدير</button>
               <button id="addMemberBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة عضو</button>
             </div>
           </div>
@@ -366,7 +375,6 @@
           <div class="section-head">
             <h2><i class="fa-solid fa-id-badge"></i> طلبات العضوية</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              
               <button id="membershipRefreshBtn" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
               <button id="membershipExportBtn" class="btn"><i class="fa-solid fa-file-export"></i> تصدير CSV</button>
               <button id="bulkExportToMembersBtn" class="btn btn-primary"><i class="fa-solid fa-users-gear"></i> تصدير جماعي للأعضاء</button>
@@ -555,6 +563,115 @@
               <menu class="dialog-actions">
                 <button type="button" class="btn btn-primary" id="bulkExportToMembersSubmit"><i class="fa-solid fa-user-plus"></i> تصدير الآن</button>
                 <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إلغاء</button>
+              </menu>
+            </form>
+          </dialog>
+        </section>
+
+        <section id="section-membership-archive" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-archive"></i> سجل فترات التسجيل</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button id="archiveCreatePeriodBtn" class="btn btn-primary"><i class="fa-solid fa-archive"></i> أرشفة الفترة الحالية</button>
+            </div>
+          </div>
+          <div class="alert info" style="margin-bottom:16px">
+            <i class="fa-solid fa-info-circle"></i>
+            <div>
+              <strong>نظام السجل:</strong> يمكنك حفظ فترات التسجيل السابقة مع بياناتها، ثم تصديرها كملف وحذفها من قاعدة البيانات لتخفيف العبء.
+            </div>
+          </div>
+          <div id="archivePeriodsGrid" class="cards-grid" aria-live="polite"></div>
+          <div id="archivePeriodsEmpty" class="empty-state muted" style="display:none">لا توجد فترات محفوظة بعد</div>
+          
+          <dialog id="archiveCreateDialog" class="admin-dialog">
+            <form method="dialog" class="dialog-form" id="archiveCreateForm">
+              <div class="dialog-header">
+                <h3 class="dialog-title"><i class="fa-solid fa-archive"></i> أرشفة فترة التسجيل الحالية</h3>
+                <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="dialog-body">
+                <div class="alert warning" style="margin-bottom:16px">
+                  <i class="fa-solid fa-exclamation-triangle"></i>
+                  <div>
+                    <strong>تنبيه هام:</strong> عند حفظ الفترة سيتم:
+                    <ul style="margin:8px 0 0 20px;padding:0">
+                      <li>تصدير جميع طلبات العضوية الحالية كملف Excel</li>
+                      <li>حذف جميع الطلبات من قاعدة البيانات</li>
+                      <li>حفظ معلومات الفترة في السجل المحلي</li>
+                    </ul>
+                    <strong style="color:#dc2626;display:block;margin-top:8px">⚠️ تأكد من تصدير الطلبات المقبولة إلى قائمة الأعضاء قبل الأرشفة!</strong>
+                  </div>
+                </div>
+                <div class="details-row cols-1">
+                  <label class="detail">اسم الفترة
+                    <input id="archivePeriodName" type="text" placeholder="مثال: فترة التسجيل - خريف 2024" required />
+                  </label>
+                </div>
+                <div class="details-row cols-2">
+                  <label class="detail">تاريخ البدء
+                    <input id="archivePeriodStartDate" type="date" required />
+                  </label>
+                  <label class="detail">تاريخ الانتهاء
+                    <input id="archivePeriodEndDate" type="date" required />
+                  </label>
+                </div>
+                <div class="details-row cols-1">
+                  <label class="detail">ملاحظات (اختياري)
+                    <textarea id="archivePeriodNotes" rows="3" placeholder="أي ملاحظات عن هذه الفترة..."></textarea>
+                  </label>
+                </div>
+                <div class="details-row cols-1">
+                  <div style="padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                      <i class="fa-solid fa-info-circle" style="color:#3d8fd6"></i>
+                      <strong>إحصائيات الطلبات الحالية:</strong>
+                    </div>
+                    <div id="archiveCurrentStats" style="font-size:0.9rem;color:#64748b"></div>
+                  </div>
+                </div>
+              </div>
+              <menu class="dialog-actions">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-archive"></i> أرشفة وتصدير وحذف</button>
+                <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إلغاء</button>
+              </menu>
+            </form>
+          </dialog>
+
+          <dialog id="archivePeriodDetailsDialog" class="admin-dialog">
+            <form method="dialog" class="dialog-form" id="archivePeriodDetailsForm">
+              <div class="dialog-header">
+                <h3 class="dialog-title" id="archivePeriodDetailsTitle">تفاصيل الفترة</h3>
+                <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="dialog-body">
+                <div class="details-row cols-1">
+                  <label class="detail">اسم الفترة<div id="archiveDetailName" class="muted"></div></label>
+                </div>
+                <div class="details-row cols-2">
+                  <label class="detail">تاريخ البدء<div id="archiveDetailStartDate" class="muted"></div></label>
+                  <label class="detail">تاريخ الانتهاء<div id="archiveDetailEndDate" class="muted"></div></label>
+                </div>
+                <div class="details-row cols-1">
+                  <label class="detail">تاريخ الحفظ<div id="archiveDetailCreatedAt" class="muted"></div></label>
+                </div>
+                <div class="details-row cols-1">
+                  <label class="detail">الملاحظات<div id="archiveDetailNotes" class="muted" style="white-space:pre-wrap"></div></label>
+                </div>
+                <div class="details-row cols-1">
+                  <div style="padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                      <i class="fa-solid fa-chart-pie" style="color:#3d8fd6"></i>
+                      <strong>إحصائيات الطلبات:</strong>
+                    </div>
+                    <div id="archiveDetailStats" style="font-size:0.9rem;color:#64748b"></div>
+                  </div>
+                </div>
+              </div>
+              <menu class="dialog-actions">
+                <button type="button" class="btn btn-primary" id="archiveExportBtn"><i class="fa-solid fa-file-excel"></i> تصدير البيانات (Excel)</button>
+                <button type="button" class="btn btn-danger" id="archiveDeleteBtn"><i class="fa-solid fa-trash"></i> حذف الفترة</button>
+                <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إغلاق</button>
               </menu>
             </form>
           </dialog>
@@ -2694,6 +2811,7 @@
         } catch (e) { console.warn('SW registration failed', e); }
       })();
     </script>
-    <script src="admin.js?v=20251011"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="admin.js?v=20251120b"></script>
   </body>
 </html>

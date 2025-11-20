@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة التحكم - نادي أديب</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <!-- شريط التنقل العلوي -->
+  <nav class="dashboard-nav">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <img src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" alt="نادي أديب" class="nav-logo">
+        <span class="nav-title">لوحة تحكم الأعضاء</span>
+      </div>
+      
+      <div class="nav-actions">
+        <button class="nav-btn" id="notificationsBtn" title="الإشعارات">
+          <i class="fas fa-bell"></i>
+          <span class="badge" id="notificationsBadge">0</span>
+        </button>
+        
+        <div class="user-menu">
+          <button class="user-menu-btn" id="userMenuBtn">
+            <img src="" alt="" class="user-avatar" id="userAvatar">
+            <span class="user-name" id="userName">جاري التحميل...</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          
+          <div class="user-menu-dropdown" id="userMenuDropdown">
+            <a href="#profile" class="menu-item">
+              <i class="fas fa-user"></i>
+              الملف الشخصي
+            </a>
+            <a href="#settings" class="menu-item">
+              <i class="fas fa-cog"></i>
+              الإعدادات
+            </a>
+            <div class="menu-divider"></div>
+            <button class="menu-item" id="logoutBtn">
+              <i class="fas fa-right-from-bracket"></i>
+              تسجيل الخروج
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- المحتوى الرئيسي -->
+  <main class="dashboard-main">
+    <div class="dashboard-container">
+      <!-- رأس الصفحة -->
+      <header class="dashboard-header">
+        <div class="welcome-section">
+          <h1 class="welcome-title">مرحباً، <span id="welcomeName">—</span></h1>
+          <p class="welcome-subtitle">نتمنى لك يوماً مثمراً في نادي أديب</p>
+        </div>
+        
+        <div class="quick-actions">
+          <button class="action-btn" onclick="window.location.href='../index.html'">
+            <i class="fas fa-home"></i>
+            <span>الصفحة الرئيسية</span>
+          </button>
+          <button class="action-btn" onclick="window.location.href='../news.html'">
+            <i class="fas fa-newspaper"></i>
+            <span>الأخبار</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- بطاقات الإحصائيات -->
+      <section class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="eventsAttended">0</div>
+              <div class="stat-label">الفعاليات المشاركة</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+              <i class="fas fa-certificate"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="certificatesEarned">0</div>
+              <div class="stat-label">الشهادات المكتسبة</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="memberCommittee">—</div>
+              <div class="stat-label">اللجنة</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="profileCompletion">0%</div>
+              <div class="stat-label">اكتمال الملف</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- المحتوى الرئيسي بشبكة -->
+      <div class="content-grid">
+        <!-- العمود الأيمن -->
+        <div class="content-main">
+          <!-- بطاقة الملف الشخصي -->
+          <section class="card profile-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <i class="fas fa-user-circle"></i>
+                الملف الشخصي
+              </h2>
+              <button class="btn-edit" id="editProfileBtn">
+                <i class="fas fa-edit"></i>
+                تعديل
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="profile-header">
+                <div class="profile-avatar-wrapper">
+                  <img src="" alt="" class="profile-avatar" id="profileAvatar">
+                  <button class="avatar-edit-btn" id="avatarEditBtn">
+                    <i class="fas fa-camera"></i>
+                  </button>
+                </div>
+                <div class="profile-info">
+                  <h3 class="profile-name" id="profileName">—</h3>
+                  <p class="profile-email" id="profileEmail">—</p>
+                  <div class="profile-badges">
+                    <span class="badge badge-success" id="accountStatusBadge">نشط</span>
+                    <span class="badge badge-info" id="committeeBadge">—</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="profile-details">
+                <div class="detail-row">
+                  <div class="detail-item">
+                    <i class="fas fa-phone"></i>
+                    <div>
+                      <span class="detail-label">الجوال</span>
+                      <span class="detail-value" id="profilePhone">—</span>
+                    </div>
+                  </div>
+                  <div class="detail-item">
+                    <i class="fas fa-building"></i>
+                    <div>
+                      <span class="detail-label">الكلية</span>
+                      <span class="detail-value" id="profileCollege">—</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="detail-row">
+                  <div class="detail-item">
+                    <i class="fas fa-graduation-cap"></i>
+                    <div>
+                      <span class="detail-label">التخصص</span>
+                      <span class="detail-value" id="profileMajor">—</span>
+                    </div>
+                  </div>
+                  <div class="detail-item">
+                    <i class="fas fa-user-graduate"></i>
+                    <div>
+                      <span class="detail-label">الدرجة العلمية</span>
+                      <span class="detail-value" id="profileDegree">—</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="detail-row">
+                  <div class="detail-item">
+                    <i class="fas fa-id-card"></i>
+                    <div>
+                      <span class="detail-label">الرقم الأكاديمي</span>
+                      <span class="detail-value" id="profileAcademicNumber">—</span>
+                    </div>
+                  </div>
+                  <div class="detail-item">
+                    <i class="fas fa-calendar"></i>
+                    <div>
+                      <span class="detail-label">تاريخ الميلاد</span>
+                      <span class="detail-value" id="profileBirthDate">—</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="social-links" id="socialLinks">
+                <!-- سيتم ملؤها ديناميكياً -->
+              </div>
+            </div>
+          </section>
+
+          <!-- بطاقة النشاط الأخير -->
+          <section class="card activity-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <i class="fas fa-clock"></i>
+                النشاط الأخير
+              </h2>
+            </div>
+            <div class="card-body">
+              <div class="activity-list" id="activityList">
+                <div class="empty-state">
+                  <i class="fas fa-inbox"></i>
+                  <p>لا يوجد نشاط حتى الآن</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- العمود الأيسر -->
+        <aside class="content-sidebar">
+          <!-- بطاقة اكتمال الملف -->
+          <section class="card completion-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <i class="fas fa-tasks"></i>
+                اكتمال الملف الشخصي
+              </h2>
+            </div>
+            <div class="card-body">
+              <div class="completion-progress">
+                <svg class="progress-ring" width="120" height="120">
+                  <circle class="progress-ring-bg" cx="60" cy="60" r="52" />
+                  <circle class="progress-ring-fill" cx="60" cy="60" r="52" id="progressCircle" />
+                </svg>
+                <div class="progress-text">
+                  <span class="progress-value" id="completionValue">0</span>
+                  <span class="progress-symbol">%</span>
+                </div>
+              </div>
+              <p class="completion-message" id="completionMessage">أكمل ملفك الشخصي للحصول على تجربة أفضل</p>
+              <button class="btn btn-primary btn-block" id="completeProfileBtn">
+                <i class="fas fa-edit"></i>
+                إكمال الملف
+              </button>
+            </div>
+          </section>
+
+          <!-- بطاقة روابط سريعة -->
+          <section class="card quick-links-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <i class="fas fa-link"></i>
+                روابط سريعة
+              </h2>
+            </div>
+            <div class="card-body">
+              <div class="quick-links-list">
+                <a href="../index.html#our-works" class="quick-link">
+                  <i class="fas fa-briefcase"></i>
+                  <span>أعمالنا</span>
+                </a>
+                <a href="../index.html#achievements" class="quick-link">
+                  <i class="fas fa-trophy"></i>
+                  <span>إنجازاتنا</span>
+                </a>
+                <a href="../index.html#board-members" class="quick-link">
+                  <i class="fas fa-users"></i>
+                  <span>المجلس الإداري</span>
+                </a>
+                <a href="../index.html#contact" class="quick-link">
+                  <i class="fas fa-envelope"></i>
+                  <span>تواصل معنا</span>
+                </a>
+              </div>
+            </div>
+          </section>
+
+          <!-- بطاقة معلومات الحساب -->
+          <section class="card account-info-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <i class="fas fa-info-circle"></i>
+                معلومات الحساب
+              </h2>
+            </div>
+            <div class="card-body">
+              <div class="info-list">
+                <div class="info-item">
+                  <span class="info-label">تاريخ التسجيل</span>
+                  <span class="info-value" id="accountCreatedAt">—</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">آخر تسجيل دخول</span>
+                  <span class="info-value" id="accountLastLogin">—</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">حالة الحساب</span>
+                  <span class="info-value" id="accountStatus">—</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <!-- مودال تعديل الملف الشخصي -->
+  <div class="modal" id="editProfileModal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">تعديل الملف الشخصي</h3>
+        <button class="modal-close" id="closeEditModal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="editProfileForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>الاسم الكامل</label>
+              <input type="text" id="editFullName" readonly>
+              <small class="form-help">لا يمكن تعديل الاسم. يرجى التواصل مع الإدارة</small>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>البريد الإلكتروني</label>
+              <input type="email" id="editEmail" readonly>
+              <small class="form-help">لا يمكن تعديل البريد. يرجى التواصل مع الإدارة</small>
+            </div>
+            <div class="form-group">
+              <label>رقم الجوال</label>
+              <input type="tel" id="editPhone" placeholder="05xxxxxxxx">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>الكلية</label>
+              <input type="text" id="editCollege">
+            </div>
+            <div class="form-group">
+              <label>التخصص</label>
+              <input type="text" id="editMajor">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>الدرجة العلمية</label>
+              <select id="editDegree">
+                <option value="">اختر الدرجة</option>
+                <option value="بكالوريوس">بكالوريوس</option>
+                <option value="ماجستير">ماجستير</option>
+                <option value="دكتوراه">دكتوراه</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>تاريخ الميلاد</label>
+              <input type="date" id="editBirthDate">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>الرقم الأكاديمي</label>
+              <input type="text" id="editAcademicNumber">
+            </div>
+            <div class="form-group">
+              <label>رقم الهوية الوطنية</label>
+              <input type="text" id="editNationalId">
+            </div>
+          </div>
+
+          <div class="form-section-title">
+            <i class="fas fa-share-nodes"></i>
+            حسابات التواصل الاجتماعي
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>تويتر (X)</label>
+              <input type="text" id="editXHandle" placeholder="@username">
+            </div>
+            <div class="form-group">
+              <label>إنستقرام</label>
+              <input type="text" id="editInstagramHandle" placeholder="@username">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>تيك توك</label>
+              <input type="text" id="editTiktokHandle" placeholder="@username">
+            </div>
+            <div class="form-group">
+              <label>لينكد إن</label>
+              <input type="text" id="editLinkedinHandle" placeholder="username">
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelEditBtn">إلغاء</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i>
+              حفظ التغييرات
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="../supabase-config.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

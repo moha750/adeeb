@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تفعيل الحساب - نادي أديب</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .activation-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 100%;
+      overflow: hidden;
+      animation: slideUp 0.6s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .activation-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 30px;
+      text-align: center;
+      color: white;
+    }
+
+    .activation-logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .activation-logo img {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+    }
+
+    .activation-header h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .activation-header p {
+      font-size: 16px;
+      opacity: 0.95;
+      line-height: 1.6;
+    }
+
+    .activation-body {
+      padding: 40px 30px;
+    }
+
+    .loading-state,
+    .error-state,
+    .success-state,
+    .form-state {
+      display: none;
+      text-align: center;
+    }
+
+    .loading-state.active,
+    .error-state.active,
+    .success-state.active,
+    .form-state.active {
+      display: block;
+    }
+
+    .loading-spinner {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 20px;
+      border: 4px solid #f3f4f6;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+    }
+
+    .status-icon.error {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .status-icon.success {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    .status-message {
+      font-size: 18px;
+      color: #374151;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .status-details {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .member-info {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      text-align: right;
+    }
+
+    .member-info-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .member-info-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .member-info-item i {
+      color: #667eea;
+      width: 20px;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      text-align: right;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #374151;
+      font-size: 14px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .password-input-wrapper {
+      position: relative;
+    }
+
+    .password-toggle {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 8px;
+      font-size: 18px;
+      transition: color 0.3s;
+    }
+
+    .password-toggle:hover {
+      color: #374151;
+    }
+
+    .password-strength {
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .strength-bar {
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+
+    .strength-bar-fill {
+      height: 100%;
+      width: 0;
+      transition: all 0.3s;
+      border-radius: 2px;
+    }
+
+    .strength-bar-fill.weak {
+      width: 33%;
+      background: #ef4444;
+    }
+
+    .strength-bar-fill.medium {
+      width: 66%;
+      background: #f59e0b;
+    }
+
+    .strength-bar-fill.strong {
+      width: 100%;
+      background: #10b981;
+    }
+
+    .strength-text {
+      color: #6b7280;
+    }
+
+    .password-requirements {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+
+    .password-requirements ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .password-requirements li {
+      padding: 4px 0;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .password-requirements li i {
+      font-size: 10px;
+    }
+
+    .password-requirements li.valid {
+      color: #059669;
+    }
+
+    .password-requirements li.valid i {
+      color: #059669;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .alert.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .alert.info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
+    .footer-links {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .footer-links a {
+      color: #667eea;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.3s;
+    }
+
+    .footer-links a:hover {
+      color: #764ba2;
+      text-decoration: underline;
+    }
+
+    @media (max-width: 640px) {
+      .activation-container {
+        border-radius: 0;
+      }
+
+      .activation-header {
+        padding: 30px 20px;
+      }
+
+      .activation-body {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="activation-container">
+    <div class="activation-header">
+      <div class="activation-logo">
+        <img src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" alt="نادي أديب">
+      </div>
+      <h1>تفعيل حسابك</h1>
+      <p>مرحباً بك في نادي أديب</p>
+    </div>
+
+    <div class="activation-body">
+      <!-- حالة التحميل -->
+      <div class="loading-state active" id="loadingState">
+        <div class="loading-spinner"></div>
+        <div class="status-message">جاري التحقق من الدعوة...</div>
+        <div class="status-details">يرجى الانتظار قليلاً</div>
+      </div>
+
+      <!-- حالة الخطأ -->
+      <div class="error-state" id="errorState">
+        <div class="status-icon error">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <div class="status-message" id="errorMessage">رابط التفعيل غير صالح</div>
+        <div class="status-details" id="errorDetails">الرابط قد يكون منتهي الصلاحية أو تم استخدامه مسبقاً</div>
+        <button class="btn btn-secondary" onclick="window.location.href='../index.html'">
+          <i class="fas fa-home"></i>
+          العودة للرئيسية
+        </button>
+      </div>
+
+      <!-- حالة النجاح -->
+      <div class="success-state" id="successState">
+        <div class="status-icon success">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="status-message">تم تفعيل حسابك بنجاح!</div>
+        <div class="status-details">يمكنك الآن تسجيل الدخول والوصول إلى لوحة التحكم الخاصة بك</div>
+        <button class="btn btn-primary" id="goToDashboardBtn">
+          <i class="fas fa-gauge"></i>
+          الانتقال إلى لوحة التحكم
+        </button>
+      </div>
+
+      <!-- نموذج التفعيل -->
+      <div class="form-state" id="formState">
+        <div class="member-info" id="memberInfo">
+          <!-- سيتم ملؤها ديناميكياً -->
+        </div>
+
+        <div class="alert info">
+          <i class="fas fa-info-circle"></i>
+          <span>يرجى إنشاء كلمة مرور قوية لحسابك</span>
+        </div>
+
+        <div id="formAlert"></div>
+
+        <form id="activationForm">
+          <div class="form-group">
+            <label for="password">كلمة المرور</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="password" name="password" required autocomplete="new-password">
+              <button type="button" class="password-toggle" id="passwordToggle">
+                <i class="fas fa-eye-slash"></i>
+              </button>
+            </div>
+            <div class="password-strength">
+              <div class="strength-bar">
+                <div class="strength-bar-fill" id="strengthBar"></div>
+              </div>
+              <div class="strength-text" id="strengthText"></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">تأكيد كلمة المرور</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password">
+              <button type="button" class="password-toggle" id="confirmPasswordToggle">
+                <i class="fas fa-eye-slash"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="password-requirements">
+            <ul id="requirementsList">
+              <li id="req-length"><i class="fas fa-circle"></i> 8 خانات على الأقل</li>
+              <li id="req-upper"><i class="fas fa-circle"></i> حرف كبير واحد على الأقل</li>
+              <li id="req-lower"><i class="fas fa-circle"></i> حرف صغير واحد على الأقل</li>
+              <li id="req-number"><i class="fas fa-circle"></i> رقم واحد على الأقل</li>
+              <li id="req-special"><i class="fas fa-circle"></i> رمز خاص واحد على الأقل</li>
+            </ul>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="submitBtn">
+            <i class="fas fa-check"></i>
+            تفعيل الحساب
+          </button>
+        </form>
+
+        <div class="footer-links">
+          <a href="../auth/login.html">هل لديك حساب بالفعل؟ تسجيل الدخول</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-config.js"></script>
+  <script src="activate.js"></script>
+</body>
+</html>

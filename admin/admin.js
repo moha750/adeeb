@@ -2174,21 +2174,30 @@
   // Edge Functions base URL (derived from project URL)
   const FUNCTIONS_BASE = (window.SUPABASE_URL || '').replace('.supabase.co', '.functions.supabase.co');
 
-  async function callFunction(name, { method = 'GET', body = null } = {}) {
+  async function callFunction(name, { method = 'GET', body = null, returnFormat = 'data' } = {}) {
     if (!sb) throw new Error('Supabase not initialized');
     if (!FUNCTIONS_BASE) throw new Error('Functions base URL not configured');
     const { data: { session } } = await sb.auth.getSession();
     if (!session) throw new Error('not-authenticated');
     const headers = {
       'Authorization': `Bearer ${session.access_token}`,
+      'apikey': window.SUPABASE_ANON_KEY || '',
       'Content-Type': 'application/json',
     };
     const res = await fetch(`${FUNCTIONS_BASE}/${name}`, { method, headers, body: body ? JSON.stringify(body) : null });
     const text = await res.text();
     let json = null; try { json = text ? JSON.parse(text) : null; } catch {}
     if (!res.ok) {
-      const msg = json?.error || res.statusText || `HTTP ${res.status}`;
-      throw new Error(msg);
+      const msg = json?.message || json?.error || res.statusText || `HTTP ${res.status}`;
+      const error = new Error(msg);
+      if (returnFormat === 'object') {
+        return { data: null, error };
+      }
+      throw error;
+    }
+    // للتوافق مع الاستدعاءات الموجودة
+    if (returnFormat === 'object') {
+      return { data: json, error: null };
     }
     return json;
   }
@@ -3339,6 +3348,14 @@
     const act = btn.dataset.act;
     if (act === 'view') {
       openMemberDetails(idx);
+      return;
+    }
+    if (act === 'send-invitation') {
+      if (!Number.isInteger(idx) || idx < 0 || idx >= members.length) return;
+      const member = members[idx];
+      if (member && member.id) {
+        sendMemberInvitation(member.id);
+      }
       return;
     }
     if (act === 'change-committee') {
@@ -7634,6 +7651,15 @@
             </div>
             
             <div style="position:absolute; top:16px; left:16px; display:flex; gap:6px">
+              ${!item.user_id ? `
+              <button class="btn btn-sm member-icon-btn" data-act="send-invitation" data-idx="${idx}" title="إرسال دعوة تفعيل" style="width:36px; height:36px; padding:0; border-radius:10px; background:#fff; border:1px solid #d1fae5; color:#10b981; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.06); transition:all 0.2s">
+                <i class="fa-solid fa-envelope" style="font-size:14px"></i>
+              </button>
+              ` : `
+              <button class="btn btn-sm member-icon-btn" disabled title="الحساب مفعّل" style="width:36px; height:36px; padding:0; border-radius:10px; background:#f0fdf4; border:1px solid #bbf7d0; color:#10b981; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.06); cursor:not-allowed; opacity:0.6">
+                <i class="fa-solid fa-check-circle" style="font-size:14px"></i>
+              </button>
+              `}
               <button class="btn btn-sm member-icon-btn" data-act="change-committee" data-idx="${idx}" title="تغيير اللجنة" style="width:36px; height:36px; padding:0; border-radius:10px; background:#fff; border:1px solid #e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.06); transition:all 0.2s">
                 <i class="fa-solid fa-arrow-right-arrow-left" style="font-size:14px"></i>
               </button>
@@ -7700,6 +7726,23 @@
           });
         }
         
+        // Hover effect for send invitation button
+        const sendInvitationBtn = card.querySelector('[data-act="send-invitation"]');
+        if (sendInvitationBtn) {
+          sendInvitationBtn.addEventListener('mouseenter', () => {
+            sendInvitationBtn.style.background = '#10b981';
+            sendInvitationBtn.style.color = '#fff';
+            sendInvitationBtn.style.borderColor = '#10b981';
+            sendInvitationBtn.style.transform = 'scale(1.1)';
+          });
+          sendInvitationBtn.addEventListener('mouseleave', () => {
+            sendInvitationBtn.style.background = '#fff';
+            sendInvitationBtn.style.color = '#10b981';
+            sendInvitationBtn.style.borderColor = '#d1fae5';
+            sendInvitationBtn.style.transform = 'scale(1)';
+          });
+        }
+        
         cardsGrid.appendChild(card);
       });
       membersList.appendChild(block);
@@ -7708,6 +7751,463 @@
     
     // Refresh committee filter options after rendering
     refreshMembersCommitteeFilterOptions();
+  }
+
+  // ============================================
+  // Member Invitations System
+  // ============================================
+  
+  // إرسال دعوة لعضو واحد
+  async function sendMemberInvitation(memberId) {
+    const member = members.find(m => m.id === memberId);
+    
+    if (!member) {
+      return Swal.fire('خطأ', 'لم يتم العثور على العضو', 'error');
+    }
+    
+    if (!member.email) {
+      return Swal.fire('خطأ', 'البريد الإلكتروني مطلوب لإرسال الدعوة', 'error');
+    }
+    
+    if (member.user_id) {
+      return Swal.fire('تنبيه', 'هذا العضو فعّل حسابه مسبقاً', 'info');
+    }
+    
+    try {
+      // عرض رسالة تحميل
+      Swal.fire({
+        title: 'جاري إرسال الدعوة...',
+        html: 'يرجى الانتظار، جاري إرسال البريد الإلكتروني...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+      
+      // استدعاء Edge Function لإرسال الدعوة
+      const { data, error } = await callFunction('send-member-invitation', {
+        method: 'POST',
+        body: {
+          member_id: memberId,
+          email: member.email,
+          full_name: member.full_name || member.name || 'عضو',
+          committee: member.committee || null
+        },
+        returnFormat: 'object'
+      });
+      
+      if (error) throw error;
+      
+      if (!data || !data.success) {
+        throw new Error(data?.message || 'فشل إرسال الدعوة');
+      }
+      
+      // عرض رسالة النجاح مع خيار عرض الرابط
+      Swal.fire({
+        title: '✅ تم إرسال الدعوة بنجاح!',
+        html: `
+          <div style="text-align:right;direction:rtl;padding:20px;">
+            <div style="background:#f0fdf4;border:2px solid #86efac;border-radius:12px;padding:16px;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                <i class="fa-solid fa-user" style="color:#10b981;font-size:20px;"></i>
+                <div>
+                  <div style="font-weight:700;color:#0f172a;font-size:1.1rem;">${escapeHtml(member.full_name || 'عضو')}</div>
+                  <div style="color:#64748b;font-size:0.9rem;margin-top:4px;">${escapeHtml(member.email)}</div>
+                </div>
+              </div>
+              ${member.committee ? `
+                <div style="display:inline-flex;align-items:center;gap:6px;background:#fff;padding:6px 12px;border-radius:8px;font-size:0.85rem;">
+                  <i class="fa-solid fa-users" style="color:#3d8fd6;"></i>
+                  <span style="color:#475569;font-weight:600;">${escapeHtml(member.committee)}</span>
+                </div>
+              ` : ''}
+            </div>
+            
+            <div style="background:#dcfce7;border:2px solid #86efac;border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;">
+              <div style="font-size:3rem;margin-bottom:8px;">📧</div>
+              <p style="margin:0;color:#166534;font-size:1.1rem;font-weight:600;">تم إرسال البريد الإلكتروني!</p>
+              <p style="margin:8px 0 0;color:#15803d;font-size:0.9rem;">تحقق من صندوق الوارد أو البريد المزعج</p>
+            </div>
+            
+            <div style="background:#e0f2fe;border-right:4px solid #0ea5e9;padding:12px 16px;border-radius:8px;">
+              <div style="display:flex;align-items:start;gap:8px;">
+                <i class="fa-solid fa-info-circle" style="color:#0284c7;margin-top:2px;"></i>
+                <div style="color:#075985;font-size:0.85rem;line-height:1.6;">
+                  <strong>ملاحظة:</strong><br>
+                  • تم إرسال رابط التفعيل للبريد الإلكتروني<br>
+                  • الرابط صالح لمدة 7 أيام<br>
+                  • يمكن استخدامه مرة واحدة فقط
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+        icon: 'success',
+        confirmButtonText: 'حسناً',
+        showDenyButton: true,
+        denyButtonText: '🔗 عرض الرابط',
+        confirmButtonColor: '#10b981',
+        denyButtonColor: '#3d8fd6',
+        width: '600px'
+      }).then(async (result) => {
+        if (result.isDenied) {
+          // عرض الرابط إذا طلب المستخدم ذلك
+          const { data: invitationData } = await sb
+            .from('member_invitations')
+            .select('invitation_token')
+            .eq('member_id', memberId)
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          if (invitationData?.invitation_token) {
+            const invitationUrl = `${window.location.origin}/members/activate.html?token=${invitationData.invitation_token}`;
+            
+            Swal.fire({
+              title: 'رابط التفعيل',
+              html: `
+                <div style="text-align:right;direction:rtl;padding:10px;">
+                  <p style="margin-bottom:12px;color:#64748b;font-size:0.9rem;">يمكنك نسخ الرابط وإرساله يدوياً:</p>
+                  <textarea 
+                    id="invitationLinkCopy" 
+                    style="width:100%;padding:14px;border:2px solid #3d8fd6;border-radius:10px;font-size:13px;direction:ltr;text-align:left;font-family:monospace;background:#f8fafc;resize:none;line-height:1.6;"
+                    rows="3"
+                    readonly
+                  >${invitationUrl}</textarea>
+                </div>
+              `,
+              icon: 'info',
+              confirmButtonText: '📋 نسخ',
+              showCancelButton: true,
+              cancelButtonText: 'إغلاق',
+              confirmButtonColor: '#3d8fd6',
+              didOpen: () => {
+                document.getElementById('invitationLinkCopy')?.select();
+              }
+            }).then((copyResult) => {
+              if (copyResult.isConfirmed) {
+                navigator.clipboard.writeText(invitationUrl).then(() => {
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'تم النسخ!',
+                    text: 'تم نسخ الرابط للحافظة',
+                    timer: 1500,
+                    showConfirmButton: false
+                  });
+                }).catch(() => {
+                  Swal.fire('تنبيه', 'فشل النسخ التلقائي', 'warning');
+                });
+              }
+            });
+          }
+        }
+      });
+      
+    } catch (err) {
+      console.error('Error sending invitation:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'فشل إنشاء الدعوة',
+        text: err.message || 'حدث خطأ غير متوقع',
+        confirmButtonText: 'حسناً',
+        confirmButtonColor: '#ef4444'
+      });
+    }
+  }
+  
+  // إرسال دعوات جماعية
+  async function sendBulkInvitations(filterType = 'all', filterValue = null) {
+    try {
+      // تحديد الأعضاء المستهدفين
+      let targetMembers = members.filter(m => !m.user_id && m.email);
+      
+      if (filterType === 'committee' && filterValue) {
+        targetMembers = targetMembers.filter(m => m.committee === filterValue);
+      }
+      
+      if (targetMembers.length === 0) {
+        return Swal.fire({
+          icon: 'info',
+          title: 'لا يوجد أعضاء',
+          text: 'لا يوجد أعضاء غير مفعلين لإرسال دعوات لهم',
+          confirmButtonText: 'حسناً'
+        });
+      }
+      
+      // تأكيد الإرسال
+      const result = await Swal.fire({
+        title: 'تأكيد الإرسال الجماعي',
+        html: `
+          <div style="text-align:right;direction:rtl;padding:10px;">
+            <p style="font-size:1.1rem;margin-bottom:16px;">
+              هل تريد إرسال دعوات تفعيل لـ <strong style="color:#10b981;">${targetMembers.length}</strong> عضو؟
+            </p>
+            ${filterType === 'committee' ? `
+              <div style="background:#f0f9ff;border:2px solid #bae6fd;border-radius:8px;padding:12px;margin-bottom:12px;">
+                <i class="fa-solid fa-users" style="color:#0284c7;"></i>
+                <strong>اللجنة:</strong> ${escapeHtml(filterValue)}
+              </div>
+            ` : ''}
+            <div style="background:#fef3c7;border-right:4px solid #f59e0b;padding:12px;border-radius:8px;font-size:0.9rem;">
+              <i class="fa-solid fa-exclamation-triangle" style="color:#f59e0b;"></i>
+              سيتم إنشاء ${targetMembers.length} دعوة جديدة
+            </div>
+          </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'نعم، أرسل الدعوات',
+        cancelButtonText: 'إلغاء',
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#64748b'
+      });
+      
+      if (!result.isConfirmed) return;
+      
+      // عرض رسالة تحميل
+      Swal.fire({
+        title: 'جاري إرسال الدعوات...',
+        html: `<div style="text-align:center;">
+          <div style="font-size:3rem;margin-bottom:10px;">📧</div>
+          <p>يرجى الانتظار...</p>
+          <p style="color:#64748b;font-size:0.9rem;">جاري إرسال ${targetMembers.length} دعوة عبر البريد الإلكتروني</p>
+          <div id="bulkProgress" style="margin-top:16px;color:#64748b;font-size:0.85rem;"></div>
+        </div>`,
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+      
+      // إرسال الدعوات واحدة تلو الأخرى
+      let successCount = 0;
+      let failedCount = 0;
+      const failedMembers = [];
+      
+      for (let i = 0; i < targetMembers.length; i++) {
+        const member = targetMembers[i];
+        const progressEl = document.getElementById('bulkProgress');
+        if (progressEl) {
+          progressEl.textContent = `جاري الإرسال: ${i + 1} من ${targetMembers.length}`;
+        }
+        
+        try {
+          const { data, error } = await callFunction('send-member-invitation', {
+            method: 'POST',
+            body: {
+              member_id: member.id,
+              email: member.email,
+              full_name: member.full_name || member.name || 'عضو',
+              committee: member.committee || null
+            },
+            returnFormat: 'object'
+          });
+          
+          if (error || !data?.success) {
+            failedCount++;
+            failedMembers.push(member.full_name || member.email);
+          } else {
+            successCount++;
+          }
+        } catch (err) {
+          console.error(`Failed to send invitation to ${member.email}:`, err);
+          failedCount++;
+          failedMembers.push(member.full_name || member.email);
+        }
+        
+        // تأخير بسيط لتجنب تجاوز حد الطلبات
+        if (i < targetMembers.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      
+      // عرض النتائج
+      Swal.fire({
+        icon: successCount > 0 ? 'success' : 'error',
+        title: successCount > 0 ? '✅ تم إرسال الدعوات!' : '❌ فشل الإرسال',
+        html: `
+          <div style="text-align:right;direction:rtl;padding:20px;">
+            <div style="font-size:3rem;margin-bottom:16px;text-align:center;">
+              ${successCount > 0 ? '🎉' : '😞'}
+            </div>
+            
+            ${successCount > 0 ? `
+            <div style="background:#dcfce7;border:2px solid #86efac;border-radius:12px;padding:16px;margin-bottom:16px;">
+              <p style="margin:0;color:#166534;font-size:1.1rem;font-weight:600;text-align:center;">
+                ✅ تم إرسال <strong>${successCount}</strong> دعوة بنجاح
+              </p>
+              <p style="margin:8px 0 0;color:#15803d;font-size:0.9rem;text-align:center;">
+                تم إرسال رسائل البريد الإلكتروني للأعضاء
+              </p>
+            </div>
+            ` : ''}
+            
+            ${failedCount > 0 ? `
+            <div style="background:#fee2e2;border:2px solid #fca5a5;border-radius:12px;padding:16px;margin-bottom:16px;">
+              <p style="margin:0 0 8px;color:#991b1b;font-size:1rem;font-weight:600;">
+                ⚠️ فشل إرسال ${failedCount} دعوة
+              </p>
+              <details style="margin-top:8px;">
+                <summary style="cursor:pointer;color:#dc2626;font-size:0.9rem;">عرض الأعضاء الذين فشل إرسال دعواتهم</summary>
+                <ul style="margin:8px 0;padding-right:20px;color:#7f1d1d;font-size:0.85rem;text-align:right;">
+                  ${failedMembers.map(name => `<li>${escapeHtml(name)}</li>`).join('')}
+                </ul>
+              </details>
+            </div>
+            ` : ''}
+            
+            <div style="background:#e0f2fe;border-right:4px solid #0ea5e9;padding:12px 16px;border-radius:8px;">
+              <div style="display:flex;align-items:start;gap:8px;">
+                <i class="fa-solid fa-info-circle" style="color:#0284c7;margin-top:2px;"></i>
+                <div style="color:#075985;font-size:0.85rem;line-height:1.6;">
+                  <strong>ملاحظة:</strong><br>
+                  • تم إرسال رسائل البريد الإلكتروني للأعضاء<br>
+                  • الروابط صالحة لمدة 7 أيام<br>
+                  ${failedCount > 0 ? '• يمكنك إعادة المحاولة للأعضاء الذين فشل إرسال دعواتهم' : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+        confirmButtonText: 'حسناً',
+        confirmButtonColor: '#10b981',
+        width: '600px'
+      });
+      
+    } catch (err) {
+      console.error('Error sending bulk invitations:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'فشل إنشاء الدعوات',
+        text: err.message || 'حدث خطأ غير متوقع',
+        confirmButtonText: 'حسناً',
+        confirmButtonColor: '#ef4444'
+      });
+    }
+  }
+  
+  // عرض استعلام SQL للحصول على روابط الدعوات
+  function showInvitationsQuery(filterType = 'all', filterValue = null) {
+    let whereClause = "mi.status = 'pending' AND mi.created_at > NOW() - INTERVAL '1 hour'";
+    if (filterType === 'committee' && filterValue) {
+      whereClause += ` AND m.committee = '${filterValue.replace(/'/g, "''")}'`;
+    }
+    
+    const query = `-- الحصول على روابط الدعوات المنشأة حديثاً
+SELECT 
+  m.full_name as "الاسم",
+  m.email as "البريد",
+  m.committee as "اللجنة",
+  'https://www.adeeb.club/members/activate.html?token=' || mi.invitation_token as "رابط_التفعيل",
+  mi.expires_at as "تاريخ_الانتهاء"
+FROM member_invitations mi
+JOIN members m ON m.id = mi.member_id
+WHERE ${whereClause}
+ORDER BY m.committee, m.full_name;`;
+    
+    Swal.fire({
+      title: 'استعلام SQL',
+      html: `
+        <div style="text-align:right;direction:rtl;padding:10px;">
+          <p style="margin-bottom:12px;color:#64748b;">انسخ هذا الاستعلام وشغّله في Supabase SQL Editor:</p>
+          <textarea 
+            id="sqlQuery" 
+            style="width:100%;padding:14px;border:2px solid #3d8fd6;border-radius:10px;font-size:12px;direction:ltr;text-align:left;font-family:monospace;background:#1e293b;color:#e2e8f0;resize:none;line-height:1.6;"
+            rows="12"
+            readonly
+          >${query}</textarea>
+        </div>
+      `,
+      icon: 'info',
+      confirmButtonText: '📋 نسخ الاستعلام',
+      showCancelButton: true,
+      cancelButtonText: 'إغلاق',
+      confirmButtonColor: '#3d8fd6',
+      width: '700px',
+      didOpen: () => {
+        document.getElementById('sqlQuery').select();
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const textarea = document.getElementById('sqlQuery');
+        textarea.select();
+        navigator.clipboard.writeText(query).then(() => {
+          Swal.fire({
+            icon: 'success',
+            title: 'تم النسخ!',
+            text: 'تم نسخ الاستعلام للحافظة',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        });
+      }
+    });
+  }
+  
+  // قائمة خيارات الدعوات الجماعية
+  function showBulkInvitationsMenu() {
+    // الحصول على اللجان الفريدة
+    const committees = [...new Set(members.filter(m => m.committee).map(m => m.committee))].sort();
+    
+    const committeeOptions = committees.map(c => 
+      `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`
+    ).join('');
+    
+    Swal.fire({
+      title: 'إرسال دعوات جماعية',
+      html: `
+        <div style="text-align:right;direction:rtl;padding:20px;">
+          <div style="margin-bottom:20px;">
+            <label style="display:block;font-weight:600;margin-bottom:8px;color:#0f172a;">
+              <i class="fa-solid fa-filter"></i> اختر طريقة الإرسال:
+            </label>
+            <select id="bulkInvitationType" style="width:100%;padding:12px;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
+              <option value="all">جميع الأعضاء غير المفعلين</option>
+              <option value="committee">حسب اللجنة</option>
+            </select>
+          </div>
+          
+          <div id="committeeSelectContainer" style="display:none;margin-bottom:20px;">
+            <label style="display:block;font-weight:600;margin-bottom:8px;color:#0f172a;">
+              <i class="fa-solid fa-users"></i> اختر اللجنة:
+            </label>
+            <select id="committeeSelect" style="width:100%;padding:12px;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
+              ${committeeOptions}
+            </select>
+          </div>
+          
+          <div style="background:#e0f2fe;border-right:4px solid #0ea5e9;padding:12px;border-radius:8px;font-size:0.9rem;">
+            <i class="fa-solid fa-info-circle" style="color:#0284c7;"></i>
+            سيتم إرسال دعوات فقط للأعضاء الذين لم يفعلوا حساباتهم بعد
+          </div>
+        </div>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'متابعة',
+      cancelButtonText: 'إلغاء',
+      confirmButtonColor: '#10b981',
+      cancelButtonColor: '#64748b',
+      didOpen: () => {
+        const typeSelect = document.getElementById('bulkInvitationType');
+        const committeeContainer = document.getElementById('committeeSelectContainer');
+        
+        typeSelect.addEventListener('change', () => {
+          if (typeSelect.value === 'committee') {
+            committeeContainer.style.display = 'block';
+          } else {
+            committeeContainer.style.display = 'none';
+          }
+        });
+      },
+      preConfirm: () => {
+        const type = document.getElementById('bulkInvitationType').value;
+        const committee = document.getElementById('committeeSelect')?.value;
+        return { type, committee };
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const { type, committee } = result.value;
+        sendBulkInvitations(type, type === 'committee' ? committee : null);
+      }
+    });
   }
 
   // Members filter event listeners
@@ -7722,6 +8222,101 @@
     if (committeeFilter) committeeFilter.value = 'all';
     if (completionFilter) completionFilter.value = 'all';
     renderMembers();
+  });
+  
+  // Bulk invitations button
+  document.getElementById('membersBulkInvitationsBtn')?.addEventListener('click', () => {
+    showBulkInvitationsMenu();
+  });
+
+  // Members export functionality
+  function membersCsvEscape(val) {
+    try {
+      const s = String(val != null ? val : '').replace(/"/g, '""');
+      return /[",\r\n]/.test(s) ? `"${s}"` : s;
+    } catch { return ''; }
+  }
+
+  function exportMembersToCSV() {
+    const list = Array.isArray(members) ? members : [];
+    if (!list.length) {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire({
+          icon: 'info',
+          title: 'لا توجد بيانات',
+          text: 'لا يوجد أعضاء لتصديرهم',
+          confirmButtonText: 'حسناً',
+          confirmButtonColor: '#3d8fd6'
+        });
+      }
+      return;
+    }
+
+    const fieldsMap = {
+      id: 'المعرف',
+      membership_number: 'رقم العضوية',
+      full_name: 'الاسم الكامل',
+      email: 'البريد الإلكتروني',
+      phone: 'رقم الجوال',
+      national_id: 'رقم الهوية',
+      academic_number: 'الرقم الجامعي',
+      degree: 'الدرجة العلمية',
+      college: 'الكلية',
+      major: 'التخصص',
+      birth_date: 'تاريخ الميلاد',
+      committee: 'اللجنة',
+      position: 'المنصب',
+      join_date: 'تاريخ الانضمام',
+      status: 'الحالة',
+      social_twitter: 'تويتر',
+      social_instagram: 'إنستقرام',
+      social_linkedin: 'لينكد إن',
+      social_tiktok: 'تيك توك',
+      bio: 'النبذة',
+      skills: 'المهارات',
+      notes: 'ملاحظات'
+    };
+
+    const fields = Object.keys(fieldsMap);
+    const rows = list.map((member) => {
+      const obj = {};
+      fields.forEach((field) => {
+        obj[field] = member[field] != null ? member[field] : '';
+      });
+      return obj;
+    });
+
+    const header = fields.map((k) => membersCsvEscape(fieldsMap[k] || k)).join(',');
+    const body = rows.map((row) => fields.map((k) => membersCsvEscape(row[k])).join(',')).join('\r\n');
+    const csv = '\uFEFF' + header + '\r\n' + body;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const ts = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const name = `members_${ts.getFullYear()}-${pad(ts.getMonth()+1)}-${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}.csv`;
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        icon: 'success',
+        title: 'تم التصدير!',
+        text: `تم تصدير ${list.length} عضو بنجاح`,
+        confirmButtonText: 'حسناً',
+        confirmButtonColor: '#3d8fd6',
+        timer: 2000
+      });
+    }
+  }
+
+  document.getElementById('membersExportBtn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    exportMembersToCSV();
   });
   
   function renderTestimonials() {
@@ -11412,4 +12007,366 @@
       showNotification('حدث خطأ في حفظ الخبر', 'error');
     }
   });
+
+  // ============================================
+  // Membership Archive System
+  // ============================================
+  const ARCHIVE_KEY = 'adeeb_membership_archive';
+  let archivePeriods = [];
+  let currentArchivePeriod = null;
+
+  // Get archive periods from storage
+  function getArchivePeriods() {
+    try {
+      const raw = localStorage.getItem(ARCHIVE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  // Save archive periods to storage
+  function saveArchivePeriods(periods) {
+    try {
+      localStorage.setItem(ARCHIVE_KEY, JSON.stringify(periods));
+    } catch (e) {
+      console.error('Failed to save archive periods:', e);
+    }
+  }
+
+  // Load and render archive periods
+  async function loadArchivePeriods() {
+    archivePeriods = getArchivePeriods();
+    renderArchivePeriods();
+  }
+
+  // Render archive periods grid
+  function renderArchivePeriods() {
+    const grid = document.getElementById('archivePeriodsGrid');
+    const empty = document.getElementById('archivePeriodsEmpty');
+    
+    if (!grid || !empty) return;
+
+    if (archivePeriods.length === 0) {
+      grid.style.display = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+
+    grid.style.display = 'grid';
+    empty.style.display = 'none';
+
+    grid.innerHTML = archivePeriods.map((period, idx) => {
+      const stats = period.stats || {};
+      const total = stats.total || 0;
+      const accepted = stats.accepted || 0;
+      const rejected = stats.rejected || 0;
+      const pending = stats.pending || 0;
+
+      return `
+        <div class="card">
+          <div class="card__body">
+            <div class="card__title">
+              <i class="fa-solid fa-archive"></i> ${escapeHtml(period.name)}
+            </div>
+            <div style="margin:12px 0;font-size:0.9rem;color:#64748b">
+              <div style="margin-bottom:6px">
+                <i class="fa-regular fa-calendar"></i> 
+                ${formatDateReadable(period.startDate)} - ${formatDateReadable(period.endDate)}
+              </div>
+              <div>
+                <i class="fa-solid fa-clock"></i> 
+                حُفظت في: ${formatDateTimeReadable(period.createdAt)}
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0">
+              <div style="padding:8px;background:#f0f9ff;border-radius:6px;text-align:center">
+                <div style="font-size:1.5rem;font-weight:700;color:#3d8fd6">${total}</div>
+                <div style="font-size:0.75rem;color:#64748b">إجمالي الطلبات</div>
+              </div>
+              <div style="padding:8px;background:#f0fdf4;border-radius:6px;text-align:center">
+                <div style="font-size:1.5rem;font-weight:700;color:#10b981">${accepted}</div>
+                <div style="font-size:0.75rem;color:#64748b">مقبول</div>
+              </div>
+            </div>
+            <div class="card__actions">
+              <button class="btn btn-primary" onclick="viewArchivePeriod(${idx})">
+                <i class="fa-solid fa-eye"></i> عرض التفاصيل
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Format date for display
+  function formatDateReadable(dateStr) {
+    try {
+      if (!dateStr) return '—';
+      const d = new Date(dateStr);
+      if (isNaN(d)) return '—';
+      return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch {
+      return '—';
+    }
+  }
+
+  // Show create period dialog
+  window.showCreateArchivePeriod = function() {
+    const dialog = document.getElementById('archiveCreateDialog');
+    if (!dialog) return;
+
+    // Load current membership stats
+    updateArchiveCurrentStats();
+
+    // Set default dates (current month)
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    const startInput = document.getElementById('archivePeriodStartDate');
+    const endInput = document.getElementById('archivePeriodEndDate');
+    
+    if (startInput) startInput.value = firstDay.toISOString().split('T')[0];
+    if (endInput) endInput.value = lastDay.toISOString().split('T')[0];
+
+    dialog.showModal();
+  };
+
+  // Update current stats in create dialog
+  function updateArchiveCurrentStats() {
+    const statsEl = document.getElementById('archiveCurrentStats');
+    if (!statsEl) return;
+
+    const apps = membershipApps || [];
+    const total = apps.length;
+    const accepted = apps.filter(a => a.status === 'accepted').length;
+    const rejected = apps.filter(a => a.status === 'rejected').length;
+    const pending = apps.filter(a => a.status === 'pending').length;
+    const review = apps.filter(a => a.status === 'review').length;
+    const interview = apps.filter(a => a.status === 'interview').length;
+
+    statsEl.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div><strong>الإجمالي:</strong> ${total}</div>
+        <div><strong>مقبول:</strong> ${accepted}</div>
+        <div><strong>مرفوض:</strong> ${rejected}</div>
+        <div><strong>قيد الانتظار:</strong> ${pending}</div>
+        <div><strong>مراجعة:</strong> ${review}</div>
+        <div><strong>مُقابلة:</strong> ${interview}</div>
+      </div>
+    `;
+  }
+
+  // Export applications to Excel
+  function exportApplicationsToExcel(apps, periodName) {
+    if (!window.XLSX) {
+      alert('مكتبة Excel غير محملة. يرجى إعادة تحميل الصفحة.');
+      return;
+    }
+
+    // Prepare data for Excel
+    const data = apps.map(app => ({
+      'الاسم الثلاثي': app.full_name || '',
+      'الجوال': app.phone || '',
+      'البريد الإلكتروني': app.email || '',
+      'الدرجة العلمية': app.degree || '',
+      'الكلية': app.college || '',
+      'التخصص': app.major || '',
+      'اللجنة المفضلة': app.preferred_committee || '',
+      'المهارات': app.skills || '',
+      'الأعمال السابقة': app.portfolio_url || '',
+      'تويتر': app.social_twitter || '',
+      'إنستقرام': app.social_instagram || '',
+      'لينكد إن': app.social_linkedin || '',
+      'النبذة': app.about || '',
+      'الحالة': app.status || '',
+      'تاريخ التقديم': app.created_at ? new Date(app.created_at).toLocaleString('ar-EG') : ''
+    }));
+
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    // Set column widths
+    const colWidths = [
+      { wch: 25 }, // الاسم
+      { wch: 15 }, // الجوال
+      { wch: 25 }, // البريد
+      { wch: 15 }, // الدرجة
+      { wch: 20 }, // الكلية
+      { wch: 20 }, // التخصص
+      { wch: 20 }, // اللجنة
+      { wch: 30 }, // المهارات
+      { wch: 30 }, // الأعمال
+      { wch: 20 }, // تويتر
+      { wch: 20 }, // إنستقرام
+      { wch: 20 }, // لينكد إن
+      { wch: 40 }, // النبذة
+      { wch: 15 }, // الحالة
+      { wch: 20 }  // التاريخ
+    ];
+    ws['!cols'] = colWidths;
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'طلبات العضوية');
+
+    // Generate filename
+    const filename = `${periodName.replace(/\s+/g, '_')}_${Date.now()}.xlsx`;
+
+    // Save file
+    XLSX.writeFile(wb, filename);
+  }
+
+  // Handle create period form submission
+  document.getElementById('archiveCreateForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('archivePeriodName')?.value.trim();
+    const startDate = document.getElementById('archivePeriodStartDate')?.value;
+    const endDate = document.getElementById('archivePeriodEndDate')?.value;
+    const notes = document.getElementById('archivePeriodNotes')?.value.trim();
+
+    if (!name || !startDate || !endDate) {
+      alert('يرجى ملء جميع الحقول المطلوبة');
+      return;
+    }
+
+    // Get current membership applications
+    const apps = membershipApps || [];
+    
+    if (apps.length === 0) {
+      alert('لا توجد طلبات عضوية لأرشفتها');
+      return;
+    }
+
+    const stats = {
+      total: apps.length,
+      accepted: apps.filter(a => a.status === 'accepted').length,
+      rejected: apps.filter(a => a.status === 'rejected').length,
+      pending: apps.filter(a => a.status === 'pending').length,
+      review: apps.filter(a => a.status === 'review').length,
+      interview: apps.filter(a => a.status === 'interview').length
+    };
+
+    // Export to Excel first
+    exportApplicationsToExcel(apps, name);
+
+    // Create period object (without storing full applications to save space)
+    const period = {
+      id: Date.now().toString(),
+      name,
+      startDate,
+      endDate,
+      notes,
+      createdAt: new Date().toISOString(),
+      stats,
+      applicationsCount: apps.length,
+      applications: apps // Keep for re-export if needed
+    };
+
+    // Save to archive
+    archivePeriods.unshift(period);
+    saveArchivePeriods(archivePeriods);
+
+    // Clear current applications from database if using Supabase
+    if (sb) {
+      try {
+        const appIds = apps.map(a => a.id).filter(id => id != null);
+        if (appIds.length > 0) {
+          await sb.from('membership_applications').delete().in('id', appIds);
+        }
+      } catch (e) {
+        console.warn('Failed to delete applications from database:', e);
+      }
+    }
+
+    // Clear local storage
+    membershipApps = [];
+    save(KEYS.membership_apps, membershipApps);
+
+    // Close dialog and refresh
+    document.getElementById('archiveCreateDialog')?.close();
+    await loadArchivePeriods();
+    await loadMembershipApps();
+
+    alert('تم أرشفة الفترة بنجاح!\n\n✓ تم تصدير البيانات كملف Excel\n✓ تم حذف الطلبات من قاعدة البيانات\n✓ تم حفظ معلومات الفترة في السجل');
+  });
+
+  // View archive period details
+  window.viewArchivePeriod = function(index) {
+    if (index < 0 || index >= archivePeriods.length) return;
+    
+    currentArchivePeriod = archivePeriods[index];
+    const period = currentArchivePeriod;
+
+    // Update dialog content
+    document.getElementById('archivePeriodDetailsTitle').textContent = period.name;
+    document.getElementById('archiveDetailName').textContent = period.name;
+    document.getElementById('archiveDetailStartDate').textContent = formatDateReadable(period.startDate);
+    document.getElementById('archiveDetailEndDate').textContent = formatDateReadable(period.endDate);
+    document.getElementById('archiveDetailCreatedAt').textContent = formatDateTimeReadable(period.createdAt);
+    document.getElementById('archiveDetailNotes').textContent = period.notes || 'لا توجد ملاحظات';
+
+    const stats = period.stats || {};
+    document.getElementById('archiveDetailStats').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div><strong>الإجمالي:</strong> ${stats.total || 0}</div>
+        <div><strong>مقبول:</strong> ${stats.accepted || 0}</div>
+        <div><strong>مرفوض:</strong> ${stats.rejected || 0}</div>
+        <div><strong>قيد الانتظار:</strong> ${stats.pending || 0}</div>
+        <div><strong>مراجعة:</strong> ${stats.review || 0}</div>
+        <div><strong>مُقابلة:</strong> ${stats.interview || 0}</div>
+      </div>
+    `;
+
+    document.getElementById('archivePeriodDetailsDialog')?.showModal();
+  };
+
+  // Export archive period data as Excel
+  document.getElementById('archiveExportBtn')?.addEventListener('click', () => {
+    if (!currentArchivePeriod) return;
+
+    const apps = currentArchivePeriod.applications || [];
+    if (apps.length === 0) {
+      alert('لا توجد بيانات طلبات لتصديرها');
+      return;
+    }
+
+    exportApplicationsToExcel(apps, currentArchivePeriod.name);
+    alert('تم تصدير البيانات كملف Excel بنجاح');
+  });
+
+  // Delete archive period
+  document.getElementById('archiveDeleteBtn')?.addEventListener('click', async () => {
+    if (!currentArchivePeriod) return;
+
+    const confirmed = confirm(`هل أنت متأكد من حذف الفترة "${currentArchivePeriod.name}"؟\n\nتأكد من تصدير البيانات أولاً لأن هذا الإجراء لا يمكن التراجع عنه.`);
+    if (!confirmed) return;
+
+    // Remove from array
+    archivePeriods = archivePeriods.filter(p => p.id !== currentArchivePeriod.id);
+    saveArchivePeriods(archivePeriods);
+
+    // Close dialog and refresh
+    document.getElementById('archivePeriodDetailsDialog')?.close();
+    await loadArchivePeriods();
+
+    alert('تم حذف الفترة بنجاح');
+    currentArchivePeriod = null;
+  });
+
+  // Initialize archive button
+  document.getElementById('archiveCreatePeriodBtn')?.addEventListener('click', showCreateArchivePeriod);
+
+  // Load archive periods when section is opened
+  const originalGoTo = window.goTo;
+  window.goTo = function(id) {
+    if (originalGoTo) originalGoTo(id);
+    if (id === '#section-membership-archive') {
+      loadArchivePeriods();
+    }
+  };
+
 })();
