@@ -172,118 +172,140 @@ serve(async (req) => {
 
     // Prepare email content
     const emailHtml = `
-<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>دعوة تفعيل حساب أديب</title>
-</head>
-<body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f5f7fa;direction:rtl;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fa;padding:40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;box-shadow:0 4px 6px rgba(0,0,0,0.1);overflow:hidden;">
-          
-          <!-- Header -->
-          <tr>
-            <td style="background:linear-gradient(135deg, #274060 0%, #3d8fd6 100%);padding:40px 30px;text-align:center;">
-              <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">🎉 مرحباً بك في نادي أديب!</h1>
-            </td>
-          </tr>
-          
-          <!-- Content -->
-          <tr>
-            <td style="padding:40px 30px;">
-              <p style="margin:0 0 20px;color:#0f172a;font-size:18px;line-height:1.6;">
-                مرحباً <strong>${full_name}</strong>،
-              </p>
-              
-              <p style="margin:0 0 20px;color:#475569;font-size:16px;line-height:1.6;">
-                يسعدنا انضمامك لعائلة نادي أديب! تم إنشاء حساب خاص بك في منصة النادي.
-              </p>
-              
-              ${committee ? `
-              <div style="background:#f0f9ff;border-right:4px solid #0ea5e9;padding:16px;border-radius:8px;margin:20px 0;">
-                <p style="margin:0;color:#0c4a6e;font-size:15px;">
-                  <strong>📋 لجنتك:</strong> ${committee}
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>دعوة تفعيل حساب أديب</title>
+  </head>
+  <body style="margin:0;background:#f6f9fc;color:#274060;font-family:-apple-system,Segoe UI,Tahoma,Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f9fc;direction:rtl;">
+      <tr>
+        <td align="center" style="padding:24px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6eef7;">
+            
+            <!-- Header Gradient Bar -->
+            <tr>
+              <td style="height:4px;background:linear-gradient(135deg,#3d8fd6,#274060);"></td>
+            </tr>
+            
+            <!-- Logo Section -->
+            <tr>
+              <td style="padding:24px 24px 8px 24px;text-align:center;">
+                <img src="https://www.adeeb.club/adeeb-logo.png" alt="شعار نادي أدِيب" width="80" style="display:block;margin:0 auto 8px auto;" />
+              </td>
+            </tr>
+            
+            <!-- Main Content -->
+            <tr>
+              <td style="padding:8px 24px 0 24px;">
+                <h1 style="margin:0 0 12px 0;font-size:22px;line-height:1.5;color:#274060;text-align:center;">مرحباً بك في نادي أديب!</h1>
+                
+                <p style="margin:0 0 16px 0;font-size:15px;line-height:1.9;color:#335c81;">
+                  أهلاً أهلاً <strong>${full_name}</strong>،
                 </p>
-              </div>
-              ` : ''}
-              
-              <p style="margin:20px 0;color:#475569;font-size:16px;line-height:1.6;">
-                لتفعيل حسابك وإنشاء كلمة مرور، يرجى الضغط على الزر أدناه:
-              </p>
-              
-              <!-- CTA Button -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin:30px 0;">
-                <tr>
-                  <td align="center">
-                    <a href="${activationUrl}" style="display:inline-block;background:#10b981;color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:12px;font-size:18px;font-weight:600;box-shadow:0 4px 6px rgba(16,185,129,0.3);">
-                      🔓 تفعيل الحساب
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-              <p style="margin:20px 0;color:#64748b;font-size:14px;line-height:1.6;">
-                أو انسخ الرابط التالي والصقه في المتصفح:
-              </p>
-              
-              <div style="background:#f8fafc;border:2px solid #e2e8f0;border-radius:8px;padding:12px;margin:10px 0;word-break:break-all;">
-                <a href="${activationUrl}" style="color:#3d8fd6;text-decoration:none;font-size:13px;font-family:monospace;">${activationUrl}</a>
-              </div>
-              
-              <!-- Warning Box -->
-              <div style="background:#fef3c7;border-right:4px solid #f59e0b;padding:16px;border-radius:8px;margin:30px 0;">
-                <p style="margin:0 0 8px;color:#92400e;font-size:15px;font-weight:600;">
-                  ⏰ مهم:
+                
+                <p style="margin:0 0 16px 0;font-size:15px;line-height:1.9;color:#335c81;">
+                  منوّر منصة أديب.
                 </p>
-                <p style="margin:0;color:#78350f;font-size:14px;line-height:1.6;">
-                  • هذا الرابط صالح لمدة <strong>7 أيام</strong> فقط<br>
-                  • يمكن استخدامه <strong>مرة واحدة</strong> فقط<br>
-                  • لا تشارك هذا الرابط مع أحد
+                
+                ${committee ? `
+                <div style="background:#f0f9ff;border-right:3px solid #3d8fd6;padding:12px 16px;border-radius:8px;margin:16px 0;">
+                  <p style="margin:0;color:#274060;font-size:14px;font-weight:600;">
+                    📋 لجنتك: <span style="font-weight:400;">${committee}</span>
+                  </p>
+                </div>
+                ` : ''}
+                
+                <p style="margin:16px 0;font-size:15px;line-height:1.9;color:#335c81;">
+                  لتفعيل حسابك وإنشاء كلمة مرور، يرجى الضغط على الزر أدناه:
                 </p>
-              </div>
-              
-              <p style="margin:20px 0;color:#475569;font-size:15px;line-height:1.6;">
-                بعد التفعيل، ستتمكن من:
-              </p>
-              
-              <ul style="color:#475569;font-size:15px;line-height:1.8;margin:10px 0;padding-right:20px;">
-                <li>الوصول إلى لوحة التحكم الخاصة بك</li>
-                <li>تحديث بياناتك الشخصية</li>
-                <li>متابعة أنشطة النادي</li>
-                <li>التواصل مع أعضاء اللجنة</li>
-              </ul>
-            </td>
-          </tr>
-          
-          <!-- Footer -->
-          <tr>
-            <td style="background:#f8fafc;padding:30px;text-align:center;border-top:1px solid #e2e8f0;">
-              <p style="margin:0 0 10px;color:#64748b;font-size:14px;">
-                نادي أديب - جامعة الملك فيصل
-              </p>
-              <p style="margin:0 0 15px;color:#94a3b8;font-size:13px;">
-                نادي ثقافي إبداعي يُثري المحتوى الثقافي والإبداعي
-              </p>
-              <div style="margin:15px 0;">
-                <a href="https://www.adeeb.club" style="color:#3d8fd6;text-decoration:none;margin:0 10px;font-size:13px;">🌐 الموقع</a>
-                <a href="https://twitter.com/AB_KFU" style="color:#3d8fd6;text-decoration:none;margin:0 10px;font-size:13px;">🐦 تويتر</a>
-                <a href="https://instagram.com/adeeb_kfu" style="color:#3d8fd6;text-decoration:none;margin:0 10px;font-size:13px;">📷 انستقرام</a>
-              </div>
-              <p style="margin:15px 0 0;color:#94a3b8;font-size:12px;">
-                إذا لم تطلب هذه الدعوة، يرجى تجاهل هذا البريد
-              </p>
-            </td>
-          </tr>
-          
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
+              </td>
+            </tr>
+            
+            <!-- CTA Button -->
+            <tr>
+              <td align="center" style="padding:16px 24px;">
+                <a href="${activationUrl}" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#3d8fd6,#274060);color:#ffffff;text-decoration:none;border-radius:10px;font-weight:700;font-size:16px;box-shadow:0 2px 8px rgba(61,143,214,0.25);">
+                  🔓 تفعيل الحساب
+                </a>
+              </td>
+            </tr>
+            
+            <!-- Alternative Link -->
+            <tr>
+              <td style="padding:0 24px 16px 24px;">
+                <p style="margin:0 0 8px 0;font-size:13px;line-height:1.8;color:#5b708d;">
+                  إذا لم يعمل الزر، انسخ الرابط التالي والصقه في المتصفح:
+                </p>
+                <div style="background:#f8fafc;border:1px solid #e6eef7;border-radius:8px;padding:10px;word-break:break-all;">
+                  <a href="${activationUrl}" style="color:#3d8fd6;text-decoration:none;font-size:12px;">${activationUrl}</a>
+                </div>
+              </td>
+            </tr>
+            
+            <!-- Warning Box -->
+            <tr>
+              <td style="padding:0 24px 16px 24px;">
+                <div style="background:#fff7ed;border-right:3px solid #f59e0b;padding:12px 16px;border-radius:8px;">
+                  <p style="margin:0 0 6px 0;color:#92400e;font-size:13px;font-weight:600;">
+                    ⏰ مهم:
+                  </p>
+                  <p style="margin:0;color:#78350f;font-size:13px;line-height:1.7;">
+                    • هذا الرابط صالح لمدة <strong>7 أيام</strong> فقط<br>
+                    • يمكن استخدامه <strong>مرة واحدة</strong> فقط<br>
+                    • لا تشارك هذا الرابط مع أحد
+                  </p>
+                </div>
+              </td>
+            </tr>
+            
+            <!-- Features List -->
+            <tr>
+              <td style="padding:0 24px 16px 24px;">
+                <p style="margin:0 0 10px 0;font-size:14px;line-height:1.8;color:#335c81;font-weight:600;">
+                  بعد التفعيل، ستتمكن من:
+                </p>
+                <ul style="margin:0;padding:0 0 0 20px;color:#5b708d;font-size:14px;line-height:1.9;">
+                  <li>الوصول إلى لوحة التحكم الخاصة بك</li>
+                  <li>تحديث بياناتك الشخصية</li>
+                  <li>متابعة أنشطة النادي</li>
+                </ul>
+              </td>
+            </tr>
+            
+            <!-- Footer -->
+            <tr>
+              <td style="padding:16px 24px 24px 24px;">
+                <hr style="border:none;border-top:1px solid #e6eef7;margin:0 0 16px 0;" />
+                
+                <p style="margin:0 0 8px 0;font-size:13px;color:#274060;font-weight:600;text-align:center;">
+                  نادي أديب - جامعة الملك فيصل
+                </p>
+                <p style="margin:0 0 12px 0;font-size:12px;color:#6b7d93;text-align:center;">
+                  نادي ثقافي إبداعي يُثري المحتوى الثقافي والإبداعي
+                </p>
+                
+                <div style="text-align:center;margin:12px 0;">
+                  <a href="https://www.adeeb.club" style="color:#3d8fd6;text-decoration:none;margin:0 8px;font-size:12px;">🌐 الموقع</a>
+                  <span style="color:#cbd5e1;">•</span>
+                  <a href="https://twitter.com/AB_KFU" style="color:#3d8fd6;text-decoration:none;margin:0 8px;font-size:12px;">🐦 تويتر</a>
+                  <span style="color:#cbd5e1;">•</span>
+                  <a href="https://instagram.com/adeeb_kfu" style="color:#3d8fd6;text-decoration:none;margin:0 8px;font-size:12px;">📷 انستقرام</a>
+                </div>
+                
+                <p style="margin:6px 0 0 0;font-size:11px;color:#94a3b8;text-align:center;">
+                  للاستفسار: <a href="mailto:adeab.kfu@gmail.com" style="color:#3d8fd6;text-decoration:none;">adeab.kfu@gmail.com</a>
+                </p>
+              </td>
+            </tr>
+            
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>
     `
 

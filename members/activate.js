@@ -233,10 +233,12 @@ activationForm.addEventListener('submit', async (e) => {
 
   try {
     // إنشاء حساب في Supabase Auth
+    // تعطيل تأكيد البريد الإلكتروني لأن العضو مدعو بالفعل
     const { data: authData, error: signUpError } = await sb.auth.signUp({
       email: invitationData.email,
       password: password,
       options: {
+        emailRedirectTo: window.location.origin + '/members/dashboard.html',
         data: {
           display_name: invitationData.members.full_name,
           member_id: invitationData.member_id,
@@ -302,10 +304,19 @@ activationForm.addEventListener('submit', async (e) => {
     
     let errorMsg = 'حدث خطأ أثناء تفعيل الحساب';
     
-    if (err.message.includes('already registered')) {
-      errorMsg = 'هذا البريد الإلكتروني مسجل مسبقاً';
+    // معالجة أخطاء محددة
+    if (err.message.includes('rate limit') || err.message.includes('Too Many Requests') || err.status === 429) {
+      errorMsg = 'تم تجاوز الحد المسموح من المحاولات. يرجى الانتظار 5-10 دقائق ثم المحاولة مرة أخرى.';
+      // إضافة معلومات إضافية للمطورين
+      console.warn('Rate limit exceeded. Please wait before retrying or increase email_sent in supabase/config.toml');
+    } else if (err.message.includes('already registered') || err.message.includes('User already registered')) {
+      errorMsg = 'هذا البريد الإلكتروني مسجل مسبقاً. يمكنك تسجيل الدخول مباشرة.';
     } else if (err.message.includes('password')) {
-      errorMsg = 'كلمة المرور غير صالحة';
+      errorMsg = 'كلمة المرور غير صالحة. يرجى التأكد من استيفاء جميع المتطلبات.';
+    } else if (err.message.includes('email')) {
+      errorMsg = 'البريد الإلكتروني غير صالح';
+    } else if (err.message.includes('network') || err.message.includes('fetch')) {
+      errorMsg = 'خطأ في الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.';
     }
     
     showFormAlert('error', errorMsg);
