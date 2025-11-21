@@ -269,17 +269,6 @@ activationForm.addEventListener('submit', async (e) => {
       throw updateError;
     }
 
-    // التحقق من نجاح الربط
-    const { data: verifyMember, error: verifyError } = await sb
-      .from('members')
-      .select('user_id, account_status')
-      .eq('id', invitationData.member_id)
-      .single();
-
-    if (verifyError || !verifyMember || !verifyMember.user_id) {
-      throw new Error('فشل ربط الحساب ببيانات العضوية');
-    }
-
     // تحديث حالة الدعوة
     const { error: invitationError } = await sb
       .from('member_invitations')
@@ -315,6 +304,19 @@ activationForm.addEventListener('submit', async (e) => {
       console.warn('Auto sign-in failed:', signInError);
       // لا نرمي خطأ هنا، فقط نعرض رسالة النجاح
       // المستخدم يمكنه تسجيل الدخول يدوياً
+    } else {
+      // التحقق من نجاح الربط بعد تسجيل الدخول
+      const { data: verifyMember, error: verifyError } = await sb
+        .from('members')
+        .select('user_id, account_status')
+        .eq('user_id', authData.user.id)
+        .single();
+
+      if (verifyError || !verifyMember) {
+        console.warn('Could not verify member data:', verifyError);
+      } else {
+        console.log('Account activation verified successfully');
+      }
     }
 
     // عرض رسالة النجاح

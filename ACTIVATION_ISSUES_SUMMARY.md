@@ -41,6 +41,19 @@
 
 ---
 
+### 4. ❌ 406 Not Acceptable - RLS Error
+**الخطأ**: `GET /rest/v1/members 406 (Not Acceptable)` - فشل ربط الحساب
+
+**السبب**: محاولة قراءة بيانات العضو قبل تسجيل الدخول، RLS يرفض الطلب
+
+**الحل**:
+- ✅ نقل التحقق من الربط إلى **بعد** تسجيل الدخول
+- ✅ استخدام `user_id` بدلاً من `member_id` في الاستعلام
+
+📄 **التفاصيل**: `FIX_RLS_406_ERROR.md`
+
+---
+
 ## التحسينات المطبقة في الكود
 
 ### في `activate.js`:
@@ -58,17 +71,7 @@ if (err.message.includes('rate limit')) {
 }
 ```
 
-#### 2. التحقق من الربط
-```javascript
-// التحقق من نجاح ربط user_id
-const { data: verifyMember } = await sb
-  .from('members')
-  .select('user_id, account_status')
-  .eq('id', invitationData.member_id)
-  .single();
-```
-
-#### 3. تسجيل دخول تلقائي
+#### 2. تسجيل دخول تلقائي
 ```javascript
 // تسجيل الدخول تلقائياً
 const { error: signInError } = await sb.auth.signInWithPassword({
@@ -98,9 +101,9 @@ const { error: signInError } = await sb.auth.signInWithPassword({
    ↓
 8. update members - ربط user_id ✅
    ↓
-9. verify - التحقق من الربط ✅
+9. signInWithPassword() - تسجيل دخول ✅
    ↓
-10. signInWithPassword() - تسجيل دخول ✅
+10. verify - التحقق من الربط (بعد تسجيل الدخول) ✅
    ↓
 11. عرض رسالة النجاح ✅
    ↓
@@ -176,6 +179,7 @@ Sender: noreply@adeeb.club
 | `FIX_SIGNUP_EMAIL_ERROR.md` | حل خطأ إرسال البريد |
 | `QUICK_FIX_EMAIL_ERROR.md` | حل سريع لخطأ البريد |
 | `FIX_AUTO_LOGIN_AFTER_ACTIVATION.md` | حل مشكلة تسجيل الدخول |
+| `FIX_RLS_406_ERROR.md` | حل خطأ RLS 406 |
 | `ACTIVATION_ISSUES_SUMMARY.md` | هذا الملف - ملخص شامل |
 
 ---
