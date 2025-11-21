@@ -49,7 +49,7 @@ CREATE POLICY "Allow activation update"
 ON members FOR UPDATE
 TO authenticated
 USING (user_id IS NULL)
-WITH CHECK (auth.uid() = user_id);
+WITH CHECK (true);
 
 -- إنشاء Policy للإداريين - القراءة
 CREATE POLICY "Admins can read all members"

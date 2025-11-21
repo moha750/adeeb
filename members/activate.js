@@ -273,7 +273,12 @@ activationForm.addEventListener('submit', async (e) => {
 
     // الآن يمكننا تحديث بيانات العضو (RLS سيسمح لأن auth.uid() موجود)
     console.log('Updating member:', invitationData.member_id, 'with user_id:', authData.user.id);
-    const { data: updateData, error: updateError } = await sb
+    
+    // التحقق من auth.uid() الحالي
+    const { data: { user: currentUser } } = await sb.auth.getUser();
+    console.log('Current auth.uid():', currentUser?.id);
+    
+    const { data: updateData, error: updateError, status, statusText } = await sb
       .from('members')
       .update({
         user_id: authData.user.id,
@@ -283,13 +288,33 @@ activationForm.addEventListener('submit', async (e) => {
       .eq('id', invitationData.member_id)
       .select();
 
+    console.log('Update response:', { data: updateData, error: updateError, status, statusText });
+
     if (updateError) {
-      console.error('Update error:', updateError);
+      console.error('Update error details:', {
+        message: updateError.message,
+        code: updateError.code,
+        details: updateError.details,
+        hint: updateError.hint
+      });
       throw updateError;
     }
 
     if (!updateData || updateData.length === 0) {
-      console.error('Update returned no data. Member ID might not exist or RLS blocked the update.');
+      console.error('Update returned no data. Possible causes:');
+      console.error('1. Member ID does not exist:', invitationData.member_id);
+      console.error('2. RLS blocked the update');
+      console.error('3. Row was not found with the given ID');
+      
+      // محاولة قراءة الصف للتحقق من وجوده
+      const { data: checkData, error: checkError } = await sb
+        .from('members')
+        .select('id, user_id, account_status')
+        .eq('id', invitationData.member_id)
+        .maybeSingle();
+      
+      console.error('Row check result:', { data: checkData, error: checkError });
+      
       throw new Error('فشل تحديث بيانات العضوية. يرجى التواصل مع الإدارة.');
     }
 

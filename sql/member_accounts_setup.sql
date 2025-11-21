@@ -101,11 +101,31 @@ USING (
   )
 );
 
--- السماح للإداريين بإدارة كل الأعضاء
+-- السماح للإداريين بإضافة أعضاء جدد
+DROP POLICY IF EXISTS "Admins can insert members" ON members;
+CREATE POLICY "Admins can insert members"
+ON members FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM admins
+    WHERE admins.user_id = auth.uid()
+    AND admins.is_admin = true
+  )
+);
+
+-- السماح للإداريين بإدارة كل الأعضاء (تحديث وحذف)
 DROP POLICY IF EXISTS "Admins can manage all members" ON members;
 CREATE POLICY "Admins can manage all members"
 ON members FOR ALL
 USING (
+  EXISTS (
+    SELECT 1 FROM admins
+    WHERE admins.user_id = auth.uid()
+    AND admins.is_admin = true
+  )
+)
+WITH CHECK (
   EXISTS (
     SELECT 1 FROM admins
     WHERE admins.user_id = auth.uid()

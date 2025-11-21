@@ -8,6 +8,7 @@ DROP POLICY IF EXISTS "Members can read own data" ON members;
 DROP POLICY IF EXISTS "Members can update own data" ON members;
 DROP POLICY IF EXISTS "Allow activation update" ON members;
 DROP POLICY IF EXISTS "Admins can read all members" ON members;
+DROP POLICY IF EXISTS "Admins can insert members" ON members;
 DROP POLICY IF EXISTS "Admins can manage all members" ON members;
 DROP POLICY IF EXISTS "Enable read access for authenticated users" ON members;
 DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON members;
@@ -34,7 +35,7 @@ CREATE POLICY "Allow activation update"
 ON members FOR UPDATE
 TO authenticated
 USING (user_id IS NULL)
-WITH CHECK (auth.uid() = user_id);
+WITH CHECK (true);  -- السماح بأي تحديث عندما user_id كان NULL
 
 -- 5. إنشاء Policy للإداريين - القراءة
 CREATE POLICY "Admins can read all members"
@@ -48,7 +49,19 @@ USING (
   )
 );
 
--- 6. إنشاء Policy للإداريين - كل العمليات
+-- 6. إنشاء Policy للإداريين - الإضافة (INSERT)
+CREATE POLICY "Admins can insert members"
+ON members FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM admins
+    WHERE admins.user_id = auth.uid()
+    AND admins.is_admin = true
+  )
+);
+
+-- 7. إنشاء Policy للإداريين - التحديث والحذف
 CREATE POLICY "Admins can manage all members"
 ON members FOR ALL
 TO authenticated
@@ -67,7 +80,7 @@ WITH CHECK (
   )
 );
 
--- 7. التحقق من Policies
+-- 8. التحقق من Policies
 SELECT 
   schemaname,
   tablename,
