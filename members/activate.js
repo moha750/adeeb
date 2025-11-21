@@ -305,9 +305,11 @@ activationForm.addEventListener('submit', async (e) => {
     let errorMsg = 'حدث خطأ أثناء تفعيل الحساب';
     
     // معالجة أخطاء محددة
-    if (err.message.includes('rate limit') || err.message.includes('Too Many Requests') || err.status === 429) {
+    if (err.message.includes('confirmation email') || err.message.includes('sending email')) {
+      errorMsg = 'خطأ في إعدادات البريد الإلكتروني. يرجى التواصل مع الإدارة.';
+      console.error('Email configuration error. Please disable email confirmations in Supabase Dashboard or configure SMTP. See FIX_SIGNUP_EMAIL_ERROR.md');
+    } else if (err.message.includes('rate limit') || err.message.includes('Too Many Requests') || err.status === 429) {
       errorMsg = 'تم تجاوز الحد المسموح من المحاولات. يرجى الانتظار 5-10 دقائق ثم المحاولة مرة أخرى.';
-      // إضافة معلومات إضافية للمطورين
       console.warn('Rate limit exceeded. Please wait before retrying or increase email_sent in supabase/config.toml');
     } else if (err.message.includes('already registered') || err.message.includes('User already registered')) {
       errorMsg = 'هذا البريد الإلكتروني مسجل مسبقاً. يمكنك تسجيل الدخول مباشرة.';
