@@ -255,19 +255,45 @@ activationForm.addEventListener('submit', async (e) => {
       throw new Error('فشل إنشاء الحساب');
     }
 
-    // ربط user_id بجدول members
-    const { error: updateError } = await sb
+    console.log('Account created successfully. User ID:', authData.user.id);
+
+    // تسجيل الدخول فوراً لإنشاء session (مطلوب لـ RLS)
+    console.log('Signing in to create session...');
+    const { error: signInError } = await sb.auth.signInWithPassword({
+      email: invitationData.email,
+      password: password
+    });
+
+    if (signInError) {
+      console.error('Sign-in error:', signInError);
+      throw new Error('فشل تسجيل الدخول بعد إنشاء الحساب. يرجى تسجيل الدخول يدوياً.');
+    }
+
+    console.log('Signed in successfully. Session created.');
+
+    // الآن يمكننا تحديث بيانات العضو (RLS سيسمح لأن auth.uid() موجود)
+    console.log('Updating member:', invitationData.member_id, 'with user_id:', authData.user.id);
+    const { data: updateData, error: updateError } = await sb
       .from('members')
       .update({
         user_id: authData.user.id,
         account_status: 'active',
         account_activated_at: new Date().toISOString()
       })
-      .eq('id', invitationData.member_id);
+      .eq('id', invitationData.member_id)
+      .select();
 
     if (updateError) {
+      console.error('Update error:', updateError);
       throw updateError;
     }
+
+    if (!updateData || updateData.length === 0) {
+      console.error('Update returned no data. Member ID might not exist or RLS blocked the update.');
+      throw new Error('فشل تحديث بيانات العضوية. يرجى التواصل مع الإدارة.');
+    }
+
+    console.log('Member updated successfully:', updateData);
 
     // تحديث حالة الدعوة
     const { error: invitationError } = await sb
@@ -294,29 +320,19 @@ activationForm.addEventListener('submit', async (e) => {
       console.warn('Failed to log activity:', logError);
     }
 
-    // تسجيل الدخول تلقائياً بعد التفعيل
-    const { error: signInError } = await sb.auth.signInWithPassword({
-      email: invitationData.email,
-      password: password
-    });
+    // التحقق النهائي من نجاح الربط
+    const { data: verifyMember, error: verifyError } = await sb
+      .from('members')
+      .select('user_id, account_status')
+      .eq('user_id', authData.user.id)
+      .maybeSingle();
 
-    if (signInError) {
-      console.warn('Auto sign-in failed:', signInError);
-      // لا نرمي خطأ هنا، فقط نعرض رسالة النجاح
-      // المستخدم يمكنه تسجيل الدخول يدوياً
+    if (verifyError) {
+      console.warn('Verification query error:', verifyError);
+    } else if (!verifyMember) {
+      console.warn('Member data not found after activation. This might be a timing issue.');
     } else {
-      // التحقق من نجاح الربط بعد تسجيل الدخول
-      const { data: verifyMember, error: verifyError } = await sb
-        .from('members')
-        .select('user_id, account_status')
-        .eq('user_id', authData.user.id)
-        .single();
-
-      if (verifyError || !verifyMember) {
-        console.warn('Could not verify member data:', verifyError);
-      } else {
-        console.log('Account activation verified successfully');
-      }
+      console.log('Account activation verified successfully:', verifyMember);
     }
 
     // عرض رسالة النجاح

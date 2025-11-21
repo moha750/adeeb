@@ -6,6 +6,7 @@
 -- 1. حذف جميع Policies القديمة
 DROP POLICY IF EXISTS "Members can read own data" ON members;
 DROP POLICY IF EXISTS "Members can update own data" ON members;
+DROP POLICY IF EXISTS "Allow activation update" ON members;
 DROP POLICY IF EXISTS "Admins can read all members" ON members;
 DROP POLICY IF EXISTS "Admins can manage all members" ON members;
 DROP POLICY IF EXISTS "Enable read access for authenticated users" ON members;
@@ -26,6 +27,13 @@ CREATE POLICY "Members can update own data"
 ON members FOR UPDATE
 TO authenticated
 USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- 4b. السماح بتحديث user_id أثناء التفعيل (عندما يكون NULL)
+CREATE POLICY "Allow activation update"
+ON members FOR UPDATE
+TO authenticated
+USING (user_id IS NULL)
 WITH CHECK (auth.uid() = user_id);
 
 -- 5. إنشاء Policy للإداريين - القراءة

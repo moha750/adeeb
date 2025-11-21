@@ -44,6 +44,13 @@ TO authenticated
 USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
+-- السماح بتحديث user_id أثناء التفعيل
+CREATE POLICY "Allow activation update"
+ON members FOR UPDATE
+TO authenticated
+USING (user_id IS NULL)
+WITH CHECK (auth.uid() = user_id);
+
 -- إنشاء Policy للإداريين - القراءة
 CREATE POLICY "Admins can read all members"
 ON members FOR SELECT
