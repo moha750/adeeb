@@ -269,6 +269,17 @@ activationForm.addEventListener('submit', async (e) => {
       throw updateError;
     }
 
+    // التحقق من نجاح الربط
+    const { data: verifyMember, error: verifyError } = await sb
+      .from('members')
+      .select('user_id, account_status')
+      .eq('id', invitationData.member_id)
+      .single();
+
+    if (verifyError || !verifyMember || !verifyMember.user_id) {
+      throw new Error('فشل ربط الحساب ببيانات العضوية');
+    }
+
     // تحديث حالة الدعوة
     const { error: invitationError } = await sb
       .from('member_invitations')
@@ -292,6 +303,18 @@ activationForm.addEventListener('submit', async (e) => {
       });
     } catch (logError) {
       console.warn('Failed to log activity:', logError);
+    }
+
+    // تسجيل الدخول تلقائياً بعد التفعيل
+    const { error: signInError } = await sb.auth.signInWithPassword({
+      email: invitationData.email,
+      password: password
+    });
+
+    if (signInError) {
+      console.warn('Auto sign-in failed:', signInError);
+      // لا نرمي خطأ هنا، فقط نعرض رسالة النجاح
+      // المستخدم يمكنه تسجيل الدخول يدوياً
     }
 
     // عرض رسالة النجاح
