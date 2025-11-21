@@ -44,13 +44,13 @@
 ### 4. ❌ 406 Not Acceptable - RLS Error
 **الخطأ**: `GET /rest/v1/members 406 (Not Acceptable)` - فشل ربط الحساب
 
-**السبب**: محاولة قراءة بيانات العضو قبل تسجيل الدخول، RLS يرفض الطلب
+**السبب الأول**: محاولة قراءة بيانات العضو قبل تسجيل الدخول
+**الحل**: ✅ نقل التحقق إلى بعد تسجيل الدخول
 
-**الحل**:
-- ✅ نقل التحقق من الربط إلى **بعد** تسجيل الدخول
-- ✅ استخدام `user_id` بدلاً من `member_id` في الاستعلام
+**السبب الثاني**: RLS Policies غير مطبقة بشكل صحيح في Supabase Cloud
+**الحل**: ✅ تشغيل `FIX_RLS_POLICIES.sql` في Supabase SQL Editor
 
-📄 **التفاصيل**: `FIX_RLS_406_ERROR.md`
+📄 **التفاصيل**: `FIX_RLS_406_ERROR.md` و `URGENT_FIX_RLS.md`
 
 ---
 
@@ -179,7 +179,9 @@ Sender: noreply@adeeb.club
 | `FIX_SIGNUP_EMAIL_ERROR.md` | حل خطأ إرسال البريد |
 | `QUICK_FIX_EMAIL_ERROR.md` | حل سريع لخطأ البريد |
 | `FIX_AUTO_LOGIN_AFTER_ACTIVATION.md` | حل مشكلة تسجيل الدخول |
-| `FIX_RLS_406_ERROR.md` | حل خطأ RLS 406 |
+| `FIX_RLS_406_ERROR.md` | حل خطأ RLS 406 (شرح مفصل) |
+| `URGENT_FIX_RLS.md` | حل عاجل لـ RLS (خطوات سريعة) |
+| `FIX_RLS_POLICIES.sql` | SQL لإصلاح RLS Policies |
 | `ACTIVATION_ISSUES_SUMMARY.md` | هذا الملف - ملخص شامل |
 
 ---
@@ -193,10 +195,13 @@ Sender: noreply@adeeb.club
    supabase start
    ```
 
-### لـ Supabase Cloud:
-1. ✅ عطّل "Enable email confirmations"
-2. ✅ أو أعد Resend SMTP
-3. ✅ اختبر التفعيل
+### لـ Supabase Cloud (مهم جداً!):
+1. 🚨 **أولاً**: شغّل `FIX_RLS_POLICIES.sql` في SQL Editor
+2. ✅ عطّل "Enable email confirmations"
+3. ✅ أو أعد Resend SMTP
+4. ✅ اختبر التفعيل
+
+⚠️ **ملاحظة مهمة**: إذا استمر خطأ 406، المشكلة في RLS Policies!
 
 ### للإنتاج:
 1. ✅ تأكد من إعداد Resend SMTP
