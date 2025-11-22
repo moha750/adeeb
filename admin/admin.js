@@ -11635,6 +11635,7 @@ ORDER BY m.committee, m.full_name;`;
     document.getElementById('news_content').value = news.content || '';
     document.getElementById('news_status').value = news.status || 'draft';
     document.getElementById('news_is_featured').checked = news.is_featured || false;
+    document.getElementById('news_photographer').value = news.photographer || '';
     
     // Load cover image
     resetCoverImage();
@@ -11931,6 +11932,7 @@ ORDER BY m.committee, m.full_name;`;
     const authors = getAuthorNames();
     const status = document.getElementById('news_status').value;
     const isFeatured = document.getElementById('news_is_featured').checked;
+    const photographer = document.getElementById('news_photographer').value.trim();
     
     if (!title || !content) {
       showNotification('يرجى ملء جميع الحقول المطلوبة', 'error');
@@ -11969,6 +11971,7 @@ ORDER BY m.committee, m.full_name;`;
         summary,
         content,
         image_url: newsCoverImage, // Cover image
+        photographer: photographer || null, // Cover image photographer
         images: newsImages, // Array of additional images with photographers
         author_id: user?.data?.user?.id || null,
         author_name: authors[0], // First author for backward compatibility

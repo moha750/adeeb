@@ -136,10 +136,21 @@ function renderNewsDetail(news) {
   // Breadcrumb
   document.getElementById('breadcrumbTitle').textContent = news.title;
 
-  // Featured badge
+  // Featured badge - always show but change style
   const featuredBadge = document.getElementById('featuredBadge');
+  const badgeText = document.getElementById('badgeText');
+  const badgeIcon = featuredBadge.querySelector('i');
+  
   if (news.is_featured) {
-    featuredBadge.style.display = 'inline-flex';
+    featuredBadge.classList.remove('regular-badge');
+    featuredBadge.classList.add('featured-badge');
+    badgeIcon.className = 'fas fa-star';
+    badgeText.textContent = 'خبر مميز';
+  } else {
+    featuredBadge.classList.remove('featured-badge');
+    featuredBadge.classList.add('regular-badge');
+    badgeIcon.className = 'fas fa-newspaper';
+    badgeText.textContent = 'خبر صحفي';
   }
 
   // Title
@@ -164,6 +175,14 @@ function renderNewsDetail(news) {
     coverImage.src = news.image_url;
     coverImage.alt = news.title;
     coverContainer.style.display = 'block';
+    
+    // Photographer name
+    if (news.photographer) {
+      const photographerItem = document.getElementById('photographerItem');
+      const photographerName = document.getElementById('photographerName');
+      photographerName.textContent = news.photographer;
+      photographerItem.style.display = 'flex';
+    }
   }
 
   // Content
@@ -174,9 +193,9 @@ function renderNewsDetail(news) {
     const galleryContainer = document.getElementById('newsImagesGallery');
     const imagesGrid = document.getElementById('newsImagesGrid');
     imagesGrid.innerHTML = news.images.map((img, index) => `
-      <div class="gallery-item">
+      <div class="gallery-image-container">
         <img src="${img.url}" alt="${escapeHtml(news.title)} - صورة ${index + 1}" class="gallery-image" />
-        ${img.photographer ? `<p class="photographer-credit"><i class="fas fa-camera"></i> تصوير: ${escapeHtml(img.photographer)}</p>` : ''}
+        ${img.photographer ? `<div class="photographer-label"><i class="fas fa-camera"></i> تصوير: ${escapeHtml(img.photographer)}</div>` : ''}
       </div>
     `).join('');
     galleryContainer.style.display = 'block';

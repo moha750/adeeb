@@ -287,29 +287,38 @@ EXECUTE FUNCTION update_member_last_login();
 CREATE OR REPLACE FUNCTION prevent_sensitive_fields_update()
 RETURNS TRIGGER AS $$
 DECLARE
-  is_admin BOOLEAN;
+  user_is_admin BOOLEAN;  -- تغيير الاسم لتجنب الغموض
 BEGIN
   -- التحقق إذا كان المستخدم إداري
   SELECT EXISTS (
     SELECT 1 FROM admins 
-    WHERE user_id = auth.uid() 
-    AND is_admin = true
-  ) INTO is_admin;
+    WHERE admins.user_id = auth.uid() 
+    AND admins.is_admin = true  -- استخدام admins.is_admin بوضوح
+  ) INTO user_is_admin;
   
   -- إذا لم يكن إداري، منع تعديل الحقول الحساسة
-  IF NOT is_admin THEN
-    -- منع تعديل user_id
-    IF NEW.user_id IS DISTINCT FROM OLD.user_id THEN
+  IF NOT user_is_admin THEN
+    -- السماح بتحديث user_id من NULL فقط (للتفعيل)
+    IF OLD.user_id IS NULL AND NEW.user_id IS NOT NULL THEN
+      -- السماح بالتفعيل
+      NULL;
+    ELSIF NEW.user_id IS DISTINCT FROM OLD.user_id THEN
       RAISE EXCEPTION 'لا يمكن تعديل user_id';
     END IF;
     
-    -- منع تعديل account_status
-    IF NEW.account_status IS DISTINCT FROM OLD.account_status THEN
+    -- السماح بتحديث account_status من pending إلى active (للتفعيل)
+    IF OLD.account_status = 'pending' AND NEW.account_status = 'active' THEN
+      -- السماح بالتفعيل
+      NULL;
+    ELSIF NEW.account_status IS DISTINCT FROM OLD.account_status THEN
       RAISE EXCEPTION 'لا يمكن تعديل حالة الحساب';
     END IF;
     
-    -- منع تعديل account_activated_at
-    IF NEW.account_activated_at IS DISTINCT FROM OLD.account_activated_at THEN
+    -- السماح بتحديث account_activated_at من NULL (للتفعيل)
+    IF OLD.account_activated_at IS NULL AND NEW.account_activated_at IS NOT NULL THEN
+      -- السماح بالتفعيل
+      NULL;
+    ELSIF NEW.account_activated_at IS DISTINCT FROM OLD.account_activated_at THEN
       RAISE EXCEPTION 'لا يمكن تعديل تاريخ التفعيل';
     END IF;
   END IF;

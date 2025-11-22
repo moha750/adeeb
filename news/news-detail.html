@@ -14,12 +14,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- CSS Files -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="news-detail.css">
     
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
+    <script src="../supabase-config.js"></script>
 </head>
 <body>
     <!-- قسم: الهيدر -->
@@ -33,7 +33,7 @@
           </div>
         </div>
         <div class="logo">
-          <a class="logo-link" href="index.html">
+          <a class="logo-link" href="../index.html">
             <img
               alt="شعار نادي أديب"
               class="logo-img"
@@ -44,7 +44,7 @@
         <nav class="nav">
           <ul class="nav-links">
             <li class="nav-item">
-              <a class="nav-link" href="index.html#adeebbook">
+              <a class="nav-link" href="../index.html#adeebbook">
                 <i class="fas fa-home nav-icon"></i>
                 <span class="nav-text">الرئيسية</span>
                 <span class="nav-wave"></span>
@@ -58,28 +58,28 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="index.html#our-works">
+              <a class="nav-link" href="../index.html#our-works">
                 <i class="fa-solid fa-briefcase"></i>
                 <span class="nav-text">أعمالنا</span>
                 <span class="nav-wave"></span>
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="index.html#sponsors">
+              <a class="nav-link" href="../index.html#sponsors">
                 <i class="fa-solid fa-briefcase"></i>
                 <span class="nav-text">شُركائنا</span>
                 <span class="nav-wave"></span>
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="index.html#board-members">
+              <a class="nav-link" href="../index.html#board-members">
                 <i class="fa-solid fa-trophy"></i>
                 <span class="nav-text">المجلس الإداري</span>
                 <span class="nav-wave"></span>
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="index.html#contact">
+              <a class="nav-link" href="../index.html#contact">
                 <i class="fas fa-envelope nav-icon"></i>
                 <span class="nav-text">تواصل معنا</span>
                 <span class="nav-wave"></span>
@@ -87,7 +87,7 @@
             </li>
           </ul>
           <!-- زر تسجيل الدخول للوحة التحكم -->
-          <a class="subscribe-btn" href="admin/admin.html" id="adminLoginBtn">
+          <a class="subscribe-btn" href="../admin/admin.html" id="adminLoginBtn">
             <span>تسجيل الدخول</span>
             <i class="fa-solid fa-arrow-right-to-bracket"></i>
           </a>
@@ -118,7 +118,7 @@
       <div class="breadcrumb-container">
         <div class="container">
           <nav class="breadcrumb">
-            <a href="index.html">
+            <a href="../index.html">
               <i class="fas fa-home"></i>
               الرئيسية
             </a>
@@ -133,19 +133,27 @@
       <!-- News Article -->
       <article class="news-article">
         <div class="container">
-          <!-- Back Button -->
-          <a href="news.html" class="back-button">
-            <i class="fas fa-arrow-right"></i>
-            العودة إلى الأخبار
-          </a>
+          <!-- Navigation Bar: Back Button & Featured Badge -->
+          <div class="article-nav-bar">
 
-          <!-- News Header -->
-          <header class="article-header">
-            <div id="featuredBadge" class="featured-badge" style="display: none;">
+            <!-- Featured Badge (Right) -->
+            <div id="featuredBadge" class="featured-badge">
               <i class="fas fa-star"></i>
-              خبر مميز
+              <span id="badgeText">خبر مميز</span>
             </div>
+
+            <!-- Back Button (Left) -->
+            <a href="news.html" class="back-button">
+              <i class="fas fa-arrow-right"></i>
+              العودة إلى الأخبار
+            </a>
+          </div>
+
+          <!-- News Article Card: Title + Image + Meta -->
+          <div id="newsCoverImageContainer" class="article-image-container" style="display: none;">
             <h1 id="newsTitle" class="article-title"></h1>
+            
+            <img id="newsCoverImage" src="" alt="" class="article-image">
             
             <div class="article-meta">
               <div class="meta-item">
@@ -160,12 +168,11 @@
                 <i class="fas fa-eye"></i>
                 <span id="newsViews"></span> مشاهدة
               </div>
+              <div id="photographerItem" class="meta-item" style="display: none;">
+                <i class="fas fa-camera"></i>
+                <span>تصوير: <span id="photographerName"></span></span>
+              </div>
             </div>
-          </header>
-
-          <!-- News Cover Image -->
-          <div id="newsCoverImageContainer" class="article-image-container" style="display: none;">
-            <img id="newsCoverImage" src="" alt="" class="article-image">
           </div>
 
           <!-- News Content -->
@@ -219,7 +226,7 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="script.js"></script>
+    <script src="../script.js"></script>
     <script src="news-detail.js"></script>
 </body>
 </html>

@@ -1639,7 +1639,7 @@ body.no-scroll { overflow: hidden; }
   height: 3px;
   background: var(--card-gradient, var(--accent-blue));
   transform: scaleX(0);
-  transform-origin: left;
+  transform-origin: right;
   transition: transform 0.3s ease;
 }
 
