@@ -88,6 +88,47 @@ function formatViewsCount(count) {
   }
 }
 
+// Update Meta Tags for Rich Preview
+function updateMetaTags(news) {
+  const url = window.location.href;
+  const title = news.title;
+  const description = news.summary || news.content.replace(/<[^>]*>/g, '').substring(0, 160) + '...';
+  const image = news.image_url || 'https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e';
+  
+  // Update standard meta tags
+  const metaDescription = document.getElementById('metaDescription');
+  if (metaDescription) metaDescription.setAttribute('content', description);
+  
+  // Update Open Graph tags
+  const ogTitle = document.getElementById('ogTitle');
+  const ogDescription = document.getElementById('ogDescription');
+  const ogImage = document.getElementById('ogImage');
+  const ogUrl = document.getElementById('ogUrl');
+  
+  if (ogTitle) ogTitle.setAttribute('content', title);
+  if (ogDescription) ogDescription.setAttribute('content', description);
+  if (ogImage) ogImage.setAttribute('content', image);
+  if (ogUrl) ogUrl.setAttribute('content', url);
+  
+  // Update Twitter Card tags
+  const twitterTitle = document.getElementById('twitterTitle');
+  const twitterDescription = document.getElementById('twitterDescription');
+  const twitterImage = document.getElementById('twitterImage');
+  
+  if (twitterTitle) twitterTitle.setAttribute('content', title);
+  if (twitterDescription) twitterDescription.setAttribute('content', description);
+  if (twitterImage) twitterImage.setAttribute('content', image);
+}
+
+// Create enhanced share text with emojis and hashtags
+function createShareText(news) {
+  const title = news.title;
+  const emoji = news.is_featured ? '⭐' : '📰';
+  const hashtags = '\n\n#نادي_أديب #جامعة_الملك_فيصل #أخبار_أديب';
+  
+  return `${emoji} ${title}${hashtags}`;
+}
+
 // Load news detail
 async function loadNewsDetail() {
   const newsId = getNewsIdFromUrl();
@@ -166,6 +207,9 @@ async function loadNewsDetail() {
 function renderNewsDetail(news) {
   // Update page title
   document.title = `${news.title} - نادي أديب`;
+
+  // Update Meta Tags for Rich Preview
+  updateMetaTags(news);
 
   // Breadcrumb
   document.getElementById('breadcrumbTitle').textContent = news.title;
@@ -297,43 +341,97 @@ function renderNewsDetail(news) {
 function setupShareButtons(news) {
   const url = window.location.href;
   const title = news.title;
-  const text = news.summary || title;
+  const shareText = createShareText(news);
+  const summary = news.summary || news.content.replace(/<[^>]*>/g, '').substring(0, 100) + '...';
 
-  // Twitter
+  // Twitter - with enhanced text
   document.getElementById('shareTwitter').onclick = () => {
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`;
+    const twitterText = `${shareText}\n\n📖 اقرأ المزيد:`;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}&url=${encodeURIComponent(url)}`;
     window.open(twitterUrl, '_blank', 'width=600,height=400');
   };
 
-  // Facebook
+  // Facebook - will use Open Graph meta tags automatically
   document.getElementById('shareFacebook').onclick = () => {
     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
     window.open(facebookUrl, '_blank', 'width=600,height=400');
   };
 
-  // WhatsApp
+  // WhatsApp - with enhanced text and emojis
   document.getElementById('shareWhatsapp').onclick = () => {
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`;
+    const whatsappText = `${shareText}\n\n📖 اقرأ التفاصيل كاملة:\n${url}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappText)}`;
     window.open(whatsappUrl, '_blank');
   };
 
-  // Copy Link
+  // Copy Link - with enhanced message
   document.getElementById('copyLink').onclick = async () => {
     try {
-      await navigator.clipboard.writeText(url);
+      // Create full share text with link
+      const fullShareText = `${shareText}\n\n📖 رابط الخبر:\n${url}`;
+      await navigator.clipboard.writeText(fullShareText);
+      
+      // Show success with toast
+      showShareToast('تم نسخ الرابط مع نص المشاركة! 🎉');
+      
+      // Update button temporarily
       const btn = document.getElementById('copyLink');
       const originalText = btn.innerHTML;
       btn.innerHTML = '<i class="fas fa-check"></i> تم النسخ!';
-      btn.style.background = '#10b981';
+      btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
       
       setTimeout(() => {
         btn.innerHTML = originalText;
-        btn.style.background = '#64748b';
+        btn.style.background = 'linear-gradient(135deg, #64748b, #475569)';
       }, 2000);
     } catch (error) {
       console.error('Error copying link:', error);
+      // Fallback: copy URL only
+      try {
+        await navigator.clipboard.writeText(url);
+        showShareToast('تم نسخ الرابط بنجاح! ✓');
+        
+        const btn = document.getElementById('copyLink');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> تم النسخ!';
+        btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.style.background = 'linear-gradient(135deg, #64748b, #475569)';
+        }, 2000);
+      } catch (err) {
+        console.error('Fallback copy also failed:', err);
+        showShareToast('حدث خطأ في النسخ ❌', 'error');
+      }
     }
   };
+}
+
+// Show share toast notification
+function showShareToast(message, type = 'success') {
+  const toast = document.getElementById('shareToast');
+  const toastMessage = document.getElementById('shareToastMessage');
+  
+  if (!toast || !toastMessage) return;
+  
+  // Update message
+  toastMessage.textContent = message;
+  
+  // Update style based on type
+  if (type === 'error') {
+    toast.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+  } else {
+    toast.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+  }
+  
+  // Show toast
+  toast.classList.add('show');
+  
+  // Hide after 3 seconds
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3000);
 }
 
 // Load related news

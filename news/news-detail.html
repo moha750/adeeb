@@ -5,6 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تفاصيل الخبر - نادي أديب</title>
     
+    <!-- Dynamic Meta Tags - Will be updated by JavaScript -->
+    <meta name="description" content="اكتشف آخر أخبار وفعاليات نادي أديب الطلابي في جامعة الملك فيصل" id="metaDescription">
+    <meta name="keywords" content="نادي أديب, جامعة الملك فيصل, أخبار, فعاليات">
+    
+    <!-- Open Graph Meta Tags for Facebook, LinkedIn, etc. -->
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="نادي أديب">
+    <meta property="og:title" content="تفاصيل الخبر - نادي أديب" id="ogTitle">
+    <meta property="og:description" content="اكتشف آخر أخبار وفعاليات نادي أديب الطلابي في جامعة الملك فيصل" id="ogDescription">
+    <meta property="og:image" content="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" id="ogImage">
+    <meta property="og:url" content="" id="ogUrl">
+    <meta property="og:locale" content="ar_SA">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@adeebclub">
+    <meta name="twitter:title" content="تفاصيل الخبر - نادي أديب" id="twitterTitle">
+    <meta name="twitter:description" content="اكتشف آخر أخبار وفعاليات نادي أديب الطلابي في جامعة الملك فيصل" id="twitterDescription">
+    <meta name="twitter:image" content="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" id="twitterImage">
+    
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -212,22 +232,27 @@
           <div class="article-share">
             <h3>شارك هذا الخبر</h3>
             <div class="share-buttons">
-              <button class="share-btn twitter" id="shareTwitter">
+              <button class="share-btn twitter" id="shareTwitter" title="شارك على تويتر مع نص جذاب وهاشتاجات">
                 <i class="fab fa-twitter"></i>
                 تويتر
               </button>
-              <button class="share-btn facebook" id="shareFacebook">
+              <button class="share-btn facebook" id="shareFacebook" title="شارك على فيسبوك مع معاينة غنية">
                 <i class="fab fa-facebook"></i>
                 فيسبوك
               </button>
-              <button class="share-btn whatsapp" id="shareWhatsapp">
+              <button class="share-btn whatsapp" id="shareWhatsapp" title="شارك على واتساب مع نص محسّن">
                 <i class="fab fa-whatsapp"></i>
                 واتساب
               </button>
-              <button class="share-btn copy" id="copyLink">
+              <button class="share-btn copy" id="copyLink" title="انسخ الرابط مع نص المشاركة الكامل">
                 <i class="fas fa-link"></i>
                 نسخ الرابط
               </button>
+            </div>
+            <!-- Toast Notification -->
+            <div id="shareToast" class="share-toast">
+              <i class="fas fa-check-circle"></i>
+              <span id="shareToastMessage">تم النسخ بنجاح!</span>
             </div>
           </div>
 

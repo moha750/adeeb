@@ -1539,17 +1539,70 @@
   background: linear-gradient(135deg, 
     rgba(248, 249, 250, 0.95) 0%, 
     rgba(230, 240, 249, 0.98) 50%,
-    rgba(248, 249, 250, 0.95) 100%);  border-radius: 20px;
+    rgba(248, 249, 250, 0.95) 100%);
+  border-radius: 24px;
   text-align: center;
   border: 1px solid rgba(61, 143, 214, 0.15);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 10px 40px rgba(61, 143, 214, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* تأثير خلفية متحرك */
+.article-share::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(61, 143, 214, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: floatBubble 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.article-share::after {
+  content: '';
+  position: absolute;
+  bottom: -50%;
+  left: -10%;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(39, 64, 96, 0.06) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: floatBubble 10s ease-in-out infinite reverse;
+  pointer-events: none;
 }
 
 .article-share h3 {
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   color: #274060;
-  margin-bottom: 25px;
-  font-weight: 700;
-  font-family: 'fb', sans-serif;
+  margin-bottom: 30px;
+  font-weight: 800;
+  font-family: 'fbb', sans-serif;
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.article-share h3::before {
+  content: '📤';
+  font-size: 1.2em;
+  animation: shareIconBounce 2s ease-in-out infinite;
+}
+
+@keyframes shareIconBounce {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(-10deg);
+  }
 }
 
 .share-buttons {
@@ -1557,47 +1610,181 @@
   justify-content: center;
   gap: 15px;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
 
 .share-btn {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 24px;
+  padding: 14px 28px;
   border: none;
-  border-radius: 12px;
+  border-radius: 50px;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
   font-family: 'fb', sans-serif;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.share-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
+}
+
+.share-btn:hover::before {
+  left: 100%;
 }
 
 .share-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.share-btn:active {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
 }
 
 .share-btn.twitter {
-  background: linear-gradient(135deg, #1DA1F2, #0d8bd9);
+  background: linear-gradient(135deg, #1DA1F2 0%, #0d8bd9 100%);
+}
+
+.share-btn.twitter:hover {
+  background: linear-gradient(135deg, #2db0ff 0%, #1a9ae8 100%);
+  box-shadow: 
+    0 8px 25px rgba(29, 161, 242, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .share-btn.facebook {
-  background: linear-gradient(135deg, #1877F2, #0d5dbf);
+  background: linear-gradient(135deg, #1877F2 0%, #0d5dbf 100%);
+}
+
+.share-btn.facebook:hover {
+  background: linear-gradient(135deg, #2d88ff 0%, #1a6dd1 100%);
+  box-shadow: 
+    0 8px 25px rgba(24, 119, 242, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .share-btn.whatsapp {
-  background: linear-gradient(135deg, #25D366, #1da851);
+  background: linear-gradient(135deg, #25D366 0%, #1da851 100%);
+}
+
+.share-btn.whatsapp:hover {
+  background: linear-gradient(135deg, #36e377 0%, #2ab95d 100%);
+  box-shadow: 
+    0 8px 25px rgba(37, 211, 102, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .share-btn.copy {
-  background: linear-gradient(135deg, #64748b, #475569);
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+}
+
+.share-btn.copy:hover {
+  background: linear-gradient(135deg, #75859b 0%, #586678 100%);
+  box-shadow: 
+    0 8px 25px rgba(100, 116, 139, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .share-btn i {
-  font-size: 1.2em;
+  font-size: 1.3em;
+  transition: transform 0.4s ease;
+}
+
+.share-btn:hover i {
+  transform: scale(1.2) rotate(5deg);
+  animation: iconPulse 0.6s ease;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1.2) rotate(5deg);
+  }
+  50% {
+    transform: scale(1.4) rotate(-5deg);
+  }
+}
+
+/* Share Toast Notification */
+.share-toast {
+  position: fixed;
+  bottom: 30px;
+  right: 50%;
+  transform: translateX(50%) translateY(150px);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 16px 32px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'fb', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  box-shadow: 
+    0 10px 40px rgba(16, 185, 129, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.share-toast.show {
+  opacity: 1;
+  transform: translateX(50%) translateY(0);
+  pointer-events: auto;
+}
+
+.share-toast i {
+  font-size: 1.4em;
+  animation: toastIconScale 0.6s ease;
+}
+
+@keyframes toastIconScale {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.share-toast span {
+  white-space: nowrap;
+}
+
+/* Responsive Toast */
+@media (max-width: 768px) {
+  .share-toast {
+    bottom: 20px;
+    padding: 14px 24px;
+    font-size: 0.95rem;
+  }
 }
 
 /* Related News */
@@ -1614,6 +1801,7 @@
   box-shadow: 
     0 10px 40px rgba(61, 143, 214, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    margin-bottom: 4rem;
 }
 
 /* تأثيرات خلفية متحركة */
@@ -1659,7 +1847,7 @@
   position: relative;
   z-index: 1;
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 /* زخرفة علوية */
