@@ -65,11 +65,14 @@ https://adeebclub.com/news/news-detail.html?id=123
 
 1. news-detail.html
    • إضافة Meta Tags (Open Graph + Twitter Cards)
+   • إضافة أبعاد الصورة ونص بديل
    • إضافة tooltips للأزرار
    • إضافة Toast notification
 
 2. news-detail.js
    • دالة updateMetaTags() - تحديث Meta Tags
+   • إصلاح: استخدام صورة الخبر بدلاً من الشعار ✅
+   • نظام أولويات ذكي للصور (صورة رئيسية > معرض > شعار)
    • دالة createShareText() - إنشاء نص محسّن
    • دالة showShareToast() - إظهار الإشعارات
    • تحديث setupShareButtons() - تحسين المشاركة
@@ -108,6 +111,7 @@ https://adeebclub.com/news/news-detail.html?id=123
 • SHARE_IMPROVEMENTS.md - شرح تفصيلي للتحسينات
 • SHARE_TEXT_EXAMPLES.md - أمثلة على النصوص المشاركة
 • README_SHARE_SYSTEM.md - دليل النظام الكامل
+• IMAGE_FIX_NOTES.md - حل مشكلة ظهور الصورة ✅
 • ملخص_التحسينات.txt - هذا الملف
 
 ───────────────────────────────────────────────────────────────

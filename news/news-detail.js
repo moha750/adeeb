@@ -93,7 +93,17 @@ function updateMetaTags(news) {
   const url = window.location.href;
   const title = news.title;
   const description = news.summary || news.content.replace(/<[^>]*>/g, '').substring(0, 160) + '...';
-  const image = news.image_url || 'https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e';
+  
+  // استخدام صورة الخبر إذا كانت موجودة، وإلا استخدام شعار أديب
+  let image = 'https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e'; // الصورة الافتراضية
+  
+  if (news.image_url && news.image_url.trim() !== '') {
+    // استخدام صورة الخبر الرئيسية
+    image = news.image_url;
+  } else if (news.images && Array.isArray(news.images) && news.images.length > 0 && news.images[0].url) {
+    // إذا لم توجد صورة رئيسية، استخدم أول صورة من معرض الصور
+    image = news.images[0].url;
+  }
   
   // Update standard meta tags
   const metaDescription = document.getElementById('metaDescription');
@@ -103,11 +113,13 @@ function updateMetaTags(news) {
   const ogTitle = document.getElementById('ogTitle');
   const ogDescription = document.getElementById('ogDescription');
   const ogImage = document.getElementById('ogImage');
+  const ogImageAlt = document.getElementById('ogImageAlt');
   const ogUrl = document.getElementById('ogUrl');
   
   if (ogTitle) ogTitle.setAttribute('content', title);
   if (ogDescription) ogDescription.setAttribute('content', description);
   if (ogImage) ogImage.setAttribute('content', image);
+  if (ogImageAlt) ogImageAlt.setAttribute('content', `${title} - نادي أديب`);
   if (ogUrl) ogUrl.setAttribute('content', url);
   
   // Update Twitter Card tags
@@ -118,6 +130,14 @@ function updateMetaTags(news) {
   if (twitterTitle) twitterTitle.setAttribute('content', title);
   if (twitterDescription) twitterDescription.setAttribute('content', description);
   if (twitterImage) twitterImage.setAttribute('content', image);
+  
+  // تحديث الصورة في head أيضاً (للتأكد)
+  console.log('Meta Tags Updated:', {
+    title: title,
+    description: description.substring(0, 50) + '...',
+    image: image,
+    url: url
+  });
 }
 
 // Create enhanced share text with emojis and hashtags
