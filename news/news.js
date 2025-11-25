@@ -138,8 +138,8 @@ function createNewsCard(news, isFeatured = false) {
       <p class="news-card-summary">${escapeHtml(summary)}</p>
       <div class="news-card-footer">
         <span class="news-card-author">
-          <i class="fas fa-user${authors.length > 1 ? 's' : ''}"></i>
-          ${authorsDisplay}
+          <i class="fa-solid fa-feather${authors.length > 1 ? 's' : ''}"></i>
+          بريشة ${authorsDisplay}
         </span>
         <span class="news-card-read-more">
           اقرأ المزيد
@@ -271,7 +271,7 @@ function formatDate(dateString) {
   if (!dateString) return '';
   const date = new Date(dateString);
   const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  return date.toLocaleDateString('ar-SA', options);
+  return date.toLocaleDateString('ar-EG', options); // Gregorian calendar
 }
 
 function stripHtml(html) {

@@ -13,6 +13,9 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    
     <!-- CSS Files -->
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="news-detail.css">
@@ -157,20 +160,20 @@
             
             <div class="article-meta">
               <div class="meta-item">
-                <i class="fas fa-calendar"></i>
-                <span id="newsDate"></span>
+                <i class="fas fa-calendar-alt"></i>
+                <span>نُشر في <span id="newsDate"></span></span>
               </div>
               <div class="meta-item">
-                <i id="authorsIcon" class="fas fa-user"></i>
-                <span id="newsAuthors"></span>
-              </div>
-              <div class="meta-item">
-                <i class="fas fa-eye"></i>
-                <span id="newsViews"></span> مشاهدة
+                <i id="authorsIcon" class="fa-solid fa-feather"></i>
+                <span><span id="authorsLabel">بريشة</span> <span id="newsAuthors"></span></span>
               </div>
               <div id="photographerItem" class="meta-item" style="display: none;">
                 <i class="fas fa-camera"></i>
-                <span>تصوير: <span id="photographerName"></span></span>
+                <span>بعدسة <span id="photographerName"></span></span>
+              </div>
+              <div class="meta-item">
+                <i class="fas fa-eye"></i>
+                <span id="newsViews"></span>
               </div>
             </div>
           </div>
@@ -180,9 +183,28 @@
 
           <!-- News Images Gallery (below content) -->
           <div id="newsImagesGallery" class="article-images-gallery" style="display: none;">
-            <h3 class="gallery-title">صور الخبر</h3>
-            <div id="newsImagesGrid" class="images-grid">
-              <!-- سيتم إضافة الصور هنا ديناميكياً -->
+            <div class="gallery-header">
+              <!-- زخرفة علوية -->
+              <div class="gallery-ornament">
+                <div class="gallery-ornament-line"></div>
+                <div class="gallery-ornament-center">
+                  <i class="fas fa-images"></i>
+                </div>
+                <div class="gallery-ornament-line"></div>
+              </div>
+              
+              <h3 class="gallery-title">صور الخبر</h3>
+            </div>
+            
+            <!-- Swiper للشاشات الصغيرة -->
+            <div class="gallery-swiper-container">
+              <div class="swiper gallery-swiper">
+                <div class="swiper-wrapper" id="newsImagesSwiper"></div>
+                <div class="swiper-button">
+                  <div class="swiper-button-next"></div>
+                  <div class="swiper-button-prev"></div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -211,21 +233,170 @@
 
           <!-- Related News -->
           <div id="relatedNewsSection" class="related-news" style="display: none;">
-            <h3>اطلع على المزيد من الأخبار</h3>
+            <div class="related-news-header">
+              <!-- زخرفة علوية -->
+              <div class="related-news-ornament">
+                <div class="related-ornament-line"></div>
+                <div class="related-ornament-center">
+                  <i class="fas fa-newspaper"></i>
+                </div>
+                <div class="related-ornament-line"></div>
+              </div>
+              
+              <h3>اطلع على المزيد من الأخبار</h3>
+            </div>
+            
+            <!-- Grid للشاشات الكبيرة والمتوسطة -->
             <div id="relatedNewsGrid" class="related-news-grid"></div>
+            
+            <!-- Swiper للشاشات الصغيرة -->
+            <div class="related-news-swiper-container">
+              <div class="swiper related-news-swiper">
+                <div class="swiper-wrapper" id="relatedNewsSwiper"></div>
+                <div class="swiper-button">
+                  <div class="swiper-button-next"></div>
+                  <div class="swiper-button-prev"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </article>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="container">
-        <p>&copy; 2024 نادي أديب. جميع الحقوق محفوظة.</p>
+    <!-- Image Lightbox -->
+    <div id="imageLightbox" class="lightbox" style="display: none;">
+      <div class="lightbox-overlay"></div>
+                <button class="lightbox-close" id="closeLightbox">
+            <i class="fas fa-times"></i>
+          </button>
+      <div class="lightbox-content">
+        <div class="lightbox-image-container">
+          <button class="lightbox-prev" id="prevImage">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+          <button class="lightbox-next" id="nextImage">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <img id="lightboxImage" src="" alt="" class="lightbox-image">
+        </div>
+        <div class="lightbox-info">
+          <div class="lightbox-title" id="lightboxTitle"></div>
+          <div class="lightbox-counter" id="lightboxCounter"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Section -->
+    <footer class="footer" id="footer">
+      <div class="footer-container">
+        <!-- Main Footer Content -->
+        <div class="footer-grid">
+          <!-- Column 1: Logo & About -->
+          <div class="footer-col footer-main">
+            <div class="footer-logo-box">
+              <img
+                alt="شعار نادي أدِيب"
+                class="footer-logo"
+                src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e"
+              />
+            </div>
+            <p class="footer-about-text">
+              منصة أدِيبية رائدة تهدف إلى إثراء المحتوى الإبداعي ودعم المواهب الإبداعية الشابة في
+              مختلف المجالات.
+            </p>
+            <div class="footer-badges">
+              <span class="footer-badge">نادي طلابي</span>
+              <span class="footer-badge">جامعة الملك فيصل</span>
+            </div>
+          </div>
+
+          <!-- Column 2: Quick Links -->
+          <div class="footer-col">
+            <h3 class="footer-title">
+              <i class="fas fa-bolt"></i>
+              <span class="title-footer">روابط سريعة</span>
+            </h3>
+            <ul class="footer-links">
+              <li>
+                <a href="../index.html#adeebbook">
+                  <i class="fas fa-home"></i>
+                  الرئيسية
+                </a>
+              </li>
+              <li>
+                <a href="../index.html#our-works">
+                  <i class="fas fa-briefcase"></i>
+                  أعمالنا
+                </a>
+              </li>
+              <li>
+                <a href="../index.html#achievements">
+                  <i class="fas fa-trophy"></i>
+                  انجازاتنا
+                </a>
+              </li>
+              <li>
+                <a href="../index.html#sponsors">
+                  <i class="fas fa-handshake"></i>
+                  شركائنا
+                </a>
+              </li>
+              <li>
+                <a href="../index.html#contact">
+                  <i class="fas fa-envelope"></i>
+                  تواصل معنا
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Column 3: Committees -->
+          <div class="footer-col">
+            <h3 class="footer-title">
+              <i class="fas fa-sitemap"></i>
+              <span class="title-footer">لجان نادي أدِيب</span>
+            </h3>
+            <div class="committees-container">
+              <div class="committee-category">
+                <ul class="committee-list">
+                  <li><i class="fas fa-pen-fancy"></i>لجنة التأليف</li>
+                  <li><i class="fa-solid fa-microphone-lines"></i>لجنة الرواة</li>
+                  <li><i class="fa-solid fa-calendar-days"></i>لجنة الفعاليات</li>
+                  <li><i class="fa-solid fa-handshake"></i>لجنة السفراء</li>
+                  <li><i class="fa-solid fa-camera-retro"></i>لجنة الإنتاج</li>
+                  <li><i class="fa-solid fa-bullhorn"></i>لجنة التسويق</li>
+                  <li><i class="fa-solid fa-bezier-curve"></i>لجنة التصميم</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Bottom -->
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="copyright">
+              جميع الحقوق محفوظة لنادي أدِيب <span style="font-family: a" id="year"></span> ©
+            </p>
+            <div class="footer-legal">
+              <a href="../constitution/constitution.html">دستور أدِيب</a>
+              <a href="../index.html#faq-section">الأسئلة الشائعة</a>
+            </div>
+          </div>
+          <div class="footer-back-top">
+            <button id="back-to-top">
+              <i class="fas fa-arrow-up"></i>
+              <span class="back-to-top">العودة للأعلى</span>
+            </button>
+          </div>
+        </div>
       </div>
     </footer>
 
     <!-- Scripts -->
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="../script.js"></script>
     <script src="news-detail.js"></script>
 </body>

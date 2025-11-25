@@ -36,11 +36,11 @@ function markNewsAsViewed(newsId) {
   }
 }
 
-// Format date
+// Format date - Gregorian calendar
 function formatDate(dateString) {
   if (!dateString) return '';
   const date = new Date(dateString);
-  return date.toLocaleDateString('ar-SA', {
+  return date.toLocaleDateString('ar-EG', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -52,6 +52,40 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Format views count with proper Arabic grammar
+function formatViewsCount(count) {
+  const num = parseInt(count) || 0;
+  
+  if (num === 0) {
+    return 'لا توجد مشاهدات';
+  } else if (num === 1) {
+    return 'مُشاهدة واحدة';
+  } else if (num === 2) {
+    return 'مُشاهدتان';
+  } else if (num >= 3 && num <= 10) {
+    return `${num} مُشاهدات`;
+  } else if (num >= 11 && num <= 99) {
+    return `${num} مُشاهدة`;
+  } else if (num >= 100 && num <= 199) {
+    return `${num} مُشاهدة`;
+  } else if (num >= 200 && num <= 299) {
+    return `${num} مُشاهدة`;
+  } else if (num % 100 === 0) {
+    return `${num} مُشاهدة`;
+  } else {
+    const lastTwoDigits = num % 100;
+    if (lastTwoDigits === 1) {
+      return `${num} مُشاهدة`;
+    } else if (lastTwoDigits === 2) {
+      return `${num} مُشاهدة`;
+    } else if (lastTwoDigits >= 3 && lastTwoDigits <= 10) {
+      return `${num} مُشاهدات`;
+    } else {
+      return `${num} مُشاهدة`;
+    }
+  }
 }
 
 // Load news detail
@@ -156,17 +190,36 @@ function renderNewsDetail(news) {
   // Title
   document.getElementById('newsTitle').textContent = news.title;
 
-  // Date
-  document.getElementById('newsDate').textContent = formatDate(news.published_at);
+  // Date - Gregorian format
+  const dateObj = new Date(news.published_at);
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  const gregorianDate = dateObj.toLocaleDateString('ar-EG', options);
+  document.getElementById('newsDate').textContent = gregorianDate;
 
-  // Authors
+  // Authors with proper formatting
   const authors = news.authors || (news.author_name ? [news.author_name] : ['نادي أديب']);
   const authorsIcon = document.getElementById('authorsIcon');
-  authorsIcon.className = authors.length > 1 ? 'fas fa-users' : 'fas fa-user';
-  document.getElementById('newsAuthors').textContent = authors.join('، ');
+  const authorsLabel = document.getElementById('authorsLabel');
+  
+  if (authors.length > 1) {
+    authorsIcon.className = 'fa-solid fa-feather';
+    authorsLabel.textContent = 'بريشات';
+    // Join with 'و' instead of comma
+    let authorsText = '';
+    if (authors.length === 2) {
+      authorsText = authors[0] + ' و ' + authors[1];
+    } else {
+      authorsText = authors.slice(0, -1).join(' و ') + ' و ' + authors[authors.length - 1];
+    }
+    document.getElementById('newsAuthors').textContent = authorsText;
+  } else {
+    authorsIcon.className = 'fa-solid fa-feather';
+    authorsLabel.textContent = 'بريشة';
+    document.getElementById('newsAuthors').textContent = authors[0];
+  }
 
-  // Views
-  document.getElementById('newsViews').textContent = news.views || 0;
+  // Views with proper Arabic grammar
+  document.getElementById('newsViews').textContent = formatViewsCount(news.views || 0);
 
   // Cover Image
   if (news.image_url) {
@@ -191,14 +244,49 @@ function renderNewsDetail(news) {
   // Additional Images Gallery (below content)
   if (news.images && Array.isArray(news.images) && news.images.length > 0) {
     const galleryContainer = document.getElementById('newsImagesGallery');
-    const imagesGrid = document.getElementById('newsImagesGrid');
-    imagesGrid.innerHTML = news.images.map((img, index) => `
-      <div class="gallery-image-container">
-        <img src="${img.url}" alt="${escapeHtml(news.title)} - صورة ${index + 1}" class="gallery-image" />
-        ${img.photographer ? `<div class="photographer-label"><i class="fas fa-camera"></i> تصوير: ${escapeHtml(img.photographer)}</div>` : ''}
+    const imagesSwiper = document.getElementById('newsImagesSwiper');
+    
+    // إنشاء HTML للصور
+    const imageHTML = news.images.map((img, index) => `
+      <div class="gallery-image-card">
+        <div class="gallery-image-container">
+          <img src="${img.url}" alt="${escapeHtml(news.title)} - صورة ${index + 1}" class="gallery-image" />
+        </div>
       </div>
     `).join('');
+    
+    // ملء Swiper
+    imagesSwiper.innerHTML = news.images.map((img, index) => `
+      <div class="swiper-slide">
+        <div class="gallery-image-card">
+          <div class="gallery-image-container">
+            <img src="${img.url}" alt="${escapeHtml(news.title)} - صورة ${index + 1}" class="gallery-image" />
+            <div class="gallery-image-overlay">
+              <i class="fas fa-search-plus"></i>
+              <span>اضغط للتكبير</span>
+            </div>
+          </div>
+          <div class="gallery-image-content">
+            ${img.photographer ? `
+            <div class="gallery-photographer">
+              <i class="fas fa-camera"></i>
+              <span>${escapeHtml(img.photographer)}</span>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+    
     galleryContainer.style.display = 'block';
+    
+    // تهيئة Swiper
+    initGallerySwiper(news.images.length);
+    
+    // تهيئة Lightbox بعد تحميل الصور
+    setTimeout(() => {
+      initImageLightbox();
+    }, 100);
   }
 
   // Setup share buttons
@@ -262,10 +350,10 @@ async function loadRelatedNews(currentNews) {
     if (error) throw error;
 
     if (data && data.length > 0) {
-      // Select 2 random news
+      // Select random news - minimum 1, maximum 4
       const randomNews = [];
       const availableNews = [...data];
-      const count = Math.min(2, availableNews.length);
+      const count = Math.min(4, availableNews.length);
       
       for (let i = 0; i < count; i++) {
         const randomIndex = Math.floor(Math.random() * availableNews.length);
@@ -285,13 +373,21 @@ async function loadRelatedNews(currentNews) {
 
 // Render related news
 function renderRelatedNews(newsList) {
-  const grid = document.getElementById('relatedNewsGrid');
-  grid.innerHTML = '';
+  const swiperWrapper = document.getElementById('relatedNewsSwiper');
+  
+  swiperWrapper.innerHTML = '';
 
+  // ملء Swiper (لجميع الشاشات)
   newsList.forEach(news => {
+    const slide = document.createElement('div');
+    slide.className = 'swiper-slide';
     const card = createRelatedNewsCard(news);
-    grid.appendChild(card);
+    slide.appendChild(card);
+    swiperWrapper.appendChild(slide);
   });
+
+  // تهيئة Swiper مع عدد الأخبار
+  initRelatedNewsSwiper(newsList.length);
 }
 
 // Create related news card
@@ -304,18 +400,20 @@ function createRelatedNewsCard(news) {
   const publishedDate = formatDate(news.published_at);
 
   card.innerHTML = `
-    <img src="${imageUrl}" alt="${escapeHtml(news.title)}" onerror="this.src='https://via.placeholder.com/400x300?text=أديب'">
-    <div class="related-news-card-content">
-      <h4>${escapeHtml(news.title)}</h4>
-      <div class="related-news-card-meta">
-        <span>
-          <i class="fas fa-calendar"></i>
-          ${publishedDate}
-        </span>
-        <span>
+    <div class="related-news-image-container">
+      <img src="${imageUrl}" alt="${escapeHtml(news.title)}" class="related-news-image" onerror="this.src='https://via.placeholder.com/400x300?text=أديب'">
+    </div>
+    <div class="related-news-content">
+      <h4 class="related-news-title">${escapeHtml(news.title)}</h4>
+      <div class="related-news-meta">
+        <div class="related-news-date">
+          <i class="fas fa-calendar-alt"></i>
+          <span>${publishedDate}</span>
+        </div>
+        <div class="related-news-views">
           <i class="fas fa-eye"></i>
-          ${news.views || 0}
-        </span>
+          <span>${formatViewsCount(news.views || 0)}</span>
+        </div>
       </div>
     </div>
   `;
@@ -323,11 +421,225 @@ function createRelatedNewsCard(news) {
   return card;
 }
 
+// Initialize Gallery Swiper
+function initGallerySwiper(imagesCount) {
+  // التحقق من وجود Swiper
+  if (typeof Swiper === 'undefined') {
+    console.warn('Swiper library not loaded');
+    return;
+  }
+
+  new Swiper('.gallery-swiper', {
+    slidesPerView: 1,
+    spaceBetween: 20,
+    loop: imagesCount > 1, // تفعيل loop فقط إذا كان هناك أكثر من صورة
+    
+    // عرض متعدد حسب حجم الشاشة
+    breakpoints: {
+      // الشاشات الصغيرة (أقل من 576px) - صورة واحدة
+      320: {
+        slidesPerView: 1,
+        spaceBetween: 20,
+      },
+      // الشاشات المتوسطة والكبيرة (576px وأكبر) - صورتان
+      500: {
+        slidesPerView: Math.min(2, imagesCount),
+        spaceBetween: 20,
+      },
+    },
+    
+    navigation: {
+      nextEl: '.gallery-swiper .swiper-button-next',
+      prevEl: '.gallery-swiper .swiper-button-prev',
+    },
+    
+    autoplay: imagesCount > 1 ? {
+      delay: 4000,
+      disableOnInteraction: false,
+      pauseOnMouseEnter: true,
+    } : false,
+    
+    effect: 'slide',
+    speed: 600,
+    
+    // تأثيرات إضافية
+    grabCursor: true,
+    centeredSlides: false,
+    
+    // إخفاء الأزرار إذا كانت هناك صورة واحدة فقط
+    on: {
+      init: function() {
+        if (imagesCount === 1) {
+          const nextBtn = document.querySelector('.gallery-swiper .swiper-button-next');
+          const prevBtn = document.querySelector('.gallery-swiper .swiper-button-prev');
+          if (nextBtn) nextBtn.style.display = 'none';
+          if (prevBtn) prevBtn.style.display = 'none';
+        }
+      }
+    }
+  });
+}
+
+// Initialize Related News Swiper
+function initRelatedNewsSwiper(newsCount) {
+  // التحقق من وجود Swiper
+  if (typeof Swiper === 'undefined') {
+    console.warn('Swiper library not loaded');
+    return;
+  }
+
+  new Swiper('.related-news-swiper', {
+    slidesPerView: 1,
+    spaceBetween: 20,
+    loop: newsCount > 1, // تفعيل loop فقط إذا كان هناك أكثر من خبر
+    
+    // عرض متعدد حسب حجم الشاشة
+    breakpoints: {
+      // الشاشات الصغيرة (أقل من 768px) - خبر واحد
+      320: {
+        slidesPerView: 1,
+        spaceBetween: 20,
+      },
+      // الشاشات الكبيرة (768px وأكبر) - خبران
+      768: {
+        slidesPerView: Math.min(2, newsCount),
+        spaceBetween: 30,
+      },
+    },
+    
+    navigation: {
+      nextEl: '.related-news-swiper .swiper-button-next',
+      prevEl: '.related-news-swiper .swiper-button-prev',
+    },
+    
+    autoplay: newsCount > 1 ? {
+      delay: 5000,
+      disableOnInteraction: false,
+      pauseOnMouseEnter: true,
+    } : false,
+    
+    effect: 'slide',
+    speed: 600,
+    
+    // تأثيرات إضافية
+    grabCursor: true,
+    centeredSlides: false,
+    
+    // إخفاء الأزرار إذا كان هناك خبر واحد فقط
+    on: {
+      init: function() {
+        if (newsCount === 1) {
+          const nextBtn = document.querySelector('.related-news-swiper .swiper-button-next');
+          const prevBtn = document.querySelector('.related-news-swiper .swiper-button-prev');
+          if (nextBtn) nextBtn.style.display = 'none';
+          if (prevBtn) prevBtn.style.display = 'none';
+        }
+      }
+    }
+  });
+}
+
 // Show error
 function showError() {
   document.getElementById('newsLoading').style.display = 'none';
   document.getElementById('newsError').style.display = 'flex';
   document.getElementById('newsDetailContent').style.display = 'none';
+}
+
+// Image Lightbox functionality
+let currentImageIndex = 0;
+let galleryImages = [];
+
+function initImageLightbox() {
+  const lightbox = document.getElementById('imageLightbox');
+  const lightboxImage = document.getElementById('lightboxImage');
+  const lightboxTitle = document.getElementById('lightboxTitle');
+  const lightboxCounter = document.getElementById('lightboxCounter');
+  const closeLightbox = document.getElementById('closeLightbox');
+  const prevImage = document.getElementById('prevImage');
+  const nextImage = document.getElementById('nextImage');
+  const overlay = document.querySelector('.lightbox-overlay');
+
+  // Get all gallery images
+  const imageElements = document.querySelectorAll('.gallery-image');
+  galleryImages = Array.from(imageElements).map((img, index) => {
+    const card = img.closest('.gallery-image-card');
+    const photographerElement = card?.querySelector('.gallery-photographer span');
+    const photographer = photographerElement?.textContent || '';
+    
+    return {
+      src: img.src,
+      alt: img.alt,
+      photographer: photographer,
+      index: index
+    };
+  });
+
+  // Add click event to each image
+  imageElements.forEach((img, index) => {
+    img.style.cursor = 'pointer';
+    img.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openLightbox(index);
+    });
+  });
+
+  // Close lightbox
+  function closeLightboxHandler() {
+    lightbox.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  closeLightbox.addEventListener('click', closeLightboxHandler);
+  overlay.addEventListener('click', closeLightboxHandler);
+
+  // Navigate images
+  prevImage.addEventListener('click', () => {
+    if (currentImageIndex > 0) {
+      showImage(currentImageIndex - 1);
+    }
+  });
+
+  nextImage.addEventListener('click', () => {
+    if (currentImageIndex < galleryImages.length - 1) {
+      showImage(currentImageIndex + 1);
+    }
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (lightbox.style.display === 'flex' || lightbox.style.display === 'block') {
+      if (e.key === 'Escape') {
+        closeLightboxHandler();
+      } else if (e.key === 'ArrowRight' && currentImageIndex > 0) {
+        showImage(currentImageIndex - 1);
+      } else if (e.key === 'ArrowLeft' && currentImageIndex < galleryImages.length - 1) {
+        showImage(currentImageIndex + 1);
+      }
+    }
+  });
+
+  function openLightbox(index) {
+    currentImageIndex = index;
+    showImage(index);
+    lightbox.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function showImage(index) {
+    currentImageIndex = index;
+    const image = galleryImages[index];
+    
+    lightboxImage.src = image.src;
+    lightboxImage.alt = image.alt;
+    lightboxTitle.textContent = image.photographer ? `الصورة بعدسة ${image.photographer}` : `صورة ${index + 1}`;
+    lightboxCounter.textContent = `${index + 1} / ${galleryImages.length}`;
+
+    // Update button states
+    prevImage.disabled = index === 0;
+    nextImage.disabled = index === galleryImages.length - 1;
+  }
 }
 
 // Initialize
