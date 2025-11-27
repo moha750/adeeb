@@ -1,73 +1,530 @@
-/* تنسيق خاص لكروت إحصائيات الأعضاء */
+/* ═══════════════════════════════════════════════════════════════════════════
+   تنسيق كروت إحصائيات الأعضاء - تصميم احترافي متطور
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-/* التنسيق الافتراضي للشاشات الكبيرة جداً */
+/* الشبكة الأساسية */
 .members-stats-grid {
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
-/* للشاشات الكبيرة جداً (1100px وأعلى): تنظيم خاص */
+/* ─────────────────────────────────────────────────────────────────────────────
+   تصميم الكروت الاحصائية المحسّن
+   ───────────────────────────────────────────────────────────────────────────── */
+.members-stats-grid .stat-card {
+  background: #fff;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+}
+
+/* الخط الملون في أعلى الكارت */
+.members-stats-grid .stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  border-radius: 20px 20px 0 0;
+}
+
+.members-stats-grid .stat-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 20px 40px rgba(2, 6, 23, 0.12), 0 8px 16px rgba(2, 6, 23, 0.08);
+}
+
+
+/* رأس الكارت مع الأيقونة */
+.stat-card__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 20px 20px 14px;
+}
+
+.stat-card__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card__icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%);
+  border-radius: inherit;
+}
+
+.stat-card:hover .stat-card__icon {
+  transform: scale(1.1) rotate(-5deg);
+  box-shadow: 0 8px 24px currentColor;
+}
+
+.stat-card__title {
+  font-family: fb, system-ui, sans-serif;
+  font-size: 1rem;
+  color: var(--text, #1a2a3a);
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+/* جسم الكارت مع الرقم */
+.stat-card__body {
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-card__value {
+  font-family: fb, system-ui, sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, currentColor 0%, currentColor 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.stat-card__subtitle {
+  font-family: fr, system-ui, sans-serif;
+  font-size: 0.9rem;
+  color: var(--muted, #64748b);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-card__subtitle i {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+/* شريط التقدم المحسّن */
+.stat-card__progress {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 6px;
+  position: relative;
+}
+
+.stat-card__progress::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.stat-card__progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card__progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 100%);
+}
+
+/* شارة النسبة المئوية المحسّنة */
+.stat-card__badge {
+  position: absolute;
+  top: 16px;
+  inset-inline-end: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: 24px;
+  font-family: fb, system-ui, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover .stat-card__badge {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   أنماط الألوان للكروت المختلفة
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* كارت إجمالي الأعضاء - أزرق متدرج فاخر */
+.stat-card--total {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 40%, #7dd3fc 100%);
+  border-color: #38bdf8;
+  box-shadow: 0 4px 20px rgba(14, 165, 233, 0.15);
+}
+.stat-card--total::before {
+  background: linear-gradient(90deg, #0ea5e9, #0284c7);
+}
+.stat-card--total .stat-card__icon {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(14, 165, 233, 0.4);
+}
+.stat-card--total:hover {
+  border-color: #0ea5e9;
+}
+.stat-card--total .stat-card__value { color: #0369a1; }
+.stat-card--total .stat-card__title { color: #075985; }
+.stat-card--total .stat-card__subtitle { color: #0c4a6e; }
+
+/* كارت البيانات المكتملة - أخضر زمردي */
+.stat-card--complete {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 50%, #86efac 100%);
+  border-color: #4ade80;
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.15);
+}
+.stat-card--complete::before {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+.stat-card--complete .stat-card__icon {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.4);
+}
+.stat-card--complete:hover {
+  border-color: #22c55e;
+}
+.stat-card--complete .stat-card__value { color: #15803d; }
+.stat-card--complete .stat-card__title { color: #166534; }
+.stat-card--complete .stat-card__badge { 
+  background: linear-gradient(135deg, #22c55e, #16a34a); 
+  color: #fff; 
+}
+.stat-card--complete .stat-card__progress-bar { 
+  background: linear-gradient(90deg, #22c55e, #16a34a, #15803d); 
+}
+
+/* كارت البيانات غير المكتملة - أحمر ياقوتي */
+.stat-card--incomplete {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 50%, #fca5a5 100%);
+  border-color: #f87171;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15);
+}
+.stat-card--incomplete::before {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+.stat-card--incomplete .stat-card__icon {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+}
+.stat-card--incomplete:hover {
+  border-color: #ef4444;
+}
+.stat-card--incomplete .stat-card__value { color: #b91c1c; }
+.stat-card--incomplete .stat-card__title { color: #991b1b; }
+.stat-card--incomplete .stat-card__badge { 
+  background: linear-gradient(135deg, #ef4444, #dc2626); 
+  color: #fff; 
+}
+.stat-card--incomplete .stat-card__progress-bar { 
+  background: linear-gradient(90deg, #ef4444, #dc2626, #b91c1c); 
+}
+
+/* كارت الحسابات المفعلة - أزرق ملكي */
+.stat-card--activated {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%);
+  border-color: #60a5fa;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+}
+.stat-card--activated::before {
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+.stat-card--activated .stat-card__icon {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+.stat-card--activated:hover {
+  border-color: #3b82f6;
+}
+.stat-card--activated .stat-card__value { color: #1d4ed8; }
+.stat-card--activated .stat-card__title { color: #1e40af; }
+.stat-card--activated .stat-card__badge { 
+  background: linear-gradient(135deg, #3b82f6, #2563eb); 
+  color: #fff; 
+}
+.stat-card--activated .stat-card__progress-bar { 
+  background: linear-gradient(90deg, #3b82f6, #2563eb, #1d4ed8); 
+}
+
+/* كارت الحسابات غير المفعلة - برتقالي ذهبي */
+.stat-card--not-activated {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%);
+  border-color: #fbbf24;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.15);
+}
+.stat-card--not-activated::before {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+.stat-card--not-activated .stat-card__icon {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+}
+.stat-card--not-activated:hover {
+  border-color: #f59e0b;
+}
+.stat-card--not-activated .stat-card__value { color: #b45309; }
+.stat-card--not-activated .stat-card__title { color: #92400e; }
+.stat-card--not-activated .stat-card__badge { 
+  background: linear-gradient(135deg, #f59e0b, #d97706); 
+  color: #fff; 
+}
+.stat-card--not-activated .stat-card__progress-bar { 
+  background: linear-gradient(90deg, #f59e0b, #d97706, #b45309); 
+}
+
+/* كروت اللجان - تصميم زجاجي أنيق */
+.stat-card--committee {
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.9) 100%);
+  border-color: #e2e8f0;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(2, 6, 23, 0.06);
+}
+.stat-card--committee::before {
+  background: linear-gradient(90deg, var(--accent-blue, #3d8fd6), var(--main-blue, #274060));
+}
+.stat-card--committee:hover {
+  border-color: var(--accent-blue, #3d8fd6);
+  box-shadow: 0 12px 32px rgba(61, 143, 214, 0.15);
+}
+.stat-card--committee .stat-card__icon {
+  background: linear-gradient(135deg, var(--accent-blue, #3d8fd6), var(--main-blue, #274060));
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(61, 143, 214, 0.35);
+}
+.stat-card--committee .stat-card__value { color: var(--main-blue, #274060); }
+.stat-card--committee .stat-card__title { color: var(--text, #1a2a3a); }
+.stat-card--committee .stat-card__subtitle { 
+  color: var(--muted, #64748b);
+  background: linear-gradient(135deg, rgba(61, 143, 214, 0.1), rgba(39, 64, 96, 0.05));
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   قسم اللجان المنفصل - تصميم بسيط
+   ───────────────────────────────────────────────────────────────────────────── */
+.committees-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border, #e5e7eb);
+}
+
+.committees-section__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.committees-section__title {
+  font-family: fb, system-ui, sans-serif;
+  font-size: 1rem;
+  color: var(--main-blue, #274060);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.committees-section__title i {
+  color: var(--accent-blue, #3d8fd6);
+}
+
+.committees-section__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent-blue, #3d8fd6), var(--main-blue, #274060));
+  color: #fff;
+  font-size: 0.85rem;
+  font-family: fb, system-ui, sans-serif;
+}
+
+.committees-grid {
+  display: grid;
+  gap: 14px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   التجاوب مع أحجام الشاشات المختلفة
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* للشاشات الكبيرة جداً (1100px وأعلى) */
 @media (min-width: 1101px) {
   .members-stats-grid {
-    display: grid;
-    gap: 12px;
-    /* نستخدم 4 أعمدة للتحكم الكامل */
     grid-template-columns: repeat(4, 1fr);
   }
   
-  /* إجمالي الأعضاء يأخذ صف كامل (الكارت الأول) */
-  .members-stats-grid > .card:first-child {
+  /* إجمالي الأعضاء يأخذ صف كامل */
+  .members-stats-grid > .stat-card--total {
     grid-column: 1 / -1;
   }
   
-  /* بيانات مكتملة وغير مكتملة في صف واحد (الكارت الثاني والثالث) */
-  .members-stats-grid > .card:nth-child(2) {
-    grid-column: 1 / 3; /* يأخذ نصف العرض */
+  /* بيانات مكتملة وغير مكتملة في صف واحد */
+  .members-stats-grid > .stat-card--complete {
+    grid-column: 1 / 3;
+  }
+  .members-stats-grid > .stat-card--incomplete {
+    grid-column: 3 / 5;
   }
   
-  .members-stats-grid > .card:nth-child(3) {
-    grid-column: 3 / 5; /* يأخذ النصف الثاني */
+  /* حسابات مفعلة وغير مفعلة في صف واحد */
+  .members-stats-grid > .stat-card--activated {
+    grid-column: 1 / 3;
+  }
+  .members-stats-grid > .stat-card--not-activated {
+    grid-column: 3 / 5;
   }
   
-  /* البقية (اللجان وغيرها) توزع بشكل عادي - 4 في كل صف */
-  .members-stats-grid > .card:nth-child(n+4) {
-    grid-column: span 1;
+  /* قسم اللجان يأخذ العرض الكامل */
+  .members-stats-grid > .committees-section {
+    grid-column: 1 / -1;
+  }
+  
+  .committees-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* عند مقاس متوسط إلى كبير (900px تقريباً): تنظيم خاص */
+/* للشاشات المتوسطة */
 @media (min-width: 768px) and (max-width: 1100px) {
   .members-stats-grid {
-    display: grid;
-    gap: 12px;
     grid-template-columns: repeat(2, 1fr);
   }
   
-  /* إجمالي الأعضاء يأخذ صف كامل (الكارت الأول) */
-  .members-stats-grid > .card:first-child {
+  .members-stats-grid > .stat-card--total {
     grid-column: 1 / -1;
   }
   
-  /* بيانات مكتملة وغير مكتملة في صف واحد (الكارت الثاني والثالث) */
-  .members-stats-grid > .card:nth-child(2),
-  .members-stats-grid > .card:nth-child(3) {
-    grid-column: span 1;
+  .members-stats-grid > .committees-section {
+    grid-column: 1 / -1;
   }
   
-  /* البقية (اللجان وغيرها) توزع بشكل عادي - كارتين في كل صف */
-  .members-stats-grid > .card:nth-child(n+4) {
-    grid-column: span 1;
+  .committees-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* للشاشات الصغيرة: عمود واحد */
+/* للشاشات الصغيرة */
 @media (max-width: 767px) {
   .members-stats-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
   
-  .members-stats-grid > .card {
+  .members-stats-grid > .stat-card,
+  .members-stats-grid > .committees-section {
     grid-column: 1 / -1;
+  }
+  
+  .committees-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .stat-card__value {
+    font-size: 2rem;
+  }
+  
+  .stat-card__icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.2rem;
+  }
+  
+  .stat-card__header {
+    padding: 16px 16px 12px;
+  }
+  
+  .stat-card__body {
+    padding: 0 16px 16px;
+  }
+  
+  .committees-section {
+    padding: 16px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   تأثيرات حركية إضافية
+   ───────────────────────────────────────────────────────────────────────────── */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(61, 143, 214, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(61, 143, 214, 0); }
+}
+
+.stat-card--total .stat-card__icon {
+  animation: pulse-glow 3s infinite;
+}
+
+/* تأثير الظهور التدريجي */
+.members-stats-grid .stat-card {
+  animation: fadeInUp 0.5s ease backwards;
+}
+
+.members-stats-grid .stat-card:nth-child(1) { animation-delay: 0.05s; }
+.members-stats-grid .stat-card:nth-child(2) { animation-delay: 0.1s; }
+.members-stats-grid .stat-card:nth-child(3) { animation-delay: 0.15s; }
+.members-stats-grid .stat-card:nth-child(4) { animation-delay: 0.2s; }
+.members-stats-grid .stat-card:nth-child(5) { animation-delay: 0.25s; }
+.members-stats-grid .committees-section { animation-delay: 0.3s; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

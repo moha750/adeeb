@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تفعيل الحساب الإداري - نادي أديب</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .activation-container {
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+      max-width: 600px;
+      width: 100%;
+      overflow: hidden;
+      animation: slideUp 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .activation-header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+      padding: 50px 40px;
+      text-align: center;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .activation-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 0.3; }
+    }
+
+    .activation-logo {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 25px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 1;
+    }
+
+    .activation-logo img {
+      width: 70px;
+      height: 70px;
+      object-fit: contain;
+    }
+
+    .activation-header h1 {
+      font-size: 32px;
+      margin-bottom: 12px;
+      font-weight: 800;
+      position: relative;
+      z-index: 1;
+    }
+
+    .activation-header p {
+      font-size: 17px;
+      opacity: 0.95;
+      line-height: 1.6;
+      position: relative;
+      z-index: 1;
+    }
+
+    .admin-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 15px;
+      backdrop-filter: blur(10px);
+    }
+
+    .activation-body {
+      padding: 45px 40px;
+    }
+
+    .loading-state,
+    .error-state,
+    .success-state,
+    .form-state {
+      display: none;
+      text-align: center;
+    }
+
+    .loading-state.active,
+    .error-state.active,
+    .success-state.active,
+    .form-state.active {
+      display: block;
+    }
+
+    .loading-spinner {
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 25px;
+      border: 5px solid #f3f4f6;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status-icon {
+      width: 90px;
+      height: 90px;
+      margin: 0 auto 25px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 45px;
+    }
+
+    .status-icon.error {
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      color: #dc2626;
+    }
+
+    .status-icon.success {
+      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+      color: #059669;
+    }
+
+    .status-message {
+      font-size: 20px;
+      color: #1f2937;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .status-details {
+      font-size: 15px;
+      color: #6b7280;
+      line-height: 1.7;
+      margin-bottom: 25px;
+    }
+
+    .admin-info {
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      border-radius: 16px;
+      padding: 25px;
+      margin-bottom: 30px;
+      text-align: right;
+      border: 2px solid #bfdbfe;
+    }
+
+    .admin-info-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #93c5fd;
+    }
+
+    .admin-info-header i {
+      font-size: 24px;
+      color: #3b82f6;
+    }
+
+    .admin-info-header h3 {
+      font-size: 18px;
+      color: #1e3a8a;
+      font-weight: 700;
+    }
+
+    .admin-info-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      font-size: 15px;
+      color: #1f2937;
+    }
+
+    .admin-info-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .admin-info-item i {
+      color: #3b82f6;
+      width: 24px;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .admin-info-item strong {
+      color: #1e3a8a;
+      min-width: 100px;
+    }
+
+    .admin-level-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+
+    .permissions-box {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      border: 2px solid #bfdbfe;
+    }
+
+    .permissions-box h4 {
+      color: #1e3a8a;
+      font-size: 16px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .permissions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .permission-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #374151;
+      padding: 8px 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+    }
+
+    .permission-item i {
+      color: #10b981;
+      font-size: 12px;
+    }
+
+    .invited-by-box {
+      background: #fef3c7;
+      border: 2px solid #fde047;
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    .invited-by-box p {
+      color: #92400e;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .invited-by-box strong {
+      color: #78350f;
+      font-weight: 700;
+    }
+
+    .form-group {
+      margin-bottom: 22px;
+      text-align: right;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 700;
+      color: #1f2937;
+      font-size: 15px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px 18px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 16px;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+
+    .password-input-wrapper {
+      position: relative;
+    }
+
+    .password-toggle {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 10px;
+      font-size: 20px;
+      transition: color 0.3s;
+    }
+
+    .password-toggle:hover {
+      color: #1f2937;
+    }
+
+    .password-strength {
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
+    .strength-bar {
+      height: 5px;
+      background: #e5e7eb;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .strength-bar-fill {
+      height: 100%;
+      width: 0;
+      transition: all 0.4s;
+      border-radius: 3px;
+    }
+
+    .strength-bar-fill.weak {
+      width: 33%;
+      background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+
+    .strength-bar-fill.medium {
+      width: 66%;
+      background: linear-gradient(90deg, #f59e0b, #d97706);
+    }
+
+    .strength-bar-fill.strong {
+      width: 100%;
+      background: linear-gradient(90deg, #10b981, #059669);
+    }
+
+    .strength-text {
+      color: #6b7280;
+      font-weight: 600;
+    }
+
+    .password-requirements {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 12px;
+      font-size: 13px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .password-requirements ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .password-requirements li {
+      padding: 6px 0;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .password-requirements li i {
+      font-size: 11px;
+    }
+
+    .password-requirements li.valid {
+      color: #059669;
+    }
+
+    .password-requirements li.valid i {
+      color: #059669;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 16px 28px;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    .alert {
+      padding: 14px 18px;
+      border-radius: 10px;
+      margin-bottom: 22px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .alert.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 2px solid #fecaca;
+    }
+
+    .alert.info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 2px solid #bfdbfe;
+    }
+
+    .alert.warning {
+      background: #fef3c7;
+      color: #92400e;
+      border: 2px solid #fde047;
+    }
+
+    .footer-links {
+      text-align: center;
+      margin-top: 25px;
+      padding-top: 25px;
+      border-top: 2px solid #e5e7eb;
+    }
+
+    .footer-links a {
+      color: #3b82f6;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 600;
+      transition: color 0.3s;
+    }
+
+    .footer-links a:hover {
+      color: #2563eb;
+      text-decoration: underline;
+    }
+
+    @media (max-width: 640px) {
+      .activation-container {
+        border-radius: 0;
+      }
+
+      .activation-header {
+        padding: 35px 25px;
+      }
+
+      .activation-body {
+        padding: 35px 25px;
+      }
+
+      .permissions-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="activation-container">
+    <div class="activation-header">
+      <div class="activation-logo">
+        <img src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" alt="نادي أديب">
+      </div>
+      <h1>🎖️ تفعيل الحساب الإداري</h1>
+      <p>مرحباً بك في الفريق الإداري لنادي أديب</p>
+      <div class="admin-badge">
+        <i class="fas fa-shield-halved"></i> حساب إداري
+      </div>
+    </div>
+
+    <div class="activation-body">
+      <!-- حالة التحميل -->
+      <div class="loading-state active" id="loadingState">
+        <div class="loading-spinner"></div>
+        <div class="status-message">جاري التحقق من الدعوة...</div>
+        <div class="status-details">يرجى الانتظار قليلاً</div>
+      </div>
+
+      <!-- حالة الخطأ -->
+      <div class="error-state" id="errorState">
+        <div class="status-icon error">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <div class="status-message" id="errorMessage">رابط التفعيل غير صالح</div>
+        <div class="status-details" id="errorDetails">الرابط قد يكون منتهي الصلاحية أو تم استخدامه مسبقاً</div>
+        <button class="btn btn-secondary" onclick="window.location.href='../index.html'">
+          <i class="fas fa-home"></i>
+          العودة للرئيسية
+        </button>
+      </div>
+
+      <!-- حالة النجاح -->
+      <div class="success-state" id="successState">
+        <div class="status-icon success">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="status-message">تم تفعيل حسابك الإداري بنجاح!</div>
+        <div class="status-details">يمكنك الآن تسجيل الدخول والوصول إلى لوحة التحكم الإدارية</div>
+        <button class="btn btn-primary" id="goToDashboardBtn">
+          <i class="fas fa-gauge"></i>
+          الانتقال إلى لوحة التحكم الإدارية
+        </button>
+      </div>
+
+      <!-- نموذج التفعيل -->
+      <div class="form-state" id="formState">
+        <div class="admin-info" id="adminInfo">
+          <!-- سيتم ملؤها ديناميكياً -->
+        </div>
+
+        <div class="alert warning">
+          <i class="fas fa-shield-halved"></i>
+          <span>يرجى إنشاء كلمة مرور قوية وآمنة لحسابك الإداري</span>
+        </div>
+
+        <div id="formAlert"></div>
+
+        <form id="activationForm">
+          <div class="form-group">
+            <label for="password">
+              <i class="fas fa-lock"></i> كلمة المرور
+            </label>
+            <div class="password-input-wrapper">
+              <input type="password" id="password" name="password" required autocomplete="new-password">
+              <button type="button" class="password-toggle" id="passwordToggle">
+                <i class="fas fa-eye-slash"></i>
+              </button>
+            </div>
+            <div class="password-strength">
+              <div class="strength-bar">
+                <div class="strength-bar-fill" id="strengthBar"></div>
+              </div>
+              <div class="strength-text" id="strengthText"></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">
+              <i class="fas fa-lock"></i> تأكيد كلمة المرور
+            </label>
+            <div class="password-input-wrapper">
+              <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password">
+              <button type="button" class="password-toggle" id="confirmPasswordToggle">
+                <i class="fas fa-eye-slash"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="password-requirements">
+            <ul id="requirementsList">
+              <li id="req-length"><i class="fas fa-circle"></i> 8 خانات على الأقل</li>
+              <li id="req-upper"><i class="fas fa-circle"></i> حرف كبير واحد على الأقل</li>
+              <li id="req-lower"><i class="fas fa-circle"></i> حرف صغير واحد على الأقل</li>
+              <li id="req-number"><i class="fas fa-circle"></i> رقم واحد على الأقل</li>
+              <li id="req-special"><i class="fas fa-circle"></i> رمز خاص واحد على الأقل</li>
+            </ul>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="submitBtn">
+            <i class="fas fa-shield-halved"></i>
+            تفعيل الحساب الإداري
+          </button>
+        </form>
+
+        <div class="footer-links">
+          <a href="../auth/login.html">
+            <i class="fas fa-arrow-left"></i> تسجيل الدخول
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-config.js"></script>
+  <script src="activate.js"></script>
+</body>
+</html>

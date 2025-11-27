@@ -1758,3 +1758,19 @@ body.no-scroll { overflow: hidden; }
     grid-template-columns: 1fr;
   }
 }
+
+/* Member cards responsive buttons */
+@media (max-width: 576px) {
+  .member-card .member-top-actions {
+    display: none !important;
+  }
+  
+  .member-card .member-inline-actions {
+    display: flex !important;
+    flex-direction: column;
+  }
+  
+  .member-card .member-inline-actions button {
+    width: 100%;
+  }
+}

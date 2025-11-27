@@ -7372,6 +7372,12 @@
     const completePercent = total > 0 ? Math.round((complete * 100) / total) : 0;
     const incompletePercent = total > 0 ? Math.round((incomplete * 100) / total) : 0;
     
+    // Count activated vs non-activated accounts
+    const activated = members.filter(m => m.user_id && m.account_status === 'active').length;
+    const notActivated = total - activated;
+    const activatedPercent = total > 0 ? Math.round((activated * 100) / total) : 0;
+    const notActivatedPercent = total > 0 ? Math.round((notActivated * 100) / total) : 0;
+    
     // Count by committee
     const committeeMap = new Map();
     members.forEach(m => {
@@ -7386,56 +7392,170 @@
     
     grid.innerHTML = '';
     
-    // Row 1: Total members (full width)
+    // كارت إجمالي الأعضاء
     const totalCard = el(`
-      <div class="card" style="grid-column: 1 / -1; background:linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border:1px solid #7dd3fc">
-        <div class="card__body">
-          <div class="card__title" style="color:#0369a1"><i class="fa-solid fa-users"></i> إجمالي الأعضاء</div>
-          <div class="stat-number" style="color:#0369a1">${num(total)}</div>
+      <div class="stat-card stat-card--total">
+        <div class="stat-card__header">
+          <div class="stat-card__icon">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <div class="stat-card__title">إجمالي أعضاء النادي</div>
+        </div>
+        <div class="stat-card__body">
+          <div class="stat-card__value">${num(total)}</div>
+          <div class="stat-card__subtitle">
+            <i class="fa-solid fa-chart-line"></i>
+            عضو مسجل في نادي أديب
+          </div>
         </div>
       </div>
     `);
     grid.appendChild(totalCard);
     
-    // Row 2: Complete + Incomplete (2 cards side by side)
+    // كارت البيانات المكتملة
     const completeCard = el(`
-      <div class="card" style="background:linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border:1px solid #6ee7b7">
-        <div class="card__body">
-          <div class="card__title" style="color:#047857"><i class="fa-solid fa-circle-check"></i> بيانات مكتملة</div>
-          <div class="stat-number" style="color:#047857">${num(complete)} (${completePercent}%)</div>
+      <div class="stat-card stat-card--complete">
+        <span class="stat-card__badge">${completePercent}%</span>
+        <div class="stat-card__header">
+          <div class="stat-card__icon">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div class="stat-card__title">بيانات مكتملة</div>
+        </div>
+        <div class="stat-card__body">
+          <div class="stat-card__value">${num(complete)}</div>
+          <div class="stat-card__subtitle">
+            <i class="fa-solid fa-clipboard-check"></i>
+            من أصل ${num(total)} عضو
+          </div>
+          <div class="stat-card__progress">
+            <div class="stat-card__progress-bar" style="width: ${completePercent}%"></div>
+          </div>
         </div>
       </div>
     `);
     grid.appendChild(completeCard);
     
+    // كارت البيانات غير المكتملة
     const incompleteCard = el(`
-      <div class="card" style="background:linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border:1px solid #fca5a5">
-        <div class="card__body">
-          <div class="card__title" style="color:#b91c1c"><i class="fa-solid fa-circle-xmark"></i> بيانات غير مكتملة</div>
-          <div class="stat-number" style="color:#b91c1c">${num(incomplete)} (${incompletePercent}%)</div>
+      <div class="stat-card stat-card--incomplete">
+        <span class="stat-card__badge">${incompletePercent}%</span>
+        <div class="stat-card__header">
+          <div class="stat-card__icon">
+            <i class="fa-solid fa-circle-xmark"></i>
+          </div>
+          <div class="stat-card__title">بيانات غير مكتملة</div>
+        </div>
+        <div class="stat-card__body">
+          <div class="stat-card__value">${num(incomplete)}</div>
+          <div class="stat-card__subtitle">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            تحتاج إلى استكمال
+          </div>
+          <div class="stat-card__progress">
+            <div class="stat-card__progress-bar" style="width: ${incompletePercent}%"></div>
+          </div>
         </div>
       </div>
     `);
     grid.appendChild(incompleteCard);
     
-    // Row 3+: Committee stats (all committees)
-    const sortedCommittees = Array.from(committeeMap.entries())
-      .sort((a, b) => {
-        try { return a[0].localeCompare(b[0], 'ar'); } catch { return String(a[0]).localeCompare(String(b[0])); }
-      });
-    
-    sortedCommittees.forEach(([committee, count]) => {
-      const icon = getCommitteeIcon(committee);
-      const card = el(`
-        <div class="card">
-          <div class="card__body">
-            <div class="card__title"><i class="${icon}"></i> ${escapeHtml(committee)}</div>
-            <div class="stat-number">${num(count)}</div>
+    // كارت الحسابات المفعلة
+    const activatedCard = el(`
+      <div class="stat-card stat-card--activated">
+        <span class="stat-card__badge">${activatedPercent}%</span>
+        <div class="stat-card__header">
+          <div class="stat-card__icon">
+            <i class="fa-solid fa-user-check"></i>
+          </div>
+          <div class="stat-card__title">حسابات مفعلة</div>
+        </div>
+        <div class="stat-card__body">
+          <div class="stat-card__value">${num(activated)}</div>
+          <div class="stat-card__subtitle">
+            <i class="fa-solid fa-shield-check"></i>
+            حساب نشط ومفعل
+          </div>
+          <div class="stat-card__progress">
+            <div class="stat-card__progress-bar" style="width: ${activatedPercent}%"></div>
           </div>
         </div>
+      </div>
+    `);
+    grid.appendChild(activatedCard);
+    
+    // كارت الحسابات غير المفعلة
+    const notActivatedCard = el(`
+      <div class="stat-card stat-card--not-activated">
+        <span class="stat-card__badge">${notActivatedPercent}%</span>
+        <div class="stat-card__header">
+          <div class="stat-card__icon">
+            <i class="fa-solid fa-user-clock"></i>
+          </div>
+          <div class="stat-card__title">حسابات غير مفعلة</div>
+        </div>
+        <div class="stat-card__body">
+          <div class="stat-card__value">${num(notActivated)}</div>
+          <div class="stat-card__subtitle">
+            <i class="fa-solid fa-hourglass-half"></i>
+            بانتظار التفعيل
+          </div>
+          <div class="stat-card__progress">
+            <div class="stat-card__progress-bar" style="width: ${notActivatedPercent}%"></div>
+          </div>
+        </div>
+      </div>
+    `);
+    grid.appendChild(notActivatedCard);
+    
+    // قسم اللجان
+    const sortedCommittees = Array.from(committeeMap.entries())
+      .sort((a, b) => b[1] - a[1]); // ترتيب تنازلي حسب عدد الأعضاء
+    
+    if (sortedCommittees.length > 0) {
+      // حساب إجمالي أعضاء اللجان (للعرض)
+      const totalInCommittees = sortedCommittees.reduce((sum, [, count]) => sum + count, 0);
+      
+      const committeesSection = el(`
+        <div class="committees-section">
+          <div class="committees-section__header">
+            <div class="committees-section__title">
+              <i class="fa-solid fa-sitemap"></i>
+              توزيع الأعضاء على اللجان
+            </div>
+            <span class="committees-section__count">${sortedCommittees.length} لجنة</span>
+          </div>
+          <div class="committees-grid"></div>
+        </div>
       `);
-      grid.appendChild(card);
-    });
+      
+      const committeesGrid = committeesSection.querySelector('.committees-grid');
+      
+      sortedCommittees.forEach(([committee, count], index) => {
+        const icon = getCommitteeIcon(committee);
+        const percent = total > 0 ? Math.round((count * 100) / total) : 0;
+        const card = el(`
+          <div class="stat-card stat-card--committee" style="animation-delay: ${0.35 + (index * 0.05)}s">
+            <div class="stat-card__header">
+              <div class="stat-card__icon">
+                <i class="${icon}"></i>
+              </div>
+              <div class="stat-card__title">${escapeHtml(committee)}</div>
+            </div>
+            <div class="stat-card__body">
+              <div class="stat-card__value">${num(count)}</div>
+              <div class="stat-card__subtitle">
+                <i class="fa-solid fa-chart-pie"></i>
+                ${percent}% من إجمالي الأعضاء
+              </div>
+            </div>
+          </div>
+        `);
+        committeesGrid.appendChild(card);
+      });
+      
+      grid.appendChild(committeesSection);
+    }
   }
 
   // Check if member data is complete (all required fields filled)
@@ -7587,8 +7707,8 @@
               <div style="display:flex; align-items:flex-start; gap:16px; margin-bottom:16px">
                 <div style="position:relative">
                   <img src="${avatar || defaultAvatar}" alt="${name}" onerror="this.src='${defaultAvatar}'" style="width:72px; height:72px; border-radius:16px; object-fit:cover; box-shadow:0 4px 12px rgba(0,0,0,0.15); flex-shrink:0; border:3px solid #fff" />
-                  <div style="position:absolute; bottom:-6px; right:-6px; background:${isComplete ? '#10b981' : '#ef4444'}; width:24px; height:24px; border-radius:50%; border:3px solid #fff; display:flex; align-items:center; justify-content:center">
-                    <i class="fa-solid ${isComplete ? 'fa-check' : 'fa-xmark'}" style="font-size:10px; color:#fff"></i>
+                  <div style="position:absolute; bottom:-6px; right:-6px; background:${item.user_id ? '#10b981' : '#ef4444'}; width:24px; height:24px; border-radius:50%; border:3px solid #fff; display:flex; align-items:center; justify-content:center" title="${item.user_id ? 'الحساب مفعّل' : 'الحساب غير مفعّل'}">
+                    <i class="fa-solid ${item.user_id ? 'fa-check' : 'fa-xmark'}" style="font-size:10px; color:#fff"></i>
                   </div>
                 </div>
                 
@@ -7639,6 +7759,29 @@
                   </div>
                 ` : ''}
               </div>
+              
+              <!-- أزرار الإجراءات السريعة (تظهر في الشبكة ذات العمودين) -->
+              <div class="member-inline-actions" style="display:none; gap:6px; margin-bottom:8px">
+                ${!item.user_id ? `
+                <button class="btn btn-sm member-icon-btn" data-act="send-invitation" data-idx="${idx}" title="إرسال دعوة تفعيل" style="flex:1; padding:8px; border-radius:8px; background:#fff; border:1px solid #d1fae5; color:#10b981; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 4px rgba(0,0,0,0.06); transition:all 0.2s; font-size:0.8rem; font-weight:600">
+                  <i class="fa-solid fa-envelope" style="font-size:12px"></i>
+                  <span>إرسال دعوة</span>
+                </button>
+                ` : `
+                <button class="btn btn-sm member-icon-btn" disabled title="الحساب مفعّل" style="flex:1; padding:8px; border-radius:8px; background:#f0fdf4; border:1px solid #bbf7d0; color:#10b981; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 4px rgba(0,0,0,0.06); cursor:not-allowed; opacity:0.6; font-size:0.8rem; font-weight:600">
+                  <i class="fa-solid fa-check-circle" style="font-size:12px"></i>
+                  <span>مفعّل</span>
+                </button>
+                `}
+                <button class="btn btn-sm member-icon-btn" data-act="change-committee" data-idx="${idx}" title="تغيير اللجنة" style="flex:1; padding:8px; border-radius:8px; background:#fff; border:1px solid #e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 4px rgba(0,0,0,0.06); transition:all 0.2s; font-size:0.8rem; font-weight:600">
+                  <i class="fa-solid fa-arrow-right-arrow-left" style="font-size:12px"></i>
+                  <span>تغيير اللجنة</span>
+                </button>
+                <button class="btn btn-sm member-delete-btn member-icon-btn" data-act="del" data-idx="${idx}" title="حذف" style="flex:1; padding:8px; border-radius:8px; background:#fff; border:1px solid #fecaca; color:#ef4444; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 4px rgba(0,0,0,0.06); transition:all 0.2s; font-size:0.8rem; font-weight:600">
+                  <i class="fa-solid fa-trash" style="font-size:12px"></i>
+                  <span>حذف</span>
+                </button>
+              </div>
             </div>
             
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; border-top:1px solid #e2e8f0; background:#fafbfc">
@@ -7650,7 +7793,8 @@
               </button>
             </div>
             
-            <div style="position:absolute; top:16px; left:16px; display:flex; gap:6px">
+            <!-- أزرار الإجراءات العلوية (تظهر في الشبكة ذات العمود الواحد) -->
+            <div class="member-top-actions" style="position:absolute; top:16px; left:16px; display:flex; gap:6px">
               ${!item.user_id ? `
               <button class="btn btn-sm member-icon-btn" data-act="send-invitation" data-idx="${idx}" title="إرسال دعوة تفعيل" style="width:36px; height:36px; padding:0; border-radius:10px; background:#fff; border:1px solid #d1fae5; color:#10b981; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.06); transition:all 0.2s">
                 <i class="fa-solid fa-envelope" style="font-size:14px"></i>
@@ -7726,26 +7870,94 @@
           });
         }
         
-        // Hover effect for send invitation button
-        const sendInvitationBtn = card.querySelector('[data-act="send-invitation"]');
-        if (sendInvitationBtn) {
-          sendInvitationBtn.addEventListener('mouseenter', () => {
-            sendInvitationBtn.style.background = '#10b981';
-            sendInvitationBtn.style.color = '#fff';
-            sendInvitationBtn.style.borderColor = '#10b981';
-            sendInvitationBtn.style.transform = 'scale(1.1)';
+        // Hover effect for send invitation button (top actions)
+        const sendInvitationBtnTop = card.querySelector('.member-top-actions [data-act="send-invitation"]');
+        if (sendInvitationBtnTop) {
+          sendInvitationBtnTop.addEventListener('mouseenter', () => {
+            sendInvitationBtnTop.style.background = '#10b981';
+            sendInvitationBtnTop.style.color = '#fff';
+            sendInvitationBtnTop.style.borderColor = '#10b981';
+            sendInvitationBtnTop.style.transform = 'scale(1.1)';
           });
-          sendInvitationBtn.addEventListener('mouseleave', () => {
-            sendInvitationBtn.style.background = '#fff';
-            sendInvitationBtn.style.color = '#10b981';
-            sendInvitationBtn.style.borderColor = '#d1fae5';
-            sendInvitationBtn.style.transform = 'scale(1)';
+          sendInvitationBtnTop.addEventListener('mouseleave', () => {
+            sendInvitationBtnTop.style.background = '#fff';
+            sendInvitationBtnTop.style.color = '#10b981';
+            sendInvitationBtnTop.style.borderColor = '#d1fae5';
+            sendInvitationBtnTop.style.transform = 'scale(1)';
           });
         }
+        
+        // Hover effects for inline action buttons
+        const inlineActionBtns = card.querySelectorAll('.member-inline-actions .member-icon-btn');
+        inlineActionBtns.forEach(btn => {
+          if (btn.disabled) return;
+          
+          btn.addEventListener('mouseenter', () => {
+            const act = btn.dataset.act;
+            if (act === 'send-invitation') {
+              btn.style.background = '#10b981';
+              btn.style.color = '#fff';
+              btn.style.borderColor = '#10b981';
+            } else if (act === 'change-committee') {
+              btn.style.background = '#3d8fd6';
+              btn.style.color = '#fff';
+              btn.style.borderColor = '#3d8fd6';
+            } else if (act === 'del') {
+              btn.style.background = '#ef4444';
+              btn.style.color = '#fff';
+              btn.style.borderColor = '#ef4444';
+            }
+            btn.style.transform = 'translateY(-2px)';
+            btn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.12)';
+          });
+          
+          btn.addEventListener('mouseleave', () => {
+            const act = btn.dataset.act;
+            btn.style.background = '#fff';
+            if (act === 'send-invitation') {
+              btn.style.color = '#10b981';
+              btn.style.borderColor = '#d1fae5';
+            } else if (act === 'change-committee') {
+              btn.style.color = '#64748b';
+              btn.style.borderColor = '#e2e8f0';
+            } else if (act === 'del') {
+              btn.style.color = '#ef4444';
+              btn.style.borderColor = '#fecaca';
+            }
+            btn.style.transform = 'translateY(0)';
+            btn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.06)';
+          });
+        });
         
         cardsGrid.appendChild(card);
       });
       membersList.appendChild(block);
+      
+      // Add ResizeObserver to toggle button positions based on grid columns
+      const resizeObserver = new ResizeObserver(() => {
+        const gridComputedStyle = window.getComputedStyle(cardsGrid);
+        const gridTemplateColumns = gridComputedStyle.gridTemplateColumns;
+        const columnCount = gridTemplateColumns.split(' ').length;
+        
+        // Get all cards in this grid
+        const cards = cardsGrid.querySelectorAll('.member-card');
+        cards.forEach(card => {
+          const topActions = card.querySelector('.member-top-actions');
+          const inlineActions = card.querySelector('.member-inline-actions');
+          
+          if (columnCount === 1) {
+            // Single column: show top actions, hide inline actions
+            if (topActions) topActions.style.display = 'flex';
+            if (inlineActions) inlineActions.style.display = 'none';
+          } else {
+            // Multiple columns: hide top actions, show inline actions
+            if (topActions) topActions.style.display = 'none';
+            if (inlineActions) inlineActions.style.display = 'flex';
+          }
+        });
+      });
+      
+      resizeObserver.observe(cardsGrid);
     }
     // no DnD in simplified grouped view
     

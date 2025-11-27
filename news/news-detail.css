@@ -1591,7 +1591,6 @@
 }
 
 .article-share h3::before {
-  content: '📤';
   font-size: 1.2em;
   animation: shareIconBounce 2s ease-in-out infinite;
 }

@@ -93,9 +93,7 @@ function updateMetaTags(news) {
   const url = window.location.href;
   const title = news.title;
   const description = news.summary || news.content.replace(/<[^>]*>/g, '').substring(0, 160) + '...';
-  
-  // استخدام صورة الخبر فقط - بدون صورة افتراضية
-  const image = news.image_url || '';
+  const image = news.image_url || 'https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e';
   
   // Update standard meta tags
   const metaDescription = document.getElementById('metaDescription');
@@ -109,7 +107,7 @@ function updateMetaTags(news) {
   
   if (ogTitle) ogTitle.setAttribute('content', title);
   if (ogDescription) ogDescription.setAttribute('content', description);
-  if (ogImage && image) ogImage.setAttribute('content', image);
+  if (ogImage) ogImage.setAttribute('content', image);
   if (ogUrl) ogUrl.setAttribute('content', url);
   
   // Update Twitter Card tags
@@ -119,7 +117,7 @@ function updateMetaTags(news) {
   
   if (twitterTitle) twitterTitle.setAttribute('content', title);
   if (twitterDescription) twitterDescription.setAttribute('content', description);
-  if (twitterImage && image) twitterImage.setAttribute('content', image);
+  if (twitterImage) twitterImage.setAttribute('content', image);
 }
 
 // Create enhanced share text with emojis and hashtags
