@@ -24,6 +24,7 @@ const passwordToggle = document.getElementById('passwordToggle');
 const confirmPasswordToggle = document.getElementById('confirmPasswordToggle');
 
 let invitationData = null;
+let invitationToken = null; // تخزين التوكن للاستخدام لاحقاً
 
 // التحقق من الدعوة عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', async () => {
@@ -41,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  invitationToken = token; // حفظ التوكن
   await verifyInvitation(token);
 });
 
