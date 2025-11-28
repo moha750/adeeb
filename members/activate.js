@@ -287,8 +287,8 @@ activationForm.addEventListener('submit', async (e) => {
       console.warn('⚠️ Failed to log activity:', logError);
     }
 
-    // عرض رسالة النجاح
-    showSuccess();
+    // عرض رسالة النجاح والتوجيه الذكي
+    showSuccess(invitationData.committee, invitationData.role);
 
   } catch (err) {
     console.error('Activation error:', err);
@@ -363,14 +363,42 @@ function showForm() {
 }
 
 // عرض حالة النجاح
-function showSuccess() {
+function showSuccess(committee, role) {
   loadingState.classList.remove('active');
   errorState.classList.remove('active');
   formState.classList.remove('active');
   successState.classList.add('active');
+  
+  // تحديد الوجهة حسب اللجنة والدور
+  const dashboardUrl = getDashboardUrl(committee, role);
+  
+  // تحديث رابط الزر
+  goToDashboardBtn.onclick = () => {
+    window.location.href = dashboardUrl;
+  };
 }
 
-// الانتقال إلى لوحة التحكم
+// تحديد لوحة التحكم المناسبة حسب اللجنة والدور
+function getDashboardUrl(committee, role) {
+  // المجلس الإداري
+  if (committee === 'المجلس الإداري' || role === 'admin' || role === 'مدير') {
+    return '../admin/dashboard.html';
+  }
+  
+  // لجان خاصة (يمكن إضافة المزيد حسب الحاجة)
+  if (committee === 'اللجنة التنفيذية') {
+    return 'executive-dashboard.html'; // لوحة تحكم اللجنة التنفيذية
+  }
+  
+  if (committee === 'لجنة المحتوى') {
+    return 'content-dashboard.html'; // لوحة تحكم لجنة المحتوى
+  }
+  
+  // الأعضاء العاديين - لوحة التحكم الافتراضية
+  return 'dashboard.html';
+}
+
+// الانتقال إلى لوحة التحكم (سيتم تحديد الرابط ديناميكياً)
 goToDashboardBtn.addEventListener('click', () => {
-  window.location.href = 'dashboard.html';
+  // سيتم تحديث onclick في showSuccess()
 });

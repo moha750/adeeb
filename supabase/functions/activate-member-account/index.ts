@@ -134,34 +134,46 @@ serve(async (req) => {
     console.log(`✅ User created successfully. ID: ${userId}`);
 
     // 5. تحديث سجل العضو
-    const { data: updatedMember, error: updateError } = await adminClient
-      .from('members')
-      .update({
-        user_id: userId,
-        is_active: true,
-        activated_at: new Date().toISOString()
-      })
-      .eq('id', invitation.member_id)
-      .select()
-      .single();
+    // استخدام SQL مباشر لتجاوز triggers
+    const { data: updatedMember, error: updateError } = await adminClient.rpc('activate_member_account', {
+      p_member_id: invitation.member_id,
+      p_user_id: userId
+    });
 
     if (updateError) {
-      console.error('❌ Failed to update member:', updateError);
+      console.error('❌ Failed to update member via RPC:', updateError);
       
-      // حذف المستخدم من Auth إذا فشل تحديث members
-      await adminClient.auth.admin.deleteUser(userId);
+      // محاولة التحديث المباشر كخطة بديلة
+      const { data: fallbackData, error: fallbackError } = await adminClient
+        .from('members')
+        .update({
+          user_id: userId,
+          account_activated_at: new Date().toISOString()
+        })
+        .eq('id', invitation.member_id)
+        .select()
+        .single();
       
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          error: 'Failed to update member record',
-          details: updateError.message 
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (fallbackError) {
+        console.error('❌ Fallback update also failed:', fallbackError);
+        
+        // حذف المستخدم من Auth إذا فشل تحديث members
+        await adminClient.auth.admin.deleteUser(userId);
+        
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: 'Failed to update member record',
+            details: fallbackError.message 
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log('✅ Member updated via fallback method');
+    } else {
+      console.log('✅ Member updated successfully via RPC');
     }
-
-    console.log('✅ Member updated successfully');
 
     // 6. تحديث حالة الدعوة
     const { error: invUpdateError } = await adminClient
