@@ -94,6 +94,9 @@ supabase link --project-ref your-project-ref
 #### الخطوة 4: نشر Edge Functions
 
 ```bash
+# نشر activate-member-account (مهم - يحل مشكلة RLS)
+supabase functions deploy activate-member-account
+
 # نشر verify-member-invitation
 supabase functions deploy verify-member-invitation
 
@@ -107,6 +110,7 @@ supabase functions deploy activate-admin-account
 #### الخطوة 5: التحقق من النشر
 
 في **Supabase Dashboard → Edge Functions**:
+- ✅ activate-member-account (جديد - لتفعيل الأعضاء)
 - ✅ verify-member-invitation
 - ✅ verify-admin-invitation
 - ✅ activate-admin-account
@@ -546,6 +550,30 @@ return new Response(JSON.stringify({
 ---
 
 ## 🐛 استكشاف الأخطاء
+
+### خطأ: "401 Unauthorized" عند استدعاء Edge Functions
+
+**السبب:**
+- Edge Functions تتطلب `Authorization` header حتى للـ endpoints العامة
+
+**الحل:**
+تأكد من إضافة `Authorization` header في جميع استدعاءات Edge Functions:
+
+```javascript
+const response = await fetch(`${supabaseUrl}/functions/v1/function-name`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${supabaseKey}`,  // ← مهم!
+    'apikey': supabaseKey
+  },
+  body: JSON.stringify({ ... })
+});
+```
+
+**ملاحظة:** تم تصحيح هذا في `admin/activate.js` بالفعل.
+
+---
 
 ### خطأ: "Invalid or expired invitation"
 

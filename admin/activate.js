@@ -91,6 +91,7 @@ async function verifyInvitation(token) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sb.supabaseKey}`,
         'apikey': sb.supabaseKey
       },
       body: JSON.stringify({ token })
@@ -325,6 +326,7 @@ activationForm.addEventListener('submit', async (e) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sb.supabaseKey}`,
         'apikey': sb.supabaseKey
       },
       body: JSON.stringify({

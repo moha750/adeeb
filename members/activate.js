@@ -232,132 +232,57 @@ activationForm.addEventListener('submit', async (e) => {
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التفعيل...';
 
   try {
-    // إنشاء حساب في Supabase Auth
-    // تعطيل تأكيد البريد الإلكتروني لأن العضو مدعو بالفعل
-    const { data: authData, error: signUpError } = await sb.auth.signUp({
-      email: invitationData.email,
-      password: password,
-      options: {
-        emailRedirectTo: window.location.origin + '/members/dashboard.html',
-        data: {
-          display_name: invitationData.members.full_name,
-          member_id: invitationData.member_id,
-          role: 'member'
-        }
-      }
+    console.log('🔐 Starting member account activation...');
+
+    // استدعاء Edge Function للتفعيل
+    const response = await fetch(`${sb.supabaseUrl}/functions/v1/activate-member-account`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sb.supabaseKey}`,
+        'apikey': sb.supabaseKey
+      },
+      body: JSON.stringify({
+        token: invitationToken,
+        password: password
+      })
     });
 
-    if (signUpError) {
-      throw signUpError;
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'فشل تفعيل الحساب');
     }
 
-    if (!authData.user) {
-      throw new Error('فشل إنشاء الحساب');
-    }
+    console.log('✅ Account activated successfully:', result);
 
-    console.log('Account created successfully. User ID:', authData.user.id);
-
-    // تسجيل الدخول فوراً لإنشاء session (مطلوب لـ RLS)
-    console.log('Signing in to create session...');
+    // تسجيل الدخول
     const { error: signInError } = await sb.auth.signInWithPassword({
       email: invitationData.email,
       password: password
     });
 
     if (signInError) {
-      console.error('Sign-in error:', signInError);
-      throw new Error('فشل تسجيل الدخول بعد إنشاء الحساب. يرجى تسجيل الدخول يدوياً.');
+      console.warn('⚠️ Auto sign-in failed:', signInError);
+      showFormAlert('warning', 'تم تفعيل الحساب بنجاح. يرجى تسجيل الدخول يدوياً.');
+      setTimeout(() => {
+        window.location.href = '../auth/login.html';
+      }, 2000);
+      return;
     }
 
-    console.log('Signed in successfully. Session created.');
+    console.log('✅ Signed in successfully');
 
-    // الآن يمكننا تحديث بيانات العضو (RLS سيسمح لأن auth.uid() موجود)
-    console.log('Updating member:', invitationData.member_id, 'with user_id:', authData.user.id);
-    
-    // التحقق من auth.uid() الحالي
-    const { data: { user: currentUser } } = await sb.auth.getUser();
-    console.log('Current auth.uid():', currentUser?.id);
-    
-    const { data: updateData, error: updateError, status, statusText } = await sb
-      .from('members')
-      .update({
-        user_id: authData.user.id,
-        account_status: 'active',
-        account_activated_at: new Date().toISOString()
-      })
-      .eq('id', invitationData.member_id)
-      .select();
-
-    console.log('Update response:', { data: updateData, error: updateError, status, statusText });
-
-    if (updateError) {
-      console.error('Update error details:', {
-        message: updateError.message,
-        code: updateError.code,
-        details: updateError.details,
-        hint: updateError.hint
-      });
-      throw updateError;
-    }
-
-    if (!updateData || updateData.length === 0) {
-      console.error('Update returned no data. Possible causes:');
-      console.error('1. Member ID does not exist:', invitationData.member_id);
-      console.error('2. RLS blocked the update');
-      console.error('3. Row was not found with the given ID');
-      
-      // محاولة قراءة الصف للتحقق من وجوده
-      const { data: checkData, error: checkError } = await sb
-        .from('members')
-        .select('id, user_id, account_status')
-        .eq('id', invitationData.member_id)
-        .maybeSingle();
-      
-      console.error('Row check result:', { data: checkData, error: checkError });
-      
-      throw new Error('فشل تحديث بيانات العضوية. يرجى التواصل مع الإدارة.');
-    }
-
-    console.log('Member updated successfully:', updateData);
-
-    // تحديث حالة الدعوة
-    const { error: invitationError } = await sb
-      .from('member_invitations')
-      .update({
-        status: 'accepted',
-        accepted_at: new Date().toISOString()
-      })
-      .eq('id', invitationData.id);
-
-    if (invitationError) {
-      console.warn('Failed to update invitation status:', invitationError);
-    }
-
-    // تسجيل النشاط
+    // تسجيل النشاط (اختياري)
     try {
       await sb.from('member_activity_log').insert({
-        member_id: invitationData.member_id,
-        user_id: authData.user.id,
+        member_id: result.member_id,
+        user_id: result.user_id,
         activity_type: 'account_activated',
         activity_details: { method: 'invitation' }
       });
     } catch (logError) {
-      console.warn('Failed to log activity:', logError);
-    }
-
-    // التحقق النهائي من نجاح الربط
-    const { data: verifyMember, error: verifyError } = await sb
-      .from('members')
-      .select('user_id, account_status')
-      .eq('user_id', authData.user.id)
-      .maybeSingle();
-
-    if (verifyError) {
-      console.warn('Verification query error:', verifyError);
-    } else if (!verifyMember) {
-      console.warn('Member data not found after activation. This might be a timing issue.');
-    } else {
-      console.log('Account activation verified successfully:', verifyMember);
+      console.warn('⚠️ Failed to log activity:', logError);
     }
 
     // عرض رسالة النجاح
