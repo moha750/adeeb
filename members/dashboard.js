@@ -86,10 +86,10 @@ async function checkAuth() {
     if (memberError || !memberData) {
       // التحقق إذا كان إداري
       const { data: adminData } = await sb
-        .from('admins')
-        .select('user_id, is_admin')
+        .from('admin_users')
+        .select('user_id, role, is_active')
         .eq('user_id', currentUser.id)
-        .eq('is_admin', true)
+        .eq('is_active', true)
         .maybeSingle();
 
       if (adminData) {

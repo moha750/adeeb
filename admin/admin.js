@@ -3209,6 +3209,363 @@
     openDialog?.(memberDetailsDialog);
   }
 
+  // Member Settings Dialog
+  const memberSettingsDialog = document.getElementById('memberSettingsDialog');
+  const memberSettingsForm = document.getElementById('memberSettingsForm');
+  const addToBoardCheckbox = document.getElementById('addToBoardCouncil');
+  const boardPositionOptions = document.getElementById('boardPositionOptions');
+  let currentSettingsMember = null;
+  let currentBoardPosition = null;
+
+  // Toggle board position options
+  addToBoardCheckbox?.addEventListener('change', () => {
+    if (boardPositionOptions) {
+      boardPositionOptions.style.display = addToBoardCheckbox.checked ? 'block' : 'none';
+    }
+  });
+
+  async function openMemberSettings(idx) {
+    const m = members?.[idx];
+    if (!m) return;
+    
+    currentSettingsMember = m;
+    
+    // Update member info in dialog
+    const nameEl = document.getElementById('settingsMemberName');
+    const emailEl = document.getElementById('settingsMemberEmail');
+    const avatarEl = document.getElementById('settingsMemberAvatar');
+    
+    if (nameEl) nameEl.textContent = m.full_name || m.name || 'العضو';
+    if (emailEl) emailEl.textContent = m.email || '';
+    
+    // Update avatar
+    if (avatarEl) {
+      if (m.avatar_url || m.avatar) {
+        avatarEl.innerHTML = `<img src="${m.avatar_url || m.avatar}" alt="${m.full_name || m.name}" style="width:100%; height:100%; border-radius:12px; object-fit:cover" onerror="this.style.display='none'" />`;
+      } else {
+        avatarEl.innerHTML = `<i class="fa-solid fa-user" style="color:#64748b; font-size:1.5rem"></i>`;
+      }
+    }
+    
+    try {
+      if (!sb) throw new Error('Supabase غير متصل');
+      
+      // Fetch current board position
+      // First get current council
+      const { data: currentCouncilData } = await sb
+        .from('board_councils')
+        .select('id')
+        .eq('is_current', true)
+        .maybeSingle();
+      
+      let boardPosition = null;
+      if (currentCouncilData) {
+        const { data: pos } = await sb
+          .from('board_positions')
+          .select(`
+            *,
+            council:board_councils(*)
+          `)
+          .eq('member_id', m.id)
+          .eq('council_id', currentCouncilData.id)
+          .maybeSingle();
+        
+        boardPosition = pos;
+      }
+      
+      currentBoardPosition = boardPosition;
+      
+      // Fill form with current data
+      if (boardPosition) {
+        addToBoardCheckbox.checked = true;
+        boardPositionOptions.style.display = 'block';
+        document.getElementById('boardPosition').value = boardPosition.position_type || '';
+        document.getElementById('positionRank').value = boardPosition.position_rank || 1;
+        document.getElementById('positionDepartment').value = boardPosition.department || '';
+      } else {
+        addToBoardCheckbox.checked = false;
+        boardPositionOptions.style.display = 'none';
+        document.getElementById('boardPosition').value = '';
+        document.getElementById('positionRank').value = 1;
+        document.getElementById('positionDepartment').value = '';
+      }
+      
+    } catch (err) {
+      console.error('Error loading member settings:', err);
+      // Reset form
+      addToBoardCheckbox.checked = false;
+      boardPositionOptions.style.display = 'none';
+    }
+    
+    // Show dialog
+    openDialog?.(memberSettingsDialog);
+  }
+
+  // Handle settings form submit
+  memberSettingsForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (!currentSettingsMember) return;
+    
+    const saveBtn = document.getElementById('saveMemberSettingsBtn');
+    if (saveBtn) saveBtn.disabled = true;
+    
+    try {
+      if (!sb) throw new Error('Supabase غير متصل');
+      
+      const addToBoard = addToBoardCheckbox?.checked || false;
+      
+      // Handle board position
+      if (addToBoard) {
+        const positionType = document.getElementById('boardPosition')?.value;
+        const positionRank = parseInt(document.getElementById('positionRank')?.value) || 1;
+        const department = document.getElementById('positionDepartment')?.value || null;
+        
+        if (!positionType) {
+          alert('يرجى اختيار المنصب');
+          if (saveBtn) saveBtn.disabled = false;
+          return;
+        }
+        
+        // Get or create current council
+        let { data: currentCouncil } = await sb
+          .from('board_councils')
+          .select('id')
+          .eq('is_current', true)
+          .maybeSingle();
+        
+        // إذا لم يوجد مجلس حالي، أنشئ واحد تلقائياً
+        if (!currentCouncil) {
+          const currentYear = new Date().getFullYear();
+          const { data: newCouncil, error: councilError } = await sb
+            .from('board_councils')
+            .insert({
+              title: `Board Council ${currentYear}`,
+              title_ar: `المجلس الإداري ${currentYear}`,
+              start_date: new Date().toISOString().split('T')[0],
+              is_active: true,
+              is_current: true,
+              is_visible: true
+            })
+            .select('id')
+            .single();
+          
+          if (councilError) {
+            console.error('Error creating council:', councilError);
+            alert('حدث خطأ في إنشاء المجلس الإداري');
+            if (saveBtn) saveBtn.disabled = false;
+            return;
+          }
+          
+          currentCouncil = newCouncil;
+        }
+        
+        // Get position titles
+        const positionTitles = {
+          'president': { ar: 'الرئيس', en: 'President' },
+          'vice_president': { ar: 'نائب الرئيس', en: 'Vice President' },
+          'leader': { ar: 'القائد', en: 'Leader' },
+          'vice_leader': { ar: 'نائب القائد', en: 'Vice Leader' },
+          'ceo': { ar: 'الرئيس التنفيذي', en: 'CEO' },
+          'secretary': { ar: 'الأمين العام', en: 'Secretary' },
+          'treasurer': { ar: 'أمين الصندوق', en: 'Treasurer' },
+          'member': { ar: 'عضو', en: 'Member' }
+        };
+        
+        const titles = positionTitles[positionType] || { ar: 'عضو', en: 'Member' };
+        
+        // Upsert board position
+        const { error: boardError } = await sb
+          .from('board_positions')
+          .upsert({
+            council_id: currentCouncil.id,
+            member_id: currentSettingsMember.id,
+            position_type: positionType,
+            position_title: titles.en,
+            position_title_ar: titles.ar,
+            position_rank: positionRank,
+            department: department,
+            department_ar: department,
+            is_visible: true
+          }, {
+            onConflict: 'council_id,member_id'
+          });
+        
+        if (boardError) throw boardError;
+      } else {
+        // Remove from board
+        if (currentBoardPosition) {
+          const { error: deleteError } = await sb
+            .from('board_positions')
+            .delete()
+            .eq('member_id', currentSettingsMember.id)
+            .eq('council_id', currentBoardPosition.council_id);
+          
+          if (deleteError) throw deleteError;
+        }
+      }
+      
+      alert('✅ تم حفظ التغييرات بنجاح');
+      memberSettingsDialog?.close();
+      
+      // Refresh admin list if in admins section
+      if (window.location.hash === '#section-admins') {
+        await fetchAdmins?.();
+      }
+      
+      // Refresh members list
+      await loadMembers?.();
+      
+    } catch (err) {
+      console.error('Error saving member settings:', err);
+      alert('حدث خطأ: ' + (err?.message || 'غير معروف'));
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
+    }
+  });
+
+  // ===== Promote to Admin Dialog =====
+  const promoteToAdminDialog = document.getElementById('promoteToAdminDialog');
+  const promoteToAdminForm = document.getElementById('promoteToAdminForm');
+  const promoteSelectMember = document.getElementById('promoteSelectMember');
+  const promoteSelectedMemberInfo = document.getElementById('promoteSelectedMemberInfo');
+  const promoteAdminRole = document.getElementById('promoteAdminRole');
+  const promoteToAdminBtn = document.getElementById('promoteToAdminBtn');
+  
+  // Open promote to admin dialog
+  promoteToAdminBtn?.addEventListener('click', async () => {
+    try {
+      // Load non-admin members
+      if (!members || members.length === 0) {
+        await loadMembers?.();
+      }
+      
+      // Filter members who are not admins
+      const nonAdminMembers = members.filter(m => !m.is_admin && !m.admin_role);
+      
+      // Populate select dropdown
+      if (promoteSelectMember) {
+        promoteSelectMember.innerHTML = '<option value="">اختر العضو المراد ترقيته</option>';
+        nonAdminMembers.forEach((m, idx) => {
+          const option = document.createElement('option');
+          option.value = idx;
+          option.textContent = `${m.full_name || m.name} ${m.email ? '(' + m.email + ')' : ''}`;
+          promoteSelectMember.appendChild(option);
+        });
+      }
+      
+      // Reset form
+      if (promoteAdminRole) promoteAdminRole.value = 'admin';
+      if (promoteSelectedMemberInfo) promoteSelectedMemberInfo.style.display = 'none';
+      document.querySelectorAll('.promote-perm-checkbox').forEach(cb => cb.checked = false);
+      
+      openDialog?.(promoteToAdminDialog);
+    } catch (err) {
+      console.error('Error opening promote dialog:', err);
+      alert('حدث خطأ في فتح النافذة');
+    }
+  });
+  
+  // Handle member selection
+  promoteSelectMember?.addEventListener('change', () => {
+    const idx = parseInt(promoteSelectMember.value);
+    if (isNaN(idx) || idx < 0) {
+      if (promoteSelectedMemberInfo) promoteSelectedMemberInfo.style.display = 'none';
+      return;
+    }
+    
+    const nonAdminMembers = members.filter(m => !m.is_admin && !m.admin_role);
+    const m = nonAdminMembers[idx];
+    if (!m) return;
+    
+    // Show member info
+    if (promoteSelectedMemberInfo) {
+      promoteSelectedMemberInfo.style.display = 'block';
+      
+      const nameEl = document.getElementById('promoteSelectedMemberName');
+      const emailEl = document.getElementById('promoteSelectedMemberEmail');
+      const committeeEl = document.getElementById('promoteSelectedMemberCommittee');
+      const avatarEl = document.getElementById('promoteSelectedMemberAvatar');
+      
+      if (nameEl) nameEl.textContent = m.full_name || m.name || 'العضو';
+      if (emailEl) emailEl.textContent = m.email || '';
+      if (committeeEl) committeeEl.textContent = m.committee ? `اللجنة: ${m.committee}` : '';
+      
+      // Update avatar
+      if (avatarEl) {
+        if (m.avatar_url || m.avatar) {
+          avatarEl.innerHTML = `<img src="${m.avatar_url || m.avatar}" alt="${m.full_name || m.name}" style="width:100%; height:100%; border-radius:12px; object-fit:cover" onerror="this.style.display='none'" />`;
+        } else {
+          avatarEl.innerHTML = `<i class="fa-solid fa-user" style="color:#64748b; font-size:1.5rem"></i>`;
+        }
+      }
+    }
+  });
+  
+  // Handle promote form submit
+  promoteToAdminForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const idx = parseInt(promoteSelectMember?.value);
+    if (isNaN(idx) || idx < 0) {
+      alert('يرجى اختيار العضو');
+      return;
+    }
+    
+    const nonAdminMembers = members.filter(m => !m.is_admin && !m.admin_role);
+    const selectedMember = nonAdminMembers[idx];
+    if (!selectedMember) {
+      alert('العضو المختار غير موجود');
+      return;
+    }
+    
+    const saveBtn = document.getElementById('savePromoteToAdminBtn');
+    if (saveBtn) saveBtn.disabled = true;
+    
+    try {
+      if (!sb) throw new Error('Supabase غير متصل');
+      
+      const role = promoteAdminRole?.value || 'admin';
+      const permissions = {};
+      
+      // Collect detailed permissions
+      document.querySelectorAll('.promote-perm-checkbox').forEach(cb => {
+        const permName = cb.getAttribute('data-perm');
+        permissions[permName] = cb.checked;
+      });
+      
+      // Create admin user
+      const { error: adminError } = await sb
+        .from('admin_users')
+        .upsert({
+          member_id: selectedMember.id,
+          user_id: selectedMember.user_id,
+          role: role,
+          permissions: permissions,
+          is_active: true
+        }, {
+          onConflict: 'member_id'
+        });
+      
+      if (adminError) throw adminError;
+      
+      alert(`✅ تم ترقية ${selectedMember.full_name || selectedMember.name} إلى عضو إداري بنجاح`);
+      promoteToAdminDialog?.close();
+      
+      // Refresh admin list
+      await fetchAdmins?.();
+      
+      // Refresh members list
+      await loadMembers?.();
+      
+    } catch (err) {
+      console.error('Error promoting member to admin:', err);
+      alert('حدث خطأ: ' + (err?.message || 'غير معروف'));
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
+    }
+  });
+
   // Members CRUD
   const memberDialog = $('#memberDialog');
   const memberForm = $('#memberForm');
@@ -3348,6 +3705,10 @@
     const act = btn.dataset.act;
     if (act === 'view') {
       openMemberDetails(idx);
+      return;
+    }
+    if (act === 'settings') {
+      openMemberSettings(idx);
       return;
     }
     if (act === 'send-invitation') {
@@ -4917,13 +5278,13 @@
     let position = null, phone = null, created_at = null;
     try {
       const { data: row, error } = await sb
-        .from('admins')
-        .select('position, phone, created_at')
+        .from('admin_users')
+        .select('role, created_at, member:members(phone)')
         .eq('user_id', userId)
         .maybeSingle();
       if (!error && row) {
-        position = row.position ?? position;
-        phone = row.phone ?? phone;
+        position = row.role ?? position; // استخدام role كمنصب
+        phone = row.member?.phone ?? phone;
         created_at = row.created_at ?? created_at;
       }
     } catch {}
@@ -5120,8 +5481,8 @@
       let pos = (data?.position || null);
       if (!pos) {
         try {
-          const { data: row2 } = await sb.from('admins').select('position').eq('user_id', userId).maybeSingle();
-          pos = row2?.position || null;
+          const { data: row2 } = await sb.from('admin_users').select('role').eq('user_id', userId).maybeSingle();
+          pos = row2?.role || null;
         } catch {}
       }
       return levelFromPositionAr(pos);
@@ -5754,13 +6115,23 @@
           // حفظ الرتبة
           await callFunction('set-admin-level', { method: 'POST', body: { user_id: adminDetailsCurrentUserId, admin_level: newLevel } });
           
-          // حفظ المنصب مباشرة في جدول admins
-          const { error: posError } = await sb
-            .from('admins')
-            .update({ position: newPosition })
-            .eq('user_id', adminDetailsCurrentUserId);
+          // حفظ المنصب مباشرة في جدول admin_users (كـ role)
+          // ملاحظة: المنصب الآن يُدار من خلال board_positions
+          // لكن يمكن تحديث role إذا كان المنصب يتطابق مع أحد الأدوار
+          const roleMapping = {
+            'super_admin': 'super_admin',
+            'admin': 'admin',
+            'moderator': 'moderator'
+          };
           
-          if (posError) throw posError;
+          if (roleMapping[newPosition]) {
+            const { error: posError } = await sb
+              .from('admin_users')
+              .update({ role: roleMapping[newPosition] })
+              .eq('user_id', adminDetailsCurrentUserId);
+            
+            if (posError) throw posError;
+          }
           
           if (msg) { 
             msg.textContent = '✓ تم حفظ الرتبة والمنصب بنجاح'; 
@@ -7784,12 +8155,15 @@
               </div>
             </div>
             
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; border-top:1px solid #e2e8f0; background:#fafbfc">
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; border-top:1px solid #e2e8f0; background:#fafbfc">
               <button class="btn btn-sm member-action-btn" data-act="view" data-idx="${idx}" style="border:none; border-radius:0 0 0 16px; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#3d8fd6; border-right:1px solid #e2e8f0; transition:all 0.2s">
                 <i class="fa-regular fa-eye"></i> عرض
               </button>
-              <button class="btn btn-sm member-action-btn" data-act="edit" data-idx="${idx}" style="border:none; border-radius:0 0 16px 0; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#64748b; transition:all 0.2s">
+              <button class="btn btn-sm member-action-btn" data-act="edit" data-idx="${idx}" style="border:none; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#64748b; border-right:1px solid #e2e8f0; transition:all 0.2s">
                 <i class="fa-solid fa-pen"></i> تعديل
+              </button>
+              <button class="btn btn-sm member-action-btn" data-act="settings" data-idx="${idx}" style="border:none; border-radius:0 0 16px 0; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#10b981; transition:all 0.2s">
+                <i class="fa-solid fa-gear"></i> إعدادات
               </button>
             </div>
             
@@ -10551,134 +10925,159 @@ ORDER BY m.committee, m.full_name;`;
   });
 
   function renderAdmins() {
-    if (!adminsHighCouncilTable || !adminsAdminCouncilTable || !adminsExecutiveCouncilTable) return;
-    adminsHighCouncilTable.innerHTML = '';
-    adminsAdminCouncilTable.innerHTML = '';
-    adminsExecutiveCouncilTable.innerHTML = '';
-
-    const presidents = [];
-    const vicesFemale = [];
-    const vicesMale = [];
-    const administrativeLeaders = [];
-    const executiveLeaders = [];
-
-    const rowNode = (row, pr) => {
-      const name = (pr?.display_name && String(pr.display_name).trim()) || 'مستخدم';
-      const avatarUrl = (pr?.avatar_url && String(pr.avatar_url).trim()) ? pr.avatar_url : null;
-      const avatar = avatarUrl
-        ? `<img src="${avatarUrl}" alt="${name}" onerror="this.remove()" />`
-        : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-             <circle cx="12" cy="12" r="10" fill="#cbd5e1"/>
-             <circle cx="12" cy="10" r="3.2" fill="#64748b"/>
-             <path d="M5.5 18.2c1.9-3 5-4.2 6.5-4.2s4.6 1.2 6.5 4.2c-2.1 1.7-4.6 2.8-6.5 2.8s-4.4-1.1-6.5-2.8z" fill="#64748b"/>
-           </svg>`;
-      const position = (pr?.position || '—').toString().trim();
+    const tbody = document.getElementById('adminUsersTable');
+    if (!tbody) return;
+    
+    if (!adminsList || adminsList.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align:center; padding:40px; color:#94a3b8">
+            <i class="fa-solid fa-users-slash" style="font-size:2rem; margin-bottom:12px"></i>
+            <div>لا يوجد مستخدمون إداريون</div>
+            <div style="font-size:0.85rem; margin-top:8px">
+              يمكنك منح صلاحيات إدارية من <a href="#section-members" style="color:#3d8fd6">تبويب الأعضاء</a>
+            </div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    tbody.innerHTML = '';
+    
+    // Helper function to get role label in Arabic
+    const getRoleLabel = (role) => {
+      const roleMap = {
+        'super_admin': 'مدير عام',
+        'admin': 'مدير',
+        'moderator': 'مشرف'
+      };
+      return roleMap[role] || role;
+    };
+    
+    // Helper function to get role badge color
+    const getRoleBadgeColor = (role) => {
+      const colorMap = {
+        'super_admin': 'background:linear-gradient(135deg, #fbbf24, #f59e0b); color:#fff',
+        'admin': 'background:linear-gradient(135deg, #3b82f6, #2563eb); color:#fff',
+        'moderator': 'background:linear-gradient(135deg, #10b981, #059669); color:#fff'
+      };
+      return colorMap[role] || 'background:#e2e8f0; color:#64748b';
+    };
+    
+    adminsList.forEach((adminUser) => {
+      const member = adminUser.member || {};
+      const name = member.full_name || 'مستخدم';
+      const email = member.email || '—';
+      const role = adminUser.role || 'moderator';
+      const isActive = adminUser.is_active !== false;
+      
       const tr = document.createElement('tr');
+      tr.style.transition = 'background 0.2s';
       tr.innerHTML = `
-        <td style="padding:12px" data-label="العضو">
-          <div class="user-mini">
-            <div class="avatar">${avatar}</div>
-            <div class="name">${name}</div>
+        <td style="padding:12px">
+          <div style="display:flex; align-items:center; gap:12px">
+            <div style="width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg, #e2e8f0, #cbd5e1); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+              ${member.avatar_url 
+                ? `<img src="${member.avatar_url}" alt="${name}" style="width:100%; height:100%; border-radius:10px; object-fit:cover" onerror="this.style.display='none'" />`
+                : `<i class="fa-solid fa-user" style="color:#64748b; font-size:1.2rem"></i>`
+              }
+            </div>
+            <div>
+              <div style="font-weight:600; color:#1e293b">${escapeHtml(name)}</div>
+              ${member.phone ? `<div style="font-size:0.8rem; color:#94a3b8; direction:ltr; text-align:right">${escapeHtml(member.phone)}</div>` : ''}
+            </div>
           </div>
         </td>
-        <td style="padding:12px" data-label="المنصب">${escapeHtml(position)}</td>
-        <td style="padding:12px; text-align:center" data-label="إجراءات">
-          <button class="btn btn-outline" data-act="details" data-id="${row.user_id}"><i class="fa-solid fa-circle-info"></i> تفاصيل</button>
-        </td>`;
-      return tr;
-    };
-
-    adminsList.forEach((row) => {
-      const pr = adminsProfilesMap.get(row.user_id) || {};
-      const pos = pr?.position || null;
-      const lvRaw = Number(pr?.admin_level);
-      const level = Number.isFinite(lvRaw) ? lvRaw : levelFromPositionAr(pos);
-      const pNorm = normalizeAr(pos || '');
+        <td style="padding:12px">
+          <div style="font-size:0.9rem; color:#64748b; overflow:hidden; text-overflow:ellipsis">${escapeHtml(email)}</div>
+        </td>
+        <td style="padding:12px">
+          <span style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; font-size:0.85rem; font-weight:600; ${getRoleBadgeColor(role)}">
+            <i class="fa-solid ${role === 'super_admin' ? 'fa-crown' : role === 'admin' ? 'fa-user-tie' : 'fa-shield-halved'}"></i>
+            ${getRoleLabel(role)}
+          </span>
+        </td>
+        <td style="padding:12px; text-align:center">
+          <span style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; font-size:0.85rem; font-weight:600; ${isActive ? 'background:#d1fae5; color:#047857' : 'background:#fee2e2; color:#b91c1c'}">
+            <i class="fa-solid fa-circle" style="font-size:0.5rem"></i>
+            ${isActive ? 'نشط' : 'معطل'}
+          </span>
+        </td>
+        <td style="padding:12px; text-align:center">
+          <div style="display:flex; gap:6px; justify-content:center">
+            <button class="btn btn-outline btn-sm" data-act="edit-admin" data-id="${adminUser.id}" data-member-id="${member.id}" title="تعديل الصلاحيات">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button class="btn btn-outline btn-sm" data-act="revoke-admin" data-id="${adminUser.id}" data-name="${name}" title="إزالة الصلاحيات" style="color:#ef4444; border-color:#fecaca">
+              <i class="fa-solid fa-user-slash"></i>
+            </button>
+          </div>
+        </td>
+      `;
       
-      // توزيع حسب الرتب الجديدة
-      if (level === ADMIN_LEVELS.president) {
-        // رئيس أديب
-        presidents.push({ row, pr });
-      } else if (level === ADMIN_LEVELS.vice) {
-        // نواب الرئيس
-        if (pNorm.includes('الطالبات') || pNorm.includes('طالبات')) vicesFemale.push({ row, pr });
-        else vicesMale.push({ row, pr });
-      } else if (level === ADMIN_LEVELS.committee_leader) {
-        // قادة اللجان
-        administrativeLeaders.push({ row, pr });
-      } else if (level === ADMIN_LEVELS.admin_officer) {
-        // المسؤولين الإداريين
-        administrativeLeaders.push({ row, pr });
-      } else if (level === ADMIN_LEVELS.executive) {
-        // الرؤساء التنفيذيين
-        executiveLeaders.push({ row, pr });
-      } else {
-        // افتراضي: ضعه في المجلس الإداري
-        administrativeLeaders.push({ row, pr });
-      }
+      // Hover effect
+      tr.addEventListener('mouseenter', () => {
+        tr.style.background = '#f8fafc';
+      });
+      tr.addEventListener('mouseleave', () => {
+        tr.style.background = '';
+      });
+      
+      tbody.appendChild(tr);
     });
-
-    // Append in required order for High Council
-    presidents.forEach((it) => adminsHighCouncilTable.appendChild(rowNode(it.row, it.pr)));
-    vicesFemale.forEach((it) => adminsHighCouncilTable.appendChild(rowNode(it.row, it.pr)));
-    vicesMale.forEach((it) => adminsHighCouncilTable.appendChild(rowNode(it.row, it.pr)));
-
-    // Sort administrative leaders by display name
-    administrativeLeaders.sort((a, b) => {
-      const an = (a.pr?.display_name || '').toString();
-      const bn = (b.pr?.display_name || '').toString();
-      return an.localeCompare(bn, 'ar');
-    });
-    administrativeLeaders.forEach((it) => adminsAdminCouncilTable.appendChild(rowNode(it.row, it.pr)));
-
-    // Sort executive leaders by display name
-    executiveLeaders.sort((a, b) => {
-      const an = (a.pr?.display_name || '').toString();
-      const bn = (b.pr?.display_name || '').toString();
-      return an.localeCompare(bn, 'ar');
-    });
-    executiveLeaders.forEach((it) => adminsExecutiveCouncilTable.appendChild(rowNode(it.row, it.pr)));
   }
 
   async function fetchAdmins() {
-    if (!adminsStatus) return;
-    adminsStatus.className = 'muted';
-    adminsStatus.textContent = 'جاري تحميل قائمة الإداريين...';
+    const tbody = document.getElementById('adminUsersTable');
+    if (!tbody) return;
+    
+    // Show loading
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align:center; padding:40px; color:#94a3b8">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; margin-bottom:12px"></i>
+          <div>جاري تحميل المستخدمين الإداريين...</div>
+        </td>
+      </tr>
+    `;
+    
     try {
-      const data = await callFunction('list-admins', { method: 'GET' });
-      adminsList = Array.isArray(data) ? data : [];
-      // Enrich with public profiles (display_name, avatar_url)
-      adminsProfilesMap = new Map();
-      try {
-        if (sb && adminsList.length) {
-          const userIds = Array.from(new Set(adminsList.map(r => r && r.user_id).filter(Boolean)));
-          if (userIds.length) {
-            const { data: profiles, error: profErr } = await sb
-              .from('auth_users_public')
-              .select('user_id, display_name, avatar_url, position, admin_level')
-              .in('user_id', userIds);
-            if (!profErr && Array.isArray(profiles)) {
-              adminsProfilesMap = new Map(profiles.map(pr => [pr.user_id, pr]));
-            }
-          }
-          // Fallback merge: take position/admin_level from list-admins response if missing in public view
-          for (const r of adminsList) {
-            const uid = r && r.user_id; if (!uid) continue;
-            const pr = adminsProfilesMap.get(uid) || { user_id: uid };
-            if (pr.position == null && typeof r.position === 'string') pr.position = r.position;
-            const prLv = Number(pr.admin_level);
-            const rLv = Number(r.admin_level);
-            if (!Number.isFinite(prLv) && Number.isFinite(rLv)) pr.admin_level = rLv;
-            adminsProfilesMap.set(uid, pr);
-          }
-        }
-      } catch {}
-      adminsStatus.className = 'muted';
-      adminsStatus.textContent = `عدد الإداريين: ${adminsList.length}`;
+      if (!sb) throw new Error('Supabase غير متصل');
+      
+      // Fetch admin users from new structure
+      const { data: adminUsers, error } = await sb
+        .from('admin_users')
+        .select(`
+          *,
+          member:members(
+            id,
+            full_name,
+            email,
+            avatar_url,
+            phone
+          )
+        `)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      adminsList = adminUsers || [];
       renderAdmins();
+      
     } catch (err) {
-      adminsStatus.className = 'alert error';
-      adminsStatus.textContent = 'فشل تحميل الإداريين: ' + (err?.message || 'غير معروف');
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align:center; padding:40px">
+            <div style="color:#ef4444; margin-bottom:12px">
+              <i class="fa-solid fa-circle-exclamation" style="font-size:2rem"></i>
+            </div>
+            <div style="color:#64748b">فشل تحميل المستخدمين الإداريين</div>
+            <div style="color:#94a3b8; font-size:0.85rem; margin-top:8px">${err?.message || 'خطأ غير معروف'}</div>
+          </td>
+        </tr>
+      `;
     }
   }
 
@@ -10813,6 +11212,44 @@ ORDER BY m.committee, m.full_name;`;
   adminsHighCouncilTable?.addEventListener('click', handleAdminsTableClick);
   adminsAdminCouncilTable?.addEventListener('click', handleAdminsTableClick);
   adminsExecutiveCouncilTable?.addEventListener('click', handleAdminsTableClick);
+  
+  // Handle clicks on new admin users table
+  const adminUsersTable = document.getElementById('adminUsersTable');
+  adminUsersTable?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    
+    const act = btn.getAttribute('data-act');
+    const adminId = btn.getAttribute('data-id');
+    const memberId = btn.getAttribute('data-member-id');
+    const name = btn.getAttribute('data-name');
+    
+    if (act === 'edit-admin') {
+      // TODO: فتح نافذة تعديل الصلاحيات
+      alert(`تعديل صلاحيات: ${name || 'المستخدم'}\n\nسيتم تطبيق هذه الميزة قريباً`);
+    }
+    
+    if (act === 'revoke-admin') {
+      if (!confirm(`هل أنت متأكد من إزالة الصلاحيات الإدارية من ${name || 'هذا المستخدم'}؟`)) return;
+      
+      try {
+        if (!sb) throw new Error('Supabase غير متصل');
+        
+        const { error } = await sb
+          .from('admin_users')
+          .delete()
+          .eq('id', adminId);
+        
+        if (error) throw error;
+        
+        alert('✅ تم إزالة الصلاحيات الإدارية بنجاح');
+        await fetchAdmins();
+        
+      } catch (err) {
+        alert('❌ فشل إزالة الصلاحيات: ' + (err?.message || 'خطأ غير معروف'));
+      }
+    }
+  });
 
   // Fetch from Supabase on load if available
   async function loadFromSupabase() {

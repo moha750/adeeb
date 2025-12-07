@@ -278,10 +278,10 @@
                 
                 // التحقق من الإداريين
                 const { data: adminRow, error: adminErr } = await sb
-                  .from('admins')
-                  .select('user_id,is_admin')
+                  .from('admin_users')
+                  .select('user_id,role,is_active')
                   .eq('user_id', userId)
-                  .eq('is_admin', true)
+                  .eq('is_active', true)
                   .maybeSingle();
                 
                 // التحقق من الأعضاء

@@ -125,6 +125,24 @@ CREATE TRIGGER trigger_set_default_admin_permissions
     EXECUTE FUNCTION set_default_admin_permissions();
 
 -- =====================================================
+-- دالة مساعدة للتحقق من صلاحيات Super Admin (لتجنب التكرار اللانهائي)
+-- =====================================================
+
+CREATE OR REPLACE FUNCTION is_super_admin(p_user_id UUID DEFAULT auth.uid())
+RETURNS BOOLEAN AS $$
+BEGIN
+    -- استخدام استعلام مباشر بدون RLS
+    RETURN EXISTS (
+        SELECT 1 FROM public.admin_users
+        WHERE user_id = p_user_id
+        AND role = 'super_admin'
+        AND is_active = true
+        LIMIT 1
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
 -- Row Level Security (RLS)
 -- =====================================================
 
@@ -140,35 +158,14 @@ USING (auth.uid() = user_id);
 DROP POLICY IF EXISTS "Super admins can read all" ON public.admin_users;
 CREATE POLICY "Super admins can read all"
 ON public.admin_users FOR SELECT
-USING (
-    EXISTS (
-        SELECT 1 FROM public.admin_users
-        WHERE admin_users.user_id = auth.uid()
-        AND admin_users.role = 'super_admin'
-        AND admin_users.is_active = true
-    )
-);
+USING (is_super_admin(auth.uid()));
 
 -- السماح للـ Super Admins بإدارة المستخدمين الإداريين
 DROP POLICY IF EXISTS "Super admins can manage admin users" ON public.admin_users;
 CREATE POLICY "Super admins can manage admin users"
 ON public.admin_users FOR ALL
-USING (
-    EXISTS (
-        SELECT 1 FROM public.admin_users
-        WHERE admin_users.user_id = auth.uid()
-        AND admin_users.role = 'super_admin'
-        AND admin_users.is_active = true
-    )
-)
-WITH CHECK (
-    EXISTS (
-        SELECT 1 FROM public.admin_users
-        WHERE admin_users.user_id = auth.uid()
-        AND admin_users.role = 'super_admin'
-        AND admin_users.is_active = true
-    )
-);
+USING (is_super_admin(auth.uid()))
+WITH CHECK (is_super_admin(auth.uid()));
 
 -- =====================================================
 -- دالة مساعدة للتحقق من الصلاحيات

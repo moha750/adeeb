@@ -1137,157 +1137,43 @@
           <div class="section-head">
             <h2><i class="fa-solid fa-user-shield"></i> إدارة الأعضاء الإداريين</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              
+              <button id="promoteToAdminBtn" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> ترقية عضو إلى إداري</button>
+            </div>
+          </div>
+
+          <div class="alert info" style="margin-bottom:16px">
+            <i class="fa-solid fa-info-circle"></i>
+            <div>
+              <strong>ملاحظة:</strong> يمكنك ترقية أي عضو من أعضاء النادي إلى عضو إداري من خلال الضغط على زر "ترقية عضو إلى إداري" أعلاه.
             </div>
           </div>
 
           <div class="panel" style="padding:16px">
             <h3 style="margin:0 0 16px; font-family: fb; display:flex; align-items:center; gap:8px; color:#1e293b">
               <span style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #10b981, #059669)">
-                <i class="fa-solid fa-user-plus" style="color:#fff; font-size:1rem" aria-hidden="true"></i>
-              </span>
-              <span>إرسال دعوة عضو إداري جديد</span>
-            </h3>
-            <p style="margin:0 0 20px; color:#64748b; font-size:0.95rem; line-height:1.6">
-              قم بإدخال بيانات العضو الإداري الجديد واختيار المنصب. سيتم تحديد المجلس تلقائياً بناءً على المنصب المختار.
-            </p>
-            <form id="addAdminForm" class="form-grid">
-              <label style="display:flex; flex-direction:column; gap:6px">
-                <span style="font-size:0.9rem; font-weight:600; color:#475569; display:flex; align-items:center; gap:6px">
-                  <i class="fa-solid fa-envelope" style="color:#64748b; font-size:0.85rem"></i>
-                  البريد الإلكتروني
-                </span>
-                <input id="newAdminEmail" type="email" placeholder="name@example.com" required style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" />
-              </label>
-              <label style="display:flex; flex-direction:column; gap:6px">
-                <span style="font-size:0.9rem; font-weight:600; color:#475569; display:flex; align-items:center; gap:6px">
-                  <i class="fa-solid fa-id-badge" style="color:#64748b; font-size:0.85rem"></i>
-                  المنصب
-                </span>
-                <select id="newAdminPosition" required style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem">
-                  <option value="">اختر المنصب</option>
-                  <optgroup label="👑 الرتبة الأولى - رئيس أديب">
-                    <option value="رئيس أديب" data-council="president" data-level="1">رئيس أديب</option>
-                  </optgroup>
-                  <optgroup label="🥈 الرتبة الثانية - نائب الرئيس">
-                    <option value="نائب الرئيس - شطر الطالبات" data-council="vice" data-level="2">نائب الرئيس - شطر الطالبات</option>
-                    <option value="نائب الرئيس - شطر الطلاب" data-council="vice" data-level="2">نائب الرئيس - شطر الطلاب</option>
-                  </optgroup>
-                  <optgroup label="🥉 الرتبة الثالثة - قائد لجنة">
-                    <option value="قائد التأليف" data-council="committee_leader" data-level="3">قائد التأليف</option>
-                    <option value="قائد الرواة" data-council="committee_leader" data-level="3">قائد الرواة</option>
-                    <option value="قائد السفراء" data-council="committee_leader" data-level="3">قائد السفراء</option>
-                    <option value="قائد الإنتاج" data-council="committee_leader" data-level="3">قائد الإنتاج</option>
-                    <option value="قائد التصميم" data-council="committee_leader" data-level="3">قائد التصميم</option>
-                    <option value="قائد التسويق" data-council="committee_leader" data-level="3">قائد التسويق</option>
-                    <option value="قائد الفعاليات" data-council="committee_leader" data-level="3">قائد الفعاليات</option>
-                  </optgroup>
-                  <optgroup label="🎖️ الرتبة الرابعة - مسؤول إداري">
-                    <option value="مسؤول الأرشيف" data-council="admin_officer" data-level="4">مسؤول الأرشيف</option>
-                    <option value="مسؤول الموارد البشرية" data-council="admin_officer" data-level="4">مسؤول الموارد البشرية</option>
-                  </optgroup>
-                  <optgroup label="🎯 الرتبة الخامسة - رئيس تنفيذي">
-                    <option value="رئيس تنفيذ مرافئ" data-council="executive" data-level="5">رئيس تنفيذ مرافئ</option>
-                    <option value="رئيس تنفيذ وجيز" data-council="executive" data-level="5">رئيس تنفيذ وجيز</option>
-                  </optgroup>
-                </select>
-              </label>
-              <input id="newAdminCouncil" type="hidden" value="" />
-              <div class="field-group" style="grid-column:1/-1">
-                <details id="invitePermsWrap">
-                  <summary class="field-group__title"><i class="fa-solid fa-lock"></i> الصلاحيات عند الدعوة (اختياري)</summary>
-                  <div id="invitePermsGrid" class="perm-grid">
-                  <label class="perm"><input type="checkbox" id="inv-perm-works" /><span class="name">إدارة الأعمال</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-sponsors" /><span class="name">إدارة الرعاة</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-achievements" /><span class="name">إدارة الإنجازات</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-board" /><span class="name">المجلس الإداري</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-members" /><span class="name">أعضاء النادي</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-membership_apps" /><span class="name">طلبات العضوية</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-forms" /><span class="name">الاستبيانات</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-faq" /><span class="name">الأسئلة الشائعة</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-idea_board" /><span class="name">سبورة أدِيب</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-chat" /><span class="name">المحادثات</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-schedule" /><span class="name">جدول أدِيب</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-appointments" /><span class="name">حجز المواعيد</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-todos" /><span class="name">المهام</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-admins" /><span class="name">إدارة الأعضاء الإداريين</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-testimonials" /><span class="name">آراء الأعضاء</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-join" /><span class="name">زر "انضم إلينا"</span><span class="switch" aria-hidden="true"></span></label>
-                  <label class="perm"><input type="checkbox" id="inv-perm-push" /><span class="name">إرسال الإشعارات</span><span class="switch" aria-hidden="true"></span></label>
-                  </div>
-                  <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-                    <button type="button" class="btn" id="invPermsSelectAll">تحديد الكل</button>
-                    <button type="button" class="btn" id="invPermsClearAll">مسح الكل</button>
-                  </div>
-                </details>
-              </div>
-              <button class="btn btn-primary" type="submit"><i class="fa-solid fa-paper-plane"></i> إرسال دعوة كإداري</button>
-            </form>
-            <div id="adminsStatus" class="muted" style="margin-top:10px"></div>
-          </div>
-
-          <!-- High Council Table -->
-          <div class="panel" style="padding:16px; margin-top:16px">
-            <h3 style="margin:0 0 12px; font-family: fb; display:flex; align-items:center; gap:8px">
-              <span style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #fbbf24, #f59e0b)">
-                <i class="fa-solid fa-crown" style="color:#fff; font-size:1rem" aria-hidden="true"></i>
-              </span>
-              <span style="color:#1e293b">المجلس الأعلى</span>
-            </h3>
-            <div style="overflow:auto">
-              <table class="table" style="width:100%; border-collapse:collapse">
-                <thead>
-                  <tr>
-                    <th style="text-align:right; padding:12px; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0">العضو</th>
-                    <th style="text-align:right; padding:12px; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0">المنصب</th>
-                    <th style="text-align:center; padding:12px; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0; width:120px">إجراءات</th>
-                  </tr>
-                </thead>
-                <tbody id="adminsHighCouncilTable"></tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Administrative Council Table -->
-          <div class="panel" style="padding:16px; margin-top:16px">
-            <h3 style="margin:0 0 12px; font-family: fb; display:flex; align-items:center; gap:8px">
-              <span style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #3b82f6, #2563eb)">
                 <i class="fa-solid fa-users-gear" style="color:#fff; font-size:1rem" aria-hidden="true"></i>
               </span>
-              <span style="color:#1e293b">المجلس الإداري</span>
+              <span>المستخدمون الإداريون</span>
             </h3>
             <div style="overflow:auto">
               <table class="table" style="width:100%; border-collapse:collapse">
                 <thead>
                   <tr>
-                    <th style="text-align:right; padding:12px; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0">العضو</th>
-                    <th style="text-align:right; padding:12px; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0">المنصب</th>
+                    <th style="text-align:right; padding:12px; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0">الاسم</th>
+                    <th style="text-align:right; padding:12px; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0">البريد الإلكتروني</th>
+                    <th style="text-align:right; padding:12px; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0">الدور</th>
+                    <th style="text-align:center; padding:12px; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0">الحالة</th>
                     <th style="text-align:center; padding:12px; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0; width:120px">إجراءات</th>
                   </tr>
                 </thead>
-                <tbody id="adminsAdminCouncilTable"></tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Executive Councils Table -->
-          <div class="panel" style="padding:16px; margin-top:16px">
-            <h3 style="margin:0 0 12px; font-family: fb; display:flex; align-items:center; gap:8px">
-              <span style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #8b5cf6, #7c3aed)">
-                <i class="fa-solid fa-sitemap" style="color:#fff; font-size:1rem" aria-hidden="true"></i>
-              </span>
-              <span style="color:#1e293b">المجالس التنفيذية</span>
-            </h3>
-            <div style="overflow:auto">
-              <table class="table" style="width:100%; border-collapse:collapse">
-                <thead>
+                <tbody id="adminUsersTable">
                   <tr>
-                    <th style="text-align:right; padding:12px; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0">العضو</th>
-                    <th style="text-align:right; padding:12px; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0">المنصب</th>
-                    <th style="text-align:center; padding:12px; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0; width:120px">إجراءات</th>
+                    <td colspan="5" style="text-align:center; padding:40px; color:#94a3b8">
+                      <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; margin-bottom:12px"></i>
+                      <div>جاري التحميل...</div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody id="adminsExecutiveCouncilTable"></tbody>
+                </tbody>
               </table>
             </div>
           </div>
@@ -1965,6 +1851,191 @@
       </form>
     </dialog>
 
+    <dialog id="memberSettingsDialog" class="admin-dialog" style="max-width:700px">
+      <form method="dialog" class="dialog-form" id="memberSettingsForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">
+            <i class="fa-solid fa-gear"></i>
+            <span id="memberSettingsTitle">إعدادات العضو</span>
+          </h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body" style="max-height:70vh; overflow-y:auto">
+          
+          <!-- معلومات العضو -->
+          <div style="background:linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); padding:20px; border-radius:12px; margin-bottom:24px; border:1px solid #e2e8f0">
+            <div style="display:flex; align-items:center; gap:16px">
+              <div id="settingsMemberAvatar" style="width:60px; height:60px; border-radius:12px; background:linear-gradient(135deg, #e2e8f0, #cbd5e1); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                <i class="fa-solid fa-user" style="color:#64748b; font-size:1.5rem"></i>
+              </div>
+              <div style="flex:1">
+                <div id="settingsMemberName" style="font-size:1.2rem; font-weight:700; color:#1e293b; margin-bottom:4px">العضو</div>
+                <div id="settingsMemberEmail" style="font-size:0.9rem; color:#64748b"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- المجلس الإداري -->
+          <div class="settings-section" style="background:#fff; padding:20px; border-radius:12px; border:1px solid #e2e8f0">
+            <h4 style="margin:0 0 16px; font-size:1.1rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:10px">
+              <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #10b981, #059669); display:flex; align-items:center; justify-content:center">
+                <i class="fa-solid fa-users-gear" style="color:#fff; font-size:1rem"></i>
+              </div>
+              المجلس الإداري
+            </h4>
+
+            <label style="display:flex; align-items:center; gap:12px; padding:12px; background:#f8fafc; border-radius:8px; cursor:pointer; transition:all 0.2s" onmouseenter="this.style.background='#ecfdf5'" onmouseleave="this.style.background='#f8fafc'">
+              <input type="checkbox" id="addToBoardCouncil" style="width:20px; height:20px; cursor:pointer" />
+              <div style="flex:1">
+                <div style="font-weight:600; color:#1e293b">إضافة للمجلس الإداري</div>
+                <div style="font-size:0.85rem; color:#64748b">منح هذا العضو منصباً في المجلس الحالي</div>
+              </div>
+            </label>
+
+            <div id="boardPositionOptions" style="display:none; margin-top:16px; padding:16px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0">
+              <label style="display:block; margin-bottom:12px">
+                <span style="display:block; font-weight:600; color:#475569; margin-bottom:6px">المنصب</span>
+                <select id="boardPosition" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem">
+                  <option value="">اختر المنصب</option>
+                  <option value="president">👑 الرئيس</option>
+                  <option value="vice_president">🥈 نائب الرئيس</option>
+                  <option value="leader">👔 القائد</option>
+                  <option value="vice_leader">🎖️ نائب القائد</option>
+                  <option value="ceo">💼 الرئيس التنفيذي</option>
+                  <option value="secretary">📝 الأمين العام</option>
+                  <option value="treasurer">💰 أمين الصندوق</option>
+                  <option value="member">👤 عضو</option>
+                </select>
+              </label>
+
+              <label style="display:block; margin-bottom:12px">
+                <span style="display:block; font-weight:600; color:#475569; margin-bottom:6px">ترتيب العرض</span>
+                <input type="number" id="positionRank" min="1" value="1" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" placeholder="1" />
+                <span style="display:block; font-size:0.8rem; color:#94a3b8; margin-top:4px">الأرقام الأصغر تظهر أولاً</span>
+              </label>
+
+              <label style="display:block">
+                <span style="display:block; font-weight:600; color:#475569; margin-bottom:6px">القسم/اللجنة (اختياري)</span>
+                <input type="text" id="positionDepartment" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" placeholder="مثال: لجنة الإعلام" />
+              </label>
+            </div>
+          </div>
+
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button type="submit" class="btn btn-primary" id="saveMemberSettingsBtn">
+            <i class="fa-solid fa-floppy-disk"></i> حفظ التغييرات
+          </button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- نافذة ترقية عضو إلى إداري -->
+    <dialog id="promoteToAdminDialog" class="admin-dialog" style="max-width:700px">
+      <form method="dialog" class="dialog-form" id="promoteToAdminForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">
+            <i class="fa-solid fa-user-shield"></i>
+            <span>ترقية عضو إلى إداري</span>
+          </h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body" style="max-height:70vh; overflow-y:auto">
+          
+          <!-- اختيار العضو -->
+          <div style="background:#fff; padding:20px; border-radius:12px; margin-bottom:16px; border:1px solid #e2e8f0">
+            <h4 style="margin:0 0 16px; font-size:1.1rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:10px">
+              <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #3b82f6, #2563eb); display:flex; align-items:center; justify-content:center">
+                <i class="fa-solid fa-user" style="color:#fff; font-size:1rem"></i>
+              </div>
+              اختيار العضو
+            </h4>
+            
+            <label style="display:block; margin-bottom:12px">
+              <span style="display:block; font-weight:600; color:#475569; margin-bottom:6px">العضو <span style="color:#ef4444">*</span></span>
+              <select id="promoteSelectMember" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem">
+                <option value="">اختر العضو المراد ترقيته</option>
+              </select>
+              <span style="display:block; font-size:0.8rem; color:#94a3b8; margin-top:4px">سيتم عرض الأعضاء الذين ليس لديهم صلاحيات إدارية فقط</span>
+            </label>
+
+            <!-- معلومات العضو المختار -->
+            <div id="promoteSelectedMemberInfo" style="display:none; margin-top:16px; padding:16px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0">
+              <div style="display:flex; align-items:center; gap:16px">
+                <div id="promoteSelectedMemberAvatar" style="width:60px; height:60px; border-radius:12px; background:linear-gradient(135deg, #e2e8f0, #cbd5e1); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                  <i class="fa-solid fa-user" style="color:#64748b; font-size:1.5rem"></i>
+                </div>
+                <div style="flex:1">
+                  <div id="promoteSelectedMemberName" style="font-size:1.1rem; font-weight:700; color:#1e293b; margin-bottom:4px"></div>
+                  <div id="promoteSelectedMemberEmail" style="font-size:0.9rem; color:#64748b"></div>
+                  <div id="promoteSelectedMemberCommittee" style="font-size:0.85rem; color:#94a3b8; margin-top:2px"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- الصلاحيات الإدارية -->
+          <div style="background:#fff; padding:20px; border-radius:12px; margin-bottom:16px; border:1px solid #e2e8f0">
+            <h4 style="margin:0 0 16px; font-size:1.1rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:10px">
+              <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #10b981, #059669); display:flex; align-items:center; justify-content:center">
+                <i class="fa-solid fa-shield-halved" style="color:#fff; font-size:1rem"></i>
+              </div>
+              الصلاحيات الإدارية
+            </h4>
+
+            <label style="display:block; margin-bottom:12px">
+              <span style="display:block; font-weight:600; color:#475569; margin-bottom:6px">الدور الإداري <span style="color:#ef4444">*</span></span>
+              <select id="promoteAdminRole" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem">
+                <option value="super_admin">🟡 مدير عام - صلاحيات كاملة</option>
+                <option value="admin" selected>🔵 مدير - صلاحيات متقدمة</option>
+                <option value="moderator">🟢 مشرف - صلاحيات محدودة</option>
+              </select>
+            </label>
+
+            <details style="margin-top:12px">
+              <summary style="cursor:pointer; font-weight:600; color:#475569; padding:8px; background:#f8fafc; border-radius:6px; user-select:none">
+                <i class="fa-solid fa-lock"></i> الصلاحيات التفصيلية (اختياري)
+              </summary>
+              <div id="promoteDetailedPermissionsGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:8px; margin-top:12px; padding:12px; background:#f8fafc; border-radius:6px">
+                <label style="display:flex; align-items:center; gap:8px; padding:8px; border-radius:6px; cursor:pointer; transition:background 0.2s" onmouseenter="this.style.background='#f1f5f9'" onmouseleave="this.style.background=''">
+                  <input type="checkbox" class="promote-perm-checkbox" data-perm="works" />
+                  <span style="font-size:0.9rem">إدارة الأعمال</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; padding:8px; border-radius:6px; cursor:pointer; transition:background 0.2s" onmouseenter="this.style.background='#f1f5f9'" onmouseleave="this.style.background=''">
+                  <input type="checkbox" class="promote-perm-checkbox" data-perm="sponsors" />
+                  <span style="font-size:0.9rem">إدارة الرعاة</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; padding:8px; border-radius:6px; cursor:pointer; transition:background 0.2s" onmouseenter="this.style.background='#f1f5f9'" onmouseleave="this.style.background=''">
+                  <input type="checkbox" class="promote-perm-checkbox" data-perm="board" />
+                  <span style="font-size:0.9rem">المجلس الإداري</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; padding:8px; border-radius:6px; cursor:pointer; transition:background 0.2s" onmouseenter="this.style.background='#f1f5f9'" onmouseleave="this.style.background=''">
+                  <input type="checkbox" class="promote-perm-checkbox" data-perm="members" />
+                  <span style="font-size:0.9rem">أعضاء النادي</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; padding:8px; border-radius:6px; cursor:pointer; transition:background 0.2s" onmouseenter="this.style.background='#f1f5f9'" onmouseleave="this.style.background=''">
+                  <input type="checkbox" class="promote-perm-checkbox" data-perm="forms" />
+                  <span style="font-size:0.9rem">الاستبيانات</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; padding:8px; border-radius:6px; cursor:pointer; transition:background 0.2s" onmouseenter="this.style.background='#f1f5f9'" onmouseleave="this.style.background=''">
+                  <input type="checkbox" class="promote-perm-checkbox" data-perm="admins" />
+                  <span style="font-size:0.9rem">إدارة الإداريين</span>
+                </label>
+              </div>
+            </details>
+          </div>
+
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button type="submit" class="btn btn-primary" id="savePromoteToAdminBtn">
+            <i class="fa-solid fa-user-shield"></i> ترقية إلى إداري
+          </button>
+        </menu>
+      </form>
+    </dialog>
+
     <dialog id="memberDialog" class="admin-dialog" style="max-width:900px">
       <form method="dialog" class="dialog-form" id="memberForm">
         <div class="dialog-header">
@@ -2078,7 +2149,6 @@
                 <select name="committee" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem">
                   <option value="">اختر اللجنة</option>
                   <option value="">بدون لجنة</option>
-                  <option>المجلس الإداري</option>
                   <option>لجنة الإنتاج</option>
                   <option>لجنة التأليف</option>
                   <option>لجنة التسويق</option>
@@ -2566,7 +2636,6 @@
                 <option>لجنة الفعاليات</option>
                 <option>لجنة السفراء</option>
                 <option>لجنة الإنتاج</option>
-                <option>المجلس الإداري</option>
               </select>
             </label>
             <label>التقييم
@@ -2764,10 +2833,10 @@
           const userId = session.user?.id;
           if (!userId) { redirectToLogin(); return; }
           const { data: adminRow, error: adminErr } = await sb
-            .from('admins')
-            .select('user_id,is_admin')
+            .from('admin_users')
+            .select('user_id,role,is_active')
             .eq('user_id', userId)
-            .eq('is_admin', true)
+            .eq('is_active', true)
             .maybeSingle();
           if (adminErr || !adminRow) {
             // Offline fallback: if previously verified and currently offline, allow opening the shell
