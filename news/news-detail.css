@@ -874,6 +874,7 @@
   line-height: 2;
   margin: 40px 0;
   font-family: 'fr', sans-serif;
+  white-space: pre-wrap;
 }
 
 .article-content p {
