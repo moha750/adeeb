@@ -12,12 +12,6 @@ function getNewsIdFromUrl() {
   return params.get('id');
 }
 
-// Get news slug from URL
-function getNewsSlugFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('slug');
-}
-
 // Check if news was viewed before on this device
 function hasViewedNews(newsId) {
   try {
@@ -138,9 +132,8 @@ function createShareText(news) {
 // Load news detail
 async function loadNewsDetail() {
   const newsId = getNewsIdFromUrl();
-  const newsSlug = getNewsSlugFromUrl();
   
-  if (!newsId && !newsSlug) {
+  if (!newsId) {
     showError();
     return;
   }
@@ -158,16 +151,11 @@ async function loadNewsDetail() {
     const params = new URLSearchParams(window.location.search);
     const isPreview = params.get('preview') === 'true';
 
-    // Fetch news by slug or ID
+    // Fetch news by ID
     let query = sb
       .from('news')
-      .select('*');
-
-    if (newsSlug) {
-      query = query.eq('slug', newsSlug);
-    } else {
-      query = query.eq('id', newsId);
-    }
+      .select('*')
+      .eq('id', newsId);
     
     // Only filter by status if not in preview mode
     if (!isPreview) {
@@ -184,16 +172,14 @@ async function loadNewsDetail() {
     currentNews = news;
 
     // Increment views only if not viewed before on this device
-    // Use id for view tracking
-    const viewKey = String(currentNews.id || newsId || newsSlug);
-    if (!hasViewedNews(viewKey)) {
+    if (!hasViewedNews(newsId)) {
       await sb
         .from('news')
         .update({ views: (news.views || 0) + 1 })
-        .eq('id', currentNews.id);
+        .eq('id', newsId);
 
       // Mark as viewed on this device
-      markNewsAsViewed(viewKey);
+      markNewsAsViewed(newsId);
 
       // Update views in current object
       currentNews.views = (news.views || 0) + 1;
@@ -354,12 +340,6 @@ function renderNewsDetail(news) {
 // Setup share buttons
 function setupShareButtons(news) {
   const url = window.location.href;
-  const newsId = news?.id;
-  const newsSlug = news?.slug;
-  const cacheBuster = news?.updated_at || news?.published_at || '';
-  const shareUrl = (newsId && window.SUPABASE_URL)
-    ? `${window.SUPABASE_URL.replace(/\/$/, '')}/functions/v1/news-share?${newsSlug ? `slug=${encodeURIComponent(newsSlug)}` : `id=${encodeURIComponent(newsId)}`}&v=${encodeURIComponent(cacheBuster)}`
-    : url;
   const title = news.title;
   const shareText = createShareText(news);
   const summary = news.summary || news.content.replace(/<[^>]*>/g, '').substring(0, 100) + '...';
@@ -367,19 +347,19 @@ function setupShareButtons(news) {
   // Twitter - with enhanced text
   document.getElementById('shareTwitter').onclick = () => {
     const twitterText = `${shareText}\n\n📖 اقرأ المزيد:`;
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}&url=${encodeURIComponent(shareUrl)}`;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}&url=${encodeURIComponent(url)}`;
     window.open(twitterUrl, '_blank', 'width=600,height=400');
   };
 
   // Facebook - will use Open Graph meta tags automatically
   document.getElementById('shareFacebook').onclick = () => {
-    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
     window.open(facebookUrl, '_blank', 'width=600,height=400');
   };
 
   // WhatsApp - with enhanced text and emojis
   document.getElementById('shareWhatsapp').onclick = () => {
-    const whatsappText = `${shareText}\n\n📖 اقرأ التفاصيل كاملة:\n${shareUrl}`;
+    const whatsappText = `${shareText}\n\n📖 اقرأ التفاصيل كاملة:\n${url}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappText)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -388,7 +368,7 @@ function setupShareButtons(news) {
   document.getElementById('copyLink').onclick = async () => {
     try {
       // Create full share text with link
-      const fullShareText = `${shareText}\n\n📖 رابط الخبر:\n${shareUrl}`;
+      const fullShareText = `${shareText}\n\n📖 رابط الخبر:\n${url}`;
       await navigator.clipboard.writeText(fullShareText);
       
       // Show success with toast
@@ -408,7 +388,7 @@ function setupShareButtons(news) {
       console.error('Error copying link:', error);
       // Fallback: copy URL only
       try {
-        await navigator.clipboard.writeText(shareUrl);
+        await navigator.clipboard.writeText(url);
         showShareToast('تم نسخ الرابط بنجاح! ✓');
         
         const btn = document.getElementById('copyLink');
@@ -512,7 +492,7 @@ function renderRelatedNews(newsList) {
 function createRelatedNewsCard(news) {
   const card = document.createElement('a');
   card.className = 'related-news-card';
-  card.href = news.slug ? `news-detail.html?slug=${encodeURIComponent(news.slug)}` : `news-detail.html?id=${news.id}`;
+  card.href = `news-detail.html?id=${news.id}`;
 
   const imageUrl = news.image_url || 'https://via.placeholder.com/400x300?text=أديب';
   const publishedDate = formatDate(news.published_at);

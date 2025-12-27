@@ -155,11 +155,6 @@ function createNewsCard(news, isFeatured = false) {
 // Open news detail page
 function openNewsDetail(newsId) {
   // Redirect to news detail page
-  const item = allNews.find(n => String(n.id) === String(newsId)) || featuredNews.find(n => String(n.id) === String(newsId));
-  if (item && item.slug) {
-    window.location.href = `news-detail.html?slug=${encodeURIComponent(item.slug)}`;
-    return;
-  }
   window.location.href = `news-detail.html?id=${newsId}`;
 }
 
