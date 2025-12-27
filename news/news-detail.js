@@ -12,6 +12,12 @@ function getNewsIdFromUrl() {
   return params.get('id');
 }
 
+// Get news slug from URL
+function getNewsSlugFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('slug');
+}
+
 // Check if news was viewed before on this device
 function hasViewedNews(newsId) {
   try {
@@ -132,8 +138,9 @@ function createShareText(news) {
 // Load news detail
 async function loadNewsDetail() {
   const newsId = getNewsIdFromUrl();
+  const newsSlug = getNewsSlugFromUrl();
   
-  if (!newsId) {
+  if (!newsId && !newsSlug) {
     showError();
     return;
   }
@@ -151,11 +158,16 @@ async function loadNewsDetail() {
     const params = new URLSearchParams(window.location.search);
     const isPreview = params.get('preview') === 'true';
 
-    // Fetch news by ID
+    // Fetch news by slug or ID
     let query = sb
       .from('news')
-      .select('*')
-      .eq('id', newsId);
+      .select('*');
+
+    if (newsSlug) {
+      query = query.eq('slug', newsSlug);
+    } else {
+      query = query.eq('id', newsId);
+    }
     
     // Only filter by status if not in preview mode
     if (!isPreview) {
@@ -172,14 +184,16 @@ async function loadNewsDetail() {
     currentNews = news;
 
     // Increment views only if not viewed before on this device
-    if (!hasViewedNews(newsId)) {
+    // Use id for view tracking
+    const viewKey = String(currentNews.id || newsId || newsSlug);
+    if (!hasViewedNews(viewKey)) {
       await sb
         .from('news')
         .update({ views: (news.views || 0) + 1 })
-        .eq('id', newsId);
+        .eq('id', currentNews.id);
 
       // Mark as viewed on this device
-      markNewsAsViewed(newsId);
+      markNewsAsViewed(viewKey);
 
       // Update views in current object
       currentNews.views = (news.views || 0) + 1;
@@ -341,9 +355,10 @@ function renderNewsDetail(news) {
 function setupShareButtons(news) {
   const url = window.location.href;
   const newsId = news?.id;
+  const newsSlug = news?.slug;
   const cacheBuster = news?.updated_at || news?.published_at || '';
   const shareUrl = (newsId && window.SUPABASE_URL)
-    ? `${window.SUPABASE_URL.replace(/\/$/, '')}/functions/v1/news-share?id=${encodeURIComponent(newsId)}&v=${encodeURIComponent(cacheBuster)}`
+    ? `${window.SUPABASE_URL.replace(/\/$/, '')}/functions/v1/news-share?${newsSlug ? `slug=${encodeURIComponent(newsSlug)}` : `id=${encodeURIComponent(newsId)}`}&v=${encodeURIComponent(cacheBuster)}`
     : url;
   const title = news.title;
   const shareText = createShareText(news);
@@ -497,7 +512,7 @@ function renderRelatedNews(newsList) {
 function createRelatedNewsCard(news) {
   const card = document.createElement('a');
   card.className = 'related-news-card';
-  card.href = `news-detail.html?id=${news.id}`;
+  card.href = news.slug ? `news-detail.html?slug=${encodeURIComponent(news.slug)}` : `news-detail.html?id=${news.id}`;
 
   const imageUrl = news.image_url || 'https://via.placeholder.com/400x300?text=أديب';
   const publishedDate = formatDate(news.published_at);
