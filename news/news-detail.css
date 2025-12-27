@@ -100,12 +100,8 @@
 
 /* Breadcrumb */
 .breadcrumb-container {
-  padding: 120px 20px 30px;
+  padding: 120px 0px 30px;
   margin-top: 0;
-  background: linear-gradient(135deg, 
-    rgba(61, 143, 214, 0.03) 0%, 
-    rgba(39, 64, 96, 0.05) 50%,
-    rgba(61, 143, 214, 0.03) 100%);
   position: relative;
   overflow: hidden;
 }
@@ -870,11 +866,23 @@
 /* Article Content */
 .article-content {
   font-size: 1.15rem;
-  color: #475569;
+  color: #274060;
   line-height: 2;
   margin: 40px 0;
+  padding: 2rem;
   font-family: 'fr', sans-serif;
   white-space: pre-wrap;
+  background: linear-gradient(135deg, 
+    rgba(248, 249, 250, 0.95) 0%, 
+    rgba(230, 240, 249, 0.98) 50%,
+    rgba(248, 249, 250, 0.95) 100%);
+  border-radius: 30px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(61, 143, 214, 0.12);
+  box-shadow: 
+    0 10px 40px rgba(61, 143, 214, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .article-content p {
@@ -2333,7 +2341,7 @@
 
 @media (max-width: 768px) {
   .breadcrumb-container {
-    padding: 100px 15px 25px;
+    padding: 100px 0px 25px;
   }
 
   .breadcrumb-container::before,
@@ -2567,7 +2575,7 @@
   }
 
   .breadcrumb-container {
-    padding: 90px 10px 20px;
+    padding: 90px 0px 20px;
   }
 
   .breadcrumb-container::before,

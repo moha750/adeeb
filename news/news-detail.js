@@ -340,6 +340,11 @@ function renderNewsDetail(news) {
 // Setup share buttons
 function setupShareButtons(news) {
   const url = window.location.href;
+  const newsId = news?.id;
+  const cacheBuster = news?.updated_at || news?.published_at || '';
+  const shareUrl = (newsId && window.SUPABASE_URL)
+    ? `${window.SUPABASE_URL.replace(/\/$/, '')}/functions/v1/news-share?id=${encodeURIComponent(newsId)}&v=${encodeURIComponent(cacheBuster)}`
+    : url;
   const title = news.title;
   const shareText = createShareText(news);
   const summary = news.summary || news.content.replace(/<[^>]*>/g, '').substring(0, 100) + '...';
@@ -347,19 +352,19 @@ function setupShareButtons(news) {
   // Twitter - with enhanced text
   document.getElementById('shareTwitter').onclick = () => {
     const twitterText = `${shareText}\n\n📖 اقرأ المزيد:`;
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}&url=${encodeURIComponent(url)}`;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}&url=${encodeURIComponent(shareUrl)}`;
     window.open(twitterUrl, '_blank', 'width=600,height=400');
   };
 
   // Facebook - will use Open Graph meta tags automatically
   document.getElementById('shareFacebook').onclick = () => {
-    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
     window.open(facebookUrl, '_blank', 'width=600,height=400');
   };
 
   // WhatsApp - with enhanced text and emojis
   document.getElementById('shareWhatsapp').onclick = () => {
-    const whatsappText = `${shareText}\n\n📖 اقرأ التفاصيل كاملة:\n${url}`;
+    const whatsappText = `${shareText}\n\n📖 اقرأ التفاصيل كاملة:\n${shareUrl}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappText)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -368,7 +373,7 @@ function setupShareButtons(news) {
   document.getElementById('copyLink').onclick = async () => {
     try {
       // Create full share text with link
-      const fullShareText = `${shareText}\n\n📖 رابط الخبر:\n${url}`;
+      const fullShareText = `${shareText}\n\n📖 رابط الخبر:\n${shareUrl}`;
       await navigator.clipboard.writeText(fullShareText);
       
       // Show success with toast
@@ -388,7 +393,7 @@ function setupShareButtons(news) {
       console.error('Error copying link:', error);
       // Fallback: copy URL only
       try {
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(shareUrl);
         showShareToast('تم نسخ الرابط بنجاح! ✓');
         
         const btn = document.getElementById('copyLink');

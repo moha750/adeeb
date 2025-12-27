@@ -12005,7 +12005,7 @@ ORDER BY m.committee, m.full_name;`;
             </div>
             
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; border-top:1px solid #e2e8f0; background:#fafbfc">
-              <button class="btn btn-sm news-action-btn" onclick="window.open('../news-detail.html?id=${news.id}&preview=true', '_blank')" style="border:none; border-radius:0 0 0 16px; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#3d8fd6; border-left:1px solid #e2e8f0; transition:all 0.2s">
+              <button class="btn btn-sm news-action-btn" onclick="window.open('../news/news-detail.html?id=${news.id}&preview=true', '_blank')" style="border:none; border-radius:0 0 0 16px; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#3d8fd6; border-left:1px solid #e2e8f0; transition:all 0.2s">
                 <i class="fa-regular fa-eye"></i> معاينة
               </button>
               <button class="btn btn-sm news-action-btn" onclick="editNews('${news.id}')" style="border:none; border-radius:0 0 16px 0; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#64748b; transition:all 0.2s">
@@ -12558,7 +12558,7 @@ ORDER BY m.committee, m.full_name;`;
             </div>
             
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; border-top:1px solid #e2e8f0; background:#fafbfc">
-              <button class="btn btn-sm news-action-btn" onclick="window.open('../news-detail.html?id=${news.id}&preview=true', '_blank')" style="border:none; border-radius:0 0 0 16px; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#3d8fd6; border-left:1px solid #e2e8f0; transition:all 0.2s">
+              <button class="btn btn-sm news-action-btn" onclick="window.open('../news/news-detail.html?id=${news.id}&preview=true', '_blank')" style="border:none; border-radius:0 0 0 16px; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#3d8fd6; border-left:1px solid #e2e8f0; transition:all 0.2s">
                 <i class="fa-regular fa-eye"></i> معاينة
               </button>
               <button class="btn btn-sm news-action-btn" onclick="editNews('${news.id}')" style="border:none; border-radius:0 0 16px 0; padding:12px; font-size:0.85rem; font-weight:600; background:transparent; color:#64748b; transition:all 0.2s">
