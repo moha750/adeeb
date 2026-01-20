@@ -1,0 +1,4312 @@
+/**
+ * نظام إدارة نادي أدِيب - لوحة التحكم الرئيسية
+ */
+
+(async function() {
+    const sb = window.sbClient;
+    let currentUser = null;
+    let currentUserRole = null;
+    let currentSection = 'dashboard';
+    let tasksChartInstance = null;
+    let projectsChartInstance = null;
+    let chartsLoaded = false;
+
+    // التحقق من المصادقة وتحميل البيانات
+    async function init() {
+        showLoading(true);
+        
+        try {
+            // إعداد المستمعات مبكراً لضمان عمل زر القائمة حتى لو فشل تحميل البيانات
+            setupEventListeners();
+
+            // حماية الصفحة والتحقق من الصلاحيات
+            const authData = await window.AuthManager.protectPage(5);
+            
+            if (!authData) {
+                showLoading(false);
+                return;
+            }
+            
+            currentUser = authData.user;
+            currentUserRole = authData.role;
+            
+            // تحديث واجهة المستخدم
+            updateUserInfo();
+            await buildNavigation();
+            await loadDashboardData();
+            
+            showLoading(false);
+        } catch (error) {
+            console.error('Error initializing dashboard:', error);
+            showError('حدث خطأ أثناء تحميل لوحة التحكم');
+            showLoading(false);
+        }
+    }
+
+    // تحديث معلومات المستخدم في الهيدر
+    function updateUserInfo() {
+        const userName = document.getElementById('userName');
+        const userRole = document.getElementById('userRole');
+        const userAvatar = document.getElementById('userAvatar');
+        const greetingText = document.getElementById('greetingText');
+        
+        // تحديد التحية حسب الوقت المحلي
+        if (greetingText) {
+            const currentHour = new Date().getHours();
+            let greeting = '';
+            
+            if (currentHour >= 5 && currentHour < 12) {
+                greeting = 'صباح الخير';
+            } else if (currentHour >= 12 && currentHour < 17) {
+                greeting = 'مساء الخير';
+            } else if (currentHour >= 17 && currentHour < 21) {
+                greeting = 'مساء الخير';
+            } else {
+                greeting = 'مساء الخير';
+            }
+            
+            greetingText.textContent = greeting;
+        }
+        
+        if (userName) userName.textContent = currentUser.full_name;
+        if (userRole) userRole.textContent = currentUserRole.role_name_ar;
+        
+        if (userAvatar && currentUser.avatar_url) {
+            userAvatar.src = currentUser.avatar_url;
+        } else if (userAvatar) {
+            userAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.full_name)}&background=3d8fd6&color=fff`;
+        }
+    }
+
+    // بناء القائمة الجانبية بناءً على الصلاحيات
+    async function buildNavigation() {
+        const nav = document.getElementById('mainNav');
+        if (!nav) return;
+        
+        const roleLevel = currentUserRole.role_level;
+        const menuItems = [];
+        
+        // لوحة المعلومات - متاحة للجميع
+        menuItems.push({
+            id: 'dashboard',
+            icon: 'fa-chart-line',
+            label: 'لوحة المعلومات',
+            section: 'dashboard-section'
+        });
+        
+        // إدارة المستخدمين - المستوى 8 وأعلى
+        if (roleLevel >= 8) {
+            menuItems.push({
+                id: 'users',
+                icon: 'fa-users',
+                label: 'إدارة المستخدمين',
+                section: 'users-section'
+            });
+        }
+        
+        // إدارة اللجان - المستوى 8 وأعلى
+        if (roleLevel >= 8) {
+            menuItems.push({
+                id: 'committees',
+                icon: 'fa-sitemap',
+                label: 'إدارة اللجان',
+                section: 'committees-section'
+            });
+        }
+        
+        // المشاريع - المستوى 7 وأعلى
+        if (roleLevel >= 7) {
+            menuItems.push({
+                id: 'projects',
+                icon: 'fa-diagram-project',
+                label: 'المشاريع',
+                section: 'projects-section'
+            });
+        }
+        
+        // إحصائيات الزيارات - المستوى 5 فأعلى
+        if (roleLevel >= 5) {
+            menuItems.push({
+                id: 'site-visits',
+                icon: 'fa-chart-line',
+                label: 'إحصائيات الزيارات',
+                section: 'site-visits-section'
+            });
+        }
+        
+        // المهام - متاحة للجميع
+        menuItems.push({
+            id: 'tasks',
+            icon: 'fa-tasks',
+            label: 'المهام',
+            section: 'tasks-section'
+        });
+        
+        // الاجتماعات - متاحة للجميع
+        menuItems.push({
+            id: 'meetings',
+            icon: 'fa-calendar-days',
+            label: 'الاجتماعات',
+            section: 'meetings-section'
+        });
+        
+        // التقارير - المستوى 7 وأعلى
+        if (roleLevel >= 7) {
+            menuItems.push({
+                id: 'reports',
+                icon: 'fa-chart-simple',
+                label: 'التقارير',
+                section: 'reports-section'
+            });
+        }
+        
+        // رسائل التواصل - المستوى 7 وأعلى
+        if (roleLevel >= 7) {
+            menuItems.push({
+                id: 'contact-messages',
+                icon: 'fa-envelope',
+                label: 'رسائل التواصل',
+                section: 'contact-messages-section'
+            });
+        }
+        
+        // النشرة البريدية - المستوى 7 وأعلى
+        if (roleLevel >= 7) {
+            menuItems.push({
+                id: 'newsletter',
+                icon: 'fa-envelope-open-text',
+                label: 'النشرة البريدية',
+                section: 'newsletter-section'
+            });
+        }
+        
+        // إدارة العضوية - المستوى 7 وأعلى
+        if (roleLevel >= 7) {
+            menuItems.push({
+                id: 'membership',
+                icon: 'fa-user-plus',
+                label: 'إدارة العضوية',
+                section: 'membership-section'
+            });
+        }
+        
+        // إدارة الموقع - المستوى 7 وأعلى
+        if (roleLevel >= 7) {
+            menuItems.push({
+                id: 'website',
+                icon: 'fa-globe',
+                label: 'إدارة الموقع',
+                section: 'website-section'
+            });
+        }
+        
+        // إدارة الصلاحيات - المستوى 10 فقط (رئيس النادي)
+        if (roleLevel >= 10) {
+            menuItems.push({
+                id: 'permissions',
+                icon: 'fa-shield-halved',
+                label: 'إدارة الصلاحيات',
+                section: 'permissions-section'
+            });
+        }
+        
+        // بناء القائمة
+        nav.innerHTML = menuItems.map(item => `
+            <a href="#" class="nav-item ${item.id === 'dashboard' ? 'active' : ''}" data-section="${item.section}">
+                <i class="fa-solid ${item.icon}"></i>
+                <span>${item.label}</span>
+            </a>
+        `).join('');
+        
+        // إضافة مستمعات التنقل
+        nav.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = item.dataset.section;
+                navigateToSection(section);
+            });
+        });
+    }
+
+    // التنقل بين الأقسام
+    function navigateToSection(sectionId) {
+        // إخفاء جميع الأقسام
+        document.querySelectorAll('.admin-section').forEach(section => {
+            section.style.display = 'none';
+        });
+        
+        // إظهار القسم المطلوب
+        const targetSection = document.getElementById(sectionId);
+        if (targetSection) {
+            targetSection.style.display = 'block';
+        }
+        
+        // تحديث القائمة النشطة
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        const activeItem = document.querySelector(`[data-section="${sectionId}"]`);
+        if (activeItem) {
+            activeItem.classList.add('active');
+        }
+        
+        // تحميل بيانات القسم
+        loadSectionData(sectionId);
+        
+        // إغلاق القائمة الجانبية على الشاشات الصغيرة
+        if (window.innerWidth < 1024) {
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+        }
+    }
+
+    // تحميل بيانات لوحة المعلومات
+    async function loadDashboardData() {
+        try {
+            await Promise.all([
+                loadStats(),
+                loadRecentActivities(),
+                loadCharts()
+            ]);
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+        }
+    }
+
+    // تحميل الإحصائيات
+    async function loadStats() {
+        const statsGrid = document.getElementById('statsGrid');
+        if (!statsGrid) return;
+        
+        try {
+            const roleLevel = currentUserRole.role_level;
+            const stats = [];
+            
+            // إحصائيات المستخدمين - للمستوى 8 وأعلى
+            if (roleLevel >= 8) {
+                const { count: usersCount } = await sb
+                    .from('profiles')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('account_status', 'active');
+                
+                stats.push({
+                    icon: 'fa-users',
+                    label: 'الأعضاء النشطين',
+                    value: usersCount || 0,
+                    color: '#3d8fd6'
+                });
+            }
+            
+            // إحصائيات المهام
+            const tasksQuery = sb.from('tasks').select('*', { count: 'exact', head: true });
+            
+            if (roleLevel < 8) {
+                // عرض مهام المستخدم فقط
+                tasksQuery.or(`assigned_to.eq.${currentUser.id},assigned_by.eq.${currentUser.id}`);
+            }
+            
+            const { count: tasksCount } = await tasksQuery;
+            
+            stats.push({
+                icon: 'fa-tasks',
+                label: 'المهام النشطة',
+                value: tasksCount || 0,
+                color: '#10b981'
+            });
+            
+            // إحصائيات المشاريع - للمستوى 7 وأعلى
+            if (roleLevel >= 7) {
+                const { count: projectsCount } = await sb
+                    .from('projects')
+                    .select('*', { count: 'exact', head: true })
+                    .in('status', ['planning', 'active']);
+                
+                stats.push({
+                    icon: 'fa-diagram-project',
+                    label: 'المشاريع الجارية',
+                    value: projectsCount || 0,
+                    color: '#f59e0b'
+                });
+            }
+            
+            // إحصائيات الاجتماعات القادمة
+            const { count: meetingsCount } = await sb
+                .from('meetings')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'scheduled')
+                .gte('scheduled_at', new Date().toISOString());
+            
+            stats.push({
+                icon: 'fa-calendar-days',
+                label: 'الاجتماعات القادمة',
+                value: meetingsCount || 0,
+                color: '#8b5cf6'
+            });
+            
+            // عرض الإحصائيات
+            statsGrid.innerHTML = stats.map(stat => `
+                <div class="stat-card" style="--stat-color: ${stat.color}">
+                    <div class="stat-icon">
+                        <i class="fa-solid ${stat.icon}"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${stat.value}</div>
+                        <div class="stat-label">${stat.label}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    }
+
+    // تحميل النشاطات الأخيرة
+    async function loadRecentActivities() {
+        const container = document.getElementById('recentActivities');
+        if (!container) return;
+        
+        try {
+            const { data: activities } = await sb
+                .from('activity_log')
+                .select(`
+                    *,
+                    user:profiles(full_name, avatar_url)
+                `)
+                .order('created_at', { ascending: false })
+                .limit(10);
+            
+            if (!activities || activities.length === 0) {
+                container.innerHTML = '<div class="empty-state">لا توجد نشاطات حديثة</div>';
+                return;
+            }
+            
+            container.innerHTML = activities.map(activity => `
+                <div class="activity-item">
+                    <div class="activity-avatar">
+                        <img src="${activity.user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(activity.user?.full_name || 'User')}&background=3d8fd6&color=fff`}" alt="${activity.user?.full_name}" />
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">
+                            <strong>${activity.user?.full_name || 'مستخدم'}</strong>
+                            ${getActivityText(activity)}
+                        </div>
+                        <div class="activity-time">${formatTimeAgo(activity.created_at)}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+        } catch (error) {
+            console.error('Error loading activities:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل النشاطات</div>';
+        }
+    }
+
+    // تحويل نوع النشاط إلى نص
+    function getActivityText(activity) {
+        const actions = {
+            'login': 'قام بتسجيل الدخول',
+            'logout': 'قام بتسجيل الخروج',
+            'create_task': 'أنشأ مهمة جديدة',
+            'update_task': 'حدّث مهمة',
+            'create_project': 'أنشأ مشروع جديد',
+            'update_project': 'حدّث مشروع',
+            'create_meeting': 'جدول اجتماع',
+            'update_user': 'حدّث بيانات مستخدم'
+        };
+        
+        return actions[activity.action_type] || 'قام بنشاط';
+    }
+
+    // تنسيق الوقت النسبي
+    function formatTimeAgo(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.floor((now - date) / 1000);
+        
+        if (seconds < 60) return 'منذ لحظات';
+        if (seconds < 3600) return `منذ ${Math.floor(seconds / 60)} دقيقة`;
+        if (seconds < 86400) return `منذ ${Math.floor(seconds / 3600)} ساعة`;
+        if (seconds < 604800) return `منذ ${Math.floor(seconds / 86400)} يوم`;
+        
+        return date.toLocaleDateString('ar-SA');
+    }
+
+    // تحميل الرسوم البيانية
+    async function loadCharts() {
+        if (chartsLoaded) return;
+        chartsLoaded = true;
+        
+        try {
+            await Promise.all([
+                loadTasksChart(),
+                loadProjectsChart()
+            ]);
+        } catch (error) {
+            console.error('Error loading charts:', error);
+            chartsLoaded = false;
+        }
+    }
+
+    // رسم بياني للمهام
+    async function loadTasksChart() {
+        const canvas = document.getElementById('tasksChart');
+        if (!canvas) return;
+        
+        try {
+            const existingChart = Chart.getChart('tasksChart');
+            if (existingChart) {
+                existingChart.destroy();
+            }
+            
+            if (tasksChartInstance) {
+                tasksChartInstance.destroy();
+                tasksChartInstance = null;
+            }
+            
+            const { data: tasks } = await sb
+                .from('tasks')
+                .select('status');
+            
+            const statusCounts = {
+                'pending': 0,
+                'in_progress': 0,
+                'review': 0,
+                'completed': 0,
+                'cancelled': 0
+            };
+            
+            tasks?.forEach(task => {
+                if (statusCounts.hasOwnProperty(task.status)) {
+                    statusCounts[task.status]++;
+                }
+            });
+            
+            tasksChartInstance = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: ['معلقة', 'قيد التنفيذ', 'قيد المراجعة', 'مكتملة', 'ملغاة'],
+                    datasets: [{
+                        label: 'عدد المهام',
+                        data: Object.values(statusCounts),
+                        backgroundColor: [
+                            '#94a3b8',
+                            '#3b82f6',
+                            '#f59e0b',
+                            '#10b981',
+                            '#ef4444'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+        } catch (error) {
+            console.error('Error loading tasks chart:', error);
+        }
+    }
+
+    // رسم بياني للمشاريع
+    async function loadProjectsChart() {
+        const canvas = document.getElementById('projectsChart');
+        if (!canvas) return;
+        
+        try {
+            const existingChart = Chart.getChart('projectsChart');
+            if (existingChart) {
+                existingChart.destroy();
+            }
+            
+            if (projectsChartInstance) {
+                projectsChartInstance.destroy();
+                projectsChartInstance = null;
+            }
+            
+            const { data: projects } = await sb
+                .from('projects')
+                .select(`
+                    committee_id,
+                    committee:committees(committee_name_ar)
+                `);
+            
+            const committeeCounts = {};
+            
+            projects?.forEach(project => {
+                const committeeName = project.committee?.committee_name_ar || 'بدون لجنة';
+                committeeCounts[committeeName] = (committeeCounts[committeeName] || 0) + 1;
+            });
+            
+            projectsChartInstance = new Chart(canvas, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(committeeCounts),
+                    datasets: [{
+                        data: Object.values(committeeCounts),
+                        backgroundColor: [
+                            '#3b82f6',
+                            '#10b981',
+                            '#f59e0b',
+                            '#8b5cf6',
+                            '#ec4899',
+                            '#14b8a6',
+                            '#f97316'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+            
+        } catch (error) {
+            console.error('Error loading projects chart:', error);
+        }
+    }
+
+    // تحميل بيانات القسم
+    async function loadSectionData(sectionId) {
+        switch(sectionId) {
+            case 'dashboard-section':
+                if (!chartsLoaded) {
+                    await loadDashboardData();
+                }
+                break;
+            case 'users-section':
+                await loadUsers();
+                break;
+            case 'committees-section':
+                await loadCommittees();
+                break;
+            case 'tasks-section':
+                await loadTasks();
+                break;
+            case 'projects-section':
+                await loadProjects();
+                break;
+            case 'meetings-section':
+                await loadMeetings();
+                break;
+            case 'reports-section':
+                await loadReports();
+                break;
+            case 'contact-messages-section':
+                if (window.contactMessagesManager) {
+                    await window.contactMessagesManager.loadMessages();
+                }
+                break;
+            case 'newsletter-section':
+                if (window.newsletterManager) {
+                    await window.newsletterManager.loadSubscribers();
+                }
+                break;
+            case 'membership-section':
+                if (window.membershipManager) {
+                    await window.membershipManager.init(currentUser);
+                }
+                break;
+            case 'website-section':
+                await loadWebsiteSection();
+                break;
+            case 'permissions-section':
+                await loadPermissionsSection();
+                break;
+        }
+    }
+
+    // وظائف تحميل البيانات
+    async function loadUsers() {
+        const container = document.getElementById('usersTable');
+        if (!container) return;
+
+        try {
+            showLoading(true);
+            
+            // جلب المستخدمين أولاً
+            const { data: users, error: usersError } = await sb
+                .from('profiles')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (usersError) throw usersError;
+
+            // جلب الأدوار لكل مستخدم
+            const usersWithRoles = await Promise.all(users.map(async (user) => {
+                const { data: userRoles } = await sb
+                    .from('user_roles')
+                    .select(`
+                        role:roles (
+                            role_name_ar,
+                            role_level
+                        ),
+                        committee:committees (
+                            committee_name_ar
+                        )
+                    `)
+                    .eq('user_id', user.id)
+                    .eq('is_active', true)
+                    .limit(1);
+
+                return {
+                    ...user,
+                    user_roles: userRoles || []
+                };
+            }));
+
+            if (!usersWithRoles || usersWithRoles.length === 0) {
+                container.innerHTML = '<div class="empty-state">لا يوجد مستخدمين</div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>الدور</th>
+                            <th>الحالة</th>
+                            <th>تاريخ الانضمام</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${usersWithRoles.map(user => {
+                            const role = user.user_roles?.[0]?.role;
+                            const status = user.account_status === 'active' ? 'نشط' : 
+                                         user.account_status === 'inactive' ? 'غير نشط' : 'معلق';
+                            const statusClass = user.account_status === 'active' ? 'success' : 'error';
+                            
+                            return `
+                                <tr>
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <img src="${user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=3d8fd6&color=fff`}" 
+                                                 style="width: 40px; height: 40px; border-radius: 50%;" />
+                                            <strong>${user.full_name}</strong>
+                                        </div>
+                                    </td>
+                                    <td>${user.email}</td>
+                                    <td>${role?.role_name_ar || 'لا يوجد'}</td>
+                                    <td><span class="badge ${statusClass}">${status}</span></td>
+                                    <td>${new Date(user.created_at).toLocaleDateString('ar-SA')}</td>
+                                    <td>
+                                        <button class="btn-sm btn-outline" onclick="editUser('${user.id}')">
+                                            <i class="fa-solid fa-edit"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        } catch (error) {
+            console.error('Error loading users:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل المستخدمين</div>';
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    async function loadCommittees() {
+        const container = document.getElementById('committeesGrid');
+        if (!container) return;
+
+        try {
+            showLoading(true);
+            
+            const { data: committees, error } = await sb
+                .from('committees')
+                .select(`
+                    *,
+                    projects:projects(count),
+                    members:user_roles(count)
+                `)
+                .eq('is_active', true);
+
+            if (error) throw error;
+
+            if (!committees || committees.length === 0) {
+                container.innerHTML = '<div class="empty-state">لا توجد لجان</div>';
+                return;
+            }
+
+            container.innerHTML = committees.map(committee => `
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-users"></i> ${committee.committee_name_ar}</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>${committee.description || 'لا يوجد وصف'}</p>
+                        <div style="display: flex; gap: 20px; margin-top: 20px;">
+                            <div>
+                                <strong>الأعضاء:</strong> ${committee.members?.[0]?.count || 0}
+                            </div>
+                            <div>
+                                <strong>المشاريع:</strong> ${committee.projects?.[0]?.count || 0}
+                            </div>
+                        </div>
+                        <button class="btn-sm btn-primary" style="margin-top: 15px;" onclick="viewCommittee(${committee.id})">
+                            <i class="fa-solid fa-eye"></i> عرض التفاصيل
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Error loading committees:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل اللجان</div>';
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    async function loadTasks() {
+        const container = document.getElementById('tasksContainer');
+        if (!container) return;
+
+        try {
+            showLoading(true);
+            
+            const { data: tasks, error } = await sb
+                .from('tasks')
+                .select(`
+                    *,
+                    assigned_to:profiles!tasks_assigned_to_fkey(full_name, avatar_url),
+                    committee:committees(committee_name_ar)
+                `)
+                .order('created_at', { ascending: false })
+                .limit(50);
+
+            if (error) throw error;
+
+            if (!tasks || tasks.length === 0) {
+                container.innerHTML = '<div class="empty-state">لا توجد مهام</div>';
+                return;
+            }
+
+            const statusColors = {
+                'pending': '#94a3b8',
+                'in_progress': '#3b82f6',
+                'review': '#f59e0b',
+                'completed': '#10b981',
+                'cancelled': '#ef4444'
+            };
+
+            const statusNames = {
+                'pending': 'معلقة',
+                'in_progress': 'قيد التنفيذ',
+                'review': 'قيد المراجعة',
+                'completed': 'مكتملة',
+                'cancelled': 'ملغاة'
+            };
+
+            const priorityColors = {
+                'low': '#64748b',
+                'medium': '#3b82f6',
+                'high': '#f59e0b',
+                'urgent': '#ef4444'
+            };
+
+            const priorityNames = {
+                'low': 'منخفض',
+                'medium': 'متوسط',
+                'high': 'عالي',
+                'urgent': 'عاجل'
+            };
+
+            container.innerHTML = `
+                <div class="tasks-grid">
+                    ${tasks.map(task => `
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>${task.title}</h3>
+                                <span class="badge" style="background: ${statusColors[task.status]}">${statusNames[task.status]}</span>
+                            </div>
+                            <div class="card-body">
+                                <p>${task.description || 'لا يوجد وصف'}</p>
+                                <div style="margin-top: 15px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                        <i class="fa-solid fa-user"></i>
+                                        <span>${task.assigned_to?.full_name || 'غير محدد'}</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                        <i class="fa-solid fa-sitemap"></i>
+                                        <span>${task.committee?.committee_name_ar || 'لا يوجد'}</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <i class="fa-solid fa-flag"></i>
+                                        <span style="color: ${priorityColors[task.priority]}">${priorityNames[task.priority]}</span>
+                                    </div>
+                                </div>
+                                ${task.due_date ? `
+                                    <div style="margin-top: 10px; color: #64748b;">
+                                        <i class="fa-solid fa-calendar"></i>
+                                        موعد التسليم: ${new Date(task.due_date).toLocaleDateString('ar-SA')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } catch (error) {
+            console.error('Error loading tasks:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل المهام</div>';
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    async function loadProjects() {
+        const container = document.getElementById('projectsContainer');
+        if (!container) return;
+
+        try {
+            showLoading(true);
+            
+            const { data: projects, error } = await sb
+                .from('projects')
+                .select(`
+                    *,
+                    committee:committees(committee_name_ar),
+                    leader:profiles!projects_project_leader_fkey(full_name),
+                    tasks:tasks(count)
+                `)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            if (error) throw error;
+
+            if (!projects || projects.length === 0) {
+                container.innerHTML = '<div class="empty-state">لا توجد مشاريع</div>';
+                return;
+            }
+
+            const statusColors = {
+                'planning': '#94a3b8',
+                'active': '#3b82f6',
+                'on_hold': '#f59e0b',
+                'completed': '#10b981',
+                'cancelled': '#ef4444'
+            };
+
+            const statusNames = {
+                'planning': 'تخطيط',
+                'active': 'نشط',
+                'on_hold': 'معلق',
+                'completed': 'مكتمل',
+                'cancelled': 'ملغي'
+            };
+
+            container.innerHTML = `
+                <div class="projects-grid">
+                    ${projects.map(project => `
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-diagram-project"></i> ${project.project_name}</h3>
+                                <span class="badge" style="background: ${statusColors[project.status]}">${statusNames[project.status]}</span>
+                            </div>
+                            <div class="card-body">
+                                <p>${project.description || 'لا يوجد وصف'}</p>
+                                <div style="margin-top: 15px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                        <i class="fa-solid fa-sitemap"></i>
+                                        <span>${project.committee?.committee_name_ar || 'لا يوجد'}</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                        <i class="fa-solid fa-user-tie"></i>
+                                        <span>${project.leader?.full_name || 'غير محدد'}</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <i class="fa-solid fa-tasks"></i>
+                                        <span>المهام: ${project.tasks?.[0]?.count || 0}</span>
+                                    </div>
+                                </div>
+                                ${project.start_date ? `
+                                    <div style="margin-top: 10px; color: #64748b;">
+                                        <i class="fa-solid fa-calendar"></i>
+                                        ${new Date(project.start_date).toLocaleDateString('ar-SA')}
+                                        ${project.end_date ? ` - ${new Date(project.end_date).toLocaleDateString('ar-SA')}` : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } catch (error) {
+            console.error('Error loading projects:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل المشاريع</div>';
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    async function loadMeetings() {
+        const container = document.getElementById('meetingsCalendar');
+        if (!container) return;
+
+        try {
+            showLoading(true);
+            
+            const { data: meetings, error } = await sb
+                .from('meetings')
+                .select(`
+                    *,
+                    committee:committees(committee_name_ar)
+                `)
+                .order('scheduled_at', { ascending: true })
+                .limit(30);
+
+            if (error) throw error;
+
+            if (!meetings || meetings.length === 0) {
+                container.innerHTML = '<div class="empty-state">لا توجد اجتماعات</div>';
+                return;
+            }
+
+            const statusColors = {
+                'scheduled': '#3b82f6',
+                'in_progress': '#f59e0b',
+                'completed': '#10b981',
+                'cancelled': '#ef4444'
+            };
+
+            const statusNames = {
+                'scheduled': 'مجدول',
+                'in_progress': 'جاري',
+                'completed': 'مكتمل',
+                'cancelled': 'ملغي'
+            };
+
+            container.innerHTML = `
+                <div class="meetings-list">
+                    ${meetings.map(meeting => `
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-calendar-days"></i> ${meeting.title}</h3>
+                                <span class="badge" style="background: ${statusColors[meeting.status]}">${statusNames[meeting.status]}</span>
+                            </div>
+                            <div class="card-body">
+                                <p>${meeting.description || 'لا يوجد وصف'}</p>
+                                <div style="margin-top: 15px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                        <i class="fa-solid fa-clock"></i>
+                                        <span>${new Date(meeting.scheduled_at).toLocaleString('ar-SA')}</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                        <i class="fa-solid fa-hourglass"></i>
+                                        <span>${meeting.duration_minutes} دقيقة</span>
+                                    </div>
+                                    ${meeting.committee ? `
+                                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                            <i class="fa-solid fa-sitemap"></i>
+                                            <span>${meeting.committee.committee_name_ar}</span>
+                                        </div>
+                                    ` : ''}
+                                    ${meeting.location ? `
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <i class="fa-solid fa-location-dot"></i>
+                                            <span>${meeting.location}</span>
+                                        </div>
+                                    ` : ''}
+                                    ${meeting.meeting_link ? `
+                                        <div style="margin-top: 10px;">
+                                            <a href="${meeting.meeting_link}" target="_blank" class="btn-sm btn-primary">
+                                                <i class="fa-solid fa-video"></i> رابط الاجتماع
+                                            </a>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } catch (error) {
+            console.error('Error loading meetings:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الاجتماعات</div>';
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    async function loadReports() {
+        const container = document.getElementById('reportsGrid');
+        if (!container) return;
+
+        try {
+            showLoading(true);
+            
+            const { data: reports, error } = await sb
+                .from('reports')
+                .select(`
+                    *,
+                    committee:committees(committee_name_ar),
+                    generator:profiles!reports_generated_by_fkey(full_name)
+                `)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            if (error) throw error;
+
+            if (!reports || reports.length === 0) {
+                container.innerHTML = '<div class="empty-state">لا توجد تقارير</div>';
+                return;
+            }
+
+            const typeNames = {
+                'committee': 'تقرير لجنة',
+                'user': 'تقرير مستخدم',
+                'project': 'تقرير مشروع',
+                'general': 'تقرير عام'
+            };
+
+            container.innerHTML = `
+                <div class="reports-grid">
+                    ${reports.map(report => `
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-file-lines"></i> ${report.report_title}</h3>
+                            </div>
+                            <div class="card-body">
+                                <div style="margin-bottom: 15px;">
+                                    <span class="badge">${typeNames[report.report_type] || report.report_type}</span>
+                                </div>
+                                <div style="color: #64748b; font-size: 0.9rem;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                        <i class="fa-solid fa-user"></i>
+                                        <span>${report.generator?.full_name || 'غير محدد'}</span>
+                                    </div>
+                                    ${report.committee ? `
+                                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                            <i class="fa-solid fa-sitemap"></i>
+                                            <span>${report.committee.committee_name_ar}</span>
+                                        </div>
+                                    ` : ''}
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <i class="fa-solid fa-calendar"></i>
+                                        <span>${new Date(report.created_at).toLocaleDateString('ar-SA')}</span>
+                                    </div>
+                                </div>
+                                <button class="btn-sm btn-primary" style="margin-top: 15px;" onclick="viewReport(${report.id})">
+                                    <i class="fa-solid fa-eye"></i> عرض التقرير
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } catch (error) {
+            console.error('Error loading reports:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل التقارير</div>';
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // تحميل قسم إدارة الموقع
+    async function loadWebsiteSection() {
+        try {
+            showLoading(true);
+            
+            // إعداد event listeners للبطاقات
+            setupWebsiteCards();
+            
+            // تحميل الإحصائيات
+            await loadSectionCounts();
+        } catch (error) {
+            console.error('Error loading website section:', error);
+            showError('حدث خطأ أثناء تحميل قسم إدارة الموقع');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // تحميل أعمالنا
+    async function loadWebsiteWorks() {
+        const container = document.getElementById('worksGrid');
+        if (!container) return;
+
+        try {
+            const { data: works, error } = await sb
+                .from('works')
+                .select('*')
+                .order('display_order', { ascending: true });
+
+            if (error) throw error;
+
+            if (!works || works.length === 0) {
+                container.innerHTML = '<div class="empty-state">لا توجد أعمال حالياً</div>';
+                return;
+            }
+
+            container.innerHTML = works.map(work => `
+                <div class="card">
+                    ${work.image_url ? `<img src="${work.image_url}" alt="${work.title}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px 8px 0 0;">` : ''}
+                    <div style="padding: 1rem;">
+                        <h3>${work.title}</h3>
+                        ${work.category ? `<span class="badge">${work.category}</span>` : ''}
+                        ${work.description ? `<p style="color: #64748b; margin: 0.5rem 0;">${work.description}</p>` : ''}
+                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                            <span class="badge ${work.is_published ? 'badge-success' : 'badge-warning'}">
+                                ${work.is_published ? 'منشور' : 'مسودة'}
+                            </span>
+                            ${work.link_url ? `<a href="${work.link_url}" target="_blank" class="btn-sm btn-secondary">الرابط</a>` : ''}
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                            <button class="btn-sm btn-primary" onclick="editWork(${work.id})">تعديل</button>
+                            <button class="btn-sm btn-danger" onclick="deleteWork(${work.id})">حذف</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Error loading works:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الأعمال</div>';
+        }
+    }
+
+    // تحميل الإنجازات
+    async function loadWebsiteAchievements() {
+        const container = document.getElementById('achievementsGrid');
+        if (!container) return;
+
+        try {
+            const { data: achievements, error } = await sb
+                .from('achievements')
+                .select('*')
+                .order('display_order', { ascending: true });
+
+            if (error) throw error;
+
+            if (!achievements || achievements.length === 0) {
+                container.innerHTML = '<div class="empty-state">لا توجد إنجازات حالياً</div>';
+                return;
+            }
+
+            container.innerHTML = achievements.map(achievement => `
+                <div class="card">
+                    ${achievement.image_url ? `<img src="${achievement.image_url}" alt="${achievement.title}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px 8px 0 0;">` : ''}
+                    <div style="padding: 1rem;">
+                        <h3>${achievement.title}</h3>
+                        ${achievement.category ? `<span class="badge">${achievement.category}</span>` : ''}
+                        ${achievement.description ? `<p style="color: #64748b; margin: 0.5rem 0;">${achievement.description}</p>` : ''}
+                        ${achievement.achievement_date ? `<p style="color: #64748b; font-size: 0.9rem;"><i class="fa-solid fa-calendar"></i> ${new Date(achievement.achievement_date).toLocaleDateString('ar-SA')}</p>` : ''}
+                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                            <button class="btn-sm btn-primary" onclick="editAchievement(${achievement.id})">تعديل</button>
+                            <button class="btn-sm btn-danger" onclick="deleteAchievement(${achievement.id})">حذف</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Error loading achievements:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الإنجازات</div>';
+        }
+    }
+
+    // تحميل الشركاء
+    async function loadWebsiteSponsors() {
+        const container = document.getElementById('sponsorsGrid');
+        if (!container) return;
+
+        try {
+            const { data: sponsors, error } = await sb
+                .from('sponsors')
+                .select('*')
+                .order('display_order', { ascending: true });
+
+            if (error) throw error;
+
+            if (!sponsors || sponsors.length === 0) {
+                container.innerHTML = '<div class="empty-state">لا يوجد شركاء حالياً</div>';
+                return;
+            }
+
+            container.innerHTML = sponsors.map(sponsor => `
+                <div class="card">
+                    ${sponsor.logo_url || sponsor.logo ? `<img src="${sponsor.logo_url || sponsor.logo}" alt="${sponsor.name}" style="width: 100%; height: 150px; object-fit: contain; padding: 1rem; background: #f8fafc;">` : ''}
+                    <div style="padding: 1rem;">
+                        <h3>${sponsor.name}</h3>
+                        ${sponsor.badge ? `<span class="badge badge-gold">${sponsor.badge}</span>` : ''}
+                        ${sponsor.description ? `<p style="color: #64748b; margin: 0.5rem 0;">${sponsor.description}</p>` : ''}
+                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                            <span class="badge ${sponsor.is_active ? 'badge-success' : 'badge-warning'}">
+                                ${sponsor.is_active ? 'نشط' : 'غير نشط'}
+                            </span>
+                            ${sponsor.link_url || sponsor.link ? `<a href="${sponsor.link_url || sponsor.link}" target="_blank" class="btn-sm btn-secondary">الموقع</a>` : ''}
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                            <button class="btn-sm btn-primary" onclick="editSponsor(${sponsor.id})">تعديل</button>
+                            <button class="btn-sm btn-danger" onclick="deleteSponsor(${sponsor.id})">حذف</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Error loading sponsors:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الشركاء</div>';
+        }
+    }
+
+    // تحميل الأسئلة الشائعة
+    async function loadWebsiteFaq() {
+        const container = document.getElementById('faqList');
+        if (!container) return;
+
+        try {
+            const { data: faqs, error } = await sb
+                .from('faq')
+                .select('*')
+                .order('display_order', { ascending: true });
+
+            if (error) throw error;
+
+            if (!faqs || faqs.length === 0) {
+                container.innerHTML = '<div class="empty-state">لا توجد أسئلة شائعة حالياً</div>';
+                return;
+            }
+
+            container.innerHTML = faqs.map(faq => `
+                <div class="card" style="margin-bottom: 1rem;">
+                    <div style="padding: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
+                            <div style="flex: 1;">
+                                <h4 style="margin-bottom: 0.5rem;">${faq.question}</h4>
+                                ${faq.category ? `<span class="badge">${faq.category}</span>` : ''}
+                                <p style="color: #64748b; margin: 0.5rem 0;">${faq.answer}</p>
+                                <span class="badge ${faq.is_active ? 'badge-success' : 'badge-warning'}">
+                                    ${faq.is_active ? 'نشط' : 'غير نشط'}
+                                </span>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn-sm btn-primary" onclick="editFaq(${faq.id})">تعديل</button>
+                                <button class="btn-sm btn-danger" onclick="deleteFaq(${faq.id})">حذف</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Error loading FAQ:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الأسئلة الشائعة</div>';
+        }
+    }
+
+    function setupEventListeners() {
+        // القائمة الجانبية
+        const toggleSidebar = document.getElementById('toggleSidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        
+        if (toggleSidebar && sidebar) {
+            toggleSidebar.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+                if (overlay) overlay.classList.toggle('active');
+            });
+        }
+        
+        if (closeSidebar && sidebar) {
+            closeSidebar.addEventListener('click', () => {
+                sidebar.classList.remove('active');
+                if (overlay) overlay.classList.remove('active');
+            });
+        }
+        
+        if (overlay && sidebar) {
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+        }
+        
+        // تسجيل الخروج (من sidebar footer)
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await window.AuthManager.logout();
+            });
+        }
+        
+        // تحديث النشاطات
+        const refreshActivities = document.getElementById('refreshActivities');
+        if (refreshActivities) {
+            refreshActivities.addEventListener('click', loadRecentActivities);
+        }
+
+        // نافذة إضافة مستخدم
+        const addUserBtn = document.getElementById('addUserBtn');
+        const userModal = document.getElementById('userModal');
+        const closeUserModal = document.getElementById('closeUserModal');
+        const cancelUserBtn = document.getElementById('cancelUserBtn');
+        const userForm = document.getElementById('userForm');
+
+        if (addUserBtn) {
+            addUserBtn.addEventListener('click', async () => {
+                await openUserModal();
+            });
+        }
+
+        if (closeUserModal) {
+            closeUserModal.addEventListener('click', () => {
+                userModal.classList.remove('active');
+            });
+        }
+
+        if (cancelUserBtn) {
+            cancelUserBtn.addEventListener('click', () => {
+                userModal.classList.remove('active');
+            });
+        }
+
+        if (userForm) {
+            userForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handleUserSubmit();
+            });
+        }
+
+        // نافذة إضافة لجنة
+        const addCommitteeBtn = document.getElementById('addCommitteeBtn');
+        const committeeModal = document.getElementById('committeeModal');
+        const closeCommitteeModal = document.getElementById('closeCommitteeModal');
+        const cancelCommitteeBtn = document.getElementById('cancelCommitteeBtn');
+        const committeeForm = document.getElementById('committeeForm');
+
+        if (addCommitteeBtn) {
+            addCommitteeBtn.addEventListener('click', () => {
+                openCommitteeModal();
+            });
+        }
+
+        if (closeCommitteeModal) {
+            closeCommitteeModal.addEventListener('click', () => {
+                committeeModal.classList.remove('active');
+            });
+        }
+
+        if (cancelCommitteeBtn) {
+            cancelCommitteeBtn.addEventListener('click', () => {
+                committeeModal.classList.remove('active');
+            });
+        }
+
+        if (committeeForm) {
+            committeeForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handleCommitteeSubmit();
+            });
+        }
+
+        // نافذة إضافة مشروع
+        const addProjectBtn = document.getElementById('addProjectBtn');
+        const projectModal = document.getElementById('projectModal');
+        const closeProjectModal = document.getElementById('closeProjectModal');
+        const cancelProjectBtn = document.getElementById('cancelProjectBtn');
+        const projectForm = document.getElementById('projectForm');
+
+        if (addProjectBtn) {
+            addProjectBtn.addEventListener('click', async () => {
+                await openProjectModal();
+            });
+        }
+
+        if (closeProjectModal) {
+            closeProjectModal.addEventListener('click', () => {
+                projectModal.classList.remove('active');
+            });
+        }
+
+        if (cancelProjectBtn) {
+            cancelProjectBtn.addEventListener('click', () => {
+                projectModal.classList.remove('active');
+            });
+        }
+
+        if (projectForm) {
+            projectForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handleProjectSubmit();
+            });
+        }
+
+        // نافذة إضافة مهمة
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const taskModal = document.getElementById('taskModal');
+        const closeTaskModal = document.getElementById('closeTaskModal');
+        const cancelTaskBtn = document.getElementById('cancelTaskBtn');
+        const taskForm = document.getElementById('taskForm');
+
+        if (addTaskBtn) {
+            addTaskBtn.addEventListener('click', async () => {
+                await openTaskModal();
+            });
+        }
+
+        if (closeTaskModal) {
+            closeTaskModal.addEventListener('click', () => {
+                taskModal.classList.remove('active');
+            });
+        }
+
+        if (cancelTaskBtn) {
+            cancelTaskBtn.addEventListener('click', () => {
+                taskModal.classList.remove('active');
+            });
+        }
+
+        if (taskForm) {
+            taskForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handleTaskSubmit();
+            });
+        }
+
+        // نافذة إضافة اجتماع
+        const addMeetingBtn = document.getElementById('addMeetingBtn');
+        const meetingModal = document.getElementById('meetingModal');
+        const closeMeetingModal = document.getElementById('closeMeetingModal');
+        const cancelMeetingBtn = document.getElementById('cancelMeetingBtn');
+        const meetingForm = document.getElementById('meetingForm');
+
+        if (addMeetingBtn) {
+            addMeetingBtn.addEventListener('click', async () => {
+                await openMeetingModal();
+            });
+        }
+
+        if (closeMeetingModal) {
+            closeMeetingModal.addEventListener('click', () => {
+                meetingModal.classList.remove('active');
+            });
+        }
+
+        if (cancelMeetingBtn) {
+            cancelMeetingBtn.addEventListener('click', () => {
+                meetingModal.classList.remove('active');
+            });
+        }
+
+        if (meetingForm) {
+            meetingForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handleMeetingSubmit();
+            });
+        }
+
+        // نافذة إنشاء تقرير
+        const generateReportBtn = document.getElementById('generateReportBtn');
+        const reportModal = document.getElementById('reportModal');
+        const closeReportModal = document.getElementById('closeReportModal');
+        const cancelReportBtn = document.getElementById('cancelReportBtn');
+        const reportForm = document.getElementById('reportForm');
+        const reportTypeSelect = document.getElementById('reportType');
+
+        if (generateReportBtn) {
+            generateReportBtn.addEventListener('click', async () => {
+                await openReportModal();
+            });
+        }
+
+        if (closeReportModal) {
+            closeReportModal.addEventListener('click', () => {
+                reportModal.classList.remove('active');
+            });
+        }
+
+        if (cancelReportBtn) {
+            cancelReportBtn.addEventListener('click', () => {
+                reportModal.classList.remove('active');
+            });
+        }
+
+        if (reportForm) {
+            reportForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handleReportSubmit();
+            });
+        }
+
+        // إظهار/إخفاء حقل اللجنة حسب نوع التقرير
+        if (reportTypeSelect) {
+            reportTypeSelect.addEventListener('change', (e) => {
+                const committeeGroup = document.getElementById('reportCommitteeGroup');
+                if (committeeGroup) {
+                    committeeGroup.style.display = e.target.value === 'committee' ? 'block' : 'none';
+                }
+            });
+        }
+
+        // تغيير الدور - إظهار/إخفاء اللجنة
+        const userRoleSelect = document.getElementById('userRoleSelect');
+        if (userRoleSelect) {
+            userRoleSelect.addEventListener('change', (e) => {
+                const selectedOption = e.target.options[e.target.selectedIndex];
+                const needsCommittee = selectedOption.dataset.needsCommittee === 'true';
+                const committeeGroup = document.getElementById('committeeGroup');
+                if (committeeGroup) {
+                    committeeGroup.style.display = needsCommittee ? 'block' : 'none';
+                }
+            });
+        }
+
+        // نماذج محتوى الموقع
+        // نافذة العمل
+        const workModal = document.getElementById('workModal');
+        const closeWorkModal = document.getElementById('closeWorkModal');
+        const cancelWorkBtn = document.getElementById('cancelWorkBtn');
+        const workForm = document.getElementById('workForm');
+
+        if (closeWorkModal) {
+            closeWorkModal.addEventListener('click', () => {
+                workModal.classList.remove('active');
+            });
+        }
+
+        if (cancelWorkBtn) {
+            cancelWorkBtn.addEventListener('click', () => {
+                workModal.classList.remove('active');
+            });
+        }
+
+        if (workForm) {
+            workForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handleWorkSubmit();
+            });
+        }
+
+        // نافذة الإنجاز
+        const achievementModal = document.getElementById('achievementModal');
+        const closeAchievementModal = document.getElementById('closeAchievementModal');
+        const cancelAchievementBtn = document.getElementById('cancelAchievementBtn');
+        const achievementForm = document.getElementById('achievementForm');
+
+        if (closeAchievementModal) {
+            closeAchievementModal.addEventListener('click', () => {
+                achievementModal.classList.remove('active');
+            });
+        }
+
+        if (cancelAchievementBtn) {
+            cancelAchievementBtn.addEventListener('click', () => {
+                achievementModal.classList.remove('active');
+            });
+        }
+
+        if (achievementForm) {
+            achievementForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handleAchievementSubmit();
+            });
+        }
+
+        // نافذة الشريك
+        const sponsorModal = document.getElementById('sponsorModal');
+        const closeSponsorModal = document.getElementById('closeSponsorModal');
+        const cancelSponsorBtn = document.getElementById('cancelSponsorBtn');
+        const sponsorForm = document.getElementById('sponsorForm');
+
+        if (closeSponsorModal) {
+            closeSponsorModal.addEventListener('click', () => {
+                sponsorModal.classList.remove('active');
+            });
+        }
+
+        if (cancelSponsorBtn) {
+            cancelSponsorBtn.addEventListener('click', () => {
+                sponsorModal.classList.remove('active');
+            });
+        }
+
+        if (sponsorForm) {
+            sponsorForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handleSponsorSubmit();
+            });
+        }
+
+        // نافذة السؤال الشائع
+        const faqModal = document.getElementById('faqModal');
+        const closeFaqModal = document.getElementById('closeFaqModal');
+        const cancelFaqBtn = document.getElementById('cancelFaqBtn');
+        const faqForm = document.getElementById('faqForm');
+
+        if (closeFaqModal) {
+            closeFaqModal.addEventListener('click', () => {
+                faqModal.classList.remove('active');
+            });
+        }
+
+        if (cancelFaqBtn) {
+            cancelFaqBtn.addEventListener('click', () => {
+                faqModal.classList.remove('active');
+            });
+        }
+
+        if (faqForm) {
+            faqForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handleFaqSubmit();
+            });
+        }
+    }
+
+    // فتح نافذة إضافة/تعديل مستخدم
+    async function openUserModal(userId = null) {
+        const modal = document.getElementById('userModal');
+        const title = document.getElementById('userModalTitle');
+        const form = document.getElementById('userForm');
+
+        // إظهار النافذة أولاً
+        modal.classList.add('active');
+
+        // تحميل الأدوار واللجان
+        await loadRolesOptions();
+        await loadCommitteesOptions();
+
+        if (userId) {
+            title.textContent = 'تعديل مستخدم';
+            
+            try {
+                // تحميل بيانات المستخدم
+                const { data: user, error: userError } = await sb
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', userId)
+                    .single();
+
+                if (userError) throw userError;
+
+                // تحميل دور المستخدم
+                const { data: userRole } = await sb
+                    .from('user_roles')
+                    .select('role_id, committee_id')
+                    .eq('user_id', userId)
+                    .eq('is_active', true)
+                    .single();
+
+                // ملء النموذج
+                document.getElementById('userFullName').value = user.full_name || '';
+                document.getElementById('userEmail').value = user.email || '';
+                document.getElementById('userPhone').value = user.phone || '';
+                
+                if (userRole) {
+                    document.getElementById('userRoleSelect').value = userRole.role_id;
+                    
+                    // إظهار حقل اللجنة إذا كان الدور يحتاج لجنة
+                    const selectedOption = document.getElementById('userRoleSelect').selectedOptions[0];
+                    if (selectedOption && selectedOption.dataset.needsCommittee === 'true') {
+                        document.getElementById('committeeGroup').style.display = 'block';
+                        if (userRole.committee_id) {
+                            document.getElementById('userCommitteeSelect').value = userRole.committee_id;
+                        }
+                    }
+                }
+
+                // إخفاء حقل كلمة المرور عند التعديل
+                document.getElementById('userPassword').required = false;
+                document.getElementById('userPassword').parentElement.style.display = 'none';
+
+                // حفظ userId للاستخدام عند الحفظ
+                form.dataset.userId = userId;
+
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                alert('حدث خطأ في تحميل بيانات المستخدم');
+                modal.classList.remove('active');
+            }
+        } else {
+            title.textContent = 'إضافة مستخدم جديد';
+            form.reset();
+            document.getElementById('userPassword').required = true;
+            document.getElementById('userPassword').parentElement.style.display = 'block';
+            delete form.dataset.userId;
+        }
+    }
+
+    // تحميل خيارات الأدوار
+    async function loadRolesOptions() {
+        console.log('loadRolesOptions called');
+        const select = document.getElementById('userRoleSelect');
+        console.log('userRoleSelect element:', select);
+        
+        if (!select) {
+            console.error('userRoleSelect element not found');
+            return;
+        }
+
+        try {
+            console.log('Loading roles from database...');
+            const { data: roles, error } = await sb
+                .from('roles')
+                .select('*')
+                .order('role_level', { ascending: false });
+
+            if (error) {
+                console.error('Error loading roles:', error);
+                return;
+            }
+
+            console.log('Roles loaded:', roles);
+            console.log('Current select innerHTML before:', select.innerHTML);
+
+            if (roles && roles.length > 0) {
+                let optionsHTML = '<option value="">اختر الدور</option>';
+                roles.forEach(role => {
+                    const needsCommittee = ['committee_leader', 'deputy_committee_leader', 'committee_member', 'hr_admin_member', 'qa_admin_member'].includes(role.role_name);
+                    optionsHTML += `<option value="${role.id}" data-needs-committee="${needsCommittee}">${role.role_name_ar}</option>`;
+                });
+                select.innerHTML = optionsHTML;
+                console.log('Current select innerHTML after:', select.innerHTML);
+                console.log('Select has', select.children.length, 'options');
+            } else {
+                console.warn('No roles found in database');
+                select.innerHTML = '<option value="">اختر الدور</option>';
+            }
+        } catch (error) {
+            console.error('Exception loading roles:', error);
+        }
+    }
+
+    // تحميل خيارات اللجان
+    async function loadCommitteesOptions() {
+        const select = document.getElementById('userCommitteeSelect');
+        if (!select) return;
+
+        try {
+            const { data: committees, error } = await sb
+                .from('committees')
+                .select('*')
+                .eq('is_active', true)
+                .order('committee_name_ar');
+
+            if (error) {
+                console.error('Error loading committees:', error);
+                return;
+            }
+
+            if (committees && committees.length > 0) {
+                let optionsHTML = '<option value="">اختر اللجنة</option>';
+                committees.forEach(committee => {
+                    optionsHTML += `<option value="${committee.id}">${committee.committee_name_ar}</option>`;
+                });
+                select.innerHTML = optionsHTML;
+            } else {
+                select.innerHTML = '<option value="">اختر اللجنة</option>';
+            }
+        } catch (error) {
+            console.error('Exception loading committees:', error);
+        }
+    }
+
+    // التحقق من صحة الاسم الكامل
+    function validateFullName(fullName) {
+        // إزالة المسافات من البداية والنهاية
+        const trimmedName = fullName.trim();
+        
+        // التحقق من وجود مسافات في البداية أو النهاية
+        if (fullName !== trimmedName) {
+            return {
+                valid: false,
+                message: 'الاسم يحتوي على مسافات في البداية أو النهاية'
+            };
+        }
+        
+        // التحقق من المسافات المتكررة
+        if (/\s{2,}/.test(fullName)) {
+            return {
+                valid: false,
+                message: 'الاسم يحتوي على مسافات متكررة'
+            };
+        }
+        
+        // التحقق من أن الاسم يحتوي على حروف عربية ومسافات فقط
+        const arabicOnlyRegex = /^[\u0600-\u06FF\s]+$/;
+        if (!arabicOnlyRegex.test(fullName)) {
+            return {
+                valid: false,
+                message: 'الاسم يجب أن يحتوي على حروف عربية فقط (بدون أرقام أو رموز أو حروف إنجليزية)'
+            };
+        }
+        
+        // تقسيم الاسم إلى كلمات
+        const nameParts = fullName.split(' ').filter(part => part.length > 0);
+        
+        // التحقق من عدد الكلمات (3 أو 4 فقط)
+        if (nameParts.length < 3) {
+            return {
+                valid: false,
+                message: 'الاسم يجب أن يكون ثلاثياً على الأقل (3 كلمات)'
+            };
+        }
+        
+        if (nameParts.length > 4) {
+            return {
+                valid: false,
+                message: 'الاسم يجب أن لا يزيد عن 4 كلمات'
+            };
+        }
+        
+        // الاسم صحيح
+        return {
+            valid: true,
+            message: ''
+        };
+    }
+
+    // معالجة إرسال نموذج المستخدم
+    async function handleUserSubmit() {
+        const form = document.getElementById('userForm');
+        const userId = form.dataset.userId; // للتحقق من وضع التعديل
+        
+        const fullName = document.getElementById('userFullName').value;
+        const email = document.getElementById('userEmail').value;
+        const phone = document.getElementById('userPhone').value;
+        const roleId = document.getElementById('userRoleSelect').value;
+        const committeeId = document.getElementById('userCommitteeSelect').value || null;
+        const password = document.getElementById('userPassword').value;
+
+        // التحقق من صحة الاسم الكامل
+        const nameValidation = validateFullName(fullName);
+        if (!nameValidation.valid) {
+            alert(nameValidation.message);
+            return;
+        }
+
+        try {
+            showLoading(true);
+
+            if (userId) {
+                // وضع التعديل
+                // 1. تحديث الملف الشخصي
+                const { error: profileError } = await sb
+                    .from('profiles')
+                    .update({
+                        full_name: fullName,
+                        phone: phone
+                    })
+                    .eq('id', userId);
+
+                if (profileError) throw profileError;
+
+                // 2. تحديث الدور
+                // حذف الأدوار القديمة
+                await sb
+                    .from('user_roles')
+                    .delete()
+                    .eq('user_id', userId);
+
+                // إضافة الدور الجديد
+                const { error: roleError } = await sb
+                    .from('user_roles')
+                    .insert({
+                        user_id: userId,
+                        role_id: roleId,
+                        committee_id: committeeId,
+                        is_active: true,
+                        assigned_by: currentUser.id
+                    });
+
+                if (roleError) throw roleError;
+
+                // 3. تسجيل النشاط
+                try {
+                    await window.AuthManager.logActivity(currentUser.id, 'update_user', 'user', userId, {
+                        role_id: roleId
+                    });
+                } catch (activityError) {
+                    console.error('Activity log error:', activityError);
+                }
+
+                alert('تم تحديث بيانات المستخدم بنجاح!');
+
+            } else {
+                // وضع الإضافة
+                const { data: authData, error: authError } = await sb.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            full_name: fullName
+                        }
+                    }
+                });
+
+                if (authError) throw authError;
+
+                if (!authData.user) {
+                    throw new Error('فشل إنشاء المستخدم');
+                }
+
+                const newUserId = authData.user.id;
+
+                // انتظار قليلاً لضمان إنشاء المستخدم
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // تحديث الملف الشخصي
+                const { error: profileError } = await sb
+                    .from('profiles')
+                    .upsert({
+                        id: newUserId,
+                        full_name: fullName,
+                        email: email,
+                        phone: phone,
+                        account_status: 'active'
+                    }, {
+                        onConflict: 'id'
+                    });
+
+                if (profileError) {
+                    console.error('Profile error:', profileError);
+                }
+
+                // تعيين الدور
+                const { error: roleError } = await sb
+                    .from('user_roles')
+                    .insert({
+                        user_id: newUserId,
+                        role_id: roleId,
+                        committee_id: committeeId,
+                        is_active: true,
+                        assigned_by: currentUser.id
+                    });
+
+                if (roleError) {
+                    console.error('Role error:', roleError);
+                    throw new Error('فشل تعيين الدور للمستخدم');
+                }
+
+                // تسجيل النشاط
+                try {
+                    await window.AuthManager.logActivity(currentUser.id, 'create_user', 'user', newUserId, {
+                        user_email: email,
+                        role_id: roleId
+                    });
+                } catch (activityError) {
+                    console.error('Activity log error:', activityError);
+                }
+
+                alert('تم إضافة المستخدم بنجاح!\n\nملاحظة: تم إرسال رسالة تأكيد البريد الإلكتروني للمستخدم.');
+            }
+
+            // إغلاق النافذة وتحديث القائمة
+            document.getElementById('userModal').classList.remove('active');
+            await loadUsers();
+
+        } catch (error) {
+            console.error('Error saving user:', error);
+            alert('حدث خطأ: ' + (error.message || 'خطأ غير معروف'));
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // دالة تعديل مستخدم (يجب أن تكون global)
+    window.editUser = async function(userId) {
+        await openUserModal(userId);
+    };
+
+    // دالة حذف مستخدم
+    window.deleteUser = async function(userId) {
+        if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
+            return;
+        }
+
+        try {
+            showLoading(true);
+
+            // تعطيل المستخدم بدلاً من حذفه
+            const { error } = await sb
+                .from('profiles')
+                .update({ account_status: 'inactive' })
+                .eq('id', userId);
+
+            if (error) throw error;
+
+            // تسجيل النشاط
+            await window.AuthManager.logActivity(currentUser.id, 'deactivate_user', 'user', userId);
+
+            await loadUsers();
+            alert('تم تعطيل المستخدم بنجاح');
+
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            alert('حدث خطأ: ' + error.message);
+        } finally {
+            showLoading(false);
+        }
+    };
+
+    // فتح نافذة إضافة/تعديل لجنة
+    function openCommitteeModal(committeeId = null) {
+        const modal = document.getElementById('committeeModal');
+        const title = document.getElementById('committeeModalTitle');
+        const form = document.getElementById('committeeForm');
+
+        modal.classList.add('active');
+
+        if (committeeId) {
+            title.textContent = 'تعديل لجنة';
+            // TODO: تحميل بيانات اللجنة
+            form.dataset.committeeId = committeeId;
+        } else {
+            title.textContent = 'إضافة لجنة جديدة';
+            form.reset();
+            document.getElementById('committeeIsActive').checked = true;
+            delete form.dataset.committeeId;
+        }
+    }
+
+    // معالجة إرسال نموذج اللجنة
+    async function handleCommitteeSubmit() {
+        const form = document.getElementById('committeeForm');
+        const committeeId = form.dataset.committeeId;
+
+        const nameAr = document.getElementById('committeeNameAr').value;
+        const description = document.getElementById('committeeDescription').value;
+        const isActive = document.getElementById('committeeIsActive').checked;
+
+        try {
+            showLoading(true);
+
+            if (committeeId) {
+                // تحديث لجنة موجودة
+                const { error } = await sb
+                    .from('committees')
+                    .update({
+                        committee_name_ar: nameAr,
+                        description: description,
+                        is_active: isActive
+                    })
+                    .eq('id', committeeId);
+
+                if (error) throw error;
+
+                alert('تم تحديث اللجنة بنجاح!');
+            } else {
+                // إضافة لجنة جديدة
+                const { error } = await sb
+                    .from('committees')
+                    .insert({
+                        committee_name_ar: nameAr,
+                        description: description,
+                        is_active: isActive
+                    });
+
+                if (error) throw error;
+
+                alert('تم إضافة اللجنة بنجاح!');
+            }
+
+            // إغلاق النافذة وتحديث القائمة
+            document.getElementById('committeeModal').classList.remove('active');
+            await loadCommittees();
+
+        } catch (error) {
+            console.error('Error saving committee:', error);
+            alert('حدث خطأ: ' + (error.message || 'خطأ غير معروف'));
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // دالة عرض لجنة
+    window.viewCommittee = async function(committeeId) {
+        try {
+            showLoading(true);
+
+            // جلب بيانات اللجنة
+            const { data: committee, error: committeeError } = await sb
+                .from('committees')
+                .select('*')
+                .eq('id', committeeId)
+                .single();
+
+            if (committeeError) throw committeeError;
+
+            // جلب عدد الأعضاء
+            const { data: members, error: membersError } = await sb
+                .from('user_roles')
+                .select('user_id, profiles(full_name, avatar_url), roles(role_name_ar)')
+                .eq('committee_id', committeeId)
+                .eq('is_active', true);
+
+            // جلب المشاريع
+            const { data: projects, error: projectsError } = await sb
+                .from('projects')
+                .select('*')
+                .eq('committee_id', committeeId)
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            // بناء محتوى النافذة
+            let content = `
+                <div style="padding: 20px;">
+                    <h2 style="color: var(--main-blue); margin-bottom: 20px;">
+                        <i class="fa-solid fa-users"></i> ${committee.committee_name_ar}
+                    </h2>
+                    
+                    <div style="background: var(--bg-light); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <p><strong>الوصف:</strong> ${committee.description || 'لا يوجد وصف'}</p>
+                        <p><strong>الحالة:</strong> <span class="badge ${committee.is_active ? 'success' : 'error'}">${committee.is_active ? 'نشطة' : 'غير نشطة'}</span></p>
+                        <p><strong>تاريخ الإنشاء:</strong> ${new Date(committee.created_at).toLocaleDateString('ar-SA')}</p>
+                    </div>
+
+                    <h3 style="margin: 20px 0 10px;">الأعضاء (${members?.length || 0})</h3>
+                    <div style="display: grid; gap: 10px; margin-bottom: 20px;">
+                        ${members && members.length > 0 ? members.map(member => `
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: white; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <img src="${member.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.profiles?.full_name || 'User')}&background=3d8fd6&color=fff`}" 
+                                     style="width: 40px; height: 40px; border-radius: 50%;" />
+                                <div>
+                                    <strong>${member.profiles?.full_name || 'غير محدد'}</strong>
+                                    <div style="font-size: 0.9rem; color: var(--text-light);">${member.roles?.role_name_ar || ''}</div>
+                                </div>
+                            </div>
+                        `).join('') : '<p style="color: var(--text-light);">لا يوجد أعضاء</p>'}
+                    </div>
+
+                    <h3 style="margin: 20px 0 10px;">المشاريع الأخيرة (${projects?.length || 0})</h3>
+                    <div style="display: grid; gap: 10px;">
+                        ${projects && projects.length > 0 ? projects.map(project => `
+                            <div style="padding: 10px; background: white; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <strong>${project.project_name}</strong>
+                                <div style="font-size: 0.9rem; color: var(--text-light); margin-top: 5px;">
+                                    ${project.description || 'لا يوجد وصف'}
+                                </div>
+                            </div>
+                        `).join('') : '<p style="color: var(--text-light);">لا توجد مشاريع</p>'}
+                    </div>
+
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button class="btn-primary" onclick="document.getElementById('committeeDetailsModal').classList.remove('active')">
+                            إغلاق
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // إنشاء نافذة منبثقة مؤقتة
+            let modal = document.getElementById('committeeDetailsModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'committeeDetailsModal';
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 700px;">
+                        <div id="committeeDetailsContent"></div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                });
+            }
+
+            document.getElementById('committeeDetailsContent').innerHTML = content;
+            modal.classList.add('active');
+
+        } catch (error) {
+            console.error('Error viewing committee:', error);
+            alert('حدث خطأ في تحميل تفاصيل اللجنة');
+        } finally {
+            showLoading(false);
+        }
+    };
+
+    // دالة تعديل لجنة
+    window.editCommittee = function(committeeId) {
+        openCommitteeModal(committeeId);
+    };
+
+    // دالة حذف لجنة
+    window.deleteCommittee = async function(committeeId) {
+        if (!confirm('هل أنت متأكد من حذف هذه اللجنة؟')) {
+            return;
+        }
+
+        try {
+            showLoading(true);
+
+            const { error } = await sb
+                .from('committees')
+                .update({ is_active: false })
+                .eq('id', committeeId);
+
+            if (error) throw error;
+
+            await loadCommittees();
+            alert('تم تعطيل اللجنة بنجاح');
+
+        } catch (error) {
+            console.error('Error deleting committee:', error);
+            alert('حدث خطأ: ' + error.message);
+        } finally {
+            showLoading(false);
+        }
+    };
+
+    // فتح نافذة إضافة/تعديل مشروع
+    async function openProjectModal(projectId = null) {
+        const modal = document.getElementById('projectModal');
+        const title = document.getElementById('projectModalTitle');
+        const form = document.getElementById('projectForm');
+
+        modal.classList.add('active');
+
+        // تحميل اللجان والمستخدمين
+        await loadProjectCommitteesOptions();
+        await loadProjectLeadersOptions();
+
+        if (projectId) {
+            title.textContent = 'تعديل مشروع';
+            form.dataset.projectId = projectId;
+        } else {
+            title.textContent = 'إضافة مشروع جديد';
+            form.reset();
+            delete form.dataset.projectId;
+        }
+    }
+
+    // تحميل خيارات اللجان للمشروع
+    async function loadProjectCommitteesOptions() {
+        const select = document.getElementById('projectCommittee');
+        if (!select) return;
+
+        try {
+            const { data: committees, error } = await sb
+                .from('committees')
+                .select('*')
+                .eq('is_active', true)
+                .order('committee_name_ar');
+
+            if (error) throw error;
+
+            let optionsHTML = '<option value="">اختر اللجنة</option>';
+            if (committees && committees.length > 0) {
+                committees.forEach(committee => {
+                    optionsHTML += `<option value="${committee.id}">${committee.committee_name_ar}</option>`;
+                });
+            }
+            select.innerHTML = optionsHTML;
+        } catch (error) {
+            console.error('Error loading committees:', error);
+        }
+    }
+
+    // تحميل خيارات قادة المشاريع
+    async function loadProjectLeadersOptions() {
+        const select = document.getElementById('projectLeader');
+        if (!select) return;
+
+        try {
+            const { data: users, error } = await sb
+                .from('profiles')
+                .select('id, full_name')
+                .eq('account_status', 'active')
+                .order('full_name');
+
+            if (error) throw error;
+
+            let optionsHTML = '<option value="">اختر القائد</option>';
+            if (users && users.length > 0) {
+                users.forEach(user => {
+                    optionsHTML += `<option value="${user.id}">${user.full_name}</option>`;
+                });
+            }
+            select.innerHTML = optionsHTML;
+        } catch (error) {
+            console.error('Error loading users:', error);
+        }
+    }
+
+    // معالجة إرسال نموذج المشروع
+    async function handleProjectSubmit() {
+        const form = document.getElementById('projectForm');
+        const projectId = form.dataset.projectId;
+
+        const name = document.getElementById('projectName').value;
+        const description = document.getElementById('projectDescription').value;
+        const committeeId = document.getElementById('projectCommittee').value;
+        const leaderId = document.getElementById('projectLeader').value || null;
+        const startDate = document.getElementById('projectStartDate').value || null;
+        const endDate = document.getElementById('projectEndDate').value || null;
+        const status = document.getElementById('projectStatus').value;
+
+        try {
+            showLoading(true);
+
+            const projectData = {
+                project_name: name,
+                description: description,
+                committee_id: committeeId,
+                project_leader: leaderId,
+                start_date: startDate,
+                end_date: endDate,
+                status: status
+            };
+
+            if (projectId) {
+                // تحديث مشروع موجود
+                const { error } = await sb
+                    .from('projects')
+                    .update(projectData)
+                    .eq('id', projectId);
+
+                if (error) throw error;
+                alert('تم تحديث المشروع بنجاح!');
+            } else {
+                // إضافة مشروع جديد
+                const { error } = await sb
+                    .from('projects')
+                    .insert(projectData);
+
+                if (error) throw error;
+                alert('تم إضافة المشروع بنجاح!');
+            }
+
+            // إغلاق النافذة وتحديث القائمة
+            document.getElementById('projectModal').classList.remove('active');
+            await loadProjects();
+
+        } catch (error) {
+            console.error('Error saving project:', error);
+            alert('حدث خطأ: ' + (error.message || 'خطأ غير معروف'));
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // فتح نافذة إضافة/تعديل مهمة
+    async function openTaskModal(taskId = null) {
+        const modal = document.getElementById('taskModal');
+        const title = document.getElementById('taskModalTitle');
+        const form = document.getElementById('taskForm');
+
+        modal.classList.add('active');
+
+        // تحميل الخيارات
+        await loadTaskCommitteesOptions();
+        await loadTaskProjectsOptions();
+        await loadTaskUsersOptions();
+
+        if (taskId) {
+            title.textContent = 'تعديل مهمة';
+            form.dataset.taskId = taskId;
+        } else {
+            title.textContent = 'إضافة مهمة جديدة';
+            form.reset();
+            delete form.dataset.taskId;
+        }
+    }
+
+    // تحميل خيارات اللجان للمهمة
+    async function loadTaskCommitteesOptions() {
+        const select = document.getElementById('taskCommittee');
+        if (!select) return;
+
+        try {
+            const { data: committees, error } = await sb
+                .from('committees')
+                .select('*')
+                .eq('is_active', true)
+                .order('committee_name_ar');
+
+            if (error) throw error;
+
+            let optionsHTML = '<option value="">اختر اللجنة</option>';
+            if (committees && committees.length > 0) {
+                committees.forEach(committee => {
+                    optionsHTML += `<option value="${committee.id}">${committee.committee_name_ar}</option>`;
+                });
+            }
+            select.innerHTML = optionsHTML;
+        } catch (error) {
+            console.error('Error loading committees:', error);
+        }
+    }
+
+    // تحميل خيارات المشاريع للمهمة
+    async function loadTaskProjectsOptions() {
+        const select = document.getElementById('taskProject');
+        if (!select) return;
+
+        try {
+            const { data: projects, error } = await sb
+                .from('projects')
+                .select('*')
+                .order('project_name');
+
+            if (error) throw error;
+
+            let optionsHTML = '<option value="">اختر المشروع</option>';
+            if (projects && projects.length > 0) {
+                projects.forEach(project => {
+                    optionsHTML += `<option value="${project.id}">${project.project_name}</option>`;
+                });
+            }
+            select.innerHTML = optionsHTML;
+        } catch (error) {
+            console.error('Error loading projects:', error);
+        }
+    }
+
+    // تحميل خيارات المستخدمين للمهمة
+    async function loadTaskUsersOptions() {
+        const select = document.getElementById('taskAssignedTo');
+        if (!select) return;
+
+        try {
+            const { data: users, error } = await sb
+                .from('profiles')
+                .select('id, full_name')
+                .eq('account_status', 'active')
+                .order('full_name');
+
+            if (error) throw error;
+
+            let optionsHTML = '<option value="">اختر المستخدم</option>';
+            if (users && users.length > 0) {
+                users.forEach(user => {
+                    optionsHTML += `<option value="${user.id}">${user.full_name}</option>`;
+                });
+            }
+            select.innerHTML = optionsHTML;
+        } catch (error) {
+            console.error('Error loading users:', error);
+        }
+    }
+
+    // معالجة إرسال نموذج المهمة
+    async function handleTaskSubmit() {
+        const form = document.getElementById('taskForm');
+        const taskId = form.dataset.taskId;
+
+        const title = document.getElementById('taskTitle').value;
+        const description = document.getElementById('taskDescription').value;
+        const committeeId = document.getElementById('taskCommittee').value || null;
+        const projectId = document.getElementById('taskProject').value || null;
+        const assignedTo = document.getElementById('taskAssignedTo').value || null;
+        const priority = document.getElementById('taskPriority').value;
+        const status = document.getElementById('taskStatus').value;
+        const dueDate = document.getElementById('taskDueDate').value || null;
+
+        try {
+            showLoading(true);
+
+            const taskData = {
+                title: title,
+                description: description,
+                committee_id: committeeId,
+                project_id: projectId,
+                assigned_to: assignedTo,
+                assigned_by: currentUser.id,
+                priority: priority,
+                status: status,
+                due_date: dueDate
+            };
+
+            if (taskId) {
+                // تحديث مهمة موجودة
+                const { error } = await sb
+                    .from('tasks')
+                    .update(taskData)
+                    .eq('id', taskId);
+
+                if (error) throw error;
+                alert('تم تحديث المهمة بنجاح!');
+            } else {
+                // إضافة مهمة جديدة
+                const { error } = await sb
+                    .from('tasks')
+                    .insert(taskData);
+
+                if (error) throw error;
+                alert('تم إضافة المهمة بنجاح!');
+            }
+
+            // إغلاق النافذة وتحديث القائمة
+            document.getElementById('taskModal').classList.remove('active');
+            await loadTasks();
+
+        } catch (error) {
+            console.error('Error saving task:', error);
+            alert('حدث خطأ: ' + (error.message || 'خطأ غير معروف'));
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // فتح نافذة إضافة/تعديل اجتماع
+    async function openMeetingModal(meetingId = null) {
+        const modal = document.getElementById('meetingModal');
+        const title = document.getElementById('meetingModalTitle');
+        const form = document.getElementById('meetingForm');
+
+        modal.classList.add('active');
+
+        // تحميل اللجان
+        await loadMeetingCommitteesOptions();
+
+        if (meetingId) {
+            title.textContent = 'تعديل اجتماع';
+            form.dataset.meetingId = meetingId;
+        } else {
+            title.textContent = 'جدولة اجتماع جديد';
+            form.reset();
+            delete form.dataset.meetingId;
+        }
+    }
+
+    // تحميل خيارات اللجان للاجتماع
+    async function loadMeetingCommitteesOptions() {
+        const select = document.getElementById('meetingCommittee');
+        if (!select) return;
+
+        try {
+            const { data: committees, error } = await sb
+                .from('committees')
+                .select('*')
+                .eq('is_active', true)
+                .order('committee_name_ar');
+
+            if (error) throw error;
+
+            let optionsHTML = '<option value="">اختر اللجنة</option>';
+            if (committees && committees.length > 0) {
+                committees.forEach(committee => {
+                    optionsHTML += `<option value="${committee.id}">${committee.committee_name_ar}</option>`;
+                });
+            }
+            select.innerHTML = optionsHTML;
+        } catch (error) {
+            console.error('Error loading committees:', error);
+        }
+    }
+
+    // معالجة إرسال نموذج الاجتماع
+    async function handleMeetingSubmit() {
+        const form = document.getElementById('meetingForm');
+        const meetingId = form.dataset.meetingId;
+
+        const title = document.getElementById('meetingTitle').value;
+        const description = document.getElementById('meetingDescription').value;
+        const meetingType = document.getElementById('meetingType').value;
+        const committeeId = document.getElementById('meetingCommittee').value || null;
+        const scheduledAt = document.getElementById('meetingScheduledAt').value;
+        const duration = document.getElementById('meetingDuration').value;
+        const location = document.getElementById('meetingLocation').value || null;
+        const meetingLink = document.getElementById('meetingLink').value || null;
+        const status = document.getElementById('meetingStatus').value;
+
+        try {
+            showLoading(true);
+
+            const meetingData = {
+                title: title,
+                description: description,
+                meeting_type: meetingType,
+                committee_id: committeeId,
+                scheduled_at: scheduledAt,
+                duration_minutes: parseInt(duration),
+                location: location,
+                meeting_link: meetingLink,
+                status: status,
+                created_by: currentUser.id
+            };
+
+            if (meetingId) {
+                // تحديث اجتماع موجود
+                const { error } = await sb
+                    .from('meetings')
+                    .update(meetingData)
+                    .eq('id', meetingId);
+
+                if (error) throw error;
+                alert('تم تحديث الاجتماع بنجاح!');
+            } else {
+                // إضافة اجتماع جديد
+                const { error } = await sb
+                    .from('meetings')
+                    .insert(meetingData);
+
+                if (error) throw error;
+                alert('تم جدولة الاجتماع بنجاح!');
+            }
+
+            // إغلاق النافذة وتحديث القائمة
+            document.getElementById('meetingModal').classList.remove('active');
+            await loadMeetings();
+
+        } catch (error) {
+            console.error('Error saving meeting:', error);
+            alert('حدث خطأ: ' + (error.message || 'خطأ غير معروف'));
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // فتح نافذة إنشاء تقرير
+    async function openReportModal() {
+        const modal = document.getElementById('reportModal');
+        const form = document.getElementById('reportForm');
+
+        modal.classList.add('active');
+
+        // تحميل اللجان
+        await loadReportCommitteesOptions();
+
+        form.reset();
+    }
+
+    // تحميل خيارات اللجان للتقرير
+    async function loadReportCommitteesOptions() {
+        const select = document.getElementById('reportCommittee');
+        if (!select) return;
+
+        try {
+            const { data: committees, error } = await sb
+                .from('committees')
+                .select('*')
+                .eq('is_active', true)
+                .order('committee_name_ar');
+
+            if (error) throw error;
+
+            let optionsHTML = '<option value="">اختر اللجنة</option>';
+            if (committees && committees.length > 0) {
+                committees.forEach(committee => {
+                    optionsHTML += `<option value="${committee.id}">${committee.committee_name_ar}</option>`;
+                });
+            }
+            select.innerHTML = optionsHTML;
+        } catch (error) {
+            console.error('Error loading committees:', error);
+        }
+    }
+
+    // معالجة إرسال نموذج التقرير
+    async function handleReportSubmit() {
+        const title = document.getElementById('reportTitle').value;
+        const reportType = document.getElementById('reportType').value;
+        const committeeId = document.getElementById('reportCommittee').value || null;
+        const periodStart = document.getElementById('reportPeriodStart').value || null;
+        const periodEnd = document.getElementById('reportPeriodEnd').value || null;
+        const notes = document.getElementById('reportNotes').value;
+
+        try {
+            showLoading(true);
+
+            // جمع البيانات حسب نوع التقرير
+            let reportData = {
+                notes: notes,
+                generated_at: new Date().toISOString()
+            };
+
+            // جلب البيانات حسب نوع التقرير
+            if (reportType === 'committee' && committeeId) {
+                // بيانات اللجنة
+                const { data: committee } = await sb
+                    .from('committees')
+                    .select('*')
+                    .eq('id', committeeId)
+                    .single();
+
+                const { data: members } = await sb
+                    .from('user_roles')
+                    .select('*, profiles(*), roles(*)')
+                    .eq('committee_id', committeeId)
+                    .eq('is_active', true);
+
+                const { data: projects } = await sb
+                    .from('projects')
+                    .select('*')
+                    .eq('committee_id', committeeId);
+
+                reportData.committee = committee;
+                reportData.members_count = members?.length || 0;
+                reportData.projects_count = projects?.length || 0;
+                reportData.members = members;
+                reportData.projects = projects;
+
+            } else if (reportType === 'general') {
+                // إحصائيات عامة
+                const { data: users } = await sb.from('profiles').select('id');
+                const { data: committees } = await sb.from('committees').select('id').eq('is_active', true);
+                const { data: projects } = await sb.from('projects').select('id');
+                const { data: tasks } = await sb.from('tasks').select('id');
+
+                reportData.total_users = users?.length || 0;
+                reportData.total_committees = committees?.length || 0;
+                reportData.total_projects = projects?.length || 0;
+                reportData.total_tasks = tasks?.length || 0;
+
+            } else if (reportType === 'attendance') {
+                // تقرير الحضور
+                const { data: attendance } = await sb
+                    .from('attendance')
+                    .select('*, profiles(*), meetings(*)')
+                    .gte('created_at', periodStart || '2000-01-01')
+                    .lte('created_at', periodEnd || '2100-12-31');
+
+                reportData.attendance_records = attendance?.length || 0;
+                reportData.attendance = attendance;
+            }
+
+            // حفظ التقرير
+            const { data: report, error } = await sb
+                .from('reports')
+                .insert({
+                    report_title: title,
+                    report_type: reportType,
+                    committee_id: committeeId,
+                    generated_by: currentUser.id,
+                    report_data: reportData,
+                    period_start: periodStart,
+                    period_end: periodEnd
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            alert('تم إنشاء التقرير بنجاح!');
+
+            // إغلاق النافذة وتحديث القائمة
+            document.getElementById('reportModal').classList.remove('active');
+            await loadReports();
+
+            // عرض التقرير
+            if (report) {
+                viewReport(report.id);
+            }
+
+        } catch (error) {
+            console.error('Error generating report:', error);
+            alert('حدث خطأ: ' + (error.message || 'خطأ غير معروف'));
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // دالة عرض تقرير
+    window.viewReport = async function(reportId) {
+        try {
+            showLoading(true);
+
+            const { data: report, error } = await sb
+                .from('reports')
+                .select('*, profiles(full_name), committees(committee_name_ar)')
+                .eq('id', reportId)
+                .single();
+
+            if (error) throw error;
+
+            // بناء محتوى التقرير
+            let content = `
+                <div style="padding: 20px;">
+                    <h2 style="color: var(--main-blue); margin-bottom: 20px;">
+                        <i class="fa-solid fa-file-lines"></i> ${report.report_title}
+                    </h2>
+                    
+                    <div style="background: var(--bg-light); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <p><strong>نوع التقرير:</strong> ${getReportTypeName(report.report_type)}</p>
+                        ${report.committees ? `<p><strong>اللجنة:</strong> ${report.committees.committee_name_ar}</p>` : ''}
+                        ${report.period_start ? `<p><strong>الفترة:</strong> من ${report.period_start} إلى ${report.period_end || 'الآن'}</p>` : ''}
+                        <p><strong>تم الإنشاء بواسطة:</strong> ${report.profiles?.full_name || 'غير محدد'}</p>
+                        <p><strong>تاريخ الإنشاء:</strong> ${new Date(report.created_at).toLocaleDateString('ar-SA')}</p>
+                    </div>
+
+                    <h3 style="margin: 20px 0 10px;">البيانات والإحصائيات</h3>
+                    <div style="background: white; padding: 15px; border-radius: 10px; border: 1px solid var(--border-color);">
+                        ${formatReportData(report.report_data, report.report_type)}
+                    </div>
+
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button class="btn-primary" onclick="document.getElementById('reportDetailsModal').classList.remove('active')">
+                            إغلاق
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // إنشاء نافذة منبثقة
+            let modal = document.getElementById('reportDetailsModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'reportDetailsModal';
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 800px;">
+                        <div id="reportDetailsContent"></div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                });
+            }
+
+            document.getElementById('reportDetailsContent').innerHTML = content;
+            modal.classList.add('active');
+
+        } catch (error) {
+            console.error('Error viewing report:', error);
+            alert('حدث خطأ في تحميل التقرير');
+        } finally {
+            showLoading(false);
+        }
+    };
+
+    // دالة مساعدة لتنسيق بيانات التقرير
+    function formatReportData(data, type) {
+        if (!data) return '<p>لا توجد بيانات</p>';
+
+        let html = '';
+
+        if (type === 'committee') {
+            html += `<p><strong>عدد الأعضاء:</strong> ${data.members_count || 0}</p>`;
+            html += `<p><strong>عدد المشاريع:</strong> ${data.projects_count || 0}</p>`;
+        } else if (type === 'general') {
+            html += `<p><strong>إجمالي المستخدمين:</strong> ${data.total_users || 0}</p>`;
+            html += `<p><strong>إجمالي اللجان:</strong> ${data.total_committees || 0}</p>`;
+            html += `<p><strong>إجمالي المشاريع:</strong> ${data.total_projects || 0}</p>`;
+            html += `<p><strong>إجمالي المهام:</strong> ${data.total_tasks || 0}</p>`;
+        } else if (type === 'attendance') {
+            html += `<p><strong>عدد سجلات الحضور:</strong> ${data.attendance_records || 0}</p>`;
+        }
+
+        if (data.notes) {
+            html += `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <strong>ملاحظات:</strong><br>${data.notes}
+            </div>`;
+        }
+
+        return html;
+    }
+
+    // دالة مساعدة للحصول على اسم نوع التقرير
+    function getReportTypeName(type) {
+        const types = {
+            'committee': 'تقرير لجنة',
+            'user': 'تقرير مستخدم',
+            'project': 'تقرير مشروع',
+            'general': 'تقرير عام',
+            'attendance': 'تقرير حضور',
+            'quality': 'تقرير جودة'
+        };
+        return types[type] || type;
+    }
+
+
+    // تحميل الإشعارات
+    async function loadNotifications() {
+        const container = document.getElementById('notificationsList');
+        const badge = document.getElementById('notificationsBadge');
+        
+        if (!container) return;
+        
+        try {
+            const { data: notifications } = await sb
+                .from('notifications')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false })
+                .limit(20);
+            
+            const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
+            
+            if (badge) {
+                badge.textContent = unreadCount;
+                badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+            }
+            
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = '<div class="empty-state">لا توجد إشعارات</div>';
+                return;
+            }
+            
+            container.innerHTML = notifications.map(notif => `
+                <div class="notification-item ${notif.is_read ? '' : 'unread'}" data-id="${notif.id}">
+                    <div class="notification-icon ${notif.notification_type}">
+                        <i class="fa-solid ${getNotificationIcon(notif.notification_type)}"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">${notif.title}</div>
+                        <div class="notification-message">${notif.message}</div>
+                        <div class="notification-time">${formatTimeAgo(notif.created_at)}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+        } catch (error) {
+            console.error('Error loading notifications:', error);
+        }
+    }
+
+    // أيقونة الإشعار حسب النوع
+    function getNotificationIcon(type) {
+        const icons = {
+            'task': 'fa-tasks',
+            'meeting': 'fa-calendar',
+            'announcement': 'fa-bullhorn',
+            'system': 'fa-gear',
+            'approval': 'fa-check-circle'
+        };
+        return icons[type] || 'fa-bell';
+    }
+
+    // إظهار/إخفاء التحميل
+    function showLoading(show) {
+        const loadingBar = document.getElementById('loadingBar');
+        if (loadingBar) {
+            loadingBar.style.display = show ? 'block' : 'none';
+        }
+    }
+
+    // إظهار رسالة خطأ
+    function showError(message) {
+        alert(message);
+    }
+
+    // إظهار رسالة نجاح
+    function showSuccess(message) {
+        alert(message);
+    }
+
+    // =====================================================
+    // وظائف إدارة محتوى الموقع
+    // =====================================================
+
+    // إعداد بطاقات الأقسام
+    function setupWebsiteCards() {
+        const cards = document.querySelectorAll('.website-section-card');
+        const sectionsGrid = document.querySelector('.website-sections-grid');
+        const detailSection = document.getElementById('website-detail-section');
+        const backBtn = document.getElementById('backToSections');
+        const detailTitle = document.getElementById('detailSectionTitle');
+        const detailContent = document.getElementById('detailContent');
+        const addItemBtn = document.getElementById('addItemBtn');
+
+        let currentSection = null;
+
+        // عند الضغط على بطاقة
+        cards.forEach(card => {
+            card.addEventListener('click', async () => {
+                const section = card.dataset.section;
+                currentSection = section;
+
+                // إخفاء البطاقات وإظهار التفاصيل
+                sectionsGrid.style.display = 'none';
+                detailSection.style.display = 'block';
+
+                // تحديث العنوان
+                const titles = {
+                    'works': 'إدارة الأعمال',
+                    'achievements': 'إدارة الإنجازات',
+                    'sponsors': 'إدارة الشركاء',
+                    'faq': 'إدارة الأسئلة الشائعة'
+                };
+                detailTitle.textContent = titles[section];
+
+                // تحميل البيانات
+                await loadSectionDetails(section);
+            });
+        });
+
+        // زر العودة
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                detailSection.style.display = 'none';
+                sectionsGrid.style.display = 'grid';
+                currentSection = null;
+            });
+        }
+
+        // زر الإضافة
+        if (addItemBtn) {
+            addItemBtn.addEventListener('click', () => {
+                switch(currentSection) {
+                    case 'works':
+                        openWorkModal();
+                        break;
+                    case 'achievements':
+                        openAchievementModal();
+                        break;
+                    case 'sponsors':
+                        openSponsorModal();
+                        break;
+                    case 'faq':
+                        openFaqModal();
+                        break;
+                }
+            });
+        }
+    }
+
+    // تحميل تفاصيل القسم
+    async function loadSectionDetails(section) {
+        const container = document.getElementById('detailContent');
+        if (!container) return;
+
+        switch(section) {
+            case 'works':
+                await loadWebsiteWorks();
+                break;
+            case 'achievements':
+                await loadWebsiteAchievements();
+                break;
+            case 'sponsors':
+                await loadWebsiteSponsors();
+                break;
+            case 'faq':
+                await loadWebsiteFaq();
+                break;
+        }
+    }
+
+    // تحميل عدد العناصر في البطاقات
+    async function loadSectionCounts() {
+        try {
+            // عدد الأعمال
+            const { count: worksCount } = await sb.from('works').select('*', { count: 'exact', head: true });
+            document.getElementById('worksCount').textContent = `${worksCount || 0} عمل`;
+
+            // عدد الإنجازات
+            const { count: achievementsCount } = await sb.from('achievements').select('*', { count: 'exact', head: true });
+            document.getElementById('achievementsCount').textContent = `${achievementsCount || 0} إنجاز`;
+
+            // عدد الشركاء
+            const { count: sponsorsCount } = await sb.from('sponsors').select('*', { count: 'exact', head: true });
+            document.getElementById('sponsorsCount').textContent = `${sponsorsCount || 0} شريك`;
+
+            // عدد الأسئلة
+            const { count: faqCount } = await sb.from('faq').select('*', { count: 'exact', head: true });
+            document.getElementById('faqCount').textContent = `${faqCount || 0} سؤال`;
+        } catch (error) {
+            console.error('Error loading counts:', error);
+        }
+    }
+
+    // تحميل الأعمال
+    async function loadWebsiteWorks() {
+        const container = document.getElementById('detailContent');
+        if (!container) return;
+
+        try {
+            showLoading(true);
+            const { data: works, error } = await sb
+                .from('works')
+                .select('*')
+                .order('order', { ascending: true, nullsFirst: false });
+
+            if (error) throw error;
+
+            if (!works || works.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد أعمال</p></div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>الصورة</th>
+                            <th>العنوان</th>
+                            <th>الفئة</th>
+                            <th>الترتيب</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${works.map(work => `
+                            <tr>
+                                <td><img src="${work.image_url || ''}" alt="${work.title}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" /></td>
+                                <td><strong>${work.title}</strong></td>
+                                <td>${work.category || '-'}</td>
+                                <td>${work.order || 0}</td>
+                                <td class="action-buttons">
+                                    <button class="btn-sm btn-outline" onclick="editWork(${work.id})">
+                                        <i class="fa-solid fa-edit"></i>
+                                    </button>
+                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteWork(${work.id})">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        } catch (error) {
+            console.error('Error loading works:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الأعمال</div>';
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // تحميل الإنجازات
+    async function loadWebsiteAchievements() {
+        const container = document.getElementById('detailContent');
+        if (!container) return;
+
+        try {
+            showLoading(true);
+            const { data: achievements, error } = await sb
+                .from('achievements')
+                .select('*')
+                .order('order', { ascending: true });
+
+            if (error) throw error;
+
+            if (!achievements || achievements.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد إنجازات</p></div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>الأيقونة</th>
+                            <th>التسمية</th>
+                            <th>الرقم</th>
+                            <th>الترتيب</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${achievements.map(ach => `
+                            <tr>
+                                <td><i class="${ach.icon_class || ach.icon}" style="font-size: 1.5rem; color: var(--accent-blue);"></i></td>
+                                <td><strong>${ach.label}</strong></td>
+                                <td>${ach.count_number || ach.count}${ach.plus_flag || ach.plus ? '+' : ''}</td>
+                                <td>${ach.order || 0}</td>
+                                <td class="action-buttons">
+                                    <button class="btn-sm btn-outline" onclick="editAchievement(${ach.id})">
+                                        <i class="fa-solid fa-edit"></i>
+                                    </button>
+                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteAchievement(${ach.id})">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        } catch (error) {
+            console.error('Error loading achievements:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الإنجازات</div>';
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // تحميل الشركاء
+    async function loadWebsiteSponsors() {
+        const container = document.getElementById('detailContent');
+        if (!container) return;
+
+        try {
+            showLoading(true);
+            const { data: sponsors, error } = await sb
+                .from('sponsors')
+                .select('*')
+                .order('order', { ascending: true, nullsFirst: false });
+
+            if (error) throw error;
+
+            if (!sponsors || sponsors.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا يوجد شركاء</p></div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>الشعار</th>
+                            <th>الاسم</th>
+                            <th>الشارة</th>
+                            <th>الوصف</th>
+                            <th>الترتيب</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sponsors.map(sponsor => `
+                            <tr>
+                                <td><img src="${sponsor.logo_url || ''}" alt="${sponsor.name}" style="width: 50px; height: 50px; object-fit: contain;" /></td>
+                                <td><strong>${sponsor.name}</strong></td>
+                                <td>${sponsor.badge || '-'}</td>
+                                <td>${sponsor.description || '-'}</td>
+                                <td>${sponsor.order || 0}</td>
+                                <td class="action-buttons">
+                                    <button class="btn-sm btn-outline" onclick="editSponsor(${sponsor.id})">
+                                        <i class="fa-solid fa-edit"></i>
+                                    </button>
+                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteSponsor(${sponsor.id})">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        } catch (error) {
+            console.error('Error loading sponsors:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الشركاء</div>';
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // تحميل الأسئلة الشائعة
+    async function loadWebsiteFaq() {
+        const container = document.getElementById('detailContent');
+        if (!container) return;
+
+        try {
+            showLoading(true);
+            const { data: faqs, error } = await sb
+                .from('faq')
+                .select('*')
+                .order('order', { ascending: true });
+
+            if (error) throw error;
+
+            if (!faqs || faqs.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد أسئلة</p></div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>السؤال</th>
+                            <th>الإجابة</th>
+                            <th>الترتيب</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${faqs.map(faq => `
+                            <tr>
+                                <td><strong>${faq.question}</strong></td>
+                                <td>${faq.answer.substring(0, 100)}${faq.answer.length > 100 ? '...' : ''}</td>
+                                <td>${faq.order || 0}</td>
+                                <td class="action-buttons">
+                                    <button class="btn-sm btn-outline" onclick="editFaq(${faq.id})">
+                                        <i class="fa-solid fa-edit"></i>
+                                    </button>
+                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteFaq(${faq.id})">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        } catch (error) {
+            console.error('Error loading FAQ:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الأسئلة</div>';
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // معالجة حفظ عمل
+    async function handleWorkSubmit() {
+        try {
+            showLoading(true);
+            
+            const workData = {
+                title: document.getElementById('workTitle').value,
+                category: document.getElementById('workCategory').value || null,
+                image_url: document.getElementById('workImage').value,
+                link_url: document.getElementById('workLink').value || null,
+                order: parseInt(document.getElementById('workOrder').value) || 0,
+                created_by: currentUser.id
+            };
+
+            const { error } = await sb.from('works').insert([workData]);
+
+            if (error) throw error;
+
+            showSuccess('تم إضافة العمل بنجاح');
+            document.getElementById('workModal').classList.remove('active');
+            document.getElementById('workForm').reset();
+            
+            await loadSectionDetails('works');
+            await loadSectionCounts();
+        } catch (error) {
+            console.error('Error saving work:', error);
+            showError('حدث خطأ أثناء حفظ العمل');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // معالجة حفظ إنجاز
+    async function handleAchievementSubmit() {
+        try {
+            showLoading(true);
+            
+            const achievementData = {
+                label: document.getElementById('achievementLabel').value,
+                count_number: parseInt(document.getElementById('achievementCount').value) || 0,
+                icon_class: document.getElementById('achievementIcon')?.value || 'fa-solid fa-trophy',
+                plus_flag: document.getElementById('achievementPlus')?.checked || false,
+                order: parseInt(document.getElementById('achievementOrder')?.value) || 0,
+                created_by: currentUser.id
+            };
+
+            const { error } = await sb.from('achievements').insert([achievementData]);
+
+            if (error) throw error;
+
+            showSuccess('تم إضافة الإنجاز بنجاح');
+            document.getElementById('achievementModal').classList.remove('active');
+            document.getElementById('achievementForm').reset();
+            
+            await loadSectionDetails('achievements');
+            await loadSectionCounts();
+        } catch (error) {
+            console.error('Error saving achievement:', error);
+            showError('حدث خطأ أثناء حفظ الإنجاز');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // معالجة حفظ شريك
+    async function handleSponsorSubmit() {
+        try {
+            showLoading(true);
+            
+            const sponsorData = {
+                name: document.getElementById('sponsorName').value,
+                description: document.getElementById('sponsorDescription')?.value || null,
+                logo_url: document.getElementById('sponsorLogo').value,
+                link_url: document.getElementById('sponsorLink')?.value || null,
+                badge: document.getElementById('sponsorBadge')?.value || null,
+                order: parseInt(document.getElementById('sponsorOrder')?.value) || 0,
+                created_by: currentUser.id
+            };
+
+            const { error } = await sb.from('sponsors').insert([sponsorData]);
+
+            if (error) throw error;
+
+            showSuccess('تم إضافة الشريك بنجاح');
+            document.getElementById('sponsorModal').classList.remove('active');
+            document.getElementById('sponsorForm').reset();
+            
+            await loadSectionDetails('sponsors');
+            await loadSectionCounts();
+        } catch (error) {
+            console.error('Error saving sponsor:', error);
+            showError('حدث خطأ أثناء حفظ الشريك');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // معالجة حفظ سؤال شائع
+    async function handleFaqSubmit() {
+        try {
+            showLoading(true);
+            
+            const faqData = {
+                question: document.getElementById('faqQuestion').value,
+                answer: document.getElementById('faqAnswer').value,
+                order: parseInt(document.getElementById('faqOrder')?.value) || 0,
+                created_by: currentUser.id
+            };
+
+            const { error } = await sb.from('faq').insert([faqData]);
+
+            if (error) throw error;
+
+            showSuccess('تم إضافة السؤال بنجاح');
+            document.getElementById('faqModal').classList.remove('active');
+            document.getElementById('faqForm').reset();
+            
+            await loadSectionDetails('faq');
+            await loadSectionCounts();
+        } catch (error) {
+            console.error('Error saving FAQ:', error);
+            showError('حدث خطأ أثناء حفظ السؤال');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // فتح نوافذ الإضافة
+    function openWorkModal() {
+        document.getElementById('workModalTitle').textContent = 'إضافة عمل جديد';
+        document.getElementById('workForm').reset();
+        document.getElementById('workModal').classList.add('active');
+    }
+
+    function openAchievementModal() {
+        document.getElementById('achievementModalTitle').textContent = 'إضافة إنجاز جديد';
+        document.getElementById('achievementForm').reset();
+        document.getElementById('achievementModal').classList.add('active');
+    }
+
+    function openSponsorModal() {
+        document.getElementById('sponsorModalTitle').textContent = 'إضافة شريك جديد';
+        document.getElementById('sponsorForm').reset();
+        document.getElementById('sponsorModal').classList.add('active');
+    }
+
+    function openFaqModal() {
+        document.getElementById('faqModalTitle').textContent = 'إضافة سؤال جديد';
+        document.getElementById('faqForm').reset();
+        document.getElementById('faqModal').classList.add('active');
+    }
+
+    // إعداد النماذج والأزرار
+    function setupWebsiteModals() {
+        // أزرار الإضافة
+        const addWorkBtn = document.getElementById('addWorkBtn');
+        const addAchievementBtn = document.getElementById('addAchievementBtn');
+        const addSponsorBtn = document.getElementById('addSponsorBtn');
+        const addFaqBtn = document.getElementById('addFaqBtn');
+
+        if (addWorkBtn) addWorkBtn.addEventListener('click', () => openWorkModal());
+        if (addAchievementBtn) addAchievementBtn.addEventListener('click', () => openAchievementModal());
+        if (addSponsorBtn) addSponsorBtn.addEventListener('click', () => openSponsorModal());
+        if (addFaqBtn) addFaqBtn.addEventListener('click', () => openFaqModal());
+
+        // أزرار الإغلاق
+        setupModalClose('workModal', 'closeWorkModal', 'cancelWorkBtn');
+        setupModalClose('achievementModal', 'closeAchievementModal', 'cancelAchievementBtn');
+        setupModalClose('sponsorModal', 'closeSponsorModal', 'cancelSponsorBtn');
+        setupModalClose('faqModal', 'closeFaqModal', 'cancelFaqBtn');
+
+        // النماذج
+        setupWorkForm();
+        setupAchievementForm();
+        setupSponsorForm();
+        setupFaqForm();
+    }
+
+    function setupModalClose(modalId, closeBtnId, cancelBtnId) {
+        const modal = document.getElementById(modalId);
+        const closeBtn = document.getElementById(closeBtnId);
+        const cancelBtn = document.getElementById(cancelBtnId);
+        const overlay = document.getElementById('overlay');
+
+        if (closeBtn) closeBtn.addEventListener('click', () => closeModal(modalId));
+        if (cancelBtn) cancelBtn.addEventListener('click', () => closeModal(modalId));
+        if (overlay) overlay.addEventListener('click', () => {
+            document.querySelectorAll('.modal.active').forEach(m => {
+                m.classList.remove('active');
+            });
+            overlay.classList.remove('active');
+        });
+    }
+
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        const overlay = document.getElementById('overlay');
+        if (modal) modal.classList.add('active');
+        if (overlay) overlay.classList.add('active');
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        const overlay = document.getElementById('overlay');
+        if (modal) {
+            modal.classList.remove('active');
+            const form = modal.querySelector('form');
+            if (form) form.reset();
+        }
+        if (overlay) overlay.classList.remove('active');
+    }
+
+    // نماذج الأعمال
+    let currentWorkId = null;
+
+    function openWorkModal(workId = null) {
+        currentWorkId = workId;
+        const modal = document.getElementById('workModal');
+        const title = document.getElementById('workModalTitle');
+
+        if (workId) {
+            title.textContent = 'تعديل عمل';
+            loadWorkData(workId);
+        } else {
+            title.textContent = 'إضافة عمل جديد';
+            document.getElementById('workForm').reset();
+        }
+
+        openModal('workModal');
+    }
+
+    async function loadWorkData(id) {
+        try {
+            const { data, error } = await sb.from('works').select('*').eq('id', id).single();
+            if (error) throw error;
+
+            document.getElementById('workTitle').value = data.title || '';
+            document.getElementById('workCategory').value = data.category || '';
+            document.getElementById('workImage').value = data.image || data.image_url || '';
+            document.getElementById('workLink').value = data.link || data.link_url || '';
+            document.getElementById('workOrder').value = data.order || 0;
+        } catch (error) {
+            console.error('Error loading work:', error);
+            showError('حدث خطأ أثناء تحميل بيانات العمل');
+        }
+    }
+
+    function setupWorkForm() {
+        const form = document.getElementById('workForm');
+        if (!form) return;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const workData = {
+                title: document.getElementById('workTitle').value,
+                category: document.getElementById('workCategory').value,
+                image: document.getElementById('workImage').value,
+                link: document.getElementById('workLink').value,
+                order: parseInt(document.getElementById('workOrder').value) || 0
+            };
+
+            try {
+                showLoading(true);
+
+                if (currentWorkId) {
+                    const { error } = await sb.from('works').update(workData).eq('id', currentWorkId);
+                    if (error) throw error;
+                    alert('تم تحديث العمل بنجاح');
+                } else {
+                    const { error } = await sb.from('works').insert([workData]);
+                    if (error) throw error;
+                    alert('تم إضافة العمل بنجاح');
+                }
+
+                closeModal('workModal');
+                await loadWebsiteWorks();
+                await loadSectionCounts();
+            } catch (error) {
+                console.error('Error saving work:', error);
+                showError('حدث خطأ أثناء حفظ العمل');
+            } finally {
+                showLoading(false);
+            }
+        });
+    }
+
+    window.editWork = function(id) {
+        openWorkModal(id);
+    };
+
+    window.deleteWork = async function(id) {
+        if (!confirm('هل أنت متأكد من حذف هذا العمل؟')) return;
+
+        try {
+            showLoading(true);
+            const { error } = await sb.from('works').delete().eq('id', id);
+            if (error) throw error;
+            alert('تم حذف العمل بنجاح');
+            await loadWebsiteWorks();
+            await loadSectionCounts();
+        } catch (error) {
+            console.error('Error deleting work:', error);
+            showError('حدث خطأ أثناء حذف العمل');
+        } finally {
+            showLoading(false);
+        }
+    };
+
+    // نماذج الإنجازات
+    let currentAchievementId = null;
+
+    function openAchievementModal(achievementId = null) {
+        currentAchievementId = achievementId;
+        const modal = document.getElementById('achievementModal');
+        const title = document.getElementById('achievementModalTitle');
+
+        if (achievementId) {
+            title.textContent = 'تعديل إنجاز';
+            loadAchievementData(achievementId);
+        } else {
+            title.textContent = 'إضافة إنجاز جديد';
+            document.getElementById('achievementForm').reset();
+        }
+
+        openModal('achievementModal');
+    }
+
+    async function loadAchievementData(id) {
+        try {
+            const { data, error } = await sb.from('achievements').select('*').eq('id', id).single();
+            if (error) throw error;
+
+            document.getElementById('achievementLabel').value = data.label || '';
+            document.getElementById('achievementCount').value = data.count_number || data.count || 0;
+            document.getElementById('achievementIcon').value = data.icon_class || data.icon || '';
+            document.getElementById('achievementPlus').checked = data.plus_flag !== false && data.plus !== false;
+            document.getElementById('achievementOrder').value = data.order || 0;
+        } catch (error) {
+            console.error('Error loading achievement:', error);
+            showError('حدث خطأ أثناء تحميل بيانات الإنجاز');
+        }
+    }
+
+    function setupAchievementForm() {
+        const form = document.getElementById('achievementForm');
+        if (!form) return;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const achievementData = {
+                label: document.getElementById('achievementLabel').value,
+                count_number: parseInt(document.getElementById('achievementCount').value),
+                icon_class: document.getElementById('achievementIcon').value,
+                plus_flag: document.getElementById('achievementPlus').checked,
+                order: parseInt(document.getElementById('achievementOrder').value) || 0
+            };
+
+            try {
+                showLoading(true);
+
+                if (currentAchievementId) {
+                    const { error } = await sb.from('achievements').update(achievementData).eq('id', currentAchievementId);
+                    if (error) throw error;
+                    alert('تم تحديث الإنجاز بنجاح');
+                } else {
+                    const { error } = await sb.from('achievements').insert([achievementData]);
+                    if (error) throw error;
+                    alert('تم إضافة الإنجاز بنجاح');
+                }
+
+                closeModal('achievementModal');
+                await loadWebsiteAchievements();
+                await loadSectionCounts();
+            } catch (error) {
+                console.error('Error saving achievement:', error);
+                showError('حدث خطأ أثناء حفظ الإنجاز');
+            } finally {
+                showLoading(false);
+            }
+        });
+    }
+
+    window.editAchievement = function(id) {
+        openAchievementModal(id);
+    };
+
+    window.deleteAchievement = async function(id) {
+        if (!confirm('هل أنت متأكد من حذف هذا الإنجاز؟')) return;
+
+        try {
+            showLoading(true);
+            const { error } = await sb.from('achievements').delete().eq('id', id);
+            if (error) throw error;
+            alert('تم حذف الإنجاز بنجاح');
+            await loadWebsiteAchievements();
+            await loadSectionCounts();
+        } catch (error) {
+            console.error('Error deleting achievement:', error);
+            showError('حدث خطأ أثناء حذف الإنجاز');
+        } finally {
+            showLoading(false);
+        }
+    };
+
+    // نماذج الشركاء
+    let currentSponsorId = null;
+
+    function openSponsorModal(sponsorId = null) {
+        currentSponsorId = sponsorId;
+        const modal = document.getElementById('sponsorModal');
+        const title = document.getElementById('sponsorModalTitle');
+
+        if (sponsorId) {
+            title.textContent = 'تعديل شريك';
+            loadSponsorData(sponsorId);
+        } else {
+            title.textContent = 'إضافة شريك جديد';
+            document.getElementById('sponsorForm').reset();
+        }
+
+        openModal('sponsorModal');
+    }
+
+    async function loadSponsorData(id) {
+        try {
+            const { data, error } = await sb.from('sponsors').select('*').eq('id', id).single();
+            if (error) throw error;
+
+            document.getElementById('sponsorName').value = data.name || '';
+            document.getElementById('sponsorDescription').value = data.description || '';
+            document.getElementById('sponsorLogo').value = data.logo || data.logo_url || '';
+            document.getElementById('sponsorLink').value = data.link || data.link_url || '';
+            document.getElementById('sponsorBadge').value = data.badge || '';
+            document.getElementById('sponsorOrder').value = data.order || 0;
+        } catch (error) {
+            console.error('Error loading sponsor:', error);
+            showError('حدث خطأ أثناء تحميل بيانات الشريك');
+        }
+    }
+
+    function setupSponsorForm() {
+        const form = document.getElementById('sponsorForm');
+        if (!form) return;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const sponsorData = {
+                name: document.getElementById('sponsorName').value,
+                description: document.getElementById('sponsorDescription').value,
+                logo: document.getElementById('sponsorLogo').value,
+                link: document.getElementById('sponsorLink').value,
+                badge: document.getElementById('sponsorBadge').value,
+                order: parseInt(document.getElementById('sponsorOrder').value) || 0
+            };
+
+            try {
+                showLoading(true);
+
+                if (currentSponsorId) {
+                    const { error } = await sb.from('sponsors').update(sponsorData).eq('id', currentSponsorId);
+                    if (error) throw error;
+                    alert('تم تحديث الشريك بنجاح');
+                } else {
+                    const { error } = await sb.from('sponsors').insert([sponsorData]);
+                    if (error) throw error;
+                    alert('تم إضافة الشريك بنجاح');
+                }
+
+                closeModal('sponsorModal');
+                await loadWebsiteSponsors();
+                await loadSectionCounts();
+            } catch (error) {
+                console.error('Error saving sponsor:', error);
+                showError('حدث خطأ أثناء حفظ الشريك');
+            } finally {
+                showLoading(false);
+            }
+        });
+    }
+
+    window.editSponsor = function(id) {
+        openSponsorModal(id);
+    };
+
+    window.deleteSponsor = async function(id) {
+        if (!confirm('هل أنت متأكد من حذف هذا الشريك؟')) return;
+
+        try {
+            showLoading(true);
+            const { error } = await sb.from('sponsors').delete().eq('id', id);
+            if (error) throw error;
+            alert('تم حذف الشريك بنجاح');
+            await loadWebsiteSponsors();
+            await loadSectionCounts();
+        } catch (error) {
+            console.error('Error deleting sponsor:', error);
+            showError('حدث خطأ أثناء حذف الشريك');
+        } finally {
+            showLoading(false);
+        }
+    };
+
+    // نماذج الأسئلة الشائعة
+    let currentFaqId = null;
+
+    function openFaqModal(faqId = null) {
+        currentFaqId = faqId;
+        const modal = document.getElementById('faqModal');
+        const title = document.getElementById('faqModalTitle');
+
+        if (faqId) {
+            title.textContent = 'تعديل سؤال';
+            loadFaqData(faqId);
+        } else {
+            title.textContent = 'إضافة سؤال شائع';
+            document.getElementById('faqForm').reset();
+        }
+
+        openModal('faqModal');
+    }
+
+    async function loadFaqData(id) {
+        try {
+            const { data, error } = await sb.from('faq').select('*').eq('id', id).single();
+            if (error) throw error;
+
+            document.getElementById('faqQuestion').value = data.question || '';
+            document.getElementById('faqAnswer').value = data.answer || '';
+            document.getElementById('faqOrder').value = data.order || 0;
+        } catch (error) {
+            console.error('Error loading FAQ:', error);
+            showError('حدث خطأ أثناء تحميل بيانات السؤال');
+        }
+    }
+
+    function setupFaqForm() {
+        const form = document.getElementById('faqForm');
+        if (!form) return;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const faqData = {
+                question: document.getElementById('faqQuestion').value,
+                answer: document.getElementById('faqAnswer').value,
+                order: parseInt(document.getElementById('faqOrder').value) || 0
+            };
+
+            try {
+                showLoading(true);
+
+                if (currentFaqId) {
+                    const { error } = await sb.from('faq').update(faqData).eq('id', currentFaqId);
+                    if (error) throw error;
+                    alert('تم تحديث السؤال بنجاح');
+                } else {
+                    const { error } = await sb.from('faq').insert([faqData]);
+                    if (error) throw error;
+                    alert('تم إضافة السؤال بنجاح');
+                }
+
+                closeModal('faqModal');
+                await loadWebsiteFaq();
+                await loadSectionCounts();
+            } catch (error) {
+                console.error('Error saving FAQ:', error);
+                showError('حدث خطأ أثناء حفظ السؤال');
+            } finally {
+                showLoading(false);
+            }
+        });
+    }
+
+    window.editFaq = function(id) {
+        openFaqModal(id);
+    };
+
+    window.deleteFaq = async function(id) {
+        if (!confirm('هل أنت متأكد من حذف هذا السؤال؟')) return;
+
+        try {
+            showLoading(true);
+            const { error } = await sb.from('faq').delete().eq('id', id);
+            if (error) throw error;
+            alert('تم حذف السؤال بنجاح');
+            await loadWebsiteFaq();
+            await loadSectionCounts();
+        } catch (error) {
+            console.error('Error deleting FAQ:', error);
+            showError('حدث خطأ أثناء حذف السؤال');
+        } finally {
+            showLoading(false);
+        }
+    };
+
+    // =====================================================
+    // إدارة الصلاحيات
+    // =====================================================
+    let permissionsManager;
+    let allPermissions = [];
+    let allRoles = [];
+
+    async function loadPermissionsSection() {
+        try {
+            if (!permissionsManager) {
+                permissionsManager = new AdeebPermissionsManager(sb);
+                await permissionsManager.initialize();
+            }
+
+            // تحميل الإحصائيات أولاً لملء allPermissions و allRoles
+            await loadPermissionsStats();
+            
+            // ثم تحميل باقي الأقسام
+            await loadRolesForPermissions();
+
+            setupPermissionsTabs();
+        } catch (error) {
+            console.error('Error loading permissions section:', error);
+            showError('حدث خطأ في تحميل قسم الصلاحيات');
+        }
+    }
+
+    async function loadRoles() {
+        try {
+            const { data, error } = await sb
+                .from('roles')
+                .select('*')
+                .order('role_level', { ascending: false });
+            
+            if (error) throw error;
+            return data || [];
+        } catch (error) {
+            console.error('Error loading roles:', error);
+            return [];
+        }
+    }
+
+    async function loadPermissionsStats() {
+            try {
+                allPermissions = await permissionsManager.getAllPermissions();
+                allRoles = await loadRoles();
+                const modules = await permissionsManager.getModules();
+                
+                const { count: userPermsCount } = await sb
+                    .from('user_specific_permissions')
+                    .select('*', { count: 'exact', head: true });
+
+                document.getElementById('totalPermissionsCount').textContent = allPermissions.length;
+                document.getElementById('totalRolesCount').textContent = allRoles.length;
+                document.getElementById('totalModulesCount').textContent = modules.length;
+                document.getElementById('totalUserPermsCount').textContent = userPermsCount || 0;
+
+                const moduleFilter = document.getElementById('moduleFilterPermissions');
+                if (moduleFilter) {
+                    moduleFilter.innerHTML = '<option value="">جميع الأقسام</option>';
+                    modules.forEach(module => {
+                        const option = document.createElement('option');
+                        option.value = module;
+                        option.textContent = getModuleNameAr(module);
+                        moduleFilter.appendChild(option);
+                    });
+                }
+                
+                // تحميل قائمة الصلاحيات مباشرة
+                await loadPermissionsList();
+            } catch (error) {
+                console.error('Error loading permissions stats:', error);
+            }
+        }
+
+    async function loadPermissionsList() {
+            const container = document.getElementById('permissionsListTable');
+            if (!container) return;
+
+            const moduleFilter = document.getElementById('moduleFilterPermissions')?.value || '';
+            const searchTerm = document.getElementById('searchPermissionsInput')?.value.toLowerCase() || '';
+
+            let filtered = allPermissions.filter(p => {
+                const matchesModule = !moduleFilter || p.module === moduleFilter;
+                const matchesSearch = !searchTerm || 
+                    p.permission_key.toLowerCase().includes(searchTerm) ||
+                    p.permission_name_ar.includes(searchTerm);
+                return matchesModule && matchesSearch;
+            });
+
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>المفتاح</th>
+                            <th>الاسم بالعربية</th>
+                            <th>القسم</th>
+                            <th>الوصف</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filtered.map(p => `
+                            <tr>
+                                <td><code>${p.permission_key}</code></td>
+                                <td>${p.permission_name_ar}</td>
+                                <td><span class="badge">${getModuleNameAr(p.module)}</span></td>
+                                <td>${p.description || '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+    async function loadRolesForPermissions() {
+        const select = document.getElementById('roleSelectPermissions');
+        if (!select) return;
+
+        select.innerHTML = '<option value="">اختر الدور...</option>';
+        allRoles.forEach(role => {
+            const option = document.createElement('option');
+            option.value = role.id;
+            option.textContent = `${role.role_name_ar} (المستوى ${role.role_level})`;
+            select.appendChild(option);
+        });
+
+        select.addEventListener('change', async (e) => {
+            if (e.target.value) {
+                await loadRolePermissionsEditor(e.target.value);
+            } else {
+                document.getElementById('rolePermissionsContent').innerHTML = 
+                    '<p class="text-muted text-center">اختر دوراً لعرض وتعديل صلاحياته</p>';
+            }
+        });
+    }
+
+    async function loadRolePermissionsEditor(roleId) {
+            try {
+                showLoading(true);
+                const rolePerms = await permissionsManager.getRolePermissions(roleId);
+                const role = allRoles.find(r => r.id == roleId);
+
+                const modules = [...new Set(allPermissions.map(p => p.module))];
+                
+                let html = `
+                    <div style="margin-bottom: 1rem;">
+                        <h4>${role.role_name_ar}</h4>
+                        <button class="btn-primary" onclick="saveRolePermissions(${roleId})">
+                            <i class="fa-solid fa-save"></i>
+                            حفظ التغييرات
+                        </button>
+                    </div>
+                `;
+
+                modules.forEach(module => {
+                    const modulePerms = allPermissions.filter(p => p.module === module);
+                    html += `
+                        <div class="card" style="margin-bottom: 1rem;">
+                            <div class="card-header">
+                                <h4>${getModuleNameAr(module)}</h4>
+                            </div>
+                            <div class="card-body">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+                                    ${modulePerms.map(perm => {
+                                        const hasPerm = rolePerms.some(rp => rp.permission_key === perm.permission_key);
+                                        const scope = rolePerms.find(rp => rp.permission_key === perm.permission_key)?.scope || 'all';
+                                        return `
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <label style="flex: 1; display: flex; align-items: center; gap: 0.5rem;">
+                                                    <input type="checkbox" 
+                                                        data-permission-key="${perm.permission_key}"
+                                                        ${hasPerm ? 'checked' : ''}>
+                                                    <span>${perm.permission_name_ar}</span>
+                                                </label>
+                                                <select class="filter-select" data-scope-for="${perm.permission_key}" 
+                                                    style="width: 100px;" ${!hasPerm ? 'disabled' : ''}>
+                                                    <option value="all" ${scope === 'all' ? 'selected' : ''}>الكل</option>
+                                                    <option value="own" ${scope === 'own' ? 'selected' : ''}>الخاص</option>
+                                                    <option value="committee" ${scope === 'committee' ? 'selected' : ''}>اللجنة</option>
+                                                </select>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('rolePermissionsContent').innerHTML = html;
+
+                document.querySelectorAll('#rolePermissionsContent input[type="checkbox"]').forEach(cb => {
+                    cb.addEventListener('change', (e) => {
+                        const key = e.target.getAttribute('data-permission-key');
+                        const scopeSelect = document.querySelector(`select[data-scope-for="${key}"]`);
+                        if (scopeSelect) scopeSelect.disabled = !e.target.checked;
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading role permissions editor:', error);
+                showError('حدث خطأ في تحميل صلاحيات الدور');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        window.saveRolePermissions = async function(roleId) {
+            try {
+                showLoading(true);
+                const currentPerms = await permissionsManager.getRolePermissions(roleId);
+                const checkboxes = document.querySelectorAll('#rolePermissionsContent input[type="checkbox"]');
+
+                for (const cb of checkboxes) {
+                    const permKey = cb.getAttribute('data-permission-key');
+                    const scopeSelect = document.querySelector(`select[data-scope-for="${permKey}"]`);
+                    const scope = scopeSelect.value;
+
+                    const hadPerm = currentPerms.some(rp => rp.permission_key === permKey);
+                    const hasPerm = cb.checked;
+
+                    if (hasPerm && !hadPerm) {
+                        await permissionsManager.grantPermissionToRole(roleId, permKey, scope);
+                    } else if (!hasPerm && hadPerm) {
+                        const oldScope = currentPerms.find(rp => rp.permission_key === permKey)?.scope;
+                        await permissionsManager.revokePermissionFromRole(roleId, permKey, oldScope);
+                    } else if (hasPerm && hadPerm) {
+                        const oldScope = currentPerms.find(rp => rp.permission_key === permKey)?.scope;
+                        if (oldScope !== scope) {
+                            await permissionsManager.revokePermissionFromRole(roleId, permKey, oldScope);
+                            await permissionsManager.grantPermissionToRole(roleId, permKey, scope);
+                        }
+                    }
+                }
+
+                alert('تم حفظ التغييرات بنجاح');
+                await loadRolePermissionsEditor(roleId);
+            } catch (error) {
+                console.error('Error saving role permissions:', error);
+                showError('حدث خطأ في حفظ التغييرات');
+            } finally {
+                showLoading(false);
+            }
+        };
+
+    function setupPermissionsTabs() {
+        const tabBtns = document.querySelectorAll('#permissions-section .tab-btn');
+        const tabContents = document.querySelectorAll('#permissions-section .tab-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.getAttribute('data-tab');
+                
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                btn.classList.add('active');
+                document.getElementById(targetTab).classList.add('active');
+            });
+        });
+
+        const moduleFilter = document.getElementById('moduleFilterPermissions');
+        const searchInput = document.getElementById('searchPermissionsInput');
+        
+        if (moduleFilter) moduleFilter.addEventListener('change', loadPermissionsList);
+        if (searchInput) searchInput.addEventListener('input', loadPermissionsList);
+    }
+
+    function getModuleNameAr(module) {
+        const names = {
+            'users': 'المستخدمين',
+            'committees': 'اللجان',
+            'projects': 'المشاريع',
+            'tasks': 'المهام',
+            'meetings': 'الاجتماعات',
+            'reports': 'التقارير',
+            'evaluations': 'التقييمات',
+            'website': 'محتوى الموقع',
+            'system': 'النظام',
+            'notifications': 'الإشعارات'
+        };
+        return names[module] || module;
+    }
+
+    // =====================================================
+    // وظائف إحصائيات الزيارات
+    // =====================================================
+    let siteVisitsManager = null;
+    let currentVisitsPeriod = 30;
+
+    async function loadSiteVisitsSection() {
+        try {
+            showLoading(true);
+
+            // التحقق من الصلاحيات
+            if (!siteVisitsManager) {
+                siteVisitsManager = new SiteVisitsManager(sb);
+            }
+
+            const hasPermission = await siteVisitsManager.checkPermissions();
+            if (!hasPermission) {
+                showError('ليس لديك صلاحية لعرض إحصائيات الزيارات');
+                showLoading(false);
+                return;
+            }
+
+            // تحميل البيانات
+            await Promise.all([
+                siteVisitsManager.renderStatsCards('visitsStatsGrid'),
+                siteVisitsManager.renderVisitsChart('visitsTimelineChart', currentVisitsPeriod),
+                siteVisitsManager.renderDeviceChart('devicesChart', currentVisitsPeriod),
+                siteVisitsManager.renderTopPages('topPagesContainer', currentVisitsPeriod)
+            ]);
+
+            // إعداد المستمعات
+            setupSiteVisitsListeners();
+
+            showLoading(false);
+        } catch (error) {
+            console.error('Error loading site visits section:', error);
+            showError('حدث خطأ أثناء تحميل إحصائيات الزيارات');
+            showLoading(false);
+        }
+    }
+
+    function setupSiteVisitsListeners() {
+        // تغيير الفترة الزمنية
+        const periodFilter = document.getElementById('visitsPeriodFilter');
+        if (periodFilter) {
+            periodFilter.addEventListener('change', async (e) => {
+                currentVisitsPeriod = parseInt(e.target.value);
+                await loadSiteVisitsSection();
+            });
+        }
+
+        // تحديث البيانات
+        const refreshBtn = document.getElementById('refreshVisitsBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', async () => {
+                await loadSiteVisitsSection();
+            });
+        }
+
+        // تصدير البيانات
+        const exportBtn = document.getElementById('exportVisitsBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', async () => {
+                try {
+                    showLoading(true);
+                    await siteVisitsManager.exportData(currentVisitsPeriod, 'csv');
+                    showLoading(false);
+                } catch (error) {
+                    console.error('Error exporting data:', error);
+                    showError('حدث خطأ أثناء تصدير البيانات');
+                    showLoading(false);
+                }
+            });
+        }
+    }
+
+    // إضافة تحميل قسم الزيارات عند التبديل إليه
+    const originalSwitchSection = switchSection;
+    function switchSection(sectionId) {
+        originalSwitchSection(sectionId);
+        
+        if (sectionId === 'site-visits-section') {
+            loadSiteVisitsSection();
+        }
+    }
+
+        // تهيئة التطبيق عند تحميل الصفحة
+        init();
+})();

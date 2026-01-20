@@ -1,0 +1,359 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تسجيل الدخول — نادي أديب</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="googlebot" content="noindex, nofollow" />
+    <link rel="canonical" href="https://www.adeeb.club/login.html" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="auth.css" />
+  </head>
+  <body>
+    <!-- جزيئات زخرفية متحركة -->
+    <div class="particles">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+
+    <div class="auth-card" role="main">
+      <header class="auth-header">
+        <div class="logo-container">
+          <div class="logo-ring"></div>
+          <img alt="شعار نادي أديب" src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" />
+        </div>
+        <div>
+          <h1 class="auth-title">تسجيل الدخول إلى لوحة التحكم</h1>
+          <p class="auth-subtitle">
+            <i class="fa-solid fa-shield-halved" style="color: var(--accent-blue); margin-left: 2px;"></i>
+              تسجيل الدخول خاص لِمُنتسبي وأعضاء نادي أدِيب فقط
+          </p>
+        </div>
+      </header>
+
+      <div id="status" class="muted"></div>
+
+      <form id="loginForm" class="auth-form">
+        <label>
+          <span class="label-text">
+            <i class="fa-solid fa-envelope"></i>
+            البريد الإلكتروني
+          </span>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <i class="fa-solid fa-at"></i>
+            </span>
+            <input id="email" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="name@example.com" class="auth-input" />
+          </div>
+        </label>
+        <label>
+          <span class="label-text">
+            <i class="fa-solid fa-lock"></i>
+            كلمة المرور
+          </span>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <i class="fa-solid fa-key"></i>
+            </span>
+            <input id="password" name="password" type="password" autocomplete="current-password" minlength="6" required placeholder="••••••" class="auth-input" />
+            <button type="button" class="toggle-password" aria-label="إظهار/إخفاء كلمة المرور">
+              <i class="fa-solid fa-eye-slash"></i>
+            </button>
+          </div>
+        </label>
+        <div class="forgot-password-link">
+          <a href="reset-password.html"><i class="fa-solid fa-key"></i> نسيت كلمة المرور؟</a>
+        </div>
+        <div class="auth-actions">
+          <button type="submit" class="btn-primary"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</button>
+        </div>
+      </form>
+
+      <div class="auth-footer">
+        <a href="../index.html"><i class="fa-solid fa-globe"></i>الرجوع لموقع أدِيب</a>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script>
+      (async function() {
+        const sb = window.sbClient;
+        const status = document.getElementById('status');
+        const form = document.getElementById('loginForm');
+
+        if (!sb) {
+          status.className = 'alert error';
+          status.textContent = 'Supabase غير مفعّل. تأكد من تحميل المكتبة وإعداد المفاتيح.';
+          form.querySelector('button').disabled = true;
+          return;
+        }
+
+        // دالة ترجمة رسائل الخطأ إلى العربية
+        function translateError(error) {
+          const message = error?.message || '';
+          
+          // طباعة الخطأ الأصلي في console للمطورين
+          if (error) {
+            console.error('خطأ تسجيل الدخول:', error);
+          }
+          
+          // أخطاء المصادقة الشائعة
+          if (message.includes('Invalid login credentials')) {
+            return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+          }
+          if (message.includes('Email not confirmed')) {
+            return 'البريد الإلكتروني غير مفعّل. يرجى تفعيل حسابك أولاً';
+          }
+          if (message.includes('User not found')) {
+            return 'لا يوجد حساب مسجل بهذا البريد الإلكتروني';
+          }
+          if (message.includes('Invalid email')) {
+            return 'صيغة البريد الإلكتروني غير صحيحة';
+          }
+          if (message.includes('Password should be at least')) {
+            return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+          }
+          if (message.includes('Email rate limit exceeded') || message.includes('rate limit')) {
+            return 'تم تجاوز عدد المحاولات المسموحة. يرجى الانتظار قليلاً ثم المحاولة مرة أخرى';
+          }
+          if (message.includes('Network request failed') || message.includes('fetch') || message.includes('Failed to fetch')) {
+            return 'خطأ في الاتصال بالإنترنت. تأكد من اتصالك وحاول مرة أخرى';
+          }
+          if (message.includes('timeout') || message.includes('timed out')) {
+            return 'انتهت مهلة الاتصال. يرجى المحاولة مرة أخرى';
+          }
+          if (message.includes('Too many requests')) {
+            return 'عدد كبير من المحاولات. يرجى الانتظار قليلاً';
+          }
+          if (message.includes('Invalid password')) {
+            return 'كلمة المرور غير صحيحة';
+          }
+          if (message.includes('Signup not allowed')) {
+            return 'التسجيل غير مسموح حالياً';
+          }
+          
+          // إذا لم يتم التعرف على الخطأ، نعرض الرسالة الأصلية مع رمز
+          return message ? '⚠️ ' + message : '❌ حدث خطأ غير متوقع';
+        }
+
+        // تخصيص رسائل التحقق باللغة العربية
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+
+        function setCustomValidationMessage(input) {
+          input.addEventListener('invalid', function(e) {
+            e.preventDefault();
+            if (this.validity.valueMissing) {
+              this.setCustomValidity('⚠️ يرجى ملء هذا الحقل');
+            } else if (this.validity.typeMismatch && this.type === 'email') {
+              this.setCustomValidity('⚠️ يرجى إدخال بريد إلكتروني صحيح');
+            } else if (this.validity.tooShort) {
+              this.setCustomValidity(`⚠️ يجب أن يكون ${this.minLength} أحرف على الأقل`);
+            } else {
+              this.setCustomValidity('⚠️ يرجى التحقق من البيانات المدخلة');
+            }
+          });
+
+          input.addEventListener('input', function() {
+            this.setCustomValidity('');
+          });
+        }
+
+        setCustomValidationMessage(emailInput);
+        setCustomValidationMessage(passwordInput);
+
+        // وظيفة إظهار/إخفاء كلمة المرور
+        const togglePasswordBtn = document.querySelector('.toggle-password');
+        
+        togglePasswordBtn.addEventListener('click', function() {
+          const type = passwordInput.type === 'password' ? 'text' : 'password';
+          passwordInput.type = type;
+          
+          // تغيير الأيقونة (عكس المنطق)
+          const icon = this.querySelector('i');
+          if (type === 'text') {
+            // عندما تكون كلمة المرور ظاهرة: عين مفتوحة
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+          } else {
+            // عندما تكون كلمة المرور مخفية: عين مشطوبة
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+          }
+        });
+
+        // Read params for any notices
+        const params = new URLSearchParams(location.search);
+        const notice = params.get('notice');
+        if (notice === 'not_admin') {
+          status.className = 'alert error';
+          status.textContent = 'حسابك ليس إداريًا. يمكنك استخدام حساب إداري للدخول إلى لوحة التحكم.';
+        }
+
+        // If already logged in, redirect immediately to admin (no message)
+        try {
+          const { data: { session } } = await sb.auth.getSession();
+          if (session) {
+            const params = new URLSearchParams(location.search);
+            const redirectParam = params.get('redirect');
+            let redirectPath = '/dashboard/dashboard.html';
+            if (redirectParam) {
+              try {
+                if (/^https?:\/\//i.test(redirectParam)) {
+                  const u = new URL(redirectParam);
+                  if (u.origin === location.origin) {
+                    redirectPath = u.href;
+                  }
+                } else {
+                  const u = new URL(redirectParam.startsWith('/') ? redirectParam : '/' + redirectParam, location.origin);
+                  redirectPath = u.pathname + u.search + u.hash;
+                }
+              } catch {}
+            }
+
+            // Optionally ensure the user is an admin before redirecting
+            try {
+              const userId = session.user.id;
+              const { data: adminRow } = await sb
+                .from('admins')
+                .select('user_id,is_admin')
+                .eq('user_id', userId)
+                .eq('is_admin', true)
+                .maybeSingle();
+
+              if (adminRow) {
+                location.replace(redirectPath);
+              }
+              // If not admin, stay on page silently (no message)
+            } catch {
+              // On error checking role, still try to redirect to avoid blocking UX
+              location.replace(redirectPath);
+            }
+          }
+        } catch {}
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          status.className = 'muted';
+          status.textContent = '';
+          const email = document.getElementById('email').value.trim();
+          const password = document.getElementById('password').value;
+          if (!email || !password) return;
+          form.querySelector('button').disabled = true;
+          form.querySelector('button').style.opacity = .7;
+          try {
+            const params = new URLSearchParams(location.search);
+            const redirectParam = params.get('redirect');
+            let redirectPath = '/dashboard/dashboard.html';
+            if (redirectParam) {
+              try {
+                if (/^https?:\/\//i.test(redirectParam)) {
+                  const u = new URL(redirectParam);
+                  if (u.origin === location.origin) {
+                    redirectPath = u.href;
+                  }
+                } else {
+                  const u = new URL(redirectParam.startsWith('/') ? redirectParam : '/' + redirectParam, location.origin);
+                  redirectPath = u.pathname + u.search + u.hash;
+                }
+              } catch {}
+            }
+            const { data, error } = await sb.auth.signInWithPassword({ email, password });
+            
+            if (error) {
+              status.className = 'alert error';
+              status.textContent = translateError(error);
+              return;
+            }
+            
+            if (data?.user) {
+              // التحقق من الحساب في النظام الجديد
+              try {
+                const userId = data.user.id;
+                
+                // التحقق من وجود الملف الشخصي
+                const { data: profileRow, error: profileErr } = await sb
+                  .from('profiles')
+                  .select('id,username,full_name,account_status')
+                  .eq('id', userId)
+                  .maybeSingle();
+                
+                // إذا لم يكن موجود في النظام
+                if (!profileRow) {
+                  status.className = 'alert error';
+                  status.textContent = 'حسابك غير مسجل في النظام. يرجى التواصل مع الإدارة.';
+                  await sb.auth.signOut();
+                  return;
+                }
+                
+                // التحقق من حالة الحساب
+                if (profileRow.account_status !== 'active') {
+                  status.className = 'alert error';
+                  status.textContent = 'حسابك غير نشط. يرجى التواصل مع الإدارة.';
+                  await sb.auth.signOut();
+                  return;
+                }
+                
+                // التحقق من الأدوار
+                const { data: userRoles } = await sb
+                  .from('user_roles')
+                  .select('role_id,is_active')
+                  .eq('user_id', userId)
+                  .eq('is_active', true)
+                  .limit(1);
+                
+                // إذا كان لديه أدوار، وجهه للوحة التحكم
+                if (userRoles && userRoles.length > 0) {
+                  status.className = 'alert success';
+                  status.textContent = 'تم تسجيل الدخول بنجاح! جاري التحويل...';
+                  setTimeout(() => {
+                    if (redirectParam && redirectParam.includes('dashboard')) {
+                      location.replace(redirectPath);
+                    } else if (redirectPath && !redirectPath.includes('dashboard')) {
+                      location.replace(redirectPath);
+                    } else {
+                      location.replace('/dashboard/dashboard.html');
+                    }
+                  }, 500);
+                  return;
+                }
+                
+                // إذا لم يكن لديه أدوار، وجهه للوحة الأعضاء
+                status.className = 'alert success';
+                status.textContent = 'تم تسجيل الدخول بنجاح! جاري التحويل...';
+                setTimeout(() => {
+                  if (redirectParam && !redirectParam.includes('dashboard')) {
+                    location.replace(redirectPath);
+                  } else {
+                    location.replace('/members/dashboard.html');
+                  }
+                }, 500);
+                return;
+                
+              } catch (roleErr) {
+                status.className = 'alert error';
+                status.textContent = 'حدث خطأ أثناء التحقق من الصلاحيات: ' + translateError(roleErr);
+                return;
+              }
+            }
+            
+            // في حالة عدم وجود بيانات مستخدم
+            status.className = 'alert error';
+            status.textContent = 'تعذّر تسجيل الدخول. يرجى المحاولة مرة أخرى.';
+          } catch (err) {
+            status.className = 'alert error';
+            status.textContent = translateError(err);
+          } finally {
+            form.querySelector('button').disabled = false;
+            form.querySelector('button').style.opacity = 1;
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

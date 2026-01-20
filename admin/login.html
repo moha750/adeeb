@@ -1,0 +1,258 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تسجيل الدخول — نظام إدارة نادي أديب</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="auth-card" role="main">
+        <header class="auth-header">
+            <div class="logo-container">
+                <div class="logo-ring"></div>
+                <img alt="شعار نادي أديب" src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" />
+            </div>
+            <div>
+                <h1 class="auth-title">نظام إدارة نادي أدِيب</h1>
+                <p class="auth-subtitle">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    تسجيل الدخول للأعضاء الإداريين فقط
+                </p>
+            </div>
+        </header>
+
+        <div id="status" class="muted"></div>
+
+        <form id="loginForm" class="auth-form">
+            <label>
+                <span class="label-text">
+                    <i class="fa-solid fa-envelope"></i>
+                    البريد الإلكتروني
+                </span>
+                <div class="input-wrapper">
+                    <span class="input-icon">
+                        <i class="fa-solid fa-at"></i>
+                    </span>
+                    <input id="email" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="name@example.com" class="auth-input" />
+                </div>
+            </label>
+            <label>
+                <span class="label-text">
+                    <i class="fa-solid fa-lock"></i>
+                    كلمة المرور
+                </span>
+                <div class="input-wrapper">
+                    <span class="input-icon">
+                        <i class="fa-solid fa-key"></i>
+                    </span>
+                    <input id="password" name="password" type="password" autocomplete="current-password" minlength="6" required placeholder="••••••" class="auth-input" />
+                    <button type="button" class="toggle-password" aria-label="إظهار/إخفاء كلمة المرور">
+                        <i class="fa-solid fa-eye-slash"></i>
+                    </button>
+                </div>
+            </label>
+            <div class="auth-actions">
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول
+                </button>
+            </div>
+        </form>
+
+        <div class="auth-footer">
+            <a href="../index.html"><i class="fa-solid fa-globe"></i> الرجوع لموقع أدِيب</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="auth-manager.js"></script>
+    <script>
+        (async function() {
+            const sb = window.sbClient;
+            const status = document.getElementById('status');
+            const form = document.getElementById('loginForm');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const togglePasswordBtn = document.querySelector('.toggle-password');
+
+            if (!sb) {
+                status.className = 'alert error';
+                status.textContent = 'خطأ في الاتصال بالنظام. يرجى المحاولة لاحقاً.';
+                form.querySelector('button').disabled = true;
+                return;
+            }
+
+            // دالة ترجمة رسائل الخطأ
+            function translateError(error) {
+                const message = error?.message || '';
+                console.error('خطأ تسجيل الدخول:', error);
+                
+                if (message.includes('Invalid login credentials')) {
+                    return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+                }
+                if (message.includes('Email not confirmed')) {
+                    return 'البريد الإلكتروني غير مفعّل. يرجى تفعيل حسابك أولاً';
+                }
+                if (message.includes('User not found')) {
+                    return 'لا يوجد حساب مسجل بهذا البريد الإلكتروني';
+                }
+                if (message.includes('rate limit')) {
+                    return 'تم تجاوز عدد المحاولات المسموحة. يرجى الانتظار قليلاً';
+                }
+                if (message.includes('Network') || message.includes('fetch')) {
+                    return 'خطأ في الاتصال بالإنترنت. تأكد من اتصالك وحاول مرة أخرى';
+                }
+                
+                return message || 'حدث خطأ غير متوقع';
+            }
+
+            // تخصيص رسائل التحقق
+            function setCustomValidationMessage(input) {
+                input.addEventListener('invalid', function(e) {
+                    e.preventDefault();
+                    if (this.validity.valueMissing) {
+                        this.setCustomValidity('يرجى ملء هذا الحقل');
+                    } else if (this.validity.typeMismatch && this.type === 'email') {
+                        this.setCustomValidity('يرجى إدخال بريد إلكتروني صحيح');
+                    } else if (this.validity.tooShort) {
+                        this.setCustomValidity(`يجب أن يكون ${this.minLength} أحرف على الأقل`);
+                    } else {
+                        this.setCustomValidity('يرجى التحقق من البيانات المدخلة');
+                    }
+                });
+
+                input.addEventListener('input', function() {
+                    this.setCustomValidity('');
+                });
+            }
+
+            setCustomValidationMessage(emailInput);
+            setCustomValidationMessage(passwordInput);
+
+            // إظهار/إخفاء كلمة المرور
+            togglePasswordBtn.addEventListener('click', function() {
+                const type = passwordInput.type === 'password' ? 'text' : 'password';
+                passwordInput.type = type;
+                
+                const icon = this.querySelector('i');
+                if (type === 'text') {
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                } else {
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                }
+            });
+
+            // التحقق من الجلسة الحالية
+            try {
+                const { data: { session } } = await sb.auth.getSession();
+                if (session) {
+                    const userRole = await window.AuthManager.getUserRole(session.user.id);
+                    if (userRole && userRole.role_level >= 5) {
+                        location.replace('/admin/dashboard.html');
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.error('Error checking session:', err);
+            }
+
+            // معالجة تسجيل الدخول
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                status.className = 'muted';
+                status.textContent = '';
+                
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                
+                if (!email || !password) return;
+                
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = 0.7;
+                
+                try {
+                    // تسجيل الدخول
+                    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+                    
+                    if (error) {
+                        status.className = 'alert error';
+                        status.textContent = translateError(error);
+                        return;
+                    }
+                    
+                    if (data?.user) {
+                        const userId = data.user.id;
+                        
+                        // التحقق من الملف الشخصي
+                        const { data: profile, error: profileErr } = await sb
+                            .from('profiles')
+                            .select('id, username, full_name, account_status')
+                            .eq('id', userId)
+                            .maybeSingle();
+                        
+                        if (!profile) {
+                            status.className = 'alert error';
+                            status.textContent = 'حسابك غير مسجل في النظام. يرجى التواصل مع الإدارة.';
+                            await sb.auth.signOut();
+                            return;
+                        }
+                        
+                        if (profile.account_status !== 'active') {
+                            status.className = 'alert error';
+                            status.textContent = 'حسابك غير نشط. يرجى التواصل مع الإدارة.';
+                            await sb.auth.signOut();
+                            return;
+                        }
+                        
+                        // التحقق من الأدوار
+                        const userRole = await window.AuthManager.getUserRole(userId);
+                        
+                        if (!userRole || userRole.role_level < 5) {
+                            status.className = 'alert error';
+                            status.textContent = 'ليس لديك صلاحية الوصول إلى لوحة التحكم. هذا النظام للأعضاء الإداريين فقط.';
+                            await sb.auth.signOut();
+                            return;
+                        }
+                        
+                        // تسجيل النشاط
+                        await window.AuthManager.logActivity(userId, 'login', 'auth', userId, {
+                            success: true,
+                            role: userRole.role_name_ar
+                        });
+                        
+                        // نجح تسجيل الدخول
+                        status.className = 'alert success';
+                        status.textContent = `مرحباً ${profile.full_name}! جاري التحويل...`;
+                        
+                        setTimeout(() => {
+                            location.replace('/admin/dashboard.html');
+                        }, 500);
+                    }
+                    
+                } catch (err) {
+                    console.error('Login error:', err);
+                    status.className = 'alert error';
+                    status.textContent = translateError(err);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = 1;
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

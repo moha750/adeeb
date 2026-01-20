@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل الخبر - نادي أديب</title>
+    
+    <!-- Dynamic Meta Tags - Will be updated by JavaScript -->
+    <meta name="description" content="اكتشف آخر أخبار وفعاليات نادي أديب الطلابي في جامعة الملك فيصل" id="metaDescription">
+    <meta name="keywords" content="نادي أديب, جامعة الملك فيصل, أخبار, فعاليات">
+    
+    <!-- Open Graph Meta Tags for Facebook, LinkedIn, etc. -->
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="نادي أديب">
+    <meta property="og:title" content="تفاصيل الخبر - نادي أديب" id="ogTitle">
+    <meta property="og:description" content="اكتشف آخر أخبار وفعاليات نادي أديب الطلابي في جامعة الملك فيصل" id="ogDescription">
+    <meta property="og:image" content="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" id="ogImage">
+    <meta property="og:url" content="" id="ogUrl">
+    <meta property="og:locale" content="ar_SA">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@adeebclub">
+    <meta name="twitter:title" content="تفاصيل الخبر - نادي أديب" id="twitterTitle">
+    <meta name="twitter:description" content="اكتشف آخر أخبار وفعاليات نادي أديب الطلابي في جامعة الملك فيصل" id="twitterDescription">
+    <meta name="twitter:image" content="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" id="twitterImage">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="news-detail.css">
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+</head>
+<body>
+    <!-- قسم: الهيدر -->
+    <header class="header">
+      <div class="header-container">
+        <div class="menu-toggle" id="menuToggle">
+          <div class="hamburger">
+            <span class="line line1"></span>
+            <span class="line line2"></span>
+            <span class="line line3"></span>
+          </div>
+        </div>
+        <div class="logo">
+          <a class="logo-link" href="../index.html">
+            <img
+              alt="شعار نادي أديب"
+              class="logo-img"
+              src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e"
+            />
+          </a>
+        </div>
+        <nav class="nav">
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#adeebbook">
+                <i class="fas fa-home nav-icon"></i>
+                <span class="nav-text">الرئيسية</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="news.html">
+                <i class="fa-solid fa-newspaper"></i>
+                <span class="nav-text">الأخبار</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#our-works">
+                <i class="fa-solid fa-briefcase"></i>
+                <span class="nav-text">أعمالنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#sponsors">
+                <i class="fa-solid fa-briefcase"></i>
+                <span class="nav-text">شُركائنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#board-members">
+                <i class="fa-solid fa-trophy"></i>
+                <span class="nav-text">المجلس الإداري</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#contact">
+                <i class="fas fa-envelope nav-icon"></i>
+                <span class="nav-text">تواصل معنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+          </ul>
+          <!-- زر تسجيل الدخول للوحة التحكم -->
+          <a class="subscribe-btn" href="../dashboard/dashboard.html" id="adminLoginBtn">
+            <span>تسجيل الدخول</span>
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Loading State -->
+    <div id="newsLoading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>جاري تحميل الخبر...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="newsError" class="error-container" style="display: none;">
+      <i class="fas fa-exclamation-circle"></i>
+      <h2>عذراً، لم يتم العثور على الخبر</h2>
+      <p>الخبر المطلوب غير موجود أو تم حذفه</p>
+      <a href="news.html" class="btn-back">
+        <i class="fas fa-arrow-right"></i>
+        العودة إلى الأخبار
+      </a>
+    </div>
+
+    <!-- News Detail Content -->
+    <main id="newsDetailContent" style="display: none;">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb-container">
+        <div class="container">
+          <nav class="breadcrumb">
+            <a href="../index.html">
+              <i class="fas fa-home"></i>
+              الرئيسية
+            </a>
+            <i class="fas fa-chevron-left"></i>
+            <a href="news.html">الأخبار</a>
+            <i class="fas fa-chevron-left"></i>
+            <span id="breadcrumbTitle">تفاصيل الخبر</span>
+          </nav>
+        </div>
+      </div>
+
+      <!-- News Article -->
+      <article class="news-article">
+        <div class="container">
+          <!-- Navigation Bar: Back Button & Featured Badge -->
+          <div class="article-nav-bar">
+
+            <!-- Featured Badge (Right) -->
+            <div id="featuredBadge" class="featured-badge">
+              <i class="fas fa-star"></i>
+              <span id="badgeText">خبر مميز</span>
+            </div>
+
+            <!-- Back Button (Left) -->
+            <a href="news.html" class="back-button">
+              <i class="fas fa-arrow-right"></i>
+              العودة إلى الأخبار
+            </a>
+          </div>
+
+          <!-- News Article Card: Title + Image + Meta -->
+          <div id="newsCoverImageContainer" class="article-image-container" style="display: none;">
+            <h1 id="newsTitle" class="article-title"></h1>
+            
+            <img id="newsCoverImage" src="" alt="" class="article-image">
+            
+            <div class="article-meta">
+              <div class="meta-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span>نُشر في <span id="newsDate"></span></span>
+              </div>
+              <div class="meta-item">
+                <i id="authorsIcon" class="fa-solid fa-feather"></i>
+                <span><span id="authorsLabel">بريشة</span> <span id="newsAuthors"></span></span>
+              </div>
+              <div id="photographerItem" class="meta-item" style="display: none;">
+                <i class="fas fa-camera"></i>
+                <span>بعدسة <span id="photographerName"></span></span>
+              </div>
+              <div class="meta-item">
+                <i class="fas fa-eye"></i>
+                <span id="newsViews"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- News Content -->
+          <div id="newsContent" class="article-content"></div>
+
+          <!-- News Images Gallery (below content) -->
+          <div id="newsImagesGallery" class="article-images-gallery" style="display: none;">
+            <div class="gallery-header">
+              <!-- زخرفة علوية -->
+              <div class="gallery-ornament">
+                <div class="gallery-ornament-line"></div>
+                <div class="gallery-ornament-center">
+                  <i class="fas fa-images"></i>
+                </div>
+                <div class="gallery-ornament-line"></div>
+              </div>
+              
+              <h3 class="gallery-title">صور الخبر</h3>
+            </div>
+            
+            <!-- Swiper للشاشات الصغيرة -->
+            <div class="gallery-swiper-container">
+              <div class="swiper gallery-swiper">
+                <div class="swiper-wrapper" id="newsImagesSwiper"></div>
+                <div class="swiper-button">
+                  <div class="swiper-button-next"></div>
+                  <div class="swiper-button-prev"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Share Section -->
+          <div class="article-share">
+            <h3>شارك هذا الخبر</h3>
+            <div class="share-buttons">
+              <button class="share-btn twitter" id="shareTwitter" title="شارك على تويتر مع نص جذاب وهاشتاجات">
+                <i class="fab fa-twitter"></i>
+                تويتر
+              </button>
+              <button class="share-btn facebook" id="shareFacebook" title="شارك على فيسبوك مع معاينة غنية">
+                <i class="fab fa-facebook"></i>
+                فيسبوك
+              </button>
+              <button class="share-btn whatsapp" id="shareWhatsapp" title="شارك على واتساب مع نص محسّن">
+                <i class="fab fa-whatsapp"></i>
+                واتساب
+              </button>
+              <button class="share-btn copy" id="copyLink" title="انسخ الرابط مع نص المشاركة الكامل">
+                <i class="fas fa-link"></i>
+                نسخ الرابط
+              </button>
+            </div>
+            <!-- Toast Notification -->
+            <div id="shareToast" class="share-toast">
+              <i class="fas fa-check-circle"></i>
+              <span id="shareToastMessage">تم النسخ بنجاح!</span>
+            </div>
+          </div>
+
+          <!-- Related News -->
+          <div id="relatedNewsSection" class="related-news" style="display: none;">
+            <div class="related-news-header">
+              <!-- زخرفة علوية -->
+              <div class="related-news-ornament">
+                <div class="related-ornament-line"></div>
+                <div class="related-ornament-center">
+                  <i class="fas fa-newspaper"></i>
+                </div>
+                <div class="related-ornament-line"></div>
+              </div>
+              
+              <h3>اطلع على المزيد من الأخبار</h3>
+            </div>
+            
+            <!-- Grid للشاشات الكبيرة والمتوسطة -->
+            <div id="relatedNewsGrid" class="related-news-grid"></div>
+            
+            <!-- Swiper للشاشات الصغيرة -->
+            <div class="related-news-swiper-container">
+              <div class="swiper related-news-swiper">
+                <div class="swiper-wrapper" id="relatedNewsSwiper"></div>
+                <div class="swiper-button">
+                  <div class="swiper-button-next"></div>
+                  <div class="swiper-button-prev"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </main>
+
+    <!-- Image Lightbox -->
+    <div id="imageLightbox" class="lightbox" style="display: none;">
+      <div class="lightbox-overlay"></div>
+                <button class="lightbox-close" id="closeLightbox">
+            <i class="fas fa-times"></i>
+          </button>
+      <div class="lightbox-content">
+        <div class="lightbox-image-container">
+          <button class="lightbox-prev" id="prevImage">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+          <button class="lightbox-next" id="nextImage">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <img id="lightboxImage" src="" alt="" class="lightbox-image">
+        </div>
+        <div class="lightbox-info">
+          <div class="lightbox-title" id="lightboxTitle"></div>
+          <div class="lightbox-counter" id="lightboxCounter"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Section -->
+    <footer class="footer" id="footer">
+      <div class="footer-container">
+        <!-- Main Footer Content -->
+        <div class="footer-grid">
+          <!-- Column 1: Logo & About -->
+          <div class="footer-col footer-main">
+            <div class="footer-logo-box">
+              <img
+                alt="شعار نادي أدِيب"
+                class="footer-logo"
+                src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e"
+              />
+            </div>
+            <p class="footer-about-text">
+              منصة أدِيبية رائدة تهدف إلى إثراء المحتوى الإبداعي ودعم المواهب الإبداعية الشابة في
+              مختلف المجالات.
+            </p>
+            <div class="footer-badges">
+              <span class="footer-badge">نادي طلابي</span>
+              <span class="footer-badge">جامعة الملك فيصل</span>
+            </div>
+          </div>
+
+          <!-- Column 2: Quick Links -->
+          <div class="footer-col">
+            <h3 class="footer-title">
+              <i class="fas fa-bolt"></i>
+              <span class="title-footer">روابط سريعة</span>
+            </h3>
+            <ul class="footer-links">
+              <li>
+                <a href="../index.html#adeebbook">
+                  <i class="fas fa-home"></i>
+                  الرئيسية
+                </a>
+              </li>
+              <li>
+                <a href="../index.html#our-works">
+                  <i class="fas fa-briefcase"></i>
+                  أعمالنا
+                </a>
+              </li>
+              <li>
+                <a href="../index.html#achievements">
+                  <i class="fas fa-trophy"></i>
+                  انجازاتنا
+                </a>
+              </li>
+              <li>
+                <a href="../index.html#sponsors">
+                  <i class="fas fa-handshake"></i>
+                  شركائنا
+                </a>
+              </li>
+              <li>
+                <a href="../index.html#contact">
+                  <i class="fas fa-envelope"></i>
+                  تواصل معنا
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Column 3: Committees -->
+          <div class="footer-col">
+            <h3 class="footer-title">
+              <i class="fas fa-sitemap"></i>
+              <span class="title-footer">لجان نادي أدِيب</span>
+            </h3>
+            <div class="committees-container">
+              <div class="committee-category">
+                <ul class="committee-list">
+                  <li><i class="fas fa-pen-fancy"></i>لجنة التأليف</li>
+                  <li><i class="fa-solid fa-microphone-lines"></i>لجنة الرواة</li>
+                  <li><i class="fa-solid fa-calendar-days"></i>لجنة الفعاليات</li>
+                  <li><i class="fa-solid fa-handshake"></i>لجنة السفراء</li>
+                  <li><i class="fa-solid fa-camera-retro"></i>لجنة الإنتاج</li>
+                  <li><i class="fa-solid fa-bullhorn"></i>لجنة التسويق</li>
+                  <li><i class="fa-solid fa-bezier-curve"></i>لجنة التصميم</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Bottom -->
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="copyright">
+              جميع الحقوق محفوظة لنادي أدِيب <span style="font-family: a" id="year"></span> ©
+            </p>
+            <div class="footer-legal">
+              <a href="../constitution/constitution.html">دستور أدِيب</a>
+              <a href="../index.html#faq-section">الأسئلة الشائعة</a>
+            </div>
+          </div>
+          <div class="footer-back-top">
+            <button id="back-to-top">
+              <i class="fas fa-arrow-up"></i>
+              <span class="back-to-top">العودة للأعلى</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Scripts -->
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="../script.js"></script>
+    <script src="news-detail.js"></script>
+</body>
+</html>

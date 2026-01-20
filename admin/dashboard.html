@@ -1,0 +1,1674 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لوحة التحكم — نظام إدارة نادي أديب</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+    <!-- شريط التحميل -->
+    <div id="loadingBar" class="loading-bar">
+        <div class="loading-progress"></div>
+    </div>
+
+    <!-- الهيدر -->
+    <header class="admin-header">
+        <div class="admin-header__container">
+            <button id="toggleSidebar" title="القائمة">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="user-info">
+                <div class="user-greeting">
+                    <span id="greetingText" class="greeting-text"></span>
+                    <span id="userName" class="user-name"></span>
+                </div>
+                <img id="userAvatar" class="user-avatar" src="" alt="صورة المستخدم" />
+            </div>
+        </div>
+    </header>
+
+    <!-- التخطيط الرئيسي -->
+    <div class="admin-layout">
+        <!-- الشريط الجانبي -->
+        <aside class="admin-sidebar" id="sidebar">
+            <div class="admin-sidebar__header">
+                <h3>لوحة التحكم</h3>
+                <button class="btn-icon" id="closeSidebar">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <nav class="admin-nav" id="mainNav">
+                <!-- سيتم ملؤها ديناميكياً بناءً على الصلاحيات -->
+            </nav>
+            <div class="admin-sidebar__footer">
+                <a href="../index.html" target="_blank" class="btn-outline">
+                    <i class="fa-solid fa-globe"></i>
+                    موقع أدِيب
+                </a>
+                <button type="button" class="btn-outline btn-danger" id="logoutBtn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    تسجيل الخروج
+                </button>
+            </div>
+        </aside>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="admin-main" id="mainContent">
+            <!-- لوحة المعلومات الرئيسية -->
+            <section id="dashboard-section" class="admin-section">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-chart-line"></i>
+                        لوحة المعلومات
+                    </h1>
+                    <p class="section-subtitle">نظرة عامة على أداء النادي</p>
+                </div>
+
+                <!-- بطاقات الإحصائيات -->
+                <div class="stats-grid" id="statsGrid">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+
+                <!-- الرسوم البيانية -->
+                <div class="charts-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-chart-bar"></i> المهام حسب الحالة</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="tasksChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-chart-pie"></i> المشاريع حسب اللجنة</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="projectsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- النشاطات الأخيرة -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-clock-rotate-left"></i> النشاطات الأخيرة</h3>
+                        <button class="btn-sm btn-outline" id="refreshActivities">
+                            <i class="fa-solid fa-rotate"></i>
+                            تحديث
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="recentActivities" class="activities-list">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم إدارة المستخدمين -->
+            <section id="users-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-users"></i>
+                        إدارة المستخدمين
+                    </h1>
+                    <button class="btn-primary" id="addUserBtn">
+                        <i class="fa-solid fa-user-plus"></i>
+                        إضافة مستخدم
+                    </button>
+                </div>
+
+                <!-- فلاتر البحث -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="userSearchInput" placeholder="البحث عن مستخدم..." />
+                    </div>
+                    <select id="roleFilter" class="filter-select">
+                        <option value="">جميع الأدوار</option>
+                    </select>
+                    <select id="committeeFilter" class="filter-select">
+                        <option value="">جميع اللجان</option>
+                    </select>
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="active">نشط</option>
+                        <option value="inactive">غير نشط</option>
+                        <option value="suspended">معلق</option>
+                    </select>
+                </div>
+
+                <!-- جدول المستخدمين -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="usersTable" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم إدارة اللجان -->
+            <section id="committees-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-sitemap"></i>
+                        إدارة اللجان
+                    </h1>
+                    <button class="btn-primary" id="addCommitteeBtn">
+                        <i class="fa-solid fa-plus"></i>
+                        إضافة لجنة
+                    </button>
+                </div>
+
+                <div class="committees-grid" id="committeesGrid">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </section>
+
+            <!-- قسم المهام -->
+            <section id="tasks-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-tasks"></i>
+                        إدارة المهام
+                    </h1>
+                    <button class="btn-primary" id="addTaskBtn">
+                        <i class="fa-solid fa-plus"></i>
+                        إضافة مهمة
+                    </button>
+                </div>
+
+                <!-- فلاتر المهام -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="taskSearchInput" placeholder="البحث عن مهمة..." />
+                    </div>
+                    <select id="taskStatusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="pending">معلقة</option>
+                        <option value="in_progress">قيد التنفيذ</option>
+                        <option value="review">قيد المراجعة</option>
+                        <option value="completed">مكتملة</option>
+                        <option value="cancelled">ملغاة</option>
+                    </select>
+                    <select id="taskPriorityFilter" class="filter-select">
+                        <option value="">جميع الأولويات</option>
+                        <option value="urgent">عاجل</option>
+                        <option value="high">عالي</option>
+                        <option value="medium">متوسط</option>
+                        <option value="low">منخفض</option>
+                    </select>
+                </div>
+
+                <div id="tasksContainer" class="tasks-container">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </section>
+
+            <!-- قسم المشاريع -->
+            <section id="projects-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-diagram-project"></i>
+                        إدارة المشاريع
+                    </h1>
+                    <button class="btn-primary" id="addProjectBtn">
+                        <i class="fa-solid fa-plus"></i>
+                        إضافة مشروع
+                    </button>
+                </div>
+
+                <div id="projectsContainer" class="projects-container">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </section>
+
+            <!-- قسم إحصائيات الزيارات -->
+            <section id="site-visits-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-chart-line"></i>
+                        إحصائيات زيارات الموقع
+                    </h1>
+                    <div class="section-actions">
+                        <select id="visitsPeriodFilter" class="filter-select">
+                            <option value="7">آخر 7 أيام</option>
+                            <option value="30" selected>آخر 30 يوم</option>
+                            <option value="90">آخر 90 يوم</option>
+                            <option value="365">آخر سنة</option>
+                        </select>
+                        <button class="btn-outline btn-sm" id="exportVisitsBtn">
+                            <i class="fa-solid fa-download"></i>
+                            تصدير البيانات
+                        </button>
+                        <button class="btn-outline btn-sm" id="refreshVisitsBtn">
+                            <i class="fa-solid fa-rotate"></i>
+                            تحديث
+                        </button>
+                    </div>
+                </div>
+
+                <!-- بطاقات الإحصائيات -->
+                <div class="stats-grid" id="visitsStatsGrid">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+
+                <!-- الرسوم البيانية -->
+                <div class="charts-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-chart-area"></i> الزيارات اليومية</h3>
+                        </div>
+                        <div class="card-body" style="height: 300px;">
+                            <canvas id="visitsTimelineChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-mobile-screen"></i> توزيع الأجهزة</h3>
+                        </div>
+                        <div class="card-body" style="height: 300px;">
+                            <canvas id="devicesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- أكثر الصفحات زيارة -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-fire"></i> أكثر الصفحات زيارة</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="topPagesContainer">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم الاجتماعات -->
+            <section id="meetings-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-calendar-days"></i>
+                        إدارة الاجتماعات
+                    </h1>
+                    <button class="btn-primary" id="addMeetingBtn">
+                        <i class="fa-solid fa-plus"></i>
+                        جدولة اجتماع
+                    </button>
+                </div>
+
+                <div id="meetingsCalendar" class="meetings-calendar">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </section>
+
+            <!-- قسم إدارة الصلاحيات -->
+            <section id="permissions-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-shield-halved"></i>
+                        إدارة الصلاحيات
+                    </h1>
+                    <p class="section-subtitle">النظام المركزي لإدارة جميع الصلاحيات</p>
+                </div>
+
+                <!-- إحصائيات الصلاحيات -->
+                <div class="stats-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-key stat-icon"></i>
+                        <div class="stat-info">
+                            <h3>إجمالي الصلاحيات</h3>
+                            <p class="stat-value" id="totalPermissionsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-user-shield stat-icon"></i>
+                        <div class="stat-info">
+                            <h3>الأدوار النشطة</h3>
+                            <p class="stat-value" id="totalRolesCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-layer-group stat-icon"></i>
+                        <div class="stat-info">
+                            <h3>الأقسام</h3>
+                            <p class="stat-value" id="totalModulesCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-user-tag stat-icon"></i>
+                        <div class="stat-info">
+                            <h3>صلاحيات خاصة</h3>
+                            <p class="stat-value" id="totalUserPermsCount">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- تبويبات الصلاحيات -->
+                <div class="tabs-container">
+                    <div class="tabs-nav">
+                        <button class="tab-btn active" data-tab="permissions-list">
+                            <i class="fa-solid fa-list"></i>
+                            قائمة الصلاحيات
+                        </button>
+                        <button class="tab-btn" data-tab="role-permissions">
+                            <i class="fa-solid fa-user-shield"></i>
+                            صلاحيات الأدوار
+                        </button>
+                        <button class="tab-btn" data-tab="user-permissions">
+                            <i class="fa-solid fa-user-tag"></i>
+                            صلاحيات المستخدمين
+                        </button>
+                        <button class="tab-btn" data-tab="audit-log">
+                            <i class="fa-solid fa-history"></i>
+                            سجل التدقيق
+                        </button>
+                    </div>
+
+                    <!-- محتوى التبويبات -->
+                    <div class="tabs-content">
+                        <!-- قائمة الصلاحيات -->
+                        <div id="permissions-list" class="tab-content active">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>جميع الصلاحيات المتاحة</h3>
+                                    <div class="filters-bar" style="margin: 0;">
+                                        <select id="moduleFilterPermissions" class="filter-select">
+                                            <option value="">جميع الأقسام</option>
+                                        </select>
+                                        <div class="filter-group">
+                                            <i class="fa-solid fa-search"></i>
+                                            <input type="text" id="searchPermissionsInput" placeholder="البحث..." />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div id="permissionsListTable" class="data-table">
+                                        <!-- سيتم ملؤها ديناميكياً -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- صلاحيات الأدوار -->
+                        <div id="role-permissions" class="tab-content">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>إدارة صلاحيات الأدوار</h3>
+                                    <select id="roleSelectPermissions" class="filter-select">
+                                        <option value="">اختر الدور...</option>
+                                    </select>
+                                </div>
+                                <div class="card-body">
+                                    <div id="rolePermissionsContent">
+                                        <p class="text-muted text-center">اختر دوراً لعرض وتعديل صلاحياته</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- صلاحيات المستخدمين -->
+                        <div id="user-permissions" class="tab-content">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>الصلاحيات الخاصة للمستخدمين</h3>
+                                    <button class="btn-primary" id="addUserPermissionBtn">
+                                        <i class="fa-solid fa-plus"></i>
+                                        إضافة صلاحية خاصة
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div id="userPermissionsTable" class="data-table">
+                                        <!-- سيتم ملؤها ديناميكياً -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- سجل التدقيق -->
+                        <div id="audit-log" class="tab-content">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>سجل تغييرات الصلاحيات</h3>
+                                    <div class="filters-bar" style="margin: 0;">
+                                        <select id="actionTypeFilterAudit" class="filter-select">
+                                            <option value="">جميع الإجراءات</option>
+                                            <option value="grant">منح</option>
+                                            <option value="revoke">إلغاء</option>
+                                            <option value="modify">تعديل</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div id="auditLogTable" class="data-table">
+                                        <!-- سيتم ملؤها ديناميكياً -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم التقارير -->
+            <section id="reports-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-chart-simple"></i>
+                        التقارير والإحصائيات
+                    </h1>
+                    <button class="btn-primary" id="generateReportBtn">
+                        <i class="fa-solid fa-file-export"></i>
+                        إنشاء تقرير
+                    </button>
+                </div>
+
+                <div class="reports-grid" id="reportsGrid">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </section>
+
+            <!-- قسم إدارة رسائل التواصل -->
+            <section id="contact-messages-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-envelope"></i>
+                        رسائل التواصل
+                    </h1>
+                    <p class="section-subtitle">إدارة رسائل التواصل الواردة من الموقع</p>
+                </div>
+
+                <!-- إحصائيات الرسائل -->
+                <div class="stats-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-envelope stat-icon" style="color: #3b82f6;"></i>
+                        <div class="stat-info">
+                            <h3>رسائل جديدة</h3>
+                            <p class="stat-value" id="newMessagesCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-envelope-open stat-icon" style="color: #10b981;"></i>
+                        <div class="stat-info">
+                            <h3>رسائل مقروءة</h3>
+                            <p class="stat-value" id="readMessagesCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-reply stat-icon" style="color: #8b5cf6;"></i>
+                        <div class="stat-info">
+                            <h3>تم الرد عليها</h3>
+                            <p class="stat-value" id="repliedMessagesCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-box-archive stat-icon" style="color: #6b7280;"></i>
+                        <div class="stat-info">
+                            <h3>مؤرشفة</h3>
+                            <p class="stat-value" id="archivedMessagesCount">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلاتر البحث -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="messageSearchInput" placeholder="البحث في الرسائل..." />
+                    </div>
+                    <select id="messageStatusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="new">جديدة</option>
+                        <option value="read">مقروءة</option>
+                        <option value="replied">تم الرد</option>
+                        <option value="archived">مؤرشفة</option>
+                    </select>
+                    <select id="messagePriorityFilter" class="filter-select">
+                        <option value="">جميع الأولويات</option>
+                        <option value="urgent">عاجل</option>
+                        <option value="high">عالي</option>
+                        <option value="normal">عادي</option>
+                        <option value="low">منخفض</option>
+                    </select>
+                    <button class="btn-primary" id="refreshMessagesBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                </div>
+
+                <!-- جدول الرسائل -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="contactMessagesTable" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم إدارة مشتركي النشرة البريدية -->
+            <section id="newsletter-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                        مشتركو النشرة البريدية
+                    </h1>
+                    <p class="section-subtitle">إدارة المشتركين في النشرة البريدية</p>
+                </div>
+
+                <!-- إحصائيات المشتركين -->
+                <div class="stats-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-users stat-icon" style="color: #3b82f6;"></i>
+                        <div class="stat-info">
+                            <h3>إجمالي المشتركين</h3>
+                            <p class="stat-value" id="totalSubscribersCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-user-check stat-icon" style="color: #10b981;"></i>
+                        <div class="stat-info">
+                            <h3>مشتركون نشطون</h3>
+                            <p class="stat-value" id="activeSubscribersCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-user-xmark stat-icon" style="color: #ef4444;"></i>
+                        <div class="stat-info">
+                            <h3>ألغوا الاشتراك</h3>
+                            <p class="stat-value" id="unsubscribedCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-calendar-plus stat-icon" style="color: #8b5cf6;"></i>
+                        <div class="stat-info">
+                            <h3>اشتراكات هذا الشهر</h3>
+                            <p class="stat-value" id="thisMonthSubscribersCount">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلاتر البحث -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="subscriberSearchInput" placeholder="البحث في المشتركين..." />
+                    </div>
+                    <select id="subscriberStatusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="active">نشط</option>
+                        <option value="unsubscribed">ألغى الاشتراك</option>
+                        <option value="bounced">بريد غير صالح</option>
+                    </select>
+                    <button class="btn-primary" id="refreshSubscribersBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                    <button class="btn-success" id="exportSubscribersBtn">
+                        <i class="fa-solid fa-file-export"></i>
+                        تصدير
+                    </button>
+                </div>
+
+                <!-- جدول المشتركين -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="subscribersTable" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم إدارة طلبات العضوية -->
+            <section id="membership-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-user-plus"></i>
+                        إدارة طلبات العضوية
+                    </h1>
+                    <p class="section-subtitle">مراجعة طلبات التسجيل والتحكم في باب التسجيل</p>
+                </div>
+
+                <!-- بطاقة التحكم في التسجيل -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-toggle-on"></i>
+                            التحكم في باب التسجيل
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: grid; gap: 1.5rem;">
+                            <!-- التحكم اليدوي -->
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="joinOpenToggle" style="width: auto;" />
+                                    <span style="font-weight: bold;">فتح باب التسجيل</span>
+                                </label>
+                                <small style="color: #64748b; margin-top: 0.25rem; display: block;">
+                                    عند التفعيل، يمكن للزوار التسجيل في العضوية
+                                </small>
+                            </div>
+
+                            <!-- العد التنازلي -->
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="countdownToggle" style="width: auto;" />
+                                    <span style="font-weight: bold;">إظهار العد التنازلي</span>
+                                </label>
+                                <small style="color: #64748b; margin-top: 0.25rem; display: block;">
+                                    عرض مؤقت العد التنازلي لإغلاق التسجيل في صفحة التسجيل
+                                </small>
+                            </div>
+
+                            <!-- الجدولة التلقائية -->
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="scheduleToggle" style="width: auto;" />
+                                    <span style="font-weight: bold;">تفعيل الجدولة التلقائية</span>
+                                </label>
+                                <small style="color: #64748b; margin-top: 0.25rem; display: block;">
+                                    فتح وإغلاق التسجيل تلقائياً حسب التواريخ المحددة
+                                </small>
+                            </div>
+
+                            <!-- إعدادات الجدولة -->
+                            <div id="scheduleSettings" style="display: none; padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #3b82f6;">
+                                <div style="display: grid; gap: 1rem;">
+                                    <div class="form-group">
+                                        <label>نمط الجدولة</label>
+                                        <select id="scheduleMode" class="filter-select">
+                                            <option value="range">نطاق زمني (فتح وإغلاق)</option>
+                                            <option value="open_only">فتح فقط</option>
+                                            <option value="close_only">إغلاق فقط</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" id="openDateGroup">
+                                        <label>تاريخ ووقت الفتح</label>
+                                        <input type="datetime-local" id="scheduleOpenAt" />
+                                    </div>
+                                    <div class="form-group" id="closeDateGroup">
+                                        <label>تاريخ ووقت الإغلاق</label>
+                                        <input type="datetime-local" id="scheduleCloseAt" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- زر الحفظ -->
+                            <div style="display: flex; gap: 0.75rem; justify-content: flex-start;">
+                                <button type="button" class="btn-primary" id="saveMembershipSettings">
+                                    <i class="fa-solid fa-save"></i>
+                                    حفظ الإعدادات
+                                </button>
+                                <button type="button" class="btn-outline" id="resetMembershipSettings">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                    إعادة تعيين
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقة إدارة اللجان المتاحة للتسجيل -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-users-gear"></i>
+                            إدارة اللجان المتاحة للتسجيل
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <p style="color: #64748b; margin-bottom: 1.5rem;">
+                            <i class="fa-solid fa-info-circle"></i>
+                            تحكم في اللجان التي تظهر في نموذج التسجيل. يتم عرض الأسماء والأوصاف من إدارة اللجان.
+                        </p>
+                        <div id="availableCommitteesTable" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- إحصائيات الطلبات -->
+                <div class="stats-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-inbox stat-icon" style="color: #3b82f6;"></i>
+                        <div class="stat-info">
+                            <h3>طلبات جديدة</h3>
+                            <p class="stat-value" id="newApplicationsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-eye stat-icon" style="color: #f59e0b;"></i>
+                        <div class="stat-info">
+                            <h3>قيد المراجعة</h3>
+                            <p class="stat-value" id="reviewApplicationsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-check-circle stat-icon" style="color: #10b981;"></i>
+                        <div class="stat-info">
+                            <h3>مقبولة</h3>
+                            <p class="stat-value" id="acceptedApplicationsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-times-circle stat-icon" style="color: #ef4444;"></i>
+                        <div class="stat-info">
+                            <h3>مرفوضة</h3>
+                            <p class="stat-value" id="rejectedApplicationsCount">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلاتر البحث -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="applicationSearchInput" placeholder="البحث في الطلبات..." />
+                    </div>
+                    <select id="applicationStatusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="new">جديدة</option>
+                        <option value="under_review">قيد المراجعة</option>
+                        <option value="accepted">مقبولة</option>
+                        <option value="rejected">مرفوضة</option>
+                        <option value="archived">مؤرشفة</option>
+                    </select>
+                    <select id="applicationCommitteeFilter" class="filter-select">
+                        <option value="">جميع اللجان</option>
+                        <option value="لجنة التأليف">لجنة التأليف</option>
+                        <option value="لجنة الرواة">لجنة الرواة</option>
+                        <option value="لجنة السفراء">لجنة السفراء</option>
+                        <option value="لجنة الفعاليات">لجنة الفعاليات</option>
+                        <option value="لجنة الإنتاج">لجنة الإنتاج</option>
+                        <option value="لجنة التصميم">لجنة التصميم</option>
+                    </select>
+                    <button class="btn-primary" id="refreshApplicationsBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                    <button class="btn-success" id="exportApplicationsBtn">
+                        <i class="fa-solid fa-file-export"></i>
+                        تصدير
+                    </button>
+                </div>
+
+                <!-- جدول الطلبات -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="applicationsTable" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم إدارة الموقع -->
+            <section id="website-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-globe"></i>
+                        إدارة محتوى الموقع
+                    </h1>
+                    <p class="section-subtitle">إدارة الأقسام الظاهرة في الموقع الرئيسي</p>
+                </div>
+
+                <!-- بطاقات الأقسام -->
+                <div class="website-sections-grid">
+                    <!-- بطاقة أعمالنا -->
+                    <div class="website-section-card" data-section="works">
+                        <div class="section-card-header">
+                            <div class="section-card-icon works-icon">
+                                <i class="fa-solid fa-briefcase"></i>
+                            </div>
+                            <div class="section-card-info">
+                                <h3>أعمالنا</h3>
+                                <p class="section-card-count" id="worksCount">
+                                    <i class="fa-solid fa-spinner fa-spin"></i>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="section-card-body">
+                            <p>إدارة الأعمال والمشاريع المعروضة في الموقع</p>
+                        </div>
+                        <div class="section-card-footer">
+                            <button class="btn-card-action">
+                                <i class="fa-solid fa-arrow-left"></i>
+                                إدارة الأعمال
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- بطاقة الإنجازات -->
+                    <div class="website-section-card" data-section="achievements">
+                        <div class="section-card-header">
+                            <div class="section-card-icon achievements-icon">
+                                <i class="fa-solid fa-trophy"></i>
+                            </div>
+                            <div class="section-card-info">
+                                <h3>الإنجازات</h3>
+                                <p class="section-card-count" id="achievementsCount">
+                                    <i class="fa-solid fa-spinner fa-spin"></i>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="section-card-body">
+                            <p>إدارة إحصائيات وأرقام إنجازات النادي</p>
+                        </div>
+                        <div class="section-card-footer">
+                            <button class="btn-card-action">
+                                <i class="fa-solid fa-arrow-left"></i>
+                                إدارة الإنجازات
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- بطاقة الشركاء -->
+                    <div class="website-section-card" data-section="sponsors">
+                        <div class="section-card-header">
+                            <div class="section-card-icon sponsors-icon">
+                                <i class="fa-solid fa-handshake"></i>
+                            </div>
+                            <div class="section-card-info">
+                                <h3>الشركاء</h3>
+                                <p class="section-card-count" id="sponsorsCount">
+                                    <i class="fa-solid fa-spinner fa-spin"></i>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="section-card-body">
+                            <p>إدارة شركاء النجاح والداعمين</p>
+                        </div>
+                        <div class="section-card-footer">
+                            <button class="btn-card-action">
+                                <i class="fa-solid fa-arrow-left"></i>
+                                إدارة الشركاء
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- بطاقة الأسئلة الشائعة -->
+                    <div class="website-section-card" data-section="faq">
+                        <div class="section-card-header">
+                            <div class="section-card-icon faq-icon">
+                                <i class="fa-solid fa-circle-question"></i>
+                            </div>
+                            <div class="section-card-info">
+                                <h3>الأسئلة الشائعة</h3>
+                                <p class="section-card-count" id="faqCount">
+                                    <i class="fa-solid fa-spinner fa-spin"></i>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="section-card-body">
+                            <p>إدارة الأسئلة والأجوبة الشائعة</p>
+                        </div>
+                        <div class="section-card-footer">
+                            <button class="btn-card-action">
+                                <i class="fa-solid fa-arrow-left"></i>
+                                إدارة الأسئلة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قسم التفاصيل (يظهر عند اختيار قسم) -->
+                <div id="website-detail-section" class="website-detail-section" style="display: none;">
+                    <div class="detail-header">
+                        <button class="btn-back" id="backToSections">
+                            <i class="fa-solid fa-arrow-right"></i>
+                            العودة
+                        </button>
+                        <h2 id="detailSectionTitle"></h2>
+                        <button class="btn-primary" id="addItemBtn">
+                            <i class="fa-solid fa-plus"></i>
+                            إضافة جديد
+                        </button>
+                    </div>
+                    <div class="detail-body">
+                        <div id="detailContent" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- الطبقة الشفافة -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- نافذة إنشاء تقرير -->
+    <div class="modal" id="reportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="reportModalTitle">إنشاء تقرير جديد</h2>
+                <button class="btn-icon" id="closeReportModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <form id="reportForm" class="modal-body">
+                <div class="form-group">
+                    <label>عنوان التقرير *</label>
+                    <input type="text" id="reportTitle" required />
+                </div>
+                <div class="form-group">
+                    <label>نوع التقرير *</label>
+                    <select id="reportType" required>
+                        <option value="">اختر نوع التقرير</option>
+                        <option value="committee">تقرير لجنة</option>
+                        <option value="user">تقرير مستخدم</option>
+                        <option value="project">تقرير مشروع</option>
+                        <option value="general">تقرير عام</option>
+                        <option value="attendance">تقرير حضور</option>
+                        <option value="quality">تقرير جودة</option>
+                    </select>
+                </div>
+                <div class="form-group" id="reportCommitteeGroup" style="display: none;">
+                    <label>اللجنة</label>
+                    <select id="reportCommittee">
+                        <option value="">اختر اللجنة</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>من تاريخ</label>
+                    <input type="date" id="reportPeriodStart" />
+                </div>
+                <div class="form-group">
+                    <label>إلى تاريخ</label>
+                    <input type="date" id="reportPeriodEnd" />
+                </div>
+                <div class="form-group">
+                    <label>ملاحظات</label>
+                    <textarea id="reportNotes" rows="3" placeholder="أضف ملاحظات أو تفاصيل إضافية..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cancelReportBtn">إلغاء</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-file-export"></i>
+                        إنشاء التقرير
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة/تعديل اجتماع -->
+    <div class="modal" id="meetingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="meetingModalTitle">جدولة اجتماع جديد</h2>
+                <button class="btn-icon" id="closeMeetingModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <form id="meetingForm" class="modal-body">
+                <div class="form-group">
+                    <label>عنوان الاجتماع *</label>
+                    <input type="text" id="meetingTitle" required />
+                </div>
+                <div class="form-group">
+                    <label>الوصف</label>
+                    <textarea id="meetingDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>نوع الاجتماع *</label>
+                    <select id="meetingType" required>
+                        <option value="general">عام</option>
+                        <option value="committee">لجنة</option>
+                        <option value="leadership">قيادي</option>
+                        <option value="emergency">طارئ</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>اللجنة</label>
+                    <select id="meetingCommittee">
+                        <option value="">اختر اللجنة</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>تاريخ ووقت الاجتماع *</label>
+                    <input type="datetime-local" id="meetingScheduledAt" required />
+                </div>
+                <div class="form-group">
+                    <label>المدة (بالدقائق) *</label>
+                    <input type="number" id="meetingDuration" value="60" min="15" step="15" required />
+                </div>
+                <div class="form-group">
+                    <label>الموقع</label>
+                    <input type="text" id="meetingLocation" placeholder="مثال: قاعة الاجتماعات" />
+                </div>
+                <div class="form-group">
+                    <label>رابط الاجتماع (اختياري)</label>
+                    <input type="url" id="meetingLink" placeholder="https://zoom.us/j/..." />
+                </div>
+                <div class="form-group">
+                    <label>الحالة *</label>
+                    <select id="meetingStatus" required>
+                        <option value="scheduled" selected>مجدول</option>
+                        <option value="ongoing">جاري</option>
+                        <option value="completed">مكتمل</option>
+                        <option value="cancelled">ملغي</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cancelMeetingBtn">إلغاء</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i>
+                        حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة/تعديل مهمة -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="taskModalTitle">إضافة مهمة جديدة</h2>
+                <button class="btn-icon" id="closeTaskModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <form id="taskForm" class="modal-body">
+                <div class="form-group">
+                    <label>عنوان المهمة *</label>
+                    <input type="text" id="taskTitle" required />
+                </div>
+                <div class="form-group">
+                    <label>الوصف</label>
+                    <textarea id="taskDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>اللجنة</label>
+                    <select id="taskCommittee">
+                        <option value="">اختر اللجنة</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>المشروع</label>
+                    <select id="taskProject">
+                        <option value="">اختر المشروع</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>تعيين إلى</label>
+                    <select id="taskAssignedTo">
+                        <option value="">اختر المستخدم</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>الأولوية *</label>
+                    <select id="taskPriority" required>
+                        <option value="low">منخفض</option>
+                        <option value="medium" selected>متوسط</option>
+                        <option value="high">عالي</option>
+                        <option value="urgent">عاجل</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>الحالة *</label>
+                    <select id="taskStatus" required>
+                        <option value="pending" selected>معلقة</option>
+                        <option value="in_progress">قيد التنفيذ</option>
+                        <option value="review">قيد المراجعة</option>
+                        <option value="completed">مكتملة</option>
+                        <option value="cancelled">ملغاة</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>موعد التسليم</label>
+                    <input type="date" id="taskDueDate" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cancelTaskBtn">إلغاء</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i>
+                        حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة/تعديل مشروع -->
+    <div class="modal" id="projectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="projectModalTitle">إضافة مشروع جديد</h2>
+                <button class="btn-icon" id="closeProjectModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <form id="projectForm" class="modal-body">
+                <div class="form-group">
+                    <label>اسم المشروع *</label>
+                    <input type="text" id="projectName" required />
+                </div>
+                <div class="form-group">
+                    <label>الوصف</label>
+                    <textarea id="projectDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>اللجنة *</label>
+                    <select id="projectCommittee" required>
+                        <option value="">اختر اللجنة</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>قائد المشروع</label>
+                    <select id="projectLeader">
+                        <option value="">اختر القائد</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>تاريخ البداية</label>
+                    <input type="date" id="projectStartDate" />
+                </div>
+                <div class="form-group">
+                    <label>تاريخ النهاية</label>
+                    <input type="date" id="projectEndDate" />
+                </div>
+                <div class="form-group">
+                    <label>الحالة *</label>
+                    <select id="projectStatus" required>
+                        <option value="planning">تخطيط</option>
+                        <option value="active" selected>نشط</option>
+                        <option value="on_hold">معلق</option>
+                        <option value="completed">مكتمل</option>
+                        <option value="cancelled">ملغي</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cancelProjectBtn">إلغاء</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i>
+                        حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة/تعديل لجنة -->
+    <div class="modal" id="committeeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="committeeModalTitle">إضافة لجنة جديدة</h2>
+                <button class="btn-icon" id="closeCommitteeModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <form id="committeeForm" class="modal-body">
+                <div class="form-group">
+                    <label>اسم اللجنة *</label>
+                    <input type="text" id="committeeNameAr" required />
+                </div>
+                <div class="form-group">
+                    <label>الوصف</label>
+                    <textarea id="committeeDescription" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="committeeIsActive" checked />
+                        لجنة نشطة
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cancelCommitteeBtn">إلغاء</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i>
+                        حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة/تعديل مستخدم -->
+    <div class="modal" id="userModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="userModalTitle">إضافة مستخدم جديد</h2>
+                <button class="btn-icon" id="closeUserModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <form id="userForm" class="modal-body">
+                <div class="form-group">
+                    <label>الاسم الكامل *</label>
+                    <input type="text" id="userFullName" required />
+                </div>
+                <div class="form-group">
+                    <label>البريد الإلكتروني *</label>
+                    <input type="email" id="userEmail" required />
+                </div>
+                <div class="form-group">
+                    <label>رقم الهاتف</label>
+                    <input type="tel" id="userPhone" />
+                </div>
+                <div class="form-group">
+                    <label>الدور *</label>
+                    <select id="userRoleSelect" required>
+                        <option value="">اختر الدور</option>
+                    </select>
+                </div>
+                <div class="form-group" id="committeeGroup" style="display: none;">
+                    <label>اللجنة *</label>
+                    <select id="userCommitteeSelect">
+                        <option value="">اختر اللجنة</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور *</label>
+                    <input type="password" id="userPassword" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cancelUserBtn">إلغاء</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i>
+                        حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة/تعديل عمل -->
+    <div class="modal" id="workModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="workModalTitle">إضافة عمل جديد</h2>
+                <button class="btn-icon" id="closeWorkModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <form id="workForm" class="modal-body">
+                <div class="form-group">
+                    <label>عنوان العمل *</label>
+                    <input type="text" id="workTitle" required />
+                </div>
+                <div class="form-group">
+                    <label>الفئة</label>
+                    <input type="text" id="workCategory" placeholder="مثال: كتاب، مقال، فيديو" />
+                </div>
+                <div class="form-group">
+                    <label>رابط الصورة *</label>
+                    <input type="url" id="workImage" required placeholder="https://example.com/image.jpg" />
+                </div>
+                <div class="form-group">
+                    <label>رابط العمل</label>
+                    <input type="url" id="workLink" placeholder="https://example.com" />
+                </div>
+                <div class="form-group">
+                    <label>الترتيب</label>
+                    <input type="number" id="workOrder" min="0" placeholder="0" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cancelWorkBtn">إلغاء</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i>
+                        حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة/تعديل إنجاز -->
+    <div class="modal" id="achievementModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="achievementModalTitle">إضافة إنجاز جديد</h2>
+                <button class="btn-icon" id="closeAchievementModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <form id="achievementForm" class="modal-body">
+                <div class="form-group">
+                    <label>التسمية *</label>
+                    <input type="text" id="achievementLabel" required placeholder="مثال: عدد الأعضاء" />
+                </div>
+                <div class="form-group">
+                    <label>الرقم *</label>
+                    <input type="number" id="achievementCount" required min="0" />
+                </div>
+                <div class="form-group">
+                    <label>أيقونة Font Awesome *</label>
+                    <input type="text" id="achievementIcon" required placeholder="fa-solid fa-trophy" />
+                    <small>مثال: fa-solid fa-trophy, fa-solid fa-users</small>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="achievementPlus" checked />
+                        إظهار علامة +
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>الترتيب</label>
+                    <input type="number" id="achievementOrder" min="0" placeholder="0" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cancelAchievementBtn">إلغاء</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i>
+                        حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة/تعديل شريك -->
+    <div class="modal" id="sponsorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="sponsorModalTitle">إضافة شريك جديد</h2>
+                <button class="btn-icon" id="closeSponsorModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <form id="sponsorForm" class="modal-body">
+                <div class="form-group">
+                    <label>اسم الشريك *</label>
+                    <input type="text" id="sponsorName" required />
+                </div>
+                <div class="form-group">
+                    <label>الوصف</label>
+                    <textarea id="sponsorDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>رابط الشعار *</label>
+                    <input type="url" id="sponsorLogo" required placeholder="https://example.com/logo.png" />
+                </div>
+                <div class="form-group">
+                    <label>رابط الموقع</label>
+                    <input type="url" id="sponsorLink" placeholder="https://example.com" />
+                </div>
+                <div class="form-group">
+                    <label>الشارة</label>
+                    <select id="sponsorBadge">
+                        <option value="">بدون شارة</option>
+                        <option value="ذهبي">ذهبي</option>
+                        <option value="فضي">فضي</option>
+                        <option value="برونزي">برونزي</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>الترتيب</label>
+                    <input type="number" id="sponsorOrder" min="0" placeholder="0" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cancelSponsorBtn">إلغاء</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i>
+                        حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة/تعديل سؤال شائع -->
+    <div class="modal" id="faqModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="faqModalTitle">إضافة سؤال شائع</h2>
+                <button class="btn-icon" id="closeFaqModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <form id="faqForm" class="modal-body">
+                <div class="form-group">
+                    <label>السؤال *</label>
+                    <input type="text" id="faqQuestion" required />
+                </div>
+                <div class="form-group">
+                    <label>الإجابة *</label>
+                    <textarea id="faqAnswer" rows="5" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>الترتيب</label>
+                    <input type="number" id="faqOrder" min="0" placeholder="0" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cancelFaqBtn">إلغاء</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i>
+                        حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة عرض تفاصيل طلب العضوية -->
+    <div class="modal" id="applicationDetailModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>
+                    <i class="fa-solid fa-user-circle"></i>
+                    تفاصيل طلب العضوية
+                </h2>
+                <button class="btn-icon" id="closeApplicationDetailModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="applicationDetailContent">
+                <div class="message-detail-header" style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                        <div>
+                            <h3 style="margin: 0 0 0.5rem 0; color: #274060;" id="applicationDetailName"></h3>
+                            <p style="margin: 0; color: #64748b;">
+                                <i class="fa-solid fa-envelope"></i> <span id="applicationDetailEmail"></span>
+                            </p>
+                            <p style="margin: 0.25rem 0 0; color: #64748b;">
+                                <i class="fa-solid fa-phone"></i> <span id="applicationDetailPhone"></span>
+                            </p>
+                        </div>
+                        <div style="text-align: left;">
+                            <span class="badge" id="applicationDetailStatus"></span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; font-size: 0.875rem; color: #64748b; flex-wrap: wrap;">
+                        <span><i class="fa-solid fa-calendar"></i> <span id="applicationDetailDate"></span></span>
+                        <span><i class="fa-solid fa-graduation-cap"></i> <span id="applicationDetailDegree"></span></span>
+                        <span><i class="fa-solid fa-users"></i> <span id="applicationDetailCommittee"></span></span>
+                    </div>
+                </div>
+
+                <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                    <div class="form-group">
+                        <label style="font-weight: bold; color: #274060;">الكلية:</label>
+                        <div style="background: #f8fafc; padding: 0.75rem; border-radius: 6px;" id="applicationDetailCollege"></div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight: bold; color: #274060;">التخصص:</label>
+                        <div style="background: #f8fafc; padding: 0.75rem; border-radius: 6px;" id="applicationDetailMajor"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label style="font-weight: bold; color: #274060;">المهارات:</label>
+                    <div style="background: #f8fafc; padding: 0.75rem; border-radius: 6px;" id="applicationDetailSkills"></div>
+                </div>
+
+                <div class="form-group">
+                    <label style="font-weight: bold; color: #274060;">نبذة عن المتقدم:</label>
+                    <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border-right: 4px solid #3b82f6; white-space: pre-wrap;" id="applicationDetailAbout"></div>
+                </div>
+
+                <div class="form-group" id="applicationPortfolioSection" style="display: none;">
+                    <label style="font-weight: bold; color: #274060;">رابط الأعمال:</label>
+                    <a id="applicationDetailPortfolio" href="#" target="_blank" rel="noopener" style="color: #3b82f6; text-decoration: none;">
+                        <i class="fa-solid fa-external-link"></i> فتح الرابط
+                    </a>
+                </div>
+
+                <div class="form-group" id="applicationSocialSection" style="display: none;">
+                    <label style="font-weight: bold; color: #274060;">حسابات التواصل:</label>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;" id="applicationDetailSocial"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>تغيير حالة الطلب:</label>
+                    <select id="applicationDetailStatusSelect" class="filter-select">
+                        <option value="new">جديد</option>
+                        <option value="under_review">قيد المراجعة</option>
+                        <option value="accepted">مقبول</option>
+                        <option value="rejected">مرفوض</option>
+                        <option value="archived">مؤرشف</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>ملاحظات الإدارة:</label>
+                    <textarea id="applicationAdminNotes" rows="4" placeholder="أضف ملاحظات حول هذا الطلب..."></textarea>
+                </div>
+
+                <div class="form-group" id="applicationReviewSection" style="display: none;">
+                    <label style="font-weight: bold; color: #6b7280;">معلومات المراجعة:</label>
+                    <div style="background: #f9fafb; padding: 1rem; border-radius: 8px; font-size: 0.875rem; color: #64748b;">
+                        <p style="margin: 0;">
+                            <i class="fa-solid fa-user"></i> تمت المراجعة بواسطة: <span id="applicationReviewedBy"></span>
+                        </p>
+                        <p style="margin: 0.5rem 0 0;">
+                            <i class="fa-solid fa-clock"></i> تاريخ المراجعة: <span id="applicationReviewedAt"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-outline" id="deleteApplicationBtn">
+                    <i class="fa-solid fa-trash"></i>
+                    حذف
+                </button>
+                <button type="button" class="btn-outline" id="closeApplicationDetailBtn">إغلاق</button>
+                <button type="button" class="btn-primary" id="saveApplicationBtn">
+                    <i class="fa-solid fa-save"></i>
+                    حفظ التغييرات
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة عرض تفاصيل رسالة التواصل -->
+    <div class="modal" id="messageDetailModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>
+                    <i class="fa-solid fa-envelope-open"></i>
+                    تفاصيل الرسالة
+                </h2>
+                <button class="btn-icon" id="closeMessageDetailModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="messageDetailContent">
+                <div class="message-detail-header" style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                        <div>
+                            <h3 style="margin: 0 0 0.5rem 0; color: #274060;" id="messageDetailName"></h3>
+                            <p style="margin: 0; color: #64748b;" id="messageDetailEmail"></p>
+                        </div>
+                        <div style="text-align: left;">
+                            <span class="badge" id="messageDetailStatus"></span>
+                            <span class="badge" id="messageDetailPriority" style="margin-right: 0.5rem;"></span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; font-size: 0.875rem; color: #64748b;">
+                        <span><i class="fa-solid fa-calendar"></i> <span id="messageDetailDate"></span></span>
+                        <span><i class="fa-solid fa-tag"></i> <span id="messageDetailSubject"></span></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label style="font-weight: bold; color: #274060;">الرسالة:</label>
+                    <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border-right: 4px solid #3b82f6;" id="messageDetailMessage"></div>
+                </div>
+
+                <div class="form-group" id="messageReplySection" style="display: none;">
+                    <label style="font-weight: bold; color: #10b981;">الرد:</label>
+                    <div style="background: #f0fdf4; padding: 1rem; border-radius: 8px; border-right: 4px solid #10b981;">
+                        <p id="messageDetailReply" style="margin: 0;"></p>
+                        <small style="color: #64748b; margin-top: 0.5rem; display: block;">
+                            <i class="fa-solid fa-user"></i> <span id="messageDetailRepliedBy"></span> • 
+                            <i class="fa-solid fa-clock"></i> <span id="messageDetailRepliedAt"></span>
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group" id="messageNotesSection" style="display: none;">
+                    <label style="font-weight: bold; color: #6b7280;">ملاحظات داخلية:</label>
+                    <div style="background: #f9fafb; padding: 1rem; border-radius: 8px;" id="messageDetailNotes"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>تغيير الحالة:</label>
+                    <select id="messageDetailStatusSelect" class="filter-select">
+                        <option value="new">جديدة</option>
+                        <option value="read">مقروءة</option>
+                        <option value="replied">تم الرد</option>
+                        <option value="archived">مؤرشفة</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>الأولوية:</label>
+                    <select id="messageDetailPrioritySelect" class="filter-select">
+                        <option value="low">منخفض</option>
+                        <option value="normal">عادي</option>
+                        <option value="high">عالي</option>
+                        <option value="urgent">عاجل</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>إضافة رد:</label>
+                    <textarea id="messageReplyInput" rows="4" placeholder="اكتب ردك هنا..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>ملاحظات داخلية:</label>
+                    <textarea id="messageNotesInput" rows="3" placeholder="ملاحظات للاستخدام الداخلي فقط..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-outline" id="deleteMessageBtn">
+                    <i class="fa-solid fa-trash"></i>
+                    حذف
+                </button>
+                <button type="button" class="btn-outline" id="closeMessageDetailBtn">إغلاق</button>
+                <button type="button" class="btn-primary" id="saveMessageBtn">
+                    <i class="fa-solid fa-save"></i>
+                    حفظ التغييرات
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- المكتبات -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="auth-manager.js"></script>
+    <script src="js/permissions-manager.js"></script>
+    <script src="js/contact-messages-manager.js"></script>
+    <script src="js/newsletter-manager.js"></script>
+    <script src="js/membership-manager.js"></script>
+    <script src="js/site-visits-manager.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>

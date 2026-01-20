@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أخبار أديب | نادي أديب الأدبي</title>
+    <meta name="description" content="آخر أخبار وفعاليات نادي أديب الأدبي">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../favicon/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="../favicon/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../favicon/favicon-16x16.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main Styles -->
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="news.css">
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+</head>
+<body>
+    <!-- قسم: الهيدر -->
+    <header class="header">
+      <div class="header-container">
+        <div class="menu-toggle" id="menuToggle">
+          <div class="hamburger">
+            <span class="line line1"></span>
+            <span class="line line2"></span>
+            <span class="line line3"></span>
+          </div>
+        </div>
+        <div class="logo">
+          <a class="logo-link" href="../index.html">
+            <img
+              alt="شعار نادي أديب"
+              class="logo-img"
+              src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e"
+            />
+          </a>
+        </div>
+        <nav class="nav">
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#adeebbook">
+                <i class="fas fa-home nav-icon"></i>
+                <span class="nav-text">الرئيسية</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="news.html">
+                <i class="fa-solid fa-newspaper"></i>
+                <span class="nav-text">الأخبار</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#achievements">
+                <i class="fa-solid fa-trophy"></i>
+                <span class="nav-text">انجازتنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#sponsors">
+                <i class="fa-solid fa-briefcase"></i>
+                <span class="nav-text">شُركائنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#board-members">
+                <i class="fa-solid fa-trophy"></i>
+                <span class="nav-text">المجلس الإداري</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html#contact">
+                <i class="fas fa-envelope nav-icon"></i>
+                <span class="nav-text">تواصل معنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+          </ul>
+          <!-- زر تسجيل الدخول للوحة التحكم -->
+          <a class="subscribe-btn" href="../dashboard/dashboard.html" id="adminLoginBtn">
+            <span>تسجيل الدخول</span>
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="news-hero">
+        <div class="news-hero-content">
+            <div class="news-hero-ornament">
+                <div class="ornament-line"></div>
+                <div class="ornament-center">
+                    <i class="fas fa-newspaper"></i>
+                </div>
+                <div class="ornament-line"></div>
+            </div>
+            <h1 class="news-hero-title">
+                <span class="heading-accent">✦</span>
+                أخبار أديب
+                <span class="heading-accent">✦</span>
+            </h1>
+            <p class="news-hero-subtitle">آخر أخبار ومُستجدات نادي أدِيب</p>
+        </div>
+    </section>
+
+    <!-- Featured News -->
+    <section class="featured-news-section" id="featuredNewsSection" style="display: none;">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-star"></i>
+                    الأخبار المميزة
+                </h2>
+            </div>
+            <div class="featured-news-grid" id="featuredNewsGrid">
+                <!-- Featured news will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- All News -->
+    <section class="all-news-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-newspaper"></i>
+                    جميع الأخبار
+                </h2>
+                <div class="news-filters">
+                    <button class="filter-btn active" data-filter="all">
+                        <i class="fas fa-list"></i>
+                        الكل
+                    </button>
+                    <button class="filter-btn" data-filter="recent">
+                        <i class="fas fa-clock"></i>
+                        الأحدث
+                    </button>
+                    <button class="filter-btn" data-filter="popular">
+                        <i class="fas fa-fire"></i>
+                        الأكثر مشاهدة
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Loading State -->
+            <div class="news-loading" id="newsLoading">
+                <div class="loading-spinner"></div>
+                <p>جاري تحميل الأخبار...</p>
+            </div>
+            
+            <!-- Empty State -->
+            <div class="news-empty" id="newsEmpty" style="display: none;">
+                <i class="fas fa-inbox"></i>
+                <p>لا توجد أخبار منشورة حالياً</p>
+            </div>
+            
+            <!-- News Grid -->
+            <div class="news-grid" id="newsGrid">
+                <!-- News cards will be loaded here -->
+            </div>
+            
+            <!-- Load More Button -->
+            <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+                <button class="load-more-btn" id="loadMoreBtn">
+                    <span>عرض المزيد</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- News Detail Modal -->
+    <div class="news-modal" id="newsModal">
+        <div class="news-modal-overlay" id="newsModalOverlay"></div>
+        <div class="news-modal-content">
+            <button class="news-modal-close" id="newsModalClose">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="news-modal-body" id="newsModalBody">
+                <!-- News detail will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Section -->
+    <footer class="footer" id="footer">
+      <div class="footer-container">
+        <!-- Main Footer Content -->
+        <div class="footer-grid">
+          <!-- Column 1: Logo & About -->
+          <div class="footer-col footer-main">
+            <div class="footer-logo-box">
+              <img
+                alt="شعار نادي أدِيب"
+                class="footer-logo"
+                src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e"
+              />
+            </div>
+            <p class="footer-about-text">
+              منصة أدِيبية رائدة تهدف إلى إثراء المحتوى الإبداعي ودعم المواهب الإبداعية الشابة في
+              مختلف المجالات.
+            </p>
+            <div class="footer-badges">
+              <span class="footer-badge">نادي طلابي</span>
+              <span class="footer-badge">جامعة الملك فيصل</span>
+            </div>
+          </div>
+
+          <!-- Column 2: Quick Links -->
+          <div class="footer-col">
+            <h3 class="footer-title">
+              <i class="fas fa-bolt"></i>
+              <span class="title-footer">روابط سريعة</span>
+            </h3>
+            <ul class="footer-links">
+              <li>
+                <a href="../index.html#adeebbook">
+                  <i class="fas fa-home"></i>
+                  الرئيسية
+                </a>
+              </li>
+              <li>
+                <a href="../index.html#our-works">
+                  <i class="fas fa-briefcase"></i>
+                  أعمالنا
+                </a>
+              </li>
+              <li>
+                <a href="../index.html#achievements">
+                  <i class="fas fa-trophy"></i>
+                  انجازاتنا
+                </a>
+              </li>
+              <li>
+                <a href="../index.html#sponsors">
+                  <i class="fas fa-handshake"></i>
+                  شركائنا
+                </a>
+              </li>
+              <li>
+                <a href="../index.html#contact">
+                  <i class="fas fa-envelope"></i>
+                  تواصل معنا
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Column 3: Committees -->
+          <div class="footer-col">
+            <h3 class="footer-title">
+              <i class="fas fa-sitemap"></i>
+              <span class="title-footer">لجان نادي أدِيب</span>
+            </h3>
+            <div class="committees-container">
+              <div class="committee-category">
+                <ul class="committee-list">
+                  <li><i class="fas fa-pen-fancy"></i>لجنة التأليف</li>
+                  <li><i class="fa-solid fa-microphone-lines"></i>لجنة الرواة</li>
+                  <li><i class="fa-solid fa-calendar-days"></i>لجنة الفعاليات</li>
+                  <li><i class="fa-solid fa-handshake"></i>لجنة السفراء</li>
+                  <li><i class="fa-solid fa-camera-retro"></i>لجنة الإنتاج</li>
+                  <li><i class="fa-solid fa-bullhorn"></i>لجنة التسويق</li>
+                  <li><i class="fa-solid fa-bezier-curve"></i>لجنة التصميم</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Bottom -->
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="copyright">
+              جميع الحقوق محفوظة لنادي أدِيب <span style="font-family: a" id="year"></span> ©
+            </p>
+            <div class="footer-legal">
+              <a href="../constitution/constitution.html">دستور أدِيب</a>
+              <a href="../index.html#faq-section">الأسئلة الشائعة</a>
+            </div>
+          </div>
+          <div class="footer-back-top">
+            <button id="back-to-top">
+              <i class="fas fa-arrow-up"></i>
+              <span class="back-to-top">العودة للأعلى</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="../script.js"></script>
+    <script src="news.js"></script>
+</body>
+</html>
