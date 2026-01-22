@@ -142,47 +142,23 @@
         }
 
         async getGeolocation() {
-            // استخدام Cloudflare Trace API - موثوق ومجاني بدون CORS
+            // حل بسيط: جلب IP فقط من ipify.org (موثوق 100%)
+            // country و city سيكونان null - يمكن إضافتهما لاحقاً إذا لزم الأمر
             try {
-                console.log('[VisitTracker] Fetching IP from Cloudflare...');
-                
-                const response = await fetch('https://www.cloudflare.com/cdn-cgi/trace');
-                const text = await response.text();
-                
-                // تحليل النص
-                const lines = text.split('\n');
-                const data = {};
-                lines.forEach(line => {
-                    const [key, value] = line.split('=');
-                    if (key && value) {
-                        data[key.trim()] = value.trim();
-                    }
+                console.log('[VisitTracker] Fetching IP...');
+                const response = await fetch('https://api.ipify.org?format=json', {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
                 });
                 
-                console.log('[VisitTracker] Cloudflare data:', data);
-                
-                const geoData = {
-                    ip: data.ip || null,
-                    country: data.loc || null,  // كود الدولة مثل SA
-                    city: null  // Cloudflare لا يوفر المدينة
-                };
-                
-                if (geoData.ip) {
-                    console.log('[VisitTracker] Successfully got geo data:', geoData);
-                    return geoData;
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
                 }
-            } catch (error) {
-                console.error('[VisitTracker] Cloudflare failed:', error.message);
-            }
-            
-            // محاولة بديلة: ipify فقط للحصول على IP
-            try {
-                console.log('[VisitTracker] Trying ipify as fallback...');
-                const response = await fetch('https://api.ipify.org?format=json');
+                
                 const data = await response.json();
                 
                 if (data.ip) {
-                    console.log('[VisitTracker] Got IP from ipify:', data.ip);
+                    console.log('[VisitTracker] Got IP:', data.ip);
                     return {
                         ip: data.ip,
                         country: null,
@@ -190,10 +166,9 @@
                     };
                 }
             } catch (error) {
-                console.error('[VisitTracker] ipify failed:', error.message);
+                console.error('[VisitTracker] Failed to get IP:', error.message);
             }
             
-            console.error('[VisitTracker] All geolocation services failed');
             return null;
         }
 
