@@ -13,7 +13,7 @@
         lastVisitKey: 'adeeb_last_visit',
         visitDurationKey: 'adeeb_visit_start',
         minDuration: 3, // الحد الأدنى لمدة الزيارة بالثواني
-        trackInterval: 30000, // تحديث مدة الزيارة كل 30 ثانية
+        trackInterval: 10000, // تحديث مدة الزيارة كل 10 ثوانٍ
     };
 
     class VisitTracker {
