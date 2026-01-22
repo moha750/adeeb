@@ -142,11 +142,10 @@
         }
 
         async getGeolocation() {
-            // حل بسيط: جلب IP فقط من ipify.org (موثوق 100%)
-            // country و city سيكونان null - يمكن إضافتهما لاحقاً إذا لزم الأمر
+            // استخدام ipinfo.io - يوفر country و city بشكل موثوق
             try {
-                console.log('[VisitTracker] Fetching IP...');
-                const response = await fetch('https://api.ipify.org?format=json', {
+                console.log('[VisitTracker] Fetching geolocation from ipinfo.io...');
+                const response = await fetch('https://ipinfo.io/json?token=', {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
                 });
@@ -156,9 +155,29 @@
                 }
                 
                 const data = await response.json();
+                console.log('[VisitTracker] ipinfo.io response:', data);
+                
+                const geoData = {
+                    ip: data.ip || null,
+                    country: data.country || null,  // كود الدولة مثل SA
+                    city: data.city || null
+                };
+                
+                console.log('[VisitTracker] Processed geo data:', geoData);
+                return geoData;
+                
+            } catch (error) {
+                console.error('[VisitTracker] ipinfo.io failed:', error.message);
+            }
+            
+            // Fallback: ipify للحصول على IP فقط
+            try {
+                console.log('[VisitTracker] Fallback: trying ipify...');
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
                 
                 if (data.ip) {
-                    console.log('[VisitTracker] Got IP:', data.ip);
+                    console.log('[VisitTracker] Got IP from ipify:', data.ip);
                     return {
                         ip: data.ip,
                         country: null,
@@ -166,7 +185,7 @@
                     };
                 }
             } catch (error) {
-                console.error('[VisitTracker] Failed to get IP:', error.message);
+                console.error('[VisitTracker] ipify failed:', error.message);
             }
             
             return null;
