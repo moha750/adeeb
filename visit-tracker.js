@@ -12,7 +12,7 @@
         sessionKey: 'adeeb_session_id',
         lastVisitKey: 'adeeb_last_visit',
         visitDurationKey: 'adeeb_visit_start',
-        minDuration: 3, // الحد الأدنى لمدة الزيارة بالثواني
+        minDuration: 1, // الحد الأدنى لمدة الزيارة بالثواني (ثانية واحدة)
         trackInterval: 30000, // تحديث مدة الزيارة كل 30 ثانية
     };
 
@@ -238,14 +238,15 @@
             }, TRACKER_CONFIG.trackInterval);
         }
 
-        async updateVisitDuration() {
+        async updateVisitDuration(force = false) {
             if (!this.isTracking || !this.visitStartTime) return;
 
             try {
                 const duration = Math.floor((Date.now() - this.visitStartTime) / 1000);
 
-                if (duration >= TRACKER_CONFIG.minDuration) {
-                    console.log(`[VisitTracker] Updating duration to ${duration}s`);
+                // تحديث إذا تجاوز الحد الأدنى أو إذا كان إجبارياً (عند المغادرة)
+                if (force || duration >= TRACKER_CONFIG.minDuration) {
+                    console.log(`[VisitTracker] Updating duration to ${duration}s (force: ${force})`);
                     
                     // تحديث مدة الزيارة في قاعدة البيانات
                     const { data, error } = await this.supabaseClient
@@ -277,53 +278,48 @@
                 this.handleUnload();
             });
 
-            // للمتصفحات الحديثة
-            window.addEventListener('pagehide', () => {
-                this.handleUnload();
-            });
-
-            // تتبع الخروج من الصفحة (visibility API)
+            // معالجة إخفاء الصفحة (للأجهزة المحمولة)
             document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'hidden') {
+                if (document.hidden) {
                     this.handleUnload();
                 }
+            });
+            
+            // معالجة إغلاق التبويب
+            window.addEventListener('pagehide', () => {
+                this.handleUnload();
             });
         }
 
         async handleUnload() {
             if (!this.isTracking || !this.visitStartTime) return;
 
-            const duration = Math.floor((Date.now() - this.visitStartTime) / 1000);
+            try {
+                const duration = Math.floor((Date.now() - this.visitStartTime) / 1000);
+                const isBounce = duration < 10;
 
-            if (duration >= TRACKER_CONFIG.minDuration) {
-                try {
-                    // تحديث مدة الزيارة مباشرة في Supabase
-                    await this.supabaseClient
-                        .from('site_visits')
-                        .update({ 
-                            visit_duration: duration,
-                            is_bounce: duration < 10
-                        })
-                        .eq('session_id', this.sessionId)
-                        .eq('page_path', window.location.pathname)
-                        .order('visited_at', { ascending: false })
-                        .limit(1);
-                } catch (error) {
+                console.log(`[VisitTracker] Page unload - final duration: ${duration}s`);
+
+                // تحديث مدة الزيارة في قاعدة البيانات (حتى لو كانت صفر)
+                const { error } = await this.supabaseClient
+                    .from('site_visits')
+                    .update({ 
+                        visit_duration: duration,
+                        is_bounce: isBounce
+                    })
+                    .eq('session_id', this.sessionId)
+                    .eq('page_path', window.location.pathname)
+                    .order('visited_at', { ascending: false })
+                    .limit(1);
+
+                if (error) {
                     console.error('[VisitTracker] Error in handleUnload:', error);
+                } else {
+                    console.log('[VisitTracker] Final duration saved on unload');
                 }
+            } catch (error) {
+                console.error('[VisitTracker] Error in handleUnload:', error);
             }
-
-            // إيقاف التتبع
-            if (this.trackingInterval) {
-                clearInterval(this.trackingInterval);
-            }
-        }
-
-        destroy() {
-            if (this.trackingInterval) {
-                clearInterval(this.trackingInterval);
-            }
-            this.isTracking = false;
         }
     }
 
