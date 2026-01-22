@@ -142,53 +142,76 @@
         }
 
         async getGeolocation() {
-            // استخدام JSONP لتجاوز CORS
-            return new Promise((resolve) => {
-                console.log('[VisitTracker] Fetching geolocation via JSONP...');
-                
-                const callbackName = 'geoCallback_' + Date.now();
-                const timeout = setTimeout(() => {
-                    console.error('[VisitTracker] Geolocation request timeout');
-                    cleanup();
-                    resolve(null);
-                }, 10000);
-
-                window[callbackName] = (data) => {
-                    clearTimeout(timeout);
-                    console.log('[VisitTracker] Geolocation data received:', data);
-                    
-                    const geoData = {
-                        ip: data.query || data.ip || null,
-                        country: data.country || data.country_name || null,
-                        city: data.city || null
-                    };
-                    
-                    console.log('[VisitTracker] Processed geo data:', geoData);
-                    cleanup();
-                    resolve(geoData);
-                };
-
-                const cleanup = () => {
-                    if (window[callbackName]) {
-                        delete window[callbackName];
+            // محاولة عدة خدمات بالترتيب (كلها HTTPS)
+            const services = [
+                {
+                    name: 'ipapi.co',
+                    url: 'https://ipapi.co/json/',
+                    parse: (data) => ({
+                        ip: data.ip,
+                        country: data.country_name,
+                        city: data.city
+                    })
+                },
+                {
+                    name: 'ipify + ipapi',
+                    url: 'https://api.ipify.org?format=json',
+                    parse: async (data) => {
+                        // الحصول على IP فقط من ipify
+                        const ip = data.ip;
+                        // ثم جلب الموقع من ipapi.co
+                        try {
+                            const geoResponse = await fetch(`https://ipapi.co/${ip}/json/`);
+                            const geoData = await geoResponse.json();
+                            return {
+                                ip: ip,
+                                country: geoData.country_name,
+                                city: geoData.city
+                            };
+                        } catch {
+                            return { ip, country: null, city: null };
+                        }
                     }
-                    if (script && script.parentNode) {
-                        script.parentNode.removeChild(script);
-                    }
-                };
+                }
+            ];
 
-                // استخدام ip-api.com مع JSONP (يدعم JSONP بشكل أصلي)
-                const script = document.createElement('script');
-                script.src = `http://ip-api.com/json/?callback=${callbackName}`;
-                script.onerror = () => {
-                    console.error('[VisitTracker] Failed to load geolocation script');
-                    clearTimeout(timeout);
-                    cleanup();
-                    resolve(null);
-                };
-                
-                document.head.appendChild(script);
-            });
+            for (const service of services) {
+                try {
+                    console.log(`[VisitTracker] Trying ${service.name}...`);
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+                    
+                    const response = await fetch(service.url, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' },
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) {
+                        console.warn(`[VisitTracker] ${service.name} returned ${response.status}`);
+                        continue;
+                    }
+
+                    const data = await response.json();
+                    console.log(`[VisitTracker] ${service.name} response:`, data);
+                    
+                    const geoData = await service.parse(data);
+                    
+                    if (geoData && geoData.ip) {
+                        console.log('[VisitTracker] Successfully got geo data:', geoData);
+                        return geoData;
+                    }
+                } catch (error) {
+                    console.warn(`[VisitTracker] ${service.name} failed:`, error.message);
+                    continue;
+                }
+            }
+            
+            console.error('[VisitTracker] All geolocation services failed');
+            return null;
         }
 
         collectVisitData() {
