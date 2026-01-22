@@ -142,35 +142,61 @@
         }
 
         async getGeolocation() {
-            // محاولة عدة خدمات بالترتيب (كلها HTTPS)
+            // استخدام خدمات موثوقة لا تحظر CORS
             const services = [
                 {
-                    name: 'ipapi.co',
-                    url: 'https://ipapi.co/json/',
-                    parse: (data) => ({
-                        ip: data.ip,
-                        country: data.country_name,
-                        city: data.city
-                    })
+                    name: 'ipify + ip-api',
+                    getIP: async () => {
+                        const response = await fetch('https://api.ipify.org?format=json');
+                        const data = await response.json();
+                        return data.ip;
+                    },
+                    getGeo: async (ip) => {
+                        // استخدام JSONP لـ ip-api.com
+                        return new Promise((resolve) => {
+                            const callbackName = 'ipApiCallback_' + Date.now();
+                            const timeout = setTimeout(() => {
+                                cleanup();
+                                resolve(null);
+                            }, 5000);
+
+                            window[callbackName] = (data) => {
+                                clearTimeout(timeout);
+                                cleanup();
+                                resolve({
+                                    ip: data.query || ip,
+                                    country: data.country || null,
+                                    city: data.city || null
+                                });
+                            };
+
+                            const cleanup = () => {
+                                if (window[callbackName]) delete window[callbackName];
+                                if (script && script.parentNode) script.parentNode.removeChild(script);
+                            };
+
+                            const script = document.createElement('script');
+                            script.src = `https://pro.ip-api.com/json/${ip}?key=free&callback=${callbackName}`;
+                            script.onerror = () => {
+                                clearTimeout(timeout);
+                                cleanup();
+                                resolve(null);
+                            };
+                            document.head.appendChild(script);
+                        });
+                    }
                 },
                 {
-                    name: 'ipify + ipapi',
-                    url: 'https://api.ipify.org?format=json',
-                    parse: async (data) => {
-                        // الحصول على IP فقط من ipify
-                        const ip = data.ip;
-                        // ثم جلب الموقع من ipapi.co
-                        try {
-                            const geoResponse = await fetch(`https://ipapi.co/${ip}/json/`);
-                            const geoData = await geoResponse.json();
-                            return {
-                                ip: ip,
-                                country: geoData.country_name,
-                                city: geoData.city
-                            };
-                        } catch {
-                            return { ip, country: null, city: null };
-                        }
+                    name: 'ipapi.is',
+                    getIP: null,
+                    getGeo: async () => {
+                        const response = await fetch('https://ipapi.is/json/');
+                        const data = await response.json();
+                        return {
+                            ip: data.ip || null,
+                            country: data.location?.country || null,
+                            city: data.location?.city || null
+                        };
                     }
                 }
             ];
@@ -179,26 +205,14 @@
                 try {
                     console.log(`[VisitTracker] Trying ${service.name}...`);
                     
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000);
-                    
-                    const response = await fetch(service.url, {
-                        method: 'GET',
-                        headers: { 'Accept': 'application/json' },
-                        signal: controller.signal
-                    });
-                    
-                    clearTimeout(timeoutId);
-
-                    if (!response.ok) {
-                        console.warn(`[VisitTracker] ${service.name} returned ${response.status}`);
-                        continue;
+                    let geoData;
+                    if (service.getIP) {
+                        const ip = await service.getIP();
+                        console.log(`[VisitTracker] Got IP: ${ip}`);
+                        geoData = await service.getGeo(ip);
+                    } else {
+                        geoData = await service.getGeo();
                     }
-
-                    const data = await response.json();
-                    console.log(`[VisitTracker] ${service.name} response:`, data);
-                    
-                    const geoData = await service.parse(data);
                     
                     if (geoData && geoData.ip) {
                         console.log('[VisitTracker] Successfully got geo data:', geoData);
