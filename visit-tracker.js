@@ -142,86 +142,55 @@
         }
 
         async getGeolocation() {
-            // استخدام خدمات موثوقة لا تحظر CORS
-            const services = [
-                {
-                    name: 'ipify + ip-api',
-                    getIP: async () => {
-                        const response = await fetch('https://api.ipify.org?format=json');
-                        const data = await response.json();
-                        return data.ip;
-                    },
-                    getGeo: async (ip) => {
-                        // استخدام JSONP لـ ip-api.com
-                        return new Promise((resolve) => {
-                            const callbackName = 'ipApiCallback_' + Date.now();
-                            const timeout = setTimeout(() => {
-                                cleanup();
-                                resolve(null);
-                            }, 5000);
-
-                            window[callbackName] = (data) => {
-                                clearTimeout(timeout);
-                                cleanup();
-                                resolve({
-                                    ip: data.query || ip,
-                                    country: data.country || null,
-                                    city: data.city || null
-                                });
-                            };
-
-                            const cleanup = () => {
-                                if (window[callbackName]) delete window[callbackName];
-                                if (script && script.parentNode) script.parentNode.removeChild(script);
-                            };
-
-                            const script = document.createElement('script');
-                            script.src = `https://pro.ip-api.com/json/${ip}?key=free&callback=${callbackName}`;
-                            script.onerror = () => {
-                                clearTimeout(timeout);
-                                cleanup();
-                                resolve(null);
-                            };
-                            document.head.appendChild(script);
-                        });
+            // استخدام Cloudflare Trace API - موثوق ومجاني بدون CORS
+            try {
+                console.log('[VisitTracker] Fetching IP from Cloudflare...');
+                
+                const response = await fetch('https://www.cloudflare.com/cdn-cgi/trace');
+                const text = await response.text();
+                
+                // تحليل النص
+                const lines = text.split('\n');
+                const data = {};
+                lines.forEach(line => {
+                    const [key, value] = line.split('=');
+                    if (key && value) {
+                        data[key.trim()] = value.trim();
                     }
-                },
-                {
-                    name: 'ipapi.is',
-                    getIP: null,
-                    getGeo: async () => {
-                        const response = await fetch('https://ipapi.is/json/');
-                        const data = await response.json();
-                        return {
-                            ip: data.ip || null,
-                            country: data.location?.country || null,
-                            city: data.location?.city || null
-                        };
-                    }
+                });
+                
+                console.log('[VisitTracker] Cloudflare data:', data);
+                
+                const geoData = {
+                    ip: data.ip || null,
+                    country: data.loc || null,  // كود الدولة مثل SA
+                    city: null  // Cloudflare لا يوفر المدينة
+                };
+                
+                if (geoData.ip) {
+                    console.log('[VisitTracker] Successfully got geo data:', geoData);
+                    return geoData;
                 }
-            ];
-
-            for (const service of services) {
-                try {
-                    console.log(`[VisitTracker] Trying ${service.name}...`);
-                    
-                    let geoData;
-                    if (service.getIP) {
-                        const ip = await service.getIP();
-                        console.log(`[VisitTracker] Got IP: ${ip}`);
-                        geoData = await service.getGeo(ip);
-                    } else {
-                        geoData = await service.getGeo();
-                    }
-                    
-                    if (geoData && geoData.ip) {
-                        console.log('[VisitTracker] Successfully got geo data:', geoData);
-                        return geoData;
-                    }
-                } catch (error) {
-                    console.warn(`[VisitTracker] ${service.name} failed:`, error.message);
-                    continue;
+            } catch (error) {
+                console.error('[VisitTracker] Cloudflare failed:', error.message);
+            }
+            
+            // محاولة بديلة: ipify فقط للحصول على IP
+            try {
+                console.log('[VisitTracker] Trying ipify as fallback...');
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                
+                if (data.ip) {
+                    console.log('[VisitTracker] Got IP from ipify:', data.ip);
+                    return {
+                        ip: data.ip,
+                        country: null,
+                        city: null
+                    };
                 }
+            } catch (error) {
+                console.error('[VisitTracker] ipify failed:', error.message);
             }
             
             console.error('[VisitTracker] All geolocation services failed');
