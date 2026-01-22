@@ -24,6 +24,7 @@
             this.isTracking = false;
             this.trackingInterval = null;
             this.supabaseClient = null;
+            this.currentVisitId = null;
         }
 
         async init() {
@@ -100,6 +101,23 @@
                 sessionStorage.setItem(TRACKER_CONFIG.visitDurationKey, this.visitStartTime.toString());
 
                 const visitData = this.collectVisitData();
+                
+                // جلب IP والموقع الجغرافي
+                const geoData = await this.getGeolocation();
+                if (geoData) {
+                    visitData.ip_address = geoData.ip;
+                    visitData.country = geoData.country;
+                    visitData.city = geoData.city;
+                    console.log('[VisitTracker] Geo data added to visit:', {
+                        ip: geoData.ip,
+                        country: geoData.country,
+                        city: geoData.city
+                    });
+                } else {
+                    console.warn('[VisitTracker] No geo data available');
+                }
+
+                console.log('[VisitTracker] Final visit data:', visitData);
 
                 // إرسال البيانات إلى Supabase
                 const { data, error } = await this.supabaseClient
@@ -111,7 +129,8 @@
                     console.error('[VisitTracker] Error tracking visit:', error);
                 } else {
                     this.isTracking = true;
-                    console.log('[VisitTracker] Visit tracked successfully');
+                    this.currentVisitId = data[0]?.id;
+                    console.log('[VisitTracker] Visit tracked successfully, ID:', this.currentVisitId);
                 }
 
                 // حفظ وقت آخر زيارة
@@ -120,6 +139,56 @@
             } catch (error) {
                 console.error('[VisitTracker] Error in trackVisit:', error);
             }
+        }
+
+        async getGeolocation() {
+            // استخدام JSONP لتجاوز CORS
+            return new Promise((resolve) => {
+                console.log('[VisitTracker] Fetching geolocation via JSONP...');
+                
+                const callbackName = 'geoCallback_' + Date.now();
+                const timeout = setTimeout(() => {
+                    console.error('[VisitTracker] Geolocation request timeout');
+                    cleanup();
+                    resolve(null);
+                }, 10000);
+
+                window[callbackName] = (data) => {
+                    clearTimeout(timeout);
+                    console.log('[VisitTracker] Geolocation data received:', data);
+                    
+                    const geoData = {
+                        ip: data.query || data.ip || null,
+                        country: data.country || data.country_name || null,
+                        city: data.city || null
+                    };
+                    
+                    console.log('[VisitTracker] Processed geo data:', geoData);
+                    cleanup();
+                    resolve(geoData);
+                };
+
+                const cleanup = () => {
+                    if (window[callbackName]) {
+                        delete window[callbackName];
+                    }
+                    if (script && script.parentNode) {
+                        script.parentNode.removeChild(script);
+                    }
+                };
+
+                // استخدام ip-api.com مع JSONP (يدعم JSONP بشكل أصلي)
+                const script = document.createElement('script');
+                script.src = `http://ip-api.com/json/?callback=${callbackName}`;
+                script.onerror = () => {
+                    console.error('[VisitTracker] Failed to load geolocation script');
+                    clearTimeout(timeout);
+                    cleanup();
+                    resolve(null);
+                };
+                
+                document.head.appendChild(script);
+            });
         }
 
         collectVisitData() {
@@ -176,17 +245,25 @@
                 const duration = Math.floor((Date.now() - this.visitStartTime) / 1000);
 
                 if (duration >= TRACKER_CONFIG.minDuration) {
+                    console.log(`[VisitTracker] Updating duration to ${duration}s`);
+                    
                     // تحديث مدة الزيارة في قاعدة البيانات
-                    const { error } = await this.supabaseClient
+                    const { data, error } = await this.supabaseClient
                         .from('site_visits')
-                        .update({ visit_duration: duration })
+                        .update({ 
+                            visit_duration: duration,
+                            is_bounce: duration < 10
+                        })
                         .eq('session_id', this.sessionId)
                         .eq('page_path', window.location.pathname)
                         .order('visited_at', { ascending: false })
-                        .limit(1);
+                        .limit(1)
+                        .select();
 
                     if (error) {
                         console.error('[VisitTracker] Error updating duration:', error);
+                    } else {
+                        console.log('[VisitTracker] Duration updated successfully:', data);
                     }
                 }
             } catch (error) {
@@ -213,24 +290,26 @@
             });
         }
 
-        handleUnload() {
+        async handleUnload() {
             if (!this.isTracking || !this.visitStartTime) return;
 
             const duration = Math.floor((Date.now() - this.visitStartTime) / 1000);
 
             if (duration >= TRACKER_CONFIG.minDuration) {
-                // استخدام sendBeacon للإرسال الموثوق عند مغادرة الصفحة
-                const data = {
-                    session_id: this.sessionId,
-                    page_path: window.location.pathname,
-                    visit_duration: duration,
-                    is_bounce: duration < 10 // اعتبار الزيارة ارتداد إذا كانت أقل من 10 ثوان
-                };
-
-                // محاولة استخدام sendBeacon
-                if (navigator.sendBeacon) {
-                    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-                    navigator.sendBeacon('/api/track-duration', blob);
+                try {
+                    // تحديث مدة الزيارة مباشرة في Supabase
+                    await this.supabaseClient
+                        .from('site_visits')
+                        .update({ 
+                            visit_duration: duration,
+                            is_bounce: duration < 10
+                        })
+                        .eq('session_id', this.sessionId)
+                        .eq('page_path', window.location.pathname)
+                        .order('visited_at', { ascending: false })
+                        .limit(1);
+                } catch (error) {
+                    console.error('[VisitTracker] Error in handleUnload:', error);
                 }
             }
 

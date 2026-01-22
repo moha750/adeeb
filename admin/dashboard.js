@@ -620,6 +620,9 @@
             case 'permissions-section':
                 await loadPermissionsSection();
                 break;
+            case 'site-visits-section':
+                await loadSiteVisitsSection();
+                break;
         }
     }
 
@@ -4297,16 +4300,6 @@
         }
     }
 
-    // إضافة تحميل قسم الزيارات عند التبديل إليه
-    const originalSwitchSection = switchSection;
-    function switchSection(sectionId) {
-        originalSwitchSection(sectionId);
-        
-        if (sectionId === 'site-visits-section') {
-            loadSiteVisitsSection();
-        }
-    }
-
-        // تهيئة التطبيق عند تحميل الصفحة
-        init();
+    // تهيئة التطبيق عند تحميل الصفحة
+    init();
 })();

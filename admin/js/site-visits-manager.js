@@ -16,7 +16,7 @@ class SiteVisitsManager {
             if (!user) return false;
 
             const { data, error } = await this.sb.rpc('can_view_site_visits', {
-                user_id: user.id
+                p_user_id: user.id
             });
 
             if (error) {
@@ -81,13 +81,9 @@ class SiteVisitsManager {
 
     async getDeviceStats(days = 30) {
         try {
-            const startDate = new Date();
-            startDate.setDate(startDate.getDate() - days);
-
-            const { data, error } = await this.sb
-                .from('site_visits')
-                .select('device_type')
-                .gte('visited_at', startDate.toISOString());
+            const { data, error } = await this.sb.rpc('get_device_stats', {
+                days_back: days
+            });
 
             if (error) throw error;
 
@@ -98,10 +94,12 @@ class SiteVisitsManager {
                 unknown: 0
             };
 
-            data.forEach(visit => {
-                const type = visit.device_type || 'unknown';
-                stats[type] = (stats[type] || 0) + 1;
-            });
+            if (data && data.length > 0) {
+                data.forEach(item => {
+                    const type = item.device_type || 'unknown';
+                    stats[type] = parseInt(item.visit_count) || 0;
+                });
+            }
 
             return stats;
         } catch (error) {
@@ -112,21 +110,19 @@ class SiteVisitsManager {
 
     async getBrowserStats(days = 30) {
         try {
-            const startDate = new Date();
-            startDate.setDate(startDate.getDate() - days);
-
-            const { data, error } = await this.sb
-                .from('site_visits')
-                .select('browser_name')
-                .gte('visited_at', startDate.toISOString());
+            const { data, error } = await this.sb.rpc('get_browser_stats', {
+                days_back: days
+            });
 
             if (error) throw error;
 
             const stats = {};
-            data.forEach(visit => {
-                const browser = visit.browser_name || 'Unknown';
-                stats[browser] = (stats[browser] || 0) + 1;
-            });
+            if (data && data.length > 0) {
+                data.forEach(item => {
+                    const browser = item.browser_name || 'Unknown';
+                    stats[browser] = parseInt(item.visit_count) || 0;
+                });
+            }
 
             return stats;
         } catch (error) {
@@ -137,22 +133,18 @@ class SiteVisitsManager {
 
     async getTodayStats() {
         try {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            const { data, error } = await this.sb
-                .from('site_visits')
-                .select('*', { count: 'exact', head: false })
-                .gte('visited_at', today.toISOString());
+            const { data, error } = await this.sb.rpc('get_today_visits_stats');
 
             if (error) throw error;
 
-            const uniqueVisitors = new Set(data.map(v => v.visitor_id)).size;
+            if (data && data.length > 0) {
+                return {
+                    total: parseInt(data[0].total_visits) || 0,
+                    unique: parseInt(data[0].unique_visitors) || 0
+                };
+            }
 
-            return {
-                total: data.length,
-                unique: uniqueVisitors
-            };
+            return { total: 0, unique: 0 };
         } catch (error) {
             console.error('Error getting today stats:', error);
             throw error;
@@ -161,22 +153,18 @@ class SiteVisitsManager {
 
     async getWeekStats() {
         try {
-            const weekAgo = new Date();
-            weekAgo.setDate(weekAgo.getDate() - 7);
-
-            const { data, error } = await this.sb
-                .from('site_visits')
-                .select('*', { count: 'exact', head: false })
-                .gte('visited_at', weekAgo.toISOString());
+            const { data, error } = await this.sb.rpc('get_week_visits_stats');
 
             if (error) throw error;
 
-            const uniqueVisitors = new Set(data.map(v => v.visitor_id)).size;
+            if (data && data.length > 0) {
+                return {
+                    total: parseInt(data[0].total_visits) || 0,
+                    unique: parseInt(data[0].unique_visitors) || 0
+                };
+            }
 
-            return {
-                total: data.length,
-                unique: uniqueVisitors
-            };
+            return { total: 0, unique: 0 };
         } catch (error) {
             console.error('Error getting week stats:', error);
             throw error;
@@ -185,22 +173,18 @@ class SiteVisitsManager {
 
     async getMonthStats() {
         try {
-            const monthAgo = new Date();
-            monthAgo.setDate(monthAgo.getDate() - 30);
-
-            const { data, error } = await this.sb
-                .from('site_visits')
-                .select('*', { count: 'exact', head: false })
-                .gte('visited_at', monthAgo.toISOString());
+            const { data, error } = await this.sb.rpc('get_month_visits_stats');
 
             if (error) throw error;
 
-            const uniqueVisitors = new Set(data.map(v => v.visitor_id)).size;
+            if (data && data.length > 0) {
+                return {
+                    total: parseInt(data[0].total_visits) || 0,
+                    unique: parseInt(data[0].unique_visitors) || 0
+                };
+            }
 
-            return {
-                total: data.length,
-                unique: uniqueVisitors
-            };
+            return { total: 0, unique: 0 };
         } catch (error) {
             console.error('Error getting month stats:', error);
             throw error;

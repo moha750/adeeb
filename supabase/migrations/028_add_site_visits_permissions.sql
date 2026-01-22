@@ -53,7 +53,7 @@ ON CONFLICT DO NOTHING;
 -- =====================================================
 -- 3. دالة للتحقق من صلاحية عرض الإحصائيات
 -- =====================================================
-CREATE OR REPLACE FUNCTION can_view_site_visits(user_id UUID)
+CREATE OR REPLACE FUNCTION can_view_site_visits(p_user_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
@@ -62,7 +62,7 @@ BEGIN
         JOIN public.roles r ON ur.role_id = r.id
         JOIN public.role_permissions rp ON r.id = rp.role_id
         JOIN public.permissions p ON rp.permission_id = p.id
-        WHERE ur.user_id = user_id
+        WHERE ur.user_id = p_user_id
             AND ur.is_active = true
             AND p.permission_key = 'view_site_visits'
     );
@@ -72,7 +72,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- =====================================================
 -- 4. دالة للتحقق من صلاحية إدارة البيانات
 -- =====================================================
-CREATE OR REPLACE FUNCTION can_manage_site_visits(user_id UUID)
+CREATE OR REPLACE FUNCTION can_manage_site_visits(p_user_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
@@ -81,7 +81,7 @@ BEGIN
         JOIN public.roles r ON ur.role_id = r.id
         JOIN public.role_permissions rp ON r.id = rp.role_id
         JOIN public.permissions p ON rp.permission_id = p.id
-        WHERE ur.user_id = user_id
+        WHERE ur.user_id = p_user_id
             AND ur.is_active = true
             AND p.permission_key = 'manage_site_visits'
     );

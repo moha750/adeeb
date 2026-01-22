@@ -145,9 +145,34 @@ SELECT
 FROM committees
 ON CONFLICT (committee_id) DO NOTHING;
 
+-- دالة لإضافة اللجان الجديدة تلقائياً
+CREATE OR REPLACE FUNCTION auto_add_committee_to_available()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- إضافة اللجنة الجديدة إلى جدول اللجان المتاحة
+    INSERT INTO membership_available_committees (committee_id, display_order, is_available)
+    VALUES (
+        NEW.id,
+        (SELECT COALESCE(MAX(display_order), 0) + 1 FROM membership_available_committees),
+        true
+    )
+    ON CONFLICT (committee_id) DO NOTHING;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- إنشاء Trigger لإضافة اللجان الجديدة تلقائياً
+DROP TRIGGER IF EXISTS trigger_auto_add_committee_to_available ON committees;
+CREATE TRIGGER trigger_auto_add_committee_to_available
+AFTER INSERT ON committees
+FOR EACH ROW
+EXECUTE FUNCTION auto_add_committee_to_available();
+
 -- تعليقات توضيحية
 COMMENT ON TABLE membership_available_committees IS 'اللجان المتاحة للتسجيل في نموذج العضوية - مستقلة عن حالة اللجنة';
 COMMENT ON COLUMN membership_available_committees.is_available IS 'هل اللجنة متاحة للتسجيل (مستقل عن is_active في جدول committees)';
 COMMENT ON COLUMN membership_available_committees.display_order IS 'ترتيب ظهور اللجنة في القائمة';
 COMMENT ON COLUMN membership_available_committees.max_applicants IS 'الحد الأقصى للمتقدمين (null = غير محدود)';
 COMMENT ON COLUMN membership_available_committees.current_applicants IS 'عدد المتقدمين الحاليين';
+COMMENT ON FUNCTION auto_add_committee_to_available() IS 'إضافة اللجان الجديدة تلقائياً إلى جدول اللجان المتاحة للتسجيل';

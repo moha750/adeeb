@@ -158,7 +158,7 @@ BEGIN
     FROM public.site_visits
     WHERE visited_at BETWEEN start_date AND end_date;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =====================================================
 -- 7. دالة للحصول على أكثر الصفحات زيارة
@@ -186,7 +186,7 @@ BEGIN
     ORDER BY visit_count DESC
     LIMIT limit_count;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =====================================================
 -- 8. دالة للحصول على الزيارات حسب اليوم
@@ -210,7 +210,7 @@ BEGIN
     GROUP BY (sv.visited_at::date)
     ORDER BY visit_date DESC;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =====================================================
 -- 9. تعليقات على الجداول

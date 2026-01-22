@@ -87,41 +87,16 @@ function isReturningVisitor() {
     return hasId; // if we already have an id in localStorage then it's a returning visit
   } catch { return false; }
 }
-async function trackVisit() {
-  try {
-    const sb = window.sbClient;
-    if (!sb) return; // Supabase not initialized
-    const wasKnown = !!(function(){ try { return localStorage.getItem('adeeb_visitor_id'); } catch { return null; } })();
-    const vid = getVisitorId();
-    const sid = getSessionId();
-    const url = new URL(location.href);
-    const utm = Object.fromEntries(['utm_source','utm_medium','utm_campaign'].map(k => [k, url.searchParams.get(k) || null]));
-    const payload = {
-      visitor_id: vid,
-      session_id: sid,
-      is_returning: wasKnown === true || wasKnown === 'true' || (typeof wasKnown === 'string' && wasKnown.length > 0),
-      path: location.pathname + location.search + location.hash,
-      referrer: document.referrer || null,
-      user_agent: (navigator.userAgent || '').slice(0, 500),
-      language: navigator.language || null,
-      screen_w: (window.screen && window.screen.width) || null,
-      screen_h: (window.screen && window.screen.height) || null,
-      tz: (Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || null,
-      utm_source: utm.utm_source,
-      utm_medium: utm.utm_medium,
-      utm_campaign: utm.utm_campaign
-    };
-    // Fire-and-forget insert; ignore errors (table might not exist yet or RLS not set)
-    sb.from('site_visits').insert(payload).then(({ error }) => {
-      if (error) console.warn('site_visits insert failed:', error.message);
-      try { localStorage.setItem('adeeb_last_visit', new Date().toISOString()); } catch {}
-    }).catch(() => {});
-  } catch {}
-}
+// ملاحظة: تم نقل نظام تتبع الزيارات إلى visit-tracker.js
+// الكود القديم هنا تم حذفه لتجنب التعارض والازدواجية
+// visit-tracker.js يوفر نظام تتبع متقدم مع:
+// - جلب IP والموقع الجغرافي
+// - تتبع مدة الزيارة
+// - معلومات الجهاز والمتصفح الكاملة
+// - متوافق مع بنية جدول site_visits
 
 document.addEventListener("DOMContentLoaded", function () {
-  // Record a site visit (new vs returning)
-  try { trackVisit(); } catch {}
+  // نظام التتبع يعمل تلقائياً من visit-tracker.js
   // Initialize FAQ accordion (will be re-initialized after dynamic loading)
   initFaqAccordion();
 
