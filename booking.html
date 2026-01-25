@@ -79,14 +79,13 @@
                             maxlength="10"
                             dir="ltr"
                         >
-                        <small class="form-hint">مثال: 0501234567</small>
                     </div>
 
                     <div id="phoneError" class="alert alert-error" style="display: none;"></div>
 
                     <button id="verifyPhoneBtn" class="btn btn-primary btn-block">
-                        <i class="fas fa-arrow-left"></i>
                         التالي
+                    <i id="arrow" class="fas fa-arrow-left"></i>
                     </button>
                 </div>
             </div>
@@ -96,8 +95,8 @@
                 <div class="warning-icon">
                     <i class="fas fa-calendar-check"></i>
                 </div>
-                <h2>لديك موعد محجوز مسبقاً</h2>
-                <p>يوجد لديك موعد محجوز في هذه الجلسة</p>
+                <h2 style="text-align: center;">لديك موعد محجوز مسبقاً</h2>
+                <p style="text-align: center;">يوجد لديك موعد محجوز في هذه الجلسة</p>
 
                 <div class="confirmation-details">
                     <div class="detail-card">
@@ -164,7 +163,7 @@
                         حذف الموعد
                     </button>
                     <button id="backToPhoneFromExisting" class="btn btn-secondary">
-                        <i class="fas fa-arrow-right"></i>
+                        <i id="arrow" class="fas fa-arrow-right"></i>
                         رجوع
                     </button>
                 </div>
@@ -221,7 +220,7 @@
                 </div>
 
                 <button id="backToPhoneBtn" class="btn btn-secondary">
-                    <i class="fas fa-arrow-right"></i>
+                    <i id="arrow" class="fas fa-arrow-right"></i>
                     رجوع
                 </button>
             </div>
@@ -324,7 +323,7 @@
 
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i>
-                    <p>سيتم إرسال تذكير لك قبل موعد المقابلة بـ 24 ساعة</p>
+                    <p>عند مرور 3 دقائق سيتم إلغاء حجزك بشكل تلقائي، لذلك نرجو الإلتزام بالموعد.</p>
                 </div>
             </div>
 
@@ -334,7 +333,7 @@
     <!-- Footer -->
     <footer class="booking-footer">
         <div class="container">
-            <p>&copy; 2026 نادي أديب الثقافي. جميع الحقوق محفوظة.</p>
+            <p>      جميع الحقوق محفوظة لنادي أدِيب 2026      &copy;        </p>
         </div>
     </footer>
 

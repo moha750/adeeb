@@ -65,7 +65,8 @@
         confirmLocation: document.getElementById('confirmLocation'),
         meetingLinkCard: document.getElementById('meetingLinkCard'),
         locationCard: document.getElementById('locationCard'),
-        addToCalendarBtn: document.getElementById('addToCalendarBtn')
+        addToCalendarBtn: document.getElementById('addToCalendarBtn'),
+        copyDetailsBtn: document.getElementById('copyDetailsBtn')
     };
 
     // ============================================================================
@@ -147,8 +148,18 @@
         });
         elements.sessionDate.textContent = dateStr;
 
-        // تنسيق الوقت
-        elements.sessionTime.textContent = `${sessionData.start_time.substring(0, 5)} - ${sessionData.end_time.substring(0, 5)}`;
+        // تنسيق الوقت - تحويل إلى نظام 12 ساعة
+        const startTime12 = new Date(`2000-01-01 ${sessionData.start_time}`).toLocaleTimeString('ar-SA', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+        const endTime12 = new Date(`2000-01-01 ${sessionData.end_time}`).toLocaleTimeString('ar-SA', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+        elements.sessionTime.textContent = `${startTime12} - ${endTime12}`;
 
         // نوع المقابلة
         const typeMap = {
@@ -415,11 +426,20 @@
             day: 'numeric'
         });
 
-        const confirmed = confirm(`هل تريد حجز الموعد:\n${dateStr}\nالساعة ${timeStr}؟`);
-
-        if (confirmed) {
-            await bookSlot(slot);
-        }
+        showConfirmDialog(
+            'تأكيد الحجز',
+            `<div style="text-align: center; padding: 1rem;">
+                <i class="fas fa-calendar-check" style="font-size: 3rem; color: #3d8fd6; margin-bottom: 1rem;"></i>
+                <p style="font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 600;">هل تريد حجز هذا الموعد؟</p>
+                <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                    <p style="color: #274060; margin: 0.5rem 0;"><i class="fas fa-calendar"></i> ${dateStr}</p>
+                    <p style="color: #274060; margin: 0.5rem 0;"><i class="fas fa-clock"></i> ${timeStr}</p>
+                </div>
+            </div>`,
+            async () => {
+                await bookSlot(slot);
+            }
+        );
     }
 
     // ============================================================================
@@ -439,8 +459,11 @@
             const result = data[0];
 
             if (!result.success) {
-                alert(result.message);
-                await loadAvailableSlots(); // إعادة تحميل المواعيد
+                showAlertDialog('تنبيه', `<div style="text-align: center; padding: 1rem;">
+                    <i class="fas fa-exclamation-circle" style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;"></i>
+                    <p style="font-size: 1.05rem; color: #64748b;">${result.message}</p>
+                </div>`);
+                await loadAvailableSlots();
                 return;
             }
 
@@ -449,7 +472,10 @@
 
         } catch (error) {
             console.error('خطأ في حجز الموعد:', error);
-            alert('حدث خطأ أثناء حجز الموعد. يرجى المحاولة مرة أخرى');
+            showAlertDialog('خطأ', `<div style="text-align: center; padding: 1rem;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;"></i>
+                <p style="font-size: 1.05rem; color: #64748b;">حدث خطأ أثناء حجز الموعد. يرجى المحاولة مرة أخرى</p>
+            </div>`);
         }
     }
 
@@ -493,6 +519,13 @@
         elements.addToCalendarBtn.addEventListener('click', () => {
             addToCalendar(slot);
         });
+
+        // زر نسخ التفاصيل
+        if (elements.copyDetailsBtn) {
+            elements.copyDetailsBtn.addEventListener('click', () => {
+                copyBookingDetails(slot);
+            });
+        }
     }
 
     // ============================================================================
@@ -564,9 +597,20 @@
     // ============================================================================
     
     elements.cancelBookingBtn.addEventListener('click', async () => {
-        // تأكيد الحذف
-        const confirmed = confirm('هل أنت متأكد من حذف هذا الموعد؟');
-        if (!confirmed) return;
+        showConfirmDialog(
+            'تأكيد الحذف',
+            `<div style="text-align: center; padding: 1rem;">
+                <i class="fas fa-trash-alt" style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;"></i>
+                <p style="font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 600;">هل أنت متأكد من حذف هذا الموعد؟</p>
+                <p style="color: #64748b; font-size: 0.95rem;">لن تتمكن من التراجع عن هذا الإجراء</p>
+            </div>`,
+            async () => {
+                await cancelBooking();
+            }
+        );
+    });
+
+    async function cancelBooking() {
 
         elements.cancelBookingBtn.disabled = true;
         elements.cancelBookingBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحذف...';
@@ -583,32 +627,38 @@
             const result = data[0];
 
             if (!result.success) {
-                alert('خطأ: ' + result.message);
+                showAlertDialog('خطأ', `<div style="text-align: center; padding: 1rem;">
+                    <i class="fas fa-exclamation-circle" style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;"></i>
+                    <p style="font-size: 1.05rem; color: #64748b;">${result.message}</p>
+                </div>`);
                 elements.cancelBookingBtn.disabled = false;
                 elements.cancelBookingBtn.innerHTML = '<i class="fas fa-trash"></i> حذف الموعد';
                 return;
             }
 
-            // إعادة تعيين بيانات الحجز الحالي
             existingBookingData = null;
 
-            // عرض رسالة نجاح
-            alert('تم حذف الموعد بنجاح. يمكنك الآن حجز موعد جديد.');
+            showAlertDialog('نجح', `<div style="text-align: center; padding: 1rem;">
+                <i class="fas fa-check-circle" style="font-size: 3rem; color: #10b981; margin-bottom: 1rem;"></i>
+                <p style="font-size: 1.1rem; font-weight: 600; color: #274060;">تم حذف الموعد بنجاح</p>
+                <p style="color: #64748b; font-size: 0.95rem; margin-top: 0.5rem;">يمكنك الآن حجز موعد جديد</p>
+            </div>`, async () => {
+                await showSlotStep();
+            });
 
-            // إعادة تعيين زر الحذف
             elements.cancelBookingBtn.disabled = false;
             elements.cancelBookingBtn.innerHTML = '<i class="fas fa-trash"></i> حذف الموعد';
-
-            // الانتقال لاختيار موعد جديد
-            await showSlotStep();
 
         } catch (error) {
             console.error('خطأ في حذف الحجز:', error);
-            alert('حدث خطأ أثناء حذف الحجز. يرجى المحاولة مرة أخرى');
+            showAlertDialog('خطأ', `<div style="text-align: center; padding: 1rem;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;"></i>
+                <p style="font-size: 1.05rem; color: #64748b;">حدث خطأ أثناء حذف الحجز. يرجى المحاولة مرة أخرى</p>
+            </div>`);
             elements.cancelBookingBtn.disabled = false;
             elements.cancelBookingBtn.innerHTML = '<i class="fas fa-trash"></i> حذف الموعد';
         }
-    });
+    }
 
     // ============================================================================
     // الرجوع من صفحة الحجز الحالي
@@ -669,6 +719,246 @@
     if (typeof window.sbClient === 'undefined') {
         showError('خطأ في الاتصال بقاعدة البيانات. يرجى المحاولة لاحقاً');
         return;
+    }
+
+    // ============================================================================
+    // نظام النوافذ المنبثقة الموحد
+    // ============================================================================
+    
+    function showConfirmDialog(title, content, onConfirm) {
+        const modalHtml = `
+            <div class="custom-modal active" id="bookingConfirmModal">
+                <div class="custom-modal-overlay"></div>
+                <div class="custom-modal-container" style="max-width: 450px;">
+                    <div class="custom-modal-header">
+                        <h2 class="custom-modal-title">
+                            <i class="fas fa-question-circle"></i>
+                            ${title}
+                        </h2>
+                        <button class="custom-modal-close" onclick="this.closest('.custom-modal').remove(); document.body.style.overflow = '';">
+                            <i class="fas fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="custom-modal-body">
+                        ${content}
+                    </div>
+                    <div class="custom-modal-footer" style="justify-content: center; gap: 1rem;">
+                        <button class="modal-btn modal-btn-primary" id="confirmBtn">
+                            <i class="fas fa-check"></i>
+                            تأكيد
+                        </button>
+                        <button class="modal-btn modal-btn-secondary" id="cancelBtn" style="background: #e2e8f0; color: #475569;">
+                            <i class="fas fa-times"></i>
+                            إلغاء
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        document.body.style.overflow = 'hidden';
+        
+        const modal = document.getElementById('bookingConfirmModal');
+        const confirmBtn = modal.querySelector('#confirmBtn');
+        const cancelBtn = modal.querySelector('#cancelBtn');
+        const overlay = modal.querySelector('.custom-modal-overlay');
+        
+        const closeModal = () => {
+            modal.remove();
+            document.body.style.overflow = '';
+        };
+        
+        confirmBtn.addEventListener('click', () => {
+            closeModal();
+            if (onConfirm) onConfirm();
+        });
+        
+        cancelBtn.addEventListener('click', closeModal);
+        overlay.addEventListener('click', closeModal);
+        
+        // ESC key
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    }
+    
+    function showAlertDialog(title, content, onClose) {
+        const modalHtml = `
+            <div class="custom-modal active" id="bookingAlertModal">
+                <div class="custom-modal-overlay"></div>
+                <div class="custom-modal-container" style="max-width: 450px;">
+                    <div class="custom-modal-header">
+                        <h2 class="custom-modal-title">
+                            <i class="fas fa-info-circle"></i>
+                            ${title}
+                        </h2>
+                        <button class="custom-modal-close" onclick="this.closest('.custom-modal').remove(); document.body.style.overflow = '';">
+                            <i class="fas fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="custom-modal-body">
+                        ${content}
+                    </div>
+                    <div class="custom-modal-footer" style="justify-content: center;">
+                        <button class="modal-btn modal-btn-primary" id="okBtn">
+                            <i class="fas fa-check"></i>
+                            حسناً
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        document.body.style.overflow = 'hidden';
+        
+        const modal = document.getElementById('bookingAlertModal');
+        const okBtn = modal.querySelector('#okBtn');
+        const overlay = modal.querySelector('.custom-modal-overlay');
+        
+        const closeModal = () => {
+            modal.remove();
+            document.body.style.overflow = '';
+            if (onClose) onClose();
+        };
+        
+        okBtn.addEventListener('click', closeModal);
+        overlay.addEventListener('click', closeModal);
+        
+        // ESC key
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    }
+
+    // ============================================================================
+    // نسخ تفاصيل الحجز
+    // ============================================================================
+    
+    function copyBookingDetails(slot) {
+        const slotTime = new Date(slot.slot_time);
+        const slotEndTime = new Date(slot.slot_end_time);
+        
+        const dateStr = slotTime.toLocaleDateString('ar-SA', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        
+        const timeStr = slotTime.toLocaleTimeString('ar-SA', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+        
+        const endTimeStr = slotEndTime.toLocaleTimeString('ar-SA', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+        
+        let details = `📋 تفاصيل حجز المقابلة\n`;
+        details += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+        details += `👤 الاسم: ${applicantData.name}\n`;
+        details += `📅 التاريخ: ${dateStr}\n`;
+        details += `🕐 الوقت: ${timeStr} - ${endTimeStr}\n`;
+        details += `⏱️ المدة: ${sessionData.slot_duration} دقيقة\n`;
+        details += `📌 الجلسة: ${sessionData.session_name}\n`;
+        
+        if (sessionData.interview_type === 'online' && sessionData.meeting_link) {
+            details += `🔗 رابط المقابلة: ${sessionData.meeting_link}\n`;
+        } else if (sessionData.location) {
+            details += `📍 الموقع: ${sessionData.location}\n`;
+        }
+        
+        // نسخ إلى الحافظة
+        navigator.clipboard.writeText(details).then(() => {
+            showCopyNotification('تم نسخ التفاصيل بنجاح ✓');
+        }).catch((err) => {
+            console.error('خطأ في النسخ:', err);
+            // Fallback للمتصفحات القديمة
+            fallbackCopyText(details);
+        });
+    }
+    
+    // ============================================================================
+    // Fallback للنسخ في المتصفحات القديمة
+    // ============================================================================
+    
+    function fallbackCopyText(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopyNotification('تم نسخ التفاصيل بنجاح ✓');
+            } else {
+                showCopyNotification('فشل النسخ. يرجى النسخ يدوياً', 'error');
+            }
+        } catch (err) {
+            console.error('Fallback: خطأ في النسخ', err);
+            showCopyNotification('فشل النسخ. يرجى النسخ يدوياً', 'error');
+        }
+        
+        document.body.removeChild(textArea);
+    }
+    
+    // ============================================================================
+    // إظهار إشعار النسخ
+    // ============================================================================
+    
+    function showCopyNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = 'copy-notification';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'success' ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)'};
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            font-family: fb;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideInRight 0.3s ease-out;
+            max-width: 350px;
+        `;
+        
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}" style="font-size: 1.25rem;"></i>
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease-out';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
     }
 
     // بدء التهيئة

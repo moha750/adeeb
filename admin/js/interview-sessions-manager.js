@@ -902,7 +902,17 @@
                 }
             }
 
-            const { error } = await window.sbClient
+            // الحصول على البيانات القديمة للمقارنة
+            const oldSession = allSessions.find(s => s.id === sessionId);
+            const timeFieldsChanged = oldSession && (
+                oldSession.session_date !== date ||
+                oldSession.start_time !== startTime ||
+                oldSession.end_time !== endTime ||
+                oldSession.slot_duration !== parseInt(duration)
+            );
+
+            // تحديث بيانات الجلسة
+            const { error: updateError } = await window.sbClient
                 .from('interview_sessions')
                 .update({
                     session_name: name,
@@ -917,9 +927,41 @@
                 })
                 .eq('id', sessionId);
 
-            if (error) throw error;
+            if (updateError) throw updateError;
 
-            showNotification('تم تحديث الجلسة بنجاح', 'success');
+            // إذا تغيرت حقول الوقت، نحتاج لإعادة توليد الفترات
+            if (timeFieldsChanged) {
+                // حذف الفترات القديمة غير المحجوزة
+                const { error: deleteError } = await window.sbClient
+                    .from('interview_slots')
+                    .delete()
+                    .eq('session_id', sessionId)
+                    .eq('is_booked', false);
+
+                if (deleteError) {
+                    console.error('خطأ في حذف الفترات القديمة:', deleteError);
+                }
+
+                // إعادة توليد الفترات الجديدة
+                const { error: generateError } = await window.sbClient
+                    .rpc('generate_interview_slots', {
+                        p_session_id: sessionId,
+                        p_session_date: date,
+                        p_start_time: startTime,
+                        p_end_time: endTime,
+                        p_slot_duration: parseInt(duration)
+                    });
+
+                if (generateError) {
+                    console.error('خطأ في إعادة توليد الفترات:', generateError);
+                    showNotification('تم تحديث الجلسة ولكن حدث خطأ في إعادة توليد الفترات الزمنية', 'warning');
+                } else {
+                    showNotification('تم تحديث الجلسة وإعادة توليد الفترات الزمنية بنجاح', 'success');
+                }
+            } else {
+                showNotification('تم تحديث الجلسة بنجاح', 'success');
+            }
+
             window.closeFormModal();
             await loadSessions();
 
