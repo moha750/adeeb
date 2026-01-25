@@ -345,7 +345,7 @@
                 slotBtn.classList.add('booked');
                 slotBtn.disabled = true;
                 slotBtn.innerHTML = `
-                    <span class="slot-time">${timeStr}</span>
+                    <span class="slot-time">${timeStr} - ${endTimeStr}</span>
                     <span class="slot-status">محجوز</span>
                 `;
             } else if (isExpired) {
@@ -354,7 +354,7 @@
                 slotBtn.classList.add('expired');
                 slotBtn.disabled = true;
                 slotBtn.innerHTML = `
-                    <span class="slot-time">${timeStr}</span>
+                    <span class="slot-time">${timeStr} - ${endTimeStr}</span>
                     <span class="slot-status">انتهى</span>
                 `;
             } else {
@@ -362,7 +362,7 @@
                 availableCount++;
                 slotBtn.classList.add('available');
                 slotBtn.innerHTML = `
-                    <span class="slot-time">${timeStr}</span>
+                    <span class="slot-time">${timeStr} - ${endTimeStr}</span>
                     <span class="slot-status">متاح</span>
                 `;
 

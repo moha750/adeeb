@@ -2468,6 +2468,10 @@
                                     رفض
                                 </button>
                             ` : ''}
+                            <button class="btn-action btn-action-warning" onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot_id}')" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                                <i class="fa-solid fa-trash-alt"></i>
+                                حذف الموعد
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -3592,6 +3596,43 @@
         });
     }
 
+    /**
+     * حذف موعد المقابلة إدارياً (إجراء قصري)
+     */
+    async function cancelInterviewAdmin(interviewId, slotId) {
+        try {
+            // تأكيد الحذف
+            const confirmed = confirm('⚠️ تحذير: هل أنت متأكد من حذف هذا الموعد؟\n\nسيتم:\n• حذف الموعد من قاعدة البيانات\n• حذف المقابلة المرتبطة\n• السماح للمتقدم بحجز موعد جديد\n\nهذا الإجراء لا يمكن التراجع عنه!');
+            
+            if (!confirmed) return;
+
+            // استدعاء دالة الحذف الإداري
+            const { data, error } = await window.sbClient
+                .rpc('cancel_interview_admin', {
+                    p_interview_id: interviewId,
+                    p_slot_id: slotId
+                });
+
+            if (error) throw error;
+
+            const result = data[0];
+
+            if (!result.success) {
+                showNotification(result.message, 'error');
+                return;
+            }
+
+            showNotification('تم حذف الموعد بنجاح. يمكن للمتقدم الآن حجز موعد جديد', 'success');
+            
+            // إعادة تحميل المقابلات
+            await loadInterviews();
+
+        } catch (error) {
+            console.error('خطأ في حذف الموعد:', error);
+            showNotification('حدث خطأ أثناء حذف الموعد', 'error');
+        }
+    }
+
     // تصدير الوظائف العامة
     window.membershipManager = {
         init: initMembershipManager,
@@ -3612,6 +3653,7 @@
         viewInterview: viewInterview,
         acceptInterview: acceptInterview,
         rejectInterview: rejectInterview,
+        cancelInterviewAdmin: cancelInterviewAdmin,
         loadAcceptedMembers: loadAcceptedMembers,
         viewAcceptedMember: viewAcceptedMember
     };
