@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حجز موعد المقابلة - أديب</title>
+    <link rel="stylesheet" href="booking.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="favicon/favicon-32x32.png">
+</head>
+<body>
+    <!-- Header -->
+    <header class="booking-header">
+        <div class="container">
+            <img src="adeeb-logo.png" alt="أديب" class="logo">
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="booking-main">
+        <div class="container">
+            
+            <!-- Loading State -->
+            <div id="loadingState" class="booking-card">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+                <p>جاري التحميل...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="booking-card error-state" style="display: none;">
+                <div class="error-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <h2>عذراً!</h2>
+                <p id="errorMessage">حدث خطأ أثناء تحميل البيانات</p>
+                <button onclick="location.reload()" class="btn btn-primary">
+                    <i class="fas fa-redo"></i>
+                    إعادة المحاولة
+                </button>
+            </div>
+
+            <!-- Step 1: Phone Verification -->
+            <div id="phoneStep" class="booking-card" style="display: none;">
+                <div class="session-info">
+                    <h1 id="sessionName">حجز موعد المقابلة</h1>
+                    <p id="sessionDescription"></p>
+                    <div class="session-details">
+                        <div class="detail-item">
+                            <i class="fas fa-calendar"></i>
+                            <span id="sessionDate"></span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-clock"></i>
+                            <span id="sessionTime"></span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-video" id="sessionTypeIcon"></i>
+                            <span id="sessionType"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>التحقق من الهوية</h3>
+                    <p class="help-text">أدخل رقم هاتفك المسجل به في طلب العضوية</p>
+                    
+                    <div class="form-group">
+                        <label for="phoneInput">
+                            <i class="fas fa-phone"></i>
+                            رقم الهاتف
+                        </label>
+                        <input 
+                            type="tel" 
+                            id="phoneInput" 
+                            class="form-control" 
+                            placeholder="05xxxxxxxx"
+                            maxlength="10"
+                            dir="ltr"
+                        >
+                        <small class="form-hint">مثال: 0501234567</small>
+                    </div>
+
+                    <div id="phoneError" class="alert alert-error" style="display: none;"></div>
+
+                    <button id="verifyPhoneBtn" class="btn btn-primary btn-block">
+                        <i class="fas fa-arrow-left"></i>
+                        التالي
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 1.5: Existing Booking -->
+            <div id="existingBookingStep" class="booking-card" style="display: none;">
+                <div class="warning-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <h2>لديك موعد محجوز مسبقاً</h2>
+                <p>يوجد لديك موعد محجوز في هذه الجلسة</p>
+
+                <div class="confirmation-details">
+                    <div class="detail-card">
+                        <div class="detail-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="detail-content">
+                            <span class="detail-label">الاسم</span>
+                            <span class="detail-value" id="existingBookingName"></span>
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="detail-content">
+                            <span class="detail-label">التاريخ</span>
+                            <span class="detail-value" id="existingBookingDate"></span>
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="detail-content">
+                            <span class="detail-label">الوقت</span>
+                            <span class="detail-value" id="existingBookingTime"></span>
+                        </div>
+                    </div>
+
+                    <div class="detail-card" id="existingMeetingLinkCard" style="display: none;">
+                        <div class="detail-icon">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <div class="detail-content">
+                            <span class="detail-label">رابط المقابلة</span>
+                            <a href="#" id="existingBookingMeetingLink" target="_blank" class="detail-value link">
+                                انقر هنا للانضمام
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="detail-card" id="existingLocationCard" style="display: none;">
+                        <div class="detail-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="detail-content">
+                            <span class="detail-label">الموقع</span>
+                            <span class="detail-value" id="existingBookingLocation"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle"></i>
+                    <p>إذا كنت تريد حجز موعد آخر، يجب عليك حذف الموعد الحالي أولاً</p>
+                </div>
+
+                <div class="confirmation-actions">
+                    <button id="cancelBookingBtn" class="btn btn-danger">
+                        <i class="fas fa-trash"></i>
+                        حذف الموعد
+                    </button>
+                    <button id="backToPhoneFromExisting" class="btn btn-secondary">
+                        <i class="fas fa-arrow-right"></i>
+                        رجوع
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Slot Selection -->
+            <div id="slotStep" class="booking-card" style="display: none;">
+                <div class="welcome-section">
+                    <div class="welcome-icon">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <h2>أهلاً <span id="applicantName"></span>! 👋</h2>
+                    <p>اختر الموعد المناسب لك من الفترات المتاحة</p>
+                    <div class="applicant-info">
+                        <span class="info-badge">
+                            <i class="fas fa-briefcase"></i>
+                            <span id="applicantCommittee"></span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="slots-section">
+                    <div class="slots-header">
+                        <h3>المواعيد المتاحة</h3>
+                        <div class="slots-legend">
+                            <span class="legend-item">
+                                <span class="legend-color available"></span>
+                                متاح
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-color booked"></span>
+                                محجوز
+                            </span>
+                        </div>
+                    </div>
+
+                    <div id="slotsLoading" class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>جاري تحميل المواعيد...</p>
+                    </div>
+
+                    <div id="slotsError" class="alert alert-error" style="display: none;"></div>
+
+                    <div id="slotsGrid" class="slots-grid"></div>
+
+                    <div id="noSlotsMessage" class="no-slots" style="display: none;">
+                        <i class="fas fa-calendar-times"></i>
+                        <p>عذراً، لا توجد مواعيد متاحة حالياً</p>
+                    </div>
+                </div>
+
+                <button id="backToPhoneBtn" class="btn btn-secondary">
+                    <i class="fas fa-arrow-right"></i>
+                    رجوع
+                </button>
+            </div>
+
+            <!-- All Slots Gone State -->
+            <div id="allSlotsGoneStep" class="booking-card error-state" style="display: none;">
+                <div class="error-icon">
+                    <i class="fas fa-calendar-times"></i>
+                </div>
+                <h2>انتهت جميع المواعيد</h2>
+                <p>عذراً، جميع المواعيد المتاحة إما محجوزة أو انتهى وقتها</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <p>يرجى التواصل مع الإدارة لمعرفة المزيد من التفاصيل</p>
+                </div>
+            </div>
+
+            <!-- Step 3: Confirmation -->
+            <div id="confirmationStep" class="booking-card success-card" style="display: none;">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2>تم حجز موعدك بنجاح! 🎉</h2>
+                <p>تم تأكيد حجز موعد المقابلة الخاص بك</p>
+
+                <div class="confirmation-details">
+                    <div class="detail-card">
+                        <div class="detail-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="detail-content">
+                            <span class="detail-label">الاسم</span>
+                            <span class="detail-value" id="confirmName"></span>
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="detail-content">
+                            <span class="detail-label">التاريخ</span>
+                            <span class="detail-value" id="confirmDate"></span>
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="detail-content">
+                            <span class="detail-label">الوقت</span>
+                            <span class="detail-value" id="confirmTime"></span>
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-icon">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <div class="detail-content">
+                            <span class="detail-label">المدة</span>
+                            <span class="detail-value" id="confirmDuration"></span>
+                        </div>
+                    </div>
+
+                    <div class="detail-card" id="meetingLinkCard" style="display: none;">
+                        <div class="detail-icon">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <div class="detail-content">
+                            <span class="detail-label">رابط المقابلة</span>
+                            <a href="#" id="confirmMeetingLink" target="_blank" class="detail-value link">
+                                انقر هنا للانضمام
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="detail-card" id="locationCard" style="display: none;">
+                        <div class="detail-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="detail-content">
+                            <span class="detail-label">الموقع</span>
+                            <span class="detail-value" id="confirmLocation"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="confirmation-actions">
+                    <button id="addToCalendarBtn" class="btn btn-secondary">
+                        <i class="fas fa-calendar-plus"></i>
+                        إضافة للتقويم
+                    </button>
+                    <button id="copyDetailsBtn" class="btn btn-primary">
+                        <i class="fas fa-copy"></i>
+                        نسخ التفاصيل
+                    </button>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <p>سيتم إرسال تذكير لك قبل موعد المقابلة بـ 24 ساعة</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="booking-footer">
+        <div class="container">
+            <p>&copy; 2026 نادي أديب الثقافي. جميع الحقوق محفوظة.</p>
+        </div>
+    </footer>
+
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="booking.js"></script>
+</body>
+</html>

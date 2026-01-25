@@ -105,74 +105,111 @@ class NewsletterManager {
 
         if (this.filteredSubscribers.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 3rem; color: #64748b;">
-                    <i class="fa-solid fa-inbox" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox"></i>
                     <p>لا توجد اشتراكات</p>
                 </div>
             `;
             return;
         }
 
-        const table = `
-            <table>
-                <thead>
-                    <tr>
-                        <th>البريد الإلكتروني</th>
-                        <th>الحالة</th>
-                        <th>تاريخ الاشتراك</th>
-                        <th>عدد الرسائل</th>
-                        <th>آخر رسالة</th>
-                        <th>الإجراءات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${this.filteredSubscribers.map(subscriber => this.renderSubscriberRow(subscriber)).join('')}
-                </tbody>
-            </table>
+        const cardsHtml = `
+            <div class="applications-cards-grid">
+                ${this.filteredSubscribers.map(subscriber => this.renderSubscriberCard(subscriber)).join('')}
+            </div>
         `;
 
-        container.innerHTML = table;
+        container.innerHTML = cardsHtml;
         this.attachRowEventListeners();
     }
 
-    renderSubscriberRow(subscriber) {
+    renderSubscriberCard(subscriber) {
         const statusBadges = {
-            active: '<span class="badge" style="background: #10b981; color: white;">نشط</span>',
-            unsubscribed: '<span class="badge" style="background: #ef4444; color: white;">ألغى الاشتراك</span>',
-            bounced: '<span class="badge" style="background: #f59e0b; color: white;">بريد غير صالح</span>'
+            active: '<span class="badge badge-success">نشط</span>',
+            unsubscribed: '<span class="badge badge-danger">ألغى الاشتراك</span>',
+            bounced: '<span class="badge badge-warning">بريد غير صالح</span>'
         };
 
-        const subscribedDate = new Date(subscriber.subscribed_at).toLocaleDateString('ar-SA');
+        const subscribedDate = new Date(subscriber.subscribed_at).toLocaleDateString('ar-SA', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        const subscribedTime = new Date(subscriber.subscribed_at).toLocaleTimeString('ar-SA', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
         const lastEmailDate = subscriber.last_email_sent_at 
-            ? new Date(subscriber.last_email_sent_at).toLocaleDateString('ar-SA')
-            : '-';
+            ? new Date(subscriber.last_email_sent_at).toLocaleDateString('ar-SA', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            })
+            : 'لم يتم الإرسال بعد';
 
         return `
-            <tr data-id="${subscriber.id}">
-                <td>${subscriber.email}</td>
-                <td>${statusBadges[subscriber.status] || subscriber.status}</td>
-                <td>${subscribedDate}</td>
-                <td>${subscriber.email_count || 0}</td>
-                <td>${lastEmailDate}</td>
-                <td>
-                    <div class="action-buttons">
+            <div class="application-card">
+                <div class="application-card-header">
+                    <div class="applicant-info">
+                        <div class="applicant-avatar">
+                            <i class="fa-solid fa-envelope-open-text"></i>
+                        </div>
+                        <div class="applicant-details">
+                            <h3 class="applicant-name" style="font-size: 1.1rem;">${subscriber.email}</h3>
+                            ${statusBadges[subscriber.status] || statusBadges.active}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="application-card-body">
+                    <div class="application-info-grid">
+                        <div class="info-item">
+                            <i class="fa-solid fa-calendar-plus"></i>
+                            <div class="info-content">
+                                <span class="info-label">تاريخ الاشتراك</span>
+                                <span class="info-value">${subscribedDate} - ${subscribedTime}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <div class="info-content">
+                                <span class="info-label">عدد الرسائل المرسلة</span>
+                                <span class="info-value">${subscriber.email_count || 0} رسالة</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item full-width">
+                            <i class="fa-solid fa-clock"></i>
+                            <div class="info-content">
+                                <span class="info-label">آخر رسالة</span>
+                                <span class="info-value">${lastEmailDate}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="application-card-footer">
+                    <div class="card-actions-grid">
                         ${subscriber.status === 'active' 
-                            ? `<button class="btn-sm btn-warning unsubscribe-btn" data-id="${subscriber.id}">
+                            ? `<button class="btn-action btn-action-warning unsubscribe-btn" data-id="${subscriber.id}">
                                 <i class="fa-solid fa-user-xmark"></i>
                                 إلغاء الاشتراك
                             </button>`
-                            : `<button class="btn-sm btn-success resubscribe-btn" data-id="${subscriber.id}">
+                            : `<button class="btn-action btn-action-success resubscribe-btn" data-id="${subscriber.id}">
                                 <i class="fa-solid fa-user-check"></i>
                                 إعادة الاشتراك
                             </button>`
                         }
-                        <button class="btn-sm btn-danger delete-subscriber-btn" data-id="${subscriber.id}">
+                        <button class="btn-action btn-action-danger delete-subscriber-btn" data-id="${subscriber.id}">
                             <i class="fa-solid fa-trash"></i>
                             حذف
                         </button>
                     </div>
-                </td>
-            </tr>
+                </div>
+            </div>
         `;
     }
 

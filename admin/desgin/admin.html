@@ -1,0 +1,2744 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>لوحة تحكم — نادي أديب</title>
+      <meta name="robots" content="noindex, nofollow" />
+      <meta name="googlebot" content="noindex, nofollow" />
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      <meta name="apple-mobile-web-app-title" content="إدارة أدِيب" />
+      <meta name="theme-color" content="#274060" />
+      <link rel="canonical" href="https://www.adeeb.club/admin/admin.html" />
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+      <link rel="stylesheet" href="../style.css?v=20251017" />
+      <link rel="stylesheet" href="admin.css?v=20251017" />
+      <link rel="stylesheet" href="members-stats.css?v=20251126" />
+      <link rel="stylesheet" href="admin-committees.css" />
+      <link rel="manifest" href="manifest.webmanifest" />
+      <link rel="apple-touch-icon" href="/admin/icons/icons/icon-512x512.png" />
+    </head>
+  <body class="admin-body" style="display:none">
+    <header class="admin-header">
+      <div class="admin-header__container">
+        <div class="admin-header__actions">
+          <button id="loginBtn" class="btn btn-outline"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</button>
+          <button id="toggleSidebar" class="btn btn-outline"><i class="fa-solid fa-chevron-left"></i></button>
+          <div class="notif-wrap">
+            <button id="notifBtn" class="btn btn-outline notif-btn" aria-haspopup="true" aria-expanded="false" aria-controls="notifDropdown" title="الإشعارات">
+              <i class="fa-regular fa-bell"></i>
+              <span id="notifBadge" class="notif-badge" style="display:none">0</span>
+            </button>
+            <div id="notifDropdown" class="notif-dropdown" hidden>
+              <div class="notif-head">
+                <div class="notif-title"><i class="fa-regular fa-bell"></i> الإشعارات</div>
+                <div style="flex:1"></div>
+                <button id="notifMarkAll" type="button" class="btn small"><i class="fa-regular fa-circle-check"></i> تعليم الكل كمقروء</button>
+                <button id="notifClearAll" type="button" class="btn btn-outline small" title="مسح الكل"><i class="fa-regular fa-trash-can"></i></button>
+              </div>
+              <div id="notifList" class="notif-list" aria-live="polite"></div>
+              <div id="notifEmpty" class="empty-state muted">لا يوجد إشعارات</div>
+            </div>
+          </div>
+        </div>
+        <div id="adminUserBadge" class="user-badge" aria-live="polite"></div>
+      </div>
+    </header>
+
+    <div class="admin-layout">
+      <aside id="sidebar" class="admin-sidebar">
+        <div class="admin-sidebar__brand">
+          <span>لوحة التحكم</span>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <nav class="admin-menu">
+          <a href="#section-stats" class="admin-menu__item"><i class="fa-solid fa-chart-column"></i> الإحصائيات</a>
+          <a href="#section-home" class="admin-menu__item"><i class="fa-solid fa-sitemap"></i> إدارة الموقع</a>
+          <a href="#section-members" class="admin-menu__item"><i class="fa-solid fa-users-rectangle"></i> أعضاء النادي</a>
+          <a href="#section-committees" class="admin-menu__item" id="menu-committees"><i class="fa-solid fa-users-gear"></i> إدارة اللجان</a>
+          <a href="#section-roles" class="admin-menu__item" id="menu-roles"><i class="fa-solid fa-user-shield"></i> الأدوار والصلاحيات</a>
+          <a href="#section-membership-apps" class="admin-menu__item"><i class="fa-solid fa-id-badge"></i> طلبات العضوية</a>
+          <a href="#section-membership-archive" class="admin-menu__item"><i class="fa-solid fa-archive"></i> سجل فترات التسجيل</a>
+          <a href="#section-schedule" class="admin-menu__item"><i class="fa-solid fa-calendar-days"></i> جدول أدِيب</a>
+          <a href="#section-appointments" class="admin-menu__item"><i class="fa-solid fa-calendar-check"></i> حجز المواعيد</a>
+          <a href="#section-forms" class="admin-menu__item"><i class="fa-solid fa-list-check"></i> الاستبيانات</a>
+          <a href="#section-idea-board" class="admin-menu__item"><i class="fa-solid fa-lightbulb"></i> سبورة أدِيب</a>
+          <a href="#section-chat" class="admin-menu__item"><i class="fa-solid fa-comments"></i> المحادثات</a>
+          <a href="#section-todos" class="admin-menu__item"><i class="fa-solid fa-list-check"></i> المهام</a>
+          <a href="#section-push" class="admin-menu__item"><i class="fa-solid fa-bell"></i> إرسال الإشعارات</a>
+          <a href="#section-contact-messages" class="admin-menu__item"><i class="fa-solid fa-envelope"></i> رسائل التواصل</a>
+          <a href="#section-newsletter" class="admin-menu__item"><i class="fa-solid fa-newspaper"></i> النشرة البريدية</a>
+          <a href="#section-news" class="admin-menu__item"><i class="fa-solid fa-bullhorn"></i> إدارة الأخبار</a>
+          <a href="#section-profile" class="admin-menu__item active"><i class="fa-solid fa-id-card"></i> ملفي</a>
+          <div class="admin-menu__footer">
+            <button type="button" class="btn btn-outline" data-logout><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+            <a class="btn btn-primary" href="../index.html" target="_blank"><i class="fa-solid fa-globe"></i> عرض الموقع</a>
+          </div>
+        </nav>
+      </aside>
+
+      <main class="admin-main">
+        <section id="section-stats" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-chart-column"></i> الإحصائيات</h2>
+          </div>
+          <div class="cards-grid" id="statsGrid" aria-live="polite"></div>
+        </section>
+        <section id="section-home" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-sitemap"></i> إدارة الموقع</h2>
+          </div>
+          <div class="cards-grid">
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-solid fa-briefcase"></i> إدارة الأعمال</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">إضافة وتعديل وحذف الأعمال مع الصورة والفئة والرابط الخارجي.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-works"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-solid fa-handshake"></i> إدارة الرعاة</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">إدارة الرعاة بإضافة الشعار والاسم والوسم والوصف ورابط الموقع.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-sponsors"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-solid fa-trophy"></i> إدارة الإنجازات</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">إنشاء أرقام إنجاز مع الأيقونة والترتيب وإظهار علامة + اختياريًا.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-achievements"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-solid fa-list-check"></i> إدارة الاستبيانات</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">إنشاء الاستبيانات ومتابعة الردود وإغلاقها.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-forms"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-solid fa-users"></i> إدارة المجلس الإداري</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">إضافة الأعضاء والمناصب وصورة العضو وروابط التواصل والبريد.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-board"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+ 
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-solid fa-user-plus"></i> زر "انضم إلينا"</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">فتح/إغلاق زر الانضمام في الصفحة الرئيسية. عند الإغلاق سيظهر تنبيه بإغلاق التسجيل.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-join"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-solid fa-question-circle"></i> إدارة الأسئلة الشائعة</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">تنظيم الأسئلة مع الإجابات وتحديد ترتيب العرض.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-faq"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__body">
+                <div class="card__title"><i class="fa-solid fa-star"></i> إدارة آراء الأعضاء</div>
+                <p class="card__text" style="color:#64748b; line-height:1.6">إضافة وتعديل وحذف آراء الأعضاء وتحديد الظهور والتقييم.</p>
+                <div class="card__actions">
+                  <button class="btn btn-primary" data-go="#section-testimonials"><i class="fa-solid fa-arrow-left"></i> فتح</button>
+                </div>
+              </div>
+            </div>
+            <!-- removed schedule and todos home cards -->
+          </div>
+        </section>
+        <section id="section-works" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-briefcase"></i> إدارة الأعمال</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addWorkBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة عمل</button>
+            </div>
+          </div>
+          <div id="worksList" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        <section id="section-sponsors" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-handshake"></i> إدارة الرعاة</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addSponsorBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة راعٍ</button>
+            </div>
+          </div>
+          <div id="sponsorsList" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        <section id="section-achievements" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-trophy"></i> إدارة الإنجازات</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addAchievementBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة إنجاز</button>
+            </div>
+          </div>
+          <div id="achievementsList" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        <section id="section-board" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-users"></i> إدارة المجلس الإداري</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addBoardBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة عضو</button>
+            </div>
+          </div>
+          <div id="boardList" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        <section id="section-join" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-user-plus"></i> زر "انضم إلينا"</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button class="btn" data-go="#section-membership-archive"><i class="fa-solid fa-archive"></i> عرض السجل</button>
+            </div>
+          </div>
+          <div class="alert info" style="margin-bottom:16px" id="joinArchiveInfo">
+            <i class="fa-solid fa-info-circle"></i>
+            <div>
+              <strong>تذكير:</strong> عند انتهاء فترة التسجيل، يمكنك <a href="#section-membership-archive" style="color:#3d8fd6;text-decoration:underline">أرشفة الطلبات</a> لحفظها كملف وحذفها من قاعدة البيانات لتخفيف العبء.
+            </div>
+          </div>
+          <div class="panel join-panel">
+            <div class="join-hero">
+              <div class="hero-countdown" id="joinCountdown" aria-live="polite">
+                <div class="cd-title"><i class="fa-regular fa-hourglass-half"></i> <span id="joinCountdownLabel">—</span></div>
+                <div class="cd-time">
+                  <div class="cd-box"><span id="cdDays">00</span><small>يوم</small></div>
+                  <div class="cd-sep">:</div>
+                  <div class="cd-box"><span id="cdHours">00</span><small>ساعة</small></div>
+                  <div class="cd-sep">:</div>
+                  <div class="cd-box"><span id="cdMinutes">00</span><small>دقيقة</small></div>
+                  <div class="cd-sep">:</div>
+                  <div class="cd-box"><span id="cdSeconds">00</span><small>ثانية</small></div>
+                </div>
+              </div>
+            </div>
+            <div class="join-content">
+              <div class="join-form">
+                <form id="joinSettingsForm" class="form-grid">
+                  <label class="full-row">
+                    طريقة التحكم
+                    <div class="segmented">
+                      <label style="display:inline-flex;align-items:center;gap:6px;margin-inline-end:8px">
+                        <input type="radio" name="joinControlType" id="joinControlTypeManual" value="manual" /> فتح/إغلاق يدوي
+                      </label>
+                      <label style="display:inline-flex;align-items:center;gap:6px">
+                        <input type="radio" name="joinControlType" id="joinControlTypeSchedule" value="schedule" /> الجدولة
+                      </label>
+                    </div>
+                  </label>
+                  <div id="joinManualGroup" class="field-group full-row">
+                    <div class="field-group__title"><i class="fa-solid fa-toggle-on"></i> التحكم اليدوي</div>
+                    <label class="toggle">
+                      <input id="joinOpenCheckbox" type="checkbox" />
+                      <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+                      <span class="toggle-label">فتح التسجيل</span>
+                    </label>
+                  </div>
+                  <div id="joinScheduleGroup" class="field-group full-row">
+                    <div class="field-group__title"><i class="fa-regular fa-clock"></i> إعداد الجدولة</div>
+                    <label class="full-row">
+                      نوع الجدولة
+                      <div class="segmented">
+                        <label style="display:inline-flex;align-items:center;gap:6px;margin-inline-end:8px">
+                          <input type="radio" name="joinScheduleMode" id="joinScheduleModeRange" value="range" /> فتح وإغلاق
+                        </label>
+                        <label style="display:inline-flex;align-items:center;gap:6px;margin-inline-end:8px">
+                          <input type="radio" name="joinScheduleMode" id="joinScheduleModeOpenOnly" value="open_only" /> فتح فقط
+                        </label>
+                        <label style="display:inline-flex;align-items:center;gap:6px">
+                          <input type="radio" name="joinScheduleMode" id="joinScheduleModeCloseOnly" value="close_only" /> إغلاق فقط
+                        </label>
+                      </div>
+                      <small class="field-help">اختر نوع الجدولة الأنسب لطبيعة التسجيل في نادي أدِيب</small>
+                    </label>
+                    <label>
+                      تاريخ ووقت الفتح
+                      <input id="joinScheduleOpenAt" type="datetime-local" />
+                    </label>
+                    <label>
+                      تاريخ ووقت الإغلاق
+                      <input id="joinScheduleCloseAt" type="datetime-local" />
+                    </label>
+                    <label class="toggle full-row" title="إظهار عداد إغلاق التسجيل في صفحة العضوية">
+                      <input id="joinMembershipCountdown" type="checkbox" />
+                      <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+                      <span class="toggle-label">إظهار عداد الإغلاق في صفحة العضوية</span>
+                    </label>
+                    <div class="full-row muted">المنطقة الزمنية: <span id="joinTimezone"></span></div>
+                  </div>
+                  <div class="field-group full-row">
+                    <div class="field-group__title"><i class="fa-regular fa-message"></i> رسالة الإغلاق</div>
+                    <label>
+                      عنوان رسالة الإغلاق
+                      <input id="joinClosedTitle" type="text" placeholder="مثال: التسجيل مغلق حاليًا" />
+                    </label>
+                    <label class="full-row">
+                      رسالة عند إغلاق التسجيل
+                      <textarea id="joinClosedMessage" rows="3" placeholder="اكتب الرسالة التي ستظهر للزوار عند إغلاق التسجيل"></textarea>
+                    </label>
+                    <label>
+                      نص زر التنبيه
+                      <input id="joinClosedButtonText" type="text" placeholder="مثال: حسناً" />
+                    </label>
+                  </div>
+                  <div class="full-row">
+                    <button type="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
+                    <button type="button" id="previewClosedMsgBtn" class="btn btn-outline"><i class="fa-regular fa-eye"></i> معاينة الرسالة</button>
+                    <span id="joinSettingsMsg" class="muted" style="margin-inline-start:10px"></span>
+                  </div>
+                </form>
+              </div>
+              <aside class="settings-summary" aria-live="polite">
+                <div class="summary-head"><i class="fa-solid fa-circle-info"></i> ملخص الإعداد</div>
+                <div class="summary-row"><span class="label">الحالة الفعلية</span><span id="joinSummaryState" class="status-pill"></span></div>
+                <div class="summary-row"><span class="label">طريقة التحكم</span><span id="joinSummaryControl" class="value"></span></div>
+                <div class="summary-row"><span class="label">نوع الجدولة</span><span id="joinSummaryMode" class="value"></span></div>
+                <div class="summary-row"><span class="label">الأوقات</span><span id="joinSummaryTimes" class="value"></span></div>
+                <div class="divider"></div>
+                <div class="summary-row"><span class="label">عنوان الرسالة</span><span id="joinSummaryTitle" class="value"></span></div>
+                <div class="summary-row"><span class="label">نص الرسالة</span><span id="joinSummaryMessage" class="value"></span></div>
+                <div class="summary-row"><span class="label">نص الزر</span><span id="joinSummaryButtonText" class="value"></span></div>
+                <div class="summary-row"><span class="label">عداد الإغلاق (العضوية)</span><span id="joinSummaryCountdown" class="value"></span></div>
+                <div class="summary-actions">
+                  <a class="btn btn-outline" href="../index.html" target="_blank"><i class="fa-solid fa-globe"></i> عرض الصفحة</a>
+                </div>
+              طور وحسن تصميم وتنسيق كروت الاحصائيات في تبويب أعضاء النادي ليكون أكثر جمالية وأحترافية ومثل تصميم كروت .cards-grid مع إضافة إجمالي عدد الأعضاء لكل لجنة</aside>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-members" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-users-rectangle"></i> أعضاء النادي</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button id="membersBulkInvitationsBtn" class="btn" style="background:#10b981;color:#fff;border-color:#10b981"><i class="fa-solid fa-envelope-open-text"></i> إرسال دعوات جماعية</button>
+              <button id="membersExportBtn" class="btn"><i class="fa-solid fa-file-export"></i> تصدير</button>
+              <button id="addMemberBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة عضو</button>
+            </div>
+          </div>
+          <div id="membersStatsGrid" class="cards-grid members-stats-grid" style="margin-bottom:16px"></div>
+          <div id="membersFilters" class="filters-bar" aria-label="فلاتر أعضاء النادي" style="margin-bottom:16px">
+            <div class="filter-field">
+              <i class="icon fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              <input id="membersFilterName" class="filter-input with-icon" type="text" placeholder="بحث بالاسم، رقم العضوية، الجوال، أو الهوية" />
+            </div>
+            <div class="filter-field">
+              <i class="icon fa-solid fa-users" aria-hidden="true"></i>
+              <select id="membersFilterCommittee" class="filter-select with-icon" title="تصفية حسب اللجنة">
+                <option value="all">كل اللجان</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <i class="icon fa-solid fa-clipboard-check" aria-hidden="true"></i>
+              <select id="membersFilterCompletion" class="filter-select with-icon" title="تصفية حسب إكمال البيانات">
+                <option value="all">كل الحالات</option>
+                <option value="complete">بيانات مكتملة</option>
+                <option value="incomplete">بيانات غير مكتملة</option>
+              </select>
+            </div>
+            <div style="flex:1 0 100%; grid-column: 1 / -1;">
+              <button id="membersClearFilters" class="btn btn-outline btn-xs" type="button" title="مسح جميع الفلاتر" style="width:100%"><i class="fa-solid fa-eraser"></i> مسح كل الفلاتر</button>
+            </div>
+          </div>
+          <div id="membersList" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        <!-- قسم إدارة اللجان -->
+        <section id="section-committees" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-users-gear"></i> إدارة اللجان</h2>
+            <button class="btn btn-primary" id="addCommitteeBtn">
+              <i class="fa-solid fa-plus"></i> إضافة لجنة
+            </button>
+          </div>
+          <div id="committeesGrid" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        <!-- قسم تفاصيل اللجنة -->
+        <section id="section-committee-detail" class="admin-section" hidden>
+          <div class="section-head">
+            <button class="btn btn-outline" id="backToCommittees">
+              <i class="fa-solid fa-arrow-right"></i> رجوع
+            </button>
+            <h2 id="committeeDetailTitle">تفاصيل اللجنة</h2>
+            <button class="btn" id="editCommitteeBtn">
+              <i class="fa-solid fa-edit"></i> تعديل
+            </button>
+          </div>
+          
+          <div style="display:grid;gap:16px">
+            <!-- معلومات اللجنة -->
+            <div class="card">
+              <div class="card__header">
+                <h3><i class="fa-solid fa-info-circle"></i> معلومات اللجنة</h3>
+              </div>
+              <div class="card__body" id="committeeInfo"></div>
+            </div>
+            
+            <!-- أعضاء اللجنة -->
+            <div class="card">
+              <div class="card__header">
+                <h3><i class="fa-solid fa-users"></i> الأعضاء</h3>
+                <button class="btn btn-primary btn-sm" id="addCommitteeMemberBtn">
+                  <i class="fa-solid fa-user-plus"></i> إضافة عضو
+                </button>
+              </div>
+              <div class="card__body">
+                <div id="committeeMembers"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- قسم الأدوار والصلاحيات -->
+        <section id="section-roles" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-user-shield"></i> الأدوار والصلاحيات</h2>
+            <button class="btn btn-primary" id="createRoleBtn">
+              <i class="fa-solid fa-plus"></i> إنشاء دور جديد
+            </button>
+          </div>
+          
+          <div class="alert info" style="margin-bottom:16px">
+            <i class="fa-solid fa-info-circle"></i>
+            <div>
+              <strong>ملاحظة:</strong> الأدوار المميزة بـ <i class="fa-solid fa-lock"></i> هي أدوار النظام الأساسية ولا يمكن حذفها أو تعديلها.
+            </div>
+          </div>
+          
+          <div id="rolesList" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        <section id="section-membership-apps" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-id-badge"></i> طلبات العضوية</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button id="membershipRefreshBtn" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+              <button id="membershipExportBtn" class="btn"><i class="fa-solid fa-file-export"></i> تصدير CSV</button>
+              <button id="bulkExportToMembersBtn" class="btn btn-primary"><i class="fa-solid fa-users-gear"></i> تصدير جماعي للأعضاء</button>
+            </div>
+          </div>
+          <div class="cards-grid" id="membershipStatsGrid" aria-live="polite" style="margin-bottom:16px"></div>
+          <div id="membershipFilters" class="filters-bar" aria-label="فلاتر طلبات العضوية" style="margin-bottom:12px">
+            <div class="filter-field">
+              <i class="icon fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              <input id="membershipFilterName" class="filter-input with-icon" type="text" placeholder="بحث بالاسم" />
+            </div>
+            <div class="filter-field">
+              <i class="icon fa-solid fa-layer-group" aria-hidden="true"></i>
+              <select id="membershipFilterStatus" class="filter-select with-icon" title="تصفية حسب الحالة">
+                <option value="all">كل الحالات</option>
+                <option value="pending">قيد الانتظار</option>
+                <option value="review">مراجعة</option>
+                <option value="interview">مُقابلة</option>
+                <option value="accepted">مقبول</option>
+                <option value="rejected">مرفوض</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <i class="icon fa-solid fa-percent" aria-hidden="true"></i>
+              <select id="membershipFilterPctBand" class="filter-select with-icon" title="تصفية حسب نسبة الإكمال">
+                <option value="all">كل النسب</option>
+                <option value="50">50% - 59%</option>
+                <option value="60">60% - 69%</option>
+                <option value="70">70% - 79%</option>
+                <option value="80">80% - 89%</option>
+                <option value="90">90% - 99%</option>
+                <option value="100">100%</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <i class="icon fa-solid fa-users" aria-hidden="true"></i>
+              <select id="membershipFilterCommittee" class="filter-select with-icon" title="تصفية حسب اللجنة">
+                <option value="all">كل اللجان</option>
+              </select>
+            </div>
+            <div style="flex:1 0 100%; grid-column: 1 / -1;">
+              <button id="membershipFiltersClear" class="btn btn-outline btn-xs" type="button" title="مسح الفلاتر" style="width:100%"><i class="fa-solid fa-eraser"></i> أسمح كل الفلاتر</button>
+            </div>
+          </div>
+          <div id="membershipAppsGroups" class="groups-grid"></div>
+          <div id="membershipAppsEmpty" class="empty-state muted" style="display:none">لا توجد طلبات بعد</div>
+          <dialog id="membershipAppDetailsDialog" class="admin-dialog">
+            <form method="dialog" class="dialog-form" id="membershipAppDetailsForm">
+              <div class="dialog-header">
+                <h3 class="dialog-title">تفاصيل طلب العضوية</h3>
+                <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="dialog-body">
+                <div class="membership-details">
+                  <div class="details-row cols-1">
+                    <label class="detail">الأسم الثلاثي<div id="membershipAppDetailsName" class="muted"></div></label>
+                  </div>
+                  <div class="details-row cols-2">
+                    <label class="detail">الجوال<div id="membershipAppDetailsPhone" class="muted"></div></label>
+                    <label class="detail">البريد الإلكتروني<div id="membershipAppDetailsEmail" class="muted"></div></label>
+                  </div>
+                  <div class="details-row cols-3">
+                    <label class="detail">الدرجة العلمية<div id="membershipAppDetailsDegree" class="muted"></div></label>
+                    <label class="detail">الكلية<div id="membershipAppDetailsCollege" class="muted"></div></label>
+                    <label class="detail">التخصص<div id="membershipAppDetailsMajor" class="muted"></div></label>
+                  </div>
+                  <div class="details-row cols-1">
+                    <label class="detail">اللجنة<div id="membershipAppDetailsCommittee" class="muted"></div></label>
+                  </div>
+                  <div class="details-row cols-1">
+                    <label class="detail">المهارات<div id="membershipAppDetailsSkills" class="muted" style="white-space:pre-wrap"></div></label>
+                  </div>
+                  <div class="details-row cols-1">
+                    <label class="detail">أعمال سابقة<div id="membershipAppDetailsPortfolio" class="muted"></div></label>
+                  </div>
+                  <div class="details-row cols-3">
+                    <label class="detail">تويتر<div id="membershipAppDetailsTwitter" class="muted"></div></label>
+                    <label class="detail">إنستقرام<div id="membershipAppDetailsInstagram" class="muted"></div></label>
+                    <label class="detail">تيك توك<div id="membershipAppDetailsLinkedin" class="muted"></div></label>
+                  </div>
+                  <div class="details-row cols-1">
+                    <label class="detail">النبذة<div id="membershipAppDetailsAbout" class="muted" style="white-space:pre-wrap"></div></label>
+                  </div>
+                  <div class="details-row cols-1">
+                    <label class="detail">التاريخ<div id="membershipAppDetailsDate" class="muted"></div></label>
+                  </div>
+                  <div class="details-row cols-1">
+                    <label class="detail">الحالة<select id="membershipAppStatusSelect">
+                      <option value="pending">قيد الانتظار</option>
+                      <option value="review">مراجعة</option>
+                      <option value="interview">مُقابلة</option>
+                      <option value="accepted">مقبول</option>
+                      <option value="rejected">مرفوض</option>
+                    </select></label>
+                  </div>
+                  <div class="details-row cols-1">
+                    <div class="notes-card" id="membershipAppNotesCard">
+                      <div class="notes-card__head">
+                        <i class="fa-solid fa-comments" aria-hidden="true"></i>
+                        <span class="notes-card__title">ملاحظات الإداريين</span>
+                        <span class="notes-card__count" id="membershipAppNotesCount">0</span>
+                      </div>
+                      <div class="notes-card__composer">
+                        <textarea id="membershipAppNoteInput" rows="2" placeholder="أضف ملاحظة تظهر لجميع الإداريين"></textarea>
+                        <button type="button" class="btn btn-primary" id="membershipAppNoteAdd"><i class="fa-solid fa-paper-plane"></i> إضافة</button>
+                      </div>
+                      <div class="notes-card__list" id="membershipAppNotesList" aria-live="polite"></div>
+                      <small id="membershipAppNotesStatus" class="field-help" style="display:none"></small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <menu class="dialog-actions">
+                <button type="button" class="btn btn-primary" id="exportToMembersBtn"><i class="fa-solid fa-user-plus"></i> تصدير إلى أعضاء النادي</button>
+                <button type="button" class="btn" onclick="this.closest('dialog').close()">إغلاق</button>
+              </menu>
+            </form>
+          </dialog>
+          <dialog id="membershipExportDialog" class="admin-dialog">
+            <form method="dialog" class="dialog-form" id="membershipExportForm">
+              <div class="dialog-header">
+                <h3 class="dialog-title"><i class="fa-solid fa-file-export"></i> تصدير طلبات العضوية</h3>
+                <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="dialog-body">
+                <div class="details-row cols-1">
+                  <label class="detail">اللجنة
+                    <select id="membershipExportCommittee">
+                      <option value="all">كل اللجان</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="details-row cols-1">
+                  <label class="detail">الحقول المراد تصديرها</label>
+                  <div id="membershipExportFields" class="checkbox-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:8px"></div>
+                </div>
+                <div class="muted" id="membershipExportHint" style="margin-top:8px">سيتم تنزيل ملف CSV يمكن فتحه مباشرةً في Google Sheets.</div>
+              </div>
+              <menu class="dialog-actions">
+                <button type="submit" class="btn btn-primary" id="membershipExportSubmit"><i class="fa-solid fa-download"></i> تنزيل CSV</button>
+                <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إلغاء</button>
+              </menu>
+            </form>
+          </dialog>
+          <dialog id="bulkExportToMembersDialog" class="admin-dialog">
+            <form method="dialog" class="dialog-form" id="bulkExportToMembersForm">
+              <div class="dialog-header">
+                <h3 class="dialog-title"><i class="fa-solid fa-users-gear"></i> تصدير جماعي إلى أعضاء النادي</h3>
+                <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="dialog-body">
+                <div class="alert info" style="margin-bottom:16px">
+                  <i class="fa-solid fa-info-circle"></i>
+                  <div>
+                    <strong>ملاحظة:</strong> سيتم تصدير الطلبات المختارة إلى قائمة أعضاء النادي. سيتم تحديث حالة الطلبات إلى "مقبول" بعد التصدير.
+                  </div>
+                </div>
+                <div class="details-row cols-1">
+                  <label class="detail">فلترة حسب الحالة
+                    <select id="bulkExportStatusFilter">
+                      <option value="accepted">مقبول فقط</option>
+                      <option value="interview">مُقابلة فقط</option>
+                      <option value="review">مراجعة فقط</option>
+                      <option value="all">جميع الحالات</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="details-row cols-1">
+                  <label class="detail">فلترة حسب اللجنة
+                    <select id="bulkExportCommitteeFilter">
+                      <option value="all">كل اللجان</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="details-row cols-1">
+                  <div id="bulkExportPreview" style="margin-top:12px;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                      <i class="fa-solid fa-list-check" style="color:#3d8fd6"></i>
+                      <strong>عدد الطلبات المتوافقة:</strong>
+                      <span id="bulkExportCount" style="color:#3d8fd6;font-weight:700">0</span>
+                    </div>
+                    <div id="bulkExportList" style="max-height:200px;overflow-y:auto;font-size:0.9rem;color:#64748b"></div>
+                  </div>
+                </div>
+              </div>
+              <menu class="dialog-actions">
+                <button type="button" class="btn btn-primary" id="bulkExportToMembersSubmit"><i class="fa-solid fa-user-plus"></i> تصدير الآن</button>
+                <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إلغاء</button>
+              </menu>
+            </form>
+          </dialog>
+        </section>
+
+        <section id="section-membership-archive" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-archive"></i> سجل فترات التسجيل</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button id="archiveCreatePeriodBtn" class="btn btn-primary"><i class="fa-solid fa-archive"></i> أرشفة الفترة الحالية</button>
+            </div>
+          </div>
+          <div class="alert info" style="margin-bottom:16px">
+            <i class="fa-solid fa-info-circle"></i>
+            <div>
+              <strong>نظام السجل:</strong> يمكنك حفظ فترات التسجيل السابقة مع بياناتها، ثم تصديرها كملف وحذفها من قاعدة البيانات لتخفيف العبء.
+            </div>
+          </div>
+          <div id="archivePeriodsGrid" class="cards-grid" aria-live="polite"></div>
+          <div id="archivePeriodsEmpty" class="empty-state muted" style="display:none">لا توجد فترات محفوظة بعد</div>
+          
+          <dialog id="archiveCreateDialog" class="admin-dialog">
+            <form method="dialog" class="dialog-form" id="archiveCreateForm">
+              <div class="dialog-header">
+                <h3 class="dialog-title"><i class="fa-solid fa-archive"></i> أرشفة فترة التسجيل الحالية</h3>
+                <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="dialog-body">
+                <div class="alert warning" style="margin-bottom:16px">
+                  <i class="fa-solid fa-exclamation-triangle"></i>
+                  <div>
+                    <strong>تنبيه هام:</strong> عند حفظ الفترة سيتم:
+                    <ul style="margin:8px 0 0 20px;padding:0">
+                      <li>تصدير جميع طلبات العضوية الحالية كملف Excel</li>
+                      <li>حذف جميع الطلبات من قاعدة البيانات</li>
+                      <li>حفظ معلومات الفترة في السجل المحلي</li>
+                    </ul>
+                    <strong style="color:#dc2626;display:block;margin-top:8px">⚠️ تأكد من تصدير الطلبات المقبولة إلى قائمة الأعضاء قبل الأرشفة!</strong>
+                  </div>
+                </div>
+                <div class="details-row cols-1">
+                  <label class="detail">اسم الفترة
+                    <input id="archivePeriodName" type="text" placeholder="مثال: فترة التسجيل - خريف 2024" required />
+                  </label>
+                </div>
+                <div class="details-row cols-2">
+                  <label class="detail">تاريخ البدء
+                    <input id="archivePeriodStartDate" type="date" required />
+                  </label>
+                  <label class="detail">تاريخ الانتهاء
+                    <input id="archivePeriodEndDate" type="date" required />
+                  </label>
+                </div>
+                <div class="details-row cols-1">
+                  <label class="detail">ملاحظات (اختياري)
+                    <textarea id="archivePeriodNotes" rows="3" placeholder="أي ملاحظات عن هذه الفترة..."></textarea>
+                  </label>
+                </div>
+                <div class="details-row cols-1">
+                  <div style="padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                      <i class="fa-solid fa-info-circle" style="color:#3d8fd6"></i>
+                      <strong>إحصائيات الطلبات الحالية:</strong>
+                    </div>
+                    <div id="archiveCurrentStats" style="font-size:0.9rem;color:#64748b"></div>
+                  </div>
+                </div>
+              </div>
+              <menu class="dialog-actions">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-archive"></i> أرشفة وتصدير وحذف</button>
+                <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إلغاء</button>
+              </menu>
+            </form>
+          </dialog>
+
+          <dialog id="archivePeriodDetailsDialog" class="admin-dialog">
+            <form method="dialog" class="dialog-form" id="archivePeriodDetailsForm">
+              <div class="dialog-header">
+                <h3 class="dialog-title" id="archivePeriodDetailsTitle">تفاصيل الفترة</h3>
+                <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="dialog-body">
+                <div class="details-row cols-1">
+                  <label class="detail">اسم الفترة<div id="archiveDetailName" class="muted"></div></label>
+                </div>
+                <div class="details-row cols-2">
+                  <label class="detail">تاريخ البدء<div id="archiveDetailStartDate" class="muted"></div></label>
+                  <label class="detail">تاريخ الانتهاء<div id="archiveDetailEndDate" class="muted"></div></label>
+                </div>
+                <div class="details-row cols-1">
+                  <label class="detail">تاريخ الحفظ<div id="archiveDetailCreatedAt" class="muted"></div></label>
+                </div>
+                <div class="details-row cols-1">
+                  <label class="detail">الملاحظات<div id="archiveDetailNotes" class="muted" style="white-space:pre-wrap"></div></label>
+                </div>
+                <div class="details-row cols-1">
+                  <div style="padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                      <i class="fa-solid fa-chart-pie" style="color:#3d8fd6"></i>
+                      <strong>إحصائيات الطلبات:</strong>
+                    </div>
+                    <div id="archiveDetailStats" style="font-size:0.9rem;color:#64748b"></div>
+                  </div>
+                </div>
+              </div>
+              <menu class="dialog-actions">
+                <button type="button" class="btn btn-primary" id="archiveExportBtn"><i class="fa-solid fa-file-excel"></i> تصدير البيانات (Excel)</button>
+                <button type="button" class="btn btn-danger" id="archiveDeleteBtn"><i class="fa-solid fa-trash"></i> حذف الفترة</button>
+                <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إغلاق</button>
+              </menu>
+            </form>
+          </dialog>
+        </section>
+
+        <section id="section-faq" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-question-circle"></i> إدارة الأسئلة الشائعة</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addFaqBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة سؤال</button>
+            </div>
+          </div>
+          <div id="faqList" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        <section id="section-testimonials" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-star"></i> إدارة آراء الأعضاء</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addTestimonialBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة رأي</button>
+            </div>
+          </div>
+          <div id="testimonialsList" class="cards-grid" aria-live="polite"></div>
+        </section>
+
+        <section id="section-schedule" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-calendar-days"></i> جدول أدِيب</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              
+            </div>
+          </div>
+          <div id="schedulePanel" class="panel" style="padding:16px">
+            <div class="calendar-toolbar">
+              <button id="calPrevBtn" class="btn btn-outline" title="الشهر السابق"><i class="fa-solid fa-chevron-right"></i></button>
+              <div id="calMonthLabel" class="calendar-month"></div>
+              <button id="calNextBtn" class="btn btn-outline" title="الشهر التالي"><i class="fa-solid fa-chevron-left"></i></button>
+              <div style="flex:1"></div>
+              <button id="calTodayBtn" class="btn"><i class="fa-solid fa-location-crosshairs"></i> عرض اليوم </button>
+              <button id="calIntlBtn" class="btn btn-outline" title="إضافة الأيام العالمية لهذا الشهر"><i class="fa-solid fa-earth-asia"></i> عرض الأيام العالمية </button>
+            </div>
+            <div class="calendar-days-head" id="calendarDaysHead"></div>
+            <div id="calendarGrid" class="calendar-grid" aria-live="polite"></div>
+          </div>
+          <!-- International Days: separate panel -->
+          <div id="intlDaysPanel" class="panel" style="padding:16px; margin-top:16px">
+            <div id="intlDaysSection">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 12px">
+                <h3 style="margin:0;font-size:1rem;color:var(--main-blue)"><i class="fa-solid fa-earth-asia"></i> الأيام العالمية لهذا الشهر</h3>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <button id="intlAddCustomBtn" class="btn btn-outline"><i class="fa-solid fa-plus"></i> إضافة يوم عالمي</button>
+                </div>
+              </div>
+              <div id="intlDaysTableWrap" style="overflow:auto">
+                <table class="table" style="width:100%; border-collapse:collapse">
+                  <thead>
+                    <tr>
+                      <th style="text-align:right; padding:12px">التاريخ</th>
+                      <th style="text-align:right; padding:12px">العنوان</th>
+                      <th style="text-align:right; padding:12px">إجراء</th>
+                    </tr>
+                  </thead>
+                  <tbody id="intlDaysTableBody"></tbody>
+                </table>
+                <div class="muted" id="intlDaysFootnote" style="margin-top:8px">القائمة ثابتة؛ وقد لا تشمل جميع الأيام العالمية</div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section id="section-idea-board" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-lightbulb"></i> سبورة أدِيب (إدارة)</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              
+              <a id="openIdeaBoardBtn" class="btn" href="../board/board.html" target="_blank"><i class="fa-solid fa-globe"></i> فتح الصفحة العامة</a>
+              <button id="ideaBoardRefreshBtn" class="btn"><i class="fa-solid fa-rotate"></i> تحديث</button>
+            </div>
+          </div>
+          <!-- Topics manager -->
+          <div class="panel" style="padding:16px; margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:8px; margin-bottom:10px">
+              <h3 style="margin:0;font-size:1rem;color:var(--main-blue)"><i class="fa-solid fa-book-open"></i> المواضيع</h3>
+              <div style="flex:1"></div>
+              <button id="addTopicBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة موضوع</button>
+              <button id="ideaTopicsRefreshBtn" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+            </div>
+            <div id="ideaTopicsList" class="cards-grid" aria-live="polite"></div>
+            <div id="ideaTopicsEmpty" class="empty-state muted" style="display:none">لا توجد مواضيع بعد</div>
+          </div>
+          <div class="panel" style="padding:16px">
+            <div id="ideaBoardList" class="simple-list" aria-live="polite"></div>
+            <div id="ideaBoardEmpty" class="empty-state muted" style="display:none">لا توجد أفكار بعد</div>
+          </div>
+          <!-- Idea Details Dialog -->
+          <dialog id="ideaDetailsDialog" class="admin-dialog">
+            <form method="dialog" class="dialog-form" id="ideaDetailsForm">
+              <div class="dialog-header">
+                <h3 class="dialog-title">تفاصيل الفكرة</h3>
+                <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="dialog-body">
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr">
+                  <label>العنوان<div id="ideaDetailsTitle" class="muted"></div></label>
+                  <label>الاسم<div id="ideaDetailsAuthor" class="muted"></div></label>
+                  <label>التاريخ<div id="ideaDetailsDate" class="muted"></div></label>
+                  <label>الموضوع<div id="ideaDetailsTopic" class="muted"></div></label>
+                  <label style="grid-column: 1 / -1">المحتوى<div id="ideaDetailsContent" class="muted" style="white-space:pre-wrap"></div></label>
+                </div>
+              </div>
+              <menu class="dialog-actions">
+                <button type="button" class="btn btn-outline" id="ideaPinToggleBtn"><i class="fa-solid fa-thumbtack"></i> تبديل التثبيت</button>
+                <button type="button" class="btn btn-outline" id="ideaVisToggleBtn"><i class="fa-solid fa-eye"></i> إظهار/إخفاء</button>
+                <button type="button" class="btn btn-outline" id="ideaDeleteBtn"><i class="fa-regular fa-trash-can"></i> حذف</button>
+              </menu>
+            </form>
+          </dialog>
+          <!-- Topic Dialog -->
+          <dialog id="topicDialog" class="admin-dialog">
+            <form method="dialog" class="dialog-form" id="topicForm">
+              <div class="dialog-header">
+                <h3 class="dialog-title">إضافة/تعديل موضوع</h3>
+                <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="dialog-body">
+                <div class="form-grid">
+                  <label>
+                    العنوان
+                    <input id="topicTitle" type="text" placeholder="عنوان الموضوع" required />
+                  </label>
+                  <label>
+                    الوصف (اختياري)
+                    <textarea id="topicDesc" rows="3" placeholder="نبذة مختصرة"></textarea>
+                  </label>
+                  <label>
+                    صورة (اختياري)
+                    <input id="topicImageFile" type="file" accept="image/*" />
+                    <small class="field-help">PNG/JPG/WebP حتى 5MB</small>
+                  </label>
+                  <div id="topicImagePreviewWrap" class="img-preview" style="display:none">
+                    <img id="topicImagePreview" alt="معاينة" />
+                    <button type="button" class="btn btn-outline btn-xs" id="topicClearImageBtn"><i class="fa-solid fa-xmark"></i> إزالة</button>
+                  </div>
+                  <label style="display:flex;align-items:center;gap:8px">
+                    <input id="topicVisible" type="checkbox" checked />
+                    ظاهر للجميع
+                  </label>
+                </div>
+              </div>
+              <menu class="dialog-actions">
+                <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+                <button value="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
+              </menu>
+            </form>
+          </dialog>
+        </section>
+        <!-- المحادثات بين الإداريين -->
+        <section id="section-chat" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-comments"></i> المحادثات</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              
+            </div>
+          </div>
+          <div class="panel" style="padding:0">
+            <div class="chat-layout">
+              <!-- جهات الاتصال -->
+              <aside class="chat-contacts-pane">
+                <div class="chat-search">
+                  <input id="chatSearch" type="text" placeholder="ابحث عن إداري بالاسم" />
+                </div>
+                <div id="chatFilters" class="chat-filters" aria-label="مرشحات">
+                  <button type="button" class="chip active" data-filter="all">الكل</button>
+                  <button type="button" class="chip" data-filter="high">المجلس الأعلى</button>
+                  <button type="button" class="chip" data-filter="admins">الإداريون</button>
+                </div>
+                <div id="chatNoContacts" class="empty-state muted" style="display:none">لا يوجد إداريون متاحون.</div>
+                <div id="chatContacts" class="chat-contacts" aria-live="polite"></div>
+              </aside>
+              <!-- نافذة الرسائل -->
+              <section class="chat-main-pane">
+                <div class="chat-header">
+                  <div class="chat-peer">
+                    <div id="chatPeerAvatar" class="avatar"></div>
+                    <div>
+                      <div id="chatPartnerName" class="chat-peer__name">—</div>
+                      <div id="chatPeerMeta" class="chat-peer__meta muted"></div>
+                    </div>
+                    <div style="flex:1"></div>
+                  </div>
+                </div>
+                <div class="chat-history-tools">
+                  <button id="chatLoadMore" class="btn btn-outline small" style="display:none"><i class="fa-solid fa-clock-rotate-left"></i> عرض أقدم</button>
+                </div>
+                <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
+                <div id="chatEmpty" class="empty-state muted" style="display:none; padding:8px 12px">اختر جهة اتصال لبدء المحادثة</div>
+                <button id="chatScrollBottom" class="chat-scroll-bottom btn btn-outline" style="display:none" title="الانتقال لآخر الرسائل"><i class="fa-solid fa-arrow-down"></i></button>
+                <div id="chatTyping" class="chat-typing muted" style="display:none">يكتب الآن…</div>
+                <form id="chatComposer" class="chat-composer">
+                  <input id="chatInput" type="text" placeholder="اكتب رسالة..." autocomplete="off" />
+                  <button id="chatSendBtn" class="btn btn-primary" type="submit"><i class="fa-solid fa-paper-plane"></i> إرسال</button>
+                </form>
+              </section>
+            </div>
+          </div>
+        </section>
+        <section id="section-todos" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-list-check"></i> المهام</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              
+              <button id="addTodoBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة مهمة</button>
+            </div>
+          </div>
+          <div id="todosList" class="cards-grid" aria-live="polite"></div>
+        </section>
+        
+        <section id="section-appointments" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-calendar-check"></i> حجز المواعيد</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button id="addAppointmentBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة موعد</button>
+            </div>
+          </div>
+          <div id="appointmentsList" class="cards-grid" aria-live="polite"></div>
+          <div class="panel" style="padding:16px; margin-top:16px" id="bookingsPanel">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+              <h3 style="margin:0;font-size:1rem;color:var(--main-blue)"><i class="fa-solid fa-calendar-check"></i> حجوزات المواعيد</h3>
+              <div style="flex:1"></div>
+              <select id="bookingAppointmentSelect">
+                <option value="all">جميع المواعيد</option>
+              </select>
+              <button id="bookingsRefreshBtn" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+              <button id="bookingsExportBtn" class="btn"><i class="fa-solid fa-file-export"></i> تصدير</button>
+            </div>
+            <div style="overflow:auto">
+              <div id="bookingsCards" class="cards-grid" aria-live="polite"></div>
+              <div id="bookingsEmpty" class="empty-state muted" style="display:none">لا توجد حجوزات</div>
+            </div>
+          </div>
+        </section>
+        
+        <!-- إرسال الإشعارات -->
+        <section id="section-push" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-bell"></i> إرسال الإشعارات</h2>
+            <button id="testPushBtn" class="btn btn-outline"><i class="fa-solid fa-vial"></i> إرسال إشعار تجريبي لنفسي</button>
+          </div>
+          <div class="panel" style="padding:24px">
+            <form id="pushNotificationForm" class="form-grid" style="gap:16px">
+              <label style="grid-column:1/-1">
+                عنوان الإشعار
+                <input type="text" id="pushTitle" placeholder="مثال: إعلان مهم" required />
+              </label>
+              <label style="grid-column:1/-1">
+                نص الإشعار
+                <textarea id="pushBody" placeholder="اكتب محتوى الإشعار هنا..." rows="3" required></textarea>
+              </label>
+              <label style="grid-column:1/-1">
+                الرابط عند النقر (اختياري)
+                <input type="url" id="pushUrl" placeholder="https://www.adeeb.club/" />
+              </label>
+              <label style="grid-column:1/-1">
+                <input type="checkbox" id="pushToAll" checked /> إرسال لجميع المستخدمين المشتركين
+              </label>
+              <div style="grid-column:1/-1;display:none" id="pushUserSelect">
+                <label>
+                  اختر مستخدمين محددين
+                  <select id="pushUserIds" multiple style="min-height:120px">
+                    <option value="">جاري التحميل...</option>
+                  </select>
+                  <small class="field-help">اضغط Ctrl للاختيار المتعدد</small>
+                </label>
+              </div>
+              <div style="grid-column:1/-1;display:flex;gap:8px">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> إرسال الإشعار</button>
+                <button type="button" id="pushPreviewBtn" class="btn btn-outline"><i class="fa-solid fa-eye"></i> معاينة</button>
+              </div>
+            </form>
+            <div id="pushStats" style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:8px;display:none">
+              <h4 style="margin:0 0 8px">إحصائيات الإرسال</h4>
+              <div id="pushStatsContent"></div>
+            </div>
+          </div>
+        </section>
+        
+        <!-- رسائل التواصل -->
+        <section id="section-contact-messages" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-envelope"></i> رسائل التواصل</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button id="refreshContactMessages" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+              <select id="contactStatusFilter" class="btn btn-outline" style="padding:8px 12px">
+                <option value="">جميع الحالات</option>
+                <option value="new">جديدة</option>
+                <option value="read">مقروءة</option>
+                <option value="replied">تم الرد</option>
+                <option value="archived">مؤرشفة</option>
+              </select>
+            </div>
+          </div>
+          <div id="contactMessagesStats" class="cards-grid" style="margin-bottom:20px"></div>
+          <div id="contactMessagesList" class="panel" style="padding:16px"></div>
+        </section>
+        
+        <!-- النشرة البريدية -->
+        <section id="section-newsletter" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-newspaper"></i> النشرة البريدية</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button id="refreshNewsletter" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+              <button id="exportNewsletterEmails" class="btn btn-primary"><i class="fa-solid fa-download"></i> تصدير البريد</button>
+              <select id="newsletterStatusFilter" class="btn btn-outline" style="padding:8px 12px">
+                <option value="">جميع الحالات</option>
+                <option value="active">نشط</option>
+                <option value="unsubscribed">ملغي</option>
+              </select>
+            </div>
+          </div>
+          <div id="newsletterStats" class="cards-grid" style="margin-bottom:20px"></div>
+          <div id="newsletterList" class="panel" style="padding:16px"></div>
+        </section>
+        
+        <!-- إدارة الأخبار -->
+        <section id="section-news" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-bullhorn"></i> إدارة الأخبار</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button id="refreshNews" class="btn btn-outline"><i class="fa-solid fa-rotate"></i> تحديث</button>
+              <button id="addNewsBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إضافة خبر جديد</button>
+            </div>
+          </div>
+          <div id="newsStats" class="cards-grid" style="margin-bottom:20px"></div>
+          
+          <!-- شريط الفلاتر المتقدم -->
+          <div id="newsFilters" class="filters-bar" aria-label="فلاتر الأخبار" style="margin-bottom:16px">
+            <div class="filter-field">
+              <i class="icon fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              <input id="newsFilterSearch" class="filter-input with-icon" type="text" placeholder="بحث بالعنوان أو الكاتب أو الملخص" />
+            </div>
+            <div class="filter-field">
+              <i class="icon fa-solid fa-filter" aria-hidden="true"></i>
+              <select id="newsStatusFilter" class="filter-select with-icon" title="تصفية حسب الحالة">
+                <option value="">جميع الحالات</option>
+                <option value="published">منشور</option>
+                <option value="draft">مسودة</option>
+                <option value="archived">مؤرشف</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <i class="icon fa-solid fa-star" aria-hidden="true"></i>
+              <select id="newsFeaturedFilter" class="filter-select with-icon" title="تصفية حسب التمييز">
+                <option value="">الكل</option>
+                <option value="featured">مميز فقط</option>
+                <option value="not-featured">غير مميز</option>
+              </select>
+            </div>
+            <div style="flex:1 0 100%; grid-column: 1 / -1;">
+              <button id="newsClearFilters" class="btn btn-outline btn-xs" type="button" title="مسح جميع الفلاتر" style="width:100%"><i class="fa-solid fa-eraser"></i> مسح كل الفلاتر</button>
+            </div>
+          </div>
+          
+          <div id="newsList" style="padding:0"></div>
+        </section>
+        
+        <!-- ملفي -->
+        <section id="section-profile" class="admin-section">
+          <div class="section-head">
+            <h2><i class="fa-solid fa-id-card"></i> ملفي</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button id="installAppBtn" class="btn btn-primary" style="display:none"><i class="fa-solid fa-download"></i> تثبيت التطبيق</button>
+              <button id="enablePushBtn" class="btn btn-outline" style="display:none"><i class="fa-solid fa-bell"></i> تفعيل الإشعارات</button>
+              <span id="installAppHint" class="muted" style="font-size:12px; margin-inline-start:8px; display:none"></span>
+              <span id="pushStatus" class="muted" style="font-size:12px; margin-inline-start:8px; display:none"></span>
+            </div>
+          </div>
+          <div class="panel" style="padding:16px">
+            <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap">
+              <div id="adminAvatarPreview" class="avatar" style="width:64px; height:64px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f1f5f9"></div>
+              <div>
+                <div id="adminProfileUserName" style="font-weight:700; font-size:18px"></div>
+                <div id="adminProfileEmail" class="muted" style="font-size:13px"></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel" style="padding:16px; margin-top:16px">
+            <form id="adminProfileForm" class="form-grid">
+              <label>
+                الاسم المعروض
+                <input id="admin_display_name" type="text" placeholder="اسمك" />
+              </label>
+              <label>
+                المسمى الوظيفي / المنصب
+                <input id="admin_position" type="text" placeholder="مثال: مشرف عام" readonly />
+                <small class="field-help">يتم تحديد المنصب عند إضافة الإداري ولا يمكن تغييره من قبل الإداري.</small>
+              </label>
+              <label>
+                رقم الجوال
+                <input id="admin_phone" type="tel" inputmode="tel" placeholder="05xxxxxxxx" />
+              </label>
+              <label>
+                صورة الحساب
+                <input id="admin_avatar_file" type="file" accept="image/*" />
+                <small class="field-help">اختر صورة جديدة لتحديث الصورة الرمزية.</small>
+              </label>
+              <div>
+                <button type="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ الملف</button>
+                <span id="adminProfileMsg" class="muted" style="margin-inline-start:10px"></span>
+              </div>
+            </form>
+          </div>
+
+          <!-- تغيير كلمة المرور -->
+          <div class="panel" style="padding:16px; margin-top:16px">
+            <h3 style="margin-top:0"><i class="fa-solid fa-key"></i> تغيير كلمة المرور</h3>
+            <form id="adminChangePasswordForm" class="form-grid">
+              <label>
+                الكلمة الحالية
+                <input id="admin_current_password" type="password" autocomplete="current-password" />
+              </label>
+              <label>
+                الكلمة الجديدة
+                <input id="admin_new_password" type="password" autocomplete="new-password" />
+              </label>
+              <label>
+                تأكيد الكلمة الجديدة
+                <input id="admin_confirm_password" type="password" autocomplete="new-password" />
+              </label>
+              <div style="display:flex;align-items:end;gap:8px">
+                <button type="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
+                <span id="adminPasswordMsg" class="muted"></span>
+              </div>
+            </form>
+          </div>
+
+          <!-- تغيير البريد الإلكتروني -->
+          <div class="panel" style="padding:16px; margin-top:16px">
+            <h3 style="margin-top:0"><i class="fa-solid fa-at"></i> تغيير البريد الإلكتروني</h3>
+            <form id="adminChangeEmailForm" class="form-grid">
+              <label>
+                بريدك الحالي
+                <input id="admin_current_email_display" type="email" readonly />
+              </label>
+              <label>
+                البريد الجديد
+                <input id="admin_new_email" type="email" placeholder="name@example.com" />
+              </label>
+              <label>
+                كلمة المرور الحالية للتحقق
+                <input id="admin_current_password_email" type="password" autocomplete="current-password" />
+              </label>
+              <div style="display:flex;align-items:end;gap:8px">
+                <button type="submit" class="btn btn-primary"><i class="fa-regular fa-paper-plane"></i> إرسال تأكيد</button>
+                <span id="adminEmailMsg" class="muted"></span>
+              </div>
+            </form>
+          </div>
+        </section>
+
+          <section id="section-forms" class="admin-section" hidden>
+          <div class="section-head">
+            <h2><i class="fa-solid fa-list-check"></i> إدارة الاستبيانات</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-outline" data-go="#section-home"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+              <button id="addFormBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إنشاء استبيان</button>
+            </div>
+          </div>
+          <div id="formsList" class="cards-grid forms-grid" aria-live="polite"></div>
+          
+          <style>
+            /* تخطيط عمود واحد للاستبيانات */
+            #formsList.cards-grid {
+              grid-template-columns: 1fr;
+              max-width: 900px;
+              margin: 0 auto;
+            }
+            
+            .forms-grid .card {
+              width: 100%;
+              max-width: none;
+            }
+            
+            .status-pill {
+              display: inline-flex;
+              align-items: center;
+              padding: 4px 8px;
+              border-radius: 12px;
+              font-size: 0.75rem;
+              font-weight: 500;
+              background: #f1f5f9;
+              color: #64748b;
+              border: 1px solid #e2e8f0;
+            }
+            
+            .status-pill.status-ok {
+              background: #dcfce7;
+              color: #166534;
+              border-color: #bbf7d0;
+            }
+            
+            .forms-grid .btn {
+              font-size: 0.875rem;
+              padding: 8px 12px;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              overflow: hidden;
+            }
+            
+            .forms-grid .btn i {
+              margin-left: 6px;
+              flex-shrink: 0;
+            }
+            
+            /* أنماط زر الحذف */
+            .forms-grid .btn[data-action="delete"] {
+              color: #ef4444;
+              border-color: #ef4444;
+            }
+            
+            .forms-grid .btn[data-action="delete"]:hover {
+              background: #ef4444;
+              border-color: #ef4444;
+              color: white;
+            }
+            
+            @media (max-width: 768px) {
+              /* تحويل جميع الصفوف إلى عمود واحد على الشاشات الصغيرة */
+              .forms-grid .card [style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+              }
+              
+              .forms-grid .btn {
+                width: 100%;
+                text-align: center;
+              }
+            }
+            
+            @media (max-width: 480px) {
+              .forms-grid .btn {
+                font-size: 0.8rem;
+                padding: 6px 10px;
+              }
+            }
+          </style>
+        </section>
+
+      </main>
+    </div>
+
+    <style>
+      /* ===== تصميم موحد للنوافذ المنبثقة ===== */
+      
+      /* تصميم الرأس الموحد */
+      .admin-dialog .dialog-header {
+        background: linear-gradient(135deg, #3d8fd6 0%, #5ba3e0 100%) !important;
+        color: #fff !important;
+        padding: 24px !important;
+        border-radius: 12px 12px 0 0 !important;
+        border-bottom: none !important;
+      }
+      
+      .admin-dialog .dialog-title {
+        margin: 0 !important;
+        font-size: 1.4rem !important;
+        font-weight: 700 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        color: #fff !important;
+      }
+      
+      .admin-dialog .dialog-title i {
+        font-size: 1.3rem;
+        opacity: 0.95;
+      }
+      
+      /* زر الإغلاق الموحد */
+      .admin-dialog .dialog-close {
+        color: #fff !important;
+        opacity: 0.9 !important;
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 8px !important;
+        transition: all 0.2s !important;
+        background: transparent !important;
+        border: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+      }
+      
+      .admin-dialog .dialog-close:hover {
+        background: rgba(255, 255, 255, 0.2) !important;
+        transform: scale(1.05);
+      }
+      
+      /* محتوى النافذة */
+      .admin-dialog .dialog-body {
+        padding: 24px !important;
+        max-height: 70vh !important;
+        overflow-y: auto !important;
+      }
+      
+      /* أقسام النموذج */
+      .admin-dialog .form-section {
+        margin-bottom: 32px;
+      }
+      
+      .admin-dialog .form-section:last-child {
+        margin-bottom: 0;
+      }
+      
+      .admin-dialog .form-section-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 16px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      .admin-dialog .form-section-title .icon-box {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #3d8fd6, #5ba3e0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 14px;
+      }
+      
+      /* الشبكة الموحدة للحقول */
+      .admin-dialog .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+      }
+      
+      .admin-dialog .form-grid.cols-1 {
+        grid-template-columns: 1fr;
+      }
+      
+      .admin-dialog .form-grid.cols-2 {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      }
+      
+      /* تنسيق الحقول */
+      .admin-dialog label {
+        display: block;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+      }
+      
+      .admin-dialog label .required {
+        color: #ef4444;
+        margin-right: 4px;
+      }
+      
+      .admin-dialog input[type="text"],
+      .admin-dialog input[type="email"],
+      .admin-dialog input[type="tel"],
+      .admin-dialog input[type="url"],
+      .admin-dialog input[type="date"],
+      .admin-dialog input[type="number"],
+      .admin-dialog input[type="color"],
+      .admin-dialog select,
+      .admin-dialog textarea {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+        background: #fff;
+      }
+      
+      .admin-dialog input:focus,
+      .admin-dialog select:focus,
+      .admin-dialog textarea:focus {
+        outline: none;
+        border-color: #3d8fd6;
+        box-shadow: 0 0 0 3px rgba(61, 143, 214, 0.1);
+      }
+      
+      .admin-dialog textarea {
+        min-height: 100px;
+        resize: vertical;
+        font-family: inherit;
+      }
+      
+      /* أزرار الإجراءات */
+      .admin-dialog .dialog-actions {
+        padding: 20px 24px !important;
+        background: #f8fafc !important;
+        border-top: 1px solid #e2e8f0 !important;
+        margin: 0 !important;
+        display: flex !important;
+        gap: 12px !important;
+        justify-content: center !important;
+      }
+      
+      .admin-dialog .dialog-actions .btn {
+        padding: 10px 24px;
+        font-weight: 600;
+        border-radius: 10px;
+        transition: all 0.5s;
+        font-size: 0.95rem;
+      }
+      
+      .admin-dialog .dialog-actions .btn-primary {
+        color: #fff;
+        background: linear-gradient(135deg, var(--accent-blue), var(--main-blue));
+        border: 1px solid rgba(61, 143, 214, 0.35);
+        box-shadow: 0 8px 18px rgba(61, 143, 214, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      }
+      
+      .admin-dialog .dialog-actions .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(61, 143, 214, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        filter: brightness(1.02);
+      }
+      
+      .admin-dialog .dialog-actions .btn-primary:active {
+        transform: translateY(0);
+        box-shadow: 0 6px 14px rgba(61, 143, 214, 0.24) inset;
+      }
+      
+      .admin-dialog .dialog-actions .btn-outline {
+        color: var(--main-blue);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(249, 251, 255, 0.98));
+        border: 1px solid rgba(61, 143, 214, 0.35);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 2px 10px rgba(39, 64, 96, 0.06);
+      }
+      
+      .admin-dialog .dialog-actions .btn-outline:hover {
+        color: #fff;
+        background: linear-gradient(135deg, var(--accent-blue), #5aa9e6);
+        border-color: rgba(61, 143, 214, 0.5);
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(61, 143, 214, 0.2);
+      }
+      
+      .admin-dialog .dialog-actions .btn-outline:active {
+        transform: translateY(0);
+        box-shadow: 0 5px 12px rgba(61, 143, 214, 0.18) inset;
+      }
+      
+      /* نوافذ العرض (Details) */
+      .admin-dialog.details-dialog .dialog-header {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+      }
+      
+      /* نوافذ التحذير/الحذف */
+      .admin-dialog.danger-dialog .dialog-header {
+        background: linear-gradient(135deg, #ef4444 0%, #f87171 100%) !important;
+      }
+      
+      /* نوافذ النجاح */
+      .admin-dialog.success-dialog .dialog-header {
+        background: linear-gradient(135deg, #10b981 0%, #34d399 100%) !important;
+      }
+      
+      /* تحسينات responsive */
+      @media (max-width: 768px) {
+        .admin-dialog .dialog-header {
+          padding: 20px !important;
+        }
+        
+        .admin-dialog .dialog-title {
+          font-size: 1.2rem !important;
+        }
+        
+        .admin-dialog .dialog-body {
+          padding: 20px !important;
+        }
+        
+        .admin-dialog .form-grid {
+          grid-template-columns: 1fr !important;
+        }
+        
+        .admin-dialog .dialog-actions {
+          flex-direction: column-reverse;
+        }
+        
+        .admin-dialog .dialog-actions .btn {
+          width: 100%;
+        }
+      }
+      
+      /* تحسين scrollbar */
+      .admin-dialog .dialog-body::-webkit-scrollbar {
+        width: 8px;
+      }
+      
+      .admin-dialog .dialog-body::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+      }
+      
+      .admin-dialog .dialog-body::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+      }
+      
+      .admin-dialog .dialog-body::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+      
+      /* ===== تصميم حقل اختيار اللون الحديث ===== */
+      .color-picker-wrapper {
+        width: 100%;
+      }
+      
+      .color-picker-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 16px;
+        background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        border: 2px solid #e2e8f0;
+        border-radius: 16px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+      
+      .color-picker-container:hover {
+        border-color: #3d8fd6;
+        box-shadow: 0 4px 16px rgba(61, 143, 214, 0.15);
+      }
+      
+      /* قسم معاينة اللون */
+      .color-preview-section {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+      }
+      
+      .color-preview {
+        position: relative;
+        width: 100%;
+        height: 80px;
+        border-radius: 12px;
+        border: 3px solid #fff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 
+                    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+      
+      .color-preview::before {
+        content: '';
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 20px;
+        height: 20px;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 50%;
+        filter: blur(5px);
+      }
+      
+      /* زر اختيار اللون */
+      .color-select-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 16px;
+        width: 100%;
+        background: linear-gradient(135deg, var(--accent-blue, #3d8fd6), var(--main-blue, #5ba3e0));
+        color: #fff !important;
+        text-align: center !important;
+        border: 1px solid rgba(61, 143, 214, 0.35);
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.5s ease;
+        box-shadow: 0 8px 18px rgba(61, 143, 214, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        position: relative; /* للسماح بتراكب المدخل داخل الزر */
+        overflow: hidden;
+      }
+      
+      .color-select-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(61, 143, 214, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        filter: brightness(1.02);
+      }
+      
+      .color-select-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 6px 14px rgba(61, 143, 214, 0.24) inset;
+      }
+
+      /* مدخل اللون بداخل الزر كـ overlay ليعمل على الجوال (iOS/Android) */
+      .color-select-btn input[type="color"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      
+      /* مدخل اللون المخفي */
+      .color-input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+        top: 0;
+        left: 0;
+      }
+      
+      /* قسم كود اللون */
+      .color-code-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 16px;
+      }
+      
+      .color-code-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 4px;
+      }
+      
+      /* تنسيق حاوية كود اللون */
+      .color-code-container {
+        display: flex;
+        align-items: stretch; /* لجعل جميع العناصر بنفس الارتفاع */
+        gap: 8px;
+      }
+      
+      .color-code {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 16px;
+        height: 42px; /* نفس ارتفاع زر النسخ */
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+        font-family: fb;
+        letter-spacing: 1px;
+        transition: all 0.2s ease;
+        flex: 1;
+        text-align: center;
+        direction: ltr;
+        box-sizing: border-box;
+        -webkit-user-select: text;
+                user-select: text;
+      }
+      
+      /* زر نسخ كود اللون */
+      .color-copy-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        height: 42px;
+        padding: 0 16px;
+        color: var(--main-blue, #3d8fd6);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(249, 251, 255, 0.98));
+        border: 1px solid rgba(61, 143, 214, 0.35);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.5s ease;
+        white-space: nowrap;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 2px 10px rgba(39, 64, 96, 0.06);
+      }
+      
+      .color-copy-btn .copy-text {
+        display: inline-block;
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+      
+      .color-copy-btn i {
+        font-size: 1.1rem; /* حجم أكبر للأيقونة */
+      }
+      
+      .color-copy-btn i.fa-check {
+        font-size: 1.2rem; /* حجم أكبر لأيقونة التأكيد */
+        font-weight: bold;
+      }
+      
+      .color-copy-btn:hover {
+        color: #fff;
+        background: linear-gradient(135deg, var(--accent-blue, #3d8fd6), #5aa9e6);
+        border-color: rgba(61, 143, 214, 0.5);
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(61, 143, 214, 0.2);
+      }
+      
+      .color-copy-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 5px 12px rgba(61, 143, 214, 0.18) inset;
+      }
+      
+      /* تأثير النقر */
+      .color-picker-container:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(61, 143, 214, 0.2);
+      }
+      
+      /* Responsive */
+      @media (max-width: 768px) {
+        .color-picker-container {
+          padding: 14px;
+        }
+        
+        .color-preview {
+          height: 70px;
+        }
+        
+        .color-select-btn {
+          font-size: 0.9rem;
+          padding: 10px 14px;
+        }
+        
+        .color-code {
+          font-size: 1rem;
+          padding: 8px 12px;
+        }
+      }
+      
+      @media (max-width: 480px) {
+        .color-code-container {
+          flex-direction: column;
+          gap: 8px;
+        }
+        
+        .color-code {
+          width: 100%;
+          text-align: center;
+        }
+        
+        .color-copy-btn {
+          width: 100%;
+          justify-content: center;
+        }
+        
+        .color-copy-btn .copy-text {
+          display: inline-block;
+        }
+      }
+    </style>
+
+    <!-- Dialogs -->
+    <!-- Image Cropper Dialog -->
+    <dialog id="imageCropDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="imageCropForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">قص الصورة</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div id="cropToolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+            <label style="display:flex;align-items:center;gap:6px">
+              نسبة القص
+              <select id="cropAspectSelect">
+                <option value="auto">تلقائي</option>
+                <option value="1">1:1</option>
+                <option value="4/3">4:3</option>
+                <option value="16/9">16:9</option>
+              </select>
+            </label>
+            <div style="flex:1"></div>
+            <button type="button" class="btn btn-outline" id="cropZoomIn" title="تكبير"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+            <button type="button" class="btn btn-outline" id="cropZoomOut" title="تصغير"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+            <button type="button" class="btn btn-outline" id="cropRotateL" title="تدوير يسار"><i class="fa-solid fa-rotate-left"></i></button>
+            <button type="button" class="btn btn-outline" id="cropRotateR" title="تدوير يمين"><i class="fa-solid fa-rotate-right"></i></button>
+            <button type="button" class="btn btn-outline" id="cropFlipH" title="عكس أفقي"><i class="fa-solid fa-arrows-left-right"></i></button>
+            <button type="button" class="btn btn-outline" id="cropFlipV" title="عكس عمودي"><i class="fa-solid fa-arrows-up-down"></i></button>
+            <button type="button" class="btn" id="cropReset" title="إعادة الضبط"><i class="fa-solid fa-undo"></i> إعادة</button>
+          </div>
+          <div id="cropperArea">
+            <img id="cropperImage" alt="معاينة القص" />
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+            <small class="field-help">اسحب وحدد الإطار ثم اضغط تأكيد للحفظ.</small>
+            <small id="cropBusy" class="field-help" style="display:none;color:#0ea5e9">جارٍ المعالجة...</small>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" id="cropCancelBtn">إلغاء</button>
+          <button value="submit" class="btn btn-primary" id="cropConfirmBtn">تأكيد</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="memberDetailsDialog" class="admin-dialog details-dialog" style="max-width:800px">
+      <form method="dialog" class="dialog-form">
+        <div class="dialog-header">
+          <h3 class="dialog-title">
+            <i class="fa-regular fa-eye"></i>
+            <span>تفاصيل العضو</span>
+          </h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body" style="padding:0">
+          <div id="memberDetailsContent"></div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إغلاق</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="memberSettingsDialog" class="admin-dialog" style="max-width:700px">
+      <form method="dialog" class="dialog-form" id="memberSettingsForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">
+            <i class="fa-solid fa-gear"></i>
+            <span id="memberSettingsTitle">إعدادات العضو</span>
+          </h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body" style="max-height:70vh; overflow-y:auto">
+          
+          <!-- معلومات العضو -->
+          <div style="background:linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); padding:20px; border-radius:12px; margin-bottom:24px; border:1px solid #e2e8f0">
+            <div style="display:flex; align-items:center; gap:16px">
+              <div id="settingsMemberAvatar" style="width:60px; height:60px; border-radius:12px; background:linear-gradient(135deg, #e2e8f0, #cbd5e1); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                <i class="fa-solid fa-user" style="color:#64748b; font-size:1.5rem"></i>
+              </div>
+              <div style="flex:1">
+                <div id="settingsMemberName" style="font-size:1.2rem; font-weight:700; color:#1e293b; margin-bottom:4px">العضو</div>
+                <div id="settingsMemberEmail" style="font-size:0.9rem; color:#64748b"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- المجلس الإداري -->
+          <div class="settings-section" style="background:#fff; padding:20px; border-radius:12px; border:1px solid #e2e8f0">
+            <h4 style="margin:0 0 16px; font-size:1.1rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:10px">
+              <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #10b981, #059669); display:flex; align-items:center; justify-content:center">
+                <i class="fa-solid fa-users-gear" style="color:#fff; font-size:1rem"></i>
+              </div>
+              المجلس الإداري
+            </h4>
+
+            <label style="display:flex; align-items:center; gap:12px; padding:12px; background:#f8fafc; border-radius:8px; cursor:pointer; transition:all 0.2s" onmouseenter="this.style.background='#ecfdf5'" onmouseleave="this.style.background='#f8fafc'">
+              <input type="checkbox" id="addToBoardCouncil" style="width:20px; height:20px; cursor:pointer" />
+              <div style="flex:1">
+                <div style="font-weight:600; color:#1e293b">إضافة للمجلس الإداري</div>
+                <div style="font-size:0.85rem; color:#64748b">منح هذا العضو منصباً في المجلس الحالي</div>
+              </div>
+            </label>
+
+            <div id="boardPositionOptions" style="display:none; margin-top:16px; padding:16px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0">
+              <label style="display:block; margin-bottom:12px">
+                <span style="display:block; font-weight:600; color:#475569; margin-bottom:6px">المنصب</span>
+                <select id="boardPosition" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem">
+                  <option value="">اختر المنصب</option>
+                  <option value="president">👑 الرئيس</option>
+                  <option value="vice_president">🥈 نائب الرئيس</option>
+                  <option value="leader">👔 القائد</option>
+                  <option value="vice_leader">🎖️ نائب القائد</option>
+                  <option value="ceo">💼 الرئيس التنفيذي</option>
+                  <option value="secretary">📝 الأمين العام</option>
+                  <option value="treasurer">💰 أمين الصندوق</option>
+                  <option value="member">👤 عضو</option>
+                </select>
+              </label>
+
+              <label style="display:block; margin-bottom:12px">
+                <span style="display:block; font-weight:600; color:#475569; margin-bottom:6px">ترتيب العرض</span>
+                <input type="number" id="positionRank" min="1" value="1" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" placeholder="1" />
+                <span style="display:block; font-size:0.8rem; color:#94a3b8; margin-top:4px">الأرقام الأصغر تظهر أولاً</span>
+              </label>
+
+              <label style="display:block">
+                <span style="display:block; font-weight:600; color:#475569; margin-bottom:6px">القسم/اللجنة (اختياري)</span>
+                <input type="text" id="positionDepartment" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" placeholder="مثال: لجنة الإعلام" />
+              </label>
+            </div>
+          </div>
+
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button type="submit" class="btn btn-primary" id="saveMemberSettingsBtn">
+            <i class="fa-solid fa-floppy-disk"></i> حفظ التغييرات
+          </button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="memberDialog" class="admin-dialog" style="max-width:900px">
+      <form method="dialog" class="dialog-form" id="memberForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">
+            <i class="fa-solid fa-user-plus"></i>
+            <span id="memberDialogTitle">إضافة عضو جديد</span>
+          </h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          
+          <!-- صورة العضو -->
+          <div style="text-align:center; margin-bottom:32px">
+            <div style="position:relative; display:inline-block">
+              <div id="memberAvatarPreviewContainer" style="width:120px; height:120px; border-radius:20px; overflow:hidden; border:4px solid #e2e8f0; box-shadow:0 4px 12px rgba(0,0,0,0.1); background:#f8fafc; display:flex; align-items:center; justify-content:center">
+                <img id="member_image_preview" alt="صورة العضو" style="width:100%; height:100%; object-fit:cover; display:none" />
+                <i class="fa-solid fa-user" id="memberAvatarPlaceholder" style="font-size:48px; color:#cbd5e1"></i>
+              </div>
+              <button type="button" id="memberChangeAvatarBtn" style="position:absolute; bottom:-8px; right:-8px; width:40px; height:40px; border-radius:50%; background:#3d8fd6; color:#fff; border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s" onmouseenter="this.style.transform='scale(1.1)'" onmouseleave="this.style.transform='scale(1)'">
+                <i class="fa-solid fa-camera"></i>
+              </button>
+            </div>
+            <div id="memberDropzone" class="upload-dropzone" style="display:none; margin-top:16px; padding:32px; border:2px dashed #cbd5e1; border-radius:12px; background:#f8fafc; cursor:pointer; transition:all 0.2s" tabindex="0" role="button" aria-label="رفع صورة">
+              <i class="fa-regular fa-image" style="font-size:32px; color:#94a3b8; margin-bottom:12px"></i>
+              <div class="dz-text">
+                <strong style="display:block; margin-bottom:4px; color:#475569">اسحب وأفلت الصورة هنا</strong>
+                <span style="font-size:0.85rem; color:#94a3b8">أو اضغط لاختيار الصورة من جهازك</span>
+              </div>
+            </div>
+            <input id="member_image_file" type="file" accept="image/*" style="display:none" />
+            <input id="member_image_url" name="avatar_url" type="hidden" />
+            <div id="memberImageActions" class="image-actions" style="display:none; margin-top:12px; gap:8px">
+              <button type="button" class="btn btn-outline btn-sm" id="member_edit_image_btn"><i class="fa-regular fa-pen-to-square"></i> تعديل</button>
+              <button type="button" class="btn btn-outline btn-sm" id="member_change_image_btn"><i class="fa-regular fa-image"></i> تغيير</button>
+            </div>
+          </div>
+
+          <!-- المعلومات الأساسية -->
+          <div class="form-section">
+            <h4 class="form-section-title">
+              <span class="icon-box"><i class="fa-solid fa-user"></i></span>
+              المعلومات الأساسية
+            </h4>
+            <div class="form-grid">
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:0.85rem; font-weight:600; color:#475569">الاسم الكامل <span style="color:#ef4444">*</span></span>
+                <input name="full_name" required placeholder="اسم العضو" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" />
+              </label>
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:0.85rem; font-weight:600; color:#475569">البريد الإلكتروني</span>
+                <input name="email" type="email" placeholder="name@example.com" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" />
+              </label>
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:0.85rem; font-weight:600; color:#475569">رقم الجوال</span>
+                <input name="phone" type="tel" inputmode="tel" placeholder="05xxxxxxxx" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" />
+              </label>
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:0.85rem; font-weight:600; color:#475569">تاريخ الميلاد</span>
+                <input name="birth_date" type="date" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" />
+              </label>
+            </div>
+          </div>
+
+          <!-- المعلومات الأكاديمية -->
+          <div class="form-section">
+            <h4 class="form-section-title">
+              <span class="icon-box" style="background:linear-gradient(135deg, #f59e0b, #fbbf24)"><i class="fa-solid fa-graduation-cap"></i></span>
+              المعلومات الأكاديمية
+            </h4>
+            <div class="form-grid">
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:0.85rem; font-weight:600; color:#475569">الكلية</span>
+                <input name="college" placeholder="مثال: كلية الآداب" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" />
+              </label>
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:0.85rem; font-weight:600; color:#475569">التخصص</span>
+                <input name="major" placeholder="مثال: اللغة العربية" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" />
+              </label>
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:0.85rem; font-weight:600; color:#475569">الرقم الأكاديمي</span>
+                <input name="academic_number" placeholder="مثال: 441234567" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" />
+              </label>
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:0.85rem; font-weight:600; color:#475569">رقم الهوية الوطنية</span>
+                <input name="national_id" placeholder="مثال: 10xxxxxxxxx" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" />
+              </label>
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:0.85rem; font-weight:600; color:#475569">الدرجة العلمية</span>
+                <select name="degree" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem">
+                  <option value="">اختر الدرجة</option>
+                  <option>المرحلة الثانوية</option>
+                  <option>دبلوم</option>
+                  <option>بكالوريوس</option>
+                  <option>ماجستير</option>
+                  <option>دكتوراه</option>
+                  <option>موظف</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <!-- معلومات النادي -->
+          <div class="form-section">
+            <h4 class="form-section-title">
+              <span class="icon-box" style="background:linear-gradient(135deg, #10b981, #34d399)"><i class="fa-solid fa-people-group"></i></span>
+              معلومات النادي
+            </h4>
+            <div class="form-grid">
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:0.85rem; font-weight:600; color:#475569">اللجنة</span>
+                <select name="committee" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem">
+                  <option value="">اختر اللجنة</option>
+                  <option value="">بدون لجنة</option>
+                  <option>لجنة الإنتاج</option>
+                  <option>لجنة التأليف</option>
+                  <option>لجنة التسويق</option>
+                  <option>لجنة التصميم</option>
+                  <option>لجنة الرواة</option>
+                  <option>لجنة السفراء</option>
+                  <option>لجنة الفعاليات</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <!-- حسابات التواصل الاجتماعي -->
+          <div class="form-section">
+            <h4 class="form-section-title">
+              <span class="icon-box" style="background:linear-gradient(135deg, #8b5cf6, #a78bfa)"><i class="fa-solid fa-hashtag"></i></span>
+              حسابات التواصل الاجتماعي
+            </h4>
+            <div class="form-grid">
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:0.85rem; font-weight:600; color:#475569">حساب منصة أكس (X)</span>
+                <input name="x_handle" placeholder="مثال: @username" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" />
+              </label>
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:0.85rem; font-weight:600; color:#475569">حساب الانستقرام</span>
+                <input name="instagram_handle" placeholder="مثال: username" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" />
+              </label>
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:0.85rem; font-weight:600; color:#475569">حساب تيك توك</span>
+                <input name="tiktok_handle" placeholder="مثال: @username" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" />
+              </label>
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:0.85rem; font-weight:600; color:#475569">حساب لينكد إن</span>
+                <input name="linkedin_handle" placeholder="مثال: username" style="padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem" />
+              </label>
+            </div>
+          </div>
+
+          <!-- الألوان -->
+          <div class="form-section">
+            <h4 class="form-section-title">
+              <span class="icon-box" style="background:linear-gradient(135deg, #ec4899, #f472b6)"><i class="fa-solid fa-palette"></i></span>
+              الألوان الشخصية
+            </h4>
+            <div class="form-grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr))">
+              <!-- اللون الأساسي -->
+              <div class="color-picker-wrapper">
+                <label style="display:block; margin-bottom:8px">
+                  <span style="font-size:0.85rem; font-weight:600; color:#475569; display:flex; align-items:center; gap:6px">
+                    <i class="fa-solid fa-droplet" style="color:#3d8fd6; font-size:0.9rem"></i>
+                    اللون الأساسي
+                  </span>
+                </label>
+                <div class="color-picker-container">
+                  <div class="color-preview-section">
+                    <div class="color-preview" id="primaryColorPreview" style="background:#3D8FD6"></div>
+                    <label class="color-select-btn">
+                      <i class="fa-solid fa-palette"></i>
+                      اختر اللون
+                      <input name="primary_color" type="color" value="#3D8FD6" id="primaryColorInput" />
+                    </label>
+                  </div>
+                  <div class="color-code-section">
+                    <div class="color-code-label">كود اللون</div>
+                    <div class="color-code-container">
+                      <code class="color-code" id="primaryColorCode">#3D8FD6</code>
+                      <button type="button" class="color-copy-btn" data-color-target="primaryColorCode" aria-label="نسخ كود اللون">
+                        <i class="fa-regular fa-copy"></i>
+                        <span class="copy-text">نسخ</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- اللون الثانوي -->
+              <div class="color-picker-wrapper">
+                <label style="display:block; margin-bottom:8px">
+                  <span style="font-size:0.85rem; font-weight:600; color:#475569; display:flex; align-items:center; gap:6px">
+                    <i class="fa-solid fa-droplet" style="color:#274060; font-size:0.9rem"></i>
+                    اللون الثانوي
+                  </span>
+                </label>
+                <div class="color-picker-container">
+                  <div class="color-preview-section">
+                    <div class="color-preview" id="secondaryColorPreview" style="background:#274060"></div>
+                    <label class="color-select-btn">
+                      <i class="fa-solid fa-palette"></i>
+                      اختر اللون
+                      <input name="secondary_color" type="color" value="#274060" id="secondaryColorInput" />
+                    </label>
+                  </div>
+                  <div class="color-code-section">
+                    <div class="color-code-label">كود اللون</div>
+                    <div class="color-code-container">
+                      <code class="color-code" id="secondaryColorCode">#274060</code>
+                      <button type="button" class="color-copy-btn" data-color-target="secondaryColorCode" aria-label="نسخ كود اللون">
+                        <i class="fa-regular fa-copy"></i>
+                        <span class="copy-text">نسخ</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit" class="btn btn-primary">حفظ العضو</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- News Dialog -->
+    <dialog id="newsDialog" class="admin-dialog" style="max-width:900px">
+      <form method="dialog" class="dialog-form" id="newsForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">
+            <i class="fa-solid fa-bullhorn"></i>
+            <span id="newsDialogTitle">إضافة خبر جديد</span>
+          </h3>
+          <button type="button" class="dialog-close" onclick="this.closest('dialog').close()">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <input type="hidden" id="news_id" />
+          
+          <label>
+            عنوان الخبر <span style="color:#ef4444">*</span>
+            <input id="news_title" type="text" placeholder="عنوان الخبر" required />
+          </label>
+          
+          <label>
+            محتوى الخبر <span style="color:#ef4444">*</span>
+            <textarea id="news_content" rows="15" placeholder="محتوى الخبر الكامل (يدعم HTML)" required></textarea>
+            <small class="field-help">يمكنك استخدام HTML للتنسيق (مثل: &lt;p&gt;، &lt;h2&gt;، &lt;ul&gt;، &lt;strong&gt;). سيتم أخذ الملخص تلقائياً من أول 75 حرف.</small>
+          </label>
+          
+          <div>
+            <label style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span>صورة الغلاف <span style="color:#ef4444">*</span></span>
+              <button type="button" class="btn btn-outline small" id="removeCoverImageBtn" style="padding:6px 12px;font-size:0.85rem;color:#ef4444;display:none">
+                <i class="fa-solid fa-trash"></i>
+                حذف الصورة
+              </button>
+            </label>
+            <input type="file" id="news_cover_image_file" accept="image/*" style="display:none" />
+            <div id="coverImageUploadArea" style="border:2px dashed #cbd5e1;border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all 0.3s" onclick="document.getElementById('news_cover_image_file').click()">
+              <i class="fa-solid fa-cloud-upload" style="font-size:48px;color:#94a3b8;margin-bottom:12px"></i>
+              <p style="margin:0;color:#64748b;font-size:14px">اضغط لاختيار صورة الغلاف</p>
+              <small style="color:#94a3b8;font-size:12px">PNG, JPG, GIF حتى 5MB</small>
+            </div>
+            <div id="coverImagePreviewArea" style="display:none;margin-top:12px">
+              <img id="coverImagePreview" src="" alt="معاينة صورة الغلاف" style="width:100%;max-height:300px;object-fit:cover;border-radius:8px" />
+            </div>
+            <input type="hidden" id="news_cover_image_url" />
+          </div>
+          
+          <label>
+            <i class="fa-solid fa-camera"></i> مصور الغلاف (اختياري)
+            <input id="news_photographer" type="text" placeholder="اسم المصور" />
+            <small class="field-help">اسم المصور الذي التقط صورة الغلاف (سيظهر في صفحة تفاصيل الخبر)</small>
+          </label>
+          
+          <div>
+            <label style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span>صور الخبر (2-4 صور) <span style="color:#ef4444">*</span></span>
+              <button type="button" class="btn btn-outline small" id="addNewsImageBtn" style="padding:6px 12px;font-size:0.85rem">
+                <i class="fa-solid fa-plus"></i>
+                إضافة صورة
+              </button>
+            </label>
+            <small class="field-help" style="display:block;margin-bottom:12px;color:#64748b">أضف من 2 إلى 4 صور مع اسم المصور لكل صورة. ستظهر هذه الصور تحت محتوى الخبر.</small>
+            <div id="newsImagesContainer" style="display:flex;flex-direction:column;gap:16px">
+              <!-- سيتم إضافة الصور هنا ديناميكياً -->
+            </div>
+            <input type="file" id="news_image_file_hidden" accept="image/*" style="display:none" />
+            <div id="uploadProgress" style="display:none;margin-top:8px">
+              <div style="background:#e2e8f0;border-radius:4px;height:8px;overflow:hidden">
+                <div id="uploadProgressBar" style="background:#3b82f6;height:100%;width:0%;transition:width 0.3s"></div>
+              </div>
+              <small id="uploadProgressText" style="color:#64748b;font-size:12px;margin-top:4px;display:block"></small>
+            </div>
+          </div>
+          
+          <div>
+            <label style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span>الكُتّاب</span>
+              <button type="button" class="btn btn-outline small" id="addAuthorBtn" style="padding:6px 12px;font-size:0.85rem">
+                <i class="fa-solid fa-plus"></i>
+                إضافة كاتب
+              </button>
+            </label>
+            <div id="authorsContainer">
+              <div class="author-field" style="display:flex;gap:8px;margin-bottom:8px">
+                <input type="text" class="author-name-input" placeholder="اسم الكاتب" style="flex:1" />
+                <button type="button" class="btn btn-outline small remove-author-btn" style="padding:8px 12px;color:#ef4444;display:none">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <label>
+            حالة الخبر <span style="color:#ef4444">*</span>
+            <select id="news_status" required>
+              <option value="draft">مسودة</option>
+              <option value="published">منشور</option>
+              <option value="archived">مؤرشف</option>
+            </select>
+          </label>
+          
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input id="news_is_featured" type="checkbox" style="width:auto;margin:0" />
+            <span>خبر مميز (يظهر في قسم الأخبار المميزة)</span>
+          </label>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-regular fa-floppy-disk"></i>
+            حفظ
+          </button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- Change Committee Dialog -->
+    <dialog id="changeCommitteeDialog" class="admin-dialog" style="max-width:5000px">
+      <form method="dialog" class="dialog-form" id="changeCommitteeForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">
+            <i class="fa-solid fa-arrow-right-arrow-left"></i>
+            <span>تغيير اللجنة</span>
+          </h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div id="changeCommitteeMemberInfo" style="background:linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); padding:16px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:24px; text-align:center">
+            <div style="font-size:0.85rem; color:#64748b; font-weight:600; margin-bottom:4px">العضو</div>
+            <div id="changeCommitteeMemberName" style="font-size:1.1rem; font-weight:700; color:#0f172a"></div>
+          </div>
+          
+          <div class="form-section">
+            <label style="display:block; margin-bottom:8px">
+              <span style="font-size:0.9rem; font-weight:600; color:#475569; display:block; margin-bottom:8px">
+                <i class="fa-solid fa-people-group" style="color:#10b981; margin-left:6px"></i>
+                اللجنة الحالية
+              </span>
+              <div id="changeCommitteeCurrentCommittee" style="padding:12px 16px; background:#f1f5f9; border-radius:8px; font-weight:600; color:#3d8fd6; border:1px solid #e2e8f0"></div>
+            </label>
+          </div>
+
+          <div class="form-section">
+            <label>
+              <span style="font-size:0.9rem; font-weight:600; color:#475569; display:block; margin-bottom:8px">
+                <i class="fa-solid fa-arrow-right" style="color:#3d8fd6; margin-left:6px"></i>
+                اللجنة الجديدة <span class="required">*</span>
+              </span>
+              <select id="changeCommitteeSelect" required style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.95rem">
+                <option value="">اختر اللجنة</option>
+              </select>
+            </label>
+            
+            <div id="changeCommitteeNewInput" style="display:none; margin-top:12px">
+              <label>
+                <span style="font-size:0.9rem; font-weight:600; color:#475569; display:block; margin-bottom:8px">اسم اللجنة الجديدة</span>
+                <input type="text" id="changeCommitteeNewName" placeholder="أدخل اسم اللجنة" style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.95rem" />
+              </label>
+            </div>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-check"></i>
+            تغيير اللجنة
+          </button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- International Day: Add Custom Dialog -->
+    <dialog id="intlCustomDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="intlCustomForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title"><i class="fa-solid fa-earth-asia"></i> إضافة يوم عالمي</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>التاريخ
+              <input id="intlCustomDate" type="date" required />
+            </label>
+            <label>العنوان
+              <input id="intlCustomTitle" type="text" required placeholder="اسم اليوم العالمي" />
+            </label>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+    <dialog id="workDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="workForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">إضافة/تعديل عمل</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>العنوان<input name="title" required /></label>
+            <label>الفئة<input name="category" placeholder="فلم قصير، مبادرة.." /></label>
+            <label>صورة العمل
+              <div id="workDropzone" class="upload-dropzone" tabindex="0" role="button" aria-label="رفع صورة بالضغط أو السحب والإفلات">
+                <i class="fa-regular fa-image" aria-hidden="true"></i>
+                <div class="dz-text">
+                  <strong>اسحب وأفلت الصورة هنا</strong>
+                  <span id="workBrowseBtn">أو اضغط لأختيار الصورة من جهازك</span>
+                </div>
+                <!-- <span class="dz-hint">الامتدادات المدعومة: JPG, PNG, WEBP • حتى 5MB</span> -->
+              </div>
+              <input id="work_image_file" type="file" accept="image/*" style="display:none" />
+              <input id="work_image_url" name="image_url" type="hidden" />
+              <small id="work_image_help" class="field-help">يمكنك السحب والإفلات أو الضغط للاختيار. ستُرفع الصورة ثم يُحفظ رابطها تلقائيًا.</small>
+              <div style="display: flex; justify-content: center;">
+                <img id="work_image_preview" alt="معاينة الصورة" class="image-preview" />
+              </div>
+              <div id="workImageActions" class="image-actions" style="display:none">
+                <button type="button" class="btn btn-outline" id="work_edit_image_btn"><i class="fa-regular fa-pen-to-square"></i> تعديل الصورة</button>
+                <button type="button" class="btn btn-outline" id="work_change_image_btn"><i class="fa-regular fa-image"></i> تغيير الصورة</button>
+              </div>
+            </label>
+            <label>رابط خارجي<input name="link" class="link" type="url" placeholder="https://..." /></label>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit" class="btn btn-primary">حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="sponsorDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="sponsorForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">إضافة/تعديل راعٍ</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>الاسم<input name="name" required /></label>
+            <label>الوسم<input name="badge" placeholder="راعي تعليمي.." /></label>
+            <label>الوصف<textarea name="description" rows="3" placeholder="نص قصير يظهر في كارد الراعي"></textarea></label>
+            <label>شعار الراعي
+              <div id="sponsorDropzone" class="upload-dropzone" tabindex="0" role="button" aria-label="رفع الشعار بالضغط أو السحب والإفلات">
+                <i class="fa-regular fa-image" aria-hidden="true"></i>
+                <div class="dz-text">
+                  <strong>اسحب وأفلت الشعار هنا</strong>
+                  <span id="sponsorBrowseBtn">أو اضغط لاختيار الشعار من جهازك</span>
+                </div>
+              </div>
+              <input id="sponsor_logo_file" type="file" accept="image/*" style="display:none" />
+              <input id="sponsor_logo_url" name="logo_url" type="hidden" />
+              <small class="field-help">يدعم PNG وWEBP. سيتم رفع الشعار وحفظ رابطه تلقائيًا.</small>
+              <div style="display: flex; justify-content: center;">
+                <img id="sponsor_logo_preview" alt="معاينة الشعار" class="image-preview" />
+              </div>
+              <div id="sponsorImageActions" class="image-actions" style="display:none">
+                <button type="button" class="btn btn-outline" id="sponsor_edit_logo_btn"><i class="fa-regular fa-pen-to-square"></i> تعديل الشعار</button>
+                <button type="button" class="btn btn-outline" id="sponsor_change_logo_btn"><i class="fa-regular fa-image"></i> تغيير الشعار</button>
+              </div>
+            </label>
+            <label>رابط الموقع<input name="link" type="url" /></label>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit" class="btn btn-primary">حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="achievementDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="achievementForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">إضافة/تعديل إنجاز</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>النص الظاهر تحت الرقم<input name="label" required placeholder="مثل: ورش تدريبية" /></label>
+            <label>أيقونة Font Awesome<input name="icon" placeholder="مثال: fa-solid fa-trophy" /></label>
+            <label>العدد<input name="count" type="number" min="0" required placeholder="0" /></label>
+            <label style="display:flex;align-items:center;gap:8px"><input name="plus" type="checkbox" checked /> إظهار علامة + بجانب الرقم</label>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit" class="btn btn-primary">حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="boardDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="boardForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">إضافة/تعديل عضو</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>الاسم<input name="name" required /></label>
+            <label>المنصب<input name="position" required /></label>
+            <label>صورة العضو
+              <div id="boardDropzone" class="upload-dropzone" tabindex="0" role="button" aria-label="رفع صورة العضو بالضغط أو السحب والإفلات">
+                <i class="fa-regular fa-image" aria-hidden="true"></i>
+                <div class="dz-text">
+                  <strong>اسحب وأفلت الصورة هنا</strong>
+                  <span id="boardBrowseBtn">أو اضغط لاختيار الصورة من جهازك</span>
+                </div>
+              </div>
+              <input id="board_image_file" type="file" accept="image/*" style="display:none" />
+              <input id="board_image_url" name="image_url" type="hidden" />
+              <small class="field-help">سيتم فتح أداة القص بنسبة 1:1 وحفظ الرابط تلقائيًا بعد الرفع.</small>
+              <div style="display: flex; justify-content: center;">
+                <img id="board_image_preview" alt="معاينة الصورة" class="image-preview" />
+              </div>
+              <div id="boardImageActions" class="image-actions" style="display:none">
+                <button type="button" class="btn btn-outline" id="board_edit_image_btn"><i class="fa-regular fa-pen-to-square"></i> تعديل الصورة</button>
+                <button type="button" class="btn btn-outline" id="board_change_image_btn"><i class="fa-regular fa-image"></i> تغيير الصورة</button>
+              </div>
+            </label>
+            <label>تويتر<input name="twitter" type="url" /></label>
+            <label>لينكدإن<input name="linkedin" type="url" /></label>
+            <label>البريد<input name="email" type="email" /></label>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit" class="btn btn-primary">حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="faqDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="faqForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">إضافة/تعديل سؤال</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>السؤال<input name="question" required /></label>
+            <label>الإجابة<textarea name="answer" rows="4" required placeholder="اكتب الإجابة هنا..."></textarea></label>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit" class="btn btn-primary">حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="testimonialDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="testimonialForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">إضافة/تعديل رأي عضو</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>الاسم<input name="member_name" required placeholder="اسم العضو" /></label>
+            <label>اللجنة
+              <select name="committee">
+                <option value="">اختر اللجنة</option>
+                <option>لجنة التأليف</option>
+                <option>لجنة الرواة</option>
+                <option>لجنة التصميم</option>
+                <option>لجنة الفعاليات</option>
+                <option>لجنة السفراء</option>
+                <option>لجنة الإنتاج</option>
+              </select>
+            </label>
+            <label>التقييم
+              <select name="rating" required>
+                <option value="5">5</option>
+                <option value="4">4</option>
+                <option value="3">3</option>
+                <option value="2">2</option>
+                <option value="1">1</option>
+              </select>
+            </label>
+            <label>نص الرأي<textarea name="text" rows="4" required placeholder="اكتب الرأي..."></textarea></label>
+            <label style="display:flex;align-items:center;gap:8px"><input name="visible" type="checkbox" checked /> ظاهر للجميع</label>
+
+            <label>صورة العضو (اختياري)
+              <div id="testimonialDropzone" class="upload-dropzone" tabindex="0" role="button" aria-label="رفع الصورة بالضغط أو السحب والإفلات">
+                <i class="fa-regular fa-image" aria-hidden="true"></i>
+                <div class="dz-text">
+                  <strong>اسحب وأفلت الصورة هنا</strong>
+                  <span id="testimonialBrowseBtn">أو اضغط لاختيار الصورة من جهازك</span>
+                </div>
+              </div>
+              <input id="testimonial_image_file" type="file" accept="image/*" style="display:none" />
+              <input id="testimonial_image_url" name="avatar_url" type="hidden" />
+              <div style="display:flex;justify-content:center;">
+                <img id="testimonial_image_preview" alt="معاينة الصورة" class="image-preview" />
+              </div>
+              <div id="testimonialImageActions" class="image-actions" style="display:none">
+                <button type="button" class="btn btn-outline" id="testimonial_edit_image_btn"><i class="fa-regular fa-pen-to-square"></i> تعديل الصورة</button>
+                <button type="button" class="btn btn-outline" id="testimonial_change_image_btn"><i class="fa-regular fa-image"></i> تغيير الصورة</button>
+              </div>
+            </label>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit" class="btn btn-primary">حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="todoDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="todoForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title"><i class="fa-solid fa-list-check"></i> إضافة/تعديل مهمة</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>العنوان<input name="title" required placeholder="عنوان المهمة" /></label>
+            <label>تاريخ الاستحقاق<input name="due" type="date" /></label>
+            <label>الحالة
+              <select name="status">
+                <option value="pending">قيد الانتظار</option>
+                <option value="in_progress">قيد التنفيذ</option>
+                <option value="done">منجزة</option>
+              </select>
+            </label>
+            <label>ملاحظات<textarea name="notes" rows="4" placeholder="تفاصيل إضافية"></textarea></label>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="appointmentDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="appointmentForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title"><i class="fa-solid fa-calendar-check"></i> إضافة/تعديل موعد</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid" style="grid-template-columns: 1fr">
+            <label>العنوان<input name="title" required placeholder="عنوان الموعد" /></label>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+            <button type="button" class="btn btn-outline" id="addSlotBtn"><i class="fa-solid fa-plus"></i> إضافة وقت</button>
+          </div>
+          <div id="appointmentSlots" class="form-grid" style="margin-top:8px"></div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="blogDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="blogForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title">إضافة/تعديل تدوينة</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <label>العنوان<input name="title" required /></label>
+            <label>صورة الغلاف (رابط)<input name="image" type="url" placeholder="https://..." /></label>
+            <label>الكاتب<input name="author" placeholder="اسم الكاتب" /></label>
+            <label>تاريخ النشر<input name="published_at" type="date" /></label>
+            <label>حالة النشر
+              <select name="status">
+                <option value="published">منشور</option>
+                <option value="draft">مسودة</option>
+              </select>
+            </label>
+            <label>التصنيفات<input name="categories" placeholder="مثال: أدب، مبادرات، شعر" /></label>
+            <label>مقتطف قصير<textarea name="excerpt" rows="3" placeholder="نبذة مختصرة"></textarea></label>
+            <label>المحتوى الكامل<textarea name="content" rows="6" placeholder="نص التدوينة"></textarea></label>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit" class="btn btn-primary">حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="scheduleDayDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form" id="scheduleDayForm">
+        <div class="dialog-header">
+          <h3 class="dialog-title"><i class="fa-solid fa-calendar-day"></i> محتوى يوم <span id="scheduleSelectedDate"></span></h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div class="day-items-section">
+            <div class="form-grid">
+              <label>العنوان
+                <input id="dayItemTitle" name="day_item_title" placeholder="عنوان قصير" />
+              </label>
+              <label>الملاحظات
+                <textarea id="dayItemNotes" name="day_item_notes" rows="4" placeholder="تفاصيل أو وصف" ></textarea>
+              </label>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; margin:8px 0 12px">
+              <button type="button" class="btn btn-primary" id="dayAddBtn"><i class="fa-solid fa-plus"></i> إضافة</button>
+              <button type="button" class="btn" id="dayCancelEditBtn" style="display:none"><i class="fa-solid fa-rotate-left"></i> إلغاء التعديل</button>
+              <div class="muted" id="dayEditState" style="display:none">وضع تعديل عنصر</div>
+            </div>
+            <div class="day-items-list" id="dayItemsList" aria-live="polite"></div>
+            <small class="field-help">يمكنك إضافة عدة عناصر لليوم نفسه. استخدم حفظ لحفظ جميع التغييرات.</small>
+          </div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn" id="dayDeleteBtn"><i class="fa-solid fa-trash"></i> حذف اليوم</button>
+          <div style="flex:1"></div>
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إلغاء</button>
+          <button value="submit " class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> حفظ</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- Admin Details Dialog -->
+    <dialog id="adminDetailsDialog" class="admin-dialog">
+      <form method="dialog" class="dialog-form">
+        <div class="dialog-header">
+          <h3 class="dialog-title"><i class="fa-regular fa-id-card"></i> تفاصيل الإداري</h3>
+          <button type="button" class="dialog-close" aria-label="إغلاق" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dialog-body">
+          <div id="adminDetailsBody" style="display:grid; gap:12px"></div>
+        </div>
+        <menu class="dialog-actions">
+          <button type="button" class="btn btn-outline" id="adminRemoveBtn"><i class="fa-solid fa-user-slash"></i> حذف من الإداريين</button>
+          <div style="flex:1"></div>
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">إغلاق</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- نظام الصلاحيات والعضويات الجديد -->
+    <script src="../js/permissions.js"></script>
+    <script src="../js/committees.js"></script>
+    <script src="../js/members.js"></script>
+    <script src="admin-committees.js"></script>
+    <script src="dashboard-permissions.js"></script>
+    <script src="admin.js?v=20251120b"></script>
+    <script src="admin-init.js"></script>
+  </body>
+</html>

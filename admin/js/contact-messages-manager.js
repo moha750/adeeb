@@ -136,88 +136,113 @@ class ContactMessagesManager {
 
         if (filteredMessages.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 3rem; color: #64748b;">
-                    <i class="fa-solid fa-inbox" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox"></i>
                     <p>لا توجد رسائل</p>
                 </div>
             `;
             return;
         }
 
-        const table = `
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="background: #f8fafc; border-bottom: 2px solid #e5e7eb;">
-                        <th style="padding: 1rem; text-align: right; font-weight: 600;">الاسم</th>
-                        <th style="padding: 1rem; text-align: right; font-weight: 600;">البريد الإلكتروني</th>
-                        <th style="padding: 1rem; text-align: right; font-weight: 600;">الموضوع</th>
-                        <th style="padding: 1rem; text-align: center; font-weight: 600;">الحالة</th>
-                        <th style="padding: 1rem; text-align: center; font-weight: 600;">الأولوية</th>
-                        <th style="padding: 1rem; text-align: center; font-weight: 600;">التاريخ</th>
-                        <th style="padding: 1rem; text-align: center; font-weight: 600;">الإجراءات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${filteredMessages.map(message => this.renderMessageRow(message)).join('')}
-                </tbody>
-            </table>
+        const cardsHtml = `
+            <div class="applications-cards-grid">
+                ${filteredMessages.map(message => this.renderMessageCard(message)).join('')}
+            </div>
         `;
 
-        container.innerHTML = table;
+        container.innerHTML = cardsHtml;
     }
 
-    renderMessageRow(message) {
+    renderMessageCard(message) {
         const statusBadges = {
-            new: '<span class="badge" style="background: #3b82f6; color: white;">جديدة</span>',
-            read: '<span class="badge" style="background: #10b981; color: white;">مقروءة</span>',
-            replied: '<span class="badge" style="background: #8b5cf6; color: white;">تم الرد</span>',
-            archived: '<span class="badge" style="background: #6b7280; color: white;">مؤرشفة</span>'
+            new: '<span class="badge badge-info">جديدة</span>',
+            read: '<span class="badge badge-success">مقروءة</span>',
+            replied: '<span class="badge" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; box-shadow: 0 2px 6px rgba(139, 92, 246, 0.3);">تم الرد</span>',
+            archived: '<span class="badge badge-secondary">مؤرشفة</span>'
         };
 
         const priorityBadges = {
-            low: '<span class="badge" style="background: #94a3b8; color: white;">منخفض</span>',
-            normal: '<span class="badge" style="background: #64748b; color: white;">عادي</span>',
-            high: '<span class="badge" style="background: #f59e0b; color: white;">عالي</span>',
-            urgent: '<span class="badge" style="background: #ef4444; color: white;">عاجل</span>'
+            low: '<span class="badge" style="background: linear-gradient(135deg, #94a3b8, #64748b); color: white; box-shadow: 0 2px 6px rgba(148, 163, 184, 0.3);">منخفض</span>',
+            normal: '<span class="badge badge-secondary">عادي</span>',
+            high: '<span class="badge badge-warning">عالي</span>',
+            urgent: '<span class="badge badge-danger">عاجل</span>'
         };
 
         const date = new Date(message.created_at).toLocaleDateString('ar-SA', {
             year: 'numeric',
-            month: 'short',
-            day: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        const time = new Date(message.created_at).toLocaleTimeString('ar-SA', {
             hour: '2-digit',
             minute: '2-digit'
         });
 
+        const messagePreview = message.message.length > 100 
+            ? this.escapeHtml(message.message.substring(0, 100)) + '...' 
+            : this.escapeHtml(message.message);
+
         return `
-            <tr style="border-bottom: 1px solid #e5e7eb; ${message.status === 'new' ? 'background: #eff6ff;' : ''}" 
-                data-message-id="${message.id}">
-                <td style="padding: 1rem;">
-                    <strong style="color: #274060;">${this.escapeHtml(message.name)}</strong>
-                </td>
-                <td style="padding: 1rem; color: #64748b;">
-                    ${this.escapeHtml(message.email)}
-                </td>
-                <td style="padding: 1rem; color: #64748b;">
-                    ${message.subject ? this.escapeHtml(message.subject) : '<em>بدون موضوع</em>'}
-                </td>
-                <td style="padding: 1rem; text-align: center;">
-                    ${statusBadges[message.status] || statusBadges.new}
-                </td>
-                <td style="padding: 1rem; text-align: center;">
-                    ${priorityBadges[message.priority] || priorityBadges.normal}
-                </td>
-                <td style="padding: 1rem; text-align: center; color: #64748b; font-size: 0.875rem;">
-                    ${date}
-                </td>
-                <td style="padding: 1rem; text-align: center;">
-                    <button class="btn-sm btn-primary" onclick="contactMessagesManager.viewMessage('${message.id}')" 
-                        style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+            <div class="application-card ${message.status === 'new' ? 'new-message' : ''}">
+                <div class="application-card-header">
+                    <div class="applicant-info">
+                        <div class="applicant-avatar">
+                            <i class="fa-solid fa-envelope"></i>
+                        </div>
+                        <div class="applicant-details">
+                            <h3 class="applicant-name">${this.escapeHtml(message.name)}</h3>
+                            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                ${statusBadges[message.status] || statusBadges.new}
+                                ${priorityBadges[message.priority] || priorityBadges.normal}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="application-card-body">
+                    <div class="application-info-grid">
+                        <div class="info-item">
+                            <i class="fa-solid fa-at"></i>
+                            <div class="info-content">
+                                <span class="info-label">البريد الإلكتروني</span>
+                                <span class="info-value">${this.escapeHtml(message.email)}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <i class="fa-solid fa-calendar"></i>
+                            <div class="info-content">
+                                <span class="info-label">تاريخ الإرسال</span>
+                                <span class="info-value">${date} - ${time}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item full-width">
+                            <i class="fa-solid fa-tag"></i>
+                            <div class="info-content">
+                                <span class="info-label">الموضوع</span>
+                                <span class="info-value">${message.subject ? this.escapeHtml(message.subject) : 'بدون موضوع'}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item full-width">
+                            <i class="fa-solid fa-message"></i>
+                            <div class="info-content">
+                                <span class="info-label">محتوى الرسالة</span>
+                                <span class="info-value" style="color: #64748b; font-size: 0.9rem;">${messagePreview}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="application-card-footer">
+                    <button class="btn-view-details" onclick="contactMessagesManager.viewMessage('${message.id}')">
                         <i class="fa-solid fa-eye"></i>
-                        عرض
+                        عرض التفاصيل الكاملة
                     </button>
-                </td>
-            </tr>
+                </div>
+            </div>
         `;
     }
 

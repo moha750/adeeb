@@ -279,6 +279,26 @@
                     </div>
                 </div>
 
+                <!-- إحصائيات الدول والمدن -->
+                <div class="charts-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-globe"></i> توزيع الدول</h3>
+                        </div>
+                        <div class="card-body" style="height: 300px;">
+                            <canvas id="countriesChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-location-dot"></i> توزيع المدن</h3>
+                        </div>
+                        <div class="card-body" style="height: 300px;">
+                            <canvas id="citiesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- أكثر الصفحات زيارة -->
                 <div class="card">
                     <div class="card-header">
@@ -628,14 +648,14 @@
                 </div>
             </section>
 
-            <!-- قسم إدارة طلبات العضوية -->
-            <section id="membership-section" class="admin-section" style="display: none;">
+            <!-- قسم إعدادات التسجيل -->
+            <section id="membership-settings-section" class="admin-section" style="display: none;">
                 <div class="section-header">
                     <h1>
-                        <i class="fa-solid fa-user-plus"></i>
-                        إدارة طلبات العضوية
+                        <i class="fa-solid fa-gear"></i>
+                        إعدادات التسجيل
                     </h1>
-                    <p class="section-subtitle">مراجعة طلبات التسجيل والتحكم في باب التسجيل</p>
+                    <p class="section-subtitle">التحكم في باب التسجيل والجدولة التلقائية</p>
                 </div>
 
                 <!-- بطاقة التحكم في التسجيل -->
@@ -717,15 +737,20 @@
                         </div>
                     </div>
                 </div>
+            </section>
 
-                <!-- بطاقة إدارة اللجان المتاحة للتسجيل -->
+            <!-- قسم اللجان المتاحة للتسجيل -->
+            <section id="membership-committees-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-users-gear"></i>
+                        اللجان المتاحة للتسجيل
+                    </h1>
+                    <p class="section-subtitle">تحكم في اللجان التي تظهر في نموذج التسجيل</p>
+                </div>
+
+                <!-- بطاقة إدارة اللجان المتاحة -->
                 <div class="card" style="margin-bottom: 2rem;">
-                    <div class="card-header">
-                        <h3>
-                            <i class="fa-solid fa-users-gear"></i>
-                            إدارة اللجان المتاحة للتسجيل
-                        </h3>
-                    </div>
                     <div class="card-body">
                         <p style="color: #64748b; margin-bottom: 1.5rem;">
                             <i class="fa-solid fa-info-circle"></i>
@@ -736,37 +761,21 @@
                         </div>
                     </div>
                 </div>
+            </section>
 
-                <!-- إحصائيات الطلبات -->
-                <div class="stats-grid" style="margin-bottom: 2rem;">
-                    <div class="stat-card">
-                        <i class="fa-solid fa-inbox stat-icon" style="color: #3b82f6;"></i>
-                        <div class="stat-info">
-                            <h3>طلبات جديدة</h3>
-                            <p class="stat-value" id="newApplicationsCount">0</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-eye stat-icon" style="color: #f59e0b;"></i>
-                        <div class="stat-info">
-                            <h3>قيد المراجعة</h3>
-                            <p class="stat-value" id="reviewApplicationsCount">0</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-check-circle stat-icon" style="color: #10b981;"></i>
-                        <div class="stat-info">
-                            <h3>مقبولة</h3>
-                            <p class="stat-value" id="acceptedApplicationsCount">0</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-times-circle stat-icon" style="color: #ef4444;"></i>
-                        <div class="stat-info">
-                            <h3>مرفوضة</h3>
-                            <p class="stat-value" id="rejectedApplicationsCount">0</p>
-                        </div>
-                    </div>
+            <!-- قسم طلبات العضوية (عرض فقط) -->
+            <section id="membership-applications-view-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-eye"></i>
+                        طلبات العضوية
+                    </h1>
+                    <p class="section-subtitle">عرض طلبات التسجيل والإحصائيات</p>
+                </div>
+
+                <!-- إحصائيات الطلبات حسب اللجان -->
+                <div class="stats-grid" style="margin-bottom: 2rem;" id="applicationsCommitteesStats">
+                    <!-- سيتم ملؤها ديناميكياً بإحصائيات اللجان -->
                 </div>
 
                 <!-- فلاتر البحث -->
@@ -775,22 +784,9 @@
                         <i class="fa-solid fa-search"></i>
                         <input type="text" id="applicationSearchInput" placeholder="البحث في الطلبات..." />
                     </div>
-                    <select id="applicationStatusFilter" class="filter-select">
-                        <option value="">جميع الحالات</option>
-                        <option value="new">جديدة</option>
-                        <option value="under_review">قيد المراجعة</option>
-                        <option value="accepted">مقبولة</option>
-                        <option value="rejected">مرفوضة</option>
-                        <option value="archived">مؤرشفة</option>
-                    </select>
                     <select id="applicationCommitteeFilter" class="filter-select">
                         <option value="">جميع اللجان</option>
-                        <option value="لجنة التأليف">لجنة التأليف</option>
-                        <option value="لجنة الرواة">لجنة الرواة</option>
-                        <option value="لجنة السفراء">لجنة السفراء</option>
-                        <option value="لجنة الفعاليات">لجنة الفعاليات</option>
-                        <option value="لجنة الإنتاج">لجنة الإنتاج</option>
-                        <option value="لجنة التصميم">لجنة التصميم</option>
+                        <!-- سيتم ملؤها ديناميكياً من اللجان الفعلية -->
                     </select>
                     <button class="btn-primary" id="refreshApplicationsBtn">
                         <i class="fa-solid fa-rotate"></i>
@@ -802,13 +798,281 @@
                     </button>
                 </div>
 
-                <!-- جدول الطلبات -->
+                <!-- جدول الطلبات (عرض فقط) -->
                 <div class="card">
                     <div class="card-body">
-                        <div id="applicationsTable" class="data-table">
+                        <div id="applicationsViewTable" class="data-table">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <!-- قسم مراجعة الطلبات (مع الإجراءات) -->
+            <section id="membership-applications-review-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-clipboard-check"></i>
+                        مراجعة الطلبات
+                    </h1>
+                    <p class="section-subtitle">قبول ورفض طلبات التسجيل</p>
+                </div>
+
+                <!-- إحصائيات الطلبات حسب اللجان -->
+                <div class="stats-grid" style="margin-bottom: 2rem;" id="applicationsReviewCommitteesStats">
+                    <!-- سيتم ملؤها ديناميكياً بإحصائيات اللجان -->
+                </div>
+
+                <!-- فلاتر البحث -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="applicationReviewSearchInput" placeholder="البحث في الطلبات..." />
+                    </div>
+                    <select id="applicationReviewStatusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="accepted">مقبول للمقابلة</option>
+                        <option value="rejected">مرفوض</option>
+                        <option value="under_review">قيد المراجعة</option>
+                        <option value="new">جديد</option>
+                    </select>
+                    <select id="applicationReviewCommitteeFilter" class="filter-select">
+                        <option value="">جميع اللجان</option>
+                        <!-- سيتم ملؤها ديناميكياً من اللجان الفعلية -->
+                    </select>
+                    <button class="btn-primary" id="refreshApplicationsReviewBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                    <button class="btn-success" id="exportApplicationsReviewBtn">
+                        <i class="fa-solid fa-file-export"></i>
+                        تصدير
+                    </button>
+                </div>
+
+                <!-- جدول الطلبات (مع أزرار الإجراءات) -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="applicationsReviewTable" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم المقابلات -->
+            <section id="membership-interviews-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-calendar-days"></i>
+                        المقابلات
+                    </h1>
+                    <p class="section-subtitle">إدارة وجدولة مقابلات المتقدمين</p>
+                </div>
+
+                <!-- إحصائيات المقابلات -->
+                <div class="stats-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-calendar-check stat-icon" style="color: #3b82f6;"></i>
+                        <div class="stat-info">
+                            <h3>مقابلات مجدولة</h3>
+                            <p class="stat-value" id="scheduledInterviewsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-clock stat-icon" style="color: #f59e0b;"></i>
+                        <div class="stat-info">
+                            <h3>معلقة</h3>
+                            <p class="stat-value" id="pendingInterviewsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-check-circle stat-icon" style="color: #10b981;"></i>
+                        <div class="stat-info">
+                            <h3>مقبولين</h3>
+                            <p class="stat-value" id="acceptedInterviewsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-times-circle stat-icon" style="color: #ef4444;"></i>
+                        <div class="stat-info">
+                            <h3>مرفوضين</h3>
+                            <p class="stat-value" id="rejectedInterviewsCount">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- أزرار الإجراءات -->
+                <div class="filters-bar">
+                    <button class="btn-primary" id="scheduleNewInterviewBtn">
+                        <i class="fa-solid fa-plus"></i>
+                        جدولة مقابلة جديدة
+                    </button>
+                    <select id="interviewStatusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="scheduled">مجدولة</option>
+                        <option value="completed">مكتملة</option>
+                        <option value="cancelled">ملغاة</option>
+                        <option value="rescheduled">معاد جدولتها</option>
+                    </select>
+                    <select id="interviewResultFilter" class="filter-select">
+                        <option value="">جميع النتائج</option>
+                        <option value="pending">معلقة</option>
+                        <option value="accepted">مقبول</option>
+                        <option value="rejected">مرفوض</option>
+                        <option value="no_show">لم يحضر</option>
+                    </select>
+                    <button class="btn-outline" id="refreshInterviewsBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                </div>
+
+                <!-- جدول المقابلات -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="interviewsTable" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم المقبولين -->
+            <section id="membership-accepted-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-user-check"></i>
+                        الأعضاء المقبولين
+                    </h1>
+                    <p class="section-subtitle">قائمة الأعضاء المقبولين نهائياً</p>
+                </div>
+
+                <!-- إحصائيات المقبولين -->
+                <div class="stats-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-users stat-icon" style="color: #3b82f6;"></i>
+                        <div class="stat-info">
+                            <h3>إجمالي الأعضاء</h3>
+                            <p class="stat-value" id="totalAcceptedCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-user-check stat-icon" style="color: #10b981;"></i>
+                        <div class="stat-info">
+                            <h3>نشط</h3>
+                            <p class="stat-value" id="activeAcceptedCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-user-clock stat-icon" style="color: #f59e0b;"></i>
+                        <div class="stat-info">
+                            <h3>غير نشط</h3>
+                            <p class="stat-value" id="inactiveAcceptedCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-calendar-plus stat-icon" style="color: #8b5cf6;"></i>
+                        <div class="stat-info">
+                            <h3>انضموا هذا الشهر</h3>
+                            <p class="stat-value" id="thisMonthAcceptedCount">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلاتر البحث -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="acceptedSearchInput" placeholder="البحث في الأعضاء..." />
+                    </div>
+                    <select id="acceptedStatusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="active">نشط</option>
+                        <option value="inactive">غير نشط</option>
+                        <option value="suspended">معلق</option>
+                        <option value="terminated">منتهي</option>
+                    </select>
+                    <select id="acceptedCommitteeFilter" class="filter-select">
+                        <option value="">جميع اللجان</option>
+                    </select>
+                    <button class="btn-outline" id="refreshAcceptedBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                    <button class="btn-success" id="exportAcceptedBtn">
+                        <i class="fa-solid fa-file-export"></i>
+                        تصدير
+                    </button>
+                </div>
+
+                <!-- جدول المقبولين -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="acceptedMembersTable" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم أرشيف فتح التسجيل -->
+            <section id="membership-archives-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-box-archive"></i>
+                        أرشيف فتح التسجيل
+                    </h1>
+                    <p class="section-subtitle">سجل تاريخي لفترات فتح وإغلاق التسجيل</p>
+                </div>
+
+                <!-- إحصائيات الأرشيف -->
+                <div class="stats-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-folder-open stat-icon" style="color: #3b82f6;"></i>
+                        <div class="stat-info">
+                            <h3>إجمالي الأرشيفات</h3>
+                            <p class="stat-value" id="totalArchivesCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-users stat-icon" style="color: #10b981;"></i>
+                        <div class="stat-info">
+                            <h3>إجمالي الطلبات</h3>
+                            <p class="stat-value" id="totalArchivedApplicationsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-calendar-check stat-icon" style="color: #8b5cf6;"></i>
+                        <div class="stat-info">
+                            <h3>آخر فترة تسجيل</h3>
+                            <p class="stat-value" id="lastArchivePeriod" style="font-size: 0.9rem;">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-chart-line stat-icon" style="color: #f59e0b;"></i>
+                        <div class="stat-info">
+                            <h3>معدل القبول</h3>
+                            <p class="stat-value" id="averageAcceptanceRate">0%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- أزرار الإجراءات -->
+                <div class="filters-bar">
+                    <button class="btn-primary" id="createManualArchiveBtn">
+                        <i class="fa-solid fa-plus"></i>
+                        إنشاء أرشيف يدوي
+                    </button>
+                    <button class="btn-outline" id="refreshArchivesBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                </div>
+
+                <!-- قائمة الأرشيفات -->
+                <div id="archivesContainer">
+                    <!-- سيتم ملؤها ديناميكياً -->
                 </div>
             </section>
 
@@ -1563,6 +1827,66 @@
         </div>
     </div>
 
+    <!-- قسم جلسات المقابلات -->
+    <section id="interview-sessions-section" class="admin-section" style="display: none;">
+        <div class="section-header">
+            <h1>
+                <i class="fa-solid fa-calendar-days"></i>
+                جلسات المقابلات
+            </h1>
+            <p class="section-subtitle">إدارة جلسات حجز المواعيد للمتقدمين</p>
+        </div>
+
+        <!-- إحصائيات الجلسات -->
+        <div class="stats-grid" style="margin-bottom: 2rem;">
+            <div class="stat-card">
+                <i class="fa-solid fa-calendar-check stat-icon" style="color: #3b82f6;"></i>
+                <div class="stat-info">
+                    <h3>جلسات نشطة</h3>
+                    <p class="stat-value" id="activeSessionsCount">0</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fa-solid fa-clock stat-icon" style="color: #10b981;"></i>
+                <div class="stat-info">
+                    <h3>إجمالي الفترات</h3>
+                    <p class="stat-value" id="totalSlotsCount">0</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fa-solid fa-user-check stat-icon" style="color: #8b5cf6;"></i>
+                <div class="stat-info">
+                    <h3>حجوزات مؤكدة</h3>
+                    <p class="stat-value" id="bookedSlotsCount">0</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fa-solid fa-percentage stat-icon" style="color: #f59e0b;"></i>
+                <div class="stat-info">
+                    <h3>نسبة الحجز</h3>
+                    <p class="stat-value" id="bookingRate">0%</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- أزرار الإجراءات -->
+        <div class="filters-bar">
+            <button class="btn-primary" id="createSessionBtn">
+                <i class="fa-solid fa-plus"></i>
+                إنشاء جلسة جديدة
+            </button>
+            <button class="btn-outline" id="refreshSessionsBtn">
+                <i class="fa-solid fa-rotate"></i>
+                تحديث
+            </button>
+        </div>
+
+        <!-- جدول الجلسات -->
+        <div class="card">
+            <div id="sessionsTable"></div>
+        </div>
+    </section>
+
     <!-- نافذة عرض تفاصيل رسالة التواصل -->
     <div class="modal" id="messageDetailModal">
         <div class="modal-content" style="max-width: 800px;">
@@ -1658,16 +1982,88 @@
         </div>
     </div>
 
+    <!-- نافذة منبثقة احترافية لتفاصيل الطلب -->
+    <div id="applicationDetailsModal" class="custom-modal">
+        <div class="custom-modal-overlay"></div>
+        <div class="custom-modal-container">
+            <div class="custom-modal-header">
+                <h2 class="custom-modal-title">
+                    <i class="fa-solid fa-file-lines"></i>
+                    تفاصيل الطلب
+                </h2>
+                <button class="custom-modal-close" onclick="window.closeApplicationModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="custom-modal-body" id="applicationDetailsContent">
+                <!-- سيتم ملء المحتوى ديناميكياً -->
+            </div>
+            
+            <div class="custom-modal-footer" id="applicationDetailsActions">
+                <!-- سيتم ملء الأزرار ديناميكياً -->
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة منبثقة للنماذج (إنشاء/تعديل) -->
+    <div id="formModal" class="custom-modal">
+        <div class="custom-modal-overlay"></div>
+        <div class="custom-modal-container" style="max-width: 650px;">
+            <div class="custom-modal-header">
+                <h2 class="custom-modal-title" id="formModalTitle">
+                    <i class="fa-solid fa-edit"></i>
+                    نموذج
+                </h2>
+                <button class="custom-modal-close" onclick="window.closeFormModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="custom-modal-body" id="formModalContent">
+                <!-- سيتم ملء النموذج ديناميكياً -->
+            </div>
+            
+            <div class="custom-modal-footer" id="formModalActions">
+                <!-- سيتم ملء الأزرار ديناميكياً -->
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تأكيد -->
+    <div id="confirmModal" class="custom-modal">
+        <div class="custom-modal-overlay"></div>
+        <div class="custom-modal-container" style="max-width: 450px;">
+            <div class="custom-modal-header">
+                <h2 class="custom-modal-title" id="confirmModalTitle">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    تأكيد
+                </h2>
+                <button class="custom-modal-close" onclick="window.closeConfirmModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="custom-modal-body" id="confirmModalContent" style="text-align: center; padding: 2rem;">
+                <!-- سيتم ملء المحتوى ديناميكياً -->
+            </div>
+            
+            <div class="custom-modal-footer" id="confirmModalActions" style="justify-content: center;">
+                <!-- سيتم ملء الأزرار ديناميكياً -->
+            </div>
+        </div>
+    </div>
+
     <!-- المكتبات -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../supabase-config.js"></script>
     <script src="auth-manager.js"></script>
     <script src="js/permissions-manager.js"></script>
     <script src="js/contact-messages-manager.js"></script>
     <script src="js/newsletter-manager.js"></script>
     <script src="js/membership-manager.js"></script>
+    <script src="js/interview-sessions-manager.js"></script>
     <script src="js/site-visits-manager.js"></script>
     <script src="dashboard.js"></script>
 </body>

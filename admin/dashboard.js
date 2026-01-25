@@ -180,13 +180,92 @@
             });
         }
         
-        // إدارة العضوية - المستوى 7 وأعلى
-        if (roleLevel >= 7) {
+        // إدارة العضوية - المستوى 5 وأعلى (قائمة منسدلة)
+        if (roleLevel >= 5) {
+            const membershipSubItems = [];
+            
+            // إعدادات التسجيل - مستوى 8+
+            if (roleLevel >= 8) {
+                membershipSubItems.push({
+                    id: 'membership-settings',
+                    icon: 'fa-gear',
+                    label: 'إعدادات التسجيل',
+                    section: 'membership-settings-section'
+                });
+            }
+            
+            // اللجان المتاحة - مستوى 8+
+            if (roleLevel >= 8) {
+                membershipSubItems.push({
+                    id: 'membership-committees',
+                    icon: 'fa-users-gear',
+                    label: 'اللجان المتاحة',
+                    section: 'membership-committees-section'
+                });
+            }
+            
+            // طلبات العضوية (عرض فقط) - مستوى 5+
+            membershipSubItems.push({
+                id: 'membership-applications-view',
+                icon: 'fa-eye',
+                label: 'طلبات العضوية',
+                section: 'membership-applications-view-section'
+            });
+            
+            // مراجعة الطلبات (إجراءات) - مستوى 8+
+            if (roleLevel >= 8) {
+                membershipSubItems.push({
+                    id: 'membership-applications-review',
+                    icon: 'fa-clipboard-check',
+                    label: 'مراجعة الطلبات',
+                    section: 'membership-applications-review-section'
+                });
+            }
+            
+            // جلسات المقابلات - مستوى 7+
+            if (roleLevel >= 7) {
+                membershipSubItems.push({
+                    id: 'interview-sessions',
+                    icon: 'fa-calendar-days',
+                    label: 'جلسات المقابلات',
+                    section: 'interview-sessions-section'
+                });
+            }
+            
+            // المقابلات - مستوى 7+
+            if (roleLevel >= 7) {
+                membershipSubItems.push({
+                    id: 'membership-interviews',
+                    icon: 'fa-calendar-check',
+                    label: 'المقابلات',
+                    section: 'membership-interviews-section'
+                });
+            }
+            
+            // المقبولين - مستوى 5+
+            membershipSubItems.push({
+                id: 'membership-accepted',
+                icon: 'fa-user-check',
+                label: 'المقبولين',
+                section: 'membership-accepted-section'
+            });
+            
+            // أرشيف فتح التسجيل - مستوى 7+
+            if (roleLevel >= 7) {
+                membershipSubItems.push({
+                    id: 'membership-archives',
+                    icon: 'fa-box-archive',
+                    label: 'أرشيف التسجيل',
+                    section: 'membership-archives-section'
+                });
+            }
+            
             menuItems.push({
                 id: 'membership',
                 icon: 'fa-user-plus',
                 label: 'إدارة العضوية',
-                section: 'membership-section'
+                isDropdown: true,
+                subItems: membershipSubItems
             });
         }
         
@@ -211,15 +290,66 @@
         }
         
         // بناء القائمة
-        nav.innerHTML = menuItems.map(item => `
-            <a href="#" class="nav-item ${item.id === 'dashboard' ? 'active' : ''}" data-section="${item.section}">
-                <i class="fa-solid ${item.icon}"></i>
-                <span>${item.label}</span>
-            </a>
-        `).join('');
+        nav.innerHTML = menuItems.map(item => {
+            if (item.isDropdown) {
+                // عنصر قائمة منسدلة
+                return `
+                    <div class="nav-item-dropdown" data-dropdown="${item.id}">
+                        <a href="#" class="nav-item" data-dropdown-toggle="${item.id}">
+                            <i class="fa-solid ${item.icon}"></i>
+                            <span>${item.label}</span>
+                        </a>
+                        <div class="nav-dropdown-menu">
+                            ${item.subItems.map(subItem => `
+                                <a href="#" class="nav-dropdown-item" data-section="${subItem.section}">
+                                    <i class="fa-solid ${subItem.icon}"></i>
+                                    <span>${subItem.label}</span>
+                                </a>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // عنصر قائمة عادي
+                return `
+                    <a href="#" class="nav-item ${item.id === 'dashboard' ? 'active' : ''}" data-section="${item.section}">
+                        <i class="fa-solid ${item.icon}"></i>
+                        <span>${item.label}</span>
+                    </a>
+                `;
+            }
+        }).join('');
         
-        // إضافة مستمعات التنقل
-        nav.querySelectorAll('.nav-item').forEach(item => {
+        // إضافة مستمعات التنقل للعناصر العادية
+        nav.querySelectorAll('.nav-item:not([data-dropdown-toggle])').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = item.dataset.section;
+                navigateToSection(section);
+            });
+        });
+        
+        // إضافة مستمعات للقوائم المنسدلة
+        nav.querySelectorAll('[data-dropdown-toggle]').forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                const dropdownId = toggle.dataset.dropdownToggle;
+                const dropdown = nav.querySelector(`[data-dropdown="${dropdownId}"]`);
+                
+                // إغلاق جميع القوائم المنسدلة الأخرى
+                nav.querySelectorAll('.nav-item-dropdown').forEach(d => {
+                    if (d !== dropdown) {
+                        d.classList.remove('open');
+                    }
+                });
+                
+                // تبديل حالة القائمة الحالية
+                dropdown.classList.toggle('open');
+            });
+        });
+        
+        // إضافة مستمعات للعناصر الفرعية
+        nav.querySelectorAll('.nav-dropdown-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 const section = item.dataset.section;
@@ -242,13 +372,23 @@
         }
         
         // تحديث القائمة النشطة
-        document.querySelectorAll('.nav-item').forEach(item => {
+        document.querySelectorAll('.nav-item:not([data-dropdown-toggle])').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelectorAll('.nav-dropdown-item').forEach(item => {
             item.classList.remove('active');
         });
         
+        // تفعيل العنصر المناسب
         const activeItem = document.querySelector(`[data-section="${sectionId}"]`);
         if (activeItem) {
             activeItem.classList.add('active');
+            
+            // إذا كان العنصر داخل قائمة منسدلة، افتح القائمة
+            const parentDropdown = activeItem.closest('.nav-item-dropdown');
+            if (parentDropdown) {
+                parentDropdown.classList.add('open');
+            }
         }
         
         // تحميل بيانات القسم
@@ -609,9 +749,40 @@
                     await window.newsletterManager.loadSubscribers();
                 }
                 break;
-            case 'membership-section':
+            case 'membership-settings-section':
+            case 'membership-committees-section':
                 if (window.membershipManager) {
                     await window.membershipManager.init(currentUser);
+                }
+                break;
+            case 'membership-applications-view-section':
+                if (window.membershipManager) {
+                    await window.membershipManager.loadApplicationsView();
+                }
+                break;
+            case 'membership-applications-review-section':
+                if (window.membershipManager) {
+                    await window.membershipManager.loadApplicationsReview(currentUser);
+                }
+                break;
+            case 'membership-archives-section':
+                if (window.membershipManager) {
+                    await window.membershipManager.loadArchives();
+                }
+                break;
+            case 'interview-sessions-section':
+                if (window.interviewSessionsManager) {
+                    await window.interviewSessionsManager.init(currentUser);
+                }
+                break;
+            case 'membership-interviews-section':
+                if (window.membershipManager) {
+                    await window.membershipManager.loadInterviews();
+                }
+                break;
+            case 'membership-accepted-section':
+                if (window.membershipManager) {
+                    await window.membershipManager.loadAcceptedMembers();
                 }
                 break;
             case 'website-section':
@@ -4251,6 +4422,8 @@
                 siteVisitsManager.renderStatsCards('visitsStatsGrid'),
                 siteVisitsManager.renderVisitsChart('visitsTimelineChart', currentVisitsPeriod),
                 siteVisitsManager.renderDeviceChart('devicesChart', currentVisitsPeriod),
+                siteVisitsManager.renderCountriesChart('countriesChart', currentVisitsPeriod),
+                siteVisitsManager.renderCitiesChart('citiesChart', currentVisitsPeriod),
                 siteVisitsManager.renderTopPages('topPagesContainer', currentVisitsPeriod)
             ]);
 

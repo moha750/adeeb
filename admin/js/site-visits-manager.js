@@ -515,6 +515,224 @@ class SiteVisitsManager {
         }
     }
 
+    async getCountriesStats(days = 30) {
+        try {
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - days);
+
+            const { data, error } = await this.sb
+                .from('site_visits')
+                .select('country')
+                .gte('visited_at', startDate.toISOString())
+                .not('country', 'is', null);
+
+            if (error) throw error;
+
+            // حساب عدد الزيارات لكل دولة
+            const countryCounts = {};
+            data.forEach(visit => {
+                const country = visit.country || 'غير معروف';
+                countryCounts[country] = (countryCounts[country] || 0) + 1;
+            });
+
+            // تحويل إلى مصفوفة وترتيب حسب العدد
+            return Object.entries(countryCounts)
+                .map(([country, count]) => ({ country, count }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 10); // أعلى 10 دول
+        } catch (error) {
+            console.error('Error getting countries stats:', error);
+            return [];
+        }
+    }
+
+    async getCitiesStats(days = 30) {
+        try {
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - days);
+
+            const { data, error } = await this.sb
+                .from('site_visits')
+                .select('city, country')
+                .gte('visited_at', startDate.toISOString())
+                .not('city', 'is', null);
+
+            if (error) throw error;
+
+            // حساب عدد الزيارات لكل مدينة
+            const cityCounts = {};
+            data.forEach(visit => {
+                const city = visit.city || 'غير معروف';
+                const country = visit.country || '';
+                const key = country ? `${city}, ${country}` : city;
+                cityCounts[key] = (cityCounts[key] || 0) + 1;
+            });
+
+            // تحويل إلى مصفوفة وترتيب حسب العدد
+            return Object.entries(cityCounts)
+                .map(([city, count]) => ({ city, count }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 10); // أعلى 10 مدن
+        } catch (error) {
+            console.error('Error getting cities stats:', error);
+            return [];
+        }
+    }
+
+    async renderCountriesChart(canvasId, days = 30) {
+        try {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const countriesStats = await this.getCountriesStats(days);
+
+            if (countriesStats.length === 0) {
+                canvas.parentElement.innerHTML = '<p class="no-data">لا توجد بيانات متاحة</p>';
+                return;
+            }
+
+            const labels = countriesStats.map(c => c.country);
+            const data = countriesStats.map(c => c.count);
+
+            const colors = [
+                '#3d8fd6', '#28a745', '#ffc107', '#dc3545', '#6c757d',
+                '#17a2b8', '#e83e8c', '#fd7e14', '#20c997', '#6610f2'
+            ];
+
+            if (this.charts[canvasId]) {
+                this.charts[canvasId].destroy();
+            }
+
+            this.charts[canvasId] = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'عدد الزيارات',
+                        data: data,
+                        backgroundColor: colors.slice(0, data.length),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            rtl: true,
+                            textDirection: 'rtl',
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.parsed.x} زيارة`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: {
+                                    family: 'Cairo, sans-serif'
+                                }
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                font: {
+                                    family: 'Cairo, sans-serif'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error rendering countries chart:', error);
+        }
+    }
+
+    async renderCitiesChart(canvasId, days = 30) {
+        try {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const citiesStats = await this.getCitiesStats(days);
+
+            if (citiesStats.length === 0) {
+                canvas.parentElement.innerHTML = '<p class="no-data">لا توجد بيانات متاحة</p>';
+                return;
+            }
+
+            const labels = citiesStats.map(c => c.city);
+            const data = citiesStats.map(c => c.count);
+
+            const colors = [
+                '#3d8fd6', '#28a745', '#ffc107', '#dc3545', '#6c757d',
+                '#17a2b8', '#e83e8c', '#fd7e14', '#20c997', '#6610f2'
+            ];
+
+            if (this.charts[canvasId]) {
+                this.charts[canvasId].destroy();
+            }
+
+            this.charts[canvasId] = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'عدد الزيارات',
+                        data: data,
+                        backgroundColor: colors.slice(0, data.length),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            rtl: true,
+                            textDirection: 'rtl',
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.parsed.x} زيارة`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: {
+                                    family: 'Cairo, sans-serif'
+                                }
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                font: {
+                                    family: 'Cairo, sans-serif'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error rendering cities chart:', error);
+        }
+    }
+
     async exportData(days = 30, format = 'csv') {
         try {
             const startDate = new Date();
