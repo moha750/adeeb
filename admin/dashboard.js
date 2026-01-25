@@ -246,7 +246,7 @@
             membershipSubItems.push({
                 id: 'membership-accepted',
                 icon: 'fa-user-check',
-                label: 'المقبولين',
+                label: 'نتائج العضوية',
                 section: 'membership-accepted-section'
             });
             
@@ -781,8 +781,8 @@
                 }
                 break;
             case 'membership-accepted-section':
-                if (window.membershipManager) {
-                    await window.membershipManager.loadAcceptedMembers();
+                if (window.membershipDecisions) {
+                    await window.membershipDecisions.load();
                 }
                 break;
             case 'website-section':

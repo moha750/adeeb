@@ -554,6 +554,7 @@
         const statusMap = {
             'new': 'جديد',
             'under_review': 'قيد المراجعة',
+            'approved_for_interview': 'مقبول للمقابلة',
             'accepted': 'مقبول',
             'rejected': 'مرفوض',
             'archived': 'مؤرشف'
@@ -565,6 +566,7 @@
         const classMap = {
             'new': 'badge-info',
             'under_review': 'badge-warning',
+            'approved_for_interview': 'badge-success',
             'accepted': 'badge-success',
             'rejected': 'badge-danger',
             'archived': 'badge-secondary'
@@ -1049,10 +1051,14 @@
                 ` : ''}
             `;
 
-            // بناء أزرار الإجراءات
+            // بناء أزرار الإجراءات - فقط في قسم المراجعة
             let actionsHtml = '';
 
-            if (data.status === 'new' || data.status === 'under_review') {
+            // التحقق من القسم الحالي - إذا كان قسم العرض، لا تظهر أزرار الإجراءات
+            const isViewSection = document.getElementById('membership-applications-view-section')?.style.display !== 'none';
+            const isReviewSection = document.getElementById('membership-applications-review-section')?.style.display !== 'none';
+
+            if (isReviewSection && (data.status === 'new' || data.status === 'under_review')) {
                 actionsHtml = `
                     <button class="modal-btn modal-btn-primary" onclick="window.membershipManager.approveForInterview('${data.id}'); window.closeApplicationModal();">
                         <i class="fa-solid fa-calendar-check"></i>
@@ -1734,7 +1740,7 @@
         try {
             // حساب الإحصائيات حسب الحالة
             const totalCount = currentApplications.length;
-            const acceptedCount = currentApplications.filter(a => a.status === 'accepted').length;
+            const approvedForInterviewCount = currentApplications.filter(a => a.status === 'approved_for_interview').length;
             const rejectedCount = currentApplications.filter(a => a.status === 'rejected').length;
             const underReviewCount = currentApplications.filter(a => a.status === 'under_review').length;
 
@@ -1750,14 +1756,14 @@
                 <div class="stat-card">
                     <i class="fa-solid fa-check-circle stat-icon" style="color: #10b981;"></i>
                     <div class="stat-info">
-                        <h3>مقبولين للمقابلة</h3>
-                        <p class="stat-value">${acceptedCount}</p>
+                        <h3>المقبولين للمقابلة</h3>
+                        <p class="stat-value">${approvedForInterviewCount}</p>
                     </div>
                 </div>
                 <div class="stat-card">
                     <i class="fa-solid fa-times-circle stat-icon" style="color: #ef4444;"></i>
                     <div class="stat-info">
-                        <h3>مرفوضين</h3>
+                        <h3>المرفوضين</h3>
                         <p class="stat-value">${rejectedCount}</p>
                     </div>
                 </div>
@@ -2226,7 +2232,8 @@
 
             showLoading(container);
 
-            const { data, error } = await window.sbClient
+            // جلب المقابلات المجدولة فقط (status = 'scheduled')
+            const { data: scheduledData, error: scheduledError } = await window.sbClient
                 .from('membership_interviews')
                 .select(`
                     *,
@@ -2234,12 +2241,35 @@
                     interviewer:profiles!interviewer_id(full_name),
                     decided_by_user:profiles!decided_by(full_name)
                 `)
-                .order('interview_date', { ascending: false });
+                .eq('status', 'scheduled')
+                .order('interview_date', { ascending: true });
 
-            if (error) throw error;
+            if (scheduledError) throw scheduledError;
 
-            renderInterviewsTable(data || []);
-            updateInterviewsStatistics(data || []);
+            // جلب عدد الطلبات المقبولة للمقابلة بدون مقابلات مجدولة (غير مجدولة)
+            const { data: approvedApps, error: approvedError } = await window.sbClient
+                .from('membership_applications')
+                .select('id')
+                .eq('status', 'approved_for_interview');
+
+            if (approvedError) throw approvedError;
+
+            const { data: existingInterviews, error: interviewsError } = await window.sbClient
+                .from('membership_interviews')
+                .select('application_id');
+
+            if (interviewsError) throw interviewsError;
+
+            const existingAppIds = new Set(existingInterviews?.map(i => i.application_id) || []);
+            const unscheduledCount = approvedApps?.filter(app => !existingAppIds.has(app.id)).length || 0;
+
+            // حفظ البيانات في cache للاستخدام في الفلترة المحلية
+            if (container) {
+                container._cachedInterviews = scheduledData || [];
+            }
+            
+            renderInterviewsTable(scheduledData || []);
+            updateInterviewsStatistics(scheduledData || [], unscheduledCount);
             bindInterviewsEvents();
         } catch (error) {
             console.error('خطأ في تحميل المقابلات:', error);
@@ -2252,18 +2282,27 @@
      */
     function renderInterviewsTable(interviews) {
         const container = document.getElementById('interviewsTable');
-        const statusFilter = document.getElementById('interviewStatusFilter');
-        const resultFilter = document.getElementById('interviewResultFilter');
+        const searchInput = document.getElementById('interviewsSearchInput');
+        const sortFilter = document.getElementById('interviewsSortFilter');
 
         if (!container) return;
 
-        const statusValue = statusFilter?.value || '';
-        const resultValue = resultFilter?.value || '';
+        const searchTerm = searchInput?.value.toLowerCase() || '';
+        const sortValue = sortFilter?.value || 'nearest';
 
+        // فلترة حسب البحث
         let filtered = interviews.filter(interview => {
-            const matchStatus = !statusValue || interview.status === statusValue;
-            const matchResult = !resultValue || interview.result === resultValue;
-            return matchStatus && matchResult;
+            const matchSearch = !searchTerm || 
+                interview.application?.full_name.toLowerCase().includes(searchTerm) ||
+                interview.application?.email.toLowerCase().includes(searchTerm);
+            return matchSearch;
+        });
+
+        // ترتيب حسب التاريخ
+        filtered.sort((a, b) => {
+            const dateA = new Date(a.interview_date);
+            const dateB = new Date(b.interview_date);
+            return sortValue === 'nearest' ? dateA - dateB : dateB - dateA;
         });
 
         if (filtered.length === 0) {
@@ -2412,21 +2451,14 @@
     /**
      * تحديث إحصائيات المقابلات
      */
-    function updateInterviewsStatistics(interviews) {
-        const scheduled = interviews.filter(i => i.status === 'scheduled').length;
-        const pending = interviews.filter(i => i.result === 'pending').length;
-        const accepted = interviews.filter(i => i.result === 'accepted').length;
-        const rejected = interviews.filter(i => i.result === 'rejected').length;
+    function updateInterviewsStatistics(interviews, unscheduledCount) {
+        const scheduled = interviews.length;
 
         const scheduledEl = document.getElementById('scheduledInterviewsCount');
-        const pendingEl = document.getElementById('pendingInterviewsCount');
-        const acceptedEl = document.getElementById('acceptedInterviewsCount');
-        const rejectedEl = document.getElementById('rejectedInterviewsCount');
+        const unscheduledEl = document.getElementById('unscheduledInterviewsCount');
 
         if (scheduledEl) scheduledEl.textContent = scheduled;
-        if (pendingEl) pendingEl.textContent = pending;
-        if (acceptedEl) acceptedEl.textContent = accepted;
-        if (rejectedEl) rejectedEl.textContent = rejected;
+        if (unscheduledEl) unscheduledEl.textContent = unscheduledCount || 0;
     }
 
     /**
@@ -2584,11 +2616,40 @@
                     </div>
                 ` : ''}
 
+                ${(data.application.review_notes || data.application.admin_notes) ? `
+                    <div class="detail-section">
+                        <div class="detail-section-header">
+                            <i class="fa-solid fa-clipboard-list"></i>
+                            <h3>ملاحظات مرحلة مراجعة الطلبات</h3>
+                        </div>
+                        <div class="admin-notes-container">
+                            ${data.application.review_notes ? `
+                                <div class="admin-note review-note">
+                                    <div class="note-header">
+                                        <i class="fa-solid fa-eye"></i>
+                                        <strong>ملاحظات قيد المراجعة</strong>
+                                    </div>
+                                    <div class="note-content">${escapeHtml(data.application.review_notes)}</div>
+                                </div>
+                            ` : ''}
+                            ${data.application.admin_notes ? `
+                                <div class="admin-note ${data.application.status === 'approved_for_interview' ? 'accept-note' : data.application.status === 'rejected' ? 'reject-note' : ''}">
+                                    <div class="note-header">
+                                        <i class="fa-solid fa-${data.application.status === 'approved_for_interview' ? 'check-circle' : data.application.status === 'rejected' ? 'times-circle' : 'note-sticky'}"></i>
+                                        <strong>${data.application.status === 'approved_for_interview' ? 'ملاحظات القبول للمقابلة' : data.application.status === 'rejected' ? 'سبب الرفض' : 'ملاحظات إدارية'}</strong>
+                                    </div>
+                                    <div class="note-content">${escapeHtml(data.application.admin_notes)}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+
                 ${data.result_notes ? `
                     <div class="detail-section">
                         <div class="detail-section-header">
                             <i class="fa-solid fa-note-sticky"></i>
-                            <h3>ملاحظات النتيجة</h3>
+                            <h3>ملاحظات نتيجة المقابلة</h3>
                         </div>
                         <div class="admin-notes-container">
                             <div class="admin-note ${data.result === 'accepted' ? 'accept-note' : data.result === 'rejected' ? 'reject-note' : ''}">
@@ -2882,17 +2943,40 @@
      */
     function bindInterviewsEvents() {
         const scheduleBtn = document.getElementById('scheduleNewInterviewBtn');
-        const statusFilter = document.getElementById('interviewStatusFilter');
-        const resultFilter = document.getElementById('interviewResultFilter');
+        const searchInput = document.getElementById('interviewsSearchInput');
+        const sortFilter = document.getElementById('interviewsSortFilter');
         const refreshBtn = document.getElementById('refreshInterviewsBtn');
 
         if (scheduleBtn) {
             scheduleBtn.removeEventListener('click', scheduleNewInterview);
             scheduleBtn.addEventListener('click', scheduleNewInterview);
         }
-        if (statusFilter) statusFilter.addEventListener('change', loadInterviews);
-        if (resultFilter) resultFilter.addEventListener('change', loadInterviews);
-        if (refreshBtn) refreshBtn.addEventListener('click', loadInterviews);
+        
+        // استخدام renderInterviewsTable بدلاً من loadInterviews للفلاتر المحلية
+        if (searchInput) {
+            searchInput.removeEventListener('input', () => {});
+            searchInput.addEventListener('input', () => {
+                const container = document.getElementById('interviewsTable');
+                if (container && container._cachedInterviews) {
+                    renderInterviewsTable(container._cachedInterviews);
+                }
+            });
+        }
+        
+        if (sortFilter) {
+            sortFilter.removeEventListener('change', () => {});
+            sortFilter.addEventListener('change', () => {
+                const container = document.getElementById('interviewsTable');
+                if (container && container._cachedInterviews) {
+                    renderInterviewsTable(container._cachedInterviews);
+                }
+            });
+        }
+        
+        if (refreshBtn) {
+            refreshBtn.removeEventListener('click', loadInterviews);
+            refreshBtn.addEventListener('click', loadInterviews);
+        }
     }
 
     /**

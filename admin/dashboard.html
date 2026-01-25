@@ -831,7 +831,7 @@
                     </div>
                     <select id="applicationReviewStatusFilter" class="filter-select">
                         <option value="">جميع الحالات</option>
-                        <option value="accepted">مقبول للمقابلة</option>
+                        <option value="approved_for_interview">مقبول للمقابلة</option>
                         <option value="rejected">مرفوض</option>
                         <option value="under_review">قيد المراجعة</option>
                         <option value="new">جديد</option>
@@ -873,54 +873,34 @@
                 <!-- إحصائيات المقابلات -->
                 <div class="stats-grid" style="margin-bottom: 2rem;">
                     <div class="stat-card">
-                        <i class="fa-solid fa-calendar-check stat-icon" style="color: #3b82f6;"></i>
+                        <i class="fa-solid fa-calendar-check stat-icon" style="color: #10b981;"></i>
                         <div class="stat-info">
                             <h3>مقابلات مجدولة</h3>
                             <p class="stat-value" id="scheduledInterviewsCount">0</p>
                         </div>
                     </div>
                     <div class="stat-card">
-                        <i class="fa-solid fa-clock stat-icon" style="color: #f59e0b;"></i>
+                        <i class="fa-solid fa-calendar-xmark stat-icon" style="color: #ef4444;"></i>
                         <div class="stat-info">
-                            <h3>معلقة</h3>
-                            <p class="stat-value" id="pendingInterviewsCount">0</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-check-circle stat-icon" style="color: #10b981;"></i>
-                        <div class="stat-info">
-                            <h3>مقبولين</h3>
-                            <p class="stat-value" id="acceptedInterviewsCount">0</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-times-circle stat-icon" style="color: #ef4444;"></i>
-                        <div class="stat-info">
-                            <h3>مرفوضين</h3>
-                            <p class="stat-value" id="rejectedInterviewsCount">0</p>
+                            <h3>غير مجدولة</h3>
+                            <p class="stat-value" id="unscheduledInterviewsCount">0</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- أزرار الإجراءات -->
+                <!-- أزرار الإجراءات والفلاتر -->
                 <div class="filters-bar">
                     <button class="btn-primary" id="scheduleNewInterviewBtn">
                         <i class="fa-solid fa-plus"></i>
                         جدولة مقابلة جديدة
                     </button>
-                    <select id="interviewStatusFilter" class="filter-select">
-                        <option value="">جميع الحالات</option>
-                        <option value="scheduled">مجدولة</option>
-                        <option value="completed">مكتملة</option>
-                        <option value="cancelled">ملغاة</option>
-                        <option value="rescheduled">معاد جدولتها</option>
-                    </select>
-                    <select id="interviewResultFilter" class="filter-select">
-                        <option value="">جميع النتائج</option>
-                        <option value="pending">معلقة</option>
-                        <option value="accepted">مقبول</option>
-                        <option value="rejected">مرفوض</option>
-                        <option value="no_show">لم يحضر</option>
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="interviewsSearchInput" placeholder="البحث بالاسم..." />
+                    </div>
+                    <select id="interviewsSortFilter" class="filter-select">
+                        <option value="nearest">الأقرب أولاً</option>
+                        <option value="farthest">الأبعد أولاً</option>
                     </select>
                     <button class="btn-outline" id="refreshInterviewsBtn">
                         <i class="fa-solid fa-rotate"></i>
@@ -938,44 +918,37 @@
                 </div>
             </section>
 
-            <!-- قسم المقبولين -->
+            <!-- قسم نتائج العضوية -->
             <section id="membership-accepted-section" class="admin-section" style="display: none;">
                 <div class="section-header">
                     <h1>
-                        <i class="fa-solid fa-user-check"></i>
-                        الأعضاء المقبولين
+                        <i class="fa-solid fa-clipboard-check"></i>
+                        نتائج العضوية
                     </h1>
-                    <p class="section-subtitle">قائمة الأعضاء المقبولين نهائياً</p>
+                    <p class="section-subtitle">عرض المتقدمين المقبولين والمرفوضين</p>
                 </div>
 
-                <!-- إحصائيات المقبولين -->
+                <!-- إحصائيات نتائج العضوية -->
                 <div class="stats-grid" style="margin-bottom: 2rem;">
                     <div class="stat-card">
-                        <i class="fa-solid fa-users stat-icon" style="color: #3b82f6;"></i>
+                        <i class="fa-solid fa-clipboard-list stat-icon" style="color: #3b82f6;"></i>
                         <div class="stat-info">
-                            <h3>إجمالي الأعضاء</h3>
-                            <p class="stat-value" id="totalAcceptedCount">0</p>
+                            <h3>إجمالي القرارات</h3>
+                            <p class="stat-value" id="totalDecisionsCount">0</p>
                         </div>
                     </div>
                     <div class="stat-card">
                         <i class="fa-solid fa-user-check stat-icon" style="color: #10b981;"></i>
                         <div class="stat-info">
-                            <h3>نشط</h3>
-                            <p class="stat-value" id="activeAcceptedCount">0</p>
+                            <h3>مقبولين</h3>
+                            <p class="stat-value" id="acceptedDecisionsCount">0</p>
                         </div>
                     </div>
                     <div class="stat-card">
-                        <i class="fa-solid fa-user-clock stat-icon" style="color: #f59e0b;"></i>
+                        <i class="fa-solid fa-user-times stat-icon" style="color: #ef4444;"></i>
                         <div class="stat-info">
-                            <h3>غير نشط</h3>
-                            <p class="stat-value" id="inactiveAcceptedCount">0</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-calendar-plus stat-icon" style="color: #8b5cf6;"></i>
-                        <div class="stat-info">
-                            <h3>انضموا هذا الشهر</h3>
-                            <p class="stat-value" id="thisMonthAcceptedCount">0</p>
+                            <h3>مرفوضين</h3>
+                            <p class="stat-value" id="rejectedDecisionsCount">0</p>
                         </div>
                     </div>
                 </div>
@@ -984,32 +957,31 @@
                 <div class="filters-bar">
                     <div class="filter-group">
                         <i class="fa-solid fa-search"></i>
-                        <input type="text" id="acceptedSearchInput" placeholder="البحث في الأعضاء..." />
+                        <input type="text" id="decisionsSearchInput" placeholder="البحث بالاسم أو البريد..." />
                     </div>
-                    <select id="acceptedStatusFilter" class="filter-select">
-                        <option value="">جميع الحالات</option>
-                        <option value="active">نشط</option>
-                        <option value="inactive">غير نشط</option>
-                        <option value="suspended">معلق</option>
-                        <option value="terminated">منتهي</option>
+                    <select id="decisionsStatusFilter" class="filter-select">
+                        <option value="">جميع القرارات</option>
+                        <option value="accepted">مقبول نهائياً</option>
+                        <option value="rejected">مرفوض نهائياً</option>
                     </select>
-                    <select id="acceptedCommitteeFilter" class="filter-select">
+                    <select id="decisionsCommitteeFilter" class="filter-select">
                         <option value="">جميع اللجان</option>
                     </select>
-                    <button class="btn-outline" id="refreshAcceptedBtn">
+                    <button class="btn-outline" id="refreshDecisionsBtn">
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
-                    <button class="btn-success" id="exportAcceptedBtn">
+                    <button class="btn-success" id="exportDecisionsBtn">
                         <i class="fa-solid fa-file-export"></i>
                         تصدير
                     </button>
                 </div>
 
-                <!-- جدول المقبولين -->
+                <!-- جدول نتائج العضوية -->
+                 
                 <div class="card">
                     <div class="card-body">
-                        <div id="acceptedMembersTable" class="data-table">
+                        <div id="decisionsTable" class="data-table">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -2063,6 +2035,7 @@
     <script src="js/contact-messages-manager.js"></script>
     <script src="js/newsletter-manager.js"></script>
     <script src="js/membership-manager.js"></script>
+    <script src="js/membership-decisions.js"></script>
     <script src="js/interview-sessions-manager.js"></script>
     <script src="js/site-visits-manager.js"></script>
     <script src="dashboard.js"></script>
