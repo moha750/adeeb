@@ -2239,12 +2239,34 @@
                     *,
                     application:membership_applications(id, full_name, email, phone, preferred_committee),
                     interviewer:profiles!interviewer_id(full_name),
-                    decided_by_user:profiles!decided_by(full_name)
+                    decided_by_user:profiles!decided_by(full_name),
+                    slot:interview_slots(session_id, interview_sessions(*))
                 `)
                 .eq('status', 'scheduled')
                 .order('interview_date', { ascending: true });
 
             if (scheduledError) throw scheduledError;
+
+            // جلب الجلسات النشطة لملء الفلتر
+            const { data: activeSessions, error: sessionsError } = await window.sbClient
+                .from('interview_sessions')
+                .select('id, session_name, session_date, end_time, is_active')
+                .eq('is_active', true)
+                .order('session_date', { ascending: false });
+
+            if (sessionsError) {
+                console.error('خطأ في جلب الجلسات:', sessionsError);
+            }
+
+            // تصفية الجلسات النشطة غير المنتهية
+            const now = new Date();
+            const activeNonExpiredSessions = (activeSessions || []).filter(session => {
+                const sessionEndDateTime = new Date(`${session.session_date}T${session.end_time}`);
+                return sessionEndDateTime >= now;
+            });
+
+            // ملء فلتر الجلسات
+            populateSessionsFilter(activeNonExpiredSessions);
 
             // جلب عدد الطلبات المقبولة للمقابلة بدون مقابلات مجدولة (غير مجدولة)
             const { data: approvedApps, error: approvedError } = await window.sbClient
@@ -2283,19 +2305,27 @@
     function renderInterviewsTable(interviews) {
         const container = document.getElementById('interviewsTable');
         const searchInput = document.getElementById('interviewsSearchInput');
+        const sessionFilter = document.getElementById('interviewsSessionFilter');
         const sortFilter = document.getElementById('interviewsSortFilter');
 
         if (!container) return;
 
         const searchTerm = searchInput?.value.toLowerCase() || '';
+        const sessionValue = sessionFilter?.value || '';
         const sortValue = sortFilter?.value || 'nearest';
 
-        // فلترة حسب البحث
+        // فلترة حسب البحث والجلسة
         let filtered = interviews.filter(interview => {
             const matchSearch = !searchTerm || 
                 interview.application?.full_name.toLowerCase().includes(searchTerm) ||
-                interview.application?.email.toLowerCase().includes(searchTerm);
-            return matchSearch;
+                interview.application?.email.toLowerCase().includes(searchTerm) ||
+                (interview.application?.phone && interview.application.phone.includes(searchTerm));
+            
+            // فلترة حسب الجلسة المختارة
+            const matchSession = !sessionValue || 
+                (interview.slot && interview.slot.session_id === sessionValue);
+            
+            return matchSearch && matchSession;
         });
 
         // ترتيب حسب التاريخ
@@ -2939,6 +2969,30 @@
     }
 
     /**
+     * ملء فلتر الجلسات القائمة
+     */
+    function populateSessionsFilter(sessions) {
+        const sessionFilter = document.getElementById('interviewsSessionFilter');
+        if (!sessionFilter) return;
+
+        // الاحتفاظ بالخيار الافتراضي
+        sessionFilter.innerHTML = '<option value="">جميع الجلسات</option>';
+
+        // إضافة الجلسات النشطة
+        sessions.forEach(session => {
+            const date = new Date(session.session_date).toLocaleDateString('ar-SA', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            const option = document.createElement('option');
+            option.value = session.id;
+            option.textContent = `${session.session_name} (${date})`;
+            sessionFilter.appendChild(option);
+        });
+    }
+
+    /**
      * ربط أحداث قسم المقابلات
      */
     function bindInterviewsEvents() {
@@ -2956,6 +3010,17 @@
         if (searchInput) {
             searchInput.removeEventListener('input', () => {});
             searchInput.addEventListener('input', () => {
+                const container = document.getElementById('interviewsTable');
+                if (container && container._cachedInterviews) {
+                    renderInterviewsTable(container._cachedInterviews);
+                }
+            });
+        }
+        
+        const sessionFilter = document.getElementById('interviewsSessionFilter');
+        if (sessionFilter) {
+            sessionFilter.removeEventListener('change', () => {});
+            sessionFilter.addEventListener('change', () => {
                 const container = document.getElementById('interviewsTable');
                 if (container && container._cachedInterviews) {
                     renderInterviewsTable(container._cachedInterviews);

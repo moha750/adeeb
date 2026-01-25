@@ -898,6 +898,10 @@
                         <i class="fa-solid fa-search"></i>
                         <input type="text" id="interviewsSearchInput" placeholder="البحث بالاسم..." />
                     </div>
+                    <select id="interviewsSessionFilter" class="filter-select">
+                        <option value="">جميع الجلسات</option>
+                        <!-- سيتم ملؤها ديناميكياً -->
+                    </select>
                     <select id="interviewsSortFilter" class="filter-select">
                         <option value="nearest">الأقرب أولاً</option>
                         <option value="farthest">الأبعد أولاً</option>
@@ -1175,6 +1179,73 @@
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <!-- قسم جلسات المقابلات -->
+            <section id="interview-sessions-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-calendar-days"></i>
+                        جلسات المقابلات
+                    </h1>
+                    <p class="section-subtitle">إدارة جلسات حجز المواعيد للمتقدمين</p>
+                </div>
+
+                <!-- إحصائيات الجلسات -->
+                <div class="stats-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-calendar-check stat-icon" style="color: #3b82f6;"></i>
+                        <div class="stat-info">
+                            <h3>جلسات نشطة</h3>
+                            <p class="stat-value" id="activeSessionsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-calendar-xmark stat-icon" style="color: #64748b;"></i>
+                        <div class="stat-info">
+                            <h3>جلسات منتهية</h3>
+                            <p class="stat-value" id="expiredSessionsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-clock stat-icon" style="color: #10b981;"></i>
+                        <div class="stat-info">
+                            <h3>إجمالي الفترات</h3>
+                            <p class="stat-value" id="totalSlotsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-user-check stat-icon" style="color: #8b5cf6;"></i>
+                        <div class="stat-info">
+                            <h3>حجوزات مؤكدة</h3>
+                            <p class="stat-value" id="bookedSlotsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-percentage stat-icon" style="color: #f59e0b;"></i>
+                        <div class="stat-info">
+                            <h3>نسبة الحجز</h3>
+                            <p class="stat-value" id="bookingRate">0%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- أزرار الإجراءات -->
+                <div class="filters-bar">
+                    <button class="btn-primary" id="createSessionBtn">
+                        <i class="fa-solid fa-plus"></i>
+                        إنشاء جلسة جديدة
+                    </button>
+                    <button class="btn-outline" id="refreshSessionsBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                </div>
+
+                <!-- جدول الجلسات -->
+                <div class="card">
+                    <div id="sessionsTable"></div>
                 </div>
             </section>
 
@@ -1798,66 +1869,6 @@
             </div>
         </div>
     </div>
-
-    <!-- قسم جلسات المقابلات -->
-    <section id="interview-sessions-section" class="admin-section" style="display: none;">
-        <div class="section-header">
-            <h1>
-                <i class="fa-solid fa-calendar-days"></i>
-                جلسات المقابلات
-            </h1>
-            <p class="section-subtitle">إدارة جلسات حجز المواعيد للمتقدمين</p>
-        </div>
-
-        <!-- إحصائيات الجلسات -->
-        <div class="stats-grid" style="margin-bottom: 2rem;">
-            <div class="stat-card">
-                <i class="fa-solid fa-calendar-check stat-icon" style="color: #3b82f6;"></i>
-                <div class="stat-info">
-                    <h3>جلسات نشطة</h3>
-                    <p class="stat-value" id="activeSessionsCount">0</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <i class="fa-solid fa-clock stat-icon" style="color: #10b981;"></i>
-                <div class="stat-info">
-                    <h3>إجمالي الفترات</h3>
-                    <p class="stat-value" id="totalSlotsCount">0</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <i class="fa-solid fa-user-check stat-icon" style="color: #8b5cf6;"></i>
-                <div class="stat-info">
-                    <h3>حجوزات مؤكدة</h3>
-                    <p class="stat-value" id="bookedSlotsCount">0</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <i class="fa-solid fa-percentage stat-icon" style="color: #f59e0b;"></i>
-                <div class="stat-info">
-                    <h3>نسبة الحجز</h3>
-                    <p class="stat-value" id="bookingRate">0%</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- أزرار الإجراءات -->
-        <div class="filters-bar">
-            <button class="btn-primary" id="createSessionBtn">
-                <i class="fa-solid fa-plus"></i>
-                إنشاء جلسة جديدة
-            </button>
-            <button class="btn-outline" id="refreshSessionsBtn">
-                <i class="fa-solid fa-rotate"></i>
-                تحديث
-            </button>
-        </div>
-
-        <!-- جدول الجلسات -->
-        <div class="card">
-            <div id="sessionsTable"></div>
-        </div>
-    </section>
 
     <!-- نافذة عرض تفاصيل رسالة التواصل -->
     <div class="modal" id="messageDetailModal">

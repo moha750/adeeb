@@ -9,6 +9,26 @@
     let allSessions = [];
 
     /**
+     * التحقق من انتهاء الجلسة بناءً على وقت النهاية
+     * Single Source of Truth للحالة الزمنية
+     */
+    function isSessionExpired(session) {
+        const now = new Date();
+        const sessionEndDateTime = new Date(`${session.session_date}T${session.end_time}`);
+        return sessionEndDateTime < now;
+    }
+
+    /**
+     * التحقق من انتهاء الفترة الزمنية
+     * Helper function لتوحيد منطق حساب حالة الفترة
+     */
+    function isSlotExpired(slotTime) {
+        const now = new Date();
+        const slot = new Date(slotTime);
+        return slot < now;
+    }
+
+    /**
      * تهيئة مدير جلسات المقابلات
      */
     async function initInterviewSessionsManager(user) {
@@ -100,9 +120,16 @@
                 'phone': 'هاتفي'
             };
 
-            const statusBadge = session.is_active 
-                ? '<span class="badge badge-success">نشط</span>'
-                : '<span class="badge badge-secondary">معطل</span>';
+            // تحديد حالة الجلسة بناءً على الوقت والحالة النشطة
+            const isExpired = isSessionExpired(session);
+            let statusBadge;
+            if (isExpired) {
+                statusBadge = '<span class="badge badge-secondary">منتهية</span>';
+            } else if (session.is_active) {
+                statusBadge = '<span class="badge badge-success">نشط</span>';
+            } else {
+                statusBadge = '<span class="badge badge-secondary">معطل</span>';
+            }
 
             // تحويل الوقت إلى نظام 12 ساعة
             const startTime = new Date(`2000-01-01 ${session.start_time}`).toLocaleTimeString('ar-SA', {
@@ -215,7 +242,7 @@
                                 <i class="fa-solid fa-link"></i>
                                 نسخ
                             </button>
-                            <button class="btn-action ${session.is_active ? 'btn-action-warning' : 'btn-action-success'}" onclick="window.interviewSessionsManager.toggleSession('${session.id}', ${!session.is_active})" title="${session.is_active ? 'تعطيل' : 'تفعيل'}">
+                            <button class="btn-action ${session.is_active ? '' : 'btn-action-success'}" ${session.is_active ? 'style="background: linear-gradient(135deg, #94a3b8, #64748b); color: white;"' : ''} onclick="window.interviewSessionsManager.toggleSession('${session.id}', ${!session.is_active})" title="${session.is_active ? 'تعطيل' : 'تفعيل'}">
                                 <i class="fa-solid fa-${session.is_active ? 'pause' : 'play'}"></i>
                                 ${session.is_active ? 'تعطيل' : 'تفعيل'}
                             </button>
@@ -266,11 +293,15 @@
      * تحديث الإحصائيات العامة
      */
     async function updateStatistics() {
-        const activeSessions = allSessions.filter(s => s.is_active).length;
+        // فصل الجلسات النشطة عن المنتهية
+        const activeNonExpiredSessions = allSessions.filter(s => s.is_active && !isSessionExpired(s));
+        const expiredSessions = allSessions.filter(s => isSessionExpired(s));
+        
         let totalSlots = 0;
         let bookedSlots = 0;
 
-        for (const session of allSessions) {
+        // احتساب الفترات للجلسات النشطة غير المنتهية فقط
+        for (const session of activeNonExpiredSessions) {
             const stats = await getSessionStats(session.id);
             totalSlots += stats.total_slots;
             bookedSlots += stats.booked_slots;
@@ -278,10 +309,16 @@
 
         const bookingRate = totalSlots > 0 ? ((bookedSlots / totalSlots) * 100).toFixed(1) : 0;
 
-        document.getElementById('activeSessionsCount').textContent = activeSessions;
+        document.getElementById('activeSessionsCount').textContent = activeNonExpiredSessions.length;
         document.getElementById('totalSlotsCount').textContent = totalSlots;
         document.getElementById('bookedSlotsCount').textContent = bookedSlots;
         document.getElementById('bookingRate').textContent = `${bookingRate}%`;
+        
+        // تحديث عدد الجلسات المنتهية إن وجد العنصر
+        const expiredCountElement = document.getElementById('expiredSessionsCount');
+        if (expiredCountElement) {
+            expiredCountElement.textContent = expiredSessions.length;
+        }
     }
 
     /**
@@ -325,8 +362,9 @@
                 </select>
             </div>
             <div class="form-group" id="meeting-link-group">
-                <label>رابط الاجتماع (للمقابلات الأونلاين)</label>
-                <input type="url" id="session-link" class="form-input" placeholder="https://meet.google.com/xxx">
+                <label>رابط الاجتماع (للمقابلات الأونلاين) <span class="required">*</span></label>
+                <input type="url" id="session-link" class="form-input" placeholder="https://meet.google.com/xxx" required>
+                <span class="form-hint">رابط الاجتماع إلزامي للمقابلات الأونلاين</span>
             </div>
             <div class="form-group" id="location-group" style="display: none;">
                 <label>الموقع (للمقابلات الحضورية)</label>
@@ -388,14 +426,40 @@
             const link = document.getElementById('session-link').value.trim();
             const location = document.getElementById('session-location').value.trim();
 
+            // التحقق من الحقول المطلوبة
             if (!name || !date || !startTime || !endTime || !duration) {
                 showNotification('يرجى ملء جميع الحقول المطلوبة', 'warning');
                 return;
             }
 
+            // التحقق من صحة الوقت
             if (startTime >= endTime) {
                 showNotification('وقت النهاية يجب أن يكون بعد وقت البداية', 'warning');
                 return;
+            }
+
+            // التحقق من أن التاريخ ليس في الماضي
+            const selectedDateTime = new Date(`${date}T${startTime}`);
+            const now = new Date();
+            if (selectedDateTime < now) {
+                showNotification('لا يمكن جدولة مقابلة في وقت سابق للوقت الحالي', 'error');
+                return;
+            }
+
+            // التحقق من رابط الاجتماع للمقابلات الأونلاين
+            if (type === 'online' && !link) {
+                showNotification('رابط الاجتماع إلزامي للمقابلات الأونلاين', 'error');
+                return;
+            }
+
+            // التحقق من صحة رابط الاجتماع
+            if (type === 'online' && link) {
+                try {
+                    new URL(link);
+                } catch (e) {
+                    showNotification('يرجى إدخال رابط صحيح للاجتماع', 'error');
+                    return;
+                }
             }
 
             const { data, error } = await window.sbClient
@@ -409,7 +473,7 @@
                     slot_duration: parseInt(duration),
                     interview_type: type,
                     meeting_link: type === 'online' ? link : null,
-                    interview_location: type === 'in_person' ? location : null,
+                    location: type === 'in_person' ? location : null,
                     is_active: true
                 })
                 .select()
@@ -474,9 +538,16 @@
                 ? '<span class="badge badge-info">حضوري</span>'
                 : '<span class="badge badge-secondary">هاتفي</span>';
 
-            const statusBadge = session.is_active
-                ? '<span class="badge badge-success">نشطة</span>'
-                : '<span class="badge badge-secondary">معطلة</span>';
+            // تحديد حالة الجلسة في النافذة المنبثقة
+            const isExpired = isSessionExpired(session);
+            let statusBadge;
+            if (isExpired) {
+                statusBadge = '<span class="badge badge-secondary">منتهية</span>';
+            } else if (session.is_active) {
+                statusBadge = '<span class="badge badge-success">نشطة</span>';
+            } else {
+                statusBadge = '<span class="badge badge-secondary">معطلة</span>';
+            }
 
             let slotsTableHtml = '';
             if (slots && slots.length > 0) {
@@ -500,9 +571,16 @@
                         hour12: true
                     });
 
-                    const status = slot.is_booked
-                        ? '<span class="badge badge-danger">محجوز</span>'
-                        : '<span class="badge badge-success">متاح</span>';
+                    // تحديد حالة الفترة بناءً على الحجز والوقت
+                    const isExpired = isSlotExpired(slot.slot_time);
+                    let status;
+                    if (slot.is_booked) {
+                        status = '<span class="badge badge-danger">محجوز</span>';
+                    } else if (isExpired) {
+                        status = '<span class="badge badge-secondary">منتهية</span>';
+                    } else {
+                        status = '<span class="badge badge-success">متاح</span>';
+                    }
 
                     const applicant = slot.booked_by_app
                         ? `${escapeHtml(slot.booked_by_app.full_name)}<br><small style="color: #64748b;">${escapeHtml(slot.booked_by_app.preferred_committee)}</small>`
@@ -564,13 +642,13 @@
                             </div>
                             <div class="detail-value">${statusBadge}</div>
                         </div>
-                        ${session.interview_location ? `
+                        ${session.location ? `
                             <div class="detail-item">
                                 <div class="detail-label">
                                     <i class="fa-solid fa-location-dot"></i>
                                     الموقع
                                 </div>
-                                <div class="detail-value">${escapeHtml(session.interview_location)}</div>
+                                <div class="detail-value">${escapeHtml(session.location)}</div>
                             </div>
                         ` : ''}
                     </div>
@@ -733,7 +811,7 @@
             </div>
             <div class="form-group" id="location-group" style="display: ${session.interview_type === 'in_person' ? 'block' : 'none'};">
                 <label>الموقع</label>
-                <input type="text" id="session-location" class="form-input" value="${session.interview_location || ''}">
+                <input type="text" id="session-location" class="form-input" value="${session.location || ''}">
             </div>
         `;
 
@@ -788,14 +866,40 @@
             const link = document.getElementById('session-link').value.trim();
             const location = document.getElementById('session-location').value.trim();
 
+            // التحقق من الحقول المطلوبة
             if (!name || !date || !startTime || !endTime || !duration) {
                 showNotification('يرجى ملء جميع الحقول المطلوبة', 'warning');
                 return;
             }
 
+            // التحقق من صحة الوقت
             if (startTime >= endTime) {
                 showNotification('وقت النهاية يجب أن يكون بعد وقت البداية', 'warning');
                 return;
+            }
+
+            // التحقق من أن التاريخ ليس في الماضي
+            const selectedDateTime = new Date(`${date}T${startTime}`);
+            const now = new Date();
+            if (selectedDateTime < now) {
+                showNotification('لا يمكن جدولة مقابلة في وقت سابق للوقت الحالي', 'error');
+                return;
+            }
+
+            // التحقق من رابط الاجتماع للمقابلات الأونلاين
+            if (type === 'online' && !link) {
+                showNotification('رابط الاجتماع إلزامي للمقابلات الأونلاين', 'error');
+                return;
+            }
+
+            // التحقق من صحة رابط الاجتماع
+            if (type === 'online' && link) {
+                try {
+                    new URL(link);
+                } catch (e) {
+                    showNotification('يرجى إدخال رابط صحيح للاجتماع', 'error');
+                    return;
+                }
             }
 
             const { error } = await window.sbClient
@@ -809,7 +913,7 @@
                     slot_duration: parseInt(duration),
                     interview_type: type,
                     meeting_link: type === 'online' ? link : null,
-                    interview_location: type === 'in_person' ? location : null
+                    location: type === 'in_person' ? location : null
                 })
                 .eq('id', sessionId);
 

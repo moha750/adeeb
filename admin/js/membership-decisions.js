@@ -92,7 +92,8 @@
         let filtered = currentDecisions.filter(interview => {
             const matchSearch = !searchTerm || 
                 interview.application?.full_name.toLowerCase().includes(searchTerm) ||
-                interview.application?.email.toLowerCase().includes(searchTerm);
+                interview.application?.email.toLowerCase().includes(searchTerm) ||
+                (interview.application?.phone && interview.application.phone.includes(searchTerm));
             
             const matchStatus = !statusValue || interview.result === statusValue;
             const matchCommittee = !committeeValue || interview.application?.preferred_committee === committeeValue;

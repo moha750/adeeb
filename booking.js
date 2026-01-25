@@ -107,6 +107,17 @@
             }
 
             sessionData = data;
+            
+            // التحقق من انتهاء الجلسة قبل عرض خطوة الهاتف
+            const sessionEndDateTime = new Date(`${data.session_date}T${data.end_time}`);
+            const now = new Date();
+            
+            if (sessionEndDateTime < now) {
+                // الجلسة منتهية - عرض رسالة مباشرة
+                showError('عذراً، انتهت هذه الجلسة ولم يعد بالإمكان حجز مواعيد فيها');
+                return;
+            }
+            
             displaySessionInfo();
             showPhoneStep();
         } catch (error) {
