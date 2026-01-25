@@ -179,19 +179,53 @@
     }
 
     // ============================================================================
+    // دالة توحيد صيغة رقم الهاتف
+    // ============================================================================
+    
+    function normalizePhone(phone) {
+        if (!phone) return null;
+        
+        // إزالة جميع المسافات والرموز والأحرف غير الرقمية
+        phone = phone.replace(/[^0-9]/g, '');
+        
+        // إزالة الأصفار البادئة الزائدة
+        phone = phone.replace(/^0+/, '');
+        
+        // إذا كان الرقم يبدأ بـ 966 (كود السعودية)، نزيله
+        if (phone.startsWith('966')) {
+            phone = phone.substring(3);
+        }
+        
+        // إضافة 0 في البداية إذا لم يكن موجوداً
+        if (!phone.startsWith('0')) {
+            phone = '0' + phone;
+        }
+        
+        // التأكد من أن الرقم يبدأ بـ 05 ويتكون من 10 أرقام
+        if (!phone.startsWith('05') || phone.length !== 10) {
+            return null;
+        }
+        
+        return phone;
+    }
+
+    // ============================================================================
     // التحقق من رقم الهاتف
     // ============================================================================
     
     elements.verifyPhoneBtn.addEventListener('click', async () => {
-        const phone = elements.phoneInput.value.trim();
+        const phoneInput = elements.phoneInput.value.trim();
 
         // التحقق من صحة الرقم
-        if (!phone) {
+        if (!phoneInput) {
             showPhoneError('يرجى إدخال رقم الهاتف');
             return;
         }
 
-        if (!/^05\d{8}$/.test(phone)) {
+        // توحيد صيغة الرقم
+        const normalizedPhone = normalizePhone(phoneInput);
+        
+        if (!normalizedPhone) {
             showPhoneError('رقم الهاتف غير صحيح. يجب أن يبدأ بـ 05 ويتكون من 10 أرقام');
             return;
         }
@@ -200,15 +234,32 @@
         elements.verifyPhoneBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
 
         try {
+            console.log('🔍 رقم الهاتف المُدخل:', phoneInput);
+            console.log('✅ رقم الهاتف الموحد:', normalizedPhone);
+            
             const { data, error } = await window.sbClient
                 .rpc('validate_phone_for_booking', {
-                    p_phone: phone,
+                    p_phone: normalizedPhone,
                     p_session_id: sessionData.id
                 });
 
-            if (error) throw error;
+            if (error) {
+                console.error('❌ خطأ من قاعدة البيانات:', error);
+                throw error;
+            }
+
+            console.log('📦 البيانات المُستلمة من قاعدة البيانات:', data);
+
+            if (!data || data.length === 0) {
+                console.error('❌ لم يتم استلام أي بيانات من قاعدة البيانات');
+                showPhoneError('حدث خطأ في التحقق من رقم الهاتف. يرجى المحاولة مرة أخرى');
+                elements.verifyPhoneBtn.disabled = false;
+                elements.verifyPhoneBtn.innerHTML = '<i class="fas fa-arrow-left"></i> التالي';
+                return;
+            }
 
             const result = data[0];
+            console.log('📋 النتيجة:', result);
 
             // حفظ بيانات المتقدم
             applicantData = {
@@ -220,6 +271,7 @@
 
             // التحقق من وجود حجز مسبق
             if (result.has_existing_booking) {
+                console.log('✅ يوجد حجز مسبق');
                 // حفظ بيانات الحجز الحالي
                 existingBookingData = {
                     slotId: result.existing_slot_id,
@@ -235,11 +287,14 @@
 
             // التحقق من صحة البيانات
             if (!result.is_valid) {
+                console.log('❌ الرقم غير صالح:', result.error_message);
                 showPhoneError(result.error_message);
                 elements.verifyPhoneBtn.disabled = false;
                 elements.verifyPhoneBtn.innerHTML = '<i class="fas fa-arrow-left"></i> التالي';
                 return;
             }
+
+            console.log('✅ التحقق نجح - الانتقال لاختيار الموعد');
 
             // الانتقال لاختيار الموعد
             await showSlotStep();
