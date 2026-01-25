@@ -2323,7 +2323,7 @@
             
             // فلترة حسب الجلسة المختارة
             const matchSession = !sessionValue || 
-                (interview.slot && interview.slot.session_id === sessionValue);
+                (interview.slot && interview.slot[0] && interview.slot[0].session_id === sessionValue);
             
             return matchSearch && matchSession;
         });

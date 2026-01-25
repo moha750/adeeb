@@ -1,3 +1,80 @@
+@font-face {
+  font-family: fl;
+  src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Light.otf);
+}
+
+@font-face {
+  font-family: fr;
+  src: url(./fonts/COMM\ -\ Lyon\ Arabic\ Display\ Regular.otf);
+}
+
+@font-face {
+  font-family: fm;
+  src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Medium.otf);
+}
+
+@font-face {
+  font-family: fb;
+  src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Bold.otf);
+}
+
+@font-face {
+  font-family: fbb;
+  src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Black.otf);
+}
+
+@font-face {
+  font-family: a;
+  src: url(../fonts/ERASLGHT.TTF) format("truetype");
+}
+
+@font-face {
+  font-family: b;
+  src: url(../fonts/ERASDEMI.TTF) format("truetype");
+}
+
+@font-face {
+  font-family: c;
+  src: url(../fonts/ERASMD.TTF) format("truetype");
+}
+
+@font-face {
+  font-family: d;
+  src: url(../fonts/ERASBD.TTF) format("truetype");
+}
+
+/* Override digits globally to use ERAS within existing families */
+/* Latin digits U+0030-0039 and Arabic-Indic digits U+0660-0669 */
+@font-face {
+  font-family: fl; /* Light */
+  src: url(../fonts/ERASLGHT.TTF) format("truetype");
+  unicode-range: U+0030-0039, U+0660-0669;
+}
+
+@font-face {
+  font-family: fr; /* Regular */
+  src: url(./fonts/ERASMD.TTF) format("truetype");
+  unicode-range: U+0030-0039, U+0660-0669;
+}
+
+@font-face {
+  font-family: fm; /* Medium */
+  src: url(../fonts/ERASMD.TTF) format("truetype");
+  unicode-range: U+0030-0039, U+0660-0669;
+}
+
+@font-face {
+  font-family: fb; /* Bold */
+  src: url(../fonts/ERASDEMI.TTF) format("truetype");
+  unicode-range: U+0030-0039, U+0660-0669;
+}
+
+@font-face {
+  font-family: fbb; /* Black */
+  src: url(../fonts/ERASBD.TTF) format("truetype");
+  unicode-range: U+0030-0039, U+0660-0669;
+}
+
 /* =====================================================
    نظام إدارة نادي أدِيب - تصميم لوحة التحكم
    ===================================================== */
@@ -24,10 +101,10 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: fb;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: var(--bg-light);
     color: var(--text-dark);
     line-height: 1.6;

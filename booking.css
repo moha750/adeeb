@@ -1,37 +1,133 @@
+@font-face {
+  font-family: fl;
+  src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Light.otf);
+}
+
+@font-face {
+  font-family: fr;
+  src: url(./fonts/COMM\ -\ Lyon\ Arabic\ Display\ Regular.otf);
+}
+
+@font-face {
+  font-family: fm;
+  src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Medium.otf);
+}
+
+@font-face {
+  font-family: fb;
+  src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Bold.otf);
+}
+
+@font-face {
+  font-family: fbb;
+  src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Black.otf);
+}
+
+@font-face {
+  font-family: a;
+  src: url(../fonts/ERASLGHT.TTF) format("truetype");
+}
+
+@font-face {
+  font-family: b;
+  src: url(../fonts/ERASDEMI.TTF) format("truetype");
+}
+
+@font-face {
+  font-family: c;
+  src: url(../fonts/ERASMD.TTF) format("truetype");
+}
+
+@font-face {
+  font-family: d;
+  src: url(../fonts/ERASBD.TTF) format("truetype");
+}
+
+/* Override digits globally to use ERAS within existing families */
+/* Latin digits U+0030-0039 and Arabic-Indic digits U+0660-0669 */
+@font-face {
+  font-family: fl; /* Light */
+  src: url(../fonts/ERASLGHT.TTF) format("truetype");
+  unicode-range: U+0030-0039, U+0660-0669;
+}
+
+@font-face {
+  font-family: fr; /* Regular */
+  src: url(./fonts/ERASMD.TTF) format("truetype");
+  unicode-range: U+0030-0039, U+0660-0669;
+}
+
+@font-face {
+  font-family: fm; /* Medium */
+  src: url(../fonts/ERASMD.TTF) format("truetype");
+  unicode-range: U+0030-0039, U+0660-0669;
+}
+
+@font-face {
+  font-family: fb; /* Bold */
+  src: url(../fonts/ERASDEMI.TTF) format("truetype");
+  unicode-range: U+0030-0039, U+0660-0669;
+}
+
+@font-face {
+  font-family: fbb; /* Black */
+  src: url(../fonts/ERASBD.TTF) format("truetype");
+  unicode-range: U+0030-0039, U+0660-0669;
+}
+
 /* ============================================================================
    نظام حجز مواعيد المقابلات - Booking System Styles
    ============================================================================ */
 
 :root {
-    --primary-color: #2563eb;
-    --primary-dark: #1e40af;
+    --main-blue: #274060;
+    --accent-blue: #3d8fd6;
+    --light-blue: #6ba8e2;
+    --dark-blue: #1a2a3a;
+    --primary-color: #3d8fd6;
+    --primary-dark: #274060;
     --secondary-color: #64748b;
     --success-color: #10b981;
     --error-color: #ef4444;
     --warning-color: #f59e0b;
-    --background: #f8fafc;
+    --background: linear-gradient(135deg, #f8f9fa 0%, #e6f0f9 100%);
     --card-bg: #ffffff;
-    --text-primary: #1e293b;
-    --text-secondary: #64748b;
+    --text-primary: #274060;
+    --text-secondary: #335c81;
     --border-color: #e2e8f0;
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --shadow: 0 5px 30px rgba(39, 64, 96, 0.1);
+    --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(39, 64, 96, 0.2);
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: fb;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--background);
+    font-family: fl;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e6f0f9 100%);
     color: var(--text-primary);
     line-height: 1.6;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(61, 143, 214, 0.08) 0%, rgba(61, 143, 214, 0) 70%);
+    z-index: 0;
+    pointer-events: none;
 }
 
 .container {
@@ -39,6 +135,8 @@ body {
     margin: 0 auto;
     padding: 0 1rem;
     width: 100%;
+    position: relative;
+    z-index: 1;
 }
 
 /* ============================================================================
@@ -46,18 +144,26 @@ body {
    ============================================================================ */
 
 .booking-header {
-    background: var(--card-bg);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     padding: 1.5rem 0;
-    box-shadow: var(--shadow);
+    box-shadow: 0 5px 30px rgba(39, 64, 96, 0.1);
     position: sticky;
     top: 0;
     z-index: 100;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .booking-header .logo {
     height: 50px;
     display: block;
     margin: 0 auto;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.booking-header .logo:hover {
+    transform: scale(1.05);
 }
 
 /* ============================================================================
@@ -70,11 +176,45 @@ body {
 }
 
 .booking-card {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: var(--shadow-lg);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(39, 64, 96, 0.2);
     margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.booking-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, #3d8fd6, #274060);
+    z-index: 2;
+}
+
+.booking-card::after {
+    content: "";
+    position: absolute;
+    bottom: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(61, 143, 214, 0.05) 0%, rgba(61, 143, 214, 0) 70%);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.booking-card:hover::after {
+    opacity: 1;
 }
 
 /* ============================================================================
@@ -88,8 +228,18 @@ body {
 
 .loading-spinner i {
     font-size: 3rem;
-    color: var(--primary-color);
+    color: var(--accent-blue);
     margin-bottom: 1rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .loading-spinner p {
@@ -109,16 +259,30 @@ body {
     font-size: 4rem;
     color: var(--error-color);
     margin-bottom: 1rem;
+    animation: pulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 5px 15px rgba(239, 68, 68, 0.3));
+}
+
+.warning-icon {
+    font-size: 4rem;
+    color: var(--warning-color);
+    margin-bottom: 1rem;
+    animation: pulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 5px 15px rgba(245, 158, 11, 0.3));
 }
 
 .error-state h2 {
     color: var(--error-color);
     margin-bottom: 1rem;
+    font-family: fbb;
+    font-size: 1.8rem;
 }
 
 .error-state p {
     color: var(--text-secondary);
     margin-bottom: 2rem;
+    font-family: fr;
+    font-size: 1.05rem;
 }
 
 /* ============================================================================
@@ -134,13 +298,17 @@ body {
 
 .session-info h1 {
     font-size: 2rem;
-    color: var(--text-primary);
+    color: var(--main-blue);
     margin-bottom: 0.5rem;
+    font-family: fbb;
+    font-weight: 700;
 }
 
 .session-info p {
     color: var(--text-secondary);
     margin-bottom: 1.5rem;
+    font-family: fr;
+    font-size: 1.05rem;
 }
 
 .session-details {
@@ -174,7 +342,9 @@ body {
 .form-section h3 {
     text-align: center;
     margin-bottom: 0.5rem;
-    color: var(--text-primary);
+    color: var(--main-blue);
+    font-family: fb;
+    font-size: 1.5rem;
 }
 
 .help-text {
@@ -194,7 +364,8 @@ body {
     gap: 0.5rem;
     margin-bottom: 0.5rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--main-blue);
+    font-family: fb;
 }
 
 .form-group label i {
@@ -205,18 +376,23 @@ body {
     width: 100%;
     padding: 0.75rem 1rem;
     border: 2px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 12px;
     font-size: 1rem;
-    transition: all 0.3s;
+    transition: all 0.3s ease;
     text-align: center;
     font-size: 1.2rem;
     letter-spacing: 1px;
+    font-family: fb;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
 }
 
 .form-control:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 4px rgba(61, 143, 214, 0.15);
+    background: white;
+    transform: translateY(-2px);
 }
 
 .form-hint {
@@ -238,23 +414,43 @@ body {
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.3s ease;
     text-decoration: none;
+    font-family: fb;
+    letter-spacing: 0.3px;
 }
 
 .btn-primary {
-    background: var(--primary-color);
+    background: linear-gradient(135deg, #3d8fd6 0%, #274060 100%);
     color: white;
+    box-shadow: 0 4px 15px rgba(61, 143, 214, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-primary:hover::before {
+    left: 100%;
 }
 
 .btn-primary:hover {
-    background: var(--primary-dark);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(61, 143, 214, 0.4);
+    background: linear-gradient(135deg, #4a9ee5 0%, #2c5a7d 100%);
 }
 
 .btn-secondary {
@@ -263,8 +459,21 @@ body {
 }
 
 .btn-secondary:hover {
-    background: #475569;
+    background: linear-gradient(135deg, #475569, #334155);
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(100, 116, 139, 0.3);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
 }
 
 .btn-block {
@@ -282,12 +491,16 @@ body {
    ============================================================================ */
 
 .alert {
-    padding: 1rem;
-    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    font-family: fr;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    animation: slideInUp 0.4s ease-out;
 }
 
 .alert i {
@@ -295,21 +508,31 @@ body {
 }
 
 .alert-error {
-    background: #fee2e2;
+    background: linear-gradient(135deg, rgba(254, 226, 226, 0.9), rgba(254, 202, 202, 0.8));
     color: #991b1b;
-    border: 1px solid #fecaca;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
 }
 
 .alert-info {
-    background: #dbeafe;
+    background: linear-gradient(135deg, rgba(219, 234, 254, 0.9), rgba(191, 219, 254, 0.8));
     color: #1e40af;
-    border: 1px solid #bfdbfe;
+    border: 1px solid rgba(61, 143, 214, 0.3);
+    box-shadow: 0 4px 12px rgba(61, 143, 214, 0.1);
 }
 
 .alert-success {
-    background: #d1fae5;
+    background: linear-gradient(135deg, rgba(209, 250, 229, 0.9), rgba(167, 243, 208, 0.8));
     color: #065f46;
-    border: 1px solid #a7f3d0;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, rgba(254, 243, 199, 0.9), rgba(253, 230, 138, 0.8));
+    color: #92400e;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
 }
 
 /* ============================================================================
@@ -325,18 +548,24 @@ body {
 
 .welcome-icon {
     font-size: 4rem;
-    color: var(--primary-color);
+    color: var(--accent-blue);
     margin-bottom: 1rem;
+    animation: pulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 5px 15px rgba(61, 143, 214, 0.3));
 }
 
 .welcome-section h2 {
     font-size: 1.8rem;
     margin-bottom: 0.5rem;
+    font-family: fbb;
+    color: var(--main-blue);
 }
 
 .welcome-section p {
     color: var(--text-secondary);
     margin-bottom: 1rem;
+    font-family: fr;
+    font-size: 1.05rem;
 }
 
 .applicant-info {
@@ -351,10 +580,19 @@ body {
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background: #eff6ff;
-    color: var(--primary-color);
+    background: linear-gradient(135deg, rgba(61, 143, 214, 0.1), rgba(39, 64, 96, 0.05));
+    color: var(--accent-blue);
     border-radius: 20px;
     font-weight: 600;
+    font-family: fb;
+    border: 1px solid rgba(61, 143, 214, 0.2);
+    box-shadow: 0 2px 8px rgba(61, 143, 214, 0.1);
+    transition: all 0.3s ease;
+}
+
+.info-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(61, 143, 214, 0.2);
 }
 
 /* ============================================================================
@@ -376,6 +614,9 @@ body {
 
 .slots-header h3 {
     margin: 0;
+    font-family: fb;
+    color: var(--main-blue);
+    font-size: 1.5rem;
 }
 
 .slots-legend {
@@ -394,7 +635,14 @@ body {
 .legend-color {
     width: 20px;
     height: 20px;
-    border-radius: 4px;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.legend-item:hover .legend-color {
+    transform: scale(1.1);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 
 .legend-color.available {
@@ -403,6 +651,10 @@ body {
 
 .legend-color.booked {
     background: var(--secondary-color);
+}
+
+.legend-color.expired {
+    background: #fca5a5;
 }
 
 .slots-grid {
@@ -415,24 +667,51 @@ body {
 .slot-button {
     padding: 1rem;
     border: 2px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 10px;
     background: white;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.3s ease;
     text-align: center;
     font-weight: 600;
+    font-family: fb;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.slot-button:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .slot-button.available {
     border-color: var(--success-color);
     color: var(--success-color);
+    background: rgba(16, 185, 129, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.slot-button.available::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: var(--success-color);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
+    z-index: -1;
+}
+
+.slot-button.available:hover::before {
+    width: 300px;
+    height: 300px;
 }
 
 .slot-button.available:hover {
-    background: var(--success-color);
     color: white;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
 }
 
 .slot-button.booked {
@@ -461,12 +740,14 @@ body {
     display: block;
     font-size: 1.1rem;
     margin-bottom: 0.25rem;
+    font-family: fb;
 }
 
 .slot-status {
     display: block;
     font-size: 0.85rem;
     opacity: 0.8;
+    font-family: fr;
 }
 
 .no-slots {
@@ -479,6 +760,12 @@ body {
     font-size: 3rem;
     margin-bottom: 1rem;
     opacity: 0.5;
+    color: var(--text-secondary);
+}
+
+.no-slots p {
+    font-family: fr;
+    font-size: 1.1rem;
 }
 
 /* ============================================================================
@@ -493,7 +780,8 @@ body {
     font-size: 5rem;
     color: var(--success-color);
     margin-bottom: 1rem;
-    animation: scaleIn 0.5s ease-out;
+    animation: scaleIn 0.5s ease-out, pulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 5px 15px rgba(16, 185, 129, 0.3));
 }
 
 @keyframes scaleIn {
@@ -507,14 +795,38 @@ body {
     }
 }
 
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 .success-card h2 {
     color: var(--success-color);
     margin-bottom: 0.5rem;
+    font-family: fbb;
+    font-size: 2rem;
 }
 
 .success-card > p {
     color: var(--text-secondary);
     margin-bottom: 2rem;
+    font-family: fr;
+    font-size: 1.1rem;
 }
 
 .confirmation-details {
@@ -529,10 +841,19 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 1rem;
-    background: var(--background);
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
+    padding: 1.25rem;
+    background: linear-gradient(135deg, rgba(248, 249, 250, 0.8), rgba(230, 240, 249, 0.6));
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border-radius: 12px;
+    border: 1px solid rgba(61, 143, 214, 0.15);
+    transition: all 0.3s ease;
+}
+
+.detail-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(61, 143, 214, 0.15);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(230, 240, 249, 0.8));
 }
 
 .detail-icon {
@@ -541,11 +862,18 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--primary-color);
+    background: linear-gradient(135deg, #3d8fd6, #274060);
     color: white;
     border-radius: 50%;
     font-size: 1.5rem;
     flex-shrink: 0;
+    box-shadow: 0 5px 15px rgba(61, 143, 214, 0.3);
+    transition: all 0.3s ease;
+}
+
+.detail-card:hover .detail-icon {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 8px 20px rgba(61, 143, 214, 0.4);
 }
 
 .detail-content {
@@ -558,11 +886,13 @@ body {
     font-size: 0.85rem;
     color: var(--text-secondary);
     margin-bottom: 0.25rem;
+    font-family: fr;
 }
 
 .detail-value {
     font-weight: 600;
     color: var(--text-primary);
+    font-family: fb;
 }
 
 .detail-value.link {
@@ -587,12 +917,21 @@ body {
    ============================================================================ */
 
 .booking-footer {
-    background: var(--card-bg);
-    padding: 1.5rem 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 2rem 0;
     text-align: center;
     color: var(--text-secondary);
-    border-top: 1px solid var(--border-color);
+    border-top: 2px solid rgba(61, 143, 214, 0.1);
     margin-top: auto;
+    box-shadow: 0 -5px 20px rgba(39, 64, 96, 0.05);
+    font-family: fr;
+}
+
+.booking-footer p {
+    font-size: 1rem;
+    margin: 0;
 }
 
 /* ============================================================================
@@ -600,8 +939,14 @@ body {
    ============================================================================ */
 
 @media (max-width: 768px) {
+    body::before {
+        width: 200px;
+        height: 200px;
+    }
+
     .booking-card {
         padding: 1.5rem;
+        border-radius: 16px;
     }
 
     .session-info h1 {
@@ -614,20 +959,39 @@ body {
     }
 
     .slots-grid {
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
         gap: 0.75rem;
+    }
+
+    .slot-button {
+        padding: 0.85rem;
+        font-size: 0.95rem;
     }
 
     .confirmation-details {
         grid-template-columns: 1fr;
+        gap: 0.75rem;
     }
 
     .confirmation-actions {
         flex-direction: column;
+        gap: 0.75rem;
     }
 
     .confirmation-actions .btn {
         width: 100%;
+    }
+
+    .welcome-icon {
+        font-size: 3.5rem;
+    }
+
+    .success-icon {
+        font-size: 4rem;
+    }
+
+    .error-icon, .warning-icon {
+        font-size: 3.5rem;
     }
 }
 
@@ -635,9 +999,96 @@ body {
    Print Styles
    ============================================================================ */
 
+@media (max-width: 576px) {
+    .booking-main {
+        padding: 1.5rem 0;
+    }
+
+    .booking-card {
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .session-info h1 {
+        font-size: 1.3rem;
+    }
+
+    .form-section {
+        max-width: 100%;
+    }
+
+    .form-control {
+        font-size: 1rem;
+        padding: 0.65rem 0.85rem;
+    }
+
+    .btn {
+        padding: 0.65rem 1.25rem;
+        font-size: 0.95rem;
+    }
+
+    .slots-grid {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .detail-card {
+        padding: 1rem;
+    }
+
+    .detail-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+    }
+
+    .welcome-section h2 {
+        font-size: 1.5rem;
+    }
+
+    .slots-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .slots-legend {
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .booking-card {
+        padding: 1rem;
+    }
+
+    .session-info h1 {
+        font-size: 1.2rem;
+    }
+
+    .slots-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .welcome-icon,
+    .success-icon,
+    .error-icon,
+    .warning-icon {
+        font-size: 3rem;
+    }
+}
+
 @media print {
     body {
         background: white;
+    }
+
+    body::before {
+        display: none;
     }
 
     .booking-header,
@@ -650,6 +1101,13 @@ body {
     .booking-card {
         box-shadow: none;
         border: 1px solid var(--border-color);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+
+    .booking-card::before,
+    .booking-card::after {
+        display: none;
     }
 }
 
@@ -671,3 +1129,15 @@ body {
 .booking-card {
     animation: fadeIn 0.5s ease-out;
 }
+
+.detail-card {
+    animation: slideInUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.detail-card:nth-child(1) { animation-delay: 0.1s; }
+.detail-card:nth-child(2) { animation-delay: 0.2s; }
+.detail-card:nth-child(3) { animation-delay: 0.3s; }
+.detail-card:nth-child(4) { animation-delay: 0.4s; }
+.detail-card:nth-child(5) { animation-delay: 0.5s; }
+.detail-card:nth-child(6) { animation-delay: 0.6s; }
