@@ -232,15 +232,32 @@
                 subItems: membershipSubItems
             });
         }
-
+        
+        // إدارة الاستبيانات - المستوى 7 وأعلى (قائمة منسدلة)
         if (roleLevel >= 7) {
-    menuItems.push({
-        id: 'surveys',
-        icon: 'fa-clipboard-question',
-        label: 'الاستبيانات',
-        section: 'surveys-section'
-    });
-}
+            const surveysSubItems = [
+                {
+                    id: 'surveys-list',
+                    icon: 'fa-list',
+                    label: 'قائمة الاستبيانات',
+                    section: 'surveys-section'
+                },
+                {
+                    id: 'surveys-templates',
+                    icon: 'fa-layer-group',
+                    label: 'القوالب',
+                    section: 'survey-templates-section'
+                }
+            ];
+            
+            menuItems.push({
+                id: 'surveys',
+                icon: 'fa-clipboard-question',
+                label: 'الاستبيانات',
+                isDropdown: true,
+                subItems: surveysSubItems
+            });
+        }
         
         // إدارة الموقع - المستوى 7 وأعلى (قائمة منسدلة)
         if (roleLevel >= 7) {
@@ -616,11 +633,16 @@
             case 'site-visits-section':
                 await loadSiteVisitsSection();
                 break;
-                case 'surveys-section':
-    if (window.surveysManager) {
-        await window.surveysManager.init(currentUser);
-    }
-    break;
+            case 'surveys-section':
+                if (window.surveysManager) {
+                    await window.surveysManager.init(currentUser);
+                }
+                break;
+            case 'survey-templates-section':
+                if (window.surveysManager) {
+                    await window.surveysManager.init(currentUser);
+                }
+                break;
         }
     }
 
