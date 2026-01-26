@@ -102,36 +102,32 @@
         });
 
         if (filtered.length === 0) {
-            container.innerHTML = '<p class="text-center text-muted">لا توجد قرارات</p>';
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox"></i>
+                    <p>لا توجد قرارات</p>
+                </div>
+            `;
             return;
         }
 
-        let html = `
-            <table>
-                <thead>
-                    <tr>
-                        <th>الاسم</th>
-                        <th>البريد الإلكتروني</th>
-                        <th>اللجنة المرغوبة</th>
-                        <th>تاريخ المقابلة</th>
-                        <th>القرار النهائي</th>
-                        <th>تاريخ القرار</th>
-                        <th>الإجراءات</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
+        let html = '<div class="applications-cards-grid">';
 
         filtered.forEach(interview => {
             const interviewDate = interview.interview_date ? new Date(interview.interview_date).toLocaleDateString('ar-SA', {
                 year: 'numeric',
-                month: 'short',
+                month: 'long',
                 day: 'numeric'
             }) : 'غير محدد';
+            
+            const interviewTime = interview.interview_date ? new Date(interview.interview_date).toLocaleTimeString('ar-SA', {
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : '';
 
             const decidedDate = interview.decided_at ? new Date(interview.decided_at).toLocaleDateString('ar-SA', {
                 year: 'numeric',
-                month: 'short',
+                month: 'long',
                 day: 'numeric'
             }) : 'غير محدد';
 
@@ -139,25 +135,89 @@
                 ? '<span class="status-badge status-accepted">مقبول نهائياً</span>'
                 : '<span class="status-badge status-rejected">مرفوض نهائياً</span>';
 
+            const avatarIcon = interview.result === 'accepted' 
+                ? '<i class="fa-solid fa-user-check"></i>'
+                : '<i class="fa-solid fa-user-xmark"></i>';
+
             html += `
-                <tr>
-                    <td><strong>${escapeHtml(interview.application?.full_name || 'غير محدد')}</strong></td>
-                    <td>${escapeHtml(interview.application?.email || 'غير محدد')}</td>
-                    <td>${escapeHtml(interview.application?.preferred_committee || 'غير محدد')}</td>
-                    <td>${interviewDate}</td>
-                    <td>${statusBadge}</td>
-                    <td>${decidedDate}</td>
-                    <td>
-                        <button class="btn-sm btn-primary" onclick="window.membershipManager.viewInterview('${interview.id}')">
+                <div class="application-card">
+                    <div class="application-card-header">
+                        <div class="applicant-info">
+                            <div class="applicant-avatar ${interview.result === 'accepted' ? 'avatar-accepted' : 'avatar-rejected'}">
+                                ${avatarIcon}
+                            </div>
+                            <div class="applicant-details">
+                                <h3 class="applicant-name">${escapeHtml(interview.application?.full_name || 'غير محدد')}</h3>
+                                ${statusBadge}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="application-card-body">
+                        <div class="application-info-grid">
+                            <div class="info-item">
+                                <i class="fa-solid fa-envelope"></i>
+                                <div class="info-content">
+                                    <span class="info-label">البريد الإلكتروني</span>
+                                    <span class="info-value">${escapeHtml(interview.application?.email || 'غير محدد')}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="info-item">
+                                <i class="fa-solid fa-phone"></i>
+                                <div class="info-content">
+                                    <span class="info-label">رقم الجوال</span>
+                                    <span class="info-value">${escapeHtml(interview.application?.phone || 'غير متوفر')}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="info-item">
+                                <i class="fa-solid fa-users"></i>
+                                <div class="info-content">
+                                    <span class="info-label">اللجنة المرغوبة</span>
+                                    <span class="info-value">${escapeHtml(interview.application?.preferred_committee || 'غير محدد')}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="info-item">
+                                <i class="fa-solid fa-calendar-check"></i>
+                                <div class="info-content">
+                                    <span class="info-label">تاريخ المقابلة</span>
+                                    <span class="info-value">${interviewDate}${interviewTime ? ' - ' + interviewTime : ''}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="info-item">
+                                <i class="fa-solid fa-clipboard-check"></i>
+                                <div class="info-content">
+                                    <span class="info-label">تاريخ القرار</span>
+                                    <span class="info-value">${decidedDate}</span>
+                                </div>
+                            </div>
+                            
+                            ${interview.notes ? `
+                                <div class="info-item full-width">
+                                    <i class="fa-solid fa-note-sticky"></i>
+                                    <div class="info-content">
+                                        <span class="info-label">ملاحظات</span>
+                                        <span class="info-value">${escapeHtml(interview.notes)}</span>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="application-card-footer">
+                        <button class="btn-view-details" onclick="window.membershipManager.viewInterview('${interview.id}')">
                             <i class="fa-solid fa-eye"></i>
-                            عرض
+                            عرض التفاصيل الكاملة
                         </button>
-                    </td>
-                </tr>
+                    </div>
+                </div>
             `;
         });
 
-        html += '</tbody></table>';
+        html += '</div>';
         container.innerHTML = html;
     }
 

@@ -2240,7 +2240,7 @@
                     application:membership_applications(id, full_name, email, phone, preferred_committee),
                     interviewer:profiles!interviewer_id(full_name),
                     decided_by_user:profiles!decided_by(full_name),
-                    slot:interview_slots(session_id, interview_sessions(*))
+                    slot:interview_slots(id, session_id, interview_sessions(*))
                 `)
                 .eq('status', 'scheduled')
                 .order('interview_date', { ascending: true });
@@ -2468,7 +2468,7 @@
                                     رفض
                                 </button>
                             ` : ''}
-                            <button class="btn-action btn-action-warning" onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot_id}')" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <button class="btn-action btn-action-warning" onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot && interview.slot[0] ? interview.slot[0].id : ''}')" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
                                 <i class="fa-solid fa-trash-alt"></i>
                                 حذف الموعد
                             </button>
@@ -3601,10 +3601,65 @@
      */
     async function cancelInterviewAdmin(interviewId, slotId) {
         try {
-            // تأكيد الحذف
-            const confirmed = confirm('⚠️ تحذير: هل أنت متأكد من حذف هذا الموعد؟\n\nسيتم:\n• حذف الموعد من قاعدة البيانات\n• حذف المقابلة المرتبطة\n• السماح للمتقدم بحجز موعد جديد\n\nهذا الإجراء لا يمكن التراجع عنه!');
-            
-            if (!confirmed) return;
+            // التحقق من وجود slot_id
+            if (!slotId || slotId === 'undefined' || slotId === '') {
+                showNotification('خطأ: لا يمكن العثور على معرف الفترة الزمنية', 'error');
+                return;
+            }
+
+            // عرض نافذة تأكيد موحدة
+            const contentHtml = `
+                <div style="text-align: center; padding: 1rem;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;"></i>
+                    <p style="font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 600;">هل أنت متأكد من حذف هذا الموعد؟</p>
+                    <div style="background: #fef3c7; padding: 1rem; border-radius: 8px; margin-top: 1rem; border-right: 3px solid #f59e0b;">
+                        <p style="color: #92400e; margin: 0.5rem 0; font-size: 0.95rem; text-align: right;">
+                            <i class="fa-solid fa-circle-check" style="color: #f59e0b;"></i> حذف الموعد من قاعدة البيانات
+                        </p>
+                        <p style="color: #92400e; margin: 0.5rem 0; font-size: 0.95rem; text-align: right;">
+                            <i class="fa-solid fa-circle-check" style="color: #f59e0b;"></i> حذف المقابلة المرتبطة
+                        </p>
+                        <p style="color: #92400e; margin: 0.5rem 0; font-size: 0.95rem; text-align: right;">
+                            <i class="fa-solid fa-circle-check" style="color: #f59e0b;"></i> السماح للمتقدم بحجز موعد جديد
+                        </p>
+                    </div>
+                    <p style="color: #ef4444; font-size: 0.9rem; margin-top: 1rem; font-weight: 600;">⚠️ هذا الإجراء لا يمكن التراجع عنه!</p>
+                    <input type="hidden" id="delete-interview-id" value="${interviewId}">
+                    <input type="hidden" id="delete-slot-id" value="${slotId}">
+                </div>
+            `;
+
+            const actionsHtml = `
+                <button class="modal-btn modal-btn-danger" onclick="window.membershipManager.confirmCancelInterview()">
+                    <i class="fa-solid fa-trash"></i>
+                    نعم، احذف الموعد
+                </button>
+                <button class="modal-btn modal-btn-secondary" onclick="window.closeConfirmModal()" style="background: #e2e8f0; color: #475569;">
+                    <i class="fa-solid fa-times"></i>
+                    إلغاء
+                </button>
+            `;
+
+            document.getElementById('confirmModalContent').innerHTML = contentHtml;
+            document.getElementById('confirmModalActions').innerHTML = actionsHtml;
+            window.setConfirmModalTitle('تأكيد حذف الموعد', 'fa-triangle-exclamation');
+            window.openConfirmModal();
+
+        } catch (error) {
+            console.error('خطأ في عرض نافذة التأكيد:', error);
+            showNotification('حدث خطأ أثناء عرض نافذة التأكيد', 'error');
+        }
+    }
+
+    /**
+     * تأكيد حذف الموعد (يتم استدعاؤها من النافذة المنبثقة)
+     */
+    async function confirmCancelInterview() {
+        try {
+            const interviewId = document.getElementById('delete-interview-id').value;
+            const slotId = document.getElementById('delete-slot-id').value;
+
+            window.closeConfirmModal();
 
             // استدعاء دالة الحذف الإداري
             const { data, error } = await window.sbClient
@@ -3654,6 +3709,7 @@
         acceptInterview: acceptInterview,
         rejectInterview: rejectInterview,
         cancelInterviewAdmin: cancelInterviewAdmin,
+        confirmCancelInterview: confirmCancelInterview,
         loadAcceptedMembers: loadAcceptedMembers,
         viewAcceptedMember: viewAcceptedMember
     };

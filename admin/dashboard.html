@@ -1,5 +1,6 @@
 <!doctype html>
 <html dir="rtl" lang="ar">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
     <link rel="stylesheet" href="dashboard.css" />
 </head>
+
 <body>
     <!-- شريط التحميل -->
     <div id="loadingBar" class="loading-bar">
@@ -72,25 +74,6 @@
                     <!-- سيتم ملؤها ديناميكياً -->
                 </div>
 
-                <!-- الرسوم البيانية -->
-                <div class="charts-grid">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3><i class="fa-solid fa-chart-bar"></i> المهام حسب الحالة</h3>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="tasksChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">
-                            <h3><i class="fa-solid fa-chart-pie"></i> المشاريع حسب اللجنة</h3>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="projectsChart"></canvas>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- النشاطات الأخيرة -->
                 <div class="card">
@@ -166,65 +149,6 @@
                 </div>
 
                 <div class="committees-grid" id="committeesGrid">
-                    <!-- سيتم ملؤها ديناميكياً -->
-                </div>
-            </section>
-
-            <!-- قسم المهام -->
-            <section id="tasks-section" class="admin-section" style="display: none;">
-                <div class="section-header">
-                    <h1>
-                        <i class="fa-solid fa-tasks"></i>
-                        إدارة المهام
-                    </h1>
-                    <button class="btn-primary" id="addTaskBtn">
-                        <i class="fa-solid fa-plus"></i>
-                        إضافة مهمة
-                    </button>
-                </div>
-
-                <!-- فلاتر المهام -->
-                <div class="filters-bar">
-                    <div class="filter-group">
-                        <i class="fa-solid fa-search"></i>
-                        <input type="text" id="taskSearchInput" placeholder="البحث عن مهمة..." />
-                    </div>
-                    <select id="taskStatusFilter" class="filter-select">
-                        <option value="">جميع الحالات</option>
-                        <option value="pending">معلقة</option>
-                        <option value="in_progress">قيد التنفيذ</option>
-                        <option value="review">قيد المراجعة</option>
-                        <option value="completed">مكتملة</option>
-                        <option value="cancelled">ملغاة</option>
-                    </select>
-                    <select id="taskPriorityFilter" class="filter-select">
-                        <option value="">جميع الأولويات</option>
-                        <option value="urgent">عاجل</option>
-                        <option value="high">عالي</option>
-                        <option value="medium">متوسط</option>
-                        <option value="low">منخفض</option>
-                    </select>
-                </div>
-
-                <div id="tasksContainer" class="tasks-container">
-                    <!-- سيتم ملؤها ديناميكياً -->
-                </div>
-            </section>
-
-            <!-- قسم المشاريع -->
-            <section id="projects-section" class="admin-section" style="display: none;">
-                <div class="section-header">
-                    <h1>
-                        <i class="fa-solid fa-diagram-project"></i>
-                        إدارة المشاريع
-                    </h1>
-                    <button class="btn-primary" id="addProjectBtn">
-                        <i class="fa-solid fa-plus"></i>
-                        إضافة مشروع
-                    </button>
-                </div>
-
-                <div id="projectsContainer" class="projects-container">
                     <!-- سيتم ملؤها ديناميكياً -->
                 </div>
             </section>
@@ -312,22 +236,79 @@
                 </div>
             </section>
 
-            <!-- قسم الاجتماعات -->
-            <section id="meetings-section" class="admin-section" style="display: none;">
+            <!-- إضافة قسم الاستبيانات -->
+            <section id="surveys-section" class="admin-section" style="display: none;">
                 <div class="section-header">
                     <h1>
-                        <i class="fa-solid fa-calendar-days"></i>
-                        إدارة الاجتماعات
+                        <i class="fa-solid fa-clipboard-question"></i>
+                        إدارة الاستبيانات
                     </h1>
-                    <button class="btn-primary" id="addMeetingBtn">
+                    <button class="btn-primary" id="createSurveyBtn">
                         <i class="fa-solid fa-plus"></i>
-                        جدولة اجتماع
+                        إنشاء استبيان جديد
                     </button>
                 </div>
 
-                <div id="meetingsCalendar" class="meetings-calendar">
-                    <!-- سيتم ملؤها ديناميكياً -->
+                <!-- إحصائيات -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-clipboard-list stat-icon"></i>
+                        <div class="stat-info">
+                            <h3>إجمالي الاستبيانات</h3>
+                            <p class="stat-value" id="totalSurveysCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-chart-line stat-icon"></i>
+                        <div class="stat-info">
+                            <h3>استبيانات نشطة</h3>
+                            <p class="stat-value" id="activeSurveysCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-file-lines stat-icon"></i>
+                        <div class="stat-info">
+                            <h3>مسودات</h3>
+                            <p class="stat-value" id="draftSurveysCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-users stat-icon"></i>
+                        <div class="stat-info">
+                            <h3>إجمالي الاستجابات</h3>
+                            <p class="stat-value" id="totalSurveyResponsesCount">0</p>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- فلاتر -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="surveysSearchInput" placeholder="البحث..." />
+                    </div>
+                    <select id="surveysStatusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="draft">مسودة</option>
+                        <option value="active">نشط</option>
+                        <option value="paused">متوقف</option>
+                        <option value="closed">مغلق</option>
+                    </select>
+                    <select id="surveysTypeFilter" class="filter-select">
+                        <option value="">جميع الأنواع</option>
+                        <option value="general">عام</option>
+                        <option value="membership">عضوية</option>
+                        <option value="event">فعالية</option>
+                        <option value="feedback">تقييم</option>
+                    </select>
+                    <button class="btn-primary" id="refreshSurveysBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                </div>
+
+                <!-- قائمة الاستبيانات -->
+                <div id="surveysListContainer"></div>
             </section>
 
             <!-- قسم إدارة الصلاحيات -->
@@ -478,23 +459,6 @@
                 </div>
             </section>
 
-            <!-- قسم التقارير -->
-            <section id="reports-section" class="admin-section" style="display: none;">
-                <div class="section-header">
-                    <h1>
-                        <i class="fa-solid fa-chart-simple"></i>
-                        التقارير والإحصائيات
-                    </h1>
-                    <button class="btn-primary" id="generateReportBtn">
-                        <i class="fa-solid fa-file-export"></i>
-                        إنشاء تقرير
-                    </button>
-                </div>
-
-                <div class="reports-grid" id="reportsGrid">
-                    <!-- سيتم ملؤها ديناميكياً -->
-                </div>
-            </section>
 
             <!-- قسم إدارة رسائل التواصل -->
             <section id="contact-messages-section" class="admin-section" style="display: none;">
@@ -702,7 +666,8 @@
                             </div>
 
                             <!-- إعدادات الجدولة -->
-                            <div id="scheduleSettings" style="display: none; padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #3b82f6;">
+                            <div id="scheduleSettings"
+                                style="display: none; padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #3b82f6;">
                                 <div style="display: grid; gap: 1rem;">
                                     <div class="form-group">
                                         <label>نمط الجدولة</label>
@@ -982,7 +947,7 @@
                 </div>
 
                 <!-- جدول نتائج العضوية -->
-                 
+
                 <div class="card">
                     <div class="card-body">
                         <div id="decisionsTable" class="data-table">
@@ -1052,130 +1017,84 @@
                 </div>
             </section>
 
-            <!-- قسم إدارة الموقع -->
-            <section id="website-section" class="admin-section" style="display: none;">
+            <!-- قسم أعمالنا -->
+            <section id="website-works-section" class="admin-section" style="display: none;">
                 <div class="section-header">
                     <h1>
-                        <i class="fa-solid fa-globe"></i>
-                        إدارة محتوى الموقع
+                        <i class="fa-solid fa-briefcase"></i>
+                        أعمالنا
                     </h1>
-                    <p class="section-subtitle">إدارة الأقسام الظاهرة في الموقع الرئيسي</p>
+                    <button class="btn-primary" id="addWorkBtn">
+                        <i class="fa-solid fa-plus"></i>
+                        إضافة عمل جديد
+                    </button>
                 </div>
-
-                <!-- بطاقات الأقسام -->
-                <div class="website-sections-grid">
-                    <!-- بطاقة أعمالنا -->
-                    <div class="website-section-card" data-section="works">
-                        <div class="section-card-header">
-                            <div class="section-card-icon works-icon">
-                                <i class="fa-solid fa-briefcase"></i>
-                            </div>
-                            <div class="section-card-info">
-                                <h3>أعمالنا</h3>
-                                <p class="section-card-count" id="worksCount">
-                                    <i class="fa-solid fa-spinner fa-spin"></i>
-                                </p>
-                            </div>
-                        </div>
-                        <div class="section-card-body">
-                            <p>إدارة الأعمال والمشاريع المعروضة في الموقع</p>
-                        </div>
-                        <div class="section-card-footer">
-                            <button class="btn-card-action">
-                                <i class="fa-solid fa-arrow-left"></i>
-                                إدارة الأعمال
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- بطاقة الإنجازات -->
-                    <div class="website-section-card" data-section="achievements">
-                        <div class="section-card-header">
-                            <div class="section-card-icon achievements-icon">
-                                <i class="fa-solid fa-trophy"></i>
-                            </div>
-                            <div class="section-card-info">
-                                <h3>الإنجازات</h3>
-                                <p class="section-card-count" id="achievementsCount">
-                                    <i class="fa-solid fa-spinner fa-spin"></i>
-                                </p>
-                            </div>
-                        </div>
-                        <div class="section-card-body">
-                            <p>إدارة إحصائيات وأرقام إنجازات النادي</p>
-                        </div>
-                        <div class="section-card-footer">
-                            <button class="btn-card-action">
-                                <i class="fa-solid fa-arrow-left"></i>
-                                إدارة الإنجازات
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- بطاقة الشركاء -->
-                    <div class="website-section-card" data-section="sponsors">
-                        <div class="section-card-header">
-                            <div class="section-card-icon sponsors-icon">
-                                <i class="fa-solid fa-handshake"></i>
-                            </div>
-                            <div class="section-card-info">
-                                <h3>الشركاء</h3>
-                                <p class="section-card-count" id="sponsorsCount">
-                                    <i class="fa-solid fa-spinner fa-spin"></i>
-                                </p>
-                            </div>
-                        </div>
-                        <div class="section-card-body">
-                            <p>إدارة شركاء النجاح والداعمين</p>
-                        </div>
-                        <div class="section-card-footer">
-                            <button class="btn-card-action">
-                                <i class="fa-solid fa-arrow-left"></i>
-                                إدارة الشركاء
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- بطاقة الأسئلة الشائعة -->
-                    <div class="website-section-card" data-section="faq">
-                        <div class="section-card-header">
-                            <div class="section-card-icon faq-icon">
-                                <i class="fa-solid fa-circle-question"></i>
-                            </div>
-                            <div class="section-card-info">
-                                <h3>الأسئلة الشائعة</h3>
-                                <p class="section-card-count" id="faqCount">
-                                    <i class="fa-solid fa-spinner fa-spin"></i>
-                                </p>
-                            </div>
-                        </div>
-                        <div class="section-card-body">
-                            <p>إدارة الأسئلة والأجوبة الشائعة</p>
-                        </div>
-                        <div class="section-card-footer">
-                            <button class="btn-card-action">
-                                <i class="fa-solid fa-arrow-left"></i>
-                                إدارة الأسئلة
-                            </button>
+                <div class="card">
+                    <div class="card-body">
+                        <div id="websiteWorksGrid" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
                 </div>
+            </section>
 
-                <!-- قسم التفاصيل (يظهر عند اختيار قسم) -->
-                <div id="website-detail-section" class="website-detail-section" style="display: none;">
-                    <div class="detail-header">
-                        <button class="btn-back" id="backToSections">
-                            <i class="fa-solid fa-arrow-right"></i>
-                            العودة
-                        </button>
-                        <h2 id="detailSectionTitle"></h2>
-                        <button class="btn-primary" id="addItemBtn">
-                            <i class="fa-solid fa-plus"></i>
-                            إضافة جديد
-                        </button>
+            <!-- قسم الإنجازات -->
+            <section id="website-achievements-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-trophy"></i>
+                        الإنجازات
+                    </h1>
+                    <button class="btn-primary" id="addAchievementBtn">
+                        <i class="fa-solid fa-plus"></i>
+                        إضافة إنجاز جديد
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div id="websiteAchievementsGrid" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
                     </div>
-                    <div class="detail-body">
-                        <div id="detailContent" class="data-table">
+                </div>
+            </section>
+
+            <!-- قسم الشركاء -->
+            <section id="website-sponsors-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-handshake"></i>
+                        الشركاء
+                    </h1>
+                    <button class="btn-primary" id="addSponsorBtn">
+                        <i class="fa-solid fa-plus"></i>
+                        إضافة شريك جديد
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div id="websiteSponsorsGrid" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم الأسئلة الشائعة -->
+            <section id="website-faq-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-circle-question"></i>
+                        الأسئلة الشائعة
+                    </h1>
+                    <button class="btn-primary" id="addFaqBtn">
+                        <i class="fa-solid fa-plus"></i>
+                        إضافة سؤال جديد
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div id="websiteFaqGrid" class="data-table">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -1255,258 +1174,6 @@
     <!-- الطبقة الشفافة -->
     <div class="overlay" id="overlay"></div>
 
-    <!-- نافذة إنشاء تقرير -->
-    <div class="modal" id="reportModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="reportModalTitle">إنشاء تقرير جديد</h2>
-                <button class="btn-icon" id="closeReportModal">
-                    <i class="fa-solid fa-times"></i>
-                </button>
-            </div>
-            <form id="reportForm" class="modal-body">
-                <div class="form-group">
-                    <label>عنوان التقرير *</label>
-                    <input type="text" id="reportTitle" required />
-                </div>
-                <div class="form-group">
-                    <label>نوع التقرير *</label>
-                    <select id="reportType" required>
-                        <option value="">اختر نوع التقرير</option>
-                        <option value="committee">تقرير لجنة</option>
-                        <option value="user">تقرير مستخدم</option>
-                        <option value="project">تقرير مشروع</option>
-                        <option value="general">تقرير عام</option>
-                        <option value="attendance">تقرير حضور</option>
-                        <option value="quality">تقرير جودة</option>
-                    </select>
-                </div>
-                <div class="form-group" id="reportCommitteeGroup" style="display: none;">
-                    <label>اللجنة</label>
-                    <select id="reportCommittee">
-                        <option value="">اختر اللجنة</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>من تاريخ</label>
-                    <input type="date" id="reportPeriodStart" />
-                </div>
-                <div class="form-group">
-                    <label>إلى تاريخ</label>
-                    <input type="date" id="reportPeriodEnd" />
-                </div>
-                <div class="form-group">
-                    <label>ملاحظات</label>
-                    <textarea id="reportNotes" rows="3" placeholder="أضف ملاحظات أو تفاصيل إضافية..."></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-outline" id="cancelReportBtn">إلغاء</button>
-                    <button type="submit" class="btn-primary">
-                        <i class="fa-solid fa-file-export"></i>
-                        إنشاء التقرير
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- نافذة إضافة/تعديل اجتماع -->
-    <div class="modal" id="meetingModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="meetingModalTitle">جدولة اجتماع جديد</h2>
-                <button class="btn-icon" id="closeMeetingModal">
-                    <i class="fa-solid fa-times"></i>
-                </button>
-            </div>
-            <form id="meetingForm" class="modal-body">
-                <div class="form-group">
-                    <label>عنوان الاجتماع *</label>
-                    <input type="text" id="meetingTitle" required />
-                </div>
-                <div class="form-group">
-                    <label>الوصف</label>
-                    <textarea id="meetingDescription" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>نوع الاجتماع *</label>
-                    <select id="meetingType" required>
-                        <option value="general">عام</option>
-                        <option value="committee">لجنة</option>
-                        <option value="leadership">قيادي</option>
-                        <option value="emergency">طارئ</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>اللجنة</label>
-                    <select id="meetingCommittee">
-                        <option value="">اختر اللجنة</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>تاريخ ووقت الاجتماع *</label>
-                    <input type="datetime-local" id="meetingScheduledAt" required />
-                </div>
-                <div class="form-group">
-                    <label>المدة (بالدقائق) *</label>
-                    <input type="number" id="meetingDuration" value="60" min="15" step="15" required />
-                </div>
-                <div class="form-group">
-                    <label>الموقع</label>
-                    <input type="text" id="meetingLocation" placeholder="مثال: قاعة الاجتماعات" />
-                </div>
-                <div class="form-group">
-                    <label>رابط الاجتماع (اختياري)</label>
-                    <input type="url" id="meetingLink" placeholder="https://zoom.us/j/..." />
-                </div>
-                <div class="form-group">
-                    <label>الحالة *</label>
-                    <select id="meetingStatus" required>
-                        <option value="scheduled" selected>مجدول</option>
-                        <option value="ongoing">جاري</option>
-                        <option value="completed">مكتمل</option>
-                        <option value="cancelled">ملغي</option>
-                    </select>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-outline" id="cancelMeetingBtn">إلغاء</button>
-                    <button type="submit" class="btn-primary">
-                        <i class="fa-solid fa-save"></i>
-                        حفظ
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- نافذة إضافة/تعديل مهمة -->
-    <div class="modal" id="taskModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="taskModalTitle">إضافة مهمة جديدة</h2>
-                <button class="btn-icon" id="closeTaskModal">
-                    <i class="fa-solid fa-times"></i>
-                </button>
-            </div>
-            <form id="taskForm" class="modal-body">
-                <div class="form-group">
-                    <label>عنوان المهمة *</label>
-                    <input type="text" id="taskTitle" required />
-                </div>
-                <div class="form-group">
-                    <label>الوصف</label>
-                    <textarea id="taskDescription" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>اللجنة</label>
-                    <select id="taskCommittee">
-                        <option value="">اختر اللجنة</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>المشروع</label>
-                    <select id="taskProject">
-                        <option value="">اختر المشروع</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>تعيين إلى</label>
-                    <select id="taskAssignedTo">
-                        <option value="">اختر المستخدم</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>الأولوية *</label>
-                    <select id="taskPriority" required>
-                        <option value="low">منخفض</option>
-                        <option value="medium" selected>متوسط</option>
-                        <option value="high">عالي</option>
-                        <option value="urgent">عاجل</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>الحالة *</label>
-                    <select id="taskStatus" required>
-                        <option value="pending" selected>معلقة</option>
-                        <option value="in_progress">قيد التنفيذ</option>
-                        <option value="review">قيد المراجعة</option>
-                        <option value="completed">مكتملة</option>
-                        <option value="cancelled">ملغاة</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>موعد التسليم</label>
-                    <input type="date" id="taskDueDate" />
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-outline" id="cancelTaskBtn">إلغاء</button>
-                    <button type="submit" class="btn-primary">
-                        <i class="fa-solid fa-save"></i>
-                        حفظ
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- نافذة إضافة/تعديل مشروع -->
-    <div class="modal" id="projectModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="projectModalTitle">إضافة مشروع جديد</h2>
-                <button class="btn-icon" id="closeProjectModal">
-                    <i class="fa-solid fa-times"></i>
-                </button>
-            </div>
-            <form id="projectForm" class="modal-body">
-                <div class="form-group">
-                    <label>اسم المشروع *</label>
-                    <input type="text" id="projectName" required />
-                </div>
-                <div class="form-group">
-                    <label>الوصف</label>
-                    <textarea id="projectDescription" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>اللجنة *</label>
-                    <select id="projectCommittee" required>
-                        <option value="">اختر اللجنة</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>قائد المشروع</label>
-                    <select id="projectLeader">
-                        <option value="">اختر القائد</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>تاريخ البداية</label>
-                    <input type="date" id="projectStartDate" />
-                </div>
-                <div class="form-group">
-                    <label>تاريخ النهاية</label>
-                    <input type="date" id="projectEndDate" />
-                </div>
-                <div class="form-group">
-                    <label>الحالة *</label>
-                    <select id="projectStatus" required>
-                        <option value="planning">تخطيط</option>
-                        <option value="active" selected>نشط</option>
-                        <option value="on_hold">معلق</option>
-                        <option value="completed">مكتمل</option>
-                        <option value="cancelled">ملغي</option>
-                    </select>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-outline" id="cancelProjectBtn">إلغاء</button>
-                    <button type="submit" class="btn-primary">
-                        <i class="fa-solid fa-save"></i>
-                        حفظ
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <!-- نافذة إضافة/تعديل لجنة -->
     <div class="modal" id="committeeModal">
@@ -1773,8 +1440,10 @@
                 </button>
             </div>
             <div class="modal-body" id="applicationDetailContent">
-                <div class="message-detail-header" style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                <div class="message-detail-header"
+                    style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                         <div>
                             <h3 style="margin: 0 0 0.5rem 0; color: #274060;" id="applicationDetailName"></h3>
                             <p style="margin: 0; color: #64748b;">
@@ -1790,7 +1459,8 @@
                     </div>
                     <div style="display: flex; gap: 1rem; font-size: 0.875rem; color: #64748b; flex-wrap: wrap;">
                         <span><i class="fa-solid fa-calendar"></i> <span id="applicationDetailDate"></span></span>
-                        <span><i class="fa-solid fa-graduation-cap"></i> <span id="applicationDetailDegree"></span></span>
+                        <span><i class="fa-solid fa-graduation-cap"></i> <span
+                                id="applicationDetailDegree"></span></span>
                         <span><i class="fa-solid fa-users"></i> <span id="applicationDetailCommittee"></span></span>
                     </div>
                 </div>
@@ -1798,27 +1468,32 @@
                 <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
                     <div class="form-group">
                         <label style="font-weight: bold; color: #274060;">الكلية:</label>
-                        <div style="background: #f8fafc; padding: 0.75rem; border-radius: 6px;" id="applicationDetailCollege"></div>
+                        <div style="background: #f8fafc; padding: 0.75rem; border-radius: 6px;"
+                            id="applicationDetailCollege"></div>
                     </div>
                     <div class="form-group">
                         <label style="font-weight: bold; color: #274060;">التخصص:</label>
-                        <div style="background: #f8fafc; padding: 0.75rem; border-radius: 6px;" id="applicationDetailMajor"></div>
+                        <div style="background: #f8fafc; padding: 0.75rem; border-radius: 6px;"
+                            id="applicationDetailMajor"></div>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label style="font-weight: bold; color: #274060;">المهارات:</label>
-                    <div style="background: #f8fafc; padding: 0.75rem; border-radius: 6px;" id="applicationDetailSkills"></div>
+                    <div style="background: #f8fafc; padding: 0.75rem; border-radius: 6px;"
+                        id="applicationDetailSkills"></div>
                 </div>
 
                 <div class="form-group">
                     <label style="font-weight: bold; color: #274060;">نبذة عن المتقدم:</label>
-                    <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border-right: 4px solid #3b82f6; white-space: pre-wrap;" id="applicationDetailAbout"></div>
+                    <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border-right: 4px solid #3b82f6; white-space: pre-wrap;"
+                        id="applicationDetailAbout"></div>
                 </div>
 
                 <div class="form-group" id="applicationPortfolioSection" style="display: none;">
                     <label style="font-weight: bold; color: #274060;">رابط الأعمال:</label>
-                    <a id="applicationDetailPortfolio" href="#" target="_blank" rel="noopener" style="color: #3b82f6; text-decoration: none;">
+                    <a id="applicationDetailPortfolio" href="#" target="_blank" rel="noopener"
+                        style="color: #3b82f6; text-decoration: none;">
                         <i class="fa-solid fa-external-link"></i> فتح الرابط
                     </a>
                 </div>
@@ -1846,9 +1521,11 @@
 
                 <div class="form-group" id="applicationReviewSection" style="display: none;">
                     <label style="font-weight: bold; color: #6b7280;">معلومات المراجعة:</label>
-                    <div style="background: #f9fafb; padding: 1rem; border-radius: 8px; font-size: 0.875rem; color: #64748b;">
+                    <div
+                        style="background: #f9fafb; padding: 1rem; border-radius: 8px; font-size: 0.875rem; color: #64748b;">
                         <p style="margin: 0;">
-                            <i class="fa-solid fa-user"></i> تمت المراجعة بواسطة: <span id="applicationReviewedBy"></span>
+                            <i class="fa-solid fa-user"></i> تمت المراجعة بواسطة: <span
+                                id="applicationReviewedBy"></span>
                         </p>
                         <p style="margin: 0.5rem 0 0;">
                             <i class="fa-solid fa-clock"></i> تاريخ المراجعة: <span id="applicationReviewedAt"></span>
@@ -1883,8 +1560,10 @@
                 </button>
             </div>
             <div class="modal-body" id="messageDetailContent">
-                <div class="message-detail-header" style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                <div class="message-detail-header"
+                    style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                         <div>
                             <h3 style="margin: 0 0 0.5rem 0; color: #274060;" id="messageDetailName"></h3>
                             <p style="margin: 0; color: #64748b;" id="messageDetailEmail"></p>
@@ -1902,15 +1581,17 @@
 
                 <div class="form-group">
                     <label style="font-weight: bold; color: #274060;">الرسالة:</label>
-                    <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border-right: 4px solid #3b82f6;" id="messageDetailMessage"></div>
+                    <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border-right: 4px solid #3b82f6;"
+                        id="messageDetailMessage"></div>
                 </div>
 
                 <div class="form-group" id="messageReplySection" style="display: none;">
                     <label style="font-weight: bold; color: #10b981;">الرد:</label>
-                    <div style="background: #f0fdf4; padding: 1rem; border-radius: 8px; border-right: 4px solid #10b981;">
+                    <div
+                        style="background: #f0fdf4; padding: 1rem; border-radius: 8px; border-right: 4px solid #10b981;">
                         <p id="messageDetailReply" style="margin: 0;"></p>
                         <small style="color: #64748b; margin-top: 0.5rem; display: block;">
-                            <i class="fa-solid fa-user"></i> <span id="messageDetailRepliedBy"></span> • 
+                            <i class="fa-solid fa-user"></i> <span id="messageDetailRepliedBy"></span> •
                             <i class="fa-solid fa-clock"></i> <span id="messageDetailRepliedAt"></span>
                         </small>
                     </div>
@@ -1978,11 +1659,11 @@
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            
+
             <div class="custom-modal-body" id="applicationDetailsContent">
                 <!-- سيتم ملء المحتوى ديناميكياً -->
             </div>
-            
+
             <div class="custom-modal-footer" id="applicationDetailsActions">
                 <!-- سيتم ملء الأزرار ديناميكياً -->
             </div>
@@ -2002,11 +1683,11 @@
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            
+
             <div class="custom-modal-body" id="formModalContent">
                 <!-- سيتم ملء النموذج ديناميكياً -->
             </div>
-            
+
             <div class="custom-modal-footer" id="formModalActions">
                 <!-- سيتم ملء الأزرار ديناميكياً -->
             </div>
@@ -2026,11 +1707,11 @@
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            
+
             <div class="custom-modal-body" id="confirmModalContent" style="text-align: center; padding: 2rem;">
                 <!-- سيتم ملء المحتوى ديناميكياً -->
             </div>
-            
+
             <div class="custom-modal-footer" id="confirmModalActions" style="justify-content: center;">
                 <!-- سيتم ملء الأزرار ديناميكياً -->
             </div>
@@ -2049,6 +1730,8 @@
     <script src="js/membership-decisions.js"></script>
     <script src="js/interview-sessions-manager.js"></script>
     <script src="js/site-visits-manager.js"></script>
+    <script src="js/surveys-manager.js"></script>
     <script src="dashboard.js"></script>
 </body>
+
 </html>

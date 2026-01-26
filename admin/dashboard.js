@@ -7,8 +7,6 @@
     let currentUser = null;
     let currentUserRole = null;
     let currentSection = 'dashboard';
-    let tasksChartInstance = null;
-    let projectsChartInstance = null;
     let chartsLoaded = false;
 
     // التحقق من المصادقة وتحميل البيانات
@@ -114,15 +112,6 @@
             });
         }
         
-        // المشاريع - المستوى 7 وأعلى
-        if (roleLevel >= 7) {
-            menuItems.push({
-                id: 'projects',
-                icon: 'fa-diagram-project',
-                label: 'المشاريع',
-                section: 'projects-section'
-            });
-        }
         
         // إحصائيات الزيارات - المستوى 5 فأعلى
         if (roleLevel >= 5) {
@@ -134,31 +123,6 @@
             });
         }
         
-        // المهام - متاحة للجميع
-        menuItems.push({
-            id: 'tasks',
-            icon: 'fa-tasks',
-            label: 'المهام',
-            section: 'tasks-section'
-        });
-        
-        // الاجتماعات - متاحة للجميع
-        menuItems.push({
-            id: 'meetings',
-            icon: 'fa-calendar-days',
-            label: 'الاجتماعات',
-            section: 'meetings-section'
-        });
-        
-        // التقارير - المستوى 7 وأعلى
-        if (roleLevel >= 7) {
-            menuItems.push({
-                id: 'reports',
-                icon: 'fa-chart-simple',
-                label: 'التقارير',
-                section: 'reports-section'
-            });
-        }
         
         // رسائل التواصل - المستوى 7 وأعلى
         if (roleLevel >= 7) {
@@ -268,14 +232,51 @@
                 subItems: membershipSubItems
             });
         }
-        
-        // إدارة الموقع - المستوى 7 وأعلى
+
         if (roleLevel >= 7) {
+    menuItems.push({
+        id: 'surveys',
+        icon: 'fa-clipboard-question',
+        label: 'الاستبيانات',
+        section: 'surveys-section'
+    });
+}
+        
+        // إدارة الموقع - المستوى 7 وأعلى (قائمة منسدلة)
+        if (roleLevel >= 7) {
+            const websiteSubItems = [
+                {
+                    id: 'website-works',
+                    icon: 'fa-briefcase',
+                    label: 'أعمالنا',
+                    section: 'website-works-section'
+                },
+                {
+                    id: 'website-achievements',
+                    icon: 'fa-trophy',
+                    label: 'الإنجازات',
+                    section: 'website-achievements-section'
+                },
+                {
+                    id: 'website-sponsors',
+                    icon: 'fa-handshake',
+                    label: 'الشركاء',
+                    section: 'website-sponsors-section'
+                },
+                {
+                    id: 'website-faq',
+                    icon: 'fa-circle-question',
+                    label: 'الأسئلة الشائعة',
+                    section: 'website-faq-section'
+                }
+            ];
+            
             menuItems.push({
                 id: 'website',
                 icon: 'fa-globe',
                 label: 'إدارة الموقع',
-                section: 'website-section'
+                isDropdown: true,
+                subItems: websiteSubItems
             });
         }
         
@@ -438,51 +439,6 @@
                 });
             }
             
-            // إحصائيات المهام
-            const tasksQuery = sb.from('tasks').select('*', { count: 'exact', head: true });
-            
-            if (roleLevel < 8) {
-                // عرض مهام المستخدم فقط
-                tasksQuery.or(`assigned_to.eq.${currentUser.id},assigned_by.eq.${currentUser.id}`);
-            }
-            
-            const { count: tasksCount } = await tasksQuery;
-            
-            stats.push({
-                icon: 'fa-tasks',
-                label: 'المهام النشطة',
-                value: tasksCount || 0,
-                color: '#10b981'
-            });
-            
-            // إحصائيات المشاريع - للمستوى 7 وأعلى
-            if (roleLevel >= 7) {
-                const { count: projectsCount } = await sb
-                    .from('projects')
-                    .select('*', { count: 'exact', head: true })
-                    .in('status', ['planning', 'active']);
-                
-                stats.push({
-                    icon: 'fa-diagram-project',
-                    label: 'المشاريع الجارية',
-                    value: projectsCount || 0,
-                    color: '#f59e0b'
-                });
-            }
-            
-            // إحصائيات الاجتماعات القادمة
-            const { count: meetingsCount } = await sb
-                .from('meetings')
-                .select('*', { count: 'exact', head: true })
-                .eq('status', 'scheduled')
-                .gte('scheduled_at', new Date().toISOString());
-            
-            stats.push({
-                icon: 'fa-calendar-days',
-                label: 'الاجتماعات القادمة',
-                value: meetingsCount || 0,
-                color: '#8b5cf6'
-            });
             
             // عرض الإحصائيات
             statsGrid.innerHTML = stats.map(stat => `
@@ -548,11 +504,6 @@
         const actions = {
             'login': 'قام بتسجيل الدخول',
             'logout': 'قام بتسجيل الخروج',
-            'create_task': 'أنشأ مهمة جديدة',
-            'update_task': 'حدّث مهمة',
-            'create_project': 'أنشأ مشروع جديد',
-            'update_project': 'حدّث مشروع',
-            'create_meeting': 'جدول اجتماع',
             'update_user': 'حدّث بيانات مستخدم'
         };
         
@@ -579,139 +530,13 @@
         chartsLoaded = true;
         
         try {
-            await Promise.all([
-                loadTasksChart(),
-                loadProjectsChart()
-            ]);
+            // تم حذف الرسوم البيانية للمهام والمشاريع
         } catch (error) {
             console.error('Error loading charts:', error);
             chartsLoaded = false;
         }
     }
 
-    // رسم بياني للمهام
-    async function loadTasksChart() {
-        const canvas = document.getElementById('tasksChart');
-        if (!canvas) return;
-        
-        try {
-            const existingChart = Chart.getChart('tasksChart');
-            if (existingChart) {
-                existingChart.destroy();
-            }
-            
-            if (tasksChartInstance) {
-                tasksChartInstance.destroy();
-                tasksChartInstance = null;
-            }
-            
-            const { data: tasks } = await sb
-                .from('tasks')
-                .select('status');
-            
-            const statusCounts = {
-                'pending': 0,
-                'in_progress': 0,
-                'review': 0,
-                'completed': 0,
-                'cancelled': 0
-            };
-            
-            tasks?.forEach(task => {
-                if (statusCounts.hasOwnProperty(task.status)) {
-                    statusCounts[task.status]++;
-                }
-            });
-            
-            tasksChartInstance = new Chart(canvas, {
-                type: 'bar',
-                data: {
-                    labels: ['معلقة', 'قيد التنفيذ', 'قيد المراجعة', 'مكتملة', 'ملغاة'],
-                    datasets: [{
-                        label: 'عدد المهام',
-                        data: Object.values(statusCounts),
-                        backgroundColor: [
-                            '#94a3b8',
-                            '#3b82f6',
-                            '#f59e0b',
-                            '#10b981',
-                            '#ef4444'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-            
-        } catch (error) {
-            console.error('Error loading tasks chart:', error);
-        }
-    }
-
-    // رسم بياني للمشاريع
-    async function loadProjectsChart() {
-        const canvas = document.getElementById('projectsChart');
-        if (!canvas) return;
-        
-        try {
-            const existingChart = Chart.getChart('projectsChart');
-            if (existingChart) {
-                existingChart.destroy();
-            }
-            
-            if (projectsChartInstance) {
-                projectsChartInstance.destroy();
-                projectsChartInstance = null;
-            }
-            
-            const { data: projects } = await sb
-                .from('projects')
-                .select(`
-                    committee_id,
-                    committee:committees(committee_name_ar)
-                `);
-            
-            const committeeCounts = {};
-            
-            projects?.forEach(project => {
-                const committeeName = project.committee?.committee_name_ar || 'بدون لجنة';
-                committeeCounts[committeeName] = (committeeCounts[committeeName] || 0) + 1;
-            });
-            
-            projectsChartInstance = new Chart(canvas, {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(committeeCounts),
-                    datasets: [{
-                        data: Object.values(committeeCounts),
-                        backgroundColor: [
-                            '#3b82f6',
-                            '#10b981',
-                            '#f59e0b',
-                            '#8b5cf6',
-                            '#ec4899',
-                            '#14b8a6',
-                            '#f97316'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-            
-        } catch (error) {
-            console.error('Error loading projects chart:', error);
-        }
-    }
 
     // تحميل بيانات القسم
     async function loadSectionData(sectionId) {
@@ -726,18 +551,6 @@
                 break;
             case 'committees-section':
                 await loadCommittees();
-                break;
-            case 'tasks-section':
-                await loadTasks();
-                break;
-            case 'projects-section':
-                await loadProjects();
-                break;
-            case 'meetings-section':
-                await loadMeetings();
-                break;
-            case 'reports-section':
-                await loadReports();
                 break;
             case 'contact-messages-section':
                 if (window.contactMessagesManager) {
@@ -785,8 +598,17 @@
                     await window.membershipDecisions.load();
                 }
                 break;
-            case 'website-section':
-                await loadWebsiteSection();
+            case 'website-works-section':
+                await loadWebsiteWorksSection();
+                break;
+            case 'website-achievements-section':
+                await loadWebsiteAchievementsSection();
+                break;
+            case 'website-sponsors-section':
+                await loadWebsiteSponsorsSection();
+                break;
+            case 'website-faq-section':
+                await loadWebsiteFaqSection();
                 break;
             case 'permissions-section':
                 await loadPermissionsSection();
@@ -794,6 +616,11 @@
             case 'site-visits-section':
                 await loadSiteVisitsSection();
                 break;
+                case 'surveys-section':
+    if (window.surveysManager) {
+        await window.surveysManager.init(currentUser);
+    }
+    break;
         }
     }
 
@@ -944,364 +771,237 @@
         }
     }
 
-    async function loadTasks() {
-        const container = document.getElementById('tasksContainer');
+
+
+
+
+    // تحميل قسم أعمالنا
+    async function loadWebsiteWorksSection() {
+        const container = document.getElementById('websiteWorksGrid');
         if (!container) return;
 
         try {
             showLoading(true);
-            
-            const { data: tasks, error } = await sb
-                .from('tasks')
-                .select(`
-                    *,
-                    assigned_to:profiles!tasks_assigned_to_fkey(full_name, avatar_url),
-                    committee:committees(committee_name_ar)
-                `)
-                .order('created_at', { ascending: false })
-                .limit(50);
+            const { data: works, error } = await sb
+                .from('works')
+                .select('*')
+                .order('order', { ascending: true, nullsFirst: false });
 
             if (error) throw error;
 
-            if (!tasks || tasks.length === 0) {
-                container.innerHTML = '<div class="empty-state">لا توجد مهام</div>';
+            if (!works || works.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد أعمال</p></div>';
                 return;
             }
 
-            const statusColors = {
-                'pending': '#94a3b8',
-                'in_progress': '#3b82f6',
-                'review': '#f59e0b',
-                'completed': '#10b981',
-                'cancelled': '#ef4444'
-            };
-
-            const statusNames = {
-                'pending': 'معلقة',
-                'in_progress': 'قيد التنفيذ',
-                'review': 'قيد المراجعة',
-                'completed': 'مكتملة',
-                'cancelled': 'ملغاة'
-            };
-
-            const priorityColors = {
-                'low': '#64748b',
-                'medium': '#3b82f6',
-                'high': '#f59e0b',
-                'urgent': '#ef4444'
-            };
-
-            const priorityNames = {
-                'low': 'منخفض',
-                'medium': 'متوسط',
-                'high': 'عالي',
-                'urgent': 'عاجل'
-            };
-
             container.innerHTML = `
-                <div class="tasks-grid">
-                    ${tasks.map(task => `
-                        <div class="card">
-                            <div class="card-header">
-                                <h3>${task.title}</h3>
-                                <span class="badge" style="background: ${statusColors[task.status]}">${statusNames[task.status]}</span>
-                            </div>
-                            <div class="card-body">
-                                <p>${task.description || 'لا يوجد وصف'}</p>
-                                <div style="margin-top: 15px;">
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                        <i class="fa-solid fa-user"></i>
-                                        <span>${task.assigned_to?.full_name || 'غير محدد'}</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                        <i class="fa-solid fa-sitemap"></i>
-                                        <span>${task.committee?.committee_name_ar || 'لا يوجد'}</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <i class="fa-solid fa-flag"></i>
-                                        <span style="color: ${priorityColors[task.priority]}">${priorityNames[task.priority]}</span>
-                                    </div>
-                                </div>
-                                ${task.due_date ? `
-                                    <div style="margin-top: 10px; color: #64748b;">
-                                        <i class="fa-solid fa-calendar"></i>
-                                        موعد التسليم: ${new Date(task.due_date).toLocaleDateString('ar-SA')}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>الصورة</th>
+                            <th>العنوان</th>
+                            <th>الفئة</th>
+                            <th>الترتيب</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${works.map(work => `
+                            <tr>
+                                <td><img src="${work.image_url || ''}" alt="${work.title}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" /></td>
+                                <td><strong>${work.title}</strong></td>
+                                <td>${work.category || '-'}</td>
+                                <td>${work.order || 0}</td>
+                                <td class="action-buttons">
+                                    <button class="btn-sm btn-outline" onclick="editWork(${work.id})">
+                                        <i class="fa-solid fa-edit"></i>
+                                    </button>
+                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteWork(${work.id})">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
             `;
         } catch (error) {
-            console.error('Error loading tasks:', error);
-            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل المهام</div>';
+            console.error('Error loading works:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الأعمال</div>';
         } finally {
             showLoading(false);
         }
     }
 
-    async function loadProjects() {
-        const container = document.getElementById('projectsContainer');
+    // تحميل قسم الإنجازات
+    async function loadWebsiteAchievementsSection() {
+        const container = document.getElementById('websiteAchievementsGrid');
         if (!container) return;
 
         try {
             showLoading(true);
-            
-            const { data: projects, error } = await sb
-                .from('projects')
-                .select(`
-                    *,
-                    committee:committees(committee_name_ar),
-                    leader:profiles!projects_project_leader_fkey(full_name),
-                    tasks:tasks(count)
-                `)
-                .order('created_at', { ascending: false })
-                .limit(20);
+            const { data: achievements, error } = await sb
+                .from('achievements')
+                .select('*')
+                .order('order', { ascending: true });
 
             if (error) throw error;
 
-            if (!projects || projects.length === 0) {
-                container.innerHTML = '<div class="empty-state">لا توجد مشاريع</div>';
+            if (!achievements || achievements.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد إنجازات</p></div>';
                 return;
             }
 
-            const statusColors = {
-                'planning': '#94a3b8',
-                'active': '#3b82f6',
-                'on_hold': '#f59e0b',
-                'completed': '#10b981',
-                'cancelled': '#ef4444'
-            };
-
-            const statusNames = {
-                'planning': 'تخطيط',
-                'active': 'نشط',
-                'on_hold': 'معلق',
-                'completed': 'مكتمل',
-                'cancelled': 'ملغي'
-            };
-
             container.innerHTML = `
-                <div class="projects-grid">
-                    ${projects.map(project => `
-                        <div class="card">
-                            <div class="card-header">
-                                <h3><i class="fa-solid fa-diagram-project"></i> ${project.project_name}</h3>
-                                <span class="badge" style="background: ${statusColors[project.status]}">${statusNames[project.status]}</span>
-                            </div>
-                            <div class="card-body">
-                                <p>${project.description || 'لا يوجد وصف'}</p>
-                                <div style="margin-top: 15px;">
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                        <i class="fa-solid fa-sitemap"></i>
-                                        <span>${project.committee?.committee_name_ar || 'لا يوجد'}</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                        <i class="fa-solid fa-user-tie"></i>
-                                        <span>${project.leader?.full_name || 'غير محدد'}</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <i class="fa-solid fa-tasks"></i>
-                                        <span>المهام: ${project.tasks?.[0]?.count || 0}</span>
-                                    </div>
-                                </div>
-                                ${project.start_date ? `
-                                    <div style="margin-top: 10px; color: #64748b;">
-                                        <i class="fa-solid fa-calendar"></i>
-                                        ${new Date(project.start_date).toLocaleDateString('ar-SA')}
-                                        ${project.end_date ? ` - ${new Date(project.end_date).toLocaleDateString('ar-SA')}` : ''}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>الأيقونة</th>
+                            <th>التسمية</th>
+                            <th>الرقم</th>
+                            <th>الترتيب</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${achievements.map(achievement => `
+                            <tr>
+                                <td><i class="${achievement.icon || 'fa-solid fa-trophy'}" style="font-size: 1.5rem; color: var(--accent-blue);"></i></td>
+                                <td><strong>${achievement.label}</strong></td>
+                                <td>${achievement.count}${achievement.plus ? '+' : ''}</td>
+                                <td>${achievement.order || 0}</td>
+                                <td class="action-buttons">
+                                    <button class="btn-sm btn-outline" onclick="editAchievement(${achievement.id})">
+                                        <i class="fa-solid fa-edit"></i>
+                                    </button>
+                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteAchievement(${achievement.id})">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
             `;
         } catch (error) {
-            console.error('Error loading projects:', error);
-            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل المشاريع</div>';
+            console.error('Error loading achievements:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الإنجازات</div>';
         } finally {
             showLoading(false);
         }
     }
 
-    async function loadMeetings() {
-        const container = document.getElementById('meetingsCalendar');
+    // تحميل قسم الشركاء
+    async function loadWebsiteSponsorsSection() {
+        const container = document.getElementById('websiteSponsorsGrid');
         if (!container) return;
 
         try {
             showLoading(true);
-            
-            const { data: meetings, error } = await sb
-                .from('meetings')
-                .select(`
-                    *,
-                    committee:committees(committee_name_ar)
-                `)
-                .order('scheduled_at', { ascending: true })
-                .limit(30);
+            const { data: sponsors, error } = await sb
+                .from('sponsors')
+                .select('*')
+                .order('order', { ascending: true });
 
             if (error) throw error;
 
-            if (!meetings || meetings.length === 0) {
-                container.innerHTML = '<div class="empty-state">لا توجد اجتماعات</div>';
+            if (!sponsors || sponsors.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا يوجد شركاء</p></div>';
                 return;
             }
 
-            const statusColors = {
-                'scheduled': '#3b82f6',
-                'in_progress': '#f59e0b',
-                'completed': '#10b981',
-                'cancelled': '#ef4444'
-            };
-
-            const statusNames = {
-                'scheduled': 'مجدول',
-                'in_progress': 'جاري',
-                'completed': 'مكتمل',
-                'cancelled': 'ملغي'
-            };
-
             container.innerHTML = `
-                <div class="meetings-list">
-                    ${meetings.map(meeting => `
-                        <div class="card">
-                            <div class="card-header">
-                                <h3><i class="fa-solid fa-calendar-days"></i> ${meeting.title}</h3>
-                                <span class="badge" style="background: ${statusColors[meeting.status]}">${statusNames[meeting.status]}</span>
-                            </div>
-                            <div class="card-body">
-                                <p>${meeting.description || 'لا يوجد وصف'}</p>
-                                <div style="margin-top: 15px;">
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                        <i class="fa-solid fa-clock"></i>
-                                        <span>${new Date(meeting.scheduled_at).toLocaleString('ar-SA')}</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                        <i class="fa-solid fa-hourglass"></i>
-                                        <span>${meeting.duration_minutes} دقيقة</span>
-                                    </div>
-                                    ${meeting.committee ? `
-                                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                            <i class="fa-solid fa-sitemap"></i>
-                                            <span>${meeting.committee.committee_name_ar}</span>
-                                        </div>
-                                    ` : ''}
-                                    ${meeting.location ? `
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <i class="fa-solid fa-location-dot"></i>
-                                            <span>${meeting.location}</span>
-                                        </div>
-                                    ` : ''}
-                                    ${meeting.meeting_link ? `
-                                        <div style="margin-top: 10px;">
-                                            <a href="${meeting.meeting_link}" target="_blank" class="btn-sm btn-primary">
-                                                <i class="fa-solid fa-video"></i> رابط الاجتماع
-                                            </a>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>الشعار</th>
+                            <th>الاسم</th>
+                            <th>الحالة</th>
+                            <th>الترتيب</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sponsors.map(sponsor => `
+                            <tr>
+                                <td><img src="${sponsor.logo_url || sponsor.logo || ''}" alt="${sponsor.name}" style="width: 50px; height: 50px; object-fit: contain; border-radius: 4px;" /></td>
+                                <td><strong>${sponsor.name}</strong></td>
+                                <td><span class="badge ${sponsor.is_active ? 'success' : 'error'}">${sponsor.is_active ? 'نشط' : 'غير نشط'}</span></td>
+                                <td>${sponsor.order || 0}</td>
+                                <td class="action-buttons">
+                                    <button class="btn-sm btn-outline" onclick="editSponsor(${sponsor.id})">
+                                        <i class="fa-solid fa-edit"></i>
+                                    </button>
+                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteSponsor(${sponsor.id})">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
             `;
         } catch (error) {
-            console.error('Error loading meetings:', error);
-            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الاجتماعات</div>';
+            console.error('Error loading sponsors:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الشركاء</div>';
         } finally {
             showLoading(false);
         }
     }
 
-    async function loadReports() {
-        const container = document.getElementById('reportsGrid');
+    // تحميل قسم الأسئلة الشائعة
+    async function loadWebsiteFaqSection() {
+        const container = document.getElementById('websiteFaqGrid');
         if (!container) return;
 
         try {
             showLoading(true);
-            
-            const { data: reports, error } = await sb
-                .from('reports')
-                .select(`
-                    *,
-                    committee:committees(committee_name_ar),
-                    generator:profiles!reports_generated_by_fkey(full_name)
-                `)
-                .order('created_at', { ascending: false })
-                .limit(20);
+            const { data: faqs, error } = await sb
+                .from('faq')
+                .select('*')
+                .order('order', { ascending: true });
 
             if (error) throw error;
 
-            if (!reports || reports.length === 0) {
-                container.innerHTML = '<div class="empty-state">لا توجد تقارير</div>';
+            if (!faqs || faqs.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد أسئلة شائعة</p></div>';
                 return;
             }
 
-            const typeNames = {
-                'committee': 'تقرير لجنة',
-                'user': 'تقرير مستخدم',
-                'project': 'تقرير مشروع',
-                'general': 'تقرير عام'
-            };
-
             container.innerHTML = `
-                <div class="reports-grid">
-                    ${reports.map(report => `
-                        <div class="card">
-                            <div class="card-header">
-                                <h3><i class="fa-solid fa-file-lines"></i> ${report.report_title}</h3>
-                            </div>
-                            <div class="card-body">
-                                <div style="margin-bottom: 15px;">
-                                    <span class="badge">${typeNames[report.report_type] || report.report_type}</span>
-                                </div>
-                                <div style="color: #64748b; font-size: 0.9rem;">
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                        <i class="fa-solid fa-user"></i>
-                                        <span>${report.generator?.full_name || 'غير محدد'}</span>
-                                    </div>
-                                    ${report.committee ? `
-                                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                            <i class="fa-solid fa-sitemap"></i>
-                                            <span>${report.committee.committee_name_ar}</span>
-                                        </div>
-                                    ` : ''}
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <i class="fa-solid fa-calendar"></i>
-                                        <span>${new Date(report.created_at).toLocaleDateString('ar-SA')}</span>
-                                    </div>
-                                </div>
-                                <button class="btn-sm btn-primary" style="margin-top: 15px;" onclick="viewReport(${report.id})">
-                                    <i class="fa-solid fa-eye"></i> عرض التقرير
-                                </button>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>السؤال</th>
+                            <th>الفئة</th>
+                            <th>الحالة</th>
+                            <th>الترتيب</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${faqs.map(faq => `
+                            <tr>
+                                <td><strong>${faq.question}</strong></td>
+                                <td>${faq.category || '-'}</td>
+                                <td><span class="badge ${faq.is_active ? 'success' : 'error'}">${faq.is_active ? 'نشط' : 'غير نشط'}</span></td>
+                                <td>${faq.order || 0}</td>
+                                <td class="action-buttons">
+                                    <button class="btn-sm btn-outline" onclick="editFaq(${faq.id})">
+                                        <i class="fa-solid fa-edit"></i>
+                                    </button>
+                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteFaq(${faq.id})">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
             `;
         } catch (error) {
-            console.error('Error loading reports:', error);
-            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل التقارير</div>';
-        } finally {
-            showLoading(false);
-        }
-    }
-
-    // تحميل قسم إدارة الموقع
-    async function loadWebsiteSection() {
-        try {
-            showLoading(true);
-            
-            // إعداد event listeners للبطاقات
-            setupWebsiteCards();
-            
-            // تحميل الإحصائيات
-            await loadSectionCounts();
-        } catch (error) {
-            console.error('Error loading website section:', error);
-            showError('حدث خطأ أثناء تحميل قسم إدارة الموقع');
+            console.error('Error loading FAQ:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الأسئلة الشائعة</div>';
         } finally {
             showLoading(false);
         }
@@ -1837,6 +1537,9 @@
                 await handleFaqSubmit();
             });
         }
+        
+        // إعداد نماذج إدارة الموقع
+        setupWebsiteModals();
     }
 
     // فتح نافذة إضافة/تعديل مستخدم

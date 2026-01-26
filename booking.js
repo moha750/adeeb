@@ -12,6 +12,7 @@
     let selectedSlot = null;
     let sessionToken = null;
     let existingBookingData = null;
+    let verificationAbortController = null;
 
     // عناصر DOM
     const elements = {
@@ -230,6 +231,12 @@
             return;
         }
 
+        // إلغاء أي عملية تحقق سابقة
+        if (verificationAbortController) {
+            verificationAbortController.abort();
+        }
+        verificationAbortController = new AbortController();
+
         elements.verifyPhoneBtn.disabled = true;
         elements.verifyPhoneBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
 
@@ -301,9 +308,12 @@
 
         } catch (error) {
             console.error('خطأ في التحقق من رقم الهاتف:', error);
+            // تجاهل الأخطاء إذا تم إلغاء العملية
+            if (error.name === 'AbortError') {
+                return;
+            }
             showPhoneError('حدث خطأ أثناء التحقق. يرجى المحاولة مرة أخرى');
-            elements.verifyPhoneBtn.disabled = false;
-            elements.verifyPhoneBtn.innerHTML = '<i class="fas fa-arrow-left"></i> التالي';
+            resetVerifyButton();
         }
     });
 
@@ -720,9 +730,8 @@
     // ============================================================================
     
     elements.backToPhoneFromExisting.addEventListener('click', () => {
+        cancelVerification();
         showPhoneStep();
-        elements.verifyPhoneBtn.disabled = false;
-        elements.verifyPhoneBtn.innerHTML = '<i class="fas fa-arrow-left"></i> التالي';
     });
 
     // ============================================================================
@@ -730,6 +739,7 @@
     // ============================================================================
     
     elements.backToPhoneBtn.addEventListener('click', () => {
+        cancelVerification();
         showPhoneStep();
     });
 
@@ -742,6 +752,23 @@
         elements.phoneStep.style.display = 'block';
         elements.phoneInput.value = '';
         elements.phoneError.style.display = 'none';
+        resetVerifyButton();
+    }
+
+    function resetVerifyButton() {
+        elements.verifyPhoneBtn.disabled = false;
+        elements.verifyPhoneBtn.innerHTML = 'التالي\n                    <i id="arrow" class="fas fa-arrow-left"></i>';
+    }
+
+    function cancelVerification() {
+        // إلغاء أي عملية تحقق نشطة
+        if (verificationAbortController) {
+            verificationAbortController.abort();
+            verificationAbortController = null;
+        }
+        // إعادة تعيين البيانات
+        applicantData = null;
+        existingBookingData = null;
     }
 
     function hideAllSteps() {

@@ -539,6 +539,8 @@ body.no-scroll {
     border-radius: 14px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     min-height: calc(100vh - var(--header-height) - (var(--layout-padding) * 2));
+    position: relative;
+    z-index: 1;
 }
 
 /* الأقسام */
@@ -1776,6 +1778,17 @@ body.no-scroll {
     font-size: 1.5rem;
     flex-shrink: 0;
     box-shadow: 0 4px 12px rgba(61, 143, 214, 0.3);
+    transition: all 0.3s ease;
+}
+
+.applicant-avatar.avatar-accepted {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.applicant-avatar.avatar-rejected {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .applicant-details {
@@ -1787,10 +1800,51 @@ body.no-scroll {
     font-size: 1.25rem;
     font-weight: 600;
     color: var(--text-dark);
-    margin: 0 0 0.5rem 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* شارات الحالة للقبول والرفض */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.1rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.status-badge i {
+    font-size: 1rem;
+}
+
+.status-badge.status-accepted {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #065f46;
+    border: 1px solid #10b981;
+}
+
+.status-badge.status-accepted::before {
+    content: "\f00c";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    margin-left: 0.25rem;
+}
+
+.status-badge.status-rejected {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #991b1b;
+    border: 1px solid #ef4444;
+}
+
+.status-badge.status-rejected::before {
+    content: "\f00d";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    margin-left: 0.25rem;
 }
 
 .application-card-body {
@@ -1931,6 +1985,12 @@ body.no-scroll {
     background: linear-gradient(135deg, #f59e0b, #d97706);
     color: white;
     box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+}
+
+.badge-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
 }
 
 .badge-success {
