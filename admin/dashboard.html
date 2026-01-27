@@ -236,14 +236,18 @@
                 </div>
             </section>
 
-            <!-- قسم إدارة الاستبيانات -->
-            <section id="surveys-section" class="admin-section" style="display: none;">
+            <!-- =====================================================
+                 أقسام إدارة الاستبيانات
+                 ===================================================== -->
+
+            <!-- قسم جميع الاستبيانات -->
+            <section id="surveys-all-section" class="admin-section" style="display: none;">
                 <div class="section-header">
                     <h1>
                         <i class="fa-solid fa-clipboard-question"></i>
-                        إدارة الاستبيانات
+                        جميع الاستبيانات
                     </h1>
-                    <button class="btn-primary" id="createSurveyBtn">
+                    <button class="btn-primary" id="createNewSurveyBtn">
                         <i class="fa-solid fa-plus"></i>
                         إنشاء استبيان جديد
                     </button>
@@ -273,10 +277,10 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <i class="fa-solid fa-file-lines stat-icon"></i>
+                        <i class="fa-solid fa-check-circle stat-icon"></i>
                         <div class="stat-info">
-                            <h3>مسودات</h3>
-                            <p class="stat-value" id="draftSurveysCount">0</p>
+                            <h3>استجابات مكتملة</h3>
+                            <p class="stat-value" id="completedResponsesCount">0</p>
                         </div>
                     </div>
                 </div>
@@ -285,7 +289,7 @@
                 <div class="filters-bar">
                     <div class="filter-group">
                         <i class="fa-solid fa-search"></i>
-                        <input type="text" id="surveysSearchInput" placeholder="البحث عن استبيان..." />
+                        <input type="text" id="surveysSearchInput" placeholder="البحث في الاستبيانات..." />
                     </div>
                     <select id="surveysStatusFilter" class="filter-select">
                         <option value="">جميع الحالات</option>
@@ -301,40 +305,33 @@
                         <option value="membership">عضوية</option>
                         <option value="event">فعالية</option>
                         <option value="feedback">تقييم</option>
-                        <option value="research">بحثي</option>
-                        <option value="poll">استطلاع رأي</option>
+                        <option value="evaluation">تقويم</option>
+                        <option value="poll">استطلاع</option>
+                        <option value="quiz">اختبار</option>
+                        <option value="research">بحث</option>
                     </select>
-                    <select id="surveysAccessFilter" class="filter-select">
-                        <option value="">جميع أنواع الوصول</option>
-                        <option value="public">عام</option>
-                        <option value="members_only">للأعضاء فقط</option>
-                    </select>
-                    <button class="btn-primary" id="refreshSurveysBtn">
+                    <button class="btn-outline" id="refreshSurveysBtn">
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
                 </div>
 
                 <!-- قائمة الاستبيانات -->
-                <div id="surveysListContainer" class="data-table">
+                <div id="surveysListContainer" class="surveys-list">
                     <!-- سيتم ملؤها ديناميكياً -->
                 </div>
             </section>
 
-            <!-- قسم بناء الاستبيان -->
-            <section id="survey-builder-section" class="admin-section" style="display: none;">
+            <!-- قسم إنشاء استبيان -->
+            <section id="surveys-create-section" class="admin-section" style="display: none;">
                 <div class="section-header">
-                    <button class="btn-secondary" id="backToSurveysBtn">
-                        <i class="fa-solid fa-arrow-right"></i>
-                        العودة للقائمة
-                    </button>
                     <h1>
-                        <i class="fa-solid fa-pen-to-square"></i>
-                        <span id="surveyBuilderTitle">إنشاء استبيان جديد</span>
+                        <i class="fa-solid fa-plus-circle"></i>
+                        إنشاء استبيان جديد
                     </h1>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn-secondary" id="saveSurveyDraftBtn">
-                            <i class="fa-solid fa-floppy-disk"></i>
+                    <div class="header-actions">
+                        <button class="btn-outline" id="saveSurveyDraftBtn">
+                            <i class="fa-solid fa-save"></i>
                             حفظ كمسودة
                         </button>
                         <button class="btn-primary" id="publishSurveyBtn">
@@ -344,76 +341,98 @@
                     </div>
                 </div>
 
-                <!-- محتوى بناء الاستبيان -->
-                <div id="surveyBuilderContent">
-                    <!-- سيتم ملؤه ديناميكياً بواسطة JavaScript -->
+                <!-- نموذج إنشاء الاستبيان -->
+                <div id="surveyBuilderContainer" class="survey-builder">
+                    <!-- سيتم ملؤه ديناميكياً -->
                 </div>
             </section>
 
-            <!-- قسم عرض النتائج والتحليلات -->
-            <section id="survey-results-section" class="admin-section" style="display: none;">
+            <!-- قسم نتائج الاستبيانات -->
+            <section id="surveys-results-section" class="admin-section" style="display: none;">
                 <div class="section-header">
-                    <button class="btn-secondary" id="backToSurveysFromResultsBtn">
-                        <i class="fa-solid fa-arrow-right"></i>
-                        العودة للقائمة
-                    </button>
                     <h1>
-                        <i class="fa-solid fa-chart-bar"></i>
-                        <span id="surveyResultsTitle">نتائج الاستبيان</span>
+                        <i class="fa-solid fa-chart-pie"></i>
+                        نتائج الاستبيانات
                     </h1>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn-secondary" id="exportResultsCSVBtn">
-                            <i class="fa-solid fa-file-csv"></i>
-                            تصدير CSV
-                        </button>
-                        <button class="btn-primary" id="refreshResultsBtn">
-                            <i class="fa-solid fa-rotate"></i>
-                            تحديث
-                        </button>
+                    <p class="section-subtitle">تحليل شامل لجميع الاستجابات والإحصائيات</p>
+                </div>
+
+                <!-- اختيار الاستبيان -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-body">
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                            <div class="filter-group" style="flex: 1; min-width: 300px;">
+                                <label for="selectSurveyForResults">اختر الاستبيان:</label>
+                                <select id="selectSurveyForResults" class="filter-select">
+                                    <option value="">-- اختر استبياناً --</option>
+                                </select>
+                            </div>
+                            <div class="header-actions" id="resultsActions" style="display: none;">
+                                <button class="btn-outline" id="exportExcelBtn">
+                                    <i class="fa-solid fa-file-excel"></i>
+                                    تصدير Excel
+                                </button>
+                                <button class="btn-outline" id="exportCSVBtn">
+                                    <i class="fa-solid fa-file-csv"></i>
+                                    تصدير CSV
+                                </button>
+                                <button class="btn-outline" id="exportPDFBtn">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                    تصدير PDF
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- إحصائيات الاستبيان -->
-                <div id="surveyResultsStats" class="stats-grid">
-                    <!-- سيتم ملؤها ديناميكياً -->
-                </div>
-
-                <!-- تبويبات النتائج -->
-                <div class="tabs-container">
-                    <div class="tabs-nav">
-                        <button class="tab-btn active" data-tab="results-overview">
-                            <i class="fa-solid fa-chart-pie"></i>
-                            نظرة عامة
+                <!-- التبويبات -->
+                <div class="tabs-container" id="resultsTabsContainer" style="display: none;">
+                    <div class="tabs-header">
+                        <button class="tab-btn active" data-tab="statistics">
+                            <i class="fa-solid fa-chart-bar"></i>
+                            الإحصائيات
                         </button>
-                        <button class="tab-btn" data-tab="results-responses">
+                        <button class="tab-btn" data-tab="responses">
                             <i class="fa-solid fa-list"></i>
-                            الاستجابات
+                            الاستجابات الفردية
                         </button>
-                        <button class="tab-btn" data-tab="results-analytics">
+                        <button class="tab-btn" data-tab="analytics">
                             <i class="fa-solid fa-chart-line"></i>
-                            التحليلات
+                            التحليلات المتقدمة
                         </button>
                     </div>
 
+                    <!-- محتوى التبويبات -->
                     <div class="tabs-content">
-                        <div id="results-overview" class="tab-content active">
-                            <!-- محتوى النظرة العامة -->
+                        <!-- تبويب الإحصائيات -->
+                        <div class="tab-pane active" id="statistics-tab">
+                            <div id="surveyStatisticsContainer">
+                                <!-- سيتم ملؤه ديناميكياً -->
+                            </div>
                         </div>
-                        <div id="results-responses" class="tab-content">
-                            <!-- قائمة الاستجابات -->
+
+                        <!-- تبويب الاستجابات -->
+                        <div class="tab-pane" id="responses-tab">
+                            <div id="surveyResponsesContainer">
+                                <!-- سيتم ملؤه ديناميكياً -->
+                            </div>
                         </div>
-                        <div id="results-analytics" class="tab-content">
-                            <!-- التحليلات التفصيلية -->
+
+                        <!-- تبويب التحليلات المتقدمة -->
+                        <div class="tab-pane" id="analytics-tab">
+                            <div id="surveyAnalyticsContainer">
+                                <!-- سيتم ملؤه ديناميكياً -->
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- قسم القوالب -->
-            <section id="survey-templates-section" class="admin-section" style="display: none;">
+            <!-- قسم قوالب الاستبيانات -->
+            <section id="surveys-templates-section" class="admin-section" style="display: none;">
                 <div class="section-header">
                     <h1>
-                        <i class="fa-solid fa-layer-group"></i>
+                        <i class="fa-solid fa-file-lines"></i>
                         قوالب الاستبيانات
                     </h1>
                     <button class="btn-primary" id="createTemplateBtn">
@@ -422,21 +441,18 @@
                     </button>
                 </div>
 
-                <!-- فلاتر القوالب -->
+                <!-- فئات القوالب -->
                 <div class="filters-bar">
-                    <div class="filter-group">
-                        <i class="fa-solid fa-search"></i>
-                        <input type="text" id="templatesSearchInput" placeholder="البحث عن قالب..." />
-                    </div>
-                    <select id="templatesCategoryFilter" class="filter-select">
+                    <select id="templatesFilterCategory" class="filter-select">
                         <option value="">جميع الفئات</option>
+                        <option value="general">عام</option>
                         <option value="membership">عضوية</option>
                         <option value="event">فعالية</option>
                         <option value="feedback">تقييم</option>
-                        <option value="research">بحثي</option>
-                        <option value="poll">استطلاع</option>
+                        <option value="evaluation">تقويم</option>
+                        <option value="custom">مخصص</option>
                     </select>
-                    <button class="btn-primary" id="refreshTemplatesBtn">
+                    <button class="btn-outline" id="refreshTemplatesBtn">
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
@@ -1868,6 +1884,7 @@
     <script src="js/interview-sessions-manager.js"></script>
     <script src="js/site-visits-manager.js"></script>
     <script src="js/surveys-manager.js"></script>
+    <script src="js/surveys-results-enhanced.js"></script>
     <script src="dashboard.js"></script>
 </body>
 

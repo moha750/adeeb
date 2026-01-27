@@ -237,23 +237,35 @@
         if (roleLevel >= 7) {
             const surveysSubItems = [
                 {
-                    id: 'surveys-list',
+                    id: 'surveys-all',
                     icon: 'fa-list',
-                    label: 'قائمة الاستبيانات',
-                    section: 'surveys-section'
+                    label: 'جميع الاستبيانات',
+                    section: 'surveys-all-section'
+                },
+                {
+                    id: 'surveys-create',
+                    icon: 'fa-plus-circle',
+                    label: 'إنشاء استبيان',
+                    section: 'surveys-create-section'
+                },
+                {
+                    id: 'surveys-results',
+                    icon: 'fa-chart-pie',
+                    label: 'نتائج الاستبيانات',
+                    section: 'surveys-results-section'
                 },
                 {
                     id: 'surveys-templates',
-                    icon: 'fa-layer-group',
-                    label: 'القوالب',
-                    section: 'survey-templates-section'
+                    icon: 'fa-file-lines',
+                    label: 'قوالب الاستبيانات',
+                    section: 'surveys-templates-section'
                 }
             ];
             
             menuItems.push({
                 id: 'surveys',
                 icon: 'fa-clipboard-question',
-                label: 'الاستبيانات',
+                label: 'إدارة الاستبيانات',
                 isDropdown: true,
                 subItems: surveysSubItems
             });
@@ -427,6 +439,11 @@
                 loadRecentActivities(),
                 loadCharts()
             ]);
+            
+            // تهيئة مدير الاستبيانات
+            if (window.surveysManager && currentUser) {
+                await window.surveysManager.init(currentUser);
+            }
         } catch (error) {
             console.error('Error loading dashboard data:', error);
         }
@@ -633,14 +650,24 @@
             case 'site-visits-section':
                 await loadSiteVisitsSection();
                 break;
-            case 'surveys-section':
+            case 'surveys-all-section':
                 if (window.surveysManager) {
-                    await window.surveysManager.init(currentUser);
+                    await window.surveysManager.loadAllSurveys();
                 }
                 break;
-            case 'survey-templates-section':
+            case 'surveys-create-section':
                 if (window.surveysManager) {
-                    await window.surveysManager.init(currentUser);
+                    await window.surveysManager.showCreateForm();
+                }
+                break;
+            case 'surveys-results-section':
+                if (window.surveysManager) {
+                    await window.surveysManager.loadResults();
+                }
+                break;
+            case 'surveys-templates-section':
+                if (window.surveysManager) {
+                    await window.surveysManager.loadTemplates();
                 }
                 break;
         }

@@ -1,88 +1,46 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<!doctype html>
+<html dir="rtl" lang="ar">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استبيان - نادي أدِيب</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- Survey CSS -->
-    <link rel="stylesheet" href="survey.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>استبيان — نادي أدِيب</title>
+    <meta name="description" content="شارك في استبيان نادي أدِيب" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="survey.css" />
 </head>
+
 <body>
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="spinner"></div>
-        <p>جاري التحميل...</p>
+    <!-- شريط التحميل -->
+    <div id="loadingBar" class="loading-bar">
+        <div class="loading-progress"></div>
     </div>
 
-    <!-- Survey Container -->
-    <div id="surveyContainer" class="survey-container" style="display: none;">
-        <!-- Survey Header -->
-        <div class="survey-header">
-            <div class="survey-logo">
-                <img src="adeeb-logo.png" alt="نادي أدِيب">
+    <!-- الحاوية الرئيسية -->
+    <div class="survey-container">
+        <!-- الهيدر -->
+        <header class="survey-header">
+            <div class="survey-header-content">
+                <img src="adeeb-logo.png" alt="نادي أدِيب" class="survey-logo" />
+                <h1 class="survey-brand">نادي أدِيب</h1>
             </div>
-            <h1 id="surveyTitle" class="survey-title"></h1>
-            <p id="surveyDescription" class="survey-description"></p>
-            <div id="surveyWelcome" class="survey-welcome"></div>
-        </div>
+        </header>
 
-        <!-- Progress Bar -->
-        <div id="progressContainer" class="progress-container" style="display: none;">
-            <div class="progress-bar">
-                <div id="progressFill" class="progress-fill"></div>
-            </div>
-            <p class="progress-text">
-                <span id="currentQuestion">1</span> من <span id="totalQuestions">10</span>
-            </p>
-        </div>
+        <!-- محتوى الاستبيان -->
+        <main class="survey-main" id="surveyMain">
+            <!-- سيتم ملؤه ديناميكياً -->
+        </main>
 
-        <!-- Survey Form -->
-        <form id="surveyForm" class="survey-form">
-            <div id="questionsContainer" class="questions-container"></div>
-            
-            <!-- Submit Button -->
-            <div class="form-actions">
-                <button type="submit" id="submitBtn" class="btn-submit">
-                    <i class="fa-solid fa-paper-plane"></i>
-                    إرسال الإجابات
-                </button>
-            </div>
-        </form>
-
-        <!-- Completion Message -->
-        <div id="completionContainer" class="completion-container" style="display: none;">
-            <div class="completion-icon">
-                <i class="fa-solid fa-circle-check"></i>
-            </div>
-            <h2>شكراً لمشاركتك!</h2>
-            <p id="completionMessage"></p>
-        </div>
+        <!-- الفوتر -->
+        <footer class="survey-footer">
+            <p>© 2026 نادي أدِيب. جميع الحقوق محفوظة.</p>
+        </footer>
     </div>
 
-    <!-- Error Container -->
-    <div id="errorContainer" class="error-container" style="display: none;">
-        <div class="error-icon">
-            <i class="fa-solid fa-circle-exclamation"></i>
-        </div>
-        <h2>عذراً!</h2>
-        <p id="errorMessage"></p>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="toast"></div>
-
-    <!-- Survey Script -->
+    <!-- المكتبات -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script src="survey.js"></script>
 </body>
+
 </html>
