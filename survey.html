@@ -8,6 +8,7 @@
     <meta name="description" content="شارك في استبيان نادي أدِيب" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
     <link rel="stylesheet" href="survey.css" />
+    <link rel="icon" type="image/png" href="favicon/favicon-32x32.png" />
 </head>
 
 <body>
@@ -16,26 +17,28 @@
         <div class="loading-progress"></div>
     </div>
 
-    <!-- الحاوية الرئيسية -->
-    <div class="survey-container">
-        <!-- الهيدر -->
-        <header class="survey-header">
-            <div class="survey-header-content">
-                <img src="adeeb-logo.png" alt="نادي أدِيب" class="survey-logo" />
-                <h1 class="survey-brand">نادي أدِيب</h1>
+    <!-- الهيدر -->
+    <header class="survey-header">
+        <div class="container">
+            <img src="adeeb-logo.png" alt="نادي أدِيب" class="logo" />
+        </div>
+    </header>
+
+    <!-- محتوى الاستبيان -->
+    <main class="survey-main">
+        <div class="container">
+            <div id="surveyMain">
+                <!-- سيتم ملؤه ديناميكياً -->
             </div>
-        </header>
+        </div>
+    </main>
 
-        <!-- محتوى الاستبيان -->
-        <main class="survey-main" id="surveyMain">
-            <!-- سيتم ملؤه ديناميكياً -->
-        </main>
-
-        <!-- الفوتر -->
-        <footer class="survey-footer">
-            <p>© 2026 نادي أدِيب. جميع الحقوق محفوظة.</p>
-        </footer>
-    </div>
+    <!-- الفوتر -->
+    <footer class="survey-footer">
+        <div class="container">
+            <p>      جميع الحقوق محفوظة لنادي أدِيب 2026      &copy;        </p>
+        </div>
+    </footer>
 
     <!-- المكتبات -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

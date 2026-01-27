@@ -83,6 +83,31 @@ body {
     color: var(--text-dark);
     min-height: 100vh;
     line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(61, 143, 214, 0.08) 0%, rgba(61, 143, 214, 0) 70%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    width: 100%;
+    position: relative;
+    z-index: 1;
 }
 
 /* شريط التحميل */
@@ -125,12 +150,25 @@ body {
 
 /* الهيدر */
 .survey-header {
-    background: var(--bg-white);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    padding: 1.5rem 2rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    padding: 0.7rem 0;
+    box-shadow: 0 5px 30px rgba(39, 64, 96, 0.1);
     position: sticky;
     top: 0;
     z-index: 100;
+}
+
+.survey-header .logo {
+    height: 50px;
+    display: block;
+    margin: 0 auto;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.survey-header .logo:hover {
+    transform: scale(1.05);
 }
 
 .survey-header-content {
@@ -156,17 +194,53 @@ body {
 /* المحتوى الرئيسي */
 .survey-main {
     flex: 1;
-    padding: 2rem;
+    padding: 2rem 0;
+    display: flex;
+    align-items: center;
 }
 
 /* بطاقة الاستبيان */
 .survey-card {
-    background: var(--bg-white);
-    border-radius: 16px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(39, 64, 96, 0.2);
     padding: 2.5rem;
     margin-bottom: 2rem;
     animation: fadeInUp 0.5s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.survey-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, #3d8fd6, #274060);
+    z-index: 2;
+}
+
+.survey-card::after {
+    content: "";
+    position: absolute;
+    bottom: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(61, 143, 214, 0.05) 0%, rgba(61, 143, 214, 0) 70%);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.survey-card:hover::after {
+    opacity: 1;
 }
 
 @keyframes fadeInUp {
@@ -430,6 +504,7 @@ textarea.form-input {
     background: var(--bg-light);
     outline: none;
     -webkit-appearance: none;
+    appearance: none;
 }
 
 .slider-input::-webkit-slider-thumb {
@@ -579,7 +654,7 @@ textarea.form-input {
 /* استجابة للشاشات الصغيرة */
 @media (max-width: 768px) {
     .survey-main {
-        padding: 1rem;
+        padding: 1.5rem 0;
     }
     
     .survey-card {
@@ -599,7 +674,7 @@ textarea.form-input {
     }
     
     .navigation-buttons {
-        flex-direction: column;
+        flex-direction: row;
     }
     
     .btn {

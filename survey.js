@@ -190,8 +190,8 @@
                 <div class="question-header">
                     <span class="question-number">سؤال ${questionNumber} من ${totalQuestions}</span>
                     <h2 class="question-text">
+                    ${escapeHtml(question.question_text)}
                         ${question.is_required ? '<span class="required">*</span>' : ''}
-                        ${escapeHtml(question.question_text)}
                     </h2>
                     ${question.question_description ? `
                         <p class="question-description">${escapeHtml(question.question_description)}</p>
