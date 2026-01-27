@@ -2965,21 +2965,19 @@
         if (notes === null) return;
 
         try {
-            // تحديث حالة المقابلة
             const { data: interview, error: interviewError } = await window.sbClient
                 .from('membership_interviews')
-                .update({
-                    result: 'accepted',
-                    result_notes: notes || null,
-                    decided_by: currentUser.id,
-                    decided_at: new Date().toISOString(),
-                    status: 'completed'
-                })
+                .select('id, application_id, result, status')
                 .eq('id', interviewId)
-                .select('application_id')
                 .single();
 
             if (interviewError) throw interviewError;
+
+            if (interview.result === 'accepted' && interview.status === 'completed') {
+                showNotification('تم قبول هذا المتقدم مسبقاً', 'info');
+                await loadInterviews();
+                return;
+            }
 
             // الحصول على بيانات الطلب
             const { data: application, error: appError } = await window.sbClient
@@ -3003,7 +3001,23 @@
                     added_by: currentUser.id
                 });
 
-            if (acceptedError) throw acceptedError;
+            if (acceptedError) {
+                const isConflict = acceptedError.code === '23505' || acceptedError.status === 409;
+                if (!isConflict) throw acceptedError;
+            }
+
+            const { error: updateInterviewError } = await window.sbClient
+                .from('membership_interviews')
+                .update({
+                    result: 'accepted',
+                    result_notes: notes || null,
+                    decided_by: currentUser.id,
+                    decided_at: new Date().toISOString(),
+                    status: 'completed'
+                })
+                .eq('id', interviewId);
+
+            if (updateInterviewError) throw updateInterviewError;
 
             showNotification('تم قبول المتقدم بنجاح', 'success');
             await loadInterviews();
