@@ -1040,6 +1040,48 @@
                 </div>
             </section>
 
+            <section id="membership-barzakh-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-hourglass-half"></i>
+                        البرزخ
+                    </h1>
+                    <p class="section-subtitle">المقبولين للمقابلة بدون موعد مقابلة مجدول</p>
+                </div>
+
+                <div class="stats-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-user-clock stat-icon" style="color: #f59e0b;"></i>
+                        <div class="stat-info">
+                            <h3>بانتظار جدولة المقابلة</h3>
+                            <p class="stat-value" id="barzakhCount">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="barzakhSearchInput" placeholder="البحث بالاسم أو البريد..." />
+                    </div>
+                    <select id="barzakhCommitteeFilter" class="filter-select">
+                        <option value="">جميع اللجان</option>
+                    </select>
+                    <button class="btn-outline" id="refreshBarzakhBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div id="barzakhTable" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- قسم نتائج العضوية -->
             <section id="membership-accepted-section" class="admin-section" style="display: none;">
                 <div class="section-header">

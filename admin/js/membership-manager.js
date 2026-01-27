@@ -6,6 +6,7 @@
     'use strict';
 
     let currentApplications = [];
+    let barzakhApplications = [];
     let currentSettings = null;
     let currentUser = null;
     let availableCommittees = [];
@@ -1207,6 +1208,11 @@
             if (insertError) throw insertError;
 
             showNotification('تم قبول الطلب وجدولة المقابلة بنجاح', 'success');
+
+            const barzakhTable = document.getElementById('barzakhTable');
+            if (barzakhTable) {
+                await loadBarzakh();
+            }
         } catch (error) {
             console.error('خطأ في جدولة المقابلة:', error);
             showNotification('تم قبول الطلب ولكن فشلت جدولة المقابلة. يمكنك جدولتها من قسم المقابلات', 'warning');
@@ -2247,26 +2253,35 @@
 
             if (scheduledError) throw scheduledError;
 
-            // جلب الجلسات النشطة لملء الفلتر
-            const { data: activeSessions, error: sessionsError } = await window.sbClient
+            // جلب جميع الجلسات لملء الفلتر (نشطة + منتهية)
+            const { data: allSessions, error: sessionsError } = await window.sbClient
                 .from('interview_sessions')
                 .select('id, session_name, session_date, end_time, is_active')
-                .eq('is_active', true)
                 .order('session_date', { ascending: false });
 
             if (sessionsError) {
                 console.error('خطأ في جلب الجلسات:', sessionsError);
             }
 
-            // تصفية الجلسات النشطة غير المنتهية
+            // تصنيف الجلسات إلى نشطة وغير منتهية مقابل منتهية/غير نشطة
             const now = new Date();
-            const activeNonExpiredSessions = (activeSessions || []).filter(session => {
+            const activeNonExpiredSessions = [];
+            const expiredOrInactiveSessions = [];
+
+            (allSessions || []).forEach(session => {
                 const sessionEndDateTime = new Date(`${session.session_date}T${session.end_time}`);
-                return sessionEndDateTime >= now;
+                const isExpired = sessionEndDateTime < now;
+                const isActive = !!session.is_active;
+
+                if (isActive && !isExpired) {
+                    activeNonExpiredSessions.push(session);
+                } else {
+                    expiredOrInactiveSessions.push(session);
+                }
             });
 
-            // ملء فلتر الجلسات
-            populateSessionsFilter(activeNonExpiredSessions);
+            // ملء فلتر الجلسات (مع تمييز النشطة عن المنتهية)
+            populateSessionsFilter(activeNonExpiredSessions, expiredOrInactiveSessions);
 
             // جلب عدد الطلبات المقبولة للمقابلة بدون مقابلات مجدولة (غير مجدولة)
             const { data: approvedApps, error: approvedError } = await window.sbClient
@@ -2299,6 +2314,204 @@
         }
     }
 
+    async function loadBarzakh() {
+        try {
+            const container = document.getElementById('barzakhTable');
+            if (!container) return;
+
+            showLoading(container);
+
+            await updateCommitteeFilter('barzakhCommitteeFilter');
+
+            const { data: approvedApps, error: appsError } = await window.sbClient
+                .from('membership_applications')
+                .select('id, full_name, email, phone, preferred_committee, approved_for_interview_at, created_at')
+                .eq('status', 'approved_for_interview')
+                .order('approved_for_interview_at', { ascending: false });
+
+            if (appsError) throw appsError;
+
+            const appIds = (approvedApps || []).map(a => a.id);
+
+            let interviewsByAppId = new Map();
+            if (appIds.length) {
+                const { data: interviews, error: interviewsError } = await window.sbClient
+                    .from('membership_interviews')
+                    .select('application_id, status')
+                    .in('application_id', appIds);
+
+                if (interviewsError) throw interviewsError;
+
+                (interviews || []).forEach(i => {
+                    const key = i.application_id;
+                    const list = interviewsByAppId.get(key) || [];
+                    list.push(i);
+                    interviewsByAppId.set(key, list);
+                });
+            }
+
+            barzakhApplications = (approvedApps || []).filter(app => {
+                const appInterviews = interviewsByAppId.get(app.id) || [];
+                return !appInterviews.some(i => i.status === 'scheduled' || i.status === 'completed');
+            });
+
+            const countEl = document.getElementById('barzakhCount');
+            if (countEl) countEl.textContent = barzakhApplications.length;
+
+            container._cachedBarzakh = barzakhApplications;
+
+            renderBarzakhTable();
+            bindBarzakhEvents();
+        } catch (error) {
+            console.error('خطأ في تحميل البرزخ:', error);
+            showNotification('خطأ في تحميل قسم البرزخ', 'error');
+        }
+    }
+
+    async function scheduleInterviewFromBarzakh(applicationId) {
+        const container = document.getElementById('barzakhTable');
+        const source = container?._cachedBarzakh || barzakhApplications;
+        const application = (source || []).find(a => String(a.id) === String(applicationId));
+
+        if (!application) {
+            showNotification('لم يتم العثور على بيانات المتقدم', 'error');
+            return;
+        }
+
+        await scheduleInterviewForApplication(applicationId, application);
+    }
+
+    function bindBarzakhEvents() {
+        const searchInput = document.getElementById('barzakhSearchInput');
+        const committeeFilter = document.getElementById('barzakhCommitteeFilter');
+        const refreshBtn = document.getElementById('refreshBarzakhBtn');
+
+        if (searchInput) {
+            searchInput.removeEventListener('input', renderBarzakhTable);
+            searchInput.addEventListener('input', renderBarzakhTable);
+        }
+        if (committeeFilter) {
+            committeeFilter.removeEventListener('change', renderBarzakhTable);
+            committeeFilter.addEventListener('change', renderBarzakhTable);
+        }
+        if (refreshBtn) {
+            refreshBtn.removeEventListener('click', loadBarzakh);
+            refreshBtn.addEventListener('click', loadBarzakh);
+        }
+    }
+
+    function renderBarzakhTable() {
+        const container = document.getElementById('barzakhTable');
+        const searchInput = document.getElementById('barzakhSearchInput');
+        const committeeFilter = document.getElementById('barzakhCommitteeFilter');
+
+        if (!container) return;
+
+        const searchTerm = searchInput?.value.toLowerCase() || '';
+        const committeeValue = committeeFilter?.value || '';
+
+        const source = container._cachedBarzakh || barzakhApplications;
+
+        const filtered = (source || []).filter(app => {
+            const matchSearch = !searchTerm ||
+                (app.full_name && app.full_name.toLowerCase().includes(searchTerm)) ||
+                (app.email && app.email.toLowerCase().includes(searchTerm)) ||
+                (app.phone && app.phone.includes(searchTerm));
+
+            const matchCommittee = !committeeValue || app.preferred_committee === committeeValue;
+            return matchSearch && matchCommittee;
+        });
+
+        if (!filtered.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox"></i>
+                    <p>لا يوجد متقدمون في البرزخ</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '<div class="applications-cards-grid">';
+
+        filtered.forEach(app => {
+            const acceptedAt = app.approved_for_interview_at || app.created_at;
+            const date = acceptedAt ? new Date(acceptedAt).toLocaleDateString('ar-SA', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }) : '-';
+
+            html += `
+                <div class="application-card">
+                    <div class="application-card-header">
+                        <div class="applicant-info">
+                            <div class="applicant-avatar">
+                                <i class="fa-solid fa-user-clock"></i>
+                            </div>
+                            <div class="applicant-details">
+                                <h3 class="applicant-name">${escapeHtml(app.full_name || 'غير محدد')}</h3>
+                                <span class="badge badge-warning">بانتظار جدولة المقابلة</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="application-card-body">
+                        <div class="application-info-grid">
+                            <div class="info-item">
+                                <i class="fa-solid fa-envelope"></i>
+                                <div class="info-content">
+                                    <span class="info-label">البريد الإلكتروني</span>
+                                    <span class="info-value">${escapeHtml(app.email || 'غير متوفر')}</span>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <i class="fa-solid fa-phone"></i>
+                                <div class="info-content">
+                                    <span class="info-label">رقم الجوال</span>
+                                    <span class="info-value">${escapeHtml(app.phone || 'غير متوفر')}</span>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <i class="fa-solid fa-users"></i>
+                                <div class="info-content">
+                                    <span class="info-label">اللجنة</span>
+                                    <span class="info-value">${escapeHtml(app.preferred_committee || 'غير محدد')}</span>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <i class="fa-solid fa-calendar"></i>
+                                <div class="info-content">
+                                    <span class="info-label">تاريخ القبول للمقابلة</span>
+                                    <span class="info-value">${date}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="application-card-footer">
+                        <div class="card-actions-grid">
+                            <button class="btn-action btn-action-primary" onclick="window.membershipManager.viewApplication('${app.id}')">
+                                <i class="fa-solid fa-eye"></i>
+                                عرض التفاصيل
+                            </button>
+                            <button class="btn-action btn-action-success" onclick="window.membershipManager.scheduleInterviewFromBarzakh('${app.id}')">
+                                <i class="fa-solid fa-calendar-plus"></i>
+                                جدولة مقابلة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
     /**
      * عرض جدول المقابلات
      */
@@ -2323,7 +2536,7 @@
             
             // فلترة حسب الجلسة المختارة
             const matchSession = !sessionValue || 
-                (interview.slot && interview.slot[0] && interview.slot[0].session_id === sessionValue);
+                (interview.slot && interview.slot[0] && String(interview.slot[0].session_id) === String(sessionValue));
             
             return matchSearch && matchSession;
         });
@@ -2975,25 +3188,44 @@
     /**
      * ملء فلتر الجلسات القائمة
      */
-    function populateSessionsFilter(sessions) {
+    function populateSessionsFilter(activeSessions, expiredSessions) {
         const sessionFilter = document.getElementById('interviewsSessionFilter');
         if (!sessionFilter) return;
 
         // الاحتفاظ بالخيار الافتراضي
         sessionFilter.innerHTML = '<option value="">جميع الجلسات</option>';
 
-        // إضافة الجلسات النشطة
-        sessions.forEach(session => {
-            const date = new Date(session.session_date).toLocaleDateString('ar-SA', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
-            const option = document.createElement('option');
-            option.value = session.id;
-            option.textContent = `${session.session_name} (${date})`;
-            sessionFilter.appendChild(option);
+        const formatSessionDate = (session) => new Date(session.session_date).toLocaleDateString('ar-SA', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
         });
+
+        const addOptionsToGroup = (groupEl, sessions, isExpiredGroup) => {
+            (sessions || []).forEach(session => {
+                const date = formatSessionDate(session);
+                const option = document.createElement('option');
+                option.value = session.id;
+                option.textContent = isExpiredGroup ? `${session.session_name} (${date}) (منتهية)` : `${session.session_name} (${date})`;
+                groupEl.appendChild(option);
+            });
+        };
+
+        // الجلسات النشطة أولاً
+        if (activeSessions && activeSessions.length) {
+            const activeGroup = document.createElement('optgroup');
+            activeGroup.label = 'الجلسات النشطة';
+            addOptionsToGroup(activeGroup, activeSessions, false);
+            sessionFilter.appendChild(activeGroup);
+        }
+
+        // ثم الجلسات المنتهية / غير النشطة
+        if (expiredSessions && expiredSessions.length) {
+            const expiredGroup = document.createElement('optgroup');
+            expiredGroup.label = 'الجلسات المنتهية';
+            addOptionsToGroup(expiredGroup, expiredSessions, true);
+            sessionFilter.appendChild(expiredGroup);
+        }
     }
 
     /**
@@ -3695,6 +3927,8 @@
         approveForInterview: approveForInterview,
         rejectApplication: rejectApplication,
         markUnderReview: markUnderReview,
+        scheduleInterviewForApplication: scheduleInterviewForApplication,
+        scheduleInterviewFromBarzakh: scheduleInterviewFromBarzakh,
         toggleCommitteeAvailability: toggleCommitteeAvailability,
         updateMaxApplicants: updateMaxApplicants,
         moveCommittee: moveCommittee,
@@ -3705,6 +3939,7 @@
         viewArchive: viewArchive,
         downloadArchive: downloadArchive,
         loadInterviews: loadInterviews,
+        loadBarzakh: loadBarzakh,
         viewInterview: viewInterview,
         acceptInterview: acceptInterview,
         rejectInterview: rejectInterview,

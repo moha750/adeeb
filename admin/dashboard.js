@@ -205,6 +205,15 @@
                     section: 'membership-interviews-section'
                 });
             }
+
+            if (roleLevel >= 7) {
+                membershipSubItems.push({
+                    id: 'membership-barzakh',
+                    icon: 'fa-hourglass-half',
+                    label: 'البرزخ',
+                    section: 'membership-barzakh-section'
+                });
+            }
             
             // المقبولين - مستوى 5+
             membershipSubItems.push({
@@ -625,6 +634,11 @@
             case 'membership-interviews-section':
                 if (window.membershipManager) {
                     await window.membershipManager.loadInterviews();
+                }
+                break;
+            case 'membership-barzakh-section':
+                if (window.membershipManager) {
+                    await window.membershipManager.loadBarzakh();
                 }
                 break;
             case 'membership-accepted-section':
