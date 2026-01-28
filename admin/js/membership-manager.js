@@ -2502,6 +2502,10 @@
                                 <i class="fa-solid fa-calendar-plus"></i>
                                 جدولة مقابلة
                             </button>
+                            <button class="btn-action btn-action-danger" onclick="window.membershipManager.rejectFromBarzakh('${app.id}', '${escapeHtml(app.full_name || '')}')">
+                                <i class="fa-solid fa-user-xmark"></i>
+                                حذف/رفض
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2892,20 +2896,46 @@
                     </div>
                 ` : ''}
 
-                ${data.result_notes ? `
+                ${(data.result_notes || data.notes) ? `
                     <div class="detail-section">
                         <div class="detail-section-header">
                             <i class="fa-solid fa-note-sticky"></i>
                             <h3>ملاحظات نتيجة المقابلة</h3>
                         </div>
                         <div class="admin-notes-container">
-                            <div class="admin-note ${data.result === 'accepted' ? 'accept-note' : data.result === 'rejected' ? 'reject-note' : ''}">
-                                <div class="note-header">
-                                    <i class="fa-solid fa-${data.result === 'accepted' ? 'check-circle' : data.result === 'rejected' ? 'times-circle' : 'note-sticky'}"></i>
-                                    <strong>${data.result === 'accepted' ? 'ملاحظات قبول المقابلة' : data.result === 'rejected' ? 'سبب رفض المقابلة' : 'ملاحظات النتيجة'}</strong>
+                            ${data.result_notes ? `
+                                <div class="admin-note ${data.result === 'accepted' ? 'accept-note' : data.result === 'rejected' ? 'reject-note' : ''}">
+                                    <div class="note-header">
+                                        <i class="fa-solid fa-${data.result === 'accepted' ? 'check-circle' : data.result === 'rejected' ? 'times-circle' : 'note-sticky'}"></i>
+                                        <strong>${data.result === 'accepted' ? 'ملاحظات قبول المقابلة' : data.result === 'rejected' ? 'سبب رفض المقابلة' : 'ملاحظات النتيجة'}</strong>
+                                    </div>
+                                    <div class="note-content">${escapeHtml(data.result_notes)}</div>
                                 </div>
-                                <div class="note-content">${escapeHtml(data.result_notes)}</div>
-                            </div>
+                            ` : ''}
+                            ${data.notes ? `
+                                <div class="admin-note reject-note" style="border-right: 4px solid #ef4444; background: #fef2f2;">
+                                    <div class="note-header">
+                                        <i class="fa-solid fa-user-xmark" style="color: #ef4444;"></i>
+                                        <strong>رفض من البرزخ</strong>
+                                        <span style="font-size: 0.85rem; color: #64748b; font-weight: normal; margin-right: auto;">
+                                            ${data.interview_date ? '' : '(رفض مباشر بدون مقابلة)'}
+                                        </span>
+                                    </div>
+                                    <div class="note-content">${escapeHtml(data.notes)}</div>
+                                    ${data.decided_by_user ? `
+                                        <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #fee2e2; font-size: 0.85rem; color: #64748b;">
+                                            <i class="fa-solid fa-user-shield" style="margin-left: 0.25rem;"></i>
+                                            تم الرفض بواسطة: <strong style="color: #1e293b;">${escapeHtml(data.decided_by_user.full_name)}</strong>
+                                            ${data.decided_at ? `
+                                                <span style="margin-right: 0.5rem;">
+                                                    <i class="fa-solid fa-clock" style="margin-left: 0.25rem;"></i>
+                                                    ${new Date(data.decided_at).toLocaleDateString('ar-SA')}
+                                                </span>
+                                            ` : ''}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                 ` : ''}
@@ -3934,6 +3964,183 @@
         }
     }
 
+    /**
+     * رفض متقدم من البرزخ
+     */
+    async function rejectFromBarzakh(applicationId, applicantName) {
+        try {
+            const formHtml = `
+                <div class="form-group">
+                    <label style="font-weight: 600; color: #1e293b; margin-bottom: 1rem; display: block;">
+                        <i class="fa-solid fa-exclamation-circle" style="color: #ef4444; margin-left: 0.5rem;"></i>
+                        سبب الرفض/الحذف
+                    </label>
+                    <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.6;">
+                        سيتم نقل <strong style="color: #1e293b;">${applicantName}</strong> إلى قائمة المرفوضين في نتائج العضوية
+                    </p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <label class="radio-option" style="display: flex; align-items: center; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                            <input type="radio" name="rejection-reason" value="withdrawn" id="reason-withdrawn" style="margin-left: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #1e293b; margin-bottom: 0.25rem;">
+                                    <i class="fa-solid fa-person-walking-arrow-right" style="color: #f59e0b; margin-left: 0.5rem;"></i>
+                                    منسحب من المقابلة
+                                </div>
+                                <div style="font-size: 0.85rem; color: #64748b;">المتقدم قرر الانسحاب وعدم المتابعة</div>
+                            </div>
+                        </label>
+                        
+                        <label class="radio-option" style="display: flex; align-items: center; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                            <input type="radio" name="rejection-reason" value="no_response" id="reason-no-response" style="margin-left: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #1e293b; margin-bottom: 0.25rem;">
+                                    <i class="fa-solid fa-phone-slash" style="color: #ef4444; margin-left: 0.5rem;"></i>
+                                    لا يرد على التواصل
+                                </div>
+                                <div style="font-size: 0.85rem; color: #64748b;">عدم الرد على محاولات التواصل المتكررة</div>
+                            </div>
+                        </label>
+                        
+                        <label class="radio-option" style="display: flex; align-items: center; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                            <input type="radio" name="rejection-reason" value="other" id="reason-other" style="margin-left: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #1e293b; margin-bottom: 0.25rem;">
+                                    <i class="fa-solid fa-pen" style="color: #8b5cf6; margin-left: 0.5rem;"></i>
+                                    سبب آخر
+                                </div>
+                                <div style="font-size: 0.85rem; color: #64748b;">تحديد سبب مخصص</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group" id="custom-reason-group" style="display: none; margin-top: 1rem;">
+                    <label style="font-weight: 600; color: #1e293b; margin-bottom: 0.5rem; display: block;">
+                        <i class="fa-solid fa-comment-dots" style="color: #8b5cf6; margin-left: 0.5rem;"></i>
+                        اذكر السبب
+                    </label>
+                    <textarea id="custom-rejection-reason" class="form-textarea" rows="3" placeholder="اكتب السبب هنا..." style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+                
+                <input type="hidden" id="reject-application-id" value="${applicationId}">
+            `;
+
+            const actionsHtml = `
+                <button class="modal-btn modal-btn-danger" onclick="window.membershipManager.confirmRejectFromBarzakh()" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                    <i class="fa-solid fa-check"></i>
+                    تأكيد الرفض
+                </button>
+                <button class="modal-btn modal-btn-secondary" onclick="window.closeFormModal()" style="background: #e2e8f0; color: #475569;">
+                    <i class="fa-solid fa-times"></i>
+                    إلغاء
+                </button>
+            `;
+
+            document.getElementById('formModalContent').innerHTML = formHtml;
+            document.getElementById('formModalActions').innerHTML = actionsHtml;
+            window.setFormModalTitle('رفض/حذف متقدم من البرزخ', 'fa-user-xmark');
+            window.openFormModal();
+
+            // إضافة مستمعات للأحداث
+            setTimeout(() => {
+                const radioOptions = document.querySelectorAll('.radio-option');
+                const customReasonGroup = document.getElementById('custom-reason-group');
+                const otherRadio = document.getElementById('reason-other');
+
+                // تأثيرات بصرية عند التحديد
+                radioOptions.forEach(option => {
+                    const radio = option.querySelector('input[type="radio"]');
+                    radio.addEventListener('change', () => {
+                        radioOptions.forEach(opt => {
+                            opt.style.borderColor = '#e2e8f0';
+                            opt.style.background = 'white';
+                        });
+                        if (radio.checked) {
+                            option.style.borderColor = '#3b82f6';
+                            option.style.background = '#eff6ff';
+                        }
+                    });
+                });
+
+                // إظهار حقل السبب المخصص
+                document.querySelectorAll('input[name="rejection-reason"]').forEach(radio => {
+                    radio.addEventListener('change', () => {
+                        if (otherRadio.checked) {
+                            customReasonGroup.style.display = 'block';
+                        } else {
+                            customReasonGroup.style.display = 'none';
+                        }
+                    });
+                });
+            }, 100);
+
+        } catch (error) {
+            console.error('خطأ في عرض نافذة الرفض:', error);
+            showNotification('حدث خطأ أثناء عرض نافذة الرفض', 'error');
+        }
+    }
+
+    /**
+     * تأكيد رفض متقدم من البرزخ
+     */
+    async function confirmRejectFromBarzakh() {
+        try {
+            const applicationId = document.getElementById('reject-application-id').value;
+            const selectedReason = document.querySelector('input[name="rejection-reason"]:checked');
+
+            if (!selectedReason) {
+                showNotification('يرجى اختيار سبب الرفض', 'warning');
+                return;
+            }
+
+            let rejectionNote = '';
+            if (selectedReason.value === 'withdrawn') {
+                rejectionNote = 'منسحب من المقابلة - المتقدم قرر الانسحاب وعدم المتابعة';
+            } else if (selectedReason.value === 'no_response') {
+                rejectionNote = 'لا يرد على التواصل - عدم الرد على محاولات التواصل المتكررة';
+            } else if (selectedReason.value === 'other') {
+                const customReason = document.getElementById('custom-rejection-reason').value.trim();
+                if (!customReason) {
+                    showNotification('يرجى كتابة السبب', 'warning');
+                    return;
+                }
+                rejectionNote = `سبب آخر: ${customReason}`;
+            }
+
+            window.closeFormModal();
+
+            // الحصول على معرف المستخدم الحالي
+            const { data: { user } } = await window.sbClient.auth.getUser();
+            const userId = user?.id || currentUser?.id;
+
+            // إنشاء سجل مقابلة برفض مباشر
+            const { data: interviewData, error: interviewError } = await window.sbClient
+                .from('membership_interviews')
+                .insert({
+                    application_id: applicationId,
+                    status: 'completed',
+                    result: 'rejected',
+                    notes: rejectionNote,
+                    decided_at: new Date().toISOString(),
+                    decided_by: userId
+                })
+                .select()
+                .single();
+
+            if (interviewError) throw interviewError;
+
+            showNotification('تم رفض المتقدم ونقله إلى قائمة المرفوضين', 'success');
+
+            // إعادة تحميل البرزخ
+            await loadBarzakh();
+
+        } catch (error) {
+            console.error('خطأ في رفض المتقدم:', error);
+            showNotification('حدث خطأ أثناء رفض المتقدم', 'error');
+        }
+    }
+
     // تصدير الوظائف العامة
     window.membershipManager = {
         init: initMembershipManager,
@@ -3959,6 +4166,8 @@
         rejectInterview: rejectInterview,
         cancelInterviewAdmin: cancelInterviewAdmin,
         confirmCancelInterview: confirmCancelInterview,
+        rejectFromBarzakh: rejectFromBarzakh,
+        confirmRejectFromBarzakh: confirmRejectFromBarzakh,
         loadAcceptedMembers: loadAcceptedMembers,
         viewAcceptedMember: viewAcceptedMember
     };
@@ -4019,3 +4228,73 @@ function handleEscapeKey(event) {
         window.closeApplicationModal();
     }
 }
+
+/**
+ * دالة أرشفة دورة التسجيل الحالية
+ */
+async function archiveMembershipCycle() {
+    // نافذة تأكيد
+    const confirmed = confirm(`⚠️ تحذير مهم
+
+هذا الإجراء سيقوم بـ:
+• نقل جميع الطلبات إلى الأرشيف
+• نقل جميع المقابلات إلى الأرشيف
+• نقل جميع الجلسات إلى الأرشيف
+• حذف جميع البيانات من الأقسام الحالية
+
+لن تتمكن من التراجع عن هذا الإجراء!
+
+هل أنت متأكد من الأرشفة؟`);
+    
+    if (!confirmed) return;
+    
+    // نافذة إدخال اسم الدورة
+    const cycleName = prompt('أدخل اسم الدورة للأرشيف (مثال: دورة التسجيل - خريف 1446)');
+    
+    if (!cycleName || cycleName.trim() === '') {
+        alert('يجب إدخال اسم الدورة');
+        return;
+    }
+    
+    const cycleYear = prompt('أدخل السنة الهجرية (مثال: 1446)');
+    if (!cycleYear) return;
+    
+    const cycleSeason = prompt('أدخل الموسم (spring, summer, fall, winter)');
+    if (!cycleSeason) return;
+    
+    try {
+        // عرض شريط التحميل
+        const loadingBar = document.getElementById('loadingBar');
+        if (loadingBar) loadingBar.style.display = 'block';
+        
+        // استدعاء دالة الأرشفة
+        const { data, error } = await window.sbClient.rpc('archive_membership_cycle', {
+            p_cycle_name: cycleName.trim(),
+            p_cycle_year: parseInt(cycleYear),
+            p_cycle_season: cycleSeason,
+            p_description: `أرشفة تلقائية - ${new Date().toLocaleDateString('ar-SA')}`,
+            p_archived_by: window.currentUser?.id
+        });
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0 && data[0].success) {
+            alert(`✅ ${data[0].message}\n\nالأقسام الآن فارغة وجاهزة لدورة جديدة.`);
+            
+            // إعادة تحميل الصفحة
+            location.reload();
+        } else {
+            alert('❌ فشلت عملية الأرشفة');
+        }
+        
+    } catch (error) {
+        console.error('خطأ في الأرشفة:', error);
+        alert(`❌ حدث خطأ أثناء الأرشفة:\n${error.message}`);
+    } finally {
+        const loadingBar = document.getElementById('loadingBar');
+        if (loadingBar) loadingBar.style.display = 'none';
+    }
+}
+
+// تصدير الدالة
+window.archiveMembershipCycle = archiveMembershipCycle;

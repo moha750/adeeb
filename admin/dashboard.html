@@ -8,6 +8,7 @@
     <meta name="robots" content="noindex, nofollow" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
     <link rel="stylesheet" href="dashboard.css" />
+    <!-- <link rel="stylesheet" href="dashboard-archives.css" /> -->
 </head>
 
 <body>
@@ -855,6 +856,46 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- بطاقة أرشفة التسجيل -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-box-archive"></i>
+                            أرشفة التسجيل الحالي
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning" style="background: #fef3c7; border-right: 4px solid #f59e0b; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                            <i class="fa-solid fa-exclamation-triangle" style="color: #f59e0b;"></i>
+                            <strong>تحذير:</strong> الأرشفة ستنقل جميع البيانات الحالية إلى الأرشيف وتحذفها من الأقسام، 
+                            مما يجعل النظام جاهزاً لدورة تسجيل جديدة.
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="text-align: center; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                                <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem;">الطلبات الحالية</div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #3b82f6;" id="currentApplicationsCount">0</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                                <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem;">المقابلات الحالية</div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #8b5cf6;" id="currentInterviewsCount">0</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                                <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem;">الجلسات الحالية</div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #10b981;" id="currentSessionsCount">0</div>
+                            </div>
+                        </div>
+                        
+                        <button 
+                            class="btn btn-danger" 
+                            onclick="archiveMembershipCycle()"
+                            style="width: 100%; background: #ef4444; border: none; padding: 0.875rem; font-size: 1rem; font-weight: 600; cursor: pointer; border-radius: 8px; color: white; transition: all 0.3s ease;">
+                            <i class="fa-solid fa-box-archive"></i>
+                            أرشفة التسجيل الحالي
+                        </button>
+                    </div>
+                </div>
             </section>
 
             <!-- قسم اللجان المتاحة للتسجيل -->
@@ -1142,7 +1183,6 @@
                 </div>
 
                 <!-- جدول نتائج العضوية -->
-
                 <div class="card">
                     <div class="card-body">
                         <div id="decisionsTable" class="data-table">
@@ -1152,14 +1192,14 @@
                 </div>
             </section>
 
-            <!-- قسم أرشيف فتح التسجيل -->
+            <!-- قسم أرشيف التسجيل -->
             <section id="membership-archives-section" class="admin-section" style="display: none;">
                 <div class="section-header">
                     <h1>
                         <i class="fa-solid fa-box-archive"></i>
-                        أرشيف فتح التسجيل
+                        أرشيف التسجيل
                     </h1>
-                    <p class="section-subtitle">سجل تاريخي لفترات فتح وإغلاق التسجيل</p>
+                    <p class="section-subtitle">سجل تاريخي كامل لدورات التسجيل المؤرشفة</p>
                 </div>
 
                 <!-- إحصائيات الأرشيف -->
@@ -1167,39 +1207,35 @@
                     <div class="stat-card">
                         <i class="fa-solid fa-folder-open stat-icon" style="color: #3b82f6;"></i>
                         <div class="stat-info">
-                            <h3>إجمالي الأرشيفات</h3>
-                            <p class="stat-value" id="totalArchivesCount">0</p>
+                            <h3>الدورات المؤرشفة</h3>
+                            <p class="stat-value" id="archivesCount">0</p>
                         </div>
                     </div>
                     <div class="stat-card">
                         <i class="fa-solid fa-users stat-icon" style="color: #10b981;"></i>
                         <div class="stat-info">
                             <h3>إجمالي الطلبات</h3>
-                            <p class="stat-value" id="totalArchivedApplicationsCount">0</p>
+                            <p class="stat-value" id="totalArchivedApplications">0</p>
                         </div>
                     </div>
                     <div class="stat-card">
-                        <i class="fa-solid fa-calendar-check stat-icon" style="color: #8b5cf6;"></i>
+                        <i class="fa-solid fa-user-check stat-icon" style="color: #8b5cf6;"></i>
                         <div class="stat-info">
-                            <h3>آخر فترة تسجيل</h3>
-                            <p class="stat-value" id="lastArchivePeriod" style="font-size: 0.9rem;">-</p>
+                            <h3>إجمالي المقبولين</h3>
+                            <p class="stat-value" id="totalAcceptedMembers">0</p>
                         </div>
                     </div>
                     <div class="stat-card">
                         <i class="fa-solid fa-chart-line stat-icon" style="color: #f59e0b;"></i>
                         <div class="stat-info">
                             <h3>معدل القبول</h3>
-                            <p class="stat-value" id="averageAcceptanceRate">0%</p>
+                            <p class="stat-value" id="overallAcceptanceRate">0%</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- أزرار الإجراءات -->
                 <div class="filters-bar">
-                    <button class="btn-primary" id="createManualArchiveBtn">
-                        <i class="fa-solid fa-plus"></i>
-                        إنشاء أرشيف يدوي
-                    </button>
                     <button class="btn-outline" id="refreshArchivesBtn">
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
@@ -1207,7 +1243,7 @@
                 </div>
 
                 <!-- قائمة الأرشيفات -->
-                <div id="archivesContainer">
+                <div id="archivesTable">
                     <!-- سيتم ملؤها ديناميكياً -->
                 </div>
             </section>
@@ -1927,7 +1963,9 @@
     <script src="js/site-visits-manager.js"></script>
     <script src="js/surveys-manager.js"></script>
     <script src="js/surveys-results-enhanced.js"></script>
+    <script src="js/membership-archives.js"></script>
     <script src="dashboard.js"></script>
+    <!-- <link rel="stylesheet" href="css/archives.css"> -->
 </body>
 
 </html>
