@@ -256,11 +256,33 @@
     }
 
     /**
+     * تحديث حالة زر تفعيل Push
+     */
+    function updatePushButtonState() {
+        const enablePushBtn = document.getElementById('enablePushBtn');
+        if (!enablePushBtn) return;
+
+        if (Notification.permission === 'granted' && pushSubscription) {
+            enablePushBtn.innerHTML = '<i class="fa-solid fa-bell"></i>';
+            enablePushBtn.title = 'إشعارات الجوال مفعلة';
+            enablePushBtn.style.color = '#10b981';
+        } else if (Notification.permission === 'denied') {
+            enablePushBtn.innerHTML = '<i class="fa-solid fa-bell-slash"></i>';
+            enablePushBtn.title = 'تم رفض إذن الإشعارات';
+            enablePushBtn.style.color = '#ef4444';
+        } else {
+            enablePushBtn.innerHTML = '<i class="fa-solid fa-bell-slash"></i>';
+            enablePushBtn.title = 'اضغط لتفعيل إشعارات الجوال';
+            enablePushBtn.style.color = '#94a3b8';
+        }
+    }
+
+    /**
      * طلب إذن Push Notifications
      */
     async function requestPushPermission() {
         if (!('Notification' in window)) {
-            console.log('Push notifications not supported');
+            alert('متصفحك لا يدعم الإشعارات');
             return;
         }
 
@@ -269,11 +291,17 @@
             return;
         }
 
-        if (Notification.permission !== 'denied') {
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                await subscribeToPush();
-            }
+        if (Notification.permission === 'denied') {
+            alert('تم رفض إذن الإشعارات مسبقاً. يرجى تفعيلها من إعدادات المتصفح.');
+            return;
+        }
+
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            await subscribeToPush();
+            alert('✅ تم تفعيل إشعارات الجوال بنجاح!');
+        } else {
+            alert('❌ تم رفض إذن الإشعارات');
         }
     }
 
@@ -312,8 +340,10 @@
 
             pushSubscription = subscription;
             console.log('✅ Push subscription saved');
+            updatePushButtonState();
         } catch (error) {
             console.error('Error subscribing to push:', error);
+            alert('حدث خطأ أثناء تفعيل الإشعارات: ' + error.message);
         }
     }
 
@@ -347,6 +377,16 @@
      * إعداد مستمعات الأحداث
      */
     function setupEventListeners() {
+        // زر تفعيل Push Notifications
+        const enablePushBtn = document.getElementById('enablePushBtn');
+        if (enablePushBtn) {
+            enablePushBtn.addEventListener('click', async () => {
+                await requestPushPermission();
+                updatePushButtonState();
+            });
+            updatePushButtonState();
+        }
+
         // زر تعليم الكل كمقروء
         const markAllBtn = document.getElementById('markAllReadBtn');
         if (markAllBtn) {
