@@ -48,10 +48,17 @@
                     <i class="fa-solid fa-bell"></i>
                     <span class="notifications-badge" id="notificationsBadge">0</span>
                 </button>
+                <!-- Backdrop للإشعارات -->
+                <div class="notifications-backdrop" id="notificationsBackdrop"></div>
                 <div class="notifications-dropdown" id="notificationsDropdown">
                     <div class="notifications-header">
                         <h3>الإشعارات</h3>
-                        <button class="btn-text" id="markAllReadBtn">تعليم الكل كمقروء</button>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="btn-text" id="markAllReadBtn">تعليم الكل كمقروء</button>
+                            <button class="btn-icon" id="closeNotificationsBtn" title="إغلاق">
+                                <i class="fa-solid fa-times"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="notifications-list" id="notificationsList">
                         <div class="empty-notifications">

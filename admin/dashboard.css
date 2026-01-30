@@ -97,21 +97,6 @@
     --layout-padding: 20px;
 }
 
-/* Dark Mode Variables */
-[data-theme="dark"] {
-    --main-blue: #3d5a7f;
-    --accent-blue: #5ba3e0;
-    --gold: #e6c04e;
-    --text-dark: #e2e8f0;
-    --text-light: #94a3b8;
-    --bg-light: #1e293b;
-    --bg-white: #0f172a;
-    --border-color: #334155;
-    --success: #22c55e;
-    --error: #f87171;
-    --warning: #fbbf24;
-    --info: #60a5fa;
-}
 
 * {
     margin: 0;
@@ -262,6 +247,25 @@ body {
     position: relative;
 }
 
+.notifications-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 999;
+    backdrop-filter: blur(4px);
+}
+
+.notifications-backdrop.active {
+    opacity: 1;
+    visibility: visible;
+}
+
 .notifications-btn {
     position: relative;
     width: 40px;
@@ -306,18 +310,19 @@ body {
 }
 
 .notifications-dropdown {
-    position: absolute;
-    top: calc(100% + 12px);
-    right: 0;
-    width: 380px;
-    max-height: 500px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    width: 450px;
+    max-width: 90vw;
+    max-height: 600px;
     background: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
     border: 1px solid var(--border-color);
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-10px);
     transition: all 0.3s ease;
     z-index: 1000;
     overflow: hidden;
@@ -328,7 +333,7 @@ body {
 .notifications-dropdown.active {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    transform: translate(-50%, -50%) scale(1);
 }
 
 .notifications-header {
@@ -4143,148 +4148,6 @@ body.no-scroll {
         flex-direction: column;
         gap: 0.5rem;
     }
-    
-    /* تنسيقات الإشعارات للشاشات الصغيرة */
-    .notifications-dropdown {
-        width: calc(100vw - 32px);
-        max-width: 380px;
-        right: 16px !important;
-        left: auto !important;
-        transform-origin: top right;
-    }
-    
-    .notifications-dropdown.active {
-        transform: translateY(0) !important;
-    }
-}
-
-/* =====================================================
-   Dark Mode Additional Styles
-   ===================================================== */
-
-[data-theme="dark"] {
-    /* Cards */
-    .card {
-        background: var(--bg-white);
-        border-color: var(--border-color);
-    }
-
-    .card-header {
-        border-color: var(--border-color);
-    }
-
-    /* Sidebar */
-    .admin-sidebar {
-        background: var(--bg-white);
-        border-color: var(--border-color);
-    }
-
-    .nav-item {
-        color: var(--text-dark);
-    }
-
-    .nav-item:hover {
-        background: var(--bg-light);
-    }
-
-    .nav-item.active {
-        background: var(--accent-blue);
-        color: white;
-    }
-
-    /* Header */
-    .admin-header {
-        background: var(--bg-white);
-        border-color: var(--border-color);
-    }
-
-    /* Inputs & Selects */
-    input[type="text"],
-    input[type="email"],
-    input[type="password"],
-    input[type="tel"],
-    input[type="date"],
-    input[type="number"],
-    input[type="url"],
-    textarea,
-    select,
-    .filter-select {
-        background: var(--bg-light);
-        color: var(--text-dark);
-        border-color: var(--border-color);
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-        color: var(--text-light);
-    }
-
-    /* Modals */
-    .modal-content,
-    .custom-modal-container {
-        background: var(--bg-white);
-    }
-
-    /* Tables */
-    .data-table table {
-        background: var(--bg-white);
-    }
-
-    .data-table th {
-        background: var(--bg-light);
-        color: var(--text-dark);
-    }
-
-    .data-table tr:hover {
-        background: var(--bg-light);
-    }
-
-    /* Stat Cards */
-    .stat-card {
-        background: var(--bg-white);
-    }
-
-    /* Notifications */
-    .notifications-dropdown {
-        background: var(--bg-white);
-        border-color: var(--border-color);
-    }
-
-    .notification-item {
-        border-color: var(--border-color);
-    }
-
-    .notification-item:hover {
-        background: var(--bg-light);
-    }
-
-    /* Buttons */
-    .btn-outline {
-        border-color: var(--border-color);
-        color: var(--text-dark);
-    }
-
-    .btn-outline:hover {
-        background: var(--bg-light);
-    }
-
-    /* Dropdowns */
-    .nav-dropdown-menu,
-    .nav-nested-menu {
-        background: var(--bg-white);
-        border-color: var(--border-color);
-    }
-
-    .nav-dropdown-item:hover,
-    .nav-nested-item:hover {
-        background: var(--bg-light);
-    }
-
-    /* App Download Buttons */
-    .app-download-btn {
-        background: var(--bg-white);
-        border: 1px solid var(--border-color);
-    }
 }
 
 /* =====================================================
@@ -4532,40 +4395,6 @@ body.no-scroll {
     line-height: 1.6;
 }
 
-/* =====================================================
-   Dark Mode Support for New Components
-   ===================================================== */
-
-[data-theme="dark"] .theme-option-btn {
-    background: var(--bg-secondary);
-    border-color: var(--border-color);
-}
-
-[data-theme="dark"] .theme-option-btn:hover {
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);
-}
-
-[data-theme="dark"] .pwa-install-icon {
-    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
-}
-
-[data-theme="dark"] .pwa-feature {
-    background: var(--bg-secondary);
-    border-color: var(--border-color);
-}
-
-[data-theme="dark"] .pwa-feature:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-[data-theme="dark"] .pwa-feature-icon {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%);
-}
-
-[data-theme="dark"] .pwa-info-box {
-    background: var(--bg-secondary);
-    border-right-color: var(--primary-color);
-}
 
 /* =====================================================
    Responsive Design
@@ -4642,15 +4471,6 @@ body.no-scroll {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-[data-theme="dark"] .committee-info-box,
-[data-theme="dark"] .settings-notification-box {
-    background: var(--bg-secondary);
-}
-
-[data-theme="dark"] .committee-info-box:hover,
-[data-theme="dark"] .settings-notification-box:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
 
 @media (max-width: 768px) {
     .theme-options-grid {

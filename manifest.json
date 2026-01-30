@@ -2,7 +2,7 @@
   "name": "نادي أدِيب ",
   "short_name": "أدِيب",
   "description": "نادي أدِيب - منصة إدارة النادي والأعضاء",
-  "start_url": "/",
+  "start_url": "/admin/dashboard.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",

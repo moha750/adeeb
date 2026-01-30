@@ -4425,20 +4425,45 @@
     function setupNotificationsCenter() {
         const notificationsBtn = document.getElementById('notificationsBtn');
         const notificationsDropdown = document.getElementById('notificationsDropdown');
+        const notificationsBackdrop = document.getElementById('notificationsBackdrop');
+        const closeNotificationsBtn = document.getElementById('closeNotificationsBtn');
         const markAllReadBtn = document.getElementById('markAllReadBtn');
         
         if (!notificationsBtn || !notificationsDropdown) return;
         
-        // فتح/إغلاق قائمة الإشعارات
+        // فتح قائمة الإشعارات
         notificationsBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            notificationsDropdown.classList.toggle('active');
+            notificationsDropdown.classList.add('active');
+            if (notificationsBackdrop) {
+                notificationsBackdrop.classList.add('active');
+            }
+            document.body.style.overflow = 'hidden';
         });
         
-        // إغلاق القائمة عند النقر خارجها
-        document.addEventListener('click', (e) => {
-            if (!notificationsDropdown.contains(e.target) && e.target !== notificationsBtn) {
-                notificationsDropdown.classList.remove('active');
+        // إغلاق القائمة
+        const closeNotifications = () => {
+            notificationsDropdown.classList.remove('active');
+            if (notificationsBackdrop) {
+                notificationsBackdrop.classList.remove('active');
+            }
+            document.body.style.overflow = '';
+        };
+        
+        // إغلاق عند النقر على زر الإغلاق
+        if (closeNotificationsBtn) {
+            closeNotificationsBtn.addEventListener('click', closeNotifications);
+        }
+        
+        // إغلاق عند النقر على الـ backdrop
+        if (notificationsBackdrop) {
+            notificationsBackdrop.addEventListener('click', closeNotifications);
+        }
+        
+        // إغلاق عند الضغط على ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && notificationsDropdown.classList.contains('active')) {
+                closeNotifications();
             }
         });
         

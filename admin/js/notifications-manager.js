@@ -284,8 +284,8 @@
         try {
             const registration = await navigator.serviceWorker.ready;
             
-            // مفتاح VAPID عام (يجب استبداله بمفتاح حقيقي في الإنتاج)
-            const vapidPublicKey = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib37J8xYjEB6LdoeKTHBWMi3_GvC2XJlcvxwjAq00zGgKI1VNSDAjH-ZkI8';
+            // مفتاح VAPID عام
+            const vapidPublicKey = 'BLZeg372Xih_c0f_RIcXfQbkJ2y_ALIFiZ_583AtDC8CxG1lOPFBcv9XsVFdUT5EKRu0gCZJeddZRJd6GrTDLPc';
             
             const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,

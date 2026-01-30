@@ -8,21 +8,12 @@
     const THEME_KEY = 'adeeb_theme_preference';
 
     /**
-     * تطبيق المظهر
+     * تطبيق المظهر - تم تعطيل Dark Mode
      */
     function applyTheme(theme) {
         const root = document.documentElement;
-        
-        if (theme === 'dark') {
-            root.setAttribute('data-theme', 'dark');
-        } else if (theme === 'light') {
-            root.setAttribute('data-theme', 'light');
-        } else {
-            // auto - حسب التوقيت المحلي
-            const hour = new Date().getHours();
-            const isDark = hour >= 18 || hour < 6; // من 6 مساءً إلى 6 صباحاً
-            root.setAttribute('data-theme', isDark ? 'dark' : 'light');
-        }
+        // فرض الوضع الفاتح دائماً
+        root.setAttribute('data-theme', 'light');
     }
 
     /**
@@ -36,7 +27,7 @@
      * تحميل تفضيل المظهر
      */
     function loadThemePreference() {
-        return localStorage.getItem(THEME_KEY) || 'auto';
+        return 'light'; // دائماً الوضع الفاتح
     }
 
     /**

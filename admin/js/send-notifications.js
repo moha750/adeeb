@@ -218,38 +218,41 @@
     }
 
     /**
-     * إرسال Push Notifications للمستخدمين
+     * إرسال Push Notifications للمستخدمين عبر Edge Function
      */
     async function sendPushNotifications(notification) {
         try {
-            // جلب اشتراكات المستخدمين المستهدفين
-            let query = window.sbClient
-                .from('push_subscriptions')
-                .select('*')
-                .eq('is_active', true);
+            console.log(`📱 Sending push notifications for notification ID: ${notification.id}`);
 
-            // تصفية حسب الجمهور المستهدف
-            if (notification.target_audience === 'specific_users' && notification.target_user_ids) {
-                query = query.in('user_id', notification.target_user_ids);
+            // استدعاء Edge Function لإرسال الإشعارات
+            const { data, error } = await window.sbClient.functions.invoke(
+                'send-push-notification',
+                {
+                    body: { notification_id: notification.id }
+                }
+            );
+
+            if (error) {
+                console.error('❌ Error from Edge Function:', error);
+                throw error;
             }
 
-            const { data: subscriptions, error } = await query;
-
-            if (error) throw error;
-
-            console.log(`📱 Sending push to ${subscriptions.length} devices`);
-
-            // هنا يجب إرسال Push Notifications عبر الخادم
-            // في الإنتاج، يجب استخدام Edge Function أو API خارجي
+            console.log('✅ Push notifications sent:', data);
             
-            // تحديث وقت الإرسال
-            await window.sbClient
-                .from('notifications')
-                .update({ push_sent_at: new Date().toISOString() })
-                .eq('id', notification.id);
+            // عرض نتيجة الإرسال
+            if (data.successful > 0) {
+                console.log(`✅ Successfully sent to ${data.successful} devices`);
+            }
+            if (data.failed > 0) {
+                console.warn(`⚠️ Failed to send to ${data.failed} devices`);
+            }
+
+            return data;
 
         } catch (error) {
-            console.error('Error sending push notifications:', error);
+            console.error('❌ Error sending push notifications:', error);
+            // لا نفشل العملية كاملة إذا فشل Push
+            // الإشعار موجود في قاعدة البيانات على أي حال
         }
     }
 
