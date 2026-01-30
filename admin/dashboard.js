@@ -31,7 +31,19 @@
             // تحديث واجهة المستخدم
             updateUserInfo();
             await buildNavigation();
-            await loadDashboardData();
+            
+            // تهيئة نظام الإشعارات
+            if (window.notificationsManager) {
+                await window.notificationsManager.init(currentUser);
+            }
+            
+            // تهيئة نظام إرسال الإشعارات (لرئيس النادي فقط)
+            if (currentUserRole.role_level >= 10 && window.sendNotifications) {
+                await window.sendNotifications.init(currentUser);
+            }
+            
+            // فتح بطاقة العضوية كصفحة افتراضية
+            navigateToSection('membership-card-section');
             
             showLoading(false);
         } catch (error) {
@@ -84,6 +96,14 @@
         const roleLevel = currentUserRole.role_level;
         const menuItems = [];
         
+        // بطاقة العضوية - جميع المستويات (أول تبويب)
+        menuItems.push({
+            id: 'membership-card',
+            icon: 'fa-id-badge',
+            label: 'بطاقة العضوية',
+            section: 'membership-card-section'
+        });
+        
         // لوحة المعلومات - متاحة للجميع
         menuItems.push({
             id: 'dashboard',
@@ -112,9 +132,18 @@
             });
         }
         
+        // إدارة الإشعارات - رئيس النادي فقط (المستوى 10)
+        if (roleLevel >= 10) {
+            menuItems.push({
+                id: 'send-notifications',
+                icon: 'fa-paper-plane',
+                label: 'إدارة الإشعارات',
+                section: 'send-notifications-section'
+            });
+        }
         
-        // إحصائيات الزيارات - المستوى 5 فأعلى
-        if (roleLevel >= 5) {
+        // إحصائيات الزيارات - المستوى 6 فأعلى (مخفي عن العضو)
+        if (roleLevel >= 6) {
             menuItems.push({
                 id: 'site-visits',
                 icon: 'fa-chart-line',
@@ -144,8 +173,8 @@
             });
         }
         
-        // إدارة العضوية - المستوى 5 وأعلى (قائمة منسدلة)
-        if (roleLevel >= 5) {
+        // إدارة العضوية - المستوى 6 وأعلى (مخفي عن العضو)
+        if (roleLevel >= 6) {
             const membershipSubItems = [];
             
             // باب التسجيل - قائمة فرعية
@@ -353,6 +382,14 @@
             section: 'profile-section'
         });
 
+        // لجنتي - جميع المستويات (سيتم إخفاؤه للأعضاء غير المنتمين للجان)
+        menuItems.push({
+            id: 'my-committee',
+            icon: 'fa-users',
+            label: 'لجنتي',
+            section: 'my-committee-section'
+        });
+
         // الإعدادات - جميع المستويات
         menuItems.push({
             id: 'settings',
@@ -421,7 +458,7 @@
             } else {
                 // عنصر قائمة عادي
                 return `
-                    <a href="#" class="nav-item ${item.id === 'dashboard' ? 'active' : ''}" data-section="${item.section}">
+                    <a href="#" class="nav-item ${item.id === 'membership-card' ? 'active' : ''}" data-section="${item.section}">
                         <i class="fa-solid ${item.icon}"></i>
                         <span>${item.label}</span>
                     </a>
@@ -586,12 +623,15 @@
             // عرض الإحصائيات
             statsGrid.innerHTML = stats.map(stat => `
                 <div class="stat-card" style="--stat-color: ${stat.color}">
-                    <div class="stat-icon">
-                        <i class="fa-solid ${stat.icon}"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value">${stat.value}</div>
-                        <div class="stat-label">${stat.label}</div>
+                    ${stat.badge ? `<div class="stat-badge">${stat.badge}</div>` : ''}
+                    <div class="stat-card-wrapper">
+                        <div class="stat-icon">
+                            <i class="fa-solid ${stat.icon}"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">${stat.value}</div>
+                            <div class="stat-label">${stat.label}</div>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -754,6 +794,13 @@
             case 'member-migration-section':
                 if (window.memberMigration) {
                     await window.memberMigration.init(currentUser);
+                }
+                break;
+            case 'my-committee-section':
+            case 'membership-card-section':
+            case 'profile-section':
+                if (window.profileManager) {
+                    await window.profileManager.init(currentUser);
                 }
                 break;
             case 'website-works-section':
@@ -1409,6 +1456,9 @@
         if (refreshActivities) {
             refreshActivities.addEventListener('click', loadRecentActivities);
         }
+        
+        // إعداد مركز الإشعارات
+        setupNotificationsCenter();
 
         // نافذة إضافة مستخدم
         const addUserBtn = document.getElementById('addUserBtn');
@@ -2118,7 +2168,7 @@
     };
 
     // فتح نافذة إضافة/تعديل لجنة
-    function openCommitteeModal(committeeId = null) {
+    async function openCommitteeModal(committeeId = null) {
         const modal = document.getElementById('committeeModal');
         const title = document.getElementById('committeeModalTitle');
         const form = document.getElementById('committeeForm');
@@ -2127,8 +2177,28 @@
 
         if (committeeId) {
             title.textContent = 'تعديل لجنة';
-            // TODO: تحميل بيانات اللجنة
-            form.dataset.committeeId = committeeId;
+            
+            // تحميل بيانات اللجنة
+            try {
+                const { data: committee, error } = await sb
+                    .from('committees')
+                    .select('*')
+                    .eq('id', committeeId)
+                    .single();
+
+                if (error) throw error;
+
+                document.getElementById('committeeNameAr').value = committee.committee_name_ar || '';
+                document.getElementById('committeeDescription').value = committee.description || '';
+                document.getElementById('committeeGroupLink').value = committee.group_link || '';
+                document.getElementById('committeeIsActive').checked = committee.is_active;
+                
+                form.dataset.committeeId = committeeId;
+            } catch (error) {
+                console.error('Error loading committee:', error);
+                alert('فشل تحميل بيانات اللجنة');
+                modal.classList.remove('active');
+            }
         } else {
             title.textContent = 'إضافة لجنة جديدة';
             form.reset();
@@ -2144,6 +2214,7 @@
 
         const nameAr = document.getElementById('committeeNameAr').value;
         const description = document.getElementById('committeeDescription').value;
+        const groupLink = document.getElementById('committeeGroupLink').value;
         const isActive = document.getElementById('committeeIsActive').checked;
 
         try {
@@ -2156,6 +2227,7 @@
                     .update({
                         committee_name_ar: nameAr,
                         description: description,
+                        group_link: groupLink,
                         is_active: isActive
                     })
                     .eq('id', committeeId);
@@ -2170,6 +2242,7 @@
                     .insert({
                         committee_name_ar: nameAr,
                         description: description,
+                        group_link: groupLink,
                         is_active: isActive
                     });
 
@@ -2211,14 +2284,6 @@
                 .eq('committee_id', committeeId)
                 .eq('is_active', true);
 
-            // جلب المشاريع
-            const { data: projects, error: projectsError } = await sb
-                .from('projects')
-                .select('*')
-                .eq('committee_id', committeeId)
-                .order('created_at', { ascending: false })
-                .limit(5);
-
             // بناء محتوى النافذة
             let content = `
                 <div style="padding: 20px;">
@@ -2230,6 +2295,7 @@
                         <p><strong>الوصف:</strong> ${committee.description || 'لا يوجد وصف'}</p>
                         <p><strong>الحالة:</strong> <span class="badge ${committee.is_active ? 'success' : 'error'}">${committee.is_active ? 'نشطة' : 'غير نشطة'}</span></p>
                         <p><strong>تاريخ الإنشاء:</strong> ${new Date(committee.created_at).toLocaleDateString('ar-SA')}</p>
+                        ${committee.group_link ? `<p><strong>رابط القروب:</strong> <a href="${committee.group_link}" target="_blank" style="color: var(--main-blue);">افتح الرابط</a></p>` : ''}
                     </div>
 
                     <h3 style="margin: 20px 0 10px;">الأعضاء (${members?.length || 0})</h3>
@@ -2244,18 +2310,6 @@
                                 </div>
                             </div>
                         `).join('') : '<p style="color: var(--text-light);">لا يوجد أعضاء</p>'}
-                    </div>
-
-                    <h3 style="margin: 20px 0 10px;">المشاريع الأخيرة (${projects?.length || 0})</h3>
-                    <div style="display: grid; gap: 10px;">
-                        ${projects && projects.length > 0 ? projects.map(project => `
-                            <div style="padding: 10px; background: white; border-radius: 8px; border: 1px solid var(--border-color);">
-                                <strong>${project.project_name}</strong>
-                                <div style="font-size: 0.9rem; color: var(--text-light); margin-top: 5px;">
-                                    ${project.description || 'لا يوجد وصف'}
-                                </div>
-                            </div>
-                        `).join('') : '<p style="color: var(--text-light);">لا توجد مشاريع</p>'}
                     </div>
 
                     <div style="margin-top: 20px; text-align: center;">
@@ -4362,6 +4416,137 @@
                     showLoading(false);
                 }
             });
+        }
+    }
+
+    // =====================================================
+    // مركز الإشعارات
+    // =====================================================
+    function setupNotificationsCenter() {
+        const notificationsBtn = document.getElementById('notificationsBtn');
+        const notificationsDropdown = document.getElementById('notificationsDropdown');
+        const markAllReadBtn = document.getElementById('markAllReadBtn');
+        
+        if (!notificationsBtn || !notificationsDropdown) return;
+        
+        // فتح/إغلاق قائمة الإشعارات
+        notificationsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notificationsDropdown.classList.toggle('active');
+        });
+        
+        // إغلاق القائمة عند النقر خارجها
+        document.addEventListener('click', (e) => {
+            if (!notificationsDropdown.contains(e.target) && e.target !== notificationsBtn) {
+                notificationsDropdown.classList.remove('active');
+            }
+        });
+        
+        // تعليم الكل كمقروء
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', async () => {
+                await markAllNotificationsAsRead();
+            });
+        }
+        
+        // تحميل الإشعارات
+        loadNotifications();
+    }
+    
+    async function loadNotifications() {
+        try {
+            const notificationsList = document.getElementById('notificationsList');
+            const notificationsBadge = document.getElementById('notificationsBadge');
+            
+            if (!notificationsList) return;
+            
+            // هنا يمكن جلب الإشعارات من قاعدة البيانات
+            // مثال مؤقت:
+            const notifications = [];
+            
+            if (notifications.length === 0) {
+                notificationsList.innerHTML = `
+                    <div class="empty-notifications">
+                        <i class="fa-solid fa-bell-slash"></i>
+                        <p>لا توجد إشعارات جديدة</p>
+                    </div>
+                `;
+                notificationsBadge.textContent = '0';
+                notificationsBadge.style.display = 'none';
+            } else {
+                const unreadCount = notifications.filter(n => !n.is_read).length;
+                notificationsBadge.textContent = unreadCount;
+                notificationsBadge.style.display = unreadCount > 0 ? 'flex' : 'none';
+                
+                notificationsList.innerHTML = notifications.map(notification => `
+                    <div class="notification-item ${!notification.is_read ? 'unread' : ''}" 
+                         data-notification-id="${notification.id}">
+                        <div class="notification-icon ${notification.type}">
+                            <i class="fa-solid ${getNotificationIcon(notification.type)}"></i>
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-title">${notification.title}</div>
+                            <div class="notification-message">${notification.message}</div>
+                            <div class="notification-time">${formatTimeAgo(notification.created_at)}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // إضافة مستمعات للنقر على الإشعارات
+                document.querySelectorAll('.notification-item').forEach(item => {
+                    item.addEventListener('click', async () => {
+                        const notificationId = item.dataset.notificationId;
+                        await markNotificationAsRead(notificationId);
+                        item.classList.remove('unread');
+                        updateNotificationsBadge();
+                    });
+                });
+            }
+        } catch (error) {
+            console.error('Error loading notifications:', error);
+        }
+    }
+    
+    function getNotificationIcon(type) {
+        const icons = {
+            'info': 'fa-info-circle',
+            'success': 'fa-check-circle',
+            'warning': 'fa-exclamation-triangle',
+            'error': 'fa-times-circle'
+        };
+        return icons[type] || 'fa-bell';
+    }
+    
+    async function markNotificationAsRead(notificationId) {
+        try {
+            // تحديث حالة الإشعار في قاعدة البيانات
+            // await sb.from('notifications').update({ is_read: true }).eq('id', notificationId);
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    }
+    
+    async function markAllNotificationsAsRead() {
+        try {
+            // تحديث جميع الإشعارات في قاعدة البيانات
+            // await sb.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id);
+            
+            // تحديث الواجهة
+            document.querySelectorAll('.notification-item.unread').forEach(item => {
+                item.classList.remove('unread');
+            });
+            updateNotificationsBadge();
+        } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+        }
+    }
+    
+    function updateNotificationsBadge() {
+        const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+        const badge = document.getElementById('notificationsBadge');
+        if (badge) {
+            badge.textContent = unreadCount;
+            badge.style.display = unreadCount > 0 ? 'flex' : 'none';
         }
     }
 

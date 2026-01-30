@@ -825,32 +825,49 @@
             container.innerHTML = `
                 <div class="results-overview">
                     <div class="stats-grid">
-                        <div class="stat-card">
-                            <i class="fa-solid fa-users stat-icon"></i>
-                            <div class="stat-info">
-                                <h3>إجمالي الاستجابات</h3>
-                                <p class="stat-value">${responses.length}</p>
+                        <div class="stat-card" style="--stat-color: #3b82f6">
+                            <div class="stat-card-wrapper">
+                                <div class="stat-icon">
+                                    <i class="fa-solid fa-users"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value">${responses.length}</div>
+                                    <div class="stat-label">إجمالي الاستجابات</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="stat-card">
-                            <i class="fa-solid fa-check-circle stat-icon"></i>
-                            <div class="stat-info">
-                                <h3>استجابات مكتملة</h3>
-                                <p class="stat-value">${completedResponses.length}</p>
+                        <div class="stat-card" style="--stat-color: #10b981">
+                            <div class="stat-badge"><i class="fa-solid fa-check"></i> ${completionRate}%</div>
+                            <div class="stat-card-wrapper">
+                                <div class="stat-icon">
+                                    <i class="fa-solid fa-check-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value">${completedResponses.length}</div>
+                                    <div class="stat-label">استجابات مكتملة</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="stat-card">
-                            <i class="fa-solid fa-percentage stat-icon"></i>
-                            <div class="stat-info">
-                                <h3>معدل الإكمال</h3>
-                                <p class="stat-value">${completionRate}%</p>
+                        <div class="stat-card" style="--stat-color: #8b5cf6">
+                            <div class="stat-card-wrapper">
+                                <div class="stat-icon">
+                                    <i class="fa-solid fa-percentage"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value">${completionRate}%</div>
+                                    <div class="stat-label">معدل الإكمال</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="stat-card">
-                            <i class="fa-solid fa-eye stat-icon"></i>
-                            <div class="stat-info">
-                                <h3>المشاهدات</h3>
-                                <p class="stat-value">${survey.total_views || 0}</p>
+                        <div class="stat-card" style="--stat-color: #f59e0b">
+                            <div class="stat-card-wrapper">
+                                <div class="stat-icon">
+                                    <i class="fa-solid fa-eye"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value">${survey.total_views || 0}</div>
+                                    <div class="stat-label">المشاهدات</div>
+                                </div>
                             </div>
                         </div>
                     </div>

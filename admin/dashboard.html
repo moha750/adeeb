@@ -6,9 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>لوحة التحكم — نظام إدارة نادي أديب</title>
     <meta name="robots" content="noindex, nofollow" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="أدِيب" />
+    <link rel="manifest" href="../manifest.json" />
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
     <link rel="stylesheet" href="dashboard.css" />
     <link rel="stylesheet" href="css/member-migration.css" />
+    <link rel="stylesheet" href="css/notifications.css" />
     <!-- <link rel="stylesheet" href="dashboard-archives.css" /> -->
 </head>
 
@@ -24,12 +33,36 @@
             <button id="toggleSidebar" title="القائمة">
                 <i class="fa-solid fa-bars"></i>
             </button>
+            
             <div class="user-info">
                 <div class="user-greeting">
                     <span id="greetingText" class="greeting-text"></span>
                     <span id="userName" class="user-name"></span>
                 </div>
                 <img id="userAvatar" class="user-avatar" src="" alt="صورة المستخدم" />
+            </div>
+            
+            <!-- مركز الإشعارات -->
+            <div class="notifications-center">
+                <button id="notificationsBtn" class="notifications-btn" title="الإشعارات">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="notifications-badge" id="notificationsBadge">0</span>
+                </button>
+                <div class="notifications-dropdown" id="notificationsDropdown">
+                    <div class="notifications-header">
+                        <h3>الإشعارات</h3>
+                        <button class="btn-text" id="markAllReadBtn">تعليم الكل كمقروء</button>
+                    </div>
+                    <div class="notifications-list" id="notificationsList">
+                        <div class="empty-notifications">
+                            <i class="fa-solid fa-bell-slash"></i>
+                            <p>لا توجد إشعارات جديدة</p>
+                        </div>
+                    </div>
+                    <div class="notifications-footer">
+                        <a href="#" id="viewAllNotifications">عرض جميع الإشعارات</a>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -257,32 +290,48 @@
 
                 <!-- إحصائيات الاستبيانات -->
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <i class="fa-solid fa-clipboard-list stat-icon"></i>
-                        <div class="stat-info">
-                            <h3>إجمالي الاستبيانات</h3>
-                            <p class="stat-value" id="totalSurveysCount">0</p>
+                    <div class="stat-card" style="--stat-color: #3b82f6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-clipboard-list"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalSurveysCount">0</div>
+                                <div class="stat-label">إجمالي الاستبيانات</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-chart-line stat-icon"></i>
-                        <div class="stat-info">
-                            <h3>استبيانات نشطة</h3>
-                            <p class="stat-value" id="activeSurveysCount">0</p>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="activeSurveysCount">0</div>
+                                <div class="stat-label">استبيانات نشطة</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-users stat-icon"></i>
-                        <div class="stat-info">
-                            <h3>إجمالي الاستجابات</h3>
-                            <p class="stat-value" id="totalResponsesCount">0</p>
+                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalResponsesCount">0</div>
+                                <div class="stat-label">إجمالي الاستجابات</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-check-circle stat-icon"></i>
-                        <div class="stat-info">
-                            <h3>استجابات مكتملة</h3>
-                            <p class="stat-value" id="completedResponsesCount">0</p>
+                    <div class="stat-card" style="--stat-color: #f59e0b">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="completedResponsesCount">0</div>
+                                <div class="stat-label">استجابات مكتملة</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -483,10 +532,6 @@
                             <i class="fa-solid fa-user"></i>
                             المعلومات الأساسية
                         </h3>
-                        <button class="btn-primary" id="editProfileBtn">
-                            <i class="fa-solid fa-pen"></i>
-                            تعديل
-                        </button>
                     </div>
                     <div class="card-body">
                         <div style="display: grid; gap: 1.5rem;">
@@ -494,10 +539,6 @@
                                 <div style="position: relative;">
                                     <img id="profileAvatar" src="" alt="الصورة الشخصية" 
                                          style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #e2e8f0;">
-                                    <button id="changeAvatarBtn" class="btn-sm btn-primary" 
-                                            style="position: absolute; bottom: 0; right: 0; border-radius: 50%; width: 32px; height: 32px; padding: 0;">
-                                        <i class="fa-solid fa-camera"></i>
-                                    </button>
                                 </div>
                                 <div>
                                     <h3 id="profileFullName" style="margin: 0 0 0.5rem 0; color: #274060;">جاري التحميل...</h3>
@@ -529,48 +570,74 @@
                     </div>
                 </div>
 
-                <!-- بطاقة الأمان -->
-                <div class="card" style="margin-bottom: 2rem;">
+                <!-- بطاقة البيانات التفصيلية -->
+                <div class="card" style="margin-bottom: 2rem;" id="memberDetailsCard">
                     <div class="card-header">
                         <h3>
-                            <i class="fa-solid fa-lock"></i>
-                            الأمان
+                            <i class="fa-solid fa-id-card"></i>
+                            البيانات التفصيلية
                         </h3>
                     </div>
                     <div class="card-body">
-                        <div style="display: grid; gap: 1.5rem;">
-                            <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #3b82f6;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                                    <div>
-                                        <h4 style="margin: 0 0 0.5rem 0; color: #274060;">
-                                            <i class="fa-solid fa-key"></i>
-                                            كلمة المرور
-                                        </h4>
-                                        <p style="margin: 0; color: #64748b; font-size: 0.875rem;">
-                                            آخر تغيير: <span id="lastPasswordChange">غير معروف</span>
-                                        </p>
-                                    </div>
-                                    <button class="btn-outline" id="changePasswordBtn">
-                                        <i class="fa-solid fa-pen"></i>
-                                        تغيير كلمة المرور
-                                    </button>
-                                </div>
+                        <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                            <div>
+                                <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">رقم الهوية الوطنية</label>
+                                <p id="profileNationalId" style="margin: 0; color: #274060;">غير محدد</p>
                             </div>
-                            <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #10b981;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                                    <div>
-                                        <h4 style="margin: 0 0 0.5rem 0; color: #274060;">
-                                            <i class="fa-solid fa-desktop"></i>
-                                            الجلسات النشطة
-                                        </h4>
-                                        <p style="margin: 0; color: #64748b; font-size: 0.875rem;">
-                                            <span id="activeSessionsCount">1</span> جلسة نشطة حالياً
-                                        </p>
-                                    </div>
-                                    <button class="btn-outline" id="viewSessionsBtn">
-                                        <i class="fa-solid fa-eye"></i>
-                                        عرض الجلسات
-                                    </button>
+                            <div>
+                                <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">الرقم الأكاديمي</label>
+                                <p id="profileAcademicRecord" style="margin: 0; color: #274060;">غير محدد</p>
+                            </div>
+                            <div>
+                                <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">تاريخ الميلاد</label>
+                                <p id="profileBirthDate" style="margin: 0; color: #274060;">غير محدد</p>
+                            </div>
+                            <div>
+                                <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">الدرجة الأكاديمية</label>
+                                <p id="profileAcademicDegree" style="margin: 0; color: #274060;">غير محدد</p>
+                            </div>
+                            <div>
+                                <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">الكلية</label>
+                                <p id="profileCollege" style="margin: 0; color: #274060;">غير محدد</p>
+                            </div>
+                            <div>
+                                <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">التخصص</label>
+                                <p id="profileMajor" style="margin: 0; color: #274060;">غير محدد</p>
+                            </div>
+                            <div>
+                                <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">اللجنة</label>
+                                <p id="profileCommittee" style="margin: 0; color: #274060;">غير محدد</p>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0;">
+                            <h4 style="margin: 0 0 1rem 0; color: #274060; font-size: 0.95rem;">
+                                <i class="fa-solid fa-share-nodes"></i>
+                                حسابات التواصل الاجتماعي
+                            </h4>
+                            <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                                <div>
+                                    <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">
+                                        <i class="fa-brands fa-twitter"></i> تويتر
+                                    </label>
+                                    <p id="profileTwitter" style="margin: 0; color: #274060;">غير محدد</p>
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">
+                                        <i class="fa-brands fa-instagram"></i> إنستقرام
+                                    </label>
+                                    <p id="profileInstagram" style="margin: 0; color: #274060;">غير محدد</p>
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">
+                                        <i class="fa-brands fa-tiktok"></i> تيك توك
+                                    </label>
+                                    <p id="profileTiktok" style="margin: 0; color: #274060;">غير محدد</p>
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">
+                                        <i class="fa-brands fa-linkedin"></i> لينكد إن
+                                    </label>
+                                    <p id="profileLinkedin" style="margin: 0; color: #274060;">غير محدد</p>
                                 </div>
                             </div>
                         </div>
@@ -593,6 +660,221 @@
                 </div>
             </section>
 
+            <!-- قسم لجنتي -->
+            <section id="my-committee-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-users"></i>
+                        لجنتي
+                    </h1>
+                    <p class="section-subtitle">معلومات عن لجنتك ورابط الانضمام</p>
+                </div>
+
+                <div class="card" id="committeeInfoCard">
+                    <div class="card-body">
+                        <div style="display: grid; gap: 1.5rem;">
+                            <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white;">
+                                <i class="fa-solid fa-users" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.9;"></i>
+                                <h2 id="myCommitteeNameDisplay" style="margin: 0; font-size: 1.75rem; font-weight: bold;">جاري التحميل...</h2>
+                            </div>
+                            <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                                <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #667eea;">
+                                    <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.5rem; display: block;">
+                                        <i class="fa-solid fa-info-circle"></i> تعريف اللجنة
+                                    </label>
+                                    <p id="myCommitteeDescription" style="margin: 0; color: #274060; line-height: 1.6;">جاري التحميل...</p>
+                                </div>
+                                <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #10b981;">
+                                    <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.5rem; display: block;">
+                                        <i class="fa-solid fa-user-tie"></i> قائد اللجنة
+                                    </label>
+                                    <p id="myCommitteeLeader" style="margin: 0; color: #274060;">جاري التحميل...</p>
+                                </div>
+                                <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #f59e0b;">
+                                    <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.5rem; display: block;">
+                                        <i class="fa-solid fa-users-line"></i> عدد الأعضاء
+                                    </label>
+                                    <p id="myCommitteeMembersCount" style="margin: 0; color: #274060; font-size: 1.5rem; font-weight: bold;">0</p>
+                                </div>
+                            </div>
+                            
+                            <!-- رابط الانضمام للقروب -->
+                            <div id="myCommitteeGroupLinkContainer" style="padding: 1.5rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 12px; text-align: center; display: none;">
+                                <h3 style="margin: 0 0 1rem 0; color: white; font-size: 1.25rem;">
+                                    <i class="fa-brands fa-whatsapp"></i>
+                                    انضم إلى قروب اللجنة
+                                </h3>
+                                <a id="myCommitteeGroupLink" href="#" target="_blank" class="btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; background: white; color: #10b981; padding: 0.75rem 2rem; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">
+                                    <i class="fa-brands fa-whatsapp" style="font-size: 1.5rem;"></i>
+                                    <span>افتح الرابط</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم إدارة الإشعارات - لرئيس النادي فقط -->
+            <section id="send-notifications-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-paper-plane"></i>
+                        إدارة الإشعارات
+                    </h1>
+                    <p class="section-subtitle">إرسال إشعارات للأعضاء والمستخدمين</p>
+                </div>
+
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-bell-plus"></i>
+                            إرسال إشعار جديد
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="sendNotificationForm">
+                            <div style="display: grid; gap: 1.5rem;">
+                                <div class="form-group">
+                                    <label>عنوان الإشعار <span style="color: #ef4444;">*</span></label>
+                                    <input type="text" name="title" required placeholder="عنوان واضح ومختصر" maxlength="100">
+                                </div>
+                                <div class="form-group">
+                                    <label>نص الإشعار <span style="color: #ef4444;">*</span></label>
+                                    <textarea name="message" required placeholder="اكتب رسالة الإشعار هنا..." rows="4" maxlength="500"></textarea>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                                    <div class="form-group">
+                                        <label>نوع الإشعار</label>
+                                        <select name="type" required>
+                                            <option value="info">معلومة</option>
+                                            <option value="announcement">إعلان</option>
+                                            <option value="success">نجاح</option>
+                                            <option value="warning">تحذير</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>الأولوية</label>
+                                        <select name="priority" required>
+                                            <option value="normal">عادية</option>
+                                            <option value="high">عالية</option>
+                                            <option value="urgent">عاجلة</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>الجمهور المستهدف</label>
+                                    <select name="targetAudience" id="targetAudience" required>
+                                        <option value="all">جميع المستخدمين</option>
+                                        <option value="members">الأعضاء فقط</option>
+                                        <option value="committee_leaders">قادة اللجان</option>
+                                        <option value="specific_committee">لجنة محددة</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="committeeSelectGroup" style="display: none;">
+                                    <label>اللجنة المستهدفة</label>
+                                    <select name="targetCommittee" id="targetCommittee">
+                                        <option value="">اختر اللجنة</option>
+                                    </select>
+                                </div>
+                                <div style="padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                                    <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                                        <input type="checkbox" name="enablePush" checked style="width: 20px; height: 20px;">
+                                        <span>إرسال إشعار Push للأجهزة</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                                <button type="reset" class="btn-outline">إعادة تعيين</button>
+                                <button type="button" class="btn-primary" id="sendNotificationBtn">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                    إرسال الإشعار
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            سجل الإشعارات المرسلة
+                        </h3>
+                        <button class="btn-outline btn-sm" id="refreshHistoryBtn">
+                            <i class="fa-solid fa-rotate"></i>
+                            تحديث
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="notificationsHistoryList" style="max-height: 600px; overflow-y: auto;">
+                            <!-- سيتم ملؤه ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم بطاقة العضوية -->
+            <section id="membership-card-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-id-badge"></i>
+                        بطاقة العضوية
+                    </h1>
+                    <p class="section-subtitle">بطاقة عضويتك في نادي أدِيب</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-body" style="display: flex; justify-content: center; padding: 2rem;">
+                        <div id="membershipCard" style="width: 100%; max-width: 450px; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border-radius: 16px; padding: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; overflow: hidden;">
+                            <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                            <div style="position: absolute; bottom: -30px; left: -30px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                            
+                            <div style="position: relative; z-index: 1;">
+                                <div style="text-align: center; margin-bottom: 1.5rem;">
+                                    <img src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" alt="شعار أدِيب" style="width: 8rem; filter: brightness(0) invert(1);">
+                                    <h2 style="margin: 0.5rem 0 0 0; color: white; font-size: 1.5rem; font-weight: bold;">نادي أدِيب</h2>
+                                </div>
+
+                                <div style="text-align: center; margin-bottom: 1.5rem;">
+                                    <img id="cardAvatar" src="" alt="صورة العضو" style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid white; object-fit: cover;">
+                                </div>
+
+                                <div style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 12px; padding: 1.5rem; color: white;">
+                                    <div style="margin-bottom: 1rem;">
+                                        <label style="font-size: 0.75rem; opacity: 0.8; display: block; margin-bottom: 0.25rem;">الاسم الكامل</label>
+                                        <p id="cardFullName" style="margin: 0; font-size: 1.25rem; font-weight: bold;">جاري التحميل...</p>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                        <div>
+                                            <label style="font-size: 0.75rem; opacity: 0.8; display: block; margin-bottom: 0.25rem;">رقم الهوية</label>
+                                            <p id="cardNationalId" style="margin: 0; font-size: 0.95rem; font-weight: 600;">**********</p>
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.75rem; opacity: 0.8; display: block; margin-bottom: 0.25rem;">الرقم الأكاديمي</label>
+                                            <p id="cardAcademicRecord" style="margin: 0; font-size: 0.95rem; font-weight: 600;">**********</p>
+                                        </div>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                        <div>
+                                            <label style="font-size: 0.75rem; opacity: 0.8; display: block; margin-bottom: 0.25rem;">الدور</label>
+                                            <p id="cardRole" style="margin: 0; font-size: 0.9rem; font-weight: 600;">جاري التحميل...</p>
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.75rem; opacity: 0.8; display: block; margin-bottom: 0.25rem;">تاريخ الانضمام</label>
+                                            <p id="cardJoinDate" style="margin: 0; font-size: 0.9rem; font-weight: 600;">جاري التحميل...</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.2);">
+                                    <p style="margin: 0; font-size: 0.75rem; color: rgba(255,255,255,0.8);">رقم العضوية: <span id="cardMemberId" style="font-weight: bold;">---</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- قسم الإعدادات -->
             <section id="settings-section" class="admin-section" style="display: none;">
                 <div class="section-header">
@@ -600,71 +882,11 @@
                         <i class="fa-solid fa-sliders"></i>
                         الإعدادات
                     </h1>
-                    <p class="section-subtitle">إعدادات المظهر والتفضيلات الشخصية</p>
+                    <p class="section-subtitle">إعدادات التطبيق والتفضيلات الشخصية</p>
                 </div>
 
-                <!-- بطاقة المظهر -->
+                <!-- إعدادات الإشعارات -->
                 <div class="card" style="margin-bottom: 2rem;">
-                    <div class="card-header">
-                        <h3>
-                            <i class="fa-solid fa-palette"></i>
-                            المظهر
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label style="font-weight: bold; margin-bottom: 1rem; display: block;">
-                                <i class="fa-solid fa-moon"></i>
-                                الوضع الليلي / النهاري
-                            </label>
-                            <div style="display: grid; gap: 1rem;">
-                                <label style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;" class="theme-option">
-                                    <input type="radio" name="theme" value="light" style="width: auto;">
-                                    <div style="flex: 1;">
-                                        <div style="font-weight: 600; margin-bottom: 0.25rem;">
-                                            <i class="fa-solid fa-sun" style="color: #f59e0b;"></i>
-                                            الوضع النهاري
-                                        </div>
-                                        <div style="font-size: 0.875rem; color: #64748b;">خلفية فاتحة ونصوص داكنة</div>
-                                    </div>
-                                </label>
-
-                                <label style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;" class="theme-option">
-                                    <input type="radio" name="theme" value="dark" style="width: auto;">
-                                    <div style="flex: 1;">
-                                        <div style="font-weight: 600; margin-bottom: 0.25rem;">
-                                            <i class="fa-solid fa-moon" style="color: #6366f1;"></i>
-                                            الوضع الليلي
-                                        </div>
-                                        <div style="font-size: 0.875rem; color: #64748b;">خلفية داكنة ونصوص فاتحة</div>
-                                    </div>
-                                </label>
-
-                                <label style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;" class="theme-option">
-                                    <input type="radio" name="theme" value="auto" checked style="width: auto;">
-                                    <div style="flex: 1;">
-                                        <div style="font-weight: 600; margin-bottom: 0.25rem;">
-                                            <i class="fa-solid fa-circle-half-stroke" style="color: #8b5cf6;"></i>
-                                            تلقائي (حسب التوقيت المحلي)
-                                        </div>
-                                        <div style="font-size: 0.875rem; color: #64748b;">نهاري من 6 صباحاً - 6 مساءً، ليلي من 6 مساءً - 6 صباحاً</div>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div style="margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #3b82f6;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <i class="fa-solid fa-info-circle" style="color: #3b82f6;"></i>
-                                <strong>الوضع الحالي:</strong>
-                            </div>
-                            <div id="currentThemeStatus" style="color: #64748b;">جاري التحميل...</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- بطاقة الإشعارات -->
-                <div class="card">
                     <div class="card-header">
                         <h3>
                             <i class="fa-solid fa-bell"></i>
@@ -672,24 +894,102 @@
                         </h3>
                     </div>
                     <div class="card-body">
-                        <div class="form-group">
-                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                <input type="checkbox" id="soundNotifications" checked style="width: auto;">
-                                <span style="font-weight: bold;">تفعيل الأصوات</span>
-                            </label>
-                            <small style="color: #64748b; margin-top: 0.25rem; display: block;">
-                                تشغيل صوت عند ظهور الإشعارات
-                            </small>
+                        <div style="display: grid; gap: 1.5rem;">
+                            <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #10b981;">
+                                <label style="font-weight: bold; color: #274060; margin-bottom: 0.75rem; display: block;">
+                                    <i class="fa-solid fa-envelope"></i> إشعارات البريد الإلكتروني
+                                </label>
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <label class="switch">
+                                        <input type="checkbox" id="emailNotificationsToggle" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                    <span style="color: #64748b; font-size: 0.875rem;">قريباً - قيد التطوير</span>
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #f59e0b;">
+                                <label style="font-weight: bold; color: #274060; margin-bottom: 0.75rem; display: block;">
+                                    <i class="fa-solid fa-browser"></i> إشعارات المتصفح
+                                </label>
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <label class="switch">
+                                        <input type="checkbox" id="browserNotificationsToggle">
+                                        <span class="slider"></span>
+                                    </label>
+                                    <span style="color: #64748b; font-size: 0.875rem;">قريباً - قيد التطوير</span>
+                                </div>
+                            </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="form-group" style="margin-top: 1rem;">
-                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                <input type="checkbox" id="desktopNotifications" style="width: auto;">
-                                <span style="font-weight: bold;">إشعارات سطح المكتب</span>
-                            </label>
-                            <small style="color: #64748b; margin-top: 0.25rem; display: block;">
-                                عرض الإشعارات على سطح المكتب (يتطلب إذن المتصفح)
-                            </small>
+                <!-- تثبيت التطبيق PWA -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-mobile-screen-button"></i>
+                            تطبيق نادي أدِيب
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="pwa-install-container">
+                            <div class="pwa-install-hero">
+                                <div class="pwa-install-icon">
+                                    <i class="fa-solid fa-mobile-screen-button"></i>
+                                </div>
+                                <h3>ثبّت تطبيق نادي أدِيب</h3>
+                                <p>استمتع بتجربة أسرع وأفضل مع التطبيق على جهازك</p>
+                            </div>
+
+                            <div class="pwa-features-grid">
+                                <div class="pwa-feature">
+                                    <div class="pwa-feature-icon">
+                                        <i class="fa-solid fa-bolt"></i>
+                                    </div>
+                                    <h4>سريع وخفيف</h4>
+                                    <p>تحميل فوري وأداء ممتاز</p>
+                                </div>
+                                <div class="pwa-feature">
+                                    <div class="pwa-feature-icon">
+                                        <i class="fa-solid fa-wifi"></i>
+                                    </div>
+                                    <h4>يعمل بدون إنترنت</h4>
+                                    <p>تصفح المحتوى حتى بدون اتصال</p>
+                                </div>
+                                <div class="pwa-feature">
+                                    <div class="pwa-feature-icon">
+                                        <i class="fa-solid fa-bell"></i>
+                                    </div>
+                                    <h4>إشعارات فورية</h4>
+                                    <p>احصل على التحديثات مباشرة</p>
+                                </div>
+                                <div class="pwa-feature">
+                                    <div class="pwa-feature-icon">
+                                        <i class="fa-solid fa-download"></i>
+                                    </div>
+                                    <h4>بدون متجر</h4>
+                                    <p>تثبيت مباشر من المتصفح</p>
+                                </div>
+                            </div>
+
+                            <button id="pwaInstallBtn" class="pwa-install-btn" style="display: none;">
+                                <i class="fa-solid fa-download"></i>
+                                <span>ثبّت التطبيق الآن</span>
+                            </button>
+
+                            <div id="pwaInstalledMessage" class="pwa-installed-message" style="display: none;">
+                                <i class="fa-solid fa-check-circle"></i>
+                                <span>التطبيق مثبت بالفعل على جهازك!</span>
+                            </div>
+
+                            <div class="pwa-info-box">
+                                <i class="fa-solid fa-info-circle"></i>
+                                <div>
+                                    <strong>كيفية التثبيت:</strong>
+                                    <p>انقر على زر "ثبّت التطبيق" أعلاه، أو استخدم قائمة المتصفح واختر "تثبيت التطبيق" أو "إضافة إلى الشاشة الرئيسية"</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -707,32 +1007,48 @@
 
                 <!-- إحصائيات الصلاحيات -->
                 <div class="stats-grid" style="margin-bottom: 2rem;">
-                    <div class="stat-card">
-                        <i class="fa-solid fa-key stat-icon"></i>
-                        <div class="stat-info">
-                            <h3>إجمالي الصلاحيات</h3>
-                            <p class="stat-value" id="totalPermissionsCount">0</p>
+                    <div class="stat-card" style="--stat-color: #3b82f6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-key"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalPermissionsCount">0</div>
+                                <div class="stat-label">إجمالي الصلاحيات</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-user-shield stat-icon"></i>
-                        <div class="stat-info">
-                            <h3>الأدوار النشطة</h3>
-                            <p class="stat-value" id="totalRolesCount">0</p>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user-shield"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalRolesCount">0</div>
+                                <div class="stat-label">الأدوار النشطة</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-layer-group stat-icon"></i>
-                        <div class="stat-info">
-                            <h3>الأقسام</h3>
-                            <p class="stat-value" id="totalModulesCount">0</p>
+                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalModulesCount">0</div>
+                                <div class="stat-label">الأقسام</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-user-tag stat-icon"></i>
-                        <div class="stat-info">
-                            <h3>صلاحيات خاصة</h3>
-                            <p class="stat-value" id="totalUserPermsCount">0</p>
+                    <div class="stat-card" style="--stat-color: #f59e0b">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user-tag"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalUserPermsCount">0</div>
+                                <div class="stat-label">صلاحيات خاصة</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -856,32 +1172,48 @@
 
                 <!-- إحصائيات الرسائل -->
                 <div class="stats-grid" style="margin-bottom: 2rem;">
-                    <div class="stat-card">
-                        <i class="fa-solid fa-envelope stat-icon" style="color: #3b82f6;"></i>
-                        <div class="stat-info">
-                            <h3>رسائل جديدة</h3>
-                            <p class="stat-value" id="newMessagesCount">0</p>
+                    <div class="stat-card" style="--stat-color: #3b82f6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-envelope"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="newMessagesCount">0</div>
+                                <div class="stat-label">رسائل جديدة</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-envelope-open stat-icon" style="color: #10b981;"></i>
-                        <div class="stat-info">
-                            <h3>رسائل مقروءة</h3>
-                            <p class="stat-value" id="readMessagesCount">0</p>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-envelope-open"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="readMessagesCount">0</div>
+                                <div class="stat-label">رسائل مقروءة</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-reply stat-icon" style="color: #8b5cf6;"></i>
-                        <div class="stat-info">
-                            <h3>تم الرد عليها</h3>
-                            <p class="stat-value" id="repliedMessagesCount">0</p>
+                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-reply"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="repliedMessagesCount">0</div>
+                                <div class="stat-label">تم الرد عليها</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-box-archive stat-icon" style="color: #6b7280;"></i>
-                        <div class="stat-info">
-                            <h3>مؤرشفة</h3>
-                            <p class="stat-value" id="archivedMessagesCount">0</p>
+                    <div class="stat-card" style="--stat-color: #6b7280">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-box-archive"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="archivedMessagesCount">0</div>
+                                <div class="stat-label">مؤرشفة</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -934,32 +1266,49 @@
 
                 <!-- إحصائيات المشتركين -->
                 <div class="stats-grid" style="margin-bottom: 2rem;">
-                    <div class="stat-card">
-                        <i class="fa-solid fa-users stat-icon" style="color: #3b82f6;"></i>
-                        <div class="stat-info">
-                            <h3>إجمالي المشتركين</h3>
-                            <p class="stat-value" id="totalSubscribersCount">0</p>
+                    <div class="stat-card" style="--stat-color: #3b82f6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalSubscribersCount">0</div>
+                                <div class="stat-label">إجمالي المشتركين</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-user-check stat-icon" style="color: #10b981;"></i>
-                        <div class="stat-info">
-                            <h3>مشتركون نشطون</h3>
-                            <p class="stat-value" id="activeSubscribersCount">0</p>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user-check"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="activeSubscribersCount">0</div>
+                                <div class="stat-label">مشتركون نشطون</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-user-xmark stat-icon" style="color: #ef4444;"></i>
-                        <div class="stat-info">
-                            <h3>ألغوا الاشتراك</h3>
-                            <p class="stat-value" id="unsubscribedCount">0</p>
+                    <div class="stat-card" style="--stat-color: #ef4444">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user-xmark"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="unsubscribedCount">0</div>
+                                <div class="stat-label">ألغوا الاشتراك</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-calendar-plus stat-icon" style="color: #8b5cf6;"></i>
-                        <div class="stat-info">
-                            <h3>اشتراكات هذا الشهر</h3>
-                            <p class="stat-value" id="thisMonthSubscribersCount">0</p>
+                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                        <div class="stat-badge"><i class="fa-solid fa-calendar"></i> هذا الشهر</div>
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-calendar-plus"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="thisMonthSubscribersCount">0</div>
+                                <div class="stat-label">اشتراكات هذا الشهر</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1164,32 +1513,48 @@
 
                 <!-- إحصائيات الدعوات -->
                 <div class="stats-grid" style="margin-bottom: 2rem;">
-                    <div class="stat-card">
-                        <i class="fa-solid fa-envelope stat-icon" style="color: #3b82f6;"></i>
-                        <div class="stat-info">
-                            <h3>إجمالي الدعوات</h3>
-                            <p class="stat-value" id="totalInvitationsCount">0</p>
+                    <div class="stat-card" style="--stat-color: #3b82f6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-envelope"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalInvitationsCount">0</div>
+                                <div class="stat-label">إجمالي الدعوات</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-check-circle stat-icon" style="color: #10b981;"></i>
-                        <div class="stat-info">
-                            <h3>دعوات نشطة</h3>
-                            <p class="stat-value" id="activeInvitationsCount">0</p>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="activeInvitationsCount">0</div>
+                                <div class="stat-label">دعوات نشطة</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-user-check stat-icon" style="color: #8b5cf6;"></i>
-                        <div class="stat-info">
-                            <h3>دعوات مستخدمة</h3>
-                            <p class="stat-value" id="usedInvitationsCount">0</p>
+                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user-check"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="usedInvitationsCount">0</div>
+                                <div class="stat-label">دعوات مستخدمة</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-clock stat-icon" style="color: #f59e0b;"></i>
-                        <div class="stat-info">
-                            <h3>دعوات منتهية</h3>
-                            <p class="stat-value" id="expiredInvitationsCount">0</p>
+                    <div class="stat-card" style="--stat-color: #f59e0b">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="expiredInvitationsCount">0</div>
+                                <div class="stat-label">دعوات منتهية</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1336,18 +1701,26 @@
 
                 <!-- إحصائيات المقابلات -->
                 <div class="stats-grid" style="margin-bottom: 2rem;">
-                    <div class="stat-card">
-                        <i class="fa-solid fa-calendar-check stat-icon" style="color: #10b981;"></i>
-                        <div class="stat-info">
-                            <h3>مقابلات مجدولة</h3>
-                            <p class="stat-value" id="scheduledInterviewsCount">0</p>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-calendar-check"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="scheduledInterviewsCount">0</div>
+                                <div class="stat-label">مقابلات مجدولة</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-calendar-xmark stat-icon" style="color: #ef4444;"></i>
-                        <div class="stat-info">
-                            <h3>غير مجدولة</h3>
-                            <p class="stat-value" id="unscheduledInterviewsCount">0</p>
+                    <div class="stat-card" style="--stat-color: #ef4444">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-calendar-xmark"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="unscheduledInterviewsCount">0</div>
+                                <div class="stat-label">غير مجدولة</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1813,6 +2186,14 @@
                 <div class="form-group">
                     <label>الوصف</label>
                     <textarea id="committeeDescription" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>رابط قروب اللجنة (WhatsApp/Telegram) *</label>
+                    <input type="url" id="committeeGroupLink" placeholder="https://chat.whatsapp.com/..." required />
+                    <small style="color: #64748b; display: block; margin-top: 0.5rem;">
+                        <i class="fa-solid fa-info-circle"></i>
+                        سيظهر هذا الرابط للأعضاء في تبويب "لجنتي" للانضمام إلى القروب
+                    </small>
                 </div>
                 <div class="form-group">
                     <label>
@@ -2339,6 +2720,198 @@
         </div>
     </div>
 
+    <!-- نافذة تعديل البيانات الشخصية -->
+    <div class="modal" id="editProfileModal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>
+                    <i class="fa-solid fa-user-pen"></i>
+                    تعديل البيانات الشخصية
+                </h2>
+                <button class="btn-icon" id="closeEditProfileModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editProfileForm">
+                    <!-- البيانات الأساسية -->
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="margin: 0 0 1rem 0; color: #274060; font-size: 1.1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">
+                            <i class="fa-solid fa-user"></i>
+                            البيانات الأساسية
+                        </h3>
+                        <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                            <div class="form-group">
+                                <label>الاسم الثلاثي <span style="color: #ef4444;">*</span></label>
+                                <input type="text" id="editFullName" required placeholder="الاسم الثلاثي الكامل">
+                                <small id="nameChangeWarning" style="color: #f59e0b; display: none;">
+                                    <i class="fa-solid fa-exclamation-triangle"></i>
+                                    يمكن تغيير الاسم مرة واحدة كل 30 يومًا
+                                </small>
+                            </div>
+                            <div class="form-group">
+                                <label>البريد الإلكتروني <span style="color: #ef4444;">*</span></label>
+                                <input type="email" id="editEmail" required placeholder="name@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label>رقم الجوال <span style="color: #ef4444;">*</span></label>
+                                <input type="tel" id="editPhone" required placeholder="05XXXXXXXX" pattern="^05[0-9]{8}$" maxlength="10">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- البيانات الشخصية -->
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="margin: 0 0 1rem 0; color: #274060; font-size: 1.1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">
+                            <i class="fa-solid fa-id-card"></i>
+                            البيانات الشخصية
+                        </h3>
+                        <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                            <div class="form-group">
+                                <label>رقم الهوية الوطنية <span style="color: #ef4444;">*</span></label>
+                                <input type="text" id="editNationalId" required placeholder="1XXXXXXXXX" pattern="^[12][0-9]{9}$" maxlength="10">
+                            </div>
+                            <div class="form-group">
+                                <label>تاريخ الميلاد <span style="color: #ef4444;">*</span></label>
+                                <input type="date" id="editBirthDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>الرقم الأكاديمي <span style="color: #ef4444;">*</span></label>
+                                <input type="text" id="editAcademicRecord" required placeholder="4XXXXXXXX">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- البيانات الأكاديمية -->
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="margin: 0 0 1rem 0; color: #274060; font-size: 1.1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                            البيانات الأكاديمية
+                        </h3>
+                        <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                            <div class="form-group">
+                                <label>الدرجة الأكاديمية <span style="color: #ef4444;">*</span></label>
+                                <select id="editAcademicDegree" required>
+                                    <option value="">اختر الدرجة</option>
+                                    <option value="high_school">ثانوية عامة</option>
+                                    <option value="diploma">دبلوم</option>
+                                    <option value="bachelor">بكالوريوس</option>
+                                    <option value="master">ماجستير</option>
+                                    <option value="phd">دكتوراه</option>
+                                    <option value="other">أخرى</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>الكلية</label>
+                                <input type="text" id="editCollege" placeholder="اسم الكلية">
+                            </div>
+                            <div class="form-group">
+                                <label>التخصص</label>
+                                <input type="text" id="editMajor" placeholder="التخصص الدراسي">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- حسابات التواصل الاجتماعي -->
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="margin: 0 0 1rem 0; color: #274060; font-size: 1.1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">
+                            <i class="fa-solid fa-share-nodes"></i>
+                            حسابات التواصل الاجتماعي
+                        </h3>
+                        <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                            <div class="form-group">
+                                <label><i class="fa-brands fa-twitter"></i> تويتر</label>
+                                <input type="text" id="editTwitter" placeholder="@username">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-brands fa-instagram"></i> إنستقرام</label>
+                                <input type="text" id="editInstagram" placeholder="@username">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-brands fa-tiktok"></i> تيك توك</label>
+                                <input type="text" id="editTiktok" placeholder="@username">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-brands fa-linkedin"></i> لينكد إن</label>
+                                <input type="text" id="editLinkedin" placeholder="username">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-outline" id="cancelEditProfile">إلغاء</button>
+                <button type="button" class="btn-primary" id="saveProfileChanges">
+                    <i class="fa-solid fa-save"></i>
+                    حفظ التغييرات
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تغيير كلمة المرور -->
+    <div class="modal" id="changePasswordModal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>
+                    <i class="fa-solid fa-key"></i>
+                    تغيير كلمة المرور
+                </h2>
+                <button class="btn-icon" id="closeChangePasswordModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="changePasswordForm">
+                    <div class="form-group">
+                        <label>كلمة المرور الحالية <span style="color: #ef4444;">*</span></label>
+                        <input type="password" id="currentPassword" required placeholder="أدخل كلمة المرور الحالية">
+                    </div>
+                    <div class="form-group">
+                        <label>كلمة المرور الجديدة <span style="color: #ef4444;">*</span></label>
+                        <input type="password" id="newPassword" required placeholder="أدخل كلمة المرور الجديدة" minlength="8">
+                        <small style="color: #64748b;">يجب أن تكون 8 أحرف على الأقل</small>
+                    </div>
+                    <div class="form-group">
+                        <label>تأكيد كلمة المرور الجديدة <span style="color: #ef4444;">*</span></label>
+                        <input type="password" id="confirmNewPassword" required placeholder="أعد إدخال كلمة المرور الجديدة">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-outline" id="cancelChangePassword">إلغاء</button>
+                <button type="button" class="btn-primary" id="saveNewPassword">
+                    <i class="fa-solid fa-save"></i>
+                    تغيير كلمة المرور
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تأكيد -->
+    <div id="confirmModal" class="custom-modal">
+        <div class="custom-modal-overlay"></div>
+        <div class="custom-modal-container" style="max-width: 450px;">
+            <div class="custom-modal-header">
+                <h2 class="custom-modal-title" id="confirmModalTitle">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    تأكيد
+                </h2>
+                <button class="custom-modal-close" onclick="window.closeConfirmModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="custom-modal-body" id="confirmModalContent" style="text-align: center; padding: 2rem;">
+                <!-- سيتم ملء المحتوى ديناميكياً -->
+            </div>
+
+            <div class="custom-modal-footer" id="confirmModalActions" style="justify-content: center;">
+                <!-- سيتم ملء الأزرار ديناميكياً -->
+            </div>
+        </div>
+    </div>
+
     <!-- المكتبات -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
@@ -2359,6 +2932,9 @@
     <script src="js/member-migration.js"></script>
     <script src="js/profile.js"></script>
     <script src="js/settings.js"></script>
+    <script src="js/pwa-manager.js"></script>
+    <script src="js/notifications-manager.js"></script>
+    <script src="js/send-notifications.js"></script>
     <script src="dashboard.js"></script>
     <!-- <link rel="stylesheet" href="css/archives.css"> -->
 </body>

@@ -128,34 +128,73 @@
 
             container.innerHTML = `
                 <!-- مؤشرات الأداء الرئيسية -->
-                <div class="kpi-grid">
-                    <div class="kpi-card">
-                        <div class="kpi-value">${currentResponses.length}</div>
-                        <div class="kpi-label">إجمالي الاستجابات</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-value">${completedResponses.length}</div>
-                        <div class="kpi-label">استجابات مكتملة</div>
-                        <div class="kpi-change positive">
-                            <i class="fa-solid fa-arrow-up"></i>
-                            ${completionRate}%
+                <div class="stats-grid">
+                    <div class="stat-card" style="--stat-color: #3b82f6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${currentResponses.length}</div>
+                                <div class="stat-label">إجمالي الاستجابات</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-value">${inProgressResponses.length}</div>
-                        <div class="kpi-label">قيد التقدم</div>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-badge"><i class="fa-solid fa-arrow-up"></i> ${completionRate}%</div>
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${completedResponses.length}</div>
+                                <div class="stat-label">استجابات مكتملة</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-value">${abandonedResponses.length}</div>
-                        <div class="kpi-label">متروكة</div>
+                    <div class="stat-card" style="--stat-color: #f59e0b">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-spinner"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${inProgressResponses.length}</div>
+                                <div class="stat-label">قيد التقدم</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-value">${currentSurveyData.total_views || 0}</div>
-                        <div class="kpi-label">المشاهدات</div>
+                    <div class="stat-card" style="--stat-color: #ef4444">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-ban"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${abandonedResponses.length}</div>
+                                <div class="stat-label">متروكة</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-value">${this.formatTime(avgTimeSpent)}</div>
-                        <div class="kpi-label">متوسط الوقت</div>
+                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-eye"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${currentSurveyData.total_views || 0}</div>
+                                <div class="stat-label">المشاهدات</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #14b8a6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${this.formatTime(avgTimeSpent)}</div>
+                                <div class="stat-label">متوسط الوقت</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

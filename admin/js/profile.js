@@ -13,8 +13,24 @@
      */
     async function init(user) {
         currentUser = user;
-        await loadProfileData();
+        const memberDetails = await loadProfileData();
         await loadRecentActivity();
+        
+        // تحميل بيانات اللجنة
+        const { data: userRole } = await window.sbClient
+            .from('user_roles')
+            .select('committee_id, committees(committee_name_ar)')
+            .eq('user_id', currentUser.id)
+            .eq('is_active', true)
+            .single();
+        
+        if (userRole && userRole.committee_id) {
+            await loadCommitteeData(userRole);
+        }
+        
+        // تحميل بطاقة العضوية
+        await loadMembershipCard(memberDetails);
+        
         bindEvents();
     }
 
@@ -23,18 +39,42 @@
      */
     async function loadProfileData() {
         try {
-            if (!currentUser) return;
+            if (!currentUser) return null;
+
+            // جلب بيانات member_details
+            const { data: memberDetails, error: memberError } = await window.sbClient
+                .from('member_details')
+                .select('*, committees(committee_name_ar)')
+                .eq('user_id', currentUser.id)
+                .single();
+
+            if (memberError && memberError.code !== 'PGRST116') {
+                console.error('خطأ في جلب بيانات العضو:', memberError);
+                return null;
+            }
+
+            // جلب معلومات اللجنة من user_roles
+            const { data: userRole } = await window.sbClient
+                .from('user_roles')
+                .select('committee_id, committees(committee_name_ar)')
+                .eq('user_id', currentUser.id)
+                .eq('is_active', true)
+                .single();
+
+            // جلب آخر تسجيل دخول من auth.users
+            const { data: { user: authUser } } = await window.sbClient.auth.getUser();
 
             // تحديث الصورة الشخصية
             const avatar = document.getElementById('profileAvatar');
             if (avatar) {
-                avatar.src = currentUser.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.full_name || 'User')}&background=3d8fd6&color=fff&size=200`;
+                const displayName = memberDetails?.full_name_triple || currentUser.full_name || 'User';
+                avatar.src = currentUser.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=3d8fd6&color=fff&size=200`;
             }
 
             // تحديث الاسم
             const fullName = document.getElementById('profileFullName');
             if (fullName) {
-                fullName.textContent = currentUser.full_name || currentUser.email;
+                fullName.textContent = memberDetails?.full_name_triple || currentUser.full_name || currentUser.email;
             }
 
             // تحديث الدور
@@ -47,13 +87,13 @@
             // تحديث البريد الإلكتروني
             const email = document.getElementById('profileEmail');
             if (email) {
-                email.textContent = currentUser.email;
+                email.textContent = memberDetails?.email || currentUser.email;
             }
 
             // تحديث رقم الهاتف
             const phone = document.getElementById('profilePhone');
             if (phone) {
-                phone.textContent = currentUser.phone || 'غير محدد';
+                phone.textContent = memberDetails?.phone || currentUser.phone || 'غير محدد';
             }
 
             // تحديث تاريخ الانضمام
@@ -66,12 +106,26 @@
                 });
             }
 
-            // تحديث آخر تسجيل دخول
+            // تحديث آخر تسجيل دخول من auth.users
             const lastLogin = document.getElementById('profileLastLogin');
             if (lastLogin) {
-                lastLogin.textContent = currentUser.last_sign_in_at 
-                    ? new Date(currentUser.last_sign_in_at).toLocaleString('ar-SA')
+                const lastSignIn = authUser?.last_sign_in_at || currentUser.last_sign_in_at;
+                lastLogin.textContent = lastSignIn 
+                    ? new Date(lastSignIn).toLocaleString('ar-SA', {
+                        year: 'numeric',
+                        month: 'numeric',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
                     : 'غير معروف';
+            }
+
+            // تحديث اللجنة من user_roles
+            const committee = document.getElementById('profileCommittee');
+            if (committee) {
+                const committeeName = userRole?.committees?.committee_name_ar || memberDetails?.committees?.committee_name_ar;
+                committee.textContent = committeeName || 'غير محدد';
             }
 
             // تحديث آخر تغيير لكلمة المرور
@@ -80,9 +134,95 @@
                 lastPasswordChange.textContent = 'غير معروف';
             }
 
+            // عرض بيانات member_details الإضافية إذا كانت موجودة
+            displayMemberDetails(memberDetails, userRole);
+
+            // تحميل بيانات اللجنة
+            await loadCommitteeData(userRole);
+
+            // تحميل بطاقة العضوية
+            await loadMembershipCard(memberDetails);
+
+            return memberDetails;
+
         } catch (error) {
             console.error('خطأ في تحميل بيانات الملف الشخصي:', error);
             showNotification('فشل تحميل بيانات الملف الشخصي', 'error');
+            return null;
+        }
+    }
+
+    /**
+     * عرض بيانات العضو التفصيلية
+     */
+    function displayMemberDetails(details, userRole) {
+        if (!details) {
+            const card = document.getElementById('memberDetailsCard');
+            if (card) card.style.display = 'none';
+            return;
+        }
+
+        const degreeMap = {
+            'high_school': 'ثانوية عامة',
+            'diploma': 'دبلوم',
+            'bachelor': 'بكالوريوس',
+            'master': 'ماجستير',
+            'phd': 'دكتوراه',
+            'other': 'أخرى'
+        };
+
+        const nationalId = document.getElementById('profileNationalId');
+        if (nationalId) {
+            nationalId.textContent = details.national_id || 'غير محدد';
+        }
+
+        const academicRecord = document.getElementById('profileAcademicRecord');
+        if (academicRecord) {
+            academicRecord.textContent = details.academic_record_number || 'غير محدد';
+        }
+
+        const birthDate = document.getElementById('profileBirthDate');
+        if (birthDate && details.birth_date) {
+            birthDate.textContent = new Date(details.birth_date).toLocaleDateString('ar-SA', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        const academicDegree = document.getElementById('profileAcademicDegree');
+        if (academicDegree) {
+            academicDegree.textContent = degreeMap[details.academic_degree] || details.academic_degree || 'غير محدد';
+        }
+
+        const college = document.getElementById('profileCollege');
+        if (college) {
+            college.textContent = details.college || 'غير محدد';
+        }
+
+        const major = document.getElementById('profileMajor');
+        if (major) {
+            major.textContent = details.major || 'غير محدد';
+        }
+
+        const twitter = document.getElementById('profileTwitter');
+        if (twitter) {
+            twitter.textContent = details.twitter_account || 'غير محدد';
+        }
+
+        const instagram = document.getElementById('profileInstagram');
+        if (instagram) {
+            instagram.textContent = details.instagram_account || 'غير محدد';
+        }
+
+        const tiktok = document.getElementById('profileTiktok');
+        if (tiktok) {
+            tiktok.textContent = details.tiktok_account || 'غير محدد';
+        }
+
+        const linkedin = document.getElementById('profileLinkedin');
+        if (linkedin) {
+            linkedin.textContent = details.linkedin_account || 'غير محدد';
         }
     }
 
@@ -110,7 +250,7 @@
             if (!container) return;
 
             const { data, error } = await window.sbClient
-                .from('activity_logs')
+                .from('activity_log')
                 .select('*')
                 .eq('user_id', currentUser.id)
                 .order('created_at', { ascending: false })
@@ -204,44 +344,165 @@
     /**
      * فتح نافذة تعديل الملف الشخصي
      */
-    function openEditProfileModal() {
-        const modalHtml = `
-            <div class="modal-overlay" id="editProfileModal" onclick="if(event.target === this) this.remove()">
-                <div class="modal-content" style="max-width: 500px;">
-                    <div class="modal-header">
-                        <h2><i class="fa-solid fa-pen"></i> تعديل الملف الشخصي</h2>
-                        <button class="modal-close" onclick="document.getElementById('editProfileModal').remove()">
-                            <i class="fa-solid fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="editProfileForm" style="display: grid; gap: 1rem;">
-                            <div class="form-group">
-                                <label><strong>الاسم الكامل</strong></label>
-                                <input type="text" id="editFullName" value="${currentUser.full_name || ''}" required>
-                            </div>
-                            <div class="form-group">
-                                <label><strong>رقم الهاتف</strong></label>
-                                <input type="tel" id="editPhone" value="${currentUser.phone || ''}" placeholder="05XXXXXXXX">
-                            </div>
-                            <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1rem;">
-                                <button type="button" class="btn-outline" onclick="document.getElementById('editProfileModal').remove()">
-                                    إلغاء
-                                </button>
-                                <button type="submit" class="btn-primary">
-                                    <i class="fa-solid fa-save"></i>
-                                    حفظ التغييرات
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        `;
+    async function openEditProfileModal() {
+        const modal = document.getElementById('editProfileModal');
+        if (!modal) return;
 
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        try {
+            const { data: memberDetails, error } = await window.sbClient
+                .from('member_details')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .single();
 
-        document.getElementById('editProfileForm').addEventListener('submit', handleEditProfile);
+            if (error && error.code !== 'PGRST116') {
+                console.error('خطأ في جلب بيانات العضو:', error);
+            }
+
+            document.getElementById('editFullName').value = memberDetails?.full_name_triple || currentUser.full_name || '';
+            document.getElementById('editEmail').value = memberDetails?.email || currentUser.email || '';
+            document.getElementById('editPhone').value = memberDetails?.phone || currentUser.phone || '';
+            document.getElementById('editNationalId').value = memberDetails?.national_id || '';
+            document.getElementById('editBirthDate').value = memberDetails?.birth_date || '';
+            document.getElementById('editAcademicRecord').value = memberDetails?.academic_record_number || '';
+            document.getElementById('editAcademicDegree').value = memberDetails?.academic_degree || '';
+            document.getElementById('editCollege').value = memberDetails?.college || '';
+            document.getElementById('editMajor').value = memberDetails?.major || '';
+            document.getElementById('editTwitter').value = memberDetails?.twitter_account || '';
+            document.getElementById('editInstagram').value = memberDetails?.instagram_account || '';
+            document.getElementById('editTiktok').value = memberDetails?.tiktok_account || '';
+            document.getElementById('editLinkedin').value = memberDetails?.linkedin_account || '';
+
+            const canChangeName = await checkCanChangeName();
+            const nameWarning = document.getElementById('nameChangeWarning');
+            if (!canChangeName && nameWarning) {
+                nameWarning.style.display = 'block';
+            }
+
+            modal.style.display = 'flex';
+
+            const closeBtn = document.getElementById('closeEditProfileModal');
+            const cancelBtn = document.getElementById('cancelEditProfile');
+            const saveBtn = document.getElementById('saveProfileChanges');
+
+            closeBtn.onclick = () => modal.style.display = 'none';
+            cancelBtn.onclick = () => modal.style.display = 'none';
+            saveBtn.onclick = handleSaveProfileChanges;
+
+        } catch (error) {
+            console.error('خطأ في فتح نافذة التعديل:', error);
+            showNotification('فشل فتح نافذة التعديل', 'error');
+        }
+    }
+
+    /**
+     * التحقق من إمكانية تغيير الاسم
+     */
+    async function checkCanChangeName() {
+        try {
+            const { data, error } = await window.sbClient
+                .rpc('can_change_name', { p_user_id: currentUser.id });
+
+            if (error) throw error;
+            return data;
+        } catch (error) {
+            console.error('خطأ في التحقق من إمكانية تغيير الاسم:', error);
+            return true;
+        }
+    }
+
+    /**
+     * حفظ التغييرات على البيانات الشخصية
+     */
+    async function handleSaveProfileChanges() {
+        try {
+            const newFullName = document.getElementById('editFullName').value.trim();
+            const newEmail = document.getElementById('editEmail').value.trim();
+            const newPhone = document.getElementById('editPhone').value.trim();
+            const newNationalId = document.getElementById('editNationalId').value.trim();
+            const newBirthDate = document.getElementById('editBirthDate').value;
+            const newAcademicRecord = document.getElementById('editAcademicRecord').value.trim();
+            const newAcademicDegree = document.getElementById('editAcademicDegree').value;
+            const newCollege = document.getElementById('editCollege').value.trim();
+            const newMajor = document.getElementById('editMajor').value.trim();
+            const newTwitter = document.getElementById('editTwitter').value.trim();
+            const newInstagram = document.getElementById('editInstagram').value.trim();
+            const newTiktok = document.getElementById('editTiktok').value.trim();
+            const newLinkedin = document.getElementById('editLinkedin').value.trim();
+
+            const { data: oldData } = await window.sbClient
+                .from('member_details')
+                .select('full_name_triple')
+                .eq('user_id', currentUser.id)
+                .single();
+
+            const nameChanged = oldData && oldData.full_name_triple !== newFullName;
+
+            if (nameChanged) {
+                const canChange = await checkCanChangeName();
+                if (!canChange) {
+                    showNotification('لا يمكن تغيير الاسم إلا مرة واحدة كل 30 يومًا', 'error');
+                    return;
+                }
+
+                const { error: nameChangeError } = await window.sbClient
+                    .from('profile_name_changes')
+                    .insert({
+                        user_id: currentUser.id,
+                        old_name: oldData.full_name_triple,
+                        new_name: newFullName,
+                        changed_by: currentUser.id
+                    });
+
+                if (nameChangeError) {
+                    console.error('خطأ في تسجيل تغيير الاسم:', nameChangeError);
+                }
+            }
+
+            const { error: updateError } = await window.sbClient
+                .from('member_details')
+                .update({
+                    full_name_triple: newFullName,
+                    email: newEmail,
+                    phone: newPhone,
+                    national_id: newNationalId,
+                    birth_date: newBirthDate,
+                    academic_record_number: newAcademicRecord,
+                    academic_degree: newAcademicDegree,
+                    college: newCollege || null,
+                    major: newMajor || null,
+                    twitter_account: newTwitter || null,
+                    instagram_account: newInstagram || null,
+                    tiktok_account: newTiktok || null,
+                    linkedin_account: newLinkedin || null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('user_id', currentUser.id);
+
+            if (updateError) throw updateError;
+
+            const { error: profileError } = await window.sbClient
+                .from('profiles')
+                .update({
+                    full_name: newFullName,
+                    phone: newPhone,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', currentUser.id);
+
+            if (profileError) {
+                console.warn('تحذير: فشل تحديث جدول profiles:', profileError);
+            }
+
+            showNotification('تم حفظ التغييرات بنجاح', 'success');
+            document.getElementById('editProfileModal').style.display = 'none';
+            
+            await loadProfileData();
+
+        } catch (error) {
+            console.error('خطأ في حفظ التغييرات:', error);
+            showNotification(`فشل حفظ التغييرات: ${error.message}`, 'error');
+        }
     }
 
     /**
@@ -282,20 +543,76 @@
      * فتح نافذة تغيير كلمة المرور
      */
     function openChangePasswordModal() {
+        const modal = document.getElementById('changePasswordModal');
+        if (!modal) return;
+
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmNewPassword').value = '';
+
+        modal.style.display = 'flex';
+
+        const closeBtn = document.getElementById('closeChangePasswordModal');
+        const cancelBtn = document.getElementById('cancelChangePassword');
+        const saveBtn = document.getElementById('saveNewPassword');
+
+        closeBtn.onclick = () => modal.style.display = 'none';
+        cancelBtn.onclick = () => modal.style.display = 'none';
+        saveBtn.onclick = handleChangePassword;
+    }
+
+    /**
+     * معالجة تغيير كلمة المرور
+     */
+    async function handleChangePassword() {
+        try {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmNewPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                showNotification('كلمة المرور الجديدة غير متطابقة', 'error');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                showNotification('كلمة المرور يجب أن تكون 8 أحرف على الأقل', 'error');
+                return;
+            }
+
+            const { error } = await window.sbClient.auth.updateUser({
+                password: newPassword
+            });
+
+            if (error) throw error;
+
+            showNotification('تم تغيير كلمة المرور بنجاح', 'success');
+            document.getElementById('changePasswordModal').style.display = 'none';
+
+        } catch (error) {
+            console.error('خطأ في تغيير كلمة المرور:', error);
+            showNotification(`فشل تغيير كلمة المرور: ${error.message}`, 'error');
+        }
+    }
+
+    /**
+     * فتح نافذة تغيير كلمة المرور (قديم - سيتم حذفه)
+     */
+    function openChangePasswordModalOld() {
         const modalHtml = `
-            <div class="modal-overlay" id="changePasswordModal" onclick="if(event.target === this) this.remove()">
+            <div class="modal-overlay" id="changePasswordModalOld" onclick="if(event.target === this) this.remove()">
                 <div class="modal-content" style="max-width: 500px;">
                     <div class="modal-header">
                         <h2><i class="fa-solid fa-key"></i> تغيير كلمة المرور</h2>
-                        <button class="modal-close" onclick="document.getElementById('changePasswordModal').remove()">
+                        <button class="modal-close" onclick="document.getElementById('changePasswordModalOld').remove()">
                             <i class="fa-solid fa-times"></i>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <form id="changePasswordForm" style="display: grid; gap: 1rem;">
+                        <form id="changePasswordFormOld" style="display: grid; gap: 1rem;">
                             <div class="form-group">
                                 <label><strong>كلمة المرور الجديدة</strong></label>
-                                <input type="password" id="newPassword" required minlength="8" placeholder="8 أحرف على الأقل">
+                                <input type="password" id="newPasswordOld" required minlength="8" placeholder="8 أحرف على الأقل">
                             </div>
                             <div class="form-group">
                                 <label><strong>تأكيد كلمة المرور</strong></label>
@@ -415,8 +732,145 @@
         }
     }
 
+    /**
+     * تحميل بيانات اللجنة
+     */
+    async function loadCommitteeData(userRole) {
+        try {
+            if (!userRole || !userRole.committee_id) {
+                return;
+            }
+
+            const { data: committee, error: committeeError } = await window.sbClient
+                .from('committees')
+                .select('*')
+                .eq('id', userRole.committee_id)
+                .single();
+
+            if (committeeError) {
+                console.error('خطأ في جلب بيانات اللجنة:', committeeError);
+                return;
+            }
+
+            // جلب قائد اللجنة
+            const { data: leader } = await window.sbClient
+                .from('user_roles')
+                .select('user_id, profiles(full_name)')
+                .eq('committee_id', userRole.committee_id)
+                .eq('is_active', true)
+                .in('role_id', [7]) // role_id 7 = قائد لجنة
+                .single();
+
+            // عد أعضاء اللجنة
+            const { count: totalMembers } = await window.sbClient
+                .from('user_roles')
+                .select('*', { count: 'exact', head: true })
+                .eq('committee_id', userRole.committee_id)
+                .eq('is_active', true);
+
+            // تعبئة البيانات - دعم كلا القسمين (الملف الشخصي و لجنتي)
+            const nameDisplay = document.getElementById('committeeNameDisplay');
+            const description = document.getElementById('committeeDescription');
+            const leaderDisplay = document.getElementById('committeeLeader');
+            const membersCountEl = document.getElementById('committeeMembersCount');
+            
+            const myNameDisplay = document.getElementById('myCommitteeNameDisplay');
+            const myDescription = document.getElementById('myCommitteeDescription');
+            const myLeaderDisplay = document.getElementById('myCommitteeLeader');
+            const myMembersCountEl = document.getElementById('myCommitteeMembersCount');
+            
+            if (nameDisplay) nameDisplay.textContent = committee.committee_name_ar;
+            if (description) description.textContent = committee.description || 'لا يوجد تعريف متاح';
+            if (leaderDisplay) leaderDisplay.textContent = leader?.profiles?.full_name || 'غير محدد';
+            if (membersCountEl) membersCountEl.textContent = totalMembers || 0;
+            
+            if (myNameDisplay) myNameDisplay.textContent = committee.committee_name_ar;
+            if (myDescription) myDescription.textContent = committee.description || 'لا يوجد تعريف متاح';
+            if (myLeaderDisplay) myLeaderDisplay.textContent = leader?.profiles?.full_name || 'غير محدد';
+            if (myMembersCountEl) myMembersCountEl.textContent = totalMembers || 0;
+
+            // عرض رابط القروب إذا كان موجوداً
+            const groupLinkContainer = document.getElementById('committeeGroupLinkContainer');
+            const groupLink = document.getElementById('committeeGroupLink');
+            const myGroupLinkContainer = document.getElementById('myCommitteeGroupLinkContainer');
+            const myGroupLink = document.getElementById('myCommitteeGroupLink');
+            
+            if (committee.group_link) {
+                if (groupLinkContainer && groupLink) {
+                    groupLink.href = committee.group_link;
+                    groupLinkContainer.style.display = 'block';
+                }
+                if (myGroupLinkContainer && myGroupLink) {
+                    myGroupLink.href = committee.group_link;
+                    myGroupLinkContainer.style.display = 'block';
+                }
+            } else {
+                if (groupLinkContainer) groupLinkContainer.style.display = 'none';
+                if (myGroupLinkContainer) myGroupLinkContainer.style.display = 'none';
+            }
+
+        } catch (error) {
+            console.error('خطأ في تحميل بيانات اللجنة:', error);
+        }
+    }
+
+    /**
+     * تحميل بيانات بطاقة العضوية
+     */
+    async function loadMembershipCard(memberDetails) {
+        try {
+            const cardAvatar = document.getElementById('cardAvatar');
+            if (cardAvatar) {
+                const displayName = memberDetails?.full_name_triple || currentUser.full_name || 'User';
+                cardAvatar.src = currentUser.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=3d8fd6&color=fff&size=200`;
+            }
+
+            const cardFullName = document.getElementById('cardFullName');
+            if (cardFullName) {
+                cardFullName.textContent = memberDetails?.full_name_triple || currentUser.full_name || 'غير محدد';
+            }
+
+            const cardNationalId = document.getElementById('cardNationalId');
+            if (cardNationalId && memberDetails?.national_id) {
+                const maskedId = memberDetails.national_id.substring(0, 3) + '*******';
+                cardNationalId.textContent = maskedId;
+            }
+
+            const cardAcademicRecord = document.getElementById('cardAcademicRecord');
+            if (cardAcademicRecord && memberDetails?.academic_record_number) {
+                const maskedRecord = memberDetails.academic_record_number.substring(0, 3) + '*******';
+                cardAcademicRecord.textContent = maskedRecord;
+            }
+
+            const cardRole = document.getElementById('cardRole');
+            if (cardRole) {
+                const roleInfo = getRoleInfo(currentUser.role_level);
+                cardRole.textContent = roleInfo.name;
+            }
+
+            const cardJoinDate = document.getElementById('cardJoinDate');
+            if (cardJoinDate) {
+                cardJoinDate.textContent = new Date(currentUser.created_at).toLocaleDateString('ar-SA', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+            }
+
+            const cardMemberId = document.getElementById('cardMemberId');
+            if (cardMemberId) {
+                cardMemberId.textContent = currentUser.id.substring(0, 8).toUpperCase();
+            }
+
+        } catch (error) {
+            console.error('خطأ في تحميل بطاقة العضوية:', error);
+        }
+    }
+
     // تصدير الوظائف
     window.profileManager = {
-        init
+        init,
+        loadCommitteeData,
+        loadMembershipCard
     };
 })();

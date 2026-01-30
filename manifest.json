@@ -1,0 +1,52 @@
+{
+  "name": "نادي أدِيب ",
+  "short_name": "أدِيب",
+  "description": "نادي أدِيب - منصة إدارة النادي والأعضاء",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "/favicon/android-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon/apple-icon-180x180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon/apple-icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/Adeeb-Thumbnail.png",
+      "sizes": "1280x720",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["education", "social", "productivity"],
+  "shortcuts": [
+    {
+      "name": "لوحة التحكم",
+      "short_name": "Dashboard",
+      "description": "الوصول السريع للوحة التحكم",
+      "url": "/admin/dashboard.html",
+      "icons": [
+        {
+          "src": "/favicon/android-icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

@@ -1522,11 +1522,15 @@
 
             // بناء HTML للإحصائيات
             let html = `
-                <div class="stat-card">
-                    <i class="fa-solid fa-clipboard-list stat-icon" style="color: #3b82f6;"></i>
-                    <div class="stat-info">
-                        <h3>مجموع الطلبات</h3>
-                        <p class="stat-value">${totalCount}</p>
+                <div class="stat-card" style="--stat-color: #3b82f6">
+                    <div class="stat-card-wrapper">
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-clipboard-list"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">${totalCount}</div>
+                            <div class="stat-label">مجموع الطلبات</div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1540,11 +1544,15 @@
                 colorIndex++;
                 
                 html += `
-                    <div class="stat-card">
-                        <i class="fa-solid fa-users stat-icon" style="color: ${color};"></i>
-                        <div class="stat-info">
-                            <h3>${escapeHtml(committee)}</h3>
-                            <p class="stat-value">${count}</p>
+                    <div class="stat-card" style="--stat-color: ${color}">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${count}</div>
+                                <div class="stat-label">${escapeHtml(committee)}</div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -1750,34 +1758,58 @@
             const rejectedCount = currentApplications.filter(a => a.status === 'rejected').length;
             const underReviewCount = currentApplications.filter(a => a.status === 'under_review').length;
 
+            // حساب النسب المئوية
+            const approvedPercentage = totalCount > 0 ? Math.round((approvedForInterviewCount / totalCount) * 100) : 0;
+            const rejectedPercentage = totalCount > 0 ? Math.round((rejectedCount / totalCount) * 100) : 0;
+            const reviewPercentage = totalCount > 0 ? Math.round((underReviewCount / totalCount) * 100) : 0;
+
             // بناء HTML للإحصائيات
             const html = `
-                <div class="stat-card">
-                    <i class="fa-solid fa-clipboard-list stat-icon" style="color: #3b82f6;"></i>
-                    <div class="stat-info">
-                        <h3>إجمالي الطلبات</h3>
-                        <p class="stat-value">${totalCount}</p>
+                <div class="stat-card" style="--stat-color: #3b82f6">
+                    <div class="stat-card-wrapper">
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-clipboard-list"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">${totalCount}</div>
+                            <div class="stat-label">إجمالي الطلبات</div>
+                        </div>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <i class="fa-solid fa-check-circle stat-icon" style="color: #10b981;"></i>
-                    <div class="stat-info">
-                        <h3>المقبولين للمقابلة</h3>
-                        <p class="stat-value">${approvedForInterviewCount}</p>
+                <div class="stat-card" style="--stat-color: #10b981">
+                    <div class="stat-badge"><i class="fa-solid fa-arrow-up"></i> ${approvedPercentage}%</div>
+                    <div class="stat-card-wrapper">
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">${approvedForInterviewCount}</div>
+                            <div class="stat-label">المقبولين للمقابلة</div>
+                        </div>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <i class="fa-solid fa-times-circle stat-icon" style="color: #ef4444;"></i>
-                    <div class="stat-info">
-                        <h3>المرفوضين</h3>
-                        <p class="stat-value">${rejectedCount}</p>
+                <div class="stat-card" style="--stat-color: #ef4444">
+                    <div class="stat-badge"><i class="fa-solid fa-times"></i> ${rejectedPercentage}%</div>
+                    <div class="stat-card-wrapper">
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-times-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">${rejectedCount}</div>
+                            <div class="stat-label">المرفوضين</div>
+                        </div>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <i class="fa-solid fa-clock stat-icon" style="color: #f59e0b;"></i>
-                    <div class="stat-info">
-                        <h3>قيد المراجعة</h3>
-                        <p class="stat-value">${underReviewCount}</p>
+                <div class="stat-card" style="--stat-color: #f59e0b">
+                    <div class="stat-badge"><i class="fa-solid fa-clock"></i> ${reviewPercentage}%</div>
+                    <div class="stat-card-wrapper">
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">${underReviewCount}</div>
+                            <div class="stat-label">قيد المراجعة</div>
+                        </div>
                     </div>
                 </div>
             `;

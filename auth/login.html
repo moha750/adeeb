@@ -309,6 +309,20 @@
                 
                 // إذا كان لديه أدوار، وجهه للوحة التحكم
                 if (userRoles && userRoles.length > 0) {
+                  // تسجيل نشاط تسجيل الدخول لجميع الأعضاء
+                  try {
+                    await sb.rpc('log_activity', {
+                      p_user_id: userId,
+                      p_action_type: 'login',
+                      p_target_type: 'auth',
+                      p_target_id: userId,
+                      p_details: null,
+                      p_ip_address: null
+                    });
+                  } catch (logErr) {
+                    console.warn('فشل تسجيل نشاط الدخول:', logErr);
+                  }
+                  
                   status.className = 'alert success';
                   status.textContent = 'تم تسجيل الدخول بنجاح! جاري التحويل...';
                   setTimeout(() => {
