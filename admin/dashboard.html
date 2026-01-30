@@ -44,9 +44,6 @@
             
             <!-- مركز الإشعارات -->
             <div class="notifications-center">
-                <button id="enablePushBtn" class="notifications-btn" title="تفعيل إشعارات الجوال" style="margin-left: 10px;">
-                    <i class="fa-solid fa-bell-slash"></i>
-                </button>
                 <button id="notificationsBtn" class="notifications-btn" title="الإشعارات">
                     <i class="fa-solid fa-bell"></i>
                     <span class="notifications-badge" id="notificationsBadge">0</span>
@@ -918,17 +915,23 @@
                                 </div>
                             </div>
                             
-                            <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #f59e0b;">
+                            <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #3b82f6;">
                                 <label style="font-weight: bold; color: #274060; margin-bottom: 0.75rem; display: block;">
-                                    <i class="fa-solid fa-browser"></i> إشعارات المتصفح
+                                    <i class="fa-solid fa-mobile-screen"></i> إشعارات الجوال (Push Notifications)
                                 </label>
-                                <div style="display: flex; align-items: center; gap: 1rem;">
-                                    <label class="switch">
-                                        <input type="checkbox" id="browserNotificationsToggle">
-                                        <span class="slider"></span>
-                                    </label>
-                                    <span style="color: #64748b; font-size: 0.875rem;">قريباً - قيد التطوير</span>
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                        <button id="enablePushBtn" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                            <i class="fa-solid fa-bell"></i>
+                                            <span id="pushBtnText">تفعيل الإشعارات</span>
+                                        </button>
+                                        <span id="pushStatus" style="color: #64748b; font-size: 0.875rem;">غير مفعّل</span>
+                                    </div>
                                 </div>
+                                <p style="color: #64748b; font-size: 0.75rem; margin-top: 0.5rem; margin-bottom: 0;">
+                                    <i class="fa-solid fa-info-circle"></i> 
+                                    يتطلب iOS 16.4+ وتثبيت التطبيق على الشاشة الرئيسية
+                                </p>
                             </div>
                         </div>
                     </div>

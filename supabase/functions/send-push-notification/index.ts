@@ -82,12 +82,11 @@ serve(async (req) => {
     let targetUserIds: string[] = [];
 
     if (notification.target_audience === "all") {
-      // جلب جميع المستخدمين النشطين
-      const { data: users } = await supabaseAdmin
-        .from("users")
-        .select("id")
-        .eq("status", "active");
-      targetUserIds = users?.map((u) => u.id) || [];
+      // جلب جميع المستخدمين من auth.users
+      const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
+      if (!usersError && users) {
+        targetUserIds = users.map((u) => u.id);
+      }
     } else if (notification.target_audience === "specific_users") {
       targetUserIds = notification.target_user_ids || [];
     } else if (notification.target_audience === "members") {

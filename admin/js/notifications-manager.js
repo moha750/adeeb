@@ -260,20 +260,35 @@
      */
     function updatePushButtonState() {
         const enablePushBtn = document.getElementById('enablePushBtn');
+        const pushBtnText = document.getElementById('pushBtnText');
+        const pushStatus = document.getElementById('pushStatus');
+        
         if (!enablePushBtn) return;
 
         if (Notification.permission === 'granted' && pushSubscription) {
-            enablePushBtn.innerHTML = '<i class="fa-solid fa-bell"></i>';
-            enablePushBtn.title = 'إشعارات الجوال مفعلة';
-            enablePushBtn.style.color = '#10b981';
+            if (pushBtnText) pushBtnText.textContent = 'مفعّل';
+            if (pushStatus) {
+                pushStatus.textContent = '✅ الإشعارات مفعّلة';
+                pushStatus.style.color = '#10b981';
+            }
+            enablePushBtn.disabled = true;
+            enablePushBtn.style.opacity = '0.6';
         } else if (Notification.permission === 'denied') {
-            enablePushBtn.innerHTML = '<i class="fa-solid fa-bell-slash"></i>';
-            enablePushBtn.title = 'تم رفض إذن الإشعارات';
-            enablePushBtn.style.color = '#ef4444';
+            if (pushBtnText) pushBtnText.textContent = 'مرفوض';
+            if (pushStatus) {
+                pushStatus.textContent = '❌ تم رفض الإذن';
+                pushStatus.style.color = '#ef4444';
+            }
+            enablePushBtn.disabled = true;
+            enablePushBtn.style.opacity = '0.6';
         } else {
-            enablePushBtn.innerHTML = '<i class="fa-solid fa-bell-slash"></i>';
-            enablePushBtn.title = 'اضغط لتفعيل إشعارات الجوال';
-            enablePushBtn.style.color = '#94a3b8';
+            if (pushBtnText) pushBtnText.textContent = 'تفعيل الإشعارات';
+            if (pushStatus) {
+                pushStatus.textContent = 'غير مفعّل';
+                pushStatus.style.color = '#64748b';
+            }
+            enablePushBtn.disabled = false;
+            enablePushBtn.style.opacity = '1';
         }
     }
 
