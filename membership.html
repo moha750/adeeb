@@ -161,9 +161,32 @@
       .mc-box span { font-family: fb; font-size: clamp(1.1rem, 3.5vw, 1.6rem); letter-spacing:.5px; }
       .mc-box small { font-family: fr; opacity:.9; }
       @media (max-width:560px){ .mc-box { min-width:70px; padding:8px 10px; } }
+      /* Invitation expiry countdown */
+      .inv-countdown { display:none; width:min(760px, 96vw); margin: 0px auto 1rem; padding: 14px 16px; border-radius: 12px; background: linear-gradient(135deg, #f59e0b, #d97706); color:#fff; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 12px 30px rgba(245,158,11,.2); }
+      .inv-countdown-head { display:flex; align-items:center; justify-content:center; gap: 8px; color:#fff; font-family: fb; font-size:1rem; }
+      .inv-countdown-head i { opacity:.95; }
+      .inv-countdown-timer { display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; margin-top:8px; }
+      .inv-countdown-box { min-width:75px; display:grid; gap:4px; justify-items:center; background: rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.3); padding:8px 10px; border-radius:10px; color:#fff; box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset; }
+      .inv-countdown-box span { font-family: fb; font-size: clamp(1rem, 3vw, 1.4rem); letter-spacing:.3px; }
+      .inv-countdown-box small { font-family: fr; opacity:.95; font-size:.85rem; }
+      @media (max-width:560px){ .inv-countdown-box { min-width:65px; padding:6px 8px; } }
     </style>
   </head>
   <body>
+    <!-- Invitation expiry countdown (shown when using invitation link) -->
+    <div id="invitationCountdown" class="inv-countdown" aria-live="polite">
+      <div class="inv-countdown-head">
+        <div class="inv-countdown-label"><i class="fa-solid fa-clock"></i> تنتهي صلاحية رابط الدعوة بعد</div>
+      </div>
+      <div class="inv-countdown-timer">
+        <div class="inv-countdown-box"><span id="invDays">--</span><small>يوم</small></div>
+        <div class="inv-countdown-box"><span id="invHours">--</span><small>ساعة</small></div>
+        <div class="inv-countdown-box"><span id="invMinutes">--</span><small>دقيقة</small></div>
+        <div class="inv-countdown-box"><span id="invSeconds">--</span><small>ثانية</small></div>
+      </div>
+    </div>
+
+    <!-- Membership closing countdown -->
     <div id="membershipCountdown" class="mc-wrap" aria-live="polite">
       <div class="mc-head">
         <div class="mc-label"><i class="fa-regular fa-hourglass-half"></i> يغلق التسجيل بعد</div>
@@ -448,7 +471,9 @@
         function enforceJoinAccess(){
           try{
             const s = publicSettingsGet();
-            const isOpen = isJoinOpenEffective(s);
+            // إذا كان هناك دعوة صالحة، تجاهل إغلاق التسجيل
+            const hasValidInvitation = !!invitationData;
+            const isOpen = hasValidInvitation || isJoinOpenEffective(s);
             if (joinClosedCard) joinClosedCard.style.display = isOpen ? 'none' : 'block';
             if (pageCard) pageCard.classList.toggle('closed-state', !isOpen);
             if (headerEl) headerEl.style.display = isOpen ? '' : 'none';
@@ -812,13 +837,25 @@
             return;
           }
           const s0 = publicSettingsGet();
-          if(!isJoinOpenEffective(s0)){
+          // السماح بالإرسال إذا كان هناك دعوة صالحة أو التسجيل مفتوح
+          const hasValidInvitation = !!invitationData;
+          if(!hasValidInvitation && !isJoinOpenEffective(s0)){
             status.className = 'alert error';
             status.style.display = 'block';
             status.textContent = 'عذرًا، باب التسجيل مغلق حاليًا.';
             return;
           }
           const sb = window.sbClient;
+          
+          // تسجيل الخروج من أي session مسجل لضمان استخدام anon role
+          if (sb) {
+            try {
+              await sb.auth.signOut();
+            } catch (e) {
+              console.warn('Sign out failed:', e);
+            }
+          }
+          
           const payload = {
             full_name: document.getElementById('fullName').value.trim(),
             phone: document.getElementById('phone').value.trim() || null,
@@ -847,11 +884,23 @@
           try{
             let saved = false;
             let remoteFailed = !sb;
+            let applicationId = null;
             if(sb){
               try{
-                const { error } = await sb.from('membership_applications').insert(payload);
+                const { data, error } = await sb.from('membership_applications').insert(payload).select().single();
                 if(error) throw error;
                 saved = true;
+                applicationId = data?.id;
+                
+                // تسجيل استخدام الدعوة إذا كانت موجودة
+                if (invitationData && applicationId) {
+                  await recordInvitationUsage(
+                    invitationData.id,
+                    applicationId,
+                    payload.full_name,
+                    payload.email
+                  );
+                }
               } catch(e){ remoteFailed = true; saved = false; }
             }
             if(!saved){
@@ -978,29 +1027,184 @@
 
         showStep(0);
 
-        // تحميل اللجان المتاحة للتسجيل من قاعدة البيانات
+        // نظام الدعوات
+        let invitationCode = null;
+        let invitationData = null;
+        let allowedCommittees = null;
+
+        // قراءة كود الدعوة من الرابط
+        function getInvitationCode() {
+          const params = new URLSearchParams(window.location.search);
+          return params.get('invite');
+        }
+
+        // التحقق من صلاحية الدعوة
+        async function validateInvitation(code) {
+          if (!code) return null;
+          
+          try {
+            const sb = window.sbClient;
+            if (!sb) return null;
+
+            const { data, error } = await sb.rpc('validate_invitation', {
+              p_code: code
+            });
+
+            if (error) throw error;
+
+            console.log('Invitation validation result:', data);
+
+            // Supabase RPC returns array, get first element
+            const result = Array.isArray(data) ? data[0] : data;
+
+            if (result && result.is_valid) {
+              return {
+                id: result.invitation_id,
+                code: code,
+                mode: result.committee_mode,
+                committeeId: result.selected_committee_id,
+                committeeIds: result.selected_committee_ids,
+                expiresAt: result.expires_at,
+                remainingUses: result.remaining_uses
+              };
+            }
+            return null;
+          } catch (error) {
+            console.error('خطأ في التحقق من الدعوة:', error);
+            return null;
+          }
+        }
+
+        // تسجيل استخدام الدعوة
+        async function recordInvitationUsage(invitationId, applicationId, applicantName, applicantEmail) {
+          try {
+            const sb = window.sbClient;
+            if (!sb || !invitationId) return;
+
+            await sb.from('invitation_usages').insert({
+              invitation_id: invitationId,
+              application_id: applicationId,
+              applicant_name: applicantName,
+              applicant_email: applicantEmail
+            });
+          } catch (error) {
+            console.error('خطأ في تسجيل استخدام الدعوة:', error);
+          }
+        }
+
+        // عداد وقت صلاحية رابط الدعوة
+        let invCountdownInterval = null;
+        function startInvitationCountdown(expiresAt) {
+          const invWrap = document.getElementById('invitationCountdown');
+          const invDays = document.getElementById('invDays');
+          const invHours = document.getElementById('invHours');
+          const invMinutes = document.getElementById('invMinutes');
+          const invSeconds = document.getElementById('invSeconds');
+          
+          if (!invWrap || !expiresAt) return;
+          
+          // إيقاف العداد السابق إن وجد
+          if (invCountdownInterval) {
+            clearInterval(invCountdownInterval);
+          }
+          
+          const targetTime = new Date(expiresAt).getTime();
+          
+          function updateCountdown() {
+            const now = Date.now();
+            const diff = targetTime - now;
+            
+            if (diff <= 0) {
+              // انتهت الصلاحية
+              invWrap.style.display = 'none';
+              if (invCountdownInterval) {
+                clearInterval(invCountdownInterval);
+              }
+              // إعادة تحميل الصفحة لإظهار رسالة انتهاء الصلاحية
+              window.location.reload();
+              return;
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            if (invDays) invDays.textContent = String(days).padStart(2, '0');
+            if (invHours) invHours.textContent = String(hours).padStart(2, '0');
+            if (invMinutes) invMinutes.textContent = String(minutes).padStart(2, '0');
+            if (invSeconds) invSeconds.textContent = String(seconds).padStart(2, '0');
+            
+            invWrap.style.display = 'block';
+          }
+          
+          updateCountdown();
+          invCountdownInterval = setInterval(updateCountdown, 1000);
+        }
+
+        // تحميل اللجان المتاحة
         let activeCommittees = [];
         async function loadCommittees() {
           try {
             const sb = window.sbClient;
-            if (!sb) {
-              console.warn('Supabase client not available');
-              return;
+            if (!sb) return;
+
+            // التحقق من وجود دعوة
+            invitationCode = getInvitationCode();
+            if (invitationCode) {
+              invitationData = await validateInvitation(invitationCode);
+              
+              if (!invitationData) {
+                // دعوة غير صالحة
+                const status = document.getElementById('status');
+                if (status) {
+                  status.className = 'alert error';
+                  status.style.display = 'block';
+                  status.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> رابط الدعوة غير صالح أو منتهي الصلاحية';
+                }
+              } else {
+                // دعوة صالحة - عرض رسالة وتفعيل العداد
+                const status = document.getElementById('status');
+                if (status) {
+                  status.className = 'alert';
+                  status.style.display = 'block';
+                  status.innerHTML = '<i class="fa-solid fa-envelope-open-text"></i> تم تفعيل رابط الدعوة بنجاح';
+                  setTimeout(() => { status.style.display = 'none'; }, 5000);
+                }
+                // تشغيل عداد صلاحية الدعوة
+                startInvitationCountdown(invitationData.expiresAt);
+                // تحديث حالة الواجهة للسماح بالتسجيل
+                enforceJoinAccess();
+              }
             }
 
-            // تحميل اللجان المتاحة فقط من جدول membership_available_committees
             const { data, error } = await sb
               .from('membership_available_committees')
-              .select(`
-                *,
-                committee:committees(*)
-              `)
+              .select('*, committee:committees(*)')
               .eq('is_available', true)
-              .order('display_order', { ascending: true });
+              .order('committee(committee_name_ar)');
 
             if (error) throw error;
 
             activeCommittees = data || [];
+            
+            // تطبيق قيود الدعوة على اللجان
+            if (invitationData) {
+              if (invitationData.mode === 'single' && invitationData.committeeId) {
+                // لجنة واحدة فقط
+                activeCommittees = activeCommittees.filter(item => 
+                  item.committee && item.committee.id === invitationData.committeeId
+                );
+                allowedCommittees = [invitationData.committeeId];
+              } else if (invitationData.mode === 'multiple' && invitationData.committeeIds) {
+                // مجموعة لجان محددة
+                activeCommittees = activeCommittees.filter(item => 
+                  item.committee && invitationData.committeeIds.includes(item.committee.id)
+                );
+                allowedCommittees = invitationData.committeeIds;
+              }
+              // إذا كان 'all' فلا نطبق أي قيود
+            }
             
             // تحديث القائمة المنسدلة
             const preferredCommitteeSelect = document.getElementById('preferredCommittee');

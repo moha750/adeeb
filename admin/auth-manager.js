@@ -218,7 +218,7 @@ window.AuthManager = (function() {
     /**
      * حماية الصفحة - التحقق من تسجيل الدخول والصلاحيات
      */
-    async function protectPage(minRoleLevel = 5, redirectUrl = '/admin/login.html') {
+    async function protectPage(minRoleLevel = 5, redirectUrl = '/auth/login.html') {
         try {
             const { data: { session } } = await sb.auth.getSession();
             
@@ -266,10 +266,10 @@ window.AuthManager = (function() {
                 await logActivity(session.user.id, 'logout', 'auth', session.user.id);
             }
             await sb.auth.signOut();
-            location.replace('/admin/login.html');
+            location.replace('/auth/login.html');
         } catch (error) {
             console.error('Error logging out:', error);
-            location.replace('/admin/login.html');
+            location.replace('/auth/login.html');
         }
     }
 

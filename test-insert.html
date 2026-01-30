@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Insert</title>
+</head>
+<body>
+  <h1>Test Membership Application Insert</h1>
+  <button id="testBtn">Test Insert</button>
+  <pre id="result"></pre>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://nnlhkfeybyhvlinbqqfa.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ubGhrZmV5YnlodmxpbmJxcWZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODIyODcsImV4cCI6MjA4NDE1ODI4N30.VhQgdxHt6YOQu8IJ-eni6_9qIeua1ZM3hx8hVe3YgZg';
+
+    const testClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    document.getElementById('testBtn').addEventListener('click', async () => {
+      const result = document.getElementById('result');
+      result.textContent = 'Testing...';
+
+      try {
+        // Sign out first
+        await testClient.auth.signOut();
+        
+        const payload = {
+          full_name: 'Test User ' + Date.now(),
+          email: 'test' + Date.now() + '@example.com',
+          phone: '0501234567',
+          about: 'Test application',
+          status: 'new'
+        };
+
+        console.log('Payload:', payload);
+
+        const { data, error } = await testClient
+          .from('membership_applications')
+          .insert(payload)
+          .select()
+          .single();
+
+        if (error) {
+          result.textContent = 'ERROR:\n' + JSON.stringify(error, null, 2);
+          console.error('Error:', error);
+        } else {
+          result.textContent = 'SUCCESS:\n' + JSON.stringify(data, null, 2);
+          console.log('Success:', data);
+        }
+      } catch (e) {
+        result.textContent = 'EXCEPTION:\n' + e.message + '\n' + e.stack;
+        console.error('Exception:', e);
+      }
+    });
+  </script>
+</body>
+</html>

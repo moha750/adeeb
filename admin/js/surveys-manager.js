@@ -716,7 +716,7 @@
         }
 
         async viewSurvey(surveyId) {
-            window.open(`/survey.html?id=${surveyId}`, '_blank');
+            window.open(`/surveys/survey.html?id=${surveyId}`, '_blank');
         }
 
         async editSurvey(surveyId) {
@@ -968,7 +968,7 @@
         }
 
         async shareSurvey(surveyId) {
-            const surveyUrl = `${window.location.origin}/survey.html?id=${surveyId}`;
+            const surveyUrl = `${window.location.origin}/surveys/survey.html?id=${surveyId}`;
             
             if (navigator.clipboard) {
                 try {

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إكمال بيانات العضوية - نادي أدِيب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group label .required {
+            color: #e74c3c;
+            margin-right: 4px;
+        }
+
+        .form-group label .optional {
+            color: #95a5a6;
+            font-weight: normal;
+            font-size: 12px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group input:disabled,
+        .form-group select:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border-right: 4px solid #1976d2;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            color: #388e3c;
+            border-right: 4px solid #388e3c;
+        }
+
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border-right: 4px solid #c62828;
+        }
+
+        .alert-warning {
+            background: #fff3e0;
+            color: #f57c00;
+            border-right: 4px solid #f57c00;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .form-actions {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .success-message.active {
+            display: block;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            color: #4caf50;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 مرحباً بك في نادي أدِيب</h1>
+            <p>يرجى إكمال بياناتك لتفعيل عضويتك</p>
+        </div>
+
+        <div class="content">
+            <!-- Loading State -->
+            <div id="loadingState" class="loading active">
+                <div class="spinner"></div>
+                <p>جاري التحقق من الرابط...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" style="display: none;">
+                <div class="alert alert-error">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span id="errorMessage"></span>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form id="onboardingForm" style="display: none;">
+                <div class="alert alert-info">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <span>جميع الحقول المطلوبة يجب تعبئتها لتفعيل حسابك</span>
+                </div>
+
+                <!-- البيانات الشخصية -->
+                <div class="form-section">
+                    <h2><i class="fa-solid fa-user"></i> البيانات الشخصية</h2>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label><span class="required">*</span> الاسم الثلاثي الكامل</label>
+                            <input type="text" id="fullNameTriple" name="fullNameTriple" required 
+                                   placeholder="مثال: أحمد محمد عبدالله">
+                        </div>
+                        <div class="form-group">
+                            <label><span class="required">*</span> رقم الجوال</label>
+                            <input type="tel" id="phone" name="phone" required 
+                                   placeholder="05xxxxxxxx" pattern="^05[0-9]{8}$">
+                        </div>
+                        <div class="form-group">
+                            <label><span class="required">*</span> البريد الإلكتروني</label>
+                            <input type="email" id="email" name="email" required disabled>
+                        </div>
+                        <div class="form-group">
+                            <label><span class="required">*</span> رقم الهوية الوطنية</label>
+                            <input type="text" id="nationalId" name="nationalId" required 
+                                   placeholder="1xxxxxxxxx" pattern="^[12][0-9]{9}$">
+                        </div>
+                        <div class="form-group">
+                            <label><span class="required">*</span> تاريخ الميلاد</label>
+                            <input type="date" id="birthDate" name="birthDate" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- البيانات الأكاديمية -->
+                <div class="form-section">
+                    <h2><i class="fa-solid fa-graduation-cap"></i> البيانات الأكاديمية</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label><span class="required">*</span> رقم السجل الأكاديمي</label>
+                            <input type="text" id="academicRecordNumber" name="academicRecordNumber" required 
+                                   placeholder="4xxxxxxxx">
+                        </div>
+                        <div class="form-group">
+                            <label><span class="required">*</span> الدرجة العلمية</label>
+                            <select id="academicDegree" name="academicDegree" required>
+                                <option value="">اختر الدرجة العلمية</option>
+                                <option value="high_school">ثانوية عامة</option>
+                                <option value="diploma">دبلوم</option>
+                                <option value="bachelor">بكالوريوس</option>
+                                <option value="master">ماجستير</option>
+                                <option value="phd">دكتوراه</option>
+                                <option value="other">أخرى</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="collegeGroup" style="display: none;">
+                            <label><span class="required">*</span> الكلية</label>
+                            <input type="text" id="college" name="college" placeholder="مثال: كلية الآداب">
+                        </div>
+                        <div class="form-group" id="majorGroup" style="display: none;">
+                            <label><span class="required">*</span> التخصص</label>
+                            <input type="text" id="major" name="major" placeholder="مثال: اللغة العربية">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- اللجنة -->
+                <div class="form-section">
+                    <h2><i class="fa-solid fa-sitemap"></i> اللجنة</h2>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label><span class="required">*</span> اللجنة المختارة</label>
+                            <select id="committeeId" name="committeeId" required disabled>
+                                <option value="">جاري التحميل...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- حسابات التواصل الاجتماعي -->
+                <div class="form-section">
+                    <h2><i class="fa-solid fa-share-nodes"></i> حسابات التواصل الاجتماعي <span class="optional">(اختياري)</span></h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label><i class="fa-brands fa-twitter"></i> حساب تويتر <span class="optional">(اختياري)</span></label>
+                            <input type="text" id="twitterAccount" name="twitterAccount" placeholder="@username">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-brands fa-instagram"></i> حساب إنستقرام <span class="optional">(اختياري)</span></label>
+                            <input type="text" id="instagramAccount" name="instagramAccount" placeholder="@username">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-brands fa-tiktok"></i> حساب تيك توك <span class="optional">(اختياري)</span></label>
+                            <input type="text" id="tiktokAccount" name="tiktokAccount" placeholder="@username">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-brands fa-linkedin"></i> حساب لينكدإن <span class="optional">(اختياري)</span></label>
+                            <input type="text" id="linkedinAccount" name="linkedinAccount" placeholder="username">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="fa-solid fa-check"></i>
+                        إكمال التسجيل
+                    </button>
+                </div>
+            </form>
+
+            <!-- Success State -->
+            <div id="successState" class="success-message">
+                <div class="success-icon">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <h2 style="color: #333; margin-bottom: 15px;">تم إكمال بياناتك بنجاح!</h2>
+                <p style="color: #666; margin-bottom: 30px;">يمكنك الآن تسجيل الدخول إلى لوحة التحكم</p>
+                <a href="auth/login.html" class="btn btn-primary">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    تسجيل الدخول
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+        const sb = window.sbClient;
+        let tokenData = null;
+
+        // الحصول على token من URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        if (!token) {
+            showError('رابط غير صالح. يرجى التحقق من الرابط المرسل في الإيميل.');
+        } else {
+            verifyToken();
+        }
+
+        // التحقق من صلاحية token
+        async function verifyToken() {
+            try {
+                const { data, error } = await sb
+                    .from('member_onboarding_tokens')
+                    .select(`
+                        *,
+                        user:auth.users!user_id(id, email),
+                        application:membership_applications(phone, preferred_committee)
+                    `)
+                    .eq('token', token)
+                    .single();
+
+                if (error || !data) {
+                    throw new Error('رابط غير صالح');
+                }
+
+                if (data.is_used) {
+                    throw new Error('تم استخدام هذا الرابط مسبقاً');
+                }
+
+                if (new Date(data.expires_at) < new Date()) {
+                    throw new Error('انتهت صلاحية هذا الرابط. يرجى التواصل مع الإدارة.');
+                }
+
+                tokenData = data;
+                await loadForm();
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // تحميل النموذج
+        async function loadForm() {
+            try {
+                // جلب اللجان
+                const { data: committees } = await sb
+                    .from('committees')
+                    .select('id, committee_name_ar')
+                    .eq('is_active', true)
+                    .order('committee_name_ar');
+
+                const committeeSelect = document.getElementById('committeeId');
+                committeeSelect.innerHTML = '<option value="">اختر اللجنة</option>';
+                committees.forEach(committee => {
+                    const option = document.createElement('option');
+                    option.value = committee.id;
+                    option.textContent = committee.committee_name_ar;
+                    committeeSelect.appendChild(option);
+                });
+
+                // تعبئة البيانات الموجودة مسبقاً
+                document.getElementById('email').value = tokenData.sent_to_email;
+                if (tokenData.application?.phone) {
+                    document.getElementById('phone').value = tokenData.application.phone;
+                }
+
+                // إخفاء loading وإظهار النموذج
+                document.getElementById('loadingState').classList.remove('active');
+                document.getElementById('onboardingForm').style.display = 'block';
+
+                // إعداد event listeners
+                setupFormListeners();
+            } catch (error) {
+                showError('حدث خطأ أثناء تحميل النموذج');
+            }
+        }
+
+        // إعداد event listeners
+        function setupFormListeners() {
+            // إظهار/إخفاء حقول الكلية والتخصص
+            document.getElementById('academicDegree').addEventListener('change', function() {
+                const value = this.value;
+                const collegeGroup = document.getElementById('collegeGroup');
+                const majorGroup = document.getElementById('majorGroup');
+                const collegeInput = document.getElementById('college');
+                const majorInput = document.getElementById('major');
+
+                if (value && value !== 'high_school') {
+                    collegeGroup.style.display = 'block';
+                    majorGroup.style.display = 'block';
+                    collegeInput.required = true;
+                    majorInput.required = true;
+                } else {
+                    collegeGroup.style.display = 'none';
+                    majorGroup.style.display = 'none';
+                    collegeInput.required = false;
+                    majorInput.required = false;
+                    collegeInput.value = '';
+                    majorInput.value = '';
+                }
+            });
+
+            // معالجة إرسال النموذج
+            document.getElementById('onboardingForm').addEventListener('submit', handleSubmit);
+        }
+
+        // معالجة إرسال النموذج
+        async function handleSubmit(e) {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
+
+            try {
+                const formData = {
+                    user_id: tokenData.user_id,
+                    full_name_triple: document.getElementById('fullNameTriple').value,
+                    phone: document.getElementById('phone').value,
+                    national_id: document.getElementById('nationalId').value,
+                    academic_record_number: document.getElementById('academicRecordNumber').value,
+                    email: document.getElementById('email').value,
+                    birth_date: document.getElementById('birthDate').value,
+                    academic_degree: document.getElementById('academicDegree').value,
+                    college: document.getElementById('college').value || null,
+                    major: document.getElementById('major').value || null,
+                    committee_id: parseInt(document.getElementById('committeeId').value),
+                    twitter_account: document.getElementById('twitterAccount').value || null,
+                    instagram_account: document.getElementById('instagramAccount').value || null,
+                    tiktok_account: document.getElementById('tiktokAccount').value || null,
+                    linkedin_account: document.getElementById('linkedinAccount').value || null
+                };
+
+                // حفظ البيانات
+                const { error: insertError } = await sb
+                    .from('member_details')
+                    .insert(formData);
+
+                if (insertError) throw insertError;
+
+                // تحديث token كمستخدم
+                const { error: tokenError } = await sb
+                    .from('member_onboarding_tokens')
+                    .update({ is_used: true, used_at: new Date().toISOString() })
+                    .eq('token', token);
+
+                if (tokenError) throw tokenError;
+
+                // إظهار رسالة النجاح
+                document.getElementById('onboardingForm').style.display = 'none';
+                document.getElementById('successState').classList.add('active');
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء حفظ البيانات. يرجى المحاولة مرة أخرى.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> إكمال التسجيل';
+            }
+        }
+
+        // عرض رسالة خطأ
+        function showError(message) {
+            document.getElementById('loadingState').classList.remove('active');
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorState').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

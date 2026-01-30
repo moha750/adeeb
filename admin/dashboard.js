@@ -163,6 +163,12 @@
                     label: 'اللجان المتاحة',
                     section: 'membership-committees-section'
                 });
+                registrationSubItems.push({
+                    id: 'membership-invitations',
+                    icon: 'fa-envelope-open-text',
+                    label: 'دعوات التسجيل',
+                    section: 'membership-invitations-section'
+                });
             }
             if (registrationSubItems.length > 0) {
                 membershipSubItems.push({
@@ -234,6 +240,14 @@
                 icon: 'fa-user-check',
                 label: 'نتائج العضوية',
                 section: 'membership-accepted-section'
+            });
+            
+            // ترحيل المقبولين - عنصر مباشر
+            membershipSubItems.push({
+                id: 'member-migration',
+                icon: 'fa-users-gear',
+                label: 'ترحيل المقبولين',
+                section: 'member-migration-section'
             });
             
             // أرشيف التسجيل - عنصر مباشر
@@ -330,6 +344,22 @@
                 subItems: websiteSubItems
             });
         }
+        
+        // الملف الشخصي - جميع المستويات
+        menuItems.push({
+            id: 'profile',
+            icon: 'fa-user-circle',
+            label: 'الملف الشخصي',
+            section: 'profile-section'
+        });
+
+        // الإعدادات - جميع المستويات
+        menuItems.push({
+            id: 'settings',
+            icon: 'fa-sliders',
+            label: 'الإعدادات',
+            section: 'settings-section'
+        });
         
         // إدارة الصلاحيات - المستوى 10 فقط (رئيس النادي)
         if (roleLevel >= 10) {
@@ -681,6 +711,11 @@
                     await window.membershipManager.init(currentUser);
                 }
                 break;
+            case 'membership-invitations-section':
+                if (window.invitationsManager) {
+                    await window.invitationsManager.init(currentUser);
+                }
+                break;
             case 'membership-applications-view-section':
                 if (window.membershipManager) {
                     await window.membershipManager.loadApplicationsView();
@@ -716,6 +751,11 @@
                     await window.membershipDecisions.load();
                 }
                 break;
+            case 'member-migration-section':
+                if (window.memberMigration) {
+                    await window.memberMigration.init(currentUser);
+                }
+                break;
             case 'website-works-section':
                 await loadWebsiteWorksSection();
                 break;
@@ -727,6 +767,16 @@
                 break;
             case 'website-faq-section':
                 await loadWebsiteFaqSection();
+                break;
+            case 'profile-section':
+                if (window.profileManager) {
+                    await window.profileManager.init(currentUser);
+                }
+                break;
+            case 'settings-section':
+                if (window.settingsManager) {
+                    window.settingsManager.init();
+                }
                 break;
             case 'permissions-section':
                 await loadPermissionsSection();

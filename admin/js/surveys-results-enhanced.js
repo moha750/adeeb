@@ -94,7 +94,7 @@
         }
 
         markAbandonedResponses(responses) {
-            const ABANDONED_THRESHOLD_MINUTES = 10;
+            const ABANDONED_THRESHOLD_MINUTES = 60;
             const now = new Date();
 
             return responses.map(response => {

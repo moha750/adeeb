@@ -2385,6 +2385,7 @@
         const searchInput = document.getElementById('barzakhSearchInput');
         const committeeFilter = document.getElementById('barzakhCommitteeFilter');
         const refreshBtn = document.getElementById('refreshBarzakhBtn');
+        const exportBtn = document.getElementById('exportBarzakhBtn');
 
         if (searchInput) {
             searchInput.removeEventListener('input', renderBarzakhTable);
@@ -2398,6 +2399,42 @@
             refreshBtn.removeEventListener('click', loadBarzakh);
             refreshBtn.addEventListener('click', loadBarzakh);
         }
+        if (exportBtn) {
+            exportBtn.removeEventListener('click', exportBarzakh);
+            exportBtn.addEventListener('click', exportBarzakh);
+        }
+    }
+
+    /**
+     * تصدير بيانات البرزخ إلى CSV
+     */
+    function exportBarzakh() {
+        const container = document.getElementById('barzakhTable');
+        const source = container?._cachedBarzakh || barzakhApplications;
+        
+        if (!source || source.length === 0) {
+            showNotification('لا توجد بيانات للتصدير', 'warning');
+            return;
+        }
+
+        const headers = ['الاسم', 'البريد الإلكتروني', 'الهاتف', 'اللجنة المرغوبة', 'تاريخ القبول للمقابلة', 'تاريخ التقديم'];
+        const rows = source.map(app => [
+            app.full_name || '',
+            app.email || '',
+            app.phone || '',
+            app.preferred_committee || '',
+            app.approved_for_interview_at ? new Date(app.approved_for_interview_at).toLocaleDateString('ar-SA') : '',
+            app.created_at ? new Date(app.created_at).toLocaleDateString('ar-SA') : ''
+        ]);
+
+        const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `barzakh_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+
+        showNotification('تم تصدير بيانات البرزخ بنجاح', 'success');
     }
 
     function renderBarzakhTable() {

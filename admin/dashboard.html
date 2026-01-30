@@ -8,6 +8,7 @@
     <meta name="robots" content="noindex, nofollow" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
     <link rel="stylesheet" href="dashboard.css" />
+    <link rel="stylesheet" href="css/member-migration.css" />
     <!-- <link rel="stylesheet" href="dashboard-archives.css" /> -->
 </head>
 
@@ -462,6 +463,235 @@
                 <!-- قائمة القوالب -->
                 <div id="templatesListContainer" class="templates-grid">
                     <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </section>
+
+            <!-- قسم الملف الشخصي -->
+            <section id="profile-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-user-circle"></i>
+                        الملف الشخصي
+                    </h1>
+                    <p class="section-subtitle">إدارة معلوماتك الشخصية والأمان</p>
+                </div>
+
+                <!-- بطاقة المعلومات الأساسية -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-user"></i>
+                            المعلومات الأساسية
+                        </h3>
+                        <button class="btn-primary" id="editProfileBtn">
+                            <i class="fa-solid fa-pen"></i>
+                            تعديل
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: grid; gap: 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                                <div style="position: relative;">
+                                    <img id="profileAvatar" src="" alt="الصورة الشخصية" 
+                                         style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #e2e8f0;">
+                                    <button id="changeAvatarBtn" class="btn-sm btn-primary" 
+                                            style="position: absolute; bottom: 0; right: 0; border-radius: 50%; width: 32px; height: 32px; padding: 0;">
+                                        <i class="fa-solid fa-camera"></i>
+                                    </button>
+                                </div>
+                                <div>
+                                    <h3 id="profileFullName" style="margin: 0 0 0.5rem 0; color: #274060;">جاري التحميل...</h3>
+                                    <p id="profileRole" style="margin: 0; color: #64748b; font-size: 0.95rem;">
+                                        <i class="fa-solid fa-shield-halved"></i>
+                                        <span>جاري التحميل...</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                                <div>
+                                    <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">البريد الإلكتروني</label>
+                                    <p id="profileEmail" style="margin: 0; color: #274060;">جاري التحميل...</p>
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">رقم الهاتف</label>
+                                    <p id="profilePhone" style="margin: 0; color: #274060;">غير محدد</p>
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">تاريخ الانضمام</label>
+                                    <p id="profileJoinDate" style="margin: 0; color: #274060;">جاري التحميل...</p>
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block;">آخر تسجيل دخول</label>
+                                    <p id="profileLastLogin" style="margin: 0; color: #274060;">جاري التحميل...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقة الأمان -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-lock"></i>
+                            الأمان
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: grid; gap: 1.5rem;">
+                            <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #3b82f6;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                                    <div>
+                                        <h4 style="margin: 0 0 0.5rem 0; color: #274060;">
+                                            <i class="fa-solid fa-key"></i>
+                                            كلمة المرور
+                                        </h4>
+                                        <p style="margin: 0; color: #64748b; font-size: 0.875rem;">
+                                            آخر تغيير: <span id="lastPasswordChange">غير معروف</span>
+                                        </p>
+                                    </div>
+                                    <button class="btn-outline" id="changePasswordBtn">
+                                        <i class="fa-solid fa-pen"></i>
+                                        تغيير كلمة المرور
+                                    </button>
+                                </div>
+                            </div>
+                            <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #10b981;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                                    <div>
+                                        <h4 style="margin: 0 0 0.5rem 0; color: #274060;">
+                                            <i class="fa-solid fa-desktop"></i>
+                                            الجلسات النشطة
+                                        </h4>
+                                        <p style="margin: 0; color: #64748b; font-size: 0.875rem;">
+                                            <span id="activeSessionsCount">1</span> جلسة نشطة حالياً
+                                        </p>
+                                    </div>
+                                    <button class="btn-outline" id="viewSessionsBtn">
+                                        <i class="fa-solid fa-eye"></i>
+                                        عرض الجلسات
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقة النشاط -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-chart-line"></i>
+                            النشاط الأخير
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="recentActivityContainer" style="max-height: 400px; overflow-y: auto;">
+                            <p style="text-align: center; color: #64748b; padding: 2rem;">جاري تحميل النشاط...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم الإعدادات -->
+            <section id="settings-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-sliders"></i>
+                        الإعدادات
+                    </h1>
+                    <p class="section-subtitle">إعدادات المظهر والتفضيلات الشخصية</p>
+                </div>
+
+                <!-- بطاقة المظهر -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-palette"></i>
+                            المظهر
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label style="font-weight: bold; margin-bottom: 1rem; display: block;">
+                                <i class="fa-solid fa-moon"></i>
+                                الوضع الليلي / النهاري
+                            </label>
+                            <div style="display: grid; gap: 1rem;">
+                                <label style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;" class="theme-option">
+                                    <input type="radio" name="theme" value="light" style="width: auto;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; margin-bottom: 0.25rem;">
+                                            <i class="fa-solid fa-sun" style="color: #f59e0b;"></i>
+                                            الوضع النهاري
+                                        </div>
+                                        <div style="font-size: 0.875rem; color: #64748b;">خلفية فاتحة ونصوص داكنة</div>
+                                    </div>
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;" class="theme-option">
+                                    <input type="radio" name="theme" value="dark" style="width: auto;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; margin-bottom: 0.25rem;">
+                                            <i class="fa-solid fa-moon" style="color: #6366f1;"></i>
+                                            الوضع الليلي
+                                        </div>
+                                        <div style="font-size: 0.875rem; color: #64748b;">خلفية داكنة ونصوص فاتحة</div>
+                                    </div>
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;" class="theme-option">
+                                    <input type="radio" name="theme" value="auto" checked style="width: auto;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; margin-bottom: 0.25rem;">
+                                            <i class="fa-solid fa-circle-half-stroke" style="color: #8b5cf6;"></i>
+                                            تلقائي (حسب التوقيت المحلي)
+                                        </div>
+                                        <div style="font-size: 0.875rem; color: #64748b;">نهاري من 6 صباحاً - 6 مساءً، ليلي من 6 مساءً - 6 صباحاً</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #3b82f6;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <i class="fa-solid fa-info-circle" style="color: #3b82f6;"></i>
+                                <strong>الوضع الحالي:</strong>
+                            </div>
+                            <div id="currentThemeStatus" style="color: #64748b;">جاري التحميل...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقة الإشعارات -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-bell"></i>
+                            الإشعارات
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" id="soundNotifications" checked style="width: auto;">
+                                <span style="font-weight: bold;">تفعيل الأصوات</span>
+                            </label>
+                            <small style="color: #64748b; margin-top: 0.25rem; display: block;">
+                                تشغيل صوت عند ظهور الإشعارات
+                            </small>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 1rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" id="desktopNotifications" style="width: auto;">
+                                <span style="font-weight: bold;">إشعارات سطح المكتب</span>
+                            </label>
+                            <small style="color: #64748b; margin-top: 0.25rem; display: block;">
+                                عرض الإشعارات على سطح المكتب (يتطلب إذن المتصفح)
+                            </small>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -922,6 +1152,81 @@
                 </div>
             </section>
 
+            <!-- قسم دعوات التسجيل -->
+            <section id="membership-invitations-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                        دعوات التسجيل
+                    </h1>
+                    <p class="section-subtitle">إنشاء وإدارة دعوات التسجيل الفردية</p>
+                </div>
+
+                <!-- إحصائيات الدعوات -->
+                <div class="stats-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-envelope stat-icon" style="color: #3b82f6;"></i>
+                        <div class="stat-info">
+                            <h3>إجمالي الدعوات</h3>
+                            <p class="stat-value" id="totalInvitationsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-check-circle stat-icon" style="color: #10b981;"></i>
+                        <div class="stat-info">
+                            <h3>دعوات نشطة</h3>
+                            <p class="stat-value" id="activeInvitationsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-user-check stat-icon" style="color: #8b5cf6;"></i>
+                        <div class="stat-info">
+                            <h3>دعوات مستخدمة</h3>
+                            <p class="stat-value" id="usedInvitationsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-clock stat-icon" style="color: #f59e0b;"></i>
+                        <div class="stat-info">
+                            <h3>دعوات منتهية</h3>
+                            <p class="stat-value" id="expiredInvitationsCount">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- أزرار الإجراءات -->
+                <div class="filters-bar">
+                    <button class="btn-primary" id="createInvitationBtn">
+                        <i class="fa-solid fa-plus"></i>
+                        إنشاء دعوة جديدة
+                    </button>
+                    <select id="invitationStatusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="active">نشطة</option>
+                        <option value="used">مستخدمة</option>
+                        <option value="expired">منتهية</option>
+                        <option value="cancelled">ملغاة</option>
+                    </select>
+                    <button class="btn-outline" id="refreshInvitationsBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                    <button class="btn-success" id="exportInvitationsBtn">
+                        <i class="fa-solid fa-file-export"></i>
+                        تصدير
+                    </button>
+                </div>
+
+                <!-- جدول الدعوات -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="invitationsTable" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- قسم طلبات العضوية (عرض فقط) -->
             <section id="membership-applications-view-section" class="admin-section" style="display: none;">
                 <div class="section-header">
@@ -1112,6 +1417,10 @@
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
+                    <button class="btn-success" id="exportBarzakhBtn">
+                        <i class="fa-solid fa-file-export"></i>
+                        تصدير
+                    </button>
                 </div>
 
                 <div class="card">
@@ -1186,6 +1495,87 @@
                 <div class="card">
                     <div class="card-body">
                         <div id="decisionsTable" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم ترحيل المقبولين -->
+            <section id="member-migration-section" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-users-gear"></i>
+                        ترحيل المقبولين إلى حسابات
+                    </h1>
+                    <p class="section-subtitle">ترحيل الأعضاء المقبولين من نتائج العضوية إلى حسابات مستخدمين حقيقية</p>
+                </div>
+
+                <!-- إحصائيات الترحيل -->
+                <div class="stats-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-user-check stat-icon" style="color: #10b981;"></i>
+                        <div class="stat-info">
+                            <h3>إجمالي المقبولين</h3>
+                            <p class="stat-value" id="totalAcceptedCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-clock stat-icon" style="color: #f59e0b;"></i>
+                        <div class="stat-info">
+                            <h3>بانتظار الترحيل</h3>
+                            <p class="stat-value" id="pendingMigrationCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-user-plus stat-icon" style="color: #3b82f6;"></i>
+                        <div class="stat-info">
+                            <h3>تم ترحيلهم</h3>
+                            <p class="stat-value" id="migratedCount">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلاتر البحث -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="migrationSearchInput" placeholder="البحث بالاسم أو البريد..." />
+                    </div>
+                    <select id="migrationCommitteeFilter" class="filter-select">
+                        <option value="">جميع اللجان</option>
+                    </select>
+                    <button class="btn-outline" id="refreshMigrationBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                    <button class="btn-primary" id="exportMigrationBtn">
+                        <i class="fa-solid fa-file-excel"></i>
+                        تصدير Excel
+                    </button>
+                </div>
+
+                <!-- تعليمات الاستخدام -->
+                <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <div class="card-body">
+                        <h3 style="color: white; margin-bottom: 0.75rem;">
+                            <i class="fa-solid fa-info-circle"></i>
+                            كيفية استخدام نظام الترحيل
+                        </h3>
+                        <ul style="margin: 0; padding-right: 1.5rem; line-height: 1.8;">
+                            <li>يعرض هذا القسم جميع الأعضاء المقبولين الذين لم يتم ترحيلهم بعد</li>
+                            <li>يمكنك تعديل اللجنة لأي عضو قبل الترحيل من القائمة المنسدلة</li>
+                            <li>عند الترحيل، سيتم إنشاء حساب جديد للعضو تلقائياً مع كلمة مرور مؤقتة</li>
+                            <li>سيتم ربط العضو بدور "عضو عادي" واللجنة المحددة</li>
+                            <li>يمكنك ترحيل عضو واحد أو مجموعة من الأعضاء دفعة واحدة</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- جدول الترحيل -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="migrationTable" class="data-table">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -1952,6 +2342,7 @@
     <!-- المكتبات -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../supabase-config.js"></script>
     <script src="auth-manager.js"></script>
     <script src="js/permissions-manager.js"></script>
@@ -1959,11 +2350,15 @@
     <script src="js/newsletter-manager.js"></script>
     <script src="js/membership-manager.js"></script>
     <script src="js/membership-decisions.js"></script>
+    <script src="js/membership-invitations.js"></script>
     <script src="js/interview-sessions-manager.js"></script>
     <script src="js/site-visits-manager.js"></script>
     <script src="js/surveys-manager.js"></script>
     <script src="js/surveys-results-enhanced.js"></script>
     <script src="js/membership-archives.js"></script>
+    <script src="js/member-migration.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/settings.js"></script>
     <script src="dashboard.js"></script>
     <!-- <link rel="stylesheet" href="css/archives.css"> -->
 </body>

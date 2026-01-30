@@ -201,7 +201,7 @@
           if (session) {
             const params = new URLSearchParams(location.search);
             const redirectParam = params.get('redirect');
-            let redirectPath = '/dashboard/dashboard.html';
+            let redirectPath = '/admin/dashboard.html';
             if (redirectParam) {
               try {
                 if (/^https?:\/\//i.test(redirectParam)) {
@@ -249,7 +249,7 @@
           try {
             const params = new URLSearchParams(location.search);
             const redirectParam = params.get('redirect');
-            let redirectPath = '/dashboard/dashboard.html';
+            let redirectPath = '/admin/dashboard.html';
             if (redirectParam) {
               try {
                 if (/^https?:\/\//i.test(redirectParam)) {
@@ -317,7 +317,7 @@
                     } else if (redirectPath && !redirectPath.includes('dashboard')) {
                       location.replace(redirectPath);
                     } else {
-                      location.replace('/dashboard/dashboard.html');
+                      location.replace('/admin/dashboard.html');
                     }
                   }, 500);
                   return;
