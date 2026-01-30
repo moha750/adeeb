@@ -131,23 +131,38 @@
         const form = document.getElementById('sendNotificationForm');
         const formData = new FormData(form);
 
+        // التحقق من الحقول المطلوبة
+        const title = formData.get('title')?.trim();
+        const message = formData.get('message')?.trim();
+        const type = formData.get('type');
+        const targetAudience = formData.get('targetAudience');
+
+        if (!title || !message || !type || !targetAudience) {
+            Swal.fire({
+                icon: 'error',
+                title: 'خطأ',
+                text: 'يرجى ملء جميع الحقول المطلوبة'
+            });
+            return;
+        }
+
         const notification = {
-            title: formData.get('title'),
-            message: formData.get('message'),
-            type: formData.get('type'),
-            priority: formData.get('priority'),
-            target_audience: formData.get('targetAudience'),
-            action_url: formData.get('actionUrl') || null,
-            action_label: formData.get('actionLabel') || null,
+            title: title,
+            message: message,
+            type: type,
+            priority: formData.get('priority') || 'normal',
+            target_audience: targetAudience,
+            action_url: formData.get('actionUrl')?.trim() || null,
+            action_label: formData.get('actionLabel')?.trim() || null,
             sender_id: currentUser.id,
             is_push_enabled: formData.get('enablePush') === 'on',
-            icon: getIconForType(formData.get('type'))
+            icon: getIconForType(type)
         };
 
         // إضافة معلومات إضافية حسب الجمهور المستهدف
         if (notification.target_audience === 'specific_committee') {
-            notification.target_committee_id = parseInt(formData.get('targetCommittee'));
-            if (!notification.target_committee_id) {
+            const committeeId = parseInt(formData.get('targetCommittee'));
+            if (!committeeId || isNaN(committeeId)) {
                 Swal.fire({
                     icon: 'error',
                     title: 'خطأ',
@@ -155,6 +170,7 @@
                 });
                 return;
             }
+            notification.target_committee_id = committeeId;
         }
 
         // تأكيد الإرسال
@@ -179,6 +195,8 @@
         if (!result.isConfirmed) return;
 
         try {
+            console.log('📤 Sending notification:', notification);
+
             // إرسال الإشعار
             const { data, error } = await window.sbClient
                 .from('notifications')
@@ -186,10 +204,16 @@
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('❌ Database error:', error);
+                throw error;
+            }
+
+            console.log('✅ Notification created:', data);
 
             // إذا كان Push مفعل، إرسال Push Notifications
-            if (notification.is_push_enabled) {
+            if (notification.is_push_enabled && data) {
+                console.log('📱 Triggering push notifications...');
                 await sendPushNotifications(data);
             }
 
@@ -208,11 +232,23 @@
             await loadNotificationsHistory();
 
         } catch (error) {
-            console.error('Error sending notification:', error);
+            console.error('❌ Error sending notification:', error);
+            
+            let errorMessage = 'حدث خطأ أثناء إرسال الإشعار';
+            
+            if (error.message?.includes('Failed to fetch')) {
+                errorMessage = 'فشل الاتصال بقاعدة البيانات. تحقق من الاتصال بالإنترنت.';
+            } else if (error.code === '42501') {
+                errorMessage = 'ليس لديك صلاحية لإرسال الإشعارات. يجب أن تكون رئيس النادي.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
             Swal.fire({
                 icon: 'error',
                 title: 'خطأ',
-                text: 'حدث خطأ أثناء إرسال الإشعار'
+                text: errorMessage,
+                footer: error.hint || error.details || ''
             });
         }
     }

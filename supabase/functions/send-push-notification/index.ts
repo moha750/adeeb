@@ -32,6 +32,13 @@ serve(async (req) => {
   }
 
   try {
+    // استخدام Service Role للوصول الكامل لقاعدة البيانات
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    // إنشاء عميل للتحقق من المصادقة
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
@@ -49,7 +56,7 @@ serve(async (req) => {
     } = await supabaseClient.auth.getUser();
 
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({ error: "Unauthorized", details: authError?.message }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -68,7 +75,7 @@ serve(async (req) => {
     }
 
     // جلب بيانات الإشعار
-    const { data: notification, error: notifError } = await supabaseClient
+    const { data: notification, error: notifError } = await supabaseAdmin
       .from("notifications")
       .select("*")
       .eq("id", notification_id)
@@ -76,7 +83,7 @@ serve(async (req) => {
 
     if (notifError || !notification) {
       return new Response(
-        JSON.stringify({ error: "Notification not found" }),
+        JSON.stringify({ error: "Notification not found", details: notifError?.message }),
         {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -100,7 +107,7 @@ serve(async (req) => {
 
     if (notification.target_audience === "all") {
       // جلب جميع المستخدمين النشطين
-      const { data: users } = await supabaseClient
+      const { data: users } = await supabaseAdmin
         .from("users")
         .select("id")
         .eq("status", "active");
@@ -108,24 +115,24 @@ serve(async (req) => {
     } else if (notification.target_audience === "specific_users") {
       targetUserIds = notification.target_user_ids || [];
     } else if (notification.target_audience === "members") {
-      const { data: members } = await supabaseClient
+      const { data: members } = await supabaseAdmin
         .from("member_details")
         .select("user_id");
       targetUserIds = members?.map((m) => m.user_id) || [];
     } else if (notification.target_audience === "committee_leaders") {
-      const { data: leaders } = await supabaseClient
+      const { data: leaders } = await supabaseAdmin
         .from("user_roles")
         .select("user_id, roles!inner(role_name)")
         .eq("roles.role_name", "committee_leader");
       targetUserIds = leaders?.map((l) => l.user_id) || [];
     } else if (notification.target_audience === "admins") {
-      const { data: admins } = await supabaseClient
+      const { data: admins } = await supabaseAdmin
         .from("user_roles")
         .select("user_id, roles!inner(role_name)")
         .in("roles.role_name", ["admin", "super_admin"]);
       targetUserIds = admins?.map((a) => a.user_id) || [];
     } else if (notification.target_audience === "specific_committee") {
-      const { data: members } = await supabaseClient
+      const { data: members } = await supabaseAdmin
         .from("user_roles")
         .select("user_id")
         .eq("committee_id", notification.target_committee_id);
@@ -133,7 +140,7 @@ serve(async (req) => {
     }
 
     // جلب اشتراكات Push للمستخدمين المستهدفين
-    const { data: subscriptions, error: subsError } = await supabaseClient
+    const { data: subscriptions, error: subsError } = await supabaseAdmin
       .from("push_subscriptions")
       .select("*")
       .in("user_id", targetUserIds)
@@ -200,7 +207,7 @@ serve(async (req) => {
           
           // إذا كان الاشتراك غير صالح، قم بتعطيله
           if (error.statusCode === 410) {
-            await supabaseClient
+            await supabaseAdmin
               .from("push_subscriptions")
               .update({ is_active: false })
               .eq("id", sub.id);
