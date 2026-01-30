@@ -294,6 +294,16 @@
                             <input type="email" id="email" name="email" required disabled>
                         </div>
                         <div class="form-group">
+                            <label><span class="required">*</span> كلمة المرور</label>
+                            <input type="password" id="password" name="password" required 
+                                   placeholder="8 أحرف على الأقل" minlength="8">
+                        </div>
+                        <div class="form-group">
+                            <label><span class="required">*</span> تأكيد كلمة المرور</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" required 
+                                   placeholder="أعد إدخال كلمة المرور" minlength="8">
+                        </div>
+                        <div class="form-group">
                             <label><span class="required">*</span> رقم الهوية الوطنية</label>
                             <input type="text" id="nationalId" name="nationalId" required 
                                    placeholder="1xxxxxxxxx" pattern="^[12][0-9]{9}$">
@@ -419,13 +429,13 @@
                     .from('member_onboarding_tokens')
                     .select(`
                         *,
-                        user:auth.users!user_id(id, email),
                         application:membership_applications(phone, preferred_committee)
                     `)
                     .eq('token', token)
                     .single();
 
                 if (error || !data) {
+                    console.error('Token verification error:', error);
                     throw new Error('رابط غير صالح');
                 }
 
@@ -513,13 +523,21 @@
         async function handleSubmit(e) {
             e.preventDefault();
 
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // التحقق من تطابق كلمات المرور
+            if (password !== confirmPassword) {
+                alert('كلمات المرور غير متطابقة');
+                return;
+            }
+
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
 
             try {
-                const formData = {
-                    user_id: tokenData.user_id,
+                const memberDetails = {
                     full_name_triple: document.getElementById('fullNameTriple').value,
                     phone: document.getElementById('phone').value,
                     national_id: document.getElementById('nationalId').value,
@@ -536,20 +554,23 @@
                     linkedin_account: document.getElementById('linkedinAccount').value || null
                 };
 
-                // حفظ البيانات
-                const { error: insertError } = await sb
-                    .from('member_details')
-                    .insert(formData);
+                // استدعاء Edge Function
+                const { data, error } = await sb.functions.invoke('complete-member-onboarding', {
+                    body: {
+                        token: token,
+                        password: password,
+                        member_details: memberDetails
+                    }
+                });
 
-                if (insertError) throw insertError;
+                if (error) {
+                    console.error('Function error:', error);
+                    throw new Error(error.message || 'فشل في إكمال البيانات');
+                }
 
-                // تحديث token كمستخدم
-                const { error: tokenError } = await sb
-                    .from('member_onboarding_tokens')
-                    .update({ is_used: true, used_at: new Date().toISOString() })
-                    .eq('token', token);
-
-                if (tokenError) throw tokenError;
+                if (!data.success) {
+                    throw new Error(data.error || 'فشل في إكمال البيانات');
+                }
 
                 // إظهار رسالة النجاح
                 document.getElementById('onboardingForm').style.display = 'none';
@@ -557,7 +578,7 @@
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('حدث خطأ أثناء حفظ البيانات. يرجى المحاولة مرة أخرى.');
+                alert(error.message || 'حدث خطأ أثناء حفظ البيانات. يرجى المحاولة مرة أخرى.');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> إكمال التسجيل';
             }
