@@ -427,10 +427,7 @@
             try {
                 const { data, error } = await sb
                     .from('member_onboarding_tokens')
-                    .select(`
-                        *,
-                        application:membership_applications(phone, preferred_committee)
-                    `)
+                    .select('*')
                     .eq('token', token)
                     .single();
 
@@ -475,9 +472,6 @@
 
                 // تعبئة البيانات الموجودة مسبقاً
                 document.getElementById('email').value = tokenData.sent_to_email;
-                if (tokenData.application?.phone) {
-                    document.getElementById('phone').value = tokenData.application.phone;
-                }
 
                 // إخفاء loading وإظهار النموذج
                 document.getElementById('loadingState').classList.remove('active');
