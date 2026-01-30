@@ -156,70 +156,318 @@ Deno.serve(async (req) => {
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
               <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
-                .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; text-align: center; }
-                .header h1 { margin: 0; font-size: 28px; }
-                .content { padding: 40px 30px; }
-                .content h2 { color: #333; margin-top: 0; }
-                .content p { color: #555; line-height: 1.8; font-size: 16px; }
-                .cta-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; font-size: 18px; }
-                .cta-button:hover { opacity: 0.9; }
-                .info-box { background: #f8f9fa; border-right: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 8px; }
-                .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #777; font-size: 14px; }
-                .warning { background: #fff3cd; border-right: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 8px; color: #856404; }
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { 
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                  background: linear-gradient(135deg, #f8f9fa 0%, #e6f0f9 100%);
+                  margin: 0; 
+                  padding: 20px; 
+                  line-height: 1.6;
+                }
+                .email-wrapper { 
+                  max-width: 650px; 
+                  margin: 0 auto; 
+                  background: white; 
+                  border-radius: 20px; 
+                  overflow: hidden; 
+                  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(39, 64, 96, 0.2);
+                  border: 1px solid rgba(255, 255, 255, 0.3);
+                }
+                .email-header { 
+                  background: linear-gradient(135deg, #f8f9fa 0%, #e6f0f9 100%);
+                  padding: 40px 30px; 
+                  text-align: center; 
+                  border-bottom: 1px solid rgba(61, 143, 214, 0.15);
+                  position: relative;
+                }
+                .email-header::before {
+                  content: "";
+                  position: absolute;
+                  top: 0;
+                  right: 0;
+                  width: 100%;
+                  height: 5px;
+                  background: linear-gradient(90deg, #3d8fd6, #274060);
+                }
+                .logo-container {
+                  width: 100px;
+                  height: 100px;
+                  margin: 0 auto 20px;
+                  background: linear-gradient(135deg, #3d8fd6, #274060);
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  box-shadow: 0 10px 30px rgba(61, 143, 214, 0.3);
+                }
+                .logo-icon {
+                  font-size: 50px;
+                  color: white;
+                }
+                .email-header h1 { 
+                  color: #274060; 
+                  font-size: 32px; 
+                  margin-bottom: 10px;
+                  font-weight: bold;
+                }
+                .email-header p { 
+                  color: #64748b; 
+                  font-size: 16px; 
+                }
+                .email-content { 
+                  padding: 40px 35px; 
+                  background: white;
+                }
+                .greeting { 
+                  color: #274060; 
+                  font-size: 20px; 
+                  font-weight: 600;
+                  margin-bottom: 20px;
+                }
+                .email-content p { 
+                  color: #475569; 
+                  line-height: 1.8; 
+                  font-size: 16px; 
+                  margin-bottom: 20px;
+                }
+                .info-card { 
+                  background: linear-gradient(135deg, rgba(61, 143, 214, 0.05), rgba(61, 143, 214, 0.02));
+                  border: 1px solid rgba(61, 143, 214, 0.15);
+                  border-right: 4px solid #3d8fd6; 
+                  padding: 25px; 
+                  margin: 25px 0; 
+                  border-radius: 12px;
+                }
+                .info-card-title {
+                  color: #274060;
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin-bottom: 12px;
+                  display: flex;
+                  align-items: center;
+                  gap: 10px;
+                }
+                .info-card p {
+                  margin: 0;
+                  color: #64748b;
+                  font-size: 15px;
+                }
+                .cta-container { 
+                  text-align: center; 
+                  margin: 35px 0;
+                }
+                .cta-button { 
+                  display: inline-block; 
+                  background: linear-gradient(135deg, #3d8fd6, #274060);
+                  color: white !important; 
+                  padding: 18px 45px; 
+                  text-decoration: none; 
+                  border-radius: 12px; 
+                  font-weight: bold; 
+                  font-size: 18px;
+                  box-shadow: 0 8px 20px rgba(61, 143, 214, 0.25);
+                  transition: all 0.3s ease;
+                }
+                .warning-card { 
+                  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.05));
+                  border: 1px solid rgba(245, 158, 11, 0.25);
+                  border-right: 4px solid #f59e0b; 
+                  padding: 20px; 
+                  margin: 25px 0; 
+                  border-radius: 12px;
+                }
+                .warning-card-title {
+                  color: #92400e;
+                  font-size: 17px;
+                  font-weight: bold;
+                  margin-bottom: 12px;
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                }
+                .warning-card ul { 
+                  margin: 12px 0 0 0; 
+                  padding-right: 25px;
+                  color: #92400e;
+                }
+                .warning-card li {
+                  margin-bottom: 8px;
+                  line-height: 1.6;
+                }
+                .data-list-title {
+                  color: #274060;
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin: 30px 0 15px 0;
+                }
+                .data-grid {
+                  display: grid;
+                  grid-template-columns: repeat(2, 1fr);
+                  gap: 12px;
+                  margin: 20px 0;
+                }
+                .data-item {
+                  background: #f8fafc;
+                  padding: 12px 15px;
+                  border-radius: 8px;
+                  border: 1px solid #e2e8f0;
+                  color: #475569;
+                  font-size: 14px;
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                }
+                .data-item-icon {
+                  color: #3d8fd6;
+                  font-size: 16px;
+                }
+                .closing-message {
+                  margin-top: 40px;
+                  padding-top: 30px;
+                  border-top: 2px solid #e2e8f0;
+                  color: #475569;
+                  font-size: 16px;
+                }
+                .signature {
+                  margin-top: 25px;
+                  color: #274060;
+                  font-weight: 600;
+                }
+                .email-footer { 
+                  background: linear-gradient(135deg, #f8f9fa 0%, #e6f0f9 100%);
+                  padding: 30px; 
+                  text-align: center; 
+                  border-top: 1px solid rgba(61, 143, 214, 0.15);
+                }
+                .email-footer p { 
+                  color: #64748b; 
+                  font-size: 14px; 
+                  margin: 8px 0;
+                }
+                .email-footer .copyright {
+                  color: #274060;
+                  font-weight: 600;
+                  margin-bottom: 10px;
+                }
+                .email-footer .disclaimer {
+                  font-size: 12px; 
+                  color: #94a3b8;
+                  margin-top: 15px;
+                }
+                @media only screen and (max-width: 600px) {
+                  .email-wrapper { margin: 10px; border-radius: 16px; }
+                  .email-header, .email-content, .email-footer { padding: 25px 20px; }
+                  .email-header h1 { font-size: 26px; }
+                  .data-grid { grid-template-columns: 1fr; }
+                  .cta-button { padding: 15px 35px; font-size: 16px; }
+                }
               </style>
             </head>
             <body>
-              <div class="container">
-                <div class="header">
-                  <h1>🎉 مبروك العضوية!</h1>
+              <div class="email-wrapper">
+                <div class="email-header">
+                  <div class="logo-container">
+                    <div class="logo-icon">🎓</div>
+                  </div>
+                  <h1>مبروك العضوية!</h1>
+                  <p>مرحباً بك في عائلة نادي أدِيب</p>
                 </div>
-                <div class="content">
-                  <h2>عزيزي/عزيزتي ${profile.full_name}،</h2>
-                  <p>يسعدنا أن نبلغك بأنه تم قبولك رسمياً في <strong>نادي أدِيب الثقافي</strong>! 🎊</p>
+                
+                <div class="email-content">
+                  <div class="greeting">عزيزي/عزيزتي ${profile.full_name}،</div>
                   
-                  <div class="info-box">
-                    <p style="margin: 0;"><strong>📋 الخطوة التالية:</strong></p>
-                    <p style="margin: 10px 0 0 0;">لإكمال عملية التسجيل وتفعيل حسابك، يرجى تعبئة بياناتك الشخصية والأكاديمية من خلال الرابط أدناه:</p>
+                  <p>يسعدنا ويشرفنا أن نبلغك بأنه تم قبولك رسمياً في <strong>نادي أدِيب </strong>! 🎊</p>
+                  
+                  <p>نحن متحمسون لانضمامك إلى عائلتنا ، ونتطلع إلى مساهماتك القيّمة في مسيرة النادي.</p>
+                  
+                  <div class="info-card">
+                    <div class="info-card-title">
+                      <span>📋</span>
+                      <span>الخطوة التالية</span>
+                    </div>
+                    <p>لإكمال عملية التسجيل وتفعيل حسابك بشكل كامل، يرجى تعبئة بياناتك الشخصية والأكاديمية من خلال الرابط أدناه. هذه الخطوة ضرورية للاستفادة من جميع خدمات النادي.</p>
                   </div>
                   
-                  <div style="text-align: center;">
+                  <div class="cta-container">
                     <a href="${actualUrl}" class="cta-button">
-                      📝 إكمال البيانات الآن
+                      ✨ إكمال البيانات الآن
                     </a>
                   </div>
                   
-                  <div class="warning">
-                    <p style="margin: 0;"><strong>⚠️ مهم:</strong></p>
-                    <ul style="margin: 10px 0 0 0; padding-right: 20px;">
+                  <div class="warning-card">
+                    <div class="warning-card-title">
+                      <span>⚠️</span>
+                      <span>معلومات مهمة</span>
+                    </div>
+                    <ul>
                       <li>الرابط صالح لمدة <strong>7 أيام</strong> من تاريخ استلام هذا الإيميل</li>
-                      <li>يجب تعبئة جميع البيانات المطلوبة لتفعيل حسابك</li>
-                      <li>في حال انتهاء صلاحية الرابط، يرجى التواصل مع الإدارة</li>
+                      <li>يجب تعبئة جميع البيانات المطلوبة لتفعيل حسابك بالكامل</li>
+                      <li>في حال انتهاء صلاحية الرابط، يرجى التواصل مع إدارة النادي</li>
+                      <li>تأكد من صحة جميع البيانات المدخلة قبل الإرسال</li>
                     </ul>
                   </div>
                   
-                  <p><strong>البيانات المطلوبة:</strong></p>
-                  <ul style="color: #555; line-height: 2;">
-                    <li>الاسم الثلاثي الكامل</li>
-                    <li>رقم الجوال</li>
-                    <li>رقم الهوية الوطنية</li>
-                    <li>رقم السجل الأكاديمي</li>
-                    <li>البريد الإلكتروني</li>
-                    <li>الدرجة العلمية</li>
-                    <li>الكلية والتخصص (إن وجد)</li>
-                    <li>تاريخ الميلاد</li>
-                    <li>اللجنة</li>
-                    <li>حسابات التواصل الاجتماعي (اختياري)</li>
-                  </ul>
+                  <div class="data-list-title">📝 البيانات المطلوبة:</div>
                   
-                  <p>نحن متحمسون لانضمامك إلى عائلة أدِيب! 🌟</p>
+                  <div class="data-grid">
+                    <div class="data-item">
+                      <span class="data-item-icon">👤</span>
+                      <span>الاسم الثلاثي الكامل</span>
+                    </div>
+                    <div class="data-item">
+                      <span class="data-item-icon">📱</span>
+                      <span>رقم الجوال</span>
+                    </div>
+                    <div class="data-item">
+                      <span class="data-item-icon">🆔</span>
+                      <span>رقم الهوية الوطنية</span>
+                    </div>
+                    <div class="data-item">
+                      <span class="data-item-icon">🎓</span>
+                      <span>رقم السجل الأكاديمي</span>
+                    </div>
+                    <div class="data-item">
+                      <span class="data-item-icon">📧</span>
+                      <span>البريد الإلكتروني</span>
+                    </div>
+                    <div class="data-item">
+                      <span class="data-item-icon">📚</span>
+                      <span>الدرجة العلمية</span>
+                    </div>
+                    <div class="data-item">
+                      <span class="data-item-icon">🏛️</span>
+                      <span>الكلية والتخصص</span>
+                    </div>
+                    <div class="data-item">
+                      <span class="data-item-icon">📅</span>
+                      <span>تاريخ الميلاد</span>
+                    </div>
+                    <div class="data-item">
+                      <span class="data-item-icon">👥</span>
+                      <span>اللجنة المفضلة</span>
+                    </div>
+                    <div class="data-item">
+                      <span class="data-item-icon">🌐</span>
+                      <span>حسابات التواصل (اختياري)</span>
+                    </div>
+                  </div>
                   
-                  <p style="margin-top: 30px;">مع أطيب التحيات،<br><strong>فريق نادي أدِيب الثقافي</strong></p>
+                  <div class="closing-message">
+                    <p>نحن في نادي أدِيب نؤمن بقوة الثقافة والمعرفة في بناء مجتمع واعٍ ومبدع. انضمامك إلينا يعزز هذه الرسالة ويثري مسيرتنا .</p>
+                    
+                    <p>نتطلع إلى رؤيتك في فعالياتنا وأنشطتنا القادمة! 🌟</p>
+                    
+                    <div class="signature">
+                      مع أطيب التحيات،<br>
+                      <strong>لجنة الموارد البشرية</strong>
+                    </div>
+                  </div>
                 </div>
-                <div class="footer">
-                  <p>© 2026 نادي أدِيب الثقافي. جميع الحقوق محفوظة.</p>
-                  <p style="font-size: 12px; color: #999;">إذا لم تقم بالتقديم لنادي أدِيب، يرجى تجاهل هذا الإيميل.</p>
+                
+                <div class="email-footer">
+                  <p class="copyright">© 2026 نادي أدِيب . جميع الحقوق محفوظة.</p>
+                  <p>نادي طلابي ثقافي يهدف إلى نشر الثقافة والمعرفة</p>
+                  <p class="disclaimer">إذا لم تقم بالتقديم لنادي أدِيب، يرجى تجاهل هذا الإيميل.</p>
                 </div>
               </div>
             </body>

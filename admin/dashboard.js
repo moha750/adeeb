@@ -1457,6 +1457,9 @@
             refreshActivities.addEventListener('click', loadRecentActivities);
         }
         
+        // روابط مجموعات أدِيب
+        setupGroupLinks();
+        
         // إعداد مركز الإشعارات
         setupNotificationsCenter();
 
@@ -4422,6 +4425,70 @@
     // =====================================================
     // مركز الإشعارات
     // =====================================================
+    /**
+     * إعداد روابط مجموعات أدِيب
+     */
+    async function setupGroupLinks() {
+        try {
+            // جلب روابط المجموعات من قاعدة البيانات
+            const { data: settings, error } = await sb
+                .from('site_settings')
+                .select('setting_key, setting_value')
+                .in('setting_key', ['whatsapp_general_group', 'whatsapp_female_group'])
+                .eq('is_active', true);
+
+            if (error) throw error;
+
+            // تحديث الروابط
+            const generalGroupLink = document.getElementById('generalGroupLink');
+            const femaleGroupLink = document.getElementById('femaleGroupLink');
+
+            if (settings && settings.length > 0) {
+                settings.forEach(setting => {
+                    if (setting.setting_key === 'whatsapp_general_group' && generalGroupLink) {
+                        generalGroupLink.href = setting.setting_value;
+                        generalGroupLink.target = '_blank';
+                    } else if (setting.setting_key === 'whatsapp_female_group' && femaleGroupLink) {
+                        femaleGroupLink.href = setting.setting_value;
+                        femaleGroupLink.target = '_blank';
+                    }
+                });
+            }
+
+            // إضافة معالج للتحقق من الجنس قبل فتح رابط مجلس أدِيبات
+            if (femaleGroupLink) {
+                femaleGroupLink.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    
+                    // التحقق من جنس المستخدم
+                    const { data: profile } = await sb
+                        .from('profiles')
+                        .select('gender')
+                        .eq('id', currentUser.id)
+                        .single();
+
+                    if (profile && profile.gender === 'female') {
+                        window.open(femaleGroupLink.href, '_blank');
+                    } else {
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'عذراً',
+                                text: 'هذا المجلس مخصص للأديبات فقط',
+                                icon: 'warning',
+                                confirmButtonText: 'حسناً',
+                                confirmButtonColor: '#3d8fd6'
+                            });
+                        } else {
+                            alert('هذا المجلس مخصص للأديبات فقط');
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error loading group links:', error);
+        }
+    }
+
     function setupNotificationsCenter() {
         const notificationsBtn = document.getElementById('notificationsBtn');
         const notificationsDropdown = document.getElementById('notificationsDropdown');

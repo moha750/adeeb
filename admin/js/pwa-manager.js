@@ -44,22 +44,114 @@
      * التحقق من التثبيت المسبق
      */
     function checkIfInstalled() {
-        // التحقق من وضع standalone
+        // التحقق من وضع standalone (يعمل على جميع المنصات)
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
-            || window.navigator.standalone 
-            || document.referrer.includes('android-app://');
+            || window.matchMedia('(display-mode: window-controls-overlay)').matches // Windows PWA
+            || window.matchMedia('(display-mode: minimal-ui)').matches
+            || window.matchMedia('(display-mode: fullscreen)').matches
+            || window.navigator.standalone // iOS
+            || document.referrer.includes('android-app://'); // Android
         
-        if (isStandalone) {
+        // التحقق من User Agent للتطبيقات المثبتة
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isInstalledApp = userAgent.includes('wv') || // WebView
+                               userAgent.includes('standalone') ||
+                               (window.navigator.standalone !== undefined); // iOS
+        
+        // التحقق الإضافي للتطبيقات المثبتة من localStorage
+        const isPWAInstalled = localStorage.getItem('pwa_installed') === 'true';
+        
+        // التحقق من تأكيد المستخدم اليدوي
+        const userConfirmedInstall = localStorage.getItem('pwa_user_confirmed') === 'true';
+        
+        console.log('🔍 PWA Installation Check:', {
+            isStandalone,
+            isInstalledApp,
+            isPWAInstalled,
+            userConfirmedInstall,
+            displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 
+                        window.matchMedia('(display-mode: window-controls-overlay)').matches ? 'window-controls-overlay' :
+                        window.matchMedia('(display-mode: minimal-ui)').matches ? 'minimal-ui' : 'browser'
+        });
+        
+        if (isStandalone || isInstalledApp || isPWAInstalled || userConfirmedInstall) {
             console.log('✅ التطبيق مثبت بالفعل');
-            if (installedMessage) {
-                installedMessage.style.display = 'flex';
-            }
-            if (installBtn) {
-                installBtn.style.display = 'none';
-            }
+            
+            // حفظ حالة التثبيت
+            localStorage.setItem('pwa_installed', 'true');
+            
+            updatePWAStatus(true);
+            
             return true;
+        } else {
+            updatePWAStatus(false);
         }
         return false;
+    }
+    
+    /**
+     * تأكيد التثبيت يدوياً من قبل المستخدم
+     */
+    function confirmInstallManually() {
+        localStorage.setItem('pwa_installed', 'true');
+        localStorage.setItem('pwa_user_confirmed', 'true');
+        
+        updatePWAStatus(true);
+        
+        if (window.Swal) {
+            Swal.fire({
+                title: 'تم التأكيد!',
+                text: 'تم تأكيد تثبيت التطبيق بنجاح',
+                icon: 'success',
+                confirmButtonText: 'رائع!',
+                confirmButtonColor: '#10b981'
+            });
+        }
+    }
+
+    /**
+     * تحديث حالة PWA في الواجهة
+     */
+    function updatePWAStatus(isInstalled) {
+        const statusContainer = document.getElementById('pwaStatusContainer');
+        const installBtnContainer = document.getElementById('pwaInstallBtnContainer');
+        const installedMessage = document.getElementById('pwaInstalledMessage');
+        
+        if (!statusContainer) return;
+
+        if (isInstalled) {
+            // إخفاء زر التثبيت
+            if (installBtnContainer) installBtnContainer.style.display = 'none';
+            
+            // إظهار رسالة التثبيت الناجح
+            if (installedMessage) installedMessage.style.display = 'block';
+            
+            // تحديث حالة التثبيت
+            statusContainer.innerHTML = `
+                <div style="padding: 1rem; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; border: 1px solid #6ee7b7; text-align: center;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; color: #065f46; font-weight: bold; font-size: 1rem;">
+                        <i class="fa-solid fa-check-circle" style="font-size: 1.5rem;"></i>
+                        <span>التطبيق مثبت ويعمل بنجاح!</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            // إظهار زر التثبيت
+            if (installBtnContainer) installBtnContainer.style.display = 'block';
+            
+            // إخفاء رسالة التثبيت
+            if (installedMessage) installedMessage.style.display = 'none';
+            
+            // تحديث حالة عدم التثبيت
+            statusContainer.innerHTML = `
+                <div style="padding: 1rem; background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.05)); border-radius: 12px; border: 1px solid rgba(245,158,11,0.25); border-right: 4px solid #f59e0b;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; color: #92400e;">
+                        <i class="fa-solid fa-exclamation-triangle" style="font-size: 1.25rem;"></i>
+                        <span>التطبيق غير مثبت. ثبّته الآن للحصول على تجربة أفضل!</span>
+                    </div>
+                </div>
+            `;
+        }
     }
 
     /**
@@ -153,14 +245,23 @@
     window.addEventListener('appinstalled', () => {
         console.log('🎉 PWA was installed successfully');
         
-        if (installBtn) {
-            installBtn.style.display = 'none';
-        }
-        if (installedMessage) {
-            installedMessage.style.display = 'flex';
-        }
+        // حفظ حالة التثبيت
+        localStorage.setItem('pwa_installed', 'true');
+        
+        updatePWAStatus(true);
         
         deferredPrompt = null;
+        
+        // إظهار رسالة نجاح
+        if (window.Swal) {
+            Swal.fire({
+                title: 'تم التثبيت بنجاح!',
+                text: 'يمكنك الآن استخدام التطبيق من الشاشة الرئيسية',
+                icon: 'success',
+                confirmButtonText: 'رائع!',
+                confirmButtonColor: '#10b981'
+            });
+        }
         
         // تتبع التثبيت (يمكن إضافة Analytics هنا)
         console.log('📊 PWA install tracked');
@@ -176,6 +277,12 @@
         // التحقق من التثبيت المسبق
         checkIfInstalled();
         
+        // ربط زر التأكيد اليدوي
+        const confirmBtn = document.getElementById('pwaConfirmInstallBtn');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', confirmInstallManually);
+        }
+        
         console.log('🚀 PWA Manager initialized');
     }
 
@@ -189,6 +296,7 @@
     // تصدير الوظائف
     window.pwaManager = {
         checkIfInstalled,
-        registerServiceWorker
+        registerServiceWorker,
+        confirmInstallManually
     };
 })();

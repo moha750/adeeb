@@ -65,6 +65,11 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
     
+    // تجاهل الطلبات غير HTTP/HTTPS (chrome-extension, data, blob, etc.)
+    if (!url.protocol.startsWith('http')) {
+        return;
+    }
+    
     // تجاهل طلبات Supabase والـ API
     if (url.origin.includes('supabase') || url.origin.includes('googleapis')) {
         return;

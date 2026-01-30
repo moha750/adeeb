@@ -116,6 +116,49 @@
                     <!-- سيتم ملؤها ديناميكياً -->
                 </div>
 
+                <!-- مجموعات أدِيب -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-users"></i> مجموعات أدِيب</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: grid; gap: 1.5rem;">
+                            <!-- مجلس أدِيب العام -->
+                            <div style="padding: 1.5rem; background: linear-gradient(135deg, rgba(61, 143, 214, 0.05), rgba(61, 143, 214, 0.02)); border: 1px solid rgba(61, 143, 214, 0.15); border-right: 4px solid #3d8fd6; border-radius: 12px; transition: all 0.3s ease;">
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem;">
+                                    <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #3d8fd6, #274060); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(61, 143, 214, 0.25);">
+                                        <i class="fa-solid fa-users" style="color: white; font-size: 1.5rem;"></i>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <h4 style="margin: 0; color: #274060; font-size: 1.1rem; font-weight: bold;">قروب مجلس أدِيب العام</h4>
+                                        <p style="margin: 0.25rem 0 0 0; color: #64748b; font-size: 0.9rem;">مجلس عام لجميع الأُدباء للنقاشات العامة والدردشة</p>
+                                    </div>
+                                    <a href="#" id="generalGroupLink" class="btn-primary" style="white-space: nowrap; text-decoration: none;">
+                                        <i class="fa-brands fa-whatsapp"></i>
+                                        انضم الآن
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- مجلس أدِيبات -->
+                            <div style="padding: 1.5rem; background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(139, 92, 246, 0.02)); border: 1px solid rgba(139, 92, 246, 0.15); border-right: 4px solid #8b5cf6; border-radius: 12px; transition: all 0.3s ease;">
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem;">
+                                    <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);">
+                                        <i class="fa-solid fa-user-group" style="color: white; font-size: 1.5rem;"></i>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <h4 style="margin: 0; color: #274060; font-size: 1.1rem; font-weight: bold;">قروب مجلس أدِيبات</h4>
+                                        <p style="margin: 0.25rem 0 0 0; color: #64748b; font-size: 0.9rem;">مجلس خاص للأديبات البنات فقط</p>
+                                    </div>
+                                    <a href="#" id="femaleGroupLink" class="btn-primary" style="white-space: nowrap; text-decoration: none; background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                                        <i class="fa-brands fa-whatsapp"></i>
+                                        انضم الآن
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- النشاطات الأخيرة -->
                 <div class="card">
@@ -892,115 +935,153 @@
                     <p class="section-subtitle">إعدادات التطبيق والتفضيلات الشخصية</p>
                 </div>
 
-                <!-- إعدادات الإشعارات -->
-                <div class="card" style="margin-bottom: 2rem;">
-                    <div class="card-header">
-                        <h3>
-                            <i class="fa-solid fa-bell"></i>
-                            الإشعارات
+                <!-- بطاقة تثبيت التطبيق -->
+                <div class="card" style="margin-bottom: 2rem; overflow: hidden; position: relative;">
+                    <div style="position: absolute; top: 0; right: 0; width: 100%; height: 5px; background: linear-gradient(90deg, #3d8fd6, #274060);"></div>
+                    <div class="card-header" style="background: linear-gradient(135deg, #f8f9fa 0%, #e6f0f9 100%); border-bottom: 1px solid rgba(61,143,214,0.15);">
+                        <h3 style="display: flex; align-items: center; gap: 0.75rem; color: #274060;">
+                            <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #3d8fd6, #274060); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(61,143,214,0.25);">
+                                <i class="fa-solid fa-mobile-screen-button" style="color: white; font-size: 1.5rem;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.25rem; font-weight: bold; margin-bottom: 0.25rem;">تطبيق نادي أدِيب</div>
+                                <div style="font-size: 0.875rem; font-weight: normal; color: #64748b;">ثبّت التطبيق للحصول على تجربة أفضل</div>
+                            </div>
                         </h3>
                     </div>
                     <div class="card-body">
-                        <div style="display: grid; gap: 1.5rem;">
-                            <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #10b981;">
-                                <label style="font-weight: bold; color: #274060; margin-bottom: 0.75rem; display: block;">
-                                    <i class="fa-solid fa-envelope"></i> إشعارات البريد الإلكتروني
-                                </label>
-                                <div style="display: flex; align-items: center; gap: 1rem;">
-                                    <label class="switch">
-                                        <input type="checkbox" id="emailNotificationsToggle" checked>
-                                        <span class="slider"></span>
-                                    </label>
-                                    <span style="color: #64748b; font-size: 0.875rem;">قريباً - قيد التطوير</span>
+                        <!-- حالة التثبيت -->
+                        <div id="pwaStatusContainer" style="margin-bottom: 1.5rem;">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+
+                        <!-- مميزات التطبيق -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="padding: 1rem; background: linear-gradient(135deg, rgba(61,143,214,0.05), rgba(61,143,214,0.02)); border-radius: 12px; border: 1px solid rgba(61,143,214,0.15); transition: all 0.3s ease;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #10b981, #059669); display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; box-shadow: 0 4px 12px rgba(16,185,129,0.2);">
+                                    <i class="fa-solid fa-bolt" style="color: white; font-size: 1.25rem;"></i>
                                 </div>
+                                <h4 style="margin: 0 0 0.5rem 0; color: #274060; font-size: 1rem;">سريع وخفيف</h4>
+                                <p style="margin: 0; color: #64748b; font-size: 0.875rem; line-height: 1.5;">تحميل فوري وأداء ممتاز</p>
                             </div>
-                            
-                            <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid #3b82f6;">
-                                <label style="font-weight: bold; color: #274060; margin-bottom: 0.75rem; display: block;">
-                                    <i class="fa-solid fa-mobile-screen"></i> إشعارات الجوال (Push Notifications)
-                                </label>
-                                <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <div style="display: flex; align-items: center; gap: 1rem;">
-                                        <button id="enablePushBtn" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
-                                            <i class="fa-solid fa-bell"></i>
-                                            <span id="pushBtnText">تفعيل الإشعارات</span>
-                                        </button>
-                                        <span id="pushStatus" style="color: #64748b; font-size: 0.875rem;">غير مفعّل</span>
-                                    </div>
+                            <div style="padding: 1rem; background: linear-gradient(135deg, rgba(61,143,214,0.05), rgba(61,143,214,0.02)); border-radius: 12px; border: 1px solid rgba(61,143,214,0.15); transition: all 0.3s ease;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #3b82f6, #2563eb); display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; box-shadow: 0 4px 12px rgba(59,130,246,0.2);">
+                                    <i class="fa-solid fa-wifi" style="color: white; font-size: 1.25rem;"></i>
                                 </div>
-                                <p style="color: #64748b; font-size: 0.75rem; margin-top: 0.5rem; margin-bottom: 0;">
-                                    <i class="fa-solid fa-info-circle"></i> 
-                                    يتطلب iOS 16.4+ وتثبيت التطبيق على الشاشة الرئيسية
+                                <h4 style="margin: 0 0 0.5rem 0; color: #274060; font-size: 1rem;">يعمل بدون إنترنت</h4>
+                                <p style="margin: 0; color: #64748b; font-size: 0.875rem; line-height: 1.5;">تصفح المحتوى حتى بدون اتصال</p>
+                            </div>
+                            <div style="padding: 1rem; background: linear-gradient(135deg, rgba(61,143,214,0.05), rgba(61,143,214,0.02)); border-radius: 12px; border: 1px solid rgba(61,143,214,0.15); transition: all 0.3s ease;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; box-shadow: 0 4px 12px rgba(139,92,246,0.2);">
+                                    <i class="fa-solid fa-bell" style="color: white; font-size: 1.25rem;"></i>
+                                </div>
+                                <h4 style="margin: 0 0 0.5rem 0; color: #274060; font-size: 1rem;">إشعارات فورية</h4>
+                                <p style="margin: 0; color: #64748b; font-size: 0.875rem; line-height: 1.5;">احصل على التحديثات مباشرة</p>
+                            </div>
+                            <div style="padding: 1rem; background: linear-gradient(135deg, rgba(61,143,214,0.05), rgba(61,143,214,0.02)); border-radius: 12px; border: 1px solid rgba(61,143,214,0.15); transition: all 0.3s ease;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #f59e0b, #d97706); display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; box-shadow: 0 4px 12px rgba(245,158,11,0.2);">
+                                    <i class="fa-solid fa-download" style="color: white; font-size: 1.25rem;"></i>
+                                </div>
+                                <h4 style="margin: 0 0 0.5rem 0; color: #274060; font-size: 1rem;">بدون متجر</h4>
+                                <p style="margin: 0; color: #64748b; font-size: 0.875rem; line-height: 1.5;">تثبيت مباشر من المتصفح</p>
+                            </div>
+                        </div>
+
+                        <!-- زر التثبيت -->
+                        <div id="pwaInstallBtnContainer" style="display: none; text-align: center; margin-bottom: 1rem;">
+                            <button id="pwaInstallBtn" class="btn-primary" style="padding: 1rem 2.5rem; font-size: 1rem; border-radius: 12px; box-shadow: 0 8px 20px rgba(61,143,214,0.25); transition: all 0.3s ease;">
+                                <i class="fa-solid fa-download"></i>
+                                <span>ثبّت التطبيق الآن</span>
+                            </button>
+                            
+                            <!-- زر التأكيد اليدوي -->
+                            <div style="margin-top: 1rem; padding: 1rem; background: linear-gradient(135deg, rgba(245,158,11,0.05), rgba(245,158,11,0.02)); border-radius: 12px; border: 1px solid rgba(245,158,11,0.15);">
+                                <p style="margin: 0 0 0.75rem 0; color: #92400e; font-size: 0.875rem; text-align: right;">
+                                    <i class="fa-solid fa-info-circle"></i>
+                                    <strong>هل قمت بتثبيت التطبيق بالفعل؟</strong>
                                 </p>
+                                <button id="pwaConfirmInstallBtn" class="btn-outline" style="width: 100%; padding: 0.75rem; font-size: 0.9rem; border-color: #f59e0b; color: #f59e0b;">
+                                    <i class="fa-solid fa-check"></i>
+                                    <span>نعم، التطبيق مثبت لدي</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- رسالة التثبيت الناجح -->
+                        <div id="pwaInstalledMessage" style="display: none; padding: 1.25rem; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; border: 1px solid #6ee7b7; text-align: center;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; color: #065f46; font-weight: bold; font-size: 1.1rem;">
+                                <i class="fa-solid fa-check-circle" style="font-size: 1.5rem;"></i>
+                                <span>التطبيق مثبت بالفعل على جهازك!</span>
+                            </div>
+                        </div>
+
+                        <!-- معلومات التثبيت -->
+                        <div style="padding: 1rem; background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(59,130,246,0.02)); border-radius: 12px; border: 1px solid rgba(59,130,246,0.15); border-right: 4px solid #3b82f6;">
+                            <div style="display: flex; gap: 1rem;">
+                                <div style="flex-shrink: 0;">
+                                    <i class="fa-solid fa-info-circle" style="color: #3b82f6; font-size: 1.5rem;"></i>
+                                </div>
+                                <div>
+                                    <strong style="color: #274060; display: block; margin-bottom: 0.5rem;">كيفية التثبيت:</strong>
+                                    <p style="margin: 0; color: #64748b; font-size: 0.875rem; line-height: 1.6;">
+                                        <strong>iOS:</strong> اضغط على زر المشاركة <i class="fa-solid fa-share"></i> ثم اختر "إضافة إلى الشاشة الرئيسية"<br>
+                                        <strong>Android:</strong> افتح قائمة المتصفح (⋮) واختر "تثبيت التطبيق"
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- تثبيت التطبيق PWA -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>
-                            <i class="fa-solid fa-mobile-screen-button"></i>
-                            تطبيق نادي أدِيب
+                <!-- بطاقة الإشعارات -->
+                <div class="card" style="overflow: hidden; position: relative;">
+                    <div style="position: absolute; top: 0; right: 0; width: 100%; height: 5px; background: linear-gradient(90deg, #8b5cf6, #7c3aed);"></div>
+                    <div class="card-header" style="background: linear-gradient(135deg, #f8f9fa 0%, #ede9fe 100%); border-bottom: 1px solid rgba(139,92,246,0.15);">
+                        <h3 style="display: flex; align-items: center; gap: 0.75rem; color: #274060;">
+                            <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(139,92,246,0.25);">
+                                <i class="fa-solid fa-bell" style="color: white; font-size: 1.5rem;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.25rem; font-weight: bold; margin-bottom: 0.25rem;">الإشعارات</div>
+                                <div style="font-size: 0.875rem; font-weight: normal; color: #64748b;">فعّل الإشعارات لتبقى على اطلاع</div>
+                            </div>
                         </h3>
                     </div>
                     <div class="card-body">
-                        <div class="pwa-install-container">
-                            <div class="pwa-install-hero">
-                                <div class="pwa-install-icon">
-                                    <i class="fa-solid fa-mobile-screen-button"></i>
-                                </div>
-                                <h3>ثبّت تطبيق نادي أدِيب</h3>
-                                <p>استمتع بتجربة أسرع وأفضل مع التطبيق على جهازك</p>
-                            </div>
+                        <!-- حالة الإشعارات -->
+                        <div id="pushNotificationStatus" style="margin-bottom: 1.5rem;">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
 
-                            <div class="pwa-features-grid">
-                                <div class="pwa-feature">
-                                    <div class="pwa-feature-icon">
-                                        <i class="fa-solid fa-bolt"></i>
-                                    </div>
-                                    <h4>سريع وخفيف</h4>
-                                    <p>تحميل فوري وأداء ممتاز</p>
-                                </div>
-                                <div class="pwa-feature">
-                                    <div class="pwa-feature-icon">
-                                        <i class="fa-solid fa-wifi"></i>
-                                    </div>
-                                    <h4>يعمل بدون إنترنت</h4>
-                                    <p>تصفح المحتوى حتى بدون اتصال</p>
-                                </div>
-                                <div class="pwa-feature">
-                                    <div class="pwa-feature-icon">
-                                        <i class="fa-solid fa-bell"></i>
-                                    </div>
-                                    <h4>إشعارات فورية</h4>
-                                    <p>احصل على التحديثات مباشرة</p>
-                                </div>
-                                <div class="pwa-feature">
-                                    <div class="pwa-feature-icon">
-                                        <i class="fa-solid fa-download"></i>
-                                    </div>
-                                    <h4>بدون متجر</h4>
-                                    <p>تثبيت مباشر من المتصفح</p>
-                                </div>
-                            </div>
-
-                            <button id="pwaInstallBtn" class="pwa-install-btn" style="display: none;">
-                                <i class="fa-solid fa-download"></i>
-                                <span>ثبّت التطبيق الآن</span>
+                        <!-- زر تفعيل الإشعارات -->
+                        <div id="enablePushContainer" style="display: none; text-align: center; margin-bottom: 1rem;">
+                            <button id="enablePushBtn" class="btn-primary" style="padding: 1rem 2.5rem; font-size: 1rem; border-radius: 12px; box-shadow: 0 8px 20px rgba(139,92,246,0.25); background: linear-gradient(135deg, #8b5cf6, #7c3aed); transition: all 0.3s ease;">
+                                <i class="fa-solid fa-bell"></i>
+                                <span id="pushBtnText">تفعيل الإشعارات</span>
                             </button>
+                        </div>
 
-                            <div id="pwaInstalledMessage" class="pwa-installed-message" style="display: none;">
-                                <i class="fa-solid fa-check-circle"></i>
-                                <span>التطبيق مثبت بالفعل على جهازك!</span>
+                        <!-- رسالة التفعيل الناجح -->
+                        <div id="pushEnabledMessage" style="display: none; padding: 1.25rem; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; border: 1px solid #6ee7b7; text-align: center;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; color: #065f46; font-weight: bold; font-size: 1.1rem;">
+                                <i class="fa-solid fa-check-circle" style="font-size: 1.5rem;"></i>
+                                <span>الإشعارات مفعّلة بنجاح!</span>
                             </div>
+                        </div>
 
-                            <div class="pwa-info-box">
-                                <i class="fa-solid fa-info-circle"></i>
+                        <!-- معلومات الإشعارات -->
+                        <div style="padding: 1rem; background: linear-gradient(135deg, rgba(139,92,246,0.05), rgba(139,92,246,0.02)); border-radius: 12px; border: 1px solid rgba(139,92,246,0.15); border-right: 4px solid #8b5cf6;">
+                            <div style="display: flex; gap: 1rem;">
+                                <div style="flex-shrink: 0;">
+                                    <i class="fa-solid fa-lightbulb" style="color: #8b5cf6; font-size: 1.5rem;"></i>
+                                </div>
                                 <div>
-                                    <strong>كيفية التثبيت:</strong>
-                                    <p>انقر على زر "ثبّت التطبيق" أعلاه، أو استخدم قائمة المتصفح واختر "تثبيت التطبيق" أو "إضافة إلى الشاشة الرئيسية"</p>
+                                    <strong style="color: #274060; display: block; margin-bottom: 0.5rem;">ملاحظة هامة:</strong>
+                                    <p style="margin: 0; color: #64748b; font-size: 0.875rem; line-height: 1.6;">
+                                        • يتطلب تفعيل الإشعارات تثبيت التطبيق أولاً<br>
+                                        • iOS يتطلب الإصدار 16.4 أو أحدث<br>
+                                        • يمكنك إلغاء الإشعارات في أي وقت من إعدادات المتصفح
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -2946,8 +3027,10 @@
     <script src="js/profile.js"></script>
     <script src="js/settings.js"></script>
     <script src="js/pwa-manager.js"></script>
+    <script src="js/push-notifications-manager.js"></script>
     <script src="js/notifications-manager.js"></script>
     <script src="js/send-notifications.js"></script>
+    <script src="js/welcome-modal.js"></script>
     <script src="dashboard.js"></script>
     <!-- <link rel="stylesheet" href="css/archives.css"> -->
 </body>
