@@ -425,29 +425,39 @@
         // التحقق من صلاحية token
         async function verifyToken() {
             try {
-                const { data, error } = await sb
-                    .from('member_onboarding_tokens')
-                    .select('*')
-                    .eq('token', token)
-                    .single();
+                // استدعاء Edge Function للتحقق من token وجلب بيانات application
+                const { data, error } = await sb.functions.invoke('complete-member-onboarding', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: null,
+                    // إضافة token كـ query parameter
+                });
 
-                if (error || !data) {
-                    console.error('Token verification error:', error);
-                    throw new Error('رابط غير صالح');
+                // استخدام fetch مباشرة للـ GET request
+                const response = await fetch(
+                    `${sb.functions.getUrl('complete-member-onboarding')}?token=${token}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': sb.supabaseKey
+                        }
+                    }
+                );
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'رابط غير صالح');
                 }
 
-                if (data.is_used) {
-                    throw new Error('تم استخدام هذا الرابط مسبقاً');
-                }
-
-                if (new Date(data.expires_at) < new Date()) {
-                    throw new Error('انتهت صلاحية هذا الرابط. يرجى التواصل مع الإدارة.');
-                }
-
-                tokenData = data;
+                tokenData = result.data;
                 await loadForm();
             } catch (error) {
-                showError(error.message);
+                console.error('Token verification error:', error);
+                showError(error.message || 'رابط غير صالح');
             }
         }
 
@@ -470,8 +480,64 @@
                     committeeSelect.appendChild(option);
                 });
 
-                // تعبئة البيانات الموجودة مسبقاً
-                document.getElementById('email').value = tokenData.sent_to_email;
+                // تعبئة البيانات الموجودة مسبقاً من application
+                const app = tokenData.application;
+                
+                if (app) {
+                    // البيانات الشخصية
+                    if (app.full_name) {
+                        document.getElementById('fullNameTriple').value = app.full_name;
+                    }
+                    if (app.phone) {
+                        document.getElementById('phone').value = app.phone;
+                    }
+                    if (app.email) {
+                        document.getElementById('email').value = app.email;
+                    }
+                    
+                    // البيانات الأكاديمية
+                    if (app.degree) {
+                        const degreeMap = {
+                            'ثانوية عامة': 'high_school',
+                            'دبلوم': 'diploma',
+                            'بكالوريوس': 'bachelor',
+                            'ماجستير': 'master',
+                            'دكتوراه': 'phd'
+                        };
+                        const degreeValue = degreeMap[app.degree] || 'other';
+                        document.getElementById('academicDegree').value = degreeValue;
+                        
+                        // إظهار حقول الكلية والتخصص إذا لم يكن ثانوية
+                        if (degreeValue !== 'high_school') {
+                            document.getElementById('collegeGroup').style.display = 'block';
+                            document.getElementById('majorGroup').style.display = 'block';
+                            document.getElementById('college').required = true;
+                            document.getElementById('major').required = true;
+                            
+                            if (app.college) {
+                                document.getElementById('college').value = app.college;
+                            }
+                            if (app.major) {
+                                document.getElementById('major').value = app.major;
+                            }
+                        }
+                    }
+                    
+                    // اللجنة المفضلة
+                    if (app.preferred_committee) {
+                        // البحث عن اللجنة المطابقة
+                        const options = committeeSelect.options;
+                        for (let i = 0; i < options.length; i++) {
+                            if (options[i].textContent === app.preferred_committee) {
+                                committeeSelect.selectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    // إذا لم تكن هناك بيانات application، استخدم البريد من token
+                    document.getElementById('email').value = tokenData.sent_to_email;
+                }
 
                 // إخفاء loading وإظهار النموذج
                 document.getElementById('loadingState').classList.remove('active');

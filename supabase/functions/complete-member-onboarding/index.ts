@@ -44,6 +44,69 @@ Deno.serve(async (req: Request) => {
       }
     );
 
+    // GET: التحقق من token وإرجاع بيانات application
+    if (req.method === 'GET') {
+      const url = new URL(req.url);
+      const token = url.searchParams.get('token');
+
+      if (!token) {
+        return new Response(
+          JSON.stringify({ error: 'Missing token' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data: tokenData, error: tokenError } = await supabaseClient
+        .from('member_onboarding_tokens')
+        .select(`
+          *,
+          application:membership_applications(
+            full_name,
+            phone,
+            email,
+            degree,
+            college,
+            major,
+            preferred_committee
+          )
+        `)
+        .eq('token', token)
+        .single();
+
+      if (tokenError || !tokenData) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid token' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (tokenData.is_used) {
+        return new Response(
+          JSON.stringify({ error: 'Token already used' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (new Date(tokenData.expires_at) < new Date()) {
+        return new Response(
+          JSON.stringify({ error: 'Token expired' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: tokenData
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    }
+
+    // POST: إكمال البيانات
     const { token, password, member_details }: OnboardingRequest = await req.json();
 
     if (!token || !password || !member_details) {
@@ -53,10 +116,21 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // التحقق من token
+    // التحقق من token وجلب بيانات الطلب
     const { data: tokenData, error: tokenError } = await supabaseClient
       .from('member_onboarding_tokens')
-      .select('*')
+      .select(`
+        *,
+        application:membership_applications(
+          full_name,
+          phone,
+          email,
+          degree,
+          college,
+          major,
+          preferred_committee
+        )
+      `)
       .eq('token', token)
       .single();
 
