@@ -425,27 +425,17 @@
         // التحقق من صلاحية token
         async function verifyToken() {
             try {
-                // استدعاء Edge Function للتحقق من token وجلب بيانات application
-                const { data, error } = await sb.functions.invoke('complete-member-onboarding', {
+                // استخدام fetch مباشرة للـ GET request
+                const functionUrl = `${window.SUPABASE_URL}/functions/v1/complete-member-onboarding?token=${token}`;
+                
+                const response = await fetch(functionUrl, {
                     method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: null,
-                    // إضافة token كـ query parameter
-                });
-
-                // استخدام fetch مباشرة للـ GET request
-                const response = await fetch(
-                    `${sb.functions.getUrl('complete-member-onboarding')}?token=${token}`,
-                    {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': sb.supabaseKey
-                        }
+                        'Content-Type': 'application/json',
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
                     }
-                );
+                });
 
                 const result = await response.json();
 
