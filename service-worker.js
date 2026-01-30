@@ -114,27 +114,92 @@ self.addEventListener('message', (event) => {
     }
 });
 
-// إشعارات Push (جاهز للتفعيل مستقبلاً)
+// إشعارات Push
 self.addEventListener('push', (event) => {
-    const options = {
-        body: event.data ? event.data.text() : 'إشعار جديد من نادي أدِيب',
+    console.log('[SW] Push notification received');
+    
+    let notificationData = {
+        title: 'نادي أدِيب',
+        body: 'إشعار جديد',
         icon: '/favicon/android-icon-192x192.png',
         badge: '/favicon/android-icon-192x192.png',
-        vibrate: [200, 100, 200],
-        dir: 'rtl',
-        lang: 'ar'
+        data: { url: '/admin/dashboard.html' }
     };
     
+    if (event.data) {
+        try {
+            const payload = event.data.json();
+            console.log('[SW] Parsed payload:', payload);
+            
+            // التعامل مع الصيغة المتداخلة
+            if (payload.notification) {
+                notificationData = {
+                    title: payload.notification.title || notificationData.title,
+                    body: payload.notification.body || notificationData.body,
+                    icon: payload.notification.icon || notificationData.icon,
+                    badge: payload.notification.badge || notificationData.badge,
+                    tag: payload.notification.tag,
+                    requireInteraction: payload.notification.requireInteraction || false,
+                    vibrate: [200, 100, 200],
+                    dir: 'rtl',
+                    lang: 'ar',
+                    data: payload.notification.data || notificationData.data
+                };
+            } else {
+                // الصيغة المباشرة
+                notificationData = {
+                    title: payload.title || notificationData.title,
+                    body: payload.body || notificationData.body,
+                    icon: payload.icon || notificationData.icon,
+                    badge: payload.badge || notificationData.badge,
+                    tag: payload.tag,
+                    requireInteraction: payload.requireInteraction || false,
+                    vibrate: [200, 100, 200],
+                    dir: 'rtl',
+                    lang: 'ar',
+                    data: payload.data || notificationData.data
+                };
+            }
+        } catch (error) {
+            console.error('[SW] Error parsing notification:', error);
+        }
+    }
+    
     event.waitUntil(
-        self.registration.showNotification('نادي أدِيب', options)
+        self.registration.showNotification(notificationData.title, {
+            body: notificationData.body,
+            icon: notificationData.icon,
+            badge: notificationData.badge,
+            tag: notificationData.tag,
+            requireInteraction: notificationData.requireInteraction,
+            vibrate: notificationData.vibrate,
+            dir: notificationData.dir,
+            lang: notificationData.lang,
+            data: notificationData.data
+        })
     );
 });
 
 // معالجة النقر على الإشعارات
 self.addEventListener('notificationclick', (event) => {
+    console.log('[SW] Notification clicked');
     event.notification.close();
     
+    const urlToOpen = event.notification.data?.url || '/admin/dashboard.html';
+    
     event.waitUntil(
-        clients.openWindow('/')
+        clients.matchAll({ type: 'window', includeUncontrolled: true })
+            .then((clientList) => {
+                // إذا كان هناك نافذة مفتوحة، ركز عليها
+                for (const client of clientList) {
+                    if (client.url.includes(urlToOpen) && 'focus' in client) {
+                        return client.focus();
+                    }
+                }
+                // وإلا افتح نافذة جديدة
+                if (clients.openWindow) {
+                    return clients.openWindow(urlToOpen);
+                }
+            })
     );
 });

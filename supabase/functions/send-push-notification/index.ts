@@ -137,7 +137,7 @@ serve(async (req) => {
     const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") || "mailto:admin@adeeb.club";
 
     // إعداد payload الإشعار
-    const payload: NotificationPayload = {
+    const payload = {
       title: notification.title,
       body: notification.message,
       icon: "/favicon/android-icon-192x192.png",
@@ -145,7 +145,7 @@ serve(async (req) => {
       tag: `notification-${notification.id}`,
       requireInteraction: notification.priority === "urgent",
       data: {
-        url: notification.action_url,
+        url: notification.action_url || "/admin/dashboard.html",
         notification_id: notification.id,
       },
     };
