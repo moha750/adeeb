@@ -1,4 +1,4 @@
-/**
+﻿/**
  * مدير إحصائيات زيارات الموقع
  * يوفر واجهة لعرض وإدارة بيانات الزيارات
  */
@@ -14,17 +14,9 @@ class SiteVisitsManager {
         try {
             const { data: { user } } = await this.sb.auth.getUser();
             if (!user) return false;
-
-            const { data, error } = await this.sb.rpc('can_view_site_visits', {
-                p_user_id: user.id
-            });
-
-            if (error) {
-                console.error('Error checking permissions:', error);
-                return false;
-            }
-
-            return data === true;
+            
+            // السماح بالوصول لجميع المستخدمين المسجلين
+            return true;
         } catch (error) {
             console.error('Error in checkPermissions:', error);
             return false;
@@ -238,16 +230,18 @@ class SiteVisitsManager {
         return pageNames[path] || path;
     }
 
-    createStatsCard(title, value, subtitle, icon, color = 'primary') {
+    createStatsCard(title, value, subtitle, icon, color = '#3d8fd6') {
         return `
-            <div class="stat-card stat-card--${color}">
-                <div class="stat-card__icon">
-                    <i class="fa-solid ${icon}"></i>
-                </div>
-                <div class="stat-card__content">
-                    <h3 class="stat-card__value">${value}</h3>
-                    <p class="stat-card__title">${title}</p>
-                    ${subtitle ? `<p class="stat-card__subtitle">${subtitle}</p>` : ''}
+            <div class="stat-card" style="--stat-color: ${color}">
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid ${icon}"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${value}</div>
+                        <div class="stat-label">${title}</div>
+                        ${subtitle ? `<div class="stat-subtitle" style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">${subtitle}</div>` : ''}
+                    </div>
                 </div>
             </div>
         `;
@@ -273,32 +267,32 @@ class SiteVisitsManager {
                     this.formatNumber(todayStats.total),
                     `${this.formatNumber(todayStats.unique)} زائر فريد`,
                     'fa-calendar-day',
-                    'primary'
+                    '#3d8fd6'
                 ),
                 this.createStatsCard(
                     'زيارات الأسبوع',
                     this.formatNumber(weekStats.total),
                     `${this.formatNumber(weekStats.unique)} زائر فريد`,
                     'fa-calendar-week',
-                    'success'
+                    '#10b981'
                 ),
                 this.createStatsCard(
                     'زيارات الشهر',
                     this.formatNumber(monthStats.total),
                     `${this.formatNumber(monthStats.unique)} زائر فريد`,
                     'fa-calendar-alt',
-                    'info'
+                    '#8b5cf6'
                 ),
                 this.createStatsCard(
                     'متوسط مدة الزيارة',
                     this.formatDuration(Math.round(generalStats?.avg_duration || 0)),
                     `معدل الارتداد: ${generalStats?.bounce_rate || 0}%`,
                     'fa-clock',
-                    'warning'
+                    '#f59e0b'
                 )
             ];
 
-            container.innerHTML = cards.join('');
+            container.innerHTML = `<div class="stats-grid">${cards.join('')}</div>`;
         } catch (error) {
             console.error('Error rendering stats cards:', error);
             const container = document.getElementById(containerId);
@@ -335,7 +329,7 @@ class SiteVisitsManager {
                                     <h4 class="top-page-title">${this.getPageName(page.page_path)}</h4>
                                     <p class="top-page-path">${page.page_path}</p>
                                     <div class="top-page-bar">
-                                        <div class="top-page-bar-fill" style="width: ${percentage}%"></div>
+                                        <div class="top-page-bar-fill"></div>
                                     </div>
                                 </div>
                                 <div class="top-page-stats">

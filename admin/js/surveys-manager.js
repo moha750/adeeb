@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام إدارة الاستبيانات المتقدم - نادي أدِيب
  * مدير شامل للاستبيانات مع دعم جميع أنواع الأسئلة
  */
@@ -72,6 +72,17 @@
             const typeFilter = document.getElementById('surveysTypeFilter');
             if (typeFilter) {
                 typeFilter.addEventListener('change', () => this.filterSurveys());
+            }
+
+            // ربط اختيار الاستبيان من قسم الإحصائيات بقسم الاستجابات الفردية
+            const selectSurveyForResults = document.getElementById('selectSurveyForResults');
+            if (selectSurveyForResults) {
+                selectSurveyForResults.addEventListener('change', async (e) => {
+                    const surveyId = e.target.value;
+                    if (surveyId) {
+                        await this.loadSurveyResponses(surveyId);
+                    }
+                });
             }
 
             this.setupSaveButtons();
@@ -198,75 +209,99 @@
                 ? Math.round((survey.total_completed / survey.total_responses) * 100) 
                 : 0;
 
+            const statusBadgeClass = {
+                draft: 'badge-secondary',
+                active: 'badge-success',
+                paused: 'badge-warning',
+                closed: 'badge-danger',
+                archived: 'badge-secondary'
+            };
+
             return `
-                <div class="survey-card" data-survey-id="${survey.id}">
-                    <div class="survey-card-header">
-                        <div class="survey-card-title">
-                            <h3>${this.escapeHtml(survey.title)}</h3>
-                            <div class="survey-card-badges">
-                                <span class="badge" style="background: ${statusColors[survey.status]}">
-                                    ${statusLabels[survey.status]}
-                                </span>
-                                <span class="badge badge-outline">
-                                    ${typeLabels[survey.survey_type]}
-                                </span>
+                <div class="application-card" data-survey-id="${survey.id}">
+                    <div class="application-card-header">
+                        <div class="applicant-info">
+                            <div class="applicant-avatar">
+                                <i class="fa-solid fa-clipboard-question"></i>
                             </div>
-                        </div>
-                        <div class="survey-card-actions">
-                            <button class="btn-icon" onclick="window.surveysManager.viewSurvey(${survey.id})" title="عرض">
-                                <i class="fa-solid fa-eye"></i>
-                            </button>
-                            <button class="btn-icon" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل">
-                                <i class="fa-solid fa-edit"></i>
-                            </button>
-                            <button class="btn-icon" onclick="window.surveysManager.viewResults(${survey.id})" title="النتائج">
-                                <i class="fa-solid fa-chart-bar"></i>
-                            </button>
-                            <button class="btn-icon" onclick="window.surveysManager.shareSurvey(${survey.id})" title="مشاركة">
-                                <i class="fa-solid fa-share-nodes"></i>
-                            </button>
-                            <button class="btn-icon btn-danger" onclick="window.surveysManager.deleteSurvey(${survey.id})" title="حذف">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
+                            <div class="applicant-details">
+                                <h3 class="applicant-name">${this.escapeHtml(survey.title)}</h3>
+                                <div>
+                                    <span class="badge ${statusBadgeClass[survey.status]}">
+                                        ${statusLabels[survey.status]}
+                                    </span>
+                                    <span class="badge badge-info">
+                                        ${typeLabels[survey.survey_type]}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
                     ${survey.description ? `
-                        <div class="survey-card-description">
-                            ${this.escapeHtml(survey.description)}
+                        <div class="application-card-body">
+                            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem;">${this.escapeHtml(survey.description)}</p>
                         </div>
                     ` : ''}
                     
-                    <div class="survey-card-stats">
-                        <div class="stat-item">
-                            <i class="fa-solid fa-eye"></i>
-                            <span>${survey.total_views || 0} مشاهدة</span>
-                        </div>
-                        <div class="stat-item">
-                            <i class="fa-solid fa-users"></i>
-                            <span>${survey.total_responses || 0} استجابة</span>
-                        </div>
-                        <div class="stat-item">
-                            <i class="fa-solid fa-check-circle"></i>
-                            <span>${survey.total_completed || 0} مكتمل</span>
-                        </div>
-                        <div class="stat-item">
-                            <i class="fa-solid fa-percentage"></i>
-                            <span>${completionRate}% معدل الإكمال</span>
+                    <div class="application-card-body">
+                        <div class="application-info-grid">
+                            <div class="info-item">
+                                <i class="fa-solid fa-eye"></i>
+                                <div class="info-content">
+                                    <span class="info-label">المشاهدات</span>
+                                    <span class="info-value">${survey.total_views || 0}</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fa-solid fa-users"></i>
+                                <div class="info-content">
+                                    <span class="info-label">الاستجابات</span>
+                                    <span class="info-value">${survey.total_responses || 0}</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fa-solid fa-check-circle"></i>
+                                <div class="info-content">
+                                    <span class="info-label">المكتملة</span>
+                                    <span class="info-value">${survey.total_completed || 0}</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fa-solid fa-percentage"></i>
+                                <div class="info-content">
+                                    <span class="info-label">معدل الإكمال</span>
+                                    <span class="info-value">${completionRate}%</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fa-solid fa-calendar"></i>
+                                <div class="info-content">
+                                    <span class="info-label">تاريخ الإنشاء</span>
+                                    <span class="info-value">${this.formatDate(survey.created_at)}</span>
+                                </div>
+                            </div>
+                            ${survey.created_by_profile ? `
+                                <div class="info-item">
+                                    <i class="fa-solid fa-user"></i>
+                                    <div class="info-content">
+                                        <span class="info-label">المنشئ</span>
+                                        <span class="info-value">${this.escapeHtml(survey.created_by_profile.full_name)}</span>
+                                    </div>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                     
-                    <div class="survey-card-footer">
-                        <span class="survey-card-date">
-                            <i class="fa-solid fa-calendar"></i>
-                            ${this.formatDate(survey.created_at)}
-                        </span>
-                        ${survey.created_by_profile ? `
-                            <span class="survey-card-author">
-                                <i class="fa-solid fa-user"></i>
-                                ${this.escapeHtml(survey.created_by_profile.full_name)}
-                            </span>
-                        ` : ''}
+                    <div class="application-card-footer">
+                        <button class="btn-action btn-action-primary" onclick="window.surveysManager.viewResults(${survey.id})" title="النتائج">
+                            <i class="fa-solid fa-chart-bar"></i>
+                            النتائج
+                        </button>
+                        <button class="btn-action btn-action-outline" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل">
+                            <i class="fa-solid fa-edit"></i>
+                            تعديل
+                        </button>
                     </div>
                 </div>
             `;
@@ -781,10 +816,8 @@
             if (resultsSection) resultsSection.click();
 
             setTimeout(() => {
-                const select = document.getElementById('selectSurveyForResults');
-                if (select) {
-                    select.value = surveyId;
-                    this.loadSurveyResults(surveyId);
+                if (window.surveysResultsEnhanced) {
+                    window.surveysResultsEnhanced.loadSurveyResults(surveyId);
                 }
             }, 100);
         }
@@ -825,7 +858,7 @@
             container.innerHTML = `
                 <div class="results-overview">
                     <div class="stats-grid">
-                        <div class="stat-card" style="--stat-color: #3b82f6">
+                        <div class="stat-card" style="--stat-color: #3d8fd6">
                             <div class="stat-card-wrapper">
                                 <div class="stat-icon">
                                     <i class="fa-solid fa-users"></i>
@@ -859,7 +892,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="stat-card" style="--stat-color: #f59e0b">
+                        <div class="stat-card" style="--stat-color: #14b8a6">
                             <div class="stat-card-wrapper">
                                 <div class="stat-icon">
                                     <i class="fa-solid fa-eye"></i>
@@ -933,7 +966,7 @@
                             <div class="choice-result-item">
                                 <div class="choice-label">${this.escapeHtml(choice)}</div>
                                 <div class="choice-bar">
-                                    <div class="choice-bar-fill" style="width: ${percentage}%"></div>
+                                    <div class="choice-bar-fill"></div>
                                 </div>
                                 <div class="choice-stats">
                                     <span>${count} (${percentage}%)</span>
@@ -1051,6 +1084,99 @@
                 notification.classList.remove('show');
                 setTimeout(() => notification.remove(), 300);
             }, 3000);
+        }
+
+        async loadSurveyResponses(surveyId) {
+            try {
+                const { data: responses, error } = await sb
+                    .from('survey_responses')
+                    .select(`
+                        *,
+                        user:profiles(full_name, email)
+                    `)
+                    .eq('survey_id', surveyId)
+                    .order('submitted_at', { ascending: false });
+
+                if (error) throw error;
+
+                const container = document.getElementById('surveyResponsesContainer');
+                if (!container) return;
+
+                if (!responses || responses.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa-solid fa-inbox"></i>
+                            <p>لا توجد استجابات لهذا الاستبيان</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '<div class="responses-list">';
+                responses.forEach((response, index) => {
+                    const submittedDate = new Date(response.submitted_at).toLocaleDateString('ar-SA', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    html += `
+                        <div class="card mb-1rem">
+                            <div class="card-header">
+                                <h3>استجابة #${index + 1}</h3>
+                                <div>
+                                    <span class="badge badge-info">${response.user?.full_name || 'مستخدم'}</span>
+                                    <span class="badge">${submittedDate}</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="response-data">
+                                    ${this.renderResponseData(response.response_data)}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading survey responses:', error);
+            }
+        }
+
+        renderResponseData(responseData) {
+            if (!responseData || typeof responseData !== 'object') {
+                return '<p>لا توجد بيانات</p>';
+            }
+
+            let html = '<div class="response-items">';
+            Object.entries(responseData).forEach(([questionId, answer]) => {
+                html += `
+                    <div class="response-item">
+                        <div class="response-question">
+                            <strong>السؤال ${questionId}:</strong>
+                        </div>
+                        <div class="response-answer">
+                            ${this.formatAnswer(answer)}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        formatAnswer(answer) {
+            if (Array.isArray(answer)) {
+                return answer.join(', ');
+            }
+            if (typeof answer === 'object') {
+                return JSON.stringify(answer, null, 2);
+            }
+            return answer || 'لا توجد إجابة';
         }
     }
 

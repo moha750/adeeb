@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام إجبار المستخدم على تثبيت التطبيق وتفعيل الإشعارات
  * يعرض modal مبتكر وجذاب للمستخدمين الذين لم يثبتوا التطبيق أو يفعلوا الإشعارات
  */
@@ -169,8 +169,8 @@
      */
     function createModalHTML(steps) {
         const stepsHTML = steps.map((step, index) => `
-            <div class="setup-step" data-action="${step.action}" style="animation-delay: ${index * 0.1}s;">
-                <div class="step-icon" style="background: linear-gradient(135deg, ${step.color}, ${adjustColor(step.color, -20)});">
+            <div class="setup-step" data-action="${step.action}">
+                <div class="step-icon">
                     <i class="fa-solid ${step.icon}"></i>
                 </div>
                 <div class="step-content">
@@ -575,13 +575,13 @@
     function navigateToSettings(section) {
         // إخفاء جميع الأقسام
         document.querySelectorAll('.admin-section').forEach(s => {
-            s.style.display = 'none';
+            s.classList.add('d-none');
         });
 
         // عرض قسم الإعدادات
         const settingsSection = document.getElementById('settings-section');
         if (settingsSection) {
-            settingsSection.style.display = 'block';
+            settingsSection.classList.remove('d-none');
             
             // التمرير للقسم المطلوب
             setTimeout(() => {

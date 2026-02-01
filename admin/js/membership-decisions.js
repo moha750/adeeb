@@ -225,17 +225,52 @@
      * تحديث إحصائيات قرارات العضوية
      */
     function updateDecisionsStatistics() {
+        const container = document.getElementById('decisionsStatsGrid');
+        if (!container) return;
+
         const total = currentDecisions.length;
         const accepted = currentDecisions.filter(i => i.result === 'accepted').length;
         const rejected = currentDecisions.filter(i => i.result === 'rejected').length;
+        const acceptedPercentage = total > 0 ? Math.round((accepted / total) * 100) : 0;
+        const rejectedPercentage = total > 0 ? Math.round((rejected / total) * 100) : 0;
 
-        const totalEl = document.getElementById('totalDecisionsCount');
-        const acceptedEl = document.getElementById('acceptedDecisionsCount');
-        const rejectedEl = document.getElementById('rejectedDecisionsCount');
-
-        if (totalEl) totalEl.textContent = total;
-        if (acceptedEl) acceptedEl.textContent = accepted;
-        if (rejectedEl) rejectedEl.textContent = rejected;
+        container.innerHTML = `
+            <div class="stat-card" style="--stat-color: #3d8fd6">
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${total}</div>
+                        <div class="stat-label">إجمالي القرارات</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" style="--stat-color: #10b981">
+                <div class="stat-badge"><i class="fa-solid fa-check"></i> ${acceptedPercentage}%</div>
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${accepted}</div>
+                        <div class="stat-label">المقبولين</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" style="--stat-color: #ef4444">
+                <div class="stat-badge"><i class="fa-solid fa-times"></i> ${rejectedPercentage}%</div>
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-user-xmark"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${rejected}</div>
+                        <div class="stat-label">المرفوضين</div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     /**

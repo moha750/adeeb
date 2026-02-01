@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام إدارة الملف الشخصي
  * عرض وتعديل المعلومات الشخصية، الأمان، النشاط
  */
@@ -81,7 +81,7 @@
             const role = document.getElementById('profileRole');
             if (role) {
                 const roleInfo = getRoleInfo(currentUser.role_level);
-                role.innerHTML = `<i class="fa-solid fa-shield-halved" style="color: ${roleInfo.color};"></i> <span>${roleInfo.name}</span>`;
+                role.innerHTML = `<i class="fa-solid fa-shield-halved"></i> <span>${roleInfo.name}</span>`;
             }
 
             // تحديث البريد الإلكتروني
@@ -259,20 +259,20 @@
             if (error) throw error;
 
             if (!data || data.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #64748b; padding: 2rem;">لا يوجد نشاط مسجل</p>';
+                container.innerHTML = '<p>لا يوجد نشاط مسجل</p>';
                 return;
             }
 
             const html = data.map(activity => `
-                <div style="padding: 1rem; border-bottom: 1px solid #e2e8f0; display: flex; gap: 1rem; align-items: start;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: ${getActivityColor(activity.action_type)}; display: grid; place-items: center; flex-shrink: 0;">
-                        <i class="fa-solid ${getActivityIcon(activity.action_type)}" style="color: white; font-size: 1rem;"></i>
+                <div>
+                    <div>
+                        <i class="fa-solid ${getActivityIcon(activity.action_type)}"></i>
                     </div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: #274060; margin-bottom: 0.25rem;">
+                    <div>
+                        <div>
                             ${getActivityText(activity)}
                         </div>
-                        <div style="font-size: 0.875rem; color: #64748b;">
+                        <div>
                             <i class="fa-solid fa-clock"></i>
                             ${new Date(activity.created_at).toLocaleString('ar-SA')}
                         </div>
@@ -286,7 +286,7 @@
             console.error('خطأ في تحميل النشاط:', error);
             const container = document.getElementById('recentActivityContainer');
             if (container) {
-                container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">فشل تحميل النشاط</p>';
+                container.innerHTML = '<p>فشل تحميل النشاط</p>';
             }
         }
     }
@@ -601,7 +601,7 @@
     function openChangePasswordModalOld() {
         const modalHtml = `
             <div class="modal-overlay" id="changePasswordModalOld" onclick="if(event.target === this) this.remove()">
-                <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-content">
                     <div class="modal-header">
                         <h2><i class="fa-solid fa-key"></i> تغيير كلمة المرور</h2>
                         <button class="modal-close" onclick="document.getElementById('changePasswordModalOld').remove()">
@@ -609,7 +609,7 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <form id="changePasswordFormOld" style="display: grid; gap: 1rem;">
+                        <form id="changePasswordFormOld">
                             <div class="form-group">
                                 <label><strong>كلمة المرور الجديدة</strong></label>
                                 <input type="password" id="newPasswordOld" required minlength="8" placeholder="8 أحرف على الأقل">
@@ -618,11 +618,11 @@
                                 <label><strong>تأكيد كلمة المرور</strong></label>
                                 <input type="password" id="confirmPassword" required minlength="8" placeholder="أعد إدخال كلمة المرور">
                             </div>
-                            <div style="padding: 0.75rem; background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; font-size: 0.875rem; color: #92400e;">
+                            <div>
                                 <i class="fa-solid fa-triangle-exclamation"></i>
                                 تأكد من استخدام كلمة مرور قوية تحتوي على أحرف كبيرة وصغيرة وأرقام
                             </div>
-                            <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1rem;">
+                            <div>
                                 <button type="button" class="btn-outline" onclick="document.getElementById('changePasswordModal').remove()">
                                     إلغاء
                                 </button>

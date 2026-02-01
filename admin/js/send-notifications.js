@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام إرسال الإشعارات - لرئيس النادي فقط
  */
 
@@ -88,8 +88,8 @@
 
         if (notifications.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 3rem; color: #64748b;">
-                    <i class="fa-solid fa-inbox" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <div>
+                    <i class="fa-solid fa-inbox"></i>
                     <p>لم يتم إرسال أي إشعارات بعد</p>
                 </div>
             `;
@@ -177,12 +177,12 @@
         const result = await Swal.fire({
             title: 'تأكيد الإرسال',
             html: `
-                <div style="text-align: right; line-height: 1.8;">
+                <div>
                     <p><strong>العنوان:</strong> ${notification.title}</p>
                     <p><strong>الرسالة:</strong> ${notification.message}</p>
                     <p><strong>الجمهور:</strong> ${getAudienceLabel(notification.target_audience)}</p>
                     <p><strong>الأولوية:</strong> ${getPriorityLabel(notification.priority)}</p>
-                    ${notification.is_push_enabled ? '<p style="color: #10b981;"><i class="fa-solid fa-bell"></i> سيتم إرسال إشعار Push</p>' : ''}
+                    ${notification.is_push_enabled ? '<p><i class="fa-solid fa-bell"></i> سيتم إرسال إشعار Push</p>' : ''}
                 </div>
             `,
             icon: 'question',

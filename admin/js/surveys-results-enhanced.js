@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام عرض نتائج الاستبيانات المحسّن
  * فصل الإحصائيات عن الاستجابات مع تحليلات متقدمة
  */
@@ -129,7 +129,7 @@
             container.innerHTML = `
                 <!-- مؤشرات الأداء الرئيسية -->
                 <div class="stats-grid">
-                    <div class="stat-card" style="--stat-color: #3b82f6">
+                    <div class="stat-card" style="--stat-color: #3d8fd6">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-users"></i>
@@ -174,7 +174,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                    <div class="stat-card" style="--stat-color: #14b8a6">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-eye"></i>
@@ -185,7 +185,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="stat-card" style="--stat-color: #14b8a6">
+                    <div class="stat-card" style="--stat-color: #8b5cf6">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-clock"></i>
@@ -199,7 +199,7 @@
                 </div>
 
                 <!-- إحصائيات الأسئلة -->
-                <h3 style="margin: 2rem 0 1rem 0; font-family: fb; color: var(--main-blue);">
+                <h3>
                     <i class="fa-solid fa-chart-bar"></i>
                     إحصائيات الأسئلة
                 </h3>
@@ -216,7 +216,7 @@
             );
 
             return `
-                <div class="card" style="margin-bottom: 1.5rem;">
+                <div class="card">
                     <div class="card-header">
                         <h3>${this.escapeHtml(question.question_text)}</h3>
                         <span class="badge">${answers.length} إجابة</span>
@@ -230,7 +230,7 @@
 
         renderAnswerStatistics(question, answers) {
             if (answers.length === 0) {
-                return '<p class="text-muted" style="text-align: center; padding: 2rem;">لا توجد إجابات بعد</p>';
+                return '<p class="text-muted">لا توجد إجابات بعد</p>';
             }
 
             if (['single_choice', 'multiple_choice', 'dropdown'].includes(question.question_type)) {
@@ -274,7 +274,7 @@
                             <div class="choice-result-item">
                                 <div class="choice-label">${this.escapeHtml(choice)}</div>
                                 <div class="choice-bar">
-                                    <div class="choice-bar-fill" style="width: ${barWidth}%"></div>
+                                    <div class="choice-bar-fill"></div>
                                 </div>
                                 <div class="choice-stats">${count} (${percentage}%)</div>
                             </div>
@@ -340,14 +340,14 @@
                     <div class="choice-result-item">
                         <div class="choice-label">نعم</div>
                         <div class="choice-bar">
-                            <div class="choice-bar-fill" style="width: ${yesPercentage}%"></div>
+                            <div class="choice-bar-fill"></div>
                         </div>
                         <div class="choice-stats">${yesCount} (${yesPercentage}%)</div>
                     </div>
                     <div class="choice-result-item">
                         <div class="choice-label">لا</div>
                         <div class="choice-bar">
-                            <div class="choice-bar-fill" style="width: ${noPercentage}%"></div>
+                            <div class="choice-bar-fill"></div>
                         </div>
                         <div class="choice-stats">${noCount} (${noPercentage}%)</div>
                     </div>
@@ -363,7 +363,7 @@
             }
 
             return `
-                <div style="margin-bottom: 1rem;">
+                <div>
                     <strong>عدد الإجابات النصية: ${textAnswers.length}</strong>
                 </div>
                 <div class="text-results">
@@ -371,7 +371,7 @@
                         <div class="text-answer">${this.escapeHtml(a.answer_text)}</div>
                     `).join('')}
                     ${textAnswers.length > 10 ? `
-                        <p class="text-muted" style="text-align: center; margin-top: 1rem;">
+                        <p class="text-muted">
                             وهناك ${textAnswers.length - 10} إجابة إضافية...
                         </p>
                     ` : ''}
@@ -398,7 +398,7 @@
 
             container.innerHTML = `
                 <!-- فلاتر الاستجابات -->
-                <div class="responses-filters">
+                <div class="filters-bar mb-2rem">
                     <div class="filter-group">
                         <i class="fa-solid fa-search"></i>
                         <input type="text" id="responsesSearchInput" placeholder="البحث في الاستجابات..." />
@@ -418,7 +418,7 @@
                 </div>
 
                 <!-- قائمة الاستجابات -->
-                <div id="responsesListContainer">
+                <div id="responsesListContainer" class="applications-cards-grid">
                     ${completedResponses.map(r => this.renderResponseCard(r)).join('')}
                 </div>
             `;
@@ -428,35 +428,58 @@
 
         renderResponseCard(response) {
             const userName = response.user?.full_name || (response.is_anonymous ? 'مجهول' : 'غير معروف');
-            const statusClass = response.status === 'completed' ? 'completed' : 
-                               response.status === 'in_progress' ? 'in-progress' : 'abandoned';
+            const statusClass = response.status === 'completed' ? 'badge-success' : 
+                               response.status === 'in_progress' ? 'badge-warning' : 'badge-danger';
             const statusText = response.status === 'completed' ? 'مكتملة' : 
                               response.status === 'in_progress' ? 'قيد التقدم' : 'متروكة';
 
             return `
-                <div class="response-card">
-                    <div class="response-card-header">
-                        <div>
-                            <strong>${userName}</strong>
-                            <span class="response-status ${statusClass}">${statusText}</span>
-                        </div>
-                        <div class="response-card-meta">
-                            <div class="meta-item">
-                                <i class="fa-solid fa-calendar"></i>
-                                ${this.formatDate(response.created_at)}
+                <div class="application-card">
+                    <div class="application-card-header">
+                        <div class="applicant-info">
+                            <div class="applicant-avatar">
+                                <i class="fa-solid fa-user"></i>
                             </div>
-                            <div class="meta-item">
-                                <i class="fa-solid fa-clock"></i>
-                                ${this.formatTime(response.time_spent_seconds)}
-                            </div>
-                            <div class="meta-item">
-                                <i class="fa-solid fa-mobile"></i>
-                                ${response.device_type || 'غير محدد'}
+                            <div class="applicant-details">
+                                <h3 class="applicant-name">${this.escapeHtml(userName)}</h3>
+                                <span class="badge ${statusClass}">${statusText}</span>
                             </div>
                         </div>
                     </div>
-                    <div class="response-card-answers">
-                        ${this.renderResponseAnswers(response)}
+
+                    <div class="application-card-body">
+                        <div class="application-info-grid">
+                            <div class="info-item">
+                                <i class="fa-solid fa-calendar"></i>
+                                <div class="info-content">
+                                    <span class="info-label">تاريخ الإرسال</span>
+                                    <span class="info-value">${this.formatDate(response.created_at)}</span>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <i class="fa-solid fa-clock"></i>
+                                <div class="info-content">
+                                    <span class="info-label">وقت الإكمال</span>
+                                    <span class="info-value">${this.formatTime(response.time_spent_seconds)}</span>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <i class="fa-solid fa-mobile"></i>
+                                <div class="info-content">
+                                    <span class="info-label">الجهاز</span>
+                                    <span class="info-value">${response.device_type || 'غير محدد'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="application-card-footer">
+                        <button class="btn-action btn-action-primary" onclick="window.surveysResultsEnhanced.viewResponseDetails('${response.id}')">
+                            <i class="fa-solid fa-eye"></i>
+                            عرض التفاصيل
+                        </button>
                     </div>
                 </div>
             `;
@@ -547,9 +570,9 @@
             let stars = '';
             for (let i = 1; i <= max; i++) {
                 if (i <= rating) {
-                    stars += '<i class="fa-solid fa-star" style="color: #fbbf24;"></i>';
+                    stars += '<i class="fa-solid fa-star"></i>';
                 } else {
-                    stars += '<i class="fa-regular fa-star" style="color: #d1d5db;"></i>';
+                    stars += '<i class="fa-regular fa-star"></i>';
                 }
             }
             return `
@@ -564,9 +587,9 @@
             let hearts = '';
             for (let i = 1; i <= max; i++) {
                 if (i <= rating) {
-                    hearts += '<i class="fa-solid fa-heart" style="color: #ef4444;"></i>';
+                    hearts += '<i class="fa-solid fa-heart"></i>';
                 } else {
-                    hearts += '<i class="fa-regular fa-heart" style="color: #d1d5db;"></i>';
+                    hearts += '<i class="fa-regular fa-heart"></i>';
                 }
             }
             return `
@@ -585,7 +608,7 @@
             
             return `
                 <div class="rating-display">
-                    <span style="font-size: 2rem;">${emoji}</span>
+                    <span>${emoji}</span>
                     <span class="rating-text">${label} (${rating}/5)</span>
                 </div>
             `;
@@ -596,7 +619,7 @@
             return `
                 <div class="scale-display">
                     <div class="scale-bar">
-                        <div class="scale-fill" style="width: ${percentage}%"></div>
+                        <div class="scale-fill"></div>
                     </div>
                     <span class="scale-text">${value} من ${min} إلى ${max}</span>
                 </div>
@@ -608,7 +631,7 @@
             return `
                 <div class="scale-display">
                     <div class="scale-bar">
-                        <div class="scale-fill" style="width: ${percentage}%"></div>
+                        <div class="scale-fill"></div>
                     </div>
                     <span class="scale-text">${value} (${min} - ${max})</span>
                 </div>
@@ -662,81 +685,98 @@
             
             // تحليل معدل الإكمال حسب الوقت
             const completionTrend = this.analyzeCompletionTrend(currentResponses);
+            
+            const completionRate = this.calculateCompletionRate();
+            const growth = this.calculateGrowth(completedResponses);
 
             container.innerHTML = `
-                <div class="analytics-grid">
-                    <div class="analytics-card">
-                        <div class="analytics-card-icon" style="color: var(--accent-blue);">
-                            <i class="fa-solid fa-chart-line"></i>
-                        </div>
-                        <div class="analytics-card-value">${completedResponses.length}</div>
-                        <div class="analytics-card-label">استجابات مكتملة</div>
-                        <div class="analytics-card-trend up">
-                            <i class="fa-solid fa-arrow-up"></i>
-                            ${this.calculateGrowth(completedResponses)}%
+                <!-- كروت الإحصائيات -->
+                <div class="stats-grid mb-2rem">
+                    <div class="stat-card" style="--stat-color: #3d8fd6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${completedResponses.length}</div>
+                                <div class="stat-label">استجابات مكتملة</div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="analytics-card">
-                        <div class="analytics-card-icon" style="color: var(--success);">
-                            <i class="fa-solid fa-percentage"></i>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-badge"><i class="fa-solid fa-percentage"></i> ${completionRate}%</div>
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${completionRate}%</div>
+                                <div class="stat-label">معدل الإكمال</div>
+                            </div>
                         </div>
-                        <div class="analytics-card-value">${this.calculateCompletionRate()}%</div>
-                        <div class="analytics-card-label">معدل الإكمال</div>
                     </div>
                     
-                    <div class="analytics-card">
-                        <div class="analytics-card-icon" style="color: var(--warning);">
-                            <i class="fa-solid fa-hourglass-half"></i>
+                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-hourglass-half"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${timeStats.average}</div>
+                                <div class="stat-label">متوسط وقت الإكمال</div>
+                            </div>
                         </div>
-                        <div class="analytics-card-value">${timeStats.average}</div>
-                        <div class="analytics-card-label">متوسط وقت الإكمال</div>
                     </div>
                     
-                    <div class="analytics-card">
-                        <div class="analytics-card-icon" style="color: var(--info);">
-                            <i class="fa-solid fa-eye"></i>
+                    <div class="stat-card" style="--stat-color: #f59e0b">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-eye"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${currentSurveyData.total_views || 0}</div>
+                                <div class="stat-label">إجمالي المشاهدات</div>
+                            </div>
                         </div>
-                        <div class="analytics-card-value">${currentSurveyData.total_views || 0}</div>
-                        <div class="analytics-card-label">إجمالي المشاهدات</div>
                     </div>
                 </div>
 
                 <!-- توزيع الأجهزة -->
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <h3 class="chart-title">
+                <div class="card mb-2rem">
+                    <div class="card-header">
+                        <h3>
                             <i class="fa-solid fa-mobile-screen"></i>
                             توزيع الأجهزة
                         </h3>
                     </div>
-                    <div class="chart-body">
+                    <div class="card-body">
                         ${this.renderDeviceChart(deviceStats)}
                     </div>
                 </div>
 
                 <!-- معدل الإكمال حسب الوقت -->
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <h3 class="chart-title">
+                <div class="card mb-2rem">
+                    <div class="card-header">
+                        <h3>
                             <i class="fa-solid fa-chart-area"></i>
                             معدل الإكمال حسب الوقت
                         </h3>
                     </div>
-                    <div class="chart-body">
+                    <div class="card-body">
                         ${this.renderCompletionTrendChart(completionTrend)}
                     </div>
                 </div>
 
                 <!-- توزيع أوقات الإكمال -->
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <h3 class="chart-title">
+                <div class="card mb-2rem">
+                    <div class="card-header">
+                        <h3>
                             <i class="fa-solid fa-clock"></i>
                             توزيع أوقات الإكمال
                         </h3>
                     </div>
-                    <div class="chart-body">
+                    <div class="card-body">
                         ${this.renderTimeDistributionChart(timeStats)}
                     </div>
                 </div>
@@ -804,7 +844,7 @@
                                     ${deviceName}
                                 </div>
                                 <div class="choice-bar">
-                                    <div class="choice-bar-fill" style="width: ${percentage}%"></div>
+                                    <div class="choice-bar-fill"></div>
                                 </div>
                                 <div class="choice-stats">${count} (${percentage}%)</div>
                             </div>
@@ -825,7 +865,7 @@
                             <div class="choice-result-item">
                                 <div class="choice-label">${date}</div>
                                 <div class="choice-bar">
-                                    <div class="choice-bar-fill" style="width: ${rate}%"></div>
+                                    <div class="choice-bar-fill"></div>
                                 </div>
                                 <div class="choice-stats">${data.completed}/${data.total} (${rate}%)</div>
                             </div>
@@ -837,7 +877,7 @@
 
         renderTimeDistributionChart(timeStats) {
             if (!timeStats.distribution || timeStats.distribution.length === 0) {
-                return '<p class="text-muted" style="text-align: center;">لا توجد بيانات كافية</p>';
+                return '<p class="text-muted">لا توجد بيانات كافية</p>';
             }
 
             const ranges = [
@@ -866,7 +906,7 @@
                             <div class="choice-result-item">
                                 <div class="choice-label">${d.label}</div>
                                 <div class="choice-bar">
-                                    <div class="choice-bar-fill" style="width: ${barWidth}%"></div>
+                                    <div class="choice-bar-fill"></div>
                                 </div>
                                 <div class="choice-stats">${d.count} (${percentage}%)</div>
                             </div>
@@ -1041,6 +1081,75 @@
 
         showError(message) {
             this.showNotification('error', message);
+        }
+
+        viewResponseDetails(responseId) {
+            const response = currentResponses.find(r => r.id === responseId);
+            if (!response) return;
+            
+            const userName = response.user?.full_name || (response.is_anonymous ? 'مجهول' : 'غير معروف');
+            const statusClass = response.status === 'completed' ? 'badge-success' : 
+                               response.status === 'in_progress' ? 'badge-warning' : 'badge-danger';
+            const statusText = response.status === 'completed' ? 'مكتملة' : 
+                              response.status === 'in_progress' ? 'قيد التقدم' : 'متروكة';
+            
+            let answersHtml = '';
+            response.survey_answers.forEach(answer => {
+                const question = currentQuestions.find(q => q.id === answer.question_id);
+                if (!question) return;
+                
+                const answerDisplay = this.formatAnswerDisplay(answer, question);
+                
+                answersHtml += `
+                    <div class="detail-item">
+                        <label>
+                            <i class="fa-solid fa-question-circle"></i>
+                            ${this.escapeHtml(question.question_text)}
+                        </label>
+                        <div class="value">${answerDisplay}</div>
+                    </div>
+                `;
+            });
+            
+            const modalContent = `
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label><i class="fa-solid fa-user"></i> المستجيب</label>
+                        <div class="value">${this.escapeHtml(userName)}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label><i class="fa-solid fa-flag"></i> الحالة</label>
+                        <div class="value"><span class="badge ${statusClass}">${statusText}</span></div>
+                    </div>
+                    <div class="detail-item">
+                        <label><i class="fa-solid fa-calendar"></i> تاريخ الإرسال</label>
+                        <div class="value">${this.formatDate(response.created_at)}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label><i class="fa-solid fa-clock"></i> وقت الإكمال</label>
+                        <div class="value">${this.formatTime(response.time_spent_seconds)}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label><i class="fa-solid fa-mobile"></i> الجهاز</label>
+                        <div class="value">${response.device_type || 'غير محدد'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label><i class="fa-solid fa-globe"></i> عنوان IP</label>
+                        <div class="value">${response.ip_address || 'غير متوفر'}</div>
+                    </div>
+                </div>
+                
+                <h3 style="margin: 24px 0 16px; color: var(--text-primary);">
+                    <i class="fa-solid fa-list-check"></i>
+                    الإجابات
+                </h3>
+                <div class="detail-grid">
+                    ${answersHtml}
+                </div>
+            `;
+            
+            // فتح النافذة المنبثقة
+            openModal('تفاصيل الاستجابة', modalContent);
         }
     }
 

@@ -28,18 +28,15 @@ async function loadArchivedCycles() {
         showLoading(container);
 
         const { data, error } = await window.sbClient
-            .from('membership_cycles')
+            .from('archived_membership_cycles')
             .select('*')
-            .eq('status', 'archived')
             .order('archived_at', { ascending: false });
 
         if (error) throw error;
 
         archivedCycles = data || [];
 
-        const countEl = document.getElementById('archivesCount');
-        if (countEl) countEl.textContent = archivedCycles.length;
-
+        updateArchivesStatistics();
         renderArchivesTable();
     } catch (error) {
         console.error('خطأ في تحميل الأرشيف:', error);
@@ -67,7 +64,7 @@ function renderArchivesTable() {
     }
 
     const html = `
-        <div class="archives-grid">
+        <div class="applications-cards-grid">
             ${archivedCycles.map(cycle => renderCycleCard(cycle)).join('')}
         </div>
     `;
@@ -209,11 +206,11 @@ function renderCycleCard(cycle) {
             </div>
 
             <div class="archive-card-actions">
-                <button class="btn btn-sm btn-primary" onclick="window.archivesManager.viewCycleDetails('${cycle.id}')">
+                <button class="btn btn--primary btn--sm" onclick="window.archivesManager.viewCycleDetails('${cycle.id}')">
                     <i class="fa-solid fa-eye"></i>
                     عرض التفاصيل الكاملة
                 </button>
-                <button class="btn btn-sm btn-outline" onclick="window.archivesManager.exportCycle('${cycle.id}')">
+                <button class="btn btn--outline btn--outline-primary btn--sm" onclick="window.archivesManager.exportCycle('${cycle.id}')">
                     <i class="fa-solid fa-download"></i>
                     تصدير
                 </button>
@@ -357,61 +354,37 @@ function renderOverviewTab(cycle) {
 }
 
 function renderStatsSummary(stats) {
-    const sections = [
-        {
-            title: 'باب التسجيل',
-            icon: 'fa-door-open',
-            data: stats.registration || {},
-            items: [
-                { label: 'إجمالي الطلبات', key: 'total_applications' },
-                { label: 'قيد المراجعة', key: 'pending_review' },
-                { label: 'منسحب', key: 'withdrawn' }
-            ]
-        },
-        {
-            title: 'الفرز المبدئي',
-            icon: 'fa-filter',
-            data: stats.review || {},
-            items: [
-                { label: 'مقبول للمقابلة', key: 'approved_for_interview' },
-                { label: 'مرفوض في المراجعة', key: 'rejected_in_review' }
-            ]
-        },
-        {
-            title: 'المقابلات الشخصية',
-            icon: 'fa-comments',
-            data: stats.interviews || {},
-            items: [
-                { label: 'إجمالي المقابلات', key: 'total_interviews' },
-                { label: 'مقابلات مكتملة', key: 'completed_interviews' },
-                { label: 'في البرزخ', key: 'in_barzakh' },
-                { label: 'الجلسات', key: 'total_sessions' }
-            ]
-        },
-        {
-            title: 'نتائج العضوية',
-            icon: 'fa-user-check',
-            data: stats.results || {},
-            items: [
-                { label: 'مقبول', key: 'accepted' },
-                { label: 'مرفوض', key: 'rejected' }
-            ]
-        }
+    const colors = ['#3d8fd6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#14b8a6'];
+    let colorIndex = 0;
+
+    const allStats = [
+        { label: 'إجمالي الطلبات', value: stats.registration?.total_applications || 0, icon: 'fa-clipboard-list' },
+        { label: 'قيد المراجعة', value: stats.registration?.pending_review || 0, icon: 'fa-hourglass-half' },
+        { label: 'مقبول للمقابلة', value: stats.review?.approved_for_interview || 0, icon: 'fa-user-check' },
+        { label: 'مرفوض في المراجعة', value: stats.review?.rejected_in_review || 0, icon: 'fa-user-xmark' },
+        { label: 'إجمالي المقابلات', value: stats.interviews?.total_interviews || 0, icon: 'fa-comments' },
+        { label: 'في البرزخ', value: stats.interviews?.in_barzakh || 0, icon: 'fa-pause-circle' },
+        { label: 'مقبول نهائياً', value: stats.results?.accepted || 0, icon: 'fa-circle-check' },
+        { label: 'مرفوض نهائياً', value: stats.results?.rejected || 0, icon: 'fa-circle-xmark' }
     ];
 
-    return sections.map(section => `
-        <div class="summary-section">
-            <h4><i class="fa-solid ${section.icon}"></i> ${section.title}</h4>
-            <div class="summary-items">
-                ${section.items.map(item => `
-                    <div class="summary-item">
-                        <span class="summary-label">${item.label}</span>
-                        <span class="summary-value">${section.data[item.key] || 0}</span>
+    return `<div class="stats-grid">${allStats.map(stat => {
+        const color = colors[colorIndex % colors.length];
+        colorIndex++;
+        return `
+            <div class="stat-card" style="--stat-color: ${color}">
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid ${stat.icon}"></i>
                     </div>
-                `).join('')}
+                    <div class="stat-content">
+                        <div class="stat-value">${stat.value}</div>
+                        <div class="stat-label">${stat.label}</div>
+                    </div>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('')}</div>`;
 }
 
 // =====================================================
@@ -620,12 +593,113 @@ function showLoading(show) {
     }
 }
 
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `custom-notification custom-notification-${type}`;
+    
+    const icons = {
+        success: 'fa-circle-check',
+        error: 'fa-circle-xmark',
+        warning: 'fa-triangle-exclamation',
+        info: 'fa-circle-info'
+    };
+    
+    notification.innerHTML = `
+        <i class="fa-solid ${icons[type] || icons.info}"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.classList.add('show'), 10);
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
 function bindArchiveEvents() {
     // يمكن إضافة مستمعات أحداث إضافية هنا
 }
 
 // =====================================================
-// التصدير
+// تحديث إحصائيات الأرشيف
+// =====================================================
+
+function updateArchivesStatistics() {
+    const container = document.getElementById('archivesStatsGrid');
+    if (!container) return;
+
+    const totalArchives = archivedCycles.length;
+    let totalApplications = 0;
+    let totalAccepted = 0;
+    let totalRejected = 0;
+
+    archivedCycles.forEach(cycle => {
+        const stats = cycle.detailed_stats || {};
+        totalApplications += (stats.registration?.total_applications || 0);
+        totalAccepted += (stats.results?.accepted || 0);
+        totalRejected += (stats.results?.rejected || 0);
+    });
+
+    const acceptanceRate = totalApplications > 0 
+        ? Math.round((totalAccepted / totalApplications) * 100) 
+        : 0;
+
+    container.innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-card" style="--stat-color: #3d8fd6">
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${totalArchives}</div>
+                        <div class="stat-label">الدورات المؤرشفة</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" style="--stat-color: #10b981">
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${totalApplications}</div>
+                        <div class="stat-label">إجمالي الطلبات</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" style="--stat-color: #8b5cf6">
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${totalAccepted}</div>
+                        <div class="stat-label">إجمالي المقبولين</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" style="--stat-color: #f59e0b">
+                <div class="stat-badge"><i class="fa-solid fa-percentage"></i> ${acceptanceRate}%</div>
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${acceptanceRate}%</div>
+                        <div class="stat-label">معدل القبول</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// =====================================================
+// تصدير الوحدة
 // =====================================================
 
 window.archivesManager = {

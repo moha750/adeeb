@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام إدارة إشعارات Push
  * يتعامل مع تفعيل وإدارة الإشعارات الفورية
  */
@@ -54,9 +54,9 @@
                 if (pushEnabledMessage) pushEnabledMessage.style.display = 'block';
                 
                 pushStatusContainer.innerHTML = `
-                    <div style="padding: 1rem; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; border: 1px solid #6ee7b7; text-align: center;">
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; color: #065f46; font-weight: bold; font-size: 1rem;">
-                            <i class="fa-solid fa-check-circle" style="font-size: 1.5rem;"></i>
+                    <div>
+                        <div>
+                            <i class="fa-solid fa-check-circle"></i>
                             <span>الإشعارات مفعّلة وتعمل بنجاح!</span>
                         </div>
                     </div>
@@ -68,12 +68,12 @@
                 if (pushEnabledMessage) pushEnabledMessage.style.display = 'none';
                 
                 pushStatusContainer.innerHTML = `
-                    <div style="padding: 1rem; background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(239,68,68,0.05)); border-radius: 12px; border: 1px solid rgba(239,68,68,0.25); border-right: 4px solid #ef4444;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem; color: #991b1b;">
-                            <i class="fa-solid fa-ban" style="font-size: 1.25rem;"></i>
+                    <div>
+                        <div>
+                            <i class="fa-solid fa-ban"></i>
                             <div>
-                                <strong style="display: block; margin-bottom: 0.25rem;">الإشعارات محظورة</strong>
-                                <span style="font-size: 0.875rem;">يرجى تفعيل الإشعارات من إعدادات المتصفح</span>
+                                <strong>الإشعارات محظورة</strong>
+                                <span>يرجى تفعيل الإشعارات من إعدادات المتصفح</span>
                             </div>
                         </div>
                     </div>
@@ -85,9 +85,9 @@
                 if (pushEnabledMessage) pushEnabledMessage.style.display = 'none';
                 
                 pushStatusContainer.innerHTML = `
-                    <div style="padding: 1rem; background: linear-gradient(135deg, rgba(100,116,139,0.08), rgba(100,116,139,0.05)); border-radius: 12px; border: 1px solid rgba(100,116,139,0.25); border-right: 4px solid #64748b;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem; color: #475569;">
-                            <i class="fa-solid fa-info-circle" style="font-size: 1.25rem;"></i>
+                    <div>
+                        <div>
+                            <i class="fa-solid fa-info-circle"></i>
                             <span>المتصفح لا يدعم الإشعارات الفورية</span>
                         </div>
                     </div>
@@ -100,9 +100,9 @@
                 if (pushEnabledMessage) pushEnabledMessage.style.display = 'none';
                 
                 pushStatusContainer.innerHTML = `
-                    <div style="padding: 1rem; background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.05)); border-radius: 12px; border: 1px solid rgba(245,158,11,0.25); border-right: 4px solid #f59e0b;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem; color: #92400e;">
-                            <i class="fa-solid fa-bell-slash" style="font-size: 1.25rem;"></i>
+                    <div>
+                        <div>
+                            <i class="fa-solid fa-bell-slash"></i>
                             <span>الإشعارات غير مفعّلة. فعّلها الآن لتبقى على اطلاع!</span>
                         </div>
                     </div>
@@ -139,9 +139,9 @@
                 Swal.fire({
                     title: 'تنبيه',
                     html: `
-                        <div style="text-align: right; line-height: 1.8;">
+                        <div>
                             <p>لتفعيل الإشعارات، يجب تثبيت التطبيق أولاً.</p>
-                            <p style="margin-top: 1rem;">هل تريد الانتقال لقسم تثبيت التطبيق؟</p>
+                            <p>هل تريد الانتقال لقسم تثبيت التطبيق؟</p>
                         </div>
                     `,
                     icon: 'info',
@@ -201,9 +201,9 @@
                     Swal.fire({
                         title: 'تم الرفض',
                         html: `
-                            <div style="text-align: right; line-height: 1.8;">
+                            <div>
                                 <p>لقد رفضت إذن الإشعارات.</p>
-                                <p style="margin-top: 1rem;">لتفعيلها لاحقاً، يرجى تغيير الإعدادات من متصفحك.</p>
+                                <p>لتفعيلها لاحقاً، يرجى تغيير الإعدادات من متصفحك.</p>
                             </div>
                         `,
                         icon: 'warning',

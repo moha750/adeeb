@@ -112,6 +112,16 @@
             section: 'dashboard-section'
         });
         
+        // الأعضاء المعلقين - المستوى 7 وأعلى
+        if (roleLevel >= 7) {
+            menuItems.push({
+                id: 'pending-members',
+                icon: 'fa-clock',
+                label: 'الأعضاء المعلقين',
+                section: 'pending-members-section'
+            });
+        }
+        
         // إدارة المستخدمين - المستوى 8 وأعلى
         if (roleLevel >= 8) {
             menuItems.push({
@@ -129,6 +139,26 @@
                 icon: 'fa-sitemap',
                 label: 'إدارة اللجان',
                 section: 'committees-section'
+            });
+        }
+        
+        // تعيين الأدوار والمناصب - المستوى 8 وأعلى
+        if (roleLevel >= 8) {
+            menuItems.push({
+                id: 'role-assignment',
+                icon: 'fa-user-shield',
+                label: 'تعيين الأدوار والمناصب',
+                section: 'role-assignment-section'
+            });
+        }
+        
+        // إدارة بيانات الأعضاء - المستوى 8 وأعلى
+        if (roleLevel >= 8) {
+            menuItems.push({
+                id: 'member-data-management',
+                icon: 'fa-user-gear',
+                label: 'إدارة بيانات الأعضاء',
+                section: 'member-data-management-section'
             });
         }
         
@@ -317,7 +347,27 @@
                     id: 'surveys-results',
                     icon: 'fa-chart-pie',
                     label: 'نتائج الاستبيانات',
-                    section: 'surveys-results-section'
+                    isDropdown: true,
+                    subItems: [
+                        {
+                            id: 'surveys-results-statistics',
+                            icon: 'fa-chart-bar',
+                            label: 'الإحصائيات',
+                            section: 'surveys-results-statistics-section'
+                        },
+                        {
+                            id: 'surveys-results-responses',
+                            icon: 'fa-list-check',
+                            label: 'الاستجابات الفردية',
+                            section: 'surveys-results-responses-section'
+                        },
+                        {
+                            id: 'surveys-results-analytics',
+                            icon: 'fa-chart-line',
+                            label: 'التحليلات المتقدمة',
+                            section: 'surveys-results-analytics-section'
+                        }
+                    ]
                 },
                 {
                     id: 'surveys-templates',
@@ -398,15 +448,6 @@
             section: 'settings-section'
         });
         
-        // إدارة الصلاحيات - المستوى 10 فقط (رئيس النادي)
-        if (roleLevel >= 10) {
-            menuItems.push({
-                id: 'permissions',
-                icon: 'fa-shield-halved',
-                label: 'إدارة الصلاحيات',
-                section: 'permissions-section'
-            });
-        }
         
         // دالة مساعدة لبناء عناصر القائمة (تدعم التداخل)
         function buildMenuItem(subItem) {
@@ -538,13 +579,13 @@
     function navigateToSection(sectionId) {
         // إخفاء جميع الأقسام
         document.querySelectorAll('.admin-section').forEach(section => {
-            section.style.display = 'none';
+            section.classList.add('d-none');
         });
         
         // إظهار القسم المطلوب
         const targetSection = document.getElementById(sectionId);
         if (targetSection) {
-            targetSection.style.display = 'block';
+            targetSection.classList.remove('d-none');
         }
         
         // تحديث القائمة النشطة
@@ -552,6 +593,9 @@
             item.classList.remove('active');
         });
         document.querySelectorAll('.nav-dropdown-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelectorAll('.nav-nested-item').forEach(item => {
             item.classList.remove('active');
         });
         
@@ -567,6 +611,13 @@
             }
         }
         
+        // إعادة scroll للبداية
+        const mainContent = document.getElementById('mainContent');
+        if (mainContent) {
+            mainContent.scrollTop = 0;
+        }
+        window.scrollTo(0, 0);
+
         // تحميل بيانات القسم
         loadSectionData(sectionId);
         
@@ -574,6 +625,7 @@
         if (window.innerWidth < 1024) {
             document.getElementById('sidebar').classList.remove('active');
             document.getElementById('overlay').classList.remove('active');
+            document.body.style.overflow = '';
         }
     }
 
@@ -720,29 +772,51 @@
         }
     }
 
-
     // تحميل بيانات القسم
     async function loadSectionData(sectionId) {
         switch(sectionId) {
             case 'dashboard-section':
-                if (!chartsLoaded) {
-                    await loadDashboardData();
+                loadDashboardData();
+                break;
+            case 'pending-members-section':
+                if (window.PendingMembersManager && !window.pendingMembersManagerInstance) {
+                    window.pendingMembersManagerInstance = new window.PendingMembersManager();
+                }
+                if (window.pendingMembersManagerInstance) {
+                    await window.pendingMembersManagerInstance.init('pendingMembersContainer');
                 }
                 break;
             case 'users-section':
-                await loadUsers();
+                if (window.UsersManager && !window.usersManagerInstance) {
+                    window.usersManagerInstance = new window.UsersManager();
+                }
+                if (window.usersManagerInstance) {
+                    await window.usersManagerInstance.init();
+                }
                 break;
             case 'committees-section':
                 await loadCommittees();
                 break;
             case 'contact-messages-section':
-                if (window.contactMessagesManager) {
-                    await window.contactMessagesManager.loadMessages();
+                if (window.ContactMessagesManager) {
+                    if (!window.contactMessagesManager) {
+                        window.contactMessagesManager = new window.ContactMessagesManager();
+                        await window.contactMessagesManager.init();
+                    } else {
+                        // إعادة تحميل البيانات إذا كان الـ manager موجود
+                        await window.contactMessagesManager.loadMessages();
+                    }
                 }
                 break;
             case 'newsletter-section':
-                if (window.newsletterManager) {
-                    await window.newsletterManager.loadSubscribers();
+                if (window.NewsletterManager) {
+                    if (!window.newsletterManager) {
+                        window.newsletterManager = new window.NewsletterManager();
+                        await window.newsletterManager.init();
+                    } else {
+                        // إعادة تحميل البيانات إذا كان الـ manager موجود
+                        await window.newsletterManager.loadSubscribers();
+                    }
                 }
                 break;
             case 'membership-settings-section':
@@ -754,6 +828,19 @@
             case 'membership-invitations-section':
                 if (window.invitationsManager) {
                     await window.invitationsManager.init(currentUser);
+                }
+                break;
+            case 'member-data-management-section':
+                if (window.memberDataManager) {
+                    await window.memberDataManager.init();
+                }
+                break;
+            case 'role-assignment-section':
+                if (window.RoleAssignmentManager && !window.roleAssignmentManager) {
+                    window.roleAssignmentManager = new window.RoleAssignmentManager();
+                }
+                if (window.roleAssignmentManager) {
+                    await window.roleAssignmentManager.init(currentUser);
                 }
                 break;
             case 'membership-applications-view-section':
@@ -825,9 +912,6 @@
                     window.settingsManager.init();
                 }
                 break;
-            case 'permissions-section':
-                await loadPermissionsSection();
-                break;
             case 'site-visits-section':
                 await loadSiteVisitsSection();
                 break;
@@ -841,9 +925,31 @@
                     await window.surveysManager.showCreateForm();
                 }
                 break;
-            case 'surveys-results-section':
+            case 'surveys-results-statistics-section':
                 if (window.surveysManager) {
                     await window.surveysManager.loadResults();
+                    // التبديل إلى عرض الإحصائيات
+                    if (window.resultsViewSwitcher) {
+                        window.resultsViewSwitcher.switchView('statistics');
+                    }
+                }
+                break;
+            case 'surveys-results-responses-section':
+                if (window.surveysManager) {
+                    await window.surveysManager.loadResults();
+                    // التبديل إلى عرض الاستجابات
+                    if (window.resultsViewSwitcher) {
+                        window.resultsViewSwitcher.switchView('responses');
+                    }
+                }
+                break;
+            case 'surveys-results-analytics-section':
+                if (window.surveysManager) {
+                    await window.surveysManager.loadResults();
+                    // التبديل إلى عرض التحليلات
+                    if (window.resultsViewSwitcher) {
+                        window.resultsViewSwitcher.switchView('analytics');
+                    }
                 }
                 break;
             case 'surveys-templates-section':
@@ -1423,8 +1529,13 @@
         
         if (toggleSidebar && sidebar) {
             toggleSidebar.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
+                const isActive = sidebar.classList.toggle('active');
                 if (overlay) overlay.classList.toggle('active');
+                
+                // منع scroll عند فتح sidebar في الشاشات الصغيرة
+                if (window.innerWidth < 1024) {
+                    document.body.style.overflow = isActive ? 'hidden' : '';
+                }
             });
         }
         
@@ -1432,6 +1543,11 @@
             closeSidebar.addEventListener('click', () => {
                 sidebar.classList.remove('active');
                 if (overlay) overlay.classList.remove('active');
+                
+                // إعادة scroll
+                if (window.innerWidth < 1024) {
+                    document.body.style.overflow = '';
+                }
             });
         }
         
@@ -1439,6 +1555,11 @@
             overlay.addEventListener('click', () => {
                 sidebar.classList.remove('active');
                 overlay.classList.remove('active');
+                
+                // إعادة scroll
+                if (window.innerWidth < 1024) {
+                    document.body.style.overflow = '';
+                }
             });
         }
         
@@ -1462,6 +1583,16 @@
         
         // إعداد مركز الإشعارات
         setupNotificationsCenter();
+        
+        // زر تحديث الأعضاء المعلقين
+        const refreshPendingMembersBtn = document.getElementById('refreshPendingMembersBtn');
+        if (refreshPendingMembersBtn) {
+            refreshPendingMembersBtn.addEventListener('click', async () => {
+                if (window.pendingMembersManagerInstance) {
+                    await window.pendingMembersManagerInstance.init('pendingMembersContainer');
+                }
+            });
+        }
 
         // نافذة إضافة مستخدم
         const addUserBtn = document.getElementById('addUserBtn');
@@ -1784,77 +1915,27 @@
         setupWebsiteModals();
     }
 
-    // فتح نافذة إضافة/تعديل مستخدم
+    // فتح نافذة إضافة مستخدم (عضوية هدية)
     async function openUserModal(userId = null) {
         const modal = document.getElementById('userModal');
         const title = document.getElementById('userModalTitle');
         const form = document.getElementById('userForm');
 
-        // إظهار النافذة أولاً
         modal.classList.add('active');
 
-        // تحميل الأدوار واللجان
-        await loadRolesOptions();
-        await loadCommitteesOptions();
-
         if (userId) {
-            title.textContent = 'تعديل مستخدم';
-            
-            try {
-                // تحميل بيانات المستخدم
-                const { data: user, error: userError } = await sb
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', userId)
-                    .single();
-
-                if (userError) throw userError;
-
-                // تحميل دور المستخدم
-                const { data: userRole } = await sb
-                    .from('user_roles')
-                    .select('role_id, committee_id')
-                    .eq('user_id', userId)
-                    .eq('is_active', true)
-                    .single();
-
-                // ملء النموذج
-                document.getElementById('userFullName').value = user.full_name || '';
-                document.getElementById('userEmail').value = user.email || '';
-                document.getElementById('userPhone').value = user.phone || '';
-                
-                if (userRole) {
-                    document.getElementById('userRoleSelect').value = userRole.role_id;
-                    
-                    // إظهار حقل اللجنة إذا كان الدور يحتاج لجنة
-                    const selectedOption = document.getElementById('userRoleSelect').selectedOptions[0];
-                    if (selectedOption && selectedOption.dataset.needsCommittee === 'true') {
-                        document.getElementById('committeeGroup').style.display = 'block';
-                        if (userRole.committee_id) {
-                            document.getElementById('userCommitteeSelect').value = userRole.committee_id;
-                        }
-                    }
-                }
-
-                // إخفاء حقل كلمة المرور عند التعديل
-                document.getElementById('userPassword').required = false;
-                document.getElementById('userPassword').parentElement.style.display = 'none';
-
-                // حفظ userId للاستخدام عند الحفظ
-                form.dataset.userId = userId;
-
-            } catch (error) {
-                console.error('Error loading user data:', error);
-                alert('حدث خطأ في تحميل بيانات المستخدم');
-                modal.classList.remove('active');
-            }
+            // وضع التعديل غير مدعوم في نظام العضوية الهدية
+            alert('لا يمكن تعديل المستخدمين من هنا. استخدم قسم إدارة المستخدمين.');
+            modal.classList.remove('active');
+            return;
         } else {
-            title.textContent = 'إضافة مستخدم جديد';
+            title.textContent = 'منح عضوية هدية';
             form.reset();
-            document.getElementById('userPassword').required = true;
-            document.getElementById('userPassword').parentElement.style.display = 'block';
             delete form.dataset.userId;
         }
+
+        // تحميل اللجان فقط
+        await loadCommitteesOptions();
     }
 
     // تحميل خيارات الأدوار
@@ -1987,17 +2068,13 @@
         };
     }
 
-    // معالجة إرسال نموذج المستخدم
+    // معالجة إرسال نموذج المستخدم (عضوية هدية)
     async function handleUserSubmit() {
         const form = document.getElementById('userForm');
-        const userId = form.dataset.userId; // للتحقق من وضع التعديل
         
         const fullName = document.getElementById('userFullName').value;
         const email = document.getElementById('userEmail').value;
-        const phone = document.getElementById('userPhone').value;
-        const roleId = document.getElementById('userRoleSelect').value;
-        const committeeId = document.getElementById('userCommitteeSelect').value || null;
-        const password = document.getElementById('userPassword').value;
+        const committeeId = document.getElementById('userCommitteeSelect').value;
 
         // التحقق من صحة الاسم الكامل
         const nameValidation = validateFullName(fullName);
@@ -2006,99 +2083,79 @@
             return;
         }
 
+        if (!committeeId) {
+            alert('يرجى اختيار اللجنة');
+            return;
+        }
+
         try {
             showLoading(true);
 
-            if (userId) {
-                // وضع التعديل
-                // 1. تحديث الملف الشخصي
-                const { error: profileError } = await sb
-                    .from('profiles')
-                    .update({
-                        full_name: fullName,
-                        phone: phone
-                    })
-                    .eq('id', userId);
+            // 1. إنشاء حساب مستخدم جديد بكلمة مرور عشوائية مؤقتة
+            const tempPassword = Math.random().toString(36).slice(-12) + 'Aa1!';
+            
+            // استخدام admin.createUser بدلاً من signUp لتجنب إرسال بريد التأكيد التلقائي
+            const { data: { session: adminSession } } = await sb.auth.getSession();
+            if (!adminSession) {
+                throw new Error('يجب تسجيل الدخول كمسؤول');
+            }
 
-                if (profileError) throw profileError;
-
-                // 2. تحديث الدور
-                // حذف الأدوار القديمة
-                await sb
-                    .from('user_roles')
-                    .delete()
-                    .eq('user_id', userId);
-
-                // إضافة الدور الجديد
-                const { error: roleError } = await sb
-                    .from('user_roles')
-                    .insert({
-                        user_id: userId,
-                        role_id: roleId,
-                        committee_id: committeeId,
-                        is_active: true,
-                        assigned_by: currentUser.id
-                    });
-
-                if (roleError) throw roleError;
-
-                // 3. تسجيل النشاط
-                try {
-                    await window.AuthManager.logActivity(currentUser.id, 'update_user', 'user', userId, {
-                        role_id: roleId
-                    });
-                } catch (activityError) {
-                    console.error('Activity log error:', activityError);
-                }
-
-                alert('تم تحديث بيانات المستخدم بنجاح!');
-
-            } else {
-                // وضع الإضافة
-                const { data: authData, error: authError } = await sb.auth.signUp({
+            // استدعاء Edge Function لإنشاء المستخدم بشكل صحيح
+            const createUserResponse = await fetch(`${window.SUPABASE_URL}/functions/v1/create-member-directly`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${adminSession.access_token}`,
+                    'Content-Type': 'application/json',
+                    'apikey': window.SUPABASE_ANON_KEY
+                },
+                body: JSON.stringify({
                     email: email,
-                    password: password,
-                    options: {
-                        data: {
-                            full_name: fullName
-                        }
-                    }
+                    password: tempPassword,
+                    full_name: fullName,
+                    committee_id: committeeId
+                })
+            });
+
+            if (!createUserResponse.ok) {
+                const errorData = await createUserResponse.json();
+                throw new Error(errorData.error || 'فشل إنشاء المستخدم');
+            }
+
+            const { user_id: newUserId, token } = await createUserResponse.json();
+
+            if (!newUserId) {
+                throw new Error('فشل إنشاء المستخدم');
+            }
+
+            // 2. تحديث الملف الشخصي
+            const { error: profileError } = await sb
+                .from('profiles')
+                .upsert({
+                    id: newUserId,
+                    full_name: fullName,
+                    email: email,
+                    account_status: 'active'
+                }, {
+                    onConflict: 'id'
                 });
 
-                if (authError) throw authError;
+            if (profileError) {
+                console.error('Profile error:', profileError);
+            }
 
-                if (!authData.user) {
-                    throw new Error('فشل إنشاء المستخدم');
-                }
+            // 3. تعيين دور "عضو" (role_level = 5)
+            const { data: memberRole } = await sb
+                .from('roles')
+                .select('id')
+                .eq('role_level', 5)
+                .single();
 
-                const newUserId = authData.user.id;
-
-                // انتظار قليلاً لضمان إنشاء المستخدم
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                // تحديث الملف الشخصي
-                const { error: profileError } = await sb
-                    .from('profiles')
-                    .upsert({
-                        id: newUserId,
-                        full_name: fullName,
-                        email: email,
-                        phone: phone,
-                        account_status: 'active'
-                    }, {
-                        onConflict: 'id'
-                    });
-
-                if (profileError) {
-                    console.error('Profile error:', profileError);
-                }
-
-                // تعيين الدور
+            if (memberRole) {
                 const { error: roleError } = await sb
                     .from('user_roles')
                     .insert({
                         user_id: newUserId,
-                        role_id: roleId,
+                        role_id: memberRole.id,
                         committee_id: committeeId,
                         is_active: true,
                         assigned_by: currentUser.id
@@ -2106,28 +2163,75 @@
 
                 if (roleError) {
                     console.error('Role error:', roleError);
-                    throw new Error('فشل تعيين الدور للمستخدم');
                 }
-
-                // تسجيل النشاط
-                try {
-                    await window.AuthManager.logActivity(currentUser.id, 'create_user', 'user', newUserId, {
-                        user_email: email,
-                        role_id: roleId
-                    });
-                } catch (activityError) {
-                    console.error('Activity log error:', activityError);
-                }
-
-                alert('تم إضافة المستخدم بنجاح!\n\nملاحظة: تم إرسال رسالة تأكيد البريد الإلكتروني للمستخدم.');
             }
+
+            // 4. إنشاء token لإكمال التسجيل (مثل نظام الترحيل)
+            const { data: tokenData, error: tokenError } = await sb
+                .from('member_onboarding_tokens')
+                .insert({
+                    user_id: newUserId,
+                    token: crypto.randomUUID(),
+                    sent_to_email: email,
+                    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 أيام
+                    is_used: false
+                })
+                .select()
+                .single();
+
+            if (tokenError) {
+                console.error('Token error:', tokenError);
+            }
+
+            // 5. إرسال رسالة القبول عبر Edge Function
+            try {
+                const { data: { session } } = await sb.auth.getSession();
+                if (session && newUserId) {
+                    const response = await fetch(
+                        `${sb.supabaseUrl}/functions/v1/resend-onboarding-email`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${session.access_token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ 
+                                user_id: newUserId
+                            })
+                        }
+                    );
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error('Failed to send onboarding email:', errorData);
+                    } else {
+                        console.log('Onboarding email sent successfully');
+                    }
+                }
+            } catch (emailError) {
+                console.error('Email sending error:', emailError);
+            }
+
+            // 6. تسجيل النشاط
+            try {
+                await window.AuthManager.logActivity(currentUser.id, 'create_gift_membership', 'user', newUserId, {
+                    user_email: email,
+                    committee_id: committeeId
+                });
+            } catch (activityError) {
+                console.error('Activity log error:', activityError);
+            }
+
+            alert('تم منح العضوية بنجاح!\n\nتم إرسال رسالة قبول للعضو على البريد الإلكتروني لإكمال التسجيل.');
 
             // إغلاق النافذة وتحديث القائمة
             document.getElementById('userModal').classList.remove('active');
-            await loadUsers();
+            if (window.usersManagerInstance) {
+                await window.usersManagerInstance.init();
+            }
 
         } catch (error) {
-            console.error('Error saving user:', error);
+            console.error('Error creating gift membership:', error);
             alert('حدث خطأ: ' + (error.message || 'خطأ غير معروف'));
         } finally {
             showLoading(false);
@@ -4061,288 +4165,6 @@
         }
     };
 
-    // =====================================================
-    // إدارة الصلاحيات
-    // =====================================================
-    let permissionsManager;
-    let allPermissions = [];
-    let allRoles = [];
-
-    async function loadPermissionsSection() {
-        try {
-            if (!permissionsManager) {
-                permissionsManager = new AdeebPermissionsManager(sb);
-                await permissionsManager.initialize();
-            }
-
-            // تحميل الإحصائيات أولاً لملء allPermissions و allRoles
-            await loadPermissionsStats();
-            
-            // ثم تحميل باقي الأقسام
-            await loadRolesForPermissions();
-
-            setupPermissionsTabs();
-        } catch (error) {
-            console.error('Error loading permissions section:', error);
-            showError('حدث خطأ في تحميل قسم الصلاحيات');
-        }
-    }
-
-    async function loadRoles() {
-        try {
-            const { data, error } = await sb
-                .from('roles')
-                .select('*')
-                .order('role_level', { ascending: false });
-            
-            if (error) throw error;
-            return data || [];
-        } catch (error) {
-            console.error('Error loading roles:', error);
-            return [];
-        }
-    }
-
-    async function loadPermissionsStats() {
-            try {
-                allPermissions = await permissionsManager.getAllPermissions();
-                allRoles = await loadRoles();
-                const modules = await permissionsManager.getModules();
-                
-                const { count: userPermsCount } = await sb
-                    .from('user_specific_permissions')
-                    .select('*', { count: 'exact', head: true });
-
-                document.getElementById('totalPermissionsCount').textContent = allPermissions.length;
-                document.getElementById('totalRolesCount').textContent = allRoles.length;
-                document.getElementById('totalModulesCount').textContent = modules.length;
-                document.getElementById('totalUserPermsCount').textContent = userPermsCount || 0;
-
-                const moduleFilter = document.getElementById('moduleFilterPermissions');
-                if (moduleFilter) {
-                    moduleFilter.innerHTML = '<option value="">جميع الأقسام</option>';
-                    modules.forEach(module => {
-                        const option = document.createElement('option');
-                        option.value = module;
-                        option.textContent = getModuleNameAr(module);
-                        moduleFilter.appendChild(option);
-                    });
-                }
-                
-                // تحميل قائمة الصلاحيات مباشرة
-                await loadPermissionsList();
-            } catch (error) {
-                console.error('Error loading permissions stats:', error);
-            }
-        }
-
-    async function loadPermissionsList() {
-            const container = document.getElementById('permissionsListTable');
-            if (!container) return;
-
-            const moduleFilter = document.getElementById('moduleFilterPermissions')?.value || '';
-            const searchTerm = document.getElementById('searchPermissionsInput')?.value.toLowerCase() || '';
-
-            let filtered = allPermissions.filter(p => {
-                const matchesModule = !moduleFilter || p.module === moduleFilter;
-                const matchesSearch = !searchTerm || 
-                    p.permission_key.toLowerCase().includes(searchTerm) ||
-                    p.permission_name_ar.includes(searchTerm);
-                return matchesModule && matchesSearch;
-            });
-
-            container.innerHTML = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>المفتاح</th>
-                            <th>الاسم بالعربية</th>
-                            <th>القسم</th>
-                            <th>الوصف</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${filtered.map(p => `
-                            <tr>
-                                <td><code>${p.permission_key}</code></td>
-                                <td>${p.permission_name_ar}</td>
-                                <td><span class="badge">${getModuleNameAr(p.module)}</span></td>
-                                <td>${p.description || '-'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-        }
-
-    async function loadRolesForPermissions() {
-        const select = document.getElementById('roleSelectPermissions');
-        if (!select) return;
-
-        select.innerHTML = '<option value="">اختر الدور...</option>';
-        allRoles.forEach(role => {
-            const option = document.createElement('option');
-            option.value = role.id;
-            option.textContent = `${role.role_name_ar} (المستوى ${role.role_level})`;
-            select.appendChild(option);
-        });
-
-        select.addEventListener('change', async (e) => {
-            if (e.target.value) {
-                await loadRolePermissionsEditor(e.target.value);
-            } else {
-                document.getElementById('rolePermissionsContent').innerHTML = 
-                    '<p class="text-muted text-center">اختر دوراً لعرض وتعديل صلاحياته</p>';
-            }
-        });
-    }
-
-    async function loadRolePermissionsEditor(roleId) {
-            try {
-                showLoading(true);
-                const rolePerms = await permissionsManager.getRolePermissions(roleId);
-                const role = allRoles.find(r => r.id == roleId);
-
-                const modules = [...new Set(allPermissions.map(p => p.module))];
-                
-                let html = `
-                    <div style="margin-bottom: 1rem;">
-                        <h4>${role.role_name_ar}</h4>
-                        <button class="btn-primary" onclick="saveRolePermissions(${roleId})">
-                            <i class="fa-solid fa-save"></i>
-                            حفظ التغييرات
-                        </button>
-                    </div>
-                `;
-
-                modules.forEach(module => {
-                    const modulePerms = allPermissions.filter(p => p.module === module);
-                    html += `
-                        <div class="card" style="margin-bottom: 1rem;">
-                            <div class="card-header">
-                                <h4>${getModuleNameAr(module)}</h4>
-                            </div>
-                            <div class="card-body">
-                                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
-                                    ${modulePerms.map(perm => {
-                                        const hasPerm = rolePerms.some(rp => rp.permission_key === perm.permission_key);
-                                        const scope = rolePerms.find(rp => rp.permission_key === perm.permission_key)?.scope || 'all';
-                                        return `
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                                <label style="flex: 1; display: flex; align-items: center; gap: 0.5rem;">
-                                                    <input type="checkbox" 
-                                                        data-permission-key="${perm.permission_key}"
-                                                        ${hasPerm ? 'checked' : ''}>
-                                                    <span>${perm.permission_name_ar}</span>
-                                                </label>
-                                                <select class="filter-select" data-scope-for="${perm.permission_key}" 
-                                                    style="width: 100px;" ${!hasPerm ? 'disabled' : ''}>
-                                                    <option value="all" ${scope === 'all' ? 'selected' : ''}>الكل</option>
-                                                    <option value="own" ${scope === 'own' ? 'selected' : ''}>الخاص</option>
-                                                    <option value="committee" ${scope === 'committee' ? 'selected' : ''}>اللجنة</option>
-                                                </select>
-                                            </div>
-                                        `;
-                                    }).join('')}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                document.getElementById('rolePermissionsContent').innerHTML = html;
-
-                document.querySelectorAll('#rolePermissionsContent input[type="checkbox"]').forEach(cb => {
-                    cb.addEventListener('change', (e) => {
-                        const key = e.target.getAttribute('data-permission-key');
-                        const scopeSelect = document.querySelector(`select[data-scope-for="${key}"]`);
-                        if (scopeSelect) scopeSelect.disabled = !e.target.checked;
-                    });
-                });
-            } catch (error) {
-                console.error('Error loading role permissions editor:', error);
-                showError('حدث خطأ في تحميل صلاحيات الدور');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        window.saveRolePermissions = async function(roleId) {
-            try {
-                showLoading(true);
-                const currentPerms = await permissionsManager.getRolePermissions(roleId);
-                const checkboxes = document.querySelectorAll('#rolePermissionsContent input[type="checkbox"]');
-
-                for (const cb of checkboxes) {
-                    const permKey = cb.getAttribute('data-permission-key');
-                    const scopeSelect = document.querySelector(`select[data-scope-for="${permKey}"]`);
-                    const scope = scopeSelect.value;
-
-                    const hadPerm = currentPerms.some(rp => rp.permission_key === permKey);
-                    const hasPerm = cb.checked;
-
-                    if (hasPerm && !hadPerm) {
-                        await permissionsManager.grantPermissionToRole(roleId, permKey, scope);
-                    } else if (!hasPerm && hadPerm) {
-                        const oldScope = currentPerms.find(rp => rp.permission_key === permKey)?.scope;
-                        await permissionsManager.revokePermissionFromRole(roleId, permKey, oldScope);
-                    } else if (hasPerm && hadPerm) {
-                        const oldScope = currentPerms.find(rp => rp.permission_key === permKey)?.scope;
-                        if (oldScope !== scope) {
-                            await permissionsManager.revokePermissionFromRole(roleId, permKey, oldScope);
-                            await permissionsManager.grantPermissionToRole(roleId, permKey, scope);
-                        }
-                    }
-                }
-
-                alert('تم حفظ التغييرات بنجاح');
-                await loadRolePermissionsEditor(roleId);
-            } catch (error) {
-                console.error('Error saving role permissions:', error);
-                showError('حدث خطأ في حفظ التغييرات');
-            } finally {
-                showLoading(false);
-            }
-        };
-
-    function setupPermissionsTabs() {
-        const tabBtns = document.querySelectorAll('#permissions-section .tab-btn');
-        const tabContents = document.querySelectorAll('#permissions-section .tab-content');
-
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const targetTab = btn.getAttribute('data-tab');
-                
-                tabBtns.forEach(b => b.classList.remove('active'));
-                tabContents.forEach(c => c.classList.remove('active'));
-                
-                btn.classList.add('active');
-                document.getElementById(targetTab).classList.add('active');
-            });
-        });
-
-        const moduleFilter = document.getElementById('moduleFilterPermissions');
-        const searchInput = document.getElementById('searchPermissionsInput');
-        
-        if (moduleFilter) moduleFilter.addEventListener('change', loadPermissionsList);
-        if (searchInput) searchInput.addEventListener('input', loadPermissionsList);
-    }
-
-    function getModuleNameAr(module) {
-        const names = {
-            'users': 'المستخدمين',
-            'committees': 'اللجان',
-            'projects': 'المشاريع',
-            'tasks': 'المهام',
-            'meetings': 'الاجتماعات',
-            'reports': 'التقارير',
-            'evaluations': 'التقييمات',
-            'website': 'محتوى الموقع',
-            'system': 'النظام',
-            'notifications': 'الإشعارات'
-        };
-        return names[module] || module;
-    }
 
     // =====================================================
     // وظائف إحصائيات الزيارات
@@ -4455,33 +4277,11 @@
                 });
             }
 
-            // إضافة معالج للتحقق من الجنس قبل فتح رابط مجلس أدِيبات
+            // رابط مجلس أدِيبات
             if (femaleGroupLink) {
-                femaleGroupLink.addEventListener('click', async (e) => {
+                femaleGroupLink.addEventListener('click', (e) => {
                     e.preventDefault();
-                    
-                    // التحقق من جنس المستخدم
-                    const { data: profile } = await sb
-                        .from('profiles')
-                        .select('gender')
-                        .eq('id', currentUser.id)
-                        .single();
-
-                    if (profile && profile.gender === 'female') {
-                        window.open(femaleGroupLink.href, '_blank');
-                    } else {
-                        if (window.Swal) {
-                            Swal.fire({
-                                title: 'عذراً',
-                                text: 'هذا المجلس مخصص للأديبات فقط',
-                                icon: 'warning',
-                                confirmButtonText: 'حسناً',
-                                confirmButtonColor: '#3d8fd6'
-                            });
-                        } else {
-                            alert('هذا المجلس مخصص للأديبات فقط');
-                        }
-                    }
+                    window.open(femaleGroupLink.href, '_blank');
                 });
             }
         } catch (error) {

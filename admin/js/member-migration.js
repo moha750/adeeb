@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام ترحيل المقبولين إلى حسابات مستخدمين حقيقية
  * يسمح بعرض المقبولين، تعديل لجانهم، وترحيلهم إلى حسابات فعلية
  */
@@ -103,19 +103,19 @@
                 <div class="empty-state">
                     <i class="fa-solid fa-user-check"></i>
                     <p>لا يوجد أعضاء مقبولين بانتظار الترحيل</p>
-                    <p style="font-size: 0.9rem; color: #64748b;">جميع المقبولين تم ترحيلهم بنجاح</p>
+                    <p>جميع المقبولين تم ترحيلهم بنجاح</p>
                 </div>
             `;
             return;
         }
 
         let html = `
-            <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+            <div>
                 <button class="btn-primary" onclick="window.memberMigration.migrateAllSelected()" id="migrateSelectedBtn" disabled>
                     <i class="fa-solid fa-users-gear"></i>
                     ترحيل المحددين (<span id="selectedCount">0</span>)
                 </button>
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <label>
                     <input type="checkbox" id="selectAllCheckbox" onchange="window.memberMigration.toggleSelectAll(this.checked)" />
                     <span>تحديد الكل</span>
                 </label>
@@ -190,9 +190,9 @@
                             
                             <div class="info-item full-width">
                                 <i class="fa-solid fa-users"></i>
-                                <div style="flex: 1;">
+                                <div>
                                     <span class="info-label">اللجنة</span>
-                                    <select class="committee-select" data-member-id="${member.id}" style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; margin-top: 0.25rem;">
+                                    <select class="committee-select" data-member-id="${member.id}">
                                         ${committeeOptions}
                                     </select>
                                 </div>
@@ -227,11 +227,35 @@
     }
 
     function updateMigrationStatistics() {
-        const totalEl = document.getElementById('totalAcceptedCount');
-        const pendingEl = document.getElementById('pendingMigrationCount');
+        const container = document.getElementById('migrationStatsGrid');
+        if (!container) return;
 
-        if (totalEl) totalEl.textContent = acceptedMembers.length;
-        if (pendingEl) pendingEl.textContent = acceptedMembers.length;
+        const total = acceptedMembers.length;
+
+        container.innerHTML = `
+            <div class="stat-card" style="--stat-color: #10b981">
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${total}</div>
+                        <div class="stat-label">المقبولين بانتظار الترحيل</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" style="--stat-color: #3d8fd6">
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="selectedMigrationCount">0</div>
+                        <div class="stat-label">المحدد للترحيل</div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     function toggleSelectAll(checked) {
@@ -244,7 +268,7 @@
         const checkboxes = document.querySelectorAll('.member-checkbox:checked');
         const count = checkboxes.length;
         
-        const countEl = document.getElementById('selectedCount');
+        const countEl = document.getElementById('selectedMigrationCount');
         const migrateBtn = document.getElementById('migrateSelectedBtn');
         
         if (countEl) countEl.textContent = count;
@@ -262,8 +286,8 @@
             title: 'تأكيد الترحيل',
             html: `
                 <p>هل أنت متأكد من ترحيل العضو:</p>
-                <p style="font-weight: bold; margin: 1rem 0;">${escapeHtml(member.application.full_name)}</p>
-                <p style="font-size: 0.9rem; color: #64748b;">سيتم إنشاء حساب جديد وإرسال بريد إلكتروني بكلمة المرور المؤقتة</p>
+                <p>${escapeHtml(member.application.full_name)}</p>
+                <p>سيتم إنشاء حساب جديد وإرسال بريد إلكتروني بكلمة المرور المؤقتة</p>
             `,
             icon: 'question',
             showCancelButton: true,
@@ -301,13 +325,13 @@
                     title: 'تم الترحيل بنجاح! 🎉',
                     html: `
                         <p>تم إنشاء حساب للعضو بنجاح</p>
-                        <div style="background: #e8f5e9; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
-                            <p style="margin: 0.5rem 0; color: #2e7d32;"><i class="fa-solid fa-check-circle"></i> تم إرسال إيميل ترحيبي للعضو</p>
-                            <p style="margin: 0.5rem 0; font-size: 0.9rem; color: #558b2f;">يحتوي الإيميل على رابط لتعبئة البيانات الشخصية والأكاديمية</p>
+                        <div>
+                            <p><i class="fa-solid fa-check-circle"></i> تم إرسال إيميل ترحيبي للعضو</p>
+                            <p>يحتوي الإيميل على رابط لتعبئة البيانات الشخصية والأكاديمية</p>
                         </div>
-                        <div style="background: #f1f5f9; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; text-align: left; direction: ltr;">
-                            <p style="margin: 0.5rem 0;"><strong>Email:</strong> ${data.email}</p>
-                            <p style="margin: 0.5rem 0; font-size: 0.85rem; color: #64748b;">سيتمكن العضو من تسجيل الدخول بعد إكمال بياناته</p>
+                        <div>
+                            <p><strong>Email:</strong> ${data.email}</p>
+                            <p>سيتمكن العضو من تسجيل الدخول بعد إكمال بياناته</p>
                         </div>
                     `,
                     icon: 'success',
@@ -338,7 +362,7 @@
             title: 'تأكيد الترحيل الجماعي',
             html: `
                 <p>هل أنت متأكد من ترحيل <strong>${checkboxes.length}</strong> عضو؟</p>
-                <p style="font-size: 0.9rem; color: #64748b;">سيتم إنشاء حسابات لجميع الأعضاء المحددين</p>
+                <p>سيتم إنشاء حسابات لجميع الأعضاء المحددين</p>
             `,
             icon: 'warning',
             showCancelButton: true,
@@ -392,22 +416,22 @@
         await loadAcceptedMembers();
 
         const resultsHtml = results.map(r => `
-            <div style="background: #f1f5f9; padding: 0.75rem; border-radius: 0.375rem; margin: 0.5rem 0; text-align: left; direction: ltr;">
-                <p style="margin: 0.25rem 0; font-weight: bold;">${r.name}</p>
-                <p style="margin: 0.25rem 0; font-size: 0.9rem;">Email: ${r.email}</p>
-                <p style="margin: 0.25rem 0; font-size: 0.9rem;">Password: <code style="background: white; padding: 0.125rem 0.375rem; border-radius: 0.25rem;">${r.password}</code></p>
+            <div>
+                <p>${r.name}</p>
+                <p>Email: ${r.email}</p>
+                <p>Password: <code>${r.password}</code></p>
             </div>
         `).join('');
 
         await Swal.fire({
             title: 'نتيجة الترحيل الجماعي',
             html: `
-                <p>تم ترحيل <strong style="color: #10b981;">${successCount}</strong> عضو بنجاح</p>
-                ${failCount > 0 ? `<p>فشل ترحيل <strong style="color: #ef4444;">${failCount}</strong> عضو</p>` : ''}
-                <div style="max-height: 300px; overflow-y: auto; margin-top: 1rem;">
+                <p>تم ترحيل <strong>${successCount}</strong> عضو بنجاح</p>
+                ${failCount > 0 ? `<p>فشل ترحيل <strong>${failCount}</strong> عضو</p>` : ''}
+                <div>
                     ${resultsHtml}
                 </div>
-                <p style="font-size: 0.9rem; color: #64748b; margin-top: 1rem;">يرجى حفظ كلمات المرور وإرسالها للأعضاء</p>
+                <p>يرجى حفظ كلمات المرور وإرسالها للأعضاء</p>
             `,
             icon: successCount > 0 ? 'success' : 'error',
             confirmButtonText: 'حسناً',
@@ -424,26 +448,26 @@
         Swal.fire({
             title: 'تفاصيل العضو',
             html: `
-                <div style="text-align: right; direction: rtl;">
-                    <div style="margin: 1rem 0;">
+                <div>
+                    <div>
                         <strong>الاسم الكامل:</strong> ${escapeHtml(app.full_name)}
                     </div>
-                    <div style="margin: 1rem 0;">
+                    <div>
                         <strong>البريد الإلكتروني:</strong> ${escapeHtml(app.email)}
                     </div>
-                    <div style="margin: 1rem 0;">
+                    <div>
                         <strong>رقم الجوال:</strong> ${escapeHtml(app.phone || 'غير متوفر')}
                     </div>
-                    <div style="margin: 1rem 0;">
+                    <div>
                         <strong>الدرجة العلمية:</strong> ${escapeHtml(app.degree || 'غير محدد')}
                     </div>
-                    <div style="margin: 1rem 0;">
+                    <div>
                         <strong>الكلية:</strong> ${escapeHtml(app.college || 'غير محدد')}
                     </div>
-                    <div style="margin: 1rem 0;">
+                    <div>
                         <strong>التخصص:</strong> ${escapeHtml(app.major || 'غير محدد')}
                     </div>
-                    <div style="margin: 1rem 0;">
+                    <div>
                         <strong>اللجنة المرغوبة:</strong> ${escapeHtml(app.preferred_committee || 'غير محدد')}
                     </div>
                 </div>
@@ -545,7 +569,7 @@
 
     function showLoading(container) {
         if (container) {
-            container.innerHTML = '<div class="text-center" style="padding: 3rem;"><i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem;"></i><p style="margin-top: 1rem;">جاري التحميل...</p></div>';
+            container.innerHTML = '<div class="text-center"><i class="fa-solid fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>';
         }
     }
 

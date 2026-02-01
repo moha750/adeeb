@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام إدارة PWA
  * يتعامل مع تثبيت التطبيق وتسجيل Service Worker
  */
@@ -128,9 +128,9 @@
             
             // تحديث حالة التثبيت
             statusContainer.innerHTML = `
-                <div style="padding: 1rem; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; border: 1px solid #6ee7b7; text-align: center;">
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; color: #065f46; font-weight: bold; font-size: 1rem;">
-                        <i class="fa-solid fa-check-circle" style="font-size: 1.5rem;"></i>
+                <div>
+                    <div>
+                        <i class="fa-solid fa-check-circle"></i>
                         <span>التطبيق مثبت ويعمل بنجاح!</span>
                     </div>
                 </div>
@@ -144,9 +144,9 @@
             
             // تحديث حالة عدم التثبيت
             statusContainer.innerHTML = `
-                <div style="padding: 1rem; background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.05)); border-radius: 12px; border: 1px solid rgba(245,158,11,0.25); border-right: 4px solid #f59e0b;">
-                    <div style="display: flex; align-items: center; gap: 0.75rem; color: #92400e;">
-                        <i class="fa-solid fa-exclamation-triangle" style="font-size: 1.25rem;"></i>
+                <div>
+                    <div>
+                        <i class="fa-solid fa-exclamation-triangle"></i>
                         <span>التطبيق غير مثبت. ثبّته الآن للحصول على تجربة أفضل!</span>
                     </div>
                 </div>
@@ -184,15 +184,15 @@
                 Swal.fire({
                     title: 'تثبيت التطبيق',
                     html: `
-                        <div style="text-align: right; line-height: 1.8;">
+                        <div>
                             <p><strong>للتثبيت على iOS:</strong></p>
-                            <ol style="text-align: right;">
+                            <ol>
                                 <li>اضغط على زر المشاركة <i class="fa-solid fa-share"></i></li>
                                 <li>اختر "إضافة إلى الشاشة الرئيسية"</li>
                             </ol>
                             <br>
                             <p><strong>للتثبيت على Android:</strong></p>
-                            <ol style="text-align: right;">
+                            <ol>
                                 <li>افتح قائمة المتصفح (⋮)</li>
                                 <li>اختر "تثبيت التطبيق" أو "إضافة إلى الشاشة الرئيسية"</li>
                             </ol>

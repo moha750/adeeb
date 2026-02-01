@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام إدارة دعوات التسجيل
  * يدعم: لجنة واحدة، مجموعة لجان، جميع اللجان
  * مدة الصلاحية: 24 ساعة - 7 أيام
@@ -102,7 +102,7 @@
         }
 
         if (filtered.length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: #64748b; padding: 2rem;">لا توجد دعوات</p>';
+            container.innerHTML = '<p>لا توجد دعوات</p>';
             return;
         }
 
@@ -123,13 +123,13 @@
                     ${filtered.map(invitation => `
                         <tr>
                             <td>
-                                <code style="background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 4px; font-family: monospace;">
+                                <code>
                                     ${invitation.invitation_code}
                                 </code>
                             </td>
                             <td>${getCommitteeModeText(invitation)}</td>
                             <td>
-                                <span style="color: ${invitation.current_uses >= invitation.max_uses ? '#ef4444' : '#10b981'};">
+                                <span>
                                     ${invitation.current_uses}
                                 </span>
                                 / ${invitation.max_uses}
@@ -138,7 +138,7 @@
                             <td>${getStatusBadge(invitation.status)}</td>
                             <td>${new Date(invitation.created_at).toLocaleDateString('ar-SA')}</td>
                             <td>
-                                <div style="display: flex; gap: 0.5rem;">
+                                <div>
                                     <button class="btn-sm btn-outline" onclick="window.invitationsManager.copyInvitationLink('${invitation.invitation_code}')" title="نسخ الرابط">
                                         <i class="fa-solid fa-copy"></i>
                                     </button>
@@ -170,12 +170,12 @@
     function getCommitteeModeText(invitation) {
         switch (invitation.committee_mode) {
             case 'single':
-                return `<span style="color: #3b82f6;"><i class="fa-solid fa-user"></i> ${invitation.selected_committee?.committee_name_ar || 'لجنة واحدة'}</span>`;
+                return `<span><i class="fa-solid fa-user"></i> ${invitation.selected_committee?.committee_name_ar || 'لجنة واحدة'}</span>`;
             case 'multiple':
                 const count = invitation.selected_committee_ids?.length || 0;
-                return `<span style="color: #8b5cf6;"><i class="fa-solid fa-users"></i> ${count} لجان</span>`;
+                return `<span><i class="fa-solid fa-users"></i> ${count} لجان</span>`;
             case 'all':
-                return `<span style="color: #10b981;"><i class="fa-solid fa-globe"></i> جميع اللجان</span>`;
+                return `<span><i class="fa-solid fa-globe"></i> جميع اللجان</span>`;
             default:
                 return 'غير محدد';
         }
@@ -191,12 +191,12 @@
         const hours = Math.floor(diff / (1000 * 60 * 60));
 
         if (diff < 0) {
-            return '<span style="color: #ef4444;">منتهية</span>';
+            return '<span>منتهية</span>';
         } else if (hours < 24) {
-            return `<span style="color: #f59e0b;">${hours} ساعة</span>`;
+            return `<span>${hours} ساعة</span>`;
         } else {
             const days = Math.floor(hours / 24);
-            return `<span style="color: #10b981;">${days} يوم</span>`;
+            return `<span>${days} يوم</span>`;
         }
     }
 
@@ -247,7 +247,7 @@
 
         const modalHtml = `
             <div class="modal-overlay" id="invitationDetailsModal" onclick="if(event.target === this) this.remove()">
-                <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-content">
                     <div class="modal-header">
                         <h2><i class="fa-solid fa-envelope-open-text"></i> تفاصيل الدعوة</h2>
                         <button class="modal-close" onclick="document.getElementById('invitationDetailsModal').remove()">
@@ -255,18 +255,18 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div style="display: grid; gap: 1rem;">
+                        <div>
                             <div>
                                 <strong>كود الدعوة:</strong>
-                                <code style="background: #f1f5f9; padding: 0.5rem; border-radius: 4px; display: block; margin-top: 0.5rem;">
+                                <code>
                                     ${invitation.invitation_code}
                                 </code>
                             </div>
                             <div>
                                 <strong>الرابط:</strong>
-                                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                <div>
                                     <input type="text" value="${window.location.origin}/membership.html?invite=${invitation.invitation_code}" 
-                                           readonly style="flex: 1; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 4px;">
+                                           readonly>
                                     <button class="btn-sm btn-primary" onclick="window.invitationsManager.copyInvitationLink('${invitation.invitation_code}')">
                                         <i class="fa-solid fa-copy"></i>
                                     </button>
@@ -292,12 +292,12 @@
                             ${usages && usages.length > 0 ? `
                                 <div>
                                     <strong>سجل الاستخدامات:</strong>
-                                    <div style="margin-top: 0.5rem; max-height: 200px; overflow-y: auto;">
+                                    <div>
                                         ${usages.map(u => `
-                                            <div style="padding: 0.5rem; background: #f8fafc; border-radius: 4px; margin-bottom: 0.5rem;">
+                                            <div>
                                                 <div><strong>${u.applicant_name || 'غير محدد'}</strong></div>
-                                                <div style="font-size: 0.875rem; color: #64748b;">${u.applicant_email || ''}</div>
-                                                <div style="font-size: 0.75rem; color: #94a3b8;">${new Date(u.used_at).toLocaleString('ar-SA')}</div>
+                                                <div>${u.applicant_email || ''}</div>
+                                                <div>${new Date(u.used_at).toLocaleString('ar-SA')}</div>
                                             </div>
                                         `).join('')}
                                     </div>
@@ -366,7 +366,7 @@
     function openCreateInvitationModal() {
         const modalHtml = `
             <div class="modal-overlay" id="createInvitationModal" onclick="if(event.target === this) this.remove()">
-                <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-content">
                     <div class="modal-header">
                         <h2><i class="fa-solid fa-plus"></i> إنشاء دعوة تسجيل جديدة</h2>
                         <button class="modal-close" onclick="document.getElementById('createInvitationModal').remove()">
@@ -374,7 +374,7 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <form id="createInvitationForm" style="display: grid; gap: 1.5rem;">
+                        <form id="createInvitationForm">
                             <!-- نوع اللجنة -->
                             <div class="form-group">
                                 <label><strong>نوع اللجنة</strong></label>
@@ -387,7 +387,7 @@
                             </div>
 
                             <!-- لجنة واحدة -->
-                            <div id="singleCommitteeGroup" class="form-group" style="display: none;">
+                            <div id="singleCommitteeGroup" class="form-group">
                                 <label><strong>اللجنة المحددة</strong></label>
                                 <select id="singleCommitteeSelect">
                                     <option value="">اختر اللجنة</option>
@@ -396,12 +396,12 @@
                             </div>
 
                             <!-- مجموعة لجان -->
-                            <div id="multipleCommitteesGroup" class="form-group" style="display: none;">
+                            <div id="multipleCommitteesGroup" class="form-group">
                                 <label><strong>اللجان المختارة</strong></label>
-                                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+                                <div>
                                     ${availableCommittees.map(c => `
-                                        <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer;">
-                                            <input type="checkbox" name="committees" value="${c.id}" style="width: auto;">
+                                        <label>
+                                            <input type="checkbox" name="committees" value="${c.id}">
                                             <span>${c.committee_name_ar}</span>
                                         </label>
                                     `).join('')}
@@ -412,7 +412,7 @@
                             <div class="form-group">
                                 <label><strong>عدد مرات الاستخدام</strong></label>
                                 <input type="number" id="maxUsesInput" min="1" max="100" value="1" required>
-                                <small style="color: #64748b;">الحد الأدنى: 1، الحد الأقصى: 100</small>
+                                <small>الحد الأدنى: 1، الحد الأقصى: 100</small>
                             </div>
 
                             <!-- مدة الصلاحية -->
@@ -429,10 +429,10 @@
                             </div>
 
                             <!-- مدة مخصصة -->
-                            <div id="customValidityGroup" class="form-group" style="display: none;">
+                            <div id="customValidityGroup" class="form-group">
                                 <label><strong>عدد الساعات (24 - 168)</strong></label>
                                 <input type="number" id="customHoursInput" min="24" max="168" placeholder="أدخل عدد الساعات">
-                                <small style="color: #64748b;">الحد الأدنى: 24 ساعة، الحد الأقصى: 168 ساعة (7 أيام)</small>
+                                <small>الحد الأدنى: 24 ساعة، الحد الأقصى: 168 ساعة (7 أيام)</small>
                             </div>
 
                             <!-- ملاحظات -->
@@ -442,7 +442,7 @@
                             </div>
 
                             <!-- أزرار -->
-                            <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                            <div>
                                 <button type="button" class="btn-outline" onclick="document.getElementById('createInvitationModal').remove()">
                                     إلغاء
                                 </button>

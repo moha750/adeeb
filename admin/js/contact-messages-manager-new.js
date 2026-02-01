@@ -1,5 +1,5 @@
-﻿/**
- * Contact Messages Manager
+/**
+ * Contact Messages Manager - إعادة بناء كاملة
  * إدارة رسائل التواصل في لوحة التحكم
  */
 
@@ -12,13 +12,13 @@ class ContactMessagesManager {
             status: '',
             priority: ''
         };
-        this.init();
+        console.log('ContactMessagesManager: Initialized');
     }
 
-    init() {
+    async init() {
+        console.log('ContactMessagesManager: Starting init...');
         this.attachEventListeners();
-        // تحميل الرسائل مباشرة عند الإنشاء
-        this.loadMessages();
+        await this.loadMessages();
     }
 
     attachEventListeners() {
@@ -26,10 +26,6 @@ class ContactMessagesManager {
         const statusFilter = document.getElementById('messageStatusFilter');
         const priorityFilter = document.getElementById('messagePriorityFilter');
         const refreshBtn = document.getElementById('refreshMessagesBtn');
-        const saveBtn = document.getElementById('saveMessageBtn');
-        const deleteBtn = document.getElementById('deleteMessageBtn');
-        const closeBtn = document.getElementById('closeMessageDetailBtn');
-        const closeModalBtn = document.getElementById('closeMessageDetailModal');
 
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
@@ -55,27 +51,15 @@ class ContactMessagesManager {
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => this.loadMessages());
         }
-
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => this.saveMessage());
-        }
-
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', () => this.deleteMessage());
-        }
-
-        if (closeBtn || closeModalBtn) {
-            [closeBtn, closeModalBtn].forEach(btn => {
-                if (btn) btn.addEventListener('click', () => this.closeMessageModal());
-            });
-        }
     }
 
     async loadMessages() {
         try {
+            console.log('ContactMessagesManager: Loading messages...');
             const sb = window.sbClient;
             if (!sb) {
-                console.error('Supabase client not initialized');
+                console.error('ContactMessagesManager: Supabase client not initialized');
+                this.showError('لم يتم تهيئة الاتصال بقاعدة البيانات');
                 return;
             }
 
@@ -84,14 +68,18 @@ class ContactMessagesManager {
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            if (error) {
+                console.error('ContactMessagesManager: Error loading messages:', error);
+                throw error;
+            }
 
+            console.log('ContactMessagesManager: Loaded messages:', data?.length || 0);
             this.messages = data || [];
             this.updateStats();
             this.renderMessages();
         } catch (error) {
-            console.error('Error loading messages:', error);
-            this.showNotification('حدث خطأ في تحميل الرسائل', 'error');
+            console.error('ContactMessagesManager: Error in loadMessages:', error);
+            this.showError('حدث خطأ في تحميل الرسائل: ' + error.message);
         }
     }
 
@@ -103,15 +91,19 @@ class ContactMessagesManager {
             archived: this.messages.filter(m => m.status === 'archived').length
         };
 
-        const newCount = document.getElementById('newMessagesCount');
-        const readCount = document.getElementById('readMessagesCount');
-        const repliedCount = document.getElementById('repliedMessagesCount');
-        const archivedCount = document.getElementById('archivedMessagesCount');
+        const elements = {
+            newMessagesCount: stats.new,
+            readMessagesCount: stats.read,
+            repliedMessagesCount: stats.replied,
+            archivedMessagesCount: stats.archived
+        };
 
-        if (newCount) newCount.textContent = stats.new;
-        if (readCount) readCount.textContent = stats.read;
-        if (repliedCount) repliedCount.textContent = stats.replied;
-        if (archivedCount) archivedCount.textContent = stats.archived;
+        Object.keys(elements).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = elements[id];
+        });
+
+        console.log('ContactMessagesManager: Stats updated:', stats);
     }
 
     filterMessages() {
@@ -132,11 +124,12 @@ class ContactMessagesManager {
     renderMessages() {
         const container = document.getElementById('contactMessagesTable');
         if (!container) {
-            console.error('contactMessagesTable container not found');
+            console.error('ContactMessagesManager: contactMessagesTable container not found');
             return;
         }
 
         const filteredMessages = this.filterMessages();
+        console.log('ContactMessagesManager: Rendering', filteredMessages.length, 'messages');
 
         if (filteredMessages.length === 0) {
             container.innerHTML = `
@@ -148,13 +141,14 @@ class ContactMessagesManager {
             return;
         }
 
-        const cardsHtml = `
+        container.innerHTML = `
             <div class="applications-cards-grid">
                 ${filteredMessages.map(message => this.renderMessageCard(message)).join('')}
             </div>
         `;
 
-        container.innerHTML = cardsHtml;
+        // إضافة مستمعات الأحداث للأزرار
+        this.attachMessageCardListeners();
     }
 
     renderMessageCard(message) {
@@ -241,7 +235,7 @@ class ContactMessagesManager {
                 </div>
                 
                 <div class="application-card-footer">
-                    <button class="btn-view-details" onclick="contactMessagesManager.viewMessage('${message.id}')">
+                    <button class="btn-view-details" data-message-id="${message.id}">
                         <i class="fa-solid fa-eye"></i>
                         عرض التفاصيل الكاملة
                     </button>
@@ -250,68 +244,51 @@ class ContactMessagesManager {
         `;
     }
 
+    attachMessageCardListeners() {
+        document.querySelectorAll('.btn-view-details').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const messageId = e.currentTarget.dataset.messageId;
+                this.viewMessage(messageId);
+            });
+        });
+    }
+
     async viewMessage(messageId) {
         const message = this.messages.find(m => m.id === messageId);
         if (!message) return;
 
         this.currentMessage = message;
+        console.log('ContactMessagesManager: Viewing message:', messageId);
 
-        document.getElementById('messageDetailName').textContent = message.name;
-        document.getElementById('messageDetailEmail').textContent = message.email;
-        document.getElementById('messageDetailSubject').textContent = message.subject || 'بدون موضوع';
-        document.getElementById('messageDetailMessage').textContent = message.message;
-        
-        const date = new Date(message.created_at).toLocaleDateString('ar-SA', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        document.getElementById('messageDetailDate').textContent = date;
+        // عرض تفاصيل الرسالة باستخدام SweetAlert أو Modal
+        if (window.Swal) {
+            const result = await Swal.fire({
+                title: `رسالة من ${this.escapeHtml(message.name)}`,
+                html: `
+                    <div style="text-align: right; direction: rtl;">
+                        <p><strong>البريد الإلكتروني:</strong> ${this.escapeHtml(message.email)}</p>
+                        <p><strong>الموضوع:</strong> ${message.subject ? this.escapeHtml(message.subject) : 'بدون موضوع'}</p>
+                        <p><strong>التاريخ:</strong> ${new Date(message.created_at).toLocaleString('ar-SA')}</p>
+                        <hr>
+                        <p><strong>الرسالة:</strong></p>
+                        <p style="white-space: pre-wrap;">${this.escapeHtml(message.message)}</p>
+                    </div>
+                `,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'تعليم كمقروءة',
+                cancelButtonText: 'إغلاق',
+                width: '600px'
+            });
 
-        const statusBadges = {
-            new: '<span class="badge">جديدة</span>',
-            read: '<span class="badge">مقروءة</span>',
-            replied: '<span class="badge">تم الرد</span>',
-            archived: '<span class="badge">مؤرشفة</span>'
-        };
-
-        const priorityBadges = {
-            low: '<span class="badge">منخفض</span>',
-            normal: '<span class="badge">عادي</span>',
-            high: '<span class="badge">عالي</span>',
-            urgent: '<span class="badge">عاجل</span>'
-        };
-
-        document.getElementById('messageDetailStatus').innerHTML = statusBadges[message.status];
-        document.getElementById('messageDetailPriority').innerHTML = priorityBadges[message.priority];
-
-        document.getElementById('messageDetailStatusSelect').value = message.status;
-        document.getElementById('messageDetailPrioritySelect').value = message.priority;
-
-        if (message.reply_message) {
-            document.getElementById('messageReplySection').style.display = 'block';
-            document.getElementById('messageDetailReply').textContent = message.reply_message;
-            document.getElementById('messageDetailRepliedAt').textContent = new Date(message.replied_at).toLocaleDateString('ar-SA');
+            if (result.isConfirmed && message.status === 'new') {
+                await this.markAsRead(messageId);
+            }
         } else {
-            document.getElementById('messageReplySection').style.display = 'none';
-        }
-
-        if (message.notes) {
-            document.getElementById('messageNotesSection').style.display = 'block';
-            document.getElementById('messageDetailNotes').textContent = message.notes;
-        } else {
-            document.getElementById('messageNotesSection').style.display = 'none';
-        }
-
-        document.getElementById('messageReplyInput').value = message.reply_message || '';
-        document.getElementById('messageNotesInput').value = message.notes || '';
-
-        this.openMessageModal();
-
-        if (message.status === 'new') {
-            await this.markAsRead(messageId);
+            alert(`رسالة من: ${message.name}\nالبريد: ${message.email}\n\n${message.message}`);
+            if (message.status === 'new') {
+                await this.markAsRead(messageId);
+            }
         }
     }
 
@@ -327,92 +304,13 @@ class ContactMessagesManager {
 
             const message = this.messages.find(m => m.id === messageId);
             if (message) message.status = 'read';
+            
             this.updateStats();
+            this.renderMessages();
+            console.log('ContactMessagesManager: Message marked as read');
         } catch (error) {
-            console.error('Error marking message as read:', error);
+            console.error('ContactMessagesManager: Error marking message as read:', error);
         }
-    }
-
-    async saveMessage() {
-        if (!this.currentMessage) return;
-
-        try {
-            const sb = window.sbClient;
-            const user = await sb.auth.getUser();
-
-            const updates = {
-                status: document.getElementById('messageDetailStatusSelect').value,
-                priority: document.getElementById('messageDetailPrioritySelect').value,
-                notes: document.getElementById('messageNotesInput').value || null
-            };
-
-            const replyInput = document.getElementById('messageReplyInput').value;
-            if (replyInput && replyInput !== this.currentMessage.reply_message) {
-                updates.reply_message = replyInput;
-                updates.replied_by = user.data.user.id;
-                updates.replied_at = new Date().toISOString();
-                if (updates.status === 'new' || updates.status === 'read') {
-                    updates.status = 'replied';
-                }
-            }
-
-            const { error } = await sb
-                .from('contact_messages')
-                .update(updates)
-                .eq('id', this.currentMessage.id);
-
-            if (error) throw error;
-
-            this.showNotification('تم حفظ التغييرات بنجاح', 'success');
-            this.closeMessageModal();
-            await this.loadMessages();
-        } catch (error) {
-            console.error('Error saving message:', error);
-            this.showNotification('حدث خطأ في حفظ التغييرات', 'error');
-        }
-    }
-
-    async deleteMessage() {
-        if (!this.currentMessage) return;
-
-        const confirmed = await this.showConfirmDialog(
-            'هل أنت متأكد؟',
-            'سيتم حذف هذه الرسالة نهائياً ولن يمكن استرجاعها'
-        );
-
-        if (!confirmed) return;
-
-        try {
-            const sb = window.sbClient;
-            const { error } = await sb
-                .from('contact_messages')
-                .delete()
-                .eq('id', this.currentMessage.id);
-
-            if (error) throw error;
-
-            this.showNotification('تم حذف الرسالة بنجاح', 'success');
-            this.closeMessageModal();
-            await this.loadMessages();
-        } catch (error) {
-            console.error('Error deleting message:', error);
-            this.showNotification('حدث خطأ في حذف الرسالة', 'error');
-        }
-    }
-
-    openMessageModal() {
-        const modal = document.getElementById('messageDetailModal');
-        const overlay = document.getElementById('overlay');
-        if (modal) modal.classList.add('active');
-        if (overlay) overlay.classList.add('active');
-    }
-
-    closeMessageModal() {
-        const modal = document.getElementById('messageDetailModal');
-        const overlay = document.getElementById('overlay');
-        if (modal) modal.classList.remove('active');
-        if (overlay) overlay.classList.remove('active');
-        this.currentMessage = null;
     }
 
     escapeHtml(text) {
@@ -421,37 +319,15 @@ class ContactMessagesManager {
         return div.innerHTML;
     }
 
-    showNotification(message, type = 'info') {
+    showError(message) {
         if (window.Swal) {
             Swal.fire({
-                text: message,
-                icon: type,
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
+                icon: 'error',
+                title: 'خطأ',
+                text: message
             });
         } else {
             alert(message);
-        }
-    }
-
-    async showConfirmDialog(title, text) {
-        if (window.Swal) {
-            const result = await Swal.fire({
-                title: title,
-                text: text,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'نعم، احذف',
-                cancelButtonText: 'إلغاء',
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#6b7280'
-            });
-            return result.isConfirmed;
-        } else {
-            return confirm(text);
         }
     }
 }

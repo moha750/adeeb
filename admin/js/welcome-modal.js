@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نافذة الترحيب لأعضاء نادي أدِيب
  */
 
@@ -75,7 +75,7 @@
     function createModalHTML() {
         const committeeSection = userCommittee ? `
             <div class="welcome-item">
-                <div class="welcome-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <div class="welcome-icon">
                     <i class="fa-solid fa-users-gear"></i>
                 </div>
                 <div class="welcome-content">
@@ -104,7 +104,7 @@
                     <div class="welcome-body">
                         <!-- قروب مجلس أدِيب العام -->
                         <div class="welcome-item">
-                            <div class="welcome-icon" style="background: linear-gradient(135deg, #3d8fd6, #274060);">
+                            <div class="welcome-icon">
                                 <i class="fa-solid fa-users"></i>
                             </div>
                             <div class="welcome-content">
@@ -119,7 +119,7 @@
 
                         <!-- قروب مجلس أدِيبات -->
                         <div class="welcome-item" id="welcomeFemaleGroupItem">
-                            <div class="welcome-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                            <div class="welcome-icon">
                                 <i class="fa-solid fa-user-group"></i>
                             </div>
                             <div class="welcome-content">
@@ -136,7 +136,7 @@
 
                         <!-- تثبيت التطبيق -->
                         <div class="welcome-item">
-                            <div class="welcome-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            <div class="welcome-icon">
                                 <i class="fa-solid fa-mobile-screen-button"></i>
                             </div>
                             <div class="welcome-content">
@@ -151,7 +151,7 @@
 
                         <!-- تفعيل الإشعارات -->
                         <div class="welcome-item">
-                            <div class="welcome-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                            <div class="welcome-icon">
                                 <i class="fa-solid fa-bell"></i>
                             </div>
                             <div class="welcome-content">
@@ -421,35 +421,12 @@
                 });
             }
 
-            // التحقق من جنس المستخدم لمجلس أدِيبات
-            if (femaleLink && currentUser) {
-                const { data: profile } = await window.sbClient
-                    .from('profiles')
-                    .select('gender')
-                    .eq('id', currentUser.id)
-                    .single();
-
-                if (profile && profile.gender !== 'female' && femaleItem) {
-                    femaleItem.style.display = 'none';
-                } else if (femaleLink) {
-                    femaleLink.addEventListener('click', async (e) => {
-                        e.preventDefault();
-                        
-                        if (profile && profile.gender === 'female') {
-                            window.open(femaleLink.href, '_blank');
-                        } else {
-                            if (window.Swal) {
-                                Swal.fire({
-                                    title: 'عذراً',
-                                    text: 'هذا المجلس مخصص للأديبات فقط',
-                                    icon: 'warning',
-                                    confirmButtonText: 'حسناً',
-                                    confirmButtonColor: '#3d8fd6'
-                                });
-                            }
-                        }
-                    });
-                }
+            // رابط مجلس أدِيبات
+            if (femaleLink) {
+                femaleLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.open(femaleLink.href, '_blank');
+                });
             }
         } catch (error) {
             console.error('Error loading group links:', error);

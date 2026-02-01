@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // نظام إدارة جلسات المقابلات - Interview Sessions Manager
 // ============================================================================
 
@@ -89,7 +89,7 @@
                 <div class="empty-state">
                     <i class="fa-solid fa-calendar-xmark"></i>
                     <p>لا توجد جلسات مقابلات</p>
-                    <button class="btn-primary" onclick="window.interviewSessionsManager.createNewSession()" style="margin-top: 1rem;">
+                    <button class="btn-primary" onclick="window.interviewSessionsManager.createNewSession()">
                         <i class="fa-solid fa-plus"></i>
                         إنشاء جلسة جديدة
                     </button>
@@ -156,7 +156,7 @@
                             </div>
                             <div class="applicant-details">
                                 <h3 class="applicant-name">${escapeHtml(session.session_name)}</h3>
-                                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                <div>
                                     ${statusBadge}
                                     <span class="badge badge-info">${typeLabels[session.interview_type] || session.interview_type}</span>
                                 </div>
@@ -166,9 +166,9 @@
                     
                     <div class="application-card-body">
                         ${session.session_description ? `
-                            <div style="padding: 0.75rem; background: #f8fafc; border-radius: 8px; margin-bottom: 1rem; border-right: 3px solid var(--accent-blue);">
-                                <p style="margin: 0; color: #64748b; font-size: 0.9rem; line-height: 1.5;">
-                                    <i class="fa-solid fa-quote-right" style="color: var(--accent-blue); margin-left: 0.5rem;"></i>
+                            <div>
+                                <p>
+                                    <i class="fa-solid fa-quote-right"></i>
                                     ${escapeHtml(session.session_description)}
                                 </p>
                             </div>
@@ -211,11 +211,11 @@
                                 <i class="fa-solid fa-chart-line"></i>
                                 <div class="info-content">
                                     <span class="info-label">نسبة الحجز</span>
-                                    <div style="margin-top: 0.5rem;">
-                                        <div style="background: #e2e8f0; border-radius: 20px; height: 8px; overflow: hidden;">
-                                            <div style="background: linear-gradient(135deg, #10b981, #059669); height: 100%; width: ${bookingPercentage}%; transition: width 0.3s ease;"></div>
+                                    <div>
+                                        <div>
+                                            <div></div>
                                         </div>
-                                        <span class="info-value" style="margin-top: 0.25rem; display: block;">${bookingPercentage}%</span>
+                                        <span class="info-value">${bookingPercentage}%</span>
                                     </div>
                                 </div>
                             </div>
@@ -223,7 +223,7 @@
                     </div>
                     
                     <div class="application-card-footer">
-                        <div class="card-actions-grid" style="grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));">
+                        <div class="card-actions-grid">
                             <button class="btn-action btn-action-primary" onclick="window.interviewSessionsManager.viewSession('${session.id}')" title="عرض التفاصيل">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض
@@ -233,16 +233,16 @@
                                 تعديل
                             </button>
                             ${session.interview_type === 'online' ? `
-                                <button class="btn-action" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white;" onclick="window.interviewSessionsManager.updateMeetingLink('${session.id}')" title="تحديث رابط المقابلة">
+                                <button class="btn-action" onclick="window.interviewSessionsManager.updateMeetingLink('${session.id}')" title="تحديث رابط المقابلة">
                                     <i class="fa-solid fa-video"></i>
                                     الرابط
                                 </button>
                             ` : ''}
-                            <button class="btn-action" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white;" onclick="window.interviewSessionsManager.copyLink('${session.public_link_token}')" title="نسخ رابط الحجز">
+                            <button class="btn-action" onclick="window.interviewSessionsManager.copyLink('${session.public_link_token}')" title="نسخ رابط الحجز">
                                 <i class="fa-solid fa-link"></i>
                                 نسخ
                             </button>
-                            <button class="btn-action ${session.is_active ? '' : 'btn-action-success'}" ${session.is_active ? 'style="background: linear-gradient(135deg, #94a3b8, #64748b); color: white;"' : ''} onclick="window.interviewSessionsManager.toggleSession('${session.id}', ${!session.is_active})" title="${session.is_active ? 'تعطيل' : 'تفعيل'}">
+                            <button class="btn-action ${session.is_active ? 'btn--secondary' : 'btn-action-success'}" onclick="window.interviewSessionsManager.toggleSession('${session.id}', ${!session.is_active})" title="${session.is_active ? 'تعطيل' : 'تفعيل'}">
                                 <i class="fa-solid fa-${session.is_active ? 'pause' : 'play'}"></i>
                                 ${session.is_active ? 'تعطيل' : 'تفعيل'}
                             </button>
@@ -293,6 +293,9 @@
      * تحديث الإحصائيات العامة
      */
     async function updateStatistics() {
+        const container = document.getElementById('sessionsStatsGrid');
+        if (!container) return;
+
         // فصل الجلسات النشطة عن المنتهية
         const activeNonExpiredSessions = allSessions.filter(s => s.is_active && !isSessionExpired(s));
         const expiredSessions = allSessions.filter(s => isSessionExpired(s));
@@ -309,84 +312,128 @@
 
         const bookingRate = totalSlots > 0 ? ((bookedSlots / totalSlots) * 100).toFixed(1) : 0;
 
-        document.getElementById('activeSessionsCount').textContent = activeNonExpiredSessions.length;
-        document.getElementById('totalSlotsCount').textContent = totalSlots;
-        document.getElementById('bookedSlotsCount').textContent = bookedSlots;
-        document.getElementById('bookingRate').textContent = `${bookingRate}%`;
-        
-        // تحديث عدد الجلسات المنتهية إن وجد العنصر
-        const expiredCountElement = document.getElementById('expiredSessionsCount');
-        if (expiredCountElement) {
-            expiredCountElement.textContent = expiredSessions.length;
-        }
+        container.innerHTML = `
+            <div class="stat-card" style="--stat-color: #3d8fd6">
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${activeNonExpiredSessions.length}</div>
+                        <div class="stat-label">الجلسات النشطة</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" style="--stat-color: #10b981">
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${totalSlots}</div>
+                        <div class="stat-label">إجمالي الفترات</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" style="--stat-color: #8b5cf6">
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${bookedSlots}</div>
+                        <div class="stat-label">الفترات المحجوزة</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" style="--stat-color: #f59e0b">
+                <div class="stat-badge"><i class="fa-solid fa-percentage"></i> ${bookingRate}%</div>
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${bookingRate}%</div>
+                        <div class="stat-label">معدل الحجز</div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     /**
      * إنشاء جلسة جديدة
      */
     async function createNewSession() {
-        const formHtml = `
-            <div class="form-group">
-                <label>اسم الجلسة <span class="required">*</span></label>
-                <input type="text" id="session-name" class="form-input" placeholder="مثال: مقابلات لجنة الإعلام">
-            </div>
-            <div class="form-group">
-                <label>الوصف (اختياري)</label>
-                <textarea id="session-description" class="form-textarea" placeholder="وصف مختصر للجلسة"></textarea>
-            </div>
-            <div class="form-group">
-                <label>تاريخ الجلسة <span class="required">*</span></label>
-                <input type="date" id="session-date" class="form-input">
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>وقت البداية <span class="required">*</span></label>
-                    <input type="time" id="session-start" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>وقت النهاية <span class="required">*</span></label>
-                    <input type="time" id="session-end" class="form-input">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>مدة كل مقابلة (بالدقائق) <span class="required">*</span></label>
-                <input type="number" id="session-duration" class="form-input" min="5" max="60" value="15">
-                <span class="form-hint">سيتم تقسيم الوقت بين البداية والنهاية إلى فترات بهذه المدة</span>
-            </div>
-            <div class="form-group">
-                <label>نوع المقابلة <span class="required">*</span></label>
-                <select id="session-type" class="form-select">
-                    <option value="online">أونلاين</option>
-                    <option value="in_person">حضوري</option>
-                    <option value="phone">هاتفي</option>
-                </select>
-            </div>
-            <div class="form-group" id="meeting-link-group">
-                <label>رابط الاجتماع (للمقابلات الأونلاين) <span class="required">*</span></label>
-                <input type="url" id="session-link" class="form-input" placeholder="https://meet.google.com/xxx" required>
-                <span class="form-hint">رابط الاجتماع إلزامي للمقابلات الأونلاين</span>
-            </div>
-            <div class="form-group" id="location-group" style="display: none;">
-                <label>الموقع (للمقابلات الحضورية)</label>
-                <input type="text" id="session-location" class="form-input" placeholder="مثال: مبنى النادي، الطابق الثاني">
-            </div>
-        `;
+        const fields = [
+            {
+                id: 'session-name',
+                label: 'اسم الجلسة',
+                type: 'text',
+                placeholder: 'مثال: مقابلات لجنة الإعلام',
+                required: true
+            },
+            {
+                id: 'session-description',
+                label: 'الوصف (اختياري)',
+                type: 'textarea',
+                placeholder: 'وصف مختصر للجلسة',
+                rows: 3
+            },
+            {
+                id: 'session-date',
+                label: 'تاريخ الجلسة',
+                type: 'date',
+                required: true
+            },
+            {
+                id: 'session-start',
+                label: 'وقت البداية',
+                type: 'time',
+                required: true
+            },
+            {
+                id: 'session-end',
+                label: 'وقت النهاية',
+                type: 'time',
+                required: true
+            },
+            {
+                id: 'session-duration',
+                label: 'مدة كل مقابلة (بالدقائق)',
+                type: 'number',
+                value: '15',
+                required: true
+            },
+            {
+                id: 'session-type',
+                label: 'نوع المقابلة',
+                type: 'select',
+                options: [
+                    { value: 'online', label: 'أونلاين' },
+                    { value: 'in_person', label: 'حضوري' },
+                    { value: 'phone', label: 'هاتفي' }
+                ],
+                required: true
+            },
+            {
+                id: 'session-link',
+                label: 'رابط الاجتماع (للمقابلات الأونلاين)',
+                type: 'url',
+                placeholder: 'https://meet.google.com/xxx'
+            },
+            {
+                id: 'session-location',
+                label: 'الموقع (للمقابلات الحضورية)',
+                type: 'text',
+                placeholder: 'مثال: مبنى النادي، الطابق الثاني'
+            }
+        ];
 
-        const actionsHtml = `
-            <button class="modal-btn modal-btn-primary" onclick="window.interviewSessionsManager.submitNewSession()">
-                <i class="fa-solid fa-check"></i>
-                إنشاء الجلسة
-            </button>
-            <button class="modal-btn modal-btn-secondary" onclick="window.closeFormModal()" style="background: #e2e8f0; color: #475569;">
-                <i class="fa-solid fa-times"></i>
-                إلغاء
-            </button>
-        `;
-
-        document.getElementById('formModalContent').innerHTML = formHtml;
-        document.getElementById('formModalActions').innerHTML = actionsHtml;
-        window.setFormModalTitle('إنشاء جلسة مقابلات جديدة', 'fa-plus-circle');
-        window.openFormModal();
+        window.openFormModal('إنشاء جلسة مقابلات جديدة', fields, submitNewSession, {
+            icon: 'fa-plus-circle',
+            submitText: 'إنشاء الجلسة'
+        });
 
         // إضافة مستمع لتغيير نوع المقابلة
         setTimeout(() => {
@@ -552,13 +599,13 @@
             let slotsTableHtml = '';
             if (slots && slots.length > 0) {
                 slotsTableHtml = `
-                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead style="position: sticky; top: 0; background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                    <div>
+                        <table>
+                            <thead>
                                 <tr>
-                                    <th style="padding: 0.75rem; text-align: right;">الوقت</th>
-                                    <th style="padding: 0.75rem; text-align: center;">الحالة</th>
-                                    <th style="padding: 0.75rem; text-align: right;">المتقدم</th>
+                                    <th>الوقت</th>
+                                    <th>الحالة</th>
+                                    <th>المتقدم</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -583,21 +630,21 @@
                     }
 
                     const applicant = slot.booked_by_app
-                        ? `${escapeHtml(slot.booked_by_app.full_name)}<br><small style="color: #64748b;">${escapeHtml(slot.booked_by_app.preferred_committee)}</small>`
+                        ? `${escapeHtml(slot.booked_by_app.full_name)}<br><small>${escapeHtml(slot.booked_by_app.preferred_committee)}</small>`
                         : '-';
 
                     slotsTableHtml += `
-                        <tr style="border-bottom: 1px solid #e2e8f0;">
-                            <td style="padding: 0.75rem;">${time}</td>
-                            <td style="padding: 0.75rem; text-align: center;">${status}</td>
-                            <td style="padding: 0.75rem;">${applicant}</td>
+                        <tr>
+                            <td>${time}</td>
+                            <td>${status}</td>
+                            <td>${applicant}</td>
                         </tr>
                     `;
                 });
 
                 slotsTableHtml += '</tbody></table></div>';
             } else {
-                slotsTableHtml = '<p style="text-align: center; color: #64748b; padding: 2rem;">لا توجد فترات زمنية</p>';
+                slotsTableHtml = '<p>لا توجد فترات زمنية</p>';
             }
 
             const contentHtml = `
@@ -672,21 +719,21 @@
                                 <i class="fa-solid fa-check"></i>
                                 المحجوز
                             </div>
-                            <div class="detail-value" style="color: #ef4444; font-weight: 600;">${stats.booked_slots}</div>
+                            <div class="detail-value">${stats.booked_slots}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">
                                 <i class="fa-solid fa-calendar-check"></i>
                                 المتاح
                             </div>
-                            <div class="detail-value" style="color: #10b981; font-weight: 600;">${stats.available_slots}</div>
+                            <div class="detail-value">${stats.available_slots}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">
                                 <i class="fa-solid fa-percent"></i>
                                 نسبة الحجز
                             </div>
-                            <div class="detail-value" style="color: var(--accent-blue); font-weight: 600;">${stats.booking_rate}%</div>
+                            <div class="detail-value">${stats.booking_rate}%</div>
                         </div>
                     </div>
                 </div>
@@ -696,13 +743,11 @@
                         <i class="fa-solid fa-link"></i>
                         <h3>رابط الحجز</h3>
                     </div>
-                    <div style="display: flex; gap: 0.75rem; align-items: center;">
-                        <input type="text" value="${bookingLink}" readonly 
-                            style="flex: 1; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.875rem;"
+                    <div>
+                        <input type="text" value="${bookingLink}" readonly
                             onclick="this.select()">
                         <button class="modal-btn modal-btn-primary" 
-                            onclick="navigator.clipboard.writeText('${bookingLink}'); window.interviewSessionsManager.copyLinkNotification();" 
-                            style="white-space: nowrap;">
+                            onclick="navigator.clipboard.writeText('${bookingLink}'); window.interviewSessionsManager.copyLinkNotification();">
                             <i class="fa-solid fa-copy"></i>
                             نسخ
                         </button>
@@ -805,11 +850,11 @@
                     <option value="phone" ${session.interview_type === 'phone' ? 'selected' : ''}>هاتفي</option>
                 </select>
             </div>
-            <div class="form-group" id="meeting-link-group" style="display: ${session.interview_type === 'online' ? 'block' : 'none'};">
+            <div class="form-group" id="meeting-link-group">
                 <label>رابط الاجتماع</label>
                 <input type="url" id="session-link" class="form-input" value="${session.meeting_link || ''}">
             </div>
-            <div class="form-group" id="location-group" style="display: ${session.interview_type === 'in_person' ? 'block' : 'none'};">
+            <div class="form-group" id="location-group">
                 <label>الموقع</label>
                 <input type="text" id="session-location" class="form-input" value="${session.location || ''}">
             </div>
@@ -820,7 +865,7 @@
                 <i class="fa-solid fa-save"></i>
                 حفظ التعديلات
             </button>
-            <button class="modal-btn modal-btn-secondary" onclick="window.closeFormModal()" style="background: #e2e8f0; color: #475569;">
+            <button class="modal-btn modal-btn-secondary" onclick="window.closeFormModal()">
                 <i class="fa-solid fa-times"></i>
                 إلغاء
             </button>
@@ -1002,7 +1047,7 @@
                 <i class="fa-solid fa-check"></i>
                 تحديث الرابط
             </button>
-            <button class="modal-btn modal-btn-secondary" onclick="window.closeFormModal()" style="background: #e2e8f0; color: #475569;">
+            <button class="modal-btn modal-btn-secondary" onclick="window.closeFormModal()">
                 <i class="fa-solid fa-times"></i>
                 إلغاء
             </button>
@@ -1055,31 +1100,33 @@
         const session = allSessions.find(s => s.id === sessionId);
         if (!session) return;
 
-        const contentHtml = `
-            <div style="text-align: center; padding: 1rem;">
-                <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;"></i>
-                <p style="font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 600;">هل أنت متأكد من حذف هذه الجلسة؟</p>
-                <p style="color: #64748b; margin-bottom: 1rem;">${escapeHtml(session.session_name)}</p>
-                <p style="color: #ef4444; font-size: 0.9rem;">⚠️ سيتم حذف جميع الفترات والحجوزات المرتبطة بها</p>
-                <input type="hidden" id="delete-session-id" value="${sessionId}">
-            </div>
+        const message = `
+            <p>هل أنت متأكد من حذف هذه الجلسة؟</p>
+            <p><strong>${escapeHtml(session.session_name)}</strong></p>
+            <p>⚠️ سيتم حذف جميع الفترات والحجوزات المرتبطة بها</p>
         `;
 
-        const actionsHtml = `
-            <button class="modal-btn modal-btn-danger" onclick="window.interviewSessionsManager.confirmDelete()">
-                <i class="fa-solid fa-trash"></i>
-                نعم، احذف
-            </button>
-            <button class="modal-btn modal-btn-secondary" onclick="window.closeConfirmModal()" style="background: #e2e8f0; color: #475569;">
-                <i class="fa-solid fa-times"></i>
-                إلغاء
-            </button>
-        `;
+        window.openConfirmModal(
+            'تأكيد الحذف',
+            message,
+            async () => {
+                try {
+                    const { error } = await window.sbClient
+                        .from('interview_sessions')
+                        .delete()
+                        .eq('id', sessionId);
 
-        document.getElementById('confirmModalContent').innerHTML = contentHtml;
-        document.getElementById('confirmModalActions').innerHTML = actionsHtml;
-        window.setConfirmModalTitle('تأكيد الحذف', 'fa-triangle-exclamation');
-        window.openConfirmModal();
+                    if (error) throw error;
+
+                    showNotification('تم حذف الجلسة بنجاح', 'success');
+                    loadSessions();
+                } catch (error) {
+                    console.error('Error deleting session:', error);
+                    showNotification('حدث خطأ أثناء حذف الجلسة', 'error');
+                }
+            },
+            { danger: true, confirmText: 'نعم، احذف' }
+        );
     }
 
     async function confirmDelete() {
@@ -1109,7 +1156,7 @@
     function showLoading() {
         const container = document.getElementById('sessionsTable');
         if (container) {
-            container.innerHTML = '<div style="text-align: center; padding: 2rem;"><i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem;"></i></div>';
+            container.innerHTML = '<div><i class="fa-solid fa-spinner fa-spin"></i></div>';
         }
     }
 

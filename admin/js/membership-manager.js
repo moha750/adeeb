@@ -1,4 +1,4 @@
-/**
+﻿/**
  * مدير العضوية - إدارة طلبات التسجيل والتحكم في باب التسجيل
  */
 
@@ -672,10 +672,10 @@
 
         if (availableCommittees.length === 0) {
             availableCommitteesTable.innerHTML = `
-                <div style="text-align: center; padding: 2rem; color: #64748b;">
-                    <i class="fa-solid fa-inbox" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox empty-state__icon"></i>
                     <p>لا توجد لجان متاحة</p>
-                    <p style="font-size: 0.9rem;">قم بإضافة لجان من قسم إدارة اللجان أولاً</p>
+                    <p class="text-base">قم بإضافة لجان من قسم إدارة اللجان أولاً</p>
                 </div>
             `;
             return;
@@ -685,12 +685,12 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 50px;">الترتيب</th>
+                        <th class="w-50">الترتيب</th>
                         <th>اسم اللجنة</th>
                         <th>الوصف</th>
-                        <th style="width: 100px;">المتقدمين</th>
-                        <th style="width: 120px;">الحد الأقصى</th>
-                        <th style="width: 100px;">الحالة</th>
+                        <th class="w-100">المتقدمين</th>
+                        <th class="w-120">الحد الأقصى</th>
+                        <th class="w-100">الحالة</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -705,8 +705,8 @@
 
             html += `
                 <tr>
-                    <td style="text-align: center;">
-                        <div style="display: flex; gap: 4px; justify-content: center;">
+                    <td class="text-center">
+                        <div class="d-flex gap-4 justify-content-center">
                             <button 
                                 class="icon-btn" 
                                 onclick="window.membershipManager.moveCommittee('${item.id}', 'up')"
@@ -726,23 +726,23 @@
                     <td>
                         <strong>${committee.committee_name_ar}</strong>
                     </td>
-                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <td class="max-w-300 text-overflow-ellipsis">
                         ${committee.description || 'لا يوجد وصف'}
                     </td>
-                    <td style="text-align: center;">
+                    <td class="text-center">
                         <span class="badge ${isFull ? 'error' : 'info'}">${currentCount}</span>
                     </td>
-                    <td style="text-align: center;">
+                    <td class="text-center">
                         <input 
                             type="number" 
                             value="${item.max_applicants || ''}" 
                             placeholder="∞"
-                            style="width: 80px; text-align: center; padding: 4px 8px;"
+                            class="w-80 text-center py-4 px-8"
                             onchange="window.membershipManager.updateMaxApplicants('${item.id}', this.value)"
                         />
                     </td>
-                    <td style="text-align: center;">
-                        <label class="toggle-switch" style="margin: 0;">
+                    <td class="text-center">
+                        <label class="toggle-switch m-0">
                             <input 
                                 type="checkbox" 
                                 ${isAvailable ? 'checked' : ''}
@@ -1056,8 +1056,8 @@
             let actionsHtml = '';
 
             // التحقق من القسم الحالي - إذا كان قسم العرض، لا تظهر أزرار الإجراءات
-            const isViewSection = document.getElementById('membership-applications-view-section')?.style.display !== 'none';
-            const isReviewSection = document.getElementById('membership-applications-review-section')?.style.display !== 'none';
+            const isViewSection = !document.getElementById('membership-applications-view-section')?.classList.contains('d-none');
+            const isReviewSection = !document.getElementById('membership-applications-review-section')?.classList.contains('d-none');
 
             if (isReviewSection && (data.status === 'new' || data.status === 'under_review')) {
                 actionsHtml = `
@@ -1142,17 +1142,17 @@
         const result = await showCustomConfirm({
             title: 'جدولة المقابلة',
             html: `
-                <div style="text-align: right;">
-                    <p style="margin-bottom: 1rem;"><strong>المتقدم:</strong> ${escapeHtml(application.full_name)}</p>
-                    <p style="margin-bottom: 1rem;"><strong>اللجنة:</strong> ${escapeHtml(application.preferred_committee)}</p>
+                <div class="text-right">
+                    <p class="mb-1rem"><strong>المتقدم:</strong> ${escapeHtml(application.full_name)}</p>
+                    <p class="mb-1rem"><strong>اللجنة:</strong> ${escapeHtml(application.preferred_committee)}</p>
                     <hr>
                     <div class="form-group">
                         <label>تاريخ ووقت المقابلة</label>
-                        <input type="datetime-local" id="swal-date" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <input type="datetime-local" id="swal-date" class="form-input">
                     </div>
                     <div class="form-group">
                         <label>نوع المقابلة</label>
-                        <select id="swal-type" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <select id="swal-type" class="form-select">
                             <option value="in_person">حضوري</option>
                             <option value="online">أونلاين</option>
                             <option value="phone">هاتفي</option>
@@ -1160,11 +1160,11 @@
                     </div>
                     <div class="form-group">
                         <label>الموقع/الرابط</label>
-                        <input type="text" id="swal-location" placeholder="الموقع أو رابط الاجتماع" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <input type="text" id="swal-location" placeholder="الموقع أو رابط الاجتماع" class="form-input">
                     </div>
                     <div class="form-group">
                         <label>ملاحظات (اختياري)</label>
-                        <textarea id="swal-notes" placeholder="ملاحظات حول المقابلة..." style="width: 100%; height: 80px; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; resize: vertical;"></textarea>
+                        <textarea id="swal-notes" placeholder="ملاحظات حول المقابلة..." class="form-textarea form-textarea-sm"></textarea>
                     </div>
                 </div>
             `,
@@ -1522,7 +1522,7 @@
 
             // بناء HTML للإحصائيات
             let html = `
-                <div class="stat-card" style="--stat-color: #3b82f6">
+                <div class="stat-card" style="--stat-color: #3d8fd6">
                     <div class="stat-card-wrapper">
                         <div class="stat-icon">
                             <i class="fa-solid fa-clipboard-list"></i>
@@ -1765,7 +1765,7 @@
 
             // بناء HTML للإحصائيات
             const html = `
-                <div class="stat-card" style="--stat-color: #3b82f6">
+                <div class="stat-card" style="--stat-color: #3d8fd6">
                     <div class="stat-card-wrapper">
                         <div class="stat-icon">
                             <i class="fa-solid fa-clipboard-list"></i>
@@ -1894,10 +1894,10 @@
         if (archives.length === 0) {
             container.innerHTML = `
                 <div class="card">
-                    <div class="card-body" style="text-align: center; padding: 3rem; color: #64748b;">
-                        <i class="fa-solid fa-box-open" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">لا توجد أرشيفات</p>
-                        <p style="font-size: 0.9rem;">سيتم إنشاء أرشيف تلقائياً عند إغلاق باب التسجيل</p>
+                    <div class="card-body empty-state">
+                        <i class="fa-solid fa-box-open empty-state__icon text-2xl"></i>
+                        <p class="text-lg mb-0-5rem">لا توجد أرشيفات</p>
+                        <p class="text-base">سيتم إنشاء أرشيف تلقائياً عند إغلاق باب التسجيل</p>
                     </div>
                 </div>
             `;
@@ -1922,13 +1922,13 @@
                 : 0;
 
             html += `
-                <div class="card" style="margin-bottom: 1.5rem;">
+                <div class="card">
                     <div class="card-header">
                         <h3>
                             <i class="fa-solid fa-folder"></i>
                             ${escapeHtml(archive.archive_name)}
                         </h3>
-                        <div style="display: flex; gap: 0.5rem;">
+                        <div>
                             <button class="btn-sm btn-primary" onclick="window.membershipManager.viewArchive('${archive.id}')">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض التفاصيل
@@ -1940,26 +1940,26 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                        <div>
                             <div>
-                                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 0.25rem;">الفترة</p>
-                                <p style="font-weight: 600;">${openedDate} - ${closedDate}</p>
+                                <p>الفترة</p>
+                                <p>${openedDate} - ${closedDate}</p>
                             </div>
                             <div>
-                                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 0.25rem;">إجمالي الطلبات</p>
-                                <p style="font-weight: 600; color: #3b82f6;">${archive.total_applications}</p>
+                                <p>إجمالي الطلبات</p>
+                                <p>${archive.total_applications}</p>
                             </div>
                             <div>
-                                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 0.25rem;">مقبولة</p>
-                                <p style="font-weight: 600; color: #10b981;">${archive.accepted_applications}</p>
+                                <p>مقبولة</p>
+                                <p>${archive.accepted_applications}</p>
                             </div>
                             <div>
-                                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 0.25rem;">مرفوضة</p>
-                                <p style="font-weight: 600; color: #ef4444;">${archive.rejected_applications}</p>
+                                <p>مرفوضة</p>
+                                <p>${archive.rejected_applications}</p>
                             </div>
                             <div>
-                                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 0.25rem;">معدل القبول</p>
-                                <p style="font-weight: 600; color: #8b5cf6;">${acceptanceRate}%</p>
+                                <p>معدل القبول</p>
+                                <p>${acceptanceRate}%</p>
                             </div>
                         </div>
                     </div>
@@ -2030,20 +2030,20 @@
                             <i class="fa-solid fa-users"></i>
                             <h3>توزيع الطلبات حسب اللجان</h3>
                         </div>
-                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div>
                 `;
                 data.committees_data.forEach(committee => {
                     committeesHtml += `
-                        <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-right: 3px solid var(--accent-blue);">
-                            <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-dark);">
-                                <i class="fa-solid fa-users" style="color: var(--accent-blue); margin-left: 0.5rem;"></i>
+                        <div>
+                            <div>
+                                <i class="fa-solid fa-users"></i>
                                 ${escapeHtml(committee.committee_name)}
                             </div>
-                            <div style="display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.875rem;">
-                                <span><i class="fa-solid fa-file" style="color: #64748b;"></i> ${committee.total_applications} طلب</span>
-                                <span><i class="fa-solid fa-check" style="color: #10b981;"></i> ${committee.accepted} مقبول</span>
-                                <span><i class="fa-solid fa-times" style="color: #ef4444;"></i> ${committee.rejected} مرفوض</span>
-                                <span><i class="fa-solid fa-clock" style="color: #f59e0b;"></i> ${committee.pending} معلق</span>
+                            <div>
+                                <span><i class="fa-solid fa-file"></i> ${committee.total_applications} طلب</span>
+                                <span><i class="fa-solid fa-check"></i> ${committee.accepted} مقبول</span>
+                                <span><i class="fa-solid fa-times"></i> ${committee.rejected} مرفوض</span>
+                                <span><i class="fa-solid fa-clock"></i> ${committee.pending} معلق</span>
                             </div>
                         </div>
                     `;
@@ -2124,14 +2124,14 @@
                                 <i class="fa-solid fa-file-circle-check"></i>
                                 مقبولة
                             </div>
-                            <div class="detail-value" style="color: #10b981; font-weight: 600;">${data.accepted_applications}</div>
+                            <div class="detail-value">${data.accepted_applications}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">
                                 <i class="fa-solid fa-file-circle-xmark"></i>
                                 مرفوضة
                             </div>
-                            <div class="detail-value" style="color: #ef4444; font-weight: 600;">${data.rejected_applications}</div>
+                            <div class="detail-value">${data.rejected_applications}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">
@@ -2155,14 +2155,14 @@
                                 <i class="fa-solid fa-percent"></i>
                                 معدل القبول
                             </div>
-                            <div class="detail-value" style="color: #10b981; font-weight: 600;">${data.statistics?.acceptance_rate || 0}%</div>
+                            <div class="detail-value">${data.statistics?.acceptance_rate || 0}%</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">
                                 <i class="fa-solid fa-percent"></i>
                                 معدل الرفض
                             </div>
-                            <div class="detail-value" style="color: #ef4444; font-weight: 600;">${data.statistics?.rejection_rate || 0}%</div>
+                            <div class="detail-value">${data.statistics?.rejection_rate || 0}%</div>
                         </div>
                         <div class="detail-item full-width">
                             <div class="detail-label">
@@ -2382,13 +2382,12 @@
                 });
             }
 
-            barzakhApplications = (approvedApps || []).filter(app => {
+            const barzakhApplications = (approvedApps || []).filter(app => {
                 const appInterviews = interviewsByAppId.get(app.id) || [];
                 return !appInterviews.some(i => i.status === 'scheduled' || i.status === 'completed');
             });
 
-            const countEl = document.getElementById('barzakhCount');
-            if (countEl) countEl.textContent = barzakhApplications.length;
+            updateBarzakhStatistics(barzakhApplications.length);
 
             container._cachedBarzakh = barzakhApplications;
 
@@ -2664,7 +2663,7 @@
                             </div>
                             <div class="applicant-details">
                                 <h3 class="applicant-name">${escapeHtml(interview.application?.full_name || 'غير محدد')}</h3>
-                                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                <div>
                                     ${statusBadge}
                                     ${resultBadge}
                                 </div>
@@ -2729,7 +2728,7 @@
                                     <i class="fa-solid fa-link"></i>
                                     <div class="info-content">
                                         <span class="info-label">رابط المقابلة</span>
-                                        <a href="${escapeHtml(interview.meeting_link)}" target="_blank" class="info-value" style="color: var(--accent-blue); text-decoration: underline;">
+                                        <a href="${escapeHtml(interview.meeting_link)}" target="_blank" class="info-value">
                                             فتح الرابط
                                         </a>
                                     </div>
@@ -2754,7 +2753,7 @@
                                     رفض
                                 </button>
                             ` : ''}
-                            <button class="btn-action btn-action-warning" onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot && interview.slot[0] ? interview.slot[0].id : ''}')" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <button class="btn-action btn-action-warning" onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot && interview.slot[0] ? interview.slot[0].id : ''}')">
                                 <i class="fa-solid fa-trash-alt"></i>
                                 حذف الموعد
                             </button>
@@ -2982,22 +2981,22 @@
                                 </div>
                             ` : ''}
                             ${data.notes ? `
-                                <div class="admin-note reject-note" style="border-right: 4px solid #ef4444; background: #fef2f2;">
+                                <div class="admin-note reject-note">
                                     <div class="note-header">
-                                        <i class="fa-solid fa-user-xmark" style="color: #ef4444;"></i>
+                                        <i class="fa-solid fa-user-xmark"></i>
                                         <strong>رفض من البرزخ</strong>
-                                        <span style="font-size: 0.85rem; color: #64748b; font-weight: normal; margin-right: auto;">
+                                        <span>
                                             ${data.interview_date ? '' : '(رفض مباشر بدون مقابلة)'}
                                         </span>
                                     </div>
                                     <div class="note-content">${escapeHtml(data.notes)}</div>
                                     ${data.decided_by_user ? `
-                                        <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #fee2e2; font-size: 0.85rem; color: #64748b;">
-                                            <i class="fa-solid fa-user-shield" style="margin-left: 0.25rem;"></i>
-                                            تم الرفض بواسطة: <strong style="color: #1e293b;">${escapeHtml(data.decided_by_user.full_name)}</strong>
+                                        <div>
+                                            <i class="fa-solid fa-user-shield"></i>
+                                            تم الرفض بواسطة: <strong>${escapeHtml(data.decided_by_user.full_name)}</strong>
                                             ${data.decided_at ? `
-                                                <span style="margin-right: 0.5rem;">
-                                                    <i class="fa-solid fa-clock" style="margin-left: 0.25rem;"></i>
+                                                <span>
+                                                    <i class="fa-solid fa-clock"></i>
                                                     ${new Date(data.decided_at).toLocaleDateString('ar-SA')}
                                                 </span>
                                             ` : ''}
@@ -3226,20 +3225,20 @@
             const result = await showCustomConfirm({
                 title: 'جدولة مقابلة جديدة',
                 html: `
-                    <div style="text-align: right;">
+                    <div>
                         <div class="form-group">
                             <label>المتقدم</label>
-                            <select id="swal-application" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <select id="swal-application">
                                 ${applicationsOptions}
                             </select>
                         </div>
                         <div class="form-group">
                             <label>تاريخ ووقت المقابلة</label>
-                            <input type="datetime-local" id="swal-date" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <input type="datetime-local" id="swal-date">
                         </div>
                         <div class="form-group">
                             <label>نوع المقابلة</label>
-                            <select id="swal-type" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <select id="swal-type">
                                 <option value="in_person">حضوري</option>
                                 <option value="online">أونلاين</option>
                                 <option value="phone">هاتفي</option>
@@ -3247,7 +3246,7 @@
                         </div>
                         <div class="form-group">
                             <label>الموقع/الرابط</label>
-                            <input type="text" id="swal-location" placeholder="الموقع أو رابط الاجتماع" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <input type="text" id="swal-location" placeholder="الموقع أو رابط الاجتماع">
                         </div>
                     </div>
                 `,
@@ -3785,7 +3784,7 @@
             if (options.html) {
                 content.innerHTML = options.html;
             } else {
-                content.innerHTML = `<p style="text-align: center; margin: 1rem 0;">${options.text || ''}</p>`;
+                content.innerHTML = `<p>${options.text || ''}</p>`;
             }
 
             // بناء الأزرار
@@ -3801,7 +3800,7 @@
 
             if (options.showDenyButton) {
                 buttonsHtml += `
-                    <button class="btn-outline" id="customDenyBtn" style="background: #6b7280; color: white;">
+                    <button class="btn-outline" id="customDenyBtn">
                         ${options.denyButtonText || 'لا'}
                     </button>
                 `;
@@ -3871,28 +3870,26 @@
             let inputHtml = '';
             if (options.input === 'textarea') {
                 inputHtml = `
-                    <div style="text-align: right; margin: 1rem 0;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                    <div>
+                        <label>
                             ${options.inputLabel || ''}
                         </label>
                         <textarea 
                             id="customInputField" 
                             placeholder="${options.inputPlaceholder || ''}"
-                            style="width: 100%; min-height: 100px; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; resize: vertical;"
                         ></textarea>
                     </div>
                 `;
             } else {
                 inputHtml = `
-                    <div style="text-align: right; margin: 1rem 0;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                    <div>
+                        <label>
                             ${options.inputLabel || ''}
                         </label>
                         <input 
                             type="text" 
                             id="customInputField" 
                             placeholder="${options.inputPlaceholder || ''}"
-                            style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit;"
                         />
                     </div>
                 `;
@@ -3954,21 +3951,21 @@
 
             // عرض نافذة تأكيد موحدة
             const contentHtml = `
-                <div style="text-align: center; padding: 1rem;">
-                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;"></i>
-                    <p style="font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 600;">هل أنت متأكد من حذف هذا الموعد؟</p>
-                    <div style="background: #fef3c7; padding: 1rem; border-radius: 8px; margin-top: 1rem; border-right: 3px solid #f59e0b;">
-                        <p style="color: #92400e; margin: 0.5rem 0; font-size: 0.95rem; text-align: right;">
-                            <i class="fa-solid fa-circle-check" style="color: #f59e0b;"></i> حذف الموعد من قاعدة البيانات
+                <div>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <p>هل أنت متأكد من حذف هذا الموعد؟</p>
+                    <div>
+                        <p>
+                            <i class="fa-solid fa-circle-check"></i> حذف الموعد من قاعدة البيانات
                         </p>
-                        <p style="color: #92400e; margin: 0.5rem 0; font-size: 0.95rem; text-align: right;">
-                            <i class="fa-solid fa-circle-check" style="color: #f59e0b;"></i> حذف المقابلة المرتبطة
+                        <p>
+                            <i class="fa-solid fa-circle-check"></i> حذف المقابلة المرتبطة
                         </p>
-                        <p style="color: #92400e; margin: 0.5rem 0; font-size: 0.95rem; text-align: right;">
-                            <i class="fa-solid fa-circle-check" style="color: #f59e0b;"></i> السماح للمتقدم بحجز موعد جديد
+                        <p>
+                            <i class="fa-solid fa-circle-check"></i> السماح للمتقدم بحجز موعد جديد
                         </p>
                     </div>
-                    <p style="color: #ef4444; font-size: 0.9rem; margin-top: 1rem; font-weight: 600;">⚠️ هذا الإجراء لا يمكن التراجع عنه!</p>
+                    <p>⚠️ هذا الإجراء لا يمكن التراجع عنه!</p>
                     <input type="hidden" id="delete-interview-id" value="${interviewId}">
                     <input type="hidden" id="delete-slot-id" value="${slotId}">
                 </div>
@@ -3979,7 +3976,7 @@
                     <i class="fa-solid fa-trash"></i>
                     نعم، احذف الموعد
                 </button>
-                <button class="modal-btn modal-btn-secondary" onclick="window.closeConfirmModal()" style="background: #e2e8f0; color: #475569;">
+                <button class="modal-btn modal-btn-secondary" onclick="window.closeConfirmModal()">
                     <i class="fa-solid fa-times"></i>
                     إلغاء
                 </button>
@@ -4040,67 +4037,67 @@
         try {
             const formHtml = `
                 <div class="form-group">
-                    <label style="font-weight: 600; color: #1e293b; margin-bottom: 1rem; display: block;">
-                        <i class="fa-solid fa-exclamation-circle" style="color: #ef4444; margin-left: 0.5rem;"></i>
+                    <label>
+                        <i class="fa-solid fa-exclamation-circle"></i>
                         سبب الرفض/الحذف
                     </label>
-                    <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.6;">
-                        سيتم نقل <strong style="color: #1e293b;">${applicantName}</strong> إلى قائمة المرفوضين في نتائج العضوية
+                    <p>
+                        سيتم نقل <strong>${applicantName}</strong> إلى قائمة المرفوضين في نتائج العضوية
                     </p>
                     
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                        <label class="radio-option" style="display: flex; align-items: center; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-                            <input type="radio" name="rejection-reason" value="withdrawn" id="reason-withdrawn" style="margin-left: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; color: #1e293b; margin-bottom: 0.25rem;">
-                                    <i class="fa-solid fa-person-walking-arrow-right" style="color: #f59e0b; margin-left: 0.5rem;"></i>
+                    <div>
+                        <label class="radio-option">
+                            <input type="radio" name="rejection-reason" value="withdrawn" id="reason-withdrawn">
+                            <div>
+                                <div>
+                                    <i class="fa-solid fa-person-walking-arrow-right"></i>
                                     منسحب من المقابلة
                                 </div>
-                                <div style="font-size: 0.85rem; color: #64748b;">المتقدم قرر الانسحاب وعدم المتابعة</div>
+                                <div>المتقدم قرر الانسحاب وعدم المتابعة</div>
                             </div>
                         </label>
                         
-                        <label class="radio-option" style="display: flex; align-items: center; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-                            <input type="radio" name="rejection-reason" value="no_response" id="reason-no-response" style="margin-left: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; color: #1e293b; margin-bottom: 0.25rem;">
-                                    <i class="fa-solid fa-phone-slash" style="color: #ef4444; margin-left: 0.5rem;"></i>
+                        <label class="radio-option">
+                            <input type="radio" name="rejection-reason" value="no_response" id="reason-no-response">
+                            <div>
+                                <div>
+                                    <i class="fa-solid fa-phone-slash"></i>
                                     لا يرد على التواصل
                                 </div>
-                                <div style="font-size: 0.85rem; color: #64748b;">عدم الرد على محاولات التواصل المتكررة</div>
+                                <div>عدم الرد على محاولات التواصل المتكررة</div>
                             </div>
                         </label>
                         
-                        <label class="radio-option" style="display: flex; align-items: center; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-                            <input type="radio" name="rejection-reason" value="other" id="reason-other" style="margin-left: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; color: #1e293b; margin-bottom: 0.25rem;">
-                                    <i class="fa-solid fa-pen" style="color: #8b5cf6; margin-left: 0.5rem;"></i>
+                        <label class="radio-option">
+                            <input type="radio" name="rejection-reason" value="other" id="reason-other">
+                            <div>
+                                <div>
+                                    <i class="fa-solid fa-pen"></i>
                                     سبب آخر
                                 </div>
-                                <div style="font-size: 0.85rem; color: #64748b;">تحديد سبب مخصص</div>
+                                <div>تحديد سبب مخصص</div>
                             </div>
                         </label>
                     </div>
                 </div>
                 
-                <div class="form-group" id="custom-reason-group" style="display: none; margin-top: 1rem;">
-                    <label style="font-weight: 600; color: #1e293b; margin-bottom: 0.5rem; display: block;">
-                        <i class="fa-solid fa-comment-dots" style="color: #8b5cf6; margin-left: 0.5rem;"></i>
+                <div class="form-group" id="custom-reason-group">
+                    <label>
+                        <i class="fa-solid fa-comment-dots"></i>
                         اذكر السبب
                     </label>
-                    <textarea id="custom-rejection-reason" class="form-textarea" rows="3" placeholder="اكتب السبب هنا..." style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+                    <textarea id="custom-rejection-reason" class="form-textarea" rows="3" placeholder="اكتب السبب هنا..."></textarea>
                 </div>
                 
                 <input type="hidden" id="reject-application-id" value="${applicationId}">
             `;
 
             const actionsHtml = `
-                <button class="modal-btn modal-btn-danger" onclick="window.membershipManager.confirmRejectFromBarzakh()" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                <button class="modal-btn modal-btn-danger" onclick="window.membershipManager.confirmRejectFromBarzakh()">
                     <i class="fa-solid fa-check"></i>
                     تأكيد الرفض
                 </button>
-                <button class="modal-btn modal-btn-secondary" onclick="window.closeFormModal()" style="background: #e2e8f0; color: #475569;">
+                <button class="modal-btn modal-btn-secondary" onclick="window.closeFormModal()">
                     <i class="fa-solid fa-times"></i>
                     إلغاء
                 </button>
@@ -4208,6 +4205,27 @@
             console.error('خطأ في رفض المتقدم:', error);
             showNotification('حدث خطأ أثناء رفض المتقدم', 'error');
         }
+    }
+
+    function updateBarzakhStatistics(count) {
+        const container = document.getElementById('barzakhStatsGrid');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-card" style="--stat-color: #f59e0b">
+                    <div class="stat-card-wrapper">
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-user-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">${count}</div>
+                            <div class="stat-label">بانتظار جدولة المقابلة</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     // تصدير الوظائف العامة

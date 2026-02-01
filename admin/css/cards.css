@@ -1,0 +1,121 @@
+/* ============================================================================
+   Card Component - مكون البطاقات العامة
+   تصميم حديث ومتطور
+   متوافق مع هوية نادي أدِيب
+   ============================================================================ */
+
+:root {
+    --card-radius: 16px;
+    --card-shadow: 0 4px 15px rgba(39, 64, 96, 0.08);
+    --card-shadow-hover: 0 8px 25px rgba(39, 64, 96, 0.12);
+    --card-transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* ============================================================================
+   Card Base
+   ============================================================================ */
+
+.card {
+    background: white;
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(61, 143, 214, 0.1);
+    overflow: hidden;
+    transition: var(--card-transition);
+}
+
+.card:hover {
+    box-shadow: var(--card-shadow-hover);
+}
+
+/* ============================================================================
+   Card Header
+   ============================================================================ */
+
+.card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(61, 143, 214, 0.1);
+    background: linear-gradient(135deg, rgba(248, 249, 250, 0.8), rgba(230, 240, 249, 0.6));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--main-blue);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card-header h3 i {
+    color: var(--accent-blue);
+}
+
+/* ============================================================================
+   Card Body
+   ============================================================================ */
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* ============================================================================
+   Card Footer
+   ============================================================================ */
+
+.card-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(61, 143, 214, 0.1);
+    background: rgba(248, 249, 250, 0.5);
+}
+
+/* ============================================================================
+   Responsive Design
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .card-header,
+    .card-body,
+    .card-footer {
+        padding: 1rem;
+    }
+
+    .card-header h3 {
+        font-size: 1rem;
+    }
+}
+
+/* ============================================================================
+   Print Styles
+   ============================================================================ */
+
+@media print {
+    .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+    }
+}
+
+/* ============================================================================
+   Dark Mode Support
+   ============================================================================ */
+
+@media (prefers-color-scheme: dark) {
+    .card {
+        background: #1e293b;
+        border-color: rgba(61, 143, 214, 0.2);
+    }
+
+    .card-header {
+        background: rgba(30, 41, 59, 0.8);
+    }
+
+    .card-header h3 {
+        color: #e2e8f0;
+    }
+}

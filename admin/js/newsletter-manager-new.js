@@ -1,41 +1,37 @@
-﻿// =====================================================
-// مدير النشرة البريدية
-// Newsletter Manager
-// =====================================================
+/**
+ * Newsletter Manager - إعادة بناء كاملة
+ * إدارة النشرة البريدية
+ */
 
 class NewsletterManager {
     constructor() {
         this.subscribers = [];
         this.filteredSubscribers = [];
-        this.init();
+        console.log('NewsletterManager: Initialized');
     }
 
-    init() {
+    async init() {
+        console.log('NewsletterManager: Starting init...');
         this.setupEventListeners();
-        // تحميل المشتركين مباشرة عند الإنشاء
-        this.loadSubscribers();
+        await this.loadSubscribers();
     }
 
     setupEventListeners() {
-        // زر التحديث
         const refreshBtn = document.getElementById('refreshSubscribersBtn');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => this.loadSubscribers());
         }
 
-        // زر التصدير
         const exportBtn = document.getElementById('exportSubscribersBtn');
         if (exportBtn) {
             exportBtn.addEventListener('click', () => this.exportSubscribers());
         }
 
-        // البحث
         const searchInput = document.getElementById('subscriberSearchInput');
         if (searchInput) {
-            searchInput.addEventListener('input', (e) => this.filterSubscribers());
+            searchInput.addEventListener('input', () => this.filterSubscribers());
         }
 
-        // فلتر الحالة
         const statusFilter = document.getElementById('subscriberStatusFilter');
         if (statusFilter) {
             statusFilter.addEventListener('change', () => this.filterSubscribers());
@@ -44,28 +40,33 @@ class NewsletterManager {
 
     async loadSubscribers() {
         try {
+            console.log('NewsletterManager: Loading subscribers...');
             const sb = window.sbClient;
             if (!sb) {
-                console.error('Supabase client not initialized');
+                console.error('NewsletterManager: Supabase client not initialized');
+                this.showError('لم يتم تهيئة الاتصال بقاعدة البيانات');
                 return;
             }
 
-            // جلب جميع المشتركين
             const { data, error } = await sb
                 .from('newsletter_subscribers')
                 .select('*')
                 .order('subscribed_at', { ascending: false });
 
-            if (error) throw error;
+            if (error) {
+                console.error('NewsletterManager: Error loading subscribers:', error);
+                throw error;
+            }
 
+            console.log('NewsletterManager: Loaded subscribers:', data?.length || 0);
             this.subscribers = data || [];
             this.filteredSubscribers = [...this.subscribers];
             
             this.updateStats();
             this.renderSubscribers();
         } catch (error) {
-            console.error('Error loading subscribers:', error);
-            this.showError('حدث خطأ أثناء تحميل المشتركين');
+            console.error('NewsletterManager: Error in loadSubscribers:', error);
+            this.showError('حدث خطأ أثناء تحميل المشتركين: ' + error.message);
         }
     }
 
@@ -74,17 +75,25 @@ class NewsletterManager {
         const active = this.subscribers.filter(s => s.status === 'active').length;
         const unsubscribed = this.subscribers.filter(s => s.status === 'unsubscribed').length;
         
-        // اشتراكات هذا الشهر
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const thisMonth = this.subscribers.filter(s => 
             new Date(s.subscribed_at) >= firstDayOfMonth
         ).length;
 
-        document.getElementById('totalSubscribersCount').textContent = total;
-        document.getElementById('activeSubscribersCount').textContent = active;
-        document.getElementById('unsubscribedCount').textContent = unsubscribed;
-        document.getElementById('thisMonthSubscribersCount').textContent = thisMonth;
+        const elements = {
+            totalSubscribersCount: total,
+            activeSubscribersCount: active,
+            unsubscribedCount: unsubscribed,
+            thisMonthSubscribersCount: thisMonth
+        };
+
+        Object.keys(elements).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = elements[id];
+        });
+
+        console.log('NewsletterManager: Stats updated:', elements);
     }
 
     filterSubscribers() {
@@ -98,13 +107,14 @@ class NewsletterManager {
             return matchesSearch && matchesStatus;
         });
 
+        console.log('NewsletterManager: Filtered to', this.filteredSubscribers.length, 'subscribers');
         this.renderSubscribers();
     }
 
     renderSubscribers() {
         const container = document.getElementById('subscribersTable');
         if (!container) {
-            console.error('subscribersTable container not found');
+            console.error('NewsletterManager: subscribersTable container not found');
             return;
         }
 
@@ -118,13 +128,14 @@ class NewsletterManager {
             return;
         }
 
-        const cardsHtml = `
+        console.log('NewsletterManager: Rendering', this.filteredSubscribers.length, 'subscribers');
+
+        container.innerHTML = `
             <div class="applications-cards-grid">
                 ${this.filteredSubscribers.map(subscriber => this.renderSubscriberCard(subscriber)).join('')}
             </div>
         `;
 
-        container.innerHTML = cardsHtml;
         this.attachRowEventListeners();
     }
 
@@ -219,7 +230,6 @@ class NewsletterManager {
     }
 
     attachRowEventListeners() {
-        // أزرار إلغاء الاشتراك
         document.querySelectorAll('.unsubscribe-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.dataset.id;
@@ -227,7 +237,6 @@ class NewsletterManager {
             });
         });
 
-        // أزرار إعادة الاشتراك
         document.querySelectorAll('.resubscribe-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.dataset.id;
@@ -235,7 +244,6 @@ class NewsletterManager {
             });
         });
 
-        // أزرار الحذف
         document.querySelectorAll('.delete-subscriber-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.dataset.id;
@@ -276,7 +284,7 @@ class NewsletterManager {
             this.showSuccess('تم تحديث حالة المشترك بنجاح');
             await this.loadSubscribers();
         } catch (error) {
-            console.error('Error updating subscriber:', error);
+            console.error('NewsletterManager: Error updating subscriber:', error);
             this.showError('حدث خطأ أثناء تحديث حالة المشترك');
         }
     }
@@ -299,7 +307,7 @@ class NewsletterManager {
             this.showSuccess('تم حذف المشترك بنجاح');
             await this.loadSubscribers();
         } catch (error) {
-            console.error('Error deleting subscriber:', error);
+            console.error('NewsletterManager: Error deleting subscriber:', error);
             this.showError('حدث خطأ أثناء حذف المشترك');
         }
     }
@@ -310,10 +318,7 @@ class NewsletterManager {
             return;
         }
 
-        // تحضير البيانات للتصدير
         const csvContent = this.convertToCSV(this.filteredSubscribers);
-        
-        // إنشاء ملف وتحميله
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
@@ -344,7 +349,7 @@ class NewsletterManager {
             ...rows.map(row => row.join(','))
         ].join('\n');
 
-        return '\uFEFF' + csvContent; // BOM for UTF-8
+        return '\uFEFF' + csvContent;
     }
 
     showSuccess(message) {
@@ -392,5 +397,4 @@ class NewsletterManager {
     }
 }
 
-// تصدير الـ class
 window.NewsletterManager = NewsletterManager;
