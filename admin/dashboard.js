@@ -142,16 +142,6 @@
             });
         }
         
-        // تعيين الأدوار والمناصب - المستوى 8 وأعلى
-        if (roleLevel >= 8) {
-            menuItems.push({
-                id: 'role-assignment',
-                icon: 'fa-user-shield',
-                label: 'تعيين الأدوار والمناصب',
-                section: 'role-assignment-section'
-            });
-        }
-        
         // إدارة بيانات الأعضاء - المستوى 8 وأعلى
         if (roleLevel >= 8) {
             menuItems.push({
@@ -159,6 +149,16 @@
                 icon: 'fa-user-gear',
                 label: 'إدارة بيانات الأعضاء',
                 section: 'member-data-management-section'
+            });
+        }
+        
+        // تعيين المناصب - المستوى 8 وأعلى
+        if (roleLevel >= 8) {
+            menuItems.push({
+                id: 'positions',
+                icon: 'fa-user-tie',
+                label: 'تعيين المناصب',
+                section: 'positions-section'
             });
         }
         
@@ -835,12 +835,12 @@
                     await window.memberDataManager.init();
                 }
                 break;
-            case 'role-assignment-section':
-                if (window.RoleAssignmentManager && !window.roleAssignmentManager) {
-                    window.roleAssignmentManager = new window.RoleAssignmentManager();
+            case 'positions-section':
+                if (window.PositionsManager && !window.positionsManager) {
+                    window.positionsManager = new window.PositionsManager();
                 }
-                if (window.roleAssignmentManager) {
-                    await window.roleAssignmentManager.init(currentUser);
+                if (window.positionsManager) {
+                    await window.positionsManager.init();
                 }
                 break;
             case 'membership-applications-view-section':

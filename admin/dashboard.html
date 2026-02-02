@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="css/item-cards.css" />
     <link rel="stylesheet" href="css/modals.css" />
     <link rel="stylesheet" href="css/membership-card.css" />
+    <link rel="stylesheet" href="css/positions.css" />
 </head>
 
 <body>
@@ -271,87 +272,6 @@
                 </div>
             </section>
 
-            <!-- قسم تعيين الأدوار والمناصب -->
-            <section id="role-assignment-section" class="admin-section d-none">
-                <div class="section-header">
-                    <h1>
-                        <i class="fa-solid fa-user-shield"></i>
-                        تعيين الأدوار والمناصب
-                    </h1>
-                    <p class="section-subtitle">تعيين الأدوار والمناصب للأعضاء (قائد، نائب، عضو لجنة، إلخ)</p>
-                </div>
-
-                <!-- إحصائيات -->
-                <div class="stats-grid mb-2rem">
-                    <div class="stat-card" style="--stat-color: #3b82f6">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-users"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="totalUsersWithRolesCount">0</div>
-                                <div class="stat-label">إجمالي المستخدمين</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #10b981">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-shield"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="totalActiveRolesCount">0</div>
-                                <div class="stat-label">أدوار مفعلة</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #8b5cf6">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-crown"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="committeeLeadersCount">0</div>
-                                <div class="stat-label">قادة اللجان</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #f59e0b">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-user-group"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="committeeDeputiesCount">0</div>
-                                <div class="stat-label">نواب القادة</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- فلاتر البحث -->
-                <div class="filters-bar">
-                    <div class="filter-group">
-                        <i class="fa-solid fa-search"></i>
-                        <input type="text" id="roleAssignmentSearchInput" placeholder="البحث عن مستخدم..." />
-                    </div>
-                    <select id="roleAssignmentRoleFilter" class="filter-select">
-                        <option value="">جميع الأدوار</option>
-                    </select>
-                    <select id="roleAssignmentCommitteeFilter" class="filter-select">
-                        <option value="">جميع اللجان</option>
-                    </select>
-                    <button class="btn btn--outline btn--outline-primary" id="refreshRoleAssignmentBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-                </div>
-
-                <!-- قائمة المستخدمين مع الأدوار -->
-                <div id="roleAssignmentContainer">
-                    <!-- سيتم ملؤها ديناميكياً -->
-                </div>
-            </section>
 
             <!-- قسم إدارة اللجان -->
             <section id="committees-section" class="admin-section d-none">
@@ -1132,6 +1052,232 @@
                         <div id="memberDataTable" class="data-table">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم تعيين المناصب -->
+            <section id="positions-section" class="admin-section d-none">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-user-tie"></i>
+                        تعيين المناصب
+                    </h1>
+                    <p class="section-subtitle">إدارة وتعيين المناصب وفقًا لهيكلة أدِيب</p>
+                </div>
+
+                <!-- بطاقات الإحصائيات -->
+                <div class="stats-grid" id="positionsStatsGrid">
+                    <div class="stat-card" style="--stat-color: #dc2626">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-crown"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="clubPresidentCount">0</div>
+                                <div class="stat-label">رئيس النادي</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #ea580c">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user-shield"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="councilLeadersCount">0</div>
+                                <div class="stat-label">قادة المجالس العليا</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #f59e0b">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-users-gear"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="committeeLeadersCount">0</div>
+                                <div class="stat-label">قادة اللجان</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalMembersCount">0</div>
+                                <div class="stat-label">إجمالي الأعضاء</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- هيكلة المناصب -->
+                <div class="card mb-2rem">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-sitemap"></i>
+                            هيكلة المناصب في أدِيب
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="positions-hierarchy">
+                            <!-- المستوى 10: رئيس النادي -->
+                            <div class="position-level" data-level="10">
+                                <div class="position-level-header">
+                                    <div class="position-level-badge" style="background: #dc2626;">
+                                        <i class="fa-solid fa-crown"></i>
+                                        <span>المستوى 10</span>
+                                    </div>
+                                    <h4>رئيس النادي</h4>
+                                </div>
+                                <div class="position-members" id="level-10-members">
+                                    <!-- سيتم ملؤها ديناميكياً -->
+                                </div>
+                            </div>
+
+                            <!-- المستوى 9: قائد مجلس أعلى -->
+                            <div class="position-level" data-level="9">
+                                <div class="position-level-header">
+                                    <div class="position-level-badge" style="background: #ea580c;">
+                                        <i class="fa-solid fa-user-shield"></i>
+                                        <span>المستوى 9</span>
+                                    </div>
+                                    <h4>قائد مجلس أعلى</h4>
+                                </div>
+                                <div class="position-members" id="level-9-members">
+                                    <!-- سيتم ملؤها ديناميكياً -->
+                                </div>
+                            </div>
+
+                            <!-- المستوى 8: قائد لجنة -->
+                            <div class="position-level" data-level="8">
+                                <div class="position-level-header">
+                                    <div class="position-level-badge" style="background: #f59e0b;">
+                                        <i class="fa-solid fa-users-gear"></i>
+                                        <span>المستوى 8</span>
+                                    </div>
+                                    <h4>قائد لجنة</h4>
+                                </div>
+                                <div class="position-members" id="level-8-members">
+                                    <!-- سيتم ملؤها ديناميكياً -->
+                                </div>
+                            </div>
+
+                            <!-- المستوى 7: نائب قائد لجنة -->
+                            <div class="position-level" data-level="7">
+                                <div class="position-level-header">
+                                    <div class="position-level-badge" style="background: #eab308;">
+                                        <i class="fa-solid fa-user-gear"></i>
+                                        <span>المستوى 7</span>
+                                    </div>
+                                    <h4>نائب قائد لجنة</h4>
+                                </div>
+                                <div class="position-members" id="level-7-members">
+                                    <!-- سيتم ملؤها ديناميكياً -->
+                                </div>
+                            </div>
+
+                            <!-- المستوى 6: عضو لجنة -->
+                            <div class="position-level" data-level="6">
+                                <div class="position-level-header">
+                                    <div class="position-level-badge" style="background: #84cc16;">
+                                        <i class="fa-solid fa-user-tag"></i>
+                                        <span>المستوى 6</span>
+                                    </div>
+                                    <h4>عضو لجنة</h4>
+                                </div>
+                                <div class="position-members" id="level-6-members">
+                                    <!-- سيتم ملؤها ديناميكياً -->
+                                </div>
+                            </div>
+
+                            <!-- المستوى 5: عضو نادي -->
+                            <div class="position-level" data-level="5">
+                                <div class="position-level-header">
+                                    <div class="position-level-badge" style="background: #10b981;">
+                                        <i class="fa-solid fa-user"></i>
+                                        <span>المستوى 5</span>
+                                    </div>
+                                    <h4>عضو نادي</h4>
+                                </div>
+                                <div class="position-members" id="level-5-members">
+                                    <!-- سيتم ملؤها ديناميكياً -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- أدوات البحث والتعيين -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-user-plus"></i>
+                            تعيين منصب جديد
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="assignPositionForm">
+                            <div class="d-grid gap-1-5rem">
+                                <!-- البحث عن العضو -->
+                                <div class="form-group">
+                                    <label>البحث عن العضو <span class="text-danger">*</span></label>
+                                    <div class="search-member-container">
+                                        <input 
+                                            type="text" 
+                                            id="searchMemberInput" 
+                                            placeholder="ابحث بالاسم أو البريد الإلكتروني..."
+                                            autocomplete="off"
+                                        />
+                                        <div class="search-results" id="searchResults"></div>
+                                    </div>
+                                    <input type="hidden" id="selectedMemberId" name="memberId" required />
+                                    <div id="selectedMemberDisplay" class="selected-member-display"></div>
+                                </div>
+
+                                <!-- اختيار المنصب -->
+                                <div class="form-group">
+                                    <label>المنصب <span class="text-danger">*</span></label>
+                                    <select id="positionRoleSelect" name="roleId" required>
+                                        <option value="">اختر المنصب</option>
+                                    </select>
+                                </div>
+
+                                <!-- اختيار اللجنة (يظهر حسب المنصب) -->
+                                <div class="form-group d-none" id="positionCommitteeGroup">
+                                    <label>اللجنة <span class="text-danger">*</span></label>
+                                    <select id="positionCommitteeSelect" name="committeeId">
+                                        <option value="">اختر اللجنة</option>
+                                    </select>
+                                </div>
+
+                                <!-- ملاحظات -->
+                                <div class="form-group">
+                                    <label>ملاحظات (اختياري)</label>
+                                    <textarea 
+                                        id="positionNotes" 
+                                        name="notes" 
+                                        rows="3" 
+                                        placeholder="أضف أي ملاحظات حول التعيين..."
+                                    ></textarea>
+                                </div>
+
+                                <!-- أزرار الإجراءات -->
+                                <div class="d-flex gap-1rem justify-content-end">
+                                    <button type="reset" class="btn btn--outline btn--outline-primary">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                        إعادة تعيين
+                                    </button>
+                                    <button type="submit" class="btn btn--primary" id="assignPositionBtn">
+                                        <i class="fa-solid fa-check"></i>
+                                        تعيين المنصب
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </section>
@@ -3094,7 +3240,7 @@
     <script src="js/pending-members-manager.js"></script>
     <script src="js/users-manager.js"></script>
     <script src="js/member-data-manager.js?v=20260131-6"></script>
-    <script src="js/role-assignment-manager.js"></script>
+    <script src="js/positions-manager.js"></script>
     <script src="js/stats-counter.js"></script>
     <script src="js/modal-manager.js"></script>
     <script src="dashboard.js"></script>
