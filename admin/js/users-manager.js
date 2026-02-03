@@ -41,7 +41,7 @@ class UsersManager {
 
             if (usersError) throw usersError;
 
-            // جلب الأدوار لكل مستخدم
+            // جلب الأدوار وحالة التفعيل لكل مستخدم
             const usersWithRoles = await Promise.all(users.map(async (user) => {
                 const { data: userRoles } = await this.supabase
                     .from('user_roles')
@@ -58,9 +58,24 @@ class UsersManager {
                     .eq('is_active', true)
                     .limit(1);
 
+                // فحص حالة التفعيل من member_onboarding_tokens
+                const { data: token } = await this.supabase
+                    .from('member_onboarding_tokens')
+                    .select('is_used')
+                    .eq('user_id', user.id)
+                    .single();
+
+                // تحديد الحالة الفعلية
+                let actualStatus = user.account_status;
+                if (token && !token.is_used) {
+                    actualStatus = 'pending'; // معلق - لم يفعل الحساب
+                }
+
                 return {
                     ...user,
-                    user_roles: userRoles || []
+                    user_roles: userRoles || [],
+                    actual_status: actualStatus,
+                    is_activated: !token || token.is_used
                 };
             }));
 
@@ -256,10 +271,12 @@ class UsersManager {
         const statusMap = {
             'active': { label: 'نشط', class: 'badge-success' },
             'inactive': { label: 'غير نشط', class: 'badge-warning' },
-            'suspended': { label: 'معلق', class: 'badge-danger' }
+            'suspended': { label: 'معلق', class: 'badge-danger' },
+            'pending': { label: 'معلق - لم يفعل الحساب', class: 'badge-info' }
         };
         
-        const status = statusMap[user.account_status] || { label: 'غير محدد', class: 'badge-secondary' };
+        // استخدام الحالة الفعلية بدلاً من account_status
+        const status = statusMap[user.actual_status] || { label: 'غير محدد', class: 'badge-secondary' };
         const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=3d8fd6&color=fff`;
 
         return `
@@ -374,7 +391,7 @@ class UsersManager {
 
             // فلتر الحالة
             if (this.currentFilters.status) {
-                if (user.account_status !== this.currentFilters.status) return false;
+                if (user.actual_status !== this.currentFilters.status) return false;
             }
 
             return true;

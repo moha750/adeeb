@@ -289,7 +289,8 @@ class PositionsManager {
         try {
             const { data: members, error } = await this.supabase
                 .from('profiles')
-                .select('id, full_name, email, avatar_url')
+                .select('id, full_name, email, avatar_url, account_status')
+                .eq('account_status', 'active')
                 .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
                 .limit(10);
 
@@ -440,14 +441,31 @@ class PositionsManager {
                     .eq('is_active', true);
             }
 
-            // حذف أي سجلات قديمة غير نشطة بنفس المفتاح الفريد لتجنب خطأ duplicate key
-            await this.supabase
-                .from('user_roles')
-                .delete()
-                .eq('user_id', memberId)
-                .eq('role_id', roleId)
-                .eq('committee_id', committeeId || null)
-                .eq('is_active', false);
+            // حذف أي سجلات قديمة بنفس المفتاح الفريد لتجنب خطأ duplicate key
+            // يجب الحذف قبل الإدراج لتجنب التعارض
+            const deleteConditions = {
+                user_id: memberId,
+                role_id: roleId
+            };
+            
+            if (committeeId) {
+                deleteConditions.committee_id = committeeId;
+            } else {
+                // للمناصب التي لا تحتاج لجنة، نحذف السجلات التي committee_id = null
+                await this.supabase
+                    .from('user_roles')
+                    .delete()
+                    .eq('user_id', memberId)
+                    .eq('role_id', roleId)
+                    .is('committee_id', null);
+            }
+            
+            if (committeeId) {
+                await this.supabase
+                    .from('user_roles')
+                    .delete()
+                    .match(deleteConditions);
+            }
 
             const insertData = {
                 user_id: memberId,
