@@ -1,0 +1,164 @@
+/* ========================================
+   تعريف الخطوط - Fonts Definition
+   ======================================== */
+
+/* خط Lyon Arabic للنصوص العربية */
+@font-face {
+    font-family: 'Lyon Arabic';
+    src: url('../../fonts/COMM - Lyon Arabic Display Light.otf') format('opentype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Lyon Arabic';
+    src: url('../../fonts/COMM - Lyon Arabic Display Regular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Lyon Arabic';
+    src: url('../../fonts/COMM - Lyon Arabic Display Medium.otf') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Lyon Arabic';
+    src: url('../../fonts/COMM - Lyon Arabic Display Bold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Lyon Arabic';
+    src: url('../../fonts/COMM - Lyon Arabic Display Black.otf') format('opentype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* خط ERA للنصوص الإنجليزية والأرقام والرموز */
+@font-face {
+    font-family: 'ERA';
+    src: url('../../fonts/ERASLGHT.TTF') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'ERA';
+    src: url('../../fonts/ERASMD.TTF') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'ERA';
+    src: url('../../fonts/ERASDEMI.TTF') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'ERA';
+    src: url('../../fonts/ERASBD.TTF') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ========================================
+   تطبيق الخطوط - Font Application
+   ======================================== */
+
+/* تطبيق الخطوط على جميع العناصر */
+* {
+    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* تطبيق خاص للنصوص العربية */
+body,
+html {
+    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* العناوين */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 700;
+}
+
+/* الأزرار */
+button,
+.btn {
+    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 500;
+}
+
+/* حقول الإدخال */
+input,
+textarea,
+select {
+    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* الروابط */
+a {
+    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* النصوص العادية */
+p,
+span,
+div,
+label {
+    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* القوائم */
+ul,
+ol,
+li {
+    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* الجداول */
+table,
+th,
+td {
+    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* الأيقونات - استثناء Font Awesome */
+i[class*="fa-"],
+.fa,
+.fas,
+.far,
+.fal,
+.fab {
+    font-family: 'Font Awesome 6 Free', 'Font Awesome 6 Brands' !important;
+}
+
+/* تحسين عرض الخطوط */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* تطبيق خاص للأرقام والرموز الإنجليزية */
+.numbers,
+.english-text,
+code,
+pre {
+    font-family: 'ERA', 'Lyon Arabic', monospace;
+}
