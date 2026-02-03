@@ -218,7 +218,7 @@ window.AuthManager = (function() {
     /**
      * حماية الصفحة - التحقق من تسجيل الدخول والصلاحيات
      */
-    async function protectPage(minRoleLevel = 5, redirectUrl = '/auth/login.html') {
+    async function protectPage(minRoleLevel = 3, redirectUrl = '/auth/login.html') {
         try {
             const { data: { session } } = await sb.auth.getSession();
             

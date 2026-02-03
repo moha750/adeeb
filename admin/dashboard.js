@@ -17,8 +17,8 @@
             // إعداد المستمعات مبكراً لضمان عمل زر القائمة حتى لو فشل تحميل البيانات
             setupEventListeners();
 
-            // حماية الصفحة والتحقق من الصلاحيات
-            const authData = await window.AuthManager.protectPage(5);
+            // حماية الصفحة والتحقق من الصلاحيات (role_level = 3 لعضو لجنة)
+            const authData = await window.AuthManager.protectPage(3);
             
             if (!authData) {
                 showLoading(false);
@@ -432,13 +432,15 @@
             section: 'profile-section'
         });
 
-        // لجنتي - جميع المستويات (سيتم إخفاؤه للأعضاء غير المنتمين للجان)
-        menuItems.push({
-            id: 'my-committee',
-            icon: 'fa-users',
-            label: 'لجنتي',
-            section: 'my-committee-section'
-        });
+        // لجنتي - جميع المستويات ما عدا رئيس النادي (10) ورئيس المجلس الإداري (6)
+        if (roleLevel !== 10 && roleLevel !== 6) {
+            menuItems.push({
+                id: 'my-committee',
+                icon: 'fa-users',
+                label: 'لجنتي',
+                section: 'my-committee-section'
+            });
+        }
 
         // الإعدادات - جميع المستويات
         menuItems.push({
@@ -884,6 +886,13 @@
                 }
                 break;
             case 'my-committee-section':
+                if (window.profileManager) {
+                    await window.profileManager.init(currentUser);
+                }
+                if (window.CommitteeMembersManager && !window.committeeMembersManager) {
+                    window.committeeMembersManager = new window.CommitteeMembersManager();
+                }
+                break;
             case 'membership-card-section':
             case 'profile-section':
                 if (window.profileManager) {
@@ -2143,14 +2152,23 @@
                 console.error('Profile error:', profileError);
             }
 
-            // 3. تعيين دور "عضو" (role_level = 5)
+            // 3. تعيين دور "عضو لجنة" (role_level = 3)
             const { data: memberRole } = await sb
                 .from('roles')
                 .select('id')
-                .eq('role_level', 5)
+                .eq('role_level', 3)
                 .single();
 
             if (memberRole) {
+                // حذف أي سجلات قديمة بنفس المفتاح الفريد لتجنب خطأ duplicate key
+                await sb
+                    .from('user_roles')
+                    .delete()
+                    .eq('user_id', newUserId)
+                    .eq('role_id', memberRole.id)
+                    .eq('committee_id', committeeId);
+
+                // إدراج الدور الجديد
                 const { error: roleError } = await sb
                     .from('user_roles')
                     .insert({
@@ -2163,6 +2181,7 @@
 
                 if (roleError) {
                     console.error('Role error:', roleError);
+                    throw roleError;
                 }
             }
 

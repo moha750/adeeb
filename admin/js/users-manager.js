@@ -335,6 +335,10 @@ class UsersManager {
                         <i class="fa-solid fa-edit"></i>
                         تعديل
                     </button>
+                    <button class="btn-action btn-action-danger btn-terminate-membership" data-user-id="${user.id}" title="إنهاء العضوية نهائياً">
+                        <i class="fa-solid fa-user-slash"></i>
+                        إنهاء العضوية
+                    </button>
                 </div>
             </div>
         `;
@@ -419,7 +423,7 @@ class UsersManager {
             });
         }
 
-        // أزرار عرض التفاصيل وتعديل
+        // أزرار عرض التفاصيل وتعديل وإنهاء العضوية
         document.addEventListener('click', (e) => {
             if (e.target.closest('.btn-view-user')) {
                 const userId = e.target.closest('.btn-view-user').dataset.userId;
@@ -427,6 +431,9 @@ class UsersManager {
             } else if (e.target.closest('.btn-edit-user')) {
                 const userId = e.target.closest('.btn-edit-user').dataset.userId;
                 this.editUser(userId);
+            } else if (e.target.closest('.btn-terminate-membership')) {
+                const userId = e.target.closest('.btn-terminate-membership').dataset.userId;
+                this.terminateMembership(userId);
             }
         });
     }
@@ -527,6 +534,100 @@ class UsersManager {
                 window.showErrorModal('خطأ', 'حدث خطأ أثناء تحديث البيانات');
             }
         }, { icon: 'fa-edit', submitText: 'حفظ التعديلات' });
+    }
+
+    /**
+     * إنهاء عضوية المستخدم نهائياً
+     */
+    async terminateMembership(userId) {
+        const user = this.allUsers.find(u => u.id === userId);
+        if (!user) return;
+
+        const result = await Swal.fire({
+            title: 'تأكيد إنهاء العضوية',
+            html: `
+                <div style="text-align: center;">
+                    <p style="font-size: 1.1rem; margin-bottom: 1rem;">
+                        هل أنت متأكد من إنهاء عضوية <strong>${user.full_name}</strong>؟
+                    </p>
+                    <div style="background: #fff3cd; padding: 1rem; border-radius: 8px; border-right: 4px solid #ffc107; margin: 1rem 0;">
+                        <i class="fa-solid fa-exclamation-triangle" style="color: #ffc107; font-size: 1.5rem;"></i>
+                        <p style="margin: 0.5rem 0 0; color: #856404; font-weight: 600;">
+                            تحذير: هذا الإجراء سيقوم بـ:
+                        </p>
+                        <ul style="text-align: right; margin: 0.5rem 0; padding-right: 1.5rem; color: #856404;">
+                            <li>حذف جميع أدوار ومناصب المستخدم</li>
+                            <li>تعطيل حساب المستخدم نهائياً</li>
+                            <li>منع المستخدم من الدخول للنظام</li>
+                        </ul>
+                    </div>
+                    <p style="color: #dc3545; font-weight: 600; margin-top: 1rem;">
+                        لا يمكن التراجع عن هذا الإجراء!
+                    </p>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'نعم، إنهاء العضوية',
+            cancelButtonText: 'إلغاء',
+            reverseButtons: true
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            // 1. تعطيل جميع أدوار المستخدم
+            const { error: rolesError } = await this.supabase
+                .from('user_roles')
+                .update({ is_active: false })
+                .eq('user_id', userId);
+
+            if (rolesError) throw rolesError;
+
+            // 2. تحديث حالة الحساب إلى معلق
+            const { error: profileError } = await this.supabase
+                .from('profiles')
+                .update({ 
+                    account_status: 'suspended',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId);
+
+            if (profileError) throw profileError;
+
+            // 3. إلغاء أي tokens معلقة
+            const { error: tokensError } = await this.supabase
+                .from('member_onboarding_tokens')
+                .update({ is_used: true })
+                .eq('user_id', userId);
+
+            if (tokensError) console.warn('Error updating tokens:', tokensError);
+
+            await Swal.fire({
+                title: 'تم إنهاء العضوية',
+                html: `
+                    <p>تم إنهاء عضوية <strong>${user.full_name}</strong> بنجاح</p>
+                    <p style="color: #6c757d; font-size: 0.9rem; margin-top: 0.5rem;">
+                        تم تعطيل جميع الأدوار والصلاحيات
+                    </p>
+                `,
+                icon: 'success',
+                confirmButtonText: 'حسناً'
+            });
+
+            await this.loadUsers();
+            await this.loadStats();
+        } catch (error) {
+            console.error('Error terminating membership:', error);
+            await Swal.fire({
+                title: 'خطأ',
+                text: 'حدث خطأ أثناء إنهاء العضوية. يرجى المحاولة مرة أخرى.',
+                icon: 'error',
+                confirmButtonText: 'حسناً'
+            });
+        }
     }
 
     /**

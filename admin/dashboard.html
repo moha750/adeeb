@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="css/modals.css" />
     <link rel="stylesheet" href="css/membership-card.css" />
     <link rel="stylesheet" href="css/positions.css" />
+    <link rel="stylesheet" href="css/committee-members.css" />
 </head>
 
 <body>
@@ -810,6 +811,72 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- قسم إدارة الأعضاء - يظهر فقط لقائد اللجنة ونائبه -->
+                <div class="card d-none" id="committeeMembersManagementCard">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-user-gear"></i>
+                            إدارة أعضاء اللجنة
+                        </h3>
+                        <p class="text-muted">عرض وإدارة بيانات أعضاء لجنتك</p>
+                    </div>
+                    <div class="card-body">
+                        <!-- إحصائيات سريعة -->
+                        <div class="stats-grid mb-2rem">
+                            <div class="stat-card" style="--stat-color: #3b82f6">
+                                <div class="stat-card-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="fa-solid fa-users"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="committeeActiveMembersCount">0</div>
+                                        <div class="stat-label">أعضاء نشطين</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-card" style="--stat-color: #10b981">
+                                <div class="stat-card-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="fa-solid fa-user-check"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="committeeNewMembersCount">0</div>
+                                        <div class="stat-label">أعضاء جدد (30 يوم)</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-card" style="--stat-color: #f59e0b">
+                                <div class="stat-card-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="fa-solid fa-user-clock"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="committeePendingMembersCount">0</div>
+                                        <div class="stat-label">أعضاء معلقين</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- فلاتر البحث -->
+                        <div class="filters-bar mb-1-5rem">
+                            <div class="filter-group" style="flex: 1;">
+                                <i class="fa-solid fa-search"></i>
+                                <input type="text" id="committeeMembersSearchInput" placeholder="البحث عن عضو..." />
+                            </div>
+                            <button class="btn btn--outline btn--outline-primary" id="refreshCommitteeMembersBtn">
+                                <i class="fa-solid fa-rotate"></i>
+                                تحديث
+                            </button>
+                        </div>
+
+                        <!-- جدول الأعضاء -->
+                        <div id="committeeMembersTableContainer">
+                            <!-- سيتم ملؤه ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- قسم إدارة الإشعارات - لرئيس النادي فقط -->
@@ -1124,86 +1191,114 @@
                     </div>
                     <div class="card-body">
                         <div class="positions-hierarchy">
-                            <!-- المستوى 10: رئيس النادي -->
+                            <!-- المستوى 10: رئيس نادي أدِيب -->
                             <div class="position-level" data-level="10">
                                 <div class="position-level-header">
                                     <div class="position-level-badge" style="background: #dc2626;">
                                         <i class="fa-solid fa-crown"></i>
-                                        <span>المستوى 10</span>
+                                        <span>رئيس نادي أدِيب</span>
                                     </div>
-                                    <h4>رئيس النادي</h4>
+                                    <h4>رئيس نادي أدِيب</h4>
                                 </div>
                                 <div class="position-members" id="level-10-members">
                                     <!-- سيتم ملؤها ديناميكياً -->
                                 </div>
                             </div>
 
-                            <!-- المستوى 9: قائد مجلس أعلى -->
+                            <!-- المستوى 9: قائد لجنة الموارد البشرية -->
                             <div class="position-level" data-level="9">
                                 <div class="position-level-header">
                                     <div class="position-level-badge" style="background: #ea580c;">
                                         <i class="fa-solid fa-user-shield"></i>
-                                        <span>المستوى 9</span>
+                                        <span>قائد لجنة الموارد البشرية</span>
                                     </div>
-                                    <h4>قائد مجلس أعلى</h4>
+                                    <h4>قائد لجنة الموارد البشرية</h4>
                                 </div>
                                 <div class="position-members" id="level-9-members">
                                     <!-- سيتم ملؤها ديناميكياً -->
                                 </div>
                             </div>
 
-                            <!-- المستوى 8: قائد لجنة -->
+                            <!-- المستوى 8: قائد لجنة الضمان والجودة -->
                             <div class="position-level" data-level="8">
                                 <div class="position-level-header">
                                     <div class="position-level-badge" style="background: #f59e0b;">
-                                        <i class="fa-solid fa-users-gear"></i>
-                                        <span>المستوى 8</span>
+                                        <i class="fa-solid fa-shield-halved"></i>
+                                        <span>قائد لجنة الضمان والجودة</span>
                                     </div>
-                                    <h4>قائد لجنة</h4>
+                                    <h4>قائد لجنة الضمان والجودة</h4>
                                 </div>
                                 <div class="position-members" id="level-8-members">
                                     <!-- سيتم ملؤها ديناميكياً -->
                                 </div>
                             </div>
 
-                            <!-- المستوى 7: نائب قائد لجنة -->
+                            <!-- المستوى 7: عضو إداري -->
                             <div class="position-level" data-level="7">
                                 <div class="position-level-header">
                                     <div class="position-level-badge" style="background: #eab308;">
                                         <i class="fa-solid fa-user-gear"></i>
-                                        <span>المستوى 7</span>
+                                        <span>عضو إداري</span>
                                     </div>
-                                    <h4>نائب قائد لجنة</h4>
+                                    <h4>عضو إداري</h4>
                                 </div>
                                 <div class="position-members" id="level-7-members">
                                     <!-- سيتم ملؤها ديناميكياً -->
                                 </div>
                             </div>
 
-                            <!-- المستوى 6: عضو لجنة -->
+                            <!-- المستوى 6: رئيس المجلس التنفيذي -->
                             <div class="position-level" data-level="6">
                                 <div class="position-level-header">
-                                    <div class="position-level-badge" style="background: #84cc16;">
-                                        <i class="fa-solid fa-user-tag"></i>
-                                        <span>المستوى 6</span>
+                                    <div class="position-level-badge" style="background: #f97316;">
+                                        <i class="fa-solid fa-user-tie"></i>
+                                        <span>رئيس المجلس التنفيذي</span>
                                     </div>
-                                    <h4>عضو لجنة</h4>
+                                    <h4>رئيس المجلس التنفيذي</h4>
                                 </div>
                                 <div class="position-members" id="level-6-members">
                                     <!-- سيتم ملؤها ديناميكياً -->
                                 </div>
                             </div>
 
-                            <!-- المستوى 5: عضو نادي -->
+                            <!-- المستوى 5: قائد لجنة -->
                             <div class="position-level" data-level="5">
+                                <div class="position-level-header">
+                                    <div class="position-level-badge" style="background: #84cc16;">
+                                        <i class="fa-solid fa-users-gear"></i>
+                                        <span>قائد لجنة</span>
+                                    </div>
+                                    <h4>قائد لجنة</h4>
+                                </div>
+                                <div class="position-members" id="level-5-members">
+                                    <!-- سيتم ملؤها ديناميكياً -->
+                                </div>
+                            </div>
+
+                            <!-- المستوى 4: نائب قائد لجنة -->
+                            <div class="position-level" data-level="4">
+                                <div class="position-level-header">
+                                    <div class="position-level-badge" style="background: #22c55e;">
+                                        <i class="fa-solid fa-user-tag"></i>
+                                        <span>نائب قائد لجنة</span>
+                                    </div>
+                                    <h4>نائب قائد لجنة</h4>
+                                </div>
+                                <div class="position-members" id="level-4-members">
+                                    <!-- سيتم ملؤها ديناميكياً -->
+                                </div>
+                            </div>
+
+                            <!-- المستوى 3: عضو لجنة -->
+                            <div class="position-level" data-level="3">
                                 <div class="position-level-header">
                                     <div class="position-level-badge" style="background: #10b981;">
                                         <i class="fa-solid fa-user"></i>
-                                        <span>المستوى 5</span>
+                                        <span>عضو لجنة</span>
                                     </div>
-                                    <h4>عضو نادي</h4>
+                                    <h4>عضو لجنة</h4>
                                 </div>
-                                <div class="position-members" id="level-5-members">
+                                <div class="position-members" id="level-3-members">
                                     <!-- سيتم ملؤها ديناميكياً -->
                                 </div>
                             </div>
@@ -3241,6 +3336,7 @@
     <script src="js/users-manager.js"></script>
     <script src="js/member-data-manager.js?v=20260131-6"></script>
     <script src="js/positions-manager.js"></script>
+    <script src="js/committee-members-manager.js"></script>
     <script src="js/stats-counter.js"></script>
     <script src="js/modal-manager.js"></script>
     <script src="dashboard.js"></script>

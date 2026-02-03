@@ -166,12 +166,14 @@ Deno.serve(async (req: Request) => {
       throw new Error('Failed to update password');
     }
 
-    // حفظ بيانات العضو
+    // حفظ بيانات العضو (استخدام upsert لتجنب أخطاء التكرار)
     const { error: insertError } = await supabaseClient
       .from('member_details')
-      .insert({
+      .upsert({
         user_id: tokenData.user_id,
         ...member_details
+      }, {
+        onConflict: 'user_id'
       });
 
     if (insertError) {

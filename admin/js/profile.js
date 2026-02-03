@@ -13,6 +13,19 @@
      */
     async function init(user) {
         currentUser = user;
+        
+        // جلب role_level من user_roles
+        const { data: userRoleData } = await window.sbClient
+            .from('user_roles')
+            .select('role:roles(role_level)')
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .single();
+        
+        if (userRoleData && userRoleData.role) {
+            currentUser.role_level = userRoleData.role.role_level;
+        }
+        
         const memberDetails = await loadProfileData();
         await loadRecentActivity();
         
@@ -231,14 +244,16 @@
      */
     function getRoleInfo(roleLevel) {
         const levels = {
-            10: { name: 'رئيس النادي', color: '#dc2626' },
-            9: { name: 'قائد مجلس أعلى', color: '#ea580c' },
-            8: { name: 'قائد لجنة', color: '#f59e0b' },
-            7: { name: 'نائب قائد لجنة', color: '#eab308' },
-            6: { name: 'عضو لجنة', color: '#84cc16' },
-            5: { name: 'عضو نادي', color: '#10b981' }
+            10: { name: 'رئيس نادي أدِيب', color: '#dc2626' },
+            9: { name: 'قائد لجنة الموارد البشرية', color: '#ea580c' },
+            8: { name: 'قائد لجنة الضمان والجودة', color: '#f59e0b' },
+            7: { name: 'عضو إداري', color: '#eab308' },
+            6: { name: 'رئيس المجلس التنفيذي', color: '#f97316' },
+            5: { name: 'قائد لجنة', color: '#84cc16' },
+            4: { name: 'نائب قائد لجنة', color: '#22c55e' },
+            3: { name: 'عضو لجنة', color: '#10b981' }
         };
-        return levels[roleLevel] || { name: 'عضو', color: '#64748b' };
+        return levels[roleLevel] || { name: 'عضو لجنة', color: '#64748b' };
     }
 
     /**
@@ -752,14 +767,25 @@
                 return;
             }
 
-            // جلب قائد اللجنة
-            const { data: leader } = await window.sbClient
+            // جلب قائد اللجنة (role_id: 7 = قائد لجنة، 8 = نائب قائد لجنة)
+            const { data: leaders, error: leadersError } = await window.sbClient
                 .from('user_roles')
-                .select('user_id, profiles(full_name)')
+                .select('user_id, role_id, profiles!user_roles_user_id_fkey(full_name), roles(role_name_ar)')
                 .eq('committee_id', userRole.committee_id)
                 .eq('is_active', true)
-                .in('role_id', [7]) // role_id 7 = قائد لجنة
-                .single();
+                .in('role_id', [7, 8]) // 7 = قائد لجنة، 8 = نائب قائد لجنة
+                .order('role_id', { ascending: true }); // قائد اللجنة أولاً
+
+            if (leadersError) {
+                console.error('خطأ في جلب قادة اللجنة:', leadersError);
+            }
+            
+            console.log('قادة اللجنة:', leaders);
+
+            // اختيار القائد أو النائب
+            const mainLeader = leaders?.find(l => l.role_id === 7); // قائد اللجنة
+            const viceLeader = leaders?.find(l => l.role_id === 8); // نائب قائد اللجنة
+            const displayLeader = mainLeader || viceLeader;
 
             // عد أعضاء اللجنة
             const { count: totalMembers } = await window.sbClient
@@ -779,14 +805,21 @@
             const myLeaderDisplay = document.getElementById('myCommitteeLeader');
             const myMembersCountEl = document.getElementById('myCommitteeMembersCount');
             
+            // تنسيق عرض القائد/النائب
+            let leaderText = 'غير محدد';
+            if (displayLeader?.profiles?.full_name) {
+                const roleTitle = displayLeader.roles?.role_name_ar || (displayLeader.role_id === 7 ? 'قائد اللجنة' : 'نائب قائد اللجنة');
+                leaderText = `${displayLeader.profiles.full_name} (${roleTitle})`;
+            }
+            
             if (nameDisplay) nameDisplay.textContent = committee.committee_name_ar;
             if (description) description.textContent = committee.description || 'لا يوجد تعريف متاح';
-            if (leaderDisplay) leaderDisplay.textContent = leader?.profiles?.full_name || 'غير محدد';
+            if (leaderDisplay) leaderDisplay.textContent = leaderText;
             if (membersCountEl) membersCountEl.textContent = totalMembers || 0;
             
             if (myNameDisplay) myNameDisplay.textContent = committee.committee_name_ar;
             if (myDescription) myDescription.textContent = committee.description || 'لا يوجد تعريف متاح';
-            if (myLeaderDisplay) myLeaderDisplay.textContent = leader?.profiles?.full_name || 'غير محدد';
+            if (myLeaderDisplay) myLeaderDisplay.textContent = leaderText;
             if (myMembersCountEl) myMembersCountEl.textContent = totalMembers || 0;
 
             // عرض رابط القروب إذا كان موجوداً
@@ -846,6 +879,12 @@
             if (cardRole) {
                 const roleInfo = getRoleInfo(currentUser.role_level);
                 cardRole.textContent = roleInfo.name;
+            }
+
+            const cardType = document.getElementById('cardType');
+            if (cardType) {
+                const roleInfo = getRoleInfo(currentUser.role_level);
+                cardType.textContent = roleInfo.name;
             }
 
             const cardJoinDate = document.getElementById('cardJoinDate');

@@ -52,7 +52,9 @@ class PositionsManager {
 
         let html = '<option value="">اختر المنصب</option>';
         this.roles.forEach(role => {
-            html += `<option value="${role.id}" data-level="${role.role_level}" data-name="${role.role_name}">${role.role_name_ar}</option>`;
+            if (role.role_name !== 'committee_member') {
+                html += `<option value="${role.id}" data-level="${role.role_level}" data-name="${role.role_name}">${role.role_name_ar}</option>`;
+            }
         });
         select.innerHTML = html;
     }
@@ -150,11 +152,13 @@ class PositionsManager {
             const { data: userRoles, error } = await this.supabase
                 .from('user_roles')
                 .select(`
-                    id,
-                    user_id,
-                    role_id,
-                    committee_id,
-                    is_active,
+                    *,
+                    profile:user_id(
+                        id,
+                        full_name,
+                        email,
+                        avatar_url
+                    ),
                     role:roles(
                         role_name_ar,
                         role_level
@@ -172,29 +176,9 @@ class PositionsManager {
 
             console.log('Loaded user roles:', userRoles);
 
-            // جلب معلومات المستخدمين
-            const userIds = [...new Set(userRoles?.map(ur => ur.user_id) || [])];
-            const { data: profiles, error: profilesError } = await this.supabase
-                .from('profiles')
-                .select('id, full_name, email, avatar_url')
-                .in('id', userIds);
-
-            if (profilesError) {
-                console.error('Error loading profiles:', profilesError);
-                throw profilesError;
-            }
-
-            console.log('Loaded profiles:', profiles);
-
-            // دمج البيانات
-            const userRolesWithProfiles = userRoles?.map(ur => ({
-                ...ur,
-                profile: profiles?.find(p => p.id === ur.user_id)
-            })) || [];
-
-            const levels = [10, 9, 8, 7, 6, 5];
+            const levels = [10, 9, 8, 7, 6, 5, 4, 3];
             for (const level of levels) {
-                const levelMembers = userRolesWithProfiles.filter(ur => ur.role?.role_level === level);
+                const levelMembers = userRoles?.filter(ur => ur.role?.role_level === level) || [];
                 console.log(`Level ${level} members:`, levelMembers);
                 this.renderLevelMembers(level, levelMembers);
             }
@@ -224,6 +208,7 @@ class PositionsManager {
             const committee = member.committee;
             const avatarUrl = profile?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profile?.full_name || 'User');
 
+            const showDeleteButton = level !== 3 && level !== 10;
             html += `
                 <div class="position-member-card" data-user-role-id="${member.id}">
                     <img src="${avatarUrl}" alt="${profile?.full_name}" class="position-member-avatar" />
@@ -231,6 +216,7 @@ class PositionsManager {
                         <h5 class="position-member-name">${profile?.full_name || 'غير محدد'}</h5>
                         ${committee ? `<p class="position-member-committee"><i class="fa-solid fa-users"></i> ${committee.committee_name_ar}</p>` : ''}
                     </div>
+                    ${showDeleteButton ? `
                     <div class="position-member-actions">
                         <button class="btn btn--icon btn--icon-sm btn--outline btn--outline-danger" 
                                 onclick="window.positionsManager.removePosition('${member.id}')" 
@@ -238,6 +224,7 @@ class PositionsManager {
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
+                    ` : ''}
                 </div>
             `;
         });
@@ -431,71 +418,51 @@ class PositionsManager {
         }
 
         try {
-            // الحصول على المستخدم الحالي
-            const { data: { user }, error: userError } = await this.supabase.auth.getUser();
-            if (userError || !user) {
+            const currentUser = await window.AuthManager.getCurrentUser();
+            if (!currentUser) {
                 this.showError('يجب تسجيل الدخول أولاً');
                 return;
             }
 
-            // التحقق من وجود نفس الدور واللجنة
-            const { data: exactMatch, error: exactError } = await this.supabase
+            const { data: existingRoles, error: checkError } = await this.supabase
                 .from('user_roles')
-                .select('id, is_active')
+                .select('id')
+                .eq('user_id', memberId)
+                .eq('is_active', true);
+
+            if (checkError) throw checkError;
+
+            if (existingRoles && existingRoles.length > 0) {
+                await this.supabase
+                    .from('user_roles')
+                    .update({ is_active: false })
+                    .eq('user_id', memberId)
+                    .eq('is_active', true);
+            }
+
+            // حذف أي سجلات قديمة غير نشطة بنفس المفتاح الفريد لتجنب خطأ duplicate key
+            await this.supabase
+                .from('user_roles')
+                .delete()
                 .eq('user_id', memberId)
                 .eq('role_id', roleId)
                 .eq('committee_id', committeeId || null)
-                .maybeSingle();
+                .eq('is_active', false);
 
-            if (exactError) throw exactError;
+            const insertData = {
+                user_id: memberId,
+                role_id: roleId,
+                committee_id: committeeId || null,
+                is_active: true,
+                assigned_by: currentUser.id,
+                notes: notes || null
+            };
 
-            if (exactMatch) {
-                // إذا كان الدور موجود بالفعل، نفعّله فقط
-                const { error: updateError } = await this.supabase
-                    .from('user_roles')
-                    .update({ 
-                        is_active: true,
-                        assigned_by: user.id,
-                        notes: notes || null,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', exactMatch.id);
+            const { error: insertError } = await this.supabase
+                .from('user_roles')
+                .insert(insertData);
 
-                if (updateError) throw updateError;
-            } else {
-                // إلغاء تفعيل جميع الأدوار النشطة الأخرى للمستخدم
-                const { data: existingRoles, error: checkError } = await this.supabase
-                    .from('user_roles')
-                    .select('id')
-                    .eq('user_id', memberId)
-                    .eq('is_active', true);
-
-                if (checkError) throw checkError;
-
-                if (existingRoles && existingRoles.length > 0) {
-                    await this.supabase
-                        .from('user_roles')
-                        .update({ is_active: false })
-                        .eq('user_id', memberId)
-                        .eq('is_active', true);
-                }
-
-                // إضافة الدور الجديد
-                const insertData = {
-                    user_id: memberId,
-                    role_id: roleId,
-                    committee_id: committeeId || null,
-                    is_active: true,
-                    assigned_by: user.id,
-                    notes: notes || null
-                };
-
-                const { error: insertError } = await this.supabase
-                    .from('user_roles')
-                    .insert(insertData);
-
-                if (insertError) throw insertError;
-            }
+            if (insertError) throw insertError;
 
             this.showSuccess('تم تعيين المنصب بنجاح');
             this.resetForm();
@@ -508,19 +475,82 @@ class PositionsManager {
     }
 
     async removePosition(userRoleId) {
-        if (!confirm('هل أنت متأكد من إزالة هذا المنصب؟')) {
-            return;
-        }
-
         try {
-            const { error } = await this.supabase
+            const { data: currentRole, error: fetchError } = await this.supabase
+                .from('user_roles')
+                .select('*, role:roles(role_level, role_name), committee_id')
+                .eq('id', userRoleId)
+                .single();
+
+            if (fetchError) throw fetchError;
+
+            if (currentRole.role?.role_level === 3) {
+                this.showError('لا يمكن إزالة منصب عضو لجنة لأنه أدنى منصب في النظام');
+                return;
+            }
+
+            if (!confirm('هل أنت متأكد من إزالة هذا المنصب؟ سيتم إرجاع العضو لمنصب عضو لجنة.')) {
+                return;
+            }
+
+            const currentUser = await window.AuthManager.getCurrentUser();
+            if (!currentUser) {
+                this.showError('يجب تسجيل الدخول أولاً');
+                return;
+            }
+
+            const { error: deactivateError } = await this.supabase
                 .from('user_roles')
                 .update({ is_active: false })
                 .eq('id', userRoleId);
 
-            if (error) throw error;
+            if (deactivateError) throw deactivateError;
 
-            this.showSuccess('تم إزالة المنصب بنجاح');
+            const committeeMemberRole = this.roles.find(r => r.role_name === 'committee_member');
+            if (!committeeMemberRole) {
+                throw new Error('لم يتم العثور على منصب عضو لجنة');
+            }
+
+            // التحقق من وجود منصب عضو لجنة سابق
+            const { data: existingRole, error: checkError } = await this.supabase
+                .from('user_roles')
+                .select('id')
+                .eq('user_id', currentRole.user_id)
+                .eq('role_id', committeeMemberRole.id)
+                .eq('committee_id', currentRole.committee_id)
+                .maybeSingle();
+
+            if (checkError) throw checkError;
+
+            if (existingRole) {
+                // تفعيل المنصب الموجود
+                const { error: updateError } = await this.supabase
+                    .from('user_roles')
+                    .update({
+                        is_active: true,
+                        assigned_by: currentUser.id,
+                        notes: 'تم الإرجاع تلقائياً بعد إزالة المنصب'
+                    })
+                    .eq('id', existingRole.id);
+
+                if (updateError) throw updateError;
+            } else {
+                // إنشاء منصب جديد
+                const { error: insertError } = await this.supabase
+                    .from('user_roles')
+                    .insert({
+                        user_id: currentRole.user_id,
+                        role_id: committeeMemberRole.id,
+                        committee_id: currentRole.committee_id,
+                        is_active: true,
+                        assigned_by: currentUser.id,
+                        notes: 'تم الإرجاع تلقائياً بعد إزالة المنصب'
+                    });
+
+                if (insertError) throw insertError;
+            }
+
+            this.showSuccess('تم إزالة المنصب وإرجاع العضو لمنصب عضو لجنة');
             await this.loadStats();
             await this.loadPositionsHierarchy();
         } catch (error) {

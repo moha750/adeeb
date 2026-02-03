@@ -113,11 +113,11 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Failed to create profile: ${profileError.message}`);
     }
 
-    // تعيين دور العضو
+    // تعيين دور العضو (role_level = 3 لعضو لجنة)
     const { data: memberRole } = await supabaseClient
       .from('roles')
       .select('id')
-      .eq('role_level', 5)
+      .eq('role_level', 3)
       .single();
 
     if (memberRole) {
