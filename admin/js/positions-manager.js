@@ -443,13 +443,14 @@ class PositionsManager {
 
             // حذف أي سجلات قديمة بنفس المفتاح الفريد لتجنب خطأ duplicate key
             // يجب الحذف قبل الإدراج لتجنب التعارض
-            const deleteConditions = {
-                user_id: memberId,
-                role_id: roleId
-            };
-            
             if (committeeId) {
-                deleteConditions.committee_id = committeeId;
+                // للمناصب التي تحتاج لجنة
+                await this.supabase
+                    .from('user_roles')
+                    .delete()
+                    .eq('user_id', memberId)
+                    .eq('role_id', roleId)
+                    .eq('committee_id', committeeId);
             } else {
                 // للمناصب التي لا تحتاج لجنة، نحذف السجلات التي committee_id = null
                 await this.supabase
@@ -458,13 +459,6 @@ class PositionsManager {
                     .eq('user_id', memberId)
                     .eq('role_id', roleId)
                     .is('committee_id', null);
-            }
-            
-            if (committeeId) {
-                await this.supabase
-                    .from('user_roles')
-                    .delete()
-                    .match(deleteConditions);
             }
 
             const insertData = {
