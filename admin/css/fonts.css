@@ -80,27 +80,33 @@
    تطبيق الخطوط - Font Application
    ======================================== */
 
+/* 
+   استراتيجية الخطوط:
+   - ERA للأحرف الإنجليزية والأرقام والرموز
+   - Lyon Arabic للأحرف العربية فقط
+*/
+
 /* تطبيق الخطوط على جميع العناصر */
 * {
-    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'ERA', 'Lyon Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* تطبيق خاص للنصوص العربية */
+/* تطبيق خاص للنصوص */
 body,
 html {
-    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'ERA', 'Lyon Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* العناوين */
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'ERA', 'Lyon Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-weight: 700;
 }
 
 /* الأزرار */
 button,
 .btn {
-    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'ERA', 'Lyon Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-weight: 500;
 }
 
@@ -108,12 +114,12 @@ button,
 input,
 textarea,
 select {
-    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'ERA', 'Lyon Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* الروابط */
 a {
-    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'ERA', 'Lyon Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* النصوص العادية */
@@ -121,21 +127,21 @@ p,
 span,
 div,
 label {
-    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'ERA', 'Lyon Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* القوائم */
 ul,
 ol,
 li {
-    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'ERA', 'Lyon Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* الجداول */
 table,
 th,
 td {
-    font-family: 'Lyon Arabic', 'ERA', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'ERA', 'Lyon Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* الأيقونات - استثناء Font Awesome */

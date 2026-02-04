@@ -1,0 +1,481 @@
+/**
+ * تنسيقات الفلاتر - نادي أدِيب
+ * نظام موحد لتصميم الفلاتر وأشرطة البحث
+ */
+
+/* شريط الفلاتر الرئيسي */
+.filters-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+/* مجموعة الفلتر */
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    flex: 1;
+    min-width: 200px;
+    transition: all 0.2s ease;
+}
+
+.filter-group:focus-within {
+    background: white;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-group i {
+    color: #9ca3af;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.filter-group input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.875rem;
+    color: #1f2937;
+    font-family: inherit;
+}
+
+.filter-group input::placeholder {
+    color: #9ca3af;
+}
+
+/* قائمة الفلتر المنسدلة */
+.filter-select {
+    padding: 0.625rem 1rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    min-width: 150px;
+}
+
+.filter-select:hover {
+    background: white;
+    border-color: #d1d5db;
+}
+
+.filter-select:focus {
+    outline: none;
+    background: white;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* زر الفلتر */
+.filter-button {
+    padding: 0.625rem 1rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.filter-button:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.filter-button:active {
+    transform: scale(0.98);
+}
+
+.filter-button.active {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+}
+
+.filter-button i {
+    font-size: 0.875rem;
+}
+
+/* شريحة الفلتر (Filter Chip) */
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 20px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #1e40af;
+    transition: all 0.2s ease;
+}
+
+.filter-chip-remove {
+    background: transparent;
+    border: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #1e40af;
+    transition: all 0.2s ease;
+    padding: 0;
+    margin: 0;
+}
+
+.filter-chip-remove:hover {
+    background: #bfdbfe;
+}
+
+.filter-chip-remove i {
+    font-size: 0.625rem;
+}
+
+/* حاوية شرائح الفلتر */
+.filter-chips-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.filter-chips-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.filter-chips-clear {
+    background: transparent;
+    border: none;
+    color: #ef4444;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.filter-chips-clear:hover {
+    background: #fee2e2;
+}
+
+/* فلتر التاريخ */
+.filter-date-range {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-date-input {
+    padding: 0.625rem 0.875rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.filter-date-input:focus {
+    outline: none;
+    background: white;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-date-separator {
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+/* فلتر متقدم قابل للطي */
+.filter-advanced {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.filter-advanced-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-advanced-header:hover {
+    background: #f9fafb;
+}
+
+.filter-advanced-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.filter-advanced-toggle {
+    color: #9ca3af;
+    transition: transform 0.2s ease;
+}
+
+.filter-advanced.expanded .filter-advanced-toggle {
+    transform: rotate(180deg);
+}
+
+.filter-advanced-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.filter-advanced.expanded .filter-advanced-body {
+    max-height: 1000px;
+}
+
+.filter-advanced-content {
+    padding: 0 1rem 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+/* شريط الفلاتر المدمج */
+.filters-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.filters-inline .filter-group,
+.filters-inline .filter-select,
+.filters-inline .filter-button {
+    margin: 0;
+}
+
+/* عداد النتائج */
+.filter-results-count {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #0369a1;
+    margin-bottom: 1rem;
+}
+
+.filter-results-count i {
+    color: #0284c7;
+}
+
+.filter-results-count strong {
+    font-weight: 600;
+}
+
+/* حالة الفلتر الفارغة */
+.filter-empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #9ca3af;
+}
+
+.filter-empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #d1d5db;
+}
+
+.filter-empty-state h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.filter-empty-state p {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    margin: 0;
+}
+
+/* أزرار إعادة تعيين الفلاتر */
+.filter-reset {
+    padding: 0.625rem 1rem;
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-reset:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    color: #374151;
+}
+
+.filter-reset:active {
+    transform: scale(0.98);
+}
+
+/* فلتر البحث المتقدم */
+.filter-search-advanced {
+    position: relative;
+}
+
+.filter-search-suggestions {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+}
+
+.filter-search-advanced.active .filter-search-suggestions {
+    display: block;
+}
+
+.filter-suggestion-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.filter-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.filter-suggestion-item:hover {
+    background: #f9fafb;
+}
+
+.filter-suggestion-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: #f0f9ff;
+    color: #3b82f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+}
+
+.filter-suggestion-content {
+    flex: 1;
+}
+
+.filter-suggestion-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1f2937;
+    margin-bottom: 0.125rem;
+}
+
+.filter-suggestion-meta {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+/* التوافق مع الشاشات الصغيرة */
+@media (max-width: 768px) {
+    .filters-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-group,
+    .filter-select,
+    .filter-button {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .filter-advanced-content {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-date-range {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-date-input {
+        width: 100%;
+    }
+}
+
+/* تأثيرات الحركة */
+@keyframes filterSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.filter-group,
+.filter-select,
+.filter-button {
+    animation: filterSlideIn 0.3s ease;
+}

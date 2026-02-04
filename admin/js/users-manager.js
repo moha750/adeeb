@@ -59,11 +59,18 @@ class UsersManager {
                     .limit(1);
 
                 // فحص حالة التفعيل من member_onboarding_tokens
-                const { data: token } = await this.supabase
-                    .from('member_onboarding_tokens')
-                    .select('is_used')
-                    .eq('user_id', user.id)
-                    .single();
+                let token = null;
+                try {
+                    const { data } = await this.supabase
+                        .from('member_onboarding_tokens')
+                        .select('is_used')
+                        .eq('user_id', user.id)
+                        .maybeSingle();
+                    token = data;
+                } catch (error) {
+                    // تجاهل أخطاء RLS - قد يكون المستخدم في وضع التنكر
+                    console.debug('Could not fetch token for user:', user.id);
+                }
 
                 // تحديد الحالة الفعلية
                 let actualStatus = user.account_status;
@@ -440,6 +447,17 @@ class UsersManager {
             });
         }
 
+        // زر التنكر كمستخدم
+        const impersonateBtn = document.getElementById('impersonateUserBtn');
+        if (impersonateBtn) {
+            this.checkImpersonationPermission(impersonateBtn);
+            impersonateBtn.addEventListener('click', () => {
+                if (window.ImpersonationManager) {
+                    window.ImpersonationManager.openImpersonationDialog();
+                }
+            });
+        }
+
         // أزرار عرض التفاصيل وتعديل وإنهاء العضوية
         document.addEventListener('click', (e) => {
             if (e.target.closest('.btn-view-user')) {
@@ -644,6 +662,18 @@ class UsersManager {
                 icon: 'error',
                 confirmButtonText: 'حسناً'
             });
+        }
+    }
+
+    /**
+     * التحقق من صلاحية التنكر وإظهار الزر
+     */
+    async checkImpersonationPermission(button) {
+        if (window.ImpersonationManager) {
+            const canImpersonate = await window.ImpersonationManager.canImpersonate();
+            if (canImpersonate) {
+                button.style.display = 'block';
+            }
         }
     }
 

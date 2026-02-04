@@ -104,61 +104,74 @@
             section: 'membership-card-section'
         });
         
-        // لوحة المعلومات - متاحة للجميع
-        menuItems.push({
-            id: 'dashboard',
-            icon: 'fa-chart-line',
-            label: 'لوحة المعلومات',
-            section: 'dashboard-section'
-        });
-        
-        // الأعضاء المعلقين - المستوى 7 وأعلى
+        // شجرة أدِيب - المستوى 7 وأعلى (قائمة منسدلة)
         if (roleLevel >= 7) {
-            menuItems.push({
+            const adeebTreeSubItems = [];
+            
+            // إدارة المستخدمين - المستوى 8 وأعلى
+            if (roleLevel >= 8) {
+                adeebTreeSubItems.push({
+                    id: 'users',
+                    icon: 'fa-users',
+                    label: 'إدارة المستخدمين',
+                    section: 'users-section'
+                });
+            }
+            
+            // إدارة بيانات الأعضاء - المستوى 8 وأعلى
+            if (roleLevel >= 8) {
+                adeebTreeSubItems.push({
+                    id: 'member-data-management',
+                    icon: 'fa-user-gear',
+                    label: 'إدارة بيانات الأعضاء',
+                    section: 'member-data-management-section'
+                });
+            }
+            
+            // تعيين المناصب - المستوى 8 وأعلى
+            if (roleLevel >= 8) {
+                adeebTreeSubItems.push({
+                    id: 'positions',
+                    icon: 'fa-user-tie',
+                    label: 'تعيين المناصب',
+                    section: 'positions-section'
+                });
+            }
+            
+            // التنكر كمستخدم - رئيس النادي فقط (المستوى 10)
+            if (roleLevel >= 10) {
+                adeebTreeSubItems.push({
+                    id: 'impersonation',
+                    icon: 'fa-user-secret',
+                    label: 'التنكر كمستخدم',
+                    section: 'impersonation-section'
+                });
+            }
+            
+            // إدارة اللجان - المستوى 8 وأعلى
+            if (roleLevel >= 8) {
+                adeebTreeSubItems.push({
+                    id: 'committees',
+                    icon: 'fa-sitemap',
+                    label: 'إدارة اللجان',
+                    section: 'committees-section'
+                });
+            }
+            
+            // الأعضاء المعلقين - المستوى 7 وأعلى
+            adeebTreeSubItems.push({
                 id: 'pending-members',
                 icon: 'fa-clock',
                 label: 'الأعضاء المعلقين',
                 section: 'pending-members-section'
             });
-        }
-        
-        // إدارة المستخدمين - المستوى 8 وأعلى
-        if (roleLevel >= 8) {
+            
             menuItems.push({
-                id: 'users',
-                icon: 'fa-users',
-                label: 'إدارة المستخدمين',
-                section: 'users-section'
-            });
-        }
-        
-        // إدارة اللجان - المستوى 8 وأعلى
-        if (roleLevel >= 8) {
-            menuItems.push({
-                id: 'committees',
-                icon: 'fa-sitemap',
-                label: 'إدارة اللجان',
-                section: 'committees-section'
-            });
-        }
-        
-        // إدارة بيانات الأعضاء - المستوى 8 وأعلى
-        if (roleLevel >= 8) {
-            menuItems.push({
-                id: 'member-data-management',
-                icon: 'fa-user-gear',
-                label: 'إدارة بيانات الأعضاء',
-                section: 'member-data-management-section'
-            });
-        }
-        
-        // تعيين المناصب - المستوى 8 وأعلى
-        if (roleLevel >= 8) {
-            menuItems.push({
-                id: 'positions',
-                icon: 'fa-user-tie',
-                label: 'تعيين المناصب',
-                section: 'positions-section'
+                id: 'adeeb-tree',
+                icon: 'fa-tree',
+                label: 'شجرة أدِيب',
+                isDropdown: true,
+                subItems: adeebTreeSubItems
             });
         }
         
@@ -386,6 +399,16 @@
             });
         }
         
+        // الأخبار - المستوى 7 وأعلى (تبويب منفصل)
+        if (roleLevel >= 7) {
+            menuItems.push({
+                id: 'news',
+                icon: 'fa-newspaper',
+                label: 'الأخبار',
+                section: 'website-news-section'
+            });
+        }
+
         // إدارة الموقع - المستوى 7 وأعلى (قائمة منسدلة)
         if (roleLevel >= 7) {
             const websiteSubItems = [
@@ -631,155 +654,10 @@
         }
     }
 
-    // تحميل بيانات لوحة المعلومات
-    async function loadDashboardData() {
-        try {
-            await Promise.all([
-                loadStats(),
-                loadRecentActivities(),
-                loadCharts()
-            ]);
-            
-            // تهيئة مدير الاستبيانات
-            if (window.surveysManager && currentUser) {
-                await window.surveysManager.init(currentUser);
-            }
-        } catch (error) {
-            console.error('Error loading dashboard data:', error);
-        }
-    }
-
-    // تحميل الإحصائيات
-    async function loadStats() {
-        const statsGrid = document.getElementById('statsGrid');
-        if (!statsGrid) return;
-        
-        try {
-            const roleLevel = currentUserRole.role_level;
-            const stats = [];
-            
-            // إحصائيات المستخدمين - للمستوى 8 وأعلى
-            if (roleLevel >= 8) {
-                const { count: usersCount } = await sb
-                    .from('profiles')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('account_status', 'active');
-                
-                stats.push({
-                    icon: 'fa-users',
-                    label: 'الأعضاء النشطين',
-                    value: usersCount || 0,
-                    color: '#3d8fd6'
-                });
-            }
-            
-            
-            // عرض الإحصائيات
-            statsGrid.innerHTML = stats.map(stat => `
-                <div class="stat-card" style="--stat-color: ${stat.color}">
-                    ${stat.badge ? `<div class="stat-badge">${stat.badge}</div>` : ''}
-                    <div class="stat-card-wrapper">
-                        <div class="stat-icon">
-                            <i class="fa-solid ${stat.icon}"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-value">${stat.value}</div>
-                            <div class="stat-label">${stat.label}</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-            
-        } catch (error) {
-            console.error('Error loading stats:', error);
-        }
-    }
-
-    // تحميل النشاطات الأخيرة
-    async function loadRecentActivities() {
-        const container = document.getElementById('recentActivities');
-        if (!container) return;
-        
-        try {
-            const { data: activities } = await sb
-                .from('activity_log')
-                .select(`
-                    *,
-                    user:profiles(full_name, avatar_url)
-                `)
-                .order('created_at', { ascending: false })
-                .limit(10);
-            
-            if (!activities || activities.length === 0) {
-                container.innerHTML = '<div class="empty-state">لا توجد نشاطات حديثة</div>';
-                return;
-            }
-            
-            container.innerHTML = activities.map(activity => `
-                <div class="activity-item">
-                    <div class="activity-avatar">
-                        <img src="${activity.user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(activity.user?.full_name || 'User')}&background=3d8fd6&color=fff`}" alt="${activity.user?.full_name}" />
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-text">
-                            <strong>${activity.user?.full_name || 'مستخدم'}</strong>
-                            ${getActivityText(activity)}
-                        </div>
-                        <div class="activity-time">${formatTimeAgo(activity.created_at)}</div>
-                    </div>
-                </div>
-            `).join('');
-            
-        } catch (error) {
-            console.error('Error loading activities:', error);
-            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل النشاطات</div>';
-        }
-    }
-
-    // تحويل نوع النشاط إلى نص
-    function getActivityText(activity) {
-        const actions = {
-            'login': 'قام بتسجيل الدخول',
-            'logout': 'قام بتسجيل الخروج',
-            'update_user': 'حدّث بيانات مستخدم'
-        };
-        
-        return actions[activity.action_type] || 'قام بنشاط';
-    }
-
-    // تنسيق الوقت النسبي
-    function formatTimeAgo(dateString) {
-        const date = new Date(dateString);
-        const now = new Date();
-        const seconds = Math.floor((now - date) / 1000);
-        
-        if (seconds < 60) return 'منذ لحظات';
-        if (seconds < 3600) return `منذ ${Math.floor(seconds / 60)} دقيقة`;
-        if (seconds < 86400) return `منذ ${Math.floor(seconds / 3600)} ساعة`;
-        if (seconds < 604800) return `منذ ${Math.floor(seconds / 86400)} يوم`;
-        
-        return date.toLocaleDateString('ar-SA');
-    }
-
-    // تحميل الرسوم البيانية
-    async function loadCharts() {
-        if (chartsLoaded) return;
-        chartsLoaded = true;
-        
-        try {
-            // تم حذف الرسوم البيانية للمهام والمشاريع
-        } catch (error) {
-            console.error('Error loading charts:', error);
-            chartsLoaded = false;
-        }
-    }
 
     // تحميل بيانات القسم
     async function loadSectionData(sectionId) {
         switch(sectionId) {
-            case 'dashboard-section':
-                loadDashboardData();
-                break;
             case 'pending-members-section':
                 if (window.PendingMembersManager && !window.pendingMembersManagerInstance) {
                     window.pendingMembersManagerInstance = new window.PendingMembersManager();
@@ -794,6 +672,11 @@
                 }
                 if (window.usersManagerInstance) {
                     await window.usersManagerInstance.init();
+                }
+                break;
+            case 'impersonation-section':
+                if (window.ImpersonationManager) {
+                    await window.ImpersonationManager.initImpersonationPage();
                 }
                 break;
             case 'committees-section':
@@ -921,21 +804,39 @@
                     window.settingsManager.init();
                 }
                 break;
+            case 'website-news-section':
+                if (window.NewsManager && currentUser) {
+                    await window.NewsManager.init(currentUser);
+                }
+                break;
+            case 'website-works-section':
+                if (window.WorksManager && currentUser) {
+                    await window.WorksManager.init(currentUser);
+                }
+                break;
+            case 'website-sponsors-section':
+                if (window.SponsorsManager && currentUser) {
+                    await window.SponsorsManager.init(currentUser);
+                }
+                break;
             case 'site-visits-section':
                 await loadSiteVisitsSection();
                 break;
             case 'surveys-all-section':
                 if (window.surveysManager) {
+                    if (currentUser) await window.surveysManager.init(currentUser);
                     await window.surveysManager.loadAllSurveys();
                 }
                 break;
             case 'surveys-create-section':
                 if (window.surveysManager) {
+                    if (currentUser) await window.surveysManager.init(currentUser);
                     await window.surveysManager.showCreateForm();
                 }
                 break;
             case 'surveys-results-statistics-section':
                 if (window.surveysManager) {
+                    if (currentUser) await window.surveysManager.init(currentUser);
                     await window.surveysManager.loadResults();
                     // التبديل إلى عرض الإحصائيات
                     if (window.resultsViewSwitcher) {
@@ -945,6 +846,7 @@
                 break;
             case 'surveys-results-responses-section':
                 if (window.surveysManager) {
+                    if (currentUser) await window.surveysManager.init(currentUser);
                     await window.surveysManager.loadResults();
                     // التبديل إلى عرض الاستجابات
                     if (window.resultsViewSwitcher) {
@@ -954,6 +856,7 @@
                 break;
             case 'surveys-results-analytics-section':
                 if (window.surveysManager) {
+                    if (currentUser) await window.surveysManager.init(currentUser);
                     await window.surveysManager.loadResults();
                     // التبديل إلى عرض التحليلات
                     if (window.resultsViewSwitcher) {
@@ -963,6 +866,7 @@
                 break;
             case 'surveys-templates-section':
                 if (window.surveysManager) {
+                    if (currentUser) await window.surveysManager.init(currentUser);
                     await window.surveysManager.loadTemplates();
                 }
                 break;
@@ -1217,15 +1121,15 @@
                     <tbody>
                         ${achievements.map(achievement => `
                             <tr>
-                                <td><i class="${achievement.icon || 'fa-solid fa-trophy'}" style="font-size: 1.5rem; color: var(--accent-blue);"></i></td>
+                                <td><i class="${achievement.icon_class || 'fa-solid fa-trophy'}" style="font-size: 1.5rem; color: var(--accent-blue);"></i></td>
                                 <td><strong>${achievement.label}</strong></td>
-                                <td>${achievement.count}${achievement.plus ? '+' : ''}</td>
+                                <td>${achievement.count_number || 0}${achievement.plus_flag ? '+' : ''}</td>
                                 <td>${achievement.order || 0}</td>
                                 <td class="action-buttons">
-                                    <button class="btn-sm btn-outline" onclick="editAchievement(${achievement.id})">
+                                    <button class="btn-sm btn-outline" onclick="editAchievement('${achievement.id}')">
                                         <i class="fa-solid fa-edit"></i>
                                     </button>
-                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteAchievement(${achievement.id})">
+                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteAchievement('${achievement.id}')">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </td>

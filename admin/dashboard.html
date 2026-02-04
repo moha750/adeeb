@@ -22,10 +22,13 @@
     <link rel="stylesheet" href="css/cards.css" />
     <link rel="stylesheet" href="css/stats-cards.css" />
     <link rel="stylesheet" href="css/item-cards.css" />
-    <link rel="stylesheet" href="css/modals.css" />
+    <link rel="stylesheet" href="css/form-inputs.css" />
     <link rel="stylesheet" href="css/membership-card.css" />
     <link rel="stylesheet" href="css/positions.css" />
     <link rel="stylesheet" href="css/committee-members.css" />
+    <link rel="stylesheet" href="css/impersonation.css" />
+    <link rel="stylesheet" href="css/modals.css" />
+    <link rel="stylesheet" href="css/filters.css" />
 </head>
 
 <body>
@@ -109,77 +112,152 @@
 
         <!-- المحتوى الرئيسي -->
         <main class="admin-main" id="mainContent">
-            <!-- لوحة المعلومات الرئيسية -->
-            <section id="dashboard-section" class="admin-section">
+
+            <!-- قسم التنكر كمستخدم -->
+            <section id="impersonation-section" class="admin-section d-none">
                 <div class="section-header">
                     <h1>
-                        <i class="fa-solid fa-chart-line"></i>
-                        لوحة المعلومات
+                        <i class="fa-solid fa-user-secret"></i>
+                        التنكر كمستخدم
                     </h1>
-                    <p class="section-subtitle">نظرة عامة على أداء النادي</p>
+                    <p class="section-subtitle">إدارة جلسات التنكر وعرض السجل الكامل</p>
+                    <button class="btn btn--primary" id="startImpersonationBtn">
+                        <i class="fa-solid fa-user-secret"></i>
+                        بدء التنكر
+                    </button>
                 </div>
 
-                <!-- بطاقات الإحصائيات -->
-                <div class="stats-grid" id="statsGrid">
-                    <!-- سيتم ملؤها ديناميكياً -->
-                </div>
-
-                <!-- مجموعات أدِيب -->
-                <div class="card mb-2rem">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-users"></i> مجموعات أدِيب</h3>
-                    </div>
+                <!-- تحذير أمني -->
+                <div class="card" style="background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%); border: 2px solid #ffc107; margin-bottom: 1.5rem;">
                     <div class="card-body">
-                        <div class="d-grid gap-1-5rem">
-                            <!-- مجلس أدِيب العام -->
-                            <div class="group-card group-card--primary">
-                                <div class="group-card__content">
-                                    <div class="group-card__icon group-card__icon--primary">
-                                        <i class="fa-solid fa-users"></i>
-                                    </div>
-                                    <div class="group-card__info">
-                                        <h4 class="group-card__title">قروب مجلس أدِيب العام</h4>
-                                        <p class="group-card__description">مجلس عام لجميع الأُدباء للنقاشات العامة والدردشة</p>
-                                    </div>
-                                    <a href="#" id="generalGroupLink" class="btn btn--primary">
-                                        <i class="fa-brands fa-whatsapp"></i>
-                                        انضم الآن
-                                    </a>
-                                </div>
-                            </div>
-
-                            <!-- مجلس أدِيبات -->
-                            <div class="group-card group-card--purple">
-                                <div class="group-card__content">
-                                    <div class="group-card__icon group-card__icon--purple">
-                                        <i class="fa-solid fa-user-group"></i>
-                                    </div>
-                                    <div class="group-card__info">
-                                        <h4 class="group-card__title">قروب مجلس أدِيبات</h4>
-                                        <p class="group-card__description">مجلس خاص للأديبات البنات فقط</p>
-                                    </div>
-                                    <a href="#" id="femaleGroupLink" class="btn btn--primary btn--purple">
-                                        <i class="fa-brands fa-whatsapp"></i>
-                                        انضم الآن
-                                    </a>
-                                </div>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <i class="fa-solid fa-exclamation-triangle" style="font-size: 2rem; color: #856404;"></i>
+                            <div>
+                                <h3 style="color: #856404; margin-bottom: 0.5rem; font-weight: 600;">تحذير أمني</h3>
+                                <p style="color: #856404; margin: 0;">
+                                    هذه الميزة متاحة لرئيس النادي فقط. جميع جلسات التنكر يتم تسجيلها بالكامل مع التاريخ والوقت والسبب.
+                                    استخدم هذه الميزة فقط عند الضرورة القصوى لاستكشاف المشاكل أو دعم المستخدمين.
+                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- النشاطات الأخيرة -->
+                <!-- إحصائيات التنكر -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                    <div class="stat-card" style="--stat-color: #3b82f6;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalImpersonationsCount">0</div>
+                                <div class="stat-label">إجمالي الجلسات</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="activeImpersonationsCount">0</div>
+                                <div class="stat-label">الجلسات النشطة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #3d8fd6;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-calendar-days"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="thisMonthImpersonationsCount">0</div>
+                                <div class="stat-label">هذا الشهر</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #f59e0b;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="uniqueUsersImpersonatedCount">0</div>
+                                <div class="stat-label">مستخدمين مختلفين</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- الجلسة النشطة (إن وجدت) -->
+                <div id="activeImpersonationCard" class="card" style="display: none; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 2px solid #dc2626; margin-bottom: 1.5rem;">
+                    <div class="card-body">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="color: #991b1b; margin-bottom: 0.5rem; font-weight: 600;">
+                                    <i class="fa-solid fa-circle-dot" style="animation: pulse 2s ease-in-out infinite;"></i>
+                                    جلسة تنكر نشطة
+                                </h3>
+                                <p style="color: #991b1b; margin: 0; font-size: 0.875rem;">يوجد حالياً جلسة تنكر نشطة</p>
+                            </div>
+                            <button class="btn btn--danger btn--sm" id="endActiveImpersonationBtn">
+                                <i class="fa-solid fa-stop"></i>
+                                إنهاء الجلسة
+                            </button>
+                        </div>
+                        <div id="activeImpersonationDetails" style="background: white; border-radius: 0.5rem; padding: 1rem;">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- سجل التنكر -->
                 <div class="card">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-clock-rotate-left"></i> النشاطات الأخيرة</h3>
-                        <button class="btn btn--outline btn--outline-primary btn--sm" id="refreshActivities">
-                            <i class="fa-solid fa-rotate"></i>
-                            تحديث
-                        </button>
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600;">
+                            <i class="fa-solid fa-history"></i>
+                            سجل التنكر
+                        </h2>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn--outline btn--outline-primary btn--sm" id="refreshImpersonationHistoryBtn">
+                                <i class="fa-solid fa-refresh"></i>
+                                تحديث
+                            </button>
+                            <button class="btn btn--outline btn--outline-secondary btn--sm" id="exportImpersonationHistoryBtn">
+                                <i class="fa-solid fa-download"></i>
+                                تصدير
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <div id="recentActivities" class="activities-list">
-                            <!-- سيتم ملؤها ديناميكياً -->
+                        <!-- فلاتر البحث -->
+                        <div class="filters-bar" style="margin-bottom: 1rem;">
+                            <div class="filter-group">
+                                <i class="fa-solid fa-search"></i>
+                                <input type="text" id="impersonationSearchInput" placeholder="البحث في السجل..." />
+                            </div>
+                            <select id="impersonationStatusFilter" class="filter-select">
+                                <option value="">جميع الحالات</option>
+                                <option value="active">نشط</option>
+                                <option value="ended">منتهي</option>
+                            </select>
+                            <select id="impersonationDateFilter" class="filter-select">
+                                <option value="">كل الفترات</option>
+                                <option value="today">اليوم</option>
+                                <option value="week">هذا الأسبوع</option>
+                                <option value="month">هذا الشهر</option>
+                                <option value="custom">فترة مخصصة</option>
+                            </select>
+                        </div>
+
+                        <!-- جدول السجل -->
+                        <div id="impersonationHistoryTable" class="data-table">
+                            <div style="text-align: center; padding: 3rem; color: #6b7280;">
+                                <i class="fa-solid fa-spinner fa-spin fa-3x" style="margin-bottom: 1rem;"></i>
+                                <p>جاري تحميل السجل...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -233,10 +311,16 @@
                         <i class="fa-solid fa-users"></i>
                         إدارة المستخدمين
                     </h1>
-                    <button class="btn btn--primary" id="addUserBtn">
-                        <i class="fa-solid fa-user-plus"></i>
-                        إضافة مستخدم
-                    </button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn--secondary" id="impersonateUserBtn" style="display: none;">
+                            <i class="fa-solid fa-user-secret"></i>
+                            التنكر كمستخدم
+                        </button>
+                        <button class="btn btn--primary" id="addUserBtn">
+                            <i class="fa-solid fa-user-plus"></i>
+                            إضافة مستخدم
+                        </button>
+                    </div>
                 </div>
 
                 <!-- بطاقات الإحصائيات -->
@@ -2483,6 +2567,136 @@
                 </div>
             </section>
 
+            <!-- قسم إدارة الأخبار -->
+            <section id="website-news-section" class="admin-section d-none">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-newspaper"></i>
+                        إدارة الأخبار
+                    </h1>
+                    <button class="btn btn--primary" id="addNewsBtn">
+                        <i class="fa-solid fa-plus"></i>
+                        إضافة خبر جديد
+                    </button>
+                </div>
+
+                <!-- إحصائيات الأخبار -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                    <div class="stat-card" style="--stat-color: #3b82f6;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-newspaper"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalNewsCount">0</div>
+                                <div class="stat-label">إجمالي الأخبار</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="publishedNewsCount">0</div>
+                                <div class="stat-label">أخبار منشورة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #f59e0b;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-star"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="featuredNewsCount">0</div>
+                                <div class="stat-label">أخبار مميزة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #8b5cf6;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-eye"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalNewsViews">0</div>
+                                <div class="stat-label">إجمالي المشاهدات</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلاتر البحث -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="newsSearchInput" placeholder="البحث في الأخبار..." />
+                    </div>
+                    <select id="newsStatusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="draft">مسودة</option>
+                        <option value="published">منشور</option>
+                        <option value="archived">مؤرشف</option>
+                    </select>
+                    <button class="btn btn--outline btn--outline-primary" id="refreshNewsBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                </div>
+
+                <!-- قائمة الأخبار -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="newsListContainer" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم إدارة القيادات -->
+            <section id="website-board-members-section" class="admin-section d-none">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-users-gear"></i>
+                        إدارة القيادات
+                    </h1>
+                    <button class="btn btn--primary" id="addBoardMemberBtn">
+                        <i class="fa-solid fa-plus"></i>
+                        إضافة عضو جديد
+                    </button>
+                </div>
+
+                <!-- فلاتر البحث -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="boardMemberSearchInput" placeholder="البحث في القيادات..." />
+                    </div>
+                    <select id="boardMemberTypeFilter" class="filter-select">
+                        <option value="">جميع المجالس</option>
+                        <option value="supreme_council">المجلس الأعلى</option>
+                        <option value="administrative_council">المجلس الإداري</option>
+                        <option value="executive_council">المجلس التنفيذي</option>
+                    </select>
+                    <button class="btn btn--outline btn--outline-primary" id="refreshBoardMembersBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                </div>
+
+                <!-- قائمة القيادات -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="boardMembersListContainer" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- قسم أعمالنا -->
             <section id="website-works-section" class="admin-section d-none">
                 <div class="section-header">
@@ -3315,6 +3529,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../supabase-config.js"></script>
     <script src="auth-manager.js"></script>
+    <script src="js/impersonation-manager.js"></script>
     <script src="js/results-view-switcher.js"></script>
     <script src="js/contact-messages-manager-new.js"></script>
     <script src="js/newsletter-manager-new.js"></script>
@@ -3340,6 +3555,10 @@
     <script src="js/committee-members-manager.js"></script>
     <script src="js/stats-counter.js"></script>
     <script src="js/modal-manager.js"></script>
+    <script src="js/image-upload-helper.js"></script>
+    <script src="js/news-manager.js"></script>
+    <script src="js/works-manager.js"></script>
+    <script src="js/sponsors-manager.js"></script>
     <script src="dashboard.js"></script>
     <!-- <link rel="stylesheet" href="css/archives.css"> -->
 </body>

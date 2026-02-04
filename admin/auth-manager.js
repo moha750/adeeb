@@ -8,17 +8,37 @@ window.AuthManager = (function() {
 
     /**
      * الحصول على معلومات المستخدم الحالي
+     * يدعم نظام التنكر - إذا كان المستخدم في وضع التنكر، يتم إرجاع بيانات المستخدم المتنكر به
      */
     async function getCurrentUser() {
         try {
             const { data: { session } } = await sb.auth.getSession();
             if (!session) return null;
 
+            let userId = session.user.id;
+            let isImpersonating = false;
+            let realUserId = null;
+
+            // التحقق من وجود جلسة تنكر نشطة
+            if (window.ImpersonationManager) {
+                const impersonation = await window.ImpersonationManager.getActiveImpersonation();
+                if (impersonation && impersonation.adminUserId === session.user.id) {
+                    userId = impersonation.impersonatedUserId;
+                    isImpersonating = true;
+                    realUserId = session.user.id;
+                }
+            }
+
             const { data: profile } = await sb
                 .from('profiles')
                 .select('*')
-                .eq('id', session.user.id)
+                .eq('id', userId)
                 .single();
+
+            if (profile && isImpersonating) {
+                profile._isImpersonating = true;
+                profile._realUserId = realUserId;
+            }
 
             return profile;
         } catch (error) {
@@ -29,9 +49,23 @@ window.AuthManager = (function() {
 
     /**
      * الحصول على أعلى دور للمستخدم
+     * يدعم نظام التنكر - يتم إرجاع دور المستخدم المتنكر به
      */
     async function getUserRole(userId) {
         try {
+            let targetUserId = userId;
+
+            // التحقق من وجود جلسة تنكر نشطة
+            if (window.ImpersonationManager) {
+                const { data: { session } } = await sb.auth.getSession();
+                if (session) {
+                    const impersonation = await window.ImpersonationManager.getActiveImpersonation();
+                    if (impersonation && impersonation.adminUserId === session.user.id && userId === session.user.id) {
+                        targetUserId = impersonation.impersonatedUserId;
+                    }
+                }
+            }
+
             const { data: userRoles, error } = await sb
                 .from('user_roles')
                 .select(`
@@ -39,7 +73,7 @@ window.AuthManager = (function() {
                     role:roles(*),
                     committee:committees(*)
                 `)
-                .eq('user_id', userId)
+                .eq('user_id', targetUserId)
                 .eq('is_active', true);
 
             if (error) {

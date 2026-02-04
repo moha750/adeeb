@@ -5,6 +5,10 @@
 
 (function() {
     const sb = window.sbClient;
+    window.currentUser = null;
+    window.currentSurvey = null;
+    window.allSurveys = [];
+    window.surveyQuestions = [];
     let currentUser = null;
     let currentSurvey = null;
     let allSurveys = [];
@@ -178,6 +182,25 @@
         }
 
         renderSurveyCard(survey) {
+            // التحقق من حالة الاستبيان بناءً على التاريخ
+            let actualStatus = survey.status;
+            const now = new Date();
+            
+            if (survey.status === 'active') {
+                if (survey.end_date) {
+                    const endDate = new Date(survey.end_date);
+                    if (now > endDate) {
+                        actualStatus = 'closed';
+                    }
+                }
+                if (survey.start_date) {
+                    const startDate = new Date(survey.start_date);
+                    if (now < startDate) {
+                        actualStatus = 'paused';
+                    }
+                }
+            }
+
             const statusColors = {
                 draft: '#6b7280',
                 active: '#10b981',
@@ -217,6 +240,8 @@
                 archived: 'badge-secondary'
             };
 
+            const surveyUrl = `${window.location.origin}/surveys/survey.html?id=${survey.id}`;
+
             return `
                 <div class="application-card" data-survey-id="${survey.id}">
                     <div class="application-card-header">
@@ -227,12 +252,13 @@
                             <div class="applicant-details">
                                 <h3 class="applicant-name">${this.escapeHtml(survey.title)}</h3>
                                 <div>
-                                    <span class="badge ${statusBadgeClass[survey.status]}">
-                                        ${statusLabels[survey.status]}
+                                    <span class="badge ${statusBadgeClass[actualStatus]}">
+                                        ${statusLabels[actualStatus]}
                                     </span>
                                     <span class="badge badge-info">
                                         ${typeLabels[survey.survey_type]}
                                     </span>
+                                    ${actualStatus !== survey.status ? '<span class="badge badge-warning" title="تم تحديد الحالة تلقائياً بناءً على التاريخ"><i class="fa-solid fa-clock"></i></span>' : ''}
                                 </div>
                             </div>
                         </div>
@@ -294,13 +320,25 @@
                     </div>
                     
                     <div class="application-card-footer">
-                        <button class="btn-action btn-action-primary" onclick="window.surveysManager.viewResults(${survey.id})" title="النتائج">
-                            <i class="fa-solid fa-chart-bar"></i>
-                            النتائج
+                        <button class="btn-action btn-action-info" onclick="window.surveysManager.previewSurvey(${survey.id})" title="معاينة الاستبيان">
+                            <i class="fa-solid fa-eye"></i>
+                            معاينة
                         </button>
-                        <button class="btn-action btn-action-outline" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل">
+                        <button class="btn-action btn-action-secondary" onclick="window.surveysManager.copySurveyLink(${survey.id})" title="نسخ رابط الاستبيان">
+                            <i class="fa-solid fa-copy"></i>
+                            نسخ الرابط
+                        </button>
+                        <button class="btn-action btn-action-success" onclick="window.surveysManager.shareSurveyModal(${survey.id})" title="نشر على منصات التواصل">
+                            <i class="fa-solid fa-share-nodes"></i>
+                            نشر
+                        </button>
+                        <button class="btn-action btn-action-warning" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل الاستبيان">
                             <i class="fa-solid fa-edit"></i>
                             تعديل
+                        </button>
+                        <button class="btn-action btn-action-primary" onclick="window.surveysManager.viewResults(${survey.id})" title="عرض النتائج">
+                            <i class="fa-solid fa-chart-bar"></i>
+                            النتائج
                         </button>
                     </div>
                 </div>
@@ -665,6 +703,11 @@
 
         async saveSurvey(status) {
             try {
+                if (!currentUser || !currentUser.id) {
+                    this.showError('خطأ في تحديد المستخدم الحالي');
+                    return;
+                }
+
                 const title = document.getElementById('surveyTitle')?.value.trim();
                 if (!title) {
                     this.showError('يرجى إدخال عنوان الاستبيان');
@@ -754,40 +797,6 @@
             window.open(`/surveys/survey.html?id=${surveyId}`, '_blank');
         }
 
-        async editSurvey(surveyId) {
-            try {
-                const { data: survey, error: surveyError } = await sb
-                    .from('surveys')
-                    .select('*')
-                    .eq('id', surveyId)
-                    .single();
-
-                if (surveyError) throw surveyError;
-
-                const { data: questions, error: questionsError } = await sb
-                    .from('survey_questions')
-                    .select('*')
-                    .eq('survey_id', surveyId)
-                    .order('question_order');
-
-                if (questionsError) throw questionsError;
-
-                this.currentEditingSurvey = survey;
-                surveyQuestions = questions || [];
-
-                const createSection = document.querySelector('[data-section="surveys-create-section"]');
-                if (createSection) createSection.click();
-
-                setTimeout(() => {
-                    this.renderSurveyBuilder();
-                    this.setupSaveButtons();
-                }, 100);
-
-            } catch (error) {
-                console.error('Error loading survey for edit:', error);
-                this.showError('حدث خطأ أثناء تحميل الاستبيان');
-            }
-        }
 
         async deleteSurvey(surveyId) {
             if (!confirm('هل أنت متأكد من حذف هذا الاستبيان؟ سيتم حذف جميع الأسئلة والإجابات المرتبطة به.')) {
@@ -811,15 +820,182 @@
             }
         }
 
-        async viewResults(surveyId) {
-            const resultsSection = document.querySelector('[data-section="surveys-results-section"]');
-            if (resultsSection) resultsSection.click();
+        async previewSurvey(surveyId) {
+            const surveyUrl = `${window.location.origin}/surveys/survey.html?id=${surveyId}`;
+            window.open(surveyUrl, '_blank');
+        }
 
-            setTimeout(() => {
-                if (window.surveysResultsEnhanced) {
-                    window.surveysResultsEnhanced.loadSurveyResults(surveyId);
+        async copySurveyLink(surveyId) {
+            const surveyUrl = `${window.location.origin}/surveys/survey.html?id=${surveyId}`;
+            
+            try {
+                await navigator.clipboard.writeText(surveyUrl);
+                this.showSuccess('تم نسخ رابط الاستبيان بنجاح');
+            } catch (err) {
+                this.showCopyLinkModal(surveyUrl);
+            }
+        }
+
+        showCopyLinkModal(url) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-backdrop active';
+            modal.innerHTML = `
+                <div class="modal modal-md active">
+                    <div class="modal-header">
+                        <h3><i class="fa-solid fa-link"></i> رابط الاستبيان</h3>
+                        <button class="modal-close" onclick="this.closest('.modal-backdrop').remove()">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="share-link-container">
+                            <input type="text" class="share-link-input" value="${url}" readonly />
+                            <button class="share-link-copy" onclick="navigator.clipboard.writeText('${url}').then(() => { window.surveysManager.showSuccess('تم النسخ'); this.closest('.modal-backdrop').remove(); })">
+                                <i class="fa-solid fa-copy"></i> نسخ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.body.classList.add('modal-open');
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                    document.body.classList.remove('modal-open');
                 }
-            }, 100);
+            });
+        }
+
+        async shareSurveyModal(surveyId) {
+            const survey = allSurveys.find(s => s.id === surveyId);
+            if (!survey) return;
+            
+            const surveyUrl = `${window.location.origin}/surveys/survey.html?id=${surveyId}`;
+            const shareText = `شارك في استبيان: ${survey.title}`;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal-backdrop active';
+            modal.innerHTML = `
+                <div class="modal modal-md active">
+                    <div class="modal-header">
+                        <h3><i class="fa-solid fa-share-nodes"></i> نشر الاستبيان</h3>
+                        <button class="modal-close" onclick="this.closest('.modal-backdrop').remove(); document.body.classList.remove('modal-open');">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="share-options">
+                            <div class="share-option" onclick="window.open('https://wa.me/?text=${encodeURIComponent(shareText + ' ' + surveyUrl)}', '_blank')">
+                                <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i>
+                                <span>واتساب</span>
+                            </div>
+                            <div class="share-option" onclick="window.open('https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(surveyUrl)}', '_blank')">
+                                <i class="fa-brands fa-x-twitter" style="color: #000000;"></i>
+                                <span>تويتر</span>
+                            </div>
+                            <div class="share-option" onclick="window.open('https://t.me/share/url?url=${encodeURIComponent(surveyUrl)}&text=${encodeURIComponent(shareText)}', '_blank')">
+                                <i class="fa-brands fa-telegram" style="color: #0088cc;"></i>
+                                <span>تيليجرام</span>
+                            </div>
+                            <div class="share-option" onclick="window.open('mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(surveyUrl)}', '_blank')">
+                                <i class="fa-solid fa-envelope" style="color: #ea4335;"></i>
+                                <span>بريد إلكتروني</span>
+                            </div>
+                        </div>
+                        <div class="share-link-container" style="margin-top: 1rem;">
+                            <input type="text" class="share-link-input" value="${surveyUrl}" readonly />
+                            <button class="share-link-copy" onclick="navigator.clipboard.writeText('${surveyUrl}').then(() => window.surveysManager.showSuccess('تم نسخ الرابط'))">
+                                <i class="fa-solid fa-copy"></i> نسخ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.body.classList.add('modal-open');
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                    document.body.classList.remove('modal-open');
+                }
+            });
+        }
+
+        async editSurvey(surveyId) {
+            try {
+                const survey = allSurveys.find(s => s.id === surveyId);
+                if (!survey) {
+                    this.showError('لم يتم العثور على الاستبيان');
+                    return;
+                }
+
+                const { data: questions, error } = await sb
+                    .from('survey_questions')
+                    .select('*')
+                    .eq('survey_id', surveyId)
+                    .order('question_order');
+
+                if (error) throw error;
+
+                this.currentEditingSurvey = survey;
+                surveyQuestions = questions || [];
+
+                const createSection = document.querySelector('[data-section="surveys-create-section"]');
+                if (createSection) {
+                    createSection.click();
+                    
+                    setTimeout(() => {
+                        this.renderSurveyBuilder();
+                        this.populateSurveyForm(survey);
+                        this.setupSaveButtons();
+                    }, 100);
+                }
+            } catch (error) {
+                console.error('Error loading survey for edit:', error);
+                this.showError('حدث خطأ أثناء تحميل الاستبيان');
+            }
+        }
+
+        populateSurveyForm(survey) {
+            document.getElementById('surveyTitle').value = survey.title || '';
+            document.getElementById('surveyDescription').value = survey.description || '';
+            document.getElementById('surveyType').value = survey.survey_type || 'general';
+            document.getElementById('surveyAccessType').value = survey.access_type || 'public';
+            
+            if (survey.start_date) {
+                const startDate = new Date(survey.start_date);
+                document.getElementById('surveyStartDate').value = startDate.toISOString().slice(0, 16);
+            }
+            
+            if (survey.end_date) {
+                const endDate = new Date(survey.end_date);
+                document.getElementById('surveyEndDate').value = endDate.toISOString().slice(0, 16);
+            }
+            
+            document.getElementById('allowMultipleResponses').checked = survey.allow_multiple_responses || false;
+            document.getElementById('allowAnonymous').checked = survey.allow_anonymous || false;
+            document.getElementById('showProgressBar').checked = survey.show_progress_bar !== false;
+            document.getElementById('showResults').checked = survey.show_results_to_participants || false;
+            document.getElementById('welcomeMessage').value = survey.welcome_message || '';
+            document.getElementById('thankYouMessage').value = survey.thank_you_message || 'شكراً لمشاركتك';
+        }
+
+        async viewResults(surveyId) {
+            const statisticsSection = document.querySelector('[data-section="surveys-results-statistics-section"]');
+            if (statisticsSection) {
+                statisticsSection.click();
+                
+                setTimeout(() => {
+                    const selectSurvey = document.getElementById('selectSurveyForResults');
+                    if (selectSurvey) {
+                        selectSurvey.value = surveyId;
+                        selectSurvey.dispatchEvent(new Event('change'));
+                    }
+                }, 200);
+            }
         }
 
         async loadResults() {

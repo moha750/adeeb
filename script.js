@@ -254,23 +254,81 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       const sb = window.sbClient;
       if (sb) {
-        const { data, error } = await sb
-          .from('board_members')
+        const { data: userRoles, error: rolesError } = await sb
+          .from('user_roles')
+          .select('user_id, role_id, committee_id')
+          .eq('is_active', true);
+        
+        if (rolesError) throw rolesError;
+        
+        const { data: roles, error: rolesListError } = await sb
+          .from('roles')
           .select('*')
-          .order('order', { ascending: true, nullsFirst: true })
-          .order('created_at', { ascending: false });
-        if (error) throw error;
-        const arr = Array.isArray(data) ? data : [];
+          .gte('role_level', 4);
+        
+        if (rolesListError) throw rolesListError;
+        
+        const leadershipRoleIds = roles.map(r => r.id);
+        const leadershipUserRoles = userRoles.filter(ur => leadershipRoleIds.includes(ur.role_id));
+        
+        const userIds = [...new Set(leadershipUserRoles.map(ur => ur.user_id))];
+        
+        if (userIds.length === 0) return [];
+        
+        const { data: profiles, error: profilesError } = await sb
+          .from('profiles')
+          .select('*')
+          .in('id', userIds);
+        
+        if (profilesError) throw profilesError;
+        
+        const { data: committees, error: committeesError } = await sb
+          .from('committees')
+          .select('*');
+        
+        if (committeesError) throw committeesError;
+        
+        const arr = leadershipUserRoles.map(ur => {
+          const profile = profiles.find(p => p.id === ur.user_id);
+          const role = roles.find(r => r.id === ur.role_id);
+          const committee = committees.find(c => c.id === ur.committee_id);
+          
+          let positionTitle = role?.role_name_ar || 'غير محدد';
+          
+          if (committee && committee.committee_name_ar) {
+            if (positionTitle === 'قائد لجنة') {
+              positionTitle = `قائد ${committee.committee_name_ar}`;
+            } else if (positionTitle === 'نائب قائد لجنة') {
+              positionTitle = `نائب قائد ${committee.committee_name_ar}`;
+            }
+          }
+          
+          return {
+            id: ur.user_id,
+            full_name: profile?.full_name || 'غير محدد',
+            image_url: profile?.avatar_url,
+            position_title: positionTitle,
+            position_type: role?.role_category,
+            role_level: role?.role_level || 0,
+            committee: committee?.committee_name_ar,
+            bio: profile?.bio,
+            social_links: {
+              email: profile?.email
+            }
+          };
+        }).sort((a, b) => (b.role_level || 0) - (a.role_level || 0));
+        
         return arr;
       }
     } catch (e) {
-      console.warn('Supabase board fetch failed, will try localStorage.', e);
+      console.error('Supabase board fetch failed:', e);
+      console.warn('Will try localStorage.');
     }
     try {
       const raw = localStorage.getItem('adeeb_board');
       const arr = raw ? JSON.parse(raw) : [];
       return Array.isArray(arr)
-        ? arr.slice().sort((a, b) => (a.order ?? 1_000_000) - (b.order ?? 1_000_000) || (new Date(b.created_at || 0) - new Date(a.created_at || 0)))
+        ? arr.slice().sort((a, b) => (b.role_level ?? 0) - (a.role_level ?? 0))
         : [];
     } catch (e) {
       console.warn('LocalStorage board parse failed.', e);
@@ -283,17 +341,18 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!wrapper) return;
     wrapper.innerHTML = '';
     list.forEach((m) => {
-      const img = m.image || m.image_url || '';
-      const name = m.name || '';
-      const pos = m.position || '';
-      const twitter = m.twitter || m.twitter_url || '';
-      const linkedin = m.linkedin || m.linkedin_url || '';
-      const email = m.email || '';
+      const img = m.image_url || m.image || '';
+      const name = m.full_name || m.name || '';
+      const pos = m.position_title || m.position || '';
+      const socialLinks = m.social_links || {};
+      const twitter = socialLinks.twitter || m.twitter || m.twitter_url || '';
+      const linkedin = socialLinks.linkedin || m.linkedin || m.linkedin_url || '';
+      const email = socialLinks.email || m.email || '';
       const slide = document.createElement('div');
       slide.className = 'board-card swiper-slide';
       slide.innerHTML = `
         <div class="board-img-container">
-          <img alt="عضو المجلس الإداري" class="board-img" src="${img}" />
+          <img alt="${name}" class="board-img" src="${img || 'https://via.placeholder.com/300x300?text=أديب'}" />
         </div>
         <div class="board-info">
           <h3>${name}</h3>
