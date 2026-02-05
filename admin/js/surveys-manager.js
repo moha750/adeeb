@@ -925,37 +925,43 @@
         }
 
         async editSurvey(surveyId) {
-            try {
-                const survey = allSurveys.find(s => s.id === surveyId);
-                if (!survey) {
-                    this.showError('لم يتم العثور على الاستبيان');
-                    return;
+            // استخدام نظام Modal الجديد للتعديل
+            if (window.surveyEditModal) {
+                window.surveyEditModal.open(surveyId);
+            } else {
+                // Fallback للطريقة القديمة إذا لم يكن Modal متاحاً
+                try {
+                    const survey = allSurveys.find(s => s.id === surveyId);
+                    if (!survey) {
+                        this.showError('لم يتم العثور على الاستبيان');
+                        return;
+                    }
+
+                    const { data: questions, error } = await sb
+                        .from('survey_questions')
+                        .select('*')
+                        .eq('survey_id', surveyId)
+                        .order('question_order');
+
+                    if (error) throw error;
+
+                    this.currentEditingSurvey = survey;
+                    surveyQuestions = questions || [];
+
+                    const createSection = document.querySelector('[data-section="surveys-create-section"]');
+                    if (createSection) {
+                        createSection.click();
+                        
+                        setTimeout(() => {
+                            this.renderSurveyBuilder();
+                            this.populateSurveyForm(survey);
+                            this.setupSaveButtons();
+                        }, 100);
+                    }
+                } catch (error) {
+                    console.error('Error loading survey for edit:', error);
+                    this.showError('حدث خطأ أثناء تحميل الاستبيان');
                 }
-
-                const { data: questions, error } = await sb
-                    .from('survey_questions')
-                    .select('*')
-                    .eq('survey_id', surveyId)
-                    .order('question_order');
-
-                if (error) throw error;
-
-                this.currentEditingSurvey = survey;
-                surveyQuestions = questions || [];
-
-                const createSection = document.querySelector('[data-section="surveys-create-section"]');
-                if (createSection) {
-                    createSection.click();
-                    
-                    setTimeout(() => {
-                        this.renderSurveyBuilder();
-                        this.populateSurveyForm(survey);
-                        this.setupSaveButtons();
-                    }, 100);
-                }
-            } catch (error) {
-                console.error('Error loading survey for edit:', error);
-                this.showError('حدث خطأ أثناء تحميل الاستبيان');
             }
         }
 
@@ -1000,22 +1006,135 @@
 
         async loadResults() {
             const select = document.getElementById('selectSurveyForResults');
-            if (!select) return;
-
-            select.innerHTML = '<option value="">-- اختر استبياناً --</option>';
+            const grid = document.getElementById('surveyResultsGrid');
             
-            allSurveys.forEach(survey => {
-                const option = document.createElement('option');
-                option.value = survey.id;
-                option.textContent = survey.title;
-                select.appendChild(option);
-            });
+            // تحديث القائمة المنسدلة المخفية للتوافق
+            if (select) {
+                select.innerHTML = '<option value="">-- اختر استبياناً --</option>';
+                allSurveys.forEach(survey => {
+                    const option = document.createElement('option');
+                    option.value = survey.id;
+                    option.textContent = survey.title;
+                    select.appendChild(option);
+                });
 
-            select.addEventListener('change', (e) => {
-                if (e.target.value) {
-                    this.loadSurveyResults(parseInt(e.target.value));
-                }
+                select.addEventListener('change', (e) => {
+                    if (e.target.value) {
+                        this.loadSurveyResults(parseInt(e.target.value));
+                    }
+                });
+            }
+
+            // عرض بطاقات الاستبيانات المحسنة
+            if (grid) {
+                this.renderSurveyResultsGrid(grid);
+                this.setupResultsFilters();
+            }
+        }
+
+        renderSurveyResultsGrid(grid) {
+            if (allSurveys.length === 0) {
+                grid.innerHTML = `
+                    <div class="results-empty-state" style="grid-column: 1 / -1;">
+                        <div class="results-empty-icon">
+                            <i class="fa-solid fa-clipboard-list"></i>
+                        </div>
+                        <div class="results-empty-title">لا توجد استبيانات</div>
+                        <div class="results-empty-text">لم يتم إنشاء أي استبيانات بعد</div>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = allSurveys.map(survey => this.renderSurveyResultCard(survey)).join('');
+        }
+
+        renderSurveyResultCard(survey) {
+            const statusClass = survey.status === 'active' ? 'active' : 
+                               survey.status === 'closed' ? 'closed' : 'draft';
+            const statusText = survey.status === 'active' ? 'نشط' : 
+                              survey.status === 'closed' ? 'مغلق' : 'مسودة';
+            
+            const totalResponses = survey.total_responses || 0;
+            const completedResponses = survey.completed_responses || totalResponses;
+            const completionRate = totalResponses > 0 ? Math.round((completedResponses / totalResponses) * 100) : 0;
+
+            return `
+                <div class="survey-selector-card" data-survey-id="${survey.id}" data-status="${survey.status}" data-type="${survey.survey_type || 'general'}" onclick="window.surveysManager.selectSurveyForResults(${survey.id})">
+                    <div class="survey-selector-header">
+                        <h4 class="survey-selector-title">${this.escapeHtml(survey.title)}</h4>
+                        <span class="survey-selector-status ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="survey-selector-stats">
+                        <div class="survey-selector-stat">
+                            <i class="fa-solid fa-users"></i>
+                            <span class="survey-selector-stat-value">${totalResponses}</span>
+                            <span class="survey-selector-stat-label">استجابة</span>
+                        </div>
+                        <div class="survey-selector-stat">
+                            <i class="fa-solid fa-check-circle"></i>
+                            <span class="survey-selector-stat-value">${completionRate}%</span>
+                            <span class="survey-selector-stat-label">معدل الإكمال</span>
+                        </div>
+                        <div class="survey-selector-stat">
+                            <i class="fa-solid fa-question-circle"></i>
+                            <span class="survey-selector-stat-value">${survey.questions_count || 0}</span>
+                            <span class="survey-selector-stat-label">سؤال</span>
+                        </div>
+                    </div>
+                    <div class="survey-selector-progress">
+                        <div class="survey-selector-progress-bar" style="width: ${completionRate}%;"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        selectSurveyForResults(surveyId) {
+            // تحديث حالة البطاقات
+            document.querySelectorAll('.survey-selector-card').forEach(card => {
+                card.classList.remove('selected');
             });
+            const selectedCard = document.querySelector(`.survey-selector-card[data-survey-id="${surveyId}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+
+            // تحديث القائمة المنسدلة المخفية
+            const select = document.getElementById('selectSurveyForResults');
+            if (select) {
+                select.value = surveyId;
+            }
+
+            // تحميل النتائج
+            this.loadSurveyResults(surveyId);
+        }
+
+        setupResultsFilters() {
+            const searchInput = document.getElementById('surveyResultsSearch');
+            const statusFilter = document.getElementById('surveyResultsStatusFilter');
+            const typeFilter = document.getElementById('surveyResultsTypeFilter');
+
+            const filterCards = () => {
+                const searchTerm = searchInput?.value.toLowerCase() || '';
+                const statusValue = statusFilter?.value || '';
+                const typeValue = typeFilter?.value || '';
+
+                document.querySelectorAll('.survey-selector-card').forEach(card => {
+                    const title = card.querySelector('.survey-selector-title')?.textContent.toLowerCase() || '';
+                    const status = card.dataset.status || '';
+                    const type = card.dataset.type || '';
+
+                    const matchesSearch = title.includes(searchTerm);
+                    const matchesStatus = !statusValue || status === statusValue;
+                    const matchesType = !typeValue || type === typeValue;
+
+                    card.style.display = matchesSearch && matchesStatus && matchesType ? '' : 'none';
+                });
+            };
+
+            searchInput?.addEventListener('input', filterCards);
+            statusFilter?.addEventListener('change', filterCards);
+            typeFilter?.addEventListener('change', filterCards);
         }
 
         async loadSurveyResults(surveyId) {
@@ -1271,7 +1390,7 @@
                         user:profiles(full_name, email)
                     `)
                     .eq('survey_id', surveyId)
-                    .order('submitted_at', { ascending: false });
+                    .order('created_at', { ascending: false });
 
                 if (error) throw error;
 
@@ -1282,7 +1401,7 @@
                     container.innerHTML = `
                         <div class="empty-state">
                             <i class="fa-solid fa-inbox"></i>
-                            <p>لا توجد استجابات لهذا الاستبيان</p>
+                            <p>لا توجد استجابات لهذا الاستبيان بعد</p>
                         </div>
                     `;
                     return;
@@ -1290,7 +1409,7 @@
 
                 let html = '<div class="responses-list">';
                 responses.forEach((response, index) => {
-                    const submittedDate = new Date(response.submitted_at).toLocaleDateString('ar-SA', {
+                    const submittedDate = new Date(response.created_at).toLocaleDateString('ar-SA', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric',

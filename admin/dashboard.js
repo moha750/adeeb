@@ -359,28 +359,8 @@
                 {
                     id: 'surveys-results',
                     icon: 'fa-chart-pie',
-                    label: 'نتائج الاستبيانات',
-                    isDropdown: true,
-                    subItems: [
-                        {
-                            id: 'surveys-results-statistics',
-                            icon: 'fa-chart-bar',
-                            label: 'الإحصائيات',
-                            section: 'surveys-results-statistics-section'
-                        },
-                        {
-                            id: 'surveys-results-responses',
-                            icon: 'fa-list-check',
-                            label: 'الاستجابات الفردية',
-                            section: 'surveys-results-responses-section'
-                        },
-                        {
-                            id: 'surveys-results-analytics',
-                            icon: 'fa-chart-line',
-                            label: 'التحليلات المتقدمة',
-                            section: 'surveys-results-analytics-section'
-                        }
-                    ]
+                    label: 'نتائج وتحليلات',
+                    section: 'surveys-results-section'
                 },
                 {
                     id: 'surveys-templates',
@@ -399,13 +379,57 @@
             });
         }
         
-        // الأخبار - المستوى 7 وأعلى (تبويب منفصل)
+        // الأخبار - نظام متعدد التبويبات
         if (roleLevel >= 7) {
+            const newsSubItems = [
+                {
+                    id: 'news-drafts',
+                    icon: 'fa-file-lines',
+                    label: 'مسودات الأخبار',
+                    section: 'news-drafts-section'
+                },
+                {
+                    id: 'news-in-progress',
+                    icon: 'fa-pen-to-square',
+                    label: 'قيد الكتابة',
+                    section: 'news-in-progress-section'
+                },
+                {
+                    id: 'news-review',
+                    icon: 'fa-clipboard-check',
+                    label: 'جاهز للمراجعة',
+                    section: 'news-review-section'
+                },
+                {
+                    id: 'news-published',
+                    icon: 'fa-newspaper',
+                    label: 'الأخبار المنشورة',
+                    section: 'news-published-section'
+                },
+                {
+                    id: 'news-archived',
+                    icon: 'fa-archive',
+                    label: 'الأخبار المؤرشفة',
+                    section: 'news-archived-section'
+                }
+            ];
+            
             menuItems.push({
                 id: 'news',
                 icon: 'fa-newspaper',
                 label: 'الأخبار',
-                section: 'website-news-section'
+                isDropdown: true,
+                subItems: newsSubItems
+            });
+        }
+        
+        // الأخبار المعينة لي - لجميع الأعضاء
+        if (roleLevel >= 1) {
+            menuItems.push({
+                id: 'news-my-assignments',
+                icon: 'fa-pen-fancy',
+                label: 'الأخبار المعينة لي',
+                section: 'news-my-assignments-section'
             });
         }
 
@@ -809,6 +833,39 @@
                     await window.NewsManager.init(currentUser);
                 }
                 break;
+            case 'news-drafts-section':
+                if (window.NewsManagerEnhanced && currentUser) {
+                    await window.NewsManagerEnhanced.init(currentUser, currentUserRole);
+                }
+                if (window.NewsDraftEditor && currentUser) {
+                    await window.NewsDraftEditor.init(currentUser, currentUserRole);
+                }
+                break;
+            case 'news-in-progress-section':
+                if (window.NewsManagerEnhanced && currentUser) {
+                    await window.NewsManagerEnhanced.init(currentUser, currentUserRole);
+                }
+                break;
+            case 'news-review-section':
+                if (window.NewsManagerEnhanced && currentUser) {
+                    await window.NewsManagerEnhanced.init(currentUser, currentUserRole);
+                }
+                break;
+            case 'news-published-section':
+                if (window.NewsManagerEnhanced && currentUser) {
+                    await window.NewsManagerEnhanced.init(currentUser, currentUserRole);
+                }
+                break;
+            case 'news-archived-section':
+                if (window.NewsManagerEnhanced && currentUser) {
+                    await window.NewsManagerEnhanced.init(currentUser, currentUserRole);
+                }
+                break;
+            case 'news-my-assignments-section':
+                if (window.NewsWritersManager && currentUser) {
+                    await window.NewsWritersManager.init(currentUser);
+                }
+                break;
             case 'website-works-section':
                 if (window.WorksManager && currentUser) {
                     await window.WorksManager.init(currentUser);
@@ -834,34 +891,12 @@
                     await window.surveysManager.showCreateForm();
                 }
                 break;
-            case 'surveys-results-statistics-section':
+            case 'surveys-results-section':
                 if (window.surveysManager) {
                     if (currentUser) await window.surveysManager.init(currentUser);
                     await window.surveysManager.loadResults();
-                    // التبديل إلى عرض الإحصائيات
-                    if (window.resultsViewSwitcher) {
-                        window.resultsViewSwitcher.switchView('statistics');
-                    }
-                }
-                break;
-            case 'surveys-results-responses-section':
-                if (window.surveysManager) {
-                    if (currentUser) await window.surveysManager.init(currentUser);
-                    await window.surveysManager.loadResults();
-                    // التبديل إلى عرض الاستجابات
-                    if (window.resultsViewSwitcher) {
-                        window.resultsViewSwitcher.switchView('responses');
-                    }
-                }
-                break;
-            case 'surveys-results-analytics-section':
-                if (window.surveysManager) {
-                    if (currentUser) await window.surveysManager.init(currentUser);
-                    await window.surveysManager.loadResults();
-                    // التبديل إلى عرض التحليلات
-                    if (window.resultsViewSwitcher) {
-                        window.resultsViewSwitcher.switchView('analytics');
-                    }
+                    // تهيئة التبويبات الداخلية
+                    initSurveyResultsTabs();
                 }
                 break;
             case 'surveys-templates-section':
@@ -4363,6 +4398,43 @@
             badge.textContent = unreadCount;
             badge.style.display = unreadCount > 0 ? 'flex' : 'none';
         }
+    }
+
+    // تهيئة التبويبات الداخلية لنتائج الاستبيانات
+    function initSurveyResultsTabs() {
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        if (tabButtons.length === 0) return;
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTab = button.getAttribute('data-tab');
+
+                // إزالة active من جميع الأزرار والمحتويات
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.style.borderBottom = 'none';
+                    btn.style.color = '#6b7280';
+                });
+
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    content.style.display = 'none';
+                });
+
+                // إضافة active للزر والمحتوى المحدد
+                button.classList.add('active');
+                button.style.borderBottom = '3px solid #3b82f6';
+                button.style.color = '#3b82f6';
+
+                const targetContent = document.getElementById(`${targetTab}-tab`);
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                    targetContent.style.display = 'block';
+                }
+            });
+        });
     }
 
     // تهيئة التطبيق عند تحميل الصفحة

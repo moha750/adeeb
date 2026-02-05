@@ -29,6 +29,14 @@
     <link rel="stylesheet" href="css/impersonation.css" />
     <link rel="stylesheet" href="css/modals.css" />
     <link rel="stylesheet" href="css/filters.css" />
+    <link rel="stylesheet" href="css/news-workflow.css" />
+    <link rel="stylesheet" href="css/toast-notifications.css" />
+    <link rel="stylesheet" href="css/survey-responses.css" />
+    <!-- Design Tokens - المتغيرات الموحدة -->
+    <link rel="stylesheet" href="css/design-tokens.css" />
+    <!-- Survey Enhanced Styles -->
+    <link rel="stylesheet" href="css/survey-edit-modal.css" />
+    <link rel="stylesheet" href="css/survey-results-enhanced.css" />
 </head>
 
 <body>
@@ -587,80 +595,131 @@
                 </div>
             </section>
 
-            <!-- قسم نتائج الاستبيانات - الإحصائيات -->
-            <section id="surveys-results-statistics-section" class="admin-section d-none">
+            <!-- قسم نتائج الاستبيانات - موحد مع تبويبات -->
+            <section id="surveys-results-section" class="admin-section d-none">
                 <div class="section-header">
                     <h1>
-                        <i class="fa-solid fa-chart-bar"></i>
-                        الإحصائيات
+                        <i class="fa-solid fa-chart-pie"></i>
+                        نتائج وتحليلات الاستبيانات
                     </h1>
-                    <p class="section-subtitle">عرض إحصائيات الاستبيانات</p>
+                    <p class="section-subtitle">عرض الإحصائيات والاستجابات والتحليلات المتقدمة</p>
                 </div>
 
-                <!-- اختيار الاستبيان -->
-                <div class="card" class="mb-2rem">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center gap-1rem flex-wrap">
-                            <div class="filter-group" class="flex-1 min-w-300">
-                                <label for="selectSurveyForResults">اختر الاستبيان:</label>
-                                <select id="selectSurveyForResults" class="filter-select">
-                                    <option value="">-- اختر استبياناً --</option>
+                <!-- اختيار الاستبيان - واجهة محسنة -->
+                <div class="survey-selector-container" id="surveySelectorContainer">
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-clipboard-list"></i>
+                                اختر استبياناً لعرض نتائجه
+                            </h3>
+                            <div class="results-export-options" id="resultsActions" style="display: none;">
+                                <button class="results-export-btn" id="exportCSVBtn" title="تصدير CSV">
+                                    <i class="fa-solid fa-file-csv"></i>
+                                    CSV
+                                </button>
+                                <button class="results-export-btn" id="exportExcelBtn" title="تصدير Excel">
+                                    <i class="fa-solid fa-file-excel"></i>
+                                    Excel
+                                </button>
+                                <button class="results-export-btn" id="refreshResultsBtn" title="تحديث">
+                                    <i class="fa-solid fa-rotate"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- شريط البحث والفلاتر -->
+                            <div class="filters-bar" style="margin-bottom: 1rem;">
+                                <div class="filter-group" style="flex: 1; min-width: 250px;">
+                                    <i class="fa-solid fa-search"></i>
+                                    <input type="text" id="surveyResultsSearch" placeholder="ابحث عن استبيان..." />
+                                </div>
+                                <select id="surveyResultsStatusFilter" class="filter-select">
+                                    <option value="">جميع الحالات</option>
+                                    <option value="active">نشط</option>
+                                    <option value="closed">مغلق</option>
+                                    <option value="draft">مسودة</option>
+                                </select>
+                                <select id="surveyResultsTypeFilter" class="filter-select">
+                                    <option value="">جميع الأنواع</option>
+                                    <option value="general">عام</option>
+                                    <option value="feedback">تقييم</option>
+                                    <option value="poll">استطلاع</option>
                                 </select>
                             </div>
-                            <div id="resultsActions" class="d-flex gap-0-5rem" style="display: none !important;">
-                                <button class="btn btn--outline btn--outline-primary" id="exportResultsBtn">
-                                    <i class="fa-solid fa-download"></i>
-                                    تصدير النتائج
-                                </button>
-                                <button class="btn btn--outline btn--outline-primary" id="refreshResultsBtn">
-                                    <i class="fa-solid fa-rotate"></i>
-                                    تحديث
-                                </button>
+                            
+                            <!-- بطاقات الاستبيانات -->
+                            <div class="survey-selector-grid" id="surveyResultsGrid">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                                <div class="results-empty-state">
+                                    <div class="results-empty-icon">
+                                        <i class="fa-solid fa-chart-pie"></i>
+                                    </div>
+                                    <div class="results-empty-title">جاري تحميل الاستبيانات...</div>
+                                </div>
                             </div>
+                            
+                            <!-- القائمة المنسدلة المخفية للتوافق -->
+                            <select id="selectSurveyForResults" class="filter-select" style="display: none;">
+                                <option value="">-- اختر استبياناً --</option>
+                            </select>
                         </div>
                     </div>
                 </div>
 
+                <!-- التبويبات الأفقية -->
                 <div id="resultsTabsContainer" style="display: none;">
-                    <div class="tab-pane active" id="statistics-tab">
+                    <!-- شريط التبويبات -->
+                    <div class="tabs-nav" style="display: flex; gap: 0.5rem; border-bottom: 2px solid #e5e7eb; margin-bottom: 1.5rem;">
+                        <button class="tab-btn active" data-tab="statistics" style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: 500;">
+                            <i class="fa-solid fa-chart-pie"></i>
+                            الإحصائيات
+                        </button>
+                        <button class="tab-btn" data-tab="responses" style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; color: #6b7280;">
+                            <i class="fa-solid fa-list"></i>
+                            الاستجابات الفردية
+                        </button>
+                        <button class="tab-btn" data-tab="analytics" style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; color: #6b7280;">
+                            <i class="fa-solid fa-chart-line"></i>
+                            التحليلات المتقدمة
+                        </button>
+                    </div>
+
+                    <!-- محتوى التبويبات -->
+                    <div class="tab-content active" id="statistics-tab">
                         <div id="surveyStatisticsContainer">
                             <!-- سيتم ملؤه ديناميكياً -->
                         </div>
                     </div>
-                </div>
-            </section>
 
-            <!-- قسم نتائج الاستبيانات - الاستجابات الفردية -->
-            <section id="surveys-results-responses-section" class="admin-section d-none">
-                <div class="section-header">
-                    <h1>
-                        <i class="fa-solid fa-list-check"></i>
-                        الاستجابات الفردية
-                    </h1>
-                    <p class="section-subtitle">عرض الاستجابات الفردية للاستبيانات</p>
-                </div>
-
-                <div id="surveyResponsesContainer">
-                    <!-- سيتم ملؤه ديناميكياً من قسم الإحصائيات -->
-                    <div class="empty-state">
-                        <i class="fa-solid fa-chart-bar"></i>
-                        <p>اختر استبياناً من قسم الإحصائيات لعرض الاستجابات الفردية</p>
+                    <div class="tab-content" id="responses-tab" style="display: none;">
+                        <!-- فلاتر البحث -->
+                        <div class="responses-filters">
+                            <div class="responses-search">
+                                <i class="fa-solid fa-search"></i>
+                                <input type="text" id="responsesSearchInput" placeholder="ابحث عن مستخدم...">
+                            </div>
+                            <div class="responses-filter-group">
+                                <select id="responsesFilterDate">
+                                    <option value="">جميع الفترات</option>
+                                    <option value="today">اليوم</option>
+                                    <option value="week">آخر أسبوع</option>
+                                    <option value="month">آخر شهر</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- محتوى الاستجابات -->
+                        <div id="surveyResponsesContainer">
+                            <!-- سيتم ملؤه ديناميكياً -->
+                        </div>
                     </div>
-                </div>
-            </section>
 
-            <!-- قسم نتائج الاستبيانات - التحليلات المتقدمة -->
-            <section id="surveys-results-analytics-section" class="admin-section d-none">
-                <div class="section-header">
-                    <h1>
-                        <i class="fa-solid fa-chart-line"></i>
-                        التحليلات المتقدمة
-                    </h1>
-                    <p class="section-subtitle">تحليلات متقدمة لنتائج الاستبيانات</p>
-                </div>
-
-                <div id="surveyAnalyticsContainer">
-                    <!-- سيتم ملؤه ديناميكياً -->
+                    <div class="tab-content" id="analytics-tab" style="display: none;">
+                        <div id="surveyAnalyticsContainer">
+                            <!-- سيتم ملؤه ديناميكياً -->
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -2567,32 +2626,153 @@
                 </div>
             </section>
 
-            <!-- قسم إدارة الأخبار -->
-            <section id="website-news-section" class="admin-section d-none">
+            <!-- =====================================================
+                 نظام إدارة الأخبار المطور مع Workflow
+                 ===================================================== -->
+
+            <!-- قسم: مسودات الأخبار (للقادة فقط) -->
+            <section id="news-drafts-section" class="admin-section d-none">
                 <div class="section-header">
                     <h1>
-                        <i class="fa-solid fa-newspaper"></i>
-                        إدارة الأخبار
+                        <i class="fa-solid fa-file-lines"></i>
+                        مسودات الأخبار
                     </h1>
-                    <button class="btn btn--primary" id="addNewsBtn">
+                    <p class="section-subtitle">إنشاء وإدارة مسودات الأخبار قبل تعيين الكتّاب</p>
+                    <button class="btn btn--primary" id="createNewsDraftBtn">
                         <i class="fa-solid fa-plus"></i>
-                        إضافة خبر جديد
+                        إنشاء مسودة جديدة
                     </button>
                 </div>
 
-                <!-- إحصائيات الأخبار -->
+                <!-- إحصائيات سريعة -->
                 <div class="stats-grid" style="margin-bottom: 1.5rem;">
-                    <div class="stat-card" style="--stat-color: #3b82f6;">
+                    <div class="stat-card" style="--stat-color: #6b7280;">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
-                                <i class="fa-solid fa-newspaper"></i>
+                                <i class="fa-solid fa-file"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-value" id="totalNewsCount">0</div>
-                                <div class="stat-label">إجمالي الأخبار</div>
+                                <div class="stat-value" id="newsDraftsCount">0</div>
+                                <div class="stat-label">مسودات</div>
                             </div>
                         </div>
                     </div>
+                    <div class="stat-card" style="--stat-color: #3b82f6;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="newsAssignedCount">0</div>
+                                <div class="stat-label">معينة للكتّاب</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #f59e0b;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-pen"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="newsInProgressCount">0</div>
+                                <div class="stat-label">قيد الكتابة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="newsReadyForReviewCount">0</div>
+                                <div class="stat-label">جاهز للمراجعة</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قائمة المسودات -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="newsDraftsContainer">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم: قيد الكتابة (للقادة والكتّاب) -->
+            <section id="news-in-progress-section" class="admin-section d-none">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        الأخبار قيد الكتابة
+                    </h1>
+                    <p class="section-subtitle">الأخبار التي يعمل عليها الكتّاب حالياً</p>
+                    <button class="btn btn--outline btn--outline-primary" id="refreshInProgressNewsBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                </div>
+
+                <!-- فلاتر -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="inProgressNewsSearchInput" placeholder="البحث..." />
+                    </div>
+                    <select id="inProgressNewsCommitteeFilter" class="filter-select">
+                        <option value="">جميع اللجان</option>
+                    </select>
+                </div>
+
+                <!-- قائمة الأخبار -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="newsInProgressContainer">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم: جاهز للمراجعة (للقادة فقط) -->
+            <section id="news-review-section" class="admin-section d-none">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-clipboard-check"></i>
+                        جاهز للمراجعة
+                    </h1>
+                    <p class="section-subtitle">الأخبار المكتملة والجاهزة للمراجعة والنشر</p>
+                    <button class="btn btn--outline btn--outline-primary" id="refreshReviewNewsBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                </div>
+
+                <!-- قائمة الأخبار -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="newsReviewContainer">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم: الأخبار المنشورة -->
+            <section id="news-published-section" class="admin-section d-none">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-newspaper"></i>
+                        الأخبار المنشورة
+                    </h1>
+                    <p class="section-subtitle">جميع الأخبار المنشورة على الموقع</p>
+                </div>
+
+                <!-- إحصائيات -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
                     <div class="stat-card" style="--stat-color: #10b981;">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
@@ -2626,21 +2806,38 @@
                             </div>
                         </div>
                     </div>
+                    <div class="stat-card" style="--stat-color: #3b82f6;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-calendar"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="thisMonthNewsCount">0</div>
+                                <div class="stat-label">هذا الشهر</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- فلاتر البحث -->
+                <!-- فلاتر -->
                 <div class="filters-bar">
                     <div class="filter-group">
                         <i class="fa-solid fa-search"></i>
-                        <input type="text" id="newsSearchInput" placeholder="البحث في الأخبار..." />
+                        <input type="text" id="publishedNewsSearchInput" placeholder="البحث في الأخبار..." />
                     </div>
-                    <select id="newsStatusFilter" class="filter-select">
-                        <option value="">جميع الحالات</option>
-                        <option value="draft">مسودة</option>
-                        <option value="published">منشور</option>
-                        <option value="archived">مؤرشف</option>
+                    <select id="publishedNewsCategoryFilter" class="filter-select">
+                        <option value="">جميع التصنيفات</option>
+                        <option value="events">فعاليات</option>
+                        <option value="achievements">إنجازات</option>
+                        <option value="announcements">إعلانات</option>
+                        <option value="workshops">ورش عمل</option>
+                        <option value="meetings">اجتماعات</option>
+                        <option value="general">عام</option>
                     </select>
-                    <button class="btn btn--outline btn--outline-primary" id="refreshNewsBtn">
+                    <select id="publishedNewsCommitteeFilter" class="filter-select">
+                        <option value="">جميع اللجان</option>
+                    </select>
+                    <button class="btn btn--outline btn--outline-primary" id="refreshPublishedNewsBtn">
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
@@ -2649,7 +2846,113 @@
                 <!-- قائمة الأخبار -->
                 <div class="card">
                     <div class="card-body">
-                        <div id="newsListContainer" class="data-table">
+                        <div id="newsPublishedContainer">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم: الأخبار المؤرشفة -->
+            <section id="news-archived-section" class="admin-section d-none">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-archive"></i>
+                        الأخبار المؤرشفة
+                    </h1>
+                    <p class="section-subtitle">الأخبار القديمة المؤرشفة</p>
+                    <button class="btn btn--outline btn--outline-primary" id="refreshArchivedNewsBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                </div>
+
+                <!-- قائمة الأخبار -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="newsArchivedContainer">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم: الأخبار المعينة لي (للكتّاب) -->
+            <section id="news-my-assignments-section" class="admin-section d-none">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-pen-fancy"></i>
+                        الأخبار المعينة لي
+                    </h1>
+                    <p class="section-subtitle">الأخبار التي تم تعيينك لكتابتها</p>
+                    <button class="btn btn--outline btn--outline-primary" id="refreshMyAssignmentsBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                </div>
+
+                <!-- إحصائيات التعيينات -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                    <div class="stat-card" style="--stat-color: #6b7280;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="myAssignmentsPendingCount">0</div>
+                                <div class="stat-label">في الانتظار</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #3b82f6;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-pen"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="myAssignmentsInProgressCount">0</div>
+                                <div class="stat-label">قيد الكتابة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="myAssignmentsCompletedCount">0</div>
+                                <div class="stat-label">مكتملة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #8b5cf6;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-list"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="myAssignmentsTotalCount">0</div>
+                                <div class="stat-label">الإجمالي</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلاتر -->
+                <div class="filters-bar">
+                    <select id="myAssignmentsStatusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="pending">في الانتظار</option>
+                        <option value="in_progress">قيد الكتابة</option>
+                        <option value="completed">مكتملة</option>
+                    </select>
+                </div>
+
+                <!-- قائمة التعيينات -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="myAssignmentsContainer">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -3539,7 +3842,9 @@
     <script src="js/interview-sessions-manager.js"></script>
     <script src="js/site-visits-manager.js"></script>
     <script src="js/surveys-manager.js"></script>
+    <script src="js/surveys-edit-modal.js"></script>
     <script src="js/surveys-results-enhanced.js"></script>
+    <script src="js/survey-responses-viewer.js"></script>
     <script src="js/membership-archives.js"></script>
     <script src="js/member-migration.js"></script>
     <script src="js/profile.js"></script>
@@ -3557,8 +3862,14 @@
     <script src="js/modal-manager.js"></script>
     <script src="js/image-upload-helper.js"></script>
     <script src="js/news-manager.js"></script>
+    <script src="js/news-workflow-manager.js"></script>
+    <script src="js/news-writers-manager.js"></script>
+    <script src="js/news-draft-editor.js"></script>
+    <script src="js/news-manager-enhanced.js"></script>
     <script src="js/works-manager.js"></script>
     <script src="js/sponsors-manager.js"></script>
+    <script src="js/modal-helper.js"></script>
+    <script src="js/toast-notifications.js"></script>
     <script src="dashboard.js"></script>
     <!-- <link rel="stylesheet" href="css/archives.css"> -->
 </body>
