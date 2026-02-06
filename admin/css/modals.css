@@ -82,6 +82,47 @@
 }
 
 /* ============================================================================
+   محتوى النافذة المنبثقة (wrapper)
+   ============================================================================ */
+
+.modal-content {
+    background: linear-gradient(135deg, #ffffff, #f8fbff);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+/* زر الأيقونة في النوافذ المنبثقة */
+.modal .btn-icon {
+    background: transparent;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--main-blue);
+    transition: all 0.3s ease;
+    font-size: 1.125rem;
+}
+
+.modal .btn-icon:hover {
+    background: rgba(61, 143, 214, 0.1);
+    color: var(--accent-blue);
+}
+
+.modal .btn-icon:active {
+    transform: scale(0.95);
+}
+
+/* ============================================================================
    أحجام النوافذ المنبثقة
    ============================================================================ */
 

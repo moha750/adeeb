@@ -19,9 +19,7 @@
     <link rel="stylesheet" href="css/buttons.css" />
     <link rel="stylesheet" href="css/header.css" />
     <link rel="stylesheet" href="css/sidebar.css" />
-    <link rel="stylesheet" href="css/cards.css" />
     <link rel="stylesheet" href="css/stats-cards.css" />
-    <link rel="stylesheet" href="css/item-cards.css" />
     <link rel="stylesheet" href="css/form-inputs.css" />
     <link rel="stylesheet" href="css/membership-card.css" />
     <link rel="stylesheet" href="css/positions.css" />
@@ -34,9 +32,13 @@
     <link rel="stylesheet" href="css/survey-responses.css" />
     <!-- Design Tokens - المتغيرات الموحدة -->
     <link rel="stylesheet" href="css/design-tokens.css" />
+    <!-- Unified Cards System - نظام الكروت الموحد -->
+    <link rel="stylesheet" href="css/unified-cards.css" />
     <!-- Survey Enhanced Styles -->
     <link rel="stylesheet" href="css/survey-edit-modal.css" />
     <link rel="stylesheet" href="css/survey-results-enhanced.css" />
+    <!-- Image Cropper Styles -->
+    <link rel="stylesheet" href="css/image-cropper.css" />
 </head>
 
 <body>
@@ -320,10 +322,6 @@
                         إدارة المستخدمين
                     </h1>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="btn btn--secondary" id="impersonateUserBtn" style="display: none;">
-                            <i class="fa-solid fa-user-secret"></i>
-                            التنكر كمستخدم
-                        </button>
                         <button class="btn btn--primary" id="addUserBtn">
                             <i class="fa-solid fa-user-plus"></i>
                             إضافة مستخدم
@@ -2959,6 +2957,80 @@
                 </div>
             </section>
 
+            <!-- قسم: النشر الفوري (لقائد ونائب لجنة التقارير والأرشفة فقط) -->
+            <section id="news-instant-publish-section" class="admin-section d-none">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-bolt"></i>
+                        نشر فوري
+                    </h1>
+                    <p class="section-subtitle">كتابة ونشر خبر بشكل فوري دون الحاجة لتعيين كتّاب</p>
+                </div>
+
+                <!-- نموذج النشر الفوري -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-newspaper"></i>
+                            كتابة خبر جديد
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="instantPublishForm">
+                            <div style="display: grid; gap: 1.5rem;">
+                                <div class="form-group">
+                                    <label class="form-label">عنوان الخبر <span style="color: #ef4444;">*</span></label>
+                                    <input type="text" id="instantNewsTitle" class="form-input" placeholder="أدخل عنوان الخبر" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">ملخص الخبر <span style="color: #ef4444;">*</span></label>
+                                    <textarea id="instantNewsSummary" class="form-input" rows="2" placeholder="ملخص مختصر للخبر" required></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">محتوى الخبر <span style="color: #ef4444;">*</span></label>
+                                    <textarea id="instantNewsContent" class="form-input" rows="8" placeholder="محتوى الخبر الكامل" required></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">صورة غلاف الخبر <span style="color: #ef4444;">*</span></label>
+                                    <div id="instantNewsImageUploadContainer">
+                                        <!-- سيتم ملؤه ديناميكياً -->
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">معرض صور الخبر (2-4 صور اختيارية)</label>
+                                    <div id="instantNewsGalleryContainer">
+                                        <!-- سيتم ملؤه ديناميكياً -->
+                                    </div>
+                                    <small style="color: #6b7280; font-size: 0.8rem;">يمكنك إضافة من 2 إلى 4 صور إضافية للخبر</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="checkbox" id="instantNewsIsFeatured">
+                                        <span>⭐ خبر مميز</span>
+                                    </label>
+                                </div>
+                                
+                                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                                    <button type="button" class="btn btn--outline btn--outline-secondary" id="clearInstantNewsBtn">
+                                        <i class="fa-solid fa-eraser"></i>
+                                        مسح النموذج
+                                    </button>
+                                    <button type="submit" class="btn btn--primary" id="publishInstantNewsBtn">
+                                        <i class="fa-solid fa-paper-plane"></i>
+                                        نشر الخبر الآن
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
             <!-- قسم إدارة القيادات -->
             <section id="website-board-members-section" class="admin-section d-none">
                 <div class="section-header">
@@ -3207,7 +3279,7 @@
     </div>
 
     <!-- نافذة إضافة/تعديل عمل -->
-    <div class="modal" id="workModal">
+    <div class="modal modal-md" id="workModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="workModalTitle">إضافة عمل جديد</h2>
@@ -3248,7 +3320,7 @@
     </div>
 
     <!-- نافذة إضافة/تعديل إنجاز -->
-    <div class="modal" id="achievementModal">
+    <div class="modal modal-md" id="achievementModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="achievementModalTitle">إضافة إنجاز جديد</h2>
@@ -3292,7 +3364,7 @@
     </div>
 
     <!-- نافذة إضافة/تعديل شريك -->
-    <div class="modal" id="sponsorModal">
+    <div class="modal modal-md" id="sponsorModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="sponsorModalTitle">إضافة شريك جديد</h2>
@@ -3342,7 +3414,7 @@
     </div>
 
     <!-- نافذة إضافة/تعديل سؤال شائع -->
-    <div class="modal" id="faqModal">
+    <div class="modal modal-md" id="faqModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="faqModalTitle">إضافة سؤال شائع</h2>
@@ -3860,6 +3932,7 @@
     <script src="js/committee-members-manager.js"></script>
     <script src="js/stats-counter.js"></script>
     <script src="js/modal-manager.js"></script>
+    <script src="js/image-cropper.js"></script>
     <script src="js/image-upload-helper.js"></script>
     <script src="js/news-manager.js"></script>
     <script src="js/news-workflow-manager.js"></script>

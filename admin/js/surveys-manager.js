@@ -178,11 +178,71 @@
                 return;
             }
 
-            container.innerHTML = surveys.map(survey => this.renderSurveyCard(survey)).join('');
+            // فصل الاستبيانات حسب الحالة الفعلية
+            const now = new Date();
+            const activeSurveys = [];
+            const endedSurveys = [];
+            const draftSurveys = [];
+
+            surveys.forEach(survey => {
+                const actualStatus = this.getActualStatus(survey);
+                if (actualStatus === 'draft') {
+                    draftSurveys.push(survey);
+                } else if (actualStatus === 'active') {
+                    activeSurveys.push(survey);
+                } else {
+                    endedSurveys.push(survey);
+                }
+            });
+
+            let html = '';
+
+            // قسم الاستبيانات النشطة
+            if (activeSurveys.length > 0) {
+                html += `
+                    <div class="surveys-section">
+                        <div class="surveys-section-header">
+                            <h3><i class="fa-solid fa-circle-play" style="color: #10b981;"></i> الاستبيانات النشطة (${activeSurveys.length})</h3>
+                        </div>
+                        <div class="surveys-section-content">
+                            ${activeSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // قسم المسودات
+            if (draftSurveys.length > 0) {
+                html += `
+                    <div class="surveys-section">
+                        <div class="surveys-section-header">
+                            <h3><i class="fa-solid fa-file-pen" style="color: #6b7280;"></i> المسودات (${draftSurveys.length})</h3>
+                        </div>
+                        <div class="surveys-section-content">
+                            ${draftSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // قسم الاستبيانات المنتهية
+            if (endedSurveys.length > 0) {
+                html += `
+                    <div class="surveys-section surveys-section-ended">
+                        <div class="surveys-section-header">
+                            <h3><i class="fa-solid fa-circle-stop" style="color: #ef4444;"></i> الاستبيانات المنتهية (${endedSurveys.length})</h3>
+                        </div>
+                        <div class="surveys-section-content">
+                            ${endedSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
         }
 
-        renderSurveyCard(survey) {
-            // التحقق من حالة الاستبيان بناءً على التاريخ
+        getActualStatus(survey) {
             let actualStatus = survey.status;
             const now = new Date();
             
@@ -200,6 +260,12 @@
                     }
                 }
             }
+            return actualStatus;
+        }
+
+        renderSurveyCard(survey) {
+            // التحقق من حالة الاستبيان بناءً على التاريخ
+            const actualStatus = this.getActualStatus(survey);
 
             const statusColors = {
                 draft: '#6b7280',
@@ -990,17 +1056,15 @@
         }
 
         async viewResults(surveyId) {
-            const statisticsSection = document.querySelector('[data-section="surveys-results-statistics-section"]');
-            if (statisticsSection) {
-                statisticsSection.click();
+            // الانتقال لقسم النتائج
+            const resultsSection = document.querySelector('[data-section="surveys-results-section"]');
+            if (resultsSection) {
+                resultsSection.click();
                 
                 setTimeout(() => {
-                    const selectSurvey = document.getElementById('selectSurveyForResults');
-                    if (selectSurvey) {
-                        selectSurvey.value = surveyId;
-                        selectSurvey.dispatchEvent(new Event('change'));
-                    }
-                }, 200);
+                    // اختيار الاستبيان وتحميل نتائجه
+                    this.selectSurveyForResults(surveyId);
+                }, 300);
             }
         }
 
@@ -1046,14 +1110,57 @@
                 return;
             }
 
-            grid.innerHTML = allSurveys.map(survey => this.renderSurveyResultCard(survey)).join('');
+            // فصل الاستبيانات حسب الحالة الفعلية
+            const activeSurveys = [];
+            const endedSurveys = [];
+
+            allSurveys.forEach(survey => {
+                const actualStatus = this.getActualStatus(survey);
+                if (actualStatus === 'active') {
+                    activeSurveys.push(survey);
+                } else {
+                    endedSurveys.push(survey);
+                }
+            });
+
+            let html = '';
+
+            // قسم الاستبيانات النشطة
+            if (activeSurveys.length > 0) {
+                html += `
+                    <div class="survey-results-section" style="grid-column: 1 / -1;">
+                        <div class="surveys-section-header">
+                            <h3><i class="fa-solid fa-circle-play" style="color: #10b981;"></i> الاستبيانات النشطة (${activeSurveys.length})</h3>
+                        </div>
+                    </div>
+                    ${activeSurveys.map(survey => this.renderSurveyResultCard(survey)).join('')}
+                `;
+            }
+
+            // قسم الاستبيانات المنتهية
+            if (endedSurveys.length > 0) {
+                html += `
+                    <div class="survey-results-section" style="grid-column: 1 / -1; margin-top: 1.5rem;">
+                        <div class="surveys-section-header">
+                            <h3><i class="fa-solid fa-circle-stop" style="color: #ef4444;"></i> الاستبيانات المنتهية والمسودات (${endedSurveys.length})</h3>
+                        </div>
+                    </div>
+                    ${endedSurveys.map(survey => this.renderSurveyResultCard(survey)).join('')}
+                `;
+            }
+
+            grid.innerHTML = html;
         }
 
         renderSurveyResultCard(survey) {
-            const statusClass = survey.status === 'active' ? 'active' : 
-                               survey.status === 'closed' ? 'closed' : 'draft';
-            const statusText = survey.status === 'active' ? 'نشط' : 
-                              survey.status === 'closed' ? 'مغلق' : 'مسودة';
+            // استخدام الحالة الفعلية بناءً على التاريخ
+            const actualStatus = this.getActualStatus(survey);
+            const statusClass = actualStatus === 'active' ? 'active' : 
+                               actualStatus === 'closed' ? 'closed' : 
+                               actualStatus === 'paused' ? 'paused' : 'draft';
+            const statusText = actualStatus === 'active' ? 'نشط' : 
+                              actualStatus === 'closed' ? 'مغلق' : 
+                              actualStatus === 'paused' ? 'متوقف' : 'مسودة';
             
             const totalResponses = survey.total_responses || 0;
             const completedResponses = survey.completed_responses || totalResponses;
@@ -1107,6 +1214,14 @@
 
             // تحميل النتائج
             this.loadSurveyResults(surveyId);
+
+            // التمرير إلى قسم النتائج
+            setTimeout(() => {
+                const resultsContainer = document.getElementById('resultsTabsContainer');
+                if (resultsContainer) {
+                    resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
         }
 
         setupResultsFilters() {
@@ -1351,18 +1466,39 @@
         }
 
         showSuccess(message) {
-            this.showNotification(message, 'success');
+            if (window.Toast) {
+                window.Toast.success(message);
+            } else {
+                this.showNotification(message, 'success');
+            }
         }
 
         showError(message) {
-            this.showNotification(message, 'error');
+            if (window.Toast) {
+                window.Toast.error(message);
+            } else {
+                this.showNotification(message, 'error');
+            }
         }
 
         showInfo(message) {
-            this.showNotification(message, 'info');
+            if (window.Toast) {
+                window.Toast.info(message);
+            } else {
+                this.showNotification(message, 'info');
+            }
         }
 
         showNotification(message, type = 'info') {
+            // استخدام Toast إذا كان متاحاً
+            if (window.Toast) {
+                if (type === 'success') window.Toast.success(message);
+                else if (type === 'error') window.Toast.error(message);
+                else window.Toast.info(message);
+                return;
+            }
+
+            // Fallback للإشعارات المخصصة
             const notification = document.createElement('div');
             notification.className = `notification notification-${type}`;
             notification.innerHTML = `

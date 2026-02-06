@@ -85,10 +85,8 @@ window.Toast = (function() {
 
         html += '</div>';
 
-        // زر الإغلاق
-        if (closable) {
-            html += `<button class="toast-close" onclick="Toast.close('${toastId}')">✕</button>`;
-        }
+        // زر الإغلاق - تم إزالته حسب الطلب
+        // الإغلاق يتم تلقائياً بعد انتهاء المدة
 
         // شريط التقدم
         if (!persistent && duration > 0) {

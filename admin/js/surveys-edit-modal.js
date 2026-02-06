@@ -348,8 +348,11 @@
                             </div>
                         </div>
                         <div class="edit-question-actions">
-                            <button class="edit-question-btn move" title="تحريك">
-                                <i class="fa-solid fa-grip-vertical"></i>
+                            <button class="edit-question-btn move" onclick="window.surveyEditModal.moveQuestion(${index}, 'up')" title="تحريك لأعلى" ${index === 0 ? 'disabled' : ''}>
+                                <i class="fa-solid fa-chevron-up"></i>
+                            </button>
+                            <button class="edit-question-btn move" onclick="window.surveyEditModal.moveQuestion(${index}, 'down')" title="تحريك لأسفل">
+                                <i class="fa-solid fa-chevron-down"></i>
                             </button>
                             <button class="edit-question-btn edit" onclick="window.surveyEditModal.editQuestion(${index})" title="تعديل">
                                 <i class="fa-solid fa-edit"></i>
@@ -456,8 +459,8 @@
             const question = this.currentQuestions[index];
             
             const modalHTML = `
-                <div class="modal-backdrop active" id="questionEditBackdrop" style="z-index: 1100;">
-                    <div class="modal modal-md active" style="z-index: 1101;">
+                <div class="modal-backdrop active" id="questionEditBackdrop" style="z-index: 10100;">
+                    <div class="modal modal-md active" style="z-index: 10101;">
                         <div class="modal-header">
                             <div class="modal-header-content">
                                 <i class="fa-solid fa-question-circle"></i>
@@ -638,6 +641,28 @@
                 this.hasChanges = true;
                 this.updateQuestionsPanel();
             }
+        }
+
+        moveQuestion(index, direction) {
+            const newIndex = direction === 'up' ? index - 1 : index + 1;
+            
+            // التحقق من الحدود
+            if (newIndex < 0 || newIndex >= this.currentQuestions.length) {
+                return;
+            }
+
+            // تبديل المواقع
+            const temp = this.currentQuestions[index];
+            this.currentQuestions[index] = this.currentQuestions[newIndex];
+            this.currentQuestions[newIndex] = temp;
+
+            // تحديث ترتيب الأسئلة
+            this.currentQuestions.forEach((q, i) => {
+                q.question_order = i;
+            });
+
+            this.hasChanges = true;
+            this.updateQuestionsPanel();
         }
 
         updateQuestionsPanel() {

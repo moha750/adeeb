@@ -28,6 +28,9 @@ window.NewsWorkflowManager = (function() {
         return null;
     }
 
+    // معرف لجنة التقارير والأرشفة (الأخبار دائماً تابعة لها)
+    const REPORTS_COMMITTEE_ID = 18;
+
     // إنشاء مسودة خبر جديد
     async function createNewsDraft() {
         if (!isLeaderOrDeputy()) {
@@ -35,22 +38,8 @@ window.NewsWorkflowManager = (function() {
             throw new Error('غير مصرح لك بإنشاء الأخبار');
         }
 
-        const committeeId = getUserCommitteeId();
-        const isPresident = currentUserRole?.role_name === 'club_president';
-
-        // الحصول على قائمة اللجان إذا كان رئيس النادي
-        let committeesOptions = '';
-        if (isPresident) {
-            const { data: committees } = await sb
-                .from('committees')
-                .select('id, committee_name_ar')
-                .eq('is_active', true)
-                .order('committee_name_ar');
-            
-            committeesOptions = committees?.map(c => 
-                `<option value="${c.id}">${c.committee_name_ar}</option>`
-            ).join('') || '';
-        }
+        // الأخبار دائماً تابعة للجنة التقارير والأرشفة
+        const committeeId = REPORTS_COMMITTEE_ID;
 
         const fields = [
             {
@@ -59,38 +48,6 @@ window.NewsWorkflowManager = (function() {
                 label: 'عنوان الخبر',
                 placeholder: 'أدخل عنوان الخبر',
                 required: true
-            }
-        ];
-
-        if (isPresident) {
-            fields.push({
-                name: 'committee',
-                type: 'select',
-                label: 'اللجنة المسؤولة',
-                required: true,
-                placeholder: '-- اختر اللجنة --',
-                options: [
-                    { value: '', label: '-- اختر اللجنة --' },
-                    ...(await sb.from('committees').select('id, committee_name_ar').eq('is_active', true).order('committee_name_ar'))
-                        .data?.map(c => ({ value: c.id, label: c.committee_name_ar })) || []
-                ]
-            });
-        }
-
-        fields.push(
-            {
-                name: 'category',
-                type: 'select',
-                label: 'التصنيف',
-                options: [
-                    { value: '', label: '-- اختر التصنيف --' },
-                    { value: 'events', label: 'فعاليات' },
-                    { value: 'achievements', label: 'إنجازات' },
-                    { value: 'announcements', label: 'إعلانات' },
-                    { value: 'workshops', label: 'ورش عمل' },
-                    { value: 'meetings', label: 'اجتماعات' },
-                    { value: 'general', label: 'عام' }
-                ]
             },
             {
                 name: 'notes',
@@ -98,7 +55,7 @@ window.NewsWorkflowManager = (function() {
                 label: 'ملاحظات أولية',
                 placeholder: 'ملاحظات أو تعليمات للكتّاب...'
             }
-        );
+        ];
 
         try {
             await ModalHelper.form({
@@ -112,10 +69,9 @@ window.NewsWorkflowManager = (function() {
                     try {
                         const newsData = {
                             title: formData.title,
-                            category: formData.category || null,
                             workflow_status: 'draft',
                             status: 'draft',
-                            committee_id: isPresident ? formData.committee : committeeId,
+                            committee_id: committeeId,
                             created_by: currentUser.id,
                             review_notes: formData.notes || null,
                             content: '',
@@ -179,11 +135,13 @@ window.NewsWorkflowManager = (function() {
 
             if (newsError) throw newsError;
 
-            // الحصول على أعضاء اللجنة
+            // الحصول على أعضاء اللجنة مع أدوارهم
             const { data: members, error: membersError } = await sb
                 .from('user_roles')
                 .select(`
                     user_id,
+                    role_id,
+                    roles!user_roles_role_id_fkey(role_name, role_level),
                     profiles!user_roles_user_id_fkey(id, full_name, avatar_url, email)
                 `)
                 .eq('committee_id', news.committee_id)
@@ -191,9 +149,25 @@ window.NewsWorkflowManager = (function() {
 
             if (membersError) throw membersError;
 
+            // تصفية الأعضاء المتاحين للتعيين
+            // - قائد اللجنة لا يُعيّن له خبر أبداً (يتم استبعاده دائماً)
+            // - نائب اللجنة والأعضاء يمكن تعيينهم
+            let filteredMembers = members.filter(m => {
+                const memberRole = m.roles?.role_name;
+                // استبعاد المستخدم الحالي من القائمة
+                if (m.profiles.id === currentUser.id) return false;
+                
+                // استبعاد قائد اللجنة دائماً - لا يُعيّن له خبر
+                if (memberRole === 'committee_leader') {
+                    return false;
+                }
+                
+                return true;
+            });
+
             // إزالة التكرار
             const uniqueMembers = Array.from(
-                new Map(members.map(m => [m.profiles.id, m.profiles])).values()
+                new Map(filteredMembers.map(m => [m.profiles.id, m.profiles])).values()
             );
 
             Toast.close(loadingToast);
@@ -231,6 +205,10 @@ window.NewsWorkflowManager = (function() {
                         <label style="display: block; margin-bottom: 0.875rem; font-weight: 600; color: #374151;">الحقول المتاحة للكتّاب *</label>
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 1rem; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
                             <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="fields" value="title" style="width: 16px; height: 16px; cursor: pointer;">
+                                <span style="font-size: 0.9375rem;">عنوان الخبر</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                                 <input type="checkbox" name="fields" value="content" checked style="width: 16px; height: 16px; cursor: pointer;">
                                 <span style="font-size: 0.9375rem;">المحتوى الرئيسي</span>
                             </label>
@@ -240,11 +218,11 @@ window.NewsWorkflowManager = (function() {
                             </label>
                             <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                                 <input type="checkbox" name="fields" value="image_url" style="width: 16px; height: 16px; cursor: pointer;">
-                                <span style="font-size: 0.9375rem;">الصورة</span>
+                                <span style="font-size: 0.9375rem;">صورة الغلاف</span>
                             </label>
                             <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                <input type="checkbox" name="fields" value="tags" style="width: 16px; height: 16px; cursor: pointer;">
-                                <span style="font-size: 0.9375rem;">الوسوم (Tags)</span>
+                                <input type="checkbox" name="fields" value="gallery_images" style="width: 16px; height: 16px; cursor: pointer;">
+                                <span style="font-size: 0.9375rem;">معرض الصور (2-4 صور)</span>
                             </label>
                         </div>
                     </div>
@@ -517,6 +495,24 @@ window.NewsWorkflowManager = (function() {
             .eq('id', newsId)
             .single();
 
+        // جلب أسماء الكتّاب المعينين للخبر
+        let authorNames = [];
+        if (news.assigned_writers?.length > 0) {
+            const { data: writers } = await sb
+                .from('profiles')
+                .select('full_name')
+                .in('id', news.assigned_writers);
+            
+            if (writers && writers.length > 0) {
+                authorNames = writers.map(w => w.full_name);
+            }
+        }
+        
+        // إذا لم يكن هناك كتّاب معينين، استخدم اسم المستخدم الحالي
+        if (authorNames.length === 0) {
+            authorNames = [currentUser.full_name];
+        }
+
         if (action === 'publish') {
             const fields = [
                 {
@@ -559,7 +555,9 @@ window.NewsWorkflowManager = (function() {
                                     published_at: new Date(formData.publishDate).toISOString(),
                                     reviewed_by: currentUser.id,
                                     reviewed_at: new Date().toISOString(),
-                                    review_notes: formData.notes || null
+                                    review_notes: formData.notes || null,
+                                    author_name: authorNames[0],
+                                    authors: authorNames
                                 })
                                 .eq('id', newsId);
 

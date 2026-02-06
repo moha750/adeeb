@@ -720,23 +720,46 @@ window.NewsManagerEnhanced = (function() {
         const news = allNews.find(n => n.id === newsId);
         if (!news) return;
 
-        Swal.fire({
-            title: `<i class="fa-solid fa-info-circle"></i> تفاصيل الخبر`,
+        ModalHelper.show({
+            title: '<i class="fa-solid fa-info-circle"></i> تفاصيل الخبر',
             html: `
                 <div style="text-align: right;">
-                    <h3 style="margin-bottom: 1rem;">${news.title}</h3>
+                    <h3 style="margin-bottom: 1rem; color: var(--main-blue);">${news.title}</h3>
                     <div style="display: grid; gap: 0.75rem;">
-                        <div><strong>اللجنة:</strong> ${news.committees?.committee_name_ar || 'غير محدد'}</div>
-                        <div><strong>التصنيف:</strong> ${getCategoryLabel(news.category)}</div>
-                        <div><strong>الحالة:</strong> ${getWorkflowStatusLabel(news.workflow_status)}</div>
-                        <div><strong>عدد الكتّاب:</strong> ${news.assigned_writers?.length || 0}</div>
-                        ${news.assigned_by_profile ? `<div><strong>معين من:</strong> ${news.assigned_by_profile.full_name}</div>` : ''}
+                        <div class="info-item" style="padding: 0.75rem; background: #f8fafc; border-radius: 8px;">
+                            <i class="fa-solid fa-sitemap" style="color: var(--accent-blue); margin-left: 0.5rem;"></i>
+                            <strong>اللجنة:</strong> ${news.committees?.committee_name_ar || 'غير محدد'}
+                        </div>
+                        <div class="info-item" style="padding: 0.75rem; background: #f8fafc; border-radius: 8px;">
+                            <i class="fa-solid fa-tasks" style="color: var(--accent-blue); margin-left: 0.5rem;"></i>
+                            <strong>الحالة:</strong> ${getWorkflowStatusLabel(news.workflow_status)}
+                        </div>
+                        <div class="info-item" style="padding: 0.75rem; background: #f8fafc; border-radius: 8px;">
+                            <i class="fa-solid fa-users" style="color: var(--accent-blue); margin-left: 0.5rem;"></i>
+                            <strong>عدد الكتّاب:</strong> ${news.assigned_writers?.length || 0}
+                        </div>
+                        ${news.assigned_by_profile ? `
+                        <div class="info-item" style="padding: 0.75rem; background: #f8fafc; border-radius: 8px;">
+                            <i class="fa-solid fa-user-check" style="color: var(--accent-blue); margin-left: 0.5rem;"></i>
+                            <strong>معين من:</strong> ${news.assigned_by_profile.full_name}
+                        </div>` : ''}
+                        ${news.review_notes ? `
+                        <div class="info-item" style="padding: 0.75rem; background: #fffbeb; border-radius: 8px; border-right: 3px solid #f59e0b;">
+                            <i class="fa-solid fa-sticky-note" style="color: #f59e0b; margin-left: 0.5rem;"></i>
+                            <strong>ملاحظات:</strong> ${news.review_notes}
+                        </div>` : ''}
                     </div>
                 </div>
             `,
-            width: '600px',
-            showCloseButton: true,
-            showConfirmButton: false
+            size: 'md',
+            showClose: true,
+            showFooter: true,
+            footerButtons: [
+                {
+                    text: 'إغلاق',
+                    class: 'btn--outline btn--outline-secondary'
+                }
+            ]
         });
     }
 

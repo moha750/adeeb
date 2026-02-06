@@ -265,6 +265,15 @@ window.NewsWritersManager = (function() {
         // بناء حقول النموذج بناءً على الصلاحيات
         let formFields = '';
 
+        if (availableFields.includes('title')) {
+            formFields += `
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">عنوان الخبر *</label>
+                    <input type="text" id="newsTitle" class="swal2-input" value="${news.title || ''}" style="width: 100%; margin: 0;">
+                </div>
+            `;
+        }
+
         if (availableFields.includes('content')) {
             formFields += `
                 <div style="margin-bottom: 1rem;">
@@ -300,15 +309,6 @@ window.NewsWritersManager = (function() {
             `;
         }
 
-        if (availableFields.includes('tags')) {
-            formFields += `
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الوسوم (Tags)</label>
-                    <input type="text" id="newsTags" class="swal2-input" placeholder="افصل بين الوسوم بفاصلة" value="${(news.tags || []).join(', ')}" style="width: 100%; margin: 0;">
-                    <small style="color: #6b7280; font-size: 0.75rem;">مثال: فعالية, ورشة عمل, إنجاز</small>
-                </div>
-            `;
-        }
 
         const { value: formValues } = await Swal.fire({
             title: `<i class="fa-solid fa-pen"></i> كتابة: ${news.title}`,
@@ -353,6 +353,15 @@ window.NewsWritersManager = (function() {
         try {
             const updateData = {};
 
+            if (availableFields.includes('title')) {
+                const title = document.getElementById('newsTitle')?.value;
+                if (!title && submitForReview) {
+                    Swal.showValidationMessage('يرجى إدخال عنوان الخبر');
+                    return false;
+                }
+                updateData.title = title;
+            }
+
             if (availableFields.includes('content')) {
                 const content = document.getElementById('newsContent')?.value;
                 if (!content && submitForReview) {
@@ -378,13 +387,6 @@ window.NewsWritersManager = (function() {
                 } else {
                     const imageUrl = document.getElementById('newsImageUrl')?.value;
                     if (imageUrl) updateData.image_url = imageUrl;
-                }
-            }
-
-            if (availableFields.includes('tags')) {
-                const tagsInput = document.getElementById('newsTags')?.value;
-                if (tagsInput) {
-                    updateData.tags = tagsInput.split(',').map(t => t.trim()).filter(t => t);
                 }
             }
 

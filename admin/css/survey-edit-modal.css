@@ -295,11 +295,18 @@
 .edit-question-btn.move {
     background: rgba(100, 116, 139, 0.1);
     color: var(--text-muted, #64748b);
-    cursor: grab;
+    cursor: pointer;
 }
 
-.edit-question-btn.move:hover {
-    background: rgba(100, 116, 139, 0.2);
+.edit-question-btn.move:hover:not(:disabled) {
+    background: rgba(61, 143, 214, 0.15);
+    color: var(--color-primary-light, #3d8fd6);
+}
+
+.edit-question-btn.move:disabled,
+.edit-question-btn.move[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 /* Question Body (Expandable) */

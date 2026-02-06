@@ -235,7 +235,7 @@ window.ModalHelper = (function() {
                     {
                         text: submitText,
                         class: 'btn--primary',
-                        callback: () => {
+                        callback: async () => {
                             const form = document.getElementById('modalForm');
                             if (form && form.checkValidity()) {
                                 const formData = new FormData(form);
@@ -243,8 +243,24 @@ window.ModalHelper = (function() {
                                 for (let [key, value] of formData.entries()) {
                                     data[key] = value;
                                 }
-                                if (onSubmit) onSubmit(data);
-                                resolve(data);
+                                try {
+                                    if (onSubmit) await onSubmit(data);
+                                    resolve(data);
+                                    // إغلاق المودال بعد نجاح العملية
+                                    const modal = document.querySelector('.modal.active');
+                                    const backdrop = document.querySelector('.modal-backdrop.active');
+                                    if (modal) {
+                                        modal.classList.remove('active');
+                                        setTimeout(() => modal.remove(), 300);
+                                    }
+                                    if (backdrop) {
+                                        backdrop.classList.remove('active');
+                                        setTimeout(() => backdrop.remove(), 300);
+                                    }
+                                    document.body.classList.remove('modal-open');
+                                } catch (error) {
+                                    console.error('Error in form submit:', error);
+                                }
                             } else {
                                 form.reportValidity();
                             }

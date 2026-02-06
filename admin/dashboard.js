@@ -380,7 +380,16 @@
         }
         
         // الأخبار - نظام متعدد التبويبات
-        if (roleLevel >= 7) {
+        // يظهر لـ: رئيس النادي، رئيس المجلس التنفيذي، قائد ونائب لجنة التقارير والأرشفة فقط
+        const REPORTS_COMMITTEE_ID = 18; // معرف لجنة التقارير والأرشفة
+        const isReportsCommittee = currentUserRole.committee_id === REPORTS_COMMITTEE_ID;
+        const isReportsLeaderOrDeputy = isReportsCommittee && 
+            ['committee_leader', 'deputy_committee_leader'].includes(currentUserRole.role_name);
+        const canManageNews = roleLevel >= 10 || // رئيس النادي
+            (roleLevel === 6) || // رئيس المجلس التنفيذي
+            isReportsLeaderOrDeputy; // قائد أو نائب لجنة التقارير والأرشفة
+        
+        if (canManageNews) {
             const newsSubItems = [
                 {
                     id: 'news-drafts',
@@ -414,6 +423,17 @@
                 }
             ];
             
+            // إضافة تبويب النشر الفوري لرئيس النادي، الرئيس التنفيذي، قائد ونائب لجنة التقارير والأرشفة
+            const canInstantPublish = roleLevel >= 10 || roleLevel === 6 || isReportsLeaderOrDeputy;
+            if (canInstantPublish) {
+                newsSubItems.push({
+                    id: 'news-instant-publish',
+                    icon: 'fa-bolt',
+                    label: 'نشر فوري',
+                    section: 'news-instant-publish-section'
+                });
+            }
+            
             menuItems.push({
                 id: 'news',
                 icon: 'fa-newspaper',
@@ -423,8 +443,13 @@
             });
         }
         
-        // الأخبار المعينة لي - لجميع الأعضاء
-        if (roleLevel >= 1) {
+        // الأخبار المعينة لي - لأعضاء لجنة التقارير والأرشفة فقط (ما عدا القائد ورئيس النادي ورئيس المجلس التنفيذي)
+        // النائب يستقبل تعيينات، القائد لا يستقبل
+        const isReportsDeputy = isReportsCommittee && currentUserRole.role_name === 'deputy_committee_leader';
+        const isReportsMember = isReportsCommittee && currentUserRole.role_name === 'committee_member';
+        const canReceiveAssignments = isReportsDeputy || isReportsMember;
+        
+        if (canReceiveAssignments) {
             menuItems.push({
                 id: 'news-my-assignments',
                 icon: 'fa-pen-fancy',
@@ -866,6 +891,9 @@
                     await window.NewsWritersManager.init(currentUser);
                 }
                 break;
+            case 'news-instant-publish-section':
+                await initInstantPublishSection();
+                break;
             case 'website-works-section':
                 if (window.WorksManager && currentUser) {
                     await window.WorksManager.init(currentUser);
@@ -1061,9 +1089,125 @@
         }
     }
 
-
-
-
+    // تهيئة قسم النشر الفوري
+    async function initInstantPublishSection() {
+        const REPORTS_COMMITTEE_ID = 18;
+        
+        // إعداد رفع صورة الغلاف مع نظام القص
+        const imageContainer = document.getElementById('instantNewsImageUploadContainer');
+        if (imageContainer && window.ImageUploadHelper) {
+            imageContainer.innerHTML = window.ImageUploadHelper.createCoverImageUploader({
+                inputId: 'instantNewsImageUpload',
+                folder: 'news',
+                required: true,
+                aspectRatio: 16/9
+            });
+        } else if (imageContainer) {
+            imageContainer.innerHTML = `<input type="url" id="instantNewsImageUrl" class="form-input" placeholder="رابط صورة الغلاف">`;
+        }
+        
+        // إعداد معرض الصور (2-4 صور إجبارية) مع نظام القص
+        const galleryContainer = document.getElementById('instantNewsGalleryContainer');
+        if (galleryContainer && window.ImageUploadHelper) {
+            galleryContainer.innerHTML = window.ImageUploadHelper.createNewsGalleryUploader({
+                containerId: 'instantNewsGallery',
+                minImages: 2,
+                maxImages: 4,
+                currentImages: [],
+                folder: 'news/gallery',
+                required: true
+            });
+        } else if (galleryContainer) {
+            galleryContainer.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                    <div><label style="font-size: 0.85rem; color: #6b7280;">صورة 1</label><input type="url" id="galleryImage1" class="form-input" placeholder="رابط الصورة"></div>
+                    <div><label style="font-size: 0.85rem; color: #6b7280;">صورة 2</label><input type="url" id="galleryImage2" class="form-input" placeholder="رابط الصورة"></div>
+                    <div><label style="font-size: 0.85rem; color: #6b7280;">صورة 3</label><input type="url" id="galleryImage3" class="form-input" placeholder="رابط الصورة"></div>
+                    <div><label style="font-size: 0.85rem; color: #6b7280;">صورة 4</label><input type="url" id="galleryImage4" class="form-input" placeholder="رابط الصورة"></div>
+                </div>
+            `;
+        }
+        
+        // مستمع نموذج النشر
+        const form = document.getElementById('instantPublishForm');
+        if (form) {
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                const title = document.getElementById('instantNewsTitle').value.trim();
+                const summary = document.getElementById('instantNewsSummary').value.trim();
+                const content = document.getElementById('instantNewsContent').value.trim();
+                const isFeatured = document.getElementById('instantNewsIsFeatured').checked;
+                
+                if (!title || !summary || !content) {
+                    Toast.warning('يرجى ملء جميع الحقول المطلوبة');
+                    return;
+                }
+                
+                // التحقق من صورة الغلاف
+                const coverImageUrl = window.ImageUploadHelper?.getCoverImageUrl('instantNewsImageUpload');
+                if (!coverImageUrl) {
+                    Toast.warning('يرجى رفع صورة غلاف الخبر');
+                    return;
+                }
+                
+                // التحقق من معرض الصور (2-4 صور إجبارية)
+                let galleryImages = [];
+                const galleryUrlsInput = document.getElementById('instantNewsGallery_gallery_urls');
+                if (galleryUrlsInput) {
+                    try {
+                        galleryImages = JSON.parse(galleryUrlsInput.value || '[]');
+                    } catch (e) {
+                        galleryImages = [];
+                    }
+                }
+                
+                if (galleryImages.length < 2) {
+                    Toast.warning('يجب إضافة صورتين على الأقل في معرض الصور');
+                    return;
+                }
+                
+                const loadingToast = Toast.loading('جاري نشر الخبر...');
+                try {
+                    const newsData = {
+                        title, summary, content, 
+                        image_url: coverImageUrl,
+                        gallery_images: galleryImages, 
+                        is_featured: isFeatured,
+                        status: 'published', 
+                        workflow_status: 'published',
+                        committee_id: REPORTS_COMMITTEE_ID, 
+                        created_by: currentUser.id,
+                        author_name: currentUser.full_name, 
+                        authors: [currentUser.full_name],
+                        published_at: new Date().toISOString(),
+                        reviewed_by: currentUser.id, 
+                        reviewed_at: new Date().toISOString()
+                    };
+                    
+                    const { error } = await sb.from('news').insert([newsData]);
+                    if (error) throw error;
+                    
+                    Toast.close(loadingToast);
+                    Toast.success('تم نشر الخبر بنجاح!');
+                    
+                    // إعادة تهيئة النموذج
+                    form.reset();
+                    initInstantPublishSection();
+                } catch (error) {
+                    Toast.close(loadingToast);
+                    Toast.error('حدث خطأ: ' + error.message);
+                }
+            };
+        }
+        
+        const clearBtn = document.getElementById('clearInstantNewsBtn');
+        if (clearBtn) {
+            clearBtn.onclick = () => {
+                document.getElementById('instantPublishForm')?.reset();
+                initInstantPublishSection();
+            };
+        }
+    }
 
     // تحميل قسم أعمالنا
     async function loadWebsiteWorksSection() {
@@ -3722,19 +3866,40 @@
     function openModal(modalId) {
         const modal = document.getElementById(modalId);
         const overlay = document.getElementById('overlay');
-        if (modal) modal.classList.add('active');
+        
+        // إنشاء backdrop إذا لم يكن موجوداً
+        let backdrop = document.querySelector('.modal-backdrop');
+        if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop';
+            document.body.appendChild(backdrop);
+        }
+        
+        if (modal) {
+            modal.classList.add('active');
+            document.body.classList.add('modal-open');
+        }
+        if (backdrop) {
+            backdrop.classList.add('active');
+            // إغلاق عند الضغط على الخلفية
+            backdrop.onclick = () => closeModal(modalId);
+        }
         if (overlay) overlay.classList.add('active');
     }
 
     function closeModal(modalId) {
         const modal = document.getElementById(modalId);
         const overlay = document.getElementById('overlay');
+        const backdrop = document.querySelector('.modal-backdrop');
+        
         if (modal) {
             modal.classList.remove('active');
             const form = modal.querySelector('form');
             if (form) form.reset();
         }
+        if (backdrop) backdrop.classList.remove('active');
         if (overlay) overlay.classList.remove('active');
+        document.body.classList.remove('modal-open');
     }
 
     // نماذج الأعمال

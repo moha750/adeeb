@@ -1,0 +1,489 @@
+/**
+ * تنسيقات نظام قص الصور - Adeeb Image Cropper
+ */
+
+.image-cropper-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-cropper-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+}
+
+.image-cropper-container {
+    position: relative;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-width: 400px;
+}
+
+.image-cropper-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, rgba(61, 143, 214, 0.08), rgba(61, 143, 214, 0.04));
+}
+
+.image-cropper-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #274060;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.image-cropper-header h3 i {
+    color: #3d8fd6;
+}
+
+.image-cropper-close {
+    background: transparent;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #6b7280;
+    transition: all 0.2s;
+}
+
+.image-cropper-close:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.image-cropper-body {
+    padding: 1.5rem;
+    overflow: auto;
+    flex: 1;
+}
+
+.image-cropper-preview-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 1rem;
+}
+
+#cropperCanvas {
+    display: block;
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.cropper-overlay {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.cropper-selection {
+    position: absolute;
+    border: 2px solid #3d8fd6;
+    background: rgba(61, 143, 214, 0.1);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+    cursor: move;
+    pointer-events: all;
+}
+
+.cropper-handle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #3d8fd6;
+    border: 2px solid white;
+    border-radius: 50%;
+    pointer-events: all;
+}
+
+.cropper-handle.nw { top: -6px; left: -6px; cursor: nw-resize; }
+.cropper-handle.ne { top: -6px; right: -6px; cursor: ne-resize; }
+.cropper-handle.sw { bottom: -6px; left: -6px; cursor: sw-resize; }
+.cropper-handle.se { bottom: -6px; right: -6px; cursor: se-resize; }
+.cropper-handle.n { top: -6px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
+.cropper-handle.s { bottom: -6px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
+.cropper-handle.e { top: 50%; right: -6px; transform: translateY(-50%); cursor: e-resize; }
+.cropper-handle.w { top: 50%; left: -6px; transform: translateY(-50%); cursor: w-resize; }
+
+.image-cropper-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.cropper-aspect-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.cropper-aspect-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #e5e7eb;
+    background: white;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #374151;
+}
+
+.cropper-aspect-btn:hover {
+    border-color: #3d8fd6;
+    color: #3d8fd6;
+}
+
+.cropper-aspect-btn.active {
+    background: #3d8fd6;
+    border-color: #3d8fd6;
+    color: white;
+}
+
+.cropper-preview-box {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.cropper-preview-box span {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+#cropperPreviewCanvas {
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    background: white;
+}
+
+.image-cropper-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+/* ============================================
+   نظام معرض الصور المحسن
+   ============================================ */
+
+.news-gallery-uploader {
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+    transition: all 0.3s;
+}
+
+.news-gallery-uploader:hover {
+    border-color: #3d8fd6;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+}
+
+.news-gallery-uploader.has-images {
+    border-style: solid;
+    border-color: #3d8fd6;
+}
+
+.gallery-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.gallery-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.gallery-header h4 i {
+    color: #3d8fd6;
+}
+
+.gallery-counter {
+    font-size: 0.875rem;
+    color: #6b7280;
+    background: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+}
+
+.gallery-counter.valid {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #166534;
+}
+
+.gallery-counter.invalid {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+.gallery-images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.gallery-image-item {
+    position: relative;
+    aspect-ratio: 16/9;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #e5e7eb;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.gallery-image-item:hover {
+    border-color: #3d8fd6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.gallery-image-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.gallery-image-item .remove-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.gallery-image-item:hover .remove-btn {
+    opacity: 1;
+}
+
+.gallery-image-item .remove-btn:hover {
+    background: #dc2626;
+}
+
+.gallery-add-btn {
+    aspect-ratio: 16/9;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #6b7280;
+    transition: all 0.2s;
+}
+
+.gallery-add-btn:hover {
+    border-color: #3d8fd6;
+    color: #3d8fd6;
+    background: #eff6ff;
+}
+
+.gallery-add-btn i {
+    font-size: 1.5rem;
+}
+
+.gallery-add-btn span {
+    font-size: 0.75rem;
+}
+
+.gallery-add-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.gallery-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+}
+
+.gallery-hint i {
+    color: #3d8fd6;
+}
+
+.gallery-hint.error {
+    color: #dc2626;
+}
+
+.gallery-hint.error i {
+    color: #dc2626;
+}
+
+/* ============================================
+   رفع صورة الغلاف المحسن
+   ============================================ */
+
+.cover-image-uploader {
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.cover-image-uploader:hover {
+    border-color: #3d8fd6;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+}
+
+.cover-image-uploader.has-image {
+    border-style: solid;
+    border-color: #10b981;
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+}
+
+.cover-image-preview {
+    position: relative;
+    max-width: 400px;
+    margin: 0 auto 1rem;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cover-image-preview img {
+    width: 100%;
+    display: block;
+}
+
+.cover-image-preview .change-btn {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.cover-image-preview:hover .change-btn {
+    opacity: 1;
+}
+
+.cover-upload-area {
+    padding: 2rem;
+    cursor: pointer;
+}
+
+.cover-upload-area i {
+    font-size: 3rem;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+}
+
+.cover-upload-area p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.cover-upload-area span {
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .image-cropper-container {
+        min-width: auto;
+        width: 95vw;
+        max-height: 95vh;
+    }
+
+    .image-cropper-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .cropper-aspect-buttons {
+        justify-content: center;
+    }
+
+    .cropper-preview-box {
+        justify-content: center;
+    }
+
+    .gallery-images-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

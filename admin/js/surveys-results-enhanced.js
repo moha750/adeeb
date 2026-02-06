@@ -94,7 +94,7 @@
         }
 
         markAbandonedResponses(responses) {
-            const ABANDONED_THRESHOLD_MINUTES = 60;
+            const ABANDONED_THRESHOLD_MINUTES = 60; // ساعة واحدة
             const now = new Date();
 
             return responses.map(response => {
@@ -114,90 +114,8 @@
             const container = document.getElementById('surveyStatisticsContainer');
             if (!container) return;
 
-            const completedResponses = currentResponses.filter(r => r.status === 'completed');
-            const inProgressResponses = currentResponses.filter(r => r.status === 'in_progress');
-            const abandonedResponses = currentResponses.filter(r => r.status === 'abandoned');
-            
-            const completionRate = currentResponses.length > 0 
-                ? Math.round((completedResponses.length / currentResponses.length) * 100) 
-                : 0;
-
-            const avgTimeSpent = completedResponses.length > 0
-                ? Math.round(completedResponses.reduce((sum, r) => sum + (r.time_spent_seconds || 0), 0) / completedResponses.length)
-                : 0;
-
+            // قسم الإحصائيات يعرض فقط إحصائيات الأسئلة
             container.innerHTML = `
-                <!-- مؤشرات الأداء الرئيسية -->
-                <div class="stats-grid">
-                    <div class="stat-card" style="--stat-color: #3d8fd6">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-users"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value">${currentResponses.length}</div>
-                                <div class="stat-label">إجمالي الاستجابات</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #10b981">
-                        <div class="stat-badge"><i class="fa-solid fa-arrow-up"></i> ${completionRate}%</div>
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-check-circle"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value">${completedResponses.length}</div>
-                                <div class="stat-label">استجابات مكتملة</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #f59e0b">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-spinner"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value">${inProgressResponses.length}</div>
-                                <div class="stat-label">قيد التقدم</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #ef4444">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-ban"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value">${abandonedResponses.length}</div>
-                                <div class="stat-label">متروكة</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #14b8a6">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-eye"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value">${currentSurveyData.total_views || 0}</div>
-                                <div class="stat-label">المشاهدات</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #8b5cf6">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-clock"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value">${this.formatTime(avgTimeSpent)}</div>
-                                <div class="stat-label">متوسط الوقت</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- إحصائيات الأسئلة -->
                 <h3>
                     <i class="fa-solid fa-chart-bar"></i>
@@ -383,14 +301,15 @@
             const container = document.getElementById('surveyResponsesContainer');
             if (!container) return;
 
-            const completedResponses = currentResponses.filter(r => r.status === 'completed');
+            // عرض جميع الاستجابات وليس فقط المكتملة
+            const allResponses = currentResponses;
 
-            if (completedResponses.length === 0) {
+            if (allResponses.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <i class="fa-solid fa-inbox"></i>
-                        <h3>لا توجد استجابات مكتملة</h3>
-                        <p>لم يتم استلام أي استجابات مكتملة بعد</p>
+                        <h3>لا توجد استجابات</h3>
+                        <p>لم يتم استلام أي استجابات بعد</p>
                     </div>
                 `;
                 return;
@@ -419,7 +338,7 @@
 
                 <!-- قائمة الاستجابات -->
                 <div id="responsesListContainer" class="applications-cards-grid">
-                    ${completedResponses.map(r => this.renderResponseCard(r)).join('')}
+                    ${allResponses.map(r => this.renderResponseCard(r)).join('')}
                 </div>
             `;
 
@@ -676,6 +595,8 @@
             if (!container) return;
 
             const completedResponses = currentResponses.filter(r => r.status === 'completed');
+            const inProgressResponses = currentResponses.filter(r => r.status === 'in_progress');
+            const abandonedResponses = currentResponses.filter(r => r.status === 'abandoned');
             
             // تحليل الأجهزة
             const deviceStats = this.analyzeDevices(currentResponses);
@@ -690,12 +611,25 @@
             const growth = this.calculateGrowth(completedResponses);
 
             container.innerHTML = `
-                <!-- كروت الإحصائيات -->
+                <!-- كروت الإحصائيات الرئيسية - تم نقلها من قسم الإحصائيات -->
                 <div class="stats-grid mb-2rem">
                     <div class="stat-card" style="--stat-color: #3d8fd6">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
-                                <i class="fa-solid fa-chart-line"></i>
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${currentResponses.length}</div>
+                                <div class="stat-label">إجمالي الاستجابات</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-badge"><i class="fa-solid fa-arrow-up"></i> ${completionRate}%</div>
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-check-circle"></i>
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value">${completedResponses.length}</div>
@@ -704,15 +638,38 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card" style="--stat-color: #10b981">
-                        <div class="stat-badge"><i class="fa-solid fa-percentage"></i> ${completionRate}%</div>
+                    <div class="stat-card" style="--stat-color: #f59e0b">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
-                                <i class="fa-solid fa-check-circle"></i>
+                                <i class="fa-solid fa-spinner"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-value">${completionRate}%</div>
-                                <div class="stat-label">معدل الإكمال</div>
+                                <div class="stat-value">${inProgressResponses.length}</div>
+                                <div class="stat-label">قيد التقدم</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card" style="--stat-color: #ef4444">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-ban"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${abandonedResponses.length}</div>
+                                <div class="stat-label">متروكة</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card" style="--stat-color: #14b8a6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-eye"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${currentSurveyData.total_views || 0}</div>
+                                <div class="stat-label">المشاهدات</div>
                             </div>
                         </div>
                     </div>
@@ -720,23 +677,24 @@
                     <div class="stat-card" style="--stat-color: #8b5cf6">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
-                                <i class="fa-solid fa-hourglass-half"></i>
+                                <i class="fa-solid fa-clock"></i>
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value">${timeStats.average}</div>
-                                <div class="stat-label">متوسط وقت الإكمال</div>
+                                <div class="stat-label">متوسط الوقت</div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="stat-card" style="--stat-color: #f59e0b">
+                    <div class="stat-card" style="--stat-color: #6366f1">
+                        <div class="stat-badge"><i class="fa-solid fa-percentage"></i></div>
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
-                                <i class="fa-solid fa-eye"></i>
+                                <i class="fa-solid fa-chart-pie"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-value">${currentSurveyData.total_views || 0}</div>
-                                <div class="stat-label">إجمالي المشاهدات</div>
+                                <div class="stat-value">${completionRate}%</div>
+                                <div class="stat-label">معدل الإكمال</div>
                             </div>
                         </div>
                     </div>

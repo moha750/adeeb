@@ -4,6 +4,54 @@
    ============================================================================ */
 
 /* ============================================================================
+   Surveys Sections - أقسام الاستبيانات (نشطة/منتهية/مسودات)
+   ============================================================================ */
+
+.surveys-section {
+    margin-bottom: 2rem;
+}
+
+.surveys-section-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid rgba(61, 143, 214, 0.15);
+}
+
+.surveys-section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-primary, #274060);
+    margin: 0;
+}
+
+.surveys-section-header h3 i {
+    font-size: 1rem;
+}
+
+.surveys-section-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 1rem;
+}
+
+.surveys-section-ended {
+    opacity: 0.85;
+}
+
+.surveys-section-ended .surveys-section-header {
+    border-bottom-color: rgba(239, 68, 68, 0.2);
+}
+
+@media (max-width: 768px) {
+    .surveys-section-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================================
    Survey Selector - اختيار الاستبيان المحسن
    ============================================================================ */
 
@@ -96,6 +144,11 @@
 .survey-selector-status.draft {
     background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
     color: #475569;
+}
+
+.survey-selector-status.paused {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
 }
 
 .survey-selector-stats {
