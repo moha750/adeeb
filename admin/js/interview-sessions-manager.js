@@ -313,7 +313,7 @@
         const bookingRate = totalSlots > 0 ? ((bookedSlots / totalSlots) * 100).toFixed(1) : 0;
 
         container.innerHTML = `
-            <div class="stat-card" style="--stat-color: #3d8fd6">
+            <div class="stat-card stat-card--blue">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-calendar-check"></i>
@@ -324,7 +324,7 @@
                     </div>
                 </div>
             </div>
-            <div class="stat-card" style="--stat-color: #10b981">
+            <div class="stat-card stat-card--green">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-clock"></i>
@@ -335,7 +335,7 @@
                     </div>
                 </div>
             </div>
-            <div class="stat-card" style="--stat-color: #8b5cf6">
+            <div class="stat-card stat-card--purple">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-user-check"></i>
@@ -346,7 +346,7 @@
                     </div>
                 </div>
             </div>
-            <div class="stat-card" style="--stat-color: #f59e0b">
+            <div class="stat-card stat-card--yellow">
                 <div class="stat-badge"><i class="fa-solid fa-percentage"></i> ${bookingRate}%</div>
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">

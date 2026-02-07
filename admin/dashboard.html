@@ -29,16 +29,13 @@
     <link rel="stylesheet" href="css/filters.css" />
     <link rel="stylesheet" href="css/news-workflow.css" />
     <link rel="stylesheet" href="css/toast-notifications.css" />
-    <link rel="stylesheet" href="css/survey-responses.css" />
     <!-- Design Tokens - المتغيرات الموحدة -->
     <link rel="stylesheet" href="css/design-tokens.css" />
-    <!-- Unified Cards System - نظام الكروت الموحد -->
-    <link rel="stylesheet" href="css/unified-cards.css" />
-    <!-- Survey Enhanced Styles -->
     <link rel="stylesheet" href="css/survey-edit-modal.css" />
-    <link rel="stylesheet" href="css/survey-results-enhanced.css" />
     <!-- Image Cropper Styles -->
     <link rel="stylesheet" href="css/image-cropper.css" />
+    <!-- JS Components Styles - تنسيقات المكونات الديناميكية -->
+    <link rel="stylesheet" href="css/js-components.css" />
 </head>
 
 <body>
@@ -542,7 +539,7 @@
                         <option value="draft">مسودة</option>
                         <option value="active">نشط</option>
                         <option value="paused">متوقف</option>
-                        <option value="closed">مغلق</option>
+                        <option value="closed">منتهية</option>
                         <option value="archived">مؤرشف</option>
                     </select>
                     <select id="surveysTypeFilter" class="filter-select">
@@ -575,21 +572,23 @@
                         <i class="fa-solid fa-plus-circle"></i>
                         إنشاء استبيان جديد
                     </h1>
-                    <div class="header-actions">
-                        <button class="btn btn--outline btn--outline-primary" id="saveSurveyDraftBtn">
-                            <i class="fa-solid fa-save"></i>
-                            حفظ كمسودة
-                        </button>
-                        <button class="btn btn--primary" id="publishSurveyBtn">
-                            <i class="fa-solid fa-paper-plane"></i>
-                            نشر الاستبيان
-                        </button>
-                    </div>
                 </div>
 
                 <!-- نموذج إنشاء الاستبيان -->
                 <div id="surveyBuilderContainer" class="survey-builder">
                     <!-- سيتم ملؤه ديناميكياً -->
+                </div>
+
+                <!-- أزرار الحفظ والنشر في الأسفل -->
+                <div class="section-footer-actions">
+                    <button class="btn btn--outline btn--outline-primary" id="saveSurveyDraftBtn">
+                        <i class="fa-solid fa-save"></i>
+                        حفظ كمسودة
+                    </button>
+                    <button class="btn btn--primary" id="publishSurveyBtn">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        نشر الاستبيان
+                    </button>
                 </div>
             </section>
 
@@ -635,7 +634,7 @@
                                 <select id="surveyResultsStatusFilter" class="filter-select">
                                     <option value="">جميع الحالات</option>
                                     <option value="active">نشط</option>
-                                    <option value="closed">مغلق</option>
+                                    <option value="closed">منتهية</option>
                                     <option value="draft">مسودة</option>
                                 </select>
                                 <select id="surveyResultsTypeFilter" class="filter-select">
@@ -665,8 +664,37 @@
                     </div>
                 </div>
 
-                <!-- التبويبات الأفقية -->
+                <!-- التبويبات الأفقية - صفحة النتائج المنفصلة -->
                 <div id="resultsTabsContainer" style="display: none;">
+                    <!-- شريط العنوان مع زر الرجوع -->
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <button class="btn btn--outline btn--outline-primary" id="backToSurveysList" style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                    رجوع للقائمة
+                                </button>
+                                <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;" id="selectedSurveyTitle">
+                                    <i class="fa-solid fa-chart-pie"></i>
+                                    نتائج الاستبيان
+                                </h3>
+                            </div>
+                            <div class="results-export-options" id="resultsActionsTop">
+                                <button class="results-export-btn" id="exportCSVBtnTop" title="تصدير CSV" onclick="window.surveysResultsEnhanced?.exportToCSV()">
+                                    <i class="fa-solid fa-file-csv"></i>
+                                    CSV
+                                </button>
+                                <button class="results-export-btn" id="exportExcelBtnTop" title="تصدير Excel" onclick="window.surveysResultsEnhanced?.exportToExcel()">
+                                    <i class="fa-solid fa-file-excel"></i>
+                                    Excel
+                                </button>
+                                <button class="results-export-btn" id="refreshResultsBtnTop" title="تحديث" onclick="window.surveysResultsEnhanced?.refreshResults()">
+                                    <i class="fa-solid fa-rotate"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- شريط التبويبات -->
                     <div class="tabs-nav" style="display: flex; gap: 0.5rem; border-bottom: 2px solid #e5e7eb; margin-bottom: 1.5rem;">
                         <button class="tab-btn active" data-tab="statistics" style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: 500;">
@@ -2999,13 +3027,21 @@
                                         <!-- سيتم ملؤه ديناميكياً -->
                                     </div>
                                 </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fa-solid fa-camera" style="margin-left: 0.375rem;"></i>
+                                        اسم مصور الغلاف <span style="color: #ef4444;">*</span>
+                                    </label>
+                                    <input type="text" id="instantNewsCoverPhotographer" class="form-input" placeholder="أدخل اسم مصور صورة الغلاف" required>
+                                </div>
                                 
                                 <div class="form-group">
-                                    <label class="form-label">معرض صور الخبر (2-4 صور اختيارية)</label>
+                                    <label class="form-label">معرض صور الخبر (2-4 صور إجبارية)</label>
                                     <div id="instantNewsGalleryContainer">
                                         <!-- سيتم ملؤه ديناميكياً -->
                                     </div>
-                                    <small style="color: #6b7280; font-size: 0.8rem;">يمكنك إضافة من 2 إلى 4 صور إضافية للخبر</small>
+                                    <small style="color: #6b7280; font-size: 0.8rem;">يجب إضافة من 2 إلى 4 صور مع اسم المصور لكل صورة</small>
                                 </div>
                                 
                                 <div class="form-group">
@@ -3901,7 +3937,6 @@
     <!-- المكتبات -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../supabase-config.js"></script>
     <script src="auth-manager.js"></script>
     <script src="js/impersonation-manager.js"></script>
@@ -3943,6 +3978,8 @@
     <script src="js/sponsors-manager.js"></script>
     <script src="js/modal-helper.js"></script>
     <script src="js/toast-notifications.js"></script>
+    <!-- SweetAlert2 Shim - يحوّل Swal.fire إلى ModalHelper -->
+    <script src="js/swal-shim.js"></script>
     <script src="dashboard.js"></script>
     <!-- <link rel="stylesheet" href="css/archives.css"> -->
 </body>

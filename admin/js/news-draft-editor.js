@@ -48,73 +48,39 @@ window.NewsDraftEditor = (function() {
             // بناء HTML للنموذج
             const assignedWriters = news.news_writer_assignments || [];
             const writersHTML = assignedWriters.length > 0 ? `
-                <div style="margin-bottom: 1.5rem;">
-                    <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #374151;">الكتّاب المعينون</label>
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div class="form-group">
+                    <label class="form-label">الكتّاب المعينون</label>
+                    <div class="writers-list">
                         ${assignedWriters.map(assignment => `
-                            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
+                            <div class="user-select-item">
                                 <img src="${assignment.profiles.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(assignment.profiles.full_name)}" 
-                                     style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                                <div style="flex: 1; text-align: right;">
-                                    <div style="font-weight: 600; color: #111827;">${assignment.profiles.full_name}</div>
-                                    <div style="font-size: 0.875rem; color: #6b7280;">${assignment.profiles.email}</div>
+                                     class="user-select-avatar">
+                                <div class="user-select-info">
+                                    <div class="user-select-name">${assignment.profiles.full_name}</div>
+                                    <div class="user-select-email">${assignment.profiles.email}</div>
                                 </div>
-                                <span style="padding: 0.25rem 0.75rem; background: ${getStatusColor(assignment.status)}; color: white; border-radius: 6px; font-size: 0.8125rem;">
+                                <span class="badge badge-${getStatusClass(assignment.status)}">
                                     ${getStatusText(assignment.status)}
                                 </span>
-                                <button type="button" class="remove-writer-btn" data-assignment-id="${assignment.id}" data-writer-id="${assignment.writer_id}" 
-                                        style="padding: 0.5rem; background: #fef2f2; color: #991b1b; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                <button type="button" class="remove-writer-btn btn btn--danger btn--sm" data-assignment-id="${assignment.id}" data-writer-id="${assignment.writer_id}">
                                     <i class="fa-solid fa-times"></i>
                                 </button>
                             </div>
                         `).join('')}
                     </div>
                 </div>
-            ` : '<p style="color: #6b7280; font-size: 0.9375rem; margin-bottom: 1.5rem;">لم يتم تعيين كتّاب بعد</p>';
+            ` : '<p class="empty-text">لم يتم تعيين كتّاب بعد</p>';
 
             const modalHTML = `
-                <div style="text-align: right;">
-                    <div style="margin-bottom: 1.5rem;">
-                        <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #374151;">عنوان الخبر *</label>
-                        <input type="text" name="title" value="${escapeHtml(news.title)}" 
-                               style="width: 100%; padding: 0.875rem; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem;">
+                <div class="modal-content-rtl">
+                    <div class="form-group">
+                        <label class="form-label">عنوان الخبر *</label>
+                        <input type="text" name="title" value="${escapeHtml(news.title)}" class="form-input">
                     </div>
 
-                    <div style="margin-bottom: 1.5rem;">
-                        <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #374151;">اللجنة المسؤولة *</label>
-                        <select name="committee" style="width: 100%; padding: 0.875rem; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem;">
-                            <option value="">-- اختر اللجنة --</option>
-                            ${committees?.map(c => `
-                                <option value="${c.id}" ${c.id === news.committee_id ? 'selected' : ''}>
-                                    ${c.committee_name_ar}
-                                </option>
-                            `).join('')}
-                        </select>
-                    </div>
-
-                    <div style="margin-bottom: 1.5rem;">
-                        <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #374151;">التصنيف</label>
-                        <select name="category" style="width: 100%; padding: 0.875rem; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem;">
-                            <option value="">-- اختر التصنيف --</option>
-                            <option value="events" ${news.category === 'events' ? 'selected' : ''}>فعاليات</option>
-                            <option value="achievements" ${news.category === 'achievements' ? 'selected' : ''}>إنجازات</option>
-                            <option value="announcements" ${news.category === 'announcements' ? 'selected' : ''}>إعلانات</option>
-                            <option value="workshops" ${news.category === 'workshops' ? 'selected' : ''}>ورش عمل</option>
-                            <option value="meetings" ${news.category === 'meetings' ? 'selected' : ''}>اجتماعات</option>
-                            <option value="general" ${news.category === 'general' ? 'selected' : ''}>عام</option>
-                        </select>
-                    </div>
-
-                    <div style="margin-bottom: 1.5rem;">
-                        <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #374151;">الملخص</label>
-                        <textarea name="summary" rows="3" 
-                                  style="width: 100%; padding: 0.875rem; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; font-family: inherit; resize: vertical;">${escapeHtml(news.summary || '')}</textarea>
-                    </div>
-
-                    <div style="margin-bottom: 1.5rem;">
-                        <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #374151;">ملاحظات المراجعة</label>
-                        <textarea name="notes" rows="2" 
-                                  style="width: 100%; padding: 0.875rem; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; font-family: inherit; resize: vertical;">${escapeHtml(news.review_notes || '')}</textarea>
+                    <div class="form-group">
+                        <label class="form-label">ملاحظات للكتّاب</label>
+                        <textarea name="notes" rows="2" placeholder="تعليمات أو ملاحظات للكتّاب..." class="form-input">${escapeHtml(news.review_notes || '')}</textarea>
                     </div>
 
                     ${writersHTML}
@@ -138,18 +104,10 @@ window.NewsDraftEditor = (function() {
                         callback: async () => {
                             const modalElement = document.querySelector('.modal.active');
                             const title = modalElement.querySelector('input[name="title"]').value;
-                            const committee = modalElement.querySelector('select[name="committee"]').value;
-                            const category = modalElement.querySelector('select[name="category"]').value;
-                            const summary = modalElement.querySelector('textarea[name="summary"]').value;
                             const notes = modalElement.querySelector('textarea[name="notes"]').value;
 
                             if (!title.trim()) {
                                 Toast.warning('يرجى إدخال عنوان الخبر');
-                                return;
-                            }
-
-                            if (!committee) {
-                                Toast.warning('يرجى اختيار اللجنة المسؤولة');
                                 return;
                             }
 
@@ -160,9 +118,6 @@ window.NewsDraftEditor = (function() {
                                     .from('news')
                                     .update({
                                         title: title.trim(),
-                                        committee_id: committee,
-                                        category: category || null,
-                                        summary: summary.trim() || null,
                                         review_notes: notes.trim() || null,
                                         updated_at: new Date().toISOString()
                                     })
@@ -172,7 +127,7 @@ window.NewsDraftEditor = (function() {
 
                                 // تسجيل النشاط
                                 await window.NewsWorkflowManager.logActivity(newsId, 'draft_updated', {
-                                    updated_fields: ['title', 'committee_id', 'category', 'summary', 'review_notes']
+                                    updated_fields: ['title', 'review_notes']
                                 });
 
                                 Toast.close(savingToast);

@@ -312,6 +312,18 @@
     background: linear-gradient(135deg, rgba(61, 143, 214, 0.04), rgba(61, 143, 214, 0.02));
 }
 
+/* تنسيق أزرار النوافذ المنبثقة */
+.modal-footer .btn--outline-secondary {
+    color: #64748b !important;
+    border-color: #64748b !important;
+    background: transparent !important;
+}
+
+.modal-footer .btn--outline-secondary:hover {
+    background: linear-gradient(to right, #64748b, #475569) !important;
+    color: white !important;
+}
+
 /* ============================================================================
    أنواع النوافذ المنبثقة (ألوان متنوعة)
    ============================================================================ */

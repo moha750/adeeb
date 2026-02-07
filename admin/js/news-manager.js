@@ -60,9 +60,9 @@ window.NewsManager = (function() {
 
         if (filteredNews.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 3rem; color: #6b7280;">
-                    <i class="fa-solid fa-inbox fa-3x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <p style="font-size: 1.125rem; font-weight: 500;">لا توجد أخبار</p>
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <p class="empty-state__title">لا توجد أخبار</p>
                 </div>
             `;
             return;
@@ -83,11 +83,11 @@ window.NewsManager = (function() {
         return `
             <div class="application-card">
                 <div class="application-card-header">
-                    <img src="${imageUrl}" alt="${news.title}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px 8px 0 0; margin: -1rem -1rem 1rem -1rem;" onerror="this.src='https://via.placeholder.com/400x300?text=أديب'">
+                    <img src="${imageUrl}" alt="${news.title}" class="news-card__image" onerror="this.src='https://via.placeholder.com/400x300?text=أديب'">
                     <div class="applicant-info">
                         <div class="applicant-details">
                             <h4 class="applicant-name">${news.title}</h4>
-                            <p style="margin: 0.5rem 0; font-size: 0.875rem; color: #64748b;">${news.summary || ''}</p>
+                            <p class="news-card__meta">${news.summary || ''}</p>
                         </div>
                     </div>
                 </div>
@@ -120,7 +120,7 @@ window.NewsManager = (function() {
                 </div>
                 <div class="application-card-footer">
                     ${statusBadge}
-                    <div style="display: flex; gap: 0.5rem; margin-right: auto;">
+                    <div class="news-card__actions">
                         <button class="btn btn--icon btn--icon-sm" onclick="NewsManager.editNews('${news.id}')" title="تعديل">
                             <i class="fa-solid fa-edit"></i>
                         </button>
@@ -146,18 +146,18 @@ window.NewsManager = (function() {
         const { value: formValues } = await Swal.fire({
             title: '<i class="fa-solid fa-newspaper"></i> إضافة خبر جديد',
             html: `
-                <div style="text-align: right;">
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">عنوان الخبر</label>
-                        <input type="text" id="newsTitle" class="swal2-input" placeholder="عنوان الخبر" style="width: 100%; margin: 0;">
+                <div class="modal-content-rtl">
+                    <div class="form-group">
+                        <label class="form-label">عنوان الخبر</label>
+                        <input type="text" id="newsTitle" class="form-input" placeholder="عنوان الخبر">
                     </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">ملخص الخبر</label>
-                        <textarea id="newsSummary" class="swal2-textarea" rows="2" placeholder="ملخص مختصر للخبر" style="width: 100%; margin: 0;"></textarea>
+                    <div class="form-group">
+                        <label class="form-label">ملخص الخبر</label>
+                        <textarea id="newsSummary" class="form-input" rows="2" placeholder="ملخص مختصر للخبر"></textarea>
                     </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">محتوى الخبر</label>
-                        <textarea id="newsContent" class="swal2-textarea" rows="5" placeholder="محتوى الخبر الكامل" style="width: 100%; margin: 0;"></textarea>
+                    <div class="form-group">
+                        <label class="form-label">محتوى الخبر</label>
+                        <textarea id="newsContent" class="form-input" rows="5" placeholder="محتوى الخبر الكامل"></textarea>
                     </div>
                     ${window.ImageUploadHelper ? window.ImageUploadHelper.createImageUploadInput({
                         label: 'صورة الخبر',
@@ -165,24 +165,39 @@ window.NewsManager = (function() {
                         previewId: 'newsImagePreview',
                         folder: 'news'
                     }) : `
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">رابط الصورة</label>
-                            <input type="url" id="newsImageUrl" class="swal2-input" placeholder="https://example.com/image.jpg" style="width: 100%; margin: 0;">
+                        <div class="form-group">
+                            <label class="form-label">رابط الصورة</label>
+                            <input type="url" id="newsImageUrl" class="form-input" placeholder="https://example.com/image.jpg">
                         </div>
                     `}
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الكاتب</label>
-                        <input type="text" id="newsAuthor" class="swal2-input" placeholder="اسم الكاتب" style="width: 100%; margin: 0;">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fa-solid fa-camera"></i>
+                            مصور الغلاف <span class="required">*</span>
+                        </label>
+                        <input type="text" id="newsCoverPhotographer" class="form-input" placeholder="اسم مصور صورة الغلاف" required>
                     </div>
-                    <div style="margin-bottom: 1rem; display: flex; gap: 1rem;">
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fa-solid fa-images"></i>
+                            مصورو المعرض <span class="required">*</span>
+                        </label>
+                        <input type="text" id="newsGalleryPhotographers" class="form-input" placeholder="أسماء المصورين (افصل بفاصلة)" required>
+                        <small class="form-hint">مثال: أحمد محمد، سارة علي</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الكاتب</label>
+                        <input type="text" id="newsAuthor" class="form-input" placeholder="اسم الكاتب">
+                    </div>
+                    <div class="form-group">
+                        <label class="publish-option">
                             <input type="checkbox" id="newsIsFeatured">
                             <span>خبر مميز</span>
                         </label>
                     </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الحالة</label>
-                        <select id="newsStatus" class="swal2-select" style="width: 100%; margin: 0;">
+                    <div class="form-group">
+                        <label class="form-label">الحالة</label>
+                        <select id="newsStatus" class="form-input">
                             <option value="draft">مسودة</option>
                             <option value="published">منشور</option>
                             <option value="archived">مؤرشف</option>
@@ -199,6 +214,8 @@ window.NewsManager = (function() {
                 const summary = document.getElementById('newsSummary').value;
                 const content = document.getElementById('newsContent').value;
                 const author = document.getElementById('newsAuthor').value;
+                const coverPhotographer = document.getElementById('newsCoverPhotographer').value;
+                const galleryPhotographersInput = document.getElementById('newsGalleryPhotographers').value;
                 const isFeatured = document.getElementById('newsIsFeatured').checked;
                 const status = document.getElementById('newsStatus').value;
 
@@ -206,6 +223,18 @@ window.NewsManager = (function() {
                     Swal.showValidationMessage('يرجى إدخال عنوان الخبر والمحتوى');
                     return false;
                 }
+
+                if (!coverPhotographer || !coverPhotographer.trim()) {
+                    Swal.showValidationMessage('يرجى إدخال اسم مصور الغلاف');
+                    return false;
+                }
+
+                if (!galleryPhotographersInput || !galleryPhotographersInput.trim()) {
+                    Swal.showValidationMessage('يرجى إدخال أسماء مصوري المعرض');
+                    return false;
+                }
+
+                const galleryPhotographers = galleryPhotographersInput.split(/[،,]/).map(p => p.trim()).filter(p => p);
 
                 // رفع الصورة إذا كان النظام متاحاً
                 let imageUrl = null;
@@ -220,7 +249,7 @@ window.NewsManager = (function() {
                     imageUrl = document.getElementById('newsImageUrl')?.value;
                 }
 
-                return { title, summary, content, imageUrl, author, isFeatured, status };
+                return { title, summary, content, imageUrl, author, coverPhotographer, galleryPhotographers, isFeatured, status };
             }
         });
 
@@ -232,6 +261,8 @@ window.NewsManager = (function() {
                     content: formValues.content,
                     image_url: formValues.imageUrl || null,
                     author_name: formValues.author || null,
+                    cover_photographer: formValues.coverPhotographer,
+                    gallery_photographers: formValues.galleryPhotographers,
                     is_featured: formValues.isFeatured,
                     status: formValues.status,
                     created_by: currentUser.id,
@@ -269,18 +300,18 @@ window.NewsManager = (function() {
         const { value: formValues } = await Swal.fire({
             title: '<i class="fa-solid fa-edit"></i> تعديل الخبر',
             html: `
-                <div style="text-align: right;">
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">عنوان الخبر</label>
-                        <input type="text" id="newsTitle" class="swal2-input" value="${news.title}" style="width: 100%; margin: 0;">
+                <div class="modal-content-rtl">
+                    <div class="form-group">
+                        <label class="form-label">عنوان الخبر</label>
+                        <input type="text" id="newsTitle" class="form-input" value="${news.title}">
                     </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">ملخص الخبر</label>
-                        <textarea id="newsSummary" class="swal2-textarea" rows="2" style="width: 100%; margin: 0;">${news.summary || ''}</textarea>
+                    <div class="form-group">
+                        <label class="form-label">ملخص الخبر</label>
+                        <textarea id="newsSummary" class="form-input" rows="2">${news.summary || ''}</textarea>
                     </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">محتوى الخبر</label>
-                        <textarea id="newsContent" class="swal2-textarea" rows="5" style="width: 100%; margin: 0;">${news.content}</textarea>
+                    <div class="form-group">
+                        <label class="form-label">محتوى الخبر</label>
+                        <textarea id="newsContent" class="form-input" rows="5">${news.content}</textarea>
                     </div>
                     ${window.ImageUploadHelper ? window.ImageUploadHelper.createImageUploadInput({
                         label: 'صورة الخبر',
@@ -289,24 +320,24 @@ window.NewsManager = (function() {
                         folder: 'news',
                         currentImageUrl: news.image_url
                     }) : `
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">رابط الصورة</label>
-                            <input type="url" id="newsImageUrl" class="swal2-input" value="${news.image_url || ''}" style="width: 100%; margin: 0;">
+                        <div class="form-group">
+                            <label class="form-label">رابط الصورة</label>
+                            <input type="url" id="newsImageUrl" class="form-input" value="${news.image_url || ''}">
                         </div>
                     `}
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الكاتب</label>
-                        <input type="text" id="newsAuthor" class="swal2-input" value="${news.author_name || ''}" style="width: 100%; margin: 0;">
+                    <div class="form-group">
+                        <label class="form-label">الكاتب</label>
+                        <input type="text" id="newsAuthor" class="form-input" value="${news.author_name || ''}">
                     </div>
-                    <div style="margin-bottom: 1rem; display: flex; gap: 1rem;">
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div class="form-group">
+                        <label class="publish-option">
                             <input type="checkbox" id="newsIsFeatured" ${news.is_featured ? 'checked' : ''}>
                             <span>خبر مميز</span>
                         </label>
                     </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الحالة</label>
-                        <select id="newsStatus" class="swal2-select" style="width: 100%; margin: 0;">
+                    <div class="form-group">
+                        <label class="form-label">الحالة</label>
+                        <select id="newsStatus" class="form-input">
                             <option value="draft" ${news.status === 'draft' ? 'selected' : ''}>مسودة</option>
                             <option value="published" ${news.status === 'published' ? 'selected' : ''}>منشور</option>
                             <option value="archived" ${news.status === 'archived' ? 'selected' : ''}>مؤرشف</option>

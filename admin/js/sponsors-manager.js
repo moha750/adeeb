@@ -36,9 +36,9 @@ window.SponsorsManager = (function() {
 
         if (allSponsors.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 3rem; color: #6b7280;">
-                    <i class="fa-solid fa-inbox fa-3x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <p style="font-size: 1.125rem; font-weight: 500;">لا توجد شركاء</p>
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <p class="empty-state__title">لا توجد شركاء</p>
                 </div>
             `;
             return;
@@ -58,7 +58,7 @@ window.SponsorsManager = (function() {
                 <tbody>
                     ${allSponsors.map(sponsor => `
                         <tr>
-                            <td><img src="${sponsor.logo_url || 'https://via.placeholder.com/50'}" alt="${sponsor.name}" style="width: 50px; height: 50px; object-fit: contain; border-radius: 4px;" onerror="this.src='https://via.placeholder.com/50'"/></td>
+                            <td><img src="${sponsor.logo_url || 'https://via.placeholder.com/50'}" alt="${sponsor.name}" class="sponsor-logo" onerror="this.src='https://via.placeholder.com/50'"/></td>
                             <td><strong>${sponsor.name}</strong></td>
                             <td>${sponsor.badge || '-'}</td>
                             <td>${sponsor.order || 0}</td>
@@ -78,108 +78,84 @@ window.SponsorsManager = (function() {
     }
 
     async function addSponsor() {
-        const { value: formValues } = await Swal.fire({
-            title: '<i class="fa-solid fa-handshake"></i> إضافة شريك جديد',
-            html: `
-                <div style="text-align: right;">
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">اسم الشريك</label>
-                        <input type="text" id="sponsorName" class="swal2-input" placeholder="اسم الشريك" style="width: 100%; margin: 0;">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الوسام</label>
-                        <input type="text" id="sponsorBadge" class="swal2-input" placeholder="مثال: شريك ذهبي، شريك استراتيجي" style="width: 100%; margin: 0;">
-                    </div>
-                    ${window.ImageUploadHelper ? window.ImageUploadHelper.createImageUploadInput({
-                        label: 'شعار الشريك',
-                        inputId: 'sponsorLogoUpload',
-                        previewId: 'sponsorLogoPreview',
-                        folder: 'sponsors'
-                    }) : `
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">رابط الشعار</label>
-                            <input type="url" id="sponsorLogoUrl" class="swal2-input" placeholder="https://example.com/logo.png" style="width: 100%; margin: 0;">
-                        </div>
-                    `}
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">رابط الموقع</label>
-                        <input type="url" id="sponsorLinkUrl" class="swal2-input" placeholder="https://example.com" style="width: 100%; margin: 0;">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الوصف</label>
-                        <textarea id="sponsorDescription" class="swal2-textarea" rows="2" placeholder="وصف مختصر عن الشريك" style="width: 100%; margin: 0;"></textarea>
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الترتيب</label>
-                        <input type="number" id="sponsorOrder" class="swal2-input" value="0" min="0" style="width: 100%; margin: 0;">
-                    </div>
-                </div>
-            `,
-            width: '600px',
-            showCancelButton: true,
-            confirmButtonText: 'إضافة',
-            cancelButtonText: 'إلغاء',
-            preConfirm: async () => {
-                const name = document.getElementById('sponsorName').value;
-                const badge = document.getElementById('sponsorBadge').value;
-                const linkUrl = document.getElementById('sponsorLinkUrl').value;
-                const description = document.getElementById('sponsorDescription').value;
-                const order = parseInt(document.getElementById('sponsorOrder').value) || 0;
+        const fields = [
+            {
+                name: 'name',
+                type: 'text',
+                label: 'اسم الشريك',
+                placeholder: 'أدخل اسم الشريك',
+                required: true
+            },
+            {
+                name: 'badge',
+                type: 'text',
+                label: 'الوسام',
+                placeholder: 'مثال: شريك ذهبي، شريك استراتيجي'
+            },
+            {
+                name: 'logo_url',
+                type: 'image',
+                label: 'شعار الشريك',
+                folder: 'sponsors'
+            },
+            {
+                name: 'link_url',
+                type: 'url',
+                label: 'رابط الموقع',
+                placeholder: 'https://example.com'
+            },
+            {
+                name: 'description',
+                type: 'textarea',
+                label: 'الوصف',
+                placeholder: 'وصف مختصر عن الشريك'
+            },
+            {
+                name: 'order',
+                type: 'number',
+                label: 'الترتيب',
+                value: '0',
+                min: 0
+            }
+        ];
 
-                if (!name) {
-                    Swal.showValidationMessage('يرجى إدخال اسم الشريك');
-                    return false;
-                }
+        try {
+            await ModalHelper.form({
+                title: '🤝 إضافة شريك جديد',
+                fields: fields,
+                submitText: 'إضافة',
+                cancelText: 'إلغاء',
+                onSubmit: async (formData) => {
+                    const loadingToast = Toast.loading('جاري إضافة الشريك...');
 
-                let logoUrl = null;
-                if (window.ImageUploadHelper) {
                     try {
-                        logoUrl = await window.ImageUploadHelper.uploadFromInput('sponsorLogoUpload', 'sponsors');
+                        const sponsorData = {
+                            name: formData.name,
+                            badge: formData.badge || null,
+                            logo_url: formData.logo_url || null,
+                            link_url: formData.link_url || null,
+                            description: formData.description || null,
+                            order: parseInt(formData.order) || 0,
+                            created_by: currentUser?.id
+                        };
+
+                        const { error } = await sb.from('sponsors').insert([sponsorData]);
+
+                        if (error) throw error;
+
+                        Toast.close(loadingToast);
+                        Toast.success('تم إضافة الشريك بنجاح');
+                        await loadSponsors();
                     } catch (error) {
-                        Swal.showValidationMessage('حدث خطأ أثناء رفع الشعار: ' + error.message);
-                        return false;
+                        Toast.close(loadingToast);
+                        Toast.error('حدث خطأ أثناء إضافة الشريك');
+                        console.error('Error adding sponsor:', error);
+                        throw error;
                     }
-                } else {
-                    logoUrl = document.getElementById('sponsorLogoUrl')?.value;
                 }
-
-                return { name, badge, logoUrl, linkUrl, description, order };
-            }
-        });
-
-        if (formValues) {
-            try {
-                const sponsorData = {
-                    name: formValues.name,
-                    badge: formValues.badge,
-                    logo_url: formValues.logoUrl,
-                    link_url: formValues.linkUrl,
-                    description: formValues.description,
-                    order: formValues.order,
-                    created_by: currentUser?.id
-                };
-
-                const { error } = await sb.from('sponsors').insert([sponsorData]);
-
-                if (error) throw error;
-
-                await Swal.fire({
-                    title: 'تم بنجاح',
-                    text: 'تم إضافة الشريك بنجاح',
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-
-                await loadSponsors();
-            } catch (error) {
-                console.error('Error adding sponsor:', error);
-                Swal.fire({
-                    title: 'خطأ',
-                    text: 'حدث خطأ أثناء إضافة الشريك',
-                    icon: 'error'
-                });
-            }
+            });
+        } catch (error) {
+            console.error('Error in addSponsor:', error);
         }
     }
 
@@ -187,146 +163,114 @@ window.SponsorsManager = (function() {
         const sponsor = allSponsors.find(s => s.id === sponsorId);
         if (!sponsor) return;
 
-        const { value: formValues } = await Swal.fire({
-            title: '<i class="fa-solid fa-edit"></i> تعديل الشريك',
-            html: `
-                <div style="text-align: right;">
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">اسم الشريك</label>
-                        <input type="text" id="sponsorName" class="swal2-input" value="${sponsor.name}" style="width: 100%; margin: 0;">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الوسام</label>
-                        <input type="text" id="sponsorBadge" class="swal2-input" value="${sponsor.badge || ''}" style="width: 100%; margin: 0;">
-                    </div>
-                    ${window.ImageUploadHelper ? window.ImageUploadHelper.createImageUploadInput({
-                        label: 'شعار الشريك',
-                        inputId: 'sponsorLogoUpload',
-                        previewId: 'sponsorLogoPreview',
-                        folder: 'sponsors',
-                        currentImageUrl: sponsor.logo_url
-                    }) : `
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">رابط الشعار</label>
-                            <input type="url" id="sponsorLogoUrl" class="swal2-input" value="${sponsor.logo_url || ''}" style="width: 100%; margin: 0;">
-                        </div>
-                    `}
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">رابط الموقع</label>
-                        <input type="url" id="sponsorLinkUrl" class="swal2-input" value="${sponsor.link_url || ''}" style="width: 100%; margin: 0;">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الوصف</label>
-                        <textarea id="sponsorDescription" class="swal2-textarea" rows="2" style="width: 100%; margin: 0;">${sponsor.description || ''}</textarea>
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الترتيب</label>
-                        <input type="number" id="sponsorOrder" class="swal2-input" value="${sponsor.order || 0}" min="0" style="width: 100%; margin: 0;">
-                    </div>
-                </div>
-            `,
-            width: '600px',
-            showCancelButton: true,
-            confirmButtonText: 'حفظ',
-            cancelButtonText: 'إلغاء',
-            preConfirm: async () => {
-                const name = document.getElementById('sponsorName').value;
-                const badge = document.getElementById('sponsorBadge').value;
-                const linkUrl = document.getElementById('sponsorLinkUrl').value;
-                const description = document.getElementById('sponsorDescription').value;
-                const order = parseInt(document.getElementById('sponsorOrder').value) || 0;
+        const fields = [
+            {
+                name: 'name',
+                type: 'text',
+                label: 'اسم الشريك',
+                placeholder: 'أدخل اسم الشريك',
+                value: sponsor.name,
+                required: true
+            },
+            {
+                name: 'badge',
+                type: 'text',
+                label: 'الوسام',
+                placeholder: 'مثال: شريك ذهبي، شريك استراتيجي',
+                value: sponsor.badge || ''
+            },
+            {
+                name: 'logo_url',
+                type: 'image',
+                label: 'شعار الشريك',
+                folder: 'sponsors',
+                value: sponsor.logo_url || ''
+            },
+            {
+                name: 'link_url',
+                type: 'url',
+                label: 'رابط الموقع',
+                placeholder: 'https://example.com',
+                value: sponsor.link_url || ''
+            },
+            {
+                name: 'description',
+                type: 'textarea',
+                label: 'الوصف',
+                placeholder: 'وصف مختصر عن الشريك',
+                value: sponsor.description || ''
+            },
+            {
+                name: 'order',
+                type: 'number',
+                label: 'الترتيب',
+                value: String(sponsor.order || 0),
+                min: 0
+            }
+        ];
 
-                if (!name) {
-                    Swal.showValidationMessage('يرجى إدخال اسم الشريك');
-                    return false;
-                }
+        try {
+            await ModalHelper.form({
+                title: '✏️ تعديل الشريك',
+                fields: fields,
+                submitText: 'حفظ التعديلات',
+                cancelText: 'إلغاء',
+                onSubmit: async (formData) => {
+                    const loadingToast = Toast.loading('جاري حفظ التعديلات...');
 
-                let logoUrl = sponsor.logo_url;
-                if (window.ImageUploadHelper) {
                     try {
-                        const newLogoUrl = await window.ImageUploadHelper.uploadFromInput('sponsorLogoUpload', 'sponsors');
-                        if (newLogoUrl) logoUrl = newLogoUrl;
+                        const sponsorData = {
+                            name: formData.name,
+                            badge: formData.badge || null,
+                            logo_url: formData.logo_url || sponsor.logo_url,
+                            link_url: formData.link_url || null,
+                            description: formData.description || null,
+                            order: parseInt(formData.order) || 0
+                        };
+
+                        const { error } = await sb.from('sponsors').update(sponsorData).eq('id', sponsorId);
+
+                        if (error) throw error;
+
+                        Toast.close(loadingToast);
+                        Toast.success('تم تحديث الشريك بنجاح');
+                        await loadSponsors();
                     } catch (error) {
-                        Swal.showValidationMessage('حدث خطأ أثناء رفع الشعار: ' + error.message);
-                        return false;
+                        Toast.close(loadingToast);
+                        Toast.error('حدث خطأ أثناء تحديث الشريك');
+                        console.error('Error updating sponsor:', error);
+                        throw error;
                     }
-                } else {
-                    const urlInput = document.getElementById('sponsorLogoUrl');
-                    if (urlInput) logoUrl = urlInput.value;
                 }
-
-                return { name, badge, logoUrl, linkUrl, description, order };
-            }
-        });
-
-        if (formValues) {
-            try {
-                const sponsorData = {
-                    name: formValues.name,
-                    badge: formValues.badge,
-                    logo_url: formValues.logoUrl,
-                    link_url: formValues.linkUrl,
-                    description: formValues.description,
-                    order: formValues.order
-                };
-
-                const { error } = await sb.from('sponsors').update(sponsorData).eq('id', sponsorId);
-
-                if (error) throw error;
-
-                await Swal.fire({
-                    title: 'تم بنجاح',
-                    text: 'تم تحديث الشريك بنجاح',
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-
-                await loadSponsors();
-            } catch (error) {
-                console.error('Error updating sponsor:', error);
-                Swal.fire({
-                    title: 'خطأ',
-                    text: 'حدث خطأ أثناء تحديث الشريك',
-                    icon: 'error'
-                });
-            }
+            });
+        } catch (error) {
+            console.error('Error in editSponsor:', error);
         }
     }
 
     async function deleteSponsor(sponsorId) {
-        const result = await Swal.fire({
+        const confirmed = await ModalHelper.confirm({
             title: 'تأكيد الحذف',
-            text: 'هل أنت متأكد من حذف هذا الشريك؟',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'نعم، احذف',
-            cancelButtonText: 'إلغاء',
-            confirmButtonColor: '#dc2626'
+            message: 'هل أنت متأكد من حذف هذا الشريك؟',
+            type: 'danger',
+            confirmText: 'نعم، احذف',
+            cancelText: 'إلغاء'
         });
 
-        if (result.isConfirmed) {
+        if (confirmed) {
+            const loadingToast = Toast.loading('جاري الحذف...');
             try {
                 const { error } = await sb.from('sponsors').delete().eq('id', sponsorId);
 
                 if (error) throw error;
 
-                await Swal.fire({
-                    title: 'تم الحذف',
-                    text: 'تم حذف الشريك بنجاح',
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-
+                Toast.close(loadingToast);
+                Toast.success('تم حذف الشريك بنجاح');
                 await loadSponsors();
             } catch (error) {
+                Toast.close(loadingToast);
+                Toast.error('حدث خطأ أثناء حذف الشريك');
                 console.error('Error deleting sponsor:', error);
-                Swal.fire({
-                    title: 'خطأ',
-                    text: 'حدث خطأ أثناء حذف الشريك',
-                    icon: 'error'
-                });
             }
         }
     }
@@ -339,12 +283,8 @@ window.SponsorsManager = (function() {
     }
 
     function showError(message) {
-        if (window.Swal) {
-            Swal.fire({
-                title: 'خطأ',
-                text: message,
-                icon: 'error'
-            });
+        if (window.Toast) {
+            Toast.error(message);
         } else {
             alert(message);
         }

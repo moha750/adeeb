@@ -90,7 +90,7 @@ window.Toast = (function() {
 
         // شريط التقدم
         if (!persistent && duration > 0) {
-            html += `<div class="toast-progress" style="animation-duration: ${duration}ms;"></div>`;
+            html += `<div class="toast-progress" data-duration="${duration}"></div>`;
         }
 
         toast.innerHTML = html;
@@ -248,7 +248,7 @@ window.Toast = (function() {
             </div>
             <div class="modal-body">
                 ${message ? `<p>${message}</p>` : ''}
-                <input type="text" class="form-input" id="promptInput" placeholder="${placeholder}" value="${defaultValue}" style="width: 100%; margin-top: 0.5rem;">
+                <input type="text" class="form-input prompt-input" id="promptInput" placeholder="${placeholder}" value="${defaultValue}">
             </div>
             <div class="modal-footer">
                 <button class="btn btn--outline btn--outline-secondary" onclick="Toast.closePrompt(false)">${cancelText}</button>

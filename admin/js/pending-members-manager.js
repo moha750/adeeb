@@ -72,7 +72,7 @@ class PendingMembersManager {
         const valid = total - expired;
 
         container.innerHTML = `
-            <div class="stat-card" style="--stat-color: #f59e0b">
+            <div class="stat-card stat-card--yellow">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-clock"></i>
@@ -83,7 +83,7 @@ class PendingMembersManager {
                     </div>
                 </div>
             </div>
-            <div class="stat-card" style="--stat-color: #10b981">
+            <div class="stat-card stat-card--green">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-check-circle"></i>
@@ -94,7 +94,7 @@ class PendingMembersManager {
                     </div>
                 </div>
             </div>
-            <div class="stat-card" style="--stat-color: #ef4444">
+            <div class="stat-card stat-card--red">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-times-circle"></i>

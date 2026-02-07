@@ -344,7 +344,7 @@
                             <div class="edit-question-type">
                                 <i class="fa-solid ${typeInfo.icon}"></i>
                                 ${typeInfo.label}
-                                ${question.is_required ? '<span style="color: #ef4444; margin-right: 0.5rem;">• إجباري</span>' : ''}
+                                ${question.is_required ? '<span class="required-indicator">• إجباري</span>' : ''}
                             </div>
                         </div>
                         <div class="edit-question-actions">
@@ -459,8 +459,8 @@
             const question = this.currentQuestions[index];
             
             const modalHTML = `
-                <div class="modal-backdrop active" id="questionEditBackdrop" style="z-index: 10100;">
-                    <div class="modal modal-md active" style="z-index: 10101;">
+                <div class="modal-backdrop active modal-backdrop--high" id="questionEditBackdrop">
+                    <div class="modal modal-md active modal--high">
                         <div class="modal-header">
                             <div class="modal-header-content">
                                 <i class="fa-solid fa-question-circle"></i>
@@ -470,14 +470,14 @@
                                 <i class="fa-solid fa-times"></i>
                             </button>
                         </div>
-                        <div class="modal-body" style="padding: 1.5rem;">
-                            <div class="edit-form-group" style="margin-bottom: 1rem;">
+                        <div class="modal-body">
+                            <div class="edit-form-group">
                                 <label class="edit-form-label">نص السؤال <span class="required">*</span></label>
                                 <input type="text" class="edit-form-input" id="questionText" 
                                     value="${this.escapeHtml(question.question_text || '')}"
                                     placeholder="أدخل نص السؤال">
                             </div>
-                            <div class="edit-form-grid" style="margin-bottom: 1rem;">
+                            <div class="edit-form-grid">
                                 <div class="edit-form-group">
                                     <label class="edit-form-label">نوع السؤال</label>
                                     <select class="edit-form-select" id="questionType" onchange="window.surveyEditModal.onQuestionTypeChange()">
@@ -489,7 +489,7 @@
                                     </select>
                                 </div>
                                 <div class="edit-form-group">
-                                    <label class="edit-form-label" style="margin-bottom: 0.75rem;">إجباري</label>
+                                    <label class="edit-form-label">إجباري</label>
                                     <label class="edit-toggle">
                                         <input type="checkbox" id="questionRequired" ${question.is_required ? 'checked' : ''}>
                                         <span class="edit-toggle-slider"></span>
@@ -525,13 +525,12 @@
                 return `
                     <div class="edit-form-group">
                         <label class="edit-form-label">الخيارات</label>
-                        <div id="optionsList" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div id="optionsList" class="options-list">
                             ${options.map((opt, i) => `
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <div class="option-item">
                                     <input type="text" class="edit-form-input question-option" 
                                         value="${this.escapeHtml(opt)}" 
-                                        placeholder="خيار ${i + 1}"
-                                        style="margin-bottom: 0;">
+                                        placeholder="خيار ${i + 1}">
                                     <button type="button" class="btn btn--icon btn--icon-danger" 
                                         onclick="this.parentElement.remove()" 
                                         ${options.length <= 2 ? 'disabled' : ''}>
@@ -540,7 +539,7 @@
                                 </div>
                             `).join('')}
                         </div>
-                        <button type="button" class="btn btn--outline-primary btn--sm" style="margin-top: 0.75rem;"
+                        <button type="button" class="btn btn--outline-primary btn--sm add-option-btn"
                             onclick="window.surveyEditModal.addOption()">
                             <i class="fa-solid fa-plus"></i>
                             إضافة خيار
@@ -578,11 +577,10 @@
             const list = document.getElementById('optionsList');
             const count = list.children.length + 1;
             const optionHTML = `
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <div class="option-item">
                     <input type="text" class="edit-form-input question-option" 
                         value="" 
-                        placeholder="خيار ${count}"
-                        style="margin-bottom: 0;">
+                        placeholder="خيار ${count}">
                     <button type="button" class="btn btn--icon btn--icon-danger" 
                         onclick="this.parentElement.remove()">
                         <i class="fa-solid fa-times"></i>
@@ -635,8 +633,16 @@
             if (backdrop) backdrop.remove();
         }
 
-        deleteQuestion(index) {
-            if (confirm('هل أنت متأكد من حذف هذا السؤال؟')) {
+        async deleteQuestion(index) {
+            const confirmed = await ModalHelper.confirm({
+                title: 'حذف السؤال',
+                message: 'هل أنت متأكد من حذف هذا السؤال؟',
+                type: 'danger',
+                confirmText: 'نعم، احذف',
+                cancelText: 'إلغاء'
+            });
+            
+            if (confirmed) {
                 this.currentQuestions.splice(index, 1);
                 this.hasChanges = true;
                 this.updateQuestionsPanel();
@@ -796,36 +802,19 @@
         }
 
         showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                z-index: 10000;
-                padding: 1rem 1.5rem;
-                border-radius: 12px;
-                background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
-                color: white;
-                font-weight: 600;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            `;
-            notification.innerHTML = `
-                <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
-                <span>${message}</span>
-            `;
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.style.opacity = '0';
-                notification.style.transform = 'translateX(-50%) translateY(-20px)';
-                notification.style.transition = 'all 0.3s ease';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
+            // استخدام نظام Toast الموحد بدلاً من الإشعارات المخصصة
+            if (window.Toast) {
+                if (type === 'success') {
+                    Toast.success(message);
+                } else if (type === 'error') {
+                    Toast.error(message);
+                } else {
+                    Toast.info(message);
+                }
+            } else {
+                // fallback في حالة عدم توفر Toast
+                console.log(`[${type}] ${message}`);
+            }
         }
     }
 

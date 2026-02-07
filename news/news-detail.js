@@ -274,10 +274,10 @@ function renderNewsDetail(news) {
     coverContainer.style.display = 'block';
     
     // Photographer name
-    if (news.photographer) {
+    if (news.cover_photographer) {
       const photographerItem = document.getElementById('photographerItem');
       const photographerName = document.getElementById('photographerName');
-      photographerName.textContent = news.photographer;
+      photographerName.textContent = news.cover_photographer;
       photographerItem.style.display = 'flex';
     }
   }
@@ -286,46 +286,44 @@ function renderNewsDetail(news) {
   document.getElementById('newsContent').innerHTML = news.content;
 
   // Additional Images Gallery (below content)
-  if (news.images && Array.isArray(news.images) && news.images.length > 0) {
+  // gallery_images هو مصفوفة URLs نصية، و gallery_photographers مصفوفة أسماء
+  const galleryImgs = news.gallery_images;
+  const galleryPhotographers = news.gallery_photographers || [];
+  
+  if (galleryImgs && Array.isArray(galleryImgs) && galleryImgs.length > 0) {
     const galleryContainer = document.getElementById('newsImagesGallery');
     const imagesSwiper = document.getElementById('newsImagesSwiper');
     
-    // إنشاء HTML للصور
-    const imageHTML = news.images.map((img, index) => `
-      <div class="gallery-image-card">
-        <div class="gallery-image-container">
-          <img src="${img.url}" alt="${escapeHtml(news.title)} - صورة ${index + 1}" class="gallery-image" />
-        </div>
-      </div>
-    `).join('');
-    
     // ملء Swiper
-    imagesSwiper.innerHTML = news.images.map((img, index) => `
+    imagesSwiper.innerHTML = galleryImgs.map((imgUrl, index) => {
+      const photographer = galleryPhotographers[index] || '';
+      return `
       <div class="swiper-slide">
         <div class="gallery-image-card">
           <div class="gallery-image-container">
-            <img src="${img.url}" alt="${escapeHtml(news.title)} - صورة ${index + 1}" class="gallery-image" />
+            <img src="${imgUrl}" alt="${escapeHtml(news.title)} - صورة ${index + 1}" class="gallery-image" />
             <div class="gallery-image-overlay">
               <i class="fas fa-search-plus"></i>
               <span>اضغط للتكبير</span>
             </div>
           </div>
           <div class="gallery-image-content">
-            ${img.photographer ? `
+            ${photographer ? `
             <div class="gallery-photographer">
               <i class="fas fa-camera"></i>
-              <span>${escapeHtml(img.photographer)}</span>
+              <span>${escapeHtml(photographer)}</span>
             </div>
             ` : ''}
           </div>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
     
     galleryContainer.style.display = 'block';
     
     // تهيئة Swiper
-    initGallerySwiper(news.images.length);
+    initGallerySwiper(galleryImgs.length);
     
     // تهيئة Lightbox بعد تحميل الصور
     setTimeout(() => {

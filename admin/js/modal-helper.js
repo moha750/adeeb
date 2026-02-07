@@ -83,6 +83,8 @@ window.ModalHelper = (function() {
             title = '',
             html = '',
             size = 'md', // sm, md, lg, xl
+            type = '', // success, warning, danger, info, purple
+            extraClass = '', // modal-form, modal-share, etc.
             showClose = true,
             showFooter = false,
             footerButtons = [],
@@ -96,7 +98,9 @@ window.ModalHelper = (function() {
             backdrop.id = modalId + '-backdrop';
 
             const modal = document.createElement('div');
-            modal.className = `modal modal-${size}`;
+            const typeClass = type ? ` modal-${type}` : '';
+            const extraCls = extraClass ? ` ${extraClass}` : '';
+            modal.className = `modal modal-${size}${typeClass}${extraCls}`;
             modal.id = modalId;
 
             let modalHTML = '';
@@ -104,8 +108,10 @@ window.ModalHelper = (function() {
             if (title) {
                 modalHTML += `
                     <div class="modal-header">
-                        <h3>${title}</h3>
-                        ${showClose ? '<button class="modal-close" data-action="close">✕</button>' : ''}
+                        <div class="modal-header-content">
+                            <h3>${title}</h3>
+                        </div>
+                        ${showClose ? '<button class="modal-close-x" data-action="close"><i class="fa-solid fa-xmark"></i></button>' : ''}
                     </div>
                 `;
             }
@@ -132,14 +138,14 @@ window.ModalHelper = (function() {
             }, 10);
 
             const closeModal = (result = null) => {
-                modal.classList.remove('active');
+                modal.classList.add('closing');
                 backdrop.classList.remove('active');
                 
                 setTimeout(() => {
                     modal.remove();
                     backdrop.remove();
                     document.body.classList.remove('modal-open');
-                }, 300);
+                }, 400);
 
                 if (onClose) onClose(result);
                 resolve(result);
@@ -182,17 +188,17 @@ window.ModalHelper = (function() {
         } = options;
 
         return new Promise((resolve) => {
-            let formHTML = '<form id="modalForm" style="display: flex; flex-direction: column; gap: 1rem;">';
+            let formHTML = '<form id="modalForm" class="modal-form-fields">';
             
             fields.forEach(field => {
                 formHTML += `<div class="form-group">`;
                 if (field.label) {
-                    formHTML += `<label class="form-label">${field.label}${field.required ? ' <span style="color: #ef4444;">*</span>' : ''}</label>`;
+                    formHTML += `<label>${field.label}${field.required ? ' <span class="required">*</span>' : ''}</label>`;
                 }
 
                 switch (field.type) {
                     case 'textarea':
-                        formHTML += `<textarea class="form-input" name="${field.name}" placeholder="${field.placeholder || ''}" ${field.required ? 'required' : ''}>${field.value || ''}</textarea>`;
+                        formHTML += `<textarea class="form-textarea" name="${field.name}" placeholder="${field.placeholder || ''}" ${field.required ? 'required' : ''}>${field.value || ''}</textarea>`;
                         break;
                     case 'select':
                         formHTML += `<select class="form-select" name="${field.name}" ${field.required ? 'required' : ''}>`;
@@ -223,6 +229,7 @@ window.ModalHelper = (function() {
                 title: title,
                 html: formHTML,
                 size: 'md',
+                extraClass: 'modal-form',
                 showFooter: true,
                 footerButtons: [
                     {
@@ -243,6 +250,12 @@ window.ModalHelper = (function() {
                                 for (let [key, value] of formData.entries()) {
                                     data[key] = value;
                                 }
+                                // معالجة checkboxes غير المحددة
+                                fields.forEach(f => {
+                                    if (f.type === 'checkbox' && !data[f.name]) {
+                                        data[f.name] = '';
+                                    }
+                                });
                                 try {
                                     if (onSubmit) await onSubmit(data);
                                     resolve(data);
@@ -250,12 +263,12 @@ window.ModalHelper = (function() {
                                     const modal = document.querySelector('.modal.active');
                                     const backdrop = document.querySelector('.modal-backdrop.active');
                                     if (modal) {
-                                        modal.classList.remove('active');
-                                        setTimeout(() => modal.remove(), 300);
+                                        modal.classList.add('closing');
+                                        setTimeout(() => modal.remove(), 400);
                                     }
                                     if (backdrop) {
                                         backdrop.classList.remove('active');
-                                        setTimeout(() => backdrop.remove(), 300);
+                                        setTimeout(() => backdrop.remove(), 400);
                                     }
                                     document.body.classList.remove('modal-open');
                                 } catch (error) {

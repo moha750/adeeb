@@ -233,7 +233,7 @@
         const total = acceptedMembers.length;
 
         container.innerHTML = `
-            <div class="stat-card" style="--stat-color: #10b981">
+            <div class="stat-card stat-card--green">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-user-graduate"></i>
@@ -244,7 +244,7 @@
                     </div>
                 </div>
             </div>
-            <div class="stat-card" style="--stat-color: #3d8fd6">
+            <div class="stat-card stat-card--blue">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-arrow-right-arrow-left"></i>

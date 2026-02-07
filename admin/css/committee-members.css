@@ -40,32 +40,6 @@
     gap: 1.5rem;
 }
 
-.info-item {
-    padding: 1rem;
-    background: rgba(248, 249, 250, 0.8);
-    border-radius: 8px;
-    border-right: 3px solid var(--main-blue);
-}
-
-.info-item label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: 600;
-    color: var(--main-blue);
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-}
-
-.info-item label i {
-    font-size: 1rem;
-}
-
-.info-item p {
-    margin: 0;
-    color: var(--text-color);
-    font-size: 1rem;
-}
 
 .user-avatar-sm {
     width: 40px;

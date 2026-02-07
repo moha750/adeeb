@@ -235,7 +235,7 @@
         const rejectedPercentage = total > 0 ? Math.round((rejected / total) * 100) : 0;
 
         container.innerHTML = `
-            <div class="stat-card" style="--stat-color: #3d8fd6">
+            <div class="stat-card stat-card--blue">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-clipboard-check"></i>
@@ -246,7 +246,7 @@
                     </div>
                 </div>
             </div>
-            <div class="stat-card" style="--stat-color: #10b981">
+            <div class="stat-card stat-card--green">
                 <div class="stat-badge"><i class="fa-solid fa-check"></i> ${acceptedPercentage}%</div>
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
@@ -258,7 +258,7 @@
                     </div>
                 </div>
             </div>
-            <div class="stat-card" style="--stat-color: #ef4444">
+            <div class="stat-card stat-card--red">
                 <div class="stat-badge"><i class="fa-solid fa-times"></i> ${rejectedPercentage}%</div>
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">

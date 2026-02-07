@@ -140,30 +140,30 @@ window.ImageUploadHelper = (function() {
         } = options;
 
         return `
-            <div style="margin-bottom: 1rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+            <div class="form-group">
+                <label class="form-label">
                     ${options.label || 'صورة'}
                 </label>
                 
                 <!-- معاينة الصورة الحالية -->
                 ${currentImageUrl ? `
-                    <div style="margin-bottom: 1rem;">
+                    <div class="image-preview-container">
                         <img id="${previewId}_current" 
                              src="${currentImageUrl}" 
                              alt="الصورة الحالية" 
-                             style="max-width: 200px; max-height: 200px; border-radius: 8px; object-fit: cover;">
+                             class="image-preview">
                     </div>
                 ` : ''}
                 
                 <!-- معاينة الصورة الجديدة -->
-                <div id="${previewId}" style="margin-bottom: 1rem; display: none;">
+                <div id="${previewId}" class="image-preview-container image-preview-container--hidden">
                     <img id="${previewId}_img" 
                          src="" 
                          alt="معاينة الصورة" 
-                         style="max-width: 200px; max-height: 200px; border-radius: 8px; object-fit: cover;">
+                         class="image-preview">
                     <button type="button" 
                             onclick="document.getElementById('${inputId}').value=''; document.getElementById('${previewId}').style.display='none';"
-                            style="display: block; margin-top: 0.5rem; padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            class="btn btn--danger btn--sm">
                         <i class="fa-solid fa-times"></i> إلغاء
                     </button>
                 </div>
@@ -172,10 +172,10 @@ window.ImageUploadHelper = (function() {
                 <input type="file" 
                        id="${inputId}" 
                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-                       style="width: 100%; padding: 0.75rem; border: 2px dashed #d1d5db; border-radius: 8px; cursor: pointer;"
+                       class="file-input"
                        onchange="window.ImageUploadHelper.previewImage('${inputId}', '${previewId}')">
                 
-                <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">
+                <p class="form-hint">
                     <i class="fa-solid fa-info-circle"></i> 
                     الصيغ المدعومة: JPG, PNG, WEBP, GIF (الحد الأقصى: 5 ميجابايت)
                 </p>
@@ -270,6 +270,7 @@ window.ImageUploadHelper = (function() {
             minImages = 2,
             maxImages = 4,
             currentImages = [],
+            currentPhotographers = [],
             folder = 'news/gallery',
             required = true
         } = options;
@@ -277,9 +278,9 @@ window.ImageUploadHelper = (function() {
         const galleryId = containerId + '_gallery';
         
         return `
-            <div class="news-gallery-uploader ${currentImages.length > 0 ? 'has-images' : ''}" id="${galleryId}">
+            <div class="news-gallery-uploader ${currentImages.length > 0 ? 'has-images' : ''}" id="${galleryId}" data-max-images="${maxImages}">
                 <div class="gallery-header">
-                    <h4><i class="fa-solid fa-images"></i> معرض صور الخبر ${required ? '<span style="color: #ef4444;">*</span>' : ''}</h4>
+                    <h4><i class="fa-solid fa-images"></i> معرض صور الخبر ${required ? '<span class="required">*</span>' : ''}</h4>
                     <span class="gallery-counter ${currentImages.length >= minImages ? 'valid' : 'invalid'}" id="${galleryId}_counter">
                         ${currentImages.length} / ${maxImages}
                     </span>
@@ -289,6 +290,14 @@ window.ImageUploadHelper = (function() {
                     ${currentImages.map((img, index) => `
                         <div class="gallery-image-item" data-index="${index}">
                             <img src="${img}" alt="صورة ${index + 1}">
+                            <div class="gallery-image-photographer">
+                                <input type="text" 
+                                       class="form-input gallery-photographer-input" 
+                                       placeholder="اسم المصور"
+                                       value="${currentPhotographers[index] || ''}"
+                                       data-index="${index}"
+                                       onchange="window.ImageUploadHelper.updateGalleryPhotographer('${galleryId}', ${index}, this.value)">
+                            </div>
                             <button type="button" class="remove-btn" onclick="window.ImageUploadHelper.removeGalleryImage('${galleryId}', ${index})">
                                 <i class="fa-solid fa-times"></i>
                             </button>
@@ -306,14 +315,15 @@ window.ImageUploadHelper = (function() {
                 <input type="file" 
                        id="${galleryId}_input" 
                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-                       style="display: none;"
+                       class="hidden-input"
                        onchange="window.ImageUploadHelper.handleGalleryImageSelect('${galleryId}', '${folder}', ${maxImages})">
                 
                 <input type="hidden" id="${galleryId}_urls" value='${JSON.stringify(currentImages)}'>
+                <input type="hidden" id="${galleryId}_photographers" value='${JSON.stringify(currentPhotographers)}'>
                 
                 <div class="gallery-hint ${currentImages.length < minImages && required ? 'error' : ''}" id="${galleryId}_hint">
                     <i class="fa-solid fa-info-circle"></i>
-                    ${required ? `يجب إضافة ${minImages} صور على الأقل (الحد الأقصى: ${maxImages} صور)` : `يمكنك إضافة حتى ${maxImages} صور`}
+                    ${required ? `يجب إضافة ${minImages} صور على الأقل (الحد الأقصى: ${maxImages} صور) مع اسم المصور لكل صورة` : `يمكنك إضافة حتى ${maxImages} صور`}
                 </div>
             </div>
         `;
@@ -375,7 +385,21 @@ window.ImageUploadHelper = (function() {
             if (result.success) {
                 currentUrls.push(result.url);
                 urlsInput.value = JSON.stringify(currentUrls);
-                updateGalleryUI(galleryId, currentUrls, maxImages);
+                
+                // إضافة مصور فارغ للصورة الجديدة
+                const photographersInput = document.getElementById(galleryId + '_photographers');
+                let currentPhotographers = [];
+                try {
+                    currentPhotographers = JSON.parse(photographersInput?.value || '[]');
+                } catch (e) {
+                    currentPhotographers = [];
+                }
+                currentPhotographers.push('');
+                if (photographersInput) {
+                    photographersInput.value = JSON.stringify(currentPhotographers);
+                }
+                
+                updateGalleryUI(galleryId, currentUrls, maxImages, currentPhotographers);
                 
                 if (window.Toast) {
                     Toast.success('تم رفع الصورة بنجاح');
@@ -400,30 +424,58 @@ window.ImageUploadHelper = (function() {
      */
     function removeGalleryImage(galleryId, index) {
         const urlsInput = document.getElementById(galleryId + '_urls');
+        const photographersInput = document.getElementById(galleryId + '_photographers');
         let currentUrls = [];
+        let currentPhotographers = [];
         
         try {
             currentUrls = JSON.parse(urlsInput.value || '[]');
         } catch (e) {
             currentUrls = [];
         }
+        
+        try {
+            currentPhotographers = JSON.parse(photographersInput?.value || '[]');
+        } catch (e) {
+            currentPhotographers = [];
+        }
 
         if (index >= 0 && index < currentUrls.length) {
             currentUrls.splice(index, 1);
+            currentPhotographers.splice(index, 1);
             urlsInput.value = JSON.stringify(currentUrls);
+            if (photographersInput) {
+                photographersInput.value = JSON.stringify(currentPhotographers);
+            }
             
             // الحصول على maxImages من الـ container
             const container = document.getElementById(galleryId);
             const maxImages = parseInt(container?.dataset?.maxImages) || 4;
             
-            updateGalleryUI(galleryId, currentUrls, maxImages);
+            updateGalleryUI(galleryId, currentUrls, maxImages, currentPhotographers);
         }
     }
 
     /**
      * تحديث واجهة المعرض
      */
-    function updateGalleryUI(galleryId, urls, maxImages) {
+    function updateGalleryPhotographer(galleryId, index, value) {
+        const photographersInput = document.getElementById(galleryId + '_photographers');
+        let currentPhotographers = [];
+        
+        try {
+            currentPhotographers = JSON.parse(photographersInput?.value || '[]');
+        } catch (e) {
+            currentPhotographers = [];
+        }
+        
+        currentPhotographers[index] = value;
+        if (photographersInput) {
+            photographersInput.value = JSON.stringify(currentPhotographers);
+        }
+    }
+
+    function updateGalleryUI(galleryId, urls, maxImages, photographers = []) {
         const grid = document.getElementById(galleryId + '_grid');
         const counter = document.getElementById(galleryId + '_counter');
         const hint = document.getElementById(galleryId + '_hint');
@@ -432,10 +484,18 @@ window.ImageUploadHelper = (function() {
 
         if (!grid) return;
 
-        // تحديث الشبكة
+        // تحديث الشبكة مع حقول أسماء المصورين
         grid.innerHTML = urls.map((img, index) => `
             <div class="gallery-image-item" data-index="${index}">
                 <img src="${img}" alt="صورة ${index + 1}">
+                <div class="gallery-image-photographer">
+                    <input type="text" 
+                           class="form-input gallery-photographer-input" 
+                           placeholder="اسم المصور"
+                           value="${photographers[index] || ''}"
+                           data-index="${index}"
+                           onchange="window.ImageUploadHelper.updateGalleryPhotographer('${galleryId}', ${index}, this.value)">
+                </div>
                 <button type="button" class="remove-btn" onclick="window.ImageUploadHelper.removeGalleryImage('${galleryId}', ${index})">
                     <i class="fa-solid fa-times"></i>
                 </button>
@@ -478,6 +538,18 @@ window.ImageUploadHelper = (function() {
     }
 
     /**
+     * الحصول على أسماء مصوري المعرض
+     */
+    function getGalleryPhotographers(galleryId) {
+        const photographersInput = document.getElementById(galleryId + '_gallery_photographers');
+        try {
+            return JSON.parse(photographersInput?.value || '[]');
+        } catch (e) {
+            return [];
+        }
+    }
+
+    /**
      * التحقق من صحة المعرض
      */
     function validateGallery(galleryId, minImages = 2) {
@@ -509,7 +581,7 @@ window.ImageUploadHelper = (function() {
                 ` : `
                     <div class="cover-upload-area" id="${inputId}_area" onclick="document.getElementById('${inputId}').click()">
                         <i class="fa-solid fa-cloud-upload-alt"></i>
-                        <p>اضغط لرفع صورة الغلاف ${required ? '<span style="color: #ef4444;">*</span>' : ''}</p>
+                        <p>اضغط لرفع صورة الغلاف ${required ? '<span class="required">*</span>' : ''}</p>
                         <span>JPG, PNG, WEBP (الحد الأقصى: 5MB)</span>
                     </div>
                 `}
@@ -517,7 +589,7 @@ window.ImageUploadHelper = (function() {
                 <input type="file" 
                        id="${inputId}" 
                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-                       style="display: none;"
+                       class="hidden-input"
                        data-folder="${folder}"
                        data-aspect-ratio="${aspectRatio}"
                        onchange="window.ImageUploadHelper.handleCoverImageSelect('${inputId}')">
@@ -543,11 +615,11 @@ window.ImageUploadHelper = (function() {
 
         // عرض مؤشر التحميل
         container.innerHTML = `
-            <div style="text-align: center; padding: 2rem;">
-                <i class="fa-solid fa-spinner fa-spin fa-2x" style="color: #3d8fd6;"></i>
-                <p style="margin-top: 1rem; color: #6b7280;">جاري معالجة الصورة...</p>
+            <div class="loading-spinner">
+                <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                <p>جاري معالجة الصورة...</p>
             </div>
-            <input type="file" id="${inputId}" style="display: none;">
+            <input type="file" id="${inputId}" class="hidden-input">
             <input type="hidden" id="${inputId}_url" value="${urlInput?.value || ''}">
         `;
 
@@ -578,7 +650,7 @@ window.ImageUploadHelper = (function() {
                     <input type="file" 
                            id="${inputId}" 
                            accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-                           style="display: none;"
+                           class="hidden-input"
                            data-folder="${folder}"
                            data-aspect-ratio="${aspectRatio}"
                            onchange="window.ImageUploadHelper.handleCoverImageSelect('${inputId}')">
@@ -620,7 +692,7 @@ window.ImageUploadHelper = (function() {
                 <input type="file" 
                        id="${inputId}" 
                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-                       style="display: none;"
+                       class="hidden-input"
                        data-folder="${folder}"
                        data-aspect-ratio="${aspectRatio}"
                        onchange="window.ImageUploadHelper.handleCoverImageSelect('${inputId}')">
@@ -630,13 +702,13 @@ window.ImageUploadHelper = (function() {
             container.innerHTML = `
                 <div class="cover-upload-area" id="${inputId}_area" onclick="document.getElementById('${inputId}').click()">
                     <i class="fa-solid fa-cloud-upload-alt"></i>
-                    <p>اضغط لرفع صورة الغلاف <span style="color: #ef4444;">*</span></p>
+                    <p>اضغط لرفع صورة الغلاف <span class="required">*</span></p>
                     <span>JPG, PNG, WEBP (الحد الأقصى: 5MB)</span>
                 </div>
                 <input type="file" 
                        id="${inputId}" 
                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-                       style="display: none;"
+                       class="hidden-input"
                        data-folder="${folder}"
                        data-aspect-ratio="${aspectRatio}"
                        onchange="window.ImageUploadHelper.handleCoverImageSelect('${inputId}')">
@@ -664,7 +736,9 @@ window.ImageUploadHelper = (function() {
         createNewsGalleryUploader,
         handleGalleryImageSelect,
         removeGalleryImage,
+        updateGalleryPhotographer,
         getGalleryUrls,
+        getGalleryPhotographers,
         validateGallery,
         createCoverImageUploader,
         handleCoverImageSelect,

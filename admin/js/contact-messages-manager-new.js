@@ -265,13 +265,13 @@ class ContactMessagesManager {
             const result = await Swal.fire({
                 title: `رسالة من ${this.escapeHtml(message.name)}`,
                 html: `
-                    <div style="text-align: right; direction: rtl;">
+                    <div class="modal-content-rtl">
                         <p><strong>البريد الإلكتروني:</strong> ${this.escapeHtml(message.email)}</p>
                         <p><strong>الموضوع:</strong> ${message.subject ? this.escapeHtml(message.subject) : 'بدون موضوع'}</p>
                         <p><strong>التاريخ:</strong> ${new Date(message.created_at).toLocaleString('ar-SA')}</p>
                         <hr>
                         <p><strong>الرسالة:</strong></p>
-                        <p style="white-space: pre-wrap;">${this.escapeHtml(message.message)}</p>
+                        <p class="message-content">${this.escapeHtml(message.message)}</p>
                     </div>
                 `,
                 icon: 'info',

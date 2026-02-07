@@ -46,6 +46,12 @@
                 return;
             }
 
+            // التحقق من تاريخ البدء (الاستبيان المجدول)
+            if (survey.start_date && new Date(survey.start_date) > new Date()) {
+                showScheduledSurvey(survey);
+                return;
+            }
+
             if (survey.end_date && new Date(survey.end_date) < new Date()) {
                 showError('انتهت صلاحية هذا الاستبيان');
                 return;
@@ -66,6 +72,37 @@
             if (surveyQuestions.length === 0) {
                 showError('هذا الاستبيان لا يحتوي على أسئلة');
                 return;
+            }
+
+            // التحقق من إعداد عدم السماح بإجابات متعددة
+            if (!survey.allow_multiple_responses) {
+                const { data: { user } } = await sb.auth.getUser();
+                
+                if (user) {
+                    // التحقق من وجود استجابة سابقة لهذا المستخدم (مكتملة أو قيد التقدم)
+                    const { data: existingResponses } = await sb
+                        .from('survey_responses')
+                        .select('id, status')
+                        .eq('survey_id', surveyId)
+                        .eq('user_id', user.id);
+                    
+                    if (existingResponses && existingResponses.length > 0) {
+                        const completedResponse = existingResponses.find(r => r.status === 'completed');
+                        if (completedResponse) {
+                            // عرض رسالة شكر بدلاً من خطأ
+                            showAlreadyAnswered();
+                            return;
+                        }
+                        // إذا كانت هناك استجابة قيد التقدم، نستخدمها بدلاً من إنشاء جديدة
+                        const inProgressResponse = existingResponses.find(r => r.status === 'in_progress');
+                        if (inProgressResponse) {
+                            responseId = inProgressResponse.id;
+                            showLoading(false);
+                            renderSurvey();
+                            return;
+                        }
+                    }
+                }
             }
 
             await updateViewCount(surveyId);
@@ -93,10 +130,14 @@
         try {
             const { data: { user } } = await sb.auth.getUser();
 
+            // إذا كان الاستبيان يسمح بالإجابات المجهولة، لا نسجل هوية المستخدم
+            const isAnonymous = currentSurvey.allow_anonymous;
+            
             const responseData = {
                 survey_id: surveyId,
-                user_id: user?.id || null,
-                is_anonymous: !user || currentSurvey.allow_anonymous,
+                // إذا كانت الإجابات مجهولة، لا نسجل user_id
+                user_id: isAnonymous ? null : (user?.id || null),
+                is_anonymous: isAnonymous || !user,
                 status: 'in_progress',
                 started_at: new Date().toISOString(),
                 ip_address: null,
@@ -129,10 +170,100 @@
         return 'desktop';
     }
 
+    // عرض العداد التنازلي
+    function renderCountdown() {
+        return `
+            <div id="surveyCountdown" class="survey-countdown" style="
+                width: 100%;
+                max-width: 800px;
+                margin: 0 auto 1rem;
+                padding: 16px;
+                border-radius: 16px;
+                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                color: #fff;
+                border: 1px solid rgba(255,255,255,0.18);
+                box-shadow: 0 16px 40px rgba(2,6,23,.18);
+            ">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 1.05rem;">
+                    <i class="fa-regular fa-hourglass-half"></i>
+                    <span>ينتهي الاستبيان بعد</span>
+                </div>
+                <div id="countdownTimer" style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 10px;">
+                    <div style="min-width: 75px; display: grid; gap: 4px; justify-items: center; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.28); padding: 10px 12px; border-radius: 12px;">
+                        <span id="countdownDays" style="font-weight: 700; font-size: 1.4rem;">--</span>
+                        <small style="opacity: 0.9;">يوم</small>
+                    </div>
+                    <div style="min-width: 75px; display: grid; gap: 4px; justify-items: center; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.28); padding: 10px 12px; border-radius: 12px;">
+                        <span id="countdownHours" style="font-weight: 700; font-size: 1.4rem;">--</span>
+                        <small style="opacity: 0.9;">ساعة</small>
+                    </div>
+                    <div style="min-width: 75px; display: grid; gap: 4px; justify-items: center; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.28); padding: 10px 12px; border-radius: 12px;">
+                        <span id="countdownMinutes" style="font-weight: 700; font-size: 1.4rem;">--</span>
+                        <small style="opacity: 0.9;">دقيقة</small>
+                    </div>
+                    <div style="min-width: 75px; display: grid; gap: 4px; justify-items: center; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.28); padding: 10px 12px; border-radius: 12px;">
+                        <span id="countdownSeconds" style="font-weight: 700; font-size: 1.4rem;">--</span>
+                        <small style="opacity: 0.9;">ثانية</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // بدء العداد التنازلي
+    function startCountdown() {
+        if (!currentSurvey.end_date) return;
+
+        const endDate = new Date(currentSurvey.end_date).getTime();
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = endDate - now;
+
+            if (distance < 0) {
+                // انتهى الوقت
+                const countdownEl = document.getElementById('surveyCountdown');
+                if (countdownEl) {
+                    countdownEl.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+                    countdownEl.innerHTML = `
+                        <div style="text-align: center; padding: 0.5rem;">
+                            <i class="fa-solid fa-clock" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+                            <div style="font-weight: 600;">انتهت صلاحية هذا الاستبيان</div>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            const daysEl = document.getElementById('countdownDays');
+            const hoursEl = document.getElementById('countdownHours');
+            const minutesEl = document.getElementById('countdownMinutes');
+            const secondsEl = document.getElementById('countdownSeconds');
+
+            if (daysEl) daysEl.textContent = days;
+            if (hoursEl) hoursEl.textContent = hours;
+            if (minutesEl) minutesEl.textContent = minutes;
+            if (secondsEl) secondsEl.textContent = seconds;
+
+            setTimeout(updateCountdown, 1000);
+        }
+
+        updateCountdown();
+    }
+
     function renderSurvey() {
         const container = document.getElementById('surveyMain');
         
+        // إنشاء عداد تنازلي إذا كان هناك تاريخ انتهاء
+        const countdownHTML = currentSurvey.end_date ? renderCountdown() : '';
+        
         container.innerHTML = `
+            ${countdownHTML}
             <div class="survey-card">
                 <h1 class="survey-title">${escapeHtml(currentSurvey.title)}</h1>
                 ${currentSurvey.description ? `
@@ -174,6 +305,11 @@
 
         setupNavigationButtons();
         renderQuestion(currentQuestionIndex);
+        
+        // بدء العداد التنازلي إذا كان هناك تاريخ انتهاء
+        if (currentSurvey.end_date) {
+            startCountdown();
+        }
     }
 
     function renderQuestion(index) {
@@ -676,6 +812,14 @@
     function showThankYou() {
         const container = document.getElementById('surveyMain');
         
+        // إذا كان الاستبيان يسمح بعرض النتائج للمشاركين
+        const showResultsButton = currentSurvey.show_results_to_participants ? `
+            <button onclick="window.surveyApp.showResults()" class="btn btn-secondary" style="margin-top: 1rem; background: linear-gradient(135deg, #8b5cf6, #6366f1); border: none;">
+                <i class="fa-solid fa-chart-pie"></i>
+                عرض نتائج الاستبيان
+            </button>
+        ` : '';
+        
         container.innerHTML = `
             <div class="survey-card">
                 <div class="thank-you-container">
@@ -686,13 +830,292 @@
                     <p class="thank-you-message">
                         ${currentSurvey.thank_you_message || 'تم إرسال إجاباتك بنجاح. نقدر وقتك ومشاركتك في هذا الاستبيان.'}
                     </p>
-                    <a href="index.html" class="btn btn-primary">
+                    ${showResultsButton}
+                    <a href="/" class="btn btn-primary" style="margin-top: 1rem;">
                         <i class="fa-solid fa-home"></i>
                         العودة للرئيسية
                     </a>
                 </div>
             </div>
         `;
+    }
+
+    // عرض رسالة للمستخدم الذي أجاب مسبقاً
+    function showAlreadyAnswered() {
+        showLoading(false);
+        const container = document.getElementById('surveyMain');
+        
+        // إذا كان الاستبيان يسمح بعرض النتائج للمشاركين
+        const showResultsButton = currentSurvey.show_results_to_participants ? `
+            <button onclick="window.surveyApp.showResults()" class="btn btn-secondary" style="margin-top: 1rem; background: linear-gradient(135deg, #8b5cf6, #6366f1); border: none;">
+                <i class="fa-solid fa-chart-pie"></i>
+                عرض نتائج الاستبيان
+            </button>
+        ` : '';
+        
+        container.innerHTML = `
+            <div class="survey-card">
+                <div class="thank-you-container">
+                    <div class="thank-you-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                    </div>
+                    <h1 class="thank-you-title">لقد أجبت على هذا الاستبيان مسبقاً</h1>
+                    <p class="thank-you-message">
+                        شكراً لك! لقد قمت بالإجابة على هذا الاستبيان من قبل. لا يُسمح بإجابات متعددة على هذا الاستبيان.
+                    </p>
+                    ${showResultsButton}
+                    <a href="/" class="btn btn-primary" style="margin-top: 1rem;">
+                        <i class="fa-solid fa-home"></i>
+                        العودة للرئيسية
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+    
+    // عرض نتائج الاستبيان للمشاركين
+    async function showResults() {
+        const container = document.getElementById('surveyMain');
+        container.innerHTML = `
+            <div class="survey-card">
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x" style="color: #3b82f6;"></i>
+                    <p style="margin-top: 1rem; color: #6b7280;">جاري تحميل النتائج...</p>
+                </div>
+            </div>
+        `;
+        
+        try {
+            // جلب جميع الإجابات للاستبيان
+            const { data: responses, error } = await sb
+                .from('survey_responses')
+                .select('survey_answers(*)')
+                .eq('survey_id', currentSurvey.id)
+                .eq('status', 'completed');
+            
+            if (error) throw error;
+            
+            // تجميع الإجابات حسب السؤال
+            const questionStats = {};
+            surveyQuestions.forEach(q => {
+                questionStats[q.id] = {
+                    question: q,
+                    answers: []
+                };
+            });
+            
+            responses.forEach(r => {
+                (r.survey_answers || []).forEach(a => {
+                    if (questionStats[a.question_id]) {
+                        questionStats[a.question_id].answers.push(a);
+                    }
+                });
+            });
+            
+            // عرض النتائج
+            container.innerHTML = `
+                <div class="survey-card">
+                    <h2 style="text-align: center; margin-bottom: 1.5rem; color: #1f2937;">
+                        <i class="fa-solid fa-chart-pie" style="color: #8b5cf6;"></i>
+                        نتائج الاستبيان
+                    </h2>
+                    <p style="text-align: center; color: #6b7280; margin-bottom: 2rem;">
+                        إجمالي المشاركين: ${responses.length}
+                    </p>
+                    <div class="results-container">
+                        ${Object.values(questionStats).map(stat => renderQuestionResults(stat)).join('')}
+                    </div>
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <a href="/" class="btn btn-primary">
+                            <i class="fa-solid fa-home"></i>
+                            العودة للرئيسية
+                        </a>
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            console.error('Error loading results:', error);
+            container.innerHTML = `
+                <div class="survey-card">
+                    <div class="error-container">
+                        <div class="error-icon">
+                            <i class="fa-solid fa-exclamation-triangle"></i>
+                        </div>
+                        <h2 class="error-title">عذراً</h2>
+                        <p>حدث خطأ أثناء تحميل النتائج</p>
+                        <a href="/" class="btn btn-primary">
+                            <i class="fa-solid fa-home"></i>
+                            العودة للرئيسية
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    // عرض نتائج سؤال واحد
+    function renderQuestionResults(stat) {
+        const question = stat.question;
+        const answers = stat.answers;
+        const totalAnswers = answers.length;
+        
+        if (totalAnswers === 0) {
+            return `
+                <div style="padding: 1rem; margin-bottom: 1rem; background: #f9fafb; border-radius: 8px;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #374151;">${escapeHtml(question.question_text)}</h4>
+                    <p style="color: #9ca3af; margin: 0;">لا توجد إجابات</p>
+                </div>
+            `;
+        }
+        
+        // للأسئلة ذات الخيارات
+        if (['single_choice', 'multiple_choice', 'dropdown', 'yes_no'].includes(question.question_type)) {
+            const choiceCounts = {};
+            answers.forEach(a => {
+                const value = Array.isArray(a.answer_json) ? a.answer_json : [a.answer_json];
+                value.forEach(v => {
+                    choiceCounts[v] = (choiceCounts[v] || 0) + 1;
+                });
+            });
+            
+            return `
+                <div style="padding: 1rem; margin-bottom: 1rem; background: #f9fafb; border-radius: 8px;">
+                    <h4 style="margin: 0 0 1rem 0; color: #374151;">${escapeHtml(question.question_text)}</h4>
+                    ${Object.entries(choiceCounts).map(([choice, count]) => {
+                        const percentage = Math.round((count / totalAnswers) * 100);
+                        return `
+                            <div style="margin-bottom: 0.75rem;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                    <span style="color: #4b5563;">${escapeHtml(choice)}</span>
+                                    <span style="color: #6b7280;">${count} (${percentage}%)</span>
+                                </div>
+                                <div style="height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
+                                    <div style="height: 100%; width: ${percentage}%; background: linear-gradient(90deg, #8b5cf6, #6366f1); border-radius: 4px;"></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+        
+        // للأسئلة الرقمية والتقييم
+        if (['number', 'linear_scale', 'rating_stars', 'rating_hearts', 'slider'].includes(question.question_type)) {
+            const values = answers.map(a => a.answer_number || 0).filter(v => v > 0);
+            const avg = values.length > 0 ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) : 0;
+            
+            return `
+                <div style="padding: 1rem; margin-bottom: 1rem; background: #f9fafb; border-radius: 8px;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #374151;">${escapeHtml(question.question_text)}</h4>
+                    <p style="color: #6b7280; margin: 0;">
+                        <strong style="color: #8b5cf6; font-size: 1.25rem;">${avg}</strong> متوسط التقييم
+                        <span style="margin-right: 1rem;">(${values.length} إجابة)</span>
+                    </p>
+                </div>
+            `;
+        }
+        
+        // للأسئلة النصية
+        return `
+            <div style="padding: 1rem; margin-bottom: 1rem; background: #f9fafb; border-radius: 8px;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #374151;">${escapeHtml(question.question_text)}</h4>
+                <p style="color: #6b7280; margin: 0;">${totalAnswers} إجابة نصية</p>
+            </div>
+        `;
+    }
+
+    function showScheduledSurvey(survey) {
+        const container = document.getElementById('surveyMain');
+        const startDate = new Date(survey.start_date);
+        
+        container.innerHTML = `
+            <div class="survey-card">
+                <div class="scheduled-container" style="text-align: center; padding: 2rem;">
+                    <div style="width: 80px; height: 80px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-calendar-clock" style="font-size: 2rem; color: white;"></i>
+                    </div>
+                    <h2 style="color: #1f2937; margin-bottom: 1rem;">${escapeHtml(survey.title)}</h2>
+                    <p style="color: #6b7280; margin-bottom: 1.5rem;">هذا الاستبيان مجدول وسيكون متاحاً قريباً</p>
+                    
+                    <div id="scheduledCountdown" style="
+                        padding: 1.5rem;
+                        border-radius: 16px;
+                        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                        color: #fff;
+                        margin-bottom: 1.5rem;
+                    ">
+                        <div style="font-weight: 600; font-size: 1rem; margin-bottom: 1rem;">
+                            <i class="fa-regular fa-hourglass-half"></i>
+                            سيكون متاحاً بعد
+                        </div>
+                        <div id="countdownTimer" style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                            <div style="min-width: 70px; display: grid; gap: 4px; justify-items: center; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.28); padding: 10px 12px; border-radius: 12px;">
+                                <span id="countdownDays" style="font-weight: 700; font-size: 1.4rem;">--</span>
+                                <small style="opacity: 0.9;">يوم</small>
+                            </div>
+                            <div style="min-width: 70px; display: grid; gap: 4px; justify-items: center; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.28); padding: 10px 12px; border-radius: 12px;">
+                                <span id="countdownHours" style="font-weight: 700; font-size: 1.4rem;">--</span>
+                                <small style="opacity: 0.9;">ساعة</small>
+                            </div>
+                            <div style="min-width: 70px; display: grid; gap: 4px; justify-items: center; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.28); padding: 10px 12px; border-radius: 12px;">
+                                <span id="countdownMinutes" style="font-weight: 700; font-size: 1.4rem;">--</span>
+                                <small style="opacity: 0.9;">دقيقة</small>
+                            </div>
+                            <div style="min-width: 70px; display: grid; gap: 4px; justify-items: center; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.28); padding: 10px 12px; border-radius: 12px;">
+                                <span id="countdownSeconds" style="font-weight: 700; font-size: 1.4rem;">--</span>
+                                <small style="opacity: 0.9;">ثانية</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p style="color: #9ca3af; font-size: 0.9rem;">
+                        تاريخ البدء: ${startDate.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                    
+                    <a href="/" class="btn btn-primary" style="margin-top: 1.5rem;">
+                        <i class="fa-solid fa-home"></i>
+                        العودة للرئيسية
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        // بدء العداد التنازلي
+        startScheduledCountdown(startDate);
+    }
+    
+    function startScheduledCountdown(startDate) {
+        const targetTime = startDate.getTime();
+        
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = targetTime - now;
+            
+            if (distance < 0) {
+                // الاستبيان أصبح متاحاً - إعادة تحميل الصفحة
+                location.reload();
+                return;
+            }
+            
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            const daysEl = document.getElementById('countdownDays');
+            const hoursEl = document.getElementById('countdownHours');
+            const minutesEl = document.getElementById('countdownMinutes');
+            const secondsEl = document.getElementById('countdownSeconds');
+            
+            if (daysEl) daysEl.textContent = days;
+            if (hoursEl) hoursEl.textContent = hours;
+            if (minutesEl) minutesEl.textContent = minutes;
+            if (secondsEl) secondsEl.textContent = seconds;
+            
+            setTimeout(updateCountdown, 1000);
+        }
+        
+        updateCountdown();
     }
 
     function showError(message) {
@@ -727,6 +1150,11 @@
         div.textContent = text;
         return div.innerHTML;
     }
+
+    // تصدير الدوال للاستخدام الخارجي
+    window.surveyApp = {
+        showResults
+    };
 
     document.addEventListener('DOMContentLoaded', init);
 })();

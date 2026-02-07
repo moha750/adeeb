@@ -1137,9 +1137,26 @@
                 const summary = document.getElementById('instantNewsSummary').value.trim();
                 const content = document.getElementById('instantNewsContent').value.trim();
                 const isFeatured = document.getElementById('instantNewsIsFeatured').checked;
+                const coverPhotographer = document.getElementById('instantNewsCoverPhotographer')?.value.trim() || '';
+                
+                // الحصول على أسماء مصوري المعرض من الحقول الجديدة
+                let galleryPhotographers = [];
+                const galleryPhotographersInput = document.getElementById('instantNewsGallery_gallery_photographers');
+                if (galleryPhotographersInput) {
+                    try {
+                        galleryPhotographers = JSON.parse(galleryPhotographersInput.value || '[]');
+                    } catch (e) {
+                        galleryPhotographers = [];
+                    }
+                }
                 
                 if (!title || !summary || !content) {
                     Toast.warning('يرجى ملء جميع الحقول المطلوبة');
+                    return;
+                }
+                
+                if (!coverPhotographer) {
+                    Toast.warning('يرجى إدخال اسم مصور الغلاف');
                     return;
                 }
                 
@@ -1172,6 +1189,8 @@
                         title, summary, content, 
                         image_url: coverImageUrl,
                         gallery_images: galleryImages, 
+                        cover_photographer: coverPhotographer,
+                        gallery_photographers: galleryPhotographers,
                         is_featured: isFeatured,
                         status: 'published', 
                         workflow_status: 'published',
@@ -3798,32 +3817,158 @@
 
     // فتح نوافذ الإضافة
     function openWorkModal() {
-        document.getElementById('workModalTitle').textContent = 'إضافة عمل جديد';
-        document.getElementById('workForm').reset();
-        document.getElementById('workModal').classList.add('active');
+        ModalHelper.form({
+            title: '📁 إضافة عمل جديد',
+            fields: [
+                { name: 'title', type: 'text', label: 'عنوان العمل', placeholder: 'أدخل عنوان العمل', required: true },
+                { name: 'category', type: 'text', label: 'الفئة', placeholder: 'مثال: تصميم، برمجة، تسويق' },
+                { name: 'image_url', type: 'url', label: 'رابط الصورة', placeholder: 'https://example.com/image.jpg', required: true },
+                { name: 'link_url', type: 'url', label: 'رابط العمل', placeholder: 'https://example.com' },
+                { name: 'order', type: 'number', label: 'الترتيب', value: '0' }
+            ],
+            submitText: 'إضافة',
+            cancelText: 'إلغاء',
+            onSubmit: async (formData) => {
+                const loadingToast = Toast.loading('جاري إضافة العمل...');
+                try {
+                    const { error } = await sb.from('works').insert([{
+                        title: formData.title,
+                        category: formData.category || null,
+                        image_url: formData.image_url,
+                        link_url: formData.link_url || null,
+                        order: parseInt(formData.order) || 0,
+                        created_by: currentUser?.id
+                    }]);
+                    if (error) throw error;
+                    Toast.close(loadingToast);
+                    Toast.success('تم إضافة العمل بنجاح');
+                    await loadSectionDetails('works');
+                } catch (error) {
+                    Toast.close(loadingToast);
+                    Toast.error('حدث خطأ أثناء إضافة العمل');
+                    console.error(error);
+                    throw error;
+                }
+            }
+        });
     }
 
     function openAchievementModal() {
-        document.getElementById('achievementModalTitle').textContent = 'إضافة إنجاز جديد';
-        document.getElementById('achievementForm').reset();
-        document.getElementById('achievementModal').classList.add('active');
+        ModalHelper.form({
+            title: '🏆 إضافة إنجاز جديد',
+            fields: [
+                { name: 'label', type: 'text', label: 'التسمية', placeholder: 'مثال: مشروع منجز', required: true },
+                { name: 'icon_class', type: 'text', label: 'أيقونة FontAwesome', placeholder: 'مثال: fa-solid fa-trophy', hint: 'استخدم أيقونات FontAwesome مثل fa-solid fa-star' },
+                { name: 'count_number', type: 'number', label: 'الرقم', placeholder: '0', required: true },
+                { name: 'plus_flag', type: 'checkbox', checkboxLabel: 'إضافة علامة + بعد الرقم' },
+                { name: 'order', type: 'number', label: 'الترتيب', value: '0' }
+            ],
+            submitText: 'إضافة',
+            cancelText: 'إلغاء',
+            onSubmit: async (formData) => {
+                const loadingToast = Toast.loading('جاري إضافة الإنجاز...');
+                try {
+                    const { error } = await sb.from('achievements').insert([{
+                        label: formData.label,
+                        icon_class: formData.icon_class || 'fa-solid fa-trophy',
+                        count_number: parseInt(formData.count_number) || 0,
+                        plus_flag: formData.plus_flag === 'on',
+                        order: parseInt(formData.order) || 0,
+                        created_by: currentUser?.id
+                    }]);
+                    if (error) throw error;
+                    Toast.close(loadingToast);
+                    Toast.success('تم إضافة الإنجاز بنجاح');
+                    await loadSectionDetails('achievements');
+                } catch (error) {
+                    Toast.close(loadingToast);
+                    Toast.error('حدث خطأ أثناء إضافة الإنجاز');
+                    console.error(error);
+                    throw error;
+                }
+            }
+        });
     }
 
     function openSponsorModal() {
-        document.getElementById('sponsorModalTitle').textContent = 'إضافة شريك جديد';
-        document.getElementById('sponsorForm').reset();
-        document.getElementById('sponsorModal').classList.add('active');
+        if (window.SponsorsManager) {
+            window.SponsorsManager.addSponsor();
+        } else {
+            ModalHelper.form({
+                title: '🤝 إضافة شريك جديد',
+                fields: [
+                    { name: 'name', type: 'text', label: 'اسم الشريك', placeholder: 'أدخل اسم الشريك', required: true },
+                    { name: 'badge', type: 'text', label: 'الوسام', placeholder: 'مثال: شريك ذهبي' },
+                    { name: 'logo_url', type: 'url', label: 'رابط الشعار', placeholder: 'https://example.com/logo.png' },
+                    { name: 'link_url', type: 'url', label: 'رابط الموقع', placeholder: 'https://example.com' },
+                    { name: 'description', type: 'textarea', label: 'الوصف', placeholder: 'وصف مختصر عن الشريك' },
+                    { name: 'order', type: 'number', label: 'الترتيب', value: '0' }
+                ],
+                submitText: 'إضافة',
+                cancelText: 'إلغاء',
+                onSubmit: async (formData) => {
+                    const loadingToast = Toast.loading('جاري إضافة الشريك...');
+                    try {
+                        const { error } = await sb.from('sponsors').insert([{
+                            name: formData.name,
+                            badge: formData.badge || null,
+                            logo_url: formData.logo_url || null,
+                            link_url: formData.link_url || null,
+                            description: formData.description || null,
+                            order: parseInt(formData.order) || 0,
+                            created_by: currentUser?.id
+                        }]);
+                        if (error) throw error;
+                        Toast.close(loadingToast);
+                        Toast.success('تم إضافة الشريك بنجاح');
+                        await loadSectionDetails('sponsors');
+                    } catch (error) {
+                        Toast.close(loadingToast);
+                        Toast.error('حدث خطأ أثناء إضافة الشريك');
+                        console.error(error);
+                        throw error;
+                    }
+                }
+            });
+        }
     }
 
     function openFaqModal() {
-        document.getElementById('faqModalTitle').textContent = 'إضافة سؤال جديد';
-        document.getElementById('faqForm').reset();
-        document.getElementById('faqModal').classList.add('active');
+        ModalHelper.form({
+            title: '❓ إضافة سؤال شائع',
+            fields: [
+                { name: 'question', type: 'text', label: 'السؤال', placeholder: 'أدخل السؤال', required: true },
+                { name: 'answer', type: 'textarea', label: 'الإجابة', placeholder: 'أدخل الإجابة', required: true },
+                { name: 'order', type: 'number', label: 'الترتيب', value: '0' }
+            ],
+            submitText: 'إضافة',
+            cancelText: 'إلغاء',
+            onSubmit: async (formData) => {
+                const loadingToast = Toast.loading('جاري إضافة السؤال...');
+                try {
+                    const { error } = await sb.from('faq').insert([{
+                        question: formData.question,
+                        answer: formData.answer,
+                        order: parseInt(formData.order) || 0,
+                        created_by: currentUser?.id
+                    }]);
+                    if (error) throw error;
+                    Toast.close(loadingToast);
+                    Toast.success('تم إضافة السؤال بنجاح');
+                    await loadSectionDetails('faq');
+                } catch (error) {
+                    Toast.close(loadingToast);
+                    Toast.error('حدث خطأ أثناء إضافة السؤال');
+                    console.error(error);
+                    throw error;
+                }
+            }
+        });
     }
 
     // إعداد النماذج والأزرار
     function setupWebsiteModals() {
-        // أزرار الإضافة
+        // أزرار الإضافة - نوافذ منبثقة باستخدام ModalHelper.form
         const addWorkBtn = document.getElementById('addWorkBtn');
         const addAchievementBtn = document.getElementById('addAchievementBtn');
         const addSponsorBtn = document.getElementById('addSponsorBtn');
@@ -4003,19 +4148,8 @@
     let currentAchievementId = null;
 
     function openAchievementModal(achievementId = null) {
-        currentAchievementId = achievementId;
-        const modal = document.getElementById('achievementModal');
-        const title = document.getElementById('achievementModalTitle');
-
-        if (achievementId) {
-            title.textContent = 'تعديل إنجاز';
-            loadAchievementData(achievementId);
-        } else {
-            title.textContent = 'إضافة إنجاز جديد';
-            document.getElementById('achievementForm').reset();
-        }
-
-        openModal('achievementModal');
+        // تم تعطيل النوافذ المنبثقة بناءً على طلب المستخدم
+        return;
     }
 
     async function loadAchievementData(id) {
@@ -4100,19 +4234,8 @@
     let currentSponsorId = null;
 
     function openSponsorModal(sponsorId = null) {
-        currentSponsorId = sponsorId;
-        const modal = document.getElementById('sponsorModal');
-        const title = document.getElementById('sponsorModalTitle');
-
-        if (sponsorId) {
-            title.textContent = 'تعديل شريك';
-            loadSponsorData(sponsorId);
-        } else {
-            title.textContent = 'إضافة شريك جديد';
-            document.getElementById('sponsorForm').reset();
-        }
-
-        openModal('sponsorModal');
+        // تم تعطيل النوافذ المنبثقة بناءً على طلب المستخدم
+        return;
     }
 
     async function loadSponsorData(id) {
@@ -4199,19 +4322,8 @@
     let currentFaqId = null;
 
     function openFaqModal(faqId = null) {
-        currentFaqId = faqId;
-        const modal = document.getElementById('faqModal');
-        const title = document.getElementById('faqModalTitle');
-
-        if (faqId) {
-            title.textContent = 'تعديل سؤال';
-            loadFaqData(faqId);
-        } else {
-            title.textContent = 'إضافة سؤال شائع';
-            document.getElementById('faqForm').reset();
-        }
-
-        openModal('faqModal');
+        // تم تعطيل النوافذ المنبثقة بناءً على طلب المستخدم
+        return;
     }
 
     async function loadFaqData(id) {

@@ -132,7 +132,7 @@
 
         async updateStatistics() {
             const total = allSurveys.length;
-            const active = allSurveys.filter(s => s.status === 'active').length;
+            const active = allSurveys.filter(s => this.getActualStatus(s) === 'active').length;
             const totalResponses = allSurveys.reduce((sum, s) => sum + (s.total_responses || 0), 0);
             const completedResponses = allSurveys.reduce((sum, s) => sum + (s.total_completed || 0), 0);
 
@@ -181,6 +181,7 @@
             // فصل الاستبيانات حسب الحالة الفعلية
             const now = new Date();
             const activeSurveys = [];
+            const scheduledSurveys = [];
             const endedSurveys = [];
             const draftSurveys = [];
 
@@ -190,6 +191,8 @@
                     draftSurveys.push(survey);
                 } else if (actualStatus === 'active') {
                     activeSurveys.push(survey);
+                } else if (actualStatus === 'scheduled') {
+                    scheduledSurveys.push(survey);
                 } else {
                     endedSurveys.push(survey);
                 }
@@ -202,10 +205,24 @@
                 html += `
                     <div class="surveys-section">
                         <div class="surveys-section-header">
-                            <h3><i class="fa-solid fa-circle-play" style="color: #10b981;"></i> الاستبيانات النشطة (${activeSurveys.length})</h3>
+                            <h3><i class="fa-solid fa-circle-play survey-icon--active"></i> الاستبيانات النشطة (${activeSurveys.length})</h3>
                         </div>
                         <div class="surveys-section-content">
                             ${activeSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // قسم الاستبيانات المجدولة
+            if (scheduledSurveys.length > 0) {
+                html += `
+                    <div class="surveys-section">
+                        <div class="surveys-section-header">
+                            <h3><i class="fa-solid fa-calendar-clock survey-icon--scheduled"></i> الاستبيانات المجدولة (${scheduledSurveys.length})</h3>
+                        </div>
+                        <div class="surveys-section-content">
+                            ${scheduledSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
                         </div>
                     </div>
                 `;
@@ -216,7 +233,7 @@
                 html += `
                     <div class="surveys-section">
                         <div class="surveys-section-header">
-                            <h3><i class="fa-solid fa-file-pen" style="color: #6b7280;"></i> المسودات (${draftSurveys.length})</h3>
+                            <h3><i class="fa-solid fa-file-pen survey-icon--draft"></i> المسودات (${draftSurveys.length})</h3>
                         </div>
                         <div class="surveys-section-content">
                             ${draftSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
@@ -230,7 +247,7 @@
                 html += `
                     <div class="surveys-section surveys-section-ended">
                         <div class="surveys-section-header">
-                            <h3><i class="fa-solid fa-circle-stop" style="color: #ef4444;"></i> الاستبيانات المنتهية (${endedSurveys.length})</h3>
+                            <h3><i class="fa-solid fa-circle-stop survey-icon--ended"></i> الاستبيانات المنتهية (${endedSurveys.length})</h3>
                         </div>
                         <div class="surveys-section-content">
                             ${endedSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
@@ -246,6 +263,10 @@
             let actualStatus = survey.status;
             const now = new Date();
             
+            if (survey.status === 'paused' && !survey.start_date) {
+                return 'paused';
+            }
+            
             if (survey.status === 'active') {
                 if (survey.end_date) {
                     const endDate = new Date(survey.end_date);
@@ -256,7 +277,7 @@
                 if (survey.start_date) {
                     const startDate = new Date(survey.start_date);
                     if (now < startDate) {
-                        actualStatus = 'paused';
+                        actualStatus = 'scheduled';
                     }
                 }
             }
@@ -271,6 +292,7 @@
                 draft: '#6b7280',
                 active: '#10b981',
                 paused: '#f59e0b',
+                scheduled: '#3b82f6',
                 closed: '#ef4444',
                 archived: '#64748b'
             };
@@ -279,7 +301,8 @@
                 draft: 'مسودة',
                 active: 'نشط',
                 paused: 'متوقف',
-                closed: 'مغلق',
+                scheduled: 'مجدول',
+                closed: 'منتهية',
                 archived: 'مؤرشف'
             };
 
@@ -302,6 +325,7 @@
                 draft: 'badge-secondary',
                 active: 'badge-success',
                 paused: 'badge-warning',
+                scheduled: 'badge-info',
                 closed: 'badge-danger',
                 archived: 'badge-secondary'
             };
@@ -332,7 +356,7 @@
                     
                     ${survey.description ? `
                         <div class="application-card-body">
-                            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem;">${this.escapeHtml(survey.description)}</p>
+                            <p class="survey-description">${this.escapeHtml(survey.description)}</p>
                         </div>
                     ` : ''}
                     
@@ -386,6 +410,7 @@
                     </div>
                     
                     <div class="application-card-footer">
+                        ${actualStatus !== 'draft' ? `
                         <button class="btn-action btn-action-info" onclick="window.surveysManager.previewSurvey(${survey.id})" title="معاينة الاستبيان">
                             <i class="fa-solid fa-eye"></i>
                             معاينة
@@ -398,6 +423,13 @@
                             <i class="fa-solid fa-share-nodes"></i>
                             نشر
                         </button>
+                        ` : ''}
+                        ${actualStatus === 'draft' ? `
+                        <button class="btn-action btn-action-primary" onclick="window.surveysManager.editSurvey(${survey.id})" title="إكمال الاستبيان">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                            إكمال الاستبيان
+                        </button>
+                        ` : `
                         <button class="btn-action btn-action-warning" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل الاستبيان">
                             <i class="fa-solid fa-edit"></i>
                             تعديل
@@ -405,6 +437,23 @@
                         <button class="btn-action btn-action-primary" onclick="window.surveysManager.viewResults(${survey.id})" title="عرض النتائج">
                             <i class="fa-solid fa-chart-bar"></i>
                             النتائج
+                        </button>
+                        `}
+                        ${actualStatus === 'active' ? `
+                        <button class="btn-action btn-action-warning" onclick="window.surveysManager.pauseSurvey(${survey.id})" title="إيقاف الاستبيان">
+                            <i class="fa-solid fa-pause-circle"></i>
+                            إيقاف
+                        </button>
+                        ` : ''}
+                        ${actualStatus === 'paused' ? `
+                        <button class="btn-action btn-action-success" onclick="window.surveysManager.enableSurvey(${survey.id})" title="تفعيل الاستبيان">
+                            <i class="fa-solid fa-play-circle"></i>
+                            تفعيل
+                        </button>
+                        ` : ''}
+                        <button class="btn-action btn-action-danger" onclick="window.surveysManager.deleteSurveyPermanently(${survey.id})" title="حذف نهائي">
+                            <i class="fa-solid fa-trash"></i>
+                            حذف
                         </button>
                     </div>
                 </div>
@@ -518,7 +567,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h3><i class="fa-solid fa-question-circle"></i> الأسئلة</h3>
-                            <button class="btn-primary" onclick="window.surveysManager.addQuestion()">
+                            <button class="btn btn--primary" onclick="window.surveysManager.addQuestion()">
                                 <i class="fa-solid fa-plus"></i>
                                 إضافة سؤال
                             </button>
@@ -589,18 +638,18 @@
                     <div class="question-editor-header">
                         <span class="question-number">سؤال ${index + 1}</span>
                         <div class="question-actions">
-                            <button class="btn-icon" onclick="window.surveysManager.moveQuestion(${index}, -1)" 
+                            <button class="btn btn--icon btn--icon-sm" onclick="window.surveysManager.moveQuestion(${index}, -1)" 
                                 ${index === 0 ? 'disabled' : ''} title="تحريك لأعلى">
                                 <i class="fa-solid fa-arrow-up"></i>
                             </button>
-                            <button class="btn-icon" onclick="window.surveysManager.moveQuestion(${index}, 1)" 
+                            <button class="btn btn--icon btn--icon-sm" onclick="window.surveysManager.moveQuestion(${index}, 1)" 
                                 ${index === surveyQuestions.length - 1 ? 'disabled' : ''} title="تحريك لأسفل">
                                 <i class="fa-solid fa-arrow-down"></i>
                             </button>
-                            <button class="btn-icon" onclick="window.surveysManager.duplicateQuestion(${index})" title="نسخ">
+                            <button class="btn btn--icon btn--icon-sm" onclick="window.surveysManager.duplicateQuestion(${index})" title="نسخ">
                                 <i class="fa-solid fa-copy"></i>
                             </button>
-                            <button class="btn-icon btn-danger" onclick="window.surveysManager.deleteQuestion(${index})" title="حذف">
+                            <button class="btn btn--icon btn--icon-sm btn--danger" onclick="window.surveysManager.deleteQuestion(${index})" title="حذف">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </div>
@@ -760,8 +809,16 @@
             this.renderQuestions();
         }
 
-        deleteQuestion(index) {
-            if (confirm('هل أنت متأكد من حذف هذا السؤال؟')) {
+        async deleteQuestion(index) {
+            const confirmed = await ModalHelper.confirm({
+                title: 'حذف السؤال',
+                message: 'هل أنت متأكد من حذف هذا السؤال؟',
+                type: 'danger',
+                confirmText: 'نعم، احذف',
+                cancelText: 'إلغاء'
+            });
+            
+            if (confirmed) {
                 surveyQuestions.splice(index, 1);
                 this.renderQuestions();
             }
@@ -886,6 +943,101 @@
             }
         }
 
+        async deleteSurveyPermanently(surveyId) {
+            const confirmed = await ModalHelper.confirm({
+                title: 'حذف نهائي',
+                message: 'هل أنت متأكد من حذف هذا الاستبيان نهائياً؟ سيتم حذف جميع الأسئلة والإجابات والبيانات المرتبطة به ولا يمكن التراجع عن هذا الإجراء.',
+                type: 'danger',
+                confirmText: 'نعم، احذف نهائياً',
+                cancelText: 'إلغاء'
+            });
+
+            if (!confirmed) return;
+
+            try {
+                // حذف الإجابات أولاً
+                const { error: answersError } = await sb
+                    .from('survey_answers')
+                    .delete()
+                    .in('response_id', 
+                        (await sb.from('survey_responses').select('id').eq('survey_id', surveyId)).data?.map(r => r.id) || []
+                    );
+
+                // حذف الاستجابات
+                const { error: responsesError } = await sb
+                    .from('survey_responses')
+                    .delete()
+                    .eq('survey_id', surveyId);
+
+                // حذف الأسئلة
+                const { error: questionsError } = await sb
+                    .from('survey_questions')
+                    .delete()
+                    .eq('survey_id', surveyId);
+
+                // حذف الاستبيان
+                const { error } = await sb
+                    .from('surveys')
+                    .delete()
+                    .eq('id', surveyId);
+
+                if (error) throw error;
+
+                this.showSuccess('تم حذف الاستبيان وجميع بياناته نهائياً');
+                await this.loadAllSurveys();
+
+            } catch (error) {
+                console.error('Error permanently deleting survey:', error);
+                this.showError('حدث خطأ أثناء حذف الاستبيان');
+            }
+        }
+
+        async pauseSurvey(surveyId) {
+            const confirmed = await ModalHelper.confirm({
+                title: 'إيقاف الاستبيان',
+                message: 'هل أنت متأكد من إيقاف هذا الاستبيان؟ لن يتمكن المستخدمون من الوصول إليه حتى يتم تفعيله مرة أخرى.',
+                type: 'warning',
+                confirmText: 'نعم، أوقف',
+                cancelText: 'إلغاء'
+            });
+
+            if (!confirmed) return;
+
+            try {
+                const { error } = await sb
+                    .from('surveys')
+                    .update({ status: 'paused' })
+                    .eq('id', surveyId);
+
+                if (error) throw error;
+
+                this.showSuccess('تم إيقاف الاستبيان بنجاح');
+                await this.loadAllSurveys();
+
+            } catch (error) {
+                console.error('Error pausing survey:', error);
+                this.showError('حدث خطأ أثناء إيقاف الاستبيان');
+            }
+        }
+
+        async enableSurvey(surveyId) {
+            try {
+                const { error } = await sb
+                    .from('surveys')
+                    .update({ status: 'active' })
+                    .eq('id', surveyId);
+
+                if (error) throw error;
+
+                this.showSuccess('تم تفعيل الاستبيان بنجاح');
+                await this.loadAllSurveys();
+
+            } catch (error) {
+                console.error('Error enabling survey:', error);
+                this.showError('حدث خطأ أثناء تفعيل الاستبيان');
+            }
+        }
+
         async previewSurvey(surveyId) {
             const surveyUrl = `${window.location.origin}/surveys/survey.html?id=${surveyId}`;
             window.open(surveyUrl, '_blank');
@@ -954,23 +1106,23 @@
                     <div class="modal-body">
                         <div class="share-options">
                             <div class="share-option" onclick="window.open('https://wa.me/?text=${encodeURIComponent(shareText + ' ' + surveyUrl)}', '_blank')">
-                                <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i>
+                                <i class="fa-brands fa-whatsapp share-icon--whatsapp"></i>
                                 <span>واتساب</span>
                             </div>
                             <div class="share-option" onclick="window.open('https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(surveyUrl)}', '_blank')">
-                                <i class="fa-brands fa-x-twitter" style="color: #000000;"></i>
+                                <i class="fa-brands fa-x-twitter share-icon--twitter"></i>
                                 <span>تويتر</span>
                             </div>
                             <div class="share-option" onclick="window.open('https://t.me/share/url?url=${encodeURIComponent(surveyUrl)}&text=${encodeURIComponent(shareText)}', '_blank')">
-                                <i class="fa-brands fa-telegram" style="color: #0088cc;"></i>
+                                <i class="fa-brands fa-telegram share-icon--telegram"></i>
                                 <span>تيليجرام</span>
                             </div>
                             <div class="share-option" onclick="window.open('mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(surveyUrl)}', '_blank')">
-                                <i class="fa-solid fa-envelope" style="color: #ea4335;"></i>
+                                <i class="fa-solid fa-envelope share-icon--email"></i>
                                 <span>بريد إلكتروني</span>
                             </div>
                         </div>
-                        <div class="share-link-container" style="margin-top: 1rem;">
+                        <div class="share-link-container">
                             <input type="text" class="share-link-input" value="${surveyUrl}" readonly />
                             <button class="share-link-copy" onclick="navigator.clipboard.writeText('${surveyUrl}').then(() => window.surveysManager.showSuccess('تم نسخ الرابط'))">
                                 <i class="fa-solid fa-copy"></i> نسخ
@@ -1099,7 +1251,7 @@
         renderSurveyResultsGrid(grid) {
             if (allSurveys.length === 0) {
                 grid.innerHTML = `
-                    <div class="results-empty-state" style="grid-column: 1 / -1;">
+                    <div class="results-empty-state results-empty-state--full">
                         <div class="results-empty-icon">
                             <i class="fa-solid fa-clipboard-list"></i>
                         </div>
@@ -1128,9 +1280,9 @@
             // قسم الاستبيانات النشطة
             if (activeSurveys.length > 0) {
                 html += `
-                    <div class="survey-results-section" style="grid-column: 1 / -1;">
+                    <div class="survey-results-section survey-results-section--full">
                         <div class="surveys-section-header">
-                            <h3><i class="fa-solid fa-circle-play" style="color: #10b981;"></i> الاستبيانات النشطة (${activeSurveys.length})</h3>
+                            <h3><i class="fa-solid fa-circle-play survey-icon--active"></i> الاستبيانات النشطة (${activeSurveys.length})</h3>
                         </div>
                     </div>
                     ${activeSurveys.map(survey => this.renderSurveyResultCard(survey)).join('')}
@@ -1140,9 +1292,9 @@
             // قسم الاستبيانات المنتهية
             if (endedSurveys.length > 0) {
                 html += `
-                    <div class="survey-results-section" style="grid-column: 1 / -1; margin-top: 1.5rem;">
+                    <div class="survey-results-section survey-results-section--full survey-results-section--spaced">
                         <div class="surveys-section-header">
-                            <h3><i class="fa-solid fa-circle-stop" style="color: #ef4444;"></i> الاستبيانات المنتهية والمسودات (${endedSurveys.length})</h3>
+                            <h3><i class="fa-solid fa-circle-stop survey-icon--ended"></i> الاستبيانات المنتهية والمسودات (${endedSurveys.length})</h3>
                         </div>
                     </div>
                     ${endedSurveys.map(survey => this.renderSurveyResultCard(survey)).join('')}
@@ -1159,7 +1311,7 @@
                                actualStatus === 'closed' ? 'closed' : 
                                actualStatus === 'paused' ? 'paused' : 'draft';
             const statusText = actualStatus === 'active' ? 'نشط' : 
-                              actualStatus === 'closed' ? 'مغلق' : 
+                              actualStatus === 'closed' ? 'منتهية' : 
                               actualStatus === 'paused' ? 'متوقف' : 'مسودة';
             
             const totalResponses = survey.total_responses || 0;
@@ -1190,7 +1342,7 @@
                         </div>
                     </div>
                     <div class="survey-selector-progress">
-                        <div class="survey-selector-progress-bar" style="width: ${completionRate}%;"></div>
+                        <div class="survey-selector-progress-bar" data-width="${completionRate}"></div>
                     </div>
                 </div>
             `;
@@ -1212,16 +1364,34 @@
                 select.value = surveyId;
             }
 
+            // إخفاء قائمة الكروت وإظهار صفحة النتائج المنفصلة
+            const selectorContainer = document.getElementById('surveySelectorContainer');
+            const resultsContainer = document.getElementById('resultsTabsContainer');
+            if (selectorContainer) selectorContainer.style.display = 'none';
+            if (resultsContainer) resultsContainer.style.display = 'block';
+
+            // تحديث عنوان الاستبيان المختار
+            const survey = allSurveys.find(s => s.id === surveyId);
+            const titleEl = document.getElementById('selectedSurveyTitle');
+            if (titleEl && survey) {
+                titleEl.innerHTML = `<i class="fa-solid fa-chart-pie"></i> نتائج: ${this.escapeHtml(survey.title)}`;
+            }
+
+            // إعداد زر الرجوع
+            const backBtn = document.getElementById('backToSurveysList');
+            if (backBtn) {
+                backBtn.onclick = () => {
+                    if (selectorContainer) selectorContainer.style.display = 'block';
+                    if (resultsContainer) resultsContainer.style.display = 'none';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+            }
+
             // تحميل النتائج
             this.loadSurveyResults(surveyId);
 
-            // التمرير إلى قسم النتائج
-            setTimeout(() => {
-                const resultsContainer = document.getElementById('resultsTabsContainer');
-                if (resultsContainer) {
-                    resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            }, 100);
+            // التمرير لأعلى الصفحة
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         setupResultsFilters() {
@@ -1268,7 +1438,7 @@
             container.innerHTML = `
                 <div class="results-overview">
                     <div class="stats-grid">
-                        <div class="stat-card" style="--stat-color: #3d8fd6">
+                        <div class="stat-card stat-card--blue">
                             <div class="stat-card-wrapper">
                                 <div class="stat-icon">
                                     <i class="fa-solid fa-users"></i>
@@ -1279,7 +1449,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card stat-card--green">
                             <div class="stat-badge"><i class="fa-solid fa-check"></i> ${completionRate}%</div>
                             <div class="stat-card-wrapper">
                                 <div class="stat-icon">
@@ -1291,7 +1461,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="stat-card" style="--stat-color: #8b5cf6">
+                        <div class="stat-card stat-card--purple">
                             <div class="stat-card-wrapper">
                                 <div class="stat-icon">
                                     <i class="fa-solid fa-percentage"></i>
@@ -1302,7 +1472,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="stat-card" style="--stat-color: #14b8a6">
+                        <div class="stat-card stat-card--teal">
                             <div class="stat-card-wrapper">
                                 <div class="stat-icon">
                                     <i class="fa-solid fa-eye"></i>

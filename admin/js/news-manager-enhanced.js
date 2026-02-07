@@ -144,10 +144,10 @@ window.NewsManagerEnhanced = (function() {
 
         if (drafts.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 3rem; color: #6b7280;">
-                    <i class="fa-solid fa-inbox fa-3x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <p style="font-size: 1.125rem; font-weight: 500;">لا توجد مسودات</p>
-                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">ابدأ بإنشاء مسودة خبر جديد</p>
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <p class="empty-state__title">لا توجد مسودات</p>
+                    <p class="empty-state__text">ابدأ بإنشاء مسودة خبر جديد</p>
                 </div>
             `;
             return;
@@ -170,7 +170,7 @@ window.NewsManagerEnhanced = (function() {
                     <div class="applicant-info">
                         <div class="applicant-details">
                             <h4 class="applicant-name">📄 ${news.title}</h4>
-                            <p style="margin: 0.5rem 0; font-size: 0.875rem; color: #64748b;">
+                            <p class="news-card__meta">
                                 <i class="fa-solid fa-sitemap"></i> ${news.committees?.committee_name_ar || 'غير محدد'}
                             </p>
                         </div>
@@ -185,15 +185,8 @@ window.NewsManagerEnhanced = (function() {
                                 <span class="info-value">${createdDate}</span>
                             </div>
                         </div>
-                        <div class="info-item">
-                            <i class="fa-solid fa-tag"></i>
-                            <div class="info-content">
-                                <span class="info-label">التصنيف</span>
-                                <span class="info-value">${getCategoryLabel(news.category)}</span>
-                            </div>
-                        </div>
                         ${news.review_notes ? `
-                            <div class="info-item" style="grid-column: 1 / -1;">
+                            <div class="info-item info-item--full">
                                 <i class="fa-solid fa-note-sticky"></i>
                                 <div class="info-content">
                                     <span class="info-label">ملاحظات</span>
@@ -205,7 +198,7 @@ window.NewsManagerEnhanced = (function() {
                 </div>
                 <div class="application-card-footer">
                     <span class="badge badge-secondary"><i class="fa-solid fa-file"></i> مسودة</span>
-                    <div style="display: flex; gap: 0.5rem; margin-right: auto;">
+                    <div class="news-card__actions">
                         <button class="btn btn--primary btn--sm" onclick="NewsManagerEnhanced.assignWritersToDraft('${news.id}')">
                             <i class="fa-solid fa-users"></i>
                             تعيين كتّاب
@@ -249,9 +242,9 @@ window.NewsManagerEnhanced = (function() {
 
         if (inProgressNews.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 3rem; color: #6b7280;">
-                    <i class="fa-solid fa-inbox fa-3x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <p style="font-size: 1.125rem; font-weight: 500;">لا توجد أخبار قيد الكتابة</p>
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <p class="empty-state__title">لا توجد أخبار قيد الكتابة</p>
                 </div>
             `;
             return;
@@ -277,7 +270,7 @@ window.NewsManagerEnhanced = (function() {
                     <div class="applicant-info">
                         <div class="applicant-details">
                             <h4 class="applicant-name">✍️ ${news.title}</h4>
-                            <p style="margin: 0.5rem 0; font-size: 0.875rem; color: #64748b;">
+                            <p class="news-card__meta">
                                 <i class="fa-solid fa-sitemap"></i> ${news.committees?.committee_name_ar || 'غير محدد'}
                             </p>
                         </div>
@@ -310,10 +303,17 @@ window.NewsManagerEnhanced = (function() {
                 </div>
                 <div class="application-card-footer">
                     ${statusBadge}
-                    <div style="display: flex; gap: 0.5rem; margin-right: auto;">
+                    <div class="news-card__actions">
                         <button class="btn btn--outline btn--outline-primary btn--sm" onclick="NewsManagerEnhanced.viewNewsDetails('${news.id}')">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل
+                        </button>
+                        <button class="btn btn--outline btn--outline-warning btn--sm" onclick="NewsManagerEnhanced.editWritersAssignment('${news.id}')">
+                            <i class="fa-solid fa-user-pen"></i>
+                            تعديل الكتّاب
+                        </button>
+                        <button class="btn btn--icon btn--icon-sm btn--danger" onclick="NewsManagerEnhanced.deleteNews('${news.id}')" title="حذف نهائي">
+                            <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
                 </div>
@@ -330,9 +330,9 @@ window.NewsManagerEnhanced = (function() {
 
         if (reviewNews.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 3rem; color: #6b7280;">
-                    <i class="fa-solid fa-inbox fa-3x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <p style="font-size: 1.125rem; font-weight: 500;">لا توجد أخبار جاهزة للمراجعة</p>
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <p class="empty-state__title">لا توجد أخبار جاهزة للمراجعة</p>
                 </div>
             `;
             return;
@@ -355,7 +355,7 @@ window.NewsManagerEnhanced = (function() {
                     <div class="applicant-info">
                         <div class="applicant-details">
                             <h4 class="applicant-name">✅ ${news.title}</h4>
-                            <p style="margin: 0.5rem 0; font-size: 0.875rem; color: #64748b;">
+                            <p class="news-card__meta">
                                 <i class="fa-solid fa-sitemap"></i> ${news.committees?.committee_name_ar || 'غير محدد'}
                             </p>
                         </div>
@@ -379,25 +379,32 @@ window.NewsManagerEnhanced = (function() {
                         </div>
                     </div>
                     ${news.summary ? `
-                        <div style="margin-top: 1rem; padding: 0.75rem; background: #f9fafb; border-radius: 6px;">
-                            <p style="margin: 0; font-size: 0.875rem; color: #4b5563;">${news.summary}</p>
+                        <div class="info-box info-box--info">
+                            <p class="info-box__text">${news.summary}</p>
                         </div>
                     ` : ''}
                 </div>
                 <div class="application-card-footer">
                     <span class="badge badge-success"><i class="fa-solid fa-check-circle"></i> جاهز للمراجعة</span>
-                    <div style="display: flex; gap: 0.5rem; margin-right: auto;">
+                    <div class="news-card__actions">
                         <button class="btn btn--primary btn--sm" onclick="NewsManagerEnhanced.publishNews('${news.id}')">
                             <i class="fa-solid fa-paper-plane"></i>
                             نشر
                         </button>
                         <button class="btn btn--outline btn--outline-warning btn--sm" onclick="NewsManagerEnhanced.requestChanges('${news.id}')">
-                            <i class="fa-solid fa-edit"></i>
+                            <i class="fa-solid fa-comment-dots"></i>
                             طلب تعديلات
+                        </button>
+                        <button class="btn btn--outline btn--outline-info btn--sm" onclick="NewsManagerEnhanced.directEditNews('${news.id}')">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                            تعديل مباشر
                         </button>
                         <button class="btn btn--outline btn--outline-primary btn--sm" onclick="NewsManagerEnhanced.previewNews('${news.id}')">
                             <i class="fa-solid fa-eye"></i>
                             معاينة
+                        </button>
+                        <button class="btn btn--icon btn--icon-sm btn--danger" onclick="NewsManagerEnhanced.deleteNews('${news.id}')" title="حذف نهائي">
+                            <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
                 </div>
@@ -435,9 +442,9 @@ window.NewsManagerEnhanced = (function() {
 
         if (publishedNews.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 3rem; color: #6b7280;">
-                    <i class="fa-solid fa-inbox fa-3x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <p style="font-size: 1.125rem; font-weight: 500;">لا توجد أخبار منشورة</p>
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <p class="empty-state__title">لا توجد أخبار منشورة</p>
                 </div>
             `;
             return;
@@ -458,13 +465,11 @@ window.NewsManagerEnhanced = (function() {
         return `
             <div class="application-card">
                 <div class="application-card-header">
-                    <img src="${imageUrl}" alt="${news.title}" 
-                         style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px 8px 0 0; margin: -1rem -1rem 1rem -1rem;" 
-                         onerror="this.src='https://via.placeholder.com/400x300?text=أديب'">
+                    <img src="${imageUrl}" alt="${news.title}" class="news-card__image" onerror="this.src='https://via.placeholder.com/400x300?text=أديب'">
                     <div class="applicant-info">
                         <div class="applicant-details">
                             <h4 class="applicant-name">${news.title}</h4>
-                            <p style="margin: 0.5rem 0; font-size: 0.875rem; color: #64748b;">${news.summary || ''}</p>
+                            <p class="news-card__meta">${news.summary || ''}</p>
                         </div>
                     </div>
                 </div>
@@ -497,7 +502,7 @@ window.NewsManagerEnhanced = (function() {
                 </div>
                 <div class="application-card-footer">
                     <span class="badge badge-success"><i class="fa-solid fa-check-circle"></i> منشور</span>
-                    <div style="display: flex; gap: 0.5rem; margin-right: auto;">
+                    <div class="news-card__actions">
                         <button class="btn btn--outline btn--outline-primary btn--sm" onclick="window.open('/news/news-detail.html?id=${news.id}', '_blank')">
                             <i class="fa-solid fa-external-link"></i>
                             عرض في الموقع
@@ -505,6 +510,9 @@ window.NewsManagerEnhanced = (function() {
                         <button class="btn btn--outline btn--outline-secondary btn--sm" onclick="NewsManagerEnhanced.archiveNews('${news.id}')">
                             <i class="fa-solid fa-archive"></i>
                             أرشفة
+                        </button>
+                        <button class="btn btn--icon btn--icon-sm btn--danger" onclick="NewsManagerEnhanced.deleteNewsPermanently('${news.id}')" title="حذف نهائي">
+                            <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
                 </div>
@@ -523,9 +531,9 @@ window.NewsManagerEnhanced = (function() {
 
         if (archivedNews.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 3rem; color: #6b7280;">
-                    <i class="fa-solid fa-inbox fa-3x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <p style="font-size: 1.125rem; font-weight: 500;">لا توجد أخبار مؤرشفة</p>
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <p class="empty-state__title">لا توجد أخبار مؤرشفة</p>
                 </div>
             `;
             return;
@@ -541,7 +549,7 @@ window.NewsManagerEnhanced = (function() {
     // إنشاء بطاقة خبر مؤرشف
     function createArchivedCard(news) {
         return `
-            <div class="application-card" style="opacity: 0.7;">
+            <div class="application-card application-card--archived">
                 <div class="application-card-header">
                     <div class="applicant-info">
                         <div class="applicant-details">
@@ -551,7 +559,7 @@ window.NewsManagerEnhanced = (function() {
                 </div>
                 <div class="application-card-footer">
                     <span class="badge badge-secondary"><i class="fa-solid fa-archive"></i> مؤرشف</span>
-                    <div style="display: flex; gap: 0.5rem; margin-right: auto;">
+                    <div class="news-card__actions">
                         <button class="btn btn--outline btn--outline-primary btn--sm" onclick="NewsManagerEnhanced.restoreNews('${news.id}')">
                             <i class="fa-solid fa-undo"></i>
                             استعادة
@@ -636,32 +644,134 @@ window.NewsManagerEnhanced = (function() {
         const news = allNews.find(n => n.id === newsId);
         if (!news) return;
 
-        await Swal.fire({
-            title: news.title,
+        // جلب معرض الصور إن وجد
+        let galleryHTML = '';
+        if (news.gallery_images && news.gallery_images.length > 0) {
+            galleryHTML = `
+                <div class="news-gallery">
+                    <h4 class="news-gallery__title">معرض الصور:</h4>
+                    <div class="news-gallery__grid">
+                        ${news.gallery_images.map(img => `
+                            <img src="${img}" class="news-gallery__image" onerror="this.style.display='none'">
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        await ModalHelper.show({
+            title: `📰 ${news.title}`,
             html: `
-                <div style="text-align: right;">
-                    ${news.image_url ? `<img src="${news.image_url}" style="width: 100%; border-radius: 8px; margin-bottom: 1rem;">` : ''}
-                    ${news.summary ? `<p style="font-weight: 600; margin-bottom: 1rem;">${news.summary}</p>` : ''}
-                    <div style="text-align: right; line-height: 1.8;">${news.content || 'لا يوجد محتوى'}</div>
+                <div class="modal-content-rtl">
+                    ${news.image_url ? `<img src="${news.image_url}" class="news-preview__image" onerror="this.style.display='none'">` : ''}
+                    ${news.summary ? `<p class="news-preview__summary">${news.summary}</p>` : ''}
+                    <div class="news-preview__content">${news.content || 'لا يوجد محتوى'}</div>
+                    ${galleryHTML}
                 </div>
             `,
-            width: '800px',
-            showCloseButton: true,
-            showConfirmButton: false
+            size: 'lg',
+            showClose: true,
+            showFooter: true,
+            footerButtons: [
+                {
+                    text: 'إغلاق',
+                    class: 'btn--outline btn--outline-secondary'
+                }
+            ]
         });
     }
 
+    // تعديلات مباشرة للمسؤول
+    async function directEditNews(newsId) {
+        const news = allNews.find(n => n.id === newsId);
+        if (!news) return;
+
+        const fields = [
+            {
+                name: 'title',
+                type: 'text',
+                label: 'عنوان الخبر',
+                value: news.title,
+                required: true
+            },
+            {
+                name: 'summary',
+                type: 'textarea',
+                label: 'الملخص',
+                value: news.summary || '',
+                rows: 3
+            },
+            {
+                name: 'content',
+                type: 'textarea',
+                label: 'المحتوى',
+                value: news.content || '',
+                rows: 8
+            },
+            {
+                name: 'image_url',
+                type: 'image',
+                label: 'صورة الغلاف',
+                folder: 'news',
+                value: news.image_url || ''
+            }
+        ];
+
+        try {
+            await ModalHelper.form({
+                title: '✏️ تعديلات مباشرة على الخبر',
+                fields: fields,
+                submitText: 'حفظ التعديلات',
+                cancelText: 'إلغاء',
+                onSubmit: async (formData) => {
+                    const loadingToast = Toast.loading('جاري حفظ التعديلات...');
+
+                    try {
+                        const updateData = {
+                            title: formData.title,
+                            summary: formData.summary || null,
+                            content: formData.content || null,
+                            updated_at: new Date().toISOString()
+                        };
+
+                        if (formData.image_url) {
+                            updateData.image_url = formData.image_url;
+                        }
+
+                        const { error } = await sb
+                            .from('news')
+                            .update(updateData)
+                            .eq('id', newsId);
+
+                        if (error) throw error;
+
+                        Toast.close(loadingToast);
+                        Toast.success('تم حفظ التعديلات بنجاح');
+                        await loadAllNews();
+                    } catch (error) {
+                        Toast.close(loadingToast);
+                        Toast.error('حدث خطأ في حفظ التعديلات');
+                        console.error('Error updating news:', error);
+                        throw error;
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error in directEditNews:', error);
+        }
+    }
+
     async function archiveNews(newsId) {
-        const result = await Swal.fire({
+        const confirmed = await ModalHelper.confirm({
             title: 'تأكيد الأرشفة',
-            text: 'هل تريد أرشفة هذا الخبر؟',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'نعم، أرشف',
-            cancelButtonText: 'إلغاء'
+            message: 'هل تريد أرشفة هذا الخبر؟',
+            type: 'warning',
+            confirmText: 'نعم، أرشف',
+            cancelText: 'إلغاء'
         });
 
-        if (result.isConfirmed) {
+        if (confirmed) {
+            const loadingToast = Toast.loading('جاري الأرشفة...');
             try {
                 const { error } = await sb
                     .from('news')
@@ -673,23 +783,19 @@ window.NewsManagerEnhanced = (function() {
 
                 if (error) throw error;
 
-                await Swal.fire({
-                    title: 'تمت الأرشفة',
-                    text: 'تم أرشفة الخبر بنجاح',
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-
+                Toast.close(loadingToast);
+                Toast.success('تم أرشفة الخبر بنجاح');
                 await loadAllNews();
             } catch (error) {
+                Toast.close(loadingToast);
+                Toast.error('حدث خطأ عند الأرشفة');
                 console.error('Error archiving news:', error);
-                showError('حدث خطأ عند الأرشفة');
             }
         }
     }
 
     async function restoreNews(newsId) {
+        const loadingToast = Toast.loading('جاري الاستعادة...');
         try {
             const { error } = await sb
                 .from('news')
@@ -701,51 +807,78 @@ window.NewsManagerEnhanced = (function() {
 
             if (error) throw error;
 
-            await Swal.fire({
-                title: 'تمت الاستعادة',
-                text: 'تم استعادة الخبر بنجاح',
-                icon: 'success',
-                timer: 2000,
-                showConfirmButton: false
-            });
-
+            Toast.close(loadingToast);
+            Toast.success('تم استعادة الخبر بنجاح');
             await loadAllNews();
         } catch (error) {
+            Toast.close(loadingToast);
+            Toast.error('حدث خطأ عند الاستعادة');
             console.error('Error restoring news:', error);
-            showError('حدث خطأ عند الاستعادة');
         }
     }
 
-    function viewNewsDetails(newsId) {
+    async function viewNewsDetails(newsId) {
         const news = allNews.find(n => n.id === newsId);
         if (!news) return;
+
+        // جلب أسماء الكتّاب المعينين
+        let writersHTML = '';
+        if (news.assigned_writers?.length > 0) {
+            try {
+                const { data: writers } = await sb
+                    .from('news_writer_assignments')
+                    .select('writer_id, assigned_fields, profiles:writer_id(full_name, avatar_url)')
+                    .eq('news_id', newsId);
+
+                if (writers && writers.length > 0) {
+                    writersHTML = `
+                        <div class="info-box info-box--info">
+                            <i class="fa-solid fa-users"></i>
+                            <strong>الكتّاب المعينون (${writers.length}):</strong>
+                            <div class="writers-list">
+                                ${writers.map(w => `
+                                    <div class="user-select-item">
+                                        <img src="${w.profiles?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(w.profiles?.full_name || '')}" class="user-select-avatar">
+                                        <div class="user-select-info">
+                                            <div class="user-select-name">${w.profiles?.full_name || 'غير معروف'}</div>
+                                            <div class="user-select-email">
+                                                ${(w.assigned_fields || []).map(f => getFieldLabel(f)).join('، ') || 'جميع الحقول'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading writers:', error);
+            }
+        }
 
         ModalHelper.show({
             title: '<i class="fa-solid fa-info-circle"></i> تفاصيل الخبر',
             html: `
-                <div style="text-align: right;">
-                    <h3 style="margin-bottom: 1rem; color: var(--main-blue);">${news.title}</h3>
-                    <div style="display: grid; gap: 0.75rem;">
-                        <div class="info-item" style="padding: 0.75rem; background: #f8fafc; border-radius: 8px;">
-                            <i class="fa-solid fa-sitemap" style="color: var(--accent-blue); margin-left: 0.5rem;"></i>
+                <div class="modal-content-rtl">
+                    <h3 class="news-details__title">${news.title}</h3>
+                    <div class="news-details__grid">
+                        <div class="info-box">
+                            <i class="fa-solid fa-sitemap"></i>
                             <strong>اللجنة:</strong> ${news.committees?.committee_name_ar || 'غير محدد'}
                         </div>
-                        <div class="info-item" style="padding: 0.75rem; background: #f8fafc; border-radius: 8px;">
-                            <i class="fa-solid fa-tasks" style="color: var(--accent-blue); margin-left: 0.5rem;"></i>
+                        <div class="info-box">
+                            <i class="fa-solid fa-tasks"></i>
                             <strong>الحالة:</strong> ${getWorkflowStatusLabel(news.workflow_status)}
                         </div>
-                        <div class="info-item" style="padding: 0.75rem; background: #f8fafc; border-radius: 8px;">
-                            <i class="fa-solid fa-users" style="color: var(--accent-blue); margin-left: 0.5rem;"></i>
-                            <strong>عدد الكتّاب:</strong> ${news.assigned_writers?.length || 0}
-                        </div>
                         ${news.assigned_by_profile ? `
-                        <div class="info-item" style="padding: 0.75rem; background: #f8fafc; border-radius: 8px;">
-                            <i class="fa-solid fa-user-check" style="color: var(--accent-blue); margin-left: 0.5rem;"></i>
+                        <div class="info-box">
+                            <i class="fa-solid fa-user-check"></i>
                             <strong>معين من:</strong> ${news.assigned_by_profile.full_name}
                         </div>` : ''}
+                        ${writersHTML}
                         ${news.review_notes ? `
-                        <div class="info-item" style="padding: 0.75rem; background: #fffbeb; border-radius: 8px; border-right: 3px solid #f59e0b;">
-                            <i class="fa-solid fa-sticky-note" style="color: #f59e0b; margin-left: 0.5rem;"></i>
+                        <div class="info-box info-box--warning">
+                            <i class="fa-solid fa-sticky-note"></i>
                             <strong>ملاحظات:</strong> ${news.review_notes}
                         </div>` : ''}
                     </div>
@@ -761,6 +894,17 @@ window.NewsManagerEnhanced = (function() {
                 }
             ]
         });
+    }
+
+    function getFieldLabel(field) {
+        const labels = {
+            'title': 'العنوان',
+            'content': 'المحتوى',
+            'summary': 'الملخص',
+            'image_url': 'صورة الغلاف',
+            'gallery_images': 'معرض الصور'
+        };
+        return labels[field] || field;
     }
 
     function getWorkflowStatusLabel(status) {
@@ -863,6 +1007,69 @@ window.NewsManagerEnhanced = (function() {
         }
     }
 
+    // تعديل تعيين الكتّاب
+    async function editWritersAssignment(newsId) {
+        if (window.NewsWorkflowManager) {
+            await window.NewsWorkflowManager.editWritersAssignment(newsId);
+        }
+    }
+
+    // حذف خبر نهائياً
+    async function deleteNews(newsId) {
+        const confirmed = await ModalHelper.confirm({
+            title: 'حذف الخبر نهائياً',
+            message: 'هل أنت متأكد من حذف هذا الخبر نهائياً؟ لا يمكن التراجع عن هذا الإجراء.',
+            type: 'danger',
+            confirmText: 'نعم، احذف نهائياً',
+            cancelText: 'إلغاء'
+        });
+
+        if (!confirmed) return;
+
+        const loadingToast = Toast.loading('جاري الحذف...');
+
+        try {
+            // حذف التعيينات أولاً
+            await sb
+                .from('news_writer_assignments')
+                .delete()
+                .eq('news_id', newsId);
+
+            // حذف صلاحيات الحقول
+            await sb
+                .from('news_field_permissions')
+                .delete()
+                .eq('news_id', newsId);
+
+            // حذف سجل النشاط
+            await sb
+                .from('news_activity_log')
+                .delete()
+                .eq('news_id', newsId);
+
+            // حذف الخبر
+            const { error } = await sb
+                .from('news')
+                .delete()
+                .eq('id', newsId);
+
+            if (error) throw error;
+
+            Toast.close(loadingToast);
+            Toast.success('تم حذف الخبر نهائياً');
+            await loadAllNews();
+        } catch (error) {
+            Toast.close(loadingToast);
+            Toast.error('حدث خطأ في حذف الخبر');
+            console.error('Error deleting news:', error);
+        }
+    }
+
+    // حذف خبر منشور نهائياً (نفس deleteNews)
+    async function deleteNewsPermanently(newsId) {
+        return deleteNews(newsId);
+    }
+
     return {
         init,
         loadAllNews,
@@ -874,6 +1081,10 @@ window.NewsManagerEnhanced = (function() {
         previewNews,
         archiveNews,
         restoreNews,
-        viewNewsDetails
+        viewNewsDetails,
+        editWritersAssignment,
+        deleteNews,
+        deleteNewsPermanently,
+        directEditNews
     };
 })();

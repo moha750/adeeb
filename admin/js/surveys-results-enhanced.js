@@ -613,7 +613,7 @@
             container.innerHTML = `
                 <!-- كروت الإحصائيات الرئيسية - تم نقلها من قسم الإحصائيات -->
                 <div class="stats-grid mb-2rem">
-                    <div class="stat-card" style="--stat-color: #3d8fd6">
+                    <div class="stat-card stat-card--blue">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-users"></i>
@@ -625,7 +625,7 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card" style="--stat-color: #10b981">
+                    <div class="stat-card stat-card--green">
                         <div class="stat-badge"><i class="fa-solid fa-arrow-up"></i> ${completionRate}%</div>
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
@@ -638,7 +638,7 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card" style="--stat-color: #f59e0b">
+                    <div class="stat-card stat-card--yellow">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-spinner"></i>
@@ -650,7 +650,7 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card" style="--stat-color: #ef4444">
+                    <div class="stat-card stat-card--red">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-ban"></i>
@@ -662,7 +662,7 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card" style="--stat-color: #14b8a6">
+                    <div class="stat-card stat-card--teal">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-eye"></i>
@@ -674,7 +674,7 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                    <div class="stat-card stat-card--purple">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-clock"></i>
@@ -686,7 +686,7 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card" style="--stat-color: #6366f1">
+                    <div class="stat-card stat-card--indigo">
                         <div class="stat-badge"><i class="fa-solid fa-percentage"></i></div>
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
@@ -786,8 +786,17 @@
 
         renderDeviceChart(deviceStats) {
             const total = Object.values(deviceStats).reduce((a, b) => a + b, 0);
+            if (total === 0) return '<p class="text-muted">لا توجد بيانات</p>';
+            
+            const deviceColors = {
+                'mobile': '#10b981',
+                'tablet': '#f59e0b',
+                'desktop': '#3d8fd6',
+                'unknown': '#64748b'
+            };
+            
             return `
-                <div class="choice-results">
+                <div class="results-choices-list">
                     ${Object.entries(deviceStats).map(([device, count]) => {
                         const percentage = Math.round((count / total) * 100);
                         const deviceIcon = device === 'mobile' ? 'fa-mobile' : 
@@ -795,16 +804,19 @@
                         const deviceName = device === 'mobile' ? 'جوال' : 
                                           device === 'tablet' ? 'تابلت' : 
                                           device === 'desktop' ? 'سطح مكتب' : 'غير محدد';
+                        const color = deviceColors[device] || '#64748b';
                         return `
-                            <div class="choice-result-item">
-                                <div class="choice-label">
-                                    <i class="fa-solid ${deviceIcon}"></i>
+                            <div class="results-choice-item">
+                                <div class="results-choice-label">
+                                    <i class="fa-solid ${deviceIcon} device-icon" data-color="${color}"></i>
                                     ${deviceName}
                                 </div>
-                                <div class="choice-bar">
-                                    <div class="choice-bar-fill"></div>
+                                <div class="results-choice-bar-container">
+                                    <div class="results-choice-bar" data-width="${percentage}" data-color="${color}">
+                                        <span class="results-choice-bar-text">${percentage}%</span>
+                                    </div>
                                 </div>
-                                <div class="choice-stats">${count} (${percentage}%)</div>
+                                <div class="results-choice-stats"><strong>${count}</strong></div>
                             </div>
                         `;
                     }).join('')}
@@ -814,18 +826,26 @@
 
         renderCompletionTrendChart(trend) {
             const dates = Object.keys(trend).sort();
+            if (dates.length === 0) return '<p class="text-muted">لا توجد بيانات</p>';
+            
             return `
-                <div class="choice-results">
+                <div class="results-choices-list">
                     ${dates.map(date => {
                         const data = trend[date];
                         const rate = Math.round((data.completed / data.total) * 100);
+                        const color = rate >= 70 ? '#10b981' : rate >= 40 ? '#f59e0b' : '#ef4444';
                         return `
-                            <div class="choice-result-item">
-                                <div class="choice-label">${date}</div>
-                                <div class="choice-bar">
-                                    <div class="choice-bar-fill"></div>
+                            <div class="results-choice-item">
+                                <div class="results-choice-label">
+                                    <i class="fa-solid fa-calendar-day icon--blue"></i>
+                                    ${date}
                                 </div>
-                                <div class="choice-stats">${data.completed}/${data.total} (${rate}%)</div>
+                                <div class="results-choice-bar-container">
+                                    <div class="results-choice-bar" data-width="${rate}" data-color="${color}">
+                                        <span class="results-choice-bar-text">${rate}%</span>
+                                    </div>
+                                </div>
+                                <div class="results-choice-stats"><strong>${data.completed}</strong>/${data.total}</div>
                             </div>
                         `;
                     }).join('')}
@@ -854,19 +874,24 @@
             const maxCount = Math.max(...distribution.map(d => d.count));
 
             return `
-                <div class="choice-results">
+                <div class="results-choices-list">
                     ${distribution.map(d => {
                         const percentage = timeStats.distribution.length > 0 
                             ? Math.round((d.count / timeStats.distribution.length) * 100) 
                             : 0;
                         const barWidth = maxCount > 0 ? (d.count / maxCount) * 100 : 0;
                         return `
-                            <div class="choice-result-item">
-                                <div class="choice-label">${d.label}</div>
-                                <div class="choice-bar">
-                                    <div class="choice-bar-fill"></div>
+                            <div class="results-choice-item">
+                                <div class="results-choice-label">
+                                    <i class="fa-solid fa-stopwatch icon--purple"></i>
+                                    ${d.label}
                                 </div>
-                                <div class="choice-stats">${d.count} (${percentage}%)</div>
+                                <div class="results-choice-bar-container">
+                                    <div class="results-choice-bar results-choice-bar--purple" data-width="${barWidth}">
+                                        <span class="results-choice-bar-text">${percentage}%</span>
+                                    </div>
+                                </div>
+                                <div class="results-choice-stats"><strong>${d.count}</strong></div>
                             </div>
                         `;
                     }).join('')}
@@ -1042,8 +1067,13 @@
         }
 
         viewResponseDetails(responseId) {
-            const response = currentResponses.find(r => r.id === responseId);
-            if (!response) return;
+            // تحويل responseId إلى number للمقارنة الصحيحة
+            const numericId = typeof responseId === 'string' ? parseInt(responseId, 10) : responseId;
+            const response = currentResponses.find(r => r.id === numericId);
+            if (!response) {
+                console.error('Response not found:', responseId, 'Available:', currentResponses.map(r => r.id));
+                return;
+            }
             
             const userName = response.user?.full_name || (response.is_anonymous ? 'مجهول' : 'غير معروف');
             const statusClass = response.status === 'completed' ? 'badge-success' : 
@@ -1097,7 +1127,7 @@
                     </div>
                 </div>
                 
-                <h3 style="margin: 24px 0 16px; color: var(--text-primary);">
+                <h3 class="section-title">
                     <i class="fa-solid fa-list-check"></i>
                     الإجابات
                 </h3>
@@ -1107,7 +1137,37 @@
             `;
             
             // فتح النافذة المنبثقة
-            openModal('تفاصيل الاستجابة', modalContent);
+            if (window.ModalHelper && typeof window.ModalHelper.show === 'function') {
+                window.ModalHelper.show({
+                    title: 'تفاصيل الاستجابة',
+                    html: modalContent,
+                    size: 'lg',
+                    showClose: true
+                });
+            } else {
+                // Fallback
+                const modal = document.createElement('div');
+                modal.className = 'modal-backdrop active';
+                modal.innerHTML = `
+                    <div class="modal modal-lg active">
+                        <div class="modal-header">
+                            <h3>تفاصيل الاستجابة</h3>
+                            <button class="modal-close" onclick="this.closest('.modal-backdrop').remove(); document.body.classList.remove('modal-open');">
+                                <i class="fa-solid fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">${modalContent}</div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                document.body.classList.add('modal-open');
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                        document.body.classList.remove('modal-open');
+                    }
+                });
+            }
         }
     }
 

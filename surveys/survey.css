@@ -1,55 +1,55 @@
 @font-face {
   font-family: fl;
-  src: url(fonts/COMM\ -\ Lyon\ Arabic\ Display\ Light.otf);
+  src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Light.otf);
 }
 
 @font-face {
   font-family: fm;
-  src: url(fonts/COMM\ -\ Lyon\ Arabic\ Display\ Medium.otf);
+  src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Medium.otf);
 }
 
 @font-face {
   font-family: fb;
-  src: url(fonts/COMM\ -\ Lyon\ Arabic\ Display\ Bold.otf);
+  src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Bold.otf);
 }
 
 @font-face {
   font-family: fbb;
-  src: url(fonts/COMM\ -\ Lyon\ Arabic\ Display\ Black.otf);
+  src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Black.otf);
 }
 
 @font-face {
   font-family: a;
-  src: url(fonts/ERASLGHT.TTF) format("truetype");
+  src: url(../fonts/ERASLGHT.TTF) format("truetype");
 }
 
 @font-face {
   font-family: d;
-  src: url(fonts/ERASBD.TTF) format("truetype");
+  src: url(../fonts/ERASBD.TTF) format("truetype");
 }
 
 /* Override digits globally */
 @font-face {
   font-family: fl;
-  src: url(fonts/ERASLGHT.TTF) format("truetype");
+  src: url(../fonts/ERASLGHT.TTF) format("truetype");
   unicode-range: U+0030-0039, U+0660-0669;
 }
 
 @font-face {
   font-family: fm;
-  src: url(fonts/ERASMD.TTF) format("truetype");
+  src: url(../fonts/ERASMD.TTF) format("truetype");
   unicode-range: U+0030-0039, U+0660-0669;
 }
 
 @font-face {
   font-family: fb;
-  src: url(fonts/ERASDEMI.TTF) format("truetype");
+  src: url(../fonts/ERASDEMI.TTF) format("truetype");
   unicode-range: U+0030-0039, U+0660-0669;
 }
 
 @font-face {
   font-family: fbb;
-  src: url(fonts/ERASBD.TTF) format("truetype");
+  src: url(../fonts/ERASBD.TTF) format("truetype");
   unicode-range: U+0030-0039, U+0660-0669;
 }
 

@@ -200,26 +200,26 @@ window.ImpersonationManager = (function() {
         const { value: formValues } = await Swal.fire({
             title: '<i class="fa-solid fa-user-secret"></i> التنكر كمستخدم آخر',
             html: `
-                <div style="text-align: right;">
-                    <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px; margin-bottom: 20px;">
-                        <i class="fa-solid fa-exclamation-triangle" style="color: #856404;"></i>
+                <div class="modal-content-rtl">
+                    <div class="info-box info-box--warning">
+                        <i class="fa-solid fa-exclamation-triangle"></i>
                         <strong>تحذير:</strong> هذه الميزة متاحة لرئيس النادي فقط. سيتم تسجيل جميع جلسات التنكر.
                     </div>
                     
-                    <div style="margin-bottom: 15px; text-align: right;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">البحث عن مستخدم</label>
-                        <input type="text" id="impersonationUserSearch" class="swal2-input" placeholder="ابحث بالاسم أو البريد الإلكتروني..." style="width: 100%; margin: 0;">
+                    <div class="form-group">
+                        <label class="form-label">البحث عن مستخدم</label>
+                        <input type="text" id="impersonationUserSearch" class="form-input" placeholder="ابحث بالاسم أو البريد الإلكتروني...">
                     </div>
                     
-                    <div style="margin-bottom: 15px; text-align: right;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">سبب التنكر (اختياري)</label>
-                        <textarea id="impersonationReason" class="swal2-textarea" rows="2" placeholder="مثال: استكشاف مشكلة في الصلاحيات" style="width: 100%; margin: 0;"></textarea>
+                    <div class="form-group">
+                        <label class="form-label">سبب التنكر (اختياري)</label>
+                        <textarea id="impersonationReason" class="form-input" rows="2" placeholder="مثال: استكشاف مشكلة في الصلاحيات"></textarea>
                     </div>
                     
-                    <div id="impersonationUsersList" class="users-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px;">
-                        <div style="text-align: center; padding: 20px;">
-                            <i class="fa-solid fa-spinner fa-spin fa-2x" style="color: #3b82f6;"></i>
-                            <p style="margin-top: 10px;">جاري تحميل المستخدمين...</p>
+                    <div id="impersonationUsersList" class="users-list-container">
+                        <div class="loading-spinner">
+                            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                            <p>جاري تحميل المستخدمين...</p>
                         </div>
                     </div>
                 </div>
@@ -259,32 +259,30 @@ window.ImpersonationManager = (function() {
             
             if (!profiles || profiles.length === 0) {
                 usersList.innerHTML = `
-                    <div style="text-align: center; padding: 20px; color: #6b7280;">
-                        <i class="fa-solid fa-users-slash fa-3x" style="margin-bottom: 10px;"></i>
-                        <p>لا يوجد مستخدمين متاحين</p>
+                    <div class="empty-state">
+                        <i class="fa-solid fa-users-slash empty-state__icon"></i>
+                        <p class="empty-state__title">لا يوجد مستخدمين متاحين</p>
                     </div>
                 `;
                 return;
             }
 
             usersList.innerHTML = profiles.map(user => `
-                <div class="impersonation-user-item" data-user-id="${user.id}" data-user-name="${(user.full_name || user.email).replace(/"/g, '&quot;')}" style="padding: 10px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; overflow: hidden;">
-                            ${user.avatar_url 
-                                ? `<img src="${user.avatar_url}" alt="${user.full_name}" style="width: 100%; height: 100%; object-fit: cover;">` 
-                                : `<i class="fa-solid fa-user"></i>`
-                            }
-                        </div>
-                        <div style="flex: 1; text-align: right;">
-                            <div style="font-weight: 600; color: #111827; margin-bottom: 2px;">${user.full_name || 'بدون اسم'}</div>
-                            <div style="font-size: 14px; color: #6b7280;">${user.email}</div>
-                        </div>
-                        <button class="impersonate-btn" onclick="ImpersonationManager.selectUserForImpersonation('${user.id}', '${(user.full_name || user.email).replace(/'/g, "\\'")}'); event.stopPropagation();" style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
-                            <i class="fa-solid fa-user-secret"></i>
-                            تنكر
-                        </button>
+                <div class="user-select-item" data-user-id="${user.id}" data-user-name="${(user.full_name || user.email).replace(/"/g, '&quot;')}">
+                    <div class="user-select-avatar-container">
+                        ${user.avatar_url 
+                            ? `<img src="${user.avatar_url}" alt="${user.full_name}" class="user-select-avatar">` 
+                            : `<div class="user-select-avatar-placeholder"><i class="fa-solid fa-user"></i></div>`
+                        }
                     </div>
+                    <div class="user-select-info">
+                        <div class="user-select-name">${user.full_name || 'بدون اسم'}</div>
+                        <div class="user-select-email">${user.email}</div>
+                    </div>
+                    <button class="btn btn--primary btn--sm" onclick="ImpersonationManager.selectUserForImpersonation('${user.id}', '${(user.full_name || user.email).replace(/'/g, "\\'")}'); event.stopPropagation();">
+                        <i class="fa-solid fa-user-secret"></i>
+                        تنكر
+                    </button>
                 </div>
             `).join('');
 
@@ -310,7 +308,7 @@ window.ImpersonationManager = (function() {
             const usersList = document.getElementById('impersonationUsersList');
             if (usersList) {
                 usersList.innerHTML = `
-                    <div style="background: #fee2e2; border: 1px solid #ef4444; border-radius: 8px; padding: 12px; color: #991b1b;">
+                    <div class="info-box info-box--error">
                         <i class="fa-solid fa-exclamation-circle"></i>
                         حدث خطأ في تحميل المستخدمين
                     </div>
@@ -327,7 +325,7 @@ window.ImpersonationManager = (function() {
         
         const confirmed = await Swal.fire({
             title: 'تأكيد التنكر',
-            html: `هل أنت متأكد من التنكر كـ <strong>"${userName}"</strong>؟<br><br><small style="color: #6b7280;">سيتم تسجيل هذه العملية.</small>`,
+            html: `هل أنت متأكد من التنكر كـ <strong>"${userName}"</strong>؟<br><br><small class="form-hint">سيتم تسجيل هذه العملية.</small>`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'نعم، تنكر',
@@ -455,23 +453,23 @@ window.ImpersonationManager = (function() {
                 const durationText = minutes > 0 ? `${minutes} دقيقة و ${seconds} ثانية` : `${seconds} ثانية`;
                 
                 activeDetails.innerHTML = `
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                        <div>
-                            <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">المسؤول</div>
-                            <div style="font-weight: 600; color: #111827;">${activeSession.adminName || 'غير معروف'}</div>
-                            <div style="font-size: 0.875rem; color: #6b7280;">${activeSession.adminEmail || ''}</div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-item__label">المسؤول</div>
+                            <div class="stat-item__value">${activeSession.adminName || 'غير معروف'}</div>
+                            <div class="stat-item__sub">${activeSession.adminEmail || ''}</div>
                         </div>
-                        <div>
-                            <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">المدة</div>
-                            <div style="font-weight: 600; color: #111827;">${durationText}</div>
+                        <div class="stat-item">
+                            <div class="stat-item__label">المدة</div>
+                            <div class="stat-item__value">${durationText}</div>
                         </div>
-                        <div>
-                            <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">بدأت في</div>
-                            <div style="font-weight: 600; color: #111827;">${new Date(activeSession.startedAt).toLocaleString('ar-SA')}</div>
+                        <div class="stat-item">
+                            <div class="stat-item__label">بدأت في</div>
+                            <div class="stat-item__value">${new Date(activeSession.startedAt).toLocaleString('ar-SA')}</div>
                         </div>
-                        <div>
-                            <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">معرف الجلسة</div>
-                            <div style="font-weight: 600; color: #111827; font-family: monospace; font-size: 0.875rem;">${activeSession.sessionId}</div>
+                        <div class="stat-item">
+                            <div class="stat-item__label">معرف الجلسة</div>
+                            <div class="stat-item__value stat-item__value--mono">${activeSession.sessionId}</div>
                         </div>
                     </div>
                 `;
@@ -495,10 +493,10 @@ window.ImpersonationManager = (function() {
 
             if (!history || history.length === 0) {
                 tableContainer.innerHTML = `
-                    <div style="text-align: center; padding: 3rem; color: #6b7280;">
-                        <i class="fa-solid fa-inbox fa-3x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
-                        <p style="font-size: 1.125rem; font-weight: 500;">لا يوجد سجل للتنكر</p>
-                        <p style="font-size: 0.875rem;">لم يتم تسجيل أي جلسات تنكر حتى الآن</p>
+                    <div class="empty-state">
+                        <i class="fa-solid fa-inbox empty-state__icon"></i>
+                        <p class="empty-state__title">لا يوجد سجل للتنكر</p>
+                        <p class="empty-state__text">لم يتم تسجيل أي جلسات تنكر حتى الآن</p>
                     </div>
                 `;
                 return;
@@ -530,7 +528,7 @@ window.ImpersonationManager = (function() {
                                 </div>
                                 <div class="applicant-details">
                                     <h4 class="applicant-name">${session.admin_name || 'غير معروف'}</h4>
-                                    <p style="margin: 0; font-size: 0.85rem; color: #64748b;">${session.admin_email || ''}</p>
+                                    <p class="news-card__meta">${session.admin_email || ''}</p>
                                 </div>
                             </div>
                         </div>
@@ -541,7 +539,7 @@ window.ImpersonationManager = (function() {
                                     <div class="info-content">
                                         <span class="info-label">المستخدم المتنكر به</span>
                                         <span class="info-value">${session.impersonated_name || 'غير معروف'}</span>
-                                        <span style="font-size: 0.75rem; color: #64748b; display: block; margin-top: 0.25rem;">${session.impersonated_email || ''}</span>
+                                        <span class="info-value--sub">${session.impersonated_email || ''}</span>
                                     </div>
                                 </div>
                                 <div class="info-item">
@@ -570,7 +568,7 @@ window.ImpersonationManager = (function() {
                                         <i class="fa-solid fa-comment"></i>
                                         <div class="info-content">
                                             <span class="info-label">السبب</span>
-                                            <span class="info-value" style="font-style: italic;">${session.reason}</span>
+                                            <span class="info-value info-value--italic">${session.reason}</span>
                                         </div>
                                     </div>
                                 ` : ''}
@@ -578,7 +576,7 @@ window.ImpersonationManager = (function() {
                         </div>
                         <div class="application-card-footer">
                             ${statusBadge}
-                            <span style="font-size: 0.75rem; color: #64748b; margin-right: auto;">
+                            <span class="session-id">
                                 <i class="fa-solid fa-fingerprint"></i> ${session.session_id.substring(0, 8)}...
                             </span>
                         </div>
@@ -593,9 +591,9 @@ window.ImpersonationManager = (function() {
             const tableContainer = document.getElementById('impersonationHistoryTable');
             if (tableContainer) {
                 tableContainer.innerHTML = `
-                    <div style="text-align: center; padding: 3rem; color: #dc2626;">
-                        <i class="fa-solid fa-exclamation-circle fa-3x" style="margin-bottom: 1rem;"></i>
-                        <p>حدث خطأ في تحميل السجل</p>
+                    <div class="empty-state empty-state--error">
+                        <i class="fa-solid fa-exclamation-circle empty-state__icon"></i>
+                        <p class="empty-state__title">حدث خطأ في تحميل السجل</p>
                     </div>
                 `;
             }

@@ -242,9 +242,14 @@ window.SurveyResponsesViewer = (function() {
                     </div>
                 </div>
                 <div class="response-card-footer">
-                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #6b7280;">
-                        <i class="fa-solid fa-check-circle" style="color: #10b981;"></i>
-                        <span>تم الإجابة على ${answeredQuestions} من ${totalQuestions} سؤال</span>
+                    <div class="response-status-info">
+                        <span class="badge badge-${response.status === 'completed' ? 'success' : 'warning'}">
+                            <i class="fa-solid ${response.status === 'completed' ? 'fa-check-circle' : 'fa-clock'}"></i>
+                            ${response.status === 'completed' ? 'مكتملة' : 'قيد التقدم'}
+                        </span>
+                        <span class="response-progress-text">
+                            تم الإجابة على ${answeredQuestions} من ${totalQuestions} سؤال
+                        </span>
                     </div>
                     <div class="response-actions">
                         <button class="response-action-btn view" onclick="SurveyResponsesViewer.viewDetails('${response.id}')">
@@ -289,7 +294,7 @@ window.SurveyResponsesViewer = (function() {
                 </div>
             `;
         }).join('') + (answers.length > 3 ? `
-            <div style="text-align: center; padding: 0.75rem; color: #6b7280; font-size: 0.875rem;">
+            <div class="more-answers-hint">
                 <i class="fa-solid fa-ellipsis"></i>
                 و ${answers.length - 3} إجابات أخرى
             </div>
@@ -334,14 +339,14 @@ window.SurveyResponsesViewer = (function() {
         if (type === 'rating_stars') {
             const rating = answer.answer_number || 0;
             return Array.from({length: 5}, (_, i) => 
-                `<i class="fa-solid fa-star" style="color: ${i < rating ? '#fbbf24' : '#d1d5db'}"></i>`
+                `<i class="fa-solid fa-star rating-star ${i < rating ? 'rating-star--active' : 'rating-star--inactive'}"></i>`
             ).join('');
         }
 
         if (type === 'yes_no') {
             const value = answer.answer_json === 'yes' || answer.answer_json === true;
             return `
-                <span class="choice-tag" style="border-color: ${value ? '#10b981' : '#ef4444'}; color: ${value ? '#10b981' : '#ef4444'};">
+                <span class="choice-tag choice-tag--${value ? 'yes' : 'no'}">
                     <i class="fa-solid fa-${value ? 'check' : 'times'}"></i>
                     ${value ? 'نعم' : 'لا'}
                 </span>
@@ -418,60 +423,89 @@ window.SurveyResponsesViewer = (function() {
 
     // عرض تفاصيل الاستجابة
     async function viewDetails(responseId) {
-        const response = allResponses.find(r => r.id === responseId);
-        if (!response) return;
+        console.log('viewDetails called with responseId:', responseId);
+        
+        const response = allResponses.find(r => String(r.id) === String(responseId));
+        if (!response) {
+            console.error('Response not found for id:', responseId);
+            if (window.Toast) Toast.error('لم يتم العثور على الاستجابة');
+            return;
+        }
 
         const user = response.user || {};
-        const userName = user.full_name || 'مستخدم غير معروف';
+        const userName = user.full_name || (response.is_anonymous ? 'مستخدم مجهول' : 'مستخدم غير معروف');
         const userAvatar = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=3b82f6&color=fff`;
         
         const answers = response.survey_answers || [];
         const questions = currentSurvey?.survey_questions || [];
 
+        // إذا لم تكن هناك إجابات
+        const answersHTML = answers.length > 0 ? answers.map(answer => {
+            const question = questions.find(q => q.id === answer.question_id);
+            if (!question) return '';
+            
+            return `
+                <div class="response-timeline-item">
+                    <div class="response-timeline-content">
+                        <div class="response-question-text">
+                            ${escapeHtml(question.question_text)}
+                        </div>
+                        <div class="response-answer-text">
+                            ${formatAnswer(answer, question)}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('') : '<p class="empty-text">لا توجد إجابات مسجلة</p>';
+
         const modalContent = `
             <div class="response-detail-header">
-                <img src="${userAvatar}" alt="${userName}" style="width: 64px; height: 64px; border-radius: 50%; border: 3px solid #3b82f6;">
-                <div>
-                    <h3 style="margin: 0 0 0.25rem 0; font-size: 1.25rem;">${userName}</h3>
-                    <p style="margin: 0; color: #6b7280; font-size: 0.875rem;">
+                <img src="${userAvatar}" alt="${userName}" class="response-detail-avatar">
+                <div class="response-detail-info">
+                    <h3 class="response-detail-name">${userName}</h3>
+                    <p class="response-detail-date">
                         ${new Date(response.created_at).toLocaleString('ar-SA')}
                     </p>
+                    <span class="badge badge-${response.status === 'completed' ? 'success' : 'warning'}">
+                        ${response.status === 'completed' ? 'مكتملة' : 'قيد التقدم'}
+                    </span>
                 </div>
             </div>
             <div class="response-detail-body">
                 <div class="response-timeline">
-                    ${answers.map(answer => {
-                        const question = questions.find(q => q.id === answer.question_id);
-                        if (!question) return '';
-                        
-                        return `
-                            <div class="response-timeline-item">
-                                <div class="response-timeline-content">
-                                    <div style="font-weight: 600; margin-bottom: 0.75rem; color: #374151;">
-                                        ${escapeHtml(question.question_text)}
-                                    </div>
-                                    <div style="color: #1f2937;">
-                                        ${formatAnswer(answer, question)}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
+                    ${answersHTML}
                 </div>
             </div>
         `;
 
-        await ModalHelper.show({
-            title: 'تفاصيل الاستجابة',
-            html: modalContent,
-            size: 'lg',
-            showClose: true
-        });
+        // التحقق من وجود ModalHelper
+        if (window.ModalHelper && typeof window.ModalHelper.show === 'function') {
+            await window.ModalHelper.show({
+                title: 'تفاصيل الاستجابة',
+                html: modalContent,
+                size: 'lg',
+                showClose: true
+            });
+        } else {
+            // استخدام SweetAlert2 كبديل
+            if (window.Swal) {
+                await Swal.fire({
+                    title: 'تفاصيل الاستجابة',
+                    html: modalContent,
+                    width: '700px',
+                    showConfirmButton: false,
+                    showCloseButton: true
+                });
+            } else {
+                console.error('No modal library available');
+                alert('لا يمكن عرض التفاصيل - مكتبة النوافذ غير متاحة');
+            }
+        }
     }
 
     // تصدير استجابة
     async function exportResponse(responseId) {
-        const response = allResponses.find(r => r.id === responseId);
+        const response = allResponses.find(r => String(r.id) === String(responseId));
         if (!response) return;
 
         const loadingToast = Toast.loading('جاري التصدير...');
@@ -508,6 +542,7 @@ window.SurveyResponsesViewer = (function() {
 
     // حذف استجابة
     async function deleteResponse(responseId) {
+        responseId = parseInt(responseId);
         const confirmed = await ModalHelper.confirm({
             title: 'تأكيد الحذف',
             message: 'هل أنت متأكد من حذف هذه الاستجابة؟ لا يمكن التراجع عن هذا الإجراء.',
@@ -549,19 +584,35 @@ window.SurveyResponsesViewer = (function() {
     function calculateAverageTime() {
         if (allResponses.length === 0) return '0 د';
         
-        // هذا مثال - يمكن تحسينه بناءً على البيانات الفعلية
-        return '3 د';
+        // حساب متوسط الوقت من حقل time_spent_seconds
+        const completedResponses = allResponses.filter(r => r.status === 'completed' && r.time_spent_seconds > 0);
+        
+        if (completedResponses.length === 0) return '0 د';
+        
+        const totalSeconds = completedResponses.reduce((sum, r) => sum + (r.time_spent_seconds || 0), 0);
+        const avgSeconds = Math.round(totalSeconds / completedResponses.length);
+        
+        if (avgSeconds < 60) {
+            return `${avgSeconds} ث`;
+        } else if (avgSeconds < 3600) {
+            const minutes = Math.floor(avgSeconds / 60);
+            const seconds = avgSeconds % 60;
+            return seconds > 0 ? `${minutes} د ${seconds} ث` : `${minutes} د`;
+        } else {
+            const hours = Math.floor(avgSeconds / 3600);
+            const minutes = Math.floor((avgSeconds % 3600) / 60);
+            return minutes > 0 ? `${hours} س ${minutes} د` : `${hours} س`;
+        }
     }
 
     // حساب معدل الإكمال
     function calculateCompletionRate() {
         if (allResponses.length === 0) return 0;
         
-        const totalQuestions = currentSurvey?.survey_questions?.length || 1;
-        const totalAnswered = allResponses.reduce((sum, r) => sum + (r.survey_answers?.length || 0), 0);
-        const maxPossible = allResponses.length * totalQuestions;
+        // حساب معدل الإكمال بناءً على حالة الاستجابة
+        const completedResponses = allResponses.filter(r => r.status === 'completed');
         
-        return Math.round((totalAnswered / maxPossible) * 100);
+        return Math.round((completedResponses.length / allResponses.length) * 100);
     }
 
     // تنظيف HTML

@@ -232,7 +232,7 @@ class SiteVisitsManager {
 
     createStatsCard(title, value, subtitle, icon, color = '#3d8fd6') {
         return `
-            <div class="stat-card" style="--stat-color: ${color}">
+            <div class="stat-card" data-color="${color}">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid ${icon}"></i>
@@ -240,7 +240,7 @@ class SiteVisitsManager {
                     <div class="stat-content">
                         <div class="stat-value">${value}</div>
                         <div class="stat-label">${title}</div>
-                        ${subtitle ? `<div class="stat-subtitle" style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">${subtitle}</div>` : ''}
+                        ${subtitle ? `<div class="stat-subtitle">${subtitle}</div>` : ''}
                     </div>
                 </div>
             </div>

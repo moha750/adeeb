@@ -46,11 +46,15 @@ class UsersManager {
                 const { data: userRoles } = await this.supabase
                     .from('user_roles')
                     .select(`
+                        role_id,
+                        committee_id,
                         role:roles (
+                            id,
                             role_name_ar,
                             role_level
                         ),
                         committee:committees (
+                            id,
                             committee_name_ar
                         )
                     `)
@@ -153,7 +157,7 @@ class UsersManager {
         if (!container) return;
 
         container.innerHTML = `
-            <div class="stat-card" style="--stat-color: #3d8fd6">
+            <div class="stat-card stat-card--blue">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-users"></i>
@@ -164,7 +168,7 @@ class UsersManager {
                     </div>
                 </div>
             </div>
-            <div class="stat-card" style="--stat-color: #10b981">
+            <div class="stat-card stat-card--green">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-user-check"></i>
@@ -175,7 +179,7 @@ class UsersManager {
                     </div>
                 </div>
             </div>
-            <div class="stat-card" style="--stat-color: #f59e0b">
+            <div class="stat-card stat-card--yellow">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-user-clock"></i>
@@ -186,7 +190,7 @@ class UsersManager {
                     </div>
                 </div>
             </div>
-            <div class="stat-card" style="--stat-color: #ef4444">
+            <div class="stat-card stat-card--red">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-user-slash"></i>
@@ -384,16 +388,16 @@ class UsersManager {
                 if (!matchesSearch) return false;
             }
 
-            // فلتر الدور
+            // فلتر الدور - استخدام role_id مباشرة
             if (this.currentFilters.role) {
-                const userRole = user.user_roles?.[0]?.role;
-                if (!userRole || userRole.id !== this.currentFilters.role) return false;
+                const userRoleId = user.user_roles?.[0]?.role_id;
+                if (!userRoleId || String(userRoleId) !== String(this.currentFilters.role)) return false;
             }
 
-            // فلتر اللجنة
+            // فلتر اللجنة - استخدام committee_id مباشرة
             if (this.currentFilters.committee) {
-                const userCommittee = user.user_roles?.[0]?.committee;
-                if (!userCommittee || userCommittee.id !== this.currentFilters.committee) return false;
+                const userCommitteeId = user.user_roles?.[0]?.committee_id;
+                if (!userCommitteeId || String(userCommitteeId) !== String(this.currentFilters.committee)) return false;
             }
 
             // فلتر الحالة
@@ -581,22 +585,22 @@ class UsersManager {
         const result = await Swal.fire({
             title: 'تأكيد إنهاء العضوية',
             html: `
-                <div style="text-align: center;">
-                    <p style="font-size: 1.1rem; margin-bottom: 1rem;">
+                <div class="modal-content-rtl">
+                    <p class="confirm-message">
                         هل أنت متأكد من إنهاء عضوية <strong>${user.full_name}</strong>؟
                     </p>
-                    <div style="background: #fff3cd; padding: 1rem; border-radius: 8px; border-right: 4px solid #ffc107; margin: 1rem 0;">
-                        <i class="fa-solid fa-exclamation-triangle" style="color: #ffc107; font-size: 1.5rem;"></i>
-                        <p style="margin: 0.5rem 0 0; color: #856404; font-weight: 600;">
+                    <div class="info-box info-box--warning">
+                        <i class="fa-solid fa-exclamation-triangle"></i>
+                        <p class="warning-title">
                             تحذير: هذا الإجراء سيقوم بـ:
                         </p>
-                        <ul style="text-align: right; margin: 0.5rem 0; padding-right: 1.5rem; color: #856404;">
+                        <ul class="warning-list">
                             <li>حذف جميع أدوار ومناصب المستخدم</li>
                             <li>تعطيل حساب المستخدم نهائياً</li>
                             <li>منع المستخدم من الدخول للنظام</li>
                         </ul>
                     </div>
-                    <p style="color: #dc3545; font-weight: 600; margin-top: 1rem;">
+                    <p class="danger-text">
                         لا يمكن التراجع عن هذا الإجراء!
                     </p>
                 </div>
@@ -644,7 +648,7 @@ class UsersManager {
                 title: 'تم إنهاء العضوية',
                 html: `
                     <p>تم إنهاء عضوية <strong>${user.full_name}</strong> بنجاح</p>
-                    <p style="color: #6c757d; font-size: 0.9rem; margin-top: 0.5rem;">
+                    <p class="form-hint">
                         تم تعطيل جميع الأدوار والصلاحيات
                     </p>
                 `,

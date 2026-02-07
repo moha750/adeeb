@@ -27,6 +27,9 @@ window.NewsWritersManager = (function() {
                         summary,
                         content,
                         image_url,
+                        cover_photographer,
+                        gallery_images,
+                        gallery_photographers,
                         tags,
                         category,
                         workflow_status,
@@ -85,9 +88,9 @@ window.NewsWritersManager = (function() {
 
         if (filteredAssignments.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 3rem; color: #6b7280;">
-                    <i class="fa-solid fa-inbox fa-3x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <p style="font-size: 1.125rem; font-weight: 500;">لا توجد أخبار معينة لك</p>
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <p class="empty-state__title">لا توجد أخبار معينة لك</p>
                 </div>
             `;
             return;
@@ -113,7 +116,7 @@ window.NewsWritersManager = (function() {
                     <div class="applicant-info">
                         <div class="applicant-details">
                             <h4 class="applicant-name">📰 ${news.title}</h4>
-                            <p style="margin: 0.5rem 0; font-size: 0.875rem; color: #64748b;">
+                            <p class="news-card__meta">
                                 <i class="fa-solid fa-sitemap"></i> ${news.committees?.committee_name_ar || 'غير محدد'}
                             </p>
                         </div>
@@ -136,7 +139,7 @@ window.NewsWritersManager = (function() {
                             </div>
                         </div>
                         ${assignment.assignment_notes ? `
-                            <div class="info-item" style="grid-column: 1 / -1;">
+                            <div class="info-item info-item--full">
                                 <i class="fa-solid fa-note-sticky"></i>
                                 <div class="info-content">
                                     <span class="info-label">تعليمات</span>
@@ -145,31 +148,31 @@ window.NewsWritersManager = (function() {
                             </div>
                         ` : ''}
                         ${news.review_notes && assignment.status === 'in_progress' ? `
-                            <div class="info-item" style="grid-column: 1 / -1; background: #fef3c7; padding: 0.75rem; border-radius: 6px;">
-                                <i class="fa-solid fa-exclamation-circle" style="color: #f59e0b;"></i>
+                            <div class="info-item info-item--full info-box--warning">
+                                <i class="fa-solid fa-exclamation-circle"></i>
                                 <div class="info-content">
-                                    <span class="info-label" style="color: #92400e;">ملاحظات المراجعة</span>
-                                    <span class="info-value" style="color: #92400e;">${news.review_notes}</span>
+                                    <span class="info-label">ملاحظات المراجعة</span>
+                                    <span class="info-value">${news.review_notes}</span>
                                 </div>
                             </div>
                         ` : ''}
                     </div>
 
                     ${assignment.status !== 'completed' ? `
-                        <div style="margin-top: 1rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                <span style="font-size: 0.875rem; font-weight: 500;">التقدم</span>
-                                <span style="font-size: 0.875rem; color: #6b7280;">${progressPercentage}%</span>
+                        <div class="progress-container">
+                            <div class="progress-header">
+                                <span class="progress-label">التقدم</span>
+                                <span class="progress-text">${progressPercentage}%</span>
                             </div>
-                            <div style="width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
-                                <div style="width: ${progressPercentage}%; height: 100%; background: linear-gradient(90deg, #3b82f6, #2563eb); transition: width 0.3s;"></div>
+                            <div class="progress-bar">
+                                <div class="progress-bar__fill" data-width="${progressPercentage}"></div>
                             </div>
                         </div>
                     ` : ''}
                 </div>
                 <div class="application-card-footer">
                     ${statusBadge}
-                    <div style="display: flex; gap: 0.5rem; margin-right: auto;">
+                    <div class="news-card__actions">
                         ${assignment.status === 'pending' ? `
                             <button class="btn btn--primary btn--sm" onclick="NewsWritersManager.startWriting('${assignment.id}')">
                                 <i class="fa-solid fa-play"></i>
@@ -260,91 +263,361 @@ window.NewsWritersManager = (function() {
     // فتح محرر الكتابة
     async function openWritingEditor(assignment) {
         const news = assignment.news;
-        const availableFields = news.available_fields?.fields || [];
+        // استخدام الحقول المعينة للكاتب من التعيين أو من الخبر
+        const writerFields = assignment.assigned_fields || [];
+        const availableFields = writerFields.length > 0 ? writerFields : (news.available_fields?.fields || []);
 
         // بناء حقول النموذج بناءً على الصلاحيات
         let formFields = '';
 
         if (availableFields.includes('title')) {
             formFields += `
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">عنوان الخبر *</label>
-                    <input type="text" id="newsTitle" class="swal2-input" value="${news.title || ''}" style="width: 100%; margin: 0;">
+                <div class="form-group">
+                    <label class="form-label">عنوان الخبر *</label>
+                    <input type="text" id="newsTitle" value="${escapeHtml(news.title || '')}" class="form-input">
                 </div>
             `;
         }
 
         if (availableFields.includes('content')) {
             formFields += `
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">المحتوى الرئيسي *</label>
-                    <textarea id="newsContent" class="swal2-textarea" rows="8" style="width: 100%; margin: 0; font-family: inherit;">${news.content || ''}</textarea>
+                <div class="form-group">
+                    <label class="form-label">المحتوى الرئيسي *</label>
+                    <textarea id="newsContent" rows="10" class="form-input">${escapeHtml(news.content || '')}</textarea>
                 </div>
             `;
         }
 
         if (availableFields.includes('summary')) {
             formFields += `
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الملخص *</label>
-                    <textarea id="newsSummary" class="swal2-textarea" rows="3" style="width: 100%; margin: 0;">${news.summary || ''}</textarea>
+                <div class="form-group">
+                    <label class="form-label">الملخص *</label>
+                    <textarea id="newsSummary" rows="3" class="form-input">${escapeHtml(news.summary || '')}</textarea>
                 </div>
             `;
         }
 
         if (availableFields.includes('image_url')) {
             formFields += `
-                ${window.ImageUploadHelper ? window.ImageUploadHelper.createImageUploadInput({
-                    label: 'صورة الخبر',
-                    inputId: 'newsImageUpload',
-                    previewId: 'newsImagePreview',
-                    folder: 'news',
-                    currentImageUrl: news.image_url
-                }) : `
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">رابط الصورة</label>
-                        <input type="url" id="newsImageUrl" class="swal2-input" value="${news.image_url || ''}" style="width: 100%; margin: 0;">
+                <div class="form-group">
+                    <label class="form-label">صورة الغلاف</label>
+                    <div id="coverImageContainer">
+                        ${news.image_url ? `<img src="${news.image_url}" class="news-preview__image" id="coverImagePreview">` : ''}
+                        <input type="file" id="coverImageInput" accept="image/*" class="form-input">
+                        <input type="hidden" id="newsImageUrl" value="${news.image_url || ''}">
                     </div>
-                `}
+                    <div class="form-group">
+                        <label class="form-label form-label--secondary">
+                            <i class="fa-solid fa-camera"></i>
+                            اسم مصور الغلاف
+                        </label>
+                        <input type="text" id="coverPhotographer" 
+                               value="${escapeHtml(news.cover_photographer || '')}"
+                               placeholder="أدخل اسم المصور..."
+                               class="form-input">
+                    </div>
+                </div>
             `;
         }
 
-
-        const { value: formValues } = await Swal.fire({
-            title: `<i class="fa-solid fa-pen"></i> كتابة: ${news.title}`,
-            html: `
-                <div style="text-align: right;">
-                    <div style="background: #f3f4f6; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                        <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">
-                            <i class="fa-solid fa-info-circle"></i> يمكنك تعديل الحقول التالية فقط
+        if (availableFields.includes('gallery_images')) {
+            const currentGallery = news.gallery_images || [];
+            const currentPhotographers = news.gallery_photographers || [];
+            formFields += `
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fa-solid fa-images"></i>
+                        معرض الصور (2-4 صور)
+                    </label>
+                    <div id="galleryContainer" class="gallery-upload-container">
+                        <div id="galleryPreview" class="news-gallery__grid">
+                            ${currentGallery.map((img, idx) => `
+                                <div class="gallery-item">
+                                    <img src="${img}" class="news-gallery__image">
+                                    <button type="button" onclick="this.parentElement.remove()" class="gallery-item__remove">
+                                        <i class="fa-solid fa-times"></i>
+                                    </button>
+                                    <input type="hidden" class="gallery-image-url" value="${img}">
+                                </div>
+                            `).join('')}
+                        </div>
+                        <input type="file" id="galleryInput" accept="image/*" multiple class="form-input">
+                        <p class="form-hint">
+                            <i class="fa-solid fa-info-circle"></i> يمكنك إضافة من 2 إلى 4 صور للمعرض
                         </p>
                     </div>
-
-                    ${formFields}
-
-                    <div style="margin-top: 1rem; padding: 1rem; background: #eff6ff; border-radius: 8px; border-right: 4px solid #3b82f6;">
-                        <p style="margin: 0; font-size: 0.875rem; color: #1e40af;">
-                            <i class="fa-solid fa-lightbulb"></i> سيتم حفظ عملك تلقائياً. يمكنك العودة لاحقاً لإكمال الكتابة.
-                        </p>
+                    <div class="form-group">
+                        <label class="form-label form-label--secondary">
+                            <i class="fa-solid fa-camera"></i>
+                            أسماء مصوري المعرض (افصل بين الأسماء بفاصلة)
+                        </label>
+                        <input type="text" id="galleryPhotographers" 
+                               value="${escapeHtml(currentPhotographers.join('، '))}"
+                               placeholder="مثال: أحمد محمد، سارة علي..."
+                               class="form-input">
                     </div>
                 </div>
-            `,
-            width: '800px',
-            showCancelButton: true,
-            showDenyButton: true,
-            confirmButtonText: '<i class="fa-solid fa-paper-plane"></i> إرسال للمراجعة',
-            denyButtonText: '<i class="fa-solid fa-save"></i> حفظ المسودة',
-            cancelButtonText: 'إلغاء',
-            preConfirm: async () => {
-                return await saveNewsContent(assignment, availableFields, true);
-            },
-            preDeny: async () => {
-                return await saveNewsContent(assignment, availableFields, false);
-            }
+            `;
+        }
+
+        const modalHTML = `
+            <div class="modal-content-rtl">
+                <div class="info-box info-box--info">
+                    <p class="info-box__text">
+                        <i class="fa-solid fa-info-circle"></i> الحقول المتاحة لك: <strong>${availableFields.map(f => getFieldLabel(f)).join('، ')}</strong>
+                    </p>
+                </div>
+
+                ${formFields}
+
+                <div class="info-box info-box--success">
+                    <p class="info-box__text">
+                        <i class="fa-solid fa-lightbulb"></i> يمكنك حفظ المسودة والعودة لاحقاً لإكمال الكتابة.
+                    </p>
+                </div>
+            </div>
+        `;
+
+        const modal = await ModalHelper.show({
+            title: `✍️ كتابة: ${news.title}`,
+            html: modalHTML,
+            size: 'lg',
+            showClose: true,
+            showFooter: true,
+            footerButtons: [
+                {
+                    text: 'إلغاء',
+                    class: 'btn--outline btn--outline-secondary'
+                },
+                {
+                    text: '<i class="fa-solid fa-save"></i> حفظ المسودة',
+                    class: 'btn--outline btn--outline-primary',
+                    callback: async () => {
+                        const saved = await saveNewsContentNew(assignment, availableFields, false);
+                        if (saved) {
+                            await loadMyAssignments();
+                            if (modal && modal.close) modal.close();
+                        }
+                    },
+                    keepOpen: true
+                },
+                {
+                    text: '<i class="fa-solid fa-paper-plane"></i> إرسال للمراجعة',
+                    class: 'btn--primary',
+                    callback: async () => {
+                        const saved = await saveNewsContentNew(assignment, availableFields, true);
+                        if (saved) {
+                            await loadMyAssignments();
+                            if (modal && modal.close) modal.close();
+                        }
+                    },
+                    keepOpen: true
+                }
+            ]
         });
 
-        if (formValues) {
-            await loadMyAssignments();
+        // إعداد رفع الصور بعد فتح المودال
+        setTimeout(() => {
+            setupImageUploads();
+        }, 100);
+    }
+
+    // إعداد رفع الصور
+    function setupImageUploads() {
+        // رفع صورة الغلاف
+        const coverInput = document.getElementById('coverImageInput');
+        if (coverInput) {
+            coverInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file && window.ImageUploadHelper) {
+                    const loadingToast = Toast.loading('جاري رفع الصورة...');
+                    try {
+                        const url = await window.ImageUploadHelper.uploadFile(file, 'news');
+                        if (url) {
+                            document.getElementById('newsImageUrl').value = url;
+                            let preview = document.getElementById('coverImagePreview');
+                            if (!preview) {
+                                preview = document.createElement('img');
+                                preview.id = 'coverImagePreview';
+                                preview.style.cssText = 'max-width: 200px; border-radius: 8px; margin-bottom: 0.5rem;';
+                                document.getElementById('coverImageContainer').prepend(preview);
+                            }
+                            preview.src = url;
+                            Toast.close(loadingToast);
+                            Toast.success('تم رفع الصورة بنجاح');
+                        }
+                    } catch (error) {
+                        Toast.close(loadingToast);
+                        Toast.error('فشل رفع الصورة');
+                    }
+                }
+            });
+        }
+
+        // رفع صور المعرض
+        const galleryInput = document.getElementById('galleryInput');
+        if (galleryInput) {
+            galleryInput.addEventListener('change', async (e) => {
+                const files = Array.from(e.target.files);
+                const galleryPreview = document.getElementById('galleryPreview');
+                const currentCount = galleryPreview.querySelectorAll('.gallery-item').length;
+                
+                if (currentCount + files.length > 4) {
+                    Toast.warning('الحد الأقصى للمعرض هو 4 صور');
+                    return;
+                }
+
+                for (const file of files) {
+                    if (window.ImageUploadHelper) {
+                        const loadingToast = Toast.loading('جاري رفع الصورة...');
+                        try {
+                            const url = await window.ImageUploadHelper.uploadFile(file, 'news-gallery');
+                            if (url) {
+                                const itemHTML = `
+                                    <div class="gallery-item">
+                                        <img src="${url}" class="news-gallery__image">
+                                        <button type="button" onclick="this.parentElement.remove()" class="gallery-item__remove">
+                                            <i class="fa-solid fa-times"></i>
+                                        </button>
+                                        <input type="hidden" class="gallery-image-url" value="${url}">
+                                    </div>
+                                `;
+                                galleryPreview.insertAdjacentHTML('beforeend', itemHTML);
+                                Toast.close(loadingToast);
+                            }
+                        } catch (error) {
+                            Toast.close(loadingToast);
+                            Toast.error('فشل رفع الصورة');
+                        }
+                    }
+                }
+                galleryInput.value = '';
+            });
+        }
+    }
+
+    // دالة مساعدة للحصول على تسمية الحقل
+    function getFieldLabel(field) {
+        const labels = {
+            'title': 'العنوان',
+            'content': 'المحتوى',
+            'summary': 'الملخص',
+            'image_url': 'صورة الغلاف',
+            'gallery_images': 'معرض الصور'
+        };
+        return labels[field] || field;
+    }
+
+    // دالة مساعدة لتنظيف HTML
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // حفظ محتوى الخبر (النسخة الجديدة)
+    async function saveNewsContentNew(assignment, availableFields, submitForReview = false) {
+        const loadingToast = Toast.loading(submitForReview ? 'جاري الإرسال للمراجعة...' : 'جاري الحفظ...');
+        
+        try {
+            const updateData = {};
+            const modalElement = document.querySelector('.modal.active');
+
+            // التحقق من الحقول المطلوبة قبل الإرسال للمراجعة
+            if (availableFields.includes('title')) {
+                const title = modalElement.querySelector('#newsTitle')?.value;
+                if (submitForReview && (!title || !title.trim())) {
+                    Toast.close(loadingToast);
+                    Toast.warning('يرجى إدخال عنوان الخبر');
+                    return false;
+                }
+                updateData.title = title;
+            }
+
+            if (availableFields.includes('content')) {
+                const content = modalElement.querySelector('#newsContent')?.value;
+                if (submitForReview && (!content || !content.trim())) {
+                    Toast.close(loadingToast);
+                    Toast.warning('يرجى إدخال المحتوى الرئيسي');
+                    return false;
+                }
+                updateData.content = content;
+            }
+
+            if (availableFields.includes('summary')) {
+                const summary = modalElement.querySelector('#newsSummary')?.value;
+                if (submitForReview && (!summary || !summary.trim())) {
+                    Toast.close(loadingToast);
+                    Toast.warning('يرجى إدخال الملخص');
+                    return false;
+                }
+                updateData.summary = summary;
+            }
+
+            if (availableFields.includes('image_url')) {
+                const imageUrl = modalElement.querySelector('#newsImageUrl')?.value;
+                if (imageUrl) updateData.image_url = imageUrl;
+                
+                // حفظ اسم مصور الغلاف
+                const coverPhotographer = modalElement.querySelector('#coverPhotographer')?.value?.trim();
+                if (coverPhotographer) updateData.cover_photographer = coverPhotographer;
+            }
+
+            if (availableFields.includes('gallery_images')) {
+                const galleryUrls = Array.from(modalElement.querySelectorAll('.gallery-image-url'))
+                    .map(input => input.value)
+                    .filter(url => url);
+                
+                if (submitForReview && galleryUrls.length < 2) {
+                    Toast.close(loadingToast);
+                    Toast.warning('يرجى إضافة صورتين على الأقل للمعرض');
+                    return false;
+                }
+                updateData.gallery_images = galleryUrls;
+                
+                // حفظ أسماء مصوري المعرض
+                const galleryPhotographersInput = modalElement.querySelector('#galleryPhotographers')?.value?.trim();
+                if (galleryPhotographersInput) {
+                    updateData.gallery_photographers = galleryPhotographersInput.split(/[،,]/).map(p => p.trim()).filter(p => p);
+                }
+            }
+
+            // تحديث الخبر
+            const { error: newsError } = await sb
+                .from('news')
+                .update(updateData)
+                .eq('id', assignment.news_id);
+
+            if (newsError) throw newsError;
+
+            // تحديث حالة التعيين
+            const assignmentUpdate = {
+                last_edited_at: new Date().toISOString()
+            };
+
+            if (submitForReview) {
+                assignmentUpdate.status = 'completed';
+                assignmentUpdate.completed_at = new Date().toISOString();
+
+                await window.NewsWorkflowManager.submitForReview(assignment.news_id, currentUser.id);
+            }
+
+            const { error: assignError } = await sb
+                .from('news_writer_assignments')
+                .update(assignmentUpdate)
+                .eq('id', assignment.id);
+
+            if (assignError) throw assignError;
+
+            Toast.close(loadingToast);
+            Toast.success(submitForReview ? 'تم إرسال الخبر للمراجعة بنجاح' : 'تم حفظ التغييرات بنجاح');
+            return true;
+        } catch (error) {
+            Toast.close(loadingToast);
+            Toast.error('حدث خطأ أثناء الحفظ');
+            console.error('Error saving news:', error);
+            return false;
         }
     }
 

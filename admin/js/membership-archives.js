@@ -372,7 +372,7 @@ function renderStatsSummary(stats) {
         const color = colors[colorIndex % colors.length];
         colorIndex++;
         return `
-            <div class="stat-card" style="--stat-color: ${color}">
+            <div class="stat-card" data-color="${color}">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid ${stat.icon}"></i>
@@ -649,7 +649,7 @@ function updateArchivesStatistics() {
 
     container.innerHTML = `
         <div class="stats-grid">
-            <div class="stat-card" style="--stat-color: #3d8fd6">
+            <div class="stat-card stat-card--blue">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-folder-open"></i>
@@ -660,7 +660,7 @@ function updateArchivesStatistics() {
                     </div>
                 </div>
             </div>
-            <div class="stat-card" style="--stat-color: #10b981">
+            <div class="stat-card stat-card--green">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-users"></i>
@@ -671,7 +671,7 @@ function updateArchivesStatistics() {
                     </div>
                 </div>
             </div>
-            <div class="stat-card" style="--stat-color: #8b5cf6">
+            <div class="stat-card stat-card--purple">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-user-check"></i>
@@ -682,7 +682,7 @@ function updateArchivesStatistics() {
                     </div>
                 </div>
             </div>
-            <div class="stat-card" style="--stat-color: #f59e0b">
+            <div class="stat-card stat-card--yellow">
                 <div class="stat-badge"><i class="fa-solid fa-percentage"></i> ${acceptanceRate}%</div>
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
