@@ -374,27 +374,30 @@ function renderNewsDetail(news) {
 
 // Setup share buttons
 function setupShareButtons(news) {
-  const url = window.location.href;
+  const currentUrl = window.location.href;
   const title = news.title;
   const shareText = createShareText(news);
   const summary = news.summary || news.content.replace(/<[^>]*>/g, '').substring(0, 100) + '...';
+  
+  // رابط Edge Function للمشاركة مع Open Graph صحيح
+  const ogShareUrl = `https://nnlhkfeybyhvlinbqqfa.supabase.co/functions/v1/news-og-image?slug=${encodeURIComponent(news.slug || news.id)}`;
 
-  // Twitter - with enhanced text
+  // Twitter - with enhanced text - يستخدم رابط OG لعرض صورة الخبر
   document.getElementById('shareTwitter').onclick = () => {
     const twitterText = `${shareText}\n\n📖 اقرأ المزيد:`;
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}&url=${encodeURIComponent(url)}`;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}&url=${encodeURIComponent(ogShareUrl)}`;
     window.open(twitterUrl, '_blank', 'width=600,height=400');
   };
 
-  // Facebook - will use Open Graph meta tags automatically
+  // Facebook - يستخدم رابط OG لعرض صورة الخبر
   document.getElementById('shareFacebook').onclick = () => {
-    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(ogShareUrl)}`;
     window.open(facebookUrl, '_blank', 'width=600,height=400');
   };
 
-  // WhatsApp - with enhanced text and emojis
+  // WhatsApp - with enhanced text and emojis - يستخدم الرابط المباشر
   document.getElementById('shareWhatsapp').onclick = () => {
-    const whatsappText = `${shareText}\n\n📖 اقرأ التفاصيل كاملة:\n${url}`;
+    const whatsappText = `${shareText}\n\n📖 اقرأ التفاصيل كاملة:\n${currentUrl}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappText)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -403,7 +406,7 @@ function setupShareButtons(news) {
   document.getElementById('copyLink').onclick = async () => {
     try {
       // Create full share text with link
-      const fullShareText = `${shareText}\n\n📖 رابط الخبر:\n${url}`;
+      const fullShareText = `${shareText}\n\n📖 رابط الخبر:\n${currentUrl}`;
       await navigator.clipboard.writeText(fullShareText);
       
       // Show success with toast
@@ -423,7 +426,7 @@ function setupShareButtons(news) {
       console.error('Error copying link:', error);
       // Fallback: copy URL only
       try {
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(currentUrl);
         showShareToast('تم نسخ الرابط بنجاح! ✓');
         
         const btn = document.getElementById('copyLink');
