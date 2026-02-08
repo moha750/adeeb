@@ -108,7 +108,7 @@ function renderNews() {
 function createNewsCard(news, isFeatured = false) {
   const card = document.createElement('div');
   card.className = `news-card${isFeatured ? ' featured' : ''}`;
-  card.onclick = () => openNewsDetail(news.id);
+  card.onclick = () => openNewsDetail(news.id, news.slug);
   
   const imageUrl = news.image_url || 'https://via.placeholder.com/400x300?text=أديب';
   const publishedDate = formatDate(news.published_at);
@@ -152,10 +152,15 @@ function createNewsCard(news, isFeatured = false) {
   return card;
 }
 
-// Open news detail page
-function openNewsDetail(newsId) {
-  // Redirect to news detail page
-  window.location.href = `news-detail.html?id=${newsId}`;
+// Open news detail page - now uses slug for SEO-friendly URLs
+function openNewsDetail(newsIdOrSlug, slug = null) {
+  // إذا تم تمرير slug، استخدمه للرابط الصديق لمحركات البحث
+  if (slug) {
+    window.location.href = `news-detail.html?slug=${encodeURIComponent(slug)}`;
+  } else {
+    // للتوافق مع الكود القديم، استخدم ID
+    window.location.href = `news-detail.html?id=${newsIdOrSlug}`;
+  }
 }
 
 // OLD: Open news detail modal (kept for reference, not used)

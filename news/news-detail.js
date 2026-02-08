@@ -6,10 +6,40 @@ const sb = window.sbClient;
 let currentNews = null;
 let allNews = [];
 
-// Get news ID from URL
-function getNewsIdFromUrl() {
+// Get news identifier from URL (supports both ID and Slug)
+function getNewsIdentifierFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  return params.get('id');
+  
+  // أولاً: التحقق من وجود slug في الرابط
+  const slug = params.get('slug');
+  if (slug) {
+    return { type: 'slug', value: slug };
+  }
+  
+  // ثانياً: التحقق من وجود id (للتوافق مع الروابط القديمة)
+  const id = params.get('id');
+  if (id) {
+    return { type: 'id', value: id };
+  }
+  
+  // ثالثاً: التحقق من المسار (للروابط النظيفة مستقبلاً)
+  // مثال: /news/slug-here
+  const pathParts = window.location.pathname.split('/');
+  const lastPart = pathParts[pathParts.length - 1];
+  if (lastPart && lastPart !== 'news-detail.html' && !lastPart.includes('.html')) {
+    return { type: 'slug', value: decodeURIComponent(lastPart) };
+  }
+  
+  return null;
+}
+
+// Legacy function for backward compatibility
+function getNewsIdFromUrl() {
+  const identifier = getNewsIdentifierFromUrl();
+  if (identifier && identifier.type === 'id') {
+    return identifier.value;
+  }
+  return null;
 }
 
 // Check if news was viewed before on this device
@@ -131,9 +161,9 @@ function createShareText(news) {
 
 // Load news detail
 async function loadNewsDetail() {
-  const newsId = getNewsIdFromUrl();
+  const identifier = getNewsIdentifierFromUrl();
   
-  if (!newsId) {
+  if (!identifier) {
     showError();
     return;
   }
@@ -151,11 +181,17 @@ async function loadNewsDetail() {
     const params = new URLSearchParams(window.location.search);
     const isPreview = params.get('preview') === 'true';
 
-    // Fetch news by ID
+    // Fetch news by ID or Slug
     let query = sb
       .from('news')
-      .select('*')
-      .eq('id', newsId);
+      .select('*');
+    
+    // البحث بناءً على نوع المعرف
+    if (identifier.type === 'slug') {
+      query = query.eq('slug', identifier.value);
+    } else {
+      query = query.eq('id', identifier.value);
+    }
     
     // Only filter by status if not in preview mode
     if (!isPreview) {
@@ -172,6 +208,7 @@ async function loadNewsDetail() {
     currentNews = news;
 
     // Increment views only if not viewed before on this device
+    const newsId = news.id; // استخدام ID الفعلي من قاعدة البيانات
     if (!hasViewedNews(newsId)) {
       await sb
         .from('news')
