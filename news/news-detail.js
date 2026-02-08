@@ -395,18 +395,18 @@ function setupShareButtons(news) {
     window.open(facebookUrl, '_blank', 'width=600,height=400');
   };
 
-  // WhatsApp - with enhanced text and emojis - يستخدم الرابط المباشر
+  // WhatsApp - يستخدم رابط OG لعرض صورة الخبر
   document.getElementById('shareWhatsapp').onclick = () => {
-    const whatsappText = `${shareText}\n\n📖 اقرأ التفاصيل كاملة:\n${currentUrl}`;
+    const whatsappText = `${shareText}\n\n📖 اقرأ التفاصيل كاملة:\n${ogShareUrl}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappText)}`;
     window.open(whatsappUrl, '_blank');
   };
 
-  // Copy Link - with enhanced message
+  // Copy Link - ينسخ رابط OG لعرض صورة الخبر عند المشاركة
   document.getElementById('copyLink').onclick = async () => {
     try {
-      // Create full share text with link
-      const fullShareText = `${shareText}\n\n📖 رابط الخبر:\n${currentUrl}`;
+      // Create full share text with OG link for proper image preview
+      const fullShareText = `${shareText}\n\n📖 رابط الخبر:\n${ogShareUrl}`;
       await navigator.clipboard.writeText(fullShareText);
       
       // Show success with toast
@@ -426,7 +426,7 @@ function setupShareButtons(news) {
       console.error('Error copying link:', error);
       // Fallback: copy URL only
       try {
-        await navigator.clipboard.writeText(currentUrl);
+        await navigator.clipboard.writeText(ogShareUrl);
         showShareToast('تم نسخ الرابط بنجاح! ✓');
         
         const btn = document.getElementById('copyLink');
