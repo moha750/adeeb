@@ -1716,20 +1716,20 @@
                     
                     <div class="application-card-footer">
                         <div class="card-actions-grid">
-                            <button class="btn-action btn-action-primary" onclick="window.membershipManager.viewApplication('${app.id}')">
+                            <button class="btn btn--info btn--sm" onclick="window.membershipManager.viewApplication('${app.id}')">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض التفاصيل
                             </button>
                             ${app.status === 'new' || app.status === 'under_review' ? `
-                                <button class="btn-action btn-action-success" onclick="window.membershipManager.approveForInterview('${app.id}')">
+                                <button class="btn btn--success btn--sm" onclick="window.membershipManager.approveForInterview('${app.id}')">
                                     <i class="fa-solid fa-check"></i>
                                     قبول للمقابلة
                                 </button>
-                                <button class="btn-action btn-action-warning" onclick="window.membershipManager.markUnderReview('${app.id}')">
+                                <button class="btn btn--warning btn--sm" onclick="window.membershipManager.markUnderReview('${app.id}')">
                                     <i class="fa-solid fa-clock"></i>
                                     قيد المراجعة
                                 </button>
-                                <button class="btn-action btn-action-danger" onclick="window.membershipManager.rejectApplication('${app.id}')">
+                                <button class="btn btn--danger btn--sm" onclick="window.membershipManager.rejectApplication('${app.id}')">
                                     <i class="fa-solid fa-times"></i>
                                     رفض
                                 </button>
@@ -2562,15 +2562,15 @@
 
                     <div class="application-card-footer">
                         <div class="card-actions-grid">
-                            <button class="btn-action btn-action-primary" onclick="window.membershipManager.viewApplication('${app.id}')">
+                            <button class="btn btn--info btn--sm" onclick="window.membershipManager.viewApplication('${app.id}')">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض التفاصيل
                             </button>
-                            <button class="btn-action btn-action-success" onclick="window.membershipManager.scheduleInterviewFromBarzakh('${app.id}')">
+                            <button class="btn btn--success btn--sm" onclick="window.membershipManager.scheduleInterviewFromBarzakh('${app.id}')">
                                 <i class="fa-solid fa-calendar-plus"></i>
                                 جدولة مقابلة
                             </button>
-                            <button class="btn-action btn-action-danger" onclick="window.membershipManager.rejectFromBarzakh('${app.id}', '${escapeHtml(app.full_name || '')}')">
+                            <button class="btn btn--danger btn--sm" onclick="window.membershipManager.rejectFromBarzakh('${app.id}', '${escapeHtml(app.full_name || '')}')">
                                 <i class="fa-solid fa-user-xmark"></i>
                                 حذف/رفض
                             </button>
@@ -2739,21 +2739,21 @@
                     
                     <div class="application-card-footer">
                         <div class="card-actions-grid">
-                            <button class="btn-action btn-action-primary" onclick="window.membershipManager.viewInterview('${interview.id}')">
+                            <button class="btn btn--info btn--sm" onclick="window.membershipManager.viewInterview('${interview.id}')">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض التفاصيل
                             </button>
                             ${interview.result === 'pending' || !interview.result ? `
-                                <button class="btn-action btn-action-success" onclick="window.membershipManager.acceptInterview('${interview.id}')">
+                                <button class="btn btn--success btn--sm" onclick="window.membershipManager.acceptInterview('${interview.id}')">
                                     <i class="fa-solid fa-check"></i>
                                     قبول
                                 </button>
-                                <button class="btn-action btn-action-danger" onclick="window.membershipManager.rejectInterview('${interview.id}')">
+                                <button class="btn btn--danger btn--sm" onclick="window.membershipManager.rejectInterview('${interview.id}')">
                                     <i class="fa-solid fa-times"></i>
                                     رفض
                                 </button>
                             ` : ''}
-                            <button class="btn-action btn-action-warning" onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot && interview.slot[0] ? interview.slot[0].id : ''}')">
+                            <button class="btn btn--warning btn--sm" onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot && interview.slot[0] ? interview.slot[0].id : ''}')">
                                 <i class="fa-solid fa-trash-alt"></i>
                                 حذف الموعد
                             </button>

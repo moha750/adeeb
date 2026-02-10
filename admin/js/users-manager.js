@@ -157,7 +157,7 @@ class UsersManager {
         if (!container) return;
 
         container.innerHTML = `
-            <div class="stat-card stat-card--blue">
+            <div class="stat-card" style="--stat-color: #3b82f6">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-users"></i>
@@ -168,7 +168,7 @@ class UsersManager {
                     </div>
                 </div>
             </div>
-            <div class="stat-card stat-card--green">
+            <div class="stat-card" style="--stat-color: #10b981">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-user-check"></i>
@@ -179,7 +179,7 @@ class UsersManager {
                     </div>
                 </div>
             </div>
-            <div class="stat-card stat-card--yellow">
+            <div class="stat-card" style="--stat-color: #f59e0b">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-user-clock"></i>
@@ -190,7 +190,7 @@ class UsersManager {
                     </div>
                 </div>
             </div>
-            <div class="stat-card stat-card--red">
+            <div class="stat-card" style="--stat-color: #ef4444">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-user-slash"></i>
@@ -355,15 +355,15 @@ class UsersManager {
                 </div>
                 
                 <div class="application-card-footer">
-                    <button class="btn-action btn-action-primary btn-view-user" data-user-id="${user.id}">
+                    <button class="btn btn--info btn--sm btn-view-user" data-user-id="${user.id}">
                         <i class="fa-solid fa-eye"></i>
                         عرض التفاصيل
                     </button>
-                    <button class="btn-action btn-action-outline btn-edit-user" data-user-id="${user.id}">
+                    <button class="btn btn--outline-secondary btn--sm btn-edit-user" data-user-id="${user.id}">
                         <i class="fa-solid fa-edit"></i>
                         تعديل
                     </button>
-                    <button class="btn-action btn-action-danger btn-terminate-membership" data-user-id="${user.id}" title="إنهاء العضوية نهائياً">
+                    <button class="btn btn--danger btn--sm btn-terminate-membership" data-user-id="${user.id}" title="إنهاء العضوية نهائياً">
                         <i class="fa-solid fa-user-slash"></i>
                         إنهاء العضوية
                     </button>

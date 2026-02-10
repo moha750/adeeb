@@ -1064,18 +1064,33 @@
             }
 
             container.innerHTML = committees.map(committee => `
-                <div class="card">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-users"></i> ${committee.committee_name_ar}</h3>
-                    </div>
-                    <div class="card-body">
-                        <p>${committee.description || 'لا يوجد وصف'}</p>
-                        <div style="display: flex; gap: 20px; margin-top: 20px;">
-                            <div>
-                                <strong>الأعضاء:</strong> ${committee.members_count || 0}
+                <div class="application-card">
+                    <div class="application-card-header">
+                        <div class="applicant-info">
+                            <div class="applicant-avatar">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="applicant-details">
+                                <h4 class="applicant-name">${committee.committee_name_ar}</h4>
+                                <div>
+                                    <span class="badge badge-info"><i class="fa-solid fa-users"></i> ${committee.members_count || 0} عضو</span>
+                                </div>
                             </div>
                         </div>
-                        <button class="btn-sm btn-primary" style="margin-top: 15px;" onclick="viewCommittee(${committee.id})">
+                    </div>
+                    <div class="application-card-body">
+                        <div class="application-info-grid">
+                            <div class="info-item" style="grid-column: 1 / -1;">
+                                <i class="fa-solid fa-info-circle"></i>
+                                <div class="info-content">
+                                    <span class="info-label">الوصف</span>
+                                    <span class="info-value">${committee.description || 'لا يوجد وصف'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="application-card-footer">
+                        <button class="btn btn--primary btn--sm" onclick="viewCommittee(${committee.id})">
                             <i class="fa-solid fa-eye"></i> عرض التفاصيل
                         </button>
                     </div>
@@ -1235,6 +1250,7 @@
 
         try {
             showLoading(true);
+            await initializeOrderIfNeeded('works');
             const { data: works, error } = await sb
                 .from('works')
                 .select('*')
@@ -1247,37 +1263,40 @@
                 return;
             }
 
-            container.innerHTML = `
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>الصورة</th>
-                            <th>العنوان</th>
-                            <th>الفئة</th>
-                            <th>الترتيب</th>
-                            <th>الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${works.map(work => `
-                            <tr>
-                                <td><img src="${work.image_url || ''}" alt="${work.title}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" /></td>
-                                <td><strong>${work.title}</strong></td>
-                                <td>${work.category || '-'}</td>
-                                <td>${work.order || 0}</td>
-                                <td class="action-buttons">
-                                    <button class="btn-sm btn-outline" onclick="editWork(${work.id})">
-                                        <i class="fa-solid fa-edit"></i>
-                                    </button>
-                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteWork(${work.id})">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
+            container.innerHTML = works.map((work, index) => `
+                <div class="application-card">
+                    <div class="application-card-header">
+                        <div class="applicant-info">
+                            <div class="applicant-avatar" style="background: linear-gradient(135deg, #3d8fd6, #274060); overflow: hidden;">
+                                ${work.image_url ? `<img src="${work.image_url}" alt="${work.title}" style="width: 100%; height: 100%; object-fit: cover;" />` : '<i class="fa-solid fa-briefcase"></i>'}
+                            </div>
+                            <div class="applicant-details">
+                                <h4 class="applicant-name">${work.title}</h4>
+                                <div>
+                                    ${work.category ? `<span class="badge badge-info">${work.category}</span>` : ''}
+                                    <span class="badge badge-secondary"><i class="fa-solid fa-sort"></i> الترتيب: ${work.order || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-buttons">
+                            <button class="btn-order" onclick="moveWorkUp('${work.id}', ${work.order || 0})" ${index === 0 ? 'disabled' : ''} title="تحريك لأعلى">
+                                <i class="fa-solid fa-chevron-up"></i>
+                            </button>
+                            <button class="btn-order" onclick="moveWorkDown('${work.id}', ${work.order || 0})" ${index === works.length - 1 ? 'disabled' : ''} title="تحريك لأسفل">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="application-card-footer">
+                        <button class="btn btn--primary btn--sm" onclick="editWork('${work.id}')">
+                            <i class="fa-solid fa-edit"></i> تعديل
+                        </button>
+                        <button class="btn btn--danger btn--sm" onclick="deleteWork('${work.id}')">
+                            <i class="fa-solid fa-trash"></i> حذف
+                        </button>
+                    </div>
+                </div>
+            `).join('');
         } catch (error) {
             console.error('Error loading works:', error);
             container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الأعمال</div>';
@@ -1293,6 +1312,7 @@
 
         try {
             showLoading(true);
+            await initializeOrderIfNeeded('achievements');
             const { data: achievements, error } = await sb
                 .from('achievements')
                 .select('*')
@@ -1305,37 +1325,40 @@
                 return;
             }
 
-            container.innerHTML = `
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>الأيقونة</th>
-                            <th>التسمية</th>
-                            <th>الرقم</th>
-                            <th>الترتيب</th>
-                            <th>الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${achievements.map(achievement => `
-                            <tr>
-                                <td><i class="${achievement.icon_class || 'fa-solid fa-trophy'}" style="font-size: 1.5rem; color: var(--accent-blue);"></i></td>
-                                <td><strong>${achievement.label}</strong></td>
-                                <td>${achievement.count_number || 0}${achievement.plus_flag ? '+' : ''}</td>
-                                <td>${achievement.order || 0}</td>
-                                <td class="action-buttons">
-                                    <button class="btn-sm btn-outline" onclick="editAchievement('${achievement.id}')">
-                                        <i class="fa-solid fa-edit"></i>
-                                    </button>
-                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteAchievement('${achievement.id}')">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
+            container.innerHTML = achievements.map((achievement, index) => `
+                <div class="application-card">
+                    <div class="application-card-header">
+                        <div class="applicant-info">
+                            <div class="applicant-avatar" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                                <i class="${achievement.icon_class || 'fa-solid fa-trophy'}"></i>
+                            </div>
+                            <div class="applicant-details">
+                                <h4 class="applicant-name">${achievement.label}</h4>
+                                <div>
+                                    <span class="badge badge-warning"><i class="fa-solid fa-hashtag"></i> ${achievement.count_number || 0}${achievement.plus_flag ? '+' : ''}</span>
+                                    <span class="badge badge-secondary"><i class="fa-solid fa-sort"></i> الترتيب: ${achievement.order || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-buttons">
+                            <button class="btn-order" onclick="moveAchievementUp('${achievement.id}', ${achievement.order || 0})" ${index === 0 ? 'disabled' : ''} title="تحريك لأعلى">
+                                <i class="fa-solid fa-chevron-up"></i>
+                            </button>
+                            <button class="btn-order" onclick="moveAchievementDown('${achievement.id}', ${achievement.order || 0})" ${index === achievements.length - 1 ? 'disabled' : ''} title="تحريك لأسفل">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="application-card-footer">
+                        <button class="btn btn--primary btn--sm" onclick="editAchievement('${achievement.id}')">
+                            <i class="fa-solid fa-edit"></i> تعديل
+                        </button>
+                        <button class="btn btn--danger btn--sm" onclick="deleteAchievement('${achievement.id}')">
+                            <i class="fa-solid fa-trash"></i> حذف
+                        </button>
+                    </div>
+                </div>
+            `).join('');
         } catch (error) {
             console.error('Error loading achievements:', error);
             container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الإنجازات</div>';
@@ -1351,6 +1374,7 @@
 
         try {
             showLoading(true);
+            await initializeOrderIfNeeded('sponsors');
             const { data: sponsors, error } = await sb
                 .from('sponsors')
                 .select('*')
@@ -1363,37 +1387,41 @@
                 return;
             }
 
-            container.innerHTML = `
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>الشعار</th>
-                            <th>الاسم</th>
-                            <th>الحالة</th>
-                            <th>الترتيب</th>
-                            <th>الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${sponsors.map(sponsor => `
-                            <tr>
-                                <td><img src="${sponsor.logo_url || sponsor.logo || ''}" alt="${sponsor.name}" style="width: 50px; height: 50px; object-fit: contain; border-radius: 4px;" /></td>
-                                <td><strong>${sponsor.name}</strong></td>
-                                <td><span class="badge ${sponsor.is_active ? 'success' : 'error'}">${sponsor.is_active ? 'نشط' : 'غير نشط'}</span></td>
-                                <td>${sponsor.order || 0}</td>
-                                <td class="action-buttons">
-                                    <button class="btn-sm btn-outline" onclick="editSponsor(${sponsor.id})">
-                                        <i class="fa-solid fa-edit"></i>
-                                    </button>
-                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteSponsor(${sponsor.id})">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
+            container.innerHTML = sponsors.map((sponsor, index) => `
+                <div class="application-card">
+                    <div class="application-card-header">
+                        <div class="applicant-info">
+                            <div class="applicant-avatar" style="background: #f8fafc; overflow: hidden;">
+                                ${(sponsor.logo_url || sponsor.logo) ? `<img src="${sponsor.logo_url || sponsor.logo}" alt="${sponsor.name}" style="width: 100%; height: 100%; object-fit: contain; padding: 4px;" />` : '<i class="fa-solid fa-handshake" style="color: #3d8fd6;"></i>'}
+                            </div>
+                            <div class="applicant-details">
+                                <h4 class="applicant-name">${sponsor.name}</h4>
+                                <div>
+                                    ${sponsor.badge ? `<span class="badge badge-gold">${sponsor.badge}</span>` : ''}
+                                    <span class="badge ${sponsor.is_active !== false ? 'badge-success' : 'badge-error'}">${sponsor.is_active !== false ? 'نشط' : 'غير نشط'}</span>
+                                    <span class="badge badge-secondary"><i class="fa-solid fa-sort"></i> الترتيب: ${sponsor.order || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-buttons">
+                            <button class="btn-order" onclick="moveSponsorUp('${sponsor.id}', ${sponsor.order || 0})" ${index === 0 ? 'disabled' : ''} title="تحريك لأعلى">
+                                <i class="fa-solid fa-chevron-up"></i>
+                            </button>
+                            <button class="btn-order" onclick="moveSponsorDown('${sponsor.id}', ${sponsor.order || 0})" ${index === sponsors.length - 1 ? 'disabled' : ''} title="تحريك لأسفل">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="application-card-footer">
+                        <button class="btn btn--primary btn--sm" onclick="editSponsor('${sponsor.id}')">
+                            <i class="fa-solid fa-edit"></i> تعديل
+                        </button>
+                        <button class="btn btn--danger btn--sm" onclick="deleteSponsor('${sponsor.id}')">
+                            <i class="fa-solid fa-trash"></i> حذف
+                        </button>
+                    </div>
+                </div>
+            `).join('');
         } catch (error) {
             console.error('Error loading sponsors:', error);
             container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الشركاء</div>';
@@ -1409,6 +1437,7 @@
 
         try {
             showLoading(true);
+            await initializeOrderIfNeeded('faq');
             const { data: faqs, error } = await sb
                 .from('faq')
                 .select('*')
@@ -1421,37 +1450,44 @@
                 return;
             }
 
-            container.innerHTML = `
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>السؤال</th>
-                            <th>الفئة</th>
-                            <th>الحالة</th>
-                            <th>الترتيب</th>
-                            <th>الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${faqs.map(faq => `
-                            <tr>
-                                <td><strong>${faq.question}</strong></td>
-                                <td>${faq.category || '-'}</td>
-                                <td><span class="badge ${faq.is_active ? 'success' : 'error'}">${faq.is_active ? 'نشط' : 'غير نشط'}</span></td>
-                                <td>${faq.order || 0}</td>
-                                <td class="action-buttons">
-                                    <button class="btn-sm btn-outline" onclick="editFaq(${faq.id})">
-                                        <i class="fa-solid fa-edit"></i>
-                                    </button>
-                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteFaq(${faq.id})">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
+            container.innerHTML = faqs.map((faq, index) => `
+                <div class="application-card">
+                    <div class="application-card-header">
+                        <div class="applicant-info">
+                            <div class="applicant-avatar" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
+                                <i class="fa-solid fa-circle-question"></i>
+                            </div>
+                            <div class="applicant-details">
+                                <h4 class="applicant-name">${faq.question}</h4>
+                                <div>
+                                    ${faq.category ? `<span class="badge badge-info">${faq.category}</span>` : ''}
+                                    <span class="badge ${faq.is_active !== false ? 'badge-success' : 'badge-error'}">${faq.is_active !== false ? 'نشط' : 'غير نشط'}</span>
+                                    <span class="badge badge-secondary"><i class="fa-solid fa-sort"></i> الترتيب: ${faq.order || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-buttons">
+                            <button class="btn-order" onclick="moveFaqUp('${faq.id}', ${faq.order || 0})" ${index === 0 ? 'disabled' : ''} title="تحريك لأعلى">
+                                <i class="fa-solid fa-chevron-up"></i>
+                            </button>
+                            <button class="btn-order" onclick="moveFaqDown('${faq.id}', ${faq.order || 0})" ${index === faqs.length - 1 ? 'disabled' : ''} title="تحريك لأسفل">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="application-card-body" style="padding: 12px 20px; background: rgba(139, 92, 246, 0.03);">
+                        <p style="margin: 0; color: #64748b; font-size: 0.9rem; line-height: 1.6;">${faq.answer ? faq.answer.substring(0, 150) + (faq.answer.length > 150 ? '...' : '') : ''}</p>
+                    </div>
+                    <div class="application-card-footer">
+                        <button class="btn btn--primary btn--sm" onclick="editFaq('${faq.id}')">
+                            <i class="fa-solid fa-edit"></i> تعديل
+                        </button>
+                        <button class="btn btn--danger btn--sm" onclick="deleteFaq('${faq.id}')">
+                            <i class="fa-solid fa-trash"></i> حذف
+                        </button>
+                    </div>
+                </div>
+            `).join('');
         } catch (error) {
             console.error('Error loading FAQ:', error);
             container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الأسئلة الشائعة</div>';
@@ -2505,75 +2541,63 @@
 
             if (committeeError) throw committeeError;
 
-            // جلب عدد الأعضاء
+            // جلب الأعضاء مع بيانات الملف الشخصي والأدوار
             const { data: members, error: membersError } = await sb
                 .from('user_roles')
-                .select('user_id, profiles(full_name, avatar_url), roles(role_name_ar)')
+                .select('user_id, profiles!user_roles_user_id_fkey(full_name, avatar_url), roles(role_name_ar)')
                 .eq('committee_id', committeeId)
                 .eq('is_active', true);
 
+            if (membersError) console.warn('Error loading members:', membersError);
+
             // بناء محتوى النافذة
-            let content = `
-                <div style="padding: 20px;">
-                    <h2 style="color: var(--main-blue); margin-bottom: 20px;">
-                        <i class="fa-solid fa-users"></i> ${committee.committee_name_ar}
-                    </h2>
-                    
-                    <div style="background: var(--bg-light); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                        <p><strong>الوصف:</strong> ${committee.description || 'لا يوجد وصف'}</p>
-                        <p><strong>الحالة:</strong> <span class="badge ${committee.is_active ? 'success' : 'error'}">${committee.is_active ? 'نشطة' : 'غير نشطة'}</span></p>
-                        <p><strong>تاريخ الإنشاء:</strong> ${new Date(committee.created_at).toLocaleDateString('ar-SA')}</p>
-                        ${committee.group_link ? `<p><strong>رابط القروب:</strong> <a href="${committee.group_link}" target="_blank" style="color: var(--main-blue);">افتح الرابط</a></p>` : ''}
+            const membersHtml = members && members.length > 0 ? members.map(member => `
+                <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: white; border-radius: 10px; border: 1px solid rgba(61, 143, 214, 0.15);">
+                    <img src="${member.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.profiles?.full_name || 'User')}&background=3d8fd6&color=fff`}" 
+                         style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" alt="" />
+                    <div>
+                        <strong style="color: var(--main-blue, #274060);">${member.profiles?.full_name || 'غير محدد'}</strong>
+                        <div style="font-size: 0.85rem; color: #64748b;">${member.roles?.role_name_ar || ''}</div>
                     </div>
+                </div>
+            `).join('') : '<p style="color: #64748b; text-align: center; padding: 1rem;">لا يوجد أعضاء</p>';
 
-                    <h3 style="margin: 20px 0 10px;">الأعضاء (${members?.length || 0})</h3>
-                    <div style="display: grid; gap: 10px; margin-bottom: 20px;">
-                        ${members && members.length > 0 ? members.map(member => `
-                            <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: white; border-radius: 8px; border: 1px solid var(--border-color);">
-                                <img src="${member.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.profiles?.full_name || 'User')}&background=3d8fd6&color=fff`}" 
-                                     style="width: 40px; height: 40px; border-radius: 50%;" />
-                                <div>
-                                    <strong>${member.profiles?.full_name || 'غير محدد'}</strong>
-                                    <div style="font-size: 0.9rem; color: var(--text-light);">${member.roles?.role_name_ar || ''}</div>
-                                </div>
-                            </div>
-                        `).join('') : '<p style="color: var(--text-light);">لا يوجد أعضاء</p>'}
-                    </div>
+            const content = `
+                <div style="background: rgba(61, 143, 214, 0.05); padding: 1rem; border-radius: 12px; margin-bottom: 1.25rem; border: 1px solid rgba(61, 143, 214, 0.1);">
+                    <p style="margin: 0.5rem 0;"><strong>الوصف:</strong> ${committee.description || 'لا يوجد وصف'}</p>
+                    <p style="margin: 0.5rem 0;"><strong>الحالة:</strong> <span class="badge ${committee.is_active ? 'badge-success' : 'badge-danger'}">${committee.is_active ? 'نشطة' : 'غير نشطة'}</span></p>
+                    <p style="margin: 0.5rem 0;"><strong>تاريخ الإنشاء:</strong> ${new Date(committee.created_at).toLocaleDateString('ar-SA')}</p>
+                    ${committee.group_link ? `<p style="margin: 0.5rem 0;"><strong>رابط القروب:</strong> <a href="${committee.group_link}" target="_blank" class="btn btn--primary btn--sm" style="display: inline-flex; margin-right: 0.5rem;"><i class="fa-brands fa-whatsapp"></i> افتح الرابط</a></p>` : ''}
+                </div>
 
-                    <div style="margin-top: 20px; text-align: center;">
-                        <button class="btn-primary" onclick="document.getElementById('committeeDetailsModal').classList.remove('active')">
-                            إغلاق
-                        </button>
-                    </div>
+                <h4 style="margin: 1rem 0 0.75rem; color: var(--main-blue, #274060); font-weight: 600;">
+                    <i class="fa-solid fa-users"></i> الأعضاء (${members?.length || 0})
+                </h4>
+                <div style="display: grid; gap: 0.5rem; max-height: 300px; overflow-y: auto;">
+                    ${membersHtml}
                 </div>
             `;
 
-            // إنشاء نافذة منبثقة مؤقتة
-            let modal = document.getElementById('committeeDetailsModal');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = 'committeeDetailsModal';
-                modal.className = 'modal';
-                modal.innerHTML = `
-                    <div class="modal-content" style="max-width: 700px;">
-                        <div id="committeeDetailsContent"></div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        modal.classList.remove('active');
-                    }
+            // استخدام ModalHelper.show لعرض النافذة بتنسيق صحيح
+            if (window.ModalHelper) {
+                ModalHelper.show({
+                    title: `<i class="fa-solid fa-users"></i> ${committee.committee_name_ar}`,
+                    html: content,
+                    size: 'md',
+                    type: 'info',
+                    showClose: true
                 });
+            } else {
+                window.openModal(committee.committee_name_ar, content, { icon: 'fa-users' });
             }
-
-            document.getElementById('committeeDetailsContent').innerHTML = content;
-            modal.classList.add('active');
 
         } catch (error) {
             console.error('Error viewing committee:', error);
-            alert('حدث خطأ في تحميل تفاصيل اللجنة');
+            if (window.Toast) {
+                Toast.error('حدث خطأ في تحميل تفاصيل اللجنة');
+            } else {
+                alert('حدث خطأ في تحميل تفاصيل اللجنة');
+            }
         } finally {
             showLoading(false);
         }
@@ -3985,11 +4009,6 @@
         setupModalClose('sponsorModal', 'closeSponsorModal', 'cancelSponsorBtn');
         setupModalClose('faqModal', 'closeFaqModal', 'cancelFaqBtn');
 
-        // النماذج
-        setupWorkForm();
-        setupAchievementForm();
-        setupSponsorForm();
-        setupFaqForm();
     }
 
     function setupModalClose(modalId, closeBtnId, cancelBtnId) {
@@ -4050,74 +4069,65 @@
     // نماذج الأعمال
     let currentWorkId = null;
 
-    function openWorkModal(workId = null) {
+    async function openWorkModal(workId = null) {
         currentWorkId = workId;
-        const modal = document.getElementById('workModal');
-        const title = document.getElementById('workModalTitle');
-
+        
+        // جلب آخر ترتيب
+        let nextOrder = 1;
+        if (!workId) {
+            const { data: lastWork } = await sb.from('works').select('order').order('order', { ascending: false }).limit(1);
+            if (lastWork && lastWork.length > 0) {
+                nextOrder = (lastWork[0].order || 0) + 1;
+            }
+        }
+        
+        // جلب بيانات العمل إذا كان تعديل
+        let workData = null;
         if (workId) {
-            title.textContent = 'تعديل عمل';
-            loadWorkData(workId);
-        } else {
-            title.textContent = 'إضافة عمل جديد';
-            document.getElementById('workForm').reset();
+            const { data, error } = await sb.from('works').select('*').eq('id', workId).single();
+            if (!error) workData = data;
         }
-
-        openModal('workModal');
-    }
-
-    async function loadWorkData(id) {
-        try {
-            const { data, error } = await sb.from('works').select('*').eq('id', id).single();
-            if (error) throw error;
-
-            document.getElementById('workTitle').value = data.title || '';
-            document.getElementById('workCategory').value = data.category || '';
-            document.getElementById('workImage').value = data.image || data.image_url || '';
-            document.getElementById('workLink').value = data.link || data.link_url || '';
-            document.getElementById('workOrder').value = data.order || 0;
-        } catch (error) {
-            console.error('Error loading work:', error);
-            showError('حدث خطأ أثناء تحميل بيانات العمل');
-        }
-    }
-
-    function setupWorkForm() {
-        const form = document.getElementById('workForm');
-        if (!form) return;
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const workData = {
-                title: document.getElementById('workTitle').value,
-                category: document.getElementById('workCategory').value,
-                image: document.getElementById('workImage').value,
-                link: document.getElementById('workLink').value,
-                order: parseInt(document.getElementById('workOrder').value) || 0
-            };
-
-            try {
-                showLoading(true);
-
-                if (currentWorkId) {
-                    const { error } = await sb.from('works').update(workData).eq('id', currentWorkId);
-                    if (error) throw error;
-                    alert('تم تحديث العمل بنجاح');
-                } else {
-                    const { error } = await sb.from('works').insert([workData]);
-                    if (error) throw error;
-                    alert('تم إضافة العمل بنجاح');
+        
+        const fields = [
+            { name: 'title', type: 'text', label: 'عنوان العمل', placeholder: 'أدخل عنوان العمل', required: true, value: workData?.title || '' },
+            { name: 'category', type: 'text', label: 'التصنيف', placeholder: 'مثال: تصميم، برمجة', value: workData?.category || '' },
+            { name: 'image_url', type: 'image', label: 'صورة العمل', folder: 'works', required: true, value: workData?.image_url || workData?.image || '' },
+            { name: 'link_url', type: 'url', label: 'رابط العمل', placeholder: 'https://example.com', value: workData?.link_url || workData?.link || '' }
+        ];
+        
+        ModalHelper.form({
+            title: workId ? '✏️ تعديل عمل' : '💼 إضافة عمل جديد',
+            fields: fields,
+            submitText: workId ? 'حفظ التعديلات' : 'إضافة',
+            cancelText: 'إلغاء',
+            onSubmit: async (formData) => {
+                const loadingToast = Toast.loading('جاري الحفظ...');
+                try {
+                    const saveData = {
+                        title: formData.title,
+                        category: formData.category || null,
+                        image_url: formData.image_url || null,
+                        link_url: formData.link_url || null
+                    };
+                    
+                    if (currentWorkId) {
+                        const { error } = await sb.from('works').update(saveData).eq('id', currentWorkId);
+                        if (error) throw error;
+                    } else {
+                        saveData.order = nextOrder;
+                        const { error } = await sb.from('works').insert([saveData]);
+                        if (error) throw error;
+                    }
+                    
+                    Toast.close(loadingToast);
+                    Toast.success(currentWorkId ? 'تم تحديث العمل بنجاح' : 'تم إضافة العمل بنجاح');
+                    await loadWebsiteWorksSection();
+                } catch (error) {
+                    Toast.close(loadingToast);
+                    Toast.error('حدث خطأ أثناء الحفظ');
+                    console.error(error);
+                    throw error;
                 }
-
-                closeModal('workModal');
-                await loadWebsiteWorks();
-                await loadSectionCounts();
-            } catch (error) {
-                console.error('Error saving work:', error);
-                showError('حدث خطأ أثناء حفظ العمل');
-            } finally {
-                showLoading(false);
             }
         });
     }
@@ -4127,83 +4137,91 @@
     };
 
     window.deleteWork = async function(id) {
-        if (!confirm('هل أنت متأكد من حذف هذا العمل؟')) return;
-
-        try {
-            showLoading(true);
-            const { error } = await sb.from('works').delete().eq('id', id);
-            if (error) throw error;
-            alert('تم حذف العمل بنجاح');
-            await loadWebsiteWorks();
-            await loadSectionCounts();
-        } catch (error) {
-            console.error('Error deleting work:', error);
-            showError('حدث خطأ أثناء حذف العمل');
-        } finally {
-            showLoading(false);
-        }
+        ModalHelper.confirm({
+            title: '🗑️ حذف العمل',
+            message: 'هل أنت متأكد من حذف هذا العمل؟ لا يمكن التراجع عن هذا الإجراء.',
+            confirmText: 'حذف',
+            cancelText: 'إلغاء',
+            type: 'danger',
+            onConfirm: async () => {
+                const loadingToast = Toast.loading('جاري الحذف...');
+                try {
+                    const { error } = await sb.from('works').delete().eq('id', id);
+                    if (error) throw error;
+                    Toast.close(loadingToast);
+                    Toast.success('تم حذف العمل بنجاح');
+                    await loadWebsiteWorksSection();
+                } catch (error) {
+                    Toast.close(loadingToast);
+                    Toast.error('حدث خطأ أثناء الحذف');
+                    console.error(error);
+                }
+            }
+        });
     };
 
     // نماذج الإنجازات
     let currentAchievementId = null;
 
-    function openAchievementModal(achievementId = null) {
-        // تم تعطيل النوافذ المنبثقة بناءً على طلب المستخدم
-        return;
-    }
-
-    async function loadAchievementData(id) {
-        try {
-            const { data, error } = await sb.from('achievements').select('*').eq('id', id).single();
-            if (error) throw error;
-
-            document.getElementById('achievementLabel').value = data.label || '';
-            document.getElementById('achievementCount').value = data.count_number || data.count || 0;
-            document.getElementById('achievementIcon').value = data.icon_class || data.icon || '';
-            document.getElementById('achievementPlus').checked = data.plus_flag !== false && data.plus !== false;
-            document.getElementById('achievementOrder').value = data.order || 0;
-        } catch (error) {
-            console.error('Error loading achievement:', error);
-            showError('حدث خطأ أثناء تحميل بيانات الإنجاز');
+    async function openAchievementModal(achievementId = null) {
+        currentAchievementId = achievementId;
+        
+        // جلب آخر ترتيب
+        let nextOrder = 1;
+        if (!achievementId) {
+            const { data: lastAchievement } = await sb.from('achievements').select('order').order('order', { ascending: false }).limit(1);
+            if (lastAchievement && lastAchievement.length > 0) {
+                nextOrder = (lastAchievement[0].order || 0) + 1;
+            }
         }
-    }
-
-    function setupAchievementForm() {
-        const form = document.getElementById('achievementForm');
-        if (!form) return;
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const achievementData = {
-                label: document.getElementById('achievementLabel').value,
-                count_number: parseInt(document.getElementById('achievementCount').value),
-                icon_class: document.getElementById('achievementIcon').value,
-                plus_flag: document.getElementById('achievementPlus').checked,
-                order: parseInt(document.getElementById('achievementOrder').value) || 0
-            };
-
-            try {
-                showLoading(true);
-
-                if (currentAchievementId) {
-                    const { error } = await sb.from('achievements').update(achievementData).eq('id', currentAchievementId);
-                    if (error) throw error;
-                    alert('تم تحديث الإنجاز بنجاح');
-                } else {
-                    const { error } = await sb.from('achievements').insert([achievementData]);
-                    if (error) throw error;
-                    alert('تم إضافة الإنجاز بنجاح');
+        
+        // جلب بيانات الإنجاز إذا كان تعديل
+        let achievementData = null;
+        if (achievementId) {
+            const { data, error } = await sb.from('achievements').select('*').eq('id', achievementId).single();
+            if (!error) achievementData = data;
+        }
+        
+        const fields = [
+            { name: 'label', type: 'text', label: 'العنوان', placeholder: 'مثال: عضو نشط', required: true, value: achievementData?.label || '' },
+            { name: 'count_number', type: 'number', label: 'العدد', placeholder: '0', value: achievementData?.count_number?.toString() || '0' },
+            { name: 'icon_class', type: 'text', label: 'أيقونة Font Awesome', placeholder: 'fa-solid fa-trophy', value: achievementData?.icon_class || '' },
+            { name: 'plus_flag', type: 'checkbox', checkboxLabel: 'إضافة علامة + بعد الرقم', checked: achievementData?.plus_flag || false }
+        ];
+        
+        ModalHelper.form({
+            title: achievementId ? '✏️ تعديل إنجاز' : '🏆 إضافة إنجاز جديد',
+            fields: fields,
+            submitText: achievementId ? 'حفظ التعديلات' : 'إضافة',
+            cancelText: 'إلغاء',
+            onSubmit: async (formData) => {
+                const loadingToast = Toast.loading('جاري الحفظ...');
+                try {
+                    const saveData = {
+                        label: formData.label,
+                        count_number: parseInt(formData.count_number) || 0,
+                        icon_class: formData.icon_class || 'fa-solid fa-trophy',
+                        plus_flag: formData.plus_flag === 'on' || formData.plus_flag === true
+                    };
+                    
+                    if (currentAchievementId) {
+                        const { error } = await sb.from('achievements').update(saveData).eq('id', currentAchievementId);
+                        if (error) throw error;
+                    } else {
+                        saveData.order = nextOrder;
+                        const { error } = await sb.from('achievements').insert([saveData]);
+                        if (error) throw error;
+                    }
+                    
+                    Toast.close(loadingToast);
+                    Toast.success(currentAchievementId ? 'تم تحديث الإنجاز بنجاح' : 'تم إضافة الإنجاز بنجاح');
+                    await loadWebsiteAchievementsSection();
+                } catch (error) {
+                    Toast.close(loadingToast);
+                    Toast.error('حدث خطأ أثناء الحفظ');
+                    console.error(error);
+                    throw error;
                 }
-
-                closeModal('achievementModal');
-                await loadWebsiteAchievements();
-                await loadSectionCounts();
-            } catch (error) {
-                console.error('Error saving achievement:', error);
-                showError('حدث خطأ أثناء حفظ الإنجاز');
-            } finally {
-                showLoading(false);
             }
         });
     }
@@ -4213,85 +4231,93 @@
     };
 
     window.deleteAchievement = async function(id) {
-        if (!confirm('هل أنت متأكد من حذف هذا الإنجاز؟')) return;
-
-        try {
-            showLoading(true);
-            const { error } = await sb.from('achievements').delete().eq('id', id);
-            if (error) throw error;
-            alert('تم حذف الإنجاز بنجاح');
-            await loadWebsiteAchievements();
-            await loadSectionCounts();
-        } catch (error) {
-            console.error('Error deleting achievement:', error);
-            showError('حدث خطأ أثناء حذف الإنجاز');
-        } finally {
-            showLoading(false);
-        }
+        ModalHelper.confirm({
+            title: '🗑️ حذف الإنجاز',
+            message: 'هل أنت متأكد من حذف هذا الإنجاز؟ لا يمكن التراجع عن هذا الإجراء.',
+            confirmText: 'حذف',
+            cancelText: 'إلغاء',
+            type: 'danger',
+            onConfirm: async () => {
+                const loadingToast = Toast.loading('جاري الحذف...');
+                try {
+                    const { error } = await sb.from('achievements').delete().eq('id', id);
+                    if (error) throw error;
+                    Toast.close(loadingToast);
+                    Toast.success('تم حذف الإنجاز بنجاح');
+                    await loadWebsiteAchievementsSection();
+                } catch (error) {
+                    Toast.close(loadingToast);
+                    Toast.error('حدث خطأ أثناء الحذف');
+                    console.error(error);
+                }
+            }
+        });
     };
 
     // نماذج الشركاء
     let currentSponsorId = null;
 
-    function openSponsorModal(sponsorId = null) {
-        // تم تعطيل النوافذ المنبثقة بناءً على طلب المستخدم
-        return;
-    }
-
-    async function loadSponsorData(id) {
-        try {
-            const { data, error } = await sb.from('sponsors').select('*').eq('id', id).single();
-            if (error) throw error;
-
-            document.getElementById('sponsorName').value = data.name || '';
-            document.getElementById('sponsorDescription').value = data.description || '';
-            document.getElementById('sponsorLogo').value = data.logo || data.logo_url || '';
-            document.getElementById('sponsorLink').value = data.link || data.link_url || '';
-            document.getElementById('sponsorBadge').value = data.badge || '';
-            document.getElementById('sponsorOrder').value = data.order || 0;
-        } catch (error) {
-            console.error('Error loading sponsor:', error);
-            showError('حدث خطأ أثناء تحميل بيانات الشريك');
+    async function openSponsorModal(sponsorId = null) {
+        currentSponsorId = sponsorId;
+        
+        // جلب آخر ترتيب
+        let nextOrder = 1;
+        if (!sponsorId) {
+            const { data: lastSponsor } = await sb.from('sponsors').select('order').order('order', { ascending: false }).limit(1);
+            if (lastSponsor && lastSponsor.length > 0) {
+                nextOrder = (lastSponsor[0].order || 0) + 1;
+            }
         }
-    }
-
-    function setupSponsorForm() {
-        const form = document.getElementById('sponsorForm');
-        if (!form) return;
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const sponsorData = {
-                name: document.getElementById('sponsorName').value,
-                description: document.getElementById('sponsorDescription').value,
-                logo: document.getElementById('sponsorLogo').value,
-                link: document.getElementById('sponsorLink').value,
-                badge: document.getElementById('sponsorBadge').value,
-                order: parseInt(document.getElementById('sponsorOrder').value) || 0
-            };
-
-            try {
-                showLoading(true);
-
-                if (currentSponsorId) {
-                    const { error } = await sb.from('sponsors').update(sponsorData).eq('id', currentSponsorId);
-                    if (error) throw error;
-                    alert('تم تحديث الشريك بنجاح');
-                } else {
-                    const { error } = await sb.from('sponsors').insert([sponsorData]);
-                    if (error) throw error;
-                    alert('تم إضافة الشريك بنجاح');
+        
+        // جلب بيانات الشريك إذا كان تعديل
+        let sponsorData = null;
+        if (sponsorId) {
+            const { data, error } = await sb.from('sponsors').select('*').eq('id', sponsorId).single();
+            if (!error) sponsorData = data;
+        }
+        
+        const fields = [
+            { name: 'name', type: 'text', label: 'اسم الشريك', placeholder: 'أدخل اسم الشريك', required: true, value: sponsorData?.name || '' },
+            { name: 'badge', type: 'text', label: 'الوسام', placeholder: 'مثال: شريك ذهبي', value: sponsorData?.badge || '' },
+            { name: 'logo_url', type: 'image', label: 'شعار الشريك', folder: 'sponsors', value: sponsorData?.logo_url || sponsorData?.logo || '' },
+            { name: 'link_url', type: 'url', label: 'رابط الموقع', placeholder: 'https://example.com', value: sponsorData?.link_url || sponsorData?.link || '' },
+            { name: 'description', type: 'textarea', label: 'الوصف', placeholder: 'وصف مختصر عن الشريك', value: sponsorData?.description || '' }
+        ];
+        
+        ModalHelper.form({
+            title: sponsorId ? '✏️ تعديل شريك' : '🤝 إضافة شريك جديد',
+            fields: fields,
+            submitText: sponsorId ? 'حفظ التعديلات' : 'إضافة',
+            cancelText: 'إلغاء',
+            onSubmit: async (formData) => {
+                const loadingToast = Toast.loading('جاري الحفظ...');
+                try {
+                    const saveData = {
+                        name: formData.name,
+                        badge: formData.badge || null,
+                        logo_url: formData.logo_url || null,
+                        link_url: formData.link_url || null,
+                        description: formData.description || null
+                    };
+                    
+                    if (currentSponsorId) {
+                        const { error } = await sb.from('sponsors').update(saveData).eq('id', currentSponsorId);
+                        if (error) throw error;
+                    } else {
+                        saveData.order = nextOrder;
+                        const { error } = await sb.from('sponsors').insert([saveData]);
+                        if (error) throw error;
+                    }
+                    
+                    Toast.close(loadingToast);
+                    Toast.success(currentSponsorId ? 'تم تحديث الشريك بنجاح' : 'تم إضافة الشريك بنجاح');
+                    await loadWebsiteSponsorsSection();
+                } catch (error) {
+                    Toast.close(loadingToast);
+                    Toast.error('حدث خطأ أثناء الحفظ');
+                    console.error(error);
+                    throw error;
                 }
-
-                closeModal('sponsorModal');
-                await loadWebsiteSponsors();
-                await loadSectionCounts();
-            } catch (error) {
-                console.error('Error saving sponsor:', error);
-                showError('حدث خطأ أثناء حفظ الشريك');
-            } finally {
-                showLoading(false);
             }
         });
     }
@@ -4301,79 +4327,89 @@
     };
 
     window.deleteSponsor = async function(id) {
-        if (!confirm('هل أنت متأكد من حذف هذا الشريك؟')) return;
-
-        try {
-            showLoading(true);
-            const { error } = await sb.from('sponsors').delete().eq('id', id);
-            if (error) throw error;
-            alert('تم حذف الشريك بنجاح');
-            await loadWebsiteSponsors();
-            await loadSectionCounts();
-        } catch (error) {
-            console.error('Error deleting sponsor:', error);
-            showError('حدث خطأ أثناء حذف الشريك');
-        } finally {
-            showLoading(false);
-        }
+        ModalHelper.confirm({
+            title: '🗑️ حذف الشريك',
+            message: 'هل أنت متأكد من حذف هذا الشريك؟ لا يمكن التراجع عن هذا الإجراء.',
+            confirmText: 'حذف',
+            cancelText: 'إلغاء',
+            type: 'danger',
+            onConfirm: async () => {
+                const loadingToast = Toast.loading('جاري الحذف...');
+                try {
+                    const { error } = await sb.from('sponsors').delete().eq('id', id);
+                    if (error) throw error;
+                    Toast.close(loadingToast);
+                    Toast.success('تم حذف الشريك بنجاح');
+                    await loadWebsiteSponsorsSection();
+                } catch (error) {
+                    Toast.close(loadingToast);
+                    Toast.error('حدث خطأ أثناء الحذف');
+                    console.error(error);
+                }
+            }
+        });
     };
 
     // نماذج الأسئلة الشائعة
     let currentFaqId = null;
 
-    function openFaqModal(faqId = null) {
-        // تم تعطيل النوافذ المنبثقة بناءً على طلب المستخدم
-        return;
-    }
-
-    async function loadFaqData(id) {
-        try {
-            const { data, error } = await sb.from('faq').select('*').eq('id', id).single();
-            if (error) throw error;
-
-            document.getElementById('faqQuestion').value = data.question || '';
-            document.getElementById('faqAnswer').value = data.answer || '';
-            document.getElementById('faqOrder').value = data.order || 0;
-        } catch (error) {
-            console.error('Error loading FAQ:', error);
-            showError('حدث خطأ أثناء تحميل بيانات السؤال');
+    async function openFaqModal(faqId = null) {
+        currentFaqId = faqId;
+        
+        // جلب آخر ترتيب
+        let nextOrder = 1;
+        if (!faqId) {
+            const { data: lastFaq } = await sb.from('faq').select('order').order('order', { ascending: false }).limit(1);
+            if (lastFaq && lastFaq.length > 0) {
+                nextOrder = (lastFaq[0].order || 0) + 1;
+            }
         }
-    }
-
-    function setupFaqForm() {
-        const form = document.getElementById('faqForm');
-        if (!form) return;
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const faqData = {
-                question: document.getElementById('faqQuestion').value,
-                answer: document.getElementById('faqAnswer').value,
-                order: parseInt(document.getElementById('faqOrder').value) || 0
-            };
-
-            try {
-                showLoading(true);
-
-                if (currentFaqId) {
-                    const { error } = await sb.from('faq').update(faqData).eq('id', currentFaqId);
-                    if (error) throw error;
-                    alert('تم تحديث السؤال بنجاح');
-                } else {
-                    const { error } = await sb.from('faq').insert([faqData]);
-                    if (error) throw error;
-                    alert('تم إضافة السؤال بنجاح');
+        
+        // جلب بيانات السؤال إذا كان تعديل
+        let faqData = null;
+        if (faqId) {
+            const { data, error } = await sb.from('faq').select('*').eq('id', faqId).single();
+            if (!error) faqData = data;
+        }
+        
+        const fields = [
+            { name: 'question', type: 'text', label: 'السؤال', placeholder: 'أدخل السؤال', required: true, value: faqData?.question || '' },
+            { name: 'answer', type: 'textarea', label: 'الإجابة', placeholder: 'أدخل الإجابة', required: true, value: faqData?.answer || '' },
+            { name: 'category', type: 'text', label: 'الفئة', placeholder: 'مثال: عام، العضوية', value: faqData?.category || '' }
+        ];
+        
+        ModalHelper.form({
+            title: faqId ? '✏️ تعديل سؤال' : '❓ إضافة سؤال جديد',
+            fields: fields,
+            submitText: faqId ? 'حفظ التعديلات' : 'إضافة',
+            cancelText: 'إلغاء',
+            onSubmit: async (formData) => {
+                const loadingToast = Toast.loading('جاري الحفظ...');
+                try {
+                    const saveData = {
+                        question: formData.question,
+                        answer: formData.answer,
+                        category: formData.category || null
+                    };
+                    
+                    if (currentFaqId) {
+                        const { error } = await sb.from('faq').update(saveData).eq('id', currentFaqId);
+                        if (error) throw error;
+                    } else {
+                        saveData.order = nextOrder;
+                        const { error } = await sb.from('faq').insert([saveData]);
+                        if (error) throw error;
+                    }
+                    
+                    Toast.close(loadingToast);
+                    Toast.success(currentFaqId ? 'تم تحديث السؤال بنجاح' : 'تم إضافة السؤال بنجاح');
+                    await loadWebsiteFaqSection();
+                } catch (error) {
+                    Toast.close(loadingToast);
+                    Toast.error('حدث خطأ أثناء الحفظ');
+                    console.error(error);
+                    throw error;
                 }
-
-                closeModal('faqModal');
-                await loadWebsiteFaq();
-                await loadSectionCounts();
-            } catch (error) {
-                console.error('Error saving FAQ:', error);
-                showError('حدث خطأ أثناء حفظ السؤال');
-            } finally {
-                showLoading(false);
             }
         });
     }
@@ -4383,21 +4419,160 @@
     };
 
     window.deleteFaq = async function(id) {
-        if (!confirm('هل أنت متأكد من حذف هذا السؤال؟')) return;
+        ModalHelper.confirm({
+            title: '🗑️ حذف السؤال',
+            message: 'هل أنت متأكد من حذف هذا السؤال؟ لا يمكن التراجع عن هذا الإجراء.',
+            confirmText: 'حذف',
+            cancelText: 'إلغاء',
+            type: 'danger',
+            onConfirm: async () => {
+                const loadingToast = Toast.loading('جاري الحذف...');
+                try {
+                    const { error } = await sb.from('faq').delete().eq('id', id);
+                    if (error) throw error;
+                    Toast.close(loadingToast);
+                    Toast.success('تم حذف السؤال بنجاح');
+                    await loadWebsiteFaqSection();
+                } catch (error) {
+                    Toast.close(loadingToast);
+                    Toast.error('حدث خطأ أثناء الحذف');
+                    console.error(error);
+                }
+            }
+        });
+    };
 
-        try {
-            showLoading(true);
-            const { error } = await sb.from('faq').delete().eq('id', id);
-            if (error) throw error;
-            alert('تم حذف السؤال بنجاح');
-            await loadWebsiteFaq();
-            await loadSectionCounts();
-        } catch (error) {
-            console.error('Error deleting FAQ:', error);
-            showError('حدث خطأ أثناء حذف السؤال');
-        } finally {
-            showLoading(false);
+
+    // =====================================================
+    // وظائف تبديل الترتيب
+    // =====================================================
+
+    // تهيئة الترتيب التلقائي للعناصر التي ترتيبها 0 أو null
+    async function initializeOrderIfNeeded(table) {
+        const { data: items, error } = await sb
+            .from(table)
+            .select('id, order')
+            .order('id', { ascending: true });
+        
+        if (error || !items || items.length === 0) return;
+        
+        // تحقق هل كل العناصر ترتيبها 0 أو null
+        const needsInit = items.every(item => !item.order || item.order === 0);
+        if (!needsInit) return;
+        
+        // تعيين ترتيب تسلسلي
+        for (let i = 0; i < items.length; i++) {
+            await sb.from(table).update({ order: i + 1 }).eq('id', items[i].id);
         }
+        console.log(`Initialized order for ${table}: ${items.length} items`);
+    }
+
+    async function swapOrder(table, id1, id2, order1, order2) {
+        try {
+            const { error: e1 } = await sb.from(table).update({ order: order2 }).eq('id', id1);
+            if (e1) throw e1;
+            const { error: e2 } = await sb.from(table).update({ order: order1 }).eq('id', id2);
+            if (e2) throw e2;
+            return true;
+        } catch (error) {
+            console.error('Error swapping order:', error);
+            Toast.error('حدث خطأ أثناء تغيير الترتيب');
+            return false;
+        }
+    }
+
+    async function getAdjacentItem(table, currentOrder, direction) {
+        // direction: 'up' = العنصر السابق (أقل ترتيب), 'down' = العنصر التالي (أعلى ترتيب)
+        const orderNum = Number(currentOrder) || 0;
+        
+        try {
+            // جلب جميع العناصر وفلترتها محلياً لتجنب تعارض اسم العمود "order" مع PostgREST
+            const { data: allItems, error } = await sb
+                .from(table)
+                .select('id, order')
+                .order('order', { ascending: true });
+            
+            if (error) throw error;
+            if (!allItems || allItems.length === 0) return null;
+            
+            if (direction === 'up') {
+                // البحث عن العنصر السابق (أقل ترتيب)
+                const filtered = allItems.filter(item => (item.order || 0) < orderNum);
+                if (filtered.length === 0) return null;
+                // أعلى ترتيب من الأقل
+                return filtered.reduce((max, item) => (item.order || 0) > (max.order || 0) ? item : max);
+            } else {
+                // البحث عن العنصر التالي (أعلى ترتيب)
+                const filtered = allItems.filter(item => (item.order || 0) > orderNum);
+                if (filtered.length === 0) return null;
+                // أقل ترتيب من الأعلى
+                return filtered.reduce((min, item) => (item.order || 0) < (min.order || 0) ? item : min);
+            }
+        } catch (error) {
+            console.error('Error getting adjacent item:', error);
+            return null;
+        }
+    }
+
+    // متغير لمنع الضغط المتكرر أثناء الترتيب
+    let isReordering = false;
+
+    async function handleReorder(table, id, currentOrder, direction, reloadFn) {
+        if (isReordering) {
+            Toast.warning('جاري تغيير الترتيب، يرجى الانتظار...');
+            return;
+        }
+        
+        isReordering = true;
+        const loadingToast = Toast.loading('جاري تغيير الترتيب...');
+        
+        try {
+            const adjacent = await getAdjacentItem(table, currentOrder, direction);
+            if (adjacent) {
+                const success = await swapOrder(table, id, adjacent.id, currentOrder, adjacent.order);
+                if (success) {
+                    Toast.close(loadingToast);
+                    Toast.success('تم تغيير الترتيب بنجاح');
+                    await reloadFn();
+                } else {
+                    Toast.close(loadingToast);
+                    Toast.error('حدث خطأ أثناء تغيير الترتيب');
+                }
+            } else {
+                Toast.close(loadingToast);
+            }
+        } catch (error) {
+            console.error('Error reordering:', error);
+            Toast.close(loadingToast);
+            Toast.error('حدث خطأ أثناء تغيير الترتيب');
+        } finally {
+            isReordering = false;
+        }
+    }
+
+    window.moveWorkUp = async function(id, currentOrder) {
+        await handleReorder('works', id, currentOrder, 'up', loadWebsiteWorksSection);
+    };
+    window.moveWorkDown = async function(id, currentOrder) {
+        await handleReorder('works', id, currentOrder, 'down', loadWebsiteWorksSection);
+    };
+    window.moveAchievementUp = async function(id, currentOrder) {
+        await handleReorder('achievements', id, currentOrder, 'up', loadWebsiteAchievementsSection);
+    };
+    window.moveAchievementDown = async function(id, currentOrder) {
+        await handleReorder('achievements', id, currentOrder, 'down', loadWebsiteAchievementsSection);
+    };
+    window.moveFaqUp = async function(id, currentOrder) {
+        await handleReorder('faq', id, currentOrder, 'up', loadWebsiteFaqSection);
+    };
+    window.moveFaqDown = async function(id, currentOrder) {
+        await handleReorder('faq', id, currentOrder, 'down', loadWebsiteFaqSection);
+    };
+    window.moveSponsorUp = async function(id, currentOrder) {
+        await handleReorder('sponsors', id, currentOrder, 'up', loadWebsiteSponsorsSection);
+    };
+    window.moveSponsorDown = async function(id, currentOrder) {
+        await handleReorder('sponsors', id, currentOrder, 'down', loadWebsiteSponsorsSection);
     };
 
 

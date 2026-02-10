@@ -232,7 +232,7 @@ class SiteVisitsManager {
 
     createStatsCard(title, value, subtitle, icon, color = '#3d8fd6') {
         return `
-            <div class="stat-card" data-color="${color}">
+            <div class="stat-card" style="--stat-color: ${color}">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid ${icon}"></i>
@@ -292,7 +292,7 @@ class SiteVisitsManager {
                 )
             ];
 
-            container.innerHTML = `<div class="stats-grid">${cards.join('')}</div>`;
+            container.innerHTML = cards.join('');
         } catch (error) {
             console.error('Error rendering stats cards:', error);
             const container = document.getElementById(containerId);

@@ -45,6 +45,18 @@
                     .single();
 
                 if (surveyError) throw surveyError;
+                
+                // محاولة جلب اسم المعدل إذا كان موجوداً
+                if (survey.updated_by) {
+                    const { data: updater } = await sb
+                        .from('profiles')
+                        .select('full_name')
+                        .eq('id', survey.updated_by)
+                        .single();
+                    if (updater) {
+                        survey.updated_by_profile = updater;
+                    }
+                }
 
                 // جلب الأسئلة
                 const { data: questions, error: questionsError } = await sb
@@ -142,6 +154,7 @@
                             <div class="survey-edit-footer-info">
                                 <i class="fa-solid fa-clock"></i>
                                 آخر تعديل: ${this.formatDate(this.currentSurvey.updated_at || this.currentSurvey.created_at)}
+                                ${this.currentSurvey.updated_by_profile?.full_name ? `<span class="footer-info-separator">•</span><i class="fa-solid fa-user-pen"></i> ${this.escapeHtml(this.currentSurvey.updated_by_profile.full_name)}` : ''}
                             </div>
                             <div class="survey-edit-footer-actions">
                                 <button class="btn btn--secondary" onclick="window.surveyEditModal.close()">
@@ -171,29 +184,6 @@
 
         renderBasicInfoPanel() {
             const survey = this.currentSurvey;
-            const typeOptions = [
-                { value: 'general', label: 'عام' },
-                { value: 'membership', label: 'عضوية' },
-                { value: 'event', label: 'فعالية' },
-                { value: 'feedback', label: 'تقييم' },
-                { value: 'evaluation', label: 'تقويم' },
-                { value: 'poll', label: 'استطلاع' },
-                { value: 'quiz', label: 'اختبار' },
-                { value: 'research', label: 'بحث' }
-            ];
-
-            const accessOptions = [
-                { value: 'public', label: 'عام (الجميع)' },
-                { value: 'authenticated', label: 'مستخدمون مسجلون' },
-                { value: 'members_only', label: 'أعضاء فقط' }
-            ];
-
-            const statusOptions = [
-                { value: 'draft', label: 'مسودة' },
-                { value: 'active', label: 'نشط' },
-                { value: 'paused', label: 'متوقف' },
-                { value: 'closed', label: 'مغلق' }
-            ];
 
             return `
                 <div class="edit-form-section">
@@ -222,45 +212,6 @@
                 
                 <div class="edit-form-section">
                     <div class="edit-form-section-title">
-                        <i class="fa-solid fa-tags"></i>
-                        التصنيف والحالة
-                    </div>
-                    <div class="edit-form-grid">
-                        <div class="edit-form-group">
-                            <label class="edit-form-label">نوع الاستبيان</label>
-                            <select class="edit-form-select" id="editSurveyType" onchange="window.surveyEditModal.markChanged()">
-                                ${typeOptions.map(opt => `
-                                    <option value="${opt.value}" ${survey.survey_type === opt.value ? 'selected' : ''}>
-                                        ${opt.label}
-                                    </option>
-                                `).join('')}
-                            </select>
-                        </div>
-                        <div class="edit-form-group">
-                            <label class="edit-form-label">الحالة</label>
-                            <select class="edit-form-select" id="editSurveyStatus" onchange="window.surveyEditModal.markChanged()">
-                                ${statusOptions.map(opt => `
-                                    <option value="${opt.value}" ${survey.status === opt.value ? 'selected' : ''}>
-                                        ${opt.label}
-                                    </option>
-                                `).join('')}
-                            </select>
-                        </div>
-                        <div class="edit-form-group">
-                            <label class="edit-form-label">نوع الوصول</label>
-                            <select class="edit-form-select" id="editSurveyAccess" onchange="window.surveyEditModal.markChanged()">
-                                ${accessOptions.map(opt => `
-                                    <option value="${opt.value}" ${survey.access_type === opt.value ? 'selected' : ''}>
-                                        ${opt.label}
-                                    </option>
-                                `).join('')}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="edit-form-section">
-                    <div class="edit-form-section-title">
                         <i class="fa-solid fa-calendar"></i>
                         فترة النشر
                     </div>
@@ -268,13 +219,13 @@
                         <div class="edit-form-group">
                             <label class="edit-form-label">تاريخ البدء</label>
                             <input type="datetime-local" class="edit-form-input" id="editSurveyStartDate" 
-                                value="${survey.start_date ? new Date(survey.start_date).toISOString().slice(0, 16) : ''}"
+                                value="${survey.start_date ? this.formatDateForInput(survey.start_date) : ''}"
                                 onchange="window.surveyEditModal.markChanged()">
                         </div>
                         <div class="edit-form-group">
                             <label class="edit-form-label">تاريخ الانتهاء</label>
                             <input type="datetime-local" class="edit-form-input" id="editSurveyEndDate" 
-                                value="${survey.end_date ? new Date(survey.end_date).toISOString().slice(0, 16) : ''}"
+                                value="${survey.end_date ? this.formatDateForInput(survey.end_date) : ''}"
                                 onchange="window.surveyEditModal.markChanged()">
                         </div>
                     </div>
@@ -687,6 +638,106 @@
             this.hasChanges = true;
         }
 
+        renderStatusButtons() {
+            const status = this.currentSurvey.status;
+            let buttons = '';
+            
+            // أزرار تغيير الحالة بناءً على الحالة الحالية
+            if (status === 'draft') {
+                buttons = `
+                    <button class="btn btn--success btn--sm" onclick="window.surveyEditModal.changeStatus('active')" title="نشر الاستبيان">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        نشر
+                    </button>
+                `;
+            } else if (status === 'active') {
+                buttons = `
+                    <button class="btn btn--warning btn--sm" onclick="window.surveyEditModal.changeStatus('paused')" title="إيقاف مؤقت">
+                        <i class="fa-solid fa-pause"></i>
+                        إيقاف
+                    </button>
+                    <button class="btn btn--danger btn--sm" onclick="window.surveyEditModal.endSurvey()" title="إنهاء نهائي">
+                        <i class="fa-solid fa-stop"></i>
+                        إنهاء
+                    </button>
+                `;
+            } else if (status === 'paused') {
+                buttons = `
+                    <button class="btn btn--success btn--sm" onclick="window.surveyEditModal.changeStatus('active')" title="تفعيل">
+                        <i class="fa-solid fa-play"></i>
+                        تفعيل
+                    </button>
+                    <button class="btn btn--secondary btn--sm" onclick="window.surveyEditModal.changeStatus('draft')" title="تحويل لمسودة">
+                        <i class="fa-solid fa-file-pen"></i>
+                        مسودة
+                    </button>
+                `;
+            } else if (status === 'closed') {
+                buttons = `
+                    <button class="btn btn--info btn--sm" onclick="window.surveyEditModal.changeStatus('draft')" title="إعادة كمسودة">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        إعادة كمسودة
+                    </button>
+                `;
+            }
+            
+            return buttons;
+        }
+
+        async changeStatus(newStatus) {
+            try {
+                const { error } = await sb
+                    .from('surveys')
+                    .update({ status: newStatus, updated_at: new Date().toISOString() })
+                    .eq('id', this.currentSurvey.id);
+
+                if (error) throw error;
+
+                this.currentSurvey.status = newStatus;
+                this.showNotification('تم تغيير حالة الاستبيان بنجاح', 'success');
+                
+                // إعادة تحميل قائمة الاستبيانات
+                if (window.surveysManager) {
+                    await window.surveysManager.loadAllSurveys();
+                }
+                
+                this.close();
+            } catch (error) {
+                console.error('Error changing status:', error);
+                this.showNotification('حدث خطأ أثناء تغيير الحالة', 'error');
+            }
+        }
+
+        async endSurvey() {
+            if (!confirm('هل أنت متأكد من إنهاء الاستبيان نهائياً؟ لن يتمكن أي شخص من الإجابة عليه بعد ذلك.')) {
+                return;
+            }
+            
+            try {
+                const { error } = await sb
+                    .from('surveys')
+                    .update({ 
+                        status: 'active',
+                        end_date: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', this.currentSurvey.id);
+
+                if (error) throw error;
+
+                this.showNotification('تم إنهاء الاستبيان بنجاح', 'success');
+                
+                if (window.surveysManager) {
+                    await window.surveysManager.loadAllSurveys();
+                }
+                
+                this.close();
+            } catch (error) {
+                console.error('Error ending survey:', error);
+                this.showNotification('حدث خطأ أثناء إنهاء الاستبيان', 'error');
+            }
+        }
+
         async save() {
             try {
                 const title = document.getElementById('editSurveyTitle').value.trim();
@@ -695,15 +746,27 @@
                     return;
                 }
 
-                // جمع البيانات
+                // تحويل التواريخ المحلية مع الحفاظ على التوقيت المحلي
+                const startDateInput = document.getElementById('editSurveyStartDate').value;
+                const endDateInput = document.getElementById('editSurveyEndDate').value;
+                
+                // إرسال التاريخ كما هو بدون تحويل إلى UTC
+                // Supabase يتعامل مع timestamptz بشكل صحيح
+                const startDate = startDateInput ? startDateInput + ':00' : null;
+                const endDate = endDateInput ? endDateInput + ':00' : null;
+
+                // الحصول على معرف المستخدم الحالي
+                const { data: { user } } = await sb.auth.getUser();
+
+                // جمع البيانات - الحالة تبقى كما هي (لا يتم تغييرها من هنا)
+                // ملاحظة: تم إزالة updated_by لأن العمود غير موجود في قاعدة البيانات
                 const surveyData = {
                     title,
                     description: document.getElementById('editSurveyDescription').value || null,
-                    survey_type: document.getElementById('editSurveyType').value,
-                    status: document.getElementById('editSurveyStatus').value,
-                    access_type: document.getElementById('editSurveyAccess').value,
-                    start_date: document.getElementById('editSurveyStartDate').value || null,
-                    end_date: document.getElementById('editSurveyEndDate').value || null,
+                    survey_type: 'general',
+                    access_type: 'public',
+                    start_date: startDate,
+                    end_date: endDate,
                     welcome_message: document.getElementById('editWelcomeMessage').value || null,
                     thank_you_message: document.getElementById('editThankYouMessage').value || 'شكراً لمشاركتك',
                     allow_multiple_responses: document.getElementById('editallowMultipleResponses')?.checked || false,
@@ -799,6 +862,19 @@
                 hour: '2-digit',
                 minute: '2-digit'
             });
+        }
+
+        formatDateForInput(dateString) {
+            // تحويل التاريخ من قاعدة البيانات (UTC) إلى التوقيت المحلي لعرضه في حقل datetime-local
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            // تحويل إلى التوقيت المحلي بصيغة YYYY-MM-DDTHH:mm
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
 
         showNotification(message, type = 'info') {

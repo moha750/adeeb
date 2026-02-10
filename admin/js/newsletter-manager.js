@@ -199,16 +199,16 @@ class NewsletterManager {
                 <div class="application-card-footer">
                     <div class="card-actions-grid">
                         ${subscriber.status === 'active' 
-                            ? `<button class="btn-action btn-action-warning unsubscribe-btn" data-id="${subscriber.id}">
+                            ? `<button class="btn btn--warning btn--sm unsubscribe-btn" data-id="${subscriber.id}">
                                 <i class="fa-solid fa-user-xmark"></i>
                                 إلغاء الاشتراك
                             </button>`
-                            : `<button class="btn-action btn-action-success resubscribe-btn" data-id="${subscriber.id}">
+                            : `<button class="btn btn--success btn--sm resubscribe-btn" data-id="${subscriber.id}">
                                 <i class="fa-solid fa-user-check"></i>
                                 إعادة الاشتراك
                             </button>`
                         }
-                        <button class="btn-action btn-action-danger delete-subscriber-btn" data-id="${subscriber.id}">
+                        <button class="btn btn--danger btn--sm delete-subscriber-btn" data-id="${subscriber.id}">
                             <i class="fa-solid fa-trash"></i>
                             حذف
                         </button>

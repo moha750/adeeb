@@ -238,7 +238,12 @@ window.ImpersonationManager = (function() {
      */
     async function loadUsersForImpersonation() {
         try {
-            const { data: { session } } = await sb.auth.getSession();
+            const { data: sessionData } = await sb.auth.getSession();
+            const session = sessionData?.session;
+            
+            if (!session || !session.user) {
+                throw new Error('لم يتم العثور على جلسة نشطة');
+            }
             
             const { data: profiles, error } = await sb
                 .from('profiles')
@@ -290,11 +295,12 @@ window.ImpersonationManager = (function() {
             if (searchInput) {
                 searchInput.addEventListener('input', (e) => {
                     const searchTerm = e.target.value.toLowerCase();
-                    const userItems = document.querySelectorAll('.impersonation-user-item');
+                    const userItems = document.querySelectorAll('.user-select-item');
                     
                     userItems.forEach(item => {
-                        const userName = item.dataset.userName.toLowerCase();
-                        if (userName.includes(searchTerm)) {
+                        const userName = (item.dataset.userName || '').toLowerCase();
+                        const userEmail = (item.querySelector('.user-select-email')?.textContent || '').toLowerCase();
+                        if (userName.includes(searchTerm) || userEmail.includes(searchTerm)) {
                             item.style.display = '';
                         } else {
                             item.style.display = 'none';
@@ -528,7 +534,7 @@ window.ImpersonationManager = (function() {
                                 </div>
                                 <div class="applicant-details">
                                     <h4 class="applicant-name">${session.admin_name || 'غير معروف'}</h4>
-                                    <p class="news-card__meta">${session.admin_email || ''}</p>
+                                    <div>${statusBadge}</div>
                                 </div>
                             </div>
                         </div>
@@ -539,7 +545,6 @@ window.ImpersonationManager = (function() {
                                     <div class="info-content">
                                         <span class="info-label">المستخدم المتنكر به</span>
                                         <span class="info-value">${session.impersonated_name || 'غير معروف'}</span>
-                                        <span class="info-value--sub">${session.impersonated_email || ''}</span>
                                     </div>
                                 </div>
                                 <div class="info-item">
@@ -574,9 +579,8 @@ window.ImpersonationManager = (function() {
                                 ` : ''}
                             </div>
                         </div>
-                        <div class="application-card-footer">
-                            ${statusBadge}
-                            <span class="session-id">
+                        <div class="application-card-footer" style="justify-content: flex-end; align-items: center;">
+                            <span class="session-id" style="font-size: 0.75rem; color: #6b7280; font-family: monospace;">
                                 <i class="fa-solid fa-fingerprint"></i> ${session.session_id.substring(0, 8)}...
                             </span>
                         </div>

@@ -449,10 +449,20 @@
     gap: 0.5rem;
     font-size: 0.85rem;
     color: var(--text-muted, #64748b);
+    flex-wrap: wrap;
 }
 
 .survey-edit-footer-info i {
     color: var(--color-warning, #f59e0b);
+}
+
+.survey-edit-footer-info i.fa-user-pen {
+    color: var(--color-primary-light, #3d8fd6);
+}
+
+.footer-info-separator {
+    color: #cbd5e1;
+    margin: 0 0.25rem;
 }
 
 .survey-edit-footer-actions {

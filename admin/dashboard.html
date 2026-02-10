@@ -23,7 +23,6 @@
     <link rel="stylesheet" href="css/form-inputs.css" />
     <link rel="stylesheet" href="css/membership-card.css" />
     <link rel="stylesheet" href="css/positions.css" />
-    <link rel="stylesheet" href="css/committee-members.css" />
     <link rel="stylesheet" href="css/impersonation.css" />
     <link rel="stylesheet" href="css/modals.css" />
     <link rel="stylesheet" href="css/filters.css" />
@@ -34,8 +33,8 @@
     <link rel="stylesheet" href="css/survey-edit-modal.css" />
     <!-- Image Cropper Styles -->
     <link rel="stylesheet" href="css/image-cropper.css" />
-    <!-- JS Components Styles - تنسيقات المكونات الديناميكية -->
-    <link rel="stylesheet" href="css/js-components.css" />
+    <!-- Dynamic Content Styles - تنسيقات المحتوى الديناميكي -->
+    <link rel="stylesheet" href="css/dynamic-content.css" />
 </head>
 
 <body>
@@ -273,15 +272,19 @@
             <!-- قسم الأعضاء المعلقين -->
             <section id="pending-members-section" class="admin-section d-none">
                 <div class="section-header">
-                    <h1>
-                        <i class="fa-solid fa-clock"></i>
-                        الأعضاء المعلقين
-                    </h1>
-                    <p class="section-subtitle">الأعضاء الذين لم يكملوا عملية التسجيل</p>
-                    <button class="btn btn--outline btn--outline-primary" id="refreshPendingMembersBtn">
-                        <i class="fa-solid fa-refresh"></i>
-                        تحديث
-                    </button>
+                    <div class="section-header-content">
+                        <h1>
+                            <i class="fa-solid fa-clock"></i>
+                            الأعضاء المعلقين
+                        </h1>
+                        <p class="section-subtitle">الأعضاء الذين لم يكملوا عملية التسجيل</p>
+                    </div>
+                    <div class="section-header-actions">
+                        <button class="btn btn--outline btn--outline-primary" id="refreshPendingMembersBtn">
+                            <i class="fa-solid fa-refresh"></i>
+                            تحديث
+                        </button>
+                    </div>
                 </div>
 
                 <!-- بطاقات الإحصائيات -->
@@ -375,7 +378,7 @@
                     </button>
                 </div>
 
-                <div class="committees-grid" id="committeesGrid">
+                <div class="applications-cards-grid" id="committeesGrid">
                     <!-- سيتم ملؤها ديناميكياً -->
                 </div>
             </section>
@@ -394,11 +397,11 @@
                             <option value="90">آخر 90 يوم</option>
                             <option value="365">آخر سنة</option>
                         </select>
-                        <button class="btn-outline btn-sm" id="exportVisitsBtn">
+                        <button class="btn btn--outline-secondary btn--sm" id="exportVisitsBtn">
                             <i class="fa-solid fa-download"></i>
                             تصدير البيانات
                         </button>
-                        <button class="btn-outline btn-sm" id="refreshVisitsBtn">
+                        <button class="btn btn--outline-primary btn--sm" id="refreshVisitsBtn">
                             <i class="fa-solid fa-rotate"></i>
                             تحديث
                         </button>
@@ -470,14 +473,22 @@
             <!-- قسم جميع الاستبيانات -->
             <section id="surveys-all-section" class="admin-section d-none">
                 <div class="section-header">
-                    <h1>
-                        <i class="fa-solid fa-clipboard-question"></i>
-                        جميع الاستبيانات
-                    </h1>
-                    <button class="btn btn--primary" id="createNewSurveyBtn">
-                        <i class="fa-solid fa-plus"></i>
-                        إنشاء استبيان جديد
-                    </button>
+                    <div class="section-header-content">
+                        <h1>
+                            <i class="fa-solid fa-clipboard-question"></i>
+                            جميع الاستبيانات
+                        </h1>
+                    </div>
+                    <div class="section-header-actions">
+                        <button class="btn btn--outline btn--outline-primary" id="refreshSurveysBtn">
+                            <i class="fa-solid fa-rotate"></i>
+                            تحديث
+                        </button>
+                        <button class="btn btn--primary" id="createNewSurveyBtn">
+                            <i class="fa-solid fa-plus"></i>
+                            إنشاء استبيان جديد
+                        </button>
+                    </div>
                 </div>
 
                 <!-- إحصائيات الاستبيانات -->
@@ -542,21 +553,6 @@
                         <option value="closed">منتهية</option>
                         <option value="archived">مؤرشف</option>
                     </select>
-                    <select id="surveysTypeFilter" class="filter-select">
-                        <option value="">جميع الأنواع</option>
-                        <option value="general">عام</option>
-                        <option value="membership">عضوية</option>
-                        <option value="event">فعالية</option>
-                        <option value="feedback">تقييم</option>
-                        <option value="evaluation">تقويم</option>
-                        <option value="poll">استطلاع</option>
-                        <option value="quiz">اختبار</option>
-                        <option value="research">بحث</option>
-                    </select>
-                    <button class="btn btn--outline btn--outline-primary" id="refreshSurveysBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
                 </div>
 
                 <!-- قائمة الاستبيانات -->
@@ -594,12 +590,24 @@
 
             <!-- قسم نتائج الاستبيانات - موحد مع تبويبات -->
             <section id="surveys-results-section" class="admin-section d-none">
-                <div class="section-header">
-                    <h1>
-                        <i class="fa-solid fa-chart-pie"></i>
-                        نتائج وتحليلات الاستبيانات
-                    </h1>
-                    <p class="section-subtitle">عرض الإحصائيات والاستجابات والتحليلات المتقدمة</p>
+                <div class="section-header" id="resultsMainHeader">
+                    <div class="section-header-content">
+                        <h1 id="resultsSectionTitle">
+                            <i class="fa-solid fa-chart-pie"></i>
+                            <span id="resultsTitleText">نتائج وتحليلات الاستبيانات</span>
+                        </h1>
+                        <p class="section-subtitle" id="resultsSubtitle">عرض الإحصائيات والاستجابات والتحليلات المتقدمة</p>
+                    </div>
+                    <div class="section-header-actions" id="resultsHeaderActions" style="display: none;">
+                        <button class="btn btn--outline btn--outline-primary" id="backToSurveysListHeader">
+                            <i class="fa-solid fa-arrow-right"></i>
+                            رجوع للقائمة
+                        </button>
+                        <button class="btn btn--primary" id="exportSurveyDataBtn">
+                            <i class="fa-solid fa-download"></i>
+                            تصدير
+                        </button>
+                    </div>
                 </div>
 
                 <!-- اختيار الاستبيان - واجهة محسنة -->
@@ -610,19 +618,6 @@
                                 <i class="fa-solid fa-clipboard-list"></i>
                                 اختر استبياناً لعرض نتائجه
                             </h3>
-                            <div class="results-export-options" id="resultsActions" style="display: none;">
-                                <button class="results-export-btn" id="exportCSVBtn" title="تصدير CSV">
-                                    <i class="fa-solid fa-file-csv"></i>
-                                    CSV
-                                </button>
-                                <button class="results-export-btn" id="exportExcelBtn" title="تصدير Excel">
-                                    <i class="fa-solid fa-file-excel"></i>
-                                    Excel
-                                </button>
-                                <button class="results-export-btn" id="refreshResultsBtn" title="تحديث">
-                                    <i class="fa-solid fa-rotate"></i>
-                                </button>
-                            </div>
                         </div>
                         <div class="card-body">
                             <!-- شريط البحث والفلاتر -->
@@ -636,12 +631,6 @@
                                     <option value="active">نشط</option>
                                     <option value="closed">منتهية</option>
                                     <option value="draft">مسودة</option>
-                                </select>
-                                <select id="surveyResultsTypeFilter" class="filter-select">
-                                    <option value="">جميع الأنواع</option>
-                                    <option value="general">عام</option>
-                                    <option value="feedback">تقييم</option>
-                                    <option value="poll">استطلاع</option>
                                 </select>
                             </div>
                             
@@ -666,35 +655,6 @@
 
                 <!-- التبويبات الأفقية - صفحة النتائج المنفصلة -->
                 <div id="resultsTabsContainer" style="display: none;">
-                    <!-- شريط العنوان مع زر الرجوع -->
-                    <div class="card" style="margin-bottom: 1.5rem;">
-                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                <button class="btn btn--outline btn--outline-primary" id="backToSurveysList" style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fa-solid fa-arrow-right"></i>
-                                    رجوع للقائمة
-                                </button>
-                                <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;" id="selectedSurveyTitle">
-                                    <i class="fa-solid fa-chart-pie"></i>
-                                    نتائج الاستبيان
-                                </h3>
-                            </div>
-                            <div class="results-export-options" id="resultsActionsTop">
-                                <button class="results-export-btn" id="exportCSVBtnTop" title="تصدير CSV" onclick="window.surveysResultsEnhanced?.exportToCSV()">
-                                    <i class="fa-solid fa-file-csv"></i>
-                                    CSV
-                                </button>
-                                <button class="results-export-btn" id="exportExcelBtnTop" title="تصدير Excel" onclick="window.surveysResultsEnhanced?.exportToExcel()">
-                                    <i class="fa-solid fa-file-excel"></i>
-                                    Excel
-                                </button>
-                                <button class="results-export-btn" id="refreshResultsBtnTop" title="تحديث" onclick="window.surveysResultsEnhanced?.refreshResults()">
-                                    <i class="fa-solid fa-rotate"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- شريط التبويبات -->
                     <div class="tabs-nav" style="display: flex; gap: 0.5rem; border-bottom: 2px solid #e5e7eb; margin-bottom: 1.5rem;">
                         <button class="tab-btn active" data-tab="statistics" style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: 500;">
@@ -704,6 +664,10 @@
                         <button class="tab-btn" data-tab="responses" style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; color: #6b7280;">
                             <i class="fa-solid fa-list"></i>
                             الاستجابات الفردية
+                        </button>
+                        <button class="tab-btn" data-tab="responses-table" style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; color: #6b7280;">
+                            <i class="fa-solid fa-table"></i>
+                            جدول الاستجابات
                         </button>
                         <button class="tab-btn" data-tab="analytics" style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; color: #6b7280;">
                             <i class="fa-solid fa-chart-line"></i>
@@ -719,23 +683,7 @@
                     </div>
 
                     <div class="tab-content" id="responses-tab" style="display: none;">
-                        <!-- فلاتر البحث -->
-                        <div class="responses-filters">
-                            <div class="responses-search">
-                                <i class="fa-solid fa-search"></i>
-                                <input type="text" id="responsesSearchInput" placeholder="ابحث عن مستخدم...">
-                            </div>
-                            <div class="responses-filter-group">
-                                <select id="responsesFilterDate">
-                                    <option value="">جميع الفترات</option>
-                                    <option value="today">اليوم</option>
-                                    <option value="week">آخر أسبوع</option>
-                                    <option value="month">آخر شهر</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <!-- محتوى الاستجابات -->
+                        <!-- محتوى الاستجابات - الفلاتر تُنشأ ديناميكياً -->
                         <div id="surveyResponsesContainer">
                             <!-- سيتم ملؤه ديناميكياً -->
                         </div>
@@ -743,6 +691,12 @@
 
                     <div class="tab-content" id="analytics-tab" style="display: none;">
                         <div id="surveyAnalyticsContainer">
+                            <!-- سيتم ملؤه ديناميكياً -->
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="responses-table-tab" style="display: none;">
+                        <div id="surveyResponsesTableContainer">
                             <!-- سيتم ملؤه ديناميكياً -->
                         </div>
                     </div>
@@ -1135,7 +1089,7 @@
                             <i class="fa-solid fa-clock-rotate-left"></i>
                             سجل الإشعارات المرسلة
                         </h3>
-                        <button class="btn-outline btn-sm" id="refreshHistoryBtn">
+                        <button class="btn btn--outline-primary btn--sm" id="refreshHistoryBtn">
                             <i class="fa-solid fa-rotate"></i>
                             تحديث
                         </button>
@@ -2664,7 +2618,7 @@
                         مسودات الأخبار
                     </h1>
                     <p class="section-subtitle">إنشاء وإدارة مسودات الأخبار قبل تعيين الكتّاب</p>
-                    <button class="btn btn--primary" id="createNewsDraftBtn">
+                    <button class="btn btn--primary btn--sm" id="createNewsDraftBtn">
                         <i class="fa-solid fa-plus"></i>
                         إنشاء مسودة جديدة
                     </button>
@@ -2736,7 +2690,7 @@
                         الأخبار قيد الكتابة
                     </h1>
                     <p class="section-subtitle">الأخبار التي يعمل عليها الكتّاب حالياً</p>
-                    <button class="btn btn--outline btn--outline-primary" id="refreshInProgressNewsBtn">
+                    <button class="btn btn--outline btn--outline-primary btn--sm" id="refreshInProgressNewsBtn">
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
@@ -2771,7 +2725,7 @@
                         جاهز للمراجعة
                     </h1>
                     <p class="section-subtitle">الأخبار المكتملة والجاهزة للمراجعة والنشر</p>
-                    <button class="btn btn--outline btn--outline-primary" id="refreshReviewNewsBtn">
+                    <button class="btn btn--outline btn--outline-primary btn--sm" id="refreshReviewNewsBtn">
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
@@ -2887,7 +2841,7 @@
                         الأخبار المؤرشفة
                     </h1>
                     <p class="section-subtitle">الأخبار القديمة المؤرشفة</p>
-                    <button class="btn btn--outline btn--outline-primary" id="refreshArchivedNewsBtn">
+                    <button class="btn btn--outline btn--outline-primary btn--sm" id="refreshArchivedNewsBtn">
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
@@ -3052,11 +3006,11 @@
                                 </div>
                                 
                                 <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                                    <button type="button" class="btn btn--outline btn--outline-secondary" id="clearInstantNewsBtn">
+                                    <button type="button" class="btn btn--outline btn--outline-secondary btn--sm" id="clearInstantNewsBtn">
                                         <i class="fa-solid fa-eraser"></i>
                                         مسح النموذج
                                     </button>
-                                    <button type="submit" class="btn btn--primary" id="publishInstantNewsBtn">
+                                    <button type="submit" class="btn btn--primary btn--sm" id="publishInstantNewsBtn">
                                         <i class="fa-solid fa-paper-plane"></i>
                                         نشر الخبر الآن
                                     </button>
@@ -3115,7 +3069,7 @@
                         <i class="fa-solid fa-briefcase"></i>
                         أعمالنا
                     </h1>
-                    <button class="btn btn--primary" id="addWorkBtn">
+                    <button class="btn btn--primary btn--sm" id="addWorkBtn">
                         <i class="fa-solid fa-plus"></i>
                         إضافة عمل جديد
                     </button>
@@ -3136,7 +3090,7 @@
                         <i class="fa-solid fa-trophy"></i>
                         الإنجازات
                     </h1>
-                    <button class="btn btn--primary" id="addAchievementBtn">
+                    <button class="btn btn--primary btn--sm" id="addAchievementBtn">
                         <i class="fa-solid fa-plus"></i>
                         إضافة إنجاز جديد
                     </button>
@@ -3157,7 +3111,7 @@
                         <i class="fa-solid fa-handshake"></i>
                         الشركاء
                     </h1>
-                    <button class="btn btn--primary" id="addSponsorBtn">
+                    <button class="btn btn--primary btn--sm" id="addSponsorBtn">
                         <i class="fa-solid fa-plus"></i>
                         إضافة شريك جديد
                     </button>
@@ -3178,7 +3132,7 @@
                         <i class="fa-solid fa-circle-question"></i>
                         الأسئلة الشائعة
                     </h1>
-                    <button class="btn btn--primary" id="addFaqBtn">
+                    <button class="btn btn--primary btn--sm" id="addFaqBtn">
                         <i class="fa-solid fa-plus"></i>
                         إضافة سؤال جديد
                     </button>
@@ -3333,8 +3287,16 @@
                     <input type="text" id="workCategory" placeholder="مثال: كتاب، مقال، فيديو" />
                 </div>
                 <div class="form-group">
-                    <label>رابط الصورة *</label>
-                    <input type="url" id="workImage" required placeholder="https://example.com/image.jpg" />
+                    <label>صورة العمل *</label>
+                    <div class="image-upload-container" id="workImageUploadContainer">
+                        <input type="file" id="workImageFile" accept="image/*" style="display: none;" />
+                        <input type="hidden" id="workImage" />
+                        <div class="image-preview" id="workImagePreview">
+                            <i class="fa-solid fa-cloud-upload-alt"></i>
+                            <span>اضغط لرفع صورة</span>
+                        </div>
+                    </div>
+                    <small class="text-muted">الصيغ المدعومة: JPG, PNG, GIF, WebP</small>
                 </div>
                 <div class="form-group">
                     <label>رابط العمل</label>
@@ -3418,8 +3380,16 @@
                     <textarea id="sponsorDescription" rows="3"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>رابط الشعار *</label>
-                    <input type="url" id="sponsorLogo" required placeholder="https://example.com/logo.png" />
+                    <label>شعار الشريك *</label>
+                    <div class="image-upload-container" id="sponsorLogoUploadContainer">
+                        <input type="file" id="sponsorLogoFile" accept="image/*" style="display: none;" />
+                        <input type="hidden" id="sponsorLogo" />
+                        <div class="image-preview" id="sponsorLogoPreview">
+                            <i class="fa-solid fa-cloud-upload-alt"></i>
+                            <span>اضغط لرفع شعار</span>
+                        </div>
+                    </div>
+                    <small class="text-muted">الصيغ المدعومة: JPG, PNG, GIF, WebP, SVG</small>
                 </div>
                 <div class="form-group">
                     <label>رابط الموقع</label>

@@ -1,0 +1,926 @@
+/* ============================================================================
+   Dynamic Content Styles - تنسيقات المحتوى الديناميكي
+   تم إنشاؤه لتوحيد تصميم المحتوى المولّد من JavaScript
+   ============================================================================ */
+
+/* ============================================================================
+   Top Pages List - قائمة أكثر الصفحات زيارة
+   ============================================================================ */
+
+.top-pages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.top-page-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 12px rgba(31, 38, 135, 0.06);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.top-page-item:hover {
+    transform: translateX(-4px);
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 20px rgba(31, 38, 135, 0.1);
+    border-color: rgba(61, 143, 214, 0.2);
+}
+
+.top-page-rank {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #3d8fd6, #274060);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(61, 143, 214, 0.3);
+}
+
+/* ترتيب خاص للمراكز الثلاثة الأولى */
+.top-page-item:nth-child(1) .top-page-rank {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+}
+
+.top-page-item:nth-child(2) .top-page-rank {
+    background: linear-gradient(135deg, #94a3b8, #64748b);
+    box-shadow: 0 4px 12px rgba(148, 163, 184, 0.35);
+}
+
+.top-page-item:nth-child(3) .top-page-rank {
+    background: linear-gradient(135deg, #cd7f32, #a0522d);
+    box-shadow: 0 4px 12px rgba(205, 127, 50, 0.35);
+}
+
+.top-page-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.top-page-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-dark, #1f2937);
+    margin: 0 0 4px;
+    line-height: 1.4;
+}
+
+.top-page-path {
+    font-size: 0.8rem;
+    color: var(--text-light, #6b7280);
+    margin: 0;
+    direction: ltr;
+    text-align: right;
+    font-family: 'Consolas', 'Monaco', monospace;
+    opacity: 0.8;
+}
+
+.top-page-bar {
+    height: 5px;
+    background: rgba(61, 143, 214, 0.12);
+    border-radius: 3px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.top-page-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3d8fd6, #10b981);
+    border-radius: 3px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.top-page-stats {
+    text-align: left;
+    min-width: 90px;
+    flex-shrink: 0;
+}
+
+.top-page-visits {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #3d8fd6;
+    display: block;
+    line-height: 1;
+}
+
+.top-page-label {
+    font-size: 0.7rem;
+    color: var(--text-light, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.top-page-unique {
+    font-size: 0.75rem;
+    color: #10b981;
+    display: block;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+/* ============================================================================
+   Surveys Sections - أقسام الاستبيانات
+   ============================================================================ */
+
+.surveys-section {
+    margin-bottom: 28px;
+}
+
+.surveys-section-header {
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid rgba(61, 143, 214, 0.1);
+}
+
+.surveys-section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-dark, #1f2937);
+    margin: 0;
+}
+
+.surveys-section-header h3 i {
+    font-size: 1.1rem;
+}
+
+.surveys-section-content {
+    display: grid;
+    gap: 20px;
+}
+
+.surveys-section-ended {
+    opacity: 0.85;
+}
+
+.surveys-section-ended .surveys-section-header {
+    border-bottom-color: rgba(239, 68, 68, 0.15);
+}
+
+/* ============================================================================
+   Charts Grid - شبكة الرسوم البيانية
+   ============================================================================ */
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.chart-container {
+    position: relative;
+    min-height: 300px;
+    padding: 16px;
+}
+
+.chart-container canvas {
+    max-height: 350px;
+}
+
+/* ============================================================================
+   Data Tables - جداول البيانات
+   ============================================================================ */
+
+.data-table {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.data-table table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.data-table th {
+    background: rgba(61, 143, 214, 0.08);
+    padding: 14px 16px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-dark, #374151);
+    border-bottom: 2px solid rgba(61, 143, 214, 0.15);
+    white-space: nowrap;
+}
+
+.data-table th:first-child {
+    border-radius: 0 10px 0 0;
+}
+
+.data-table th:last-child {
+    border-radius: 10px 0 0 0;
+}
+
+.data-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 0.9rem;
+    color: var(--text-dark, #1f2937);
+    transition: background 0.2s ease;
+}
+
+.data-table tr:hover td {
+    background: rgba(61, 143, 214, 0.04);
+}
+
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* ============================================================================
+   Empty States - الحالات الفارغة (محسّنة)
+   ============================================================================ */
+
+.empty-state {
+    text-align: center;
+    padding: 56px 32px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 2px dashed rgba(61, 143, 214, 0.2);
+}
+
+.empty-state i,
+.empty-state .empty-state__icon {
+    font-size: 4rem;
+    background: linear-gradient(135deg, #d1d5db, #9ca3af);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px;
+    display: block;
+}
+
+.empty-state h3,
+.empty-state .empty-state__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-dark, #374151);
+    margin: 0 0 10px;
+}
+
+.empty-state p,
+.empty-state .empty-state__text {
+    font-size: 0.95rem;
+    color: var(--text-light, #6b7280);
+    margin: 0 0 24px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.empty-state button,
+.empty-state .btn {
+    margin-top: 8px;
+}
+
+.empty-state-small {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--text-light, #6b7280);
+}
+
+.empty-state-small i {
+    font-size: 2.5rem;
+    color: #d1d5db;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.empty-state-small p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* ============================================================================
+   Loading States - حالات التحميل (محسّنة)
+   ============================================================================ */
+
+.loading-spinner {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-light, #6b7280);
+}
+
+.loading-spinner i {
+    font-size: 2.5rem;
+    color: #3d8fd6;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.loading-spinner::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 16px;
+    border: 3px solid rgba(61, 143, 214, 0.2);
+    border-top-color: #3d8fd6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   Error & No Data States - حالات الخطأ وعدم وجود بيانات
+   ============================================================================ */
+
+.no-data {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--text-light, #6b7280);
+    font-style: italic;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 12px;
+}
+
+.error-message {
+    text-align: center;
+    padding: 24px 20px;
+    color: #dc2626;
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 14px;
+    font-weight: 500;
+}
+
+.error-message i {
+    margin-left: 8px;
+}
+
+/* ============================================================================
+   Info Grid - شبكة المعلومات
+   ============================================================================ */
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.info-item:hover {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.info-item i {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(61, 143, 214, 0.1);
+    color: #3d8fd6;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.info-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.info-label {
+    font-size: 0.75rem;
+    color: var(--text-light, #6b7280);
+    margin-bottom: 2px;
+    display: block;
+}
+
+.info-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-dark, #1f2937);
+    word-break: break-word;
+}
+
+/* ============================================================================
+   Application Info Grid - شبكة معلومات التطبيق
+   ============================================================================ */
+
+.application-info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.application-info-grid .info-item {
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.application-info-grid .info-item i {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+}
+
+/* ============================================================================
+   Badges - الشارات
+   ============================================================================ */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.badge-primary {
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+}
+
+.badge-secondary {
+    background: rgba(107, 114, 128, 0.12);
+    color: #4b5563;
+}
+
+.badge-success {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+}
+
+.badge-warning {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+.badge-danger {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+}
+
+.badge-info {
+    background: rgba(61, 143, 214, 0.12);
+    color: #2563eb;
+}
+
+/* ============================================================================
+   Action Buttons - أزرار الإجراءات
+   ============================================================================ */
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.btn-action i {
+    font-size: 0.85rem;
+}
+
+.btn-action-primary {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.btn-action-primary:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-action-secondary {
+    background: rgba(107, 114, 128, 0.1);
+    color: #4b5563;
+}
+
+.btn-action-secondary:hover {
+    background: rgba(107, 114, 128, 0.2);
+}
+
+.btn-action-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.btn-action-success:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-action-warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.btn-action-warning:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.btn-action-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.btn-action-danger:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-action-info {
+    background: linear-gradient(135deg, #3d8fd6, #2563eb);
+    color: white;
+}
+
+.btn-action-info:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(61, 143, 214, 0.3);
+}
+
+/* ============================================================================
+   Application Cards - بطاقات التطبيق
+   ============================================================================ */
+
+.application-card {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 4px 24px rgba(31, 38, 135, 0.08);
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 16px;
+}
+
+.application-card:last-child {
+    margin-bottom: 0;
+}
+
+.application-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.12);
+    border-color: rgba(61, 143, 214, 0.2);
+}
+
+.application-card-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.applicant-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.applicant-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #3d8fd6, #274060);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(61, 143, 214, 0.25);
+}
+
+.applicant-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.applicant-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-dark, #1f2937);
+    margin: 0 0 6px;
+    line-height: 1.3;
+}
+
+.applicant-details > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.application-card-body {
+    padding: 20px;
+}
+
+.application-card-footer {
+    padding: 16px 20px;
+    background: rgba(0, 0, 0, 0.02);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* زرين بكل صف */
+    gap: 10px;
+}
+
+/* إذا تبقى عنصر واحد في الصف الأخير */
+.application-card-footer > *:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+}
+
+.order-buttons {
+    display: flex;
+    gap: 5px;
+    margin-right: auto;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* .btn-order styles moved to buttons.css */
+
+/* ============================================================================
+   Question Editor - محرر الأسئلة
+   ============================================================================ */
+
+.question-editor {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.question-editor:hover {
+    border-color: rgba(61, 143, 214, 0.25);
+    box-shadow: 0 4px 16px rgba(31, 38, 135, 0.08);
+}
+
+.question-editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: rgba(61, 143, 214, 0.06);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.question-number {
+    font-weight: 600;
+    color: #3d8fd6;
+    font-size: 0.9rem;
+}
+
+.question-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.questions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* ============================================================================
+   Responsive Design
+   ============================================================================ */
+
+@media (max-width: 1024px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .top-page-item {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    
+    .top-page-stats {
+        width: 100%;
+        text-align: right;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .top-page-visits {
+        font-size: 1.3rem;
+    }
+    
+    .application-card-footer {
+        grid-template-columns: 1fr; /* زر واحد بكل صف */
+    }
+
+    .application-card-footer .btn-action {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .top-page-rank {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+    
+    .empty-state {
+        padding: 40px 20px;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+    }
+}
+
+/* ============================================================================
+   Dark Mode Support
+   ============================================================================ */
+
+@media (prefers-color-scheme: dark) {
+    .top-page-item {
+        background: rgba(30, 41, 59, 0.5);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+    
+    .top-page-item:hover {
+        background: rgba(30, 41, 59, 0.7);
+    }
+    
+    .top-page-title {
+        color: #e2e8f0;
+    }
+    
+    .top-page-path {
+        color: #94a3b8;
+    }
+    
+    .application-card {
+        background: rgba(30, 41, 59, 0.55);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+    
+    .application-card:hover {
+        background: rgba(30, 41, 59, 0.7);
+    }
+    
+    .applicant-name {
+        color: #e2e8f0;
+    }
+    
+    .empty-state {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.4), rgba(30, 41, 59, 0.2));
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .empty-state h3 {
+        color: #e2e8f0;
+    }
+    
+    .data-table th {
+        background: rgba(61, 143, 214, 0.15);
+        color: #e2e8f0;
+    }
+    
+    .data-table td {
+        color: #cbd5e1;
+        border-bottom-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .data-table tr:hover td {
+        background: rgba(61, 143, 214, 0.08);
+    }
+    
+    .question-editor {
+        background: rgba(30, 41, 59, 0.5);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+    
+    .question-editor-header {
+        background: rgba(61, 143, 214, 0.1);
+    }
+}
+
+/* ============================================================================
+   Survey Selector Cards - بطاقات اختيار الاستبيانات
+   ============================================================================ */
+
+/* بطاقات نتائج الاستبيانات - تستخدم نمط application-card */
+.survey-result-card {
+    cursor: pointer;
+}
+
+.survey-result-card:hover {
+    border-color: rgba(61, 143, 214, 0.3);
+}
+
+.survey-result-card.selected {
+    border-color: rgba(61, 143, 214, 0.5);
+    box-shadow: 0 0 0 3px rgba(61, 143, 214, 0.1);
+}
+
+.survey-result-card--active {
+    border-right: 3px solid #10b981;
+}
+
+.survey-grid-section {
+    grid-column: 1 / -1;
+    margin-bottom: 4px;
+}
+
+.survey-grid-section-title {
+    margin: 0;
+    padding: 8px 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #274060;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ============================================================================
+   Print Styles
+   ============================================================================ */
+
+@media print {
+    .top-page-item,
+    .application-card,
+    .question-editor {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: white;
+    }
+    
+    .btn-action,
+    .question-actions {
+        display: none;
+    }
+}
+
+/* ============================================================================
+   Accessibility
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    .top-page-item,
+    .application-card,
+    .question-editor,
+    .btn-action,
+    .top-page-bar-fill {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+.top-page-item:focus-visible,
+.application-card:focus-visible,
+.btn-action:focus-visible {
+    outline: 3px solid #3d8fd6;
+    outline-offset: 2px;
+}

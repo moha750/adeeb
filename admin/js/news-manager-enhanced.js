@@ -170,9 +170,9 @@ window.NewsManagerEnhanced = (function() {
                     <div class="applicant-info">
                         <div class="applicant-details">
                             <h4 class="applicant-name">📄 ${news.title}</h4>
-                            <p class="news-card__meta">
-                                <i class="fa-solid fa-sitemap"></i> ${news.committees?.committee_name_ar || 'غير محدد'}
-                            </p>
+                            <div>
+                                <span class="badge badge-secondary"><i class="fa-solid fa-file"></i> مسودة</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -197,7 +197,6 @@ window.NewsManagerEnhanced = (function() {
                     </div>
                 </div>
                 <div class="application-card-footer">
-                    <span class="badge badge-secondary"><i class="fa-solid fa-file"></i> مسودة</span>
                     <div class="news-card__actions">
                         <button class="btn btn--primary btn--sm" onclick="NewsManagerEnhanced.assignWritersToDraft('${news.id}')">
                             <i class="fa-solid fa-users"></i>
@@ -270,9 +269,7 @@ window.NewsManagerEnhanced = (function() {
                     <div class="applicant-info">
                         <div class="applicant-details">
                             <h4 class="applicant-name">✍️ ${news.title}</h4>
-                            <p class="news-card__meta">
-                                <i class="fa-solid fa-sitemap"></i> ${news.committees?.committee_name_ar || 'غير محدد'}
-                            </p>
+                            <div>${statusBadge}</div>
                         </div>
                     </div>
                 </div>
@@ -302,7 +299,6 @@ window.NewsManagerEnhanced = (function() {
                     </div>
                 </div>
                 <div class="application-card-footer">
-                    ${statusBadge}
                     <div class="news-card__actions">
                         <button class="btn btn--outline btn--outline-primary btn--sm" onclick="NewsManagerEnhanced.viewNewsDetails('${news.id}')">
                             <i class="fa-solid fa-eye"></i>
@@ -355,9 +351,9 @@ window.NewsManagerEnhanced = (function() {
                     <div class="applicant-info">
                         <div class="applicant-details">
                             <h4 class="applicant-name">✅ ${news.title}</h4>
-                            <p class="news-card__meta">
-                                <i class="fa-solid fa-sitemap"></i> ${news.committees?.committee_name_ar || 'غير محدد'}
-                            </p>
+                            <div>
+                                <span class="badge badge-success"><i class="fa-solid fa-check-circle"></i> جاهز للمراجعة</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -385,7 +381,6 @@ window.NewsManagerEnhanced = (function() {
                     ` : ''}
                 </div>
                 <div class="application-card-footer">
-                    <span class="badge badge-success"><i class="fa-solid fa-check-circle"></i> جاهز للمراجعة</span>
                     <div class="news-card__actions">
                         <button class="btn btn--primary btn--sm" onclick="NewsManagerEnhanced.publishNews('${news.id}')">
                             <i class="fa-solid fa-paper-plane"></i>
@@ -469,7 +464,10 @@ window.NewsManagerEnhanced = (function() {
                     <div class="applicant-info">
                         <div class="applicant-details">
                             <h4 class="applicant-name">${news.title}</h4>
-                            <p class="news-card__meta">${news.summary || ''}</p>
+                            <div>
+                                <span class="badge badge-success"><i class="fa-solid fa-check-circle"></i> منشور</span>
+                                ${news.is_featured ? '<span class="badge badge-warning"><i class="fa-solid fa-star"></i> مميز</span>' : ''}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -489,19 +487,9 @@ window.NewsManagerEnhanced = (function() {
                                 <span class="info-value">${news.views || 0}</span>
                             </div>
                         </div>
-                        ${news.is_featured ? `
-                            <div class="info-item">
-                                <i class="fa-solid fa-star"></i>
-                                <div class="info-content">
-                                    <span class="info-label">خبر مميز</span>
-                                    <span class="info-value">نعم</span>
-                                </div>
-                            </div>
-                        ` : ''}
                     </div>
                 </div>
                 <div class="application-card-footer">
-                    <span class="badge badge-success"><i class="fa-solid fa-check-circle"></i> منشور</span>
                     <div class="news-card__actions">
                         <button class="btn btn--outline btn--outline-primary btn--sm" onclick="window.open('/news/news-detail.html?id=${news.id}', '_blank')">
                             <i class="fa-solid fa-external-link"></i>

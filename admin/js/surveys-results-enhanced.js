@@ -13,6 +13,7 @@
         constructor() {
             this.setupTabsNavigation();
             this.setupExportButtons();
+            this.setupBackButton();
         }
 
         setupTabsNavigation() {
@@ -21,29 +22,76 @@
                     const btn = e.target.classList.contains('tab-btn') ? e.target : e.target.closest('.tab-btn');
                     const tabName = btn.dataset.tab;
                     
-                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                    // تحديث التبويبات النشطة
+                    const tabsContainer = btn.closest('.tabs-nav');
+                    if (tabsContainer) {
+                        tabsContainer.querySelectorAll('.tab-btn').forEach(b => {
+                            b.classList.remove('active');
+                            b.style.borderBottom = 'none';
+                            b.style.color = '#6b7280';
+                        });
+                        btn.classList.add('active');
+                        btn.style.borderBottom = '3px solid #3b82f6';
+                        btn.style.color = '#3b82f6';
+                    }
                     
-                    btn.classList.add('active');
-                    document.getElementById(`${tabName}-tab`)?.classList.add('active');
+                    // إخفاء جميع المحتويات وإظهار المحتوى المطلوب
+                    document.querySelectorAll('.tab-content').forEach(p => p.style.display = 'none');
+                    const targetTab = document.getElementById(`${tabName}-tab`);
+                    if (targetTab) {
+                        targetTab.style.display = 'block';
+                        // عرض جدول الاستجابات عند التبديل إليه
+                        if (tabName === 'responses-table') {
+                            this.renderResponsesTable();
+                        }
+                    }
                 }
             });
         }
 
         setupExportButtons() {
-            const exportExcel = document.getElementById('exportExcelBtn');
-            const exportCSV = document.getElementById('exportCSVBtn');
-            const exportPDF = document.getElementById('exportPDFBtn');
+            // زر التصدير الجديد في الهيدر
+            const exportBtn = document.getElementById('exportSurveyDataBtn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => this.exportToCSV());
+            }
+        }
 
-            if (exportExcel) {
-                exportExcel.addEventListener('click', () => this.exportToExcel());
+        setupBackButton() {
+            // زر الرجوع الجديد في الهيدر
+            const backBtn = document.getElementById('backToSurveysListHeader');
+            if (backBtn) {
+                backBtn.addEventListener('click', () => this.backToSurveysList());
             }
-            if (exportCSV) {
-                exportCSV.addEventListener('click', () => this.exportToCSV());
+            
+            // زر الرجوع القديم (للتوافق)
+            const oldBackBtn = document.getElementById('backToSurveysList');
+            if (oldBackBtn) {
+                oldBackBtn.addEventListener('click', () => this.backToSurveysList());
             }
-            if (exportPDF) {
-                exportPDF.addEventListener('click', () => this.exportToPDF());
-            }
+        }
+
+        backToSurveysList() {
+            // إعادة العنوان الأصلي
+            const titleText = document.getElementById('resultsTitleText');
+            const subtitle = document.getElementById('resultsSubtitle');
+            if (titleText) titleText.textContent = 'نتائج وتحليلات الاستبيانات';
+            if (subtitle) subtitle.textContent = 'عرض الإحصائيات والاستجابات والتحليلات المتقدمة';
+            
+            // إخفاء أزرار الهيدر
+            const headerActions = document.getElementById('resultsHeaderActions');
+            if (headerActions) headerActions.style.display = 'none';
+            
+            // إظهار قائمة الاستبيانات وإخفاء التبويبات
+            const selectorContainer = document.getElementById('surveySelectorContainer');
+            const tabsContainer = document.getElementById('resultsTabsContainer');
+            if (selectorContainer) selectorContainer.style.display = 'block';
+            if (tabsContainer) tabsContainer.style.display = 'none';
+            
+            // إعادة تعيين البيانات
+            currentSurveyData = null;
+            currentResponses = [];
+            currentQuestions = [];
         }
 
         async loadSurveyResults(surveyId) {
@@ -81,11 +129,22 @@
                 currentResponses = this.markAbandonedResponses(responses);
 
                 document.getElementById('resultsTabsContainer').style.display = 'block';
-                document.getElementById('resultsActions').style.display = 'flex';
+                document.getElementById('surveySelectorContainer').style.display = 'none';
+                
+                // إظهار أزرار الهيدر وتحديث العنوان
+                const headerActions = document.getElementById('resultsHeaderActions');
+                if (headerActions) headerActions.style.display = 'flex';
+                
+                const titleText = document.getElementById('resultsTitleText');
+                if (titleText) titleText.textContent = survey.title;
+                
+                const subtitle = document.getElementById('resultsSubtitle');
+                if (subtitle) subtitle.textContent = survey.description || 'عرض نتائج وتحليلات الاستبيان';
 
                 this.renderStatistics();
                 this.renderResponses();
                 this.renderAnalytics();
+                this.renderResponsesTable();
 
             } catch (error) {
                 console.error('Error loading results:', error);
@@ -383,19 +442,11 @@
                                     <span class="info-value">${this.formatTime(response.time_spent_seconds)}</span>
                                 </div>
                             </div>
-
-                            <div class="info-item">
-                                <i class="fa-solid fa-mobile"></i>
-                                <div class="info-content">
-                                    <span class="info-label">الجهاز</span>
-                                    <span class="info-value">${response.device_type || 'غير محدد'}</span>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
                     <div class="application-card-footer">
-                        <button class="btn-action btn-action-primary" onclick="window.surveysResultsEnhanced.viewResponseDetails('${response.id}')">
+                        <button class="btn btn--info btn--sm" onclick="window.surveysResultsEnhanced.viewResponseDetails('${response.id}')">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل
                         </button>
@@ -533,6 +584,91 @@
             `;
         }
 
+        renderResponsesTable() {
+            const container = document.getElementById('surveyResponsesTableContainer');
+            if (!container) return;
+
+            if (!currentResponses || currentResponses.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-table"></i>
+                        <p>لا توجد استجابات لعرضها</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const completedResponses = currentResponses.filter(r => r.status === 'completed');
+
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0;">
+                            <i class="fa-solid fa-table"></i>
+                            جدول الاستجابات (${completedResponses.length} استجابة مكتملة)
+                        </h3>
+                    </div>
+                    <div class="card-body" style="overflow-x: auto;">
+                        <table class="table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8fafc;">
+                                    <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0; white-space: nowrap;">#</th>
+                                    <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0; white-space: nowrap;">المستجيب</th>
+                                    <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0; white-space: nowrap;">التاريخ</th>
+                                    <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0; white-space: nowrap;">الوقت</th>
+                                    ${currentQuestions.map(q => `
+                                        <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0; min-width: 150px;" title="${this.escapeHtml(q.question_text)}">
+                                            ${this.escapeHtml(q.question_text.length > 30 ? q.question_text.substring(0, 30) + '...' : q.question_text)}
+                                        </th>
+                                    `).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${completedResponses.map((response, index) => {
+                                    const userName = response.user?.full_name || (response.is_anonymous ? 'مجهول' : 'غير معروف');
+                                    return `
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="padding: 10px; text-align: right;">${index + 1}</td>
+                                            <td style="padding: 10px; text-align: right; white-space: nowrap;">${this.escapeHtml(userName)}</td>
+                                            <td style="padding: 10px; text-align: right; white-space: nowrap;">${this.formatDate(response.created_at)}</td>
+                                            <td style="padding: 10px; text-align: right; white-space: nowrap;">${this.formatTime(response.time_spent_seconds)}</td>
+                                            ${currentQuestions.map(q => {
+                                                const answer = response.survey_answers.find(a => a.question_id === q.id);
+                                                const answerText = this.getAnswerTextForTable(answer, q);
+                                                return `<td style="padding: 10px; text-align: right;">${answerText}</td>`;
+                                            }).join('')}
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        getAnswerTextForTable(answer, question) {
+            if (!answer) return '<span style="color: #94a3b8;">-</span>';
+            
+            if (answer.answer_text) {
+                const text = answer.answer_text;
+                return this.escapeHtml(text.length > 50 ? text.substring(0, 50) + '...' : text);
+            }
+            if (answer.answer_number !== null && answer.answer_number !== undefined) {
+                return answer.answer_number;
+            }
+            if (answer.answer_boolean !== null && answer.answer_boolean !== undefined) {
+                return answer.answer_boolean ? '<span style="color: #10b981;">نعم</span>' : '<span style="color: #ef4444;">لا</span>';
+            }
+            if (answer.answer_json) {
+                if (Array.isArray(answer.answer_json)) {
+                    return this.escapeHtml(answer.answer_json.join('، '));
+                }
+                return this.escapeHtml(JSON.stringify(answer.answer_json));
+            }
+            return '<span style="color: #94a3b8;">-</span>';
+        }
+
         renderLinearScale(value, min, max) {
             const percentage = ((value - min) / (max - min)) * 100;
             return `
@@ -613,7 +749,7 @@
             container.innerHTML = `
                 <!-- كروت الإحصائيات الرئيسية - تم نقلها من قسم الإحصائيات -->
                 <div class="stats-grid mb-2rem">
-                    <div class="stat-card stat-card--blue">
+                    <div class="stat-card" style="--stat-color: #3b82f6;">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-users"></i>
@@ -625,8 +761,7 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card stat-card--green">
-                        <div class="stat-badge"><i class="fa-solid fa-arrow-up"></i> ${completionRate}%</div>
+                    <div class="stat-card" style="--stat-color: #10b981;">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-check-circle"></i>
@@ -638,7 +773,7 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card stat-card--yellow">
+                    <div class="stat-card" style="--stat-color: #f59e0b;">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-spinner"></i>
@@ -650,7 +785,7 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card stat-card--red">
+                    <div class="stat-card" style="--stat-color: #ef4444;">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-ban"></i>
@@ -661,8 +796,10 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="stat-card stat-card--teal">
+                </div>
+                
+                <div class="stats-grid mb-2rem">
+                    <div class="stat-card" style="--stat-color: #14b8a6;">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-eye"></i>
@@ -674,7 +811,7 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card stat-card--purple">
+                    <div class="stat-card" style="--stat-color: #8b5cf6;">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-clock"></i>
@@ -686,8 +823,7 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card stat-card--indigo">
-                        <div class="stat-badge"><i class="fa-solid fa-percentage"></i></div>
+                    <div class="stat-card" style="--stat-color: #6366f1;">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-chart-pie"></i>
@@ -916,7 +1052,44 @@
         }
 
         filterResponses() {
-            // سيتم تنفيذها لاحقاً
+            const searchTerm = document.getElementById('responsesSearchInput')?.value?.toLowerCase() || '';
+            const statusFilter = document.getElementById('responsesStatusFilter')?.value || '';
+            const sortFilter = document.getElementById('responsesSortFilter')?.value || 'newest';
+
+            let filtered = [...currentResponses];
+
+            // فلترة بالبحث
+            if (searchTerm) {
+                filtered = filtered.filter(r => {
+                    const userName = r.user?.full_name || '';
+                    return userName.toLowerCase().includes(searchTerm);
+                });
+            }
+
+            // فلترة بالحالة
+            if (statusFilter) {
+                filtered = filtered.filter(r => r.status === statusFilter);
+            }
+
+            // الترتيب
+            filtered.sort((a, b) => {
+                if (sortFilter === 'newest') {
+                    return new Date(b.created_at) - new Date(a.created_at);
+                } else if (sortFilter === 'oldest') {
+                    return new Date(a.created_at) - new Date(b.created_at);
+                } else if (sortFilter === 'fastest') {
+                    return (a.time_spent_seconds || 0) - (b.time_spent_seconds || 0);
+                } else if (sortFilter === 'slowest') {
+                    return (b.time_spent_seconds || 0) - (a.time_spent_seconds || 0);
+                }
+                return 0;
+            });
+
+            // إعادة عرض البطاقات
+            const container = document.getElementById('responsesListContainer');
+            if (container) {
+                container.innerHTML = filtered.map(r => this.renderResponseCard(r)).join('');
+            }
         }
 
         calculateMedian(values) {
@@ -1089,7 +1262,7 @@
                 const answerDisplay = this.formatAnswerDisplay(answer, question);
                 
                 answersHtml += `
-                    <div class="detail-item">
+                    <div class="response-answer-item">
                         <label>
                             <i class="fa-solid fa-question-circle"></i>
                             ${this.escapeHtml(question.question_text)}
@@ -1100,38 +1273,91 @@
             });
             
             const modalContent = `
-                <div class="detail-grid">
-                    <div class="detail-item">
+                <style>
+                    .response-detail-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 1rem;
+                        margin-bottom: 1.5rem;
+                        padding: 1rem;
+                        background: #f8fafc;
+                        border-radius: 12px;
+                    }
+                    .response-detail-item {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.25rem;
+                    }
+                    .response-detail-item label {
+                        font-size: 0.8rem;
+                        color: #64748b;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                    }
+                    .response-detail-item .value {
+                        font-weight: 600;
+                        color: #1e293b;
+                    }
+                    .response-answers-section {
+                        margin-top: 1.5rem;
+                    }
+                    .response-answers-title {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        font-size: 1.1rem;
+                        font-weight: 600;
+                        color: #1e293b;
+                        margin-bottom: 1rem;
+                        padding-bottom: 0.5rem;
+                        border-bottom: 2px solid #e2e8f0;
+                    }
+                    .response-answer-item {
+                        padding: 1rem;
+                        background: #fff;
+                        border: 1px solid #e2e8f0;
+                        border-radius: 8px;
+                        margin-bottom: 0.75rem;
+                    }
+                    .response-answer-item label {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        font-size: 0.9rem;
+                        color: #3b82f6;
+                        margin-bottom: 0.5rem;
+                        font-weight: 500;
+                    }
+                    .response-answer-item .value {
+                        color: #1e293b;
+                        line-height: 1.6;
+                    }
+                </style>
+                <div class="response-detail-grid">
+                    <div class="response-detail-item">
                         <label><i class="fa-solid fa-user"></i> المستجيب</label>
                         <div class="value">${this.escapeHtml(userName)}</div>
                     </div>
-                    <div class="detail-item">
+                    <div class="response-detail-item">
                         <label><i class="fa-solid fa-flag"></i> الحالة</label>
                         <div class="value"><span class="badge ${statusClass}">${statusText}</span></div>
                     </div>
-                    <div class="detail-item">
+                    <div class="response-detail-item">
                         <label><i class="fa-solid fa-calendar"></i> تاريخ الإرسال</label>
                         <div class="value">${this.formatDate(response.created_at)}</div>
                     </div>
-                    <div class="detail-item">
+                    <div class="response-detail-item">
                         <label><i class="fa-solid fa-clock"></i> وقت الإكمال</label>
                         <div class="value">${this.formatTime(response.time_spent_seconds)}</div>
                     </div>
-                    <div class="detail-item">
-                        <label><i class="fa-solid fa-mobile"></i> الجهاز</label>
-                        <div class="value">${response.device_type || 'غير محدد'}</div>
-                    </div>
-                    <div class="detail-item">
-                        <label><i class="fa-solid fa-globe"></i> عنوان IP</label>
-                        <div class="value">${response.ip_address || 'غير متوفر'}</div>
-                    </div>
                 </div>
                 
-                <h3 class="section-title">
-                    <i class="fa-solid fa-list-check"></i>
-                    الإجابات
-                </h3>
-                <div class="detail-grid">
+                <div class="response-answers-section">
+                    <h3 class="response-answers-title">
+                        <i class="fa-solid fa-list-check"></i>
+                        الإجابات
+                    </h3>
                     ${answersHtml}
                 </div>
             `;

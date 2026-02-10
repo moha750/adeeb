@@ -10,49 +10,60 @@
 
     // إضافة النوافذ المنبثقة إلى الصفحة
     function injectModals() {
+        // إزالة أي نوافذ منبثقة قديمة إن وجدت
+        document.getElementById('changeMemberEmailModal')?.remove();
+        document.getElementById('changeMemberEmailBackdrop')?.remove();
+        document.getElementById('changeMemberPasswordModal')?.remove();
+        document.getElementById('changeMemberPasswordBackdrop')?.remove();
+
         const modalsHTML = `
+            <!-- خلفية نافذة تغيير البريد الإلكتروني -->
+            <div class="modal-backdrop" id="changeMemberEmailBackdrop"></div>
             <!-- نافذة تغيير البريد الإلكتروني للعضو -->
-            <div class="modal" id="changeMemberEmailModal">
+            <div class="modal modal-md modal-warning" id="changeMemberEmailModal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h2>
-                            <i class="fa-solid fa-envelope"></i>
-                            تغيير البريد الإلكتروني
-                        </h2>
-                        <button class="btn-icon" id="closeChangeMemberEmailModal">
-                            <i class="fa-solid fa-times"></i>
+                        <div class="modal-header-content">
+                            <h3>
+                                <i class="fa-solid fa-envelope"></i>
+                                تغيير البريد الإلكتروني
+                            </h3>
+                        </div>
+                        <button class="modal-close-x" id="closeChangeMemberEmailModal">
+                            <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div>
-                            <p>
-                                <i class="fa-solid fa-exclamation-triangle"></i>
-                                <strong>تحذير:</strong> سيتم تغيير البريد الإلكتروني للعضو فوراً. تأكد من صحة البريد الجديد.
-                            </p>
+                        <div class="form-error" style="margin-bottom: 1rem;">
+                            <i class="fa-solid fa-exclamation-triangle"></i>
+                            <strong>تحذير:</strong> سيتم تغيير البريد الإلكتروني للعضو فوراً. تأكد من صحة البريد الجديد.
                         </div>
-                        <form id="changeMemberEmailForm">
+                        <form id="changeMemberEmailForm" class="modal-form-fields">
                             <input type="hidden" id="memberEmailUserId">
                             <div class="form-group">
                                 <label>اسم العضو</label>
-                                <input type="text" id="memberEmailName" readonly>
+                                <input type="text" class="form-input" id="memberEmailName" readonly>
                             </div>
                             <div class="form-group">
                                 <label>البريد الإلكتروني الحالي</label>
-                                <input type="email" id="memberEmailCurrent" readonly>
+                                <input type="email" class="form-input" id="memberEmailCurrent" readonly>
                             </div>
                             <div class="form-group">
-                                <label>البريد الإلكتروني الجديد <span>*</span></label>
-                                <input type="email" id="memberEmailNew" required placeholder="أدخل البريد الإلكتروني الجديد">
+                                <label>البريد الإلكتروني الجديد <span class="required">*</span></label>
+                                <input type="email" class="form-input" id="memberEmailNew" required placeholder="أدخل البريد الإلكتروني الجديد">
                             </div>
                             <div class="form-group">
-                                <label>تأكيد البريد الإلكتروني الجديد <span>*</span></label>
-                                <input type="email" id="memberEmailConfirm" required placeholder="أعد إدخال البريد الإلكتروني الجديد">
+                                <label>تأكيد البريد الإلكتروني الجديد <span class="required">*</span></label>
+                                <input type="email" class="form-input" id="memberEmailConfirm" required placeholder="أعد إدخال البريد الإلكتروني الجديد">
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn-outline" id="cancelChangeMemberEmail">إلغاء</button>
-                        <button type="button" class="btn-primary" id="saveMemberEmail">
+                        <button type="button" class="btn btn--outline btn--outline-secondary" id="cancelChangeMemberEmail">
+                            <i class="fa-solid fa-times"></i>
+                            إلغاء
+                        </button>
+                        <button type="button" class="btn btn--primary" id="saveMemberEmail">
                             <i class="fa-solid fa-save"></i>
                             تغيير البريد الإلكتروني
                         </button>
@@ -60,49 +71,54 @@
                 </div>
             </div>
 
+            <!-- خلفية نافذة تغيير كلمة المرور -->
+            <div class="modal-backdrop" id="changeMemberPasswordBackdrop"></div>
             <!-- نافذة تغيير كلمة المرور للعضو -->
-            <div class="modal" id="changeMemberPasswordModal">
+            <div class="modal modal-md modal-warning" id="changeMemberPasswordModal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h2>
-                            <i class="fa-solid fa-key"></i>
-                            تغيير كلمة المرور
-                        </h2>
-                        <button class="btn-icon" id="closeChangeMemberPasswordModal">
-                            <i class="fa-solid fa-times"></i>
+                        <div class="modal-header-content">
+                            <h3>
+                                <i class="fa-solid fa-key"></i>
+                                تغيير كلمة المرور
+                            </h3>
+                        </div>
+                        <button class="modal-close-x" id="closeChangeMemberPasswordModal">
+                            <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div>
-                            <p>
-                                <i class="fa-solid fa-exclamation-triangle"></i>
-                                <strong>تحذير:</strong> سيتم تغيير كلمة المرور للعضو فوراً. تأكد من إبلاغ العضو بكلمة المرور الجديدة.
-                            </p>
+                        <div class="form-error" style="margin-bottom: 1rem;">
+                            <i class="fa-solid fa-exclamation-triangle"></i>
+                            <strong>تحذير:</strong> سيتم تغيير كلمة المرور للعضو فوراً. تأكد من إبلاغ العضو بكلمة المرور الجديدة.
                         </div>
-                        <form id="changeMemberPasswordForm">
+                        <form id="changeMemberPasswordForm" class="modal-form-fields">
                             <input type="hidden" id="memberPasswordUserId">
                             <div class="form-group">
                                 <label>اسم العضو</label>
-                                <input type="text" id="memberPasswordName" readonly>
+                                <input type="text" class="form-input" id="memberPasswordName" readonly>
                             </div>
                             <div class="form-group">
                                 <label>البريد الإلكتروني</label>
-                                <input type="email" id="memberPasswordEmail" readonly>
+                                <input type="email" class="form-input" id="memberPasswordEmail" readonly>
                             </div>
                             <div class="form-group">
-                                <label>كلمة المرور الجديدة <span>*</span></label>
-                                <input type="password" id="memberPasswordNew" required placeholder="أدخل كلمة المرور الجديدة" minlength="8">
-                                <small>يجب أن تكون 8 أحرف على الأقل</small>
+                                <label>كلمة المرور الجديدة <span class="required">*</span></label>
+                                <input type="password" class="form-input" id="memberPasswordNew" required placeholder="أدخل كلمة المرور الجديدة" minlength="8">
+                                <small class="form-hint">يجب أن تكون 8 أحرف على الأقل</small>
                             </div>
                             <div class="form-group">
-                                <label>تأكيد كلمة المرور الجديدة <span>*</span></label>
-                                <input type="password" id="memberPasswordConfirm" required placeholder="أعد إدخال كلمة المرور الجديدة">
+                                <label>تأكيد كلمة المرور الجديدة <span class="required">*</span></label>
+                                <input type="password" class="form-input" id="memberPasswordConfirm" required placeholder="أعد إدخال كلمة المرور الجديدة">
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn-outline" id="cancelChangeMemberPassword">إلغاء</button>
-                        <button type="button" class="btn-primary" id="saveMemberPassword">
+                        <button type="button" class="btn btn--outline btn--outline-secondary" id="cancelChangeMemberPassword">
+                            <i class="fa-solid fa-times"></i>
+                            إلغاء
+                        </button>
+                        <button type="button" class="btn btn--primary" id="saveMemberPassword">
                             <i class="fa-solid fa-save"></i>
                             تغيير كلمة المرور
                         </button>
@@ -290,11 +306,11 @@
                     
                     <div class="application-card-footer">
                         <div class="card-actions-grid">
-                            <button class="btn-action btn-action-primary change-email-btn" data-user-id="${member.id}">
+                            <button class="btn btn--info btn--sm change-email-btn" data-user-id="${member.id}">
                                 <i class="fa-solid fa-envelope"></i>
                                 تغيير البريد
                             </button>
-                            <button class="btn-action btn-action-warning change-password-btn" data-user-id="${member.id}">
+                            <button class="btn btn--warning btn--sm change-password-btn" data-user-id="${member.id}">
                                 <i class="fa-solid fa-key"></i>
                                 تغيير كلمة المرور
                             </button>
@@ -331,8 +347,12 @@
         document.getElementById('memberEmailConfirm').value = '';
 
         const modal = document.getElementById('changeMemberEmailModal');
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
+        const backdrop = document.getElementById('changeMemberEmailBackdrop');
+        document.body.classList.add('modal-open');
+        setTimeout(() => {
+            backdrop.classList.add('active');
+            modal.classList.add('active');
+        }, 10);
     }
 
     // فتح نافذة تغيير كلمة المرور
@@ -347,8 +367,12 @@
         document.getElementById('memberPasswordConfirm').value = '';
 
         const modal = document.getElementById('changeMemberPasswordModal');
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
+        const backdrop = document.getElementById('changeMemberPasswordBackdrop');
+        document.body.classList.add('modal-open');
+        setTimeout(() => {
+            backdrop.classList.add('active');
+            modal.classList.add('active');
+        }, 10);
     }
 
     // حفظ البريد الإلكتروني الجديد
@@ -387,9 +411,7 @@
             }
 
             showSuccess('تم تغيير البريد الإلكتروني بنجاح');
-            const modal = document.getElementById('changeMemberEmailModal');
-            modal.classList.remove('active');
-            setTimeout(() => modal.style.display = 'none', 300);
+            closeMemberEmailModal();
             await loadMembers();
             
             // تحديث عداد التغييرات
@@ -440,9 +462,7 @@
             }
 
             showSuccess('تم تغيير كلمة المرور بنجاح');
-            const modal = document.getElementById('changeMemberPasswordModal');
-            modal.classList.remove('active');
-            setTimeout(() => modal.style.display = 'none', 300);
+            closeMemberPasswordModal();
             
             // تحديث عداد التغييرات
             const currentCount = parseInt(document.getElementById('passwordChangesCount').textContent) || 0;
@@ -454,6 +474,24 @@
             showError('حدث خطأ أثناء تغيير كلمة المرور: ' + error.message);
             showLoading(false);
         }
+    }
+
+    // إغلاق نافذة تغيير البريد الإلكتروني
+    function closeMemberEmailModal() {
+        const modal = document.getElementById('changeMemberEmailModal');
+        const backdrop = document.getElementById('changeMemberEmailBackdrop');
+        if (modal) modal.classList.remove('active');
+        if (backdrop) backdrop.classList.remove('active');
+        document.body.classList.remove('modal-open');
+    }
+
+    // إغلاق نافذة تغيير كلمة المرور
+    function closeMemberPasswordModal() {
+        const modal = document.getElementById('changeMemberPasswordModal');
+        const backdrop = document.getElementById('changeMemberPasswordBackdrop');
+        if (modal) modal.classList.remove('active');
+        if (backdrop) backdrop.classList.remove('active');
+        document.body.classList.remove('modal-open');
     }
 
     // التحقق من صحة البريد الإلكتروني
@@ -518,30 +556,26 @@
         const cancelEmailBtn = document.getElementById('cancelChangeMemberEmail');
         const saveEmailBtn = document.getElementById('saveMemberEmail');
 
-        const closeEmailModalFunc = () => {
-            const modal = document.getElementById('changeMemberEmailModal');
-            modal.classList.remove('active');
-            setTimeout(() => modal.style.display = 'none', 300);
-        };
-
-        if (closeEmailModal) closeEmailModal.addEventListener('click', closeEmailModalFunc);
-        if (cancelEmailBtn) cancelEmailBtn.addEventListener('click', closeEmailModalFunc);
+        if (closeEmailModal) closeEmailModal.addEventListener('click', closeMemberEmailModal);
+        if (cancelEmailBtn) cancelEmailBtn.addEventListener('click', closeMemberEmailModal);
         if (saveEmailBtn) saveEmailBtn.addEventListener('click', saveMemberEmail);
+
+        // إغلاق عند الضغط على الخلفية
+        const emailBackdrop = document.getElementById('changeMemberEmailBackdrop');
+        if (emailBackdrop) emailBackdrop.addEventListener('click', closeMemberEmailModal);
 
         // نافذة تغيير كلمة المرور
         const closePasswordModal = document.getElementById('closeChangeMemberPasswordModal');
         const cancelPasswordBtn = document.getElementById('cancelChangeMemberPassword');
         const savePasswordBtn = document.getElementById('saveMemberPassword');
 
-        const closePasswordModalFunc = () => {
-            const modal = document.getElementById('changeMemberPasswordModal');
-            modal.classList.remove('active');
-            setTimeout(() => modal.style.display = 'none', 300);
-        };
-
-        if (closePasswordModal) closePasswordModal.addEventListener('click', closePasswordModalFunc);
-        if (cancelPasswordBtn) cancelPasswordBtn.addEventListener('click', closePasswordModalFunc);
+        if (closePasswordModal) closePasswordModal.addEventListener('click', closeMemberPasswordModal);
+        if (cancelPasswordBtn) cancelPasswordBtn.addEventListener('click', closeMemberPasswordModal);
         if (savePasswordBtn) savePasswordBtn.addEventListener('click', saveMemberPassword);
+
+        // إغلاق عند الضغط على الخلفية
+        const passwordBackdrop = document.getElementById('changeMemberPasswordBackdrop');
+        if (passwordBackdrop) passwordBackdrop.addEventListener('click', closeMemberPasswordModal);
     }
 
     // دوال مساعدة

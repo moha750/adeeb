@@ -83,7 +83,7 @@ window.WorksManager = (function() {
             fields: [
                 { name: 'title', type: 'text', label: 'عنوان العمل', placeholder: 'أدخل عنوان العمل', required: true },
                 { name: 'category', type: 'text', label: 'الفئة', placeholder: 'مثال: تصميم، برمجة، تسويق' },
-                { name: 'image_url', type: 'url', label: 'رابط الصورة', placeholder: 'https://example.com/image.jpg', required: true },
+                { name: 'image_url', type: 'image', label: 'صورة العمل', folder: 'works', required: true },
                 { name: 'link_url', type: 'url', label: 'رابط العمل', placeholder: 'https://example.com' },
                 { name: 'order', type: 'number', label: 'الترتيب', value: '0' }
             ],
@@ -123,7 +123,7 @@ window.WorksManager = (function() {
             fields: [
                 { name: 'title', type: 'text', label: 'عنوان العمل', value: work.title, required: true },
                 { name: 'category', type: 'text', label: 'الفئة', value: work.category || '' },
-                { name: 'image_url', type: 'url', label: 'رابط الصورة', value: work.image_url, required: true },
+                { name: 'image_url', type: 'image', label: 'صورة العمل', folder: 'works', value: work.image_url, required: true },
                 { name: 'link_url', type: 'url', label: 'رابط العمل', value: work.link_url || '' },
                 { name: 'order', type: 'number', label: 'الترتيب', value: String(work.order || 0) }
             ],

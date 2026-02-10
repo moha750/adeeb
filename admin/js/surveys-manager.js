@@ -73,10 +73,6 @@
                 statusFilter.addEventListener('change', () => this.filterSurveys());
             }
 
-            const typeFilter = document.getElementById('surveysTypeFilter');
-            if (typeFilter) {
-                typeFilter.addEventListener('change', () => this.filterSurveys());
-            }
 
             // ربط اختيار الاستبيان من قسم الإحصائيات بقسم الاستجابات الفردية
             const selectSurveyForResults = document.getElementById('selectSurveyForResults');
@@ -115,13 +111,18 @@
                     .select(`
                         *,
                         created_by_profile:profiles!surveys_created_by_fkey(full_name),
-                        committee:committees(committee_name_ar)
+                        committee:committees(committee_name_ar),
+                        survey_questions(id)
                     `)
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
 
-                allSurveys = data || [];
+                // إضافة عدد الأسئلة لكل استبيان
+                allSurveys = (data || []).map(survey => ({
+                    ...survey,
+                    questions_count: survey.survey_questions?.length || 0
+                }));
                 await this.updateStatistics();
                 this.renderSurveysList();
             } catch (error) {
@@ -145,15 +146,13 @@
         filterSurveys() {
             const searchTerm = document.getElementById('surveysSearchInput')?.value.toLowerCase() || '';
             const statusFilter = document.getElementById('surveysStatusFilter')?.value || '';
-            const typeFilter = document.getElementById('surveysTypeFilter')?.value || '';
 
             const filtered = allSurveys.filter(survey => {
                 const matchesSearch = survey.title.toLowerCase().includes(searchTerm) ||
                                     (survey.description || '').toLowerCase().includes(searchTerm);
                 const matchesStatus = !statusFilter || survey.status === statusFilter;
-                const matchesType = !typeFilter || survey.survey_type === typeFilter;
 
-                return matchesSearch && matchesStatus && matchesType;
+                return matchesSearch && matchesStatus;
             });
 
             this.renderSurveysList(filtered);
@@ -317,8 +316,8 @@
                 research: 'بحث'
             };
 
-            const completionRate = survey.total_responses > 0 
-                ? Math.round((survey.total_completed / survey.total_responses) * 100) 
+            const completionRate = (survey.total_views || 0) > 0 
+                ? Math.round(((survey.total_completed || 0) / survey.total_views) * 100) 
                 : 0;
 
             const statusBadgeClass = {
@@ -345,9 +344,6 @@
                                     <span class="badge ${statusBadgeClass[actualStatus]}">
                                         ${statusLabels[actualStatus]}
                                     </span>
-                                    <span class="badge badge-info">
-                                        ${typeLabels[survey.survey_type]}
-                                    </span>
                                     ${actualStatus !== survey.status ? '<span class="badge badge-warning" title="تم تحديد الحالة تلقائياً بناءً على التاريخ"><i class="fa-solid fa-clock"></i></span>' : ''}
                                 </div>
                             </div>
@@ -363,31 +359,10 @@
                     <div class="application-card-body">
                         <div class="application-info-grid">
                             <div class="info-item">
-                                <i class="fa-solid fa-eye"></i>
+                                <i class="fa-solid fa-question-circle"></i>
                                 <div class="info-content">
-                                    <span class="info-label">المشاهدات</span>
-                                    <span class="info-value">${survey.total_views || 0}</span>
-                                </div>
-                            </div>
-                            <div class="info-item">
-                                <i class="fa-solid fa-users"></i>
-                                <div class="info-content">
-                                    <span class="info-label">الاستجابات</span>
-                                    <span class="info-value">${survey.total_responses || 0}</span>
-                                </div>
-                            </div>
-                            <div class="info-item">
-                                <i class="fa-solid fa-check-circle"></i>
-                                <div class="info-content">
-                                    <span class="info-label">المكتملة</span>
-                                    <span class="info-value">${survey.total_completed || 0}</span>
-                                </div>
-                            </div>
-                            <div class="info-item">
-                                <i class="fa-solid fa-percentage"></i>
-                                <div class="info-content">
-                                    <span class="info-label">معدل الإكمال</span>
-                                    <span class="info-value">${completionRate}%</span>
+                                    <span class="info-label">الأسئلة</span>
+                                    <span class="info-value">${survey.questions_count || 0}</span>
                                 </div>
                             </div>
                             <div class="info-item">
@@ -397,6 +372,24 @@
                                     <span class="info-value">${this.formatDate(survey.created_at)}</span>
                                 </div>
                             </div>
+                            ${survey.start_date ? `
+                                <div class="info-item">
+                                    <i class="fa-solid fa-calendar-plus"></i>
+                                    <div class="info-content">
+                                        <span class="info-label">تاريخ البدء</span>
+                                        <span class="info-value">${this.formatDate(survey.start_date)}</span>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${survey.end_date ? `
+                                <div class="info-item">
+                                    <i class="fa-solid fa-calendar-xmark"></i>
+                                    <div class="info-content">
+                                        <span class="info-label">تاريخ الانتهاء</span>
+                                        <span class="info-value">${this.formatDate(survey.end_date)}</span>
+                                    </div>
+                                </div>
+                            ` : ''}
                             ${survey.created_by_profile ? `
                                 <div class="info-item">
                                     <i class="fa-solid fa-user"></i>
@@ -410,48 +403,89 @@
                     </div>
                     
                     <div class="application-card-footer">
-                        ${actualStatus !== 'draft' ? `
-                        <button class="btn-action btn-action-info" onclick="window.surveysManager.previewSurvey(${survey.id})" title="معاينة الاستبيان">
-                            <i class="fa-solid fa-eye"></i>
-                            معاينة
-                        </button>
-                        <button class="btn-action btn-action-secondary" onclick="window.surveysManager.copySurveyLink(${survey.id})" title="نسخ رابط الاستبيان">
-                            <i class="fa-solid fa-copy"></i>
-                            نسخ الرابط
-                        </button>
-                        <button class="btn-action btn-action-success" onclick="window.surveysManager.shareSurveyModal(${survey.id})" title="نشر على منصات التواصل">
-                            <i class="fa-solid fa-share-nodes"></i>
-                            نشر
-                        </button>
-                        ` : ''}
                         ${actualStatus === 'draft' ? `
-                        <button class="btn-action btn-action-primary" onclick="window.surveysManager.editSurvey(${survey.id})" title="إكمال الاستبيان">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                            إكمال الاستبيان
-                        </button>
-                        ` : `
-                        <button class="btn-action btn-action-warning" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل الاستبيان">
+                        <button class="btn btn--warning btn--sm" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل الاستبيان">
                             <i class="fa-solid fa-edit"></i>
                             تعديل
                         </button>
-                        <button class="btn-action btn-action-primary" onclick="window.surveysManager.viewResults(${survey.id})" title="عرض النتائج">
+                        <button class="btn btn--success btn--sm" onclick="window.surveysManager.publishDraftSurvey(${survey.id})" title="نشر الاستبيان">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            نشر
+                        </button>
+                        ` : ''}
+                        ${actualStatus === 'active' ? `
+                        <button class="btn btn--info btn--sm" onclick="window.surveysManager.previewSurvey(${survey.id})" title="معاينة الاستبيان">
+                            <i class="fa-solid fa-eye"></i>
+                            معاينة
+                        </button>
+                        <button class="btn btn--secondary btn--sm" onclick="window.surveysManager.copySurveyLink(${survey.id})" title="نسخ رابط الاستبيان">
+                            <i class="fa-solid fa-copy"></i>
+                            نسخ الرابط
+                        </button>
+                        <button class="btn btn--success btn--sm" onclick="window.surveysManager.shareSurveyModal(${survey.id})" title="نشر على منصات التواصل">
+                            <i class="fa-solid fa-share-nodes"></i>
+                            نشر
+                        </button>
+                        <button class="btn btn--warning btn--sm" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل الاستبيان">
+                            <i class="fa-solid fa-edit"></i>
+                            تعديل
+                        </button>
+                        <button class="btn btn--primary btn--sm" onclick="window.surveysManager.viewResults(${survey.id})" title="عرض النتائج">
                             <i class="fa-solid fa-chart-bar"></i>
                             النتائج
                         </button>
-                        `}
-                        ${actualStatus === 'active' ? `
-                        <button class="btn-action btn-action-warning" onclick="window.surveysManager.pauseSurvey(${survey.id})" title="إيقاف الاستبيان">
+                        <button class="btn btn--warning btn--sm" onclick="window.surveysManager.pauseSurvey(${survey.id})" title="إيقاف الاستبيان">
                             <i class="fa-solid fa-pause-circle"></i>
                             إيقاف
                         </button>
+                        <button class="btn btn--danger btn--sm" onclick="window.surveysManager.endSurvey(${survey.id})" title="إنهاء الاستبيان نهائياً">
+                            <i class="fa-solid fa-stop-circle"></i>
+                            إنهاء
+                        </button>
+                        ` : ''}
+                        ${actualStatus === 'scheduled' ? `
+                        <button class="btn btn--info btn--sm" onclick="window.surveysManager.previewSurvey(${survey.id})" title="معاينة الاستبيان">
+                            <i class="fa-solid fa-eye"></i>
+                            معاينة
+                        </button>
+                        <button class="btn btn--secondary btn--sm" onclick="window.surveysManager.copySurveyLink(${survey.id})" title="نسخ رابط الاستبيان">
+                            <i class="fa-solid fa-copy"></i>
+                            نسخ الرابط
+                        </button>
+                        <button class="btn btn--warning btn--sm" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل الاستبيان">
+                            <i class="fa-solid fa-edit"></i>
+                            تعديل
+                        </button>
                         ` : ''}
                         ${actualStatus === 'paused' ? `
-                        <button class="btn-action btn-action-success" onclick="window.surveysManager.enableSurvey(${survey.id})" title="تفعيل الاستبيان">
+                        <button class="btn btn--info btn--sm" onclick="window.surveysManager.previewSurvey(${survey.id})" title="معاينة الاستبيان">
+                            <i class="fa-solid fa-eye"></i>
+                            معاينة
+                        </button>
+                        <button class="btn btn--secondary btn--sm" onclick="window.surveysManager.copySurveyLink(${survey.id})" title="نسخ رابط الاستبيان">
+                            <i class="fa-solid fa-copy"></i>
+                            نسخ الرابط
+                        </button>
+                        <button class="btn btn--warning btn--sm" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل الاستبيان">
+                            <i class="fa-solid fa-edit"></i>
+                            تعديل
+                        </button>
+                        <button class="btn btn--primary btn--sm" onclick="window.surveysManager.viewResults(${survey.id})" title="عرض النتائج">
+                            <i class="fa-solid fa-chart-bar"></i>
+                            النتائج
+                        </button>
+                        <button class="btn btn--success btn--sm" onclick="window.surveysManager.enableSurvey(${survey.id})" title="تفعيل الاستبيان">
                             <i class="fa-solid fa-play-circle"></i>
                             تفعيل
                         </button>
                         ` : ''}
-                        <button class="btn-action btn-action-danger" onclick="window.surveysManager.deleteSurveyPermanently(${survey.id})" title="حذف نهائي">
+                        ${actualStatus === 'closed' ? `
+                        <button class="btn btn--primary btn--sm" onclick="window.surveysManager.viewResults(${survey.id})" title="عرض النتائج">
+                            <i class="fa-solid fa-chart-bar"></i>
+                            النتائج
+                        </button>
+                        ` : ''}
+                        <button class="btn btn--danger btn--sm" onclick="window.surveysManager.deleteSurveyPermanently(${survey.id})" title="حذف نهائي">
                             <i class="fa-solid fa-trash"></i>
                             حذف
                         </button>
@@ -502,30 +536,6 @@
                                     placeholder="وصف مختصر للاستبيان">${this.currentEditingSurvey?.description || ''}</textarea>
                             </div>
                             
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>نوع الاستبيان</label>
-                                    <select id="surveyType" class="form-input">
-                                        <option value="general">عام</option>
-                                        <option value="membership">عضوية</option>
-                                        <option value="event">فعالية</option>
-                                        <option value="feedback">تقييم</option>
-                                        <option value="evaluation">تقويم</option>
-                                        <option value="poll">استطلاع</option>
-                                        <option value="quiz">اختبار</option>
-                                        <option value="research">بحث</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label>نوع الوصول</label>
-                                    <select id="surveyAccessType" class="form-input">
-                                        <option value="public">عام (الجميع)</option>
-                                        <option value="authenticated">مستخدمون مسجلون</option>
-                                        <option value="members_only">أعضاء فقط</option>
-                                    </select>
-                                </div>
-                            </div>
                             
                             <div class="form-row">
                                 <div class="form-group">
@@ -842,18 +852,27 @@
                     return;
                 }
 
+                // تحويل التاريخ المحلي إلى ISO مع الحفاظ على التوقيت المحلي
+                const convertLocalDateToISO = (dateValue) => {
+                    if (!dateValue) return null;
+                    // datetime-local يعطي قيمة مثل "2024-01-15T15:00"
+                    // نضيف الثواني ونحولها إلى Date object ثم إلى ISO
+                    const localDate = new Date(dateValue + ':00');
+                    return localDate.toISOString();
+                };
+
                 const surveyData = {
                     title,
                     description: document.getElementById('surveyDescription')?.value || null,
-                    survey_type: document.getElementById('surveyType')?.value || 'general',
-                    access_type: document.getElementById('surveyAccessType')?.value || 'public',
+                    survey_type: 'general',
+                    access_type: 'public',
                     status,
                     allow_multiple_responses: document.getElementById('allowMultipleResponses')?.checked || false,
                     allow_anonymous: document.getElementById('allowAnonymous')?.checked || false,
                     show_progress_bar: document.getElementById('showProgressBar')?.checked || true,
                     show_results_to_participants: document.getElementById('showResults')?.checked || false,
-                    start_date: document.getElementById('surveyStartDate')?.value || null,
-                    end_date: document.getElementById('surveyEndDate')?.value || null,
+                    start_date: convertLocalDateToISO(document.getElementById('surveyStartDate')?.value),
+                    end_date: convertLocalDateToISO(document.getElementById('surveyEndDate')?.value),
                     welcome_message: document.getElementById('welcomeMessage')?.value || null,
                     thank_you_message: document.getElementById('thankYouMessage')?.value || 'شكراً لمشاركتك',
                     created_by: currentUser.id
@@ -989,6 +1008,88 @@
             } catch (error) {
                 console.error('Error permanently deleting survey:', error);
                 this.showError('حدث خطأ أثناء حذف الاستبيان');
+            }
+        }
+
+        async publishDraftSurvey(surveyId) {
+            const survey = allSurveys.find(s => s.id === surveyId);
+            if (!survey) return;
+
+            // التحقق من أن الاستبيان يحتوي على الحد الأدنى من المتطلبات
+            if (!survey.title || !survey.title.trim()) {
+                this.showError('لا يمكن نشر الاستبيان بدون عنوان. يرجى تعديل الاستبيان أولاً.');
+                return;
+            }
+
+            // التحقق من وجود أسئلة
+            const { data: questions, error: qError } = await sb
+                .from('survey_questions')
+                .select('id')
+                .eq('survey_id', surveyId);
+
+            if (qError || !questions || questions.length === 0) {
+                this.showError('لا يمكن نشر الاستبيان بدون أسئلة. يرجى إضافة أسئلة أولاً.');
+                return;
+            }
+
+            const confirmed = await ModalHelper.confirm({
+                title: 'نشر الاستبيان',
+                message: `هل أنت متأكد من نشر الاستبيان "${this.escapeHtml(survey.title)}"؟ سيصبح متاحاً للمستخدمين.`,
+                type: 'info',
+                confirmText: 'نعم، انشر',
+                cancelText: 'إلغاء'
+            });
+
+            if (!confirmed) return;
+
+            try {
+                const { error } = await sb
+                    .from('surveys')
+                    .update({ status: 'active' })
+                    .eq('id', surveyId);
+
+                if (error) throw error;
+
+                this.showSuccess('تم نشر الاستبيان بنجاح');
+                await this.loadAllSurveys();
+
+            } catch (error) {
+                console.error('Error publishing survey:', error);
+                this.showError('حدث خطأ أثناء نشر الاستبيان');
+            }
+        }
+
+        async endSurvey(surveyId) {
+            const survey = allSurveys.find(s => s.id === surveyId);
+            if (!survey) return;
+
+            const confirmed = await ModalHelper.confirm({
+                title: 'إنهاء الاستبيان',
+                message: `هل أنت متأكد من إنهاء الاستبيان "${this.escapeHtml(survey.title)}" نهائياً؟ لن يتمكن أي شخص من الإجابة عليه بعد ذلك.`,
+                type: 'danger',
+                confirmText: 'نعم، أنهِ الاستبيان',
+                cancelText: 'إلغاء'
+            });
+
+            if (!confirmed) return;
+
+            try {
+                const { error } = await sb
+                    .from('surveys')
+                    .update({ 
+                        status: 'active',
+                        end_date: new Date().toISOString()
+                    })
+                    .eq('id', surveyId);
+
+                if (error) throw error;
+
+                this.showSuccess('تم إنهاء الاستبيان بنجاح');
+                await this.loadAllSurveys();
+
+            } catch (error) {
+                console.error('Error ending survey:', error);
+                this.showError('حدث خطأ أثناء إنهاء الاستبيان');
             }
         }
 
@@ -1186,8 +1287,6 @@
         populateSurveyForm(survey) {
             document.getElementById('surveyTitle').value = survey.title || '';
             document.getElementById('surveyDescription').value = survey.description || '';
-            document.getElementById('surveyType').value = survey.survey_type || 'general';
-            document.getElementById('surveyAccessType').value = survey.access_type || 'public';
             
             if (survey.start_date) {
                 const startDate = new Date(survey.start_date);
@@ -1249,24 +1348,25 @@
         }
 
         renderSurveyResultsGrid(grid) {
-            if (allSurveys.length === 0) {
+            // استبعاد المسودات من قسم النتائج لأنها لا تحتوي على بيانات مفيدة
+            const nonDraftSurveys = allSurveys.filter(survey => this.getActualStatus(survey) !== 'draft');
+            
+            if (nonDraftSurveys.length === 0) {
                 grid.innerHTML = `
-                    <div class="results-empty-state results-empty-state--full">
-                        <div class="results-empty-icon">
-                            <i class="fa-solid fa-clipboard-list"></i>
-                        </div>
-                        <div class="results-empty-title">لا توجد استبيانات</div>
-                        <div class="results-empty-text">لم يتم إنشاء أي استبيانات بعد</div>
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i class="fa-solid fa-clipboard-list"></i>
+                        <p>لا توجد استبيانات منشورة</p>
+                        <p class="text-muted" style="font-size: 0.875rem;">الاستبيانات المسودة لا تظهر هنا</p>
                     </div>
                 `;
                 return;
             }
 
-            // فصل الاستبيانات حسب الحالة الفعلية
+            // فصل الاستبيانات حسب الحالة الفعلية (بدون المسودات)
             const activeSurveys = [];
             const endedSurveys = [];
 
-            allSurveys.forEach(survey => {
+            nonDraftSurveys.forEach(survey => {
                 const actualStatus = this.getActualStatus(survey);
                 if (actualStatus === 'active') {
                     activeSurveys.push(survey);
@@ -1277,72 +1377,93 @@
 
             let html = '';
 
-            // قسم الاستبيانات النشطة
             if (activeSurveys.length > 0) {
-                html += `
-                    <div class="survey-results-section survey-results-section--full">
-                        <div class="surveys-section-header">
-                            <h3><i class="fa-solid fa-circle-play survey-icon--active"></i> الاستبيانات النشطة (${activeSurveys.length})</h3>
-                        </div>
-                    </div>
-                    ${activeSurveys.map(survey => this.renderSurveyResultCard(survey)).join('')}
-                `;
+                html += `<div class="survey-grid-section"><h3 class="survey-grid-section-title"><i class="fa-solid fa-circle-play" style="color: #10b981;"></i> النشطة (${activeSurveys.length})</h3></div>`;
+                html += activeSurveys.map(survey => this.renderSurveyResultCard(survey)).join('');
             }
 
-            // قسم الاستبيانات المنتهية
             if (endedSurveys.length > 0) {
-                html += `
-                    <div class="survey-results-section survey-results-section--full survey-results-section--spaced">
-                        <div class="surveys-section-header">
-                            <h3><i class="fa-solid fa-circle-stop survey-icon--ended"></i> الاستبيانات المنتهية والمسودات (${endedSurveys.length})</h3>
-                        </div>
-                    </div>
-                    ${endedSurveys.map(survey => this.renderSurveyResultCard(survey)).join('')}
-                `;
+                html += `<div class="survey-grid-section" style="margin-top: 8px;"><h3 class="survey-grid-section-title"><i class="fa-solid fa-circle-stop" style="color: #6b7280;"></i> المنتهية (${endedSurveys.length})</h3></div>`;
+                html += endedSurveys.map(survey => this.renderSurveyResultCard(survey)).join('');
             }
 
             grid.innerHTML = html;
         }
 
         renderSurveyResultCard(survey) {
-            // استخدام الحالة الفعلية بناءً على التاريخ
             const actualStatus = this.getActualStatus(survey);
-            const statusClass = actualStatus === 'active' ? 'active' : 
-                               actualStatus === 'closed' ? 'closed' : 
-                               actualStatus === 'paused' ? 'paused' : 'draft';
+            const statusBadge = actualStatus === 'active' ? 'badge-success' : 
+                               actualStatus === 'closed' ? 'badge-secondary' : 
+                               actualStatus === 'paused' ? 'badge-warning' : 'badge-info';
             const statusText = actualStatus === 'active' ? 'نشط' : 
                               actualStatus === 'closed' ? 'منتهية' : 
                               actualStatus === 'paused' ? 'متوقف' : 'مسودة';
             
             const totalResponses = survey.total_responses || 0;
-            const completedResponses = survey.completed_responses || totalResponses;
-            const completionRate = totalResponses > 0 ? Math.round((completedResponses / totalResponses) * 100) : 0;
+            const totalCompleted = survey.total_completed || 0;
+            const totalViews = survey.total_views || 0;
+            // معدل الإكمال = المكتملة / المشاهدات (من بدأ الاستبيان)
+            const completionRate = totalViews > 0 ? Math.round((totalCompleted / totalViews) * 100) : 0;
+            const statusIcon = actualStatus === 'active' ? 'fa-chart-line' : 
+                              actualStatus === 'closed' ? 'fa-chart-pie' : 
+                              actualStatus === 'paused' ? 'fa-pause-circle' : 'fa-file-lines';
+            const avatarGradient = actualStatus === 'active' ? '#10b981, #059669' : 
+                                  actualStatus === 'closed' ? '#6b7280, #4b5563' : 
+                                  actualStatus === 'paused' ? '#f59e0b, #d97706' : '#3b82f6, #2563eb';
 
             return `
-                <div class="survey-selector-card" data-survey-id="${survey.id}" data-status="${survey.status}" data-type="${survey.survey_type || 'general'}" onclick="window.surveysManager.selectSurveyForResults(${survey.id})">
-                    <div class="survey-selector-header">
-                        <h4 class="survey-selector-title">${this.escapeHtml(survey.title)}</h4>
-                        <span class="survey-selector-status ${statusClass}">${statusText}</span>
-                    </div>
-                    <div class="survey-selector-stats">
-                        <div class="survey-selector-stat">
-                            <i class="fa-solid fa-users"></i>
-                            <span class="survey-selector-stat-value">${totalResponses}</span>
-                            <span class="survey-selector-stat-label">استجابة</span>
-                        </div>
-                        <div class="survey-selector-stat">
-                            <i class="fa-solid fa-check-circle"></i>
-                            <span class="survey-selector-stat-value">${completionRate}%</span>
-                            <span class="survey-selector-stat-label">معدل الإكمال</span>
-                        </div>
-                        <div class="survey-selector-stat">
-                            <i class="fa-solid fa-question-circle"></i>
-                            <span class="survey-selector-stat-value">${survey.questions_count || 0}</span>
-                            <span class="survey-selector-stat-label">سؤال</span>
+                <div class="application-card survey-result-card ${actualStatus === 'active' ? 'survey-result-card--active' : ''}" data-survey-id="${survey.id}">
+                    <div class="application-card-header">
+                        <div class="applicant-info">
+                            <div class="applicant-avatar" style="background: linear-gradient(135deg, ${avatarGradient});">
+                                <i class="fa-solid ${statusIcon}"></i>
+                            </div>
+                            <div class="applicant-details">
+                                <h4 class="applicant-name">${this.escapeHtml(survey.title)}</h4>
+                                <div>
+                                    <span class="badge ${statusBadge}">${statusText}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="survey-selector-progress">
-                        <div class="survey-selector-progress-bar" data-width="${completionRate}"></div>
+                    <div class="application-card-body">
+                        <div class="application-info-grid">
+                            <div class="info-item">
+                                <i class="fa-solid fa-users"></i>
+                                <div class="info-content">
+                                    <span class="info-label">الاستجابات</span>
+                                    <span class="info-value">${totalResponses}</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fa-solid fa-question-circle"></i>
+                                <div class="info-content">
+                                    <span class="info-label">الأسئلة</span>
+                                    <span class="info-value">${survey.questions_count || 0}</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fa-solid fa-percentage"></i>
+                                <div class="info-content">
+                                    <span class="info-label">معدل الإكمال</span>
+                                    <span class="info-value">${completionRate}%</span>
+                                </div>
+                            </div>
+                            ${survey.created_by_profile?.full_name ? `
+                            <div class="info-item">
+                                <i class="fa-solid fa-user-pen"></i>
+                                <div class="info-content">
+                                    <span class="info-label">المنشئ</span>
+                                    <span class="info-value">${this.escapeHtml(survey.created_by_profile.full_name)}</span>
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="application-card-footer" style="justify-content: flex-end;">
+                        <button class="btn btn--primary btn--sm" onclick="window.surveysManager.selectSurveyForResults(${survey.id})">
+                            <i class="fa-solid fa-eye"></i> عرض النتائج
+                        </button>
                     </div>
                 </div>
             `;
@@ -1350,10 +1471,10 @@
 
         selectSurveyForResults(surveyId) {
             // تحديث حالة البطاقات
-            document.querySelectorAll('.survey-selector-card').forEach(card => {
+            document.querySelectorAll('.survey-result-card').forEach(card => {
                 card.classList.remove('selected');
             });
-            const selectedCard = document.querySelector(`.survey-selector-card[data-survey-id="${surveyId}"]`);
+            const selectedCard = document.querySelector(`.survey-result-card[data-survey-id="${surveyId}"]`);
             if (selectedCard) {
                 selectedCard.classList.add('selected');
             }
@@ -1374,7 +1495,17 @@
             const survey = allSurveys.find(s => s.id === surveyId);
             const titleEl = document.getElementById('selectedSurveyTitle');
             if (titleEl && survey) {
-                titleEl.innerHTML = `<i class="fa-solid fa-chart-pie"></i> نتائج: ${this.escapeHtml(survey.title)}`;
+                titleEl.innerHTML = `<i class="fa-solid fa-chart-pie"></i> ${this.escapeHtml(survey.title)}`;
+            }
+            
+            // تحديث عنوان القسم الرئيسي
+            const resultsTitleText = document.getElementById('resultsTitleText');
+            const resultsSubtitle = document.getElementById('resultsSubtitle');
+            if (resultsTitleText && survey) {
+                resultsTitleText.textContent = survey.title;
+            }
+            if (resultsSubtitle) {
+                resultsSubtitle.style.display = 'none';
             }
 
             // إعداد زر الرجوع
@@ -1397,29 +1528,24 @@
         setupResultsFilters() {
             const searchInput = document.getElementById('surveyResultsSearch');
             const statusFilter = document.getElementById('surveyResultsStatusFilter');
-            const typeFilter = document.getElementById('surveyResultsTypeFilter');
 
             const filterCards = () => {
                 const searchTerm = searchInput?.value.toLowerCase() || '';
                 const statusValue = statusFilter?.value || '';
-                const typeValue = typeFilter?.value || '';
 
-                document.querySelectorAll('.survey-selector-card').forEach(card => {
-                    const title = card.querySelector('.survey-selector-title')?.textContent.toLowerCase() || '';
+                document.querySelectorAll('.survey-result-card').forEach(card => {
+                    const title = card.querySelector('.applicant-name')?.textContent.toLowerCase() || '';
                     const status = card.dataset.status || '';
-                    const type = card.dataset.type || '';
 
                     const matchesSearch = title.includes(searchTerm);
                     const matchesStatus = !statusValue || status === statusValue;
-                    const matchesType = !typeValue || type === typeValue;
 
-                    card.style.display = matchesSearch && matchesStatus && matchesType ? '' : 'none';
+                    card.style.display = matchesSearch && matchesStatus ? '' : 'none';
                 });
             };
 
             searchInput?.addEventListener('input', filterCards);
             statusFilter?.addEventListener('change', filterCards);
-            typeFilter?.addEventListener('change', filterCards);
         }
 
         async loadSurveyResults(surveyId) {
@@ -1627,11 +1753,14 @@
         }
 
         formatDate(dateString) {
+            if (!dateString) return 'غير محدد';
             const date = new Date(dateString);
             return date.toLocaleDateString('ar-SA', {
                 year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
             });
         }
 
@@ -1660,7 +1789,6 @@
         }
 
         showNotification(message, type = 'info') {
-            // استخدام Toast إذا كان متاحاً
             if (window.Toast) {
                 if (type === 'success') window.Toast.success(message);
                 else if (type === 'error') window.Toast.error(message);
@@ -1668,7 +1796,6 @@
                 return;
             }
 
-            // Fallback للإشعارات المخصصة
             const notification = document.createElement('div');
             notification.className = `notification notification-${type}`;
             notification.innerHTML = `

@@ -213,6 +213,22 @@ window.ModalHelper = (function() {
                     case 'checkbox':
                         formHTML += `<label class="form-checkbox"><input type="checkbox" name="${field.name}" ${field.checked ? 'checked' : ''}> ${field.checkboxLabel || ''}</label>`;
                         break;
+                    case 'image': {
+                        const imgInputId = 'modalImg_' + field.name;
+                        const imgPreviewId = 'modalImgPreview_' + field.name;
+                        const imgFolder = field.folder || 'general';
+                        formHTML += `
+                            ${field.value ? `<div class="image-preview-container" id="${imgPreviewId}_current_wrap" style="margin-bottom: 0.75rem;"><img src="${field.value}" alt="الصورة الحالية" style="max-width: 100%; max-height: 150px; border-radius: 8px; object-fit: contain;"></div>` : ''}
+                            <div id="${imgPreviewId}" style="display: none; margin-bottom: 0.75rem;">
+                                <img id="${imgPreviewId}_img" src="" alt="معاينة" style="max-width: 100%; max-height: 150px; border-radius: 8px; object-fit: contain;">
+                            </div>
+                            <input type="file" id="${imgInputId}" accept="image/jpeg,image/jpg,image/png,image/webp,image/gif" class="form-input" data-field-name="${field.name}" data-folder="${imgFolder}" data-image-upload="true"
+                                onchange="(function(inp){var p=document.getElementById('${imgPreviewId}');var pi=document.getElementById('${imgPreviewId}_img');var cw=document.getElementById('${imgPreviewId}_current_wrap');if(inp.files&&inp.files[0]){var r=new FileReader();r.onload=function(e){pi.src=e.target.result;p.style.display='block';if(cw)cw.style.display='none';};r.readAsDataURL(inp.files[0]);}else{p.style.display='none';if(cw)cw.style.display='';}})(this)">
+                            <input type="hidden" name="${field.name}" value="${field.value || ''}">
+                            <small class="form-hint"><i class="fa-solid fa-info-circle"></i> الصيغ المدعومة: JPG, PNG, WEBP, GIF (الحد الأقصى: 5 ميجابايت)</small>
+                        `;
+                        break;
+                    }
                     default:
                         formHTML += `<input type="${field.type || 'text'}" class="form-input" name="${field.name}" placeholder="${field.placeholder || ''}" value="${field.value || ''}" ${field.required ? 'required' : ''}>`;
                 }
@@ -234,14 +250,14 @@ window.ModalHelper = (function() {
                 footerButtons: [
                     {
                         text: cancelText,
-                        class: 'btn--outline btn--outline-secondary',
+                        class: 'btn btn--outline btn--outline-secondary',
                         callback: () => {
                             if (onCancel) onCancel();
                         }
                     },
                     {
                         text: submitText,
-                        class: 'btn--primary',
+                        class: 'btn btn--primary',
                         callback: async () => {
                             const form = document.getElementById('modalForm');
                             if (form && form.checkValidity()) {
@@ -256,6 +272,26 @@ window.ModalHelper = (function() {
                                         data[f.name] = '';
                                     }
                                 });
+                                // رفع الصور قبل الإرسال
+                                const imageInputs = form.querySelectorAll('input[data-image-upload="true"]');
+                                for (const imgInput of imageInputs) {
+                                    if (imgInput.files && imgInput.files[0] && window.ImageUploadHelper) {
+                                        const folder = imgInput.dataset.folder || 'general';
+                                        const fieldName = imgInput.dataset.fieldName;
+                                        try {
+                                            const result = await window.ImageUploadHelper.uploadImage(imgInput.files[0], folder);
+                                            if (result && result.success) {
+                                                data[fieldName] = result.url;
+                                            } else {
+                                                throw new Error(result?.error || 'فشل رفع الصورة');
+                                            }
+                                        } catch (uploadErr) {
+                                            console.error('Image upload error:', uploadErr);
+                                            if (window.Toast) Toast.error('فشل رفع الصورة: ' + uploadErr.message);
+                                            return;
+                                        }
+                                    }
+                                }
                                 try {
                                     if (onSubmit) await onSubmit(data);
                                     resolve(data);

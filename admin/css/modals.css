@@ -885,6 +885,115 @@ body.modal-open {
    وضع الدارك (اختياري)
    ============================================================================ */
 
+/* ============================================================================
+   Custom Modal - النوافذ المنبثقة المخصصة
+   ============================================================================ */
+
+.custom-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.custom-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    visibility: visible;
+}
+
+.custom-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.custom-modal-container {
+    position: relative;
+    background: linear-gradient(135deg, #ffffff, #f8fbff);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    max-width: 90vw;
+    max-height: 90vh;
+    width: 600px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.custom-modal.active .custom-modal-container {
+    transform: scale(1);
+}
+
+.custom-modal-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(61, 143, 214, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, rgba(61, 143, 214, 0.08), rgba(107, 168, 226, 0.04));
+}
+
+.custom-modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--main-blue);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.custom-modal-close {
+    background: transparent;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--main-blue);
+    transition: all 0.2s ease;
+}
+
+.custom-modal-close:hover {
+    background: rgba(61, 143, 214, 0.1);
+    color: var(--accent-blue);
+}
+
+.custom-modal-body {
+    padding: 2rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.custom-modal-footer {
+    padding: 1.25rem 2rem;
+    border-top: 1px solid rgba(61, 143, 214, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    background: rgba(0, 0, 0, 0.02);
+}
+
 @media (prefers-color-scheme: dark) {
     .modal {
         background: linear-gradient(135deg, #1e293b, #0f172a);

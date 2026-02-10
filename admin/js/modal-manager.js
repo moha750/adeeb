@@ -14,22 +14,24 @@
         // إنشاء الطبقة الشفافة
         const overlay = document.createElement('div');
         overlay.id = 'dynamicOverlay';
-        overlay.className = 'overlay';
+        overlay.className = 'modal-backdrop';
         overlay.addEventListener('click', closeModal);
 
         // إنشاء النافذة المنبثقة
         const modal = document.createElement('div');
         modal.id = 'dynamicModal';
-        modal.className = 'modal';
+        modal.className = 'modal modal-md';
         modal.innerHTML = `
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 id="dynamicModalTitle">
-                        <i class="fa-solid fa-info-circle"></i>
-                        عنوان النافذة
-                    </h2>
-                    <button class="btn-icon" onclick="closeModal()">
-                        <i class="fa-solid fa-times"></i>
+                    <div class="modal-header-content">
+                        <h3 id="dynamicModalTitle">
+                            <i class="fa-solid fa-info-circle"></i>
+                            عنوان النافذة
+                        </h3>
+                    </div>
+                    <button class="modal-close-x" onclick="closeModal()">
+                        <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
                 <div class="modal-body" id="dynamicModalBody">

@@ -72,7 +72,7 @@ class PendingMembersManager {
         const valid = total - expired;
 
         container.innerHTML = `
-            <div class="stat-card stat-card--yellow">
+            <div class="stat-card" style="--stat-color: #f59e0b;">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-clock"></i>
@@ -83,7 +83,7 @@ class PendingMembersManager {
                     </div>
                 </div>
             </div>
-            <div class="stat-card stat-card--green">
+            <div class="stat-card" style="--stat-color: #10b981;">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-check-circle"></i>
@@ -94,7 +94,7 @@ class PendingMembersManager {
                     </div>
                 </div>
             </div>
-            <div class="stat-card stat-card--red">
+            <div class="stat-card" style="--stat-color: #ef4444;">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-times-circle"></i>
@@ -293,11 +293,11 @@ class PendingMembersManager {
                 </div>
                 
                 <div class="application-card-footer">
-                    <button class="btn-action btn-action-warning btn-resend-email" data-user-id="${member.user_id}">
+                    <button class="btn btn--warning btn--sm btn-resend-email" data-user-id="${member.user_id}">
                         <i class="fa-solid fa-paper-plane"></i>
                         إعادة إرسال الرابط
                     </button>
-                    <button class="btn-action btn-action-outline btn-copy-link" data-token="${member.token}">
+                    <button class="btn btn--outline-secondary btn--sm btn-copy-link" data-token="${member.token}">
                         <i class="fa-solid fa-copy"></i>
                         نسخ الرابط
                     </button>
@@ -307,23 +307,29 @@ class PendingMembersManager {
     }
 
     /**
-     * إضافة event listeners
+     * إضافة event listeners باستخدام event delegation
      */
     attachEventListeners() {
-        // زر إعادة الإرسال
-        document.querySelectorAll('.btn-resend-email').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const userId = e.currentTarget.dataset.userId;
-                await this.handleResendEmail(userId);
-            });
-        });
+        const container = document.getElementById('pendingMembersContainer');
+        if (!container || container._pendingListenersAttached) return;
+        container._pendingListenersAttached = true;
 
-        // زر نسخ الرابط
-        document.querySelectorAll('.btn-copy-link').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const token = e.currentTarget.dataset.token;
-                this.handleCopyLink(token);
-            });
+        container.addEventListener('click', async (e) => {
+            // زر إعادة الإرسال
+            const resendBtn = e.target.closest('.btn-resend-email');
+            if (resendBtn) {
+                const userId = resendBtn.dataset.userId;
+                if (userId) await this.handleResendEmail(userId);
+                return;
+            }
+
+            // زر نسخ الرابط
+            const copyBtn = e.target.closest('.btn-copy-link');
+            if (copyBtn) {
+                const token = copyBtn.dataset.token;
+                if (token) this.handleCopyLink(token);
+                return;
+            }
         });
     }
 
@@ -420,6 +426,7 @@ class PendingMembersManager {
             await this.fetchPendingMembers();
             this.renderStats();
             this.renderPendingMembersList(containerId);
+            this.attachEventListeners();
             this.setupFilterListeners();
         } catch (error) {
             console.error('Failed to initialize pending members manager:', error);

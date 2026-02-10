@@ -235,7 +235,7 @@ class ContactMessagesManager {
                 </div>
                 
                 <div class="application-card-footer">
-                    <button class="btn-view-details" data-message-id="${message.id}">
+                    <button class="btn btn--primary btn--sm btn-view-details" data-message-id="${message.id}">
                         <i class="fa-solid fa-eye"></i>
                         عرض التفاصيل الكاملة
                     </button>
