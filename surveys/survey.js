@@ -1248,10 +1248,21 @@
         if (twitterImage) twitterImage.setAttribute('content', imageUrl);
     }
 
+    // تحديث السنة في الفوتر
+    function updateFooterYear() {
+        const yearElement = document.getElementById('currentYear');
+        if (yearElement) {
+            yearElement.textContent = new Date().getFullYear();
+        }
+    }
+
     // تصدير الدوال للاستخدام الخارجي
     window.surveyApp = {
         showResults
     };
 
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', () => {
+        updateFooterYear();
+        init();
+    });
 })();

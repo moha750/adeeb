@@ -4,6 +4,11 @@
 }
 
 @font-face {
+  font-family: fr;
+  src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Regular.otf);
+}
+
+@font-face {
   font-family: fm;
   src: url(../fonts/COMM\ -\ Lyon\ Arabic\ Display\ Medium.otf);
 }
@@ -32,6 +37,12 @@
 @font-face {
   font-family: fl;
   src: url(../fonts/ERASLGHT.TTF) format("truetype");
+  unicode-range: U+0030-0039, U+0660-0669;
+}
+
+@font-face {
+  font-family: fr;
+  src: url(../fonts/ERASMD.TTF) format("truetype");
   unicode-range: U+0030-0039, U+0660-0669;
 }
 
