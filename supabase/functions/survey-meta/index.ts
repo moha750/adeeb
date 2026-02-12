@@ -45,7 +45,7 @@ Deno.serve(async (req: Request) => {
     // Generate dynamic meta tags
     const title = survey.title ? `${survey.title} — نادي أدِيب` : 'استبيان — نادي أدِيب';
     const description = survey.description || 'شارك في استبيان نادي أدِيب';
-    const baseUrl = url.origin;
+    const baseUrl = 'https://adeeb.club';
     const surveyUrl = `${baseUrl}/surveys/survey.html?id=${surveyId}`;
     const imageUrl = `${baseUrl}/Adeeb-Thumbnail.png`;
 
@@ -78,9 +78,9 @@ Deno.serve(async (req: Request) => {
     <script>window.location.href = '${escapeHtml(surveyUrl)}';</script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
-    <link rel="stylesheet" href="${baseUrl}/surveys/survey.css" />
-    <link rel="icon" type="image/png" href="${baseUrl}/favicon/favicon-32x32.png" />
-    <link rel="apple-touch-icon" href="${baseUrl}/adeeb-logo.png" />
+    <link rel="stylesheet" href="https://adeeb.club/surveys/survey.css" />
+    <link rel="icon" type="image/png" href="https://adeeb.club/favicon/favicon-32x32.png" />
+    <link rel="apple-touch-icon" href="https://adeeb.club/adeeb-logo.png" />
 </head>
 
 <body>
