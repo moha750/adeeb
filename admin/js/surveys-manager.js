@@ -1145,8 +1145,7 @@
         }
 
         async copySurveyLink(surveyId) {
-            // استخدام Edge Function للحصول على meta tags ديناميكية عند المشاركة
-            const surveyUrl = `https://nnlhkfeybyhvlinbqqfa.supabase.co/functions/v1/survey-meta?id=${surveyId}`;
+            const surveyUrl = `${window.location.origin}/surveys/survey.html?id=${surveyId}`;
             
             try {
                 await navigator.clipboard.writeText(surveyUrl);
@@ -1192,8 +1191,7 @@
             const survey = allSurveys.find(s => s.id === surveyId);
             if (!survey) return;
             
-            // استخدام Edge Function للحصول على meta tags ديناميكية عند المشاركة
-            const surveyUrl = `https://nnlhkfeybyhvlinbqqfa.supabase.co/functions/v1/survey-meta?id=${surveyId}`;
+            const surveyUrl = `${window.location.origin}/surveys/survey.html?id=${surveyId}`;
             const shareText = `شارك في استبيان: ${survey.title}`;
             
             const modal = document.createElement('div');

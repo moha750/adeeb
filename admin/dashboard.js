@@ -240,12 +240,6 @@
                     section: 'membership-settings-section'
                 });
                 registrationSubItems.push({
-                    id: 'gift-membership',
-                    icon: 'fa-gift',
-                    label: 'إهداء العضوية',
-                    section: 'gift-membership-section'
-                });
-                registrationSubItems.push({
                     id: 'membership-committees',
                     icon: 'fa-users-gear',
                     label: 'اللجان المتاحة',

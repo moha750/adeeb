@@ -841,7 +841,7 @@
         
         // إذا كان الاستبيان يسمح بعرض النتائج للمشاركين
         const showResultsButton = currentSurvey.show_results_to_participants ? `
-            <button onclick="window.surveyApp.showResults()" class="btn btn-secondary" style="margin-top: 1rem; background: linear-gradient(135deg, #8b5cf6, #6366f1); border: none;">
+            <button onclick="window.surveyApp.showResults()" class="btn btn-primary">
                 <i class="fa-solid fa-chart-pie"></i>
                 عرض نتائج الاستبيان
             </button>
@@ -874,7 +874,7 @@
         
         // إذا كان الاستبيان يسمح بعرض النتائج للمشاركين
         const showResultsButton = currentSurvey.show_results_to_participants ? `
-            <button onclick="window.surveyApp.showResults()" class="btn btn-secondary" style="margin-top: 1rem; background: linear-gradient(135deg, #8b5cf6, #6366f1); border: none;">
+            <button onclick="window.surveyApp.showResults()" class="btn btn-secondary">
                 <i class="fa-solid fa-chart-pie"></i>
                 عرض نتائج الاستبيان
             </button>
@@ -1214,18 +1214,15 @@
         const description = survey.description || 'شارك في استبيان نادي أدِيب';
         const currentUrl = window.location.href;
         const baseUrl = window.location.origin;
-        const imageUrl = `${baseUrl}/Adeeb-Thumbnail.png`;
+        const imageUrl = `${baseUrl}/survey.png`;
+        const logoUrl = `${baseUrl}/adeeb-logo.png`;
 
         // تحديث عنوان الصفحة
         document.title = title;
         
-        // تحديث page title element
-        const pageTitle = document.getElementById('pageTitle');
-        if (pageTitle) pageTitle.textContent = title;
-        
         // تحديث meta description
-        const pageDescription = document.getElementById('pageDescription');
-        if (pageDescription) pageDescription.setAttribute('content', description);
+        const descMeta = document.querySelector('meta[name="description"]');
+        if (descMeta) descMeta.setAttribute('content', description);
 
         // تحديث Open Graph
         const ogUrl = document.getElementById('ogUrl');
@@ -1248,21 +1245,10 @@
         if (twitterImage) twitterImage.setAttribute('content', imageUrl);
     }
 
-    // تحديث السنة في الفوتر
-    function updateFooterYear() {
-        const yearElement = document.getElementById('currentYear');
-        if (yearElement) {
-            yearElement.textContent = new Date().getFullYear();
-        }
-    }
-
     // تصدير الدوال للاستخدام الخارجي
     window.surveyApp = {
         showResults
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        updateFooterYear();
-        init();
-    });
+    document.addEventListener('DOMContentLoaded', init);
 })();
