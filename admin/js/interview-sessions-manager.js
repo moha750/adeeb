@@ -577,7 +577,7 @@
                 hour12: true
             });
 
-            const bookingLink = `${window.location.origin}/booking.html?token=${session.public_link_token}`;
+            const bookingLink = `${window.location.origin}/booking/booking.html?token=${session.public_link_token}`;
 
             const typeBadge = session.interview_type === 'online' 
                 ? '<span class="badge badge-primary">أونلاين</span>'
@@ -778,7 +778,7 @@
      * نسخ رابط الحجز
      */
     function copyLink(token) {
-        const link = `${window.location.origin}/booking.html?token=${token}`;
+        const link = `${window.location.origin}/booking/booking.html?token=${token}`;
         navigator.clipboard.writeText(link).then(() => {
             showNotification('تم نسخ رابط الحجز', 'success');
         }).catch(() => {

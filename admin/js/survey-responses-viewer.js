@@ -433,7 +433,7 @@ window.SurveyResponsesViewer = (function() {
         }
 
         const user = response.user || {};
-        const userName = user.full_name || (response.is_anonymous ? 'مستخدم مجهول' : 'مستخدم غير معروف');
+        const userName = user.full_name || (response.is_anonymous ? 'المستجيب' : 'مستخدم غير معروف');
         const userAvatar = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=3b82f6&color=fff`;
         
         const answers = response.survey_answers || [];

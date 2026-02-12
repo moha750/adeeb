@@ -177,10 +177,11 @@
         try {
             showLoading(true);
 
-            // Load profiles
+            // Load profiles (استبعاد الأعضاء المنتهية عضوياتهم - terminated)
             const { data: profiles, error: profilesError } = await sb
                 .from('profiles')
                 .select('id, full_name, email, account_status, created_at')
+                .neq('account_status', 'terminated')
                 .order('full_name');
 
             if (profilesError) throw profilesError;
@@ -208,6 +209,7 @@
             }
 
             // Merge profiles with member_details
+            // لا حاجة للتحقق من tokens بعد الآن لأن account_status يحدد الحالة مباشرة
             currentMembers = profiles.map(profile => ({
                 ...profile,
                 member_details: detailsMap[profile.id] ? [detailsMap[profile.id]] : []
@@ -215,7 +217,7 @@
 
             filteredMembers = [...currentMembers];
             
-            updateStatistics();
+            await updateStatistics();
             renderMembersTable();
             showLoading(false);
         } catch (error) {
@@ -226,11 +228,16 @@
     }
 
     // تحديث الإحصائيات
-    function updateStatistics() {
-        const totalCount = currentMembers.length;
+    async function updateStatistics() {
+        // جلب عدد الأعضاء المعلقين من جدول member_onboarding_tokens
+        const { count: pendingCount } = await sb
+            .from('member_onboarding_tokens')
+            .select('*', { count: 'exact', head: true })
+            .eq('is_used', false);
+        
         const activeCount = currentMembers.filter(m => m.account_status === 'active').length;
 
-        document.getElementById('totalMembersDataCount').textContent = totalCount;
+        document.getElementById('totalMembersDataCount').textContent = pendingCount || 0;
         document.getElementById('activeMembersDataCount').textContent = activeCount;
         document.getElementById('passwordChangesCount').textContent = '0';
         document.getElementById('emailChangesCount').textContent = '0';
@@ -254,13 +261,7 @@
         let html = '<div class="applications-cards-grid">';
 
         filteredMembers.forEach(member => {
-            const committeeName = member.member_details?.[0]?.committees?.committee_name_ar || 'غير محدد';
             const statusBadge = getStatusBadge(member.account_status);
-            const joinDate = new Date(member.created_at).toLocaleDateString('ar-SA', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
 
             html += `
                 <div class="application-card">
@@ -278,29 +279,15 @@
                     
                     <div class="application-card-body">
                         <div class="application-info-grid">
-                            <div class="info-item">
-                                <i class="fa-solid fa-envelope"></i>
-                                <div class="info-content">
-                                    <span class="info-label">البريد الإلكتروني</span>
-                                    <span class="info-value">${member.email}</span>
+                            ${member.phone ? `
+                                <div class="info-item">
+                                    <i class="fa-solid fa-phone"></i>
+                                    <div class="info-content">
+                                        <span class="info-label">الجوال</span>
+                                        <span class="info-value">${member.phone}</span>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-users"></i>
-                                <div class="info-content">
-                                    <span class="info-label">اللجنة</span>
-                                    <span class="info-value">${committeeName}</span>
-                                </div>
-                            </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-calendar"></i>
-                                <div class="info-content">
-                                    <span class="info-label">تاريخ الانضمام</span>
-                                    <span class="info-value">${joinDate}</span>
-                                </div>
-                            </div>
+                            ` : ''}
                         </div>
                     </div>
                     
@@ -329,10 +316,10 @@
     function getStatusBadge(status) {
         const badges = {
             'active': '<span class="badge badge-success">نشط</span>',
-            'inactive': '<span class="badge badge-secondary">غير نشط</span>',
-            'suspended': '<span class="badge badge-danger">معلق</span>'
+            'inactive': '<span class="badge badge-warning">معلق - لم يفعل الحساب</span>',
+            'suspended': '<span class="badge badge-danger">عضوية منتهية</span>'
         };
-        return badges[status] || badges['inactive'];
+        return badges[status] || '<span class="badge badge-secondary">غير محدد</span>';
     }
 
     // فتح نافذة تغيير البريد الإلكتروني

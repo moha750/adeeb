@@ -267,14 +267,6 @@ class PendingMembersManager {
                         </div>
                         
                         <div class="info-item">
-                            <i class="fa-solid fa-phone"></i>
-                            <div class="info-content">
-                                <span class="info-label">الهاتف</span>
-                                <span class="info-value">${phone}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="info-item">
                             <i class="fa-solid fa-calendar-plus"></i>
                             <div class="info-content">
                                 <span class="info-label">تاريخ الإرسال</span>

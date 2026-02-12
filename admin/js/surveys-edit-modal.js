@@ -57,6 +57,18 @@
                         survey.updated_by_profile = updater;
                     }
                 }
+                
+                // جلب اسم المنشئ إذا لم يوجد معدل
+                if (!survey.updated_by_profile && survey.created_by) {
+                    const { data: creator } = await sb
+                        .from('profiles')
+                        .select('full_name')
+                        .eq('id', survey.created_by)
+                        .single();
+                    if (creator) {
+                        survey.created_by_profile = creator;
+                    }
+                }
 
                 // جلب الأسئلة
                 const { data: questions, error: questionsError } = await sb
@@ -154,7 +166,7 @@
                             <div class="survey-edit-footer-info">
                                 <i class="fa-solid fa-clock"></i>
                                 آخر تعديل: ${this.formatDate(this.currentSurvey.updated_at || this.currentSurvey.created_at)}
-                                ${this.currentSurvey.updated_by_profile?.full_name ? `<span class="footer-info-separator">•</span><i class="fa-solid fa-user-pen"></i> ${this.escapeHtml(this.currentSurvey.updated_by_profile.full_name)}` : ''}
+                                ${this.currentSurvey.updated_by_profile?.full_name ? `<span class="footer-info-separator">•</span><i class="fa-solid fa-user-pen"></i> ${this.escapeHtml(this.currentSurvey.updated_by_profile.full_name)}` : (this.currentSurvey.created_by_profile?.full_name ? `<span class="footer-info-separator">•</span><i class="fa-solid fa-user"></i> ${this.escapeHtml(this.currentSurvey.created_by_profile.full_name)}` : '')}
                             </div>
                             <div class="survey-edit-footer-actions">
                                 <button class="btn btn--secondary" onclick="window.surveyEditModal.close()">
@@ -227,6 +239,23 @@
                             <input type="datetime-local" class="edit-form-input" id="editSurveyEndDate" 
                                 value="${survey.end_date ? this.formatDateForInput(survey.end_date) : ''}"
                                 onchange="window.surveyEditModal.markChanged()">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="edit-form-section">
+                    <div class="edit-form-section-title">
+                        <i class="fa-solid fa-lock"></i>
+                        إتاحة الاستبيان
+                    </div>
+                    <div class="edit-form-grid single-column">
+                        <div class="edit-form-group">
+                            <label class="edit-form-label">من يمكنه الإجابة على الاستبيان</label>
+                            <select class="edit-form-input" id="editSurveyAccessType" 
+                                onchange="window.surveyEditModal.markChanged()">
+                                <option value="public" ${survey.access_type === 'public' ? 'selected' : ''}>متاح للعامة</option>
+                                <option value="members_only" ${survey.access_type === 'members_only' ? 'selected' : ''}>لأعضاء أدِيب المسجلين فقط</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -329,7 +358,7 @@
                 },
                 {
                     id: 'allowAnonymous',
-                    label: 'السماح بالإجابات المجهولة',
+                    label: 'إخفاء هوية المستجيب',
                     desc: 'عدم تسجيل هوية المستجيب',
                     checked: survey.allow_anonymous
                 },
@@ -746,14 +775,19 @@
                     return;
                 }
 
-                // تحويل التواريخ المحلية مع الحفاظ على التوقيت المحلي
+                // تحويل التواريخ المحلية إلى ISO مع الحفاظ على التوقيت الصحيح
                 const startDateInput = document.getElementById('editSurveyStartDate').value;
                 const endDateInput = document.getElementById('editSurveyEndDate').value;
                 
-                // إرسال التاريخ كما هو بدون تحويل إلى UTC
-                // Supabase يتعامل مع timestamptz بشكل صحيح
-                const startDate = startDateInput ? startDateInput + ':00' : null;
-                const endDate = endDateInput ? endDateInput + ':00' : null;
+                // تحويل التاريخ المحلي إلى ISO string
+                const convertLocalDateToISO = (dateValue) => {
+                    if (!dateValue) return null;
+                    const localDate = new Date(dateValue + ':00');
+                    return localDate.toISOString();
+                };
+                
+                const startDate = convertLocalDateToISO(startDateInput);
+                const endDate = convertLocalDateToISO(endDateInput);
 
                 // الحصول على معرف المستخدم الحالي
                 const { data: { user } } = await sb.auth.getUser();
@@ -764,7 +798,7 @@
                     title,
                     description: document.getElementById('editSurveyDescription').value || null,
                     survey_type: 'general',
-                    access_type: 'public',
+                    access_type: document.getElementById('editSurveyAccessType')?.value || 'public',
                     start_date: startDate,
                     end_date: endDate,
                     welcome_message: document.getElementById('editWelcomeMessage').value || null,
@@ -824,9 +858,16 @@
             }
         }
 
-        close() {
+        async close() {
             if (this.hasChanges) {
-                if (!confirm('لديك تغييرات غير محفوظة. هل تريد الإغلاق؟')) {
+                const confirmed = await ModalHelper.confirm({
+                    title: 'تغييرات غير محفوظة',
+                    message: 'لديك تغييرات غير محفوظة. هل تريد الإغلاق؟',
+                    type: 'warning',
+                    confirmText: 'نعم، أغلق',
+                    cancelText: 'إلغاء'
+                });
+                if (!confirmed) {
                     return;
                 }
             }

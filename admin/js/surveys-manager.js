@@ -35,8 +35,6 @@
                 { value: 'dropdown', label: 'قائمة منسدلة', icon: 'fa-caret-down' },
                 { value: 'linear_scale', label: 'مقياس خطي', icon: 'fa-sliders' },
                 { value: 'rating_stars', label: 'تقييم بالنجوم', icon: 'fa-star' },
-                { value: 'rating_hearts', label: 'تقييم بالقلوب', icon: 'fa-heart' },
-                { value: 'rating_emojis', label: 'تقييم بالإيموجي', icon: 'fa-face-smile' },
                 { value: 'number', label: 'رقم', icon: 'fa-hashtag' },
                 { value: 'email', label: 'بريد إلكتروني', icon: 'fa-envelope' },
                 { value: 'phone', label: 'رقم هاتف', icon: 'fa-phone' },
@@ -46,9 +44,7 @@
                 { value: 'datetime', label: 'تاريخ ووقت', icon: 'fa-calendar-clock' },
                 { value: 'file_upload', label: 'رفع ملف', icon: 'fa-upload' },
                 { value: 'slider', label: 'شريط منزلق', icon: 'fa-sliders-h' },
-                { value: 'yes_no', label: 'نعم/لا', icon: 'fa-toggle-on' },
-                { value: 'agreement_scale', label: 'مقياس الموافقة', icon: 'fa-thumbs-up' },
-                { value: 'nps', label: 'Net Promoter Score', icon: 'fa-chart-line' }
+                { value: 'yes_no', label: 'نعم/لا', icon: 'fa-toggle-on' }
             ];
         }
 
@@ -323,7 +319,7 @@
             const statusBadgeClass = {
                 draft: 'badge-secondary',
                 active: 'badge-success',
-                paused: 'badge-warning',
+                paused: 'badge-secondary',
                 scheduled: 'badge-info',
                 closed: 'badge-danger',
                 archived: 'badge-secondary'
@@ -344,7 +340,6 @@
                                     <span class="badge ${statusBadgeClass[actualStatus]}">
                                         ${statusLabels[actualStatus]}
                                     </span>
-                                    ${actualStatus !== survey.status ? '<span class="badge badge-warning" title="تم تحديد الحالة تلقائياً بناءً على التاريخ"><i class="fa-solid fa-clock"></i></span>' : ''}
                                 </div>
                             </div>
                         </div>
@@ -358,13 +353,6 @@
                     
                     <div class="application-card-body">
                         <div class="application-info-grid">
-                            <div class="info-item">
-                                <i class="fa-solid fa-question-circle"></i>
-                                <div class="info-content">
-                                    <span class="info-label">الأسئلة</span>
-                                    <span class="info-value">${survey.questions_count || 0}</span>
-                                </div>
-                            </div>
                             <div class="info-item">
                                 <i class="fa-solid fa-calendar"></i>
                                 <div class="info-content">
@@ -455,6 +443,10 @@
                         <button class="btn btn--warning btn--sm" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل الاستبيان">
                             <i class="fa-solid fa-edit"></i>
                             تعديل
+                        </button>
+                        <button class="btn btn--danger btn--sm" onclick="window.surveysManager.endSurvey(${survey.id})" title="إنهاء الاستبيان نهائياً">
+                            <i class="fa-solid fa-stop-circle"></i>
+                            إنهاء
                         </button>
                         ` : ''}
                         ${actualStatus === 'paused' ? `
@@ -550,6 +542,14 @@
                             </div>
                             
                             <div class="form-group">
+                                <label>إتاحة الاستبيان</label>
+                                <select id="surveyAccessType" class="form-input">
+                                    <option value="public">متاح للعامة</option>
+                                    <option value="members_only">لأعضاء أدِيب المسجلين فقط</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
                                 <label>الإعدادات</label>
                                 <div class="checkbox-group">
                                     <label class="checkbox-label">
@@ -558,7 +558,7 @@
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="allowAnonymous" />
-                                        <span>السماح بالإجابات المجهولة</span>
+                                        <span>إخفاء هوية المستجيب</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="showProgressBar" checked />
@@ -865,7 +865,7 @@
                     title,
                     description: document.getElementById('surveyDescription')?.value || null,
                     survey_type: 'general',
-                    access_type: 'public',
+                    access_type: document.getElementById('surveyAccessType')?.value || 'public',
                     status,
                     allow_multiple_responses: document.getElementById('allowMultipleResponses')?.checked || false,
                     allow_anonymous: document.getElementById('allowAnonymous')?.checked || false,
@@ -1077,7 +1077,7 @@
                 const { error } = await sb
                     .from('surveys')
                     .update({ 
-                        status: 'active',
+                        status: 'closed',
                         end_date: new Date().toISOString()
                     })
                     .eq('id', surveyId);
@@ -1394,7 +1394,7 @@
             const actualStatus = this.getActualStatus(survey);
             const statusBadge = actualStatus === 'active' ? 'badge-success' : 
                                actualStatus === 'closed' ? 'badge-secondary' : 
-                               actualStatus === 'paused' ? 'badge-warning' : 'badge-info';
+                               actualStatus === 'paused' ? 'badge-secondary' : 'badge-info';
             const statusText = actualStatus === 'active' ? 'نشط' : 
                               actualStatus === 'closed' ? 'منتهية' : 
                               actualStatus === 'paused' ? 'متوقف' : 'مسودة';

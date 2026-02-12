@@ -108,22 +108,32 @@
         if (roleLevel >= 7) {
             const adeebTreeSubItems = [];
             
-            // إدارة المستخدمين - المستوى 8 وأعلى
+            // أعضاء أديب - المستوى 8 وأعلى
             if (roleLevel >= 8) {
                 adeebTreeSubItems.push({
                     id: 'users',
                     icon: 'fa-users',
-                    label: 'إدارة المستخدمين',
+                    label: 'أعضاء أديب',
                     section: 'users-section'
                 });
             }
             
-            // إدارة بيانات الأعضاء - المستوى 8 وأعلى
+            // الأعضاء المنتهية عضوياتهم - المستوى 8 وأعلى
+            if (roleLevel >= 8) {
+                adeebTreeSubItems.push({
+                    id: 'terminated-members',
+                    icon: 'fa-user-xmark',
+                    label: 'الأعضاء المنتهية عضوياتهم',
+                    section: 'terminated-members-section'
+                });
+            }
+            
+            // غرفة العمليات الجراحية - المستوى 8 وأعلى
             if (roleLevel >= 8) {
                 adeebTreeSubItems.push({
                     id: 'member-data-management',
                     icon: 'fa-user-gear',
-                    label: 'إدارة بيانات الأعضاء',
+                    label: 'غرفة العمليات الجراحية',
                     section: 'member-data-management-section'
                 });
             }
@@ -138,12 +148,12 @@
                 });
             }
             
-            // التنكر كمستخدم - رئيس النادي فقط (المستوى 10)
+            // برج المراقبة - رئيس النادي فقط (المستوى 10)
             if (roleLevel >= 10) {
                 adeebTreeSubItems.push({
                     id: 'impersonation',
                     icon: 'fa-user-secret',
-                    label: 'التنكر كمستخدم',
+                    label: 'برج المراقبة',
                     section: 'impersonation-section'
                 });
             }
@@ -723,6 +733,9 @@
                     await window.usersManagerInstance.init();
                 }
                 break;
+            case 'terminated-members-section':
+                await loadTerminatedMembersSection();
+                break;
             case 'impersonation-section':
                 if (window.ImpersonationManager) {
                     await window.ImpersonationManager.initImpersonationPage();
@@ -933,6 +946,297 @@
                     await window.surveysManager.loadTemplates();
                 }
                 break;
+        }
+    }
+
+    // تحميل قسم الأعضاء المنتهية عضوياتهم
+    async function loadTerminatedMembersSection() {
+        const container = document.getElementById('terminatedMembersTable');
+        const statsContainer = document.getElementById('terminatedMembersStatsGrid');
+        if (!container) return;
+
+        try {
+            showLoading(true);
+            
+            // جلب الأعضاء المنتهية عضوياتهم (حالة suspended تعني إنهاء العضوية)
+            const { data: terminatedMembers, error } = await sb
+                .from('profiles')
+                .select('*')
+                .eq('account_status', 'suspended')
+                .order('updated_at', { ascending: false });
+
+            if (error) throw error;
+
+            // عرض الإحصائيات
+            if (statsContainer) {
+                statsContainer.innerHTML = `
+                    <div class="stat-card" style="--stat-color: #ef4444">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user-xmark"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${terminatedMembers?.length || 0}</div>
+                                <div class="stat-label">إجمالي الأعضاء المنتهية عضوياتهم</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (!terminatedMembers || terminatedMembers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-user-check"></i>
+                        <p>لا يوجد أعضاء منتهية عضوياتهم</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="applications-cards-grid">
+                    ${terminatedMembers.map(member => {
+                        // حساب مدة انتهاء العضوية
+                        const terminationDuration = getTerminationDuration(member.updated_at);
+                        
+                        return `
+                        <div class="application-card" data-user-id="${member.id}">
+                            <div class="application-card-header">
+                                <div class="applicant-info">
+                                    <div class="applicant-avatar">
+                                        <img src="${member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name)}&background=ef4444&color=fff`}" alt="${member.full_name}" />
+                                    </div>
+                                    <div class="applicant-details">
+                                        <h3 class="applicant-name">${member.full_name}</h3>
+                                        <span class="badge badge-danger">عضوية منتهية</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="application-card-body">
+                                <div class="application-info-grid">
+                                    ${member.email ? `
+                                        <div class="info-item">
+                                            <i class="fa-solid fa-envelope"></i>
+                                            <div class="info-content">
+                                                <span class="info-label">البريد الإلكتروني</span>
+                                                <span class="info-value">${member.email}</span>
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                    
+                                    ${member.phone ? `
+                                        <div class="info-item">
+                                            <i class="fa-solid fa-phone"></i>
+                                            <div class="info-content">
+                                                <span class="info-label">الجوال</span>
+                                                <span class="info-value">${member.phone}</span>
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                    
+                                    <div class="info-item">
+                                        <i class="fa-solid fa-calendar-xmark"></i>
+                                        <div class="info-content">
+                                            <span class="info-label">تاريخ الإنهاء</span>
+                                            <span class="info-value">${member.updated_at ? new Date(member.updated_at).toLocaleDateString('ar-SA') : 'غير محدد'}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <i class="fa-solid fa-hourglass-half"></i>
+                                        <div class="info-content">
+                                            <span class="info-label">مدة الإنهاء</span>
+                                            <span class="info-value">${terminationDuration}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="application-card-footer">
+                                <button class="btn btn--danger btn--sm btn-delete-permanently" data-user-id="${member.id}" data-user-name="${member.full_name}">
+                                    <i class="fa-solid fa-trash"></i>
+                                    حذف نهائي
+                                </button>
+                            </div>
+                        </div>
+                    `;}).join('')}
+                </div>
+            `;
+
+            // إضافة وظيفة البحث
+            const searchInput = document.getElementById('terminatedMemberSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const cards = container.querySelectorAll('.application-card');
+                    let visibleCount = 0;
+                    cards.forEach(card => {
+                        const name = card.querySelector('.applicant-name')?.textContent.toLowerCase() || '';
+                        const email = card.querySelector('.info-value')?.textContent.toLowerCase() || '';
+                        if (name.includes(searchTerm) || email.includes(searchTerm)) {
+                            card.style.display = '';
+                            visibleCount++;
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                    
+                    // إظهار empty-state إذا لم تكن هناك نتائج
+                    const cardsGrid = container.querySelector('.applications-cards-grid');
+                    let emptyState = container.querySelector('.empty-state');
+                    
+                    if (visibleCount === 0 && searchTerm) {
+                        if (!emptyState) {
+                            emptyState = document.createElement('div');
+                            emptyState.className = 'empty-state';
+                            emptyState.innerHTML = `
+                                <i class="fa-solid fa-search"></i>
+                                <p>لا توجد نتائج مطابقة للبحث</p>
+                            `;
+                            container.appendChild(emptyState);
+                        }
+                        emptyState.style.display = '';
+                        if (cardsGrid) cardsGrid.style.display = 'none';
+                    } else {
+                        if (emptyState) emptyState.style.display = 'none';
+                        if (cardsGrid) cardsGrid.style.display = '';
+                    }
+                });
+            }
+
+        // إضافة event listener لأزرار الحذف النهائي
+            container.querySelectorAll('.btn-delete-permanently').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const userId = e.currentTarget.dataset.userId;
+                    const userName = e.currentTarget.dataset.userName;
+                    await deleteMemberPermanently(userId, userName);
+                });
+            });
+
+        } catch (error) {
+            console.error('Error loading terminated members:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل البيانات</div>';
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // حساب مدة انتهاء العضوية بشكل مقروء
+    function getTerminationDuration(terminationDate) {
+        if (!terminationDate) return 'غير محدد';
+        
+        const now = new Date();
+        const termDate = new Date(terminationDate);
+        const diffMs = now - termDate;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 1) {
+            return 'اليوم';
+        } else if (diffDays === 1) {
+            return 'يوم واحد';
+        } else if (diffDays === 2) {
+            return 'يومان';
+        } else if (diffDays < 7) {
+            return `${diffDays} أيام`;
+        } else if (diffDays < 14) {
+            return 'أسبوع';
+        } else if (diffDays < 21) {
+            return 'أسبوعان';
+        } else if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7);
+            return `${weeks} أسابيع`;
+        } else if (diffDays < 60) {
+            return 'شهر';
+        } else if (diffDays < 90) {
+            return 'شهران';
+        } else if (diffDays < 365) {
+            const months = Math.floor(diffDays / 30);
+            return `${months} أشهر`;
+        } else if (diffDays < 730) {
+            return 'سنة';
+        } else if (diffDays < 1095) {
+            return 'سنتان';
+        } else {
+            const years = Math.floor(diffDays / 365);
+            return `${years} سنوات`;
+        }
+    }
+
+    // حذف عضو نهائياً من قاعدة البيانات
+    async function deleteMemberPermanently(userId, userName) {
+        const result = await Swal.fire({
+            title: 'تأكيد الحذف النهائي',
+            html: `
+                <div class="modal-content-rtl">
+                    <p class="confirm-message">
+                        هل أنت متأكد من حذف <strong>${userName}</strong> نهائياً؟
+                    </p>
+                    <div class="info-box info-box--danger">
+                        <i class="fa-solid fa-exclamation-triangle"></i>
+                        <p class="warning-title">
+                            تحذير: هذا الإجراء سيقوم بـ:
+                        </p>
+                        <ul class="warning-list">
+                            <li>حذف جميع بيانات المستخدم من قاعدة البيانات</li>
+                            <li>حذف جميع السجلات المرتبطة بالمستخدم</li>
+                            <li>لا يمكن استرجاع البيانات بعد الحذف</li>
+                        </ul>
+                    </div>
+                    <p class="danger-text">
+                        <strong>هذا الإجراء لا يمكن التراجع عنه!</strong>
+                    </p>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'نعم، احذف نهائياً',
+            cancelButtonText: 'إلغاء',
+            reverseButtons: true
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            showLoading(true);
+
+            // 1. حذف من member_onboarding_tokens
+            await sb.from('member_onboarding_tokens').delete().eq('user_id', userId);
+            
+            // 2. حذف من user_roles
+            await sb.from('user_roles').delete().eq('user_id', userId);
+            
+            // 3. حذف من member_details
+            await sb.from('member_details').delete().eq('user_id', userId);
+            
+            // 4. حذف من profiles
+            const { error: profileError } = await sb.from('profiles').delete().eq('id', userId);
+            
+            if (profileError) throw profileError;
+
+            await Swal.fire({
+                title: 'تم الحذف',
+                html: `<p>تم حذف <strong>${userName}</strong> نهائياً من قاعدة البيانات</p>`,
+                icon: 'success',
+                confirmButtonText: 'حسناً'
+            });
+
+            // إعادة تحميل القسم
+            await loadTerminatedMembersSection();
+
+        } catch (error) {
+            console.error('Error deleting member permanently:', error);
+            await Swal.fire({
+                title: 'خطأ',
+                text: 'حدث خطأ أثناء حذف العضو. قد تكون هناك بيانات مرتبطة تمنع الحذف.',
+                icon: 'error',
+                confirmButtonText: 'حسناً'
+            });
+        } finally {
+            showLoading(false);
         }
     }
 
@@ -1750,6 +2054,14 @@
 
         if (addUserBtn) {
             addUserBtn.addEventListener('click', async () => {
+                await openUserModal();
+            });
+        }
+
+        // زر إهداء العضوية في قسم باب التسجيل
+        const addGiftMembershipBtn = document.getElementById('addGiftMembershipBtn');
+        if (addGiftMembershipBtn) {
+            addGiftMembershipBtn.addEventListener('click', async () => {
                 await openUserModal();
             });
         }

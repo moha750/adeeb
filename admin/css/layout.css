@@ -166,10 +166,10 @@ body::before {
 .section-header {
     margin-bottom: 2rem;
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
     padding: 1.25rem 1.5rem;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
     border-radius: 12px;
@@ -185,23 +185,30 @@ body::before {
     min-width: 200px;
 }
 
+/* العنوان والوصف على اليمين */
+.section-header > h1,
+.section-header > .section-header-content {
+    order: 1;
+    margin-left: auto;
+}
+
+/* الأزرار على اليسار */
+.section-header > .section-header-actions,
+.section-header > .section-actions,
+.section-header > .btn,
+.section-header > button {
+    order: 2;
+    margin-right: auto;
+    margin-left: 0;
+}
+
 /* جعل section-subtitle تحت h1 مباشرة */
 .section-header > h1 + .section-subtitle {
     width: 100%;
     flex-basis: 100%;
-    order: 2;
+    order: 1;
     margin-top: 0;
     margin-bottom: 0;
-}
-
-.section-header > h1 {
-    order: 1;
-}
-
-.section-header > .section-header-actions,
-.section-header > .btn,
-.section-header > button {
-    order: 3;
 }
 
 .section-header h1 {
@@ -242,14 +249,31 @@ body::before {
     .section-header {
         padding: 1rem;
         flex-direction: column;
-        align-items: stretch;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .section-header > h1,
+    .section-header > .section-header-content {
+        margin-left: 0;
+        width: 100%;
+        align-items: center;
+    }
+    
+    .section-header > .section-header-actions,
+    .section-header > .section-actions,
+    .section-header > .btn,
+    .section-header > button {
+        margin-right: 0;
+        justify-content: center;
+        width: 100%;
     }
     
     .section-header h1 {
         font-size: 1.4rem;
         width: 100%;
         text-align: center;
-        justify-content: center; /* لأن داخله flex للأيقونة */
+        justify-content: center;
     }
     
     .section-header h1 i {
@@ -258,7 +282,7 @@ body::before {
     }
     
     .section-header-actions {
-        justify-content: flex-start;
+        justify-content: center;
         margin-top: 0.5rem;
     }
 }
@@ -584,16 +608,3 @@ body::before {
     opacity: 1;
 }
 
-/* ============================================================================
-   Dark Mode Support (Optional)
-   ============================================================================ */
-
-@media (prefers-color-scheme: dark) {
-    body {
-        background: linear-gradient(135deg, #1a1a1a 0%, #0f1419 100%);
-    }
-
-    .section-header h1 {
-        color: #e2e8f0;
-    }
-}

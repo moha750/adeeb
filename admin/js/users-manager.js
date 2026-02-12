@@ -30,18 +30,20 @@ class UsersManager {
     }
 
     /**
-     * جلب جميع المستخدمين
+     * جلب جميع المستخدمين النشطين فقط
      */
     async loadUsers() {
         try {
+            // جلب الأعضاء النشطين فقط
             const { data: users, error: usersError } = await this.supabase
                 .from('profiles')
                 .select('*')
+                .eq('account_status', 'active')
                 .order('created_at', { ascending: false });
 
             if (usersError) throw usersError;
 
-            // جلب الأدوار وحالة التفعيل لكل مستخدم
+            // جلب الأدوار لكل مستخدم
             const usersWithRoles = await Promise.all(users.map(async (user) => {
                 const { data: userRoles } = await this.supabase
                     .from('user_roles')
@@ -62,31 +64,9 @@ class UsersManager {
                     .eq('is_active', true)
                     .limit(1);
 
-                // فحص حالة التفعيل من member_onboarding_tokens
-                let token = null;
-                try {
-                    const { data } = await this.supabase
-                        .from('member_onboarding_tokens')
-                        .select('is_used')
-                        .eq('user_id', user.id)
-                        .maybeSingle();
-                    token = data;
-                } catch (error) {
-                    // تجاهل أخطاء RLS - قد يكون المستخدم في وضع التنكر
-                    console.debug('Could not fetch token for user:', user.id);
-                }
-
-                // تحديد الحالة الفعلية
-                let actualStatus = user.account_status;
-                if (token && !token.is_used) {
-                    actualStatus = 'pending'; // معلق - لم يفعل الحساب
-                }
-
                 return {
                     ...user,
-                    user_roles: userRoles || [],
-                    actual_status: actualStatus,
-                    is_activated: !token || token.is_used
+                    user_roles: userRoles || []
                 };
             }));
 
@@ -100,49 +80,17 @@ class UsersManager {
     }
 
     /**
-     * تحميل الإحصائيات
+     * تحميل الإحصائيات - عرض الأعضاء النشطين فقط
      */
     async loadStats() {
         try {
-            // جلب IDs الأعضاء المعلقين (الذين لديهم tokens غير مستخدمة)
-            const { data: pendingTokens } = await this.supabase
-                .from('member_onboarding_tokens')
-                .select('user_id')
-                .eq('is_used', false);
-
-            const pendingUserIds = pendingTokens ? pendingTokens.map(t => t.user_id) : [];
-
-            const { count: totalUsers } = await this.supabase
-                .from('profiles')
-                .select('*', { count: 'exact', head: true });
-
-            // استثناء الأعضاء المعلقين من النشطين
-            let activeQuery = this.supabase
+            const { count: activeUsers } = await this.supabase
                 .from('profiles')
                 .select('*', { count: 'exact', head: true })
                 .eq('account_status', 'active');
-            
-            if (pendingUserIds.length > 0) {
-                activeQuery = activeQuery.not('id', 'in', `(${pendingUserIds.join(',')})`);
-            }
-
-            const { count: activeUsers } = await activeQuery;
-
-            const { count: inactiveUsers } = await this.supabase
-                .from('profiles')
-                .select('*', { count: 'exact', head: true })
-                .eq('account_status', 'inactive');
-
-            const { count: suspendedUsers } = await this.supabase
-                .from('profiles')
-                .select('*', { count: 'exact', head: true })
-                .eq('account_status', 'suspended');
 
             this.renderStats({
-                total: totalUsers || 0,
-                active: activeUsers || 0,
-                inactive: inactiveUsers || 0,
-                suspended: suspendedUsers || 0
+                active: activeUsers || 0
             });
         } catch (error) {
             console.error('Error loading stats:', error);
@@ -150,24 +98,13 @@ class UsersManager {
     }
 
     /**
-     * عرض الإحصائيات
+     * عرض الإحصائيات - كارت واحد للأعضاء النشطين فقط
      */
     renderStats(stats) {
         const container = document.getElementById('usersStatsGrid');
         if (!container) return;
 
         container.innerHTML = `
-            <div class="stat-card" style="--stat-color: #3b82f6">
-                <div class="stat-card-wrapper">
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-users"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value">${stats.total}</div>
-                        <div class="stat-label">إجمالي المستخدمين</div>
-                    </div>
-                </div>
-            </div>
             <div class="stat-card" style="--stat-color: #10b981">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
@@ -175,29 +112,7 @@ class UsersManager {
                     </div>
                     <div class="stat-content">
                         <div class="stat-value">${stats.active}</div>
-                        <div class="stat-label">مستخدمين نشطين</div>
-                    </div>
-                </div>
-            </div>
-            <div class="stat-card" style="--stat-color: #f59e0b">
-                <div class="stat-card-wrapper">
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-user-clock"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value">${stats.inactive}</div>
-                        <div class="stat-label">غير نشطين</div>
-                    </div>
-                </div>
-            </div>
-            <div class="stat-card" style="--stat-color: #ef4444">
-                <div class="stat-card-wrapper">
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-user-slash"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value">${stats.suspended}</div>
-                        <div class="stat-label">معلقين</div>
+                        <div class="stat-label">أعضاء أديب النشطين</div>
                     </div>
                 </div>
             </div>
@@ -217,6 +132,10 @@ class UsersManager {
 
             const roleFilter = document.getElementById('roleFilter');
             if (roleFilter && roles) {
+                // تفريغ الخيارات الموجودة (ما عدا الخيار الأول)
+                while (roleFilter.options.length > 1) {
+                    roleFilter.remove(1);
+                }
                 roles.forEach(role => {
                     const option = document.createElement('option');
                     option.value = role.id;
@@ -234,6 +153,10 @@ class UsersManager {
 
             const committeeFilter = document.getElementById('committeeFilter');
             if (committeeFilter && committees) {
+                // تفريغ الخيارات الموجودة (ما عدا الخيار الأول)
+                while (committeeFilter.options.length > 1) {
+                    committeeFilter.remove(1);
+                }
                 committees.forEach(committee => {
                     const option = document.createElement('option');
                     option.value = committee.id;
@@ -281,13 +204,11 @@ class UsersManager {
         
         const statusMap = {
             'active': { label: 'نشط', class: 'badge-success' },
-            'inactive': { label: 'غير نشط', class: 'badge-warning' },
-            'suspended': { label: 'معلق', class: 'badge-danger' },
-            'pending': { label: 'معلق - لم يفعل الحساب', class: 'badge-info' }
+            'inactive': { label: 'معلق - لم يفعل الحساب', class: 'badge-warning' },
+            'suspended': { label: 'عضوية منتهية', class: 'badge-danger' }
         };
         
-        // استخدام الحالة الفعلية بدلاً من account_status
-        const status = statusMap[user.actual_status] || { label: 'غير محدد', class: 'badge-secondary' };
+        const status = statusMap[user.account_status] || { label: 'غير محدد', class: 'badge-secondary' };
         const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=3d8fd6&color=fff`;
 
         return `
@@ -486,36 +407,64 @@ class UsersManager {
 
         const role = user.user_roles?.[0]?.role;
         const committee = user.user_roles?.[0]?.committee;
+        
+        const statusLabels = {
+            'active': 'نشط',
+            'inactive': 'معلق - لم يفعل الحساب',
+            'suspended': 'عضوية منتهية'
+        };
+        
+        const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=3d8fd6&color=fff&size=100`;
 
         const content = `
-            <div class="detail-grid">
-                <div class="detail-item">
-                    <span class="detail-label">الاسم الكامل</span>
-                    <span class="detail-value">${user.full_name}</span>
+            <div class="user-details-modal">
+                <div class="user-details-header">
+                    <img src="${avatarUrl}" alt="${user.full_name}" class="user-avatar-lg" />
+                    <h3 class="user-name-lg">${user.full_name}</h3>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">البريد الإلكتروني</span>
-                    <span class="detail-value">${user.email || 'غير محدد'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">الجوال</span>
-                    <span class="detail-value">${user.phone || 'غير محدد'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">الدور</span>
-                    <span class="detail-value">${role?.role_name_ar || 'غير محدد'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">اللجنة</span>
-                    <span class="detail-value">${committee?.committee_name_ar || 'غير محدد'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">حالة الحساب</span>
-                    <span class="detail-value">${user.account_status}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">تاريخ الانضمام</span>
-                    <span class="detail-value">${new Date(user.created_at).toLocaleDateString('ar-SA')}</span>
+                <div class="application-info-grid" style="margin-top: 1.5rem;">
+                    <div class="info-item">
+                        <i class="fa-solid fa-envelope"></i>
+                        <div class="info-content">
+                            <span class="info-label">البريد الإلكتروني</span>
+                            <span class="info-value">${user.email || 'غير محدد'}</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fa-solid fa-phone"></i>
+                        <div class="info-content">
+                            <span class="info-label">الجوال</span>
+                            <span class="info-value">${user.phone || 'غير محدد'}</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fa-solid fa-user-tag"></i>
+                        <div class="info-content">
+                            <span class="info-label">الدور</span>
+                            <span class="info-value">${role?.role_name_ar || 'غير محدد'}</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fa-solid fa-users"></i>
+                        <div class="info-content">
+                            <span class="info-label">اللجنة</span>
+                            <span class="info-value">${committee?.committee_name_ar || 'غير محدد'}</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <div class="info-content">
+                            <span class="info-label">حالة الحساب</span>
+                            <span class="info-value">${statusLabels[user.account_status] || user.account_status}</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fa-solid fa-calendar-plus"></i>
+                        <div class="info-content">
+                            <span class="info-label">تاريخ الانضمام</span>
+                            <span class="info-value">${new Date(user.created_at).toLocaleDateString('ar-SA')}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;

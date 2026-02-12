@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>لوحة التحكم — نظام إدارة نادي أديب</title>
     <meta name="robots" content="noindex, nofollow" />
-    
+
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#3b82f6" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -53,7 +53,7 @@
                     <span id="userName" class="user-name"></span>
                 </div>
             </div>
-            
+
             <!-- مركز الإشعارات -->
             <div class="notifications-center">
                 <button id="notificationsBtn" class="notifications-btn" title="الإشعارات">
@@ -66,7 +66,8 @@
                     <div class="notifications-header">
                         <h3>الإشعارات</h3>
                         <div class="d-flex gap-8 align-items-center">
-                            <button class="btn btn--outline btn--outline-primary btn--xs" id="markAllReadBtn">تعليم الكل كمقروء</button>
+                            <button class="btn btn--outline btn--outline-primary btn--xs" id="markAllReadBtn">تعليم الكل
+                                كمقروء</button>
                             <button class="btn btn--icon btn--icon-sm" id="closeNotificationsBtn" title="إغلاق">
                                 <i class="fa-solid fa-times"></i>
                             </button>
@@ -119,29 +120,43 @@
         <!-- المحتوى الرئيسي -->
         <main class="admin-main" id="mainContent">
 
-            <!-- قسم التنكر كمستخدم -->
+            <!-- قسم برج المراقبة -->
             <section id="impersonation-section" class="admin-section d-none">
                 <div class="section-header">
+                    <div class="section-header-content">
                     <h1>
                         <i class="fa-solid fa-user-secret"></i>
-                        التنكر كمستخدم
+                        برج المراقبة
                     </h1>
                     <p class="section-subtitle">إدارة جلسات التنكر وعرض السجل الكامل</p>
-                    <button class="btn btn--primary" id="startImpersonationBtn">
-                        <i class="fa-solid fa-user-secret"></i>
-                        بدء التنكر
-                    </button>
+                </div>
+                    <div class="section-header-actions">
+                        <button class="btn btn--outline btn--outline-primary" id="refreshImpersonationHistoryBtn">
+                            <i class="fa-solid fa-refresh"></i>
+                            تحديث
+                        </button>
+                        <button class="btn btn--outline btn--outline-secondary" id="exportImpersonationHistoryBtn">
+                            <i class="fa-solid fa-download"></i>
+                            تصدير
+                        </button>
+                        <button class="btn btn--primary" id="startImpersonationBtn">
+                            <i class="fa-solid fa-user-secret"></i>
+                            بدء التنكر
+                        </button>
+                    </div>
                 </div>
 
                 <!-- تحذير أمني -->
-                <div class="card" style="background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%); border: 2px solid #ffc107; margin-bottom: 1.5rem;">
+                <div class="card"
+                    style="background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%); border: 2px solid #ffc107; margin-bottom: 1.5rem;">
                     <div class="card-body">
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             <i class="fa-solid fa-exclamation-triangle" style="font-size: 2rem; color: #856404;"></i>
                             <div>
                                 <h3 style="color: #856404; margin-bottom: 0.5rem; font-weight: 600;">تحذير أمني</h3>
                                 <p style="color: #856404; margin: 0;">
-                                    هذه الميزة متاحة لرئيس النادي فقط. جميع جلسات التنكر يتم تسجيلها بالكامل مع التاريخ والوقت والسبب.
+                                    هذه الميزة متاحة لرئيس النادي فقط. جميع جلسات التنكر يتم تسجيلها بالكامل مع التاريخ
+                                    والوقت والسبب.
                                     استخدم هذه الميزة فقط عند الضرورة القصوى لاستكشاف المشاكل أو دعم المستخدمين.
                                 </p>
                             </div>
@@ -198,22 +213,27 @@
                 </div>
 
                 <!-- الجلسة النشطة (إن وجدت) -->
-                <div id="activeImpersonationCard" class="card" style="display: none; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 2px solid #dc2626; margin-bottom: 1.5rem;">
+                <div id="activeImpersonationCard" class="card"
+                    style="display: none; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 2px solid #dc2626; margin-bottom: 1.5rem;">
                     <div class="card-body">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                             <div>
                                 <h3 style="color: #991b1b; margin-bottom: 0.5rem; font-weight: 600;">
-                                    <i class="fa-solid fa-circle-dot" style="animation: pulse 2s ease-in-out infinite;"></i>
+                                    <i class="fa-solid fa-circle-dot"
+                                        style="animation: pulse 2s ease-in-out infinite;"></i>
                                     جلسة تنكر نشطة
                                 </h3>
-                                <p style="color: #991b1b; margin: 0; font-size: 0.875rem;">يوجد حالياً جلسة تنكر نشطة</p>
+                                <p style="color: #991b1b; margin: 0; font-size: 0.875rem;">يوجد حالياً جلسة تنكر نشطة
+                                </p>
                             </div>
                             <button class="btn btn--danger btn--sm" id="endActiveImpersonationBtn">
                                 <i class="fa-solid fa-stop"></i>
                                 إنهاء الجلسة
                             </button>
                         </div>
-                        <div id="activeImpersonationDetails" style="background: white; border-radius: 0.5rem; padding: 1rem;">
+                        <div id="activeImpersonationDetails"
+                            style="background: white; border-radius: 0.5rem; padding: 1rem;">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -221,21 +241,11 @@
 
                 <!-- سجل التنكر -->
                 <div class="card">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="card-header">
                         <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600;">
                             <i class="fa-solid fa-history"></i>
                             سجل التنكر
                         </h2>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button class="btn btn--outline btn--outline-primary btn--sm" id="refreshImpersonationHistoryBtn">
-                                <i class="fa-solid fa-refresh"></i>
-                                تحديث
-                            </button>
-                            <button class="btn btn--outline btn--outline-secondary btn--sm" id="exportImpersonationHistoryBtn">
-                                <i class="fa-solid fa-download"></i>
-                                تصدير
-                            </button>
-                        </div>
                     </div>
                     <div class="card-body">
                         <!-- فلاتر البحث -->
@@ -314,19 +324,13 @@
                 </div>
             </section>
 
-            <!-- قسم إدارة المستخدمين -->
+            <!-- قسم أعضاء أديب -->
             <section id="users-section" class="admin-section d-none">
                 <div class="section-header">
                     <h1>
                         <i class="fa-solid fa-users"></i>
-                        إدارة المستخدمين
+                        أعضاء أديب
                     </h1>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button class="btn btn--primary" id="addUserBtn">
-                            <i class="fa-solid fa-user-plus"></i>
-                            إضافة مستخدم
-                        </button>
-                    </div>
                 </div>
 
                 <!-- بطاقات الإحصائيات -->
@@ -346,12 +350,6 @@
                     <select id="committeeFilter" class="filter-select">
                         <option value="">جميع اللجان</option>
                     </select>
-                    <select id="statusFilter" class="filter-select">
-                        <option value="">جميع الحالات</option>
-                        <option value="active">نشط</option>
-                        <option value="inactive">غير نشط</option>
-                        <option value="suspended">معلق</option>
-                    </select>
                 </div>
 
                 <!-- جدول المستخدمين -->
@@ -364,6 +362,38 @@
                 </div>
             </section>
 
+
+            <!-- قسم الأعضاء المنتهية عضوياتهم -->
+            <section id="terminated-members-section" class="admin-section d-none">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-user-xmark"></i>
+                        الأعضاء المنتهية عضوياتهم
+                    </h1>
+                </div>
+
+                <!-- بطاقات الإحصائيات -->
+                <div class="stats-grid" id="terminatedMembersStatsGrid">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+
+                <!-- فلاتر البحث -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="terminatedMemberSearchInput" placeholder="البحث عن عضو..." />
+                    </div>
+                </div>
+
+                <!-- جدول الأعضاء المنتهية عضوياتهم -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="terminatedMembersTable" class="data-table">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             <!-- قسم إدارة اللجان -->
             <section id="committees-section" class="admin-section d-none">
@@ -551,7 +581,6 @@
                         <option value="active">نشط</option>
                         <option value="paused">متوقف</option>
                         <option value="closed">منتهية</option>
-                        <option value="archived">مؤرشف</option>
                     </select>
                 </div>
 
@@ -596,7 +625,8 @@
                             <i class="fa-solid fa-chart-pie"></i>
                             <span id="resultsTitleText">نتائج وتحليلات الاستبيانات</span>
                         </h1>
-                        <p class="section-subtitle" id="resultsSubtitle">عرض الإحصائيات والاستجابات والتحليلات المتقدمة</p>
+                        <p class="section-subtitle" id="resultsSubtitle">عرض الإحصائيات والاستجابات والتحليلات المتقدمة
+                        </p>
                     </div>
                     <div class="section-header-actions" id="resultsHeaderActions" style="display: none;">
                         <button class="btn btn--outline btn--outline-primary" id="backToSurveysListHeader">
@@ -613,7 +643,8 @@
                 <!-- اختيار الاستبيان - واجهة محسنة -->
                 <div class="survey-selector-container" id="surveySelectorContainer">
                     <div class="card" style="margin-bottom: 1.5rem;">
-                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="card-header"
+                            style="display: flex; justify-content: space-between; align-items: center;">
                             <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
                                 <i class="fa-solid fa-clipboard-list"></i>
                                 اختر استبياناً لعرض نتائجه
@@ -633,7 +664,7 @@
                                     <option value="draft">مسودة</option>
                                 </select>
                             </div>
-                            
+
                             <!-- بطاقات الاستبيانات -->
                             <div class="survey-selector-grid" id="surveyResultsGrid">
                                 <!-- سيتم ملؤها ديناميكياً -->
@@ -644,7 +675,7 @@
                                     <div class="results-empty-title">جاري تحميل الاستبيانات...</div>
                                 </div>
                             </div>
-                            
+
                             <!-- القائمة المنسدلة المخفية للتوافق -->
                             <select id="selectSurveyForResults" class="filter-select" style="display: none;">
                                 <option value="">-- اختر استبياناً --</option>
@@ -656,20 +687,25 @@
                 <!-- التبويبات الأفقية - صفحة النتائج المنفصلة -->
                 <div id="resultsTabsContainer" style="display: none;">
                     <!-- شريط التبويبات -->
-                    <div class="tabs-nav" style="display: flex; gap: 0.5rem; border-bottom: 2px solid #e5e7eb; margin-bottom: 1.5rem;">
-                        <button class="tab-btn active" data-tab="statistics" style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: 500;">
+                    <div class="tabs-nav"
+                        style="display: flex; gap: 0.5rem; border-bottom: 2px solid #e5e7eb; margin-bottom: 1.5rem;">
+                        <button class="tab-btn active" data-tab="statistics"
+                            style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: 500;">
                             <i class="fa-solid fa-chart-pie"></i>
                             الإحصائيات
                         </button>
-                        <button class="tab-btn" data-tab="responses" style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; color: #6b7280;">
+                        <button class="tab-btn" data-tab="responses"
+                            style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; color: #6b7280;">
                             <i class="fa-solid fa-list"></i>
                             الاستجابات الفردية
                         </button>
-                        <button class="tab-btn" data-tab="responses-table" style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; color: #6b7280;">
+                        <button class="tab-btn" data-tab="responses-table"
+                            style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; color: #6b7280;">
                             <i class="fa-solid fa-table"></i>
                             جدول الاستجابات
                         </button>
-                        <button class="tab-btn" data-tab="analytics" style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; color: #6b7280;">
+                        <button class="tab-btn" data-tab="analytics"
+                            style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; color: #6b7280;">
                             <i class="fa-solid fa-chart-line"></i>
                             التحليلات المتقدمة
                         </button>
@@ -920,7 +956,7 @@
                                     <p id="myCommitteeMembersCount">0</p>
                                 </div>
                             </div>
-                            
+
                             <!-- رابط الانضمام للقروب -->
                             <div id="myCommitteeGroupLinkContainer">
                                 <h3>
@@ -1025,11 +1061,13 @@
                             <div class="d-grid gap-1-5rem">
                                 <div class="form-group">
                                     <label>عنوان الإشعار <span>*</span></label>
-                                    <input type="text" name="title" required placeholder="عنوان واضح ومختصر" maxlength="100">
+                                    <input type="text" name="title" required placeholder="عنوان واضح ومختصر"
+                                        maxlength="100">
                                 </div>
                                 <div class="form-group">
                                     <label>نص الإشعار <span>*</span></label>
-                                    <textarea name="message" required placeholder="اكتب رسالة الإشعار هنا..." rows="4" maxlength="500"></textarea>
+                                    <textarea name="message" required placeholder="اكتب رسالة الإشعار هنا..." rows="4"
+                                        maxlength="500"></textarea>
                                 </div>
                                 <div>
                                     <div class="form-group">
@@ -1105,22 +1143,25 @@
             <!-- قسم بطاقة العضوية -->
             <section id="membership-card-section" class="admin-section d-none">
                 <div class="section-header">
-                    <h1>
-                        <i class="fa-solid fa-id-badge"></i>
-                        بطاقة العضوية
-                    </h1>
-                    <p class="section-subtitle">بطاقة عضويتك في نادي أدِيب</p>
+                    <div class="section-header-content">
+                        <h1>
+                            <i class="fa-solid fa-id-badge"></i>
+                            بطاقة العضوية
+                        </h1>
+                        <p class="section-subtitle">بطاقة عضويتك في نادي أدِيب</p>
+                    </div>
                 </div>
 
                 <div class="membership-card-container">
                     <!-- البطاقة الرئيسية -->
                     <div class="membership-card">
                         <div class="membership-card-shine"></div>
-                        
+
                         <div class="membership-card-content">
                             <div class="membership-card-header">
                                 <div class="membership-card-logo">
-                                    <img src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" alt="شعار أدِيب">
+                                    <img src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e"
+                                        alt="شعار أدِيب">
                                     <div class="membership-card-logo-text">
                                         <h3>نادي أدِيب</h3>
                                         <p>Adeeb Club</p>
@@ -1132,7 +1173,8 @@
                             <div class="membership-card-info">
                                 <h2 class="membership-card-name" id="cardFullName">جاري التحميل...</h2>
                                 <p class="membership-card-id">رقم العضوية: <span id="cardMemberId">---</span></p>
-                                <div class="membership-card-committee" id="cardCommitteeContainer" style="display: none;">
+                                <div class="membership-card-committee" id="cardCommitteeContainer"
+                                    style="display: none;">
                                     <i class="fa-solid fa-users"></i>
                                     <span id="cardCommittee">---</span>
                                 </div>
@@ -1152,26 +1194,28 @@
                 </div>
             </section>
 
-            <!-- قسم إدارة بيانات الأعضاء -->
+            <!-- قسم غرفة العمليات الجراحية -->
             <section id="member-data-management-section" class="admin-section d-none">
                 <div class="section-header">
-                    <h1>
-                        <i class="fa-solid fa-user-shield"></i>
-                        إدارة بيانات الأعضاء
-                    </h1>
-                    <p class="section-subtitle">تغيير البريد الإلكتروني وكلمة المرور للأعضاء</p>
+                    <div class="section-header-content">
+                        <h1>
+                            <i class="fa-solid fa-user-shield"></i>
+                            غرفة العمليات الجراحية
+                        </h1>
+                        <p class="section-subtitle">تغيير البريد الإلكتروني وكلمة المرور للأعضاء</p>
+                    </div>
                 </div>
 
                 <!-- إحصائيات -->
                 <div class="stats-grid" class="mb-2rem">
-                    <div class="stat-card" style="--stat-color: #3b82f6">
+                    <div class="stat-card" style="--stat-color: #f59e0b">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
-                                <i class="fa-solid fa-users"></i>
+                                <i class="fa-solid fa-user-clock"></i>
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value" id="totalMembersDataCount">0</div>
-                                <div class="stat-label">إجمالي الأعضاء</div>
+                                <div class="stat-label">الأعضاء المعلقين</div>
                             </div>
                         </div>
                     </div>
@@ -1214,21 +1258,17 @@
                 <div class="filters-bar">
                     <div class="filter-group">
                         <i class="fa-solid fa-search"></i>
-                        <input type="text" id="memberDataSearchInput" placeholder="البحث عن عضو (الاسم، البريد الإلكتروني)..." />
+                        <input type="text" id="memberDataSearchInput"
+                            placeholder="البحث عن عضو (الاسم، البريد الإلكتروني)..." />
                     </div>
                     <select id="memberDataStatusFilter" class="filter-select">
                         <option value="">جميع الحالات</option>
                         <option value="active">نشط</option>
-                        <option value="inactive">غير نشط</option>
-                        <option value="suspended">معلق</option>
+                        <option value="pending">معلق</option>
                     </select>
                     <select id="memberDataCommitteeFilter" class="filter-select">
                         <option value="">جميع اللجان</option>
                     </select>
-                    <button class="btn btn--outline btn--outline-primary" id="refreshMemberDataBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
                 </div>
 
                 <!-- جدول الأعضاء -->
@@ -1250,12 +1290,14 @@
             <!-- قسم تعيين المناصب -->
             <section id="positions-section" class="admin-section d-none">
                 <div class="section-header">
+                    <div class="section-header-content">
                     <h1>
                         <i class="fa-solid fa-user-tie"></i>
                         تعيين المناصب
                     </h1>
                     <p class="section-subtitle">إدارة وتعيين المناصب وفقًا لهيكلة أدِيب</p>
                 </div>
+            </div>
 
                 <!-- بطاقات الإحصائيات -->
                 <div class="stats-grid" id="positionsStatsGrid">
@@ -1445,12 +1487,8 @@
                                 <div class="form-group">
                                     <label>البحث عن العضو <span class="text-danger">*</span></label>
                                     <div class="search-member-container">
-                                        <input 
-                                            type="text" 
-                                            id="searchMemberInput" 
-                                            placeholder="ابحث بالاسم أو البريد الإلكتروني..."
-                                            autocomplete="off"
-                                        />
+                                        <input type="text" id="searchMemberInput"
+                                            placeholder="ابحث بالاسم أو البريد الإلكتروني..." autocomplete="off" />
                                         <div class="search-results" id="searchResults"></div>
                                     </div>
                                     <input type="hidden" id="selectedMemberId" name="memberId" required />
@@ -1476,12 +1514,8 @@
                                 <!-- ملاحظات -->
                                 <div class="form-group">
                                     <label>ملاحظات (اختياري)</label>
-                                    <textarea 
-                                        id="positionNotes" 
-                                        name="notes" 
-                                        rows="3" 
-                                        placeholder="أضف أي ملاحظات حول التعيين..."
-                                    ></textarea>
+                                    <textarea id="positionNotes" name="notes" rows="3"
+                                        placeholder="أضف أي ملاحظات حول التعيين..."></textarea>
                                 </div>
 
                                 <!-- أزرار الإجراءات -->
@@ -1569,7 +1603,7 @@
                                 <i class="fa-solid fa-download"></i>
                                 <span>ثبّت التطبيق الآن</span>
                             </button>
-                            
+
                             <!-- زر التأكيد اليدوي -->
                             <div>
                                 <p>
@@ -1600,7 +1634,8 @@
                                 <div>
                                     <strong>كيفية التثبيت:</strong>
                                     <p>
-                                        <strong>iOS:</strong> اضغط على زر المشاركة <i class="fa-solid fa-share"></i> ثم اختر "إضافة إلى الشاشة الرئيسية"<br>
+                                        <strong>iOS:</strong> اضغط على زر المشاركة <i class="fa-solid fa-share"></i> ثم
+                                        اختر "إضافة إلى الشاشة الرئيسية"<br>
                                         <strong>Android:</strong> افتح قائمة المتصفح (⋮) واختر "تثبيت التطبيق"
                                     </p>
                                 </div>
@@ -1833,11 +1868,19 @@
             <!-- قسم إدارة رسائل التواصل -->
             <section id="contact-messages-section" class="admin-section d-none">
                 <div class="section-header">
-                    <h1>
-                        <i class="fa-solid fa-envelope"></i>
-                        رسائل التواصل
-                    </h1>
-                    <p class="section-subtitle">إدارة رسائل التواصل الواردة من الموقع</p>
+                    <div class="section-header-content">
+                        <h1>
+                            <i class="fa-solid fa-envelope"></i>
+                            رسائل التواصل
+                        </h1>
+                        <p class="section-subtitle">إدارة رسائل التواصل الواردة من الموقع</p>
+                    </div>
+                    <div class="section-header-actions">
+                        <button class="btn btn--outline btn--outline-primary" id="refreshContactMessagesBtn">
+                            <i class="fa-solid fa-refresh"></i>
+                            تحديث
+                        </button>
+                    </div>
                 </div>
 
                 <!-- إحصائيات الرسائل -->
@@ -1853,17 +1896,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="stat-card" style="--stat-color: #10b981">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-envelope-open"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="readMessagesCount">0</div>
-                                <div class="stat-label">رسائل مقروءة</div>
-                            </div>
-                        </div>
-                    </div>
                     <div class="stat-card" style="--stat-color: #8b5cf6">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
@@ -1872,17 +1904,6 @@
                             <div class="stat-content">
                                 <div class="stat-value" id="repliedMessagesCount">0</div>
                                 <div class="stat-label">تم الرد عليها</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #6b7280">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-box-archive"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="archivedMessagesCount">0</div>
-                                <div class="stat-label">مؤرشفة</div>
                             </div>
                         </div>
                     </div>
@@ -1897,21 +1918,8 @@
                     <select id="messageStatusFilter" class="filter-select">
                         <option value="">جميع الحالات</option>
                         <option value="new">جديدة</option>
-                        <option value="read">مقروءة</option>
                         <option value="replied">تم الرد</option>
-                        <option value="archived">مؤرشفة</option>
                     </select>
-                    <select id="messagePriorityFilter" class="filter-select">
-                        <option value="">جميع الأولويات</option>
-                        <option value="urgent">عاجل</option>
-                        <option value="high">عالي</option>
-                        <option value="normal">عادي</option>
-                        <option value="low">منخفض</option>
-                    </select>
-                    <button class="btn btn--primary" id="refreshMessagesBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
                 </div>
 
                 <!-- جدول الرسائل -->
@@ -1927,11 +1935,23 @@
             <!-- قسم إدارة مشتركي النشرة البريدية -->
             <section id="newsletter-section" class="admin-section d-none">
                 <div class="section-header">
-                    <h1>
-                        <i class="fa-solid fa-envelope-open-text"></i>
-                        مشتركو النشرة البريدية
-                    </h1>
-                    <p class="section-subtitle">إدارة المشتركين في النشرة البريدية</p>
+                    <div class="section-header-content">
+                        <h1>
+                            <i class="fa-solid fa-envelope-open-text"></i>
+                            مشتركو النشرة البريدية
+                        </h1>
+                        <p class="section-subtitle">إدارة المشتركين في النشرة البريدية</p>
+                    </div>
+                    <div class="section-header-actions">
+                        <button class="btn btn--outline btn--outline-primary" id="refreshSubscribersBtn">
+                            <i class="fa-solid fa-refresh"></i>
+                            تحديث
+                        </button>
+                        <button class="btn btn--outline btn--outline-secondary" id="exportSubscribersBtn">
+                            <i class="fa-solid fa-download"></i>
+                            تصدير
+                        </button>
+                    </div>
                 </div>
 
                 <!-- إحصائيات المشتركين -->
@@ -1995,14 +2015,6 @@
                         <option value="unsubscribed">ألغى الاشتراك</option>
                         <option value="bounced">بريد غير صالح</option>
                     </select>
-                    <button class="btn btn--primary" id="refreshSubscribersBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-                    <button class="btn btn--outline btn--outline-primary" id="exportSubscribersBtn">
-                        <i class="fa-solid fa-file-export"></i>
-                        تصدير
-                    </button>
                 </div>
 
                 <!-- جدول المشتركين -->
@@ -2096,7 +2108,8 @@
                                     <i class="fa-solid fa-save"></i>
                                     حفظ الإعدادات
                                 </button>
-                                <button type="button" class="btn btn--outline btn--outline-primary" id="resetMembershipSettings">
+                                <button type="button" class="btn btn--outline btn--outline-primary"
+                                    id="resetMembershipSettings">
                                     <i class="fa-solid fa-rotate-left"></i>
                                     إعادة تعيين
                                 </button>
@@ -2116,10 +2129,10 @@
                     <div class="card-body">
                         <div class="alert alert-warning">
                             <i class="fa-solid fa-exclamation-triangle"></i>
-                            <strong>تحذير:</strong> الأرشفة ستنقل جميع البيانات الحالية إلى الأرشيف وتحذفها من الأقسام، 
+                            <strong>تحذير:</strong> الأرشفة ستنقل جميع البيانات الحالية إلى الأرشيف وتحذفها من الأقسام،
                             مما يجعل النظام جاهزاً لدورة تسجيل جديدة.
                         </div>
-                        
+
                         <div>
                             <div>
                                 <div>الطلبات الحالية</div>
@@ -2134,10 +2147,8 @@
                                 <div id="currentSessionsCount">0</div>
                             </div>
                         </div>
-                        
-                        <button 
-                            class="btn btn-danger" 
-                            onclick="archiveMembershipCycle()">
+
+                        <button class="btn btn-danger" onclick="archiveMembershipCycle()">
                             <i class="fa-solid fa-box-archive"></i>
                             أرشفة التسجيل الحالي
                         </button>
@@ -2164,6 +2175,45 @@
                         </p>
                         <div id="availableCommitteesTable" class="data-table">
                             <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم إهداء العضوية -->
+            <section id="gift-membership-section" class="admin-section d-none">
+                <div class="section-header">
+                    <h1>
+                        <i class="fa-solid fa-gift"></i>
+                        إهداء العضوية
+                    </h1>
+                    <p class="section-subtitle">منح عضوية مباشرة لشخص دون المرور بعملية التسجيل</p>
+                </div>
+
+                <!-- شرح الميزة -->
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <div class="card-body">
+                        <div class="alert alert-info" style="margin-bottom: 1rem;">
+                            <i class="fa-solid fa-info-circle"></i>
+                            <strong>ما هي عضوية الهدية؟</strong>
+                            <p style="margin: 0.5rem 0 0 0;">
+                                تتيح لك هذه الميزة منح عضوية مباشرة لشخص ما دون الحاجة لملء نموذج التسجيل أو إجراء مقابلة.
+                                سيتم إنشاء حساب للعضو وإرسال رسالة قبول مباشرة على بريده الإلكتروني لإكمال التسجيل.
+                            </p>
+                        </div>
+                        
+                        <div style="text-align: center; padding: 2rem;">
+                            <div style="font-size: 4rem; color: #3d8fd6; margin-bottom: 1rem;">
+                                <i class="fa-solid fa-gift"></i>
+                            </div>
+                            <h3 style="margin-bottom: 1rem; color: #274060;">منح عضوية هدية</h3>
+                            <p style="color: #64748b; margin-bottom: 1.5rem;">
+                                اضغط على الزر أدناه لإضافة عضو جديد ومنحه عضوية مباشرة
+                            </p>
+                            <button class="btn btn--primary btn--lg" id="addGiftMembershipBtn">
+                                <i class="fa-solid fa-user-plus"></i>
+                                إضافة عضو جديد
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2962,21 +3012,25 @@
                             <div style="display: grid; gap: 1.5rem;">
                                 <div class="form-group">
                                     <label class="form-label">عنوان الخبر <span style="color: #ef4444;">*</span></label>
-                                    <input type="text" id="instantNewsTitle" class="form-input" placeholder="أدخل عنوان الخبر" required>
+                                    <input type="text" id="instantNewsTitle" class="form-input"
+                                        placeholder="أدخل عنوان الخبر" required>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label class="form-label">ملخص الخبر <span style="color: #ef4444;">*</span></label>
-                                    <textarea id="instantNewsSummary" class="form-input" rows="2" placeholder="ملخص مختصر للخبر" required></textarea>
+                                    <textarea id="instantNewsSummary" class="form-input" rows="2"
+                                        placeholder="ملخص مختصر للخبر" required></textarea>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label class="form-label">محتوى الخبر <span style="color: #ef4444;">*</span></label>
-                                    <textarea id="instantNewsContent" class="form-input" rows="8" placeholder="محتوى الخبر الكامل" required></textarea>
+                                    <textarea id="instantNewsContent" class="form-input" rows="8"
+                                        placeholder="محتوى الخبر الكامل" required></textarea>
                                 </div>
-                                
+
                                 <div class="form-group">
-                                    <label class="form-label">صورة غلاف الخبر <span style="color: #ef4444;">*</span></label>
+                                    <label class="form-label">صورة غلاف الخبر <span
+                                            style="color: #ef4444;">*</span></label>
                                     <div id="instantNewsImageUploadContainer">
                                         <!-- سيتم ملؤه ديناميكياً -->
                                     </div>
@@ -2987,26 +3041,29 @@
                                         <i class="fa-solid fa-camera" style="margin-left: 0.375rem;"></i>
                                         اسم مصور الغلاف <span style="color: #ef4444;">*</span>
                                     </label>
-                                    <input type="text" id="instantNewsCoverPhotographer" class="form-input" placeholder="أدخل اسم مصور صورة الغلاف" required>
+                                    <input type="text" id="instantNewsCoverPhotographer" class="form-input"
+                                        placeholder="أدخل اسم مصور صورة الغلاف" required>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label class="form-label">معرض صور الخبر (2-4 صور إجبارية)</label>
                                     <div id="instantNewsGalleryContainer">
                                         <!-- سيتم ملؤه ديناميكياً -->
                                     </div>
-                                    <small style="color: #6b7280; font-size: 0.8rem;">يجب إضافة من 2 إلى 4 صور مع اسم المصور لكل صورة</small>
+                                    <small style="color: #6b7280; font-size: 0.8rem;">يجب إضافة من 2 إلى 4 صور مع اسم
+                                        المصور لكل صورة</small>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                                         <input type="checkbox" id="instantNewsIsFeatured">
                                         <span>⭐ خبر مميز</span>
                                     </label>
                                 </div>
-                                
+
                                 <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                                    <button type="button" class="btn btn--outline btn--outline-secondary btn--sm" id="clearInstantNewsBtn">
+                                    <button type="button" class="btn btn--outline btn--outline-secondary btn--sm"
+                                        id="clearInstantNewsBtn">
                                         <i class="fa-solid fa-eraser"></i>
                                         مسح النموذج
                                     </button>
@@ -3219,7 +3276,8 @@
                     </label>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn--outline btn--outline-primary" id="cancelCommitteeBtn">إلغاء</button>
+                    <button type="button" class="btn btn--outline btn--outline-primary"
+                        id="cancelCommitteeBtn">إلغاء</button>
                     <button type="submit" class="btn btn--primary">
                         <i class="fa-solid fa-save"></i>
                         حفظ
@@ -3258,7 +3316,8 @@
                     </select>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn--outline btn--outline-primary" id="cancelUserBtn">إلغاء</button>
+                    <button type="button" class="btn btn--outline btn--outline-primary"
+                        id="cancelUserBtn">إلغاء</button>
                     <button type="submit" class="btn btn--primary">
                         <i class="fa-solid fa-gift"></i>
                         منح العضوية
@@ -3307,7 +3366,8 @@
                     <input type="number" id="workOrder" min="0" placeholder="0" />
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn--outline btn--outline-primary" id="cancelWorkBtn">إلغاء</button>
+                    <button type="button" class="btn btn--outline btn--outline-primary"
+                        id="cancelWorkBtn">إلغاء</button>
                     <button type="submit" class="btn btn--primary">
                         <i class="fa-solid fa-save"></i>
                         حفظ
@@ -3351,7 +3411,8 @@
                     <input type="number" id="achievementOrder" min="0" placeholder="0" />
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn--outline btn--outline-primary" id="cancelAchievementBtn">إلغاء</button>
+                    <button type="button" class="btn btn--outline btn--outline-primary"
+                        id="cancelAchievementBtn">إلغاء</button>
                     <button type="submit" class="btn btn--primary">
                         <i class="fa-solid fa-save"></i>
                         حفظ
@@ -3409,7 +3470,8 @@
                     <input type="number" id="sponsorOrder" min="0" placeholder="0" />
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn--outline btn--outline-primary" id="cancelSponsorBtn">إلغاء</button>
+                    <button type="button" class="btn btn--outline btn--outline-primary"
+                        id="cancelSponsorBtn">إلغاء</button>
                     <button type="submit" class="btn btn--primary">
                         <i class="fa-solid fa-save"></i>
                         حفظ
@@ -3491,26 +3553,22 @@
                 <div>
                     <div class="form-group">
                         <label>الكلية:</label>
-                        <div
-                            id="applicationDetailCollege"></div>
+                        <div id="applicationDetailCollege"></div>
                     </div>
                     <div class="form-group">
                         <label>التخصص:</label>
-                        <div
-                            id="applicationDetailMajor"></div>
+                        <div id="applicationDetailMajor"></div>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>المهارات:</label>
-                    <div
-                        id="applicationDetailSkills"></div>
+                    <div id="applicationDetailSkills"></div>
                 </div>
 
                 <div class="form-group">
                     <label>نبذة عن المتقدم:</label>
-                    <div
-                        id="applicationDetailAbout"></div>
+                    <div id="applicationDetailAbout"></div>
                 </div>
 
                 <div class="form-group" id="applicationPortfolioSection" class="d-none">
@@ -3559,7 +3617,8 @@
                     <i class="fa-solid fa-trash"></i>
                     حذف
                 </button>
-                <button type="button" class="btn btn--outline btn--outline-primary" id="closeApplicationDetailBtn">إغلاق</button>
+                <button type="button" class="btn btn--outline btn--outline-primary"
+                    id="closeApplicationDetailBtn">إغلاق</button>
                 <button type="button" class="btn btn--primary" id="saveApplicationBtn">
                     <i class="fa-solid fa-save"></i>
                     حفظ التغييرات
@@ -3600,8 +3659,7 @@
 
                 <div class="form-group">
                     <label>الرسالة:</label>
-                    <div
-                        id="messageDetailMessage"></div>
+                    <div id="messageDetailMessage"></div>
                 </div>
 
                 <div class="form-group" id="messageReplySection" class="d-none">
@@ -3655,7 +3713,8 @@
                     <i class="fa-solid fa-trash"></i>
                     حذف
                 </button>
-                <button type="button" class="btn btn--outline btn--outline-primary" id="closeMessageDetailBtn">إغلاق</button>
+                <button type="button" class="btn btn--outline btn--outline-primary"
+                    id="closeMessageDetailBtn">إغلاق</button>
                 <button type="button" class="btn btn--primary" id="saveMessageBtn">
                     <i class="fa-solid fa-save"></i>
                     حفظ التغييرات
@@ -3771,7 +3830,8 @@
                             </div>
                             <div class="form-group">
                                 <label>رقم الجوال <span>*</span></label>
-                                <input type="tel" id="editPhone" required placeholder="05XXXXXXXX" pattern="^05[0-9]{8}$" maxlength="10">
+                                <input type="tel" id="editPhone" required placeholder="05XXXXXXXX"
+                                    pattern="^05[0-9]{8}$" maxlength="10">
                             </div>
                         </div>
                     </div>
@@ -3785,7 +3845,8 @@
                         <div>
                             <div class="form-group">
                                 <label>رقم الهوية الوطنية <span>*</span></label>
-                                <input type="text" id="editNationalId" required placeholder="1XXXXXXXXX" pattern="^[12][0-9]{9}$" maxlength="10">
+                                <input type="text" id="editNationalId" required placeholder="1XXXXXXXXX"
+                                    pattern="^[12][0-9]{9}$" maxlength="10">
                             </div>
                             <div class="form-group">
                                 <label>تاريخ الميلاد <span>*</span></label>
@@ -3856,7 +3917,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn--outline btn--outline-primary" id="cancelEditProfile">إلغاء</button>
+                <button type="button" class="btn btn--outline btn--outline-primary"
+                    id="cancelEditProfile">إلغاء</button>
                 <button type="button" class="btn btn--primary" id="saveProfileChanges">
                     <i class="fa-solid fa-save"></i>
                     حفظ التغييرات
@@ -3885,17 +3947,20 @@
                     </div>
                     <div class="form-group">
                         <label>كلمة المرور الجديدة <span>*</span></label>
-                        <input type="password" id="newPassword" required placeholder="أدخل كلمة المرور الجديدة" minlength="8">
+                        <input type="password" id="newPassword" required placeholder="أدخل كلمة المرور الجديدة"
+                            minlength="8">
                         <small>يجب أن تكون 8 أحرف على الأقل</small>
                     </div>
                     <div class="form-group">
                         <label>تأكيد كلمة المرور الجديدة <span>*</span></label>
-                        <input type="password" id="confirmNewPassword" required placeholder="أعد إدخال كلمة المرور الجديدة">
+                        <input type="password" id="confirmNewPassword" required
+                            placeholder="أعد إدخال كلمة المرور الجديدة">
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn--outline btn--outline-primary" id="cancelChangePassword">إلغاء</button>
+                <button type="button" class="btn btn--outline btn--outline-primary"
+                    id="cancelChangePassword">إلغاء</button>
                 <button type="button" class="btn btn--primary" id="saveNewPassword">
                     <i class="fa-solid fa-save"></i>
                     تغيير كلمة المرور

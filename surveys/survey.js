@@ -46,6 +46,30 @@
                 return;
             }
 
+            // التحقق من أن الاستبيان خاص بأعضاء أديب
+            if (survey.access_type === 'members_only') {
+                const { data: { user } } = await sb.auth.getUser();
+                
+                if (!user) {
+                    // المستخدم غير مسجل الدخول
+                    showMembersOnlyMessage(survey);
+                    return;
+                }
+                
+                // التحقق من أن المستخدم عضو في أديب (لديه profile)
+                const { data: profile, error: profileError } = await sb
+                    .from('profiles')
+                    .select('id, account_status')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (profileError || !profile || profile.account_status !== 'active') {
+                    // المستخدم ليس عضواً نشطاً في أديب
+                    showMembersOnlyMessage(survey);
+                    return;
+                }
+            }
+
             // التحقق من تاريخ البدء (الاستبيان المجدول)
             if (survey.start_date && new Date(survey.start_date) > new Date()) {
                 showScheduledSurvey(survey);
@@ -58,6 +82,9 @@
             }
 
             currentSurvey = survey;
+
+            // تحديث عنوان الصفحة والـ meta tags ديناميكياً
+            updatePageMeta(survey);
 
             const { data: questions, error: questionsError } = await sb
                 .from('survey_questions')
@@ -1118,6 +1145,36 @@
         updateCountdown();
     }
 
+    function showMembersOnlyMessage(survey) {
+        showLoading(false);
+        const container = document.getElementById('surveyMain');
+        const currentUrl = encodeURIComponent(window.location.href);
+        
+        container.innerHTML = `
+            <div class="survey-card">
+                <div class="error-container">
+                    <div class="error-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <h2 class="error-title">استبيان خاص بأعضاء أديب</h2>
+                    <p class="thank-you-message">
+                        هذا الاستبيان متاح فقط لأعضاء ومنتسبي نادي أدِيب المسجلين.
+                        <br><br>
+                        إذا كنت عضواً في أدِيب، يرجى تسجيل الدخول للمتابعة.
+                    </p>
+                    <a href="../auth/login.html?redirect=${currentUrl}" class="btn btn-primary" style="margin-top: 1rem;">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        تسجيل الدخول
+                    </a>
+                    <a href="/" class="btn btn-secondary" style="margin-top: 0.5rem; background: #6b7280;">
+                        <i class="fa-solid fa-home"></i>
+                        العودة للرئيسية
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+
     function showError(message) {
         const container = document.getElementById('surveyMain');
         
@@ -1149,6 +1206,43 @@
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // تحديث عنوان الصفحة والـ meta tags ديناميكياً
+    function updatePageMeta(survey) {
+        const title = survey.title ? `${survey.title} — نادي أدِيب` : 'استبيان — نادي أدِيب';
+        const description = survey.description || 'شارك في استبيان نادي أدِيب';
+        const currentUrl = window.location.href;
+        const baseUrl = window.location.origin;
+        const imageUrl = `${baseUrl}/survey.png`;
+        const logoUrl = `${baseUrl}/adeeb-logo.png`;
+
+        // تحديث عنوان الصفحة
+        document.title = title;
+        
+        // تحديث meta description
+        const descMeta = document.querySelector('meta[name="description"]');
+        if (descMeta) descMeta.setAttribute('content', description);
+
+        // تحديث Open Graph
+        const ogUrl = document.getElementById('ogUrl');
+        const ogTitle = document.getElementById('ogTitle');
+        const ogDescription = document.getElementById('ogDescription');
+        const ogImage = document.getElementById('ogImage');
+        
+        if (ogUrl) ogUrl.setAttribute('content', currentUrl);
+        if (ogTitle) ogTitle.setAttribute('content', title);
+        if (ogDescription) ogDescription.setAttribute('content', description);
+        if (ogImage) ogImage.setAttribute('content', imageUrl);
+
+        // تحديث Twitter Cards
+        const twitterTitle = document.getElementById('twitterTitle');
+        const twitterDescription = document.getElementById('twitterDescription');
+        const twitterImage = document.getElementById('twitterImage');
+        
+        if (twitterTitle) twitterTitle.setAttribute('content', title);
+        if (twitterDescription) twitterDescription.setAttribute('content', description);
+        if (twitterImage) twitterImage.setAttribute('content', imageUrl);
     }
 
     // تصدير الدوال للاستخدام الخارجي

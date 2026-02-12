@@ -230,24 +230,6 @@
     --header-shadow: 0 5px 30px rgba(39, 64, 96, 0.1);
 }
 
-/* ============================================================================
-   Dark Mode Variables
-   ============================================================================ */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg-primary: #1e293b;
-        --bg-secondary: #0f172a;
-        --bg-tertiary: #1a1a2e;
-        --text-primary: #e2e8f0;
-        --text-secondary: #94a3b8;
-        --border-light: rgba(255, 255, 255, 0.1);
-        --border-medium: rgba(255, 255, 255, 0.15);
-        --card-bg: #1e293b;
-        --card-border: rgba(61, 143, 214, 0.2);
-        --input-bg: rgba(255, 255, 255, 0.05);
-        --input-border: rgba(255, 255, 255, 0.15);
-    }
-}
 
 /* ============================================================================
    Accessibility - تقليل الحركة

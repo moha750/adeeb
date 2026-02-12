@@ -405,7 +405,7 @@
         }
 
         renderResponseCard(response) {
-            const userName = response.user?.full_name || (response.is_anonymous ? 'مجهول' : 'غير معروف');
+            const userName = response.user?.full_name || (response.is_anonymous ? 'المستجيب' : 'غير معروف');
             const statusClass = response.status === 'completed' ? 'badge-success' : 
                                response.status === 'in_progress' ? 'badge-warning' : 'badge-danger';
             const statusText = response.status === 'completed' ? 'مكتملة' : 
@@ -614,8 +614,6 @@
                                 <tr style="background: #f8fafc;">
                                     <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0; white-space: nowrap;">#</th>
                                     <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0; white-space: nowrap;">المستجيب</th>
-                                    <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0; white-space: nowrap;">التاريخ</th>
-                                    <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0; white-space: nowrap;">الوقت</th>
                                     ${currentQuestions.map(q => `
                                         <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0; min-width: 150px;" title="${this.escapeHtml(q.question_text)}">
                                             ${this.escapeHtml(q.question_text.length > 30 ? q.question_text.substring(0, 30) + '...' : q.question_text)}
@@ -625,13 +623,11 @@
                             </thead>
                             <tbody>
                                 ${completedResponses.map((response, index) => {
-                                    const userName = response.user?.full_name || (response.is_anonymous ? 'مجهول' : 'غير معروف');
+                                    const userName = response.user?.full_name || (response.is_anonymous ? 'المستجيب' : 'غير معروف');
                                     return `
                                         <tr style="border-bottom: 1px solid #e2e8f0;">
                                             <td style="padding: 10px; text-align: right;">${index + 1}</td>
                                             <td style="padding: 10px; text-align: right; white-space: nowrap;">${this.escapeHtml(userName)}</td>
-                                            <td style="padding: 10px; text-align: right; white-space: nowrap;">${this.formatDate(response.created_at)}</td>
-                                            <td style="padding: 10px; text-align: right; white-space: nowrap;">${this.formatTime(response.time_spent_seconds)}</td>
                                             ${currentQuestions.map(q => {
                                                 const answer = response.survey_answers.find(a => a.question_id === q.id);
                                                 const answerText = this.getAnswerTextForTable(answer, q);
@@ -1248,7 +1244,7 @@
                 return;
             }
             
-            const userName = response.user?.full_name || (response.is_anonymous ? 'مجهول' : 'غير معروف');
+            const userName = response.user?.full_name || (response.is_anonymous ? 'المستجيب' : 'غير معروف');
             const statusClass = response.status === 'completed' ? 'badge-success' : 
                                response.status === 'in_progress' ? 'badge-warning' : 'badge-danger';
             const statusText = response.status === 'completed' ? 'مكتملة' : 

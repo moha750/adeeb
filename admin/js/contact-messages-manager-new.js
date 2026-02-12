@@ -153,17 +153,8 @@ class ContactMessagesManager {
 
     renderMessageCard(message) {
         const statusBadges = {
-            new: '<span class="badge badge-info">جديدة</span>',
-            read: '<span class="badge badge-success">مقروءة</span>',
-            replied: '<span class="badge">تم الرد</span>',
-            archived: '<span class="badge badge-secondary">مؤرشفة</span>'
-        };
-
-        const priorityBadges = {
-            low: '<span class="badge">منخفض</span>',
-            normal: '<span class="badge badge-secondary">عادي</span>',
-            high: '<span class="badge badge-warning">عالي</span>',
-            urgent: '<span class="badge badge-danger">عاجل</span>'
+            new: '<span class="badge badge-info">جديد</span>',
+            replied: '<span class="badge badge-success">تم الرد</span>'
         };
 
         const date = new Date(message.created_at).toLocaleDateString('ar-SA', {
@@ -176,6 +167,8 @@ class ContactMessagesManager {
             hour: '2-digit',
             minute: '2-digit'
         });
+        
+        const timeSince = this.getTimeSince(message.created_at);
 
         const messagePreview = message.message.length > 100 
             ? this.escapeHtml(message.message.substring(0, 100)) + '...' 
@@ -192,7 +185,7 @@ class ContactMessagesManager {
                             <h3 class="applicant-name">${this.escapeHtml(message.name)}</h3>
                             <div>
                                 ${statusBadges[message.status] || statusBadges.new}
-                                ${priorityBadges[message.priority] || priorityBadges.normal}
+                                <span class="badge badge-secondary"><i class="fa-solid fa-clock"></i> ${timeSince}</span>
                             </div>
                         </div>
                     </div>
@@ -266,22 +259,59 @@ class ContactMessagesManager {
                 title: `رسالة من ${this.escapeHtml(message.name)}`,
                 html: `
                     <div class="modal-content-rtl">
-                        <p><strong>البريد الإلكتروني:</strong> ${this.escapeHtml(message.email)}</p>
-                        <p><strong>الموضوع:</strong> ${message.subject ? this.escapeHtml(message.subject) : 'بدون موضوع'}</p>
-                        <p><strong>التاريخ:</strong> ${new Date(message.created_at).toLocaleString('ar-SA')}</p>
-                        <hr>
-                        <p><strong>الرسالة:</strong></p>
-                        <p class="message-content">${this.escapeHtml(message.message)}</p>
+                        <div class="application-info-grid">
+                            <div class="info-item">
+                                <i class="fa-solid fa-envelope"></i>
+                                <div class="info-content">
+                                    <span class="info-label">البريد الإلكتروني</span>
+                                    <span class="info-value">${this.escapeHtml(message.email)}</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fa-solid fa-tag"></i>
+                                <div class="info-content">
+                                    <span class="info-label">الموضوع</span>
+                                    <span class="info-value">${message.subject ? this.escapeHtml(message.subject) : 'بدون موضوع'}</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fa-solid fa-calendar"></i>
+                                <div class="info-content">
+                                    <span class="info-label">التاريخ</span>
+                                    <span class="info-value">${new Date(message.created_at).toLocaleString('ar-SA')}</span>
+                                </div>
+                            </div>
+                            <div class="info-item full-width">
+                                <i class="fa-solid fa-message"></i>
+                                <div class="info-content">
+                                    <span class="info-label">الرسالة</span>
+                                    <span class="info-value" style="white-space: pre-wrap;">${this.escapeHtml(message.message)}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 `,
                 icon: 'info',
                 showCancelButton: true,
-                confirmButtonText: 'تعليم كمقروءة',
+                showDenyButton: true,
+                confirmButtonText: '<i class="fa-solid fa-reply"></i> الرد عبر البريد',
+                denyButtonText: 'تعليم كمقروءة',
                 cancelButtonText: 'إغلاق',
-                width: '600px'
+                width: '600px',
+                customClass: {
+                    confirmButton: 'btn btn--primary',
+                    denyButton: 'btn btn--secondary',
+                    cancelButton: 'btn btn--outline'
+                }
             });
 
-            if (result.isConfirmed && message.status === 'new') {
+            if (result.isConfirmed) {
+                // فتح البريد الإلكتروني للرد
+                const subject = encodeURIComponent(`رد: ${message.subject || 'رسالة من موقع أدِيب'}`);
+                window.open(`mailto:${message.email}?subject=${subject}`, '_blank');
+                // تحديث حالة الرسالة إلى "تم الرد"
+                await this.markAsReplied(messageId);
+            } else if (result.isDenied && message.status === 'new') {
                 await this.markAsRead(messageId);
             }
         } else {
@@ -289,6 +319,47 @@ class ContactMessagesManager {
             if (message.status === 'new') {
                 await this.markAsRead(messageId);
             }
+        }
+    }
+
+    // حساب المدة منذ إرسال الرسالة
+    getTimeSince(dateString) {
+        const now = new Date();
+        const date = new Date(dateString);
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const diffMonths = Math.floor(diffDays / 30);
+        const diffYears = Math.floor(diffDays / 365);
+
+        if (diffMins < 1) return 'الآن';
+        if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+        if (diffHours < 24) return `منذ ${diffHours} ساعة`;
+        if (diffDays < 30) return `منذ ${diffDays} يوم`;
+        if (diffMonths < 12) return `منذ ${diffMonths} شهر`;
+        return `منذ ${diffYears} سنة`;
+    }
+
+    // تعليم الرسالة كـ "تم الرد"
+    async markAsReplied(messageId) {
+        try {
+            const sb = window.sbClient;
+            const { error } = await sb
+                .from('contact_messages')
+                .update({ status: 'replied' })
+                .eq('id', messageId);
+
+            if (error) throw error;
+
+            const message = this.messages.find(m => m.id === messageId);
+            if (message) message.status = 'replied';
+            
+            this.updateStats();
+            this.renderMessages();
+            console.log('ContactMessagesManager: Message marked as replied');
+        } catch (error) {
+            console.error('ContactMessagesManager: Error marking message as replied:', error);
         }
     }
 
