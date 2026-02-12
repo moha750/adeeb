@@ -883,7 +883,7 @@
         container.innerHTML = `
             <div class="survey-card">
                 <div class="thank-you-container">
-                    <div class="thank-you-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                    <div class="thank-you-icon">
                         <i class="fa-solid fa-clipboard-check"></i>
                     </div>
                     <h1 class="thank-you-title">لقد أجبت على هذا الاستبيان مسبقاً</h1>
@@ -1214,15 +1214,18 @@
         const description = survey.description || 'شارك في استبيان نادي أدِيب';
         const currentUrl = window.location.href;
         const baseUrl = window.location.origin;
-        const imageUrl = `${baseUrl}/survey.png`;
-        const logoUrl = `${baseUrl}/adeeb-logo.png`;
+        const imageUrl = `${baseUrl}/Adeeb-Thumbnail.png`;
 
         // تحديث عنوان الصفحة
         document.title = title;
         
+        // تحديث page title element
+        const pageTitle = document.getElementById('pageTitle');
+        if (pageTitle) pageTitle.textContent = title;
+        
         // تحديث meta description
-        const descMeta = document.querySelector('meta[name="description"]');
-        if (descMeta) descMeta.setAttribute('content', description);
+        const pageDescription = document.getElementById('pageDescription');
+        if (pageDescription) pageDescription.setAttribute('content', description);
 
         // تحديث Open Graph
         const ogUrl = document.getElementById('ogUrl');
