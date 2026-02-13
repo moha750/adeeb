@@ -351,6 +351,44 @@
             });
         }
         
+        // إدارة الانتخابات - المستوى 8 وأعلى (رئيس النادي، الرئيس التنفيذي، قائد الموارد البشرية)
+        if (roleLevel >= 8) {
+            const electionsSubItems = [
+                {
+                    id: 'elections-all',
+                    icon: 'fa-list',
+                    label: 'جميع الانتخابات',
+                    section: 'elections-section'
+                },
+                {
+                    id: 'elections-nomination',
+                    icon: 'fa-user-plus',
+                    label: 'فترة الترشح',
+                    section: 'elections-nomination-section'
+                },
+                {
+                    id: 'elections-voting',
+                    icon: 'fa-check-to-slot',
+                    label: 'فترة التصويت',
+                    section: 'elections-voting-section'
+                },
+                {
+                    id: 'elections-completed',
+                    icon: 'fa-flag-checkered',
+                    label: 'الانتخابات المكتملة',
+                    section: 'elections-completed-section'
+                }
+            ];
+            
+            menuItems.push({
+                id: 'elections',
+                icon: 'fa-vote-yea',
+                label: 'إدارة الانتخابات',
+                isDropdown: true,
+                subItems: electionsSubItems
+            });
+        }
+        
         // إدارة الاستبيانات - المستوى 7 وأعلى (قائمة منسدلة)
         if (roleLevel >= 7) {
             const surveysSubItems = [
@@ -521,26 +559,6 @@
                 icon: 'fa-users',
                 label: 'لجنتي',
                 section: 'my-committee-section'
-            });
-        }
-
-        // الترشح للقيادة - جميع المستويات ما عدا رئيس النادي (10) ورئيس المجلس الإداري (6)
-        if (roleLevel !== 10 && roleLevel !== 6) {
-            menuItems.push({
-                id: 'nominations',
-                icon: 'fa-hand-paper',
-                label: 'الترشح للقيادة',
-                section: 'nominations-section'
-            });
-        }
-
-        // إدارة الانتخابات - رئيس النادي، الرئيس التنفيذي، قائد الموارد البشرية (المستوى 8 فأعلى)
-        if (roleLevel >= 8) {
-            menuItems.push({
-                id: 'elections',
-                icon: 'fa-vote-yea',
-                label: 'إدارة الانتخابات',
-                section: 'elections-section'
             });
         }
 
@@ -857,6 +875,10 @@
                 if (window.CommitteeMembersManager && !window.committeeMembersManager) {
                     window.committeeMembersManager = new window.CommitteeMembersManager();
                 }
+                // تهيئة نظام الانتخابات للأعضاء
+                if (window.MemberElections && currentUserRole?.committee_id) {
+                    await window.MemberElections.init(currentUser, currentUserRole.committee_id);
+                }
                 break;
             case 'membership-card-section':
             case 'profile-section':
@@ -884,6 +906,14 @@
             case 'settings-section':
                 if (window.settingsManager) {
                     window.settingsManager.init();
+                }
+                break;
+            case 'elections-section':
+            case 'elections-nomination-section':
+            case 'elections-voting-section':
+            case 'elections-completed-section':
+                if (window.ElectionsManager && currentUser) {
+                    await window.ElectionsManager.init(currentUser, sectionId);
                 }
                 break;
             case 'website-news-section':
@@ -964,16 +994,6 @@
                 if (window.surveysManager) {
                     if (currentUser) await window.surveysManager.init(currentUser);
                     await window.surveysManager.loadTemplates();
-                }
-                break;
-            case 'elections-section':
-                if (typeof initElectionsManager === 'function') {
-                    initElectionsManager();
-                }
-                break;
-            case 'nominations-section':
-                if (typeof initMemberNominations === 'function') {
-                    initMemberNominations();
                 }
                 break;
         }

@@ -237,71 +237,142 @@ window.ImpersonationManager = (function() {
      * تحميل قائمة المستخدمين للتنكر
      */
     async function loadUsersForImpersonation() {
+        const usersList = document.getElementById('impersonationUsersList');
+        
+        // التأكد من وجود العنصر
+        if (!usersList) {
+            console.error('عنصر قائمة المستخدمين غير موجود');
+            return;
+        }
+        
+        // إضافة timeout للحماية من التحميل اللانهائي
+        const timeoutId = setTimeout(() => {
+            if (usersList.querySelector('.loading-spinner')) {
+                usersList.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #dc2626;">
+                        <i class="fa-solid fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                        <p style="margin: 0; font-weight: 600;">انتهت مهلة التحميل</p>
+                        <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #6b7280;">يرجى إغلاق النافذة والمحاولة مرة أخرى</p>
+                        <button onclick="ImpersonationManager.retryLoadUsers()" class="btn btn--outline btn--outline-primary btn--sm" style="margin-top: 1rem;">
+                            <i class="fa-solid fa-rotate"></i>
+                            إعادة المحاولة
+                        </button>
+                    </div>
+                `;
+            }
+        }, 10000); // 10 ثواني timeout
+        
         try {
-            const { data: sessionData } = await sb.auth.getSession();
+            // التحقق من الجلسة
+            const { data: sessionData, error: sessionError } = await sb.auth.getSession();
+            
+            if (sessionError) {
+                clearTimeout(timeoutId);
+                throw new Error('خطأ في جلب بيانات الجلسة: ' + sessionError.message);
+            }
+            
             const session = sessionData?.session;
             
             if (!session || !session.user) {
-                throw new Error('لم يتم العثور على جلسة نشطة');
+                clearTimeout(timeoutId);
+                usersList.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #dc2626;">
+                        <i class="fa-solid fa-user-slash" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                        <p style="margin: 0; font-weight: 600;">لم يتم العثور على جلسة نشطة</p>
+                        <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #6b7280;">يرجى تسجيل الدخول مرة أخرى</p>
+                    </div>
+                `;
+                return;
             }
             
-            const { data: profiles, error } = await sb
+            // جلب المستخدمين
+            const { data: profiles, error: profilesError } = await sb
                 .from('profiles')
-                .select(`
-                    id,
-                    full_name,
-                    email,
-                    account_status,
-                    avatar_url
-                `)
+                .select('id, full_name, email, account_status, avatar_url')
                 .neq('id', session.user.id)
                 .eq('account_status', 'active')
-                .order('full_name');
+                .order('full_name')
+                .limit(100); // تحديد الحد الأقصى
 
-            if (error) throw error;
+            clearTimeout(timeoutId);
 
-            const usersList = document.getElementById('impersonationUsersList');
+            if (profilesError) {
+                throw new Error('خطأ في جلب المستخدمين: ' + profilesError.message);
+            }
             
             if (!profiles || profiles.length === 0) {
                 usersList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-users-slash empty-state__icon"></i>
-                        <p class="empty-state__title">لا يوجد مستخدمين متاحين</p>
+                    <div style="text-align: center; padding: 2rem; color: #6b7280;">
+                        <i class="fa-solid fa-users-slash" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                        <p style="margin: 0; font-weight: 600;">لا يوجد مستخدمين متاحين</p>
+                        <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem;">لا يوجد مستخدمين نشطين للتنكر بهم</p>
                     </div>
                 `;
                 return;
             }
 
-            usersList.innerHTML = profiles.map(user => `
-                <div class="user-select-item" data-user-id="${user.id}" data-user-name="${(user.full_name || user.email).replace(/"/g, '&quot;')}">
-                    <div class="user-select-avatar-container">
-                        ${user.avatar_url 
-                            ? `<img src="${user.avatar_url}" alt="${user.full_name}" class="user-select-avatar">` 
-                            : `<div class="user-select-avatar-placeholder"><i class="fa-solid fa-user"></i></div>`
-                        }
+            // بناء قائمة المستخدمين
+            let usersHtml = '<div class="users-list" style="max-height: 300px; overflow-y: auto;">';
+            
+            profiles.forEach(user => {
+                const userName = user.full_name || 'بدون اسم';
+                const userEmail = user.email || '';
+                const safeUserName = userName.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+                const avatarHtml = user.avatar_url 
+                    ? `<img src="${user.avatar_url}" alt="${userName}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` 
+                    : `<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #3d8fd6, #274060); display: flex; align-items: center; justify-content: center; color: white;"><i class="fa-solid fa-user"></i></div>`;
+                
+                usersHtml += `
+                    <div class="user-select-item" data-user-id="${user.id}" data-user-name="${safeUserName}" 
+                         style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem; background: #f8fafc; border: 1px solid #e2e8f0; transition: all 0.2s ease;">
+                        <div style="flex-shrink: 0;">
+                            ${avatarHtml}
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${userName}</div>
+                            <div class="user-select-email" style="font-size: 0.75rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${userEmail}</div>
+                        </div>
+                        <button class="btn btn--primary btn--sm impersonation-select-btn" 
+                                data-user-id="${user.id}" 
+                                data-user-name="${safeUserName}"
+                                style="flex-shrink: 0; padding: 0.5rem 1rem; font-size: 0.75rem;">
+                            <i class="fa-solid fa-user-secret"></i>
+                            تنكر
+                        </button>
                     </div>
-                    <div class="user-select-info">
-                        <div class="user-select-name">${user.full_name || 'بدون اسم'}</div>
-                        <div class="user-select-email">${user.email}</div>
-                    </div>
-                    <button class="btn btn--primary btn--sm" onclick="ImpersonationManager.selectUserForImpersonation('${user.id}', '${(user.full_name || user.email).replace(/'/g, "\\'")}'); event.stopPropagation();">
-                        <i class="fa-solid fa-user-secret"></i>
-                        تنكر
-                    </button>
-                </div>
-            `).join('');
+                `;
+            });
+            
+            usersHtml += '</div>';
+            usersList.innerHTML = usersHtml;
 
+            // ربط أحداث أزرار التنكر
+            usersList.querySelectorAll('.impersonation-select-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const userId = btn.dataset.userId;
+                    const userName = btn.dataset.userName;
+                    selectUserForImpersonation(userId, userName);
+                });
+            });
+
+            // ربط حدث البحث
             const searchInput = document.getElementById('impersonationUserSearch');
             if (searchInput) {
-                searchInput.addEventListener('input', (e) => {
-                    const searchTerm = e.target.value.toLowerCase();
-                    const userItems = document.querySelectorAll('.user-select-item');
+                // إزالة المستمعات السابقة
+                const newSearchInput = searchInput.cloneNode(true);
+                searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+                
+                newSearchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase().trim();
+                    const userItems = usersList.querySelectorAll('.user-select-item');
                     
                     userItems.forEach(item => {
                         const userName = (item.dataset.userName || '').toLowerCase();
                         const userEmail = (item.querySelector('.user-select-email')?.textContent || '').toLowerCase();
-                        if (userName.includes(searchTerm) || userEmail.includes(searchTerm)) {
-                            item.style.display = '';
+                        
+                        if (searchTerm === '' || userName.includes(searchTerm) || userEmail.includes(searchTerm)) {
+                            item.style.display = 'flex';
                         } else {
                             item.style.display = 'none';
                         }
@@ -310,17 +381,37 @@ window.ImpersonationManager = (function() {
             }
 
         } catch (error) {
+            clearTimeout(timeoutId);
             console.error('Error loading users:', error);
-            const usersList = document.getElementById('impersonationUsersList');
-            if (usersList) {
-                usersList.innerHTML = `
-                    <div class="info-box info-box--error">
-                        <i class="fa-solid fa-exclamation-circle"></i>
-                        حدث خطأ في تحميل المستخدمين
-                    </div>
-                `;
-            }
+            
+            usersList.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #dc2626;">
+                    <i class="fa-solid fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    <p style="margin: 0; font-weight: 600;">حدث خطأ في تحميل المستخدمين</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #6b7280;">${error.message || 'خطأ غير معروف'}</p>
+                    <button onclick="ImpersonationManager.retryLoadUsers()" class="btn btn--outline btn--outline-primary btn--sm" style="margin-top: 1rem;">
+                        <i class="fa-solid fa-rotate"></i>
+                        إعادة المحاولة
+                    </button>
+                </div>
+            `;
         }
+    }
+    
+    /**
+     * إعادة محاولة تحميل المستخدمين
+     */
+    function retryLoadUsers() {
+        const usersList = document.getElementById('impersonationUsersList');
+        if (usersList) {
+            usersList.innerHTML = `
+                <div class="loading-spinner" style="text-align: center; padding: 2rem;">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x" style="color: #3d8fd6;"></i>
+                    <p style="margin-top: 1rem; color: #6b7280;">جاري تحميل المستخدمين...</p>
+                </div>
+            `;
+        }
+        loadUsersForImpersonation();
     }
 
     /**
@@ -739,7 +830,8 @@ window.ImpersonationManager = (function() {
         selectUserForImpersonation,
         endImpersonationAndReload,
         checkImpersonationOnLoad,
-        initImpersonationPage
+        initImpersonationPage,
+        retryLoadUsers
     };
 })();
 

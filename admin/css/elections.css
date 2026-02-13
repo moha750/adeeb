@@ -1,707 +1,904 @@
-/* ============================================================================
-   Elections System Styles - نظام الانتخابات
-   نادي أدِيب
-   ============================================================================ */
+/**
+ * تنسيقات نظام الانتخابات
+ * Elections System Styles
+ */
 
-/* ============================================================================
-   Election Cards - بطاقات الانتخابات
-   ============================================================================ */
-.elections-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-    gap: var(--spacing-lg);
-    margin-top: var(--spacing-lg);
+/* =====================================================
+   قسم الانتخابات الرئيسي
+   ===================================================== */
+
+.elections-section {
+    padding: 1.5rem;
 }
 
-.election-card {
-    background: var(--card-bg);
-    border-radius: var(--card-radius);
-    border: 1px solid var(--card-border);
-    box-shadow: var(--card-shadow);
-    overflow: hidden;
-    transition: var(--transition-normal);
-}
-
-.election-card:hover {
-    box-shadow: var(--card-shadow-hover);
-    transform: translateY(-2px);
-}
-
-.election-card__header {
-    padding: var(--spacing-lg);
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    color: var(--text-white);
-    position: relative;
-}
-
-.election-card__header h3 {
-    margin: 0 0 var(--spacing-xs);
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-semibold);
-}
-
-.election-card__position {
-    display: inline-flex;
+.elections-header {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-sm);
-    margin-top: var(--spacing-sm);
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
-.election-card__body {
-    padding: var(--spacing-lg);
+.elections-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary, #1a1a2e);
 }
 
-.election-card__dates {
+.elections-actions {
     display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
-}
-
-.election-date-item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm);
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-sm);
-}
-
-.election-date-item i {
-    color: var(--color-primary-light);
-    width: 20px;
-    text-align: center;
-}
-
-.election-date-item__label {
-    color: var(--text-muted);
-    min-width: 80px;
-}
-
-.election-date-item__value {
-    color: var(--text-primary);
-    font-weight: var(--font-weight-medium);
-}
-
-.election-card__stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
-}
-
-.election-stat {
-    text-align: center;
-    padding: var(--spacing-sm);
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-sm);
-}
-
-.election-stat__value {
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-primary);
-}
-
-.election-stat__label {
-    font-size: var(--font-size-xs);
-    color: var(--text-muted);
-}
-
-.election-card__footer {
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-top: 1px solid var(--border-light);
-    display: flex;
-    gap: var(--spacing-sm);
+    gap: 0.5rem;
     flex-wrap: wrap;
 }
 
-/* ============================================================================
-   Election Status Badges - شارات الحالة
-   ============================================================================ */
-.election-status {
-    position: absolute;
-    top: var(--spacing-md);
-    left: var(--spacing-md);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
+/* =====================================================
+   فلاتر البحث
+   ===================================================== */
+
+.elections-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    background: var(--bg-secondary, #f8f9fa);
+    padding: 1rem;
+    border-radius: 0.5rem;
+}
+
+.elections-filters .form-control,
+.elections-filters .form-select {
+    min-width: 150px;
+    max-width: 250px;
+}
+
+.elections-search {
+    flex: 1;
+    min-width: 200px;
+    max-width: 300px;
+}
+
+/* =====================================================
+   جدول الانتخابات
+   ===================================================== */
+
+.elections-table {
+    width: 100%;
+    background: var(--bg-primary, #ffffff);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.elections-table th {
+    background: var(--bg-secondary, #f8f9fa);
+    font-weight: 600;
+    padding: 1rem;
+    text-align: right;
+    border-bottom: 2px solid var(--border-color, #e9ecef);
+    white-space: nowrap;
+}
+
+.elections-table td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color, #e9ecef);
+}
+
+.elections-table tr:hover {
+    background: var(--bg-hover, #f8f9fa);
+}
+
+.elections-table .election-info strong {
+    display: block;
+    color: var(--text-primary, #1a1a2e);
+    margin-bottom: 0.25rem;
+}
+
+.elections-table .election-info small {
+    color: var(--text-muted, #6c757d);
+}
+
+.elections-table .dates-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.elections-table .dates-info small {
+    font-size: 0.75rem;
+    color: var(--text-muted, #6c757d);
+}
+
+/* =====================================================
+   شارات الحالة
+   ===================================================== */
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
     text-transform: uppercase;
 }
 
-.election-status--nomination {
-    background: var(--color-info);
-    color: white;
+.status-badge.draft {
+    background: var(--gray-100, #e9ecef);
+    color: var(--gray-700, #495057);
 }
 
-.election-status--review {
-    background: var(--color-warning);
-    color: white;
+.status-badge.nomination {
+    background: var(--info-light, #cff4fc);
+    color: var(--info-dark, #055160);
 }
 
-.election-status--voting {
-    background: var(--color-success);
-    color: white;
-    animation: pulse-status 2s ease-in-out infinite;
+.status-badge.voting {
+    background: var(--primary-light, #cfe2ff);
+    color: var(--primary-dark, #084298);
 }
 
-.election-status--completed {
-    background: var(--color-purple);
-    color: white;
+.status-badge.completed {
+    background: var(--success-light, #d1e7dd);
+    color: var(--success-dark, #0f5132);
 }
 
-.election-status--cancelled {
-    background: var(--color-danger);
-    color: white;
+.status-badge.cancelled {
+    background: var(--danger-light, #f8d7da);
+    color: var(--danger-dark, #842029);
 }
 
-@keyframes pulse-status {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+/* =====================================================
+   مودال الانتخاب
+   ===================================================== */
+
+.election-modal .modal-content {
+    max-width: 700px;
 }
 
-/* ============================================================================
-   Candidates List - قائمة المرشحين
-   ============================================================================ */
-.candidates-list {
+.election-form {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.election-form .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.election-form .form-group {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
+    gap: 0.5rem;
 }
 
-.candidate-card {
+.election-form label {
+    font-weight: 500;
+    color: var(--text-primary, #1a1a2e);
+}
+
+.election-form .required::after {
+    content: '*';
+    color: var(--danger, #dc3545);
+    margin-right: 0.25rem;
+}
+
+.election-form .form-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted, #6c757d);
+    margin-top: 0.25rem;
+}
+
+.dates-section {
+    background: var(--bg-secondary, #f8f9fa);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.dates-section h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary, #1a1a2e);
+}
+
+/* =====================================================
+   مودال المرشحين
+   ===================================================== */
+
+.candidates-modal .modal-content {
+    max-width: 900px;
+}
+
+.candidates-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: var(--spacing-md);
-    padding: var(--spacing-md);
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-md);
-    transition: var(--transition-normal);
-}
-
-.candidate-card:hover {
-    border-color: var(--color-primary-light);
-    box-shadow: var(--shadow-sm);
-}
-
-.candidate-card--pending {
-    border-right: 4px solid var(--color-warning);
-}
-
-.candidate-card--approved {
-    border-right: 4px solid var(--color-success);
-}
-
-.candidate-card--rejected {
-    border-right: 4px solid var(--color-danger);
-    opacity: 0.7;
-}
-
-.candidate-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: var(--radius-full);
-    object-fit: cover;
-    border: 3px solid var(--border-light);
-}
-
-.candidate-info {
-    flex: 1;
-}
-
-.candidate-name {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-xs);
-}
-
-.candidate-meta {
-    display: flex;
+    margin-bottom: 1rem;
     flex-wrap: wrap;
-    gap: var(--spacing-sm);
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
+    gap: 1rem;
 }
 
-.candidate-meta span {
+.candidates-stats {
+    display: flex;
+    gap: 1rem;
+}
+
+.candidates-stats .stat-item {
     display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 0.5rem;
+}
+
+.candidates-stats .stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary, #0d6efd);
+}
+
+.candidates-stats .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted, #6c757d);
+}
+
+.candidates-table {
+    width: 100%;
+}
+
+.candidates-table .candidate-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color, #e9ecef);
+}
+
+.candidates-table .candidate-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.candidates-table .candidate-name {
+    font-weight: 600;
+    color: var(--text-primary, #1a1a2e);
+}
+
+.candidates-table .candidate-email {
+    font-size: 0.75rem;
+    color: var(--text-muted, #6c757d);
+}
+
+/* =====================================================
+   مودال تفاصيل المرشح
+   ===================================================== */
+
+.candidate-detail-modal .modal-content {
+    max-width: 600px;
+}
+
+.candidate-profile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.candidate-profile .avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary, #0d6efd);
+}
+
+.candidate-profile .info h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1.25rem;
+    color: var(--text-primary, #1a1a2e);
+}
+
+.candidate-profile .info p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--text-muted, #6c757d);
+}
+
+.candidate-details {
+    display: grid;
+    gap: 1rem;
+}
+
+.candidate-details .detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.candidate-details .detail-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted, #6c757d);
+    text-transform: uppercase;
+}
+
+.candidate-details .detail-value {
+    color: var(--text-primary, #1a1a2e);
+    line-height: 1.6;
+}
+
+.candidate-details .detail-value.empty {
+    color: var(--text-muted, #6c757d);
+    font-style: italic;
 }
 
 .candidate-actions {
     display: flex;
-    gap: var(--spacing-sm);
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color, #e9ecef);
 }
 
-.candidate-status-badge {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-medium);
-}
+/* =====================================================
+   مودال النتائج
+   ===================================================== */
 
-.candidate-status-badge--pending {
-    background: rgba(var(--color-warning-rgb), 0.15);
-    color: var(--color-warning-dark);
-}
-
-.candidate-status-badge--approved {
-    background: rgba(var(--color-success-rgb), 0.15);
-    color: var(--color-success-dark);
-}
-
-.candidate-status-badge--rejected {
-    background: rgba(var(--color-danger-rgb), 0.15);
-    color: var(--color-danger-dark);
-}
-
-/* ============================================================================
-   Voting Interface - واجهة التصويت
-   ============================================================================ */
-.voting-container {
+.results-modal .modal-content {
     max-width: 800px;
-    margin: 0 auto;
 }
 
-.voting-header {
-    text-align: center;
-    margin-bottom: var(--spacing-xl);
+.results-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 
-.voting-header h2 {
-    font-size: var(--font-size-2xl);
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-sm);
-}
-
-.voting-timer {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-lg);
-    background: linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%);
-    color: white;
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-bold);
-}
-
-.voting-timer i {
-    animation: pulse 1s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-}
-
-.voting-candidates {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-}
-
-.voting-candidate-card {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-lg);
-    padding: var(--spacing-lg);
-    background: var(--card-bg);
-    border: 2px solid var(--border-light);
-    border-radius: var(--radius-lg);
-    cursor: pointer;
-    transition: var(--transition-normal);
-}
-
-.voting-candidate-card:hover {
-    border-color: var(--color-primary-light);
-    background: var(--bg-tertiary);
-}
-
-.voting-candidate-card.selected {
-    border-color: var(--color-success);
-    background: rgba(var(--color-success-rgb), 0.05);
-}
-
-.voting-candidate-card.voted {
-    border-color: var(--color-purple);
-    background: rgba(var(--color-purple-rgb), 0.05);
-    cursor: default;
-}
-
-.voting-candidate-avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: var(--radius-full);
-    object-fit: cover;
-    border: 4px solid var(--border-light);
-}
-
-.voting-candidate-info {
-    flex: 1;
-}
-
-.voting-candidate-name {
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-xs);
-}
-
-.voting-candidate-file {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    color: var(--color-primary-light);
-    font-size: var(--font-size-sm);
-    text-decoration: none;
-    transition: var(--transition-fast);
-}
-
-.voting-candidate-file:hover {
-    color: var(--color-primary);
-    text-decoration: underline;
-}
-
-.voting-candidate-votes {
-    text-align: center;
-    min-width: 100px;
-}
-
-.voting-candidate-votes__count {
-    font-size: var(--font-size-3xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-primary);
-}
-
-.voting-candidate-votes__label {
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
-}
-
-.vote-checkbox {
-    width: 32px;
-    height: 32px;
-    border: 2px solid var(--border-medium);
-    border-radius: var(--radius-full);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: var(--transition-fast);
-}
-
-.voting-candidate-card.selected .vote-checkbox {
-    background: var(--color-success);
-    border-color: var(--color-success);
-    color: white;
-}
-
-.voting-candidate-card.voted .vote-checkbox {
-    background: var(--color-purple);
-    border-color: var(--color-purple);
-    color: white;
-}
-
-.voting-submit {
-    margin-top: var(--spacing-xl);
+.results-summary .summary-card {
+    background: var(--bg-secondary, #f8f9fa);
+    padding: 1rem;
+    border-radius: 0.5rem;
     text-align: center;
 }
 
-.voting-already-voted {
-    text-align: center;
-    padding: var(--spacing-xl);
-    background: rgba(var(--color-success-rgb), 0.1);
-    border: 2px solid var(--color-success);
-    border-radius: var(--radius-lg);
-    margin-bottom: var(--spacing-xl);
+.results-summary .summary-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary, #0d6efd);
+    line-height: 1;
 }
 
-.voting-already-voted i {
-    font-size: var(--font-size-4xl);
-    color: var(--color-success);
-    margin-bottom: var(--spacing-md);
-}
-
-.voting-already-voted h3 {
-    color: var(--color-success-dark);
-    margin-bottom: var(--spacing-sm);
-}
-
-/* ============================================================================
-   Nomination Form - نموذج الترشح
-   ============================================================================ */
-.nomination-form {
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.nomination-instructions {
-    background: rgba(var(--color-info-rgb), 0.1);
-    border: 1px solid var(--color-info);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
-}
-
-.nomination-instructions h4 {
-    color: var(--color-info-dark);
-    margin-bottom: var(--spacing-sm);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-.nomination-instructions ul {
-    margin: 0;
-    padding-right: var(--spacing-lg);
-    color: var(--text-secondary);
-}
-
-.nomination-instructions li {
-    margin-bottom: var(--spacing-xs);
-}
-
-.nomination-file-upload {
-    border: 2px dashed var(--border-medium);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-2xl);
-    text-align: center;
-    cursor: pointer;
-    transition: var(--transition-normal);
-    background: var(--bg-tertiary);
-}
-
-.nomination-file-upload:hover {
-    border-color: var(--color-primary-light);
-    background: rgba(var(--color-accent-rgb), 0.05);
-}
-
-.nomination-file-upload.has-file {
-    border-color: var(--color-success);
-    background: rgba(var(--color-success-rgb), 0.05);
-}
-
-.nomination-file-upload i {
-    font-size: var(--font-size-4xl);
-    color: var(--color-primary-light);
-    margin-bottom: var(--spacing-md);
-}
-
-.nomination-file-upload p {
-    color: var(--text-muted);
-    margin-bottom: var(--spacing-sm);
-}
-
-.nomination-file-upload .file-types {
-    font-size: var(--font-size-xs);
-    color: var(--text-light);
-}
-
-.nomination-status {
-    padding: var(--spacing-lg);
-    border-radius: var(--radius-lg);
-    margin-top: var(--spacing-xl);
-}
-
-.nomination-status--pending {
-    background: rgba(var(--color-warning-rgb), 0.1);
-    border: 1px solid var(--color-warning);
-}
-
-.nomination-status--approved {
-    background: rgba(var(--color-success-rgb), 0.1);
-    border: 1px solid var(--color-success);
-}
-
-.nomination-status--rejected {
-    background: rgba(var(--color-danger-rgb), 0.1);
-    border: 1px solid var(--color-danger);
-}
-
-/* ============================================================================
-   Election Results - نتائج الانتخابات
-   ============================================================================ */
-.election-results {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.election-winner {
-    text-align: center;
-    padding: var(--spacing-2xl);
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    border: 2px solid #f59e0b;
-    border-radius: var(--radius-xl);
-    margin-bottom: var(--spacing-xl);
-    position: relative;
-    overflow: hidden;
-}
-
-.election-winner::before {
-    content: '🏆';
-    position: absolute;
-    top: -20px;
-    right: -20px;
-    font-size: 100px;
-    opacity: 0.1;
-}
-
-.election-winner__avatar {
-    width: 120px;
-    height: 120px;
-    border-radius: var(--radius-full);
-    border: 5px solid #f59e0b;
-    margin-bottom: var(--spacing-md);
-}
-
-.election-winner__name {
-    font-size: var(--font-size-2xl);
-    font-weight: var(--font-weight-bold);
-    color: #92400e;
-    margin-bottom: var(--spacing-xs);
-}
-
-.election-winner__title {
-    font-size: var(--font-size-lg);
-    color: #b45309;
-}
-
-.election-winner__votes {
-    margin-top: var(--spacing-md);
-    font-size: var(--font-size-xl);
-    color: #92400e;
+.results-summary .summary-label {
+    font-size: 0.75rem;
+    color: var(--text-muted, #6c757d);
+    margin-top: 0.5rem;
 }
 
 .results-table {
     width: 100%;
-    border-collapse: collapse;
 }
 
-.results-table th,
-.results-table td {
-    padding: var(--spacing-md);
-    text-align: right;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.results-table th {
-    background: var(--bg-tertiary);
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-secondary);
-}
-
-.results-table tr:hover {
-    background: var(--bg-tertiary);
-}
-
-.results-rank {
+.results-table .rank-cell {
     width: 50px;
     text-align: center;
-    font-weight: var(--font-weight-bold);
-    color: var(--color-primary);
 }
 
-.results-rank--1 {
-    color: #f59e0b;
+.results-table .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.875rem;
 }
 
-.results-rank--2 {
-    color: #9ca3af;
+.results-table .rank-1 .rank-badge {
+    background: linear-gradient(135deg, #ffd700, #ffb700);
+    color: #1a1a2e;
 }
 
-.results-rank--3 {
-    color: #b45309;
+.results-table .rank-2 .rank-badge {
+    background: linear-gradient(135deg, #c0c0c0, #a0a0a0);
+    color: #1a1a2e;
 }
 
-/* ============================================================================
-   Create Election Modal - نافذة إنشاء انتخاب
-   ============================================================================ */
-.election-form-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-md);
+.results-table .rank-3 .rank-badge {
+    background: linear-gradient(135deg, #cd7f32, #b87333);
+    color: #ffffff;
 }
 
-.election-form-grid .form-group.full-width {
-    grid-column: 1 / -1;
+.results-table .winner-row {
+    background: var(--success-light, #d1e7dd) !important;
 }
 
-.date-range-group {
+.results-table .winner-row td {
+    border-color: var(--success, #198754);
+}
+
+.results-table .crown-icon {
+    color: #ffd700;
+    margin-left: 0.5rem;
+}
+
+.results-table .votes-bar {
     display: flex;
-    gap: var(--spacing-md);
-    align-items: flex-end;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.date-range-group .form-group {
+.results-table .progress {
     flex: 1;
+    height: 24px;
+    background: var(--gray-200, #e9ecef);
+    border-radius: 4px;
+    overflow: hidden;
 }
 
-.date-range-separator {
-    padding-bottom: var(--spacing-md);
-    color: var(--text-muted);
+.results-table .progress-bar {
+    background: linear-gradient(90deg, var(--primary, #0d6efd), var(--primary-dark, #0a58ca));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #ffffff;
+    transition: width 0.5s ease;
 }
 
-/* ============================================================================
-   Empty States - حالات فارغة
-   ============================================================================ */
-.elections-empty {
+.results-table .votes-count {
+    min-width: 60px;
     text-align: center;
-    padding: var(--spacing-3xl);
-    color: var(--text-muted);
+    font-weight: 700;
+    color: var(--primary, #0d6efd);
 }
 
-.elections-empty i {
+/* =====================================================
+   حالات فارغة وتحميل
+   ===================================================== */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+}
+
+.empty-state .icon {
     font-size: 4rem;
-    color: var(--border-medium);
-    margin-bottom: var(--spacing-lg);
+    color: var(--gray-400, #ced4da);
+    margin-bottom: 1rem;
 }
 
-.elections-empty h3 {
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-sm);
+.empty-state .title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary, #1a1a2e);
+    margin-bottom: 0.5rem;
 }
 
-/* ============================================================================
-   Responsive Design
-   ============================================================================ */
+.empty-state .description {
+    color: var(--text-muted, #6c757d);
+    max-width: 300px;
+}
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+}
+
+.loading-state .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--gray-200, #e9ecef);
+    border-top-color: var(--primary, #0d6efd);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =====================================================
+   بطاقات الانتخابات (عرض البطاقات)
+   ===================================================== */
+
+.elections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.election-card {
+    background: var(--bg-primary, #ffffff);
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.election-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.election-card .card-header {
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--primary, #0d6efd), var(--primary-dark, #0a58ca));
+    color: #ffffff;
+}
+
+.election-card .card-header h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.election-card .card-header .committee-name {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+.election-card .card-body {
+    padding: 1rem;
+}
+
+.election-card .card-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.election-card .stat {
+    text-align: center;
+    padding: 0.5rem;
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 0.5rem;
+}
+
+.election-card .stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary, #0d6efd);
+}
+
+.election-card .stat-label {
+    font-size: 0.625rem;
+    color: var(--text-muted, #6c757d);
+    text-transform: uppercase;
+}
+
+.election-card .card-dates {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-muted, #6c757d);
+}
+
+.election-card .card-dates .date-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.election-card .card-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--border-color, #e9ecef);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* =====================================================
+   التجاوب مع الشاشات الصغيرة
+   ===================================================== */
+
 @media (max-width: 768px) {
-    .elections-grid {
-        grid-template-columns: 1fr;
+    .elections-header {
+        flex-direction: column;
+        align-items: stretch;
     }
     
-    .election-form-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .date-range-group {
+    .elections-filters {
         flex-direction: column;
     }
     
-    .voting-candidate-card {
+    .elections-filters .form-control,
+    .elections-filters .form-select,
+    .elections-search {
+        max-width: 100%;
+        width: 100%;
+    }
+    
+    .elections-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .candidates-header {
         flex-direction: column;
-        text-align: center;
+        align-items: stretch;
     }
     
-    .voting-candidate-info {
-        text-align: center;
+    .candidates-stats {
+        justify-content: center;
     }
     
-    .candidate-card {
+    .results-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .candidate-profile {
         flex-direction: column;
         text-align: center;
     }
     
     .candidate-actions {
-        width: 100%;
-        justify-content: center;
+        flex-direction: column;
     }
+    
+    .candidate-actions .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .elections-section {
+        padding: 1rem;
+    }
+    
+    .results-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .elections-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =====================================================
+   الوضع الداكن
+   ===================================================== */
+
+[data-theme="dark"] .elections-table,
+[data-theme="dark"] .election-card {
+    background: var(--bg-primary-dark, #1a1a2e);
+}
+
+[data-theme="dark"] .elections-table th {
+    background: var(--bg-secondary-dark, #252540);
+}
+
+[data-theme="dark"] .elections-filters,
+[data-theme="dark"] .dates-section,
+[data-theme="dark"] .candidate-profile,
+[data-theme="dark"] .results-summary .summary-card,
+[data-theme="dark"] .candidates-stats .stat-item,
+[data-theme="dark"] .election-card .stat {
+    background: var(--bg-secondary-dark, #252540);
+}
+
+[data-theme="dark"] .elections-table tr:hover {
+    background: var(--bg-hover-dark, #2a2a45);
+}
+
+/* =====================================================
+   بطاقات الانتخابات للأعضاء
+   ===================================================== */
+
+.election-card-member {
+    background: var(--bg-primary, #ffffff);
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color, #e9ecef);
+}
+
+.election-card-member .election-card-header {
+    margin-bottom: 1rem;
+}
+
+.election-card-member .election-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.election-card-member .election-title h4 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary, #1a1a2e);
+}
+
+.election-card-member .election-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.election-card-member .election-status.nomination {
+    background: var(--info-light, #cff4fc);
+    color: var(--info-dark, #055160);
+}
+
+.election-card-member .election-status.voting {
+    background: var(--primary-light, #cfe2ff);
+    color: var(--primary-dark, #084298);
+}
+
+.election-card-member .election-committee {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--text-muted, #6c757d);
+}
+
+.election-card-member .election-dates {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem;
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 0.5rem;
+}
+
+.election-card-member .date-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary, #495057);
+}
+
+.election-card-member .date-item i {
+    color: var(--primary, #0d6efd);
+}
+
+/* قسم الترشح */
+.nomination-action-section,
+.nomination-status-section {
+    padding: 1rem;
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    border-radius: 0.5rem;
+    border: 1px solid #7dd3fc;
+}
+
+.nomination-action-section h5,
+.nomination-status-section h5 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0369a1;
+}
+
+.nomination-action-section p {
+    margin: 0 0 1rem;
+    font-size: 0.875rem;
+    color: #0c4a6e;
+}
+
+.nomination-status-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nomination-status-card p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #0c4a6e;
+}
+
+/* قسم التصويت */
+.voting-section {
+    padding: 1rem;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-radius: 0.5rem;
+    border: 1px solid #86efac;
+}
+
+.voting-section h5 {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #166534;
+}
+
+.candidates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.candidate-vote-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: #ffffff;
+    border-radius: 0.5rem;
+    border: 1px solid #bbf7d0;
+}
+
+.candidate-vote-card .candidate-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.candidate-vote-card .candidate-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #22c55e;
+}
+
+.candidate-vote-card .candidate-name {
+    font-weight: 600;
+    color: var(--text-primary, #1a1a2e);
+}
+
+/* الوضع الداكن */
+[data-theme="dark"] .election-card-member {
+    background: var(--bg-primary-dark, #1a1a2e);
+    border-color: var(--border-color-dark, #3a3a5a);
+}
+
+[data-theme="dark"] .election-card-member .election-dates {
+    background: var(--bg-secondary-dark, #252540);
+}
+
+[data-theme="dark"] .nomination-action-section,
+[data-theme="dark"] .nomination-status-section {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1e4976 100%);
+    border-color: #3b82f6;
+}
+
+[data-theme="dark"] .nomination-action-section h5,
+[data-theme="dark"] .nomination-status-section h5,
+[data-theme="dark"] .nomination-action-section p,
+[data-theme="dark"] .nomination-status-card p {
+    color: #bfdbfe;
+}
+
+[data-theme="dark"] .voting-section {
+    background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+    border-color: #22c55e;
+}
+
+[data-theme="dark"] .voting-section h5 {
+    color: #bbf7d0;
+}
+
+[data-theme="dark"] .candidate-vote-card {
+    background: var(--bg-secondary-dark, #252540);
+    border-color: #22c55e;
 }

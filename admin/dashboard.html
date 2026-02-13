@@ -35,7 +35,7 @@
     <link rel="stylesheet" href="css/image-cropper.css" />
     <!-- Dynamic Content Styles - تنسيقات المحتوى الديناميكي -->
     <link rel="stylesheet" href="css/dynamic-content.css" />
-    <!-- Elections Styles - تنسيقات الانتخابات -->
+    <!-- Elections Styles -->
     <link rel="stylesheet" href="css/elections.css" />
 </head>
 
@@ -415,21 +415,133 @@
                 </div>
             </section>
 
-            <!-- =====================================================
-                 قسم إدارة الانتخابات
-                 ===================================================== -->
+            <!-- قسم فترة الترشح -->
+            <section id="elections-nomination-section" class="admin-section d-none elections-section">
+                <div class="section-header elections-header">
+                    <div class="section-header-content">
+                        <h1>
+                            <i class="fa-solid fa-user-plus"></i>
+                            فترة الترشح
+                        </h1>
+                        <p class="section-subtitle">الانتخابات في مرحلة الترشح</p>
+                    </div>
+                    <div class="elections-actions">
+                        <button class="btn btn--outline btn--outline-primary" id="refreshNominationElectionsBtn">
+                            <i class="fa-solid fa-rotate"></i>
+                            تحديث
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <table class="elections-table">
+                            <thead>
+                                <tr>
+                                    <th>الانتخاب</th>
+                                    <th>اللجنة</th>
+                                    <th>الحالة</th>
+                                    <th>التواريخ</th>
+                                    <th>المرشحون</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nominationElectionsTableBody">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
 
-            <!-- قسم الانتخابات -->
-            <section id="elections-section" class="admin-section d-none">
-                <div class="section-header">
+            <!-- قسم فترة التصويت -->
+            <section id="elections-voting-section" class="admin-section d-none elections-section">
+                <div class="section-header elections-header">
+                    <div class="section-header-content">
+                        <h1>
+                            <i class="fa-solid fa-check-to-slot"></i>
+                            فترة التصويت
+                        </h1>
+                        <p class="section-subtitle">الانتخابات في مرحلة التصويت</p>
+                    </div>
+                    <div class="elections-actions">
+                        <button class="btn btn--outline btn--outline-primary" id="refreshVotingElectionsBtn">
+                            <i class="fa-solid fa-rotate"></i>
+                            تحديث
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <table class="elections-table">
+                            <thead>
+                                <tr>
+                                    <th>الانتخاب</th>
+                                    <th>اللجنة</th>
+                                    <th>الحالة</th>
+                                    <th>التواريخ</th>
+                                    <th>المرشحون</th>
+                                    <th>الأصوات</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="votingElectionsTableBody">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم الانتخابات المكتملة -->
+            <section id="elections-completed-section" class="admin-section d-none elections-section">
+                <div class="section-header elections-header">
+                    <div class="section-header-content">
+                        <h1>
+                            <i class="fa-solid fa-flag-checkered"></i>
+                            الانتخابات المكتملة
+                        </h1>
+                        <p class="section-subtitle">الانتخابات التي انتهت</p>
+                    </div>
+                    <div class="elections-actions">
+                        <button class="btn btn--outline btn--outline-primary" id="refreshCompletedElectionsBtn">
+                            <i class="fa-solid fa-rotate"></i>
+                            تحديث
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <table class="elections-table">
+                            <thead>
+                                <tr>
+                                    <th>الانتخاب</th>
+                                    <th>اللجنة</th>
+                                    <th>الفائز</th>
+                                    <th>التواريخ</th>
+                                    <th>المرشحون</th>
+                                    <th>الأصوات</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="completedElectionsTableBody">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم إدارة الانتخابات -->
+            <section id="elections-section" class="admin-section d-none elections-section">
+                <div class="section-header elections-header">
                     <div class="section-header-content">
                         <h1>
                             <i class="fa-solid fa-vote-yea"></i>
                             إدارة الانتخابات
                         </h1>
-                        <p class="section-subtitle">إدارة انتخابات المناصب القيادية في اللجان</p>
+                        <p class="section-subtitle">إدارة انتخابات قادة اللجان</p>
                     </div>
-                    <div class="section-header-actions">
+                    <div class="elections-actions">
                         <button class="btn btn--outline btn--outline-primary" id="refreshElectionsBtn">
                             <i class="fa-solid fa-rotate"></i>
                             تحديث
@@ -441,78 +553,288 @@
                     </div>
                 </div>
 
-                <!-- إحصائيات الانتخابات -->
-                <div class="stats-grid">
-                    <div class="stat-card" style="--stat-color: #3b82f6">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-box-ballot"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="totalElectionsCount">0</div>
-                                <div class="stat-label">إجمالي الانتخابات</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #10b981">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-spinner"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="activeElectionsCount">0</div>
-                                <div class="stat-label">انتخابات نشطة</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #f59e0b">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-check-to-slot"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="votingElectionsCount">0</div>
-                                <div class="stat-label">تصويت جارٍ</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #8b5cf6">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-flag-checkered"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="completedElectionsCount">0</div>
-                                <div class="stat-label">انتخابات مكتملة</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- فلاتر البحث -->
-                <div class="filters-bar">
-                    <div class="filter-group">
+                <div class="elections-filters">
+                    <div class="filter-group elections-search">
                         <i class="fa-solid fa-search"></i>
-                        <input type="text" id="electionsSearchInput" placeholder="البحث في الانتخابات..." />
+                        <input type="text" id="electionSearchInput" placeholder="البحث في الانتخابات..." />
                     </div>
-                    <select id="electionsStatusFilter" class="filter-select">
-                        <option value="">جميع الحالات</option>
+                    <select id="electionStatusFilter" class="filter-select">
+                        <option value="all">جميع الحالات</option>
+                        <option value="draft">مسودة</option>
                         <option value="nomination">فترة الترشح</option>
-                        <option value="review">مراجعة الطلبات</option>
-                        <option value="voting">التصويت</option>
-                        <option value="completed">مكتملة</option>
-                        <option value="cancelled">ملغية</option>
+                        <option value="voting">فترة التصويت</option>
+                        <option value="completed">مكتمل</option>
+                        <option value="cancelled">ملغي</option>
                     </select>
-                    <select id="electionsCommitteeFilter" class="filter-select">
-                        <option value="">جميع اللجان</option>
+                    <select id="electionCommitteeFilter" class="filter-select">
+                        <option value="all">جميع اللجان</option>
                     </select>
                 </div>
 
-                <!-- قائمة الانتخابات -->
-                <div id="electionsContainer">
-                    <!-- سيتم ملؤها ديناميكياً -->
+                <!-- جدول الانتخابات -->
+                <div class="card">
+                    <div class="card-body">
+                        <table class="elections-table">
+                            <thead>
+                                <tr>
+                                    <th>الانتخاب</th>
+                                    <th>اللجنة</th>
+                                    <th>الحالة</th>
+                                    <th>التواريخ</th>
+                                    <th>المرشحون</th>
+                                    <th>الأصوات</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="electionsTableBody">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
+
+            <!-- مودال إنشاء/تعديل انتخاب -->
+            <div class="modal" id="electionModal">
+                <div class="modal-content election-modal">
+                    <div class="modal-header">
+                        <h2 id="electionModalTitle">إنشاء انتخاب جديد</h2>
+                        <button class="modal-close" id="closeElectionModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form class="election-form" id="electionForm">
+                            <input type="hidden" id="electionId" />
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="required">اللجنة</label>
+                                    <select id="electionCommittee" required>
+                                        <option value="">اختر اللجنة</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="required">نوع المنصب</label>
+                                    <select id="electionPosition" required>
+                                        <option value="leader">قائد اللجنة</option>
+                                        <option value="deputy">نائب قائد اللجنة</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="dates-section">
+                                <h4><i class="fa-solid fa-calendar"></i> فترة الترشح</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="required">تاريخ البداية</label>
+                                        <input type="datetime-local" id="nominationStartDate" required />
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="required">تاريخ النهاية</label>
+                                        <input type="datetime-local" id="nominationEndDate" required />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="dates-section">
+                                <h4><i class="fa-solid fa-check-to-slot"></i> فترة التصويت</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="required">تاريخ البداية</label>
+                                        <input type="datetime-local" id="votingStartDate" required />
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="required">تاريخ النهاية</label>
+                                        <input type="datetime-local" id="votingEndDate" required />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>الحالة</label>
+                                    <select id="electionStatus">
+                                        <option value="draft">مسودة</option>
+                                        <option value="nomination">فترة الترشح</option>
+                                        <option value="voting">فترة التصويت</option>
+                                        <option value="completed">مكتمل</option>
+                                        <option value="cancelled">ملغي</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>الحد الأقصى للمرشحين</label>
+                                    <input type="number" id="maxCandidates" value="10" min="1" />
+                                </div>
+                                <div class="form-group">
+                                    <label>الحد الأدنى للأصوات</label>
+                                    <input type="number" id="minVotesRequired" value="1" min="1" />
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn--danger" id="deleteElectionBtn" style="display: none;">
+                            <i class="fa-solid fa-trash"></i>
+                            حذف
+                        </button>
+                        <button type="button" class="btn btn--outline btn--outline-primary" id="closeElectionModalBtn">إلغاء</button>
+                        <button type="button" class="btn btn--primary" id="saveElectionBtn">
+                            <i class="fa-solid fa-save"></i>
+                            حفظ
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- مودال المرشحين -->
+            <div class="modal" id="candidatesModal">
+                <div class="modal-content candidates-modal">
+                    <div class="modal-header">
+                        <h2>المرشحون - <span id="candidatesElectionTitle"></span></h2>
+                        <button class="modal-close" id="closeCandidatesModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="candidates-header">
+                            <select id="candidateStatusFilter" class="filter-select">
+                                <option value="all">جميع الحالات</option>
+                                <option value="pending">قيد المراجعة</option>
+                                <option value="approved">مقبول</option>
+                                <option value="rejected">مرفوض</option>
+                            </select>
+                            <button class="btn btn--outline btn--outline-secondary btn--sm" id="exportCandidatesBtn">
+                                <i class="fa-solid fa-download"></i>
+                                تصدير
+                            </button>
+                        </div>
+                        <table class="candidates-table">
+                            <thead>
+                                <tr>
+                                    <th>المرشح</th>
+                                    <th>الحالة</th>
+                                    <th>تاريخ الترشح</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="candidatesTableBody">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn--outline btn--outline-primary" id="closeCandidatesModalBtn">إغلاق</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- مودال تفاصيل المرشح -->
+            <div class="modal" id="candidateDetailModal">
+                <div class="modal-content candidate-detail-modal">
+                    <div class="modal-header">
+                        <h2>تفاصيل المرشح</h2>
+                        <button class="modal-close" id="closeCandidateDetailModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="candidate-profile">
+                            <div class="info">
+                                <h3 id="candidateDetailName">-</h3>
+                                <p id="candidateDetailEmail">-</p>
+                                <p id="candidateDetailPhone">-</p>
+                            </div>
+                        </div>
+                        <div class="candidate-details">
+                            <div class="detail-item">
+                                <span class="detail-label">اللجنة</span>
+                                <span class="detail-value" id="candidateDetailCommittee">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">الحالة</span>
+                                <span class="detail-value" id="candidateDetailStatus">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">الدافع للترشح</span>
+                                <span class="detail-value" id="candidateDetailMotivation">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">الخبرات السابقة</span>
+                                <span class="detail-value" id="candidateDetailExperience">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">الرؤية المستقبلية</span>
+                                <span class="detail-value" id="candidateDetailVision">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">ملاحظات الإدارة</span>
+                                <textarea id="candidateAdminNotes" rows="3" placeholder="أضف ملاحظاتك هنا..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer candidate-actions">
+                        <button type="button" class="btn btn--danger" id="rejectCandidateBtn">
+                            <i class="fa-solid fa-times"></i>
+                            رفض
+                        </button>
+                        <button type="button" class="btn btn--success" id="approveCandidateBtn">
+                            <i class="fa-solid fa-check"></i>
+                            قبول
+                        </button>
+                        <button type="button" class="btn btn--primary" id="saveCandidateBtn">
+                            <i class="fa-solid fa-save"></i>
+                            حفظ الملاحظات
+                        </button>
+                        <button type="button" class="btn btn--outline btn--outline-primary" id="closeCandidateDetailBtn">إغلاق</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- مودال النتائج -->
+            <div class="modal" id="resultsModal">
+                <div class="modal-content results-modal">
+                    <div class="modal-header">
+                        <h2>نتائج التصويت - <span id="resultsElectionTitle"></span></h2>
+                        <button class="modal-close" id="closeResultsModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="results-summary">
+                            <div class="summary-card">
+                                <div class="summary-value" id="totalVotesCount">0</div>
+                                <div class="summary-label">إجمالي الأصوات</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-value" id="totalVotersCount">0</div>
+                                <div class="summary-label">عدد المصوتين</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-value" id="participationRate">0%</div>
+                                <div class="summary-label">نسبة المشاركة</div>
+                            </div>
+                        </div>
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th class="rank-cell">#</th>
+                                    <th>المرشح</th>
+                                    <th>الأصوات</th>
+                                    <th>النسبة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTableBody">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn--outline btn--outline-secondary" id="exportResultsBtn">
+                            <i class="fa-solid fa-download"></i>
+                            تصدير النتائج
+                        </button>
+                        <button type="button" class="btn btn--success" id="announceResultsBtn">
+                            <i class="fa-solid fa-bullhorn"></i>
+                            إعلان النتائج
+                        </button>
+                        <button type="button" class="btn btn--outline btn--outline-primary" id="closeResultsModalBtn">إغلاق</button>
+                    </div>
+                </div>
+            </div>
 
             <!-- قسم إحصائيات الزيارات -->
             <section id="site-visits-section" class="admin-section d-none">
@@ -1138,29 +1460,26 @@
                         </div>
                     </div>
                 </div>
-            </section>
 
-            <!-- قسم الترشح للقيادة - للأعضاء -->
-            <section id="nominations-section" class="admin-section d-none">
-                <div class="section-header">
-                    <div class="section-header-content">
-                        <h1>
-                            <i class="fa-solid fa-hand-paper"></i>
-                            الترشح للقيادة
-                        </h1>
-                        <p class="section-subtitle">ترشح لمنصب قيادي في لجنتك أو شارك في التصويت</p>
+                <!-- قسم الانتخابات - الترشح والتصويت -->
+                <div class="card" id="electionsCard">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-vote-yea"></i>
+                            انتخابات اللجنة
+                        </h3>
+                        <p class="text-muted">الترشح للمناصب القيادية والتصويت</p>
                     </div>
-                    <div class="section-header-actions">
-                        <button class="btn btn--outline btn--outline-primary" id="refreshNominationsBtn">
-                            <i class="fa-solid fa-rotate"></i>
-                            تحديث
-                        </button>
+                    <div class="card-body">
+                        <!-- الانتخابات النشطة -->
+                        <div id="activeElectionsContainer">
+                            <div class="empty-state" id="noActiveElections">
+                                <i class="fa-solid fa-inbox"></i>
+                                <p>لا توجد انتخابات نشطة حالياً</p>
+                            </div>
+                            <!-- سيتم ملؤه ديناميكياً -->
+                        </div>
                     </div>
-                </div>
-
-                <!-- قائمة الانتخابات المتاحة -->
-                <div id="nominationsContainer">
-                    <!-- سيتم ملؤها ديناميكياً -->
                 </div>
             </section>
 
@@ -4136,12 +4455,12 @@
     <script src="js/news-manager-enhanced.js"></script>
     <script src="js/works-manager.js"></script>
     <script src="js/sponsors-manager.js"></script>
+    <script src="js/elections-manager.js"></script>
+    <script src="js/member-elections.js"></script>
     <script src="js/modal-helper.js"></script>
     <script src="js/toast-notifications.js"></script>
     <!-- SweetAlert2 Shim - يحوّل Swal.fire إلى ModalHelper -->
     <script src="js/swal-shim.js"></script>
-    <script src="js/elections-manager.js"></script>
-    <script src="js/member-nominations.js"></script>
     <script src="dashboard.js"></script>
     <!-- <link rel="stylesheet" href="css/archives.css"> -->
 </body>
