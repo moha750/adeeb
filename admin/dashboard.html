@@ -35,6 +35,8 @@
     <link rel="stylesheet" href="css/image-cropper.css" />
     <!-- Dynamic Content Styles - تنسيقات المحتوى الديناميكي -->
     <link rel="stylesheet" href="css/dynamic-content.css" />
+    <!-- Elections Styles - تنسيقات الانتخابات -->
+    <link rel="stylesheet" href="css/elections.css" />
 </head>
 
 <body>
@@ -409,6 +411,105 @@
                 </div>
 
                 <div class="applications-cards-grid" id="committeesGrid">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </section>
+
+            <!-- =====================================================
+                 قسم إدارة الانتخابات
+                 ===================================================== -->
+
+            <!-- قسم الانتخابات -->
+            <section id="elections-section" class="admin-section d-none">
+                <div class="section-header">
+                    <div class="section-header-content">
+                        <h1>
+                            <i class="fa-solid fa-vote-yea"></i>
+                            إدارة الانتخابات
+                        </h1>
+                        <p class="section-subtitle">إدارة انتخابات المناصب القيادية في اللجان</p>
+                    </div>
+                    <div class="section-header-actions">
+                        <button class="btn btn--outline btn--outline-primary" id="refreshElectionsBtn">
+                            <i class="fa-solid fa-rotate"></i>
+                            تحديث
+                        </button>
+                        <button class="btn btn--primary" id="createElectionBtn">
+                            <i class="fa-solid fa-plus"></i>
+                            إنشاء انتخاب جديد
+                        </button>
+                    </div>
+                </div>
+
+                <!-- إحصائيات الانتخابات -->
+                <div class="stats-grid">
+                    <div class="stat-card" style="--stat-color: #3b82f6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-box-ballot"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalElectionsCount">0</div>
+                                <div class="stat-label">إجمالي الانتخابات</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-spinner"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="activeElectionsCount">0</div>
+                                <div class="stat-label">انتخابات نشطة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #f59e0b">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-check-to-slot"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="votingElectionsCount">0</div>
+                                <div class="stat-label">تصويت جارٍ</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-flag-checkered"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="completedElectionsCount">0</div>
+                                <div class="stat-label">انتخابات مكتملة</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلاتر البحث -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="electionsSearchInput" placeholder="البحث في الانتخابات..." />
+                    </div>
+                    <select id="electionsStatusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="nomination">فترة الترشح</option>
+                        <option value="review">مراجعة الطلبات</option>
+                        <option value="voting">التصويت</option>
+                        <option value="completed">مكتملة</option>
+                        <option value="cancelled">ملغية</option>
+                    </select>
+                    <select id="electionsCommitteeFilter" class="filter-select">
+                        <option value="">جميع اللجان</option>
+                    </select>
+                </div>
+
+                <!-- قائمة الانتخابات -->
+                <div id="electionsContainer">
                     <!-- سيتم ملؤها ديناميكياً -->
                 </div>
             </section>
@@ -1036,6 +1137,30 @@
                             <!-- سيتم ملؤه ديناميكياً -->
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <!-- قسم الترشح للقيادة - للأعضاء -->
+            <section id="nominations-section" class="admin-section d-none">
+                <div class="section-header">
+                    <div class="section-header-content">
+                        <h1>
+                            <i class="fa-solid fa-hand-paper"></i>
+                            الترشح للقيادة
+                        </h1>
+                        <p class="section-subtitle">ترشح لمنصب قيادي في لجنتك أو شارك في التصويت</p>
+                    </div>
+                    <div class="section-header-actions">
+                        <button class="btn btn--outline btn--outline-primary" id="refreshNominationsBtn">
+                            <i class="fa-solid fa-rotate"></i>
+                            تحديث
+                        </button>
+                    </div>
+                </div>
+
+                <!-- قائمة الانتخابات المتاحة -->
+                <div id="nominationsContainer">
+                    <!-- سيتم ملؤها ديناميكياً -->
                 </div>
             </section>
 
@@ -4015,6 +4140,8 @@
     <script src="js/toast-notifications.js"></script>
     <!-- SweetAlert2 Shim - يحوّل Swal.fire إلى ModalHelper -->
     <script src="js/swal-shim.js"></script>
+    <script src="js/elections-manager.js"></script>
+    <script src="js/member-nominations.js"></script>
     <script src="dashboard.js"></script>
     <!-- <link rel="stylesheet" href="css/archives.css"> -->
 </body>

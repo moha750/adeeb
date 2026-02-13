@@ -524,6 +524,26 @@
             });
         }
 
+        // الترشح للقيادة - جميع المستويات ما عدا رئيس النادي (10) ورئيس المجلس الإداري (6)
+        if (roleLevel !== 10 && roleLevel !== 6) {
+            menuItems.push({
+                id: 'nominations',
+                icon: 'fa-hand-paper',
+                label: 'الترشح للقيادة',
+                section: 'nominations-section'
+            });
+        }
+
+        // إدارة الانتخابات - رئيس النادي، الرئيس التنفيذي، قائد الموارد البشرية (المستوى 8 فأعلى)
+        if (roleLevel >= 8) {
+            menuItems.push({
+                id: 'elections',
+                icon: 'fa-vote-yea',
+                label: 'إدارة الانتخابات',
+                section: 'elections-section'
+            });
+        }
+
         // الإعدادات - جميع المستويات
         menuItems.push({
             id: 'settings',
@@ -944,6 +964,16 @@
                 if (window.surveysManager) {
                     if (currentUser) await window.surveysManager.init(currentUser);
                     await window.surveysManager.loadTemplates();
+                }
+                break;
+            case 'elections-section':
+                if (typeof initElectionsManager === 'function') {
+                    initElectionsManager();
+                }
+                break;
+            case 'nominations-section':
+                if (typeof initMemberNominations === 'function') {
+                    initMemberNominations();
                 }
                 break;
         }
