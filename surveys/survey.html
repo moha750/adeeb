@@ -1,0 +1,65 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title id="pageTitle">Adeeb Forms</title>
+    <meta name="description" id="pageDescription" content="نظام استبيانات نادي أدِيب" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" id="ogUrl" content="" />
+    <meta property="og:title" id="ogTitle" content="Adeeb Forms" />
+    <meta property="og:description" id="ogDescription" content="نظام استبيانات نادي أدِيب" />
+    <meta name="twitter:image" content="https://www.adeeb.club/adeeb-forms.png" />
+    <meta property="og:site_name" content="نادي أدِيب" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" id="twitterTitle" content="Adeeb Forms" />
+    <meta name="twitter:description" id="twitterDescription" content="نظام استبيانات نادي أدِيب" />
+    <meta name="twitter:image" content="https://www.adeeb.club/adeeb-forms.png" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="survey.css" />
+    <link rel="icon" type="image/png" href="../favicon/favicon-32x32.png" />
+    <link rel="apple-touch-icon" href="../adeeb-logo.png" />
+</head>
+
+<body>
+    <!-- شريط التحميل -->
+    <div id="loadingBar" class="loading-bar">
+        <div class="loading-progress"></div>
+    </div>
+
+    <!-- الهيدر -->
+    <header class="survey-header">
+        <div class="container">
+            <img src="../adeeb-logo.png" alt="نادي أدِيب" class="logo" />
+        </div>
+    </header>
+
+    <!-- محتوى الاستبيان -->
+    <main class="survey-main">
+        <div class="container">
+            <div id="surveyMain">
+                <!-- سيتم ملؤه ديناميكياً -->
+            </div>
+        </div>
+    </main>
+
+    <!-- الفوتر -->
+    <footer class="survey-footer">
+        <div class="container">
+            <p>      جميع الحقوق محفوظة لنادي أدِيب 2026      &copy;        </p>
+        </div>
+    </footer>
+
+    <!-- المكتبات -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="survey.js"></script>
+</body>
+
+</html>
