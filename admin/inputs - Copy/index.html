@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الحقول الحديث | FX UI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="fx-form-container">
+        <h2 style="margin-bottom: 2rem; color: var(--fx-primary);">مكونات واجهة الإدخال الحديثة (FX UI)</h2>
+
+        <form>
+            <div class="fx-grid">
+                
+                <div class="fx-field-wrap">
+                    <input type="text" id="fx-text" class="fx-input" placeholder=" ">
+                    <label for="fx-text" class="fx-label">الاسم الكامل</label>
+                </div>
+
+                <div class="fx-field-wrap">
+                    <input type="email" id="fx-email" class="fx-input" placeholder=" ">
+                    <label for="fx-email" class="fx-label">البريد الإلكتروني</label>
+                </div>
+
+                <div class="fx-field-wrap">
+                    <input type="password" id="fx-pass" class="fx-input" placeholder=" ">
+                    <label for="fx-pass" class="fx-label">كلمة المرور</label>
+                </div>
+
+                <div class="fx-field-wrap">
+                    <input type="number" id="fx-num" class="fx-input" placeholder=" ">
+                    <label for="fx-num" class="fx-label">العمر</label>
+                </div>
+
+                <div class="fx-field-wrap">
+                    <input type="tel" id="fx-tel" class="fx-input" placeholder=" ">
+                    <label for="fx-tel" class="fx-label">رقم الهاتف</label>
+                </div>
+
+                <div class="fx-field-wrap">
+                    <input type="url" id="fx-url" class="fx-input" placeholder=" ">
+                    <label for="fx-url" class="fx-label">رابط موقعك</label>
+                </div>
+
+                <div class="fx-field-wrap">
+                    <input type="search" id="fx-search" class="fx-input" placeholder=" ">
+                    <label for="fx-search" class="fx-label">ابحث هنا...</label>
+                </div>
+
+                <div class="fx-field-wrap">
+                    <input type="date" id="fx-date" class="fx-input" placeholder=" ">
+                    <label for="fx-date" class="fx-label">تاريخ الميلاد</label>
+                </div>
+
+                <div class="fx-field-wrap">
+                    <input type="time" id="fx-time" class="fx-input" placeholder=" ">
+                    <label for="fx-time" class="fx-label">وقت الموعد</label>
+                </div>
+
+                <div class="fx-field-wrap">
+                    <input type="datetime-local" id="fx-dt" class="fx-input" placeholder=" ">
+                    <label for="fx-dt" class="fx-label">التاريخ والوقت</label>
+                </div>
+
+                <div class="fx-field-wrap">
+                    <input type="month" id="fx-month" class="fx-input" placeholder=" ">
+                    <label for="fx-month" class="fx-label">شهر التخرج</label>
+                </div>
+
+                <div class="fx-field-wrap">
+                    <input type="week" id="fx-week" class="fx-input" placeholder=" ">
+                    <label for="fx-week" class="fx-label">أسبوع العمل</label>
+                </div>
+
+            </div> <br>
+
+            <div class="fx-field-wrap">
+                <select id="fx-select" class="fx-select" aria-placeholder=" ">
+                    <option value="" disabled selected hidden></option>
+                    <option value="1">الخيار الأول</option>
+                    <option value="2">الخيار الثاني</option>
+                    <option value="3">الخيار الثالث</option>
+                </select>
+                <label for="fx-select" class="fx-label">اختر من القائمة</label>
+            </div>
+
+            <br>
+
+            <div class="fx-field-wrap">
+                <textarea id="fx-msg" class="fx-textarea" placeholder=" "></textarea>
+                <label for="fx-msg" class="fx-label">اكتب رسالتك هنا...</label>
+            </div>
+
+            <br>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="color: var(--fx-text-muted); font-size: 0.9rem;">الاهتمامات (Checkbox):</label>
+                <div class="fx-choice-wrap">
+                    <label class="fx-choice-item">
+                        <input type="checkbox" checked>
+                        <div class="fx-box"></div> التصميم
+                    </label>
+                    <label class="fx-choice-item">
+                        <input type="checkbox">
+                        <div class="fx-box"></div> البرمجة
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="color: var(--fx-text-muted); font-size: 0.9rem;">الجنس (Radio):</label>
+                <div class="fx-choice-wrap">
+                    <label class="fx-choice-item">
+                        <input type="radio" name="gender" checked>
+                        <div class="fx-circle"></div> ذكر
+                    </label>
+                    <label class="fx-choice-item">
+                        <input type="radio" name="gender">
+                        <div class="fx-circle"></div> أنثى
+                    </label>
+                </div>
+            </div>
+
+            <div class="fx-toggle-wrap">
+                <span style="font-weight: 500;">تفعيل الوضع الليلي</span>
+                <label class="fx-toggle">
+                    <input type="checkbox">
+                    <span class="fx-slider"></span>
+                </label>
+            </div>
+
+            <br>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="color: var(--fx-text-muted); font-size: 0.9rem;">تحديد الميزانية (Range):</label>
+                <input type="range" class="fx-range" min="0" max="100" value="50">
+            </div>
+
+            <div class="fx-color-wrap" style="margin-bottom: 1.5rem;">
+                <input type="color" class="fx-color" value="#6366f1">
+                <span style="color: var(--fx-text-muted); font-size: 0.9rem;">اختر لون المظهر (Color)</span>
+            </div>
+
+            <div class="fx-file-drop">
+                <input type="file" class="fx-file-input" multiple>
+                <div style="color: var(--fx-text-muted);">
+                    <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-bottom: 10px; color: var(--fx-primary);">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <p>اسحب وأفلت الملفات هنا أو اضغط للاستعراض</p>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+</body>
+</html>

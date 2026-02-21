@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام النماذج المتكامل | نادي أديب</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <form class="form-card" onsubmit="event.preventDefault()">
+            
+            <div style="text-align: center; margin-bottom: 2.5rem;">
+                <h1 style="color: var(--primary); margin: 0;">تسجيل بيانات جديد</h1>
+                <p style="color: var(--text-muted);">يرجى ملء كافة الحقول المطلوبة</p>
+            </div>
+
+            <div class="section-header">
+                <i class="ri-user-settings-line"></i> البيانات الشخصية
+            </div>
+            
+            <div class="grid-2">
+                <div class="input-wrapper">
+                    <input type="text" class="form-input" placeholder=" " required>
+                    <label class="floating-label">الاسم الكامل</label>
+                    <i class="ri-user-line input-icon"></i>
+                </div>
+
+                <div class="input-wrapper">
+                    <input type="email" class="form-input" placeholder=" " required>
+                    <label class="floating-label">البريد الإلكتروني</label>
+                    <i class="ri-mail-line input-icon"></i>
+                </div>
+
+                <div class="input-wrapper password-wrapper">
+                    <input type="password" class="form-input" id="passwordInput" placeholder=" " required>
+                    <label class="floating-label">كلمة المرور</label>
+                    <i class="ri-lock-2-line input-icon"></i>
+                    
+                    <button type="button" class="toggle-password" onclick="togglePassword()">
+                        <i class="ri-eye-off-line" id="eyeIcon"></i>
+                    </button>
+                </div>
+
+                <div class="input-wrapper">
+                    <input type="tel" class="form-input" placeholder=" ">
+                    <label class="floating-label">رقم الجوال</label>
+                    <i class="ri-phone-line input-icon"></i>
+                </div>
+            </div>
+
+            <div class="section-header" style="margin-top: 2rem;">
+                <i class="ri-calendar-event-line"></i> المواعيد والتواريخ
+            </div>
+            
+            <div class="grid-2">
+                <div class="input-wrapper">
+                    <input type="date" class="form-input" placeholder=" ">
+                    <label class="floating-label">تاريخ الميلاد</label>
+                    <i class="ri-calendar-line input-icon"></i>
+                </div>
+
+                <div class="input-wrapper">
+                    <input type="time" class="form-input" placeholder=" ">
+                    <label class="floating-label">وقت الحضور</label>
+                    <i class="ri-time-line input-icon"></i>
+                </div>
+
+                <div class="input-wrapper">
+                    <input type="month" class="form-input" placeholder=" ">
+                    <label class="floating-label">شهر الانضمام</label>
+                    <i class="ri-calendar-check-line input-icon"></i>
+                </div>
+
+                <div class="input-wrapper">
+                    <input type="week" class="form-input" placeholder=" ">
+                    <label class="floating-label">أسبوع العمل</label>
+                    <i class="ri-calendar-todo-line input-icon"></i>
+                </div>
+            </div>
+
+            <div class="section-header" style="margin-top: 2rem;">
+                <i class="ri-list-settings-line"></i> خيارات وتفضيلات
+            </div>
+
+            <div class="grid-2">
+                <div class="input-wrapper">
+                    <select class="form-input">
+                        <option value="" disabled selected hidden></option>
+                        <option>تصميم جرافيك</option>
+                        <option>مونتاج فيديو</option>
+                        <option>برمجة ويب</option>
+                    </select>
+                    <label class="floating-label">القسم المطلوب</label>
+                    <i class="ri-briefcase-line input-icon"></i>
+                </div>
+
+                <div class="input-wrapper">
+                    <input list="cities" class="form-input" placeholder=" ">
+                    <label class="floating-label">المدينة (بحث)</label>
+                    <i class="ri-map-pin-line input-icon"></i>
+                    <datalist id="cities">
+                        <option value="الرياض">
+                        <option value="جدة">
+                        <option value="الدمام">
+                        <option value="مكة المكرمة">
+                    </datalist>
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-top: 1.5rem;">
+                <div class="color-picker-wrapper">
+                    <span style="flex:1; color: var(--text-muted); font-size: 0.9rem;">لونك المفضل:</span>
+                    <input type="color" value="#3d8fd6">
+                </div>
+
+                <div class="range-container">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.9rem;">
+                        <span>مستوى الخبرة</span>
+                        <span id="rangeVal" style="color:var(--accent); font-weight:bold;">50%</span>
+                    </div>
+                    <input type="range" min="0" max="100" value="50" oninput="document.getElementById('rangeVal').innerText = this.value + '%'">
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+                <p style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">نوع العضوية:</p>
+                <div class="radio-group">
+                    <label class="radio-card">
+                        <input type="radio" name="member" checked>
+                        <div class="radio-content">
+                            <i class="ri-user-star-line" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+                            <span>أفراد</span>
+                        </div>
+                    </label>
+                    <label class="radio-card">
+                        <input type="radio" name="member">
+                        <div class="radio-content">
+                            <i class="ri-building-2-line" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+                            <span>شركات</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; text-align: center;">
+                <p style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">رمز التحقق (OTP):</p>
+                <div class="otp-container">
+                    <input type="text" class="otp-input" maxlength="1">
+                    <input type="text" class="otp-input" maxlength="1">
+                    <input type="text" class="otp-input" maxlength="1">
+                    <input type="text" class="otp-input" maxlength="1">
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <div class="file-dropzone">
+                    <input type="file" multiple>
+                    <i class="ri-upload-cloud-2-line" style="font-size: 2.5rem; color: var(--accent);"></i>
+                    <p style="margin: 0.5rem 0;">اسحب الملفات هنا أو اضغط للرفع</p>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">PDF, JPG, PNG (Max 5MB)</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <div class="switch-wrapper">
+                    <span>الموافقة على الشروط والأحكام</span>
+                    <label class="switch">
+                        <input type="checkbox">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="input-wrapper">
+                    <textarea class="form-input" placeholder=" "></textarea>
+                    <label class="floating-label">ملاحظات إضافية</label>
+                    <i class="ri-message-2-line input-icon"></i>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">إرسال البيانات</button>
+        </form>
+    </div>
+
+    <script>
+        // 1. Password Toggle Logic
+        function togglePassword() {
+            const passInput = document.getElementById('passwordInput');
+            const icon = document.getElementById('eyeIcon');
+            
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                icon.className = 'ri-eye-line';
+                icon.style.color = 'var(--accent)';
+            } else {
+                passInput.type = 'password';
+                icon.className = 'ri-eye-off-line';
+                icon.style.color = '';
+            }
+        }
+
+        // 2. OTP Auto-Focus Logic
+        const otpInputs = document.querySelectorAll('.otp-input');
+        otpInputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if(e.target.value.length === 1 && index < otpInputs.length - 1) {
+                    otpInputs[index + 1].focus();
+                }
+            });
+            input.addEventListener('keydown', (e) => {
+                if(e.key === 'Backspace' && !e.target.value && index > 0) {
+                    otpInputs[index - 1].focus();
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

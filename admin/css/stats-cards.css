@@ -1,0 +1,397 @@
+/* ===============================
+   Stats Cards – Unified System
+   =============================== */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    /* عمودين */
+    grid-template-rows: repeat(2, auto);
+    /* صفّين */
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+/* إذا كان عدد الكروت فردي → آخر كرت يتمدد */
+.stats-grid .stat-card:last-child:nth-child(odd) {
+    grid-column: span 2;
+}
+
+/* البطاقة الأساسية - Glass Morphism */
+.stat-card {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow:
+        0 8px 32px rgba(31, 38, 135, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* الشريط العلوي المتوهج */
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--stat-color), transparent);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+}
+
+/* عنصر زخرفي زجاجي بالزاوية */
+.stat-card::after {
+    content: '';
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, var(--stat-color) 0%, transparent 70%);
+    opacity: 0.08;
+    border-radius: 50%;
+    transition: all 0.5s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-6px);
+    background: rgba(255, 255, 255, 0.55);
+    box-shadow:
+        0 12px 40px rgba(31, 38, 135, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        0 0 20px rgba(var(--stat-color-rgb, 61, 143, 214), 0.1);
+    border-color: rgba(var(--stat-color-rgb, 61, 143, 214), 0.25);
+}
+
+.stat-card:hover::after {
+    opacity: 0.15;
+    transform: scale(1.3);
+}
+
+/* محتوى البطاقة */
+.stat-card-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+    z-index: 1;
+}
+
+/* الأيقونة - Glass Morphism */
+.stat-icon {
+    width: 65px;
+    height: 65px;
+    border-radius: 18px;
+    background: linear-gradient(135deg,
+            var(--stat-color),
+            var(--stat-color-dark, var(--stat-color)));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.7rem;
+    box-shadow:
+        0 8px 24px rgba(var(--stat-color-rgb, 61, 143, 214), 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    position: relative;
+    flex-shrink: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-icon::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.35), transparent);
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.08) rotate(-3deg);
+    box-shadow:
+        0 10px 28px rgba(var(--stat-color-rgb, 61, 143, 214), 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* النص */
+.stat-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.stat-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.stat-label {
+    font-size: 1rem;
+    font-family: 'ERA', 'Lyon Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text-light);
+}
+
+.stat-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-light, #9ca3af);
+    margin-top: 6px;
+    opacity: 0.85;
+}
+
+/* Badge إضافي */
+.stat-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: linear-gradient(135deg,
+            rgba(var(--stat-color-rgb), 0.15),
+            rgba(var(--stat-color-rgb), 0.25));
+    color: var(--stat-color);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(var(--stat-color-rgb), 0.2);
+    z-index: 2;
+}
+
+.stat-badge i {
+    font-size: 0.7rem;
+}
+
+/* ===============================
+   Color Mapping (Auto RGB)
+   =============================== */
+
+.stat-card[style*="--stat-color: #3b82f6"] {
+    --stat-color-rgb: 59, 130, 246;
+    --stat-color-dark: #2563eb;
+}
+
+.stat-card[style*="--stat-color: #10b981"] {
+    --stat-color-rgb: 16, 185, 129;
+    --stat-color-dark: #059669;
+}
+
+.stat-card[style*="--stat-color: #8b5cf6"] {
+    --stat-color-rgb: 139, 92, 246;
+    --stat-color-dark: #7c3aed;
+}
+
+.stat-card[style*="--stat-color: #f59e0b"] {
+    --stat-color-rgb: 245, 158, 11;
+    --stat-color-dark: #d97706;
+}
+
+.stat-card[style*="--stat-color: #ef4444"] {
+    --stat-color-rgb: 239, 68, 68;
+    --stat-color-dark: #dc2626;
+}
+
+.stat-card[style*="--stat-color: #3d8fd6"] {
+    --stat-color-rgb: 61, 143, 214;
+    --stat-color-dark: #274060;
+}
+
+.stat-card[style*="--stat-color: #14b8a6"] {
+    --stat-color-rgb: 20, 184, 166;
+    --stat-color-dark: #0d9488;
+}
+
+.stat-card[style*="--stat-color: #ec4899"] {
+    --stat-color-rgb: 236, 72, 153;
+    --stat-color-dark: #db2777;
+}
+
+/* ===============================
+   Counter Animation
+   =============================== */
+
+.stat-value[data-count] {
+    animation: countPulse 0.6s ease-out;
+}
+
+@keyframes countPulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ===============================
+   Responsive Design
+   =============================== */
+
+@media (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        /* عمودين */
+        grid-template-rows: repeat(2, auto);
+        /* صفّين */
+        gap: 20px;
+    }
+
+    .stat-card {
+        padding: 24px;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .stat-card {
+        padding: 20px;
+    }
+
+    .stat-card-wrapper {
+        gap: 14px;
+    }
+
+    .stat-icon {
+        width: 55px;
+        height: 55px;
+        font-size: 1.4rem;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-card {
+        padding: 18px;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+    }
+
+    .stat-value {
+        font-size: 1.6rem;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+    }
+
+    .stat-badge {
+        top: 8px;
+        left: 8px;
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+}
+
+/* ===============================
+   Print Styles
+   =============================== */
+
+@media print {
+    .stat-card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+        transform: none !important;
+    }
+
+    .stat-card::before,
+    .stat-card::after {
+        display: none;
+    }
+}
+
+/* ===============================
+   Accessibility
+   =============================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .stat-card,
+    .stat-card::before,
+    .stat-card::after,
+    .stat-value {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+.stat-card:focus-visible {
+    outline: 3px solid var(--stat-color, #3d8fd6);
+    outline-offset: 4px;
+}
+
+/* ===============================
+   Dark Mode Support
+   =============================== */
+
+@media (prefers-color-scheme: dark) {
+    .stat-card {
+        background: rgba(30, 41, 59, 0.55);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .stat-card:hover {
+        background: rgba(30, 41, 59, 0.7);
+        border-color: rgba(var(--stat-color-rgb, 61, 143, 214), 0.3);
+    }
+
+    .stat-value {
+        color: #e2e8f0;
+    }
+
+    .stat-label {
+        color: #94a3b8;
+    }
+
+    .stat-card::after {
+        opacity: 0.12;
+    }
+}

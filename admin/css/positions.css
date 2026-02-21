@@ -1,0 +1,387 @@
+/**
+ * تنسيقات صفحة تعيين المناصب
+ */
+
+/* هيكلة المناصب */
+.positions-hierarchy {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.position-level {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    background: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.position-level:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.position-level-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.position-level-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.position-level-badge i {
+    font-size: 1.125rem;
+}
+
+.position-level-header h4 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+/* أعضاء المنصب */
+.position-members {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    min-height: 60px;
+}
+
+.position-member-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.position-member-card:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    transform: translateX(-4px);
+}
+
+.position-member-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+.position-member-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.position-member-name {
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.25rem 0;
+    font-size: 0.9375rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.position-member-committee {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin: 0;
+}
+
+.position-member-committee i {
+    font-size: 0.75rem;
+}
+
+.position-member-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.position-member-actions .btn--icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+}
+
+.empty-position {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 2rem;
+    color: #9ca3af;
+    font-size: 0.9375rem;
+}
+
+.empty-position i {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.5;
+}
+
+/* نموذج البحث والتعيين */
+.search-member-container {
+    position: relative;
+}
+
+.search-member-container input[type="text"] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    transition: all 0.2s ease;
+}
+
+.search-member-container input[type="text"]:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    display: none;
+}
+
+.search-results.active {
+    display: block;
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item:hover {
+    background: #f9fafb;
+}
+
+.search-result-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+.search-result-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.search-result-name {
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.25rem 0;
+    font-size: 0.9375rem;
+}
+
+.search-result-email {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.search-no-results {
+    padding: 2rem;
+    text-align: center;
+    color: #9ca3af;
+}
+
+.search-no-results i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+/* عرض العضو المحدد */
+.selected-member-display {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #eff6ff;
+    border: 2px solid #3b82f6;
+    border-radius: 8px;
+    display: none;
+}
+
+.selected-member-display.active {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.selected-member-display .position-member-avatar {
+    width: 56px;
+    height: 56px;
+}
+
+.selected-member-display .position-member-name {
+    font-size: 1rem;
+    color: #1e40af;
+}
+
+.selected-member-display .position-member-committee {
+    color: #3b82f6;
+}
+
+.selected-member-remove {
+    margin-right: auto;
+    color: #ef4444;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+}
+
+.selected-member-remove:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* تنسيقات النموذج */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.9375rem;
+}
+
+.form-group .text-danger {
+    color: #ef4444;
+}
+
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* استجابة للشاشات الصغيرة */
+@media (max-width: 768px) {
+    .position-members {
+        grid-template-columns: 1fr;
+    }
+
+    .position-level {
+        padding: 1rem;
+    }
+
+    .position-level-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .position-member-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .position-member-info {
+        text-align: center;
+    }
+
+    .position-member-actions {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* تنسيقات إضافية للأزرار */
+.d-flex {
+    display: flex;
+}
+
+.gap-1rem {
+    gap: 1rem;
+}
+
+.justify-content-end {
+    justify-content: flex-end;
+}
+
+.d-grid {
+    display: grid;
+}
+
+.gap-1-5rem {
+    gap: 1.5rem;
+}
+
+.d-none {
+    display: none !important;
+}
+
+.mb-2rem {
+    margin-bottom: 2rem;
+}

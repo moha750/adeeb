@@ -1,0 +1,316 @@
+/* ============================================================================
+   [ نظام واجهة المستخدم التفاعلي - FX UI Form System ]
+   ============================================================================ */
+
+:root {
+    /* لوحة ألوان عصرية (Indigo & Violet) */
+    --fx-primary: #6366f1;
+    --fx-primary-glow: rgba(99, 102, 241, 0.2);
+    --fx-surface: #ffffff;
+    --fx-bg: #f8fafc;
+    --fx-border: #cbd5e1;
+    --fx-text-main: #1e293b;
+    --fx-text-muted: #64748b;
+    --fx-danger: #f43f5e;
+    --fx-success: #10b981;
+    --fx-radius: 12px;
+    --fx-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--fx-bg);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--fx-text-main);
+}
+
+/* حاوية النموذج */
+.fx-form-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2.5rem;
+    background: var(--fx-surface);
+    border-radius: 24px;
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
+}
+
+.fx-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* ============================================================================
+   الحقول النصية والرقمية والتواريخ (Floating Label Design)
+   ============================================================================ */
+.fx-field-wrap {
+    position: relative;
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+.fx-input, 
+.fx-textarea, 
+.fx-select {
+    width: 100%;
+    padding: 1.25rem 1rem 0.5rem 1rem;
+    font-size: 1rem;
+    color: var(--fx-text-main);
+    background-color: transparent;
+    border: 2px solid var(--fx-border);
+    border-radius: var(--fx-radius);
+    outline: none;
+    transition: var(--fx-transition);
+    appearance: none;
+    font-family: inherit;
+}
+
+.fx-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.fx-label {
+    position: absolute;
+    right: 1rem; /* للغة العربية (RTL) */
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--fx-text-muted);
+    pointer-events: none;
+    transition: var(--fx-transition);
+    background-color: var(--fx-surface);
+    padding: 0 0.25rem;
+}
+
+.fx-textarea ~ .fx-label {
+    top: 1.5rem;
+}
+
+/* حركة العنوان العائم عند التركيز أو وجود نص */
+.fx-input:focus,
+.fx-textarea:focus,
+.fx-select:focus,
+.fx-input:not(:placeholder-shown),
+.fx-textarea:not(:placeholder-shown) {
+    border-color: var(--fx-primary);
+    box-shadow: 0 0 0 4px var(--fx-primary-glow);
+}
+
+.fx-input:focus ~ .fx-label,
+.fx-textarea:focus ~ .fx-label,
+.fx-select:focus ~ .fx-label,
+.fx-input:not(:placeholder-shown) ~ .fx-label,
+.fx-textarea:not(:placeholder-shown) ~ .fx-label {
+    top: 0;
+    font-size: 0.8rem;
+    color: var(--fx-primary);
+    font-weight: 600;
+}
+
+/* القوائم المنسدلة */
+.fx-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 1rem center;
+    background-size: 1.2rem;
+    padding-left: 2.5rem;
+    cursor: pointer;
+}
+
+/* ============================================================================
+   الخيارات (Checkbox & Radio) - تصميم مخصص
+   ============================================================================ */
+.fx-choice-wrap {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0.5rem 0;
+}
+
+.fx-choice-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.fx-choice-item input {
+    display: none; /* إخفاء العنصر الافتراضي */
+}
+
+.fx-box, .fx-circle {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--fx-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--fx-transition);
+}
+
+.fx-box { border-radius: 6px; }
+.fx-circle { border-radius: 50%; }
+
+/* تأثير التحديد */
+.fx-choice-item input:checked + .fx-box,
+.fx-choice-item input:checked + .fx-circle {
+    background-color: var(--fx-primary);
+    border-color: var(--fx-primary);
+}
+
+.fx-box::after {
+    content: "✓";
+    color: white;
+    font-size: 14px;
+    opacity: 0;
+    transform: scale(0);
+    transition: var(--fx-transition);
+}
+
+.fx-choice-item input:checked + .fx-box::after {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.fx-circle::after {
+    content: "";
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0);
+    transition: var(--fx-transition);
+}
+
+.fx-choice-item input:checked + .fx-circle::after {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* ============================================================================
+   زر التبديل (Toggle Switch)
+   ============================================================================ */
+.fx-toggle-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+}
+
+.fx-toggle {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.fx-toggle input { opacity: 0; width: 0; height: 0; }
+
+.fx-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: var(--fx-border);
+    transition: var(--fx-transition);
+    border-radius: 34px;
+}
+
+.fx-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px; width: 20px;
+    left: 4px; bottom: 4px;
+    background-color: white;
+    transition: var(--fx-transition);
+    border-radius: 50%;
+}
+
+.fx-toggle input:checked + .fx-slider {
+    background-color: var(--fx-primary);
+}
+
+.fx-toggle input:checked + .fx-slider:before {
+    transform: translateX(22px);
+}
+
+/* ============================================================================
+   شريط التمرير (Range Slider)
+   ============================================================================ */
+.fx-range {
+    width: 100%;
+    appearance: none;
+    height: 6px;
+    background: var(--fx-border);
+    border-radius: 4px;
+    outline: none;
+    margin-top: 1rem;
+}
+
+.fx-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--fx-primary);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
+    transition: transform 0.2s;
+}
+
+.fx-range::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* ============================================================================
+   رفع الملفات (Modern File Input)
+   ============================================================================ */
+.fx-file-drop {
+    border: 2px dashed var(--fx-border);
+    border-radius: var(--fx-radius);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--fx-transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.fx-file-drop:hover {
+    border-color: var(--fx-primary);
+    background-color: rgba(99, 102, 241, 0.02);
+}
+
+.fx-file-input {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* ============================================================================
+   منتقي الألوان (Color Picker)
+   ============================================================================ */
+.fx-color-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.fx-color {
+    appearance: none;
+    width: 50px;
+    height: 50px;
+    border: none;
+    border-radius: var(--fx-radius);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.fx-color::-webkit-color-swatch-wrapper { padding: 0; }
+.fx-color::-webkit-color-swatch { border: none; }
