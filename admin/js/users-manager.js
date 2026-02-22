@@ -383,6 +383,12 @@ class UsersManager {
             });
         }
 
+        // زر التصدير
+        const exportBtn = document.getElementById('exportMembersBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => this.showExportDialog());
+        }
+
         // أزرار عرض التفاصيل وتعديل وإنهاء العضوية
         document.addEventListener('click', (e) => {
             if (e.target.closest('.btn-view-user')) {
@@ -401,7 +407,7 @@ class UsersManager {
     /**
      * عرض تفاصيل المستخدم
      */
-    viewUserDetails(userId) {
+    async viewUserDetails(userId) {
         const user = this.allUsers.find(u => u.id === userId);
         if (!user) return;
 
@@ -415,6 +421,22 @@ class UsersManager {
         };
         
         const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=3d8fd6&color=fff&size=100`;
+
+        // جلب بيانات member_details
+        let memberDetails = null;
+        try {
+            const { data, error } = await this.supabase
+                .from('member_details')
+                .select('*')
+                .eq('user_id', userId)
+                .single();
+            
+            if (!error && data) {
+                memberDetails = data;
+            }
+        } catch (error) {
+            console.warn('Error fetching member details:', error);
+        }
 
         const content = `
             <div class="user-details-modal">
@@ -434,9 +456,72 @@ class UsersManager {
                         <i class="fa-solid fa-phone"></i>
                         <div class="info-content">
                             <span class="info-label">الجوال</span>
-                            <span class="info-value">${user.phone || 'غير محدد'}</span>
+                            <span class="info-value">${user.phone || memberDetails?.phone || 'غير محدد'}</span>
                         </div>
                     </div>
+                    ${memberDetails?.national_id ? `
+                    <div class="info-item">
+                        <i class="fa-solid fa-id-card"></i>
+                        <div class="info-content">
+                            <span class="info-label">الهوية الوطنية</span>
+                            <span class="info-value">${memberDetails.national_id}</span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${memberDetails?.full_name_triple ? `
+                    <div class="info-item">
+                        <i class="fa-solid fa-signature"></i>
+                        <div class="info-content">
+                            <span class="info-label">الاسم الثلاثي</span>
+                            <span class="info-value">${memberDetails.full_name_triple}</span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${memberDetails?.birth_date ? `
+                    <div class="info-item">
+                        <i class="fa-solid fa-cake-candles"></i>
+                        <div class="info-content">
+                            <span class="info-label">تاريخ الميلاد</span>
+                            <span class="info-value">${new Date(memberDetails.birth_date).toLocaleDateString('ar-SA')}</span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${memberDetails?.academic_record_number ? `
+                    <div class="info-item">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        <div class="info-content">
+                            <span class="info-label">الرقم الأكاديمي</span>
+                            <span class="info-value">${memberDetails.academic_record_number}</span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${memberDetails?.academic_degree ? `
+                    <div class="info-item">
+                        <i class="fa-solid fa-user-graduate"></i>
+                        <div class="info-content">
+                            <span class="info-label">الدرجة الأكاديمية</span>
+                            <span class="info-value">${memberDetails.academic_degree}</span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${memberDetails?.college ? `
+                    <div class="info-item">
+                        <i class="fa-solid fa-building-columns"></i>
+                        <div class="info-content">
+                            <span class="info-label">الكلية</span>
+                            <span class="info-value">${memberDetails.college}</span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${memberDetails?.major ? `
+                    <div class="info-item">
+                        <i class="fa-solid fa-book"></i>
+                        <div class="info-content">
+                            <span class="info-label">التخصص</span>
+                            <span class="info-value">${memberDetails.major}</span>
+                        </div>
+                    </div>
+                    ` : ''}
                     <div class="info-item">
                         <i class="fa-solid fa-user-tag"></i>
                         <div class="info-content">
@@ -465,6 +550,51 @@ class UsersManager {
                             <span class="info-value">${new Date(user.created_at).toLocaleDateString('ar-SA')}</span>
                         </div>
                     </div>
+                    ${memberDetails?.twitter_account ? `
+                    <div class="info-item">
+                        <i class="fa-brands fa-twitter"></i>
+                        <div class="info-content">
+                            <span class="info-label">تويتر</span>
+                            <span class="info-value"><a href="${memberDetails.twitter_account}" target="_blank">${memberDetails.twitter_account}</a></span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${memberDetails?.instagram_account ? `
+                    <div class="info-item">
+                        <i class="fa-brands fa-instagram"></i>
+                        <div class="info-content">
+                            <span class="info-label">إنستقرام</span>
+                            <span class="info-value"><a href="${memberDetails.instagram_account}" target="_blank">${memberDetails.instagram_account}</a></span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${memberDetails?.linkedin_account ? `
+                    <div class="info-item">
+                        <i class="fa-brands fa-linkedin"></i>
+                        <div class="info-content">
+                            <span class="info-label">لينكد إن</span>
+                            <span class="info-value"><a href="${memberDetails.linkedin_account}" target="_blank">${memberDetails.linkedin_account}</a></span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${memberDetails?.tiktok_account ? `
+                    <div class="info-item">
+                        <i class="fa-brands fa-tiktok"></i>
+                        <div class="info-content">
+                            <span class="info-label">تيك توك</span>
+                            <span class="info-value"><a href="${memberDetails.tiktok_account}" target="_blank">${memberDetails.tiktok_account}</a></span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${memberDetails?.notes ? `
+                    <div class="info-item" style="grid-column: 1 / -1;">
+                        <i class="fa-solid fa-note-sticky"></i>
+                        <div class="info-content">
+                            <span class="info-label">ملاحظات</span>
+                            <span class="info-value">${memberDetails.notes}</span>
+                        </div>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -627,6 +757,223 @@ class UsersManager {
             if (canImpersonate) {
                 button.style.display = 'block';
             }
+        }
+    }
+
+    /**
+     * عرض نافذة خيارات التصدير
+     */
+    async showExportDialog() {
+        // جلب اللجان
+        const { data: committees } = await this.supabase
+            .from('committees')
+            .select('*')
+            .eq('is_active', true)
+            .order('committee_name_ar');
+
+        const content = `
+            <div class="export-dialog">
+                <h3 style="margin-bottom: 1rem;">اختر البيانات المراد تصديرها</h3>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 0.5rem; font-size: 0.95rem;">فلترة حسب اللجنة:</h4>
+                    <select id="exportCommitteeFilter" class="form-select" style="width: 100%;">
+                        <option value="">جميع اللجان</option>
+                        ${(committees || []).map(c => `<option value="${c.id}">${c.committee_name_ar}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <h4 style="margin-bottom: 0.5rem; font-size: 0.95rem;">الحقول المراد تصديرها:</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" class="export-field" value="full_name" checked>
+                            <span>الاسم الكامل</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" class="export-field" value="email" checked>
+                            <span>البريد الإلكتروني</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" class="export-field" value="phone" checked>
+                            <span>الجوال</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" class="export-field" value="national_id">
+                            <span>الهوية الوطنية</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" class="export-field" value="academic_record_number">
+                            <span>الرقم الأكاديمي</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" class="export-field" value="birth_date">
+                            <span>تاريخ الميلاد</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" class="export-field" value="college">
+                            <span>الكلية</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" class="export-field" value="major">
+                            <span>التخصص</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" class="export-field" value="role" checked>
+                            <span>الدور</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" class="export-field" value="committee" checked>
+                            <span>اللجنة</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" class="export-field" value="joined_date">
+                            <span>تاريخ الانضمام</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" class="export-field" value="twitter_account">
+                            <span>تويتر</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" class="export-field" value="instagram_account">
+                            <span>إنستقرام</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" class="export-field" value="linkedin_account">
+                            <span>لينكد إن</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <button class="btn btn--sm btn--outline-secondary" onclick="document.querySelectorAll('.export-field').forEach(cb => cb.checked = true)">
+                        تحديد الكل
+                    </button>
+                    <button class="btn btn--sm btn--outline-secondary" onclick="document.querySelectorAll('.export-field').forEach(cb => cb.checked = false)">
+                        إلغاء التحديد
+                    </button>
+                </div>
+            </div>
+        `;
+
+        const result = await Swal.fire({
+            title: 'تصدير بيانات الأعضاء',
+            html: content,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa-solid fa-download"></i> تصدير كـ Excel',
+            cancelButtonText: 'إلغاء',
+            width: '600px',
+            preConfirm: () => {
+                const selectedFields = Array.from(document.querySelectorAll('.export-field:checked')).map(cb => cb.value);
+                const selectedCommittee = document.getElementById('exportCommitteeFilter').value;
+                
+                if (selectedFields.length === 0) {
+                    Swal.showValidationMessage('يرجى اختيار حقل واحد على الأقل');
+                    return false;
+                }
+                
+                return { fields: selectedFields, committee: selectedCommittee };
+            }
+        });
+
+        if (result.isConfirmed) {
+            await this.exportToExcel(result.value.fields, result.value.committee);
+        }
+    }
+
+    /**
+     * تصدير البيانات إلى Excel
+     */
+    async exportToExcel(fields, committeeId) {
+        try {
+            // جلب البيانات
+            let query = this.supabase
+                .from('profiles')
+                .select(`
+                    *,
+                    user_roles!user_roles_user_id_fkey (
+                        role:roles (role_name_ar),
+                        committee:committees (committee_name_ar),
+                        committee_id
+                    )
+                `)
+                .eq('account_status', 'active');
+
+            if (committeeId) {
+                query = query.eq('user_roles.committee_id', parseInt(committeeId));
+            }
+
+            const { data: users, error } = await query;
+            if (error) throw error;
+
+            // جلب member_details لكل مستخدم
+            const usersWithDetails = await Promise.all(users.map(async (user) => {
+                const { data: details } = await this.supabase
+                    .from('member_details')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .single();
+                
+                return { ...user, member_details: details };
+            }));
+
+            // إعداد البيانات للتصدير
+            const exportData = usersWithDetails.map(user => {
+                const row = {};
+                const details = user.member_details;
+                const role = user.user_roles?.[0]?.role;
+                const committee = user.user_roles?.[0]?.committee;
+
+                if (fields.includes('full_name')) row['الاسم الكامل'] = user.full_name || '';
+                if (fields.includes('email')) row['البريد الإلكتروني'] = user.email || '';
+                if (fields.includes('phone')) row['الجوال'] = user.phone || details?.phone || '';
+                if (fields.includes('national_id')) row['الهوية الوطنية'] = details?.national_id || '';
+                if (fields.includes('academic_record_number')) row['الرقم الأكاديمي'] = details?.academic_record_number || '';
+                if (fields.includes('birth_date')) row['تاريخ الميلاد'] = details?.birth_date ? new Date(details.birth_date).toLocaleDateString('ar-SA') : '';
+                if (fields.includes('college')) row['الكلية'] = details?.college || '';
+                if (fields.includes('major')) row['التخصص'] = details?.major || '';
+                if (fields.includes('role')) row['الدور'] = role?.role_name_ar || '';
+                if (fields.includes('committee')) row['اللجنة'] = committee?.committee_name_ar || '';
+                if (fields.includes('joined_date')) row['تاريخ الانضمام'] = user.joined_date ? new Date(user.joined_date).toLocaleDateString('ar-SA') : '';
+                if (fields.includes('twitter_account')) row['تويتر'] = details?.twitter_account || '';
+                if (fields.includes('instagram_account')) row['إنستقرام'] = details?.instagram_account || '';
+                if (fields.includes('linkedin_account')) row['لينكد إن'] = details?.linkedin_account || '';
+
+                return row;
+            });
+
+            // تحويل إلى CSV
+            const headers = Object.keys(exportData[0]);
+            const csvContent = [
+                headers.join(','),
+                ...exportData.map(row => headers.map(h => `"${row[h] || ''}"`).join(','))
+            ].join('\n');
+
+            // تنزيل الملف
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `adeeb_members_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            await Swal.fire({
+                icon: 'success',
+                title: 'تم التصدير بنجاح',
+                text: `تم تصدير ${exportData.length} عضو`,
+                confirmButtonText: 'حسناً'
+            });
+        } catch (error) {
+            console.error('Error exporting:', error);
+            await Swal.fire({
+                icon: 'error',
+                title: 'خطأ',
+                text: 'حدث خطأ أثناء التصدير',
+                confirmButtonText: 'حسناً'
+            });
         }
     }
 

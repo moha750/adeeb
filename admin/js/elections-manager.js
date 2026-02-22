@@ -344,7 +344,7 @@ class ElectionsManager {
         const status = statusLabels[election.status] || { text: election.status, class: 'badge-secondary', icon: 'fa-circle' };
         const position = positionLabels[election.position_type] || election.position_type;
         
-        // تنسيق التواريخ مع الساعة والدقيقة
+        // تنسيق التواريخ مع الساعة والدقيقة (12 ساعة)
         const formatDateTime = (dateString) => {
             if (!dateString) return '';
             const date = new Date(dateString);
@@ -354,7 +354,7 @@ class ElectionsManager {
                 day: '2-digit',
                 hour: '2-digit',
                 minute: '2-digit',
-                hour12: false
+                hour12: true
             });
         };
         
@@ -426,13 +426,6 @@ class ElectionsManager {
                             </div>
                         </div>
                         <div class="info-item">
-                            <i class="fa-solid fa-calendar-xmark"></i>
-                            <div class="info-content">
-                                <span class="info-label">ينتهي التصويت</span>
-                                <span class="info-value">${endDate}</span>
-                            </div>
-                        </div>
-                        <div class="info-item">
                             <i class="fa-solid fa-user"></i>
                             <div class="info-content">
                                 <span class="info-label">أنشأها</span>
@@ -495,12 +488,19 @@ class ElectionsManager {
             const defaultVotingStart = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
             const defaultVotingEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
 
+            // تحويل nominationEndDate من التوقيت المحلي إلى UTC بشكل صحيح
+            let nominationEndDateUTC = null;
+            if (nominationEndDate) {
+                const localDate = new Date(nominationEndDate);
+                nominationEndDateUTC = localDate.toISOString();
+            }
+
             const { data, error } = await this.supabase
                 .from('elections')
                 .insert({
                     committee_id: parseInt(committeeId),
                     position_type: positionType,
-                    nomination_end_date: nominationEndDate || null,
+                    nomination_end_date: nominationEndDateUTC,
                     voting_start_date: defaultVotingStart.toISOString(),
                     voting_end_date: defaultVotingEnd.toISOString(),
                     created_by: this.currentUser.id,
@@ -839,49 +839,284 @@ class ElectionsManager {
         const userCommitteeId = this.currentUserRole?.committee_id;
         if (!userCommitteeId) {
             document.getElementById('noOpenElectionsMessage').style.display = 'block';
-            document.getElementById('openElectionInfo').style.display = 'none';
+            document.getElementById('availablePositionsGrid').style.display = 'none';
             return;
         }
 
         try {
-            const { data: election, error } = await this.supabase
+            // جلب جميع الانتخابات المفتوحة للترشح في لجنة المستخدم
+            const { data: elections, error } = await this.supabase
                 .from('elections')
                 .select('*, committee:committees(committee_name_ar)')
                 .eq('committee_id', userCommitteeId)
-                .eq('status', 'nomination_open')
-                .single();
+                .eq('status', 'nomination_open');
 
-            if (error || !election) {
+            if (error) throw error;
+
+            if (!elections || elections.length === 0) {
                 document.getElementById('noOpenElectionsMessage').style.display = 'block';
-                document.getElementById('openElectionInfo').style.display = 'none';
+                document.getElementById('availablePositionsGrid').style.display = 'none';
                 return;
             }
 
             document.getElementById('noOpenElectionsMessage').style.display = 'none';
-            document.getElementById('openElectionInfo').style.display = 'block';
+            document.getElementById('availablePositionsGrid').style.display = 'grid';
 
-            // إضافة العداد التنازلي إذا كان هناك تاريخ انتهاء
-            this.renderNominationCountdown(election);
+            // عرض كروت المناصب المتاحة
+            await this.renderAvailablePositions(elections);
 
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    async renderAvailablePositions(elections) {
+        const container = document.getElementById('availablePositionsGrid');
+        if (!container) return;
+
+        const positionLabels = {
+            'leader': 'قائد اللجنة',
+            'vice_leader': 'نائب قائد اللجنة'
+        };
+
+        let html = '';
+
+        for (const election of elections) {
+            // التحقق من وجود ترشح سابق
             const { data: existingApp } = await this.supabase
                 .from('election_candidates')
                 .select('*')
                 .eq('election_id', election.id)
                 .eq('user_id', this.currentUser.id)
-                .single();
+                .maybeSingle();
 
-            if (existingApp) {
-                document.getElementById('nominationFormCard').style.display = 'none';
-                document.getElementById('nominationStatusCard').style.display = 'block';
-                this.renderNominationStatus(existingApp);
-            } else {
-                document.getElementById('nominationFormCard').style.display = 'block';
-                document.getElementById('nominationStatusCard').style.display = 'none';
+            const positionName = positionLabels[election.position_type] || election.position_type;
+            const endDate = election.nomination_end_date ? new Date(election.nomination_end_date).toLocaleString('ar-SA', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            }) : 'غير محدد';
+
+            html += `
+                <div class="position-card" data-election-id="${election.id}">
+                    <div class="position-card-header">
+                        <div class="position-icon">
+                            <i class="fa-solid ${election.position_type === 'leader' ? 'fa-crown' : 'fa-star'}"></i>
+                        </div>
+                        <h3 class="position-title">${positionName}</h3>
+                    </div>
+                    <div class="position-card-body">
+                        <div class="position-info">
+                            <div class="position-info-item">
+                                <i class="fa-solid fa-users"></i>
+                                <span>${election.committee?.committee_name_ar || 'غير محدد'}</span>
+                            </div>
+                            <div class="position-info-item">
+                                <i class="fa-solid fa-calendar-xmark"></i>
+                                <span>ينتهي: ${endDate}</span>
+                            </div>
+                        </div>
+                        ${existingApp ? `
+                            <div class="position-status">
+                                <div class="status-badge status-${existingApp.status}">
+                                    <i class="fa-solid ${existingApp.status === 'pending' ? 'fa-clock' : existingApp.status === 'approved' ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+                                    ${existingApp.status === 'pending' ? 'قيد المراجعة' : existingApp.status === 'approved' ? 'تم القبول' : 'تم الرفض'}
+                                </div>
+                            </div>
+                        ` : `
+                            <button class="btn btn--primary btn--block nominate-btn" data-election-id="${election.id}">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                ترشح لهذا المنصب
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+
+        // إضافة مستمعي الأحداث لأزرار الترشح
+        document.querySelectorAll('.nominate-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const electionId = e.target.closest('.nominate-btn').dataset.electionId;
+                const election = elections.find(el => el.id === electionId);
+                this.showNominationForm(election);
+            });
+        });
+    }
+
+    showNominationForm(election) {
+        this.currentElection = election;
+        
+        const positionLabels = {
+            'leader': 'قائد اللجنة',
+            'vice_leader': 'نائب قائد اللجنة'
+        };
+
+        const content = `
+            <div class="nomination-form-modal">
+                <h3 style="margin-bottom: 1rem; color: #1f2937;">
+                    <i class="fa-solid fa-file-upload"></i>
+                    الترشح لمنصب ${positionLabels[election.position_type] || election.position_type}
+                </h3>
+                
+                <div style="background: #eff6ff; border-right: 4px solid #3b82f6; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                    <p style="margin: 0; color: #1e40af; font-size: 0.9rem;">
+                        <i class="fa-solid fa-info-circle"></i>
+                        يرجى رفع ملف يحتوي على رؤيتك وخطتك للجنة. الملفات المقبولة: PDF, Word, PowerPoint
+                    </p>
+                </div>
+
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">ملف الترشح <span style="color: #ef4444;">*</span></label>
+                    <div class="file-upload-zone-modal" id="nominationFileZoneModal" style="border: 2px dashed #d1d5db; border-radius: 0.75rem; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s;">
+                        <i class="fa-solid fa-cloud-upload-alt" style="font-size: 3rem; color: #9ca3af; margin-bottom: 1rem;"></i>
+                        <p style="margin-bottom: 0.5rem; color: #374151;">اسحب الملف هنا أو اضغط للاختيار</p>
+                        <small style="color: #6b7280;">PDF, DOC, DOCX, PPT, PPTX - الحد الأقصى 10MB</small>
+                        <input type="file" id="nominationFileInputModal" accept=".pdf,.doc,.docx,.ppt,.pptx" style="display: none;">
+                    </div>
+                    <div id="selectedFileInfoModal" style="display: none; margin-top: 1rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <i class="fa-solid fa-file-pdf" style="font-size: 1.5rem; color: #ef4444;"></i>
+                            <div style="flex: 1;">
+                                <p id="selectedFileNameModal" style="margin: 0; font-weight: 500;"></p>
+                                <small id="selectedFileSizeModal" style="color: #6b7280;"></small>
+                            </div>
+                            <button type="button" class="btn btn--icon btn--icon-sm" id="removeSelectedFileModal">
+                                <i class="fa-solid fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        Swal.fire({
+            title: 'تقديم طلب الترشح',
+            html: content,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa-solid fa-paper-plane"></i> تقديم الطلب',
+            cancelButtonText: 'إلغاء',
+            width: '600px',
+            didOpen: () => {
+                const fileZone = document.getElementById('nominationFileZoneModal');
+                const fileInput = document.getElementById('nominationFileInputModal');
+                let selectedFile = null;
+
+                fileZone.addEventListener('click', () => fileInput.click());
+                
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length) {
+                        selectedFile = e.target.files[0];
+                        document.getElementById('selectedFileInfoModal').style.display = 'block';
+                        document.getElementById('selectedFileNameModal').textContent = selectedFile.name;
+                        document.getElementById('selectedFileSizeModal').textContent = (selectedFile.size / 1024 / 1024).toFixed(2) + ' MB';
+                    }
+                });
+
+                document.getElementById('removeSelectedFileModal')?.addEventListener('click', () => {
+                    selectedFile = null;
+                    fileInput.value = '';
+                    document.getElementById('selectedFileInfoModal').style.display = 'none';
+                });
+
+                // حفظ الملف المحدد في الكائن
+                this.selectedNominationFile = null;
+                fileInput.addEventListener('change', () => {
+                    this.selectedNominationFile = fileInput.files[0];
+                });
+            },
+            preConfirm: () => {
+                if (!this.selectedNominationFile) {
+                    Swal.showValidationMessage('يرجى رفع ملف الترشح');
+                    return false;
+                }
+                return true;
             }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                await this.submitNominationForElection(election.id, this.selectedNominationFile);
+            }
+        });
+    }
 
-            this.currentElection = election;
+    async submitNominationForElection(electionId, file) {
+        const allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'rtf', 'odt', 'odp', 'png', 'jpg', 'jpeg', 'gif', 'webp'];
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        
+        if (!allowedExtensions.includes(fileExtension)) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'خطأ',
+                text: 'نوع الملف غير مدعوم',
+                confirmButtonText: 'حسناً'
+            });
+            return;
+        }
+
+        const fileName = `${this.currentUser.id}_${Date.now()}.${fileExtension}`;
+
+        try {
+            Swal.fire({
+                title: 'جاري رفع الملف...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const { data: uploadData, error: uploadError } = await this.supabase.storage
+                .from('election-applications')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: urlData } = this.supabase.storage
+                .from('election-applications')
+                .getPublicUrl(fileName);
+
+            const { error: insertError } = await this.supabase
+                .from('election_candidates')
+                .insert({
+                    election_id: electionId,
+                    user_id: this.currentUser.id,
+                    application_file_url: urlData.publicUrl,
+                    application_file_name: file.name,
+                    status: 'pending'
+                });
+
+            if (insertError) throw insertError;
+
+            await this.logActivity(electionId, 'nomination_submitted', { user_id: this.currentUser.id });
+
+            await Swal.fire({
+                icon: 'success',
+                title: 'تم تقديم طلبك بنجاح! 🎉',
+                html: `
+                    <div style="text-align: center; padding: 1rem;">
+                        <p style="font-size: 1.1rem; margin-bottom: 1rem; color: #10b981; font-weight: 600;">تم استلام طلب ترشحك بنجاح!</p>
+                        <p style="margin-bottom: 1rem; color: #6b7280;">سيتم مراجعة طلبك من قبل الإدارة، وعند القبول ستدخل السباق الانتخابي.</p>
+                        <div style="background: #f0fdf4; border-right: 4px solid #10b981; padding: 1rem; border-radius: 0.5rem; margin-top: 1.5rem;">
+                            <p style="margin: 0; color: #059669; font-weight: 500;">🌟 نتمنى لك التوفيق والفوز في الانتخابات!</p>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'حسناً'
+            });
+
+            await this.loadNominationSection();
         } catch (error) {
             console.error('Error:', error);
+            await Swal.fire({
+                icon: 'error',
+                title: 'خطأ',
+                text: 'حدث خطأ أثناء تقديم الطلب',
+                confirmButtonText: 'حسناً'
+            });
         }
     }
 

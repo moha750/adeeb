@@ -317,24 +317,6 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* علامة الاتصال للمستخدم */
-.user-avatar::after {
-    content: '';
-    position: absolute;
-    bottom: 2px;
-    right: 2px;
-    width: 12px;
-    height: 12px;
-    background-color: #10b981;
-    border: 2px solid white;
-    border-radius: 50%;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* حالة عدم الاتصال */
-.user-avatar.offline::after {
-    background-color: #94a3b8;
-}
 
 /* ============================================================================
    Loading Bar

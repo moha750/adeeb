@@ -340,6 +340,10 @@
                         <i class="fa-solid fa-users"></i>
                         أعضاء أديب
                     </h1>
+                    <button class="btn btn--primary" id="exportMembersBtn" style="background-color: #3b82f6; border-color: #3b82f6;">
+                        <i class="fa-solid fa-file-export"></i>
+                        تصدير البيانات
+                    </button>
                 </div>
 
                 <!-- بطاقات الإحصائيات -->
@@ -1026,80 +1030,9 @@
                     </div>
                 </div>
 
-                <!-- معلومات الانتخابات المفتوحة -->
-                <div id="openElectionInfo" style="display: none;">
-                    <!-- العداد التنازلي -->
-                    <div id="nominationCountdownContainer"></div>
-                    
-                    <!-- تعليمات الترشح -->
-                    <div class="card" style="margin-bottom: 1.5rem; border-right: 4px solid #3b82f6;">
-                        <div class="card-header">
-                            <h3>
-                                <i class="fa-solid fa-info-circle"></i>
-                                تعليمات الترشح
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <ul>
-                                <li>احرص أن يكون الملف المرفق واضحاً ويُخاطب أعضاء لجنتك</li>
-                                <li>اشرح رؤيتك وخطتك للجنة</li>
-                                <li>الملفات المقبولة: PDF, Word</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- نموذج رفع الملف -->
-                    <div class="card" id="nominationFormCard">
-                        <div class="card-header">
-                            <h3>
-                                <i class="fa-solid fa-file-upload"></i>
-                                رفع ملف الترشح
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-group">
-                                <label>ملف الترشح <span class="required">*</span></label>
-                                <div class="file-upload-zone" id="nominationFileZone" style="border: 2px dashed #d1d5db; border-radius: 0.75rem; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s;">
-                                    <i class="fa-solid fa-cloud-upload-alt" style="font-size: 3rem; color: #9ca3af; margin-bottom: 1rem;"></i>
-                                    <p style="margin-bottom: 0.5rem;">اسحب الملف هنا أو اضغط للاختيار</p>
-                                    <small style="color: #6b7280;">PDF, DOC, DOCX - الحد الأقصى 10MB</small>
-                                    <input type="file" id="nominationFileInput" accept=".pdf,.doc,.docx" style="display: none;">
-                                </div>
-                                <div id="selectedFileInfo" style="display: none; margin-top: 1rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem;">
-                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                        <i class="fa-solid fa-file-pdf" style="font-size: 1.5rem; color: #ef4444;"></i>
-                                        <div style="flex: 1;">
-                                            <p id="selectedFileName" style="margin: 0; font-weight: 500;"></p>
-                                            <small id="selectedFileSize" style="color: #6b7280;"></small>
-                                        </div>
-                                        <button type="button" class="btn btn--icon btn--icon-sm" id="removeSelectedFile">
-                                            <i class="fa-solid fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-actions">
-                                <button type="button" class="btn btn--primary" id="submitNominationBtn">
-                                    <i class="fa-solid fa-paper-plane"></i>
-                                    تقديم طلب الترشح
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- حالة الطلب المقدم -->
-                    <div class="card" id="nominationStatusCard" style="display: none;">
-                        <div class="card-header">
-                            <h3>
-                                <i class="fa-solid fa-clock"></i>
-                                حالة طلبك
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <div id="nominationStatusContent">
-                            </div>
-                        </div>
-                    </div>
+                <!-- كروت المناصب المتاحة للترشح -->
+                <div id="availablePositionsGrid" class="applications-cards-grid" style="display: none;">
+                    <!-- سيتم ملؤها ديناميكياً -->
                 </div>
             </section>
 

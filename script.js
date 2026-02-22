@@ -254,13 +254,46 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       const sb = window.sbClient;
       if (sb) {
+        // جلب الأعضاء الإداريين من profiles مع user_roles
+        // role_level >= 80 للإداريين (admin, super_admin, etc.)
         const { data, error } = await sb
-          .from('board_members')
-          .select('*')
-          .order('order', { ascending: true, nullsFirst: true })
-          .order('created_at', { ascending: false });
+          .from('profiles')
+          .select(`
+            id,
+            full_name,
+            avatar_url,
+            email,
+            created_at,
+            user_roles!inner (
+              role:roles!inner (
+                id,
+                role_name_ar,
+                role_level
+              )
+            ),
+            member_details (
+              twitter_account,
+              linkedin_account
+            )
+          `)
+          .eq('account_status', 'active')
+          .gte('user_roles.role.role_level', 80)
+          .order('user_roles.role.role_level', { ascending: false });
+        
         if (error) throw error;
-        const arr = Array.isArray(data) ? data : [];
+        
+        // تحويل البيانات للصيغة المطلوبة
+        const arr = (data || []).map(member => ({
+          name: member.full_name,
+          image: member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name)}&background=3d8fd6&color=fff&size=200`,
+          position: member.user_roles?.[0]?.role?.role_name_ar || 'عضو',
+          email: member.email,
+          twitter: member.member_details?.[0]?.twitter_account || '',
+          linkedin: member.member_details?.[0]?.linkedin_account || '',
+          order: 100 - (member.user_roles?.[0]?.role?.role_level || 0),
+          created_at: member.created_at
+        }));
+        
         return arr;
       }
     } catch (e) {

@@ -3,155 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الحقول الحديث | FX UI</title>
+    <title>واجهة النموذج الاحترافية</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="fx-form-container">
-        <h2 style="margin-bottom: 2rem; color: var(--fx-primary);">مكونات واجهة الإدخال الحديثة (FX UI)</h2>
+    <div class="ui-container">
+        <h2 class="ui-title">البيانات الإدارية والتنظيمية</h2>
 
         <form>
-            <div class="fx-grid">
+            <div class="ui-grid">
                 
-                <div class="fx-field-wrap">
-                    <input type="text" id="fx-text" class="fx-input" placeholder=" ">
-                    <label for="fx-text" class="fx-label">الاسم الكامل</label>
+                <div class="ui-group">
+                    <input type="text" id="ui-text" class="ui-input" placeholder=" " value="نادي أدِيب">
+                    <label for="ui-text" class="ui-label">الجهة التابع لها</label>
                 </div>
 
-                <div class="fx-field-wrap">
-                    <input type="email" id="fx-email" class="fx-input" placeholder=" ">
-                    <label for="fx-email" class="fx-label">البريد الإلكتروني</label>
+                <div class="ui-group">
+                    <input type="email" id="ui-email" class="ui-input" placeholder=" ">
+                    <label for="ui-email" class="ui-label">البريد الإلكتروني الرسمي</label>
                 </div>
 
-                <div class="fx-field-wrap">
-                    <input type="password" id="fx-pass" class="fx-input" placeholder=" ">
-                    <label for="fx-pass" class="fx-label">كلمة المرور</label>
+                <div class="ui-group">
+                    <input type="password" id="ui-pass" class="ui-input" placeholder=" ">
+                    <label for="ui-pass" class="ui-label">كلمة المرور الإدارية</label>
                 </div>
 
-                <div class="fx-field-wrap">
-                    <input type="number" id="fx-num" class="fx-input" placeholder=" ">
-                    <label for="fx-num" class="fx-label">العمر</label>
+                <div class="ui-group">
+                    <div class="ui-select-wrapper">
+                        <select id="ui-select" class="ui-select" aria-placeholder=" ">
+                            <option value="" disabled selected hidden></option>
+                            <option value="1">ملعب الكأس بالهفوف</option>
+                            <option value="2">ملعب سفاري بالمزاوي</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down ui-select-icon"></i>
+                    </div>
+                    <label for="ui-select" class="ui-label">اختر المرفق الرياضي</label>
                 </div>
 
-                <div class="fx-field-wrap">
-                    <input type="tel" id="fx-tel" class="fx-input" placeholder=" ">
-                    <label for="fx-tel" class="fx-label">رقم الهاتف</label>
+                <div class="ui-group">
+                    <input type="number" id="ui-num" class="ui-input" placeholder=" ">
+                    <label for="ui-num" class="ui-label">عدد الحضور المتوقع</label>
                 </div>
 
-                <div class="fx-field-wrap">
-                    <input type="url" id="fx-url" class="fx-input" placeholder=" ">
-                    <label for="fx-url" class="fx-label">رابط موقعك</label>
+                <div class="ui-group">
+                    <input type="tel" id="ui-tel" class="ui-input" placeholder=" ">
+                    <label for="ui-tel" class="ui-label">رقم جوال المسؤول</label>
                 </div>
 
-                <div class="fx-field-wrap">
-                    <input type="search" id="fx-search" class="fx-input" placeholder=" ">
-                    <label for="fx-search" class="fx-label">ابحث هنا...</label>
+                <div class="ui-group">
+                    <input type="url" id="ui-url" class="ui-input" placeholder=" ">
+                    <label for="ui-url" class="ui-label">رابط التغطية أو الموقع</label>
                 </div>
 
-                <div class="fx-field-wrap">
-                    <input type="date" id="fx-date" class="fx-input" placeholder=" ">
-                    <label for="fx-date" class="fx-label">تاريخ الميلاد</label>
+                <div class="ui-group">
+                    <input type="search" id="ui-search" class="ui-input" placeholder=" ">
+                    <label for="ui-search" class="ui-label">البحث في السجلات...</label>
                 </div>
 
-                <div class="fx-field-wrap">
-                    <input type="time" id="fx-time" class="fx-input" placeholder=" ">
-                    <label for="fx-time" class="fx-label">وقت الموعد</label>
+                <div class="ui-group">
+                    <input type="date" id="ui-date" class="ui-input" placeholder=" ">
+                    <label for="ui-date" class="ui-label">تاريخ الفعالية</label>
                 </div>
 
-                <div class="fx-field-wrap">
-                    <input type="datetime-local" id="fx-dt" class="fx-input" placeholder=" ">
-                    <label for="fx-dt" class="fx-label">التاريخ والوقت</label>
+                <div class="ui-group">
+                    <input type="time" id="ui-time" class="ui-input" placeholder=" ">
+                    <label for="ui-time" class="ui-label">وقت البدء</label>
                 </div>
 
-                <div class="fx-field-wrap">
-                    <input type="month" id="fx-month" class="fx-input" placeholder=" ">
-                    <label for="fx-month" class="fx-label">شهر التخرج</label>
+            </div>
+
+            <div class="ui-group" style="margin-bottom: 2rem;">
+                <textarea id="ui-msg" class="ui-textarea" placeholder=" "></textarea>
+                <label for="ui-msg" class="ui-label">تفاصيل إضافية أو ملاحظات</label>
+            </div>
+
+            <div class="ui-grid">
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.9rem; font-weight: 700;">الخدمات الإضافية:</span>
+                    <div class="ui-options-row">
+                        <label class="ui-check-item">
+                            <input type="checkbox" checked>
+                            <div class="ui-check-box"></div> إضاءة ليلية
+                        </label>
+                        <label class="ui-check-item">
+                            <input type="checkbox">
+                            <div class="ui-check-box"></div> تغطية إعلامية
+                        </label>
+                        <label class="ui-check-item">
+                            <input type="checkbox">
+                            <div class="ui-check-box"></div> تصميم غلاف
+                        </label>
+                    </div>
                 </div>
 
-                <div class="fx-field-wrap">
-                    <input type="week" id="fx-week" class="fx-input" placeholder=" ">
-                    <label for="fx-week" class="fx-label">أسبوع العمل</label>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.9rem; font-weight: 700;">حالة الحجز:</span>
+                    <div class="ui-options-row">
+                        <label class="ui-check-item">
+                            <input type="radio" name="status" checked>
+                            <div class="ui-radio-circle"></div> مؤكد
+                        </label>
+                        <label class="ui-check-item">
+                            <input type="radio" name="status">
+                            <div class="ui-radio-circle"></div> قيد الانتظار
+                        </label>
+                    </div>
                 </div>
-
-            </div> <br>
-
-            <div class="fx-field-wrap">
-                <select id="fx-select" class="fx-select" aria-placeholder=" ">
-                    <option value="" disabled selected hidden></option>
-                    <option value="1">الخيار الأول</option>
-                    <option value="2">الخيار الثاني</option>
-                    <option value="3">الخيار الثالث</option>
-                </select>
-                <label for="fx-select" class="fx-label">اختر من القائمة</label>
             </div>
 
             <br>
 
-            <div class="fx-field-wrap">
-                <textarea id="fx-msg" class="fx-textarea" placeholder=" "></textarea>
-                <label for="fx-msg" class="fx-label">اكتب رسالتك هنا...</label>
-            </div>
-
-            <br>
-
-            <div style="margin-bottom: 1rem;">
-                <label style="color: var(--fx-text-muted); font-size: 0.9rem;">الاهتمامات (Checkbox):</label>
-                <div class="fx-choice-wrap">
-                    <label class="fx-choice-item">
-                        <input type="checkbox" checked>
-                        <div class="fx-box"></div> التصميم
-                    </label>
-                    <label class="fx-choice-item">
-                        <input type="checkbox">
-                        <div class="fx-box"></div> البرمجة
-                    </label>
+            <div class="ui-switch-group">
+                <div>
+                    <div style="font-weight: 700;">إرسال إشعارات تلقائية</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">سيتم تنبيه المشتركين عند إجراء أي تعديل.</div>
                 </div>
-            </div>
-
-            <div style="margin-bottom: 1rem;">
-                <label style="color: var(--fx-text-muted); font-size: 0.9rem;">الجنس (Radio):</label>
-                <div class="fx-choice-wrap">
-                    <label class="fx-choice-item">
-                        <input type="radio" name="gender" checked>
-                        <div class="fx-circle"></div> ذكر
-                    </label>
-                    <label class="fx-choice-item">
-                        <input type="radio" name="gender">
-                        <div class="fx-circle"></div> أنثى
-                    </label>
-                </div>
-            </div>
-
-            <div class="fx-toggle-wrap">
-                <span style="font-weight: 500;">تفعيل الوضع الليلي</span>
-                <label class="fx-toggle">
-                    <input type="checkbox">
-                    <span class="fx-slider"></span>
+                <label class="ui-switch">
+                    <input type="checkbox" checked>
+                    <span class="ui-slider"></span>
                 </label>
             </div>
 
-            <br>
+            <div class="ui-grid" style="align-items: center;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 700;">نسبة الخصم / التقدم:</label>
+                    <input type="range" class="ui-range" min="0" max="100" value="25">
+                </div>
 
-            <div style="margin-bottom: 1.5rem;">
-                <label style="color: var(--fx-text-muted); font-size: 0.9rem;">تحديد الميزانية (Range):</label>
-                <input type="range" class="fx-range" min="0" max="100" value="50">
-            </div>
-
-            <div class="fx-color-wrap" style="margin-bottom: 1.5rem;">
-                <input type="color" class="fx-color" value="#6366f1">
-                <span style="color: var(--fx-text-muted); font-size: 0.9rem;">اختر لون المظهر (Color)</span>
-            </div>
-
-            <div class="fx-file-drop">
-                <input type="file" class="fx-file-input" multiple>
-                <div style="color: var(--fx-text-muted);">
-                    <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-bottom: 10px; color: var(--fx-primary);">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                    </svg>
-                    <p>اسحب وأفلت الملفات هنا أو اضغط للاستعراض</p>
+                <div class="ui-color-group">
+                    <input type="color" class="ui-color" value="#3d8fd6">
+                    <div>
+                        <div style="font-weight: 700;">اللون الرئيسي للتصميم</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">اختر لون الهوية</div>
+                    </div>
                 </div>
             </div>
+
+            <div class="ui-dropzone-wrapper">
+                <div style="margin-bottom: 0.5rem; font-weight: 700; color: var(--brand-dark);">المرفقات والوسائط</div>
+                
+                <div class="ui-dropzone">
+                    <input type="file" class="ui-file-input" multiple>
+                    <div class="ui-dropzone-icon-wrap">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <div class="ui-dropzone-content">
+                        <div class="ui-dropzone-title">اسحب وأفلت المرفقات هنا</div>
+                        <div class="ui-dropzone-desc">أو اضغط لاستعراض الملفات من جهازك (يدعم الصور وملفات PDF)</div>
+                    </div>
+                </div>
+
+                <div class="ui-file-preview">
+                    <div class="ui-file-info">
+                        <div class="ui-file-icon">
+                            <i class="fa-solid fa-file-lines"></i>
+                        </div>
+                        <div>
+                            <div class="ui-file-name">design-cover-2025.pdf</div>
+                            <div class="ui-file-size">2.4 MB • اكتمل الرفع</div>
+                        </div>
+                    </div>
+                    <button type="button" class="ui-file-remove" title="حذف الملف">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <br>
+            <button type="button" style="width: 100%; padding: 18px; border-radius: var(--radius-md); background: var(--brand-blue); color: white; border: none; font-size: 1.1rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: var(--transition);">حفظ وإرسال البيانات</button>
 
         </form>
     </div>
