@@ -93,6 +93,60 @@
         }
     }
 
+    /**
+     * التحقق من وجود انتخابات مفتوحة للترشح وإضافة التبويب
+     */
+    async function checkAndAddNominationTab(menuItems, committeeId) {
+        if (!committeeId) return;
+        
+        try {
+            const { data, error } = await window.sbClient
+                .from('elections')
+                .select('id')
+                .eq('committee_id', committeeId)
+                .eq('status', 'nomination_open')
+                .limit(1);
+            
+            if (!error && data && data.length > 0) {
+                menuItems.push({
+                    id: 'elections-nominate',
+                    icon: 'fa-user-plus',
+                    label: 'الترشح للقيادة',
+                    section: 'elections-nominate-section'
+                });
+            }
+        } catch (error) {
+            console.error('Error checking nomination elections:', error);
+        }
+    }
+
+    /**
+     * التحقق من وجود انتخابات مفتوحة للتصويت وإضافة التبويب
+     */
+    async function checkAndAddVotingTab(menuItems, committeeId) {
+        if (!committeeId) return;
+        
+        try {
+            const { data, error } = await window.sbClient
+                .from('elections')
+                .select('id')
+                .eq('committee_id', committeeId)
+                .eq('status', 'voting_open')
+                .limit(1);
+            
+            if (!error && data && data.length > 0) {
+                menuItems.push({
+                    id: 'elections-vote',
+                    icon: 'fa-vote-yea',
+                    label: 'التصويت',
+                    section: 'elections-vote-section'
+                });
+            }
+        } catch (error) {
+            console.error('Error checking voting elections:', error);
+        }
+    }
+
     // بناء القائمة الجانبية بناءً على الصلاحيات
     async function buildNavigation() {
         const nav = document.getElementById('mainNav');
@@ -462,117 +516,18 @@
         }
         
         // للأعضاء العاديين: تبويبات مستقلة للترشح والتصويت (ليست قائمة منسدلة)
+        // سيتم إضافتها ديناميكياً بناءً على وجود انتخابات نشطة
         // استخدام صلاحية nominate_self
         if (hasPermission('nominate_self') && !isTopAdmin) {
-            menuItems.push({
-                id: 'elections-nominate',
-                icon: 'fa-user-plus',
-                label: 'الترشح للقيادة',
-                section: 'elections-nominate-section'
-            });
+            // سيتم التحقق من وجود انتخابات مفتوحة للترشح
+            await checkAndAddNominationTab(menuItems, currentUserRole.committee_id);
         }
         
         // التصويت متاح لمن لديه صلاحية cast_vote (إذا لم يكن مسؤول كبير)
         if (hasPermission('cast_vote') && !canManageElections) {
-            menuItems.push({
-                id: 'elections-vote',
-                icon: 'fa-vote-yea',
-                label: 'التصويت',
-                section: 'elections-vote-section'
-            });
+            // سيتم التحقق من وجود انتخابات مفتوحة للتصويت
+            await checkAndAddVotingTab(menuItems, currentUserRole.committee_id);
         }
-
-        // إظهار/إخفاء تبويبات الانتخابات حسب الحالة
-        async function updateElectionsTabs() {
-            const nominateTab = document.querySelector('[data-section="elections-nominate-section"]');
-            const voteTab = document.querySelector('[data-section="elections-vote-section"]');
-            const nominateSection = document.getElementById('elections-nominate-section');
-            const voteSection = document.getElementById('elections-vote-section');
-            
-            // التحقق من وجود صلاحيات أولاً
-            if (!hasPermission('nominate_self') && !hasPermission('cast_vote')) {
-                // إخفاء التبويبات إذا لم تكن هناك صلاحيات
-                if (nominateTab) {
-                    nominateTab.style.display = 'none';
-                    nominateTab.classList.add('d-none');
-                }
-                if (voteTab) {
-                    voteTab.style.display = 'none';
-                    voteTab.classList.add('d-none');
-                }
-                if (nominateSection) nominateSection.classList.add('d-none');
-                if (voteSection) voteSection.classList.add('d-none');
-                return;
-            }
-            
-            try {
-                const userCommitteeId = currentUserRole?.committee_id;
-                if (!userCommitteeId) {
-                    console.log('No committee_id found for user');
-                    return;
-                }
-                
-                // التحقق من وجود انتخابات مفتوحة للترشح
-                const { data: nominationElections, error: nominationError } = await sb
-                    .from('elections')
-                    .select('id, status')
-                    .eq('committee_id', userCommitteeId)
-                    .eq('status', 'nomination_open');
-                
-                if (nominationError) {
-                    console.error('Error checking nomination elections:', nominationError);
-                }
-                
-                // التحقق من وجود انتخابات مفتوحة للتصويت
-                const { data: votingElections, error: votingError } = await sb
-                    .from('elections')
-                    .select('id, status')
-                    .eq('committee_id', userCommitteeId)
-                    .eq('status', 'voting_open');
-                
-                if (votingError) {
-                    console.error('Error checking voting elections:', votingError);
-                }
-                
-                const hasNominationOpen = nominationElections && nominationElections.length > 0;
-                const hasVotingOpen = votingElections && votingElections.length > 0;
-                
-                console.log('Elections status:', { hasNominationOpen, hasVotingOpen, userCommitteeId });
-                
-                // إظهار/إخفاء تبويب الترشح
-                if (nominateTab && hasPermission('nominate_self')) {
-                    if (hasNominationOpen) {
-                        nominateTab.style.display = 'flex';
-                        nominateTab.classList.remove('d-none');
-                        if (nominateSection) nominateSection.classList.remove('d-none');
-                    } else {
-                        nominateTab.style.display = 'none';
-                        nominateTab.classList.add('d-none');
-                        if (nominateSection) nominateSection.classList.add('d-none');
-                    }
-                }
-                
-                // إظهار/إخفاء تبويب التصويت
-                if (voteTab && hasPermission('cast_vote')) {
-                    if (hasVotingOpen) {
-                        voteTab.style.display = 'flex';
-                        voteTab.classList.remove('d-none');
-                        if (voteSection) voteSection.classList.remove('d-none');
-                    } else {
-                        voteTab.style.display = 'none';
-                        voteTab.classList.add('d-none');
-                        if (voteSection) voteSection.classList.add('d-none');
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Error updating elections tabs:', error);
-            }
-        }
-
-        // استدعاء الدالة عند بناء القائمة وكل دقيقة (60 ثانية بدلاً من 30)
-        await updateElectionsTabs();
-        setInterval(updateElectionsTabs, 60000);
         
         // الأخبار - نظام متعدد التبويبات
         // استخدام نظام الصلاحيات الجديد

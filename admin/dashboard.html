@@ -44,6 +44,10 @@
     <link rel="stylesheet" href="css/dynamic-content.css" />
     <!-- Countdown Timer Styles -->
     <link rel="stylesheet" href="css/countdown-timer.css" />
+    <!-- Responses Styles -->
+    <link rel="stylesheet" href="css/responses.css" />
+    <!-- Nomination Cards Styles -->
+    <link rel="stylesheet" href="css/nomination-cards.css" />
 </head>
 
 <body>
@@ -340,7 +344,7 @@
                         <i class="fa-solid fa-users"></i>
                         أعضاء أديب
                     </h1>
-                    <button class="btn btn--primary" id="exportMembersBtn" style="background-color: #3b82f6; border-color: #3b82f6;">
+                    <button class="btn btn--primary" id="exportMembersBtn">
                         <i class="fa-solid fa-file-export"></i>
                         تصدير البيانات
                     </button>
@@ -1128,8 +1132,11 @@
                     </div>
                     <div class="card-body">
                         <div class="d-flex align-items-center gap-2rem mb-2rem">
-                            <div>
+                            <div style="position: relative; cursor: pointer;" id="avatarContainer">
                                 <img id="profileAvatar" src="" alt="الصورة الشخصية" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #3d8fd6;">
+                                <div id="changeAvatarBtn" style="position: absolute; bottom: 0; right: 0; width: 32px; height: 32px; border-radius: 50%; background: #3d8fd6; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: all 0.3s ease;">
+                                    <i class="fa-solid fa-camera" style="color: white; font-size: 14px;"></i>
+                                </div>
                             </div>
                             <div>
                                 <h3 id="profileFullName" style="font-size: 1.5rem; color: #274060;">جاري التحميل...</h3>
@@ -1162,6 +1169,28 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="stat-card" style="--stat-color: #ef4444;">
+                                <div class="stat-card-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="fa-solid fa-id-card"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-label">رقم الهوية الوطنية</div>
+                                        <div class="stat-value" id="profileNationalIdBasic" style="font-size: 0.9rem;">غير محدد</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-card" style="--stat-color: #8b5cf6;">
+                                <div class="stat-card-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="fa-solid fa-cake-candles"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-label">تاريخ الميلاد</div>
+                                        <div class="stat-value" id="profileBirthDateBasic" style="font-size: 0.9rem;">غير محدد</div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="stat-card" style="--stat-color: #f59e0b;">
                                 <div class="stat-card-wrapper">
                                     <div class="stat-icon">
@@ -1173,7 +1202,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="stat-card" style="--stat-color: #8b5cf6;">
+                            <div class="stat-card" style="--stat-color: #06b6d4;">
                                 <div class="stat-card-wrapper">
                                     <div class="stat-icon">
                                         <i class="fa-solid fa-clock"></i>
@@ -1188,74 +1217,124 @@
                     </div>
                 </div>
 
-                <!-- بطاقة البيانات التفصيلية -->
+                <!-- بطاقة البيانات الأكاديمية -->
                 <div class="card mb-2rem" id="memberDetailsCard">
                     <div class="card-header">
                         <h3>
-                            <i class="fa-solid fa-id-card"></i>
-                            البيانات التفصيلية
+                            <i class="fa-solid fa-graduation-cap"></i>
+                            البيانات الأكاديمية
                         </h3>
+                        <button class="btn btn--outline btn--outline-primary btn--sm" id="editAcademicBtn">
+                            <i class="fa-solid fa-edit"></i>
+                            تعديل
+                        </button>
                     </div>
                     <div class="card-body">
-                        <div>
-                            <div>
-                                <label>رقم الهوية الوطنية</label>
-                                <p id="profileNationalId">غير محدد</p>
+                        <div class="stats-grid">
+                            <div class="stat-card" style="--stat-color: #3b82f6;">
+                                <div class="stat-card-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="fa-solid fa-hashtag"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-label">الرقم الأكاديمي</div>
+                                        <div class="stat-value" id="profileAcademicRecord" style="font-size: 0.9rem;">غير محدد</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label>الرقم الأكاديمي</label>
-                                <p id="profileAcademicRecord">غير محدد</p>
+                            <div class="stat-card" style="--stat-color: #10b981;">
+                                <div class="stat-card-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="fa-solid fa-user-graduate"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-label">الدرجة الأكاديمية</div>
+                                        <div class="stat-value" id="profileAcademicDegree" style="font-size: 0.9rem;">غير محدد</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label>تاريخ الميلاد</label>
-                                <p id="profileBirthDate">غير محدد</p>
+                            <div class="stat-card" style="--stat-color: #f59e0b;">
+                                <div class="stat-card-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="fa-solid fa-building-columns"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-label">الكلية</div>
+                                        <div class="stat-value" id="profileCollege" style="font-size: 0.9rem;">غير محدد</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label>الدرجة الأكاديمية</label>
-                                <p id="profileAcademicDegree">غير محدد</p>
-                            </div>
-                            <div>
-                                <label>الكلية</label>
-                                <p id="profileCollege">غير محدد</p>
-                            </div>
-                            <div>
-                                <label>التخصص</label>
-                                <p id="profileMajor">غير محدد</p>
-                            </div>
-                            <div>
-                                <label>اللجنة</label>
-                                <p id="profileCommittee">غير محدد</p>
+                            <div class="stat-card" style="--stat-color: #8b5cf6;">
+                                <div class="stat-card-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="fa-solid fa-book-open"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-label">التخصص</div>
+                                        <div class="stat-value" id="profileMajor" style="font-size: 0.9rem;">غير محدد</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <h4>
-                                <i class="fa-solid fa-share-nodes"></i>
-                                حسابات التواصل الاجتماعي
-                            </h4>
-                            <div>
-                                <div>
-                                    <label>
-                                        <i class="fa-brands fa-twitter"></i> تويتر
-                                    </label>
-                                    <p id="profileTwitter">غير محدد</p>
+                    </div>
+                </div>
+
+                <!-- بطاقة حساباتي في التواصل الاجتماعي -->
+                <div class="card mb-2rem">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-share-nodes"></i>
+                            حساباتي في التواصل الاجتماعي
+                        </h3>
+                        <button class="btn btn--outline btn--outline-primary btn--sm" id="editSocialBtn">
+                            <i class="fa-solid fa-edit"></i>
+                            تعديل
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="stats-grid">
+                            <div class="stat-card" style="--stat-color: #1da1f2;">
+                                <div class="stat-card-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="fa-brands fa-twitter"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-label">تويتر</div>
+                                        <div class="stat-value" id="profileTwitter" style="font-size: 0.9rem;">غير محدد</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label>
-                                        <i class="fa-brands fa-instagram"></i> إنستقرام
-                                    </label>
-                                    <p id="profileInstagram">غير محدد</p>
+                            </div>
+                            <div class="stat-card" style="--stat-color: #e1306c;">
+                                <div class="stat-card-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="fa-brands fa-instagram"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-label">إنستقرام</div>
+                                        <div class="stat-value" id="profileInstagram" style="font-size: 0.9rem;">غير محدد</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label>
-                                        <i class="fa-brands fa-tiktok"></i> تيك توك
-                                    </label>
-                                    <p id="profileTiktok">غير محدد</p>
+                            </div>
+                            <div class="stat-card" style="--stat-color: #000000;">
+                                <div class="stat-card-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="fa-brands fa-tiktok"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-label">تيك توك</div>
+                                        <div class="stat-value" id="profileTiktok" style="font-size: 0.9rem;">غير محدد</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label>
-                                        <i class="fa-brands fa-linkedin"></i> لينكد إن
-                                    </label>
-                                    <p id="profileLinkedin">غير محدد</p>
+                            </div>
+                            <div class="stat-card" style="--stat-color: #0a66c2;">
+                                <div class="stat-card-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="fa-brands fa-linkedin"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-label">لينكد إن</div>
+                                        <div class="stat-value" id="profileLinkedin" style="font-size: 0.9rem;">غير محدد</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -4279,14 +4358,15 @@
     </div>
 
     <!-- نافذة تعديل البيانات الشخصية -->
-    <div class="modal" id="editProfileModal" class="d-none">
+    <div class="modal-backdrop" id="editProfileModalBackdrop"></div>
+    <div class="modal modal-lg" id="editProfileModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>
+                <div class="modal-header-content">
                     <i class="fa-solid fa-user-pen"></i>
-                    تعديل البيانات الشخصية
-                </h2>
-                <button class="btn-icon" id="closeEditProfileModal">
+                    <h2>تعديل البيانات الشخصية</h2>
+                </div>
+                <button class="modal-close-x" id="closeEditProfileModal">
                     <i class="fa-solid fa-times"></i>
                 </button>
             </div>
@@ -4411,7 +4491,7 @@
     </div>
 
     <!-- نافذة تغيير كلمة المرور -->
-    <div class="modal" id="changePasswordModal" class="d-none">
+    <div class="modal d-none" id="changePasswordModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>

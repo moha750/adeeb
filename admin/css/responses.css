@@ -1,0 +1,49 @@
+/**
+ * تنسيقات استجابات الاستبيانات - متجاوبة
+ */
+
+.responses-list {
+    display: grid;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 100%;
+}
+
+.response-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.response-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.response-card-header,
+.response-card-body,
+.response-card-footer {
+    min-width: 500px;
+}
+
+@media (max-width: 768px) {
+    .response-card-header,
+    .response-card-body,
+    .response-card-footer {
+        min-width: 450px;
+    }
+}
+
+@media (max-width: 480px) {
+    .response-card-header,
+    .response-card-body,
+    .response-card-footer {
+        min-width: 350px;
+    }
+}

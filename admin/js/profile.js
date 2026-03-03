@@ -1,4 +1,4 @@
-﻿/**
+/**
  * نظام إدارة الملف الشخصي
  * عرض وتعديل المعلومات الشخصية، الأمان، النشاط
  */
@@ -90,11 +90,11 @@
                 fullName.textContent = memberDetails?.full_name_triple || currentUser.full_name || currentUser.email;
             }
 
-            // تحديث الدور
+            // تحديث الدور بالطريقة المطلوبة
             const role = document.getElementById('profileRole');
             if (role) {
-                const roleInfo = getRoleInfo(currentUser.role_level);
-                role.innerHTML = `<i class="fa-solid fa-shield-halved"></i> <span>${roleInfo.name}</span>`;
+                const roleDisplay = await getRoleDisplay(currentUser, userRole);
+                role.innerHTML = `<i class="fa-solid fa-shield-halved"></i> <span>${roleDisplay}</span>`;
             }
 
             // تحديث البريد الإلكتروني
@@ -132,6 +132,22 @@
                         minute: '2-digit'
                     })
                     : 'غير معروف';
+            }
+
+            // تحديث رقم الهوية الوطنية في كارد المعلومات الأساسية
+            const nationalIdBasic = document.getElementById('profileNationalIdBasic');
+            if (nationalIdBasic && memberDetails?.national_id) {
+                nationalIdBasic.textContent = memberDetails.national_id;
+            }
+
+            // تحديث تاريخ الميلاد في كارد المعلومات الأساسية
+            const birthDateBasic = document.getElementById('profileBirthDateBasic');
+            if (birthDateBasic && memberDetails?.birth_date) {
+                birthDateBasic.textContent = new Date(memberDetails.birth_date).toLocaleDateString('ar-SA', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
             }
 
             // تحديث اللجنة من user_roles
@@ -257,6 +273,52 @@
     }
 
     /**
+     * الحصول على عرض الدور بالطريقة المطلوبة
+     */
+    async function getRoleDisplay(user, userRole) {
+        try {
+            // جلب جميع أدوار المستخدم النشطة مع الأولوية للدور الأعلى
+            const { data: rolesData, error } = await window.sbClient
+                .from('user_roles')
+                .select('role_name, role_level, committee_id, committees(committee_name_ar)')
+                .eq('user_id', user.id)
+                .eq('is_active', true)
+                .order('role_level', { ascending: false });
+
+            if (error) {
+                console.error('خطأ في جلب الأدوار:', error);
+                return 'عضو لجنة';
+            }
+
+            if (!rolesData || rolesData.length === 0) return 'عضو لجنة';
+
+            // اختيار الدور الأعلى (أول عنصر بعد الترتيب)
+            const roleData = rolesData[0];
+            const roleName = roleData.role_name;
+            const committeeName = roleData.committees?.committee_name_ar || '';
+
+            // تحديد عرض الدور بناءً على نوع الدور
+            switch (roleName) {
+                case 'club_president':
+                    return 'رئيس نادي أدِيب';
+                case 'executive_president':
+                    return 'الرئيس التنفيذي';
+                case 'committee_leader':
+                    return committeeName ? `قائد ${committeeName}` : 'قائد لجنة';
+                case 'deputy_committee_leader':
+                    return committeeName ? `نائب ${committeeName}` : 'نائب قائد لجنة';
+                case 'committee_member':
+                    return committeeName ? `عضو ${committeeName}` : 'عضو لجنة';
+                default:
+                    return 'عضو لجنة';
+            }
+        } catch (error) {
+            console.error('خطأ في جلب عرض الدور:', error);
+            return 'عضو لجنة';
+        }
+    }
+
+    /**
      * تحميل النشاط الأخير
      */
     async function loadRecentActivity() {
@@ -274,22 +336,27 @@
             if (error) throw error;
 
             if (!data || data.length === 0) {
-                container.innerHTML = '<p>لا يوجد نشاط مسجل</p>';
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #6b7280;">
+                        <i class="fa-solid fa-inbox" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                        <p style="margin: 0;">لا يوجد نشاط مسجل</p>
+                    </div>
+                `;
                 return;
             }
 
             const html = data.map(activity => `
-                <div class="info-item" style="margin-bottom: var(--spacing-sm);">
-                    <div class="info-item__icon" style="background: ${getActivityColor(activity.action_type)};">
-                        <i class="fa-solid ${getActivityIcon(activity.action_type)}"></i>
+                <div style="display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; border-bottom: 1px solid #f3f4f6; transition: background 0.2s ease;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+                    <div style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 8px; background: ${getActivityColor(activity.action_type)}; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <i class="fa-solid ${getActivityIcon(activity.action_type)}" style="color: white; font-size: 18px;"></i>
                     </div>
-                    <div class="info-item__content">
-                        <div class="info-item__value">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 500; color: #274060; margin-bottom: 0.25rem; line-height: 1.5;">
                             ${getActivityText(activity)}
                         </div>
-                        <div class="info-item__label" style="margin-top: 0.25rem;">
-                            <i class="fa-solid fa-clock"></i>
-                            ${new Date(activity.created_at).toLocaleString('ar-SA')}
+                        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #6b7280;">
+                            <i class="fa-solid fa-clock" style="font-size: 0.75rem;"></i>
+                            <span>${formatActivityDate(activity.created_at)}</span>
                         </div>
                     </div>
                 </div>
@@ -301,9 +368,39 @@
             console.error('خطأ في تحميل النشاط:', error);
             const container = document.getElementById('recentActivityContainer');
             if (container) {
-                container.innerHTML = '<p>فشل تحميل النشاط</p>';
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #ef4444;">
+                        <i class="fa-solid fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                        <p style="margin: 0;">فشل تحميل النشاط</p>
+                    </div>
+                `;
             }
         }
+    }
+
+    /**
+     * تنسيق تاريخ النشاط
+     */
+    function formatActivityDate(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'الآن';
+        if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+        if (diffHours < 24) return `منذ ${diffHours} ساعة`;
+        if (diffDays < 7) return `منذ ${diffDays} يوم`;
+        
+        return date.toLocaleDateString('ar-SA', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }
 
     /**
@@ -361,7 +458,12 @@
      */
     async function openEditProfileModal() {
         const modal = document.getElementById('editProfileModal');
-        if (!modal) return;
+        const backdrop = document.getElementById('editProfileModalBackdrop');
+        
+        if (!modal) {
+            console.error('Modal not found!');
+            return;
+        }
 
         try {
             const { data: memberDetails, error } = await window.sbClient
@@ -394,15 +496,36 @@
                 nameWarning.style.display = 'block';
             }
 
-            modal.style.display = 'flex';
+            // فتح النافذة المنبثقة بالطريقة الصحيحة
+            if (backdrop) {
+                backdrop.classList.add('active');
+            }
+            modal.classList.add('active');
+            document.body.classList.add('modal-open');
 
             const closeBtn = document.getElementById('closeEditProfileModal');
             const cancelBtn = document.getElementById('cancelEditProfile');
             const saveBtn = document.getElementById('saveProfileChanges');
 
-            closeBtn.onclick = () => modal.style.display = 'none';
-            cancelBtn.onclick = () => modal.style.display = 'none';
-            saveBtn.onclick = handleSaveProfileChanges;
+            const closeModal = () => {
+                modal.classList.remove('active');
+                if (backdrop) {
+                    backdrop.classList.remove('active');
+                }
+                document.body.classList.remove('modal-open');
+            };
+
+            closeBtn.onclick = closeModal;
+            cancelBtn.onclick = closeModal;
+            saveBtn.onclick = async () => {
+                await handleSaveProfileChanges();
+                closeModal();
+            };
+
+            // إغلاق عند النقر على الخلفية
+            if (backdrop) {
+                backdrop.onclick = closeModal;
+            }
 
         } catch (error) {
             console.error('خطأ في فتح نافذة التعديل:', error);
@@ -510,7 +633,6 @@
             }
 
             showNotification('تم حفظ التغييرات بنجاح', 'success');
-            document.getElementById('editProfileModal').style.display = 'none';
             
             await loadProfileData();
 
@@ -702,8 +824,105 @@
     /**
      * تغيير الصورة الشخصية
      */
-    function changeAvatar() {
-        showNotification('ميزة تغيير الصورة الشخصية قيد التطوير', 'info');
+    async function changeAvatar() {
+        // إنشاء input لاختيار الملف
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // التحقق من حجم الملف (أقل من 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('حجم الصورة يجب أن يكون أقل من 5 ميجابايت', 'error');
+                return;
+            }
+
+            // التحقق من نوع الملف
+            if (!file.type.startsWith('image/')) {
+                showNotification('يرجى اختيار ملف صورة صحيح', 'error');
+                return;
+            }
+
+            try {
+                showNotification('جاري رفع الصورة...', 'info');
+
+                // رفع الصورة إلى Supabase Storage
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${currentUser.id}-${Date.now()}.${fileExt}`;
+                const filePath = fileName;
+
+                const { data: uploadData, error: uploadError } = await window.sbClient.storage
+                    .from('avatars')
+                    .upload(filePath, file, {
+                        cacheControl: '3600',
+                        upsert: true
+                    });
+
+                if (uploadError) throw uploadError;
+
+                // الحصول على URL العام للصورة
+                const { data: urlData } = window.sbClient.storage
+                    .from('avatars')
+                    .getPublicUrl(filePath);
+
+                const avatarUrl = urlData.publicUrl;
+
+                // تحديث الصورة في قاعدة البيانات
+                const { error: updateError } = await window.sbClient
+                    .from('profiles')
+                    .update({ avatar_url: avatarUrl })
+                    .eq('id', currentUser.id);
+
+                if (updateError) throw updateError;
+
+                // تحديث الصورة في الواجهة
+                currentUser.avatar_url = avatarUrl;
+                const profileAvatar = document.getElementById('profileAvatar');
+                if (profileAvatar) {
+                    profileAvatar.src = avatarUrl;
+                }
+
+                showNotification('تم تحديث الصورة الشخصية بنجاح', 'success');
+            } catch (error) {
+                console.error('خطأ في رفع الصورة:', error);
+                showNotification('فشل رفع الصورة: ' + error.message, 'error');
+            }
+        };
+
+        input.click();
+    }
+
+    /**
+     * فتح نافذة تعديل البيانات الأكاديمية
+     */
+    function openEditAcademicModal() {
+        // فتح النافذة المنبثقة الرئيسية مع التركيز على قسم البيانات الأكاديمية
+        openEditProfileModal();
+        // التمرير إلى قسم البيانات الأكاديمية
+        setTimeout(() => {
+            const academicSection = document.querySelector('#editProfileModal h3:nth-of-type(3)');
+            if (academicSection) {
+                academicSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 300);
+    }
+
+    /**
+     * فتح نافذة تعديل حسابات التواصل الاجتماعي
+     */
+    function openEditSocialModal() {
+        // فتح النافذة المنبثقة الرئيسية مع التركيز على قسم حسابات التواصل
+        openEditProfileModal();
+        // التمرير إلى قسم حسابات التواصل الاجتماعي
+        setTimeout(() => {
+            const socialSection = document.querySelector('#editProfileModal h3:nth-of-type(4)');
+            if (socialSection) {
+                socialSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 300);
     }
 
     /**
@@ -711,17 +930,25 @@
      */
     function bindEvents() {
         const editProfileBtn = document.getElementById('editProfileBtn');
+        const editAcademicBtn = document.getElementById('editAcademicBtn');
+        const editSocialBtn = document.getElementById('editSocialBtn');
         const changePasswordBtn = document.getElementById('changePasswordBtn');
         const viewSessionsBtn = document.getElementById('viewSessionsBtn');
         const changeAvatarBtn = document.getElementById('changeAvatarBtn');
 
         if (editProfileBtn) {
-            editProfileBtn.removeEventListener('click', openEditProfileModal);
             editProfileBtn.addEventListener('click', openEditProfileModal);
         }
 
+        if (editAcademicBtn) {
+            editAcademicBtn.addEventListener('click', openEditAcademicModal);
+        }
+
+        if (editSocialBtn) {
+            editSocialBtn.addEventListener('click', openEditSocialModal);
+        }
+
         if (changePasswordBtn) {
-            changePasswordBtn.removeEventListener('click', openChangePasswordModal);
             changePasswordBtn.addEventListener('click', openChangePasswordModal);
         }
 

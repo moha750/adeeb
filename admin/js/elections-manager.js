@@ -318,7 +318,8 @@ class ElectionsManager {
                 return;
             }
 
-            container.innerHTML = data.map(election => this.renderElectionCard(election)).join('');
+            const cardsHtml = await Promise.all(data.map(election => this.renderElectionCard(election)));
+            container.innerHTML = cardsHtml.join('');
             this.attachElectionCardListeners();
             this.initCountdownTimers();
         } catch (error) {
@@ -327,7 +328,7 @@ class ElectionsManager {
         }
     }
 
-    renderElectionCard(election) {
+    async renderElectionCard(election) {
         const statusLabels = {
             'nomination_open': { text: 'الترشح مفتوح', class: 'badge-success', icon: 'fa-door-open' },
             'nomination_review': { text: 'مراجعة الطلبات', class: 'badge-warning', icon: 'fa-clipboard-check' },
@@ -343,6 +344,12 @@ class ElectionsManager {
 
         const status = statusLabels[election.status] || { text: election.status, class: 'badge-secondary', icon: 'fa-circle' };
         const position = positionLabels[election.position_type] || election.position_type;
+        
+        // جلب عدد المترشحين
+        const { count: candidatesCount } = await this.supabase
+            .from('election_candidates')
+            .select('*', { count: 'exact', head: true })
+            .eq('election_id', election.id);
         
         // تنسيق التواريخ مع الساعة والدقيقة (12 ساعة)
         const formatDateTime = (dateString) => {
@@ -419,6 +426,13 @@ class ElectionsManager {
                             </div>
                         </div>
                         <div class="info-item">
+                            <i class="fa-solid fa-users"></i>
+                            <div class="info-content">
+                                <span class="info-label">عدد المترشحين</span>
+                                <span class="info-value">${candidatesCount || 0}</span>
+                            </div>
+                        </div>
+                        <div class="info-item">
                             <i class="fa-solid fa-calendar-plus"></i>
                             <div class="info-content">
                                 <span class="info-label">تاريخ الإنشاء</span>
@@ -439,6 +453,11 @@ class ElectionsManager {
                         <button class="btn btn--warning btn--sm close-nomination-btn" data-id="${election.id}">
                             <i class="fa-solid fa-lock"></i> إغلاق الترشح
                         </button>
+                        ${election.nomination_end_date ? `
+                            <button class="btn btn--outline btn--outline-primary btn--sm extend-nomination-btn" data-id="${election.id}">
+                                <i class="fa-solid fa-clock"></i> تعديل الوقت
+                            </button>
+                        ` : ''}
                     ` : ''}
                     ${election.status === 'nomination_review' ? `
                         <button class="btn btn--success btn--sm start-voting-btn" data-id="${election.id}">
@@ -449,6 +468,11 @@ class ElectionsManager {
                         <button class="btn btn--primary btn--sm close-voting-btn" data-id="${election.id}">
                             <i class="fa-solid fa-stop"></i> إغلاق التصويت
                         </button>
+                        ${election.voting_end_date ? `
+                            <button class="btn btn--outline btn--outline-primary btn--sm extend-voting-btn" data-id="${election.id}">
+                                <i class="fa-solid fa-clock"></i> تعديل الوقت
+                            </button>
+                        ` : ''}
                     ` : ''}
                     <button class="btn btn--outline btn--outline-danger btn--sm cancel-election-btn" data-id="${election.id}">
                         <i class="fa-solid fa-times"></i> إلغاء الانتخاب
@@ -469,6 +493,12 @@ class ElectionsManager {
         });
         document.querySelectorAll('.cancel-election-btn').forEach(btn => {
             btn.addEventListener('click', () => this.cancelElection(btn.dataset.id));
+        });
+        document.querySelectorAll('.extend-nomination-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.extendNominationTime(btn.dataset.id));
+        });
+        document.querySelectorAll('.extend-voting-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.extendVotingTime(btn.dataset.id));
         });
     }
 
@@ -621,6 +651,86 @@ class ElectionsManager {
         } catch (error) {
             console.error('Error:', error);
             this.showToast('حدث خطأ', 'error');
+        }
+    }
+
+    async extendNominationTime(electionId) {
+        const result = await Swal.fire({
+            title: 'تعديل وقت الترشح',
+            html: `
+                <div style="text-align: right;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الوقت الجديد لإغلاق الترشح</label>
+                    <input type="datetime-local" id="newNominationEndDate" class="swal2-input" style="width: 90%;">
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'تحديث',
+            cancelButtonText: 'إلغاء',
+            preConfirm: () => {
+                const newDate = document.getElementById('newNominationEndDate').value;
+                if (!newDate) {
+                    Swal.showValidationMessage('يرجى اختيار التاريخ والوقت');
+                    return false;
+                }
+                return newDate;
+            }
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const { error } = await this.supabase
+                    .from('elections')
+                    .update({ nomination_end_date: new Date(result.value).toISOString() })
+                    .eq('id', electionId);
+
+                if (error) throw error;
+
+                this.showToast('تم تحديث وقت الترشح بنجاح', 'success');
+                await this.loadElections();
+            } catch (error) {
+                console.error('Error:', error);
+                this.showToast('فشل تحديث الوقت', 'error');
+            }
+        }
+    }
+
+    async extendVotingTime(electionId) {
+        const result = await Swal.fire({
+            title: 'تعديل وقت التصويت',
+            html: `
+                <div style="text-align: right;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الوقت الجديد لإغلاق التصويت</label>
+                    <input type="datetime-local" id="newVotingEndDate" class="swal2-input" style="width: 90%;">
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'تحديث',
+            cancelButtonText: 'إلغاء',
+            preConfirm: () => {
+                const newDate = document.getElementById('newVotingEndDate').value;
+                if (!newDate) {
+                    Swal.showValidationMessage('يرجى اختيار التاريخ والوقت');
+                    return false;
+                }
+                return newDate;
+            }
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const { error } = await this.supabase
+                    .from('elections')
+                    .update({ voting_end_date: new Date(result.value).toISOString() })
+                    .eq('id', electionId);
+
+                if (error) throw error;
+
+                this.showToast('تم تحديث وقت التصويت بنجاح', 'success');
+                await this.loadElections();
+            } catch (error) {
+                console.error('Error:', error);
+                this.showToast('فشل تحديث الوقت', 'error');
+            }
         }
     }
 
@@ -853,6 +963,7 @@ class ElectionsManager {
 
             if (error) throw error;
 
+            // عرض جميع الانتخابات المفتوحة (حتى المنتهية) ما لم تنتقل للتصويت
             if (!elections || elections.length === 0) {
                 document.getElementById('noOpenElectionsMessage').style.display = 'block';
                 document.getElementById('availablePositionsGrid').style.display = 'none';
@@ -865,6 +976,14 @@ class ElectionsManager {
             // عرض كروت المناصب المتاحة
             await this.renderAvailablePositions(elections);
 
+            // إعداد تحديث دوري للتحقق من انتهاء الوقت
+            if (this.nominationCheckInterval) {
+                clearInterval(this.nominationCheckInterval);
+            }
+            this.nominationCheckInterval = setInterval(async () => {
+                await this.loadNominationSection();
+            }, 30000); // كل 30 ثانية
+
         } catch (error) {
             console.error('Error:', error);
         }
@@ -875,6 +994,8 @@ class ElectionsManager {
         if (!container) return;
 
         const positionLabels = {
+            'committee_leader': 'قائد اللجنة',
+            'deputy_committee_leader': 'نائب قائد اللجنة',
             'leader': 'قائد اللجنة',
             'vice_leader': 'نائب قائد اللجنة'
         };
@@ -900,15 +1021,70 @@ class ElectionsManager {
                 hour12: true
             }) : 'غير محدد';
 
+            // حساب الوقت المتبقي باستخدام countdown-timer.css
+            let timeRemainingHtml = '';
+            let nominationEnded = false;
+            if (election.nomination_end_date) {
+                const now = new Date();
+                const end = new Date(election.nomination_end_date);
+                const diff = end - now;
+                
+                if (diff > 0) {
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    
+                    timeRemainingHtml = `
+                        <div class="nomination-countdown-wrap active" data-end-date="${election.nomination_end_date}">
+                            <div class="nomination-countdown-head">
+                                <i class="fa-solid fa-clock"></i>
+                                <span>الوقت المتبقي لإغلاق الترشح</span>
+                            </div>
+                            <div class="nomination-countdown-timer">
+                                <div class="nomination-countdown-box">
+                                    <span class="days">${days}</span>
+                                    <small>يوم</small>
+                                </div>
+                                <div class="nomination-countdown-box">
+                                    <span class="hours">${hours}</span>
+                                    <small>ساعة</small>
+                                </div>
+                                <div class="nomination-countdown-box">
+                                    <span class="minutes">${minutes}</span>
+                                    <small>دقيقة</small>
+                                </div>
+                                <div class="nomination-countdown-box">
+                                    <span class="seconds">${seconds}</span>
+                                    <small>ثانية</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    nominationEnded = true;
+                    timeRemainingHtml = `
+                        <div class="alert" style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 1px solid #f59e0b; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; text-align: center;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: #92400e; font-weight: 600;">
+                                <i class="fa-solid fa-clock"></i>
+                                <span>انتهت فترة الترشح لهذا المنصب</span>
+                            </div>
+                            <p style="margin: 0.5rem 0 0; color: #78350f; font-size: 0.875rem;">سيتم الانتقال لمرحلة التصويت قريباً</p>
+                        </div>
+                    `;
+                }
+            }
+
             html += `
                 <div class="position-card" data-election-id="${election.id}">
                     <div class="position-card-header">
                         <div class="position-icon">
-                            <i class="fa-solid ${election.position_type === 'leader' ? 'fa-crown' : 'fa-star'}"></i>
+                            <i class="fa-solid ${election.position_type === 'committee_leader' || election.position_type === 'leader' ? 'fa-crown' : 'fa-star'}"></i>
                         </div>
                         <h3 class="position-title">${positionName}</h3>
                     </div>
                     <div class="position-card-body">
+                        ${timeRemainingHtml}
                         <div class="position-info">
                             <div class="position-info-item">
                                 <i class="fa-solid fa-users"></i>
@@ -926,6 +1102,11 @@ class ElectionsManager {
                                     ${existingApp.status === 'pending' ? 'قيد المراجعة' : existingApp.status === 'approved' ? 'تم القبول' : 'تم الرفض'}
                                 </div>
                             </div>
+                        ` : nominationEnded ? `
+                            <button class="btn btn--secondary btn--block" disabled>
+                                <i class="fa-solid fa-lock"></i>
+                                انتهت فترة الترشح
+                            </button>
                         ` : `
                             <button class="btn btn--primary btn--block nominate-btn" data-election-id="${election.id}">
                                 <i class="fa-solid fa-paper-plane"></i>
@@ -938,6 +1119,37 @@ class ElectionsManager {
         }
 
         container.innerHTML = html;
+
+        // تحديث العدادات التنازلية كل ثانية
+        if (this.timerUpdateInterval) {
+            clearInterval(this.timerUpdateInterval);
+        }
+        this.timerUpdateInterval = setInterval(() => {
+            document.querySelectorAll('.nomination-countdown-wrap').forEach(timer => {
+                const endDate = new Date(timer.dataset.endDate);
+                const now = new Date();
+                const diff = endDate - now;
+                
+                if (diff > 0) {
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    
+                    const daysSpan = timer.querySelector('.days');
+                    const hoursSpan = timer.querySelector('.hours');
+                    const minutesSpan = timer.querySelector('.minutes');
+                    const secondsSpan = timer.querySelector('.seconds');
+                    
+                    if (daysSpan) daysSpan.textContent = days;
+                    if (hoursSpan) hoursSpan.textContent = hours;
+                    if (minutesSpan) minutesSpan.textContent = minutes;
+                    if (secondsSpan) secondsSpan.textContent = seconds;
+                } else {
+                    timer.classList.remove('active');
+                }
+            });
+        }, 1000); // كل ثانية
 
         // إضافة مستمعي الأحداث لأزرار الترشح
         document.querySelectorAll('.nominate-btn').forEach(btn => {
@@ -953,6 +1165,8 @@ class ElectionsManager {
         this.currentElection = election;
         
         const positionLabels = {
+            'committee_leader': 'قائد اللجنة',
+            'deputy_committee_leader': 'نائب قائد اللجنة',
             'leader': 'قائد اللجنة',
             'vice_leader': 'نائب قائد اللجنة'
         };
@@ -1045,6 +1259,39 @@ class ElectionsManager {
     }
 
     async submitNominationForElection(electionId, file) {
+        // التحقق من صلاحية الانتخاب وعدم انتهاء الوقت
+        const { data: election, error: electionError } = await this.supabase
+            .from('elections')
+            .select('nomination_end_date, status')
+            .eq('id', electionId)
+            .single();
+
+        if (electionError || !election) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'خطأ',
+                text: 'لم يتم العثور على الانتخاب',
+                confirmButtonText: 'حسناً'
+            });
+            return;
+        }
+
+        // التحقق من انتهاء وقت الترشح
+        if (election.nomination_end_date) {
+            const now = new Date();
+            const endDate = new Date(election.nomination_end_date);
+            if (endDate <= now) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'انتهى وقت الترشح',
+                    text: 'عذراً، لقد انتهى الوقت المحدد لتقديم طلبات الترشح',
+                    confirmButtonText: 'حسناً'
+                });
+                await this.loadNominationSection();
+                return;
+            }
+        }
+
         const allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'rtf', 'odt', 'odp', 'png', 'jpg', 'jpeg', 'gif', 'webp'];
         const fileExtension = file.name.split('.').pop().toLowerCase();
         

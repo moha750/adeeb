@@ -609,15 +609,15 @@
                         </h3>
                     </div>
                     <div class="card-body p-0">
-                        <div class="table-wrapper">
-                            <table class="table">
+                        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                            <table class="table" style="min-width: 100%; width: max-content;">
                                 <thead>
                                     <tr>
-                                        <th>#</th>
-                                        <th>المستجيب</th>
+                                        <th style="position: sticky; right: 0; background: white; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.1); min-width: 50px;">#</th>
+                                        <th style="position: sticky; right: 50px; background: white; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.1); min-width: 150px; white-space: nowrap;">المستجيب</th>
                                         ${currentQuestions.map(q => `
-                                            <th title="${this.escapeHtml(q.question_text)}">
-                                                ${this.escapeHtml(q.question_text.length > 30 ? q.question_text.substring(0, 30) + '...' : q.question_text)}
+                                            <th title="${this.escapeHtml(q.question_text)}" style="min-width: 200px; max-width: 300px; white-space: normal; word-wrap: break-word;">
+                                                ${this.escapeHtml(q.question_text.length > 40 ? q.question_text.substring(0, 40) + '...' : q.question_text)}
                                             </th>
                                         `).join('')}
                                     </tr>
@@ -627,12 +627,12 @@
                                         const userName = response.user?.full_name || (response.is_anonymous ? 'المستجيب' : 'غير معروف');
                                         return `
                                             <tr>
-                                                <td>${index + 1}</td>
-                                                <td style="white-space: nowrap;">${this.escapeHtml(userName)}</td>
+                                                <td style="position: sticky; right: 0; background: white; z-index: 5; box-shadow: 2px 0 5px rgba(0,0,0,0.05);">${index + 1}</td>
+                                                <td style="position: sticky; right: 50px; background: white; z-index: 5; box-shadow: 2px 0 5px rgba(0,0,0,0.05); white-space: nowrap;">${this.escapeHtml(userName)}</td>
                                                 ${currentQuestions.map(q => {
                                                     const answer = response.survey_answers.find(a => a.question_id === q.id);
                                                     const answerText = this.getAnswerTextForTable(answer, q);
-                                                    return `<td>${answerText}</td>`;
+                                                    return `<td style="max-width: 300px; word-wrap: break-word; white-space: normal;">${answerText}</td>`;
                                                 }).join('')}
                                             </tr>
                                         `;
