@@ -848,7 +848,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const typingIndicator = document.querySelector(".typing-indicator");
 
   // Toggle chat box
-  chatIcon.addEventListener("click", () => {
+  if (chatIcon) {
+    chatIcon.addEventListener("click", () => {
     chatAssistant.classList.add("active");
     document.querySelector(".notification-badge").style.display = "none";
     chatInput.focus();
@@ -860,11 +861,14 @@ document.addEventListener("DOMContentLoaded", function () {
         chatAssistant.dataset.welcomed = "true";
       }, 700); // نصف ثانية بعد فتح الشات
     }
-  });
+    });
+  }
 
-  closeChat.addEventListener("click", () => {
-    chatAssistant.classList.remove("active");
-  });
+  if (closeChat) {
+    closeChat.addEventListener("click", () => {
+      chatAssistant.classList.remove("active");
+    });
+  }
 
   // Sample questions for quick replies
   const quickQuestions = [
@@ -1286,7 +1290,9 @@ window.addEventListener("scroll", () => {
 // Moved to attachSponsorAnimations() which runs after dynamic render
 
 // ==================== نموذج التواصل (Supabase فقط) ====================
-document.getElementById("contactForm").addEventListener("submit", async function (e) {
+const contactForm = document.getElementById("contactForm");
+if (contactForm) {
+  contactForm.addEventListener("submit", async function (e) {
   e.preventDefault();
 
   // رسالة تحميل متحركة
@@ -1368,98 +1374,102 @@ document.getElementById("contactForm").addEventListener("submit", async function
       cancelButtonText: "إلغاء",
     });
   }
-});
+  });
+}
 
 
 // ==================== نموذج النشرة البريدية (Supabase فقط) ====================
-document.getElementById("newsletterForm").addEventListener("submit", async function (e) {
-  e.preventDefault();
+const newsletterForm = document.getElementById("newsletterForm");
+if (newsletterForm) {
+  newsletterForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
 
-  // رسالة تحميل متحركة
-  const loadingAlert = Swal.fire({
-    html: `<div style="font-family:'fm';color:#274060;margin-top:15px">جاري معالجة طلبك...</div>
-      <div class="progress-bar" style="height:6px;background:#f1f5f9;border-radius:3px;margin-top:20px;overflow:hidden">
-        <div class="progress" style="height:100%;width:0%;background:linear-gradient(90deg,#3d8fd6,#274060);transition:width 0.4s ease"></div>
-      </div>`,
-    showConfirmButton: false,
-    allowOutsideClick: false,
-    didOpen: () => {
-      // تأثير شريط التقدم
-      const progressBar = document.querySelector(".progress");
-      let width = 0;
-      const interval = setInterval(() => {
-        width += 5;
-        progressBar.style.width = width + "%";
-        if (width >= 90) clearInterval(interval);
-      }, 200);
-    },
-  });
-
-  const emailInput = this.querySelector('input[type="email"]');
-  const email = emailInput.value;
-
-  try {
-    // حفظ في Supabase
-    const sb = window.sbClient;
-    if (sb) {
-      const { error } = await sb.from('newsletter_subscribers').insert({
-        email: email,
-        status: 'active'
-      });
-
-      if (error) {
-        // إذا كان البريد مسجل مسبقاً
-        if (error.code === '23505') {
-          await Swal.close();
-          Swal.fire({
-            title: "مسجل مسبقاً!",
-            text: "هذا البريد الإلكتروني مسجل بالفعل في قائمتنا البريدية.",
-            icon: "info",
-            confirmButtonText: "حسناً",
-            confirmButtonColor: "#3d8fd6",
-          });
-          this.reset();
-          return;
-        }
-        console.error('خطأ في حفظ الاشتراك:', error);
-        throw error;
-      }
-    }
-
-    // إغلاق رسالة التحميل
-    await Swal.close();
-
-    // رسالة نجاح متحركة
-    Swal.fire({
-      html: `<div style="margin-top:20px">
-        <h3 style="font-family:'fbb';color:#274060">تمّ الإشتراك بِنجاح!🥳</h3>
-        <p style="font-family:'fr';color:#64748b">ستصلك النشرة البريدية</p>
-      </div>`,
-      showConfirmButton: true,
-      confirmButtonText: "حسناً",
-      icon: "success",
-      timer: 5000,
-      timerProgressBar: true,
-      willClose: () => {
-        this.reset();
+    // رسالة تحميل متحركة
+    const loadingAlert = Swal.fire({
+      html: `<div style="font-family:'fm';color:#274060;margin-top:15px">جاري معالجة طلبك...</div>
+        <div class="progress-bar" style="height:6px;background:#f1f5f9;border-radius:3px;margin-top:20px;overflow:hidden">
+          <div class="progress" style="height:100%;width:0%;background:linear-gradient(90deg,#3d8fd6,#274060);transition:width 0.4s ease"></div>
+        </div>`,
+      showConfirmButton: false,
+      allowOutsideClick: false,
+      didOpen: () => {
+        // تأثير شريط التقدم
+        const progressBar = document.querySelector(".progress");
+        let width = 0;
+        const interval = setInterval(() => {
+          width += 5;
+          progressBar.style.width = width + "%";
+          if (width >= 90) clearInterval(interval);
+        }, 200);
       },
     });
-  } catch (error) {
-    await Swal.close();
-    console.error('خطأ في إرسال النموذج:', error);
-    // رسالة خطأ متحركة
-    Swal.fire({
-      title: '<i class="fas fa-times-circle" style="color:#f27474;font-size:60px"></i>',
-      html: `<div style="margin-top:20px">
-        <h3 style="font-family:'fbb';color:#274060">حدث خطأ!</h3>
-        <p style="font-family:'fr';color:#64748b">${error.message || "يرجى المحاولة مرة أخرى لاحقًا"}</p>
-      </div>`,
-      confirmButtonText: "حاول مرة أخرى",
-      showCancelButton: true,
-      cancelButtonText: "إلغاء",
-    });
-  }
-});
+
+    const emailInput = this.querySelector('input[type="email"]');
+    const email = emailInput.value;
+
+    try {
+      // حفظ في Supabase
+      const sb = window.sbClient;
+      if (sb) {
+        const { error } = await sb.from('newsletter_subscribers').insert({
+          email: email,
+          status: 'active'
+        });
+
+        if (error) {
+          // إذا كان البريد مسجل مسبقاً
+          if (error.code === '23505') {
+            await Swal.close();
+            Swal.fire({
+              title: "مسجل مسبقاً!",
+              text: "هذا البريد الإلكتروني مسجل بالفعل في قائمتنا البريدية.",
+              icon: "info",
+              confirmButtonText: "حسناً",
+              confirmButtonColor: "#3d8fd6",
+            });
+            this.reset();
+            return;
+          }
+          console.error('خطأ في حفظ الاشتراك:', error);
+          throw error;
+        }
+      }
+
+      // إغلاق رسالة التحميل
+      await Swal.close();
+
+      // رسالة نجاح متحركة
+      Swal.fire({
+        html: `<div style="margin-top:20px">
+          <h3 style="font-family:'fbb';color:#274060">تمّ الإشتراك بِنجاح!🥳</h3>
+          <p style="font-family:'fr';color:#64748b">ستصلك النشرة البريدية</p>
+        </div>`,
+        showConfirmButton: true,
+        confirmButtonText: "حسناً",
+        icon: "success",
+        timer: 5000,
+        timerProgressBar: true,
+        willClose: () => {
+          this.reset();
+        },
+      });
+    } catch (error) {
+      await Swal.close();
+      console.error('خطأ في إرسال النموذج:', error);
+      // رسالة خطأ متحركة
+      Swal.fire({
+        title: '<i class="fas fa-times-circle" style="color:#f27474;font-size:60px"></i>',
+        html: `<div style="margin-top:20px">
+          <h3 style="font-family:'fbb';color:#274060">حدث خطأ!</h3>
+          <p style="font-family:'fr';color:#64748b">${error.message || "يرجى المحاولة مرة أخرى لاحقًا"}</p>
+        </div>`,
+        confirmButtonText: "حاول مرة أخرى",
+        showCancelButton: true,
+        cancelButtonText: "إلغاء",
+      });
+    }
+  });
+}
 
 
 

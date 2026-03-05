@@ -379,8 +379,8 @@ function setupShareButtons(news) {
   const shareText = createShareText(news);
   const summary = news.summary || news.content.replace(/<[^>]*>/g, '').substring(0, 100) + '...';
   
-  // رابط Edge Function للمشاركة مع Open Graph صحيح
-  const ogShareUrl = `https://nnlhkfeybyhvlinbqqfa.supabase.co/functions/v1/news-og-image?slug=${encodeURIComponent(news.slug || news.id)}`;
+  // رابط المشاركة الجديد على دومين adeeb.club
+  const ogShareUrl = `https://adeeb.club/news/news-detail.html?slug=${encodeURIComponent(news.slug || news.id)}`;
 
   // Twitter - with enhanced text - يستخدم رابط OG لعرض صورة الخبر
   document.getElementById('shareTwitter').onclick = () => {
