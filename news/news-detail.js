@@ -3,8 +3,22 @@
 // Get Supabase client
 const sb = window.sbClient;
 
+// Get or create guest identifier
+function getGuestIdentifier() {
+  let identifier = localStorage.getItem('guestIdentifier');
+  if (!identifier) {
+    identifier = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('guestIdentifier', identifier);
+  }
+  return identifier;
+}
+
 let currentNews = null;
 let allNews = [];
+let currentUser = null;
+let guestIdentifier = null;
+let hasLiked = false;
+let commentsData = [];
 
 // Get news identifier from URL (supports both ID and Slug)
 function getNewsIdentifierFromUrl() {
@@ -42,25 +56,41 @@ function getNewsIdFromUrl() {
   return null;
 }
 
-// Check if news was viewed before on this device
+// Check if news was viewed before on this device within last 30 minutes
 function hasViewedNews(newsId) {
   try {
-    const viewedNews = JSON.parse(localStorage.getItem('viewedNews') || '[]');
-    return viewedNews.includes(newsId);
+    const viewedNews = JSON.parse(localStorage.getItem('viewedNews') || '{}');
+    const viewData = viewedNews[newsId];
+    
+    if (!viewData) {
+      return false;
+    }
+    
+    const now = Date.now();
+    const timeDiff = now - viewData.timestamp;
+    const thirtyMinutes = 30 * 60 * 1000; // 30 دقيقة بالميلي ثانية
+    
+    // إذا مرت أكثر من 30 دقيقة، نعتبرها زيارة جديدة
+    if (timeDiff > thirtyMinutes) {
+      return false;
+    }
+    
+    return true;
   } catch (error) {
     console.error('Error reading viewed news:', error);
     return false;
   }
 }
 
-// Mark news as viewed on this device
+// Mark news as viewed on this device with timestamp
 function markNewsAsViewed(newsId) {
   try {
-    const viewedNews = JSON.parse(localStorage.getItem('viewedNews') || '[]');
-    if (!viewedNews.includes(newsId)) {
-      viewedNews.push(newsId);
-      localStorage.setItem('viewedNews', JSON.stringify(viewedNews));
-    }
+    const viewedNews = JSON.parse(localStorage.getItem('viewedNews') || '{}');
+    viewedNews[newsId] = {
+      timestamp: Date.now(),
+      viewCount: (viewedNews[newsId]?.viewCount || 0) + 1
+    };
+    localStorage.setItem('viewedNews', JSON.stringify(viewedNews));
   } catch (error) {
     console.error('Error saving viewed news:', error);
   }
@@ -230,6 +260,9 @@ async function loadNewsDetail() {
 
     // Load related news
     await loadRelatedNews(currentNews);
+
+    // Setup engagement section (likes and comments)
+    await setupEngagementSection();
 
     loadingEl.style.display = 'none';
     contentEl.style.display = 'block';
@@ -776,6 +809,431 @@ function initImageLightbox() {
     prevImage.disabled = index === 0;
     nextImage.disabled = index === galleryImages.length - 1;
   }
+}
+
+// Get current user
+async function getCurrentUser() {
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      const { data: profile } = await sb
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .eq('id', user.id)
+        .single();
+      return profile;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return null;
+  }
+}
+
+// Format likes count
+function formatLikesCount(count) {
+  const num = parseInt(count) || 0;
+  if (num === 0) return 'لا توجد إعجابات';
+  if (num === 1) return 'إعجاب واحد';
+  if (num === 2) return 'إعجابان';
+  if (num >= 3 && num <= 10) return `${num} إعجابات`;
+  return `${num} إعجاب`;
+}
+
+// Format comments count
+function formatCommentsCount(count) {
+  const num = parseInt(count) || 0;
+  if (num === 0) return 'لا توجد تعليقات';
+  if (num === 1) return 'تعليق واحد';
+  if (num === 2) return 'تعليقان';
+  if (num >= 3 && num <= 10) return `${num} تعليقات`;
+  return `${num} تعليق`;
+}
+
+// Check if user has liked the news
+async function checkUserLike(newsId) {
+  try {
+    let query = sb
+      .from('news_likes')
+      .select('id')
+      .eq('news_id', newsId);
+
+    if (currentUser) {
+      query = query.eq('user_id', currentUser.id);
+    } else {
+      query = query.eq('guest_identifier', guestIdentifier);
+    }
+
+    const { data, error } = await query.maybeSingle();
+    
+    if (error) throw error;
+    return !!data;
+  } catch (error) {
+    console.error('Error checking user like:', error);
+    return false;
+  }
+}
+
+// Toggle like
+async function toggleLike() {
+  if (!currentNews) return;
+
+  const likeButton = document.getElementById('likeButton');
+  const likeIcon = likeButton.querySelector('i');
+  const likeText = document.getElementById('likeButtonText');
+  const likesCountEl = document.getElementById('likesCount');
+
+  try {
+    likeButton.disabled = true;
+
+    if (hasLiked) {
+      let query = sb
+        .from('news_likes')
+        .delete()
+        .eq('news_id', currentNews.id);
+
+      if (currentUser) {
+        query = query.eq('user_id', currentUser.id);
+      } else {
+        query = query.eq('guest_identifier', guestIdentifier);
+      }
+
+      const { error } = await query;
+      if (error) throw error;
+
+      hasLiked = false;
+      likeIcon.className = 'far fa-heart';
+      likeText.textContent = 'أعجبني';
+      likeButton.classList.remove('liked');
+
+      currentNews.likes_count = Math.max((currentNews.likes_count || 0) - 1, 0);
+    } else {
+      const likeData = {
+        news_id: currentNews.id,
+        user_id: currentUser ? currentUser.id : null,
+        guest_identifier: currentUser ? null : guestIdentifier
+      };
+
+      const { error } = await sb
+        .from('news_likes')
+        .insert([likeData]);
+
+      if (error) throw error;
+
+      hasLiked = true;
+      likeIcon.className = 'fas fa-heart';
+      likeText.textContent = 'أعجبت';
+      likeButton.classList.add('liked');
+
+      currentNews.likes_count = (currentNews.likes_count || 0) + 1;
+    }
+
+    likesCountEl.textContent = formatLikesCount(currentNews.likes_count);
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    alert('حدث خطأ أثناء الإعجاب. يرجى المحاولة مرة أخرى.');
+  } finally {
+    likeButton.disabled = false;
+  }
+}
+
+// Load comments
+async function loadComments() {
+  if (!currentNews) return;
+
+  const commentsLoading = document.getElementById('commentsLoading');
+  const commentsEmpty = document.getElementById('commentsEmpty');
+  const commentsList = document.getElementById('commentsList');
+
+  try {
+    commentsLoading.style.display = 'flex';
+    commentsEmpty.style.display = 'none';
+
+    const { data: comments, error } = await sb
+      .from('news_public_comments')
+      .select(`
+        *,
+        profiles:user_id (full_name, avatar_url),
+        comment_likes (id, user_id, guest_identifier)
+      `)
+      .eq('news_id', currentNews.id)
+      .eq('is_approved', true)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    commentsData = comments || [];
+    
+    commentsLoading.style.display = 'none';
+
+    if (commentsData.length === 0) {
+      commentsEmpty.style.display = 'flex';
+      document.getElementById('commentsCount').textContent = '0 تعليق';
+    } else {
+      commentsEmpty.style.display = 'none';
+      renderComments();
+      document.getElementById('commentsCount').textContent = formatCommentsCount(commentsData.length);
+    }
+  } catch (error) {
+    console.error('Error loading comments:', error);
+    commentsLoading.style.display = 'none';
+    commentsEmpty.style.display = 'flex';
+  }
+}
+
+// Render comments
+function renderComments() {
+  const commentsList = document.getElementById('commentsList');
+  const commentsLoading = document.getElementById('commentsLoading');
+  const commentsEmpty = document.getElementById('commentsEmpty');
+
+  const existingComments = commentsList.querySelectorAll('.comment-item');
+  existingComments.forEach(comment => comment.remove());
+
+  commentsData.forEach(comment => {
+    const commentEl = createCommentElement(comment);
+    commentsList.appendChild(commentEl);
+  });
+}
+
+// Create comment element
+function createCommentElement(comment) {
+  const commentDiv = document.createElement('div');
+  commentDiv.className = 'comment-item';
+  commentDiv.dataset.commentId = comment.id;
+
+  const authorName = comment.profiles?.full_name || comment.guest_name || 'مستخدم';
+  const avatarUrl = comment.profiles?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(authorName) + '&background=3d8fd6&color=fff&size=128';
+  const commentDate = new Date(comment.created_at).toLocaleDateString('ar-EG', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const likesCount = comment.comment_likes?.length || 0;
+  const userHasLiked = comment.comment_likes?.some(like => 
+    currentUser ? like.user_id === currentUser.id : like.guest_identifier === guestIdentifier
+  ) || false;
+
+  commentDiv.innerHTML = `
+    <div class="comment-avatar">
+      <img src="${avatarUrl}" alt="${escapeHtml(authorName)}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=3d8fd6&color=fff&size=128'">
+    </div>
+    <div class="comment-content-wrapper">
+      <div class="comment-header">
+        <span class="comment-author">${escapeHtml(authorName)}</span>
+        <span class="comment-date">${commentDate}</span>
+      </div>
+      <div class="comment-text">${escapeHtml(comment.content)}</div>
+      <div class="comment-actions">
+        <button class="comment-like-btn ${userHasLiked ? 'liked' : ''}" data-comment-id="${comment.id}">
+          <i class="${userHasLiked ? 'fas' : 'far'} fa-heart"></i>
+          <span class="comment-likes-count">${likesCount > 0 ? likesCount : ''}</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  const likeBtn = commentDiv.querySelector('.comment-like-btn');
+  likeBtn.addEventListener('click', () => toggleCommentLike(comment.id, likeBtn));
+
+  return commentDiv;
+}
+
+// Toggle comment like
+async function toggleCommentLike(commentId, button) {
+  try {
+    button.disabled = true;
+    const icon = button.querySelector('i');
+    const countSpan = button.querySelector('.comment-likes-count');
+    const isLiked = button.classList.contains('liked');
+
+    if (isLiked) {
+      let query = sb
+        .from('comment_likes')
+        .delete()
+        .eq('comment_id', commentId);
+
+      if (currentUser) {
+        query = query.eq('user_id', currentUser.id);
+      } else {
+        query = query.eq('guest_identifier', guestIdentifier);
+      }
+
+      const { error } = await query;
+      if (error) throw error;
+
+      button.classList.remove('liked');
+      icon.className = 'far fa-heart';
+      
+      const comment = commentsData.find(c => c.id === commentId);
+      if (comment && comment.comment_likes) {
+        comment.comment_likes = comment.comment_likes.filter(like =>
+          currentUser ? like.user_id !== currentUser.id : like.guest_identifier !== guestIdentifier
+        );
+        const newCount = comment.comment_likes.length;
+        countSpan.textContent = newCount > 0 ? newCount : '';
+      }
+    } else {
+      const likeData = {
+        comment_id: commentId,
+        user_id: currentUser ? currentUser.id : null,
+        guest_identifier: currentUser ? null : guestIdentifier
+      };
+
+      const { error } = await sb
+        .from('comment_likes')
+        .insert([likeData]);
+
+      if (error) throw error;
+
+      button.classList.add('liked');
+      icon.className = 'fas fa-heart';
+
+      const comment = commentsData.find(c => c.id === commentId);
+      if (comment) {
+        if (!comment.comment_likes) comment.comment_likes = [];
+        comment.comment_likes.push(likeData);
+        countSpan.textContent = comment.comment_likes.length;
+      }
+    }
+  } catch (error) {
+    console.error('Error toggling comment like:', error);
+    alert('حدث خطأ أثناء الإعجاب بالتعليق. يرجى المحاولة مرة أخرى.');
+  } finally {
+    button.disabled = false;
+  }
+}
+
+// Submit comment
+async function submitComment() {
+  if (!currentNews) return;
+
+  const contentEl = document.getElementById('commentContent');
+  const authorNameEl = document.getElementById('commentAuthorName');
+  const submitBtn = document.getElementById('submitCommentBtn');
+
+  const content = contentEl.value.trim();
+  
+  if (!content) {
+    alert('يرجى كتابة تعليق');
+    return;
+  }
+
+  if (!currentUser) {
+    const guestName = authorNameEl.value.trim();
+    if (!guestName) {
+      alert('يرجى كتابة اسمك');
+      authorNameEl.focus();
+      return;
+    }
+  }
+
+  try {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>جاري النشر...</span>';
+
+    const commentData = {
+      news_id: currentNews.id,
+      content: content,
+      user_id: currentUser ? currentUser.id : null,
+      guest_name: currentUser ? null : authorNameEl.value.trim(),
+      is_approved: true
+    };
+
+    const { data, error } = await sb
+      .from('news_public_comments')
+      .insert([commentData])
+      .select(`
+        *,
+        profiles:user_id (full_name, avatar_url),
+        comment_likes (id, user_id, guest_identifier)
+      `)
+      .single();
+
+    if (error) throw error;
+
+    contentEl.value = '';
+    if (!currentUser) {
+      authorNameEl.value = '';
+    }
+
+    commentsData.unshift(data);
+    
+    const commentsEmpty = document.getElementById('commentsEmpty');
+    if (commentsEmpty.style.display !== 'none') {
+      commentsEmpty.style.display = 'none';
+    }
+
+    const commentEl = createCommentElement(data);
+    const commentsList = document.getElementById('commentsList');
+    const firstComment = commentsList.querySelector('.comment-item');
+    if (firstComment) {
+      commentsList.insertBefore(commentEl, firstComment);
+    } else {
+      commentsList.appendChild(commentEl);
+    }
+
+    document.getElementById('commentsCount').textContent = formatCommentsCount(commentsData.length);
+
+    commentEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (error) {
+    console.error('Error submitting comment:', error);
+    alert('حدث خطأ أثناء نشر التعليق. يرجى المحاولة مرة أخرى.');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i><span>نشر التعليق</span>';
+  }
+}
+
+// Setup engagement section
+async function setupEngagementSection() {
+  if (!currentNews) return;
+
+  currentUser = await getCurrentUser();
+  guestIdentifier = getGuestIdentifier();
+
+  const authorNameEl = document.getElementById('commentAuthorName');
+  if (currentUser) {
+    authorNameEl.style.display = 'none';
+  } else {
+    authorNameEl.style.display = 'block';
+  }
+
+  hasLiked = await checkUserLike(currentNews.id);
+  
+  const likeButton = document.getElementById('likeButton');
+  const likeIcon = likeButton.querySelector('i');
+  const likeText = document.getElementById('likeButtonText');
+  const likesCountEl = document.getElementById('likesCount');
+
+  if (hasLiked) {
+    likeIcon.className = 'fas fa-heart';
+    likeText.textContent = 'أعجبت';
+    likeButton.classList.add('liked');
+  } else {
+    likeIcon.className = 'far fa-heart';
+    likeText.textContent = 'أعجبني';
+    likeButton.classList.remove('liked');
+  }
+
+  likesCountEl.textContent = formatLikesCount(currentNews.likes_count || 0);
+
+  likeButton.addEventListener('click', toggleLike);
+
+  const submitBtn = document.getElementById('submitCommentBtn');
+  submitBtn.addEventListener('click', submitComment);
+
+  const commentContent = document.getElementById('commentContent');
+  commentContent.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      submitComment();
+    }
+  });
+
+  await loadComments();
 }
 
 // Initialize

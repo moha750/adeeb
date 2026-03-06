@@ -256,6 +256,66 @@
             </div>
           </div>
 
+          <!-- Likes and Comments Section -->
+          <div class="engagement-section">
+            <!-- Likes Section -->
+            <div class="likes-section">
+              <button class="like-button" id="likeButton">
+                <i class="far fa-heart"></i>
+                <span id="likeButtonText">أعجبني</span>
+              </button>
+              <span class="likes-count" id="likesCount">0 إعجاب</span>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="comments-section">
+              <div class="comments-header">
+                <h3>التعليقات</h3>
+                <span class="comments-count" id="commentsCount">0 تعليق</span>
+              </div>
+
+              <!-- Add Comment Form -->
+              <div class="add-comment-form">
+                <div class="comment-input-container">
+                  <input 
+                    type="text" 
+                    id="commentAuthorName" 
+                    class="comment-author-input" 
+                    placeholder="اسمك"
+                    style="display: none;"
+                  />
+                  <textarea 
+                    id="commentContent" 
+                    class="comment-textarea" 
+                    placeholder="اكتب تعليقك هنا..."
+                    rows="3"
+                  ></textarea>
+                  <button class="submit-comment-btn" id="submitCommentBtn">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>نشر التعليق</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Comments List -->
+              <div class="comments-list" id="commentsList">
+                <!-- Loading State -->
+                <div class="comments-loading" id="commentsLoading">
+                  <div class="loading-spinner-small"></div>
+                  <p>جاري تحميل التعليقات...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div class="comments-empty" id="commentsEmpty" style="display: none;">
+                  <i class="far fa-comments"></i>
+                  <p>كن أول من يعلق على هذا الخبر</p>
+                </div>
+
+                <!-- Comments will be inserted here -->
+              </div>
+            </div>
+          </div>
+
           <!-- Related News -->
           <div id="relatedNewsSection" class="related-news" style="display: none;">
             <div class="related-news-header">
