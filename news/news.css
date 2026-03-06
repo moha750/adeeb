@@ -252,6 +252,7 @@
 .news-card-meta {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 15px;
   margin-bottom: 15px;
   font-size: 0.85rem;
@@ -311,6 +312,10 @@
   font-size: 0.9rem;
   color: #64748b;
   font-family: 'fr', sans-serif;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .news-card-author i {

@@ -56,9 +56,14 @@ function getNewsIdFromUrl() {
   return null;
 }
 
-// Check if news was viewed before on this device within last 30 minutes
+// Check if news was viewed in current session
 function hasViewedNews(newsId) {
   try {
+    const sessionViewed = sessionStorage.getItem(`viewed_${newsId}`);
+    if (sessionViewed) {
+      return true;
+    }
+    
     const viewedNews = JSON.parse(localStorage.getItem('viewedNews') || '{}');
     const viewData = viewedNews[newsId];
     
@@ -68,9 +73,8 @@ function hasViewedNews(newsId) {
     
     const now = Date.now();
     const timeDiff = now - viewData.timestamp;
-    const thirtyMinutes = 30 * 60 * 1000; // 30 دقيقة بالميلي ثانية
+    const thirtyMinutes = 30 * 60 * 1000;
     
-    // إذا مرت أكثر من 30 دقيقة، نعتبرها زيارة جديدة
     if (timeDiff > thirtyMinutes) {
       return false;
     }
@@ -82,9 +86,11 @@ function hasViewedNews(newsId) {
   }
 }
 
-// Mark news as viewed on this device with timestamp
+// Mark news as viewed in session and localStorage
 function markNewsAsViewed(newsId) {
   try {
+    sessionStorage.setItem(`viewed_${newsId}`, 'true');
+    
     const viewedNews = JSON.parse(localStorage.getItem('viewedNews') || '{}');
     viewedNews[newsId] = {
       timestamp: Date.now(),
@@ -1003,6 +1009,7 @@ function createCommentElement(comment) {
   commentDiv.dataset.commentId = comment.id;
 
   const authorName = comment.profiles?.full_name || comment.guest_name || 'مستخدم';
+  const isMember = !!comment.profiles;
   const avatarUrl = comment.profiles?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(authorName) + '&background=3d8fd6&color=fff&size=128';
   const commentDate = new Date(comment.created_at).toLocaleDateString('ar-EG', {
     year: 'numeric',
@@ -1017,13 +1024,15 @@ function createCommentElement(comment) {
     currentUser ? like.user_id === currentUser.id : like.guest_identifier === guestIdentifier
   ) || false;
 
+  const memberBadge = isMember ? '<span class="member-badge"></span>' : '';
+
   commentDiv.innerHTML = `
     <div class="comment-avatar">
       <img src="${avatarUrl}" alt="${escapeHtml(authorName)}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=3d8fd6&color=fff&size=128'">
     </div>
     <div class="comment-content-wrapper">
       <div class="comment-header">
-        <span class="comment-author">${escapeHtml(authorName)}</span>
+        <span class="comment-author">${escapeHtml(authorName)}${memberBadge}</span>
         <span class="comment-date">${commentDate}</span>
       </div>
       <div class="comment-text">${escapeHtml(comment.content)}</div>
@@ -1196,10 +1205,29 @@ async function setupEngagementSection() {
   guestIdentifier = getGuestIdentifier();
 
   const authorNameEl = document.getElementById('commentAuthorName');
+  const memberLoginPrompt = document.getElementById('memberLoginPrompt');
+  const commentUserInfo = document.getElementById('commentUserInfo');
+  
   if (currentUser) {
     authorNameEl.style.display = 'none';
+    memberLoginPrompt.style.display = 'none';
+    commentUserInfo.style.display = 'flex';
+    
+    const userAvatar = document.getElementById('commentUserAvatar');
+    const userName = document.getElementById('commentUserName');
+    userAvatar.src = currentUser.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser.full_name) + '&background=3d8fd6&color=fff&size=128';
+    userName.textContent = currentUser.full_name;
   } else {
     authorNameEl.style.display = 'block';
+    memberLoginPrompt.style.display = 'block';
+    commentUserInfo.style.display = 'none';
+  }
+
+  const loginBtn = document.getElementById('loginBtn');
+  if (loginBtn) {
+    loginBtn.addEventListener('click', () => {
+      window.location.href = '../auth/login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+    });
   }
 
   hasLiked = await checkUserLike(currentNews.id);

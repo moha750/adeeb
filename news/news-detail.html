@@ -201,6 +201,15 @@
           <!-- News Content -->
           <div id="newsContent" class="article-content"></div>
 
+          <!-- Likes Section (Standalone) -->
+          <div class="article-likes-section">
+            <button class="like-button" id="likeButton">
+              <i class="far fa-heart"></i>
+              <span id="likeButtonText">أعجبني</span>
+            </button>
+            <span class="likes-count" id="likesCount">0 إعجاب</span>
+          </div>
+
           <!-- News Images Gallery (below content) -->
           <div id="newsImagesGallery" class="article-images-gallery" style="display: none;">
             <div class="gallery-header">
@@ -256,27 +265,45 @@
             </div>
           </div>
 
-          <!-- Likes and Comments Section -->
-          <div class="engagement-section">
-            <!-- Likes Section -->
-            <div class="likes-section">
-              <button class="like-button" id="likeButton">
-                <i class="far fa-heart"></i>
-                <span id="likeButtonText">أعجبني</span>
-              </button>
-              <span class="likes-count" id="likesCount">0 إعجاب</span>
-            </div>
-
-            <!-- Comments Section -->
+          <!-- Comments Section -->
+          <div class="comments-section-wrapper">
             <div class="comments-section">
+              <!-- Comments Header -->
               <div class="comments-header">
-                <h3>التعليقات</h3>
-                <span class="comments-count" id="commentsCount">0 تعليق</span>
+                <div class="comments-header-content">
+                  <div class="comments-title-wrapper">
+                    <i class="fas fa-comments"></i>
+                    <h3>التعليقات</h3>
+                  </div>
+                  <span class="comments-count" id="commentsCount">0 تعليق</span>
+                </div>
               </div>
 
               <!-- Add Comment Form -->
               <div class="add-comment-form">
+                <!-- Guest Login Prompt (for non-logged users who are members) -->
+                <div class="member-login-prompt" id="memberLoginPrompt" style="display: none;">
+                  <div class="login-prompt-content">
+                    <i class="fas fa-user-circle"></i>
+                    <div class="login-prompt-text">
+                      <h4>أنت عضو في أديب؟</h4>
+                      <p>سجل دخولك للحصول على مزايا إضافية: اسمك يظهر تلقائياً، صورتك الشخصية، وشارة عضو أديب</p>
+                    </div>
+                    <button class="login-btn" id="loginBtn">
+                      <i class="fas fa-sign-in-alt"></i>
+                      <span>تسجيل الدخول</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div class="comment-input-container">
+                  <div class="comment-user-info" id="commentUserInfo" style="display: none;">
+                    <img src="" alt="" class="comment-user-avatar" id="commentUserAvatar">
+                    <div class="comment-user-details">
+                      <span class="comment-user-name" id="commentUserName"></span>
+                      <span class="comment-user-badge">عضو أديب</span>
+                    </div>
+                  </div>
                   <input 
                     type="text" 
                     id="commentAuthorName" 
@@ -287,13 +314,16 @@
                   <textarea 
                     id="commentContent" 
                     class="comment-textarea" 
-                    placeholder="اكتب تعليقك هنا..."
+                    placeholder="شاركنا رأيك..."
                     rows="3"
                   ></textarea>
-                  <button class="submit-comment-btn" id="submitCommentBtn">
-                    <i class="fas fa-paper-plane"></i>
-                    <span>نشر التعليق</span>
-                  </button>
+                  <div class="comment-actions-bar">
+                    <button class="submit-comment-btn" id="submitCommentBtn">
+                      <i class="fas fa-paper-plane"></i>
+                      <span>نشر التعليق</span>
+                    </button>
+                    <span class="comment-hint">اضغط Ctrl+Enter للنشر السريع</span>
+                  </div>
                 </div>
               </div>
 
