@@ -6,14 +6,202 @@ const sb = window.sbClient;
 let allNews = [];
 let featuredNews = [];
 let currentFilter = 'all';
-let displayedCount = 9;
+let displayedCount = 6;
 const loadMoreIncrement = 6;
+
+// متغيرات جديدة لتخزين الإحصائيات ومنع تكرار الطلبات
+let cachedStats = null;
+let isFetchingStats = false;
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', async () => {
   await loadNews();
   setupEventListeners();
+  setupStatsObserver();
+  setupHeaderColorChange();
+  
+  // (اختياري) يمكنك جلب الإحصائيات مسبقاً في الخلفية هنا ليكون العداد جاهزاً 100% 
+  // عند وصول المستخدم للقسم:
+  // fetchStatsInBackground();
 });
+
+// Setup Intersection Observer for stats animation
+function setupStatsObserver() {
+  const newsHeroSection = document.querySelector('.news-hero');
+  if (!newsHeroSection) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        // عند الدخول للقسم، شغل الأنيميشن
+        updateStats();
+      }
+    });
+  }, {
+    threshold: 0.3 // يبدأ الأنيميشن عندما 30% من القسم يكون مرئياً
+  });
+
+  observer.observe(newsHeroSection);
+}
+
+// Change header color on dark sections .footer-container
+function setupHeaderColorChange() {
+  const header = document.querySelector('.header');
+  // جلب جميع الأقسام الداكنة
+  const darkSections = document.querySelectorAll('.news-hero, footer, .footer');
+  
+  if (!header || darkSections.length === 0) return;
+
+  // هذه الدالة تتحقق من موقع الهيدر في كل مرة نقوم فيها بالتمرير
+  function checkHeaderOverlap() {
+    // 1. حساب موقع الهيدر (سنأخذ منتصف الهيدر كنقطة قياس ليكون التغيير طبيعياً)
+    const headerRect = header.getBoundingClientRect();
+    const headerCenter = headerRect.top + (headerRect.height / 2);
+
+    let isOverDarkSection = false;
+
+    // 2. المرور على كل الأقسام الداكنة لمعرفة ما إذا كان الهيدر فوقها
+    darkSections.forEach(section => {
+      const sectionRect = section.getBoundingClientRect();
+      
+      // هل منتصف الهيدر يقع بين أعلى القسم الداكن وأسفله؟
+      if (headerCenter >= sectionRect.top && headerCenter <= sectionRect.bottom) {
+        isOverDarkSection = true;
+      }
+    });
+
+    // 3. تطبيق النتيجة
+    if (isOverDarkSection) {
+      header.classList.add('on-dark'); // الهيدر فوق قسم داكن (أبيض)
+    } else {
+      header.classList.remove('on-dark'); // الهيدر فوق قسم فاتح (داكن)
+    }
+  }
+
+  // تشغيل الدالة عند التمرير
+  window.addEventListener('scroll', checkHeaderOverlap);
+  
+  // تشغيل الدالة مرة واحدة عند تحميل الصفحة لضبط اللون الأولي
+  checkHeaderOverlap();
+}
+
+// Update statistics with animation and caching
+async function updateStats() {
+  try {
+    // إذا كانت البيانات موجودة مسبقاً، ابدأ العداد فوراً
+    if (cachedStats) {
+      startStatsAnimation();
+      return;
+    }
+
+    // لمنع إرسال طلبات متعددة في نفس الوقت إذا تم استدعاء الدالة بسرعة
+    if (isFetchingStats) return;
+    isFetchingStats = true;
+
+    // Get total news count
+    const { count: newsCount } = await sb
+      .from('news')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'published');
+    
+    // Get news data for views and likes
+    const { data: newsData } = await sb
+      .from('news')
+      .select('views, likes_count')
+      .eq('status', 'published');
+    
+    // Get total comments count
+    const { count: commentsCount } = await sb
+      .from('news_public_comments')
+      .select('*', { count: 'exact', head: true });
+    
+    // حفظ البيانات في المتغير
+    cachedStats = {
+      totalNews: newsCount || 0,
+      totalViews: newsData?.reduce((sum, n) => sum + (n.views || 0), 0) || 0,
+      totalLikes: newsData?.reduce((sum, n) => sum + (n.likes_count || 0), 0) || 0,
+      totalComments: commentsCount || 0
+    };
+    
+    isFetchingStats = false;
+    
+    // تشغيل العداد
+    startStatsAnimation();
+
+  } catch (error) {
+    console.error('Error updating stats:', error);
+    isFetchingStats = false;
+  }
+}
+
+// دالة لجلب الإحصائيات في الخلفية عند تحميل الصفحة (اختياري)
+async function fetchStatsInBackground() {
+  if (cachedStats || isFetchingStats) return;
+  isFetchingStats = true;
+  try {
+    const { count: newsCount } = await sb.from('news').select('*', { count: 'exact', head: true }).eq('status', 'published');
+    const { data: newsData } = await sb.from('news').select('views, likes_count').eq('status', 'published');
+    const { count: commentsCount } = await sb.from('news_public_comments').select('*', { count: 'exact', head: true });
+    
+    cachedStats = {
+      totalNews: newsCount || 0,
+      totalViews: newsData?.reduce((sum, n) => sum + (n.views || 0), 0) || 0,
+      totalLikes: newsData?.reduce((sum, n) => sum + (n.likes_count || 0), 0) || 0,
+      totalComments: commentsCount || 0
+    };
+  } catch (error) {
+    console.error('Background fetch error:', error);
+  } finally {
+    isFetchingStats = false;
+  }
+}
+
+// دالة مساعدة لتشغيل العدادات بناءً على البيانات المخزنة
+function startStatsAnimation() {
+  if (!cachedStats) return;
+  animateNumber('totalNews', cachedStats.totalNews);
+  animateNumber('totalViews', cachedStats.totalViews);
+  animateNumber('totalLikes', cachedStats.totalLikes);
+  animateNumber('totalComments', cachedStats.totalComments);
+}
+
+// Animate number counting (محسنة لمنع التداخل)
+function animateNumber(elementId, targetValue) {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+  
+  // إيقاف أي أنيميشن سابق يعمل على نفس العنصر
+  if (element.animationId) {
+    cancelAnimationFrame(element.animationId);
+  }
+  
+  const duration = 2000;
+  const startValue = 0;
+  const startTime = Date.now();
+  
+  function update() {
+    const currentTime = Date.now();
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    
+    // تأثير التباطؤ في نهاية العد (Ease Out Quart)
+    const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+    const currentValue = Math.floor(startValue + (targetValue - startValue) * easeOutQuart);
+    
+    element.textContent = currentValue.toLocaleString('en-US');
+    
+    if (progress < 1) {
+      // حفظ معرف الأنيميشن لتتمكن من إيقافه لاحقاً
+      element.animationId = requestAnimationFrame(update);
+    } else {
+      element.textContent = targetValue.toLocaleString('en-US');
+      element.animationId = null;
+    }
+  }
+  
+  // بدء حركة جديدة
+  element.animationId = requestAnimationFrame(update);
+}
 
 // Load news from Supabase
 async function loadNews() {
@@ -114,8 +302,9 @@ function createNewsCard(news, isFeatured = false) {
   const publishedDate = formatDate(news.published_at);
   const authors = news.authors || (news.author_name ? [news.author_name] : ['نادي أديب']);
   const authorsDisplay = authors.length > 1 
-    ? `${escapeHtml(authors.join('، '))}` 
+    ? escapeHtml(authors[0]) + (authors.length > 1 ? '...' : '')
     : escapeHtml(authors[0]);
+  const authorIcon = authors.length > 1 ? 'fa-users' : 'fa-feather';
   const summary = news.summary || truncateText(stripHtml(news.content), 150);
   
   card.innerHTML = `
@@ -137,9 +326,9 @@ function createNewsCard(news, isFeatured = false) {
       <h3 class="news-card-title">${escapeHtml(news.title)}</h3>
       <p class="news-card-summary">${escapeHtml(summary)}</p>
       <div class="news-card-footer">
-        <span class="news-card-author">
-          <i class="fa-solid fa-feather${authors.length > 1 ? 's' : ''}"></i>
-          بريشة ${authorsDisplay}
+        <span class="news-card-author" title="${authors.length > 1 ? escapeHtml(authors.join('، ')) : ''}">
+          <i class="fa-solid ${authorIcon}"></i>
+          ${authors.length > 1 ? 'بريشات' : 'بريشة'} ${authorsDisplay}
         </span>
         <span class="news-card-read-more">
           اقرأ المزيد

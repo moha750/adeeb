@@ -909,7 +909,7 @@ async function toggleLike() {
 
       hasLiked = false;
       likeIcon.className = 'far fa-heart';
-      likeText.textContent = 'أعجبني';
+      likeText.textContent = 'أعجبني الخبر';
       likeButton.classList.remove('liked');
 
       currentNews.likes_count = Math.max((currentNews.likes_count || 0) - 1, 0);
@@ -924,11 +924,20 @@ async function toggleLike() {
         .from('news_likes')
         .insert([likeData]);
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') {
+          hasLiked = true;
+          likeIcon.className = 'fas fa-heart';
+          likeText.textContent = 'أعجبت بالخبر';
+          likeButton.classList.add('liked');
+          return;
+        }
+        throw error;
+      }
 
       hasLiked = true;
       likeIcon.className = 'fas fa-heart';
-      likeText.textContent = 'أعجبت';
+      likeText.textContent = 'أعجبت بالخبر';
       likeButton.classList.add('liked');
 
       currentNews.likes_count = (currentNews.likes_count || 0) + 1;
@@ -1239,11 +1248,11 @@ async function setupEngagementSection() {
 
   if (hasLiked) {
     likeIcon.className = 'fas fa-heart';
-    likeText.textContent = 'أعجبت';
+    likeText.textContent = 'أعجبت بالخبر';
     likeButton.classList.add('liked');
   } else {
     likeIcon.className = 'far fa-heart';
-    likeText.textContent = 'أعجبني';
+    likeText.textContent = 'أعجبني الخبر';
     likeButton.classList.remove('liked');
   }
 

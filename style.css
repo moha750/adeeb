@@ -130,6 +130,40 @@
   transform: translateY(0);
 }
 
+.header.on-dark .logo-img {
+  filter: brightness(0) invert(1);
+}
+
+.header.on-dark .nav-link {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.header.on-dark .nav-link:hover,
+.header.on-dark .nav-link.active {
+  color: white;
+  background: rgba(61, 143, 214, 0.3);
+}
+
+.header.on-dark .line {
+  background: white;
+}
+
+.header.on-dark .subscribe-btn {
+  background: white;
+  color: #274060;
+}
+
+@media (max-width: 992px) {
+    .header.on-dark .nav {
+      background: linear-gradient(135deg, rgba(107, 168, 226, 0.95) 0%, rgba(61, 143, 214, 0.98) 50%, rgba(39, 64, 96, 0.95) 100%);
+    }
+
+    .header.on-dark .nav-link .nav-wave {
+      background: linear-gradient(135deg, #346099);
+  }
+}
+
 .header.hidden {
   transform: translateY(-100%);
 }
@@ -334,14 +368,14 @@
     right: -100%;
     width: 320px;
     height: 100vh;
-    background: white;
+    background: linear-gradient(135deg, rgba(248, 249, 250, 0.95) 0%, rgba(230, 240, 249, 0.98) 50%, rgba(248, 249, 250, 0.95) 100%);
     box-shadow: -5px 0 30px rgba(0, 0, 0, 0.1);
     transition: right 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     padding: 100px 30px 30px;
     z-index: 999;
     flex-direction: column;
     align-items: flex-start;
-    justify-content: flex-start;
+    justify-content: space-between;
   }
 
   .nav.active {
@@ -1175,6 +1209,89 @@ body.menu-open {
 
 .work-link:hover i {
   transform: translateX(-5px);
+}
+
+.footer-col ul li a:hover i {
+  transform: translateX(-3px);
+}
+
+/* Footer Social Links - Redesigned to match footer identity */
+.social-links-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  list-style: none;
+  padding-right: 0;
+}
+
+.social-link-footer {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 1.1rem;
+  font-family: "fr";
+  padding: 12px 15px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.social-link-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(61, 143, 214, 0.2), rgba(39, 64, 96, 0.2));
+  transform: translateX(100%);
+  transition: transform 0.4s ease;
+  z-index: -1;
+}
+
+.social-link-footer i {
+  font-size: 1.2rem;
+  color: #3d8fd6;
+  transition: all 0.3s ease;
+  min-width: 24px;
+  text-align: center;
+}
+
+.social-link-footer span {
+  font-family: "fm";
+}
+
+.social-link-footer:hover {
+  color: white;
+  transform: translateX(-10px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(61, 143, 214, 0.4);
+  box-shadow: 0 4px 15px rgba(61, 143, 214, 0.2);
+}
+
+.social-link-footer:hover::before {
+  transform: translateX(0);
+}
+
+.social-link-footer:hover i {
+  color: white;
+  transform: scale(1.15) rotate(-5deg);
+}
+
+
+/* Footer Newsletter Text */
+.footer-newsletter-text {
+  font-family: 'fl', sans-serif;
+  line-height: 1.8;
+  margin-bottom: 20px;
+  opacity: 0.85;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 @media (max-width: 1200px) {
@@ -2408,9 +2525,9 @@ body.menu-open {
 
 .footer-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 50px;
-  margin-bottom: 70px;
+  margin-bottom: 50px;
 }
 
 .footer-main {
@@ -2459,7 +2576,7 @@ body.menu-open {
 }
 
 .footer-links li {
-  margin-bottom: 20px;
+  margin-bottom: 18.5px;
   position: relative;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -2540,16 +2657,25 @@ body.menu-open {
   color: #3d8fd6;
 } /* الرئيسية */
 .footer-links li:nth-child(2) i {
-  color: #6ba8e2;
+  color: #5c9edb;
 } /* أعمالنا */
 .footer-links li:nth-child(3) i {
-  color: #94c4f4;
+  color: #67a0da;
 } /* انجازاتنا */
 .footer-links li:nth-child(4) i {
-  color: #b8d6f9;
+  color: #85b0e0;
 } /* شركائنا */
 .footer-links li:nth-child(5) i {
+  color: #91b8e7;
+} /* تواصل معنا */
+.footer-links li:nth-child(6) i {
+  color: #aac8ec;
+} /* تواصل معنا */
+.footer-links li:nth-child(7) i {
   color: #d1e4fb;
+} /* تواصل معنا */
+.footer-links li:nth-child(8) i {
+  color: #d1e3fc;
 } /* تواصل معنا */
 
 .working-hours {
@@ -2704,7 +2830,7 @@ body.menu-open {
 @media (max-width: 768px) {
   .footer-grid {
     grid-template-columns: 1fr;
-    gap: 30px;
+    gap: 40px;
   }
 
   .footer-main {
@@ -2713,6 +2839,7 @@ body.menu-open {
 
   .footer-bottom-content {
     flex-direction: column;
+    gap: 20px;
     text-align: center;
   }
 
@@ -2722,12 +2849,21 @@ body.menu-open {
 
   .footer-links a {
     font-size: 1rem;
-    padding: 6px 12px;
-    gap: 10px;
+    padding: 10px 15px;
+    gap: 12px;
   }
 
   .footer-links li {
     margin-bottom: 15px;
+  }
+  
+  .social-links-footer {
+    gap: 12px;
+  }
+  
+  .social-link-footer {
+    padding: 10px 15px;
+    font-size: 1rem;
   }
 }
 

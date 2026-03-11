@@ -33,14 +33,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;600;700;800;900&display=swap" rel="stylesheet">
     
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet"/>
     
     <!-- Swiper CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     
-    <!-- CSS Files -->
+    <!-- Main Styles -->
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="news-detail.css">
+    <link rel="stylesheet" href="news-footer.css">
     
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -128,11 +129,10 @@
 
     <!-- Error State -->
     <div id="newsError" class="error-container" style="display: none;">
-      <i class="fas fa-exclamation-circle"></i>
+      <i id="newsError-i" class="fas fa-exclamation-circle"></i>
       <h2>عذراً، لم يتم العثور على الخبر</h2>
       <p>الخبر المطلوب غير موجود أو تم حذفه</p>
       <a href="news.html" class="btn-back">
-        <i class="fas fa-arrow-right"></i>
         العودة إلى الأخبار
       </a>
     </div>
@@ -205,6 +205,17 @@
 
           <!-- Likes Section (Standalone) -->
           <div class="article-likes-section">
+            <!-- زخرفة علوية -->
+            <div class="likes-ornament">
+              <div class="likes-ornament-line"></div>
+              <div class="likes-ornament-center">
+                <i class="fas fa-heart"></i>
+              </div>
+              <div class="likes-ornament-line"></div>
+            </div>
+            
+            <h3 class="likes-title">هل أعجبك هذا الخبر؟</h3>
+            
             <button class="like-button" id="likeButton">
               <i class="far fa-heart"></i>
               <span id="likeButtonText">أعجبني</span>
@@ -324,7 +335,6 @@
                       <i class="fas fa-paper-plane"></i>
                       <span>نشر التعليق</span>
                     </button>
-                    <span class="comment-hint">اضغط Ctrl+Enter للنشر السريع</span>
                   </div>
                 </div>
               </div>
@@ -429,64 +439,96 @@
           </div>
 
           <!-- Column 2: Quick Links -->
+        <div class="footer-col">
+          <h3 class="footer-title">
+            <i class="fas fa-bolt"></i>
+            <span class="title-footer">روابط سريعة</span>
+          </h3>
+          <ul class="footer-links">
+            <li>
+              <a href="../index.html#adeebbook">
+                <i class="fas fa-home"></i>
+                الرئيسية
+              </a>
+            </li>
+            <li>
+              <a href="../index.html#our-works">
+                <i class="fas fa-briefcase"></i>
+                أعمالنا
+              </a>
+            </li>
+                        <li>
+              <a href="../index.html#achievements">
+                <i class="fas fa-trophy"></i>
+                انجازاتنا
+              </a>
+            </li>
+            <li>
+              <a href="../index.html#achievements">
+                <i class="fa-solid fa-crown"></i>
+                المجلس الإداري
+              </a>
+            </li>
+            <li>
+              <a href="../index.html#sponsors">
+                <i class="fas fa-handshake"></i>
+                شركائنا
+              </a>
+            </li>
+            <li>
+              <a href="../index.html#contact">
+                <i class="fas fa-envelope"></i>
+                تواصل معنا
+              </a>
+            </li>
+          </ul>
+        </div>
+
+          <!-- Column 3: Follow Us -->
           <div class="footer-col">
             <h3 class="footer-title">
-              <i class="fas fa-bolt"></i>
-              <span class="title-footer">روابط سريعة</span>
+              <i class="fas fa-share-nodes"></i>
+              تابعنا
             </h3>
-            <ul class="footer-links">
-              <li>
-                <a href="../index.html#adeebbook">
-                  <i class="fas fa-home"></i>
-                  الرئيسية
-                </a>
-              </li>
-              <li>
-                <a href="../index.html#our-works">
-                  <i class="fas fa-briefcase"></i>
-                  أعمالنا
-                </a>
-              </li>
-              <li>
-                <a href="../index.html#achievements">
-                  <i class="fas fa-trophy"></i>
-                  انجازاتنا
-                </a>
-              </li>
-              <li>
-                <a href="../index.html#sponsors">
-                  <i class="fas fa-handshake"></i>
-                  شركائنا
-                </a>
-              </li>
-              <li>
-                <a href="../index.html#contact">
-                  <i class="fas fa-envelope"></i>
-                  تواصل معنا
-                </a>
-              </li>
-            </ul>
+            <div class="social-links-footer">
+              <a href="https://x.com/adeebclub" target="_blank" rel="noopener noreferrer" class="social-link-footer twitter">
+                <i class="fab fa-x-twitter"></i>
+                <span>تويتر</span>
+              </a>
+              <a href="https://www.instagram.com/adeebclub" target="_blank" rel="noopener noreferrer" class="social-link-footer instagram">
+                <i class="fab fa-instagram"></i>
+              <a href="https://www.tiktok.com/@adeebclub" target="_blank" rel="noopener noreferrer" class="social-link-footer tiktok">
+                <i class="fab fa-tiktok"></i>
+                <span>تيك توك</span>
+              </a>
+            </div>
           </div>
 
-          <!-- Column 3: Committees -->
+          <!-- Column 4: Newsletter -->
           <div class="footer-col">
-            <h3 class="footer-title">
-              <i class="fas fa-sitemap"></i>
-              <span class="title-footer">لجان نادي أدِيب</span>
+            <h3 class="footer-title1">
+              <i class="fas fa-envelope"></i>
+              النشرة البريدية
             </h3>
-            <div class="committees-container">
-              <div class="committee-category">
-                <ul class="committee-list">
-                  <li><i class="fas fa-pen-fancy"></i>لجنة التأليف</li>
-                  <li><i class="fa-solid fa-microphone-lines"></i>لجنة الرواة</li>
-                  <li><i class="fa-solid fa-calendar-days"></i>لجنة الفعاليات</li>
-                  <li><i class="fa-solid fa-handshake"></i>لجنة السفراء</li>
-                  <li><i class="fa-solid fa-camera-retro"></i>لجنة الإنتاج</li>
-                  <li><i class="fa-solid fa-bullhorn"></i>لجنة التسويق</li>
-                  <li><i class="fa-solid fa-bezier-curve"></i>لجنة التصميم</li>
-                </ul>
+            <p class="footer-newsletter-text">احصل على آخر الأخبار والتحديثات مباشرة في بريدك</p>
+            <form class="newsletter-form" id="newsletterForm">
+              <div class="input-group">
+                <input
+                  type="email"
+                  name="البريد الإلكتروني"
+                  placeholder="بريدك الإلكتروني"
+                  required
+                />
+                <button type="submit">
+                  <span>اشتراك</span>
+                  <i class="fas fa-paper-plane"></i>
+                </button>
               </div>
-            </div>
+              <div class="agreement">
+                <input type="checkbox" id="agree-news-detail" required />
+                <label for="agree-news-detail">أوافق على تلقي الرسائل في بريدي الخاص.</label>
+              </div>
+            </form>
           </div>
         </div>
 
