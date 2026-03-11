@@ -109,11 +109,16 @@ async function updateStats() {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'published');
     
-    // Get news data for views and likes
+    // Get news data for views
     const { data: newsData } = await sb
       .from('news')
-      .select('views, likes_count')
+      .select('views')
       .eq('status', 'published');
+    
+    // Get total likes count directly from news_likes table
+    const { count: likesCount } = await sb
+      .from('news_likes')
+      .select('*', { count: 'exact', head: true });
     
     // Get total comments count
     const { count: commentsCount } = await sb
@@ -124,7 +129,7 @@ async function updateStats() {
     cachedStats = {
       totalNews: newsCount || 0,
       totalViews: newsData?.reduce((sum, n) => sum + (n.views || 0), 0) || 0,
-      totalLikes: newsData?.reduce((sum, n) => sum + (n.likes_count || 0), 0) || 0,
+      totalLikes: likesCount || 0,
       totalComments: commentsCount || 0
     };
     
@@ -145,13 +150,14 @@ async function fetchStatsInBackground() {
   isFetchingStats = true;
   try {
     const { count: newsCount } = await sb.from('news').select('*', { count: 'exact', head: true }).eq('status', 'published');
-    const { data: newsData } = await sb.from('news').select('views, likes_count').eq('status', 'published');
+    const { data: newsData } = await sb.from('news').select('views').eq('status', 'published');
+    const { count: likesCount } = await sb.from('news_likes').select('*', { count: 'exact', head: true });
     const { count: commentsCount } = await sb.from('news_public_comments').select('*', { count: 'exact', head: true });
     
     cachedStats = {
       totalNews: newsCount || 0,
       totalViews: newsData?.reduce((sum, n) => sum + (n.views || 0), 0) || 0,
-      totalLikes: newsData?.reduce((sum, n) => sum + (n.likes_count || 0), 0) || 0,
+      totalLikes: likesCount || 0,
       totalComments: commentsCount || 0
     };
   } catch (error) {

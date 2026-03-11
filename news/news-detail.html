@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تفاصيل الخبر - نادي أديب</title>
+    <title>تفاصيل الخبر</title>
     
     <!-- Dynamic Meta Tags - Will be updated by JavaScript -->
-    <meta name="description" content="اكتشف آخر أخبار وفعاليات نادي أديب الطلابي في جامعة الملك فيصل" id="metaDescription">
+    <meta name="description" content="اكتشف آخر أخبار ومُستجدات نادي أدِيب" id="metaDescription">
     <meta name="keywords" content="نادي أديب, جامعة الملك فيصل, أخبار, فعاليات">
     
     <!-- Open Graph Meta Tags for Facebook, LinkedIn, etc. -->
     <meta property="og:type" content="article">
     <meta property="og:site_name" content="نادي أديب">
-    <meta property="og:title" content="تفاصيل الخبر - نادي أديب" id="ogTitle">
-    <meta property="og:description" content="اكتشف آخر أخبار وفعاليات نادي أديب الطلابي في جامعة الملك فيصل" id="ogDescription">
+    <meta property="og:title" content="تفاصيل الخبر" id="ogTitle">
+    <meta property="og:description" content="اكتشف آخر أخبار ومُستجدات نادي أدِيب" id="ogDescription">
     <meta property="og:image" content="https://www.adeeb.club/news/newspaper.png" />
     <meta property="og:url" content="https://www.adeeb.club/news/newspaper.png" />
     <meta property="og:locale" content="ar_SA">
@@ -23,8 +23,8 @@
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@adeebclub">
-    <meta name="twitter:title" content="تفاصيل الخبر - نادي أديب" id="twitterTitle">
-    <meta name="twitter:description" content="اكتشف آخر أخبار وفعاليات نادي أديب الطلابي في جامعة الملك فيصل" id="twitterDescription">
+    <meta name="twitter:title" content="تفاصيل الخبر" id="twitterTitle">
+    <meta name="twitter:description" content="اكتشف آخر أخبار ومُستجدات نادي أدِيب" id="twitterDescription">
     <meta name="twitter:image" content="https://www.adeeb.club/news/newspaper.png" />
     
     <!-- Fonts -->
@@ -50,14 +50,7 @@
 <body>
     <!-- قسم: الهيدر -->
     <header class="header">
-      <div class="header-container">
-        <div class="menu-toggle" id="menuToggle">
-          <div class="hamburger">
-            <span class="line line1"></span>
-            <span class="line line2"></span>
-            <span class="line line3"></span>
-          </div>
-        </div>
+      <div class="header-container" style="justify-content: center;">
         <div class="logo">
           <a class="logo-link" href="../index.html">
             <img
@@ -67,57 +60,6 @@
             />
           </a>
         </div>
-        <nav class="nav">
-          <ul class="nav-links">
-            <li class="nav-item">
-              <a class="nav-link" href="../index.html#adeebbook">
-                <i class="fas fa-home nav-icon"></i>
-                <span class="nav-text">الرئيسية</span>
-                <span class="nav-wave"></span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link active" href="news.html">
-                <i class="fa-solid fa-newspaper"></i>
-                <span class="nav-text">الأخبار</span>
-                <span class="nav-wave"></span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="../index.html#our-works">
-                <i class="fa-solid fa-briefcase"></i>
-                <span class="nav-text">أعمالنا</span>
-                <span class="nav-wave"></span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="../index.html#sponsors">
-                <i class="fa-solid fa-briefcase"></i>
-                <span class="nav-text">شُركائنا</span>
-                <span class="nav-wave"></span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="../index.html#board-members">
-                <i class="fa-solid fa-trophy"></i>
-                <span class="nav-text">المجلس الإداري</span>
-                <span class="nav-wave"></span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="../index.html#contact">
-                <i class="fas fa-envelope nav-icon"></i>
-                <span class="nav-text">تواصل معنا</span>
-                <span class="nav-wave"></span>
-              </a>
-            </li>
-          </ul>
-          <!-- زر تسجيل الدخول للوحة التحكم -->
-          <a class="subscribe-btn" href="../dashboard/dashboard.html" id="adminLoginBtn">
-            <span>تسجيل الدخول</span>
-            <i class="fa-solid fa-arrow-right-to-bracket"></i>
-          </a>
-        </nav>
       </div>
     </header>
 
@@ -203,9 +145,8 @@
           <!-- News Content -->
           <div id="newsContent" class="article-content"></div>
 
-          <!-- Likes Section (Standalone) -->
+          <!-- Likes Section -->
           <div class="article-likes-section">
-            <!-- زخرفة علوية -->
             <div class="likes-ornament">
               <div class="likes-ornament-line"></div>
               <div class="likes-ornament-center">
@@ -218,7 +159,7 @@
             
             <button class="like-button" id="likeButton">
               <i class="far fa-heart"></i>
-              <span id="likeButtonText">أعجبني</span>
+              <span id="likeButtonText">أعجبني الخبر</span>
             </button>
             <span class="likes-count" id="likesCount">0 إعجاب</span>
           </div>
@@ -485,24 +426,43 @@
         </div>
 
           <!-- Column 3: Follow Us -->
-          <div class="footer-col">
-            <h3 class="footer-title">
-              <i class="fas fa-share-nodes"></i>
-              تابعنا
-            </h3>
-            <div class="social-links-footer">
-              <a href="https://x.com/adeebclub" target="_blank" rel="noopener noreferrer" class="social-link-footer twitter">
-                <i class="fab fa-x-twitter"></i>
-                <span>تويتر</span>
-              </a>
-              <a href="https://www.instagram.com/adeebclub" target="_blank" rel="noopener noreferrer" class="social-link-footer instagram">
-                <i class="fab fa-instagram"></i>
-              <a href="https://www.tiktok.com/@adeebclub" target="_blank" rel="noopener noreferrer" class="social-link-footer tiktok">
-                <i class="fab fa-tiktok"></i>
-                <span>تيك توك</span>
-              </a>
-            </div>
+        <div class="footer-col">
+          <h3 class="footer-title">
+            <i class="fas fa-share-nodes"></i>
+            تابعنا
+          </h3>
+          <div class="social-links-footer">
+            <a href="https://x.com/adeebclub" target="_blank" rel="noopener noreferrer" class="social-link-footer">
+              <i class="fab fa-x-twitter"></i>
+              <span>تويتر</span>
+            </a>
+            <a href="https://www.instagram.com/adeebclub" target="_blank" rel="noopener noreferrer"
+              class="social-link-footer">
+              <i class="fab fa-instagram"></i>
+              <span>إنستقرام</span>
+            </a>
+            <a href="https://www.tiktok.com/@adeebclub" target="_blank" rel="noopener noreferrer"
+              class="social-link-footer">
+              <i class="fab fa-tiktok"></i>
+              <span>تيك توك</span>
+            </a>
+            <a href="https://snapchat.com/t/ibL1SRjg" target="_blank" rel="noopener noreferrer"
+              class="social-link-footer">
+              <i class="fab fa-snapchat"></i>
+              <span>سناب شات</span>
+            </a>
+            <a href="https://www.tiktok.com/@adeebclub" target="_blank" rel="noopener noreferrer"
+              class="social-link-footer">
+              <i class="fa-brands fa-linkedin-in"></i>
+              <span>لينكد إن</span>
+            </a>
+            <a href="https://www.youtube.com/@adeebclub" target="_blank" rel="noopener noreferrer"
+              class="social-link-footer">
+              <i class="fab fa-youtube"></i>
+              <span>يوتيوب</span>
+            </a>
           </div>
+        </div>
 
           <!-- Column 4: Newsletter -->
           <div class="footer-col">

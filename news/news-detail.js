@@ -846,16 +846,6 @@ function formatLikesCount(count) {
   return `${num} إعجاب`;
 }
 
-// Format comments count
-function formatCommentsCount(count) {
-  const num = parseInt(count) || 0;
-  if (num === 0) return 'لا توجد تعليقات';
-  if (num === 1) return 'تعليق واحد';
-  if (num === 2) return 'تعليقان';
-  if (num >= 3 && num <= 10) return `${num} تعليقات`;
-  return `${num} تعليق`;
-}
-
 // Check if user has liked the news
 async function checkUserLike(newsId) {
   try {
@@ -880,7 +870,7 @@ async function checkUserLike(newsId) {
   }
 }
 
-// Toggle like
+// Toggle like - نظام محسّن يمنع التكرار
 async function toggleLike() {
   if (!currentNews) return;
 
@@ -893,6 +883,7 @@ async function toggleLike() {
     likeButton.disabled = true;
 
     if (hasLiked) {
+      // إزالة الإعجاب
       let query = sb
         .from('news_likes')
         .delete()
@@ -911,9 +902,8 @@ async function toggleLike() {
       likeIcon.className = 'far fa-heart';
       likeText.textContent = 'أعجبني الخبر';
       likeButton.classList.remove('liked');
-
-      currentNews.likes_count = Math.max((currentNews.likes_count || 0) - 1, 0);
     } else {
+      // إضافة الإعجاب
       const likeData = {
         news_id: currentNews.id,
         user_id: currentUser ? currentUser.id : null,
@@ -925,35 +915,33 @@ async function toggleLike() {
         .insert([likeData]);
 
       if (error) {
+        // التعامل مع خطأ التكرار
         if (error.code === '23505') {
-          // الإعجاب موجود مسبقاً - نحدث الواجهة فقط دون زيادة العدد
+          console.log('الإعجاب موجود مسبقاً');
           hasLiked = true;
           likeIcon.className = 'fas fa-heart';
           likeText.textContent = 'أعجبت بالخبر';
           likeButton.classList.add('liked');
-          
-          // إعادة جلب العدد الصحيح من قاعدة البيانات
-          const { count } = await sb
-            .from('news_likes')
-            .select('*', { count: 'exact', head: true })
-            .eq('news_id', currentNews.id);
-          
-          currentNews.likes_count = count || 0;
-          likesCountEl.textContent = formatLikesCount(currentNews.likes_count);
-          return;
+        } else {
+          throw error;
         }
-        throw error;
+      } else {
+        hasLiked = true;
+        likeIcon.className = 'fas fa-heart';
+        likeText.textContent = 'أعجبت بالخبر';
+        likeButton.classList.add('liked');
       }
-
-      hasLiked = true;
-      likeIcon.className = 'fas fa-heart';
-      likeText.textContent = 'أعجبت بالخبر';
-      likeButton.classList.add('liked');
-
-      currentNews.likes_count = (currentNews.likes_count || 0) + 1;
     }
 
+    // تحديث العدد من قاعدة البيانات
+    const { count } = await sb
+      .from('news_likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('news_id', currentNews.id);
+    
+    currentNews.likes_count = count || 0;
     likesCountEl.textContent = formatLikesCount(currentNews.likes_count);
+
   } catch (error) {
     console.error('Error toggling like:', error);
     alert('حدث خطأ أثناء الإعجاب. يرجى المحاولة مرة أخرى.');
@@ -961,6 +949,19 @@ async function toggleLike() {
     likeButton.disabled = false;
   }
 }
+
+
+// Format comments count
+function formatCommentsCount(count) {
+  const num = parseInt(count) || 0;
+  if (num === 0) return 'لا توجد تعليقات';
+  if (num === 1) return 'تعليق واحد';
+  if (num === 2) return 'تعليقان';
+  if (num >= 3 && num <= 10) return `${num} تعليقات`;
+  return `${num} تعليق`;
+}
+
+
 
 // Load comments
 async function loadComments() {
@@ -1249,6 +1250,7 @@ async function setupEngagementSection() {
     });
   }
 
+  // إعداد نظام الإعجابات
   hasLiked = await checkUserLike(currentNews.id);
   
   const likeButton = document.getElementById('likeButton');
@@ -1266,7 +1268,14 @@ async function setupEngagementSection() {
     likeButton.classList.remove('liked');
   }
 
-  likesCountEl.textContent = formatLikesCount(currentNews.likes_count || 0);
+  // جلب عدد الإعجابات من قاعدة البيانات
+  const { count: likesCount } = await sb
+    .from('news_likes')
+    .select('*', { count: 'exact', head: true })
+    .eq('news_id', currentNews.id);
+  
+  currentNews.likes_count = likesCount || 0;
+  likesCountEl.textContent = formatLikesCount(currentNews.likes_count);
 
   likeButton.addEventListener('click', toggleLike);
 
