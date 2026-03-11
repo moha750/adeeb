@@ -13,12 +13,17 @@ const loadMoreIncrement = 6;
 let cachedStats = null;
 let isFetchingStats = false;
 
+// متغيرات البحث
+let searchQuery = '';
+let selectedCategory = 'all';
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', async () => {
   await loadNews();
   setupEventListeners();
   setupStatsObserver();
   setupHeaderColorChange();
+  setupAdvancedSearch();
   
   // (اختياري) يمكنك جلب الإحصائيات مسبقاً في الخلفية هنا ليكون العداد جاهزاً 100% 
   // عند وصول المستخدم للقسم:
@@ -483,4 +488,210 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// ===== Advanced Search System =====
+
+function setupAdvancedSearch() {
+  const searchInput = document.getElementById('newsSearchInput');
+  const searchClearBtn = document.getElementById('searchClearBtn');
+  const searchSuggestions = document.getElementById('searchSuggestions');
+  const suggestionsList = document.getElementById('suggestionsList');
+  const quickFilterBtns = document.querySelectorAll('.quick-filter-btn');
+  
+  let searchTimeout;
+  
+  // Search input handler
+  searchInput.addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim();
+    
+    // Show/hide clear button
+    searchClearBtn.style.display = searchQuery ? 'flex' : 'none';
+    
+    // Debounce search
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      if (searchQuery.length >= 2) {
+        showSearchSuggestions(searchQuery);
+      } else {
+        searchSuggestions.style.display = 'none';
+      }
+      performSearch();
+    }, 300);
+  });
+  
+  // Clear search
+  searchClearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    searchQuery = '';
+    searchClearBtn.style.display = 'none';
+    searchSuggestions.style.display = 'none';
+    performSearch();
+    searchInput.focus();
+  });
+  
+  // Quick filter buttons
+  quickFilterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      quickFilterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedCategory = btn.dataset.category;
+      performSearch();
+    });
+  });
+  
+  // Close suggestions when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.news-search-container')) {
+      searchSuggestions.style.display = 'none';
+    }
+  });
+  
+  // Keyboard navigation
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      searchSuggestions.style.display = 'none';
+      searchInput.blur();
+    }
+  });
+}
+
+function showSearchSuggestions(query) {
+  const suggestions = document.getElementById('searchSuggestions');
+  const suggestionsList = document.getElementById('suggestionsList');
+  
+  // Filter news based on query
+  const matches = allNews.filter(news => {
+    const titleMatch = news.title.toLowerCase().includes(query.toLowerCase());
+    const summaryMatch = news.summary?.toLowerCase().includes(query.toLowerCase());
+    const contentMatch = stripHtml(news.content).toLowerCase().includes(query.toLowerCase());
+    return titleMatch || summaryMatch || contentMatch;
+  }).slice(0, 5);
+  
+  if (matches.length === 0) {
+    suggestionsList.innerHTML = `
+      <div class="no-suggestions">
+        <i class="fas fa-search"></i>
+        <p>لا توجد نتائج مطابقة لـ "${query}"</p>
+      </div>
+    `;
+  } else {
+    suggestionsList.innerHTML = matches.map(news => {
+      const highlightedTitle = highlightText(news.title, query);
+      const category = news.category || 'عام';
+      const date = formatDate(news.published_at);
+      
+      return `
+        <div class="suggestion-item" onclick="openNewsDetail('${news.id}', '${news.slug}')">
+          <div class="suggestion-icon">
+            <i class="fas ${getCategoryIcon(category)}"></i>
+          </div>
+          <div class="suggestion-content">
+            <div class="suggestion-title">${highlightedTitle}</div>
+            <div class="suggestion-meta">
+              <span><i class="fas fa-tag"></i>${category}</span>
+              <span><i class="fas fa-calendar"></i>${date}</span>
+              <span><i class="fas fa-eye"></i>${news.views || 0}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  suggestions.style.display = 'block';
+}
+
+function highlightText(text, query) {
+  if (!query) return escapeHtml(text);
+  const regex = new RegExp(`(${query})`, 'gi');
+  return escapeHtml(text).replace(regex, '<span class="highlight">$1</span>');
+}
+
+function getCategoryIcon(category) {
+  const icons = {
+    'فعاليات': 'fa-calendar-alt',
+    'إنجازات': 'fa-trophy',
+    'ورش': 'fa-chalkboard-teacher',
+    'مسابقات': 'fa-award',
+    'أخبار': 'fa-newspaper',
+    'إعلانات': 'fa-bullhorn'
+  };
+  return icons[category] || 'fa-newspaper';
+}
+
+function performSearch() {
+  const newsGrid = document.getElementById('newsGrid');
+  const newsSection = document.querySelector('.news-section');
+  
+  let filteredNews = [...allNews];
+  
+  // Apply category filter
+  if (selectedCategory !== 'all') {
+    filteredNews = filteredNews.filter(news => 
+      news.category?.includes(selectedCategory)
+    );
+  }
+  
+  // Apply search query
+  if (searchQuery) {
+    filteredNews = filteredNews.filter(news => {
+      const titleMatch = news.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const summaryMatch = news.summary?.toLowerCase().includes(searchQuery.toLowerCase());
+      const contentMatch = stripHtml(news.content).toLowerCase().includes(searchQuery.toLowerCase());
+      const categoryMatch = news.category?.toLowerCase().includes(searchQuery.toLowerCase());
+      return titleMatch || summaryMatch || contentMatch || categoryMatch;
+    });
+  }
+  
+  // Apply current filter (recent/popular)
+  if (currentFilter === 'recent') {
+    filteredNews.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+  } else if (currentFilter === 'popular') {
+    filteredNews.sort((a, b) => (b.views || 0) - (a.views || 0));
+  }
+  
+  // Clear and render
+  newsGrid.innerHTML = '';
+  
+  if (filteredNews.length === 0) {
+    newsGrid.innerHTML = `
+      <div class="news-empty" style="grid-column: 1 / -1;">
+        <i class="fas fa-search"></i>
+        <p>لا توجد أخبار مطابقة لبحثك</p>
+        <button class="load-more-btn" onclick="document.getElementById('newsSearchInput').value = ''; searchQuery = ''; selectedCategory = 'all'; document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active')); document.querySelector('.quick-filter-btn[data-category=all]').classList.add('active'); performSearch();">
+          <span>إعادة تعيين البحث</span>
+          <i class="fas fa-redo"></i>
+        </button>
+      </div>
+    `;
+    document.getElementById('loadMoreContainer').style.display = 'none';
+    newsSection?.classList.add('search-active');
+    return;
+  }
+  
+  // Display filtered news
+  const newsToDisplay = filteredNews.slice(0, displayedCount);
+  newsToDisplay.forEach(news => {
+    const card = createNewsCard(news, false);
+    if (searchQuery || selectedCategory !== 'all') {
+      card.classList.add('search-match');
+    }
+    newsGrid.appendChild(card);
+  });
+  
+  // Show/hide load more
+  const loadMoreContainer = document.getElementById('loadMoreContainer');
+  if (filteredNews.length > displayedCount) {
+    loadMoreContainer.style.display = 'block';
+  } else {
+    loadMoreContainer.style.display = 'none';
+  }
+  
+  // Add search-active class for highlighting
+  if (searchQuery || selectedCategory !== 'all') {
+    newsSection?.classList.add('search-active');
+  } else {
+    newsSection?.classList.remove('search-active');
+  }
 }

@@ -6,6 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>أخبار أديب | نادي أديب الأدبي</title>
   <meta name="description" content="آخر أخبار وفعاليات نادي أديب الأدبي">
+  <meta property="og:image" content="https://www.adeeb.club/news/news.png" />
+  <meta property="og:url" content="https://www.adeeb.club/news/news.png" />
+  <meta property="og:image:secure_url" content="https://www.adeeb.club/news/news.png" />
+  <link rel="canonical" href="https://www.adeeb.club/news/news.png" />
+  <meta name="twitter:image" content="https://www.adeeb.club/news/news.png" />
 
   <!-- Favicon -->
   <link rel="apple-touch-icon" sizes="180x180" href="../favicon/apple-icon-180x180.png">
@@ -23,6 +28,7 @@
   <!-- Main Styles -->
   <link rel="stylesheet" href="../style.css">
   <link rel="stylesheet" href="news.css">
+  <link rel="stylesheet" href="news-search.css">
   <link rel="stylesheet" href="news-footer.css">
 
   <!-- Supabase -->
@@ -106,6 +112,54 @@
     <div class="news-hero-content">
       <h1 class="news-hero-title">منصة أدِيب الإخبارية</h1>
       <p class="news-hero-subtitle">آخر أخبار ومُستجدات نادي أدِيب</p>
+
+      <!-- Advanced Search Bar -->
+      <div class="news-search-container">
+        <div class="search-wrapper">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" id="newsSearchInput" class="news-search-input"
+            placeholder="ابحث عن الأخبار، الفعاليات، الإنجازات..." autocomplete="off" />
+          <button class="search-clear-btn" id="searchClearBtn" style="display: none;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <!-- Search Suggestions Dropdown -->
+        <div class="search-suggestions" id="searchSuggestions" style="display: none;">
+          <div class="suggestions-header">
+            <i class="fas fa-lightbulb"></i>
+            <span>اقتراحات البحث</span>
+          </div>
+          <div class="suggestions-list" id="suggestionsList">
+            <!-- سيتم ملؤها ديناميكياً -->
+          </div>
+        </div>
+
+        <!-- Quick Filters -->
+        <div class="search-quick-filters">
+          <button class="quick-filter-btn active" data-category="all">
+            <i class="fas fa-globe"></i>
+            <span>الكل</span>
+          </button>
+          <button class="quick-filter-btn" data-category="فعاليات">
+            <i class="fas fa-calendar-alt"></i>
+            <span>فعاليات</span>
+          </button>
+          <button class="quick-filter-btn" data-category="إنجازات">
+            <i class="fas fa-trophy"></i>
+            <span>إنجازات</span>
+          </button>
+          <button class="quick-filter-btn" data-category="ورش">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <span>ورش</span>
+          </button>
+          <button class="quick-filter-btn" data-category="مسابقات">
+            <i class="fas fa-award"></i>
+            <span>مسابقات</span>
+          </button>
+        </div>
+      </div>
+
       <div class="news-hero-stats">
         <div class="stat-card">
           <div class="stat-icon">
@@ -258,7 +312,7 @@
                 أعمالنا
               </a>
             </li>
-                        <li>
+            <li>
               <a href="../index.html#achievements">
                 <i class="fas fa-trophy"></i>
                 انجازاتنا

@@ -926,10 +926,20 @@ async function toggleLike() {
 
       if (error) {
         if (error.code === '23505') {
+          // الإعجاب موجود مسبقاً - نحدث الواجهة فقط دون زيادة العدد
           hasLiked = true;
           likeIcon.className = 'fas fa-heart';
           likeText.textContent = 'أعجبت بالخبر';
           likeButton.classList.add('liked');
+          
+          // إعادة جلب العدد الصحيح من قاعدة البيانات
+          const { count } = await sb
+            .from('news_likes')
+            .select('*', { count: 'exact', head: true })
+            .eq('news_id', currentNews.id);
+          
+          currentNews.likes_count = count || 0;
+          likesCountEl.textContent = formatLikesCount(currentNews.likes_count);
           return;
         }
         throw error;
