@@ -847,15 +847,6 @@
           }
           const sb = window.sbClient;
           
-          // تسجيل الخروج من أي session مسجل لضمان استخدام anon role
-          if (sb) {
-            try {
-              await sb.auth.signOut();
-            } catch (e) {
-              console.warn('Sign out failed:', e);
-            }
-          }
-          
           const payload = {
             full_name: document.getElementById('fullName').value.trim(),
             phone: document.getElementById('phone').value.trim() || null,
@@ -887,10 +878,10 @@
             let applicationId = null;
             if(sb){
               try{
-                const { data, error } = await sb.from('membership_applications').insert(payload).select().single();
+                const { data, error } = await sb.from('membership_applications').insert(payload);
                 if(error) throw error;
                 saved = true;
-                applicationId = data?.id;
+                applicationId = null; // لا يمكن الحصول على ID لأن anon لا يملك صلاحية SELECT
                 
                 // تسجيل استخدام الدعوة إذا كانت موجودة
                 if (invitationData && applicationId) {
