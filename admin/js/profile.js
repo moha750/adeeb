@@ -280,10 +280,10 @@
             // جلب جميع أدوار المستخدم النشطة مع الأولوية للدور الأعلى
             const { data: rolesData, error } = await window.sbClient
                 .from('user_roles')
-                .select('role_name, role_level, committee_id, committees(committee_name_ar)')
+                .select('committee_id, committees(committee_name_ar), roles(role_name, role_level)')
                 .eq('user_id', user.id)
                 .eq('is_active', true)
-                .order('role_level', { ascending: false });
+                .order('roles(role_level)', { ascending: false });
 
             if (error) {
                 console.error('خطأ في جلب الأدوار:', error);
@@ -294,7 +294,7 @@
 
             // اختيار الدور الأعلى (أول عنصر بعد الترتيب)
             const roleData = rolesData[0];
-            const roleName = roleData.role_name;
+            const roleName = roleData.roles?.role_name;
             const committeeName = roleData.committees?.committee_name_ar || '';
 
             // تحديد عرض الدور بناءً على نوع الدور

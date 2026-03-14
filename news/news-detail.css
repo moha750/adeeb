@@ -3450,12 +3450,12 @@ background: linear-gradient(135deg, rgba(248, 249, 250, 0.95) 0%, rgba(230, 240,
 
 .comment-author-input {
   padding: 14px 20px;
-  border: 2px solid rgba(61, 143, 214, 0.2);
+  border: 2px solid rgba(61, 143, 214, 0.25);
   border-radius: 12px;
   font-size: 1rem;
   font-family: 'fr', sans-serif;
   color: #274060;
-  background: rgba(255, 255, 255, 0.95);
+  background: linear-gradient(135deg, rgba(248, 249, 250, 0.95) 0%, rgba(230, 240, 249, 0.98) 50%, rgba(248, 249, 250, 0.95) 100%);
   transition: all 0.3s ease;
   outline: none;
 }
