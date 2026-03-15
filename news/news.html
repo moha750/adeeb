@@ -29,6 +29,7 @@
   <link rel="stylesheet" href="../style.css">
   <link rel="stylesheet" href="news.css">
   <link rel="stylesheet" href="news-footer.css">
+  <link rel="stylesheet" href="news-theme.css">
 
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -106,6 +107,11 @@
     </div>
   </header>
 
+  <!-- زر الوضع الليلي/النهاري - زاوية الصفحة -->
+  <button class="theme-toggle-btn" id="themeToggle" title="تبديل الوضع الليلي/النهاري">
+    <i class="fas fa-moon"></i>
+  </button>
+
   <!-- Hero Section -->
   <section class="news-hero">
     <div class="news-hero-content">
@@ -117,7 +123,7 @@
         <div class="search-wrapper">
           <i class="fas fa-search search-icon"></i>
           <input type="text" id="newsSearchInput" class="news-search-input"
-            placeholder="ابحث عن الأخبار، الفعاليات، الإنجازات..." autocomplete="off" />
+            placeholder=" ابحث عن الأخبار ... " autocomplete="off" />
           <button class="search-clear-btn" id="searchClearBtn" style="display: none;">
             <i class="fas fa-times"></i>
           </button>
@@ -423,6 +429,7 @@
 
   <!-- Scripts -->
   <script src="../script.js"></script>
+  <script src="news-theme.js"></script>
   <script src="news.js"></script>
 </body>
 

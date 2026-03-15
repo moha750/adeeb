@@ -1094,7 +1094,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+  background: white;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: 50px;
@@ -1242,6 +1242,7 @@
   max-height: 380px;
   overflow-y: auto;
   padding: 10px 0;
+  z-index: 10000000 !important;
 }
 
 .suggestions-list::-webkit-scrollbar {

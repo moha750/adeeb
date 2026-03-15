@@ -572,7 +572,7 @@ function showSearchSuggestions(query) {
     const summaryMatch = news.summary?.toLowerCase().includes(query.toLowerCase());
     const contentMatch = stripHtml(news.content).toLowerCase().includes(query.toLowerCase());
     return titleMatch || summaryMatch || contentMatch;
-  }).slice(0, 5);
+  }).slice(0, 10);
   
   if (matches.length === 0) {
     suggestionsList.innerHTML = `
@@ -627,77 +627,6 @@ function getCategoryIcon(category) {
 }
 
 function performSearch() {
-  const newsGrid = document.getElementById('newsGrid');
-  const newsSection = document.querySelector('.news-section');
-  
-  let filteredNews = [...allNews];
-  
-  // Apply category filter
-  if (selectedCategory !== 'all') {
-    filteredNews = filteredNews.filter(news => 
-      news.category?.includes(selectedCategory)
-    );
-  }
-  
-  // Apply search query
-  if (searchQuery) {
-    filteredNews = filteredNews.filter(news => {
-      const titleMatch = news.title.toLowerCase().includes(searchQuery.toLowerCase());
-      const summaryMatch = news.summary?.toLowerCase().includes(searchQuery.toLowerCase());
-      const contentMatch = stripHtml(news.content).toLowerCase().includes(searchQuery.toLowerCase());
-      const categoryMatch = news.category?.toLowerCase().includes(searchQuery.toLowerCase());
-      return titleMatch || summaryMatch || contentMatch || categoryMatch;
-    });
-  }
-  
-  // Apply current filter (recent/popular)
-  if (currentFilter === 'recent') {
-    filteredNews.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
-  } else if (currentFilter === 'popular') {
-    filteredNews.sort((a, b) => (b.views || 0) - (a.views || 0));
-  }
-  
-  // Clear and render
-  newsGrid.innerHTML = '';
-  
-  if (filteredNews.length === 0) {
-    newsGrid.innerHTML = `
-      <div class="news-empty" style="grid-column: 1 / -1;">
-        <i class="fas fa-search"></i>
-        <p>لا توجد أخبار مطابقة لبحثك</p>
-        <button class="load-more-btn" onclick="document.getElementById('newsSearchInput').value = ''; searchQuery = ''; selectedCategory = 'all'; document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active')); document.querySelector('.quick-filter-btn[data-category=all]').classList.add('active'); performSearch();">
-          <span>إعادة تعيين البحث</span>
-          <i class="fas fa-redo"></i>
-        </button>
-      </div>
-    `;
-    document.getElementById('loadMoreContainer').style.display = 'none';
-    newsSection?.classList.add('search-active');
-    return;
-  }
-  
-  // Display filtered news
-  const newsToDisplay = filteredNews.slice(0, displayedCount);
-  newsToDisplay.forEach(news => {
-    const card = createNewsCard(news, false);
-    if (searchQuery || selectedCategory !== 'all') {
-      card.classList.add('search-match');
-    }
-    newsGrid.appendChild(card);
-  });
-  
-  // Show/hide load more
-  const loadMoreContainer = document.getElementById('loadMoreContainer');
-  if (filteredNews.length > displayedCount) {
-    loadMoreContainer.style.display = 'block';
-  } else {
-    loadMoreContainer.style.display = 'none';
-  }
-  
-  // Add search-active class for highlighting
-  if (searchQuery || selectedCategory !== 'all') {
-    newsSection?.classList.add('search-active');
-  } else {
-    newsSection?.classList.remove('search-active');
-  }
+  // البحث لا يؤثر على أقسام الأخبار - يعمل فقط في صندوق الاقتراحات
+  // الأقسام تبقى كما هي دائمًا
 }

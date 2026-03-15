@@ -1292,7 +1292,32 @@ async function setupEngagementSection() {
   await loadComments();
 }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-  loadNewsDetail();
+// Setup header color change on footer
+function setupHeaderColorChange() {
+  const header = document.querySelector('.header');
+  const footer = document.querySelector('.footer');
+  
+  if (!header || !footer) return;
+
+  function checkHeaderOverlap() {
+    const headerRect = header.getBoundingClientRect();
+    const headerCenter = headerRect.top + (headerRect.height / 2);
+    const footerRect = footer.getBoundingClientRect();
+    
+    if (headerCenter >= footerRect.top && headerCenter <= footerRect.bottom) {
+      header.classList.add('on-dark');
+    } else {
+      header.classList.remove('on-dark');
+    }
+  }
+
+  window.addEventListener('scroll', checkHeaderOverlap);
+  checkHeaderOverlap();
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadNewsDetail();
+  setupEngagementSection();
+  setupHeaderColorChange();
 });

@@ -42,6 +42,7 @@
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="news-detail.css">
     <link rel="stylesheet" href="news-footer.css">
+    <link rel="stylesheet" href="news-theme.css">
     
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -62,6 +63,11 @@
         </div>
       </div>
     </header>
+
+    <!-- زر الوضع الليلي/النهاري - زاوية الصفحة -->
+    <button class="theme-toggle-btn" id="themeToggle" title="تبديل الوضع الليلي/النهاري">
+      <i class="fas fa-moon"></i>
+    </button>
 
     <!-- Loading State -->
     <div id="newsLoading" class="loading-container">
@@ -517,6 +523,7 @@
     <!-- Swiper JS -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="../script.js"></script>
+    <script src="news-theme.js"></script>
     <script src="news-detail.js"></script>
 </body>
 </html>

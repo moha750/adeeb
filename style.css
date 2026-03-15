@@ -135,14 +135,17 @@
 }
 
 .header.on-dark .nav-link {
-  color: white;
-  background: rgba(255, 255, 255, 0.1);
+  color: rgb(255, 255, 255);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.header.on-dark .nav-link .nav-wave  {
+  background: white;
 }
 
 .header.on-dark .nav-link:hover,
 .header.on-dark .nav-link.active {
-  color: white;
-  background: rgba(61, 143, 214, 0.3);
+  color: #274060;
 }
 
 .header.on-dark .line {
