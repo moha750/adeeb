@@ -3167,19 +3167,14 @@
 }
 
 .likes-count {
-  font-size: 1.1rem;
-  color: #274060;
-  font-weight: 700;
-  font-family: 'fb', sans-serif;
-  padding: 12px 28px;
-  background: linear-gradient(135deg, rgba(61, 143, 214, 0.1), rgba(39, 64, 96, 0.05));
-  border-radius: 25px;
-  border: 2px solid rgba(61, 143, 214, 0.2);
-  box-shadow: 0 4px 15px rgba(61, 143, 214, 0.1);
-  text-align: center;
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 1;
+    font-size: 1.1rem;
+    color: #3d8fd6;
+    font-weight: 700;
+    font-family: 'fb', sans-serif;
+    padding: 10px 22px;
+    background: linear-gradient(135deg, rgba(61, 143, 214, 0.12), rgba(61, 143, 214, 0.08));
+    border-radius: 50px;
+    border: 2px solid rgba(61, 143, 214, 0.2);
 }
 
 .likes-count:hover {

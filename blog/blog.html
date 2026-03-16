@@ -1,0 +1,298 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>مرافئ — مدونة نادي أديب</title>
+    <!-- Primary SEO -->
+    <meta name="description" content="مرافئ: منصة تدوين تابعة لنادي أدِيب لعرض مقالات وخواطر وإبداعات شباب جامعة الملك فيصل." />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#274060" />
+    <link rel="canonical" href="https://www.adeeb.club/marafi/blog/blog.html" />
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="نادي أدِيب" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ar_SA" />
+    <meta property="og:title" content="مرافئ — مدونة نادي أديب" />
+    <meta property="og:description" content="منصة تدوين لعرض مقالات وخواطر وإبداعات شباب جامعة الملك فيصل." />
+    <meta property="og:url" content="https://www.adeeb.club/marafi/blog/blog.html" />
+    <meta property="og:image" content="https://www.adeeb.club/LOGO.png" />
+    <meta property="og:image:alt" content="شعار نادي أدِيب" />
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@AB_KFU" />
+    <meta name="twitter:title" content="مرافئ — مدونة نادي أديب" />
+    <meta name="twitter:description" content="منصة تدوين لعرض مقالات وخواطر وإبداعات شباب جامعة الملك فيصل." />
+    <meta name="twitter:image" content="https://www.adeeb.club/LOGO.png" />
+    <!-- JSON-LD: Blog -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Blog",
+        "name": "مرافئ — مدونة نادي أديب",
+        "url": "https://www.adeeb.club/marafi/blog/blog.html",
+        "publisher": {
+          "@type": "Organization",
+          "name": "نادي أدِيب",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://www.adeeb.club/LOGO.png"
+          }
+        },
+        "inLanguage": "ar"
+      }
+    </script>
+    <link rel="stylesheet" href="blog.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  </head>
+  <body class="blog-page">
+    <!-- قسم: الهيدر (مطابق للرئيسية) -->
+    <header class="header">
+      <div class="header-container">
+        <div class="menu-toggle" id="menuToggle">
+          <div class="hamburger">
+            <span class="line line1"></span>
+            <span class="line line2"></span>
+            <span class="line line3"></span>
+          </div>
+        </div>
+        <div class="logo">
+          <a class="logo-link" href="/index.html">
+            <img
+              alt="شعار مرافئ"
+              class="logo-img"
+              src="/marafi/LOGO.png"
+            />
+          </a>
+        </div>
+        <nav class="nav">
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a class="nav-link" href="/index.html#adeebbook">
+                <i class="fas fa-home nav-icon"></i>
+                <span class="nav-text">موقع أدِيب</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="blog.html">
+                <i class="fa-solid fa-anchor"></i>
+                <span class="nav-text">مرافئ</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#posts">
+                <i class="fa-solid fa-file-lines"></i>
+                <span class="nav-text">التدوينات</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+            <!-- <li class="nav-item">
+              <a class="nav-link" href="../index.html#sponsors">
+                <i class="fa-solid fa-briefcase"></i>
+                <span class="nav-text">شُركائنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li> -->
+            <!-- <li class="nav-item">
+              <a class="nav-link" href="../index.html#board-members">
+                <i class="fa-solid fa-trophy"></i>
+                <span class="nav-text">المجلس الإداري</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li> -->
+            <li class="nav-item">
+              <a class="nav-link" href="/index.html#contact">
+                <i class="fas fa-envelope nav-icon"></i>
+                <span class="nav-text">تواصل معنا</span>
+                <span class="nav-wave"></span>
+              </a>
+            </li>
+          </ul>
+          <!-- زر الاشتراك -->
+          <!-- <a class="subscribe-btn" href="#" id="joinBtn">
+            <span>انضم إلينا</span>
+            <i class="fas fa-user-plus"></i>
+          </a> -->
+        </nav>
+      </div>
+    </header>
+    <!-- بطل الصفحة - النسخة المحسنة -->
+    <section class="blog-hero">
+      <!-- طبقات تأثير Parallax -->
+      <div class="parallax-layer layer-1" data-depth="0.10"></div>
+      <div class="parallax-layer layer-2" data-depth="0.20"></div>
+      <div class="parallax-layer layer-3" data-depth="0.30"></div>
+
+      <!-- عناصر الجسيمات المتحركة -->
+      <div class="particles-container" id="particles"></div>
+
+      <div class="container">
+        <div class="hero-orbit">
+          <div class="hero-logo">
+            <img src="../LOGO.png" alt="شعار نادي أدِيب" />
+          </div>
+          <ul class="orbit-tags" aria-hidden="true">
+            <li class="orbit-item orbit-tag p1">إلهام</li>
+            <li class="orbit-item orbit-emoji p2" aria-hidden="true">💡</li>
+            <li class="orbit-item orbit-tag p3">كتابة</li>
+            <li class="orbit-item orbit-emoji p4" aria-hidden="true">✍️</li>
+            <li class="orbit-item orbit-tag p5">قراءة</li>
+            <li class="orbit-item orbit-emoji p6" aria-hidden="true">📖</li>
+            <li class="orbit-item orbit-tag p7">تجارب</li>
+            <li class="orbit-item orbit-emoji p8" aria-hidden="true">🎯</li>
+            <li class="orbit-item orbit-tag p9">أدب</li>
+            <li class="orbit-item orbit-emoji p10" aria-hidden="true">📚</li>
+            <li class="orbit-item orbit-tag p11">تصميم</li>
+            <li class="orbit-item orbit-emoji p12" aria-hidden="true">🎨</li>
+          </ul>
+        </div>
+
+        <div class="hero-content">
+          <h1 class="blog-title">مرافئ الفكر والإبداع</h1>
+          <div class="blog-subtitle-wrapper">
+            <p class="blog-subtitle">محطات إبداعية تستقبل أفكاركم، مقالاتكم، وخواطركم. نرحب بكم في رحلة عبر عالم الأدب والفنون.</p>
+          </div>
+        </div>
+
+        <div class="blog-actions">
+          <a class="btn btn-primary" href="#posts">
+            <i class="fa-solid fa-compass"></i>
+            <span>استكشف التدوينات</span>
+            <div class="btn-hover-effect"></div>
+          </a>
+          <a class="btn btn-outline" id="blogCtaBtn" href="../blogger/register.html">
+            <!-- ستملئ بجافا سكريبت -->
+            <i></i>
+            <span></span>
+            <div class="btn-hover-effect"></div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- شبكة المقالات -->
+    <main id="posts" class="blog-container">
+      <div class="posts-grid" id="postsGrid">
+      </div>
+    </main>
+    <!-- Footer مع النشرة البريدية -->
+    <footer class="site-footer">
+      <div class="footer-container">
+        <!-- قسم النشرة البريدية -->
+        <div class="footer-newsletter">
+          <div class="newsletter-content">
+            <h3>انضم إلى قائمة المراسلة</h3>
+            <p>اشترك في نشرتنا البريدية لتصلك أحدث التدوينات والمقالات مباشرة إلى بريدك الإلكتروني.</p>
+            
+            <div class="newsletter-benefits">
+              <div class="benefit-item">
+                <div class="benefit-icon">
+                  <i class="fas fa-newspaper"></i>
+                </div>
+                <p>أحدث التدوينات أولًا بأول</p>
+              </div>
+              <div class="benefit-item">
+                <div class="benefit-icon">
+                  <i class="fas fa-star"></i>
+                </div>
+                <p>المختارات المتميزة</p>
+              </div>
+              <div class="benefit-item">
+                <div class="benefit-icon">
+                  <i class="fas fa-envelope-open-text"></i>
+                </div>
+                <p>ملخصات شهرية موجزة</p>
+              </div>
+            </div>
+
+            <form class="newsletter-form" id="newsletterForm">
+              <div class="input-group">
+                <input
+                  type="email"
+                  name="البريد الإلكتروني"
+                  placeholder="بريدك الإلكتروني"
+                  required
+                />
+                <button type="submit">
+                  <span>اشتراك</span>
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+              <div class="agreement">
+                <input type="checkbox" id="agree" required />
+                <label for="agree">أوافق على على تلقي الرسائل في بريدي الخاص.</label>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- روابط ومعلومات إضافية -->
+        <div class="footer-content">
+          <div class="footer-section">
+            <div class="footer-logo">
+              <img src="../LOGO.png" alt="شعار نادي أدِيب">
+              <p>مرافئ الفكر والإبداع، منصة لنشر الأفكار والتدوينات الإبداعية تحت مظلة نادي أدِيب.</p>
+            </div>
+          </div>
+
+          <div class="footer-section">
+            <h4>روابط سريعة</h4>
+            <ul class="footer-links">
+              <li><a href="/index.html">الرئيسية</a></li>
+              <li><a href="blog.html">المدونة</a></li>
+              <li><a href="#posts">أحدث التدوينات</a></li>
+              <li><a href="/index.html#contact">اتصل بنا</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h4>التصنيفات</h4>
+            <ul class="footer-links">
+              <li><a href="#">أدب وثقافة</a></li>
+              <li><a href="#">تقنية وعلوم</a></li>
+              <li><a href="#">فنون وإبداع</a></li>
+              <li><a href="#">رأي وتحليل</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h4>تابعنا على</h4>
+            <div class="social-links">
+              <a href="#" aria-label="تويتر"><i class="fab fa-twitter"></i></a>
+              <a href="#" aria-label="فيسبوك"><i class="fab fa-facebook-f"></i></a>
+              <a href="#" aria-label="إنستغرام"><i class="fab fa-instagram"></i></a>
+              <a href="#" aria-label="يوتيوب"><i class="fab fa-youtube"></i></a>
+              <a href="#" aria-label="لينكد إن"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- حقوق النشر -->
+        <div class="footer-bottom">
+          <p> مدونة مرافئ أحد برامج <a href="https://www.adeeb.club" target="_blank" rel="noopener">نادي أدِيب</a> <span id="footerYear"></span> &copy; </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- شاشة التحميل العامة للمدونة -->
+    <div id="adeebLoader" class="adeeb-loader-overlay" aria-hidden="true" style="display:none">
+      <div class="adeeb-loader-box">
+        <div id="adeebLottie" class="adeeb-loader-anim" aria-label="جاري التحميل" role="img"></div>
+        <div class="adeeb-loader-text">جاري التحميل…</div>
+      </div>
+    </div>
+
+    <!-- مكاتب خارجية أساسية فقط -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="blog.js"></script>
+  </body>
+</html>

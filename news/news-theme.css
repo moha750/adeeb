@@ -76,6 +76,16 @@ body {
   box-shadow: var(--news-card-shadow) !important;
 }
 
+[data-theme="dark"] .article-image-container .article-meta {
+  background: var(--news-card-bg) !important;
+  border-color: var(--news-card-border) !important;
+  box-shadow: var(--news-card-shadow) !important;
+}
+
+[data-theme="dark"] .article-image-container .article-title::after, .article-image-container .article-meta::before {
+  background: linear-gradient(90deg, transparent 0%, rgba(209, 233, 255, 0.4) 20%, rgba(255, 255, 255, 0.8) 50%, rgba(209, 233, 255, 0.4) 80%, transparent 100%);
+}
+
 .news-card-title {
   color: var(--news-text-primary) !important;
 }
@@ -484,13 +494,20 @@ body {
     box-shadow: var(--news-card-shadow) !important;
 }
 
-[data-theme="dark"] .meta-item::before {
-    background: none !important;
-    border-color: var(--news-card-border) !important;
-    box-shadow: var(--news-card-shadow) !important;
+[data-theme="dark"] .meta-item {
+  background: none !important;
+  border-color: var(--news-card-border) !important;
 }
 
-/* Loading & Error States */
+[data-theme="dark"] .meta-item span {
+  color: var(--news-text-secondary) !important;
+}
+
+[data-theme="dark"] .comments-header h3, .login-prompt-text h4, .login-prompt-text p, .comments-empty p {
+  color: var(--news-text-primary) !important;
+}
+
+/* Loading & Error States */ 
 [data-theme="dark"] .loading-container,
 [data-theme="dark"] .error-container {
   background: var(--news-bg-primary) !important;
@@ -534,6 +551,28 @@ body {
 [data-theme="dark"] .article-content p,
 [data-theme="dark"] .article-content li {
   color: var(--news-text-secondary) !important;
+}
+
+[data-theme="dark"] .likes-title,
+[data-theme="dark"] .gallery-title,
+[data-theme="dark"] .article-share h3,
+[data-theme="dark"] .related-news h3 {
+  color: var(--news-text-primary) !important;
+}
+
+[data-theme="dark"] .related-ornament-center,
+[data-theme="dark"] .gallery-ornament-center,
+[data-theme="dark"] .likes-ornament-center {
+  background: rgba(61, 143, 214, 0.3) !important;
+}
+
+[data-theme="dark"] .breadcrumb span {
+  color: var(--news-text-secondary) !important;
+}
+
+[data-theme="dark"] .gallery-image-card {
+    background: var(--news-card-bg) !important;
+  border-color: var(--news-card-border) !important;
 }
 
 /* الأزرار في الوضع الليلي */
