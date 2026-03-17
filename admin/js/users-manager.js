@@ -679,9 +679,14 @@ class UsersManager {
                             <li>منع المستخدم من الدخول للنظام</li>
                         </ul>
                     </div>
-                    <p class="danger-text">
-                        لا يمكن التراجع عن هذا الإجراء!
-                    </p>
+                    <div style="margin-top: 1rem; text-align: right;">
+                        <label style="display: block; font-size: 0.9rem; color: #374151; margin-bottom: 0.4rem; font-weight: 500;">
+                            سبب إنهاء العضوية <span style="color: #9ca3af; font-weight: 400;">(اختياري)</span>
+                        </label>
+                        <textarea id="terminationReasonInput" rows="3"
+                            style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; resize: vertical; direction: rtl; font-family: inherit;"
+                            placeholder="أدخل سبب إنهاء العضوية..."></textarea>
+                    </div>
                 </div>
             `,
             icon: 'warning',
@@ -690,10 +695,14 @@ class UsersManager {
             cancelButtonColor: '#6c757d',
             confirmButtonText: 'نعم، إنهاء العضوية',
             cancelButtonText: 'إلغاء',
-            reverseButtons: true
+            reverseButtons: true,
+            preConfirm: () => {
+                return document.getElementById('terminationReasonInput')?.value?.trim() || null;
+            }
         });
 
         if (!result.isConfirmed) return;
+        const terminationReason = result.value || null;
 
         try {
             // 1. تعطيل جميع أدوار المستخدم
@@ -704,11 +713,12 @@ class UsersManager {
 
             if (rolesError) throw rolesError;
 
-            // 2. تحديث حالة الحساب إلى معلق
+            // 2. تحديث حالة الحساب إلى معلق مع سبب الإنهاء
             const { error: profileError } = await this.supabase
                 .from('profiles')
                 .update({ 
                     account_status: 'suspended',
+                    termination_reason: terminationReason,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', userId);

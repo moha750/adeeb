@@ -217,7 +217,6 @@
     font-size: 0.85rem;
     color: var(--text-dark, #374151);
     border-bottom: 2px solid rgba(61, 143, 214, 0.15);
-    white-space: nowrap;
 }
 
 .data-table th:first-child {

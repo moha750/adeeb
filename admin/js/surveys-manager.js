@@ -110,6 +110,8 @@
                         committee:committees(committee_name_ar),
                         survey_questions(id)
                     `)
+                    .eq('is_archived', false)
+                    .eq('is_deleted', false)
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
@@ -497,8 +499,12 @@
                             <i class="fa-solid fa-chart-bar"></i>
                             النتائج
                         </button>
+                        <button class="btn btn--secondary btn--sm" onclick="window.surveysManager.archiveSurvey(${survey.id})" title="أرشفة الاستبيان">
+                            <i class="fa-solid fa-box-archive"></i>
+                            أرشفة
+                        </button>
                         ` : ''}
-                        <button class="btn btn--danger btn--sm" onclick="window.surveysManager.deleteSurveyPermanently(${survey.id})" title="حذف نهائي">
+                        <button class="btn btn--danger btn--sm" onclick="window.surveysManager.deleteSurvey(${survey.id})" title="حذف">
                             <i class="fa-solid fa-trash"></i>
                             حذف
                         </button>
@@ -1926,6 +1932,219 @@
                 return JSON.stringify(answer, null, 2);
             }
             return answer || 'لا توجد إجابة';
+        }
+
+        async archiveSurvey(surveyId) {
+            const result = await Swal.fire({
+                title: 'أرشفة الاستبيان',
+                text: 'هل أنت متأكد من أرشفة هذا الاستبيان؟ سيتم نقله إلى قسم الأرشيف.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'نعم، أرشف',
+                cancelButtonText: 'إلغاء',
+                confirmButtonColor: '#3b82f6'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const { error } = await sb
+                    .from('surveys')
+                    .update({
+                        is_archived: true,
+                        archived_at: new Date().toISOString(),
+                        archived_by: currentUser.id
+                    })
+                    .eq('id', surveyId);
+
+                if (error) throw error;
+
+                this.showSuccess('تم أرشفة الاستبيان بنجاح');
+                await this.loadAllSurveys();
+            } catch (error) {
+                console.error('Error archiving survey:', error);
+                this.showError('حدث خطأ أثناء أرشفة الاستبيان');
+            }
+        }
+
+        async deleteSurvey(surveyId) {
+            const result = await Swal.fire({
+                title: 'حذف الاستبيان',
+                html: 'هل أنت متأكد من حذف هذا الاستبيان؟<br><strong>سيتم الاحتفاظ به في المحذوفات لمدة 30 يوماً قبل الحذف النهائي.</strong>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'نعم، احذف',
+                cancelButtonText: 'إلغاء',
+                confirmButtonColor: '#ef4444'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const now = new Date();
+                const permanentDeleteDate = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
+
+                const { error } = await sb
+                    .from('surveys')
+                    .update({
+                        is_deleted: true,
+                        deleted_at: now.toISOString(),
+                        deleted_by: currentUser.id,
+                        permanent_delete_at: permanentDeleteDate.toISOString()
+                    })
+                    .eq('id', surveyId);
+
+                if (error) throw error;
+
+                this.showSuccess('تم نقل الاستبيان إلى المحذوفات. سيتم حذفه نهائياً بعد 30 يوماً.');
+                await this.loadAllSurveys();
+            } catch (error) {
+                console.error('Error deleting survey:', error);
+                this.showError('حدث خطأ أثناء حذف الاستبيان');
+            }
+        }
+
+        async loadArchivedSurveys() {
+            try {
+                const { data, error } = await sb
+                    .from('surveys')
+                    .select(`
+                        *,
+                        created_by_profile:profiles!surveys_created_by_fkey(full_name),
+                        archived_by_profile:profiles!surveys_archived_by_fkey(full_name),
+                        committee:committees(committee_name_ar),
+                        survey_questions(id)
+                    `)
+                    .eq('is_archived', true)
+                    .eq('is_deleted', false)
+                    .order('archived_at', { ascending: false });
+
+                if (error) throw error;
+                return data || [];
+            } catch (error) {
+                console.error('Error loading archived surveys:', error);
+                this.showError('حدث خطأ أثناء تحميل الاستبيانات المؤرشفة');
+                return [];
+            }
+        }
+
+        async loadDeletedSurveys() {
+            try {
+                const { data, error } = await sb
+                    .from('surveys')
+                    .select(`
+                        *,
+                        created_by_profile:profiles!surveys_created_by_fkey(full_name),
+                        deleted_by_profile:profiles!surveys_deleted_by_fkey(full_name),
+                        committee:committees(committee_name_ar),
+                        survey_questions(id)
+                    `)
+                    .eq('is_deleted', true)
+                    .order('deleted_at', { ascending: false });
+
+                if (error) throw error;
+                return data || [];
+            } catch (error) {
+                console.error('Error loading deleted surveys:', error);
+                this.showError('حدث خطأ أثناء تحميل الاستبيانات المحذوفة');
+                return [];
+            }
+        }
+
+        async restoreSurvey(surveyId) {
+            const result = await Swal.fire({
+                title: 'استعادة الاستبيان',
+                text: 'هل تريد استعادة هذا الاستبيان؟',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'نعم، استعد',
+                cancelButtonText: 'إلغاء',
+                confirmButtonColor: '#10b981'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const { error } = await sb
+                    .from('surveys')
+                    .update({
+                        is_deleted: false,
+                        deleted_at: null,
+                        deleted_by: null,
+                        permanent_delete_at: null
+                    })
+                    .eq('id', surveyId);
+
+                if (error) throw error;
+
+                this.showSuccess('تم استعادة الاستبيان بنجاح');
+                await this.loadAllSurveys();
+            } catch (error) {
+                console.error('Error restoring survey:', error);
+                this.showError('حدث خطأ أثناء استعادة الاستبيان');
+            }
+        }
+
+        async unarchiveSurvey(surveyId) {
+            const result = await Swal.fire({
+                title: 'إلغاء الأرشفة',
+                text: 'هل تريد إلغاء أرشفة هذا الاستبيان؟',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'نعم، ألغِ الأرشفة',
+                cancelButtonText: 'إلغاء',
+                confirmButtonColor: '#10b981'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const { error } = await sb
+                    .from('surveys')
+                    .update({
+                        is_archived: false,
+                        archived_at: null,
+                        archived_by: null
+                    })
+                    .eq('id', surveyId);
+
+                if (error) throw error;
+
+                this.showSuccess('تم إلغاء أرشفة الاستبيان بنجاح');
+                await this.loadAllSurveys();
+            } catch (error) {
+                console.error('Error unarchiving survey:', error);
+                this.showError('حدث خطأ أثناء إلغاء الأرشفة');
+            }
+        }
+
+        async deleteSurveyPermanently(surveyId) {
+            const result = await Swal.fire({
+                title: 'حذف نهائي',
+                html: '<strong>تحذير:</strong> هذا الإجراء لا يمكن التراجع عنه!<br>سيتم حذف الاستبيان وجميع بياناته نهائياً.',
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonText: 'نعم، احذف نهائياً',
+                cancelButtonText: 'إلغاء',
+                confirmButtonColor: '#dc2626'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const { error } = await sb
+                    .from('surveys')
+                    .delete()
+                    .eq('id', surveyId);
+
+                if (error) throw error;
+
+                this.showSuccess('تم حذف الاستبيان نهائياً');
+                await this.loadAllSurveys();
+            } catch (error) {
+                console.error('Error permanently deleting survey:', error);
+                this.showError('حدث خطأ أثناء الحذف النهائي');
+            }
         }
     }
 

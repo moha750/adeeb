@@ -294,7 +294,7 @@
                 // التحقق من حالة الحساب
                 if (profileRow.account_status !== 'active') {
                   status.className = 'alert error';
-                  status.textContent = 'حسابك غير نشط. يرجى التواصل مع الإدارة.';
+                  status.textContent = 'عضويتك منتهية. يرجى التواصل مع لجنة الموارد البشرية.';
                   await sb.auth.signOut();
                   return;
                 }
@@ -337,16 +337,10 @@
                   return;
                 }
                 
-                // إذا لم يكن لديه أدوار، وجهه للوحة الأعضاء
-                status.className = 'alert success';
-                status.textContent = 'تم تسجيل الدخول بنجاح! جاري التحويل...';
-                setTimeout(() => {
-                  if (redirectParam && !redirectParam.includes('dashboard')) {
-                    location.replace(redirectPath);
-                  } else {
-                    location.replace('/members/dashboard.html');
-                  }
-                }, 500);
+                // إذا لم يكن لديه أدوار نشطة، أبلغه بالتواصل مع الإدارة
+                status.className = 'alert error';
+                status.textContent = 'حسابك غير مرتبط بأي دور نشط. يرجى التواصل مع لجنة الموارد البشرية.';
+                await sb.auth.signOut();
                 return;
                 
               } catch (roleErr) {

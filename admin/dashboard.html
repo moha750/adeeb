@@ -716,15 +716,15 @@
                             <i class="fa-solid fa-list"></i>
                             الاستجابات الفردية
                         </button>
-                        <button class="tab-btn" data-tab="responses-table"
-                            style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; color: #6b7280;">
-                            <i class="fa-solid fa-table"></i>
-                            جدول الاستجابات
-                        </button>
                         <button class="tab-btn" data-tab="analytics"
                             style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; color: #6b7280;">
                             <i class="fa-solid fa-chart-line"></i>
                             التحليلات المتقدمة
+                        </button>
+                        <button class="tab-btn" data-tab="responses-table"
+                            style="padding: 0.75rem 1.5rem; border: none; background: transparent; cursor: pointer; transition: all 0.2s; color: #6b7280;">
+                            <i class="fa-solid fa-table"></i>
+                            جدول الاستجابات
                         </button>
                     </div>
 
@@ -753,6 +753,7 @@
                             <!-- سيتم ملؤه ديناميكياً -->
                         </div>
                     </div>
+
                 </div>
             </section>
 
@@ -788,6 +789,122 @@
 
                 <!-- قائمة القوالب -->
                 <div id="templatesListContainer" class="templates-grid">
+                </div>
+            </section>
+
+            <!-- قسم الاستبيانات المؤرشفة -->
+            <section id="surveys-archived-section" class="admin-section d-none">
+                <div class="section-header">
+                    <div class="section-header-content">
+                        <h1>
+                            <i class="fa-solid fa-box-archive"></i>
+                            الاستبيانات المؤرشفة
+                        </h1>
+                        <p class="section-subtitle">الاستبيانات المنتهية والمؤرشفة</p>
+                    </div>
+                    <div class="section-header-actions">
+                        <button class="btn btn--outline btn--outline-primary" id="refreshArchivedSurveysBtn">
+                            <i class="fa-solid fa-rotate"></i>
+                            تحديث
+                        </button>
+                    </div>
+                </div>
+
+                <!-- إحصائيات الاستبيانات المؤرشفة -->
+                <div class="stats-grid">
+                    <div class="stat-card" style="--stat-color: #6b7280">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-box-archive"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalArchivedSurveysCount">0</div>
+                                <div class="stat-label">إجمالي المؤرشفة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="archivedResponsesCount">0</div>
+                                <div class="stat-label">إجمالي الاستجابات</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلاتر البحث -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="archivedSurveysSearchInput" placeholder="البحث في الاستبيانات المؤرشفة..." />
+                    </div>
+                </div>
+
+                <!-- قائمة الاستبيانات المؤرشفة -->
+                <div id="archivedSurveysListContainer" class="surveys-list">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </section>
+
+            <!-- قسم الاستبيانات المحذوفة -->
+            <section id="surveys-deleted-section" class="admin-section d-none">
+                <div class="section-header">
+                    <div class="section-header-content">
+                        <h1>
+                            <i class="fa-solid fa-trash"></i>
+                            الاستبيانات المحذوفة
+                        </h1>
+                        <p class="section-subtitle">الاستبيانات المحذوفة مؤقتاً (سيتم حذفها نهائياً بعد 30 يوم)</p>
+                    </div>
+                    <div class="section-header-actions">
+                        <button class="btn btn--outline btn--outline-primary" id="refreshDeletedSurveysBtn">
+                            <i class="fa-solid fa-rotate"></i>
+                            تحديث
+                        </button>
+                    </div>
+                </div>
+
+                <!-- إحصائيات الاستبيانات المحذوفة -->
+                <div class="stats-grid">
+                    <div class="stat-card" style="--stat-color: #ef4444">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-trash"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalDeletedSurveysCount">0</div>
+                                <div class="stat-label">إجمالي المحذوفة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #f59e0b">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="deletedPendingCount">0</div>
+                                <div class="stat-label">في انتظار الحذف النهائي</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلاتر البحث -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="deletedSurveysSearchInput" placeholder="البحث في الاستبيانات المحذوفة..." />
+                    </div>
+                </div>
+
+                <!-- قائمة الاستبيانات المحذوفة -->
+                <div id="deletedSurveysListContainer" class="surveys-list">
+                    <!-- سيتم ملؤها ديناميكياً -->
                 </div>
             </section>
 
@@ -1477,107 +1594,6 @@
                 </div>
             </section>
 
-            <!-- قسم إدارة الإشعارات - لرئيس النادي فقط -->
-            <section id="send-notifications-section" class="admin-section d-none">
-                <div class="section-header">
-                    <h1>
-                        <i class="fa-solid fa-paper-plane"></i>
-                        إدارة الإشعارات
-                    </h1>
-                    <p class="section-subtitle">إرسال إشعارات للأعضاء والمستخدمين</p>
-                </div>
-
-                <div class="card" class="mb-2rem">
-                    <div class="card-header">
-                        <h3>
-                            <i class="fa-solid fa-bell-plus"></i>
-                            إرسال إشعار جديد
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <form id="sendNotificationForm">
-                            <div class="d-grid gap-1-5rem">
-                                <div class="form-group">
-                                    <label>عنوان الإشعار <span>*</span></label>
-                                    <input type="text" name="title" required placeholder="عنوان واضح ومختصر"
-                                        maxlength="100">
-                                </div>
-                                <div class="form-group">
-                                    <label>نص الإشعار <span>*</span></label>
-                                    <textarea name="message" required placeholder="اكتب رسالة الإشعار هنا..." rows="4"
-                                        maxlength="500"></textarea>
-                                </div>
-                                <div>
-                                    <div class="form-group">
-                                        <label>نوع الإشعار</label>
-                                        <select name="type" required>
-                                            <option value="info">معلومة</option>
-                                            <option value="announcement">إعلان</option>
-                                            <option value="success">نجاح</option>
-                                            <option value="warning">تحذير</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>الأولوية</label>
-                                        <select name="priority" required>
-                                            <option value="normal">عادية</option>
-                                            <option value="high">عالية</option>
-                                            <option value="urgent">عاجلة</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label>الجمهور المستهدف</label>
-                                    <select name="targetAudience" id="targetAudience" required>
-                                        <option value="all">جميع المستخدمين</option>
-                                        <option value="members">الأعضاء فقط</option>
-                                        <option value="committee_leaders">قادة اللجان</option>
-                                        <option value="specific_committee">لجنة محددة</option>
-                                    </select>
-                                </div>
-                                <div class="form-group" id="committeeSelectGroup" class="d-none">
-                                    <label>اللجنة المستهدفة</label>
-                                    <select name="targetCommittee" id="targetCommittee">
-                                        <option value="">اختر اللجنة</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label>
-                                        <input type="checkbox" name="enablePush" checked>
-                                        <span>إرسال إشعار Push للأجهزة</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div>
-                                <button type="reset" class="btn btn--outline btn--outline-primary">إعادة تعيين</button>
-                                <button type="button" class="btn btn--primary" id="sendNotificationBtn">
-                                    <i class="fa-solid fa-paper-plane"></i>
-                                    إرسال الإشعار
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h3>
-                            <i class="fa-solid fa-clock-rotate-left"></i>
-                            سجل الإشعارات المرسلة
-                        </h3>
-                        <button class="btn btn--outline-primary btn--sm" id="refreshHistoryBtn">
-                            <i class="fa-solid fa-rotate"></i>
-                            تحديث
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div id="notificationsHistoryList" class="max-h-600 overflow-y-auto">
-                            <!-- سيتم ملؤه ديناميكياً -->
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             <!-- قسم بطاقة العضوية -->
             <section id="membership-card-section" class="admin-section d-none">
                 <div class="section-header">
@@ -1646,17 +1662,6 @@
 
                 <!-- إحصائيات -->
                 <div class="stats-grid" class="mb-2rem">
-                    <div class="stat-card" style="--stat-color: #10b981">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-user-check"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="activeMembersDataCount">0</div>
-                                <div class="stat-label">أعضاء نشطون</div>
-                            </div>
-                        </div>
-                    </div>
                     <div class="stat-card" style="--stat-color: #8b5cf6">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
@@ -1676,6 +1681,17 @@
                             <div class="stat-content">
                                 <div class="stat-value" id="emailChangesCount">0</div>
                                 <div class="stat-label">تغييرات البريد الإلكتروني</div>
+                            </div>
+                        </div>
+                    </div>
+                                        <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user-check"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="activeMembersDataCount">0</div>
+                                <div class="stat-label">أعضاء نشطون</div>
                             </div>
                         </div>
                     </div>
@@ -2189,60 +2205,6 @@
                     </div>
                 </div>
 
-                <!-- بطاقة الإشعارات -->
-                <div class="card" class="overflow-hidden position-relative">
-                    <div></div>
-                    <div class="card-header">
-                        <h3>
-                            <div>
-                                <i class="fa-solid fa-bell"></i>
-                            </div>
-                            <div>
-                                <div>الإشعارات</div>
-                                <div>فعّل الإشعارات لتبقى على اطلاع</div>
-                            </div>
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <!-- حالة الإشعارات -->
-                        <div id="pushNotificationStatus">
-                            <!-- سيتم ملؤها ديناميكياً -->
-                        </div>
-
-                        <!-- زر تفعيل الإشعارات -->
-                        <div id="enablePushContainer">
-                            <button id="enablePushBtn" class="btn btn--primary">
-                                <i class="fa-solid fa-bell"></i>
-                                <span id="pushBtnText">تفعيل الإشعارات</span>
-                            </button>
-                        </div>
-
-                        <!-- رسالة التفعيل الناجح -->
-                        <div id="pushEnabledMessage">
-                            <div>
-                                <i class="fa-solid fa-check-circle"></i>
-                                <span>الإشعارات مفعّلة بنجاح!</span>
-                            </div>
-                        </div>
-
-                        <!-- معلومات الإشعارات -->
-                        <div>
-                            <div>
-                                <div>
-                                    <i class="fa-solid fa-lightbulb"></i>
-                                </div>
-                                <div>
-                                    <strong>ملاحظة هامة:</strong>
-                                    <p>
-                                        • يتطلب تفعيل الإشعارات تثبيت التطبيق أولاً<br>
-                                        • iOS يتطلب الإصدار 16.4 أو أحدث<br>
-                                        • يمكنك إلغاء الإشعارات في أي وقت من إعدادات المتصفح
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </section>
 
             <!-- قسم إدارة الصلاحيات -->
@@ -4654,9 +4616,6 @@
     <script src="js/profile.js"></script>
     <script src="js/settings.js"></script>
     <script src="js/pwa-manager.js"></script>
-    <script src="js/push-notifications-manager.js"></script>
-    <script src="js/notifications-manager.js"></script>
-    <script src="js/send-notifications.js"></script>
     <script src="js/pending-members-manager.js"></script>
     <script src="js/users-manager.js"></script>
     <script src="js/member-data-manager.js?v=20260131-6"></script>

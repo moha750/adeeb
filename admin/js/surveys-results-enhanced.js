@@ -40,6 +40,7 @@
                     const targetTab = document.getElementById(`${tabName}-tab`);
                     if (targetTab) {
                         targetTab.style.display = 'block';
+                        
                         // عرض جدول الاستجابات عند التبديل إليه
                         if (tabName === 'responses-table') {
                             this.renderResponsesTable();
@@ -146,6 +147,20 @@
                 this.renderAnalytics();
                 this.renderResponsesTable();
 
+                // تهيئة أشرطة الرسوم البيانية بعد تحميل المحتوى
+                setTimeout(() => {
+                    if (typeof window.animateChartBars === 'function') {
+                        document.querySelectorAll('.tab-content').forEach(tab => window.animateChartBars(tab));
+                    } else {
+                        document.querySelectorAll('.results-choice-bar[data-width]').forEach(bar => {
+                            const w = bar.getAttribute('data-width');
+                            const c = bar.getAttribute('data-color');
+                            if (c) bar.style.background = c;
+                            bar.style.width = (w || 0) + '%';
+                        });
+                    }
+                }, 100);
+
             } catch (error) {
                 console.error('Error loading results:', error);
                 this.showError('حدث خطأ أثناء تحميل النتائج');
@@ -173,18 +188,44 @@
             const container = document.getElementById('surveyStatisticsContainer');
             if (!container) return;
 
-            // قسم الإحصائيات يعرض فقط إحصائيات الأسئلة
-            container.innerHTML = `
-                <!-- إحصائيات الأسئلة -->
-                <h3>
-                    <i class="fa-solid fa-chart-bar"></i>
-                    إحصائيات الأسئلة
-                </h3>
-                
-                <div class="results-questions">
-                    ${currentQuestions.map(q => this.renderQuestionStatistics(q)).join('')}
-                </div>
-            `;
+            const VISUAL_TYPES = ['single_choice', 'multiple_choice', 'dropdown', 'yes_no',
+                                  'linear_scale', 'rating_stars', 'rating_hearts', 'rating_emojis', 'slider', 'number'];
+            const TEXT_TYPES   = ['short_text', 'long_text', 'email', 'phone', 'url', 'date', 'time', 'datetime'];
+
+            const visualQuestions = currentQuestions.filter(q => VISUAL_TYPES.includes(q.question_type));
+            const textQuestions   = currentQuestions.filter(q => TEXT_TYPES.includes(q.question_type));
+
+            let html = '';
+
+            if (visualQuestions.length > 0) {
+                html += `
+                    <h3 style="display:flex;align-items:center;gap:10px;margin-bottom:1.2rem;">
+                        <i class="fa-solid fa-chart-bar"></i>
+                        إحصائيات الأسئلة
+                    </h3>
+                    <div class="results-questions">
+                        ${visualQuestions.map(q => this.renderQuestionStatistics(q)).join('')}
+                    </div>
+                `;
+            }
+
+            if (textQuestions.length > 0) {
+                html += `
+                    <h3 style="display:flex;align-items:center;gap:10px;margin:2rem 0 1rem;">
+                        <i class="fa-solid fa-align-right"></i>
+                        الأسئلة النصية
+                    </h3>
+                    <div class="results-questions">
+                        ${textQuestions.map(q => this.renderQuestionStatistics(q)).join('')}
+                    </div>
+                `;
+            }
+
+            if (!html) {
+                html = '<p class="text-muted">لا توجد أسئلة في هذا الاستبيان</p>';
+            }
+
+            container.innerHTML = html;
         }
 
         renderQuestionStatistics(question) {
@@ -192,11 +233,16 @@
                 r.survey_answers.filter(a => a.question_id === question.id)
             );
 
+            const typeLabel = this.getQuestionTypeLabel(question.question_type);
+
             return `
-                <div class="card">
+                <div class="card" style="margin-bottom:1rem;">
                     <div class="card-header">
-                        <h3>${this.escapeHtml(question.question_text)}</h3>
-                        <span class="badge">${answers.length} إجابة</span>
+                        <h3 style="display:flex;align-items:center;gap:8px;">
+                            ${this.escapeHtml(question.question_text)}
+                            <span style="font-size:0.72rem;font-weight:400;color:#64748b;background:rgba(100,116,139,0.1);padding:2px 8px;border-radius:20px;">${typeLabel}</span>
+                        </h3>
+                        <span class="badge badge-info">${answers.length} إجابة</span>
                     </div>
                     <div class="card-body">
                         ${this.renderAnswerStatistics(question, answers)}
@@ -240,20 +286,26 @@
             });
 
             const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-            const maxCount = sorted.length > 0 ? sorted[0][1] : 1;
+
+            const palette = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444','#14b8a6','#ec4899','#6366f1'];
 
             return `
-                <div class="choice-results">
-                    ${sorted.map(([choice, count]) => {
+                <div class="results-choices-list">
+                    ${sorted.map(([choice, count], i) => {
                         const percentage = Math.round((count / total) * 100);
-                        const barWidth = (count / maxCount) * 100;
+                        const color = palette[i % palette.length];
                         return `
-                            <div class="choice-result-item">
-                                <div class="choice-label">${this.escapeHtml(choice)}</div>
-                                <div class="choice-bar">
-                                    <div class="choice-bar-fill"></div>
+                            <div class="results-choice-item">
+                                <div class="results-choice-label">
+                                    <span class="results-choice-dot" style="background:${color};"></span>
+                                    ${this.escapeHtml(choice)}
                                 </div>
-                                <div class="choice-stats">${count} (${percentage}%)</div>
+                                <div class="results-choice-bar-container">
+                                    <div class="results-choice-bar" data-width="${percentage}" data-color="${color}">
+                                        <span class="results-choice-bar-text">${percentage}%</span>
+                                    </div>
+                                </div>
+                                <div class="results-choice-stats"><strong>${count}</strong></div>
                             </div>
                         `;
                     }).join('')}
@@ -273,6 +325,37 @@
             const min = Math.min(...values);
             const max = Math.max(...values);
             const median = this.calculateMedian(values);
+
+            // بناء توزيع تكراري للقيم
+            const counts = {};
+            values.forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+            const sortedEntries = Object.entries(counts).sort((a, b) => Number(a[0]) - Number(b[0]));
+            const maxCount = Math.max(...Object.values(counts));
+            const palette = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444','#14b8a6','#ec4899','#6366f1'];
+
+            const distributionHtml = sortedEntries.length > 1 ? `
+                <div class="results-choices-list" style="margin-top:1rem;">
+                    ${sortedEntries.map(([val, cnt], i) => {
+                        const pct = Math.round((cnt / values.length) * 100);
+                        const barPct = Math.round((cnt / maxCount) * 100);
+                        const color = palette[i % palette.length];
+                        return `
+                            <div class="results-choice-item">
+                                <div class="results-choice-label">
+                                    <span class="results-choice-dot" style="background:${color};"></span>
+                                    ${val}
+                                </div>
+                                <div class="results-choice-bar-container">
+                                    <div class="results-choice-bar" data-width="${barPct}" data-color="${color}">
+                                        <span class="results-choice-bar-text">${pct}%</span>
+                                    </div>
+                                </div>
+                                <div class="results-choice-stats"><strong>${cnt}</strong></div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            ` : '';
 
             return `
                 <div class="numeric-results">
@@ -297,6 +380,7 @@
                         <div class="stat-value">${values.length}</div>
                     </div>
                 </div>
+                ${distributionHtml}
             `;
         }
 
@@ -313,20 +397,30 @@
             const noPercentage = Math.round((noCount / total) * 100);
 
             return `
-                <div class="choice-results">
-                    <div class="choice-result-item">
-                        <div class="choice-label">نعم</div>
-                        <div class="choice-bar">
-                            <div class="choice-bar-fill"></div>
+                <div class="results-choices-list">
+                    <div class="results-choice-item">
+                        <div class="results-choice-label">
+                            <span class="results-choice-dot" style="background:#10b981;"></span>
+                            نعم
                         </div>
-                        <div class="choice-stats">${yesCount} (${yesPercentage}%)</div>
+                        <div class="results-choice-bar-container">
+                            <div class="results-choice-bar" data-width="${yesPercentage}" data-color="#10b981">
+                                <span class="results-choice-bar-text">${yesPercentage}%</span>
+                            </div>
+                        </div>
+                        <div class="results-choice-stats"><strong>${yesCount}</strong></div>
                     </div>
-                    <div class="choice-result-item">
-                        <div class="choice-label">لا</div>
-                        <div class="choice-bar">
-                            <div class="choice-bar-fill"></div>
+                    <div class="results-choice-item">
+                        <div class="results-choice-label">
+                            <span class="results-choice-dot" style="background:#ef4444;"></span>
+                            لا
                         </div>
-                        <div class="choice-stats">${noCount} (${noPercentage}%)</div>
+                        <div class="results-choice-bar-container">
+                            <div class="results-choice-bar" data-width="${noPercentage}" data-color="#ef4444">
+                                <span class="results-choice-bar-text">${noPercentage}%</span>
+                            </div>
+                        </div>
+                        <div class="results-choice-stats"><strong>${noCount}</strong></div>
                     </div>
                 </div>
             `;
@@ -584,88 +678,6 @@
             `;
         }
 
-        renderResponsesTable() {
-            const container = document.getElementById('surveyResponsesTableContainer');
-            if (!container) return;
-
-            if (!currentResponses || currentResponses.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-table"></i>
-                        <p>لا توجد استجابات لعرضها</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const completedResponses = currentResponses.filter(r => r.status === 'completed');
-
-            container.innerHTML = `
-                <div class="card">
-                    <div class="card-header">
-                        <h3>
-                            <i class="fa-solid fa-table"></i>
-                            جدول الاستجابات (${completedResponses.length} استجابة مكتملة)
-                        </h3>
-                    </div>
-                    <div class="card-body p-0">
-                        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                            <table class="table" style="min-width: 100%; width: max-content;">
-                                <thead>
-                                    <tr>
-                                        <th style="position: sticky; right: 0; background: white; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.1); min-width: 50px;">#</th>
-                                        <th style="position: sticky; right: 50px; background: white; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.1); min-width: 150px; white-space: nowrap;">المستجيب</th>
-                                        ${currentQuestions.map(q => `
-                                            <th title="${this.escapeHtml(q.question_text)}" style="min-width: 200px; max-width: 300px; white-space: normal; word-wrap: break-word;">
-                                                ${this.escapeHtml(q.question_text.length > 40 ? q.question_text.substring(0, 40) + '...' : q.question_text)}
-                                            </th>
-                                        `).join('')}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${completedResponses.reverse().map((response, index) => {
-                                        const userName = response.user?.full_name || (response.is_anonymous ? 'المستجيب' : 'غير معروف');
-                                        return `
-                                            <tr>
-                                                <td style="position: sticky; right: 0; background: white; z-index: 5; box-shadow: 2px 0 5px rgba(0,0,0,0.05);">${index + 1}</td>
-                                                <td style="position: sticky; right: 50px; background: white; z-index: 5; box-shadow: 2px 0 5px rgba(0,0,0,0.05); white-space: nowrap;">${this.escapeHtml(userName)}</td>
-                                                ${currentQuestions.map(q => {
-                                                    const answer = response.survey_answers.find(a => a.question_id === q.id);
-                                                    const answerText = this.getAnswerTextForTable(answer, q);
-                                                    return `<td style="max-width: 300px; word-wrap: break-word; white-space: normal;">${answerText}</td>`;
-                                                }).join('')}
-                                            </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        getAnswerTextForTable(answer, question) {
-            if (!answer) return '<span style="color: #94a3b8;">-</span>';
-            
-            if (answer.answer_text) {
-                const text = answer.answer_text;
-                return this.escapeHtml(text.length > 50 ? text.substring(0, 50) + '...' : text);
-            }
-            if (answer.answer_number !== null && answer.answer_number !== undefined) {
-                return answer.answer_number;
-            }
-            if (answer.answer_boolean !== null && answer.answer_boolean !== undefined) {
-                return answer.answer_boolean ? '<span style="color: #10b981;">نعم</span>' : '<span style="color: #ef4444;">لا</span>';
-            }
-            if (answer.answer_json) {
-                if (Array.isArray(answer.answer_json)) {
-                    return this.escapeHtml(answer.answer_json.join('، '));
-                }
-                return this.escapeHtml(JSON.stringify(answer.answer_json));
-            }
-            return '<span style="color: #94a3b8;">-</span>';
-        }
 
         renderLinearScale(value, min, max) {
             const percentage = ((value - min) / (max - min)) * 100;
@@ -1392,6 +1404,191 @@
                     }
                 });
             }
+        }
+
+        async renderResponsesTable() {
+            const container = document.getElementById('surveyResponsesTableContainer');
+            if (!container || !currentSurveyData || !currentResponses || !currentQuestions) {
+                return;
+            }
+
+            if (currentResponses.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-inbox"></i>
+                        <p>لا توجد استجابات لهذا الاستبيان</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // بناء رأس الجدول
+            let tableHtml = `
+                <div class="card">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-table"></i>
+                            جدول الاستجابات (${currentResponses.length} استجابة)
+                        </h3>
+                        <button class="btn btn--outline btn--outline-primary btn--sm" onclick="window.surveysResultsEnhanced.exportTableToCSV()">
+                            <i class="fa-solid fa-download"></i>
+                            تصدير الجدول
+                        </button>
+                    </div>
+                    <div class="card-body" style="overflow-x: auto;">
+                        <table class="data-table" style="width: 100%; min-width: 800px;">
+                            <thead>
+                                <tr>
+                                    <th style="min-width: 50px;">#</th>
+                                    <th style="min-width: 150px;">المستجيب</th>
+                                    <th style="min-width: 100px;">الحالة</th>
+                                    <th style="min-width: 150px;">التاريخ</th>
+            `;
+
+            // إضافة عمود لكل سؤال
+            currentQuestions.forEach((q, index) => {
+                const questionText = this.escapeHtml(q.question_text).substring(0, 50);
+                tableHtml += `<th style="min-width: 200px;">س${index + 1}: ${questionText}${q.question_text.length > 50 ? '...' : ''}</th>`;
+            });
+
+            tableHtml += `
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+            // إضافة صفوف البيانات
+            currentResponses.forEach((response, index) => {
+                const userName = response.user?.full_name || 'مستخدم';
+                const statusClass = response.status === 'completed' ? 'badge-success' : 'badge-warning';
+                const statusText = response.status === 'completed' ? 'مكتملة' : 'جزئية';
+                const date = this.formatDate(response.created_at);
+
+                tableHtml += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${this.escapeHtml(userName)}</td>
+                        <td><span class="badge ${statusClass}">${statusText}</span></td>
+                        <td>${date}</td>
+                `;
+
+                // إضافة إجابة لكل سؤال
+                currentQuestions.forEach(q => {
+                    const answerObj = response.survey_answers?.find(a => a.question_id === q.id);
+                    const answerText = this.getAnswerTextForTable(answerObj, q);
+                    tableHtml += `<td>${answerText}</td>`;
+                });
+
+                tableHtml += `</tr>`;
+            });
+
+            tableHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = tableHtml;
+        }
+
+        getAnswerTextForTable(answerObj, question) {
+            if (!answerObj) return '<span style="color: #9ca3af;">لا توجد إجابة</span>';
+
+            const type = question?.question_type;
+
+            // اختيار القيمة المناسبة حسب نوع السؤال
+            if (['single_choice', 'multiple_choice', 'dropdown', 'yes_no'].includes(type)) {
+                if (answerObj.answer_json !== null && answerObj.answer_json !== undefined) {
+                    const val = answerObj.answer_json;
+                    if (Array.isArray(val)) return this.escapeHtml(val.join(', '));
+                    return this.escapeHtml(String(val));
+                }
+            }
+
+            if (['number', 'linear_scale', 'slider', 'rating_stars'].includes(type)) {
+                if (answerObj.answer_number !== null && answerObj.answer_number !== undefined) {
+                    return this.escapeHtml(String(answerObj.answer_number));
+                }
+            }
+
+            if (answerObj.answer_text) {
+                const text = answerObj.answer_text;
+                if (text.length > 100) return this.escapeHtml(text.substring(0, 100)) + '...';
+                return this.escapeHtml(text);
+            }
+
+            if (answerObj.answer_number !== null && answerObj.answer_number !== undefined) {
+                return this.escapeHtml(String(answerObj.answer_number));
+            }
+
+            if (answerObj.answer_boolean !== null && answerObj.answer_boolean !== undefined) {
+                return answerObj.answer_boolean ? 'نعم' : 'لا';
+            }
+
+            if (answerObj.answer_json !== null && answerObj.answer_json !== undefined) {
+                const val = answerObj.answer_json;
+                if (Array.isArray(val)) return this.escapeHtml(val.join(', '));
+                return this.escapeHtml(String(val));
+            }
+
+            if (answerObj.answer_date) return this.escapeHtml(answerObj.answer_date);
+            if (answerObj.answer_time) return this.escapeHtml(answerObj.answer_time);
+
+            return '<span style="color: #9ca3af;">لا توجد إجابة</span>';
+        }
+
+        exportTableToCSV() {
+            if (!currentSurveyData || !currentResponses || !currentQuestions) {
+                alert('لا توجد بيانات للتصدير');
+                return;
+            }
+
+            // بناء CSV
+            let csv = '\uFEFF'; // BOM for UTF-8
+            
+            // رأس الجدول
+            csv += '#,المستجيب,الحالة,التاريخ,';
+            csv += currentQuestions.map((q, i) => `"س${i + 1}: ${q.question_text.replace(/"/g, '""')}"`).join(',');
+            csv += '\n';
+
+            // البيانات
+            currentResponses.forEach((response, index) => {
+                const userName = response.user?.full_name || 'مستخدم';
+                const status = response.status === 'completed' ? 'مكتملة' : 'جزئية';
+                const date = this.formatDate(response.created_at);
+
+                csv += `${index + 1},"${userName.replace(/"/g, '""')}","${status}","${date}",`;
+                
+                const answers = currentQuestions.map(q => {
+                    const answerObj = response.survey_answers?.find(a => a.question_id === q.id);
+                    if (!answerObj) return '';
+                    if (answerObj.answer_text) return answerObj.answer_text.replace(/"/g, '""');
+                    if (answerObj.answer_number !== null && answerObj.answer_number !== undefined) return String(answerObj.answer_number);
+                    if (answerObj.answer_boolean !== null && answerObj.answer_boolean !== undefined) return answerObj.answer_boolean ? 'نعم' : 'لا';
+                    if (answerObj.answer_json !== null && answerObj.answer_json !== undefined) {
+                        const val = answerObj.answer_json;
+                        return Array.isArray(val) ? val.join('; ') : String(val).replace(/"/g, '""');
+                    }
+                    if (answerObj.answer_date) return answerObj.answer_date;
+                    if (answerObj.answer_time) return answerObj.answer_time;
+                    return '';
+                });
+                
+                csv += answers.map(a => `"${a}"`).join(',');
+                csv += '\n';
+            });
+
+            // تنزيل الملف
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `جدول_استجابات_${currentSurveyData.title}_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     }
 

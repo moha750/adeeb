@@ -255,16 +255,6 @@
             });
         }
         
-        // إدارة الإشعارات - باستخدام صلاحية manage_notifications
-        if (hasPermission('manage_notifications')) {
-            menuItems.push({
-                id: 'send-notifications',
-                icon: 'fa-paper-plane',
-                label: 'إدارة الإشعارات',
-                section: 'send-notifications-section'
-            });
-        }
-        
         // إحصائيات الزيارات - المستوى 6 فأعلى (مخفي عن العضو)
         if (roleLevel >= 6) {
             menuItems.push({
@@ -453,6 +443,18 @@
                     icon: 'fa-file-lines',
                     label: 'قوالب الاستبيانات',
                     section: 'surveys-templates-section'
+                },
+                {
+                    id: 'surveys-archived',
+                    icon: 'fa-box-archive',
+                    label: 'الاستبيانات المؤرشفة',
+                    section: 'surveys-archived-section'
+                },
+                {
+                    id: 'surveys-deleted',
+                    icon: 'fa-trash',
+                    label: 'الاستبيانات المحذوفة',
+                    section: 'surveys-deleted-section'
                 }
             ];
             
@@ -1082,6 +1084,18 @@
                     await window.surveysManager.loadTemplates();
                 }
                 break;
+            case 'surveys-archived-section':
+                if (window.surveysManager) {
+                    if (currentUser) await window.surveysManager.init(currentUser);
+                    await loadArchivedSurveysSection();
+                }
+                break;
+            case 'surveys-deleted-section':
+                if (window.surveysManager) {
+                    if (currentUser) await window.surveysManager.init(currentUser);
+                    await loadDeletedSurveysSection();
+                }
+                break;
             // أقسام الانتخابات
             case 'elections-open-section':
                 if (window.ElectionsManager) {
@@ -1224,10 +1238,24 @@
                                             <span class="info-value">${terminationDuration}</span>
                                         </div>
                                     </div>
+
+                                    ${member.termination_reason ? `
+                                        <div class="info-item full-width">
+                                            <i class="fa-solid fa-comment-dots"></i>
+                                            <div class="info-content">
+                                                <span class="info-label">سبب الإنهاء</span>
+                                                <span class="info-value">${member.termination_reason}</span>
+                                            </div>
+                                        </div>
+                                    ` : ''}
                                 </div>
                             </div>
                             
                             <div class="application-card-footer">
+                                <button class="btn btn--success btn--sm btn-restore-membership" data-user-id="${member.id}" data-user-name="${member.full_name}">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                    إعادة العضوية
+                                </button>
                                 <button class="btn btn--danger btn--sm btn-delete-permanently" data-user-id="${member.id}" data-user-name="${member.full_name}">
                                     <i class="fa-solid fa-trash"></i>
                                     حذف نهائي
@@ -1279,6 +1307,15 @@
                 });
             }
 
+        // إضافة event listener لأزرار إعادة العضوية
+            container.querySelectorAll('.btn-restore-membership').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const userId = e.currentTarget.dataset.userId;
+                    const userName = e.currentTarget.dataset.userName;
+                    await restoreMembership(userId, userName);
+                });
+            });
+
         // إضافة event listener لأزرار الحذف النهائي
             container.querySelectorAll('.btn-delete-permanently').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
@@ -1291,6 +1328,72 @@
         } catch (error) {
             console.error('Error loading terminated members:', error);
             container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل البيانات</div>';
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // إعادة عضوية عضو منتهية عضويته
+    async function restoreMembership(userId, userName) {
+        const result = await Swal.fire({
+            title: 'تأكيد إعادة العضوية',
+            html: `
+                <div class="modal-content-rtl">
+                    <p class="confirm-message">
+                        هل أنت متأكد من إعادة عضوية <strong>${userName}</strong>؟
+                    </p>
+                    <p style="font-size: 0.9rem; color: #6b7280; margin-top: 0.5rem;">
+                        سيتم تفعيل الحساب مجدداً وإتاحة الدخول للنظام.
+                    </p>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'نعم، إعادة العضوية',
+            cancelButtonText: 'إلغاء',
+            reverseButtons: true
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            showLoading(true);
+
+            const { error } = await sb
+                .from('profiles')
+                .update({
+                    account_status: 'active',
+                    termination_reason: null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId);
+
+            if (error) throw error;
+
+            // إعادة تفعيل أدوار العضو
+            await sb
+                .from('user_roles')
+                .update({ is_active: true })
+                .eq('user_id', userId);
+
+            await Swal.fire({
+                title: 'تمت إعادة العضوية',
+                html: `<p>تمت إعادة عضوية <strong>${userName}</strong> بنجاح</p>`,
+                icon: 'success',
+                confirmButtonText: 'حسناً'
+            });
+
+            await loadTerminatedMembersSection();
+        } catch (error) {
+            console.error('Error restoring membership:', error);
+            await Swal.fire({
+                title: 'خطأ',
+                text: 'حدث خطأ أثناء إعادة العضوية. يرجى المحاولة مرة أخرى.',
+                icon: 'error',
+                confirmButtonText: 'حسناً'
+            });
         } finally {
             showLoading(false);
         }
@@ -1412,6 +1515,236 @@
             showLoading(false);
         }
     }
+
+    // تحميل قسم الاستبيانات المؤرشفة
+    async function loadArchivedSurveysSection() {
+        const container = document.getElementById('archivedSurveysListContainer');
+        const countEl = document.getElementById('totalArchivedSurveysCount');
+        const searchInput = document.getElementById('archivedSurveysSearchInput');
+        const refreshBtn = document.getElementById('refreshArchivedSurveysBtn');
+        if (!container) return;
+
+        try {
+            showLoading(true);
+            const surveys = await window.surveysManager.loadArchivedSurveys();
+
+            if (countEl) countEl.textContent = surveys.length;
+
+            const renderList = (list) => {
+                if (list.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa-solid fa-box-archive"></i>
+                            <h3>لا توجد استبيانات مؤرشفة</h3>
+                            <p>الاستبيانات المؤرشفة ستظهر هنا</p>
+                        </div>
+                    `;
+                    return;
+                }
+                container.innerHTML = `
+                    <div class="applications-cards-grid">
+                        ${list.map(survey => `
+                            <div class="application-card">
+                                <div class="application-card-header">
+                                    <div class="applicant-info">
+                                        <div class="applicant-avatar">
+                                            <i class="fa-solid fa-clipboard-question"></i>
+                                        </div>
+                                        <div class="applicant-details">
+                                            <h3 class="applicant-name">${window.surveysManager.escapeHtml(survey.title)}</h3>
+                                            <span class="badge badge-secondary">مؤرشف</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="application-card-body">
+                                    <div class="application-info-grid">
+                                        ${survey.archived_at ? `
+                                            <div class="info-item">
+                                                <i class="fa-solid fa-calendar-xmark"></i>
+                                                <div class="info-content">
+                                                    <span class="info-label">تاريخ الأرشفة</span>
+                                                    <span class="info-value">${new Date(survey.archived_at).toLocaleDateString('ar-SA')}</span>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        ${survey.archived_by_profile ? `
+                                            <div class="info-item">
+                                                <i class="fa-solid fa-user"></i>
+                                                <div class="info-content">
+                                                    <span class="info-label">أرشف بواسطة</span>
+                                                    <span class="info-value">${window.surveysManager.escapeHtml(survey.archived_by_profile.full_name)}</span>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        <div class="info-item">
+                                            <i class="fa-solid fa-question-circle"></i>
+                                            <div class="info-content">
+                                                <span class="info-label">الأسئلة</span>
+                                                <span class="info-value">${survey.survey_questions?.length || 0}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="application-card-footer">
+                                    <button class="btn btn--success btn--sm" onclick="window.surveysManager.unarchiveSurvey(${survey.id}); loadArchivedSurveysSection()">
+                                        <i class="fa-solid fa-box-open"></i>
+                                        إلغاء الأرشفة
+                                    </button>
+                                    <button class="btn btn--danger btn--sm" onclick="window.surveysManager.deleteSurvey(${survey.id})">
+                                        <i class="fa-solid fa-trash"></i>
+                                        حذف
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            };
+
+            renderList(surveys);
+
+            if (searchInput) {
+                searchInput.oninput = (e) => {
+                    const term = e.target.value.toLowerCase();
+                    const filtered = surveys.filter(s => s.title.toLowerCase().includes(term));
+                    renderList(filtered);
+                };
+            }
+
+            if (refreshBtn) {
+                refreshBtn.onclick = () => loadArchivedSurveysSection();
+            }
+        } catch (error) {
+            console.error('Error loading archived surveys:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الاستبيانات المؤرشفة</div>';
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // جعل الدالة متاحة عالمياً للاستخدام في الأزرار
+    window.loadArchivedSurveysSection = loadArchivedSurveysSection;
+
+    // تحميل قسم الاستبيانات المحذوفة
+    async function loadDeletedSurveysSection() {
+        const container = document.getElementById('deletedSurveysListContainer');
+        const countEl = document.getElementById('totalDeletedSurveysCount');
+        const searchInput = document.getElementById('deletedSurveysSearchInput');
+        const refreshBtn = document.getElementById('refreshDeletedSurveysBtn');
+        if (!container) return;
+
+        try {
+            showLoading(true);
+            const surveys = await window.surveysManager.loadDeletedSurveys();
+
+            if (countEl) countEl.textContent = surveys.length;
+
+            const renderList = (list) => {
+                if (list.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa-solid fa-trash"></i>
+                            <h3>لا توجد استبيانات محذوفة</h3>
+                            <p>الاستبيانات المحذوفة ستظهر هنا</p>
+                        </div>
+                    `;
+                    return;
+                }
+                container.innerHTML = `
+                    <div class="applications-cards-grid">
+                        ${list.map(survey => {
+                            const permanentDeleteDate = survey.permanent_delete_at
+                                ? new Date(survey.permanent_delete_at).toLocaleDateString('ar-SA')
+                                : null;
+                            return `
+                            <div class="application-card">
+                                <div class="application-card-header">
+                                    <div class="applicant-info">
+                                        <div class="applicant-avatar" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </div>
+                                        <div class="applicant-details">
+                                            <h3 class="applicant-name">${window.surveysManager.escapeHtml(survey.title)}</h3>
+                                            <span class="badge badge-danger">محذوف</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="application-card-body">
+                                    <div class="application-info-grid">
+                                        ${survey.deleted_at ? `
+                                            <div class="info-item">
+                                                <i class="fa-solid fa-calendar-xmark"></i>
+                                                <div class="info-content">
+                                                    <span class="info-label">تاريخ الحذف</span>
+                                                    <span class="info-value">${new Date(survey.deleted_at).toLocaleDateString('ar-SA')}</span>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        ${permanentDeleteDate ? `
+                                            <div class="info-item">
+                                                <i class="fa-solid fa-calendar-times"></i>
+                                                <div class="info-content">
+                                                    <span class="info-label">الحذف النهائي في</span>
+                                                    <span class="info-value" style="color: #ef4444;">${permanentDeleteDate}</span>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        ${survey.deleted_by_profile ? `
+                                            <div class="info-item">
+                                                <i class="fa-solid fa-user"></i>
+                                                <div class="info-content">
+                                                    <span class="info-label">حذف بواسطة</span>
+                                                    <span class="info-value">${window.surveysManager.escapeHtml(survey.deleted_by_profile.full_name)}</span>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        <div class="info-item">
+                                            <i class="fa-solid fa-question-circle"></i>
+                                            <div class="info-content">
+                                                <span class="info-label">الأسئلة</span>
+                                                <span class="info-value">${survey.survey_questions?.length || 0}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="application-card-footer">
+                                    <button class="btn btn--success btn--sm" onclick="window.surveysManager.restoreSurvey(${survey.id}).then(() => loadDeletedSurveysSection())">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                        استعادة
+                                    </button>
+                                    <button class="btn btn--danger btn--sm" onclick="window.surveysManager.deleteSurveyPermanently(${survey.id}).then(() => loadDeletedSurveysSection())">
+                                        <i class="fa-solid fa-trash"></i>
+                                        حذف نهائي
+                                    </button>
+                                </div>
+                            </div>
+                        `;}).join('')}
+                    </div>
+                `;
+            };
+
+            renderList(surveys);
+
+            if (searchInput) {
+                searchInput.oninput = (e) => {
+                    const term = e.target.value.toLowerCase();
+                    const filtered = surveys.filter(s => s.title.toLowerCase().includes(term));
+                    renderList(filtered);
+                };
+            }
+
+            if (refreshBtn) {
+                refreshBtn.onclick = () => loadDeletedSurveysSection();
+            }
+        } catch (error) {
+            console.error('Error loading deleted surveys:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الاستبيانات المحذوفة</div>';
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    window.loadDeletedSurveysSection = loadDeletedSurveysSection;
 
     // وظائف تحميل البيانات
     async function loadUsers() {
@@ -5387,10 +5720,32 @@
                 if (targetContent) {
                     targetContent.classList.add('active');
                     targetContent.style.display = 'block';
+                    // تهيئة أشرطة الرسوم البيانية في التبويب المحدد
+                    animateChartBars(targetContent);
                 }
             });
         });
+
+        // تهيئة أشرطة التبويب النشط عند التحميل
+        const activeContent = document.querySelector('.tab-content.active');
+        if (activeContent) animateChartBars(activeContent);
     }
+
+    function animateChartBars(container) {
+        requestAnimationFrame(() => {
+            container.querySelectorAll('.results-choice-bar[data-width]').forEach(bar => {
+                const width = bar.getAttribute('data-width');
+                const color = bar.getAttribute('data-color');
+                if (color) bar.style.background = color;
+                bar.style.width = (width || 0) + '%';
+            });
+            container.querySelectorAll('.device-icon[data-color]').forEach(icon => {
+                icon.style.color = icon.getAttribute('data-color');
+            });
+        });
+    }
+
+    window.animateChartBars = animateChartBars;
 
     // تهيئة التطبيق عند تحميل الصفحة
     init();

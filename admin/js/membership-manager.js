@@ -1522,7 +1522,7 @@
 
             // بناء HTML للإحصائيات
             let html = `
-                <div class="stat-card stat-card--blue">
+                <div class="stat-card" style="--stat-color: #3b82f6;">
                     <div class="stat-card-wrapper">
                         <div class="stat-icon">
                             <i class="fa-solid fa-clipboard-list"></i>
@@ -1536,7 +1536,7 @@
             `;
 
             // إضافة بطاقة لكل لجنة
-            const colors = ['#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899'];
+            const colors = ['#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#14b8a6', '#ec4899'];
             let colorIndex = 0;
 
             Object.entries(committeeStats).forEach(([committee, count]) => {
@@ -1544,7 +1544,7 @@
                 colorIndex++;
                 
                 html += `
-                    <div class="stat-card" data-color="${color}">
+                    <div class="stat-card" style="--stat-color: ${color};">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-users"></i>
@@ -1765,7 +1765,7 @@
 
             // بناء HTML للإحصائيات
             const html = `
-                <div class="stat-card stat-card--blue">
+                <div class="stat-card" style="--stat-color: #3b82f6;">
                     <div class="stat-card-wrapper">
                         <div class="stat-icon">
                             <i class="fa-solid fa-clipboard-list"></i>
@@ -1776,7 +1776,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="stat-card stat-card--green">
+                <div class="stat-card" style="--stat-color: #10b981;">
                     <div class="stat-badge"><i class="fa-solid fa-arrow-up"></i> ${approvedPercentage}%</div>
                     <div class="stat-card-wrapper">
                         <div class="stat-icon">
@@ -1788,7 +1788,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="stat-card stat-card--red">
+                <div class="stat-card" style="--stat-color: #ef4444;">
                     <div class="stat-badge"><i class="fa-solid fa-times"></i> ${rejectedPercentage}%</div>
                     <div class="stat-card-wrapper">
                         <div class="stat-icon">
@@ -1800,7 +1800,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="stat-card stat-card--yellow">
+                <div class="stat-card" style="--stat-color: #f59e0b;">
                     <div class="stat-badge"><i class="fa-solid fa-clock"></i> ${reviewPercentage}%</div>
                     <div class="stat-card-wrapper">
                         <div class="stat-icon">

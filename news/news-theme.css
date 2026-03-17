@@ -234,13 +234,13 @@ body {
   border-color: var(--news-card-border) !important;
 }
 
-.comment-textarea {
+[data-theme="dark"] .comment-textarea {
   background: var(--news-input-bg) !important;
   border-color: var(--news-input-border) !important;
   color: var(--news-input-text) !important;
 }
 
-.comment-author-input {
+[data-theme="dark"] .comment-author-input {
   background: var(--news-input-bg) !important;
   border-color: var(--news-input-border) !important;
   color: var(--news-input-text) !important;
