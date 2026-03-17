@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعية عائلة أدِيب</title>
+    <meta name="description" content="لعبة العيد من عائلة أدِيب">
+    <meta property="og:title" content="لعبة العيد من عائلة أدِيب">
+    <meta property="og:description" content="استمتع بلعبة العيد من عائلة أدِيب!">
+    <meta property="og:type" content="website">
+    <link rel="canonical" href="https://www.adeeb.club/EID-BG.png" />
+    <meta property="og:url" content="https://www.adeeb.club/EID-BG.png" />
+    <meta property="og:image" content="https://www.adeeb.club/EID-BG.png" />
+    <meta property="og:image:secure_url" content="https://www.adeeb.club/EID-BG.png" />
+    <meta name="twitter:image" content="https://www.adeeb.club/news/EID-BG.png" />
+
+    <!-- favicon.io -->
+    <link rel="apple-touch-icon" sizes="152x152" href="/favicon/apple-icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-icon-180x180.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon/android-icon-192x192.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
+    <link rel="manifest" href="/favicon/manifest.json" />
+    <meta name="msapplication-TileColor" content="#ffffff" />
+    <meta name="msapplication-TileImage" content="/favicon/ms-icon-144x144.png" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <style>
+        :root {
+            --gold: #335c81;
+            --gold-light: #457197;
+            --gold-dark: #274060;
+            --green: #335c81;
+            --green-light: #457197;
+            --green-dark: #274060;
+            --cream: #fdf6e3;
+            --text-dark: #335c81;
+            --moon: #f0c93a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--green-dark);
+            color: var(--cream);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ---- خلفية النجوم ---- */
+        .stars-bg {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(51, 92, 129, .6) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(39, 64, 96, .8) 0%, transparent 60%),
+                linear-gradient(160deg, #335c81 0%, #344e6b 40%, #274060 100%);
+        }
+
+        .star {
+            position: absolute;
+            border-radius: 50%;
+            background: white;
+            animation: twinkle var(--dur, 3s) ease-in-out infinite alternate;
+        }
+
+        @keyframes twinkle {
+            from {
+                opacity: .2;
+                transform: scale(1);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1.4);
+            }
+        }
+
+        /* ---- هلال ---- */
+        .crescent {
+            position: fixed;
+            top: -60px;
+            left: 5%;
+            width: 220px;
+            height: 220px;
+            z-index: 1;
+            animation: floatMoon 6s ease-in-out infinite;
+
+            background: var(--moon);
+            border-radius: 50%;
+            box-shadow:
+                0 0 40px 10px rgba(240, 201, 58, .4),
+                0 0 80px 20px rgba(240, 201, 58, .15);
+
+            /* القص */
+            -webkit-mask: radial-gradient(circle at 65% 45%, transparent 60%, black 61%);
+            mask: radial-gradient(circle at 65% 45%, transparent 60%, black 61%);
+        }
+
+        .crescent::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: var(--moon);
+            box-shadow:
+                0 0 40px 10px rgba(240, 201, 58, .4),
+                0 0 80px 20px rgba(240, 201, 58, .15);
+        }
+
+        .crescent::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 30px;
+            width: 190px;
+            height: 190px;
+            border-radius: 50%;
+            background: #335c81;
+        }
+
+        @keyframes floatMoon {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(-5deg);
+            }
+
+            50% {
+                transform: translateY(-18px) rotate(5deg);
+            }
+        }
+
+        /* ---- زخارف هندسية ---- */
+        .ornament {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1;
+            opacity: .08;
+        }
+
+        .ornament-tr {
+            top: 0;
+            right: 0;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle at 100% 0%, var(--gold) 0%, transparent 70%);
+        }
+
+        .ornament-bl {
+            bottom: 0;
+            left: 0;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle at 0% 100%, var(--gold) 0%, transparent 70%);
+        }
+
+        /* ---- حاوية رئيسية ---- */
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 0rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        /* ---- البطاقة الرئيسية ---- */
+        .card {
+            width: 100%;
+            /* background: rgba(255, 255, 255, 0.04); */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 28px;
+            overflow: hidden;
+            backdrop-filter: blur(16px);
+            /* box-shadow:
+                0 24px 64px rgba(255, 255, 255, 0.4),
+                inset 0 1px 0 rgba(255,255,255,.08); */
+        }
+
+        /* ---- رأس البطاقة ---- */
+        .card-header {
+            background: linear-gradient(135deg, rgba(51, 92, 129, .15) 0%, rgba(39, 64, 96, .1) 100%);
+            border-bottom: 1px solid rgba(212, 160, 23, .15);
+            padding: 2.5rem 2rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 20px,
+                    rgba(39, 64, 96, .03) 20px,
+                    rgba(51, 92, 129, .03) 21px);
+        }
+
+        .eid-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            background: white;
+            color: var(--text-dark);
+            padding: .35rem 1rem;
+            border-radius: 100px;
+            font-size: .8rem;
+            font-weight: 800;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.4);
+            animation: pulse-glow 2.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 4px 16px rgba(255, 255, 255, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 4px 28px rgba(255, 255, 255, 0.7), 0 0 0 6px rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .card-title {
+            font-size: 2.4rem;
+            font-weight: 900;
+            line-height: 1.2;
+            background: linear-gradient(135deg, var(--gold-light), #fff 60%, var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: .6rem;
+            text-shadow: none;
+        }
+
+        .card-subtitle {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, .65);
+            font-weight: 400;
+        }
+
+        /* ---- إحصائيات ---- */
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            padding: 1.6rem 2rem;
+            border-bottom: 1px solid rgba(212, 160, 23, .1);
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: .25rem;
+        }
+
+        .stat-value {
+            font-size: 1.9rem;
+            font-weight: 900;
+            color: white;
+            line-height: 1;
+            min-width: 3ch;
+        }
+
+        .stat-value.loading {
+            animation: count-pulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes count-pulse {
+
+            0%,
+            100% {
+                opacity: .4;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .stat-label {
+            font-size: .75rem;
+            color: rgba(255, 255, 255, .5);
+            font-weight: 500;
+        }
+
+        .stat-divider {
+            width: 1px;
+            background: rgba(212, 160, 23, .2);
+            align-self: stretch;
+        }
+
+        /* ---- معاينة PDF ---- */
+        .preview-area {
+            margin: 1.5rem 2rem;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(212, 160, 23, .15);
+            background: rgba(0, 0, 0, .3);
+            position: relative;
+        }
+
+        .preview-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 2.5rem;
+            color: rgba(255, 255, 255, .4);
+        }
+
+        .preview-icon i {
+            font-size: 4rem;
+            color: white;
+            filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.5));
+            animation: float-icon 4s ease-in-out infinite;
+        }
+
+        @keyframes float-icon {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .preview-icon p {
+            font-size: .95rem;
+            color: rgba(255, 255, 255, .5);
+        }
+
+        .file-meta {
+            display: flex;
+            gap: .75rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: .5rem;
+        }
+
+        .file-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .3rem .8rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 100px;
+            font-size: .78rem;
+            color: white;
+        }
+
+        .file-tag i {
+            font-size: 1rem;
+            animation: none;
+        }
+
+        /* ---- زر التحميل ---- */
+        .download-section {
+            padding: 0 2rem 0rem;
+        }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            width: 100%;
+            padding: 1.1rem 2rem;
+            background: white;
+            color: var(--text-dark);
+            border: none;
+            border-radius: 16px;
+            font-size: 1.15rem;
+            font-weight: 900;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                0 8px 24px rgba(255, 255, 255, 0.4),
+                0 2px 0 rgba(255, 255, 255, .2) inset;
+            transition: transform .2s, box-shadow .2s;
+            text-decoration: none;
+        }
+
+        .download-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .3), transparent);
+            transition: left .6s;
+        }
+
+        .download-btn:hover::before {
+            left: 150%;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(255, 255, 255, 0.55);
+        }
+
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        .download-btn.downloading {
+            opacity: .8;
+            cursor: not-allowed;
+        }
+
+        .download-btn .btn-icon {
+            font-size: 1.4rem;
+            animation: none;
+        }
+
+        .download-btn.downloading .btn-icon {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .download-note {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: .82rem;
+            color: rgba(255, 255, 255, .35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .4rem;
+        }
+
+        /* ---- تهنئة عيد ---- */
+        .eid-greeting {
+            text-align: center;
+            padding: 1.5rem 2rem;
+            border-top: 1px solid rgba(212, 160, 23, .1);
+            position: relative;
+        }
+
+        .greeting-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gold-light), #fff 50%, var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: .5rem;
+        }
+
+        .greeting-sub {
+            font-size: .9rem;
+            color: rgba(255, 255, 255, .5);
+        }
+
+        .lantern-row {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            font-size: 1.8rem;
+        }
+
+        .lantern-row span {
+            display: inline-block;
+            animation: swing var(--s, 2s) ease-in-out infinite alternate;
+        }
+
+        @keyframes swing {
+            from {
+                transform: rotate(-8deg);
+            }
+
+            to {
+                transform: rotate(8deg);
+            }
+        }
+
+        /* ---- Toast ---- */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(135deg, var(--green), var(--green-light));
+            border: 1px solid var(--gold);
+            color: #fff;
+            padding: .9rem 1.8rem;
+            border-radius: 100px;
+            font-size: .95rem;
+            font-weight: 700;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
+            transition: transform .4s cubic-bezier(.34, 1.56, .64, 1);
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ---- زخرفة سفلية ---- */
+        .footer-note {
+            text-align: center;
+            font-size: .8rem;
+            color: rgba(255, 255, 255, .25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+        }
+
+        .footer-note a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            opacity: .8;
+            transition: opacity .2s;
+        }
+
+        .footer-note a:hover {
+            opacity: 1;
+        }
+
+        /* ---- Responsive ---- */
+        @media (max-width: 480px) {
+            .card-title {
+                font-size: 1.8rem;
+            }
+
+            .stats-row {
+                gap: 1rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .download-btn {
+                font-size: 1rem;
+                padding: 1rem 1.5rem;
+            }
+
+            .crescent {
+                width: 150px;
+                height: 150px;
+                top: -40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- خلفية -->
+    <div class="stars-bg" id="starsBg"></div>
+    <div class="ornament ornament-tr"></div>
+    <div class="ornament ornament-bl"></div>
+    <div class="crescent"></div>
+
+    <!-- محتوى -->
+    <div class="container">
+
+        <!-- البطاقة -->
+        <div class="card">
+
+            <!-- رأس -->
+            <div class="card-header">
+                <div class="eid-badge">
+                    <i class="fa-solid fa-star-and-crescent"></i>
+                    عيد مبارك سعيد
+                </div>
+                <h1 class="card-title">لعبة العيد 🎉</h1>
+                <p class="card-subtitle">هدية خاصة من عائلة نادي أدِيب لإضفاء البهجة على أجواء العيد</p>
+            </div>
+
+            <!-- معاينة -->
+            <div class="preview-area">
+                <div class="preview-icon">
+                    <i class="fa-solid fa-gamepad"></i>
+                    <p>لعبة عائلة أدِيب</p>
+                    <div class="file-meta">
+                        <span class="file-tag"><i class="fa-solid fa-file-pdf"></i> ملف PDF</span>
+                        <span class="file-tag"><i class="fa-solid fa-users"></i> للعائلة والأصدقاء</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- زر التحميل -->
+            <div class="download-section">
+                <button class="download-btn" id="downloadBtn" onclick="handleDownload()">
+                    <i class="fa-solid fa-download btn-icon" id="btnIcon"></i>
+                    <span id="btnText">حمّل لعبة العيد مجاناً</span>
+                </button>
+                <p class="download-note">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    ملف آمن — بدون إعلانات أو قيود
+                </p>
+            </div>
+
+            <!-- إحصائيات -->
+            <div class="stats-row">
+                <div class="stat">
+                    <span class="stat-value loading" id="statTotal">—</span>
+                    <span class="stat-label">إجمالي التحميلات</span>
+                </div>
+            </div>
+
+            <!-- تهنئة -->
+            <div class="eid-greeting">
+                <p class="greeting-text">عيد فطر مبارك 🌙</p>
+                <p class="greeting-sub">تقبّل الله طاعتكم وأعاده عليكم بالخير واليُمن</p>
+                <div class="lantern-row">
+                    <span style="--s:1.8s">🪔</span>
+                    <span style="--s:2.2s">🌙</span>
+                    <span style="--s:1.6s">⭐</span>
+                    <span style="--s:2.5s">🌙</span>
+                    <span style="--s:1.9s">🪔</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <p class="footer-note">
+            مُقدم بكل محبة من
+            <a href="/" target="_blank">عائلة نادي أدِيب</a>
+            <i class="fa-solid fa-heart" style="color:white"></i>
+        </p>
+
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toastMsg">جاري التحميل...</span>
+    </div>
+
+    <script>
+        const FILE_KEY = 'eid-game-2025';
+        const FILE_NAME = 'لعبة عائلة أدِيب.pdf';
+        const FILE_PATH = 'لعبة العيد.pdf';
+
+        // ---- توليد النجوم ----
+        (function generateStars() {
+            const bg = document.getElementById('starsBg');
+            const count = window.innerWidth < 480 ? 60 : 120;
+            for (let i = 0; i < count; i++) {
+                const s = document.createElement('div');
+                s.className = 'star';
+                const size = Math.random() * 2.5 + .5;
+                s.style.cssText = `
+                    width:${size}px; height:${size}px;
+                    top:${Math.random()*100}%;
+                    left:${Math.random()*100}%;
+                    --dur:${(Math.random()*3+2).toFixed(1)}s;
+                    animation-delay:${(Math.random()*4).toFixed(1)}s;
+                `;
+                bg.appendChild(s);
+            }
+        })();
+
+        // ---- تحميل الإحصائيات ----
+        async function loadStats() {
+            try {
+                const sb = window.sbClient;
+                if (!sb) return;
+                const {
+                    data
+                } = await sb.rpc('get_download_stats', {
+                    p_file_key: FILE_KEY
+                });
+                if (data && data[0]) {
+                    const d = data[0];
+                    animateCount('statTotal', parseInt(d.total_downloads) || 0);
+                    animateCount('statToday', parseInt(d.today_downloads) || 0);
+                    animateCount('statWeek', parseInt(d.this_week_downloads) || 0);
+                }
+            } catch (e) {
+                ['statTotal', 'statToday', 'statWeek'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.textContent = '0';
+                        el.classList.remove('loading');
+                    }
+                });
+            }
+        }
+
+        function animateCount(id, target) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove('loading');
+            if (target === 0) {
+                el.textContent = '0';
+                return;
+            }
+            let current = 0;
+            const step = Math.ceil(target / 30);
+            const timer = setInterval(() => {
+                current = Math.min(current + step, target);
+                el.textContent = current.toLocaleString('ar-SA');
+                if (current >= target) clearInterval(timer);
+            }, 40);
+        }
+
+        // ---- تسجيل التحميل في DB ----
+        async function logDownload() {
+            try {
+                const sb = window.sbClient;
+                if (!sb) return;
+                await sb.rpc('log_file_download', {
+                    p_file_key: FILE_KEY,
+                    p_file_name: FILE_NAME,
+                    p_user_agent: navigator.userAgent.substring(0, 200)
+                });
+            } catch (e) {
+                console.warn('Could not log download:', e);
+            }
+        }
+
+        // ---- معالج التحميل ----
+        async function handleDownload() {
+            const btn = document.getElementById('downloadBtn');
+            const icon = document.getElementById('btnIcon');
+            const text = document.getElementById('btnText');
+
+            if (btn.classList.contains('downloading')) return;
+
+            btn.classList.add('downloading');
+            icon.className = 'fa-solid fa-spinner btn-icon';
+            text.textContent = 'جاري التحميل...';
+
+            try {
+                // تسجيل في DB
+                await logDownload();
+
+                // تحديث عداد محلي فوري
+                const totalEl = document.getElementById('statTotal');
+                const todayEl = document.getElementById('statToday');
+                const weekEl = document.getElementById('statWeek');
+                if (totalEl) totalEl.textContent = (parseInt(totalEl.textContent.replace(/\D/g, '')) + 1)
+                    .toLocaleString('ar-SA');
+                if (todayEl) todayEl.textContent = (parseInt(todayEl.textContent.replace(/\D/g, '')) + 1)
+                    .toLocaleString('ar-SA');
+                if (weekEl) weekEl.textContent = (parseInt(weekEl.textContent.replace(/\D/g, '')) + 1)
+                    .toLocaleString('ar-SA');
+
+                // تحميل الملف
+                const link = document.createElement('a');
+                link.href = FILE_PATH;
+                link.download = FILE_NAME;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                showToast('✅ بدأ التحميل — عيد مبارك!');
+
+            } catch (err) {
+                showToast('⚠️ حدث خطأ — حاول مرة أخرى');
+                console.error(err);
+            } finally {
+                setTimeout(() => {
+                    btn.classList.remove('downloading');
+                    icon.className = 'fa-solid fa-download btn-icon';
+                    text.textContent = 'حمّل لعبة العيد مجاناً';
+                }, 2000);
+            }
+        }
+
+        // ---- Toast ----
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        // ---- تشغيل ----
+        document.addEventListener('DOMContentLoaded', loadStats);
+    </script>
+</body>
+
+</html>

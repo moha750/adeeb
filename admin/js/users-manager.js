@@ -389,19 +389,22 @@ class UsersManager {
             exportBtn.addEventListener('click', () => this.showExportDialog());
         }
 
-        // أزرار عرض التفاصيل وتعديل وإنهاء العضوية
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.btn-view-user')) {
-                const userId = e.target.closest('.btn-view-user').dataset.userId;
-                this.viewUserDetails(userId);
-            } else if (e.target.closest('.btn-edit-user')) {
-                const userId = e.target.closest('.btn-edit-user').dataset.userId;
-                this.editUser(userId);
-            } else if (e.target.closest('.btn-terminate-membership')) {
-                const userId = e.target.closest('.btn-terminate-membership').dataset.userId;
-                this.terminateMembership(userId);
-            }
-        });
+        // أزرار عرض التفاصيل وتعديل وإنهاء العضوية (مرة واحدة فقط)
+        if (!this._clickListenerBound) {
+            this._clickListenerBound = true;
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-view-user')) {
+                    const userId = e.target.closest('.btn-view-user').dataset.userId;
+                    this.viewUserDetails(userId);
+                } else if (e.target.closest('.btn-edit-user')) {
+                    const userId = e.target.closest('.btn-edit-user').dataset.userId;
+                    this.editUser(userId);
+                } else if (e.target.closest('.btn-terminate-membership')) {
+                    const userId = e.target.closest('.btn-terminate-membership').dataset.userId;
+                    this.terminateMembership(userId);
+                }
+            });
+        }
     }
 
     /**
@@ -680,12 +683,22 @@ class UsersManager {
                         </ul>
                     </div>
                     <div style="margin-top: 1rem; text-align: right;">
-                        <label style="display: block; font-size: 0.9rem; color: #374151; margin-bottom: 0.4rem; font-weight: 500;">
+                        <label style="display: block; font-size: 0.9rem; color: #374151; margin-bottom: 0.6rem; font-weight: 500;">
                             سبب إنهاء العضوية <span style="color: #9ca3af; font-weight: 400;">(اختياري)</span>
                         </label>
-                        <textarea id="terminationReasonInput" rows="3"
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+                            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+                                <input type="radio" name="terminationPreset" value="تقدّم العضو بطلب إنهاء عضويته" style="margin-top: 3px; flex-shrink: 0;" onchange="document.getElementById('terminationReasonInput').value=this.value">
+                                <span style="font-size: 0.88rem; color: #374151;">تقدّم العضو بطلب إنهاء عضويته</span>
+                            </label>
+                            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+                                <input type="radio" name="terminationPreset" value="خروج العضو من مجتمع أدِيب دون إبلاغ لجنة الموارد البشرية بالخروج" style="margin-top: 3px; flex-shrink: 0;" onchange="document.getElementById('terminationReasonInput').value=this.value">
+                                <span style="font-size: 0.88rem; color: #374151;">خروج العضو من مجتمع أدِيب دون إبلاغ لجنة الموارد البشرية بالخروج</span>
+                            </label>
+                        </div>
+                        <textarea id="terminationReasonInput" rows="2"
                             style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; resize: vertical; direction: rtl; font-family: inherit;"
-                            placeholder="أدخل سبب إنهاء العضوية..."></textarea>
+                            placeholder="أو اكتب سبباً مخصصاً..."></textarea>
                     </div>
                 </div>
             `,

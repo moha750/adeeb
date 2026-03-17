@@ -42,8 +42,8 @@
                 await window.notificationsManager.init(currentUser);
             }
             
-            // تهيئة نظام إرسال الإشعارات (لرئيس النادي ومستشاره)
-            if (currentUserRole.role_level >= 9 && window.sendNotifications) {
+            // تهيئة نظام إرسال الإشعارات (لمن يملك manage_notifications)
+            if (window.PermissionsHelper?.hasPermission('manage_notifications') && window.sendNotifications) {
                 await window.sendNotifications.init(currentUser);
             }
             
@@ -152,12 +152,12 @@
         const nav = document.getElementById('mainNav');
         if (!nav) return;
         
-        const roleLevel = currentUserRole.role_level;
         const menuItems = [];
         
-        // دوال مساعدة للتحقق من الصلاحيات
+        // دوال مساعدة للتحقق من الصلاحيات — المرجع الوحيد للتحكم في القائمة
         const hasPermission = (key) => window.PermissionsHelper?.hasPermission(key) || false;
         const hasAnyPermission = (keys) => window.PermissionsHelper?.hasAnyPermission(keys) || false;
+        const roleName = currentUserRole.role_name;
         
         // بطاقة العضوية - جميع المستويات (أول تبويب)
         menuItems.push({
@@ -167,12 +167,12 @@
             section: 'membership-card-section'
         });
         
-        // شجرة أدِيب - المستوى 7 وأعلى (قائمة منسدلة)
-        if (roleLevel >= 7) {
+        // شجرة أدِيب — لمن يملك view_members أو view_pending_members
+        if (hasAnyPermission(['view_members', 'view_pending_members', 'manage_member_data', 'manage_positions'])) {
             const adeebTreeSubItems = [];
             
-            // أعضاء أديب - المستوى 8 وأعلى
-            if (roleLevel >= 8) {
+            // أعضاء أديب — يحتاج view_members
+            if (hasPermission('view_members')) {
                 adeebTreeSubItems.push({
                     id: 'users',
                     icon: 'fa-users',
@@ -181,8 +181,8 @@
                 });
             }
             
-            // الأعضاء المنتهية عضوياتهم - المستوى 8 وأعلى
-            if (roleLevel >= 8) {
+            // الأعضاء المنتهية عضوياتهم — يحتاج view_members
+            if (hasPermission('view_members')) {
                 adeebTreeSubItems.push({
                     id: 'terminated-members',
                     icon: 'fa-user-xmark',
@@ -238,14 +238,17 @@
                 });
             }
             
-            // الأعضاء المعلقين - المستوى 7 وأعلى
-            adeebTreeSubItems.push({
-                id: 'pending-members',
-                icon: 'fa-clock',
-                label: 'الأعضاء المعلقين',
-                section: 'pending-members-section'
-            });
+            // الأعضاء المعلقين — يحتاج view_pending_members
+            if (hasPermission('view_pending_members')) {
+                adeebTreeSubItems.push({
+                    id: 'pending-members',
+                    icon: 'fa-clock',
+                    label: 'الأعضاء المعلقين',
+                    section: 'pending-members-section'
+                });
+            }
             
+            if (adeebTreeSubItems.length === 0) return;
             menuItems.push({
                 id: 'adeeb-tree',
                 icon: 'fa-tree',
@@ -255,8 +258,8 @@
             });
         }
         
-        // إحصائيات الزيارات - المستوى 6 فأعلى (مخفي عن العضو)
-        if (roleLevel >= 6) {
+        // إحصائيات الزيارات — يحتاج view_site_stats
+        if (hasPermission('view_site_stats')) {
             menuItems.push({
                 id: 'site-visits',
                 icon: 'fa-chart-line',
@@ -265,9 +268,8 @@
             });
         }
         
-        
-        // رسائل التواصل - المستوى 7 وأعلى
-        if (roleLevel >= 7) {
+        // رسائل التواصل — يحتاج manage_contact
+        if (hasPermission('manage_contact')) {
             menuItems.push({
                 id: 'contact-messages',
                 icon: 'fa-envelope',
@@ -276,8 +278,8 @@
             });
         }
         
-        // النشرة البريدية - المستوى 7 وأعلى
-        if (roleLevel >= 7) {
+        // النشرة البريدية — يحتاج manage_newsletter
+        if (hasPermission('manage_newsletter')) {
             menuItems.push({
                 id: 'newsletter',
                 icon: 'fa-envelope-open-text',
@@ -286,13 +288,13 @@
             });
         }
         
-        // إدارة العضوية - المستوى 6 وأعلى (مخفي عن العضو)
-        if (roleLevel >= 6) {
+        // إدارة العضوية — لمن يملك أي صلاحية عضوية
+        if (hasAnyPermission(['manage_registration', 'approve_applications', 'view_applications', 'manage_interviews', 'view_membership_archives'])) {
             const membershipSubItems = [];
             
-            // باب التسجيل - قائمة فرعية
+            // باب التسجيل — يحتاج manage_registration
             const registrationSubItems = [];
-            if (roleLevel >= 8) {
+            if (hasPermission('manage_registration')) {
                 registrationSubItems.push({
                     id: 'membership-settings',
                     icon: 'fa-gear',
@@ -311,6 +313,8 @@
                     label: 'دعوات التسجيل',
                     section: 'membership-invitations-section'
                 });
+            }
+            if (hasPermission('gift_membership')) {
                 registrationSubItems.push({
                     id: 'gift-membership',
                     icon: 'fa-gift',
@@ -328,15 +332,17 @@
                 });
             }
             
-            // الفرز المبدئي - قائمة فرعية
+            // الفرز المبدئي — يحتاج view_applications أو approve_applications
             const sortingSubItems = [];
-            sortingSubItems.push({
-                id: 'membership-applications-view',
-                icon: 'fa-eye',
-                label: 'طلبات العضوية',
-                section: 'membership-applications-view-section'
-            });
-            if (roleLevel >= 8) {
+            if (hasPermission('view_applications')) {
+                sortingSubItems.push({
+                    id: 'membership-applications-view',
+                    icon: 'fa-eye',
+                    label: 'طلبات العضوية',
+                    section: 'membership-applications-view-section'
+                });
+            }
+            if (hasPermission('approve_applications')) {
                 sortingSubItems.push({
                     id: 'membership-applications-review',
                     icon: 'fa-clipboard-check',
@@ -352,27 +358,28 @@
                 subItems: sortingSubItems
             });
             
-            // المقابلات الشخصية - قائمة فرعية
-            if (roleLevel >= 7) {
-                const interviewsSubItems = [];
-                interviewsSubItems.push({
-                    id: 'interview-sessions',
-                    icon: 'fa-calendar-days',
-                    label: 'جلسات المقابلات',
-                    section: 'interview-sessions-section'
-                });
-                interviewsSubItems.push({
-                    id: 'membership-interviews',
-                    icon: 'fa-calendar-check',
-                    label: 'المقابلات',
-                    section: 'membership-interviews-section'
-                });
-                interviewsSubItems.push({
-                    id: 'membership-barzakh',
-                    icon: 'fa-hourglass-half',
-                    label: 'البرزخ',
-                    section: 'membership-barzakh-section'
-                });
+            // المقابلات الشخصية — يحتاج manage_interviews
+            if (hasPermission('manage_interviews')) {
+                const interviewsSubItems = [
+                    {
+                        id: 'interview-sessions',
+                        icon: 'fa-calendar-days',
+                        label: 'جلسات المقابلات',
+                        section: 'interview-sessions-section'
+                    },
+                    {
+                        id: 'membership-interviews',
+                        icon: 'fa-calendar-check',
+                        label: 'المقابلات',
+                        section: 'membership-interviews-section'
+                    },
+                    {
+                        id: 'membership-barzakh',
+                        icon: 'fa-hourglass-half',
+                        label: 'البرزخ',
+                        section: 'membership-barzakh-section'
+                    }
+                ];
                 membershipSubItems.push({
                     id: 'personal-interviews',
                     icon: 'fa-comments',
@@ -398,8 +405,8 @@
                 section: 'member-migration-section'
             });
             
-            // أرشيف التسجيل - عنصر مباشر
-            if (roleLevel >= 7) {
+            // أرشيف التسجيل — يحتاج view_membership_archives
+            if (hasPermission('view_membership_archives')) {
                 membershipSubItems.push({
                     id: 'membership-archives',
                     icon: 'fa-box-archive',
@@ -417,8 +424,8 @@
             });
         }
         
-        // إدارة الاستبيانات - باستخدام صلاحية manage_surveys
-        if (hasPermission('manage_surveys') || roleLevel >= 7) {
+        // إدارة الاستبيانات — يحتاج manage_surveys
+        if (hasPermission('manage_surveys')) {
             const surveysSubItems = [
                 {
                     id: 'surveys-all',
@@ -571,9 +578,8 @@
                 }
             ];
             
-            // إضافة تبويب النشر الفوري لرئيس النادي، الرئيس التنفيذي، قائد ونائب لجنة التقارير والأرشفة
-            const canInstantPublish = roleLevel >= 9 || roleLevel === 6 || isReportsLeaderOrDeputy;
-            if (canInstantPublish) {
+            // إضافة تبويب النشر الفوري — يحتاج instant_publish
+            if (hasPermission('instant_publish')) {
                 newsSubItems.push({
                     id: 'news-instant-publish',
                     icon: 'fa-bolt',
@@ -606,8 +612,8 @@
             });
         }
 
-        // إدارة الموقع - المستوى 7 وأعلى (قائمة منسدلة)
-        if (roleLevel >= 7) {
+        // إدارة الموقع — يحتاج manage_website
+        if (hasPermission('manage_website')) {
             const websiteSubItems = [
                 {
                     id: 'website-works',
@@ -652,8 +658,10 @@
             section: 'profile-section'
         });
 
-        // لجنتي - جميع المستويات ما عدا رئيس النادي (10) ورئيس المجلس الإداري (6)
-        if (roleLevel !== 10 && roleLevel !== 6) {
+        // لجنتي — لكل من ينتمي للجنة (له committee_id) ما عدا رئيس النادي ورئيس المجلس التنفيذي
+        if (currentUserRole.committee_id &&
+            roleName !== 'club_president' &&
+            roleName !== 'executive_council_president') {
             menuItems.push({
                 id: 'my-committee',
                 icon: 'fa-users',
@@ -797,8 +805,59 @@
         });
     }
 
+    // خريطة الأقسام المحمية: sectionId → الصلاحية المطلوبة
+    const PROTECTED_SECTIONS = {
+        'users-section':                        'view_members',
+        'terminated-members-section':           'view_members',
+        'pending-members-section':              'view_pending_members',
+        'impersonation-section':                'impersonate_users',
+        'member-data-management-section':       'manage_member_data',
+        'positions-section':                    'manage_positions',
+        'permissions-section':                  'manage_positions',
+        'committees-section':                   'manage_committees',
+        'site-visits-section':                  'view_site_stats',
+        'contact-messages-section':             'manage_contact',
+        'newsletter-section':                   'manage_newsletter',
+        'membership-settings-section':          'manage_registration',
+        'membership-committees-section':        'manage_registration',
+        'membership-invitations-section':       'manage_registration',
+        'gift-membership-section':              'gift_membership',
+        'membership-applications-view-section': 'view_applications',
+        'membership-applications-review-section':'approve_applications',
+        'interview-sessions-section':           'manage_interviews',
+        'membership-interviews-section':        'manage_interviews',
+        'membership-barzakh-section':           'manage_interviews',
+        'membership-archives-section':          'view_membership_archives',
+        'member-migration-section':             'approve_applications',
+        'surveys-all-section':                  'manage_surveys',
+        'surveys-create-section':               'manage_surveys',
+        'surveys-results-section':              'manage_surveys',
+        'surveys-templates-section':            'manage_surveys',
+        'surveys-archived-section':             'manage_surveys',
+        'surveys-deleted-section':              'manage_surveys',
+        'elections-open-section':               'manage_elections',
+        'elections-review-section':             'manage_elections',
+        'elections-voting-admin-section':       'manage_voting',
+        'elections-results-section':            'manage_elections',
+        'website-works-section':                'manage_website',
+        'website-achievements-section':         'manage_website',
+        'website-sponsors-section':             'manage_website',
+        'website-faq-section':                  'manage_website',
+    };
+
     // التنقل بين الأقسام
     function navigateToSection(sectionId) {
+        // التحقق من الصلاحية إذا كان القسم محمياً
+        const requiredPermission = PROTECTED_SECTIONS[sectionId];
+        if (requiredPermission) {
+            const allowed = window.PermissionsHelper?.hasPermission(requiredPermission) || false;
+            if (!allowed) {
+                console.warn(`[Security] Blocked access to ${sectionId} — requires: ${requiredPermission}`);
+                navigateToSection('membership-card-section');
+                return;
+            }
+        }
+
         // إخفاء جميع الأقسام
         document.querySelectorAll('.admin-section').forEach(section => {
             section.classList.add('d-none');
@@ -926,6 +985,11 @@
                 }
                 if (window.positionsManager) {
                     await window.positionsManager.init();
+                }
+                break;
+            case 'permissions-section':
+                if (window.initPermissionsSection) {
+                    await window.initPermissionsSection();
                 }
                 break;
             case 'membership-applications-view-section':
@@ -1586,6 +1650,10 @@
                                     </div>
                                 </div>
                                 <div class="application-card-footer">
+                                    <button class="btn btn--outline-secondary btn--sm" onclick="window.surveysManager.exportSurveyToExcel(${survey.id})">
+                                        <i class="fa-solid fa-file-excel"></i>
+                                        تحميل Excel
+                                    </button>
                                     <button class="btn btn--success btn--sm" onclick="window.surveysManager.unarchiveSurvey(${survey.id}); loadArchivedSurveysSection()">
                                         <i class="fa-solid fa-box-open"></i>
                                         إلغاء الأرشفة
@@ -1708,6 +1776,10 @@
                                     </div>
                                 </div>
                                 <div class="application-card-footer">
+                                    <button class="btn btn--outline-secondary btn--sm" onclick="window.surveysManager.exportSurveyToExcel(${survey.id})">
+                                        <i class="fa-solid fa-file-excel"></i>
+                                        تحميل Excel
+                                    </button>
                                     <button class="btn btn--success btn--sm" onclick="window.surveysManager.restoreSurvey(${survey.id}).then(() => loadDeletedSurveysSection())">
                                         <i class="fa-solid fa-rotate-left"></i>
                                         استعادة

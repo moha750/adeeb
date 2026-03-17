@@ -457,18 +457,14 @@
      * فتح نافذة تعديل الملف الشخصي
      */
     async function openEditProfileModal() {
-        const modal = document.getElementById('editProfileModal');
-        const backdrop = document.getElementById('editProfileModalBackdrop');
-        
-        if (!modal) {
-            console.error('Modal not found!');
-            return;
-        }
+        const modal = document.getElementById('editBasicInfoModal');
+        const backdrop = document.getElementById('editBasicInfoModalBackdrop');
+        if (!modal) return;
 
         try {
             const { data: memberDetails, error } = await window.sbClient
                 .from('member_details')
-                .select('*')
+                .select('full_name_triple,email,phone,national_id,birth_date,academic_record_number')
                 .eq('user_id', currentUser.id)
                 .single();
 
@@ -476,60 +472,106 @@
                 console.error('خطأ في جلب بيانات العضو:', error);
             }
 
-            document.getElementById('editFullName').value = memberDetails?.full_name_triple || currentUser.full_name || '';
-            document.getElementById('editEmail').value = memberDetails?.email || currentUser.email || '';
-            document.getElementById('editPhone').value = memberDetails?.phone || currentUser.phone || '';
-            document.getElementById('editNationalId').value = memberDetails?.national_id || '';
-            document.getElementById('editBirthDate').value = memberDetails?.birth_date || '';
-            document.getElementById('editAcademicRecord').value = memberDetails?.academic_record_number || '';
-            document.getElementById('editAcademicDegree').value = memberDetails?.academic_degree || '';
-            document.getElementById('editCollege').value = memberDetails?.college || '';
-            document.getElementById('editMajor').value = memberDetails?.major || '';
-            document.getElementById('editTwitter').value = memberDetails?.twitter_account || '';
-            document.getElementById('editInstagram').value = memberDetails?.instagram_account || '';
-            document.getElementById('editTiktok').value = memberDetails?.tiktok_account || '';
-            document.getElementById('editLinkedin').value = memberDetails?.linkedin_account || '';
+            document.getElementById('editBasicFullName').value = memberDetails?.full_name_triple || currentUser.full_name || '';
+            document.getElementById('editBasicEmail').value = memberDetails?.email || currentUser.email || '';
+            document.getElementById('editBasicPhone').value = memberDetails?.phone || currentUser.phone || '';
+            document.getElementById('editBasicNationalId').value = memberDetails?.national_id || '';
+            document.getElementById('editBasicBirthDate').value = memberDetails?.birth_date || '';
+            document.getElementById('editBasicAcademicRecord').value = memberDetails?.academic_record_number || '';
 
             const canChangeName = await checkCanChangeName();
-            const nameWarning = document.getElementById('nameChangeWarning');
-            if (!canChangeName && nameWarning) {
-                nameWarning.style.display = 'block';
-            }
+            const nameWarning = document.getElementById('basicNameChangeWarning');
+            if (nameWarning) nameWarning.style.display = canChangeName ? 'none' : 'block';
 
-            // فتح النافذة المنبثقة بالطريقة الصحيحة
-            if (backdrop) {
-                backdrop.classList.add('active');
-            }
+            if (backdrop) backdrop.classList.add('active');
             modal.classList.add('active');
             document.body.classList.add('modal-open');
 
-            const closeBtn = document.getElementById('closeEditProfileModal');
-            const cancelBtn = document.getElementById('cancelEditProfile');
-            const saveBtn = document.getElementById('saveProfileChanges');
-
             const closeModal = () => {
                 modal.classList.remove('active');
-                if (backdrop) {
-                    backdrop.classList.remove('active');
-                }
+                if (backdrop) backdrop.classList.remove('active');
                 document.body.classList.remove('modal-open');
             };
 
-            closeBtn.onclick = closeModal;
-            cancelBtn.onclick = closeModal;
-            saveBtn.onclick = async () => {
-                await handleSaveProfileChanges();
+            document.getElementById('closeEditBasicInfoModal').onclick = closeModal;
+            document.getElementById('cancelEditBasicInfoBtn').onclick = closeModal;
+            if (backdrop) backdrop.onclick = closeModal;
+
+            document.getElementById('saveBasicInfoBtn').onclick = async () => {
+                await handleSaveBasicInfoChanges();
                 closeModal();
             };
 
-            // إغلاق عند النقر على الخلفية
-            if (backdrop) {
-                backdrop.onclick = closeModal;
+        } catch (error) {
+            console.error('خطأ في فتح نافذة المعلومات الأساسية:', error);
+            showNotification('فشل فتح نافذة التعديل', 'error');
+        }
+    }
+
+    /**
+     * حفظ المعلومات الأساسية
+     */
+    async function handleSaveBasicInfoChanges() {
+        try {
+            const newFullName = document.getElementById('editBasicFullName').value.trim();
+            const newEmail = document.getElementById('editBasicEmail').value.trim();
+            const newPhone = document.getElementById('editBasicPhone').value.trim();
+            const newNationalId = document.getElementById('editBasicNationalId').value.trim();
+            const newBirthDate = document.getElementById('editBasicBirthDate').value;
+            const newAcademicRecord = document.getElementById('editBasicAcademicRecord').value.trim();
+
+            const { data: oldData } = await window.sbClient
+                .from('member_details')
+                .select('full_name_triple')
+                .eq('user_id', currentUser.id)
+                .single();
+
+            const nameChanged = oldData && oldData.full_name_triple !== newFullName;
+            if (nameChanged) {
+                const canChange = await checkCanChangeName();
+                if (!canChange) {
+                    showNotification('لا يمكن تغيير الاسم أكثر من مرة كل 30 يومًا', 'error');
+                    return;
+                }
             }
 
+            const updateData = {
+                email: newEmail,
+                phone: newPhone,
+                national_id: newNationalId,
+                birth_date: newBirthDate || null,
+                academic_record_number: newAcademicRecord || null,
+                updated_at: new Date().toISOString()
+            };
+            if (nameChanged) {
+                updateData.full_name_triple = newFullName;
+                updateData.name_last_changed = new Date().toISOString();
+            }
+
+            const { error } = await window.sbClient
+                .from('member_details')
+                .update(updateData)
+                .eq('user_id', currentUser.id);
+
+            if (error) throw error;
+
+            if (nameChanged) {
+                await window.sbClient
+                    .from('profiles')
+                    .update({ full_name: newFullName, phone: newPhone, updated_at: new Date().toISOString() })
+                    .eq('id', currentUser.id);
+            } else {
+                await window.sbClient
+                    .from('profiles')
+                    .update({ phone: newPhone, updated_at: new Date().toISOString() })
+                    .eq('id', currentUser.id);
+            }
+
+            showNotification('تم حفظ المعلومات الأساسية بنجاح', 'success');
+            await loadProfileData();
         } catch (error) {
-            console.error('خطأ في فتح نافذة التعديل:', error);
-            showNotification('فشل فتح نافذة التعديل', 'error');
+            console.error('خطأ في حفظ المعلومات الأساسية:', error);
+            showNotification('فشل حفظ البيانات: ' + error.message, 'error');
         }
     }
 
@@ -898,31 +940,139 @@
     /**
      * فتح نافذة تعديل البيانات الأكاديمية
      */
-    function openEditAcademicModal() {
-        // فتح النافذة المنبثقة الرئيسية مع التركيز على قسم البيانات الأكاديمية
-        openEditProfileModal();
-        // التمرير إلى قسم البيانات الأكاديمية
-        setTimeout(() => {
-            const academicSection = document.querySelector('#editProfileModal h3:nth-of-type(3)');
-            if (academicSection) {
-                academicSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }, 300);
+    async function openEditAcademicModal() {
+        const modal = document.getElementById('editAcademicModal');
+        const backdrop = document.getElementById('editAcademicModalBackdrop');
+        if (!modal) return;
+
+        try {
+            const { data: memberDetails } = await window.sbClient
+                .from('member_details')
+                .select('academic_degree,college,major')
+                .eq('user_id', currentUser.id)
+                .single();
+
+            document.getElementById('editAcademicDegreeOnly').value = memberDetails?.academic_degree || '';
+            document.getElementById('editAcademicCollege').value = memberDetails?.college || '';
+            document.getElementById('editAcademicMajor').value = memberDetails?.major || '';
+
+            if (backdrop) backdrop.classList.add('active');
+            modal.classList.add('active');
+            document.body.classList.add('modal-open');
+
+            const closeModal = () => {
+                modal.classList.remove('active');
+                if (backdrop) backdrop.classList.remove('active');
+                document.body.classList.remove('modal-open');
+            };
+
+            document.getElementById('closeEditAcademicModal').onclick = closeModal;
+            document.getElementById('cancelEditAcademicBtn').onclick = closeModal;
+            if (backdrop) backdrop.onclick = closeModal;
+
+            document.getElementById('saveAcademicChangesBtn').onclick = async () => {
+                await handleSaveAcademicChanges();
+                closeModal();
+            };
+
+        } catch (error) {
+            console.error('خطأ في فتح نافذة البيانات الأكاديمية:', error);
+            showNotification('فشل فتح نافذة التعديل', 'error');
+        }
+    }
+
+    /**
+     * حفظ البيانات الأكاديمية
+     */
+    async function handleSaveAcademicChanges() {
+        try {
+            const { error } = await window.sbClient
+                .from('member_details')
+                .update({
+                    academic_degree: document.getElementById('editAcademicDegreeOnly').value || null,
+                    college: document.getElementById('editAcademicCollege').value.trim() || null,
+                    major: document.getElementById('editAcademicMajor').value.trim() || null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('user_id', currentUser.id);
+
+            if (error) throw error;
+            showNotification('تم حفظ البيانات الأكاديمية بنجاح', 'success');
+            await loadProfileData();
+        } catch (error) {
+            console.error('خطأ في حفظ البيانات الأكاديمية:', error);
+            showNotification('فشل حفظ البيانات: ' + error.message, 'error');
+        }
     }
 
     /**
      * فتح نافذة تعديل حسابات التواصل الاجتماعي
      */
-    function openEditSocialModal() {
-        // فتح النافذة المنبثقة الرئيسية مع التركيز على قسم حسابات التواصل
-        openEditProfileModal();
-        // التمرير إلى قسم حسابات التواصل الاجتماعي
-        setTimeout(() => {
-            const socialSection = document.querySelector('#editProfileModal h3:nth-of-type(4)');
-            if (socialSection) {
-                socialSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }, 300);
+    async function openEditSocialModal() {
+        const modal = document.getElementById('editSocialMediaModal');
+        const backdrop = document.getElementById('editSocialMediaModalBackdrop');
+        if (!modal) return;
+
+        try {
+            const { data: memberDetails } = await window.sbClient
+                .from('member_details')
+                .select('twitter_account,instagram_account,tiktok_account,linkedin_account')
+                .eq('user_id', currentUser.id)
+                .single();
+
+            document.getElementById('editSocialTwitter').value = memberDetails?.twitter_account || '';
+            document.getElementById('editSocialInstagram').value = memberDetails?.instagram_account || '';
+            document.getElementById('editSocialTiktok').value = memberDetails?.tiktok_account || '';
+            document.getElementById('editSocialLinkedin').value = memberDetails?.linkedin_account || '';
+
+            if (backdrop) backdrop.classList.add('active');
+            modal.classList.add('active');
+            document.body.classList.add('modal-open');
+
+            const closeModal = () => {
+                modal.classList.remove('active');
+                if (backdrop) backdrop.classList.remove('active');
+                document.body.classList.remove('modal-open');
+            };
+
+            document.getElementById('closeEditSocialModal').onclick = closeModal;
+            document.getElementById('cancelEditSocialBtn').onclick = closeModal;
+            if (backdrop) backdrop.onclick = closeModal;
+
+            document.getElementById('saveSocialChangesBtn').onclick = async () => {
+                await handleSaveSocialChanges();
+                closeModal();
+            };
+
+        } catch (error) {
+            console.error('خطأ في فتح نافذة التواصل الاجتماعي:', error);
+            showNotification('فشل فتح نافذة التعديل', 'error');
+        }
+    }
+
+    /**
+     * حفظ حسابات التواصل الاجتماعي
+     */
+    async function handleSaveSocialChanges() {
+        try {
+            const { error } = await window.sbClient
+                .from('member_details')
+                .update({
+                    twitter_account: document.getElementById('editSocialTwitter').value.trim() || null,
+                    instagram_account: document.getElementById('editSocialInstagram').value.trim() || null,
+                    tiktok_account: document.getElementById('editSocialTiktok').value.trim() || null,
+                    linkedin_account: document.getElementById('editSocialLinkedin').value.trim() || null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('user_id', currentUser.id);
+
+            if (error) throw error;
+            showNotification('تم حفظ حسابات التواصل الاجتماعي بنجاح', 'success');
+            await loadProfileData();
+        } catch (error) {
+            console.error('خطأ في حفظ حسابات التواصل:', error);
+            showNotification('فشل حفظ البيانات: ' + error.message, 'error');
+        }
     }
 
     /**

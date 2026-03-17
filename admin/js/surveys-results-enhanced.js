@@ -17,6 +17,8 @@
         }
 
         setupTabsNavigation() {
+            if (window._surveyTabsListenerBound) return;
+            window._surveyTabsListenerBound = true;
             document.addEventListener('click', (e) => {
                 if (e.target.classList.contains('tab-btn') || e.target.closest('.tab-btn')) {
                     const btn = e.target.classList.contains('tab-btn') ? e.target : e.target.closest('.tab-btn');

@@ -282,7 +282,7 @@ class AdeebPermissionsManager {
             const { data, error } = await this.sb
                 .from('permissions')
                 .select('*')
-                .order('module', { ascending: true })
+                .order('category', { ascending: true })
                 .order('permission_key', { ascending: true });
 
             if (error) throw error;
@@ -298,18 +298,18 @@ class AdeebPermissionsManager {
      * @param {string} module - اسم القسم
      * @returns {Promise<Array>}
      */
-    async getPermissionsByModule(module) {
+    async getPermissionsByCategory(category) {
         try {
             const { data, error } = await this.sb
                 .from('permissions')
                 .select('*')
-                .eq('module', module)
+                .eq('category', category)
                 .order('permission_key', { ascending: true });
 
             if (error) throw error;
             return data || [];
         } catch (error) {
-            console.error('Error getting permissions by module:', error);
+            console.error('Error getting permissions by category:', error);
             return [];
         }
     }
@@ -318,19 +318,19 @@ class AdeebPermissionsManager {
      * الحصول على جميع الأقسام المتاحة
      * @returns {Promise<Array>}
      */
-    async getModules() {
+    async getCategories() {
         try {
             const { data, error } = await this.sb
                 .from('permissions')
-                .select('module')
-                .order('module', { ascending: true });
+                .select('category')
+                .order('category', { ascending: true });
 
             if (error) throw error;
             
-            const modules = [...new Set(data.map(p => p.module))];
-            return modules;
+            const categories = [...new Set(data.map(p => p.category).filter(Boolean))];
+            return categories;
         } catch (error) {
-            console.error('Error getting modules:', error);
+            console.error('Error getting categories:', error);
             return [];
         }
     }
@@ -446,3 +446,163 @@ class AdeebPermissionsManager {
 if (typeof window !== 'undefined') {
     window.AdeebPermissionsManager = AdeebPermissionsManager;
 }
+
+/**
+ * تهيئة قسم إدارة الصلاحيات في لوحة التحكم
+ */
+let _permissionsSectionInitialized = false;
+
+window.initPermissionsSection = async function() {
+    const sb = window.sbClient;
+    if (!sb) return;
+    if (_permissionsSectionInitialized) {
+        const f = {
+            category: document.getElementById('permissionsCategoryFilter')?.value || '',
+            role:     document.getElementById('permissionsRoleFilter')?.value || '',
+            search:   document.getElementById('permissionsSearchInput')?.value || ''
+        };
+        await loadMatrix(f.category, f.role, f.search);
+        return;
+    }
+    _permissionsSectionInitialized = true;
+
+    const categoryLabels = {
+        admin:      'الإدارة',
+        membership: 'العضوية',
+        elections:  'الانتخابات',
+        news:       'الأخبار',
+        surveys:    'الاستبيانات',
+        website:    'الموقع'
+    };
+
+    // تحميل الإحصائيات
+    async function loadStats() {
+        const [permsRes, rolesRes] = await Promise.all([
+            sb.from('permissions').select('id, category'),
+            sb.from('roles').select('id')
+        ]);
+        const perms = permsRes.data || [];
+        const roles = rolesRes.data || [];
+        const categories = [...new Set(perms.map(p => p.category).filter(Boolean))];
+
+        const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+        el('totalPermissionsCount', perms.length);
+        el('totalRolesCount', roles.length);
+        el('totalCategoriesCount', categories.length);
+    }
+
+    // بناء مصفوفة الصلاحيات
+    async function loadMatrix(filterCategory = '', filterRole = '', searchTerm = '') {
+        const container = document.getElementById('permissionsMatrixContainer');
+        if (!container) return;
+
+        let permQuery = sb.from('permissions').select('*').order('category').order('permission_key');
+        if (filterCategory) permQuery = permQuery.eq('category', filterCategory);
+        if (searchTerm) permQuery = permQuery.ilike('permission_name_ar', `%${searchTerm}%`);
+
+        let rolesQuery = sb.from('roles').select('id, role_name_ar, role_level').order('role_level', { ascending: false });
+        if (filterRole) rolesQuery = rolesQuery.eq('id', filterRole);
+
+        const [{ data: perms }, { data: roles }, { data: rpData }] = await Promise.all([
+            permQuery,
+            rolesQuery,
+            sb.from('role_permissions').select('role_id, permission_id')
+        ]);
+
+        if (!perms || !roles) return;
+
+        const rpSet = new Set((rpData || []).map(r => `${r.role_id}_${r.permission_id}`));
+
+        let html = `<table class="data-table" style="min-width:700px">
+            <thead><tr>
+                <th style="min-width:160px">الصلاحية</th>
+                <th style="min-width:80px">الفئة</th>
+                ${roles.map(r => `<th style="min-width:90px;font-size:.75rem">${r.role_name_ar}</th>`).join('')}
+            </tr></thead><tbody>`;
+
+        perms.forEach(p => {
+            html += `<tr><td>${p.permission_name_ar}</td><td><span class="badge">${categoryLabels[p.category] || p.category}</span></td>`;
+            roles.forEach(r => {
+                const has = rpSet.has(`${r.id}_${p.id}`);
+                html += `<td style="text-align:center">
+                    <input type="checkbox" data-role="${r.id}" data-perm="${p.id}"
+                        ${has ? 'checked' : ''}
+                        onchange="window.toggleRolePermission(this, ${r.id}, '${p.permission_key}', ${has})"
+                        title="${r.role_name_ar} ← ${p.permission_name_ar}">
+                </td>`;
+            });
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    // تعبئة قائمة المناصب في الفلتر
+    async function populateRolesFilter() {
+        const sel = document.getElementById('permissionsRoleFilter');
+        if (!sel) return;
+        const { data } = await sb.from('roles').select('id, role_name_ar').order('role_level', { ascending: false });
+        (data || []).forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.id;
+            opt.textContent = r.role_name_ar;
+            sel.appendChild(opt);
+        });
+    }
+
+    // تبديل صلاحية منصب
+    window.toggleRolePermission = async function(checkbox, roleId, permKey, wasGranted) {
+        checkbox.disabled = true;
+        try {
+            if (!wasGranted) {
+                await sb.rpc('grant_permission_to_role', {
+                    p_role_id: roleId,
+                    p_permission_key: permKey,
+                    p_scope: 'all',
+                    p_granted_by: (await sb.auth.getUser()).data.user?.id,
+                    p_conditions: {}
+                });
+            } else {
+                await sb.rpc('revoke_permission_from_role', {
+                    p_role_id: roleId,
+                    p_permission_key: permKey,
+                    p_scope: 'all',
+                    p_revoked_by: (await sb.auth.getUser()).data.user?.id
+                });
+            }
+            checkbox.dataset.original = checkbox.checked ? 'true' : 'false';
+        } catch (e) {
+            console.error('Error toggling permission:', e);
+            checkbox.checked = wasGranted;
+        }
+        checkbox.disabled = false;
+    };
+
+    // مستمعات الفلاتر
+    const getFilters = () => ({
+        category: document.getElementById('permissionsCategoryFilter')?.value || '',
+        role:     document.getElementById('permissionsRoleFilter')?.value || '',
+        search:   document.getElementById('permissionsSearchInput')?.value || ''
+    });
+
+    ['permissionsCategoryFilter', 'permissionsRoleFilter'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', () => {
+            const f = getFilters(); loadMatrix(f.category, f.role, f.search);
+        });
+    });
+
+    let searchTimer;
+    document.getElementById('permissionsSearchInput')?.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            const f = getFilters(); loadMatrix(f.category, f.role, f.search);
+        }, 400);
+    });
+
+    document.getElementById('refreshPermissionsBtn')?.addEventListener('click', () => {
+        const f = getFilters(); loadMatrix(f.category, f.role, f.search);
+    });
+
+    await Promise.all([loadStats(), populateRolesFilter(), loadMatrix()]);
+};

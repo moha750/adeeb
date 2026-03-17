@@ -1581,6 +1581,17 @@
             }
         }
 
+        async exportSurveyToExcel(surveyId) {
+            if (window.surveysResultsEnhanced) {
+                await window.surveysResultsEnhanced.loadSurveyResults(surveyId);
+                setTimeout(() => {
+                    if (window.surveysResultsEnhanced.exportTableToCSV) {
+                        window.surveysResultsEnhanced.exportTableToCSV();
+                    }
+                }, 800);
+            }
+        }
+
         renderResults(survey, questions, responses) {
             const container = document.getElementById('surveyResultsContainer');
             const completedResponses = responses.filter(r => r.status === 'completed');

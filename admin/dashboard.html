@@ -823,17 +823,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="stat-card" style="--stat-color: #8b5cf6">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-users"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="archivedResponsesCount">0</div>
-                                <div class="stat-label">إجمالي الاستجابات</div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- فلاتر البحث -->
@@ -878,17 +867,6 @@
                             <div class="stat-content">
                                 <div class="stat-value" id="totalDeletedSurveysCount">0</div>
                                 <div class="stat-label">إجمالي المحذوفة</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #f59e0b">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-clock"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="deletedPendingCount">0</div>
-                                <div class="stat-label">في انتظار الحذف النهائي</div>
                             </div>
                         </div>
                     </div>
@@ -4319,6 +4297,145 @@
         </div>
     </div>
 
+    <!-- نافذة تعديل المعلومات الأساسية -->
+    <div class="modal-backdrop" id="editBasicInfoModalBackdrop"></div>
+    <div class="modal modal-md" id="editBasicInfoModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-header-content">
+                    <i class="fa-solid fa-user"></i>
+                    <h2>تعديل المعلومات الأساسية</h2>
+                </div>
+                <button class="modal-close-x" id="closeEditBasicInfoModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>الاسم الثلاثي <span>*</span></label>
+                    <input type="text" id="editBasicFullName" class="form-input" placeholder="الاسم الثلاثي الكامل">
+                    <small id="basicNameChangeWarning" style="display:none; color:#f59e0b;">
+                        <i class="fa-solid fa-exclamation-triangle"></i>
+                        يمكن تغيير الاسم مرة واحدة كل 30 يومًا
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>البريد الإلكتروني <span>*</span></label>
+                    <input type="email" id="editBasicEmail" class="form-input" placeholder="name@example.com">
+                </div>
+                <div class="form-group">
+                    <label>رقم الجوال <span>*</span></label>
+                    <input type="tel" id="editBasicPhone" class="form-input" placeholder="05XXXXXXXX" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label>رقم الهوية الوطنية <span>*</span></label>
+                    <input type="text" id="editBasicNationalId" class="form-input" placeholder="1XXXXXXXXX" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label>تاريخ الميلاد <span>*</span></label>
+                    <input type="date" id="editBasicBirthDate" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>الرقم الأكاديمي <span>*</span></label>
+                    <input type="text" id="editBasicAcademicRecord" class="form-input" placeholder="4XXXXXXXX">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--outline btn--outline-primary" id="cancelEditBasicInfoBtn">إلغاء</button>
+                <button type="button" class="btn btn--primary" id="saveBasicInfoBtn">
+                    <i class="fa-solid fa-save"></i>
+                    حفظ التغييرات
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل البيانات الأكاديمية -->
+    <div class="modal-backdrop" id="editAcademicModalBackdrop"></div>
+    <div class="modal modal-md" id="editAcademicModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-header-content">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <h2>تعديل البيانات الأكاديمية</h2>
+                </div>
+                <button class="modal-close-x" id="closeEditAcademicModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>الدرجة الأكاديمية <span>*</span></label>
+                    <select id="editAcademicDegreeOnly" class="form-input">
+                        <option value="">اختر الدرجة</option>
+                        <option value="high_school">ثانوية عامة</option>
+                        <option value="diploma">دبلوم</option>
+                        <option value="bachelor">بكالوريوس</option>
+                        <option value="master">ماجستير</option>
+                        <option value="phd">دكتوراه</option>
+                        <option value="other">أخرى</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>الكلية</label>
+                    <input type="text" id="editAcademicCollege" class="form-input" placeholder="اسم الكلية">
+                </div>
+                <div class="form-group">
+                    <label>التخصص</label>
+                    <input type="text" id="editAcademicMajor" class="form-input" placeholder="التخصص الدراسي">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--outline btn--outline-primary" id="cancelEditAcademicBtn">إلغاء</button>
+                <button type="button" class="btn btn--primary" id="saveAcademicChangesBtn">
+                    <i class="fa-solid fa-save"></i>
+                    حفظ التغييرات
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل حسابات التواصل الاجتماعي -->
+    <div class="modal-backdrop" id="editSocialMediaModalBackdrop"></div>
+    <div class="modal modal-md" id="editSocialMediaModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-header-content">
+                    <i class="fa-solid fa-share-nodes"></i>
+                    <h2>تعديل حسابات التواصل الاجتماعي</h2>
+                </div>
+                <button class="modal-close-x" id="closeEditSocialModal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label><i class="fa-brands fa-twitter"></i> تويتر</label>
+                    <input type="text" id="editSocialTwitter" class="form-input" placeholder="@username">
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-brands fa-instagram"></i> إنستقرام</label>
+                    <input type="text" id="editSocialInstagram" class="form-input" placeholder="@username">
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-brands fa-tiktok"></i> تيك توك</label>
+                    <input type="text" id="editSocialTiktok" class="form-input" placeholder="@username">
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-brands fa-linkedin"></i> لينكد إن</label>
+                    <input type="text" id="editSocialLinkedin" class="form-input" placeholder="username">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--outline btn--outline-primary" id="cancelEditSocialBtn">إلغاء</button>
+                <button type="button" class="btn btn--primary" id="saveSocialChangesBtn">
+                    <i class="fa-solid fa-save"></i>
+                    حفظ التغييرات
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- نافذة تعديل البيانات الشخصية -->
     <div class="modal-backdrop" id="editProfileModalBackdrop"></div>
     <div class="modal modal-lg" id="editProfileModal">
@@ -4636,7 +4753,7 @@
     <script src="js/modal-helper.js"></script>
     <script src="js/toast-notifications.js"></script>
     <script src="js/permissions-helper.js"></script>
-    <script src="js/permissions-helper.js"></script>
+    <script src="js/permissions-manager.js"></script>
     <!-- SweetAlert2 Shim - يحوّل Swal.fire إلى ModalHelper -->
     <script src="js/swal-shim.js"></script>
     <script src="dashboard.js"></script>
