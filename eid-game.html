@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعية عائلة أدِيب</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>لعبة عائلة أدِيب</title>
     <meta name="description" content="لعبة العيد من عائلة أدِيب">
     <meta property="og:title" content="لعبة العيد من عائلة أدِيب">
     <meta property="og:description" content="استمتع بلعبة العيد من عائلة أدِيب!">
@@ -14,6 +17,7 @@
     <meta property="og:image" content="https://www.adeeb.club/EID-BG.png" />
     <meta property="og:image:secure_url" content="https://www.adeeb.club/EID-BG.png" />
     <meta name="twitter:image" content="https://www.adeeb.club/news/EID-BG.png" />
+    <link rel="stylesheet" href="admin/css/fonts.css" />
 
     <!-- favicon.io -->
     <link rel="apple-touch-icon" sizes="152x152" href="/favicon/apple-icon-152x152.png" />
@@ -54,7 +58,6 @@
         }
 
         body {
-            font-family: 'Tajawal', sans-serif;
             background: var(--green-dark);
             color: var(--cream);
             min-height: 100vh;
@@ -178,7 +181,7 @@
             z-index: 10;
             max-width: 680px;
             margin: 0 auto;
-            padding: 2rem 1.5rem 0rem;
+            padding: 2rem 1.5rem 1.5rem;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -288,6 +291,9 @@
             color: white;
             line-height: 1;
             min-width: 3ch;
+            font-family: 'ERA', 'Lyon Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            direction: ltr;
+            unicode-bidi: plaintext;
         }
 
         .stat-value.loading {
@@ -404,7 +410,6 @@
             border-radius: 16px;
             font-size: 1.15rem;
             font-weight: 900;
-            font-family: 'Tajawal', sans-serif;
             cursor: pointer;
             position: relative;
             overflow: hidden;
@@ -565,6 +570,95 @@
             opacity: 1;
         }
 
+        /* ---- بالونات العيد ---- */
+        .balloons-canvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10000;
+        }
+
+        /* ---- زر المشاركة ---- */
+        .share-section {
+            padding: 0 2rem 1.5rem;
+            border-top: 1px solid rgba(255,255,255,.08);
+            padding-top: 1.5rem;
+        }
+
+        .share-label {
+            text-align: center;
+            font-size: .82rem;
+            color: rgba(255,255,255,.45);
+            margin-bottom: .9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: .7rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .share-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .6rem 1.1rem;
+            border: none;
+            border-radius: 100px;
+            font-size: .85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform .18s, box-shadow .18s, opacity .18s;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+
+        .share-btn:hover {
+            transform: translateY(-2px);
+            opacity: .92;
+        }
+
+        .share-btn:active { transform: scale(.96); }
+
+        .share-btn-whatsapp {
+            background: rgba(255,255,255,.12);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,.2);
+            box-shadow: 0 4px 14px rgba(0,0,0,.2);
+        }
+
+        .share-btn-twitter {
+            background: rgba(255,255,255,.12);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,.2);
+            box-shadow: 0 4px 14px rgba(0,0,0,.2);
+        }
+
+        .share-btn-copy {
+            background: rgba(255,255,255,.12);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,.2);
+            box-shadow: 0 4px 14px rgba(0,0,0,.2);
+        }
+
+        /* .share-btn-copy.copied {
+            background: rgba(37,211,102,.2);
+            border-color: #25d366;
+            color: #25d366;
+        } */
+
+        .share-btn-native {
+            background: rgba(255,255,255,.12);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,.2);
+            box-shadow: 0 4px 14px rgba(0,0,0,.2);
+        }
+
         /* ---- Responsive ---- */
         @media (max-width: 480px) {
             .card-title {
@@ -600,6 +694,9 @@
     <div class="ornament ornament-tr"></div>
     <div class="ornament ornament-bl"></div>
     <div class="crescent"></div>
+
+    <!-- بالونات العيد -->
+    <canvas class="balloons-canvas" id="balloonsCanvas"></canvas>
 
     <!-- محتوى -->
     <div class="container">
@@ -644,8 +741,19 @@
             <!-- إحصائيات -->
             <div class="stats-row">
                 <div class="stat">
-                    <span class="stat-value loading" id="statTotal">—</span>
+                    <span class="stat-value loading" id="statTotal">0</span>
                     <span class="stat-label">إجمالي التحميلات</span>
+                </div>
+            </div>
+
+            <!-- مشاركة -->
+            <div class="share-section">
+                <p class="share-label">
+                    <i class="fa-solid fa-share-nodes"></i>
+                    شارك اللعبة مع أهلك وأصدقائك
+                </p>
+                <div class="share-buttons" id="shareButtons">
+                    <!-- تُبنى ديناميكياً في JS -->
                 </div>
             </div>
 
@@ -742,7 +850,7 @@
             const step = Math.ceil(target / 30);
             const timer = setInterval(() => {
                 current = Math.min(current + step, target);
-                el.textContent = current.toLocaleString('ar-SA');
+                el.textContent = current.toLocaleString('en-US');
                 if (current >= target) clearInterval(timer);
             }, 40);
         }
@@ -783,11 +891,11 @@
                 const todayEl = document.getElementById('statToday');
                 const weekEl = document.getElementById('statWeek');
                 if (totalEl) totalEl.textContent = (parseInt(totalEl.textContent.replace(/\D/g, '')) + 1)
-                    .toLocaleString('ar-SA');
+                    .toLocaleString('en-US');
                 if (todayEl) todayEl.textContent = (parseInt(todayEl.textContent.replace(/\D/g, '')) + 1)
-                    .toLocaleString('ar-SA');
+                    .toLocaleString('en-US');
                 if (weekEl) weekEl.textContent = (parseInt(weekEl.textContent.replace(/\D/g, '')) + 1)
-                    .toLocaleString('ar-SA');
+                    .toLocaleString('en-US');
 
                 // تحميل الملف
                 const link = document.createElement('a');
@@ -820,7 +928,187 @@
         }
 
         // ---- تشغيل ----
-        document.addEventListener('DOMContentLoaded', loadStats);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            initBalloons();
+            initShareButtons();
+        });
+
+        // ============================================================
+        // بالونات العيد — Canvas Animation
+        // ============================================================
+        function initBalloons() {
+            const canvas = document.getElementById('balloonsCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            function resize() {
+                canvas.width  = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            const COLORS = [
+                '#f0c93a', '#ff6b6b', '#4ecdc4', '#a29bfe',
+                '#fd79a8', '#55efc4', '#fdcb6e', '#e17055',
+                '#74b9ff', '#00cec9'
+            ];
+
+            class Balloon {
+                constructor(delayOffset) {
+                    this.x        = Math.random() * canvas.width;
+                    this.y        = canvas.height + 60 + delayOffset;
+                    this.r        = 18 + Math.random() * 22;
+                    this.color    = COLORS[Math.floor(Math.random() * COLORS.length)];
+                    this.speedY   = 1.2 + Math.random() * 2;
+                    this.speedX   = (Math.random() - .5) * .8;
+                    this.sway     = Math.random() * Math.PI * 2;
+                    this.swaySpeed = .02 + Math.random() * .02;
+                    this.swayAmp  = 20 + Math.random() * 30;
+                    this.opacity  = .75 + Math.random() * .25;
+                    this.baseX    = this.x;
+                    this.done     = false;
+                }
+
+                update() {
+                    this.sway   += this.swaySpeed;
+                    this.x       = this.baseX + Math.sin(this.sway) * this.swayAmp;
+                    this.y      -= this.speedY;
+                    this.baseX  += this.speedX;
+                    if (this.y < -this.r * 2) this.done = true;
+                }
+
+                draw() {
+                    ctx.save();
+                    ctx.globalAlpha = this.opacity;
+
+                    // جسم البالون
+                    ctx.beginPath();
+                    ctx.ellipse(this.x, this.y, this.r * .85, this.r, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+
+                    // لمعة
+                    ctx.beginPath();
+                    ctx.ellipse(
+                        this.x - this.r * .25,
+                        this.y - this.r * .3,
+                        this.r * .2,
+                        this.r * .3,
+                        -Math.PI / 4, 0, Math.PI * 2
+                    );
+                    ctx.fillStyle = 'rgba(255,255,255,.35)';
+                    ctx.fill();
+
+                    // خيط
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y + this.r);
+                    ctx.quadraticCurveTo(
+                        this.x + 8, this.y + this.r + 15,
+                        this.x - 4, this.y + this.r + 28
+                    );
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 1.2;
+                    ctx.globalAlpha = this.opacity * .6;
+                    ctx.stroke();
+
+                    ctx.restore();
+                }
+            }
+
+            // 30 بالونة — موزعة على مستويات مختلفة تحت الشاشة
+            const COUNT = 30;
+            const balloons = Array.from({ length: COUNT }, (_, i) =>
+                new Balloon(i * (canvas.height / COUNT))
+            );
+
+            let animId;
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                balloons.forEach(b => { if (!b.done) { b.update(); b.draw(); } });
+
+                // أوقف الرسوم عندما تخرج جميع البالونات
+                if (balloons.every(b => b.done)) {
+                    cancelAnimationFrame(animId);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    return;
+                }
+                animId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // ============================================================
+        // أزرار المشاركة
+        // ============================================================
+        function initShareButtons() {
+            const container = document.getElementById('shareButtons');
+            if (!container) return;
+
+            const shareUrl  = window.location.href;
+            const shareText = '🎉 لعبة العيد من عائلة نادي أدِيب — حمّلها مجاناً واستمتع بها مع أهلك وأصدقائك في العيد!';
+
+            const hasNativeShare = !!navigator.share;
+
+            container.innerHTML = '';
+
+            // واتساب
+            const wa = document.createElement('a');
+            wa.href = `https://wa.me/?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
+            wa.target = '_blank';
+            wa.rel = 'noopener';
+            wa.className = 'share-btn share-btn-whatsapp';
+            wa.innerHTML = '<i class="fa-brands fa-whatsapp"></i> واتساب';
+            container.appendChild(wa);
+
+            // تويتر / X
+            const tw = document.createElement('a');
+            tw.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+            tw.target = '_blank';
+            tw.rel = 'noopener';
+            tw.className = 'share-btn share-btn-twitter';
+            tw.innerHTML = '<i class="fa-brands fa-x-twitter"></i> تويتر';
+            container.appendChild(tw);
+
+            // نسخ الرابط
+            const cp = document.createElement('button');
+            cp.className = 'share-btn share-btn-copy';
+            cp.innerHTML = '<i class="fa-solid fa-link"></i> نسخ الرابط';
+            cp.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    cp.innerHTML = '<i class="fa-solid fa-check"></i> تم النسخ!';
+                    cp.classList.add('copied');
+                    setTimeout(() => {
+                        cp.innerHTML = '<i class="fa-solid fa-link"></i> نسخ الرابط';
+                        cp.classList.remove('copied');
+                    }, 2500);
+                } catch {
+                    showToast('⚠️ تعذّر النسخ — انسخ الرابط يدوياً');
+                }
+            });
+            container.appendChild(cp);
+
+            // مشاركة أصلية (iOS/Android) — إذا متاحة
+            if (hasNativeShare) {
+                const nb = document.createElement('button');
+                nb.className = 'share-btn share-btn-native';
+                nb.innerHTML = '<i class="fa-solid fa-share-from-square"></i> مشاركة';
+                nb.addEventListener('click', async () => {
+                    try {
+                        await navigator.share({
+                            title: 'لعبة العيد — عائلة أدِيب',
+                            text:  shareText,
+                            url:   shareUrl
+                        });
+                    } catch (e) {
+                        if (e.name !== 'AbortError') showToast('⚠️ تعذّرت المشاركة');
+                    }
+                });
+                container.appendChild(nb);
+            }
+        }
     </script>
 </body>
 

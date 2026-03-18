@@ -1437,8 +1437,9 @@
                             تصدير الجدول
                         </button>
                     </div>
-                    <div class="card-body" style="overflow-x: auto;">
-                        <table class="data-table" style="width: 100%; min-width: 800px;">
+                    <div class="card-body" style="padding: 0;">
+                        <div style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                        <table class="data-table" style="width: max-content; min-width: 100%;">
                             <thead>
                                 <tr>
                                     <th style="min-width: 50px;">#</th>
@@ -1487,6 +1488,7 @@
             tableHtml += `
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             `;
