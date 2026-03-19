@@ -199,21 +199,6 @@
 .response-card-header,
 .response-card-body,
 .response-card-footer {
-    min-width: 500px;
-}
-
-@media (max-width: 768px) {
-    .response-card-header,
-    .response-card-body,
-    .response-card-footer {
-        min-width: 450px;
-    }
-}
-
-@media (max-width: 480px) {
-    .response-card-header,
-    .response-card-body,
-    .response-card-footer {
-        min-width: 350px;
-    }
+    min-width: 0;
+    width: 100%;
 }

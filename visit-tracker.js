@@ -101,25 +101,8 @@
                 sessionStorage.setItem(TRACKER_CONFIG.visitDurationKey, this.visitStartTime.toString());
 
                 const visitData = this.collectVisitData();
-                
-                // جلب IP والموقع الجغرافي
-                const geoData = await this.getGeolocation();
-                if (geoData) {
-                    visitData.ip_address = geoData.ip;
-                    visitData.country = geoData.country;
-                    visitData.city = geoData.city;
-                    console.log('[VisitTracker] Geo data added to visit:', {
-                        ip: geoData.ip,
-                        country: geoData.country,
-                        city: geoData.city
-                    });
-                } else {
-                    console.warn('[VisitTracker] No geo data available');
-                }
 
-                console.log('[VisitTracker] Final visit data:', visitData);
-
-                // إرسال البيانات إلى Supabase
+                // إرسال البيانات فوراً دون انتظار الجيو
                 const { data, error } = await this.supabaseClient
                     .from('site_visits')
                     .insert([visitData])
@@ -127,67 +110,90 @@
 
                 if (error) {
                     console.error('[VisitTracker] Error tracking visit:', error);
-                } else {
-                    this.isTracking = true;
-                    this.currentVisitId = data[0]?.id;
-                    console.log('[VisitTracker] Visit tracked successfully, ID:', this.currentVisitId);
+                    return;
                 }
+
+                this.isTracking = true;
+                this.currentVisitId = data[0]?.id;
+                console.log('[VisitTracker] Visit tracked successfully, ID:', this.currentVisitId);
 
                 // حفظ وقت آخر زيارة
                 localStorage.setItem(TRACKER_CONFIG.lastVisitKey, new Date().toISOString());
+
+                // جلب الIP والجيو بشكل مستقل وتحديث السجل (لا يعطل تسجيل الزيارة)
+                this.enrichWithGeoData(this.currentVisitId);
 
             } catch (error) {
                 console.error('[VisitTracker] Error in trackVisit:', error);
             }
         }
 
-        async getGeolocation() {
-            // استخدام ipinfo.io - يوفر country و city بشكل موثوق
+        async enrichWithGeoData(visitId) {
+            if (!visitId) return;
             try {
-                console.log('[VisitTracker] Fetching geolocation from ipinfo.io...');
-                const response = await fetch('https://ipinfo.io/json?token=', {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log('[VisitTracker] ipinfo.io response:', data);
-                
-                const geoData = {
-                    ip: data.ip || null,
-                    country: data.country || null,  // كود الدولة مثل SA
-                    city: data.city || null
-                };
-                
-                console.log('[VisitTracker] Processed geo data:', geoData);
-                return geoData;
-                
+                const geoData = await this.getGeolocation();
+                if (!geoData) return;
+
+                await this.supabaseClient
+                    .from('site_visits')
+                    .update({
+                        ip_address: geoData.ip,
+                        country: geoData.country,
+                        city: geoData.city
+                    })
+                    .eq('id', visitId);
+
+                console.log('[VisitTracker] Geo data updated:', geoData);
             } catch (error) {
-                console.error('[VisitTracker] ipinfo.io failed:', error.message);
+                console.warn('[VisitTracker] Geo enrichment failed (non-critical):', error.message);
             }
-            
-            // Fallback: ipify للحصول على IP فقط
+        }
+
+        fetchWithTimeout(url, timeout = 4000) {
+            return Promise.race([
+                fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout))
+            ]);
+        }
+
+        async getGeolocation() {
+            // ip-api.com - مجاني ولا يحتاج token
             try {
-                console.log('[VisitTracker] Fallback: trying ipify...');
-                const response = await fetch('https://api.ipify.org?format=json');
+                const response = await this.fetchWithTimeout(
+                    'https://ip-api.com/json/?fields=status,country,countryCode,city,query',
+                    4000
+                );
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
-                
-                if (data.ip) {
-                    console.log('[VisitTracker] Got IP from ipify:', data.ip);
+
+                if (data.status === 'success') {
                     return {
-                        ip: data.ip,
-                        country: null,
-                        city: null
+                        ip: data.query || null,
+                        country: data.countryCode || null,
+                        city: data.city || null
                     };
                 }
             } catch (error) {
-                console.error('[VisitTracker] ipify failed:', error.message);
+                console.warn('[VisitTracker] ip-api.com failed:', error.message);
             }
-            
+
+            // Fallback: ipapi.co
+            try {
+                const response = await this.fetchWithTimeout('https://ipapi.co/json/', 4000);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+
+                if (data.ip) {
+                    return {
+                        ip: data.ip || null,
+                        country: data.country_code || null,
+                        city: data.city || null
+                    };
+                }
+            } catch (error) {
+                console.warn('[VisitTracker] ipapi.co failed:', error.message);
+            }
+
             return null;
         }
 

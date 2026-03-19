@@ -45,6 +45,7 @@
 
 html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
 }
 
 body {
@@ -52,7 +53,7 @@ body {
     background: var(--background);
     color: var(--main-blue);
     line-height: 1.6;
-    overflow-x: hidden;
+    overflow-x: clip;
     position: relative;
 }
 
@@ -126,6 +127,7 @@ body::before {
 
 .admin-main {
     flex: 1;
+    min-width: 0;
     padding: var(--content-padding);
     transition: margin-right var(--transition-speed) var(--transition-ease);
     /* Min-height = Full Height - Header - Layout Gap */

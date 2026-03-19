@@ -762,6 +762,7 @@
 
 .admin-main {
     flex: 1;
+    min-width: 0;
     margin-right: var(--sidebar-width);
     padding: 2rem;
     transition: margin-right var(--transition-speed) var(--transition-ease);
