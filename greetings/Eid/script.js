@@ -102,17 +102,17 @@ document.addEventListener('DOMContentLoaded', function () {
     // إعدادات القوالب (12 قالب)
     // ===========================
     const templates = {
-        '1.png':  { name: 'تصميم 1',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1180 }, textColor: '#844799', fontSize: 60, fontStyle: 'bold' },
-        '2.png':  { name: 'تصميم 2',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1120 }, textColor: '#375178', fontSize: 70, fontStyle: 'bold' },
-        '3.png':  { name: 'تصميم 3',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1230 }, textColor: '#c09a20', fontSize: 70, fontStyle: 'bold' },
-        '4.png':  { name: 'تصميم 4',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1290 }, textColor: '#2c3d5d', fontSize: 60, fontStyle: 'bold' },
-        '5.png':  { name: 'تصميم 5',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1520 }, textColor: '#8d7c3f', fontSize: 70, fontStyle: 'bold' },
-        '6.png':  { name: 'تصميم 6',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1580 }, textColor: '#000000', fontSize: 70, fontStyle: 'bold' },
+        '1.jpg':  { name: 'تصميم 1',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1180 }, textColor: '#844799', fontSize: 60, fontStyle: 'bold' },
+        '2.jpg':  { name: 'تصميم 2',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1120 }, textColor: '#375178', fontSize: 70, fontStyle: 'bold' },
+        '3.jpg':  { name: 'تصميم 3',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1230 }, textColor: '#c09a20', fontSize: 70, fontStyle: 'bold' },
+        '4.jpg':  { name: 'تصميم 4',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1290 }, textColor: '#2c3d5d', fontSize: 60, fontStyle: 'bold' },
+        '5.jpg':  { name: 'تصميم 5',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1520 }, textColor: '#8d7c3f', fontSize: 70, fontStyle: 'bold' },
+        '6.jpg':  { name: 'تصميم 6',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1580 }, textColor: '#000000', fontSize: 70, fontStyle: 'bold' },
         '7.png':  { name: 'تصميم 7',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1420 }, textColor: '#ab9a84', fontSize: 66, fontStyle: 'bold' },
         '8.png':  { name: 'تصميم 8',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1250 }, textColor: '#762824', fontSize: 66, fontStyle: 'bold' },
         '9.png':  { name: 'تصميم 9',  canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1320 }, textColor: '#6c6a58', fontSize: 66, fontStyle: 'bold' },
-        '10.png': { name: 'تصميم 10', canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1450 }, textColor: '#cebb82', fontSize: 70, fontStyle: 'bold' },
-        '11.png': { name: 'تصميم 11', canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1250 }, textColor: '#ffffff', fontSize: 70, fontStyle: 'bold' },
+        '10.jpg': { name: 'تصميم 10', canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1450 }, textColor: '#cebb82', fontSize: 70, fontStyle: 'bold' },
+        '11.jpg': { name: 'تصميم 11', canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1250 }, textColor: '#ffffff', fontSize: 70, fontStyle: 'bold' },
         '12.png': { name: 'تصميم 12', canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1280 }, textColor: '#060108', fontSize: 60, fontStyle: 'bold' },
     };
 
