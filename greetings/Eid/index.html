@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بطاقة تهنئة بالعيد — نادي أدِيب</title>
+    <link rel="stylesheet" href="style.css">
+    <meta property="og:title" content="بطاقة تهنئة بالعيد — نادي أدِيب" />
+    <meta property="og:description" content="صمّم بطاقتك واحتفل بالعيد مع نادي أدِيب" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+</head>
+
+<body>
+
+<!-- قسم الهيرو -->
+<section class="hero-section">
+    <div class="hero-particles">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <div class="hero-logo-ring">
+            <img src="../../adeeb-logo.png" alt="شعار نادي أدِيب" class="hero-logo">
+        </div>
+        <div class="hero-badge">
+            <i class="fas fa-star"></i> عائلة أدِيب <i class="fas fa-star"></i>
+        </div>
+        <h1 class="hero-title">هنّئ أحبابك <span class="highlight">ببطاقات أدِيبية</span></h1>
+        <p class="hero-subtitle">تصميمات احترافية من لجنة التصميم تنقل مشاعركم بأرقى صورة وتُعبّر عن لحظات الفرح بأجمل تصاميم عيد الفطر المبارك</p>
+        <div class="hero-cta">
+            <a href="#design" class="cta-btn primary-btn">
+                <i class="fas fa-wand-magic-sparkles"></i> ابدأ التصميم الآن
+            </a>
+        </div>
+    </div>
+    <a href="#design" class="hero-scroll-indicator">
+        <span>اكتشف المزيد</span>
+        <i class="fas fa-chevron-down"></i>
+    </a>
+</section>
+
+<!-- قسم الإحصائيات -->
+<!-- <section class="stats-section">
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="visitorsCount">
+                    <span class="counter">0</span>
+                </div>
+                <div class="stat-label">زائر للموقع</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-download"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="downloadsCount">
+                    <span class="counter">0</span>
+                </div>
+                <div class="stat-label">بطاقة تم تحميلها</div>
+            </div>
+        </div>
+    </div>
+</section> -->
+
+<!-- قسم منشئ البطاقات -->
+<section class="card-section" id="design">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-gift"></i></div>
+        <h1>منشئ بطاقات التهنئة</h1>
+        <p class="section-subtitle">اختر تصميمك المفضل من بين 12 قالباً، أدخل الاسم وحمّل بطاقتك بجودة عالية فوراً</p>
+        <div class="section-divider"><span></span><i class="fas fa-star"></i><span></span></div>
+    </div>
+
+    <div class="card-builder">
+
+        <!-- عمود المعاينة -->
+        <div class="builder-preview-col">
+            <div class="preview-label"><i class="fas fa-eye"></i> معاينة البطاقة</div>
+            <div class="card-frame" id="cardFrame">
+                <canvas id="myCanvas" width="1080" height="1920"></canvas>
+            </div>
+            <div class="card-shadow"></div>
+
+            <!-- حقل الاسم -->
+            <div class="name-section">
+                <div class="picker-section-title">
+                    <i class="fas fa-user-edit"></i> اكتب الاسم
+                </div>
+                <div class="name-input-wrap">
+                    <input type="text" id="textInput" placeholder="اكتب اسم المهنأ هنا..." autocomplete="off">
+                    <button class="clear-name-btn" id="clearName" title="مسح الاسم">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- زر التحميل -->
+            <button class="btn download-btn" id="downloadBtn">
+                <i class="fas fa-download"></i>
+                تحميل البطاقة
+            </button>
+            <p class="controls-hint">
+                <i class="fas fa-info-circle"></i> البطاقة تُحمَّل بجودة كاملة PNG
+            </p>
+        </div>
+
+        <!-- عمود التحكم -->
+        <div class="builder-controls-col">
+
+            <!-- اختيار القالب بصرياً -->
+            <div class="picker-section">
+                <div class="picker-section-title">
+                    <i class="fas fa-palette"></i> اختر التصميم (12 قالب)
+                </div>
+
+                <!-- شبكة البطاقات البصرية -->
+                <div class="visual-picker" id="visualPicker">
+                    <button class="vpick-item selected-vpick" data-template="1.png" data-name="تصميم 1">
+                        <div class="vpick-thumb">
+                            <img src="1.png" alt="تصميم 1" loading="lazy">
+                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
+                        </div>
+                        <span class="vpick-name">1</span>
+                    </button>
+                    <button class="vpick-item" data-template="2.png" data-name="تصميم 2">
+                        <div class="vpick-thumb">
+                            <img src="2.png" alt="تصميم 2" loading="lazy">
+                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
+                        </div>
+                        <span class="vpick-name">2</span>
+                    </button>
+                    <button class="vpick-item" data-template="3.png" data-name="تصميم 3">
+                        <div class="vpick-thumb">
+                            <img src="3.png" alt="تصميم 3" loading="lazy">
+                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
+                        </div>
+                        <span class="vpick-name">3</span>
+                    </button>
+                    <button class="vpick-item" data-template="4.png" data-name="تصميم 4">
+                        <div class="vpick-thumb">
+                            <img src="4.png" alt="تصميم 4" loading="lazy">
+                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
+                        </div>
+                        <span class="vpick-name">4</span>
+                    </button>
+                    <button class="vpick-item" data-template="5.png" data-name="تصميم 5">
+                        <div class="vpick-thumb">
+                            <img src="5.png" alt="تصميم 5" loading="lazy">
+                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
+                        </div>
+                        <span class="vpick-name">5</span>
+                    </button>
+                    <button class="vpick-item" data-template="6.png" data-name="تصميم 6">
+                        <div class="vpick-thumb">
+                            <img src="6.png" alt="تصميم 6" loading="lazy">
+                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
+                        </div>
+                        <span class="vpick-name">6</span>
+                    </button>
+                    <button class="vpick-item" data-template="7.png" data-name="تصميم 7">
+                        <div class="vpick-thumb">
+                            <img src="7.png" alt="تصميم 7" loading="lazy">
+                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
+                        </div>
+                        <span class="vpick-name">7</span>
+                    </button>
+                    <button class="vpick-item" data-template="8.png" data-name="تصميم 8">
+                        <div class="vpick-thumb">
+                            <img src="8.png" alt="تصميم 8" loading="lazy">
+                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
+                        </div>
+                        <span class="vpick-name">8</span>
+                    </button>
+                    <button class="vpick-item" data-template="9.png" data-name="تصميم 9">
+                        <div class="vpick-thumb">
+                            <img src="9.png" alt="تصميم 9" loading="lazy">
+                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
+                        </div>
+                        <span class="vpick-name">9</span>
+                    </button>
+                    <button class="vpick-item" data-template="10.png" data-name="تصميم 10">
+                        <div class="vpick-thumb">
+                            <img src="10.png" alt="تصميم 10" loading="lazy">
+                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
+                        </div>
+                        <span class="vpick-name">10</span>
+                    </button>
+                    <button class="vpick-item" data-template="11.png" data-name="تصميم 11">
+                        <div class="vpick-thumb">
+                            <img src="11.png" alt="تصميم 11" loading="lazy">
+                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
+                        </div>
+                        <span class="vpick-name">11</span>
+                    </button>
+                    <button class="vpick-item" data-template="12.png" data-name="تصميم 12">
+                        <div class="vpick-thumb">
+                            <img src="12.png" alt="تصميم 12" loading="lazy">
+                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
+                        </div>
+                        <span class="vpick-name">12</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- قسم التواصل الاجتماعي -->
+<!-- <section class="contact-section" id="contact-section">
+    <div class="contact-bg-shapes">
+        <div class="bg-shape s1"></div>
+        <div class="bg-shape s2"></div>
+        <div class="bg-shape s3"></div>
+    </div>
+    <div class="contact-inner">
+        <div class="section-header">
+            <div class="section-badge"><i class="fas fa-headset"></i></div>
+            <h2>تواصل مع نادي أدِيب</h2>
+            <p class="section-subtitle">نسعد بتواصلكم معنا عبر أي من القنوات التالية</p>
+            <div class="section-divider"><span></span><i class="fas fa-star"></i><span></span></div>
+        </div>
+
+        <div class="contact-cards-grid">
+            <a href="tel:+966543837775" class="contact-card phone-card">
+                <div class="contact-card-icon"><i class="fas fa-phone-alt"></i></div>
+                <div class="contact-card-body">
+                    <span class="contact-card-label">اتصل بنا</span>
+                    <span class="contact-card-value" dir="ltr">+966 54 383 7775</span>
+                </div>
+                <div class="contact-card-arrow"><i class="fas fa-arrow-left"></i></div>
+            </a>
+            <a href="mailto:adeab.kfu@gmail.com" class="contact-card email-card">
+                <div class="contact-card-icon"><i class="fas fa-envelope"></i></div>
+                <div class="contact-card-body">
+                    <span class="contact-card-label">البريد الإلكتروني</span>
+                    <span class="contact-card-value">adeab.kfu@gmail.com</span>
+                </div>
+                <div class="contact-card-arrow"><i class="fas fa-arrow-left"></i></div>
+            </a>
+            <a href="https://x.com/AB_KFU" target="_blank" class="contact-card x-card">
+                <div class="contact-card-icon"><i class="fab fa-x-twitter"></i></div>
+                <div class="contact-card-body">
+                    <span class="contact-card-label">منصة X</span>
+                    <span class="contact-card-value">@AB_KFU</span>
+                </div>
+                <div class="contact-card-arrow"><i class="fas fa-arrow-left"></i></div>
+            </a>
+            <a href="https://www.instagram.com/ab_kfu/" target="_blank" class="contact-card insta-card">
+                <div class="contact-card-icon"><i class="fab fa-instagram"></i></div>
+                <div class="contact-card-body">
+                    <span class="contact-card-label">انستقرام</span>
+                    <span class="contact-card-value">ab_kfu</span>
+                </div>
+                <div class="contact-card-arrow"><i class="fas fa-arrow-left"></i></div>
+            </a>
+            <a href="https://www.tiktok.com/@ab_kfu" target="_blank" class="contact-card tiktok-card">
+                <div class="contact-card-icon"><i class="fab fa-tiktok"></i></div>
+                <div class="contact-card-body">
+                    <span class="contact-card-label">تيك توك</span>
+                    <span class="contact-card-value">@ab_kfu</span>
+                </div>
+                <div class="contact-card-arrow"><i class="fas fa-arrow-left"></i></div>
+            </a>
+            <a href="https://www.youtube.com/@ab_kfu" target="_blank" class="contact-card youtube-card">
+                <div class="contact-card-icon"><i class="fab fa-youtube"></i></div>
+                <div class="contact-card-body">
+                    <span class="contact-card-label">يوتيوب</span>
+                    <span class="contact-card-value">@ab_kfu</span>
+                </div>
+                <div class="contact-card-arrow"><i class="fas fa-arrow-left"></i></div>
+            </a>
+        </div>
+    </div>
+</section> -->
+
+<!-- Supabase Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<footer>
+    <div class="footer-inner">
+        <div class="footer-logo-area">
+            <img src="../../adeeb-logo.png" alt="نادي أدِيب" class="footer-logo">
+            <p class="footer-name">نادي أدِيب</p>
+            <p class="footer-sub">جامعة الملك فيصل — الأحساء</p>
+        </div>
+        <!-- <div class="footer-links">
+            <a href="#design"><i class="fas fa-gift"></i> منشئ البطاقات</a>
+            <a href="#contact-section"><i class="fas fa-phone-alt"></i> تواصل معنا</a>
+        </div> -->
+        <div class="footer-social">
+            <a href="https://x.com/AB_KFU" target="_blank" title="X"><i class="fab fa-x-twitter"></i></a>
+            <a href="https://www.instagram.com/ab_kfu/" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.tiktok.com/@ab_kfu" target="_blank" title="TikTok"><i class="fab fa-tiktok"></i></a>
+            <a href="https://www.youtube.com/@ab_kfu" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
+        </div>
+        <p class="footer-copy">جميع الحقوق محفوظة &copy; 2026 &mdash; نادي أدِيب</p>
+    </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
