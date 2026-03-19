@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
         '12.png': { name: 'تصميم 12', canvasW: 1080, canvasH: 1920, textPosition: { x: 540, y: 1280 }, textColor: '#060108', fontSize: 60, fontStyle: 'bold' },
     };
 
-    let currentTemplate = '1.png';
+    let currentTemplate = '1.jpg';
     let backgroundImage = new Image();
 
     // ===========================
