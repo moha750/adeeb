@@ -282,7 +282,7 @@
                         </div>
 
                         <!-- جدول السجل -->
-                        <div id="impersonationHistoryTable" class="data-table">
+                        <div id="impersonationHistoryTable">
                             <div style="text-align: center; padding: 3rem; color: #6b7280;">
                                 <i class="fa-solid fa-spinner fa-spin fa-3x" style="margin-bottom: 1rem;"></i>
                                 <p>جاري تحميل السجل...</p>
@@ -329,6 +329,9 @@
                 </div>
 
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-clock"></i> قائمة الأعضاء المعلقين</h3>
+                    </div>
                     <div class="card-body">
                         <div id="pendingMembersContainer">
                             <!-- سيتم ملؤها ديناميكياً -->
@@ -344,10 +347,6 @@
                         <i class="fa-solid fa-users"></i>
                         أعضاء أديب
                     </h1>
-                    <button class="btn btn--primary" id="exportMembersBtn">
-                        <i class="fa-solid fa-file-export"></i>
-                        تصدير البيانات
-                    </button>
                 </div>
 
                 <!-- بطاقات الإحصائيات -->
@@ -369,16 +368,21 @@
                     </select>
                 </div>
 
-                <!-- جدول المستخدمين -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-users"></i> قائمة أعضاء أديب</h3>
+                        <button class="btn btn--primary btn--sm" id="exportMembersBtn">
+                            <i class="fa-solid fa-file-export"></i>
+                            تصدير البيانات
+                        </button>
+                    </div>
                     <div class="card-body">
-                        <div id="usersTable" class="data-table">
+                        <div id="usersTable">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
                 </div>
             </section>
-
 
             <!-- قسم الأعضاء المنتهية عضوياتهم -->
             <section id="terminated-members-section" class="admin-section d-none">
@@ -402,10 +406,12 @@
                     </div>
                 </div>
 
-                <!-- جدول الأعضاء المنتهية عضوياتهم -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-user-xmark"></i> قائمة الأعضاء المنتهية عضوياتهم</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="terminatedMembersTable" class="data-table">
+                        <div id="terminatedMembersTable">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -514,7 +520,7 @@
             </section>
 
             <!-- =====================================================
-                 أقسام إدارة الاستبيانات
+                 استبيانات أدِيب
                  ===================================================== -->
 
             <!-- قسم جميع الاستبيانات -->
@@ -650,19 +656,14 @@
                             <i class="fa-solid fa-arrow-right"></i>
                             رجوع للقائمة
                         </button>
-                        <button class="btn btn--primary" id="exportSurveyDataBtn">
-                            <i class="fa-solid fa-download"></i>
-                            تصدير
-                        </button>
                     </div>
                 </div>
 
                 <!-- اختيار الاستبيان - واجهة محسنة -->
                 <div class="survey-selector-container" id="surveySelectorContainer">
                     <div class="card" style="margin-bottom: 1.5rem;">
-                        <div class="card-header"
-                            style="display: flex; justify-content: space-between; align-items: center;">
-                            <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="card-header">
+                            <h3>
                                 <i class="fa-solid fa-clipboard-list"></i>
                                 اختر استبياناً لعرض نتائجه
                             </h3>
@@ -1015,8 +1016,10 @@
                     </select>
                 </div>
 
-                <!-- قائمة طلبات الترشح -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-clipboard-list"></i> قائمة طلبات الترشح</h3>
+                    </div>
                     <div class="card-body">
                         <div id="candidatesReviewList">
                             <div class="empty-state">
@@ -1121,6 +1124,9 @@
 
                 <!-- حالة عدم وجود انتخابات مفتوحة -->
                 <div id="noOpenElectionsMessage" class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-door-closed"></i> لا يوجد باب ترشح مفتوح</h3>
+                    </div>
                     <div class="card-body">
                         <div class="empty-state">
                             <i class="fa-solid fa-door-closed"></i>
@@ -1165,6 +1171,9 @@
 
                 <!-- حالة عدم وجود تصويت مفتوح -->
                 <div id="noOpenVotingMessage" class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-check-to-slot"></i> لا يوجد تصويت مفتوح</h3>
+                    </div>
                     <div class="card-body">
                         <div class="empty-state">
                             <i class="fa-solid fa-check-to-slot"></i>
@@ -1662,7 +1671,7 @@
                             </div>
                         </div>
                     </div>
-                                        <div class="stat-card" style="--stat-color: #10b981">
+                    <div class="stat-card" style="--stat-color: #10b981">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-user-check"></i>
@@ -1701,7 +1710,7 @@
                         </h3>
                     </div>
                     <div class="card-body">
-                        <div id="memberDataTable" class="data-table">
+                        <div id="memberDataTable">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -2284,7 +2293,7 @@
                                     </div>
                                 </div>
                                 <div class="card-body">
-                                    <div id="permissionsListTable" class="data-table">
+                                    <div id="permissionsListTable">
                                         <!-- سيتم ملؤها ديناميكياً -->
                                     </div>
                                 </div>
@@ -2319,7 +2328,7 @@
                                     </button>
                                 </div>
                                 <div class="card-body">
-                                    <div id="userPermissionsTable" class="data-table">
+                                    <div id="userPermissionsTable">
                                         <!-- سيتم ملؤها ديناميكياً -->
                                     </div>
                                 </div>
@@ -2341,7 +2350,7 @@
                                     </div>
                                 </div>
                                 <div class="card-body">
-                                    <div id="auditLogTable" class="data-table">
+                                    <div id="auditLogTable">
                                         <!-- سيتم ملؤها ديناميكياً -->
                                     </div>
                                 </div>
@@ -2411,8 +2420,11 @@
 
                 <!-- جدول الرسائل -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-envelope"></i> قائمة الرسائل</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="contactMessagesTable" class="data-table">
+                        <div id="contactMessagesTable">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -2506,8 +2518,11 @@
 
                 <!-- جدول المشتركين -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-envelope-open-text"></i> قائمة المشتركين</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="subscribersTable" class="data-table">
+                        <div id="subscribersTable">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -2655,12 +2670,15 @@
 
                 <!-- بطاقة إدارة اللجان المتاحة -->
                 <div class="card" class="mb-2rem">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-users-gear"></i> قائمة اللجان المتاحة</h3>
+                    </div>
                     <div class="card-body">
                         <p>
                             <i class="fa-solid fa-info-circle"></i>
                             تحكم في اللجان التي تظهر في نموذج التسجيل. يتم عرض الأسماء والأوصاف من إدارة اللجان.
                         </p>
-                        <div id="availableCommitteesTable" class="data-table">
+                        <div id="availableCommitteesTable">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -2679,6 +2697,9 @@
 
                 <!-- شرح الميزة -->
                 <div class="card" style="margin-bottom: 1.5rem;">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-gift"></i> إهداء العضوية</h3>
+                    </div>
                     <div class="card-body">
                         <div class="alert alert-info" style="margin-bottom: 1rem;">
                             <i class="fa-solid fa-info-circle"></i>
@@ -2764,7 +2785,7 @@
                     </div>
                 </div>
 
-                <!-- أزرار الإجراءات -->
+                <!-- أزرار الإجراءات والفلاتر -->
                 <div class="filters-bar">
                     <button class="btn btn--primary" id="createInvitationBtn">
                         <i class="fa-solid fa-plus"></i>
@@ -2789,8 +2810,11 @@
 
                 <!-- جدول الدعوات -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-envelope-open-text"></i> قائمة الدعوات</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="invitationsTable" class="data-table">
+                        <div id="invitationsTable">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -2834,8 +2858,11 @@
 
                 <!-- جدول الطلبات (عرض فقط) -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-eye"></i> قائمة طلبات العضوية</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="applicationsViewTable" class="data-table">
+                        <div id="applicationsViewTable">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -2886,8 +2913,11 @@
 
                 <!-- جدول الطلبات (مع أزرار الإجراءات) -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-clipboard-check"></i> قائمة طلبات العضوية</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="applicationsReviewTable" class="data-table">
+                        <div id="applicationsReviewTable">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -2956,8 +2986,11 @@
 
                 <!-- جدول المقابلات -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-calendar-days"></i> قائمة المقابلات</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="interviewsTable" class="data-table">
+                        <div id="interviewsTable">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -2996,8 +3029,11 @@
                 </div>
 
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-hourglass-half"></i> قائمة البرزخ</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="barzakhTable" class="data-table">
+                        <div id="barzakhTable">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -3045,8 +3081,11 @@
 
                 <!-- جدول نتائج العضوية -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-clipboard-check"></i> قائمة نتائج العضوية</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="decisionsTable" class="data-table">
+                        <div id="decisionsTable">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -3106,8 +3145,11 @@
 
                 <!-- جدول الترحيل -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-users-gear"></i> قائمة الأعضاء للترحيل</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="migrationTable" class="data-table">
+                        <div id="migrationTable">
                             <!-- سيتم ملؤها ديناميكياً -->
                 </div>
             </section>
@@ -3209,6 +3251,9 @@
 
                 <!-- قائمة المسودات -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-file-lines"></i> قائمة المسودات</h3>
+                    </div>
                     <div class="card-body">
                         <div id="newsDraftsContainer">
                             <!-- سيتم ملؤها ديناميكياً -->
@@ -3244,6 +3289,9 @@
 
                 <!-- قائمة الأخبار -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-pen-to-square"></i> قائمة الأخبار قيد الكتابة</h3>
+                    </div>
                     <div class="card-body">
                         <div id="newsInProgressContainer">
                             <!-- سيتم ملؤها ديناميكياً -->
@@ -3268,6 +3316,9 @@
 
                 <!-- قائمة الأخبار -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-clipboard-check"></i> قائمة الأخبار جاهزة للمراجعة</h3>
+                    </div>
                     <div class="card-body">
                         <div id="newsReviewContainer">
                             <!-- سيتم ملؤها ديناميكياً -->
@@ -3360,6 +3411,9 @@
 
                 <!-- قائمة الأخبار -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-newspaper"></i> قائمة الأخبار المنشورة</h3>
+                    </div>
                     <div class="card-body">
                         <div id="newsPublishedContainer">
                             <!-- سيتم ملؤها ديناميكياً -->
@@ -3384,6 +3438,9 @@
 
                 <!-- قائمة الأخبار -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-archive"></i> قائمة الأخبار المؤرشفة</h3>
+                    </div>
                     <div class="card-body">
                         <div id="newsArchivedContainer">
                             <!-- سيتم ملؤها ديناميكياً -->
@@ -3466,6 +3523,9 @@
 
                 <!-- قائمة التعيينات -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-pen-fancy"></i> قائمة التعيينات</h3>
+                    </div>
                     <div class="card-body">
                         <div id="myAssignmentsContainer">
                             <!-- سيتم ملؤها ديناميكياً -->
@@ -3596,8 +3656,11 @@
 
                 <!-- قائمة القيادات -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-users-gear"></i> قائمة القيادات</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="boardMembersListContainer" class="data-table">
+                        <div id="boardMembersListContainer">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -3617,8 +3680,11 @@
                     </button>
                 </div>
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-briefcase"></i> قائمة الأعمال</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="websiteWorksGrid" class="data-table">
+                        <div id="websiteWorksGrid">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -3638,8 +3704,11 @@
                     </button>
                 </div>
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-trophy"></i> قائمة الإنجازات</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="websiteAchievementsGrid" class="data-table">
+                        <div id="websiteAchievementsGrid">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -3659,8 +3728,11 @@
                     </button>
                 </div>
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-handshake"></i> قائمة الشركاء</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="websiteSponsorsGrid" class="data-table">
+                        <div id="websiteSponsorsGrid">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
@@ -3680,8 +3752,11 @@
                     </button>
                 </div>
                 <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-circle-question"></i> قائمة الأسئلة الشائعة</h3>
+                    </div>
                     <div class="card-body">
-                        <div id="websiteFaqGrid" class="data-table">
+                        <div id="websiteFaqGrid">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>

@@ -140,26 +140,6 @@
     margin-bottom: 28px;
 }
 
-.surveys-section-header {
-    margin-bottom: 18px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid rgba(61, 143, 214, 0.1);
-}
-
-.surveys-section-header h3 {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: var(--text-dark, #1f2937);
-    margin: 0;
-}
-
-.surveys-section-header h3 i {
-    font-size: 1.1rem;
-}
-
 .surveys-section-content {
     display: grid;
     gap: 20px;
@@ -169,9 +149,6 @@
     opacity: 0.85;
 }
 
-.surveys-section-ended .surveys-section-header {
-    border-bottom-color: rgba(239, 68, 68, 0.15);
-}
 
 /* ============================================================================
    Charts Grid - شبكة الرسوم البيانية
@@ -208,7 +185,6 @@
 
 .data-table {
     width: 100%;
-    min-width: 600px;
     border-collapse: separate;
     border-spacing: 0;
 }
@@ -510,7 +486,6 @@
 
 .application-info-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
 }
 
@@ -676,7 +651,7 @@
 
 .applications-cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
     gap: 20px;
     align-items: start;
 }
@@ -705,7 +680,7 @@
     right: 0;
     left: 0;
     height: 3px;
-    background: linear-gradient(90deg, #3d8fd6 0%, #10b981 50%, #8b5cf6 100%);
+    background: linear-gradient(90deg, #3c5d88 0%, #76a6e6 100%);
     opacity: 0;
     transition: opacity 0.28s ease;
     z-index: 1;
@@ -892,13 +867,15 @@
     .top-page-visits {
         font-size: 1.3rem;
     }
-    
+
     .applications-cards-grid {
         grid-template-columns: 1fr;
     }
 
-    .application-card-footer {
-        grid-template-columns: 1fr;
+    .application-card {
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .application-card-footer .btn-action {
@@ -916,6 +893,10 @@
         width: 32px;
         height: 32px;
         font-size: 0.9rem;
+    }
+
+    .application-card-footer {
+        grid-template-columns: 1fr;
     }
     
     .empty-state {

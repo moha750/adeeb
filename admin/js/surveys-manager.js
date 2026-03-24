@@ -222,11 +222,15 @@
             if (activeSurveys.length > 0) {
                 html += `
                     <div class="surveys-section">
-                        <div class="surveys-section-header">
-                            <h3><i class="fa-solid fa-circle-play survey-icon--active"></i> الاستبيانات النشطة (${activeSurveys.length})</h3>
-                        </div>
-                        <div class="surveys-section-content">
-                            ${activeSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-circle-play survey-icon--active"></i> الاستبيانات النشطة (${activeSurveys.length})</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="surveys-section-content">
+                                    ${activeSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -236,11 +240,15 @@
             if (scheduledSurveys.length > 0) {
                 html += `
                     <div class="surveys-section">
-                        <div class="surveys-section-header">
-                            <h3><i class="fa-solid fa-calendar-clock survey-icon--scheduled"></i> الاستبيانات المجدولة (${scheduledSurveys.length})</h3>
-                        </div>
-                        <div class="surveys-section-content">
-                            ${scheduledSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-calendar-clock survey-icon--scheduled"></i> الاستبيانات المجدولة (${scheduledSurveys.length})</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="surveys-section-content">
+                                    ${scheduledSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -250,11 +258,15 @@
             if (draftSurveys.length > 0) {
                 html += `
                     <div class="surveys-section">
-                        <div class="surveys-section-header">
-                            <h3><i class="fa-solid fa-file-pen survey-icon--draft"></i> المسودات (${draftSurveys.length})</h3>
-                        </div>
-                        <div class="surveys-section-content">
-                            ${draftSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-file-pen survey-icon--draft"></i> المسودات (${draftSurveys.length})</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="surveys-section-content">
+                                    ${draftSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -264,11 +276,15 @@
             if (endedSurveys.length > 0) {
                 html += `
                     <div class="surveys-section surveys-section-ended">
-                        <div class="surveys-section-header">
-                            <h3><i class="fa-solid fa-circle-stop survey-icon--ended"></i> الاستبيانات المنتهية (${endedSurveys.length})</h3>
-                        </div>
-                        <div class="surveys-section-content">
-                            ${endedSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-circle-stop survey-icon--ended"></i> الاستبيانات المنتهية (${endedSurveys.length})</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="surveys-section-content">
+                                    ${endedSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -1439,11 +1455,11 @@
                                   actualStatus === 'paused' ? '#f59e0b, #d97706' : '#3b82f6, #2563eb';
 
             return `
-                <div class="application-card survey-result-card ${actualStatus === 'active' ? 'survey-result-card--active' : ''}" data-survey-id="${survey.id}">
+                <div class="application-card" data-survey-id="${survey.id}">
                     <div class="application-card-header">
                         <div class="applicant-info">
-                            <div class="applicant-avatar" style="background: linear-gradient(135deg, ${avatarGradient});">
-                                <i class="fa-solid ${statusIcon}"></i>
+                            <div class="applicant-avatar">
+                                <i class="fa-solid fa-clipboard-question"></i>
                             </div>
                             <div class="applicant-details">
                                 <h4 class="applicant-name">${this.escapeHtml(survey.title)}</h4>
@@ -1498,10 +1514,10 @@
 
         selectSurveyForResults(surveyId) {
             // تحديث حالة البطاقات
-            document.querySelectorAll('.survey-result-card').forEach(card => {
+            document.querySelectorAll('#surveyResultsGrid .application-card').forEach(card => {
                 card.classList.remove('selected');
             });
-            const selectedCard = document.querySelector(`.survey-result-card[data-survey-id="${surveyId}"]`);
+            const selectedCard = document.querySelector(`#surveyResultsGrid .application-card[data-survey-id="${surveyId}"]`);
             if (selectedCard) {
                 selectedCard.classList.add('selected');
             }

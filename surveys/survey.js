@@ -11,6 +11,46 @@
     let userAnswers = {};
     let responseId = null;
     let startTime = Date.now();
+    let autoSaveInterval = null;
+
+    // --- نظام الحفظ المتقدم ---
+    let _debounceTimer = null;          // مؤقت الديبونس
+    let _isSaving = false;              // منع الحفظ المتزامن
+    let _pendingSave = false;           // تسجيل طلب معلق أثناء حفظ جار
+    const DEBOUNCE_DELAY = 1500;        // 1.5 ثانية بعد توقف الكتابة
+    const AUTO_SAVE_INTERVAL = 30000;   // 30 ثانية كاحتياط
+    // --------------------------------
+
+    // --- localStorage للزوار غير المسجلين ---
+    function _lsKey(surveyId) {
+        return `survey_draft_${surveyId}`;
+    }
+    function _lsSave(surveyId) {
+        try {
+            localStorage.setItem(_lsKey(surveyId), JSON.stringify({
+                responseId,
+                userAnswers,
+                savedAt: Date.now()
+            }));
+        } catch (e) { /* quota exceeded — ignore */ }
+    }
+    function _lsLoad(surveyId) {
+        try {
+            const raw = localStorage.getItem(_lsKey(surveyId));
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            // تجاهل بيانات أقدم من 7 أيام
+            if (Date.now() - (parsed.savedAt || 0) > 7 * 24 * 3600 * 1000) {
+                localStorage.removeItem(_lsKey(surveyId));
+                return null;
+            }
+            return parsed;
+        } catch (e) { return null; }
+    }
+    function _lsClear(surveyId) {
+        try { localStorage.removeItem(_lsKey(surveyId)); } catch (e) {}
+    }
+    // -----------------------------------------
 
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -124,10 +164,36 @@
                         const inProgressResponse = existingResponses.find(r => r.status === 'in_progress');
                         if (inProgressResponse) {
                             responseId = inProgressResponse.id;
+                            await loadSavedAnswers(responseId);
                             showLoading(false);
                             renderSurvey();
+                            startAutoSave();
                             return;
                         }
+                    }
+                }
+            }
+
+            // للزوار غير المسجلين: حاول استعادة مسودة محفوظة محلياً
+            const { data: { user: currentUser } } = await sb.auth.getUser();
+            if (!currentUser) {
+                const draft = _lsLoad(surveyId);
+                if (draft && draft.responseId) {
+                    // تحقق من وجود الاستجابة في قاعدة البيانات (لم تُحذف)
+                    const { data: existingResp } = await sb
+                        .from('survey_responses')
+                        .select('id, status')
+                        .eq('id', draft.responseId)
+                        .single();
+                    if (existingResp && existingResp.status === 'in_progress') {
+                        responseId = draft.responseId;
+                        userAnswers = draft.userAnswers || {};
+                        showLoading(false);
+                        renderSurvey();
+                        startAutoSave();
+                        return;
+                    } else {
+                        _lsClear(surveyId);
                     }
                 }
             }
@@ -137,6 +203,7 @@
 
             showLoading(false);
             renderSurvey();
+            startAutoSave();
 
         } catch (error) {
             console.error('Error loading survey:', error);
@@ -151,6 +218,181 @@
         } catch (error) {
             console.error('Error updating view count:', error);
         }
+    }
+
+    async function loadSavedAnswers(respId) {
+        try {
+            const { data: answers, error } = await sb
+                .from('survey_answers')
+                .select('*')
+                .eq('response_id', respId);
+
+            if (error || !answers) return;
+
+            answers.forEach(answer => {
+                userAnswers[answer.question_id] = answer;
+            });
+        } catch (e) {
+            console.error('Error loading saved answers:', e);
+        }
+    }
+
+    // عرض حالة الحفظ للمستخدم
+    function setSaveStatus(state) {
+        const el = document.getElementById('survey-save-status');
+        if (!el) return;
+        const map = {
+            saving: { text: 'جاري الحفظ...', color: '#6b7280', icon: 'fa-circle-notch fa-spin' },
+            saved:  { text: 'تم الحفظ',       color: '#10b981', icon: 'fa-circle-check' },
+            error:  { text: 'فشل الحفظ',       color: '#ef4444', icon: 'fa-circle-exclamation' }
+        };
+        const s = map[state];
+        if (!s) { el.style.display = 'none'; return; }
+        el.innerHTML = `<i class="fa-solid ${s.icon}" style="margin-left:4px;"></i>${s.text}`;
+        el.style.cssText = `display:inline-flex;align-items:center;gap:4px;font-size:0.78rem;color:${s.color};transition:opacity 0.3s;`;
+        if (state === 'saved') setTimeout(() => { el.style.opacity = '0'; setTimeout(() => { el.style.opacity = '1'; el.style.display = 'none'; }, 500); }, 2500);
+    }
+
+    // حفظ مباشر بدون ديبونس (للاحتياط و save-on-exit)
+    async function saveProgressToDb(isExit = false) {
+        if (!responseId) return;
+        // حفظ إجابة السؤال الحالي في الذاكرة أولاً قبل إرسالها للقاعدة
+        saveCurrentAnswer();
+        // منع الحفظ المتزامن - إذا جار حفظ آخر سجل طلب معلق
+        if (_isSaving && !isExit) { _pendingSave = true; return; }
+        _isSaving = true;
+        setSaveStatus('saving');
+        try {
+            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+            const progress = surveyQuestions.length > 0
+                ? Math.round((Object.keys(userAnswers).length / surveyQuestions.length) * 100)
+                : 0;
+
+            await sb
+                .from('survey_responses')
+                .update({
+                    time_spent_seconds: timeSpent,
+                    progress_percentage: progress,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', responseId);
+
+            if (Object.keys(userAnswers).length > 0) {
+                const answersToUpsert = Object.values(userAnswers).map(({ id: _omit, ...a }) => ({
+                    ...a,
+                    response_id: responseId
+                }));
+                await sb
+                    .from('survey_answers')
+                    .upsert(answersToUpsert, { onConflict: 'response_id,question_id', ignoreDuplicates: false });
+            }
+            setSaveStatus('saved');
+            // حفظ احتياطي في localStorage للزوار غير المسجلين
+            try {
+                const { data: { user: _u } } = await sb.auth.getUser();
+                if (!_u && currentSurvey) _lsSave(currentSurvey.id);
+            } catch (_) {}
+        } catch (e) {
+            console.error('Error saving progress:', e);
+            setSaveStatus('error');
+        } finally {
+            _isSaving = false;
+            // تنفيذ الطلب المعلق إن وجد
+            if (_pendingSave) {
+                _pendingSave = false;
+                saveProgressToDb();
+            }
+        }
+    }
+
+    // حفظ مؤجل (debounce): ينتظر 1.5ثا بعد توقف التفاعل
+    function scheduleDebouncedSave() {
+        if (!responseId) return;
+        clearTimeout(_debounceTimer);
+        _debounceTimer = setTimeout(() => {
+            saveProgressToDb();
+        }, DEBOUNCE_DELAY);
+    }
+
+    // تشغيل الحفظ التلقائي كاحتياط كل 30 ثانية
+    function startAutoSave() {
+        if (autoSaveInterval) clearInterval(autoSaveInterval);
+        autoSaveInterval = setInterval(() => saveProgressToDb(), AUTO_SAVE_INTERVAL);
+
+        // حفظ عند مغادرة الصفحة أو إخفائها
+        document.addEventListener('visibilitychange', _onVisibilityChange);
+        window.addEventListener('beforeunload', _onBeforeUnload);
+    }
+
+    function _onVisibilityChange() {
+        if (document.visibilityState === 'hidden') {
+            // مزامنة: إلغاء الديبونس وحفظ فوري
+            clearTimeout(_debounceTimer);
+            saveProgressToDb(true);
+        }
+    }
+
+    function _onBeforeUnload(e) {
+        clearTimeout(_debounceTimer);
+        // حفظ الإجابة الحالية في الذاكرة فوراً
+        saveCurrentAnswer();
+        if (!responseId) return;
+        // استخدام fetch مع keepalive لضمان الإرسال حتى بعد إغلاق التبويب
+        // sendBeacon لا يدعم headers لذا نستخدم fetch+keepalive
+        try {
+            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+            const progress = surveyQuestions.length > 0
+                ? Math.round((Object.keys(userAnswers).length / surveyQuestions.length) * 100)
+                : 0;
+            const supabaseUrl = window.SUPABASE_URL;
+            const supabaseKey = window.SUPABASE_ANON_KEY;
+            if (supabaseUrl && supabaseKey) {
+                // 1. تحديث survey_responses
+                fetch(`${supabaseUrl}/rest/v1/survey_responses?id=eq.${responseId}`, {
+                    method: 'PATCH',
+                    keepalive: true,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({
+                        time_spent_seconds: timeSpent,
+                        progress_percentage: progress,
+                        updated_at: new Date().toISOString()
+                    })
+                }).catch(() => {});
+
+                // 2. upsert الإجابات
+                const answersToUpsert = Object.values(userAnswers).map(({ id: _omit, ...a }) => ({
+                    ...a,
+                    response_id: responseId
+                }));
+                if (answersToUpsert.length > 0) {
+                    fetch(`${supabaseUrl}/rest/v1/survey_answers`, {
+                        method: 'POST',
+                        keepalive: true,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': supabaseKey,
+                            'Authorization': `Bearer ${supabaseKey}`,
+                            'Prefer': 'resolution=merge-duplicates,return=minimal'
+                        },
+                        body: JSON.stringify(answersToUpsert)
+                    }).catch(() => {});
+                }
+            }
+        } catch (err) {
+            console.warn('Exit save failed:', err);
+        }
+    }
+
+    function stopAutoSave() {
+        if (autoSaveInterval) { clearInterval(autoSaveInterval); autoSaveInterval = null; }
+        clearTimeout(_debounceTimer);
+        document.removeEventListener('visibilitychange', _onVisibilityChange);
+        window.removeEventListener('beforeunload', _onBeforeUnload);
     }
 
     async function createResponse(surveyId) {
@@ -314,6 +556,9 @@
                         </div>
                     </div>
                 ` : ''}
+                <div style="text-align:left; min-height:1.2rem; margin-bottom:0.25rem;">
+                    <span id="survey-save-status" style="display:none;"></span>
+                </div>
                 
                 <div id="questionContainer"></div>
                 
@@ -371,6 +616,16 @@
 
         restoreAnswer(question);
         updateProgress();
+
+        // ربط debounce على حقول الإدخال بعد رسم السؤال
+        setTimeout(() => {
+            const container = document.getElementById('questionContainer');
+            if (!container) return;
+            container.querySelectorAll('input, textarea, select').forEach(el => {
+                el.addEventListener('input', scheduleDebouncedSave);
+                el.addEventListener('change', scheduleDebouncedSave);
+            });
+        }, 0);
     }
 
     function renderQuestionInput(question) {
@@ -783,20 +1038,23 @@
 
     async function submitSurvey() {
         showLoading(true);
+        stopAutoSave();
 
         try {
-            const answers = Object.values(userAnswers).map(answer => ({
+            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+
+            const answersToUpsert = Object.values(userAnswers).map(({ id: _omit, ...answer }) => ({
                 ...answer,
                 response_id: responseId
             }));
 
-            const { error: answersError } = await sb
-                .from('survey_answers')
-                .insert(answers);
+            if (answersToUpsert.length > 0) {
+                const { error: answersError } = await sb
+                    .from('survey_answers')
+                    .upsert(answersToUpsert, { onConflict: 'response_id,question_id', ignoreDuplicates: false });
 
-            if (answersError) throw answersError;
-
-            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+                if (answersError) throw answersError;
+            }
 
             const { error: responseError } = await sb
                 .from('survey_responses')
@@ -809,6 +1067,9 @@
                 .eq('id', responseId);
 
             if (responseError) throw responseError;
+
+            // مسح المسودة المحلية بعد الإرسال الناجح
+            if (currentSurvey) _lsClear(currentSurvey.id);
 
             showLoading(false);
             showThankYou();

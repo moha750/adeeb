@@ -468,7 +468,7 @@
             menuItems.push({
                 id: 'surveys',
                 icon: 'fa-clipboard-question',
-                label: 'إدارة الاستبيانات',
+                label: 'استبيانات أدِيب',
                 isDropdown: true,
                 subItems: surveysSubItems
             });

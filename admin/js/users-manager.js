@@ -202,17 +202,45 @@ class UsersManager {
         const role = user.user_roles?.[0]?.role;
         const committee = user.user_roles?.[0]?.committee;
         
-        const statusMap = {
-            'active': { label: 'نشط', class: 'badge-success' },
-            'inactive': { label: 'معلق - لم يفعل الحساب', class: 'badge-warning' },
-            'suspended': { label: 'عضوية منتهية', class: 'badge-danger' }
-        };
-        
-        const status = statusMap[user.account_status] || { label: 'غير محدد', class: 'badge-secondary' };
         const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=3d8fd6&color=fff`;
+        
+        let roleLabel = '';
+        if (role && committee) {
+            roleLabel = `${role.role_name_ar} ${committee.committee_name_ar}`;
+        } else if (role) {
+            roleLabel = role.role_name_ar;
+        } else {
+            roleLabel = 'غير محدد';
+        }
 
         return `
-            <div class="application-card" data-user-id="${user.id}">
+            <div class="application-card" data-user-id="${user.id}" style="position:relative;">
+                <div class="card-options-wrapper" style="position:absolute; top:0.75rem; left:0.75rem; z-index:10;">
+                    <button class="btn-user-options" data-user-id="${user.id}" title="خيارات" style="width:32px; height:32px; border-radius:8px; border:1px solid #e2e8f0; background:#fff; color:#94a3b8; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,0.06); transition:all 0.18s ease;">
+                        <i class="fa-solid fa-ellipsis-vertical" style="font-size:0.9rem; pointer-events:none;"></i>
+                    </button>
+                    <div class="user-options-dropdown" data-user-id="${user.id}" style="display:none; position:absolute; top:calc(100% + 6px); left:0; background:#fff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06); min-width:185px; z-index:200; overflow:hidden; padding:4px;">
+                        <button class="btn-edit-user" data-user-id="${user.id}" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.6rem 0.85rem; border:none; background:none; cursor:pointer; font-size:0.875rem; color:#1e293b; text-align:right; border-radius:8px; transition:background 0.15s;">
+                            <span style="width:28px; height:28px; background:#eff6ff; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <i class="fa-solid fa-pen-to-square" style="color:#3b82f6; font-size:0.75rem;"></i>
+                            </span>
+                            تعديل البيانات
+                        </button>
+                        <button class="btn-change-committee" data-user-id="${user.id}" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.6rem 0.85rem; border:none; background:none; cursor:pointer; font-size:0.875rem; color:#1e293b; text-align:right; border-radius:8px; transition:background 0.15s;">
+                            <span style="width:28px; height:28px; background:#f5f3ff; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <i class="fa-solid fa-sitemap" style="color:#8b5cf6; font-size:0.75rem;"></i>
+                            </span>
+                            تغيير اللجنة
+                        </button>
+                        <div style="border-top:1px solid #f1f5f9; margin:4px 0;"></div>
+                        <button class="btn-terminate-membership" data-user-id="${user.id}" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.6rem 0.85rem; border:none; background:none; cursor:pointer; font-size:0.875rem; color:#dc2626; text-align:right; border-radius:8px; transition:background 0.15s;">
+                            <span style="width:28px; height:28px; background:#fff5f5; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <i class="fa-solid fa-user-slash" style="color:#dc2626; font-size:0.75rem;"></i>
+                            </span>
+                            إنهاء العضوية
+                        </button>
+                    </div>
+                </div>
                 <div class="application-card-header">
                     <div class="applicant-info">
                         <div class="applicant-avatar">
@@ -220,7 +248,7 @@ class UsersManager {
                         </div>
                         <div class="applicant-details">
                             <h3 class="applicant-name">${user.full_name}</h3>
-                            <span class="badge ${status.class}">${status.label}</span>
+                            <span class="badge badge-info" style="font-size:0.78rem;">${roleLabel}</span>
                         </div>
                     </div>
                 </div>
@@ -248,24 +276,6 @@ class UsersManager {
                         ` : ''}
                         
                         <div class="info-item">
-                            <i class="fa-solid fa-user-tag"></i>
-                            <div class="info-content">
-                                <span class="info-label">الدور</span>
-                                <span class="info-value">${role?.role_name_ar || 'غير محدد'}</span>
-                            </div>
-                        </div>
-                        
-                        ${committee ? `
-                            <div class="info-item">
-                                <i class="fa-solid fa-sitemap"></i>
-                                <div class="info-content">
-                                    <span class="info-label">اللجنة</span>
-                                    <span class="info-value">${committee.committee_name_ar}</span>
-                                </div>
-                            </div>
-                        ` : ''}
-                        
-                        <div class="info-item">
                             <i class="fa-solid fa-calendar"></i>
                             <div class="info-content">
                                 <span class="info-label">تاريخ الانضمام</span>
@@ -279,14 +289,6 @@ class UsersManager {
                     <button class="btn btn--info btn--sm btn-view-user" data-user-id="${user.id}">
                         <i class="fa-solid fa-eye"></i>
                         عرض التفاصيل
-                    </button>
-                    <button class="btn btn--outline-secondary btn--sm btn-edit-user" data-user-id="${user.id}">
-                        <i class="fa-solid fa-edit"></i>
-                        تعديل
-                    </button>
-                    <button class="btn btn--danger btn--sm btn-terminate-membership" data-user-id="${user.id}" title="إنهاء العضوية نهائياً">
-                        <i class="fa-solid fa-user-slash"></i>
-                        إنهاء العضوية
                     </button>
                 </div>
             </div>
@@ -393,15 +395,45 @@ class UsersManager {
         if (!this._clickListenerBound) {
             this._clickListenerBound = true;
             document.addEventListener('click', (e) => {
-                if (e.target.closest('.btn-view-user')) {
+                // زر الخيارات
+                if (e.target.closest('.btn-user-options')) {
+                    e.stopPropagation();
+                    const btn = e.target.closest('.btn-user-options');
+                    const userId = btn.dataset.userId;
+                    const dropdown = document.querySelector(`.user-options-dropdown[data-user-id="${userId}"]`);
+                    // إغلاق كل القوائم الأخرى وإعادة تنسيق أزرارها
+                    document.querySelectorAll('.btn-user-options').forEach(b => {
+                        if (b !== btn) { b.style.background = '#fff'; b.style.color = '#94a3b8'; b.style.borderColor = '#e2e8f0'; b.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'; }
+                    });
+                    document.querySelectorAll('.user-options-dropdown').forEach(d => {
+                        if (d !== dropdown) d.style.display = 'none';
+                    });
+                    const isOpen = dropdown?.style.display !== 'none' && dropdown?.style.display !== '';
+                    if (dropdown) dropdown.style.display = isOpen ? 'none' : 'block';
+                    // تنسيق الزر حسب الحالة
+                    if (!isOpen) {
+                        btn.style.background = '#f0f9ff'; btn.style.color = '#3b82f6'; btn.style.borderColor = '#bfdbfe'; btn.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1)';
+                    } else {
+                        btn.style.background = '#fff'; btn.style.color = '#94a3b8'; btn.style.borderColor = '#e2e8f0'; btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
+                    }
+                } else if (e.target.closest('.btn-view-user')) {
                     const userId = e.target.closest('.btn-view-user').dataset.userId;
                     this.viewUserDetails(userId);
                 } else if (e.target.closest('.btn-edit-user')) {
                     const userId = e.target.closest('.btn-edit-user').dataset.userId;
                     this.editUser(userId);
+                    document.querySelectorAll('.user-options-dropdown').forEach(d => d.style.display = 'none');
+                } else if (e.target.closest('.btn-change-committee')) {
+                    const userId = e.target.closest('.btn-change-committee').dataset.userId;
+                    this.changeCommittee(userId);
+                    document.querySelectorAll('.user-options-dropdown').forEach(d => d.style.display = 'none');
                 } else if (e.target.closest('.btn-terminate-membership')) {
                     const userId = e.target.closest('.btn-terminate-membership').dataset.userId;
                     this.terminateMembership(userId);
+                    document.querySelectorAll('.user-options-dropdown').forEach(d => d.style.display = 'none');
+                } else {
+                    // إغلاق عند النقر خارج القائمة
+                    document.querySelectorAll('.user-options-dropdown').forEach(d => d.style.display = 'none');
                 }
             });
         }
@@ -606,55 +638,243 @@ class UsersManager {
     }
 
     /**
-     * تعديل المستخدم
+     * تعديل بيانات المستخدم - جميع الحقول
      */
-    editUser(userId) {
+    async editUser(userId) {
         const user = this.allUsers.find(u => u.id === userId);
         if (!user) return;
 
+        // جلب بيانات member_details
+        let md = {};
+        try {
+            const { data } = await this.supabase
+                .from('member_details')
+                .select('*')
+                .eq('user_id', userId)
+                .single();
+            if (data) md = data;
+        } catch (e) {}
+
+        const academicDegrees = [
+            { value: '', label: '-- اختر الدرجة --' },
+            { value: 'بكالوريوس', label: 'بكالوريوس' },
+            { value: 'ماجستير', label: 'ماجستير' },
+            { value: 'دكتوراه', label: 'دكتوراه' },
+            { value: 'دبلوم', label: 'دبلوم' }
+        ];
+
+        const content = `
+        <form id="editUserForm" style="display:grid; gap:1rem;">
+            <h4 style="margin:0 0 0.25rem; color:#374151; font-size:0.95rem; border-bottom:1px solid #e5e7eb; padding-bottom:0.5rem;">البيانات الأساسية</h4>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                <div class="form-group">
+                    <label>الاسم الكامل <span style="color:#ef4444">*</span></label>
+                    <input type="text" id="ef-full_name" class="form-input" value="${user.full_name || ''}" required />
+                </div>
+                <div class="form-group">
+                    <label>الاسم الثلاثي</label>
+                    <input type="text" id="ef-full_name_triple" class="form-input" value="${md.full_name_triple || ''}" />
+                </div>
+                <div class="form-group">
+                    <label>البريد الإلكتروني <span style="color:#ef4444">*</span></label>
+                    <input type="email" id="ef-email" class="form-input" value="${user.email || ''}" required />
+                </div>
+                <div class="form-group">
+                    <label>رقم الجوال</label>
+                    <input type="tel" id="ef-phone" class="form-input" value="${user.phone || md.phone || ''}" />
+                </div>
+                <div class="form-group">
+                    <label>رقم الهوية الوطنية</label>
+                    <input type="text" id="ef-national_id" class="form-input" value="${md.national_id || ''}" />
+                </div>
+                <div class="form-group">
+                    <label>تاريخ الميلاد</label>
+                    <input type="date" id="ef-birth_date" class="form-input" value="${md.birth_date || ''}" />
+                </div>
+            </div>
+
+            <h4 style="margin:0.5rem 0 0.25rem; color:#374151; font-size:0.95rem; border-bottom:1px solid #e5e7eb; padding-bottom:0.5rem;">البيانات الأكاديمية</h4>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                <div class="form-group">
+                    <label>الدرجة الأكاديمية</label>
+                    <select id="ef-academic_degree" class="form-input">
+                        ${academicDegrees.map(d => `<option value="${d.value}" ${md.academic_degree === d.value ? 'selected' : ''}>${d.label}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>الرقم الأكاديمي</label>
+                    <input type="text" id="ef-academic_record_number" class="form-input" value="${md.academic_record_number || ''}" />
+                </div>
+                <div class="form-group">
+                    <label>الكلية</label>
+                    <input type="text" id="ef-college" class="form-input" value="${md.college || ''}" />
+                </div>
+                <div class="form-group">
+                    <label>التخصص</label>
+                    <input type="text" id="ef-major" class="form-input" value="${md.major || ''}" />
+                </div>
+            </div>
+
+            <h4 style="margin:0.5rem 0 0.25rem; color:#374151; font-size:0.95rem; border-bottom:1px solid #e5e7eb; padding-bottom:0.5rem;">الحسابات الاجتماعية</h4>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                <div class="form-group">
+                    <label><i class="fa-brands fa-twitter" style="color:#1da1f2;"></i> تويتر</label>
+                    <input type="url" id="ef-twitter_account" class="form-input" placeholder="https://x.com/..." value="${md.twitter_account || ''}" />
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-brands fa-instagram" style="color:#e1306c;"></i> إنستقرام</label>
+                    <input type="url" id="ef-instagram_account" class="form-input" placeholder="https://instagram.com/..." value="${md.instagram_account || ''}" />
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-brands fa-linkedin" style="color:#0077b5;"></i> لينكد إن</label>
+                    <input type="url" id="ef-linkedin_account" class="form-input" placeholder="https://linkedin.com/..." value="${md.linkedin_account || ''}" />
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-brands fa-tiktok"></i> تيك توك</label>
+                    <input type="url" id="ef-tiktok_account" class="form-input" placeholder="https://tiktok.com/@..." value="${md.tiktok_account || ''}" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>نبذة تعريفية (bio)</label>
+                <textarea id="ef-bio" class="form-input" rows="2" placeholder="نبذة مختصرة عن العضو...">${user.bio || ''}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>ملاحظات</label>
+                <textarea id="ef-notes" class="form-input" rows="2" placeholder="ملاحظات إدارية...">${md.notes || ''}</textarea>
+            </div>
+        </form>`;
+
+        const footer = `
+            <button class="btn btn--outline btn--outline-secondary" onclick="closeModal()">
+                <i class="fa-solid fa-times"></i> إلغاء
+            </button>
+            <button class="btn btn--primary" onclick="window._submitEditUser('${userId}')">
+                <i class="fa-solid fa-save"></i> حفظ التعديلات
+            </button>`;
+
+        window._submitEditUser = async (uid) => {
+            const form = document.getElementById('editUserForm');
+            if (!form.checkValidity()) { form.reportValidity(); return; }
+
+            const g = (id) => document.getElementById(id)?.value?.trim() || null;
+
+            try {
+                // 1. تحديث profiles
+                const { error: pErr } = await this.supabase
+                    .from('profiles')
+                    .update({
+                        full_name: g('ef-full_name'),
+                        email: g('ef-email'),
+                        phone: g('ef-phone'),
+                        bio: g('ef-bio')
+                    })
+                    .eq('id', uid);
+                if (pErr) throw pErr;
+
+                // 2. تحديث member_details (إنشاء إذا لم يوجد)
+                const mdUpdate = {
+                    user_id: uid,
+                    full_name_triple: g('ef-full_name_triple'),
+                    national_id: g('ef-national_id'),
+                    birth_date: g('ef-birth_date') || null,
+                    academic_degree: g('ef-academic_degree'),
+                    academic_record_number: g('ef-academic_record_number'),
+                    college: g('ef-college'),
+                    major: g('ef-major'),
+                    twitter_account: g('ef-twitter_account'),
+                    instagram_account: g('ef-instagram_account'),
+                    linkedin_account: g('ef-linkedin_account'),
+                    tiktok_account: g('ef-tiktok_account'),
+                    notes: g('ef-notes'),
+                    updated_at: new Date().toISOString()
+                };
+
+                const { error: mdErr } = await this.supabase
+                    .from('member_details')
+                    .upsert(mdUpdate, { onConflict: 'user_id' });
+                if (mdErr) throw mdErr;
+
+                closeModal();
+                window.showSuccessModal('تم التحديث', 'تم تحديث بيانات العضو بنجاح');
+                await this.loadUsers();
+            } catch (err) {
+                console.error('Error updating user:', err);
+                window.showErrorModal('خطأ', 'حدث خطأ أثناء تحديث البيانات');
+            }
+        };
+
+        window.openModal('تعديل بيانات العضو', content, { icon: 'fa-pen-to-square', footer, size: 'lg' });
+    }
+
+    /**
+     * تغيير لجنة العضو
+     */
+    async changeCommittee(userId) {
+        const user = this.allUsers.find(u => u.id === userId);
+        if (!user) return;
+
+        const currentRole = user.user_roles?.[0];
+        const currentCommittee = currentRole?.committee;
+
+        // جلب جميع اللجان النشطة
+        const { data: committees } = await this.supabase
+            .from('committees')
+            .select('id, committee_name_ar')
+            .eq('is_active', true)
+            .order('committee_name_ar');
+
+        if (!committees || committees.length === 0) {
+            window.showErrorModal('خطأ', 'لا توجد لجان متاحة');
+            return;
+        }
+
+        const options = [
+            { value: '', label: '-- اختر اللجنة الجديدة --' },
+            ...committees.map(c => ({ value: String(c.id), label: c.committee_name_ar }))
+        ];
+
         const fields = [
             {
-                id: 'edit-full-name',
-                label: 'الاسم الكامل',
-                type: 'text',
-                value: user.full_name,
-                required: true
-            },
-            {
-                id: 'edit-email',
-                label: 'البريد الإلكتروني',
-                type: 'email',
-                value: user.email || '',
-                required: true
-            },
-            {
-                id: 'edit-phone',
-                label: 'الجوال',
-                type: 'tel',
-                value: user.phone || ''
+                id: 'new-committee',
+                label: `تغيير لجنة العضو: ${user.full_name}`,
+                type: 'select',
+                required: true,
+                options: options.map(o => ({ value: o.value, label: o.label }))
             }
         ];
 
-        window.openFormModal('تعديل بيانات المستخدم', fields, async (formData) => {
-            try {
-                const { error } = await this.supabase
-                    .from('profiles')
-                    .update({
-                        full_name: formData['edit-full-name'],
-                        email: formData['edit-email'],
-                        phone: formData['edit-phone']
-                    })
-                    .eq('id', userId);
+        window.openFormModal(
+            'تغيير اللجنة',
+            fields,
+            async (formData) => {
+                const newCommitteeId = formData['new-committee'];
+                if (!newCommitteeId) return;
 
-                if (error) throw error;
+                try {
+                    if (currentRole) {
+                        // تحديث الدور الحالي بلجنة جديدة
+                        const { error } = await this.supabase
+                            .from('user_roles')
+                            .update({ committee_id: Number(newCommitteeId) })
+                            .eq('id', currentRole.id);
+                        if (error) throw error;
+                    } else {
+                        window.showErrorModal('خطأ', 'لا يوجد دور محدد لهذا العضو');
+                        return;
+                    }
 
-                window.showSuccessModal('تم التحديث', 'تم تحديث بيانات المستخدم بنجاح');
-                this.loadUsers();
-            } catch (error) {
-                console.error('Error updating user:', error);
-                window.showErrorModal('خطأ', 'حدث خطأ أثناء تحديث البيانات');
-            }
-        }, { icon: 'fa-edit', submitText: 'حفظ التعديلات' });
+                    const newCommitteeName = committees.find(c => String(c.id) === newCommitteeId)?.committee_name_ar;
+                    window.showSuccessModal('تم التغيير', `تم نقل العضو إلى لجنة ${newCommitteeName} بنجاح`);
+                    await this.loadUsers();
+                } catch (err) {
+                    console.error('Error changing committee:', err);
+                    window.showErrorModal('خطأ', 'حدث خطأ أثناء تغيير اللجنة');
+                }
+            },
+            { icon: 'fa-sitemap', submitText: 'حفظ التغيير' }
+        );
     }
 
     /**
