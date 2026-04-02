@@ -187,7 +187,7 @@ class UsersManager {
         }
 
         const html = `
-            <div class="applications-cards-grid">
+            <div class="uc-grid">
                 ${this.filteredUsers.map(user => this.renderUserCard(user)).join('')}
             </div>
         `;
@@ -202,95 +202,97 @@ class UsersManager {
         const role = user.user_roles?.[0]?.role;
         const committee = user.user_roles?.[0]?.committee;
         
-        const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=3d8fd6&color=fff`;
+        const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=3d8fd6&color=fff&size=200`;
         
         let roleLabel = '';
         if (role && committee) {
-            roleLabel = `${role.role_name_ar} ${committee.committee_name_ar}`;
+            roleLabel = `${role.role_name_ar} · ${committee.committee_name_ar}`;
         } else if (role) {
             roleLabel = role.role_name_ar;
         } else {
-            roleLabel = 'غير محدد';
+            roleLabel = 'عضو';
         }
 
+        const joinDate = new Date(user.created_at).toLocaleDateString('ar-SA', {
+            year: 'numeric', month: 'long', day: 'numeric'
+        });
+
         return `
-            <div class="application-card" data-user-id="${user.id}" style="position:relative;">
-                <div class="card-options-wrapper" style="position:absolute; top:0.75rem; left:0.75rem; z-index:10;">
-                    <button class="btn-user-options" data-user-id="${user.id}" title="خيارات" style="width:32px; height:32px; border-radius:8px; border:1px solid #e2e8f0; background:#fff; color:#94a3b8; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,0.06); transition:all 0.18s ease;">
-                        <i class="fa-solid fa-ellipsis-vertical" style="font-size:0.9rem; pointer-events:none;"></i>
-                    </button>
-                    <div class="user-options-dropdown" data-user-id="${user.id}" style="display:none; position:absolute; top:calc(100% + 6px); left:0; background:#fff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06); min-width:185px; z-index:200; overflow:hidden; padding:4px;">
-                        <button class="btn-edit-user" data-user-id="${user.id}" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.6rem 0.85rem; border:none; background:none; cursor:pointer; font-size:0.875rem; color:#1e293b; text-align:right; border-radius:8px; transition:background 0.15s;">
-                            <span style="width:28px; height:28px; background:#eff6ff; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                                <i class="fa-solid fa-pen-to-square" style="color:#3b82f6; font-size:0.75rem;"></i>
-                            </span>
-                            تعديل البيانات
+            <div class="uc-card" data-user-id="${user.id}">
+
+                <div class="uc-card__header">
+                    <div class="uc-card__options">
+                        <button class="btn-user-options uc-card__options-btn btn btn-white btn-outline btn-icon btn-sm" data-user-id="${user.id}" title="خيارات">
+                            <i class="fa-solid fa-ellipsis-vertical" style="pointer-events:none;"></i>
                         </button>
-                        <button class="btn-change-committee" data-user-id="${user.id}" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.6rem 0.85rem; border:none; background:none; cursor:pointer; font-size:0.875rem; color:#1e293b; text-align:right; border-radius:8px; transition:background 0.15s;">
-                            <span style="width:28px; height:28px; background:#f5f3ff; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                                <i class="fa-solid fa-sitemap" style="color:#8b5cf6; font-size:0.75rem;"></i>
-                            </span>
-                            تغيير اللجنة
-                        </button>
-                        <div style="border-top:1px solid #f1f5f9; margin:4px 0;"></div>
-                        <button class="btn-terminate-membership" data-user-id="${user.id}" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.6rem 0.85rem; border:none; background:none; cursor:pointer; font-size:0.875rem; color:#dc2626; text-align:right; border-radius:8px; transition:background 0.15s;">
-                            <span style="width:28px; height:28px; background:#fff5f5; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                                <i class="fa-solid fa-user-slash" style="color:#dc2626; font-size:0.75rem;"></i>
-                            </span>
-                            إنهاء العضوية
-                        </button>
-                    </div>
-                </div>
-                <div class="application-card-header">
-                    <div class="applicant-info">
-                        <div class="applicant-avatar">
-                            <img src="${avatarUrl}" alt="${user.full_name}" />
-                        </div>
-                        <div class="applicant-details">
-                            <h3 class="applicant-name">${user.full_name}</h3>
-                            <span class="badge badge-info" style="font-size:0.78rem;">${roleLabel}</span>
+                        <div class="user-options-dropdown uc-card__dropdown" data-user-id="${user.id}" style="display:none;">
+                            <button class="btn-edit-user btn btn-primary btn-block btn-outline" data-user-id="${user.id}">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                                تعديل البيانات
+                            </button>
+                            <button class="btn-change-committee btn btn-warning btn-block btn-outline" style="margin:0.5rem 0;" data-user-id="${user.id}">
+                                <i class="fa-solid fa-sitemap"></i>
+                                تغيير اللجنة
+                            </button>
+                            <div class="uc-card__dropdown-divider"></div>
+                            <button class="btn-terminate-membership btn btn-danger btn-block btn-outline" style="margin-top:0.5rem;" data-user-id="${user.id}">
+                                <i class="fa-solid fa-user-slash"></i>
+                                إنهاء العضوية
+                            </button>
                         </div>
                     </div>
-                </div>
-                
-                <div class="application-card-body">
-                    <div class="application-info-grid">
-                        ${user.email ? `
-                            <div class="info-item">
-                                <i class="fa-solid fa-envelope"></i>
-                                <div class="info-content">
-                                    <span class="info-label">البريد الإلكتروني</span>
-                                    <span class="info-value">${user.email}</span>
-                                </div>
-                            </div>
-                        ` : ''}
-                        
-                        ${user.phone ? `
-                            <div class="info-item">
-                                <i class="fa-solid fa-phone"></i>
-                                <div class="info-content">
-                                    <span class="info-label">الجوال</span>
-                                    <span class="info-value">${user.phone}</span>
-                                </div>
-                            </div>
-                        ` : ''}
-                        
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ الانضمام</span>
-                                <span class="info-value">${new Date(user.created_at).toLocaleDateString('ar-SA')}</span>
-                            </div>
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__icon">
+                            ${user.avatar_url
+                                ? `<img src="${user.avatar_url}" alt="${user.full_name}" class="uc-card__avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><i class="fa-solid fa-user" style="display:none;"></i>`
+                                : `<i class="fa-solid fa-user"></i>`
+                            }
+                        </div>
+                        <div class="uc-card__header-info">
+                            <h3 class="uc-card__title">${user.full_name}</h3>
+                            <span class="uc-card__badge">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                ${roleLabel}
+                            </span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="application-card-footer">
-                    <button class="btn btn--info btn--sm btn-view-user" data-user-id="${user.id}">
+
+                <div class="uc-card__body">
+                    ${user.email ? `
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-regular fa-envelope"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">البريد الإلكتروني</span>
+                            <span class="uc-card__info-value">${user.email}</span>
+                        </div>
+                    </div>` : ''}
+
+                    ${user.phone ? `
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">الجوال</span>
+                            <span class="uc-card__info-value">${user.phone}</span>
+                        </div>
+                    </div>` : ''}
+
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-regular fa-calendar-alt"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">تاريخ الانضمام</span>
+                            <span class="uc-card__info-value">${joinDate}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="uc-card__footer">
+                    <button class="btn-view-user btn btn-primary btn-block" data-user-id="${user.id}">
                         <i class="fa-solid fa-eye"></i>
                         عرض التفاصيل
                     </button>
                 </div>
+
             </div>
         `;
     }
@@ -401,21 +403,12 @@ class UsersManager {
                     const btn = e.target.closest('.btn-user-options');
                     const userId = btn.dataset.userId;
                     const dropdown = document.querySelector(`.user-options-dropdown[data-user-id="${userId}"]`);
-                    // إغلاق كل القوائم الأخرى وإعادة تنسيق أزرارها
-                    document.querySelectorAll('.btn-user-options').forEach(b => {
-                        if (b !== btn) { b.style.background = '#fff'; b.style.color = '#94a3b8'; b.style.borderColor = '#e2e8f0'; b.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'; }
-                    });
+                    // إغلاق كل القوائم الأخرى
                     document.querySelectorAll('.user-options-dropdown').forEach(d => {
                         if (d !== dropdown) d.style.display = 'none';
                     });
-                    const isOpen = dropdown?.style.display !== 'none' && dropdown?.style.display !== '';
+                    const isOpen = dropdown?.style.display === 'block';
                     if (dropdown) dropdown.style.display = isOpen ? 'none' : 'block';
-                    // تنسيق الزر حسب الحالة
-                    if (!isOpen) {
-                        btn.style.background = '#f0f9ff'; btn.style.color = '#3b82f6'; btn.style.borderColor = '#bfdbfe'; btn.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1)';
-                    } else {
-                        btn.style.background = '#fff'; btn.style.color = '#94a3b8'; btn.style.borderColor = '#e2e8f0'; btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
-                    }
                 } else if (e.target.closest('.btn-view-user')) {
                     const userId = e.target.closest('.btn-view-user').dataset.userId;
                     this.viewUserDetails(userId);
@@ -747,10 +740,10 @@ class UsersManager {
         </form>`;
 
         const footer = `
-            <button class="btn btn--outline btn--outline-secondary" onclick="closeModal()">
+            <button class="btn btn-secondary" onclick="closeModal()">
                 <i class="fa-solid fa-times"></i> إلغاء
             </button>
-            <button class="btn btn--primary" onclick="window._submitEditUser('${userId}')">
+            <button class="btn btn-primary" onclick="window._submitEditUser('${userId}')">
                 <i class="fa-solid fa-save"></i> حفظ التعديلات
             </button>`;
 
@@ -886,49 +879,35 @@ class UsersManager {
 
         const result = await Swal.fire({
             title: 'تأكيد إنهاء العضوية',
+            iconClass: 'fa-solid fa-user-xmark',
+            icon: 'warning',
             html: `
-                <div class="modal-content-rtl">
-                    <p class="confirm-message">
-                        هل أنت متأكد من إنهاء عضوية <strong>${user.full_name}</strong>؟
-                    </p>
-                    <div class="info-box info-box--warning">
-                        <i class="fa-solid fa-exclamation-triangle"></i>
-                        <p class="warning-title">
-                            تحذير: هذا الإجراء سيقوم بـ:
-                        </p>
-                        <ul class="warning-list">
-                            <li>حذف جميع أدوار ومناصب المستخدم</li>
-                            <li>تعطيل حساب المستخدم نهائياً</li>
-                            <li>منع المستخدم من الدخول للنظام</li>
-                        </ul>
-                    </div>
-                    <div style="margin-top: 1rem; text-align: right;">
-                        <label style="display: block; font-size: 0.9rem; color: #374151; margin-bottom: 0.6rem; font-weight: 500;">
-                            سبب إنهاء العضوية <span style="color: #9ca3af; font-weight: 400;">(اختياري)</span>
+                <div class="form-stack">
+                    <p>هل أنت متأكد من إنهاء عضوية <strong>${user.full_name}</strong>؟</p>
+                    <div class="form-group">
+                        <label class="form-label">
+                            سبب إنهاء العضوية
+                            <span class="form-hint" style="display:inline;margin-inline-start:0.3rem;">(اختياري)</span>
                         </label>
-                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
-                            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
-                                <input type="radio" name="terminationPreset" value="تقدّم العضو بطلب إنهاء عضويته" style="margin-top: 3px; flex-shrink: 0;" onchange="document.getElementById('terminationReasonInput').value=this.value">
-                                <span style="font-size: 0.88rem; color: #374151;">تقدّم العضو بطلب إنهاء عضويته</span>
+                        <div class="form-radio-group">
+                            <label class="form-radio">
+                                <input type="radio" name="terminationPreset" value="تقدّم العضو بطلب إنهاء عضويته" onchange="document.getElementById('terminationReasonInput').value=this.value">
+                                <span class="form-radio-label">تقدّم العضو بطلب إنهاء عضويته</span>
                             </label>
-                            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
-                                <input type="radio" name="terminationPreset" value="خروج العضو من مجتمع أدِيب دون إبلاغ لجنة الموارد البشرية بالخروج" style="margin-top: 3px; flex-shrink: 0;" onchange="document.getElementById('terminationReasonInput').value=this.value">
-                                <span style="font-size: 0.88rem; color: #374151;">خروج العضو من مجتمع أدِيب دون إبلاغ لجنة الموارد البشرية بالخروج</span>
+                            <label class="form-radio">
+                                <input type="radio" name="terminationPreset" value="خروج العضو من مجتمع أدِيب دون إبلاغ لجنة الموارد البشرية بالخروج" onchange="document.getElementById('terminationReasonInput').value=this.value">
+                                <span class="form-radio-label">خروج العضو من مجتمع أدِيب دون إبلاغ لجنة الموارد البشرية بالخروج</span>
                             </label>
                         </div>
-                        <textarea id="terminationReasonInput" rows="2"
-                            style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; resize: vertical; direction: rtl; font-family: inherit;"
-                            placeholder="أو اكتب سبباً مخصصاً..."></textarea>
                     </div>
+                                            <textarea id="terminationReasonInput" class="form-input form-textarea" rows="2"
+                            placeholder="أو اكتب سبباً مخصصاً..."></textarea>
+
                 </div>
             `,
-            icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
             confirmButtonText: 'نعم، إنهاء العضوية',
             cancelButtonText: 'إلغاء',
-            reverseButtons: true,
             preConfirm: () => {
                 return document.getElementById('terminationReasonInput')?.value?.trim() || null;
             }
@@ -949,7 +928,7 @@ class UsersManager {
             // 2. تحديث حالة الحساب إلى معلق مع سبب الإنهاء
             const { error: profileError } = await this.supabase
                 .from('profiles')
-                .update({ 
+                .update({
                     account_status: 'suspended',
                     termination_reason: terminationReason,
                     updated_at: new Date().toISOString()
@@ -966,28 +945,12 @@ class UsersManager {
 
             if (tokensError) console.warn('Error updating tokens:', tokensError);
 
-            await Swal.fire({
-                title: 'تم إنهاء العضوية',
-                html: `
-                    <p>تم إنهاء عضوية <strong>${user.full_name}</strong> بنجاح</p>
-                    <p class="form-hint">
-                        تم تعطيل جميع الأدوار والصلاحيات
-                    </p>
-                `,
-                icon: 'success',
-                confirmButtonText: 'حسناً'
-            });
-
+            Toast.success(`تم إنهاء عضوية ${user.full_name} بنجاح`);
             await this.loadUsers();
             await this.loadStats();
         } catch (error) {
             console.error('Error terminating membership:', error);
-            await Swal.fire({
-                title: 'خطأ',
-                text: 'حدث خطأ أثناء إنهاء العضوية. يرجى المحاولة مرة أخرى.',
-                icon: 'error',
-                confirmButtonText: 'حسناً'
-            });
+            Toast.error('حدث خطأ أثناء إنهاء العضوية. يرجى المحاولة مرة أخرى.');
         }
     }
 
@@ -1015,96 +978,94 @@ class UsersManager {
             .order('committee_name_ar');
 
         const content = `
-            <div class="export-dialog">
-                <h3 style="margin-bottom: 1rem;">اختر البيانات المراد تصديرها</h3>
-                
-                <div style="margin-bottom: 1.5rem;">
-                    <h4 style="margin-bottom: 0.5rem; font-size: 0.95rem;">فلترة حسب اللجنة:</h4>
-                    <select id="exportCommitteeFilter" class="form-select" style="width: 100%;">
+            <div class="form-stack">
+                <div class="form-group">
+                    <label class="form-label">فلترة حسب اللجنة</label>
+                    <select id="exportCommitteeFilter" class="form-select">
                         <option value="">جميع اللجان</option>
                         ${(committees || []).map(c => `<option value="${c.id}">${c.committee_name_ar}</option>`).join('')}
                     </select>
                 </div>
 
-                <div style="margin-bottom: 1rem;">
-                    <h4 style="margin-bottom: 0.5rem; font-size: 0.95rem;">الحقول المراد تصديرها:</h4>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <div class="form-group">
+                    <label class="form-label">الحقول المراد تصديرها</label>
+                    <div class="form-checkbox-group cols-2">
+                        <label class="form-checkbox">
                             <input type="checkbox" class="export-field" value="full_name" checked>
-                            <span>الاسم الكامل</span>
+                            <span class="form-checkbox-label">الاسم الكامل</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label class="form-checkbox">
                             <input type="checkbox" class="export-field" value="email" checked>
-                            <span>البريد الإلكتروني</span>
+                            <span class="form-checkbox-label">البريد الإلكتروني</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label class="form-checkbox">
                             <input type="checkbox" class="export-field" value="phone" checked>
-                            <span>الجوال</span>
+                            <span class="form-checkbox-label">الجوال</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label class="form-checkbox">
                             <input type="checkbox" class="export-field" value="national_id">
-                            <span>الهوية الوطنية</span>
+                            <span class="form-checkbox-label">الهوية الوطنية</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label class="form-checkbox">
                             <input type="checkbox" class="export-field" value="academic_record_number">
-                            <span>الرقم الأكاديمي</span>
+                            <span class="form-checkbox-label">الرقم الأكاديمي</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label class="form-checkbox">
                             <input type="checkbox" class="export-field" value="birth_date">
-                            <span>تاريخ الميلاد</span>
+                            <span class="form-checkbox-label">تاريخ الميلاد</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label class="form-checkbox">
                             <input type="checkbox" class="export-field" value="college">
-                            <span>الكلية</span>
+                            <span class="form-checkbox-label">الكلية</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label class="form-checkbox">
                             <input type="checkbox" class="export-field" value="major">
-                            <span>التخصص</span>
+                            <span class="form-checkbox-label">التخصص</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label class="form-checkbox">
                             <input type="checkbox" class="export-field" value="role" checked>
-                            <span>الدور</span>
+                            <span class="form-checkbox-label">الدور</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label class="form-checkbox">
                             <input type="checkbox" class="export-field" value="committee" checked>
-                            <span>اللجنة</span>
+                            <span class="form-checkbox-label">اللجنة</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label class="form-checkbox">
                             <input type="checkbox" class="export-field" value="joined_date">
-                            <span>تاريخ الانضمام</span>
+                            <span class="form-checkbox-label">تاريخ الانضمام</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label class="form-checkbox">
                             <input type="checkbox" class="export-field" value="twitter_account">
-                            <span>تويتر</span>
+                            <span class="form-checkbox-label">تويتر</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label class="form-checkbox">
                             <input type="checkbox" class="export-field" value="instagram_account">
-                            <span>إنستقرام</span>
+                            <span class="form-checkbox-label">إنستقرام</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label class="form-checkbox">
                             <input type="checkbox" class="export-field" value="linkedin_account">
-                            <span>لينكد إن</span>
+                            <span class="form-checkbox-label">لينكد إن</span>
                         </label>
                     </div>
                 </div>
-
-                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                    <button class="btn btn--sm btn--outline-secondary" onclick="document.querySelectorAll('.export-field').forEach(cb => cb.checked = true)">
-                        تحديد الكل
-                    </button>
-                    <button class="btn btn--sm btn--outline-secondary" onclick="document.querySelectorAll('.export-field').forEach(cb => cb.checked = false)">
-                        إلغاء التحديد
-                    </button>
-                </div>
+                                    <div class="form-actions form-actions-start">
+                        <button class="btn btn-success" onclick="document.querySelectorAll('.export-field').forEach(cb => cb.checked = true)">
+                            تحديد الكل
+                        </button>
+                        <button class="btn btn-danger" onclick="document.querySelectorAll('.export-field').forEach(cb => cb.checked = false)">
+                            إلغاء التحديد
+                        </button>
+                    </div>
             </div>
         `;
 
         const result = await Swal.fire({
             title: 'تصدير بيانات الأعضاء',
             html: content,
+            iconClass: 'fa-solid fa-file-export',
             showCancelButton: true,
-            confirmButtonText: '<i class="fa-solid fa-download"></i> تصدير كـ Excel',
             cancelButtonText: 'إلغاء',
+            confirmButtonText: '<i class="fa-solid fa-download"></i> تصدير كـ Excel',
             width: '600px',
             preConfirm: () => {
                 const selectedFields = Array.from(document.querySelectorAll('.export-field:checked')).map(cb => cb.value);
@@ -1238,3 +1199,4 @@ class UsersManager {
 
 // تصدير للاستخدام العام
 window.UsersManager = UsersManager;
+

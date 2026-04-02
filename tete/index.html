@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>الملف الشخصي - تصميم احترافي متطور | تجربة مستخدم محسنة</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        #profile-section {
+            font-family: 'Inter', 'Tajawal', system-ui, -apple-system, sans-serif;
+            direction: rtl;
+            min-height: 100vh;
+        }
+
+        .modern-profile {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Hero Section */
+        .profile-hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-radius: 2rem;
+            margin-bottom: 2rem;
+            overflow: hidden;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .profile-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(59,130,246,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-inner {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1.8rem;
+            padding: 1.8rem 2.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-avatar {
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+
+        .hero-avatar:hover {
+            transform: scale(1.02);
+        }
+
+        #profileAvatar {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid rgba(255,255,255,0.3);
+            background: #fff;
+            box-shadow: 0 12px 25px -8px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+
+        .avatar-edit-overlay {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: #3b82f6;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid white;
+            transition: all 0.2s;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        }
+
+        .avatar-edit-overlay i {
+            font-size: 0.9rem;
+            color: white;
+        }
+
+        .avatar-edit-overlay:hover {
+            background: #2563eb;
+            transform: scale(1.08);
+        }
+
+        .hero-info {
+            flex: 1;
+        }
+
+        .hero-info h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: white;
+            margin: 0 0 0.5rem 0;
+            letter-spacing: -0.3px;
+        }
+
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(8px);
+            padding: 0.4rem 1.2rem;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #e2e8f0;
+            margin-bottom: 0.8rem;
+        }
+
+        .role-badge i {
+            color: #60a5fa;
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .hero-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.08);
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            color: #cbd5e1;
+        }
+
+        @media (max-width: 768px) {
+            .hero-inner {
+                flex-direction: column;
+                text-align: center;
+                padding: 1.5rem;
+            }
+            
+            .hero-meta {
+                justify-content: center;
+            }
+            
+            .role-badge {
+                justify-content: center;
+            }
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-card {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            border: 1px solid #eef2f8;
+            height: fit-content;
+        }
+
+        .info-card:hover {
+            box-shadow: 0 15px 35px -12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-3px);
+        }
+
+        .card-header-modern {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.9rem 1.2rem;
+            border-bottom: 1px solid #eff3f6;
+            background-color: #fafcff;
+        }
+
+        .card-header-modern h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .card-header-modern h3 i {
+            color: #3b82f6;
+            background: #eff6ff;
+            padding: 6px;
+            border-radius: 10px;
+        }
+
+        .card-body-modern {
+            padding: 1rem;
+        }
+
+        .info-grid-single {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            width: 100%;
+        }
+
+        .info-grid-dual {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.7rem 1rem;
+        }
+
+        /* ===== تحسين تجربة المستخدم: منع التفاف النص إلى سطرين ===== */
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.7rem 0.9rem;
+            background: #f9fafc;
+            border-radius: 14px;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            position: relative;
+            min-height: 68px;
+        }
+
+        /* أيقونة ثابتة لا تنكمش */
+        .info-icon {
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            background: #ffffff;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3b82f6;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+
+        /* حاوية المحتوى: مرنة ولكن مع التحكم في الالتفاف */
+        .info-content {
+            flex: 1;
+            min-width: 0; /* مهم لمنع تجاوز الحاوية */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .info-label {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 0.2rem;
+            white-space: nowrap;
+        }
+
+        /* القيمة: مع إدارة النص الطويل */
+        .info-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #0f172a;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            display: block;
+            line-height: 1.35;
+        }
+
+        /* زر التعديل: حجم مناسب لا يسبب التفاف */
+        .btn-edit-field {
+            background: none;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #94a3b8;
+            background-color: transparent;
+            flex-shrink: 0;
+            opacity: 0.6;
+        }
+
+        .info-item:hover .btn-edit-field {
+            opacity: 1;
+            background-color: #eef2ff;
+            color: #3b82f6;
+        }
+
+        .btn-edit-field:hover {
+            background-color: #e0e7ff !important;
+            color: #2563eb !important;
+            transform: scale(1.05);
+        }
+
+        /* حقول الإدخال أثناء التعديل */
+        .inline-input {
+            width: 100%;
+            padding: 0.5rem 0.7rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            background: #fff;
+            transition: all 0.2s;
+        }
+
+        .inline-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+
+        .field-actions {
+            display: flex;
+            gap: 0.4rem;
+            flex-shrink: 0;
+        }
+
+        .btn-field-save, .btn-field-cancel {
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-field-save {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-field-save:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(16,185,129,0.3);
+        }
+
+        .btn-field-cancel {
+            background-color: #f1f5f9;
+            color: #64748b;
+        }
+
+        /* التواصل الاجتماعي - تحسين لمنع الالتفاف */
+        .social-links-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.8rem;
+        }
+
+        @media (max-width: 550px) {
+            .social-links-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .social-item {
+            background: #f9fafc;
+            border-radius: 12px;
+            padding: 0.7rem 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            transition: all 0.2s ease;
+            border: 1px solid #edf2f7;
+            position: relative;
+            min-height: 70px;
+        }
+
+        .social-item:hover {
+            background: #ffffff;
+            border-color: #e2e8f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        .social-icon {
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .social-icon.twitter { background: #1DA1F2; }
+        .social-icon.instagram { background: radial-gradient(circle at 30% 110%, #ffdb8c, #f56040); }
+        .social-icon.tiktok { background: #000000; }
+        .social-icon.linkedin { background: #0A66C2; }
+
+        .social-details {
+            flex: 1;
+            min-width: 0; /* مهم لمنع تجاوز النص */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .social-platform {
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .social-username {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            direction: ltr;
+            text-align: right;
+        }
+
+        .social-input {
+            width: 100%;
+            padding: 0.45rem 0.7rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .btn-edit-social {
+            background: none;
+            border: none;
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #94a3b8;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            opacity: 0.5;
+        }
+
+        .social-item:hover .btn-edit-social {
+            opacity: 1;
+            background-color: #eef2ff;
+            color: #3b82f6;
+        }
+
+        .btn-edit-social:hover {
+            background-color: #e0e7ff !important;
+            transform: scale(1.05);
+        }
+
+        /* النشاط */
+        .activity-timeline {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            border: 1px solid #eef2f8;
+            overflow: hidden;
+        }
+
+        .activity-header {
+            padding: 0.9rem 1.2rem;
+            border-bottom: 1px solid #eff3f6;
+            background: #fafcff;
+        }
+
+        .activity-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #0f172a;
+        }
+
+        .activity-list {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            padding: 0.8rem 1.2rem;
+            border-bottom: 1px solid #f8fafc;
+            transition: background 0.15s;
+        }
+
+        .activity-icon {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            background: #eff6ff;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3b82f6;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .activity-detail {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .activity-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.2rem;
+            word-break: break-word;
+        }
+
+        .activity-time {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .toast-message {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);
+            z-index: 9999;
+            direction: rtl;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* تحسينات الشاشات الصغيرة جدًا */
+        @media (max-width: 640px) {
+            .modern-profile {
+                padding: 1rem;
+            }
+            
+            .info-grid-dual {
+                grid-template-columns: 1fr;
+            }
+            
+            /* تحسين أساسي لمنع التفاف النص إلى سطرين */
+            .info-item {
+                gap: 0.6rem;
+                padding: 0.6rem 0.7rem;
+                min-height: auto;
+            }
+            
+            .info-icon {
+                width: 38px;
+                height: 38px;
+                min-width: 38px;
+                font-size: 0.95rem;
+            }
+            
+            .info-value {
+                font-size: 0.85rem;
+                white-space: normal;
+                word-break: break-word;
+                line-height: 1.4;
+            }
+            
+            .info-label {
+                font-size: 0.58rem;
+                white-space: nowrap;
+            }
+            
+            .btn-edit-field {
+                width: 32px;
+                height: 32px;
+                min-width: 32px;
+            }
+            
+            .social-item {
+                padding: 0.6rem 0.7rem;
+                gap: 0.6rem;
+            }
+            
+            .social-icon {
+                width: 38px;
+                height: 38px;
+                min-width: 38px;
+                font-size: 1rem;
+            }
+            
+            .social-username {
+                font-size: 0.8rem;
+                white-space: nowrap;
+            }
+            
+            .field-actions .btn-field-save,
+            .field-actions .btn-field-cancel {
+                padding: 0.3rem 0.6rem;
+                font-size: 0.65rem;
+            }
+        }
+
+        /* شاشات صغيرة جدًا (اقل من 400px) */
+        @media (max-width: 480px) {
+            .info-item {
+                flex-wrap: nowrap;
+            }
+            
+            .info-content {
+                min-width: 0;
+                flex: 1;
+            }
+            
+            .info-value {
+                font-size: 0.8rem;
+                white-space: normal;
+                overflow-wrap: break-word;
+            }
+            
+            .social-username {
+                font-size: 0.75rem;
+            }
+            
+            .hero-info h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        .activity-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .activity-list::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .activity-list::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        button:focus-visible, input:focus-visible {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+<section id="profile-section">
+    <div class="modern-profile">
+        <!-- Hero section -->
+        <div class="profile-hero">
+            <div class="hero-inner">
+                <div class="hero-avatar" id="avatarContainer">
+                    <img id="profileAvatar" src="https://ui-avatars.com/api/?background=3b82f6&color=fff&size=110&bold=true&length=3&name=أحمد+المنصوري" alt="الصورة الشخصية">
+                    <div id="changeAvatarBtn" class="avatar-edit-overlay">
+                        <i class="fa-solid fa-camera"></i>
+                    </div>
+                </div>
+                <div class="hero-info">
+                    <h1 id="profileFullName">أحمد عبدالله المنصوري</h1>
+                    <div class="role-badge">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span id="profileRole">خبير تجربة المستخدم | مدير الابتكار الرقمي</span>
+                    </div>
+                    <div class="hero-meta">
+                        <div class="hero-meta-item"><i class="fa-regular fa-calendar-alt"></i> <span>انضم: <span id="profileJoinDate">١٢ مايو ٢٠٢٣</span></span></div>
+                        <div class="hero-meta-item"><i class="fa-regular fa-clock"></i> <span>آخر دخول: <span id="profileLastLogin">اليوم، ١٥:٢٠</span></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-grid">
+            <!-- المعلومات الأساسية -->
+            <div class="info-card">
+                <div class="card-header-modern">
+                    <h3><i class="fa-regular fa-id-card"></i> المعلومات الأساسية</h3>
+                </div>
+                <div class="card-body-modern">
+                    <div class="info-grid-single" id="basicInfoDisplay"></div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <!-- البيانات الأكاديمية -->
+                <div class="info-card">
+                    <div class="card-header-modern">
+                        <h3><i class="fa-solid fa-graduation-cap"></i> البيانات الأكاديمية</h3>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="info-grid-dual" id="academicDisplay"></div>
+                    </div>
+                </div>
+
+                <!-- التواصل الاجتماعي -->
+                <div class="info-card">
+                    <div class="card-header-modern">
+                        <h3><i class="fa-solid fa-share-nodes"></i> حسابات التواصل</h3>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="social-links-grid" id="socialDisplay"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- النشاط الأخير -->
+        <div class="activity-timeline">
+            <div class="activity-header"><h3><i class="fa-solid fa-chart-line"></i> النشاط الأخير</h3></div>
+            <div id="recentActivityContainer" class="activity-list"></div>
+        </div>
+    </div>
+</section>
+
+<script>
+    (function() {
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = 'toast-message';
+            toast.innerText = message;
+            if (type === 'error') toast.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // ========== بيانات كاملة ومتنوعة (غير فارغة) ==========
+        const basicFields = [
+            { id: 'profileEmail', label: 'البريد الإلكتروني', type: 'email', icon: 'fa-regular fa-envelope', value: 'ahmed.almansoori@techhub.com' },
+            { id: 'profilePhone', label: 'رقم الهاتف', type: 'tel', icon: 'fa-solid fa-phone', value: '+966 50 123 4567' },
+            { id: 'profileNationalIdBasic', label: 'رقم الهوية', type: 'text', icon: 'fa-regular fa-id-card', value: '١٢٣٤-٥٦٧٨-٩٠١٢-٣٤٥٦' },
+            { id: 'profileBirthDateBasic', label: 'تاريخ الميلاد', type: 'text', icon: 'fa-solid fa-cake-candles', value: '١٥ مارس ١٩٨٥' }
+        ];
+        
+        const academicFields = [
+            { id: 'profileAcademicRecord', label: 'الرقم الأكاديمي', type: 'text', icon: 'fa-solid fa-hashtag', value: '٢٠٢٣٠١٢٤٥-٠٠١' },
+            { id: 'profileAcademicDegree', label: 'الدرجة الأكاديمية', type: 'text', icon: 'fa-solid fa-user-graduate', value: 'ماجستير في تقنيات الذكاء الاصطناعي' },
+            { id: 'profileCollege', label: 'الكلية', type: 'text', icon: 'fa-solid fa-building-columns', value: 'كلية الحاسب وتقنية المعلومات' },
+            { id: 'profileMajor', label: 'التخصص', type: 'text', icon: 'fa-solid fa-book-open', value: 'علوم البيانات وتجربة المستخدم' }
+        ];
+        
+        const socialFields = [
+            { id: 'profileTwitter', label: 'تويتر', value: '@AhmadMansoori_UX', icon: 'twitter', brand: 'fa-brands fa-twitter' },
+            { id: 'profileInstagram', label: 'إنستقرام', value: 'ahmed.ux.designer', icon: 'instagram', brand: 'fa-brands fa-instagram' },
+            { id: 'profileTiktok', label: 'تيك توك', value: '@ahmed_tech_expert', icon: 'tiktok', brand: 'fa-brands fa-tiktok' },
+            { id: 'profileLinkedin', label: 'لينكد إن', value: 'ahmed-almansoori-ux', icon: 'linkedin', brand: 'fa-brands fa-linkedin-in' }
+        ];
+        
+        // إنشاء عناصر مخفية للتخزين
+        function createHiddenSpans() {
+            const container = document.createElement('div');
+            container.style.display = 'none';
+            basicFields.forEach(f => {
+                const span = document.createElement('span');
+                span.id = f.id;
+                span.innerText = f.value;
+                container.appendChild(span);
+            });
+            academicFields.forEach(f => {
+                const span = document.createElement('span');
+                span.id = f.id;
+                span.innerText = f.value;
+                container.appendChild(span);
+            });
+            socialFields.forEach(f => {
+                const span = document.createElement('span');
+                span.id = f.id;
+                span.innerText = f.value;
+                container.appendChild(span);
+            });
+            document.body.appendChild(container);
+            basicFields.forEach(f => f.element = document.getElementById(f.id));
+            academicFields.forEach(f => f.element = document.getElementById(f.id));
+            socialFields.forEach(f => f.element = document.getElementById(f.id));
+        }
+        
+        createHiddenSpans();
+        
+        const basicDisplay = document.getElementById('basicInfoDisplay');
+        const academicDisplay = document.getElementById('academicDisplay');
+        const socialDisplay = document.getElementById('socialDisplay');
+        
+        // عرض الحقول الأساسية
+        function renderBasicFields() {
+            basicDisplay.innerHTML = basicFields.map(f => `
+                <div class="info-item" data-field-id="${f.id}">
+                    <div class="info-icon"><i class="${f.icon}"></i></div>
+                    <div class="info-content">
+                        <div class="info-label">${f.label}</div>
+                        <div class="info-value" id="${f.id}_display">${escapeHtml(f.value)}</div>
+                    </div>
+                    <button class="btn-edit-field" data-field="${f.id}" data-action="edit">
+                        <i class="fa-regular fa-pen-to-square"></i>
+                    </button>
+                </div>
+            `).join('');
+            attachBasicEditEvents();
+        }
+        
+        function attachBasicEditEvents() {
+            document.querySelectorAll('#basicInfoDisplay .btn-edit-field').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    enterEditBasicField(btn.getAttribute('data-field'));
+                });
+            });
+        }
+        
+        function enterEditBasicField(fieldId) {
+            const field = basicFields.find(f => f.id === fieldId);
+            if (!field) return;
+            const itemDiv = document.querySelector(`.info-item[data-field-id="${fieldId}"]`);
+            if (!itemDiv) return;
+            itemDiv.innerHTML = `
+                <div class="info-icon"><i class="${field.icon}"></i></div>
+                <div class="info-content">
+                    <div class="info-label">${field.label}</div>
+                    <input type="${field.type}" class="inline-input" id="edit_${field.id}" value="${escapeHtml(field.value)}" autofocus />
+                </div>
+                <div class="field-actions">
+                    <button class="btn-field-save" data-field="${field.id}"><i class="fa-regular fa-check"></i> حفظ</button>
+                    <button class="btn-field-cancel" data-field="${field.id}"><i class="fa-regular fa-xmark"></i> إلغاء</button>
+                </div>
+            `;
+            itemDiv.querySelector('.btn-field-save').addEventListener('click', () => saveBasicField(field.id));
+            itemDiv.querySelector('.btn-field-cancel').addEventListener('click', () => renderBasicFields());
+            document.getElementById(`edit_${field.id}`)?.focus();
+        }
+        
+        function saveBasicField(fieldId) {
+            const field = basicFields.find(f => f.id === fieldId);
+            if (!field) return;
+            const input = document.getElementById(`edit_${field.id}`);
+            if (input && input.value.trim() !== '') {
+                field.value = input.value.trim();
+                if (field.element) field.element.innerText = field.value;
+                showToast(`✅ تم تحديث ${field.label}`);
+            } else {
+                showToast(`⚠️ لا يمكن ترك الحقل فارغًا`, 'error');
+                return;
+            }
+            renderBasicFields();
+        }
+        
+        // الأكاديمية
+        function renderAcademicFields() {
+            academicDisplay.innerHTML = academicFields.map(f => `
+                <div class="info-item" data-field-id="${f.id}">
+                    <div class="info-icon"><i class="${f.icon}"></i></div>
+                    <div class="info-content">
+                        <div class="info-label">${f.label}</div>
+                        <div class="info-value" id="${f.id}_display">${escapeHtml(f.value)}</div>
+                    </div>
+                    <button class="btn-edit-field" data-field="${f.id}" data-action="edit">
+                        <i class="fa-regular fa-pen-to-square"></i>
+                    </button>
+                </div>
+            `).join('');
+            document.querySelectorAll('#academicDisplay .btn-edit-field').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    enterEditAcademicField(btn.getAttribute('data-field'));
+                });
+            });
+        }
+        
+        function enterEditAcademicField(fieldId) {
+            const field = academicFields.find(f => f.id === fieldId);
+            if (!field) return;
+            const itemDiv = document.querySelector(`#academicDisplay .info-item[data-field-id="${fieldId}"]`);
+            if (!itemDiv) return;
+            itemDiv.innerHTML = `
+                <div class="info-icon"><i class="${field.icon}"></i></div>
+                <div class="info-content">
+                    <div class="info-label">${field.label}</div>
+                    <input type="text" class="inline-input" id="edit_${field.id}" value="${escapeHtml(field.value)}" autofocus />
+                </div>
+                <div class="field-actions">
+                    <button class="btn-field-save" data-field="${field.id}"><i class="fa-regular fa-check"></i> حفظ</button>
+                    <button class="btn-field-cancel" data-field="${field.id}"><i class="fa-regular fa-xmark"></i> إلغاء</button>
+                </div>
+            `;
+            itemDiv.querySelector('.btn-field-save').addEventListener('click', () => saveAcademicField(field.id));
+            itemDiv.querySelector('.btn-field-cancel').addEventListener('click', () => renderAcademicFields());
+            document.getElementById(`edit_${field.id}`)?.focus();
+        }
+        
+        function saveAcademicField(fieldId) {
+            const field = academicFields.find(f => f.id === fieldId);
+            if (!field) return;
+            const input = document.getElementById(`edit_${field.id}`);
+            if (input && input.value.trim() !== '') {
+                field.value = input.value.trim();
+                if (field.element) field.element.innerText = field.value;
+                showToast(`✅ تم تحديث ${field.label}`);
+            } else {
+                showToast(`⚠️ الحقل لا يمكن أن يكون فارغًا`, 'error');
+                return;
+            }
+            renderAcademicFields();
+        }
+        
+        // التواصل الاجتماعي
+        function renderSocialFields() {
+            socialDisplay.innerHTML = socialFields.map(f => `
+                <div class="social-item" data-field-id="${f.id}">
+                    <div class="social-icon ${f.icon}"><i class="${f.brand}"></i></div>
+                    <div class="social-details">
+                        <div class="social-platform">${f.label}</div>
+                        <div class="social-username" id="${f.id}_display">${escapeHtml(f.value)}</div>
+                    </div>
+                    <button class="btn-edit-social" data-field="${f.id}" data-action="edit">
+                        <i class="fa-regular fa-pen-to-square"></i>
+                    </button>
+                </div>
+            `).join('');
+            document.querySelectorAll('.btn-edit-social').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    enterEditSocialField(btn.getAttribute('data-field'));
+                });
+            });
+        }
+        
+        function enterEditSocialField(fieldId) {
+            const field = socialFields.find(f => f.id === fieldId);
+            if (!field) return;
+            const itemDiv = document.querySelector(`.social-item[data-field-id="${fieldId}"]`);
+            if (!itemDiv) return;
+            itemDiv.innerHTML = `
+                <div class="social-icon ${field.icon}"><i class="${field.brand}"></i></div>
+                <div class="social-details">
+                    <div class="social-platform">${field.label}</div>
+                    <input type="text" class="social-input" id="edit_${field.id}" value="${escapeHtml(field.value)}" autofocus />
+                </div>
+                <div class="field-actions">
+                    <button class="btn-field-save" data-field="${field.id}"><i class="fa-regular fa-check"></i> حفظ</button>
+                    <button class="btn-field-cancel" data-field="${field.id}"><i class="fa-regular fa-xmark"></i> إلغاء</button>
+                </div>
+            `;
+            itemDiv.querySelector('.btn-field-save').addEventListener('click', () => saveSocialField(field.id));
+            itemDiv.querySelector('.btn-field-cancel').addEventListener('click', () => renderSocialFields());
+            document.getElementById(`edit_${field.id}`)?.focus();
+        }
+        
+        function saveSocialField(fieldId) {
+            const field = socialFields.find(f => f.id === fieldId);
+            if (!field) return;
+            const input = document.getElementById(`edit_${field.id}`);
+            if (input && input.value.trim() !== '') {
+                field.value = input.value.trim();
+                if (field.element) field.element.innerText = field.value;
+                showToast(`✅ تم تحديث ${field.label}`);
+            } else {
+                showToast(`⚠️ لا يمكن ترك معرف التواصل فارغًا`, 'error');
+                return;
+            }
+            renderSocialFields();
+        }
+        
+        // النشاط الأخير
+        const activities = [
+            { icon: 'fa-regular fa-pen-to-square', text: 'تم تحديث المعلومات الأساسية وتجربة المستخدم', time: 'منذ ساعتين' },
+            { icon: 'fa-brands fa-linkedin', text: 'تم تحديث حساب لينكد إن المهني', time: 'منذ ٥ ساعات' },
+            { icon: 'fa-solid fa-camera', text: 'تحديث الصورة الشخصية بصورة حديثة', time: 'الأمس، ١٤:٢٠' },
+            { icon: 'fa-solid fa-graduation-cap', text: 'إضافة شهادة الماجستير في الذكاء الاصطناعي', time: '٢٠٢٥-٠٣-٢١' },
+            { icon: 'fa-regular fa-envelope', text: 'تغيير البريد الإلكتروني الرسمي', time: 'منذ ٣ أيام' }
+        ];
+        
+        function renderActivities() {
+            const container = document.getElementById('recentActivityContainer');
+            if (container) {
+                container.innerHTML = activities.map(act => `
+                    <div class="activity-item">
+                        <div class="activity-icon"><i class="${act.icon}"></i></div>
+                        <div class="activity-detail">
+                            <div class="activity-text">${act.text}</div>
+                            <div class="activity-time"><i class="fa-regular fa-clock"></i> ${act.time}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        // تغيير الصورة
+        const changeAvatarBtn = document.getElementById('changeAvatarBtn');
+        if (changeAvatarBtn) {
+            changeAvatarBtn.addEventListener('click', () => {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'image/jpeg,image/png,image/jpg';
+                fileInput.onchange = (ev) => {
+                    const file = ev.target.files[0];
+                    if (file && (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            document.getElementById('profileAvatar').src = e.target.result;
+                            showToast('🖼️ تم تحديث الصورة الشخصية');
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        showToast('❌ صيغة غير مدعومة، استخدم JPG أو PNG', 'error');
+                    }
+                };
+                fileInput.click();
+            });
+        }
+        
+        // بدء التشغيل
+        renderBasicFields();
+        renderAcademicFields();
+        renderSocialFields();
+        renderActivities();
+        
+        // تحديث اسم المستخدم
+        const nameElem = document.getElementById('profileFullName');
+        if (nameElem) nameElem.innerText = 'أحمد عبدالله المنصوري';
+    })();
+</script>
+</body>
+</html>

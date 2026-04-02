@@ -1,0 +1,993 @@
+/* ============================================================
+   نظام الأزرار — Buttons System  v4
+   Premium · Production-ready · Fully Animated
+   متوافق مع: members-cards.css & profile-modern.css
+   تمت الإضافة: Violet Color Variant
+   ============================================================ */
+
+
+/* ============================================================
+   § 1  CSS Design Tokens
+   ============================================================ */
+:root {
+    /* — Brand Blue */
+    --btn-blue-50:  #eff6ff;
+    --btn-blue-100: #dbeafe;
+    --btn-blue-500: #80aace;
+    --btn-blue-600: #3d77bc;
+    --btn-blue-700: #0b4fa7;
+
+    /* — Violet (NEW) */
+    --btn-violet-50:  #f5f3ff;
+    --btn-violet-100: #ede9fe;
+    --btn-violet-500: #8b5cf6;
+    --btn-violet-600: #7c3aed;
+    --btn-violet-700: #6d28d9;
+    --btn-violet-800: #5b21b6;
+
+/* — Semantic */
+    --btn-red-500:   #ef4444;
+    --btn-red-600:   #dc2626;
+    --btn-red-700:   #b91c1c;
+
+    --btn-green-500: #10b981;
+    --btn-green-600: #059669;
+    --btn-green-700: #047857;
+
+    --btn-amber-500: #f59e0b;
+    --btn-amber-600: #d97706;
+    --btn-amber-700: #b45309;
+
+    /* — Neutral */
+    --btn-slate-100: #f1f5f9;
+    --btn-slate-200: #e2e8f0;
+    --btn-slate-300: #cbd5e1;
+    --btn-slate-400: #94a3b8;
+    --btn-slate-500: #64748b;
+    --btn-slate-600: #475569;
+
+    /* — Spacing */
+    --btn-py-sm:  0.42rem;
+    --btn-px-sm:  0.9rem;
+    --btn-py-md:  0.625rem;
+    --btn-px-md:  1.35rem;
+    --btn-py-lg:  0.82rem;
+    --btn-px-lg:  1.85rem;
+
+    /* — Radius */
+    --btn-r-sm:   10px;
+    --btn-r-md:   12px;
+    --btn-r-lg:   14px;
+    --btn-r-pill: 999px;
+
+    /* — Typography */
+    --btn-fw:    600;
+    --btn-ls:    0.012em;
+    --btn-fs-sm: 0.775rem;
+    --btn-fs-md: 0.875rem;
+    --btn-fs-lg: 1rem;
+
+    /* — Motion  ← fixed: was 850ms/40ms (inverted) */
+    --btn-ease:      cubic-bezier(0.4, 0, 0.2, 1);
+    --btn-ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --btn-ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+    --btn-dur:       170ms;
+    --btn-dur-slow:  260ms;
+    --btn-dur-fast:  80ms;
+
+    /* ─────────────────────────────────────────────────────────
+       Variant Color Tokens — consumed by .btn-outline engine
+       Each variant declares its own set. Adding a new variant
+       only requires defining these 8 variables — no extra CSS.
+       ───────────────────────────────────────────────────────── */
+
+    /* --btn-c-border    : outline border color
+       --btn-c-text      : outline text/icon color
+       --btn-c-ring      : focus-ring color (rgba)
+       --btn-c-bg-subtle : faint tinted bg shown at rest (optional)
+       --btn-c-grad-from : gradient start  (filled hover/active)
+       --btn-c-grad-via  : gradient mid    (filled hover/active)
+       --btn-c-grad-to   : gradient end    (filled hover/active)
+       --btn-c-shadow-rgb: shadow color as R,G,B triplet          */
+}
+
+
+/* ============================================================
+   § 2  Base — .btn
+   ============================================================ */
+.btn {
+    display:         inline-flex;
+    align-items:     center;
+    justify-content: center;
+    gap:             0.45rem;
+    padding:         var(--btn-py-md) var(--btn-px-md);
+    font-size:       var(--btn-fs-md);
+    font-weight:     var(--btn-fw);
+    letter-spacing:  var(--btn-ls);
+    line-height:     1;
+    white-space:     nowrap;
+    text-decoration: none;
+    user-select:     none;
+    vertical-align:  middle;
+    cursor:          pointer;
+    border:          1.5px solid transparent;
+    border-radius:   var(--btn-r-md);
+    background:      transparent;
+    position:        relative;
+    overflow:        hidden;
+    outline:         none;
+    transition:
+        background-color  var(--btn-dur) var(--btn-ease),
+        background-image  var(--btn-dur) var(--btn-ease),
+        border-color      var(--btn-dur) var(--btn-ease),
+        box-shadow        var(--btn-dur-slow) var(--btn-ease),
+        transform         var(--btn-dur) var(--btn-ease),
+        color             var(--btn-dur) var(--btn-ease),
+        opacity           var(--btn-dur) var(--btn-ease);
+    -webkit-tap-highlight-color: transparent;
+    isolation: isolate;
+}
+
+/* Icons */
+.btn i,
+.btn svg {
+    font-size:   1em;
+    line-height: 1;
+    flex-shrink: 0;
+    transition:
+        transform   var(--btn-dur) var(--btn-ease-back),
+        color       var(--btn-dur) var(--btn-ease),
+        opacity     var(--btn-dur) var(--btn-ease);
+}
+
+/* Focus ring — colored per variant via box-shadow override */
+.btn:focus-visible {
+    outline:    none;
+    box-shadow: 0 0 0 3.5px rgba(79,130,168,0.38) !important;
+}
+
+/* Icon micro-interactions */
+/* .btn:not(:disabled):not(.btn-disabled):not(.btn-loading):hover i {
+    transform: scale(1.1) translateY(-1px);
+} */
+.btn:not(:disabled):not(.btn-disabled):not(.btn-loading):active i {
+    transform:         scale(0.9);
+    transition-duration: var(--btn-dur-fast);
+}
+
+/* Text label inside btn (for loading state) */
+.btn > span,
+.btn > .btn-label {
+    transition: opacity var(--btn-dur) var(--btn-ease);
+}
+
+
+/* ============================================================
+   § 3  Animated Shimmer sweep (shared for colored variants)
+   ============================================================ */
+.btn-primary::before,
+.btn-violet::before,
+.btn-slate::before,
+.btn-danger::before,
+.btn-success::before,
+.btn-warning::before {
+    content:             '';
+    position:            absolute;
+    top:                 0;
+    left:                -100%;
+    width:               60%;
+    height:              100%;
+    background:          linear-gradient(
+                             100deg,
+                             transparent 0%,
+                             rgba(255,255,255,0.36) 50%,
+                             transparent 100%
+                         );
+    border-radius:       inherit;
+    pointer-events:      none;
+    z-index:             1;
+    transition:          left 0s;
+}
+
+/* On hover — trigger sweep once */
+.btn-primary:hover:not(:disabled):not(.btn-disabled)::before,
+.btn-violet:hover:not(:disabled):not(.btn-disabled)::before,
+.btn-slate:hover:not(:disabled):not(.btn-disabled)::before,
+.btn-danger:hover:not(:disabled):not(.btn-disabled)::before,
+.btn-success:hover:not(:disabled):not(.btn-disabled)::before,
+.btn-warning:hover:not(:disabled):not(.btn-disabled)::before {
+    left:       140%;
+    transition: left 1.5s ease;
+}
+
+
+/* ============================================================
+   § 4  Variants
+   ============================================================ */
+
+/* ── Primary ─────────────────────────────────────────────── */
+.btn-primary {
+    background-image: linear-gradient(155deg, #80aace 0%, #3d77bc 55%, #0b4fa7 100%);
+    border-color:     var(--btn-blue-700);
+    color:            #fff;
+    box-shadow:
+        0 1px 2px  rgba(0,0,0,0.15),
+        0 4px 14px rgba(11,79,167,0.35);
+}
+
+.btn-primary:hover:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, #3d77bc 0%, #0b4fa7 100%);
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.16),
+        0 10px 28px rgba(11,79,167,0.45),
+        0 0 0 0 rgba(11,79,167,0);
+    transform: translateY(-2px);
+}
+
+.btn-primary:active:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, #0b4fa7 0%, #083d84 100%);
+    box-shadow:       0 1px 4px rgba(0,0,0,0.2);
+    transform:        translateY(0) scale(0.975);
+}
+
+.btn-primary:focus-visible {
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.15),
+        0 6px 18px rgba(11,79,167,0.4),
+        0 0 0 3.5px rgba(11,79,167,0.4) !important;
+}
+
+/* ── Violet (NEW) ─────────────────────────────────────────── */
+.btn-violet {
+    background-image: linear-gradient(155deg, #a78bfa 0%, var(--btn-violet-600) 60%, var(--btn-violet-800) 100%);
+    border-color:     var(--btn-violet-700);
+    color:            #fff;
+    box-shadow:
+        0 1px 2px  rgba(0,0,0,0.15),
+        0 4px 14px rgba(139,92,246,0.35);
+}
+
+.btn-violet:hover:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, var(--btn-violet-600) 0%, var(--btn-violet-700) 100%);
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.16),
+        0 10px 28px rgba(139,92,246,0.45),
+        0 0 0 0 rgba(139,92,246,0);
+    transform: translateY(-2px);
+}
+
+.btn-violet:active:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, var(--btn-violet-700) 0%, var(--btn-violet-700) 100%);
+    box-shadow:       0 1px 4px rgba(0,0,0,0.2);
+    transform:        translateY(0) scale(0.975);
+}
+
+.btn-violet:focus-visible {
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.15),
+        0 6px 18px rgba(139,92,246,0.4),
+        0 0 0 3.5px rgba(139,92,246,0.4) !important;
+}
+
+/* ── White ───────────────────────────────────────────────── */
+.btn-white {
+    background-image: linear-gradient(155deg, #ffffff 0%, #f8fafc 60%, #f1f5f9 100%);
+    border-color:     #cbd5e1;
+    color:            #334155;
+    box-shadow:
+        0 1px 2px  rgba(0,0,0,0.08),
+        0 4px 12px rgba(0,0,0,0.06);
+}
+
+.btn-white:hover:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, #f8fafc 0%, #f1f5f9 100%);
+    border-color:     #94a3b8;
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.10),
+        0 8px 20px rgba(0,0,0,0.10);
+    transform: translateY(-2px);
+}
+
+.btn-white:active:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, #f1f5f9 0%, #e2e8f0 100%);
+    box-shadow:       0 1px 4px rgba(0,0,0,0.12);
+    transform:        translateY(0) scale(0.975);
+}
+
+.btn-white:focus-visible {
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.08),
+        0 6px 18px rgba(0,0,0,0.08),
+        0 0 0 3.5px rgba(148,163,184,0.5) !important;
+}
+
+/* ── Slate (رصاصي — لون الكاردات المؤرشفة) ──────────────── */
+.btn-slate {
+    background-image: linear-gradient(155deg, #94a3b8 0%, #64748b 55%, #475569 100%);
+    border-color:     #475569;
+    color:            #fff;
+    box-shadow:
+        0 1px 2px  rgba(0,0,0,0.15),
+        0 4px 14px rgba(71,85,105,0.35);
+}
+
+.btn-slate:hover:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, #64748b 0%, #475569 100%);
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.16),
+        0 10px 28px rgba(71,85,105,0.45),
+        0 0 0 0 rgba(71,85,105,0);
+    transform: translateY(-2px);
+}
+
+.btn-slate:active:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, #475569 0%, #334155 100%);
+    box-shadow:       0 1px 4px rgba(0,0,0,0.2);
+    transform:        translateY(0) scale(0.975);
+}
+
+.btn-slate:focus-visible {
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.15),
+        0 6px 18px rgba(71,85,105,0.4),
+        0 0 0 3.5px rgba(71,85,105,0.4) !important;
+}
+
+
+/* ============================================================
+   § 4a  Outline Engine
+   Single source of truth — reads per-variant CSS variables.
+   Zero duplication: hover fills with the variant's own gradient.
+   ============================================================ */
+
+/* ── Rest state ─────────────────────────────────────────────
+   Transparent bg, colored border + text.                    */
+.btn-outline {
+    background-image: none;
+    background-color: var(--btn-c-bg-subtle, transparent);
+    border-color:     var(--btn-c-border,  var(--btn-slate-300));
+    color:            var(--btn-c-text,    var(--btn-slate-600));
+    box-shadow:       0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Shimmer sweep — inherits from solid; suppress it at rest  */
+.btn-outline::before {
+    background: linear-gradient(
+        100deg,
+        transparent 0%,
+        rgba(255,255,255,0.42) 50%,
+        transparent 100%
+    ) !important;
+    opacity: 0;
+    left: -100% !important;
+    transition: left 0s, opacity var(--btn-dur) var(--btn-ease) !important;
+}
+
+/* ── Hover — morphs into filled variant ─────────────────────
+   Gradient comes from variant tokens, matching the solid btn */
+.btn-outline:hover:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(
+        155deg,
+        var(--btn-c-grad-from, var(--btn-slate-400)) 0%,
+        var(--btn-c-grad-via,  var(--btn-slate-500)) 55%,
+        var(--btn-c-grad-to,   var(--btn-slate-600)) 100%
+    );
+    background-color: transparent;
+    border-color:     var(--btn-c-grad-to,   var(--btn-slate-600));
+    color:            var(--btn-c-hover-text, #fff);
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.14),
+        0 8px 22px rgba(var(--btn-c-shadow-rgb, 100,116,139), 0.38);
+    transform: translateY(-2px);
+}
+
+/* Trigger shimmer sweep on hover (same as solid buttons)    */
+.btn-outline:hover:not(:disabled):not(.btn-disabled)::before {
+    opacity: 1;
+    left:       140% !important;
+    transition: left 1.5s ease, opacity 0s !important;
+}
+
+/* ── Active ──────────────────────────────────────────────── */
+.btn-outline:active:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(
+        155deg,
+        var(--btn-c-grad-to,  var(--btn-slate-600)) 0%,
+        var(--btn-c-grad-to,  var(--btn-slate-600)) 100%
+    );
+    background-color: transparent;
+    border-color:     var(--btn-c-grad-to, var(--btn-slate-600));
+    color:            var(--btn-c-hover-text, #fff);
+    box-shadow:       0 1px 4px rgba(0,0,0,0.18);
+    transform:        translateY(0) scale(0.975);
+}
+
+/* ── Focus ring ──────────────────────────────────────────── */
+.btn-outline:focus-visible {
+    box-shadow: 0 0 0 3.5px rgba(var(--btn-c-shadow-rgb, 100,116,139), 0.38) !important;
+}
+
+
+/* ── Danger ──────────────────────────────────────────────── */
+.btn-danger {
+    background-image: linear-gradient(155deg, #f47272 0%, var(--btn-red-600) 60%, #c01a1a 100%);
+    border-color:     var(--btn-red-700);
+    color:            #fff;
+    box-shadow:
+        0 1px 2px  rgba(0,0,0,0.15),
+        0 4px 14px rgba(239,68,68,0.35);
+}
+
+.btn-danger:hover:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, var(--btn-red-600) 0%, var(--btn-red-700) 100%);
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.16),
+        0 10px 28px rgba(239,68,68,0.48);
+    transform: translateY(-2px);
+}
+
+.btn-danger:active:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, var(--btn-red-700) 0%, var(--btn-red-700) 100%);
+    box-shadow:       0 1px 4px rgba(0,0,0,0.2);
+    transform:        translateY(0) scale(0.975);
+}
+
+.btn-danger:focus-visible {
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.15),
+        0 6px 18px rgba(239,68,68,0.4),
+        0 0 0 3.5px rgba(239,68,68,0.38) !important;
+}
+
+
+/* ── Success ─────────────────────────────────────────────── */
+.btn-success {
+    background-image: linear-gradient(155deg, #25d4a0 0%, var(--btn-green-600) 60%, #036b4a 100%);
+    border-color:     var(--btn-green-700);
+    color:            #fff;
+    box-shadow:
+        0 1px 2px  rgba(0,0,0,0.15),
+        0 4px 14px rgba(16,185,129,0.35);
+}
+
+.btn-success:hover:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, var(--btn-green-600) 0%, var(--btn-green-700) 100%);
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.16),
+        0 10px 28px rgba(16,185,129,0.48);
+    transform: translateY(-2px);
+}
+
+.btn-success:active:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, var(--btn-green-700) 0%, var(--btn-green-700) 100%);
+    box-shadow:       0 1px 4px rgba(0,0,0,0.2);
+    transform:        translateY(0) scale(0.975);
+}
+
+.btn-success:focus-visible {
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.15),
+        0 6px 18px rgba(16,185,129,0.4),
+        0 0 0 3.5px rgba(16,185,129,0.38) !important;
+}
+
+
+/* ── Warning ─────────────────────────────────────────────── */
+.btn-warning {
+    background-image: linear-gradient(155deg, #fcd34d 0%, var(--btn-amber-500) 50%, var(--btn-amber-700) 100%);
+    border-color:     var(--btn-amber-700);
+    color:            #7c3a00;
+    text-shadow:      0 1px 0 rgba(255,255,255,0.2);
+    box-shadow:
+        0 1px 2px  rgba(0,0,0,0.15),
+        0 4px 14px rgba(245,158,11,0.38);
+}
+
+.btn-warning:hover:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, var(--btn-amber-500) 0%, var(--btn-amber-700) 100%);
+    color:            #5c2a00;
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.16),
+        0 10px 28px rgba(245,158,11,0.5);
+    transform: translateY(-2px);
+}
+
+.btn-warning:active:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, var(--btn-amber-700) 0%, var(--btn-amber-700) 100%);
+    box-shadow:       0 1px 4px rgba(0,0,0,0.2);
+    transform:        translateY(0) scale(0.975);
+}
+
+.btn-warning:focus-visible {
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.15),
+        0 6px 18px rgba(245,158,11,0.4),
+        0 0 0 3.5px rgba(245,158,11,0.42) !important;
+}
+
+
+/* ============================================================
+   § 4b  Variant Color Definitions for Outline
+   Placed AFTER solid variant rules so paired selectors
+   (.btn-danger.btn-outline etc.) win the cascade.
+   Each block only sets variables — the engine in §4a does the rest.
+   To add a new variant: copy one block, change the 8 values.
+   ============================================================ */
+
+/* ── Primary Outline ─────────────────────────────────────── */
+.btn-primary.btn-outline {
+    --btn-c-border:     var(--btn-blue-500);
+    --btn-c-text:       var(--btn-blue-600);
+    --btn-c-bg-subtle:  rgba(11,79,167,0.1);
+    --btn-c-grad-from:  #80aace;
+    --btn-c-grad-via:   var(--btn-blue-600);
+    --btn-c-grad-to:    #0b4fa7;
+    --btn-c-hover-text: #fff;
+    --btn-c-shadow-rgb: 11,79,167;
+    background-image:   none;
+    background-color:   var(--btn-c-bg-subtle);
+    border-color:       var(--btn-c-border);
+    color:              var(--btn-c-text);
+    box-shadow:         0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* ── Violet Outline ──────────────────────────────────────── */
+.btn-violet.btn-outline {
+    --btn-c-border:     var(--btn-violet-500);
+    --btn-c-text:       var(--btn-violet-600);
+    --btn-c-bg-subtle:  rgba(139,92,246,0.1);
+    --btn-c-grad-from:  #a78bfa;
+    --btn-c-grad-via:   var(--btn-violet-600);
+    --btn-c-grad-to:    var(--btn-violet-800);
+    --btn-c-hover-text: #fff;
+    --btn-c-shadow-rgb: 139,92,246;
+    background-image:   none;
+    background-color:   var(--btn-c-bg-subtle);
+    border-color:       var(--btn-c-border);
+    color:              var(--btn-c-text);
+    box-shadow:         0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* ── White Outline (للخلفيات الداكنة/الملونة) ───────────── */
+.btn-white.btn-outline {
+    --btn-c-border:     rgba(255,255,255,0.7);
+    --btn-c-text:       #ffffff;
+    --btn-c-bg-subtle:  rgba(255,255,255,0.12);
+    --btn-c-grad-from:  #ffffff;
+    --btn-c-grad-via:   #f8fafc;
+    --btn-c-grad-to:    #f1f5f9;
+    --btn-c-hover-text: #334155;
+    --btn-c-shadow-rgb: 255,255,255;
+    background-image:   none;
+    background-color:   var(--btn-c-bg-subtle);
+    border-color:       var(--btn-c-border);
+    color:              var(--btn-c-text);
+    box-shadow:         0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* ── Slate Outline ───────────────────────────────────────── */
+.btn-slate.btn-outline {
+    --btn-c-border:     #94a3b8;
+    --btn-c-text:       #475569;
+    --btn-c-bg-subtle:  rgba(71,85,105,0.08);
+    --btn-c-grad-from:  #94a3b8;
+    --btn-c-grad-via:   #64748b;
+    --btn-c-grad-to:    #475569;
+    --btn-c-hover-text: #fff;
+    --btn-c-shadow-rgb: 71,85,105;
+    background-image:   none;
+    background-color:   var(--btn-c-bg-subtle);
+    border-color:       var(--btn-c-border);
+    color:              var(--btn-c-text);
+    box-shadow:         0 1px 3px rgba(0,0,0,0.05);
+}
+
+
+/* ── Danger Outline ──────────────────────────────────────── */
+.btn-danger.btn-outline {
+    --btn-c-border:     var(--btn-red-500);
+    --btn-c-text:       var(--btn-red-600);
+    --btn-c-bg-subtle:  rgba(239,68,68,0.3);
+    --btn-c-grad-from:  #f47272;
+    --btn-c-grad-via:   var(--btn-red-600);
+    --btn-c-grad-to:    #c01a1a;
+    --btn-c-hover-text: #fff;
+    --btn-c-shadow-rgb: 239,68,68;
+    background-image:   none;
+    background-color:   var(--btn-c-bg-subtle);
+    border-color:       var(--btn-c-border);
+    color:              var(--btn-c-text);
+    box-shadow:         0 1px 3px rgba(0,0,0,0.05);
+    text-shadow:        none;
+}
+
+/* ── Success Outline ─────────────────────────────────────── */
+.btn-success.btn-outline {
+    --btn-c-border:     var(--btn-green-500);
+    --btn-c-text:       var(--btn-green-600);
+    --btn-c-bg-subtle:  rgba(16,185,129,0.3);
+    --btn-c-grad-from:  #25d4a0;
+    --btn-c-grad-via:   var(--btn-green-600);
+    --btn-c-grad-to:    #036b4a;
+    --btn-c-hover-text: #fff;
+    --btn-c-shadow-rgb: 16,185,129;
+    background-image:   none;
+    background-color:   var(--btn-c-bg-subtle);
+    border-color:       var(--btn-c-border);
+    color:              var(--btn-c-text);
+    box-shadow:         0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* ── Warning Outline ─────────────────────────────────────── */
+.btn-warning.btn-outline {
+    --btn-c-border:     var(--btn-amber-500);
+    --btn-c-text:       var(--btn-amber-700);
+    --btn-c-bg-subtle:  rgba(245,158,11,0.3);
+    --btn-c-grad-from:  #fcd34d;
+    --btn-c-grad-via:   var(--btn-amber-500);
+    --btn-c-grad-to:    var(--btn-amber-700);
+    --btn-c-hover-text: #7c3a00;
+    --btn-c-shadow-rgb: 245,158,11;
+    background-image:   none;
+    background-color:   var(--btn-c-bg-subtle);
+    border-color:       var(--btn-c-border);
+    color:              var(--btn-c-text);
+    box-shadow:         0 1px 3px rgba(0,0,0,0.05);
+    text-shadow:        none;
+}
+
+
+
+/* ============================================================
+   § 5  Size Modifiers
+   ============================================================ */
+
+.btn-lg {
+    padding:       var(--btn-py-lg) var(--btn-px-lg);
+    font-size:     var(--btn-fs-lg);
+    border-radius: var(--btn-r-lg);
+    gap:           0.55rem;
+    font-weight:   650;
+}
+
+/* Pill */
+.btn-pill { border-radius: var(--btn-r-pill); }
+
+/* Block */
+.btn-block { width: 100%; display: flex; }
+
+
+/* ============================================================
+   § 6  Icon Button
+   ============================================================ */
+.btn-icon {
+    width:         2.35rem;
+    height:        2.35rem;
+    padding:       0;
+    border-radius: var(--btn-r-md);
+    flex-shrink:   0;
+    gap:           0;
+}
+
+.btn-icon.btn-lg {
+    width:         2.9rem;
+    height:        2.9rem;
+    border-radius: var(--btn-r-lg);
+}
+
+.btn-icon.btn-pill { border-radius: 50%; }
+
+
+/* ============================================================
+   § 7  Disabled State
+   ============================================================ */
+.btn:disabled,
+.btn[disabled],
+.btn-disabled {
+    background-image: none !important;
+    background-color: var(--btn-slate-100) !important;
+    border-color:     var(--btn-slate-200) !important;
+    color:            var(--btn-slate-400) !important;
+    box-shadow:       none !important;
+    transform:        none !important;
+    cursor:           not-allowed !important;
+    pointer-events:   none;
+    opacity:          0.78;
+    text-shadow:      none !important;
+}
+
+.btn:disabled i,
+.btn-disabled i {
+    transform: none !important;
+    opacity:   0.6;
+}
+
+.btn:disabled::before,
+.btn-disabled::before {
+    display: none !important;
+}
+
+
+/* ============================================================
+   § 8  Loading State — Dual-ring Premium Spinner
+   ============================================================ */
+.btn-loading {
+    cursor:         wait !important;
+    pointer-events: none;
+}
+
+/* Fade text to transparent */
+.btn-loading > *:not(span.btn-ripple) {
+    opacity:    0 !important;
+    transform:  scale(0.8) !important;
+    transition:
+        opacity   var(--btn-dur-fast) var(--btn-ease),
+        transform var(--btn-dur-fast) var(--btn-ease);
+}
+
+.btn-loading::before {
+    display: none !important;
+}
+
+/* Dual-ring spinner via ::after */
+.btn-loading::after {
+    content:          '';
+    position:         absolute;
+    inset:            0;
+    margin:           auto;
+    width:            1.15em;
+    height:           1.15em;
+    border-radius:    50%;
+    border:           2.5px solid transparent;
+    border-top-color:    rgba(255,255,255,0.95);
+    border-right-color:  rgba(255,255,255,0.45);
+    border-bottom-color: rgba(255,255,255,0.12);
+    animation: _btn-spin 0.6s linear infinite;
+    z-index: 9;
+}
+
+/* Outline spinner — uses variant color via CSS variable     */
+.btn-loading.btn-outline::after {
+    border-top-color:    var(--btn-c-text,   var(--btn-blue-600));
+    border-right-color:  rgba(var(--btn-c-shadow-rgb, 79,130,168), 0.38);
+    border-bottom-color: rgba(var(--btn-c-shadow-rgb, 79,130,168), 0.1);
+}
+
+
+@keyframes _btn-spin {
+    to { transform: rotate(360deg); }
+}
+
+
+/* ============================================================
+   § 9  Button Group
+   ============================================================ */
+.btn-group {
+    display:     inline-flex;
+    align-items: stretch;
+}
+
+.btn-group .btn {
+    border-radius:      0;
+    border-right-width: 0;
+    position:           relative;
+    z-index:            1;
+    box-shadow:         none !important;
+}
+
+.btn-group .btn:hover,
+.btn-group .btn:focus-visible {
+    z-index: 2;
+}
+
+.btn-group .btn:first-child {
+    border-start-start-radius: var(--btn-r-md);
+    border-end-start-radius:   var(--btn-r-md);
+}
+
+.btn-group .btn:last-child {
+    border-start-end-radius: var(--btn-r-md);
+    border-end-end-radius:   var(--btn-r-md);
+    border-right-width:      1.5px;
+}
+
+.btn-group .btn:only-child {
+    border-radius:      var(--btn-r-md);
+    border-right-width: 1.5px;
+}
+
+
+/* ============================================================
+   § 10  Ripple (JS-activated)
+   ============================================================ */
+.btn-ripple {
+    position:       absolute;
+    border-radius:  50%;
+    background:     rgba(255,255,255,0.32);
+    pointer-events: none;
+    transform:      scale(0);
+    animation:      _btn-ripple 4500ms cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+    z-index:        3;
+}
+
+/* Outline ripple uses variant color when available          */
+.btn-outline .btn-ripple {
+    background: rgba(var(--btn-c-shadow-rgb, 79,130,168), 0.18);
+}
+
+
+@keyframes _btn-ripple {
+    to { transform: scale(4.5); opacity: 0; }
+}
+
+
+/* ============================================================
+   § 11  Glow Pulse — opt-in via .btn-glow
+   Adds a living ambient glow that pulses on colored buttons
+   ============================================================ */
+.btn-glow.btn-primary {
+    animation: _btn-glow-blue 2.4s ease-in-out infinite;
+}
+.btn-glow.btn-violet {
+    animation: _btn-glow-violet 2.4s ease-in-out infinite;
+}
+.btn-glow.btn-danger {
+    animation: _btn-glow-red 2.4s ease-in-out infinite;
+}
+.btn-glow.btn-success {
+    animation: _btn-glow-green 2.4s ease-in-out infinite;
+}
+.btn-glow.btn-warning {
+    animation: _btn-glow-amber 2.4s ease-in-out infinite;
+}
+
+@keyframes _btn-glow-blue {
+    0%, 100% { box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 4px 14px rgba(79,130,168,0.35); }
+    50%       { box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 6px 24px rgba(79,130,168,0.65), 0 0 40px rgba(79,130,168,0.2); }
+}
+@keyframes _btn-glow-violet {
+    0%, 100% { box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 4px 14px rgba(139,92,246,0.35); }
+    50%       { box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 6px 24px rgba(139,92,246,0.65), 0 0 40px rgba(139,92,246,0.2); }
+}
+@keyframes _btn-glow-red {
+    0%, 100% { box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 4px 14px rgba(239,68,68,0.35); }
+    50%       { box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 6px 24px rgba(239,68,68,0.65), 0 0 40px rgba(239,68,68,0.2); }
+}
+@keyframes _btn-glow-green {
+    0%, 100% { box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 4px 14px rgba(16,185,129,0.35); }
+    50%       { box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 6px 24px rgba(16,185,129,0.65), 0 0 40px rgba(16,185,129,0.2); }
+}
+@keyframes _btn-glow-amber {
+    0%, 100% { box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 4px 14px rgba(245,158,11,0.38); }
+    50%       { box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 6px 24px rgba(245,158,11,0.7),  0 0 40px rgba(245,158,11,0.22); }
+}
+
+
+/* ============================================================
+   § 12  Gradient Border — opt-in via .btn-grad-border
+   Animated rainbow/brand gradient border for outline buttons
+   ============================================================ */
+.btn-grad-border {
+    background:       #fff;
+    border:           none !important;
+    color:            var(--btn-blue-600);
+    padding:          calc(var(--btn-py-md) + 1.5px) calc(var(--btn-px-md) + 1.5px);
+    box-shadow:       none;
+}
+
+.btn-grad-border::after {
+    content:        '';
+    position:       absolute;
+    inset:          0;
+    border-radius:  inherit;
+    padding:        1.5px;
+    background:     linear-gradient(135deg, #3b82f6, #8b5cf6, #6366f1, #a855f7, #3b82f6);
+    background-size: 300% 300%;
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    animation:      _btn-grad-border 3s linear infinite;
+    z-index:        0;
+    pointer-events: none;
+}
+
+.btn-grad-border:hover:not(:disabled):not(.btn-disabled) {
+    background:  linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+    color:       var(--btn-violet-700);
+    transform:   translateY(-1.5px);
+    box-shadow:  0 6px 20px rgba(139,92,246,0.25);
+}
+
+@keyframes _btn-grad-border {
+    0%   { background-position: 0%   50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0%   50%; }
+}
+
+
+/* ============================================================
+   § 13  Entrance Animation — opt-in via .btn-animate-in
+   ============================================================ */
+.btn-animate-in {
+    animation: _btn-enter 0.38s var(--btn-ease-spring) both;
+}
+
+@keyframes _btn-enter {
+    from { opacity: 0; transform: translateY(8px) scale(0.94); }
+    to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+/* Stagger delays for groups */
+.btn-animate-in:nth-child(2) { animation-delay: 0.06s; }
+.btn-animate-in:nth-child(3) { animation-delay: 0.12s; }
+.btn-animate-in:nth-child(4) { animation-delay: 0.18s; }
+.btn-animate-in:nth-child(5) { animation-delay: 0.24s; }
+
+
+/* ============================================================
+   § 14  Responsive
+   ============================================================ */
+@media (max-width: 768px) {
+    .btn-responsive-block {
+        width:   100%;
+        display: flex;
+    }
+
+    /* Slightly reduce hover lift on touch */
+    .btn:hover:not(:disabled):not(.btn-disabled) {
+        transform: none;
+    }
+    .btn:active:not(:disabled):not(.btn-disabled) {
+        transform: scale(0.97) !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn,
+    .btn::before,
+    .btn::after,
+    .btn i,
+    .btn-glow,
+    .btn-grad-border::after,
+    .btn-animate-in {
+        animation:  none !important;
+        transition: none !important;
+    }
+}
+
+
+/* ============================================================
+   § · زر الترتيب — Order Button (للكروت)
+   ============================================================ */
+
+.btn-order {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    font-size: 0.8rem;
+    padding: 0;
+}
+
+.btn-order:hover:not(:disabled) {
+    background: var(--btn-blue-600, #4f82a8);
+    border-color: var(--btn-blue-600, #4f82a8);
+    color: #ffffff;
+}
+
+.btn-order:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}

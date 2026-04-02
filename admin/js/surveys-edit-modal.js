@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام تعديل الاستبيانات بالنوافذ المنبثقة
  * Survey Edit Modal System - نادي أدِيب
  */
@@ -105,11 +105,11 @@
                     <div class="modal survey-edit-modal active" id="surveyEditModal">
                         <div class="modal-header">
                             <div class="modal-header-content">
-                                <i class="fa-solid fa-edit"></i>
-                                <h3>تعديل الاستبيان</h3>
+                                <div class="modal-icon"><i class="fa-solid fa-edit"></i></div>
+                                <h2 class="modal-title">تعديل الاستبيان</h2>
                             </div>
-                            <button class="modal-close-x" onclick="window.surveyEditModal.close()">
-                                <i class="fa-solid fa-times"></i>
+                            <button class="modal-close" onclick="window.surveyEditModal.close()">
+                                <i class="fa-solid fa-xmark"></i>
                             </button>
                         </div>
                         
@@ -169,11 +169,11 @@
                                 ${this.currentSurvey.updated_by_profile?.full_name ? `<span class="footer-info-separator">•</span><i class="fa-solid fa-user-pen"></i> ${this.escapeHtml(this.currentSurvey.updated_by_profile.full_name)}` : (this.currentSurvey.created_by_profile?.full_name ? `<span class="footer-info-separator">•</span><i class="fa-solid fa-user"></i> ${this.escapeHtml(this.currentSurvey.created_by_profile.full_name)}` : '')}
                             </div>
                             <div class="survey-edit-footer-actions">
-                                <button class="btn btn--secondary" onclick="window.surveyEditModal.close()">
+                                <button class="btn btn-secondary" onclick="window.surveyEditModal.close()">
                                     <i class="fa-solid fa-times"></i>
                                     إلغاء
                                 </button>
-                                <button class="btn btn--primary" onclick="window.surveyEditModal.save()">
+                                <button class="btn btn-primary" onclick="window.surveyEditModal.save()">
                                     <i class="fa-solid fa-save"></i>
                                     حفظ التغييرات
                                 </button>
@@ -292,7 +292,7 @@
                         </div>
                         <div class="results-empty-title">لا توجد أسئلة</div>
                         <div class="results-empty-text">ابدأ بإضافة أسئلة للاستبيان</div>
-                        <button class="btn btn--primary" onclick="window.surveyEditModal.addQuestion()">
+                        <button class="btn btn-primary" onclick="window.surveyEditModal.addQuestion()">
                             <i class="fa-solid fa-plus"></i>
                             إضافة سؤال
                         </button>
@@ -443,11 +443,11 @@
                     <div class="modal modal-md active modal--high">
                         <div class="modal-header">
                             <div class="modal-header-content">
-                                <i class="fa-solid fa-question-circle"></i>
-                                <h3>${question.id ? 'تعديل السؤال' : 'إضافة سؤال جديد'}</h3>
+                                <div class="modal-icon"><i class="fa-solid fa-question-circle"></i></div>
+                                <h2 class="modal-title">${question.id ? 'تعديل السؤال' : 'إضافة سؤال جديد'}</h2>
                             </div>
-                            <button class="modal-close-x" onclick="window.surveyEditModal.closeQuestionEdit()">
-                                <i class="fa-solid fa-times"></i>
+                            <button class="modal-close" onclick="window.surveyEditModal.closeQuestionEdit()">
+                                <i class="fa-solid fa-xmark"></i>
                             </button>
                         </div>
                         <div class="modal-body">
@@ -481,10 +481,10 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button class="btn btn--secondary" onclick="window.surveyEditModal.closeQuestionEdit()">
+                            <button class="btn btn-secondary" onclick="window.surveyEditModal.closeQuestionEdit()">
                                 إلغاء
                             </button>
-                            <button class="btn btn--primary" onclick="window.surveyEditModal.saveQuestion(${index})">
+                            <button class="btn btn-primary" onclick="window.surveyEditModal.saveQuestion(${index})">
                                 <i class="fa-solid fa-check"></i>
                                 حفظ السؤال
                             </button>
@@ -511,7 +511,7 @@
                                     <input type="text" class="edit-form-input question-option" 
                                         value="${this.escapeHtml(opt)}" 
                                         placeholder="خيار ${i + 1}">
-                                    <button type="button" class="btn btn--icon btn--icon-danger" 
+                                    <button type="button" class="btn btn-icon btn-danger btn-sm" 
                                         onclick="this.parentElement.remove()" 
                                         ${options.length <= 2 ? 'disabled' : ''}>
                                         <i class="fa-solid fa-times"></i>
@@ -519,7 +519,7 @@
                                 </div>
                             `).join('')}
                         </div>
-                        <button type="button" class="btn btn--outline-primary btn--sm add-option-btn"
+                        <button type="button" class="btn btn-outline btn-sm add-option-btn"
                             onclick="window.surveyEditModal.addOption()">
                             <i class="fa-solid fa-plus"></i>
                             إضافة خيار
@@ -561,7 +561,7 @@
                     <input type="text" class="edit-form-input question-option" 
                         value="" 
                         placeholder="خيار ${count}">
-                    <button type="button" class="btn btn--icon btn--icon-danger" 
+                    <button type="button" class="btn btn-icon btn-danger btn-sm" 
                         onclick="this.parentElement.remove()">
                         <i class="fa-solid fa-times"></i>
                     </button>
@@ -674,36 +674,36 @@
             // أزرار تغيير الحالة بناءً على الحالة الحالية
             if (status === 'draft') {
                 buttons = `
-                    <button class="btn btn--success btn--sm" onclick="window.surveyEditModal.changeStatus('active')" title="نشر الاستبيان">
+                    <button class="btn btn-success btn-sm" onclick="window.surveyEditModal.changeStatus('active')" title="نشر الاستبيان">
                         <i class="fa-solid fa-paper-plane"></i>
                         نشر
                     </button>
                 `;
             } else if (status === 'active') {
                 buttons = `
-                    <button class="btn btn--warning btn--sm" onclick="window.surveyEditModal.changeStatus('paused')" title="إيقاف مؤقت">
+                    <button class="btn btn-warning btn-sm" onclick="window.surveyEditModal.changeStatus('paused')" title="إيقاف مؤقت">
                         <i class="fa-solid fa-pause"></i>
                         إيقاف
                     </button>
-                    <button class="btn btn--danger btn--sm" onclick="window.surveyEditModal.endSurvey()" title="إنهاء نهائي">
+                    <button class="btn btn-danger btn-sm" onclick="window.surveyEditModal.endSurvey()" title="إنهاء نهائي">
                         <i class="fa-solid fa-stop"></i>
                         إنهاء
                     </button>
                 `;
             } else if (status === 'paused') {
                 buttons = `
-                    <button class="btn btn--success btn--sm" onclick="window.surveyEditModal.changeStatus('active')" title="تفعيل">
+                    <button class="btn btn-success btn-sm" onclick="window.surveyEditModal.changeStatus('active')" title="تفعيل">
                         <i class="fa-solid fa-play"></i>
                         تفعيل
                     </button>
-                    <button class="btn btn--secondary btn--sm" onclick="window.surveyEditModal.changeStatus('draft')" title="تحويل لمسودة">
+                    <button class="btn btn-secondary btn-sm" onclick="window.surveyEditModal.changeStatus('draft')" title="تحويل لمسودة">
                         <i class="fa-solid fa-file-pen"></i>
                         مسودة
                     </button>
                 `;
             } else if (status === 'closed') {
                 buttons = `
-                    <button class="btn btn--info btn--sm" onclick="window.surveyEditModal.changeStatus('draft')" title="إعادة كمسودة">
+                    <button class="btn btn-primary btn-sm" onclick="window.surveyEditModal.changeStatus('draft')" title="إعادة كمسودة">
                         <i class="fa-solid fa-rotate-left"></i>
                         إعادة كمسودة
                     </button>
@@ -818,21 +818,44 @@
 
                 if (surveyError) throw surveyError;
 
-                // حذف الأسئلة القديمة وإضافة الجديدة
-                await sb.from('survey_questions').delete().eq('survey_id', this.currentSurvey.id);
+                // تحديث الأسئلة الموجودة، إضافة الجديدة، وحذف المحذوفة فقط
+                const existingIds = this.currentQuestions.filter(q => q.id).map(q => q.id);
 
-                if (this.currentQuestions.length > 0) {
-                    const questionsToInsert = this.currentQuestions.map((q, index) => ({
+                // حذف الأسئلة التي تمت إزالتها فقط (لا نحذف الكل لتجنب فقدان الإجابات)
+                if (existingIds.length > 0) {
+                    await sb.from('survey_questions')
+                        .delete()
+                        .eq('survey_id', this.currentSurvey.id)
+                        .not('id', 'in', `(${existingIds.join(',')})`);
+                } else {
+                    await sb.from('survey_questions').delete().eq('survey_id', this.currentSurvey.id);
+                }
+
+                for (let index = 0; index < this.currentQuestions.length; index++) {
+                    const q = this.currentQuestions[index];
+                    const questionData = {
                         survey_id: this.currentSurvey.id,
                         question_text: q.question_text,
                         question_type: q.question_type,
                         question_order: index,
                         is_required: q.is_required,
                         options: q.options
-                    }));
+                    };
 
-                    const { error: questionsError } = await sb.from('survey_questions').insert(questionsToInsert);
-                    if (questionsError) throw questionsError;
+                    if (q.id) {
+                        // تحديث السؤال الموجود بنفس الـ id للحفاظ على الإجابات المرتبطة به
+                        const { error: updateError } = await sb
+                            .from('survey_questions')
+                            .update(questionData)
+                            .eq('id', q.id);
+                        if (updateError) throw updateError;
+                    } else {
+                        // إضافة سؤال جديد
+                        const { error: insertError } = await sb
+                            .from('survey_questions')
+                            .insert(questionData);
+                        if (insertError) throw insertError;
+                    }
                 }
 
                 this.showNotification('تم حفظ التغييرات بنجاح', 'success');
@@ -937,3 +960,5 @@
 
     window.surveyEditModal = new SurveyEditModal();
 })();
+
+

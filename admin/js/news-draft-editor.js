@@ -1,4 +1,4 @@
-/**
+﻿/**
  * محرر المسودات - نظام تعديل شامل للمسودات
  * يتيح تعديل جميع خصائص المسودة بما في ذلك إدارة الكتّاب
  */
@@ -62,7 +62,7 @@ window.NewsDraftEditor = (function() {
                                 <span class="badge badge-${getStatusClass(assignment.status)}">
                                     ${getStatusText(assignment.status)}
                                 </span>
-                                <button type="button" class="remove-writer-btn btn btn--danger btn--sm" data-assignment-id="${assignment.id}" data-writer-id="${assignment.writer_id}">
+                                <button type="button" class="remove-writer-btn btn btn-danger btn-sm" data-assignment-id="${assignment.id}" data-writer-id="${assignment.writer_id}">
                                     <i class="fa-solid fa-times"></i>
                                 </button>
                             </div>
@@ -96,11 +96,11 @@ window.NewsDraftEditor = (function() {
                 footerButtons: [
                     {
                         text: 'إلغاء',
-                        class: 'btn--outline btn--outline-secondary'
+                        class: 'btn-outline'
                     },
                     {
                         text: 'حفظ التعديلات',
-                        class: 'btn--primary',
+                        class: 'btn-primary',
                         callback: async () => {
                             const modalElement = document.querySelector('.modal.active');
                             const title = modalElement.querySelector('input[name="title"]').value;
@@ -328,3 +328,4 @@ window.NewsDraftEditor = (function() {
         removeWriter
     };
 })();
+

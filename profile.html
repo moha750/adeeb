@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الملف الشخصي - نادي أدِيب</title>
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="public-profile.css">
+    
+    <meta property="og:type" content="profile">
+    <meta property="og:site_name" content="نادي أدِيب">
+    <meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loader"></div>
+        <p>جاري تحميل الملف الشخصي...</p>
+    </div>
+
+    <div class="error-screen" id="errorScreen" style="display: none;">
+        <div class="error-content">
+            <i class="fa-solid fa-user-slash"></i>
+            <h2>الملف الشخصي غير موجود</h2>
+            <p>عذراً، لم نتمكن من العثور على هذا الملف الشخصي</p>
+            <a href="/" class="btn-primary">
+                <i class="fa-solid fa-home"></i>
+                العودة للصفحة الرئيسية
+            </a>
+        </div>
+    </div>
+
+    <div class="profile-container" id="profileContainer" style="display: none;">
+        <div class="profile-header">
+            <div class="header-background"></div>
+            <div class="header-content">
+                <div class="profile-avatar-container">
+                    <img src="" alt="الصورة الشخصية" id="profileAvatar" class="profile-avatar">
+                </div>
+                <div class="profile-info">
+                    <h1 id="profileName">جاري التحميل...</h1>
+                    <p class="profile-role" id="profileRole">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>عضو نادي أدِيب</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-body">
+            <div class="profile-grid">
+                <div class="profile-card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-user"></i>
+                        <h3>المعلومات الأساسية</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-row">
+                            <div class="info-label">
+                                <i class="fa-solid fa-envelope"></i>
+                                البريد الإلكتروني
+                            </div>
+                            <div class="info-value" id="profileEmail">-</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">
+                                <i class="fa-solid fa-calendar-plus"></i>
+                                تاريخ الانضمام
+                            </div>
+                            <div class="info-value" id="profileJoinDate">-</div>
+                        </div>
+                        <div class="info-row" id="committeeRow" style="display: none;">
+                            <div class="info-label">
+                                <i class="fa-solid fa-users"></i>
+                                اللجنة
+                            </div>
+                            <div class="info-value" id="profileCommittee">-</div>
+                        </div>
+                        <div class="info-row" id="favoriteColorRow" style="display: none;">
+                            <div class="info-label">
+                                <i class="fa-solid fa-palette"></i>
+                                اللون المفضل
+                            </div>
+                            <div class="info-value" id="profileFavoriteColor">-</div>
+                        </div>
+                        <div class="info-row" id="councilRow" style="display: none;">
+                            <div class="info-label">
+                                <i class="fa-solid fa-landmark"></i>
+                                المجلس
+                            </div>
+                            <div class="info-value" id="profileCouncil">-</div>
+                        </div>
+                        <div class="info-row" id="departmentRow" style="display: none;">
+                            <div class="info-label">
+                                <i class="fa-solid fa-building"></i>
+                                القسم
+                            </div>
+                            <div class="info-value" id="profileDepartmentPublic">-</div>
+                        </div>
+                        <div class="info-row" id="committeeRowPublic" style="display: none;">
+                            <div class="info-label">
+                                <i class="fa-solid fa-users"></i>
+                                اللجنة
+                            </div>
+                            <div class="info-value" id="profileCommitteePublic">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-card" id="academicCard" style="display: none;">
+                    <div class="card-header">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        <h3>المعلومات الأكاديمية</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-row" id="degreeRow" style="display: none;">
+                            <div class="info-label">
+                                <i class="fa-solid fa-certificate"></i>
+                                المؤهل الأكاديمي
+                            </div>
+                            <div class="info-value" id="profileDegree">-</div>
+                        </div>
+                        <div class="info-row" id="collegeRow" style="display: none;">
+                            <div class="info-label">
+                                <i class="fa-solid fa-building-columns"></i>
+                                الكلية
+                            </div>
+                            <div class="info-value" id="profileCollege">-</div>
+                        </div>
+                        <div class="info-row" id="majorRow" style="display: none;">
+                            <div class="info-label">
+                                <i class="fa-solid fa-book"></i>
+                                التخصص
+                            </div>
+                            <div class="info-value" id="profileMajor">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-card" id="socialCard" style="display: none;">
+                    <div class="card-header">
+                        <i class="fa-solid fa-share-nodes"></i>
+                        <h3>حسابات التواصل الاجتماعي</h3>
+                    </div>
+                    <div class="card-body social-links">
+                        <a href="#" id="twitterLink" class="social-link twitter" target="_blank" style="display: none;">
+                            <i class="fa-brands fa-twitter"></i>
+                            <span>تويتر</span>
+                        </a>
+                        <a href="#" id="instagramLink" class="social-link instagram" target="_blank" style="display: none;">
+                            <i class="fa-brands fa-instagram"></i>
+                            <span>إنستقرام</span>
+                        </a>
+                        <a href="#" id="tiktokLink" class="social-link tiktok" target="_blank" style="display: none;">
+                            <i class="fa-brands fa-tiktok"></i>
+                            <span>تيك توك</span>
+                        </a>
+                        <a href="#" id="linkedinLink" class="social-link linkedin" target="_blank" style="display: none;">
+                            <i class="fa-brands fa-linkedin"></i>
+                            <span>لينكد إن</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-footer">
+            <div class="footer-content">
+                <img src="adeeb-logo.png" alt="نادي أدِيب" class="footer-logo">
+                <p>نادي أدِيب الثقافي الأدبي</p>
+                <div class="footer-links">
+                    <a href="/">الصفحة الرئيسية</a>
+                    <a href="/membership.html">انضم لنا</a>
+                    <a href="https://twitter.com/adeeb_club" target="_blank">
+                        <i class="fa-brands fa-twitter"></i>
+                    </a>
+                    <a href="https://instagram.com/adeeb_club" target="_blank">
+                        <i class="fa-brands fa-instagram"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="public-profile.js"></script>
+</body>
+</html>

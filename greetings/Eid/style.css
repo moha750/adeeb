@@ -495,13 +495,6 @@ body {
     }
 }
 
-/* ===========================
-   رأس القسم العام (Section Header)
-=========================== */
-.section-header {
-    text-align: center;
-    margin-bottom: 20px;
-}
 
 .section-badge {
     display: inline-flex;
@@ -517,13 +510,6 @@ body {
     box-shadow: 0 8px 24px rgba(39,64,96,0.32);
 }
 
-.section-header h1,
-.section-header h2 {
-    font-size: clamp(1.7rem, 4vw, 2.4rem);
-    color: var(--text-dark);
-    margin-bottom: 12px;
-    line-height: 1.3;
-}
 
 .section-subtitle {
     color: var(--text-mid);
@@ -870,8 +856,7 @@ canvas.canvas-square {
     margin: 0 auto;
 }
 
-/* تعديلات section-header داخل contact */
-.contact-section .section-header h2 { color: var(--white); }
+/* تعديلات داخل contact */
 .contact-section .section-subtitle   { color: rgba(255,255,255,0.72); }
 .contact-section .section-badge      { background: linear-gradient(135deg, var(--accent-blue) 0%, var(--light-blue) 100%); }
 .contact-section .section-divider span             { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35)); }

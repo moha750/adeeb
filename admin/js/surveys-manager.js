@@ -200,6 +200,7 @@
             const now = new Date();
             const activeSurveys = [];
             const scheduledSurveys = [];
+            const pausedSurveys = [];
             const endedSurveys = [];
             const draftSurveys = [];
 
@@ -211,6 +212,8 @@
                     activeSurveys.push(survey);
                 } else if (actualStatus === 'scheduled') {
                     scheduledSurveys.push(survey);
+                } else if (actualStatus === 'paused') {
+                    pausedSurveys.push(survey);
                 } else {
                     endedSurveys.push(survey);
                 }
@@ -222,12 +225,12 @@
             if (activeSurveys.length > 0) {
                 html += `
                     <div class="surveys-section">
-                        <div class="card">
+                        <div class="card card--success">
                             <div class="card-header">
                                 <h3><i class="fa-solid fa-circle-play survey-icon--active"></i> الاستبيانات النشطة (${activeSurveys.length})</h3>
                             </div>
                             <div class="card-body">
-                                <div class="surveys-section-content">
+                                <div class="uc-grid">
                                     ${activeSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
                                 </div>
                             </div>
@@ -240,13 +243,31 @@
             if (scheduledSurveys.length > 0) {
                 html += `
                     <div class="surveys-section">
-                        <div class="card">
+                        <div class="card card--info">
                             <div class="card-header">
                                 <h3><i class="fa-solid fa-calendar-clock survey-icon--scheduled"></i> الاستبيانات المجدولة (${scheduledSurveys.length})</h3>
                             </div>
                             <div class="card-body">
-                                <div class="surveys-section-content">
+                                <div class="uc-grid">
                                     ${scheduledSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // قسم الاستبيانات المتوقفة
+            if (pausedSurveys.length > 0) {
+                html += `
+                    <div class="surveys-section">
+                        <div class="card card--warning">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-circle-pause"></i> الاستبيانات المتوقفة (${pausedSurveys.length})</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="uc-grid">
+                                    ${pausedSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
                                 </div>
                             </div>
                         </div>
@@ -258,12 +279,12 @@
             if (draftSurveys.length > 0) {
                 html += `
                     <div class="surveys-section">
-                        <div class="card">
+                        <div class="card card--neutral">
                             <div class="card-header">
                                 <h3><i class="fa-solid fa-file-pen survey-icon--draft"></i> المسودات (${draftSurveys.length})</h3>
                             </div>
                             <div class="card-body">
-                                <div class="surveys-section-content">
+                                <div class="uc-grid">
                                     ${draftSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
                                 </div>
                             </div>
@@ -276,12 +297,12 @@
             if (endedSurveys.length > 0) {
                 html += `
                     <div class="surveys-section surveys-section-ended">
-                        <div class="card">
+                        <div class="card card--danger">
                             <div class="card-header">
                                 <h3><i class="fa-solid fa-circle-stop survey-icon--ended"></i> الاستبيانات المنتهية (${endedSurveys.length})</h3>
                             </div>
                             <div class="card-body">
-                                <div class="surveys-section-content">
+                                <div class="uc-grid">
                                     ${endedSurveys.map(survey => this.renderSurveyCard(survey)).join('')}
                                 </div>
                             </div>
@@ -360,169 +381,159 @@
                 active: 'badge-success',
                 paused: 'badge-secondary',
                 scheduled: 'badge-info',
-                closed: 'badge-danger',
+                closed: 'badge-secondary',
                 archived: 'badge-secondary'
+            };
+
+            const statusHeaderClass = {
+                draft:     'uc-card__header--neutral',
+                active:    'uc-card__header--success',
+                paused:    'uc-card__header--warning',
+                scheduled: 'uc-card__header--info',
+                closed:    'uc-card__header--danger',
+                archived:  'uc-card__header--danger'
+            };
+
+            const statusCardClass = {
+                draft:     'uc-card--neutral',
+                active:    'uc-card--success',
+                paused:    'uc-card--warning',
+                scheduled: 'uc-card--info',
+                closed:    'uc-card--danger',
+                archived:  'uc-card--danger'
             };
 
             const surveyUrl = `${window.location.origin}/surveys/survey.html?id=${survey.id}`;
 
             return `
-                <div class="application-card" data-survey-id="${survey.id}">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar">
+                <div class="uc-card ${statusCardClass[actualStatus] || ''}" data-survey-id="${survey.id}">
+                    <div class="uc-card__header ${statusHeaderClass[actualStatus] || ''}">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
                                 <i class="fa-solid fa-clipboard-question"></i>
                             </div>
-                            <div class="applicant-details">
-                                <h3 class="applicant-name">${this.escapeHtml(survey.title)}</h3>
-                                <div>
-                                    <span class="badge ${statusBadgeClass[actualStatus]}">
-                                        ${statusLabels[actualStatus]}
-                                    </span>
-                                </div>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${this.escapeHtml(survey.title)}</h3>
+                                <span class="uc-card__badge">
+                                    <i class="fa-solid fa-circle-dot"></i>
+                                    ${statusLabels[actualStatus]}
+                                </span>
                             </div>
                         </div>
                     </div>
-                    
-                    ${survey.description ? `
-                        <div class="application-card-body">
-                            <p class="survey-description">${this.escapeHtml(survey.description)}</p>
+
+                    <div class="uc-card__body">
+                        ${survey.description ? `<p class="uc-card__description">${this.escapeHtml(survey.description)}</p>` : ''}
+
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">تاريخ الإنشاء</span>
+                                <span class="uc-card__info-value">${this.formatDate(survey.created_at)}</span>
+                            </div>
                         </div>
-                    ` : ''}
-                    
-                    <div class="application-card-body">
-                        <div class="application-info-grid">
-                            <div class="info-item">
-                                <i class="fa-solid fa-calendar"></i>
-                                <div class="info-content">
-                                    <span class="info-label">تاريخ الإنشاء</span>
-                                    <span class="info-value">${this.formatDate(survey.created_at)}</span>
+                        ${survey.start_date ? `
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-plus"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">تاريخ البدء</span>
+                                    <span class="uc-card__info-value">${this.formatDate(survey.start_date)}</span>
                                 </div>
                             </div>
-                            ${survey.start_date ? `
-                                <div class="info-item">
-                                    <i class="fa-solid fa-calendar-plus"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">تاريخ البدء</span>
-                                        <span class="info-value">${this.formatDate(survey.start_date)}</span>
-                                    </div>
+                        ` : ''}
+                        ${survey.end_date ? `
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">تاريخ الانتهاء</span>
+                                    <span class="uc-card__info-value">${this.formatDate(survey.end_date)}</span>
                                 </div>
-                            ` : ''}
-                            ${survey.end_date ? `
-                                <div class="info-item">
-                                    <i class="fa-solid fa-calendar-xmark"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">تاريخ الانتهاء</span>
-                                        <span class="info-value">${this.formatDate(survey.end_date)}</span>
-                                    </div>
+                            </div>
+                        ` : ''}
+                        ${survey.created_by_profile ? `
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-user"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">المنشئ</span>
+                                    <span class="uc-card__info-value">${this.escapeHtml(survey.created_by_profile.full_name)}</span>
                                 </div>
-                            ` : ''}
-                            ${survey.created_by_profile ? `
-                                <div class="info-item">
-                                    <i class="fa-solid fa-user"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">المنشئ</span>
-                                        <span class="info-value">${this.escapeHtml(survey.created_by_profile.full_name)}</span>
-                                    </div>
-                                </div>
-                            ` : ''}
-                        </div>
+                            </div>
+                        ` : ''}
                     </div>
                     
-                    <div class="application-card-footer">
+                    <div class="uc-card__footer">
                         ${actualStatus === 'draft' ? `
-                        <button class="btn btn--warning btn--sm" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل الاستبيان">
-                            <i class="fa-solid fa-edit"></i>
-                            تعديل
+                        <button class="btn btn-warning btn-sm" onclick="window.surveysManager.editSurvey(${survey.id})">
+                            <i class="fa-solid fa-edit"></i> تعديل
                         </button>
-                        <button class="btn btn--success btn--sm" onclick="window.surveysManager.publishDraftSurvey(${survey.id})" title="نشر الاستبيان">
-                            <i class="fa-solid fa-paper-plane"></i>
-                            نشر
+                        <button class="btn btn-success btn-sm" onclick="window.surveysManager.publishDraftSurvey(${survey.id})">
+                            <i class="fa-solid fa-paper-plane"></i> نشر
                         </button>
                         ` : ''}
                         ${actualStatus === 'active' ? `
-                        <button class="btn btn--info btn--sm" onclick="window.surveysManager.previewSurvey(${survey.id})" title="معاينة الاستبيان">
-                            <i class="fa-solid fa-eye"></i>
-                            معاينة
+                        <button class="btn btn-primary btn-sm" onclick="window.surveysManager.previewSurvey(${survey.id})">
+                            <i class="fa-solid fa-eye"></i> معاينة
                         </button>
-                        <button class="btn btn--secondary btn--sm" onclick="window.surveysManager.copySurveyLink(${survey.id})" title="نسخ رابط الاستبيان">
-                            <i class="fa-solid fa-copy"></i>
-                            نسخ الرابط
+                        <button class="btn btn-secondary btn-sm" onclick="window.surveysManager.copySurveyLink(${survey.id})">
+                            <i class="fa-solid fa-copy"></i> نسخ الرابط
                         </button>
-                        <button class="btn btn--success btn--sm" onclick="window.surveysManager.shareSurveyModal(${survey.id})" title="نشر على منصات التواصل">
-                            <i class="fa-solid fa-share-nodes"></i>
-                            نشر
+                        <button class="btn btn-success btn-sm" onclick="window.surveysManager.shareSurveyModal(${survey.id})">
+                            <i class="fa-solid fa-share-nodes"></i> نشر
                         </button>
-                        <button class="btn btn--warning btn--sm" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل الاستبيان">
-                            <i class="fa-solid fa-edit"></i>
-                            تعديل
+                        <button class="btn btn-warning btn-sm" onclick="window.surveysManager.editSurvey(${survey.id})">
+                            <i class="fa-solid fa-edit"></i> تعديل
                         </button>
-                        <button class="btn btn--primary btn--sm" onclick="window.surveysManager.viewResults(${survey.id})" title="عرض النتائج">
-                            <i class="fa-solid fa-chart-bar"></i>
-                            النتائج
+                        <button class="btn btn-primary btn-sm" onclick="window.surveysManager.viewResults(${survey.id})">
+                            <i class="fa-solid fa-chart-bar"></i> النتائج
                         </button>
-                        <button class="btn btn--warning btn--sm" onclick="window.surveysManager.pauseSurvey(${survey.id})" title="إيقاف الاستبيان">
-                            <i class="fa-solid fa-pause-circle"></i>
-                            إيقاف
+                        <button class="btn btn-warning btn-sm" onclick="window.surveysManager.pauseSurvey(${survey.id})">
+                            <i class="fa-solid fa-pause-circle"></i> إيقاف
                         </button>
-                        <button class="btn btn--danger btn--sm" onclick="window.surveysManager.endSurvey(${survey.id})" title="إنهاء الاستبيان نهائياً">
-                            <i class="fa-solid fa-stop-circle"></i>
-                            إنهاء
+                        <button class="btn btn-danger btn-sm" onclick="window.surveysManager.endSurvey(${survey.id})">
+                            <i class="fa-solid fa-stop-circle"></i> إنهاء
                         </button>
                         ` : ''}
                         ${actualStatus === 'scheduled' ? `
-                        <button class="btn btn--info btn--sm" onclick="window.surveysManager.previewSurvey(${survey.id})" title="معاينة الاستبيان">
-                            <i class="fa-solid fa-eye"></i>
-                            معاينة
+                        <button class="btn btn-primary btn-sm" onclick="window.surveysManager.previewSurvey(${survey.id})">
+                            <i class="fa-solid fa-eye"></i> معاينة
                         </button>
-                        <button class="btn btn--secondary btn--sm" onclick="window.surveysManager.copySurveyLink(${survey.id})" title="نسخ رابط الاستبيان">
-                            <i class="fa-solid fa-copy"></i>
-                            نسخ الرابط
+                        <button class="btn btn-secondary btn-sm" onclick="window.surveysManager.copySurveyLink(${survey.id})">
+                            <i class="fa-solid fa-copy"></i> نسخ الرابط
                         </button>
-                        <button class="btn btn--warning btn--sm" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل الاستبيان">
-                            <i class="fa-solid fa-edit"></i>
-                            تعديل
+                        <button class="btn btn-warning btn-sm" onclick="window.surveysManager.editSurvey(${survey.id})">
+                            <i class="fa-solid fa-edit"></i> تعديل
                         </button>
-                        <button class="btn btn--danger btn--sm" onclick="window.surveysManager.endSurvey(${survey.id})" title="إنهاء الاستبيان نهائياً">
-                            <i class="fa-solid fa-stop-circle"></i>
-                            إنهاء
+                        <button class="btn btn-danger btn-sm" onclick="window.surveysManager.endSurvey(${survey.id})">
+                            <i class="fa-solid fa-stop-circle"></i> إنهاء
                         </button>
                         ` : ''}
                         ${actualStatus === 'paused' ? `
-                        <button class="btn btn--info btn--sm" onclick="window.surveysManager.previewSurvey(${survey.id})" title="معاينة الاستبيان">
-                            <i class="fa-solid fa-eye"></i>
-                            معاينة
+                        <button class="btn btn-primary btn-sm" onclick="window.surveysManager.previewSurvey(${survey.id})">
+                            <i class="fa-solid fa-eye"></i> معاينة
                         </button>
-                        <button class="btn btn--secondary btn--sm" onclick="window.surveysManager.copySurveyLink(${survey.id})" title="نسخ رابط الاستبيان">
-                            <i class="fa-solid fa-copy"></i>
-                            نسخ الرابط
+                        <button class="btn btn-secondary btn-sm" onclick="window.surveysManager.copySurveyLink(${survey.id})">
+                            <i class="fa-solid fa-copy"></i> نسخ الرابط
                         </button>
-                        <button class="btn btn--warning btn--sm" onclick="window.surveysManager.editSurvey(${survey.id})" title="تعديل الاستبيان">
-                            <i class="fa-solid fa-edit"></i>
-                            تعديل
+                        <button class="btn btn-warning btn-sm" onclick="window.surveysManager.editSurvey(${survey.id})">
+                            <i class="fa-solid fa-edit"></i> تعديل
                         </button>
-                        <button class="btn btn--primary btn--sm" onclick="window.surveysManager.viewResults(${survey.id})" title="عرض النتائج">
-                            <i class="fa-solid fa-chart-bar"></i>
-                            النتائج
+                        <button class="btn btn-primary btn-sm" onclick="window.surveysManager.viewResults(${survey.id})">
+                            <i class="fa-solid fa-chart-bar"></i> النتائج
                         </button>
-                        <button class="btn btn--success btn--sm" onclick="window.surveysManager.enableSurvey(${survey.id})" title="تفعيل الاستبيان">
-                            <i class="fa-solid fa-play-circle"></i>
-                            تفعيل
+                        <button class="btn btn-success btn-sm" onclick="window.surveysManager.enableSurvey(${survey.id})">
+                            <i class="fa-solid fa-play-circle"></i> تفعيل
                         </button>
                         ` : ''}
                         ${actualStatus === 'closed' ? `
-                        <button class="btn btn--primary btn--sm" onclick="window.surveysManager.viewResults(${survey.id})" title="عرض النتائج">
-                            <i class="fa-solid fa-chart-bar"></i>
-                            النتائج
+                        <button class="btn btn-primary btn-sm" onclick="window.surveysManager.viewResults(${survey.id})">
+                            <i class="fa-solid fa-chart-bar"></i> النتائج
                         </button>
-                        <button class="btn btn--secondary btn--sm" onclick="window.surveysManager.archiveSurvey(${survey.id})" title="أرشفة الاستبيان">
-                            <i class="fa-solid fa-box-archive"></i>
-                            أرشفة
+                        <button class="btn btn-secondary btn-sm" onclick="window.surveysManager.archiveSurvey(${survey.id})">
+                            <i class="fa-solid fa-box-archive"></i> أرشفة
                         </button>
                         ` : ''}
-                        <button class="btn btn--danger btn--sm" onclick="window.surveysManager.deleteSurvey(${survey.id})" title="حذف">
-                            <i class="fa-solid fa-trash"></i>
-                            حذف
+                        <button class="btn btn-danger btn-sm" onclick="window.surveysManager.deleteSurvey(${survey.id})">
+                            <i class="fa-solid fa-trash"></i> حذف
                         </button>
                     </div>
                 </div>
@@ -620,7 +631,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h3><i class="fa-solid fa-question-circle"></i> الأسئلة</h3>
-                            <button class="btn btn--primary" onclick="window.surveysManager.addQuestion()">
+                            <button class="btn btn-primary" onclick="window.surveysManager.addQuestion()">
                                 <i class="fa-solid fa-plus"></i>
                                 إضافة سؤال
                             </button>
@@ -691,18 +702,18 @@
                     <div class="question-editor-header">
                         <span class="question-number">سؤال ${index + 1}</span>
                         <div class="question-actions">
-                            <button class="btn btn--icon btn--icon-sm" onclick="window.surveysManager.moveQuestion(${index}, -1)" 
+                            <button class="btn btn-icon btn-sm" onclick="window.surveysManager.moveQuestion(${index}, -1)" 
                                 ${index === 0 ? 'disabled' : ''} title="تحريك لأعلى">
                                 <i class="fa-solid fa-arrow-up"></i>
                             </button>
-                            <button class="btn btn--icon btn--icon-sm" onclick="window.surveysManager.moveQuestion(${index}, 1)" 
+                            <button class="btn btn-icon btn-sm" onclick="window.surveysManager.moveQuestion(${index}, 1)" 
                                 ${index === surveyQuestions.length - 1 ? 'disabled' : ''} title="تحريك لأسفل">
                                 <i class="fa-solid fa-arrow-down"></i>
                             </button>
-                            <button class="btn btn--icon btn--icon-sm" onclick="window.surveysManager.duplicateQuestion(${index})" title="نسخ">
+                            <button class="btn btn-icon btn-sm" onclick="window.surveysManager.duplicateQuestion(${index})" title="نسخ">
                                 <i class="fa-solid fa-copy"></i>
                             </button>
-                            <button class="btn btn--icon btn--icon-sm btn--danger" onclick="window.surveysManager.deleteQuestion(${index})" title="حذف">
+                            <button class="btn btn-icon btn-danger btn-sm" onclick="window.surveysManager.deleteQuestion(${index})" title="حذف">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </div>
@@ -1454,57 +1465,71 @@
                                   actualStatus === 'closed' ? '#6b7280, #4b5563' : 
                                   actualStatus === 'paused' ? '#f59e0b, #d97706' : '#3b82f6, #2563eb';
 
+            const resultHeaderClass = {
+                active:    'uc-card__header--success',
+                paused:    'uc-card__header--warning',
+                scheduled: 'uc-card__header--info',
+                closed:    'uc-card__header--danger',
+                draft:     'uc-card__header--neutral'
+            };
+
+            const resultCardClass = {
+                active:    'uc-card--success',
+                paused:    'uc-card--warning',
+                scheduled: 'uc-card--info',
+                closed:    'uc-card--danger',
+                draft:     'uc-card--neutral'
+            };
+
             return `
-                <div class="application-card" data-survey-id="${survey.id}">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar">
+                <div class="uc-card ${resultCardClass[actualStatus] || ''}" data-survey-id="${survey.id}">
+                    <div class="uc-card__header ${resultHeaderClass[actualStatus] || ''}">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
                                 <i class="fa-solid fa-clipboard-question"></i>
                             </div>
-                            <div class="applicant-details">
-                                <h4 class="applicant-name">${this.escapeHtml(survey.title)}</h4>
+                            <div class="uc-card__header-info">
+                                <h4 class="uc-card__title">${this.escapeHtml(survey.title)}</h4>
                                 <div>
                                     <span class="badge ${statusBadge}">${statusText}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="application-card-body">
-                        <div class="application-info-grid">
-                            <div class="info-item">
-                                <i class="fa-solid fa-users"></i>
-                                <div class="info-content">
-                                    <span class="info-label">الاستجابات</span>
-                                    <span class="info-value">${totalResponses}</span>
+                    <div class="uc-card__body">
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-users"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">الاستجابات</span>
+                                    <span class="uc-card__info-value">${totalResponses}</span>
                                 </div>
                             </div>
-                            <div class="info-item">
-                                <i class="fa-solid fa-question-circle"></i>
-                                <div class="info-content">
-                                    <span class="info-label">الأسئلة</span>
-                                    <span class="info-value">${survey.questions_count || 0}</span>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-question-circle"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">الأسئلة</span>
+                                    <span class="uc-card__info-value">${survey.questions_count || 0}</span>
                                 </div>
                             </div>
-                            <div class="info-item">
-                                <i class="fa-solid fa-percentage"></i>
-                                <div class="info-content">
-                                    <span class="info-label">معدل الإكمال</span>
-                                    <span class="info-value">${completionRate}%</span>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-percentage"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">معدل الإكمال</span>
+                                    <span class="uc-card__info-value">${completionRate}%</span>
                                 </div>
                             </div>
                             ${survey.created_by_profile?.full_name ? `
-                            <div class="info-item">
-                                <i class="fa-solid fa-user-pen"></i>
-                                <div class="info-content">
-                                    <span class="info-label">المنشئ</span>
-                                    <span class="info-value">${this.escapeHtml(survey.created_by_profile.full_name)}</span>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-user-pen"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">المنشئ</span>
+                                    <span class="uc-card__info-value">${this.escapeHtml(survey.created_by_profile.full_name)}</span>
                                 </div>
                             </div>
                             ` : ''}
-                        </div>
                     </div>
-                    <div class="application-card-footer" style="justify-content: flex-end;">
-                        <button class="btn btn--primary btn--sm" onclick="window.surveysManager.selectSurveyForResults(${survey.id})">
+                    <div class="uc-card__footer" style="justify-content: flex-end;">
+                        <button class="btn btn-primary btn-sm" onclick="window.surveysManager.selectSurveyForResults(${survey.id})">
                             <i class="fa-solid fa-eye"></i> عرض النتائج
                         </button>
                     </div>
@@ -1514,10 +1539,10 @@
 
         selectSurveyForResults(surveyId) {
             // تحديث حالة البطاقات
-            document.querySelectorAll('#surveyResultsGrid .application-card').forEach(card => {
+            document.querySelectorAll('#surveyResultsGrid .uc-card').forEach(card => {
                 card.classList.remove('selected');
             });
-            const selectedCard = document.querySelector(`#surveyResultsGrid .application-card[data-survey-id="${surveyId}"]`);
+            const selectedCard = document.querySelector(`#surveyResultsGrid .uc-card[data-survey-id="${surveyId}"]`);
             if (selectedCard) {
                 selectedCard.classList.add('selected');
             }
@@ -1577,7 +1602,7 @@
                 const statusValue = statusFilter?.value || '';
 
                 document.querySelectorAll('.survey-result-card').forEach(card => {
-                    const title = card.querySelector('.applicant-name')?.textContent.toLowerCase() || '';
+                    const title = card.querySelector('.uc-card__title')?.textContent.toLowerCase() || '';
                     const status = card.dataset.status || '';
 
                     const matchesSearch = title.includes(searchTerm);
@@ -2177,3 +2202,5 @@
 
     window.surveysManager = new SurveysManager();
 })();
+
+

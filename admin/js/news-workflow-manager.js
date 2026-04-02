@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام إدارة سير عمل الأخبار - نادي أدِيب (محدث بدون SweetAlert)
  * يدير workflow الأخبار من المسودة إلى النشر
  */
@@ -265,11 +265,11 @@ window.NewsWorkflowManager = (function() {
                 footerButtons: [
                     {
                         text: 'إلغاء',
-                        class: 'btn--outline btn--outline-secondary'
+                        class: 'btn-outline'
                     },
                     {
                         text: 'تعيين الكتّاب',
-                        class: 'btn--primary',
+                        class: 'btn-primary',
                         callback: async () => {
                             const modalElement = document.querySelector('.modal.active');
                             
@@ -613,11 +613,11 @@ window.NewsWorkflowManager = (function() {
                     footerButtons: [
                         {
                             text: 'إلغاء',
-                            class: 'btn--outline btn--outline-secondary'
+                            class: 'btn-outline'
                         },
                         {
                             text: 'نشر الخبر',
-                            class: 'btn--primary',
+                            class: 'btn-primary',
                             callback: async () => {
                                 const modalElement = document.querySelector('.modal.active');
                                 const isFeatured = modalElement.querySelector('input[name="isFeatured"]').checked;
@@ -905,11 +905,11 @@ window.NewsWorkflowManager = (function() {
                 footerButtons: [
                     {
                         text: 'إلغاء',
-                        class: 'btn--outline btn--outline-secondary'
+                        class: 'btn-outline'
                     },
                     {
                         text: 'حفظ التعديلات',
-                        class: 'btn--primary',
+                        class: 'btn-primary',
                         callback: async () => {
                             const modalElement = document.querySelector('.modal.active');
                             
@@ -1081,3 +1081,4 @@ window.NewsWorkflowManager = (function() {
         handleFieldSelection
     };
 })();
+

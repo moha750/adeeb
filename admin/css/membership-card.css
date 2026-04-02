@@ -263,42 +263,6 @@
     flex-wrap: wrap;
 }
 
-.membership-action-btn {
-    flex: 1;
-    min-width: 200px;
-    padding: 1rem 1.5rem;
-    border-radius: 12px;
-    border: none;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-.membership-action-btn-primary {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    color: white;
-}
-
-.membership-action-btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
-}
-
-.membership-action-btn-secondary {
-    background: white;
-    color: #3b82f6;
-    border: 2px solid #3b82f6;
-}
-
-.membership-action-btn-secondary:hover {
-    background: #f0f9ff;
-    transform: translateY(-2px);
-}
 
 /* حالة البطاقة */
 .membership-status-badge {
@@ -355,9 +319,6 @@
         flex-direction: column;
     }
 
-    .membership-action-btn {
-        min-width: 100%;
-    }
 }
 
 /* طباعة البطاقة */

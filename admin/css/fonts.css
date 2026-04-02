@@ -103,12 +103,6 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
 }
 
-/* الأزرار */
-button,
-.btn {
-    font-family: 'ERA', 'Lyon Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-weight: 500;
-}
 
 /* حقول الإدخال */
 input,

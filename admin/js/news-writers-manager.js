@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام إدارة الكتّاب للأخبار - نادي أدِيب
  * يدير واجهة الكتّاب وتفاعلهم مع الأخبار المعينة لهم
  */
@@ -97,7 +97,7 @@ window.NewsWritersManager = (function() {
         }
 
         container.innerHTML = `
-            <div class="items-grid">
+            <div class="uc-grid">
                 ${filteredAssignments.map(assignment => createAssignmentCard(assignment)).join('')}
             </div>
         `;
@@ -111,52 +111,50 @@ window.NewsWritersManager = (function() {
         const assignedDate = new Date(assignment.assigned_at).toLocaleDateString('ar-SA');
 
         return `
-            <div class="application-card">
-                <div class="application-card-header">
-                    <div class="applicant-info">
-                        <div class="applicant-details">
-                            <h4 class="applicant-name">📰 ${news.title}</h4>
+            <div class="uc-card">
+                <div class="uc-card__header">
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__header-info">
+                            <h4 class="uc-card__title">📰 ${news.title}</h4>
                             <p class="news-card__meta">
                                 <i class="fa-solid fa-sitemap"></i> ${news.committees?.committee_name_ar || 'غير محدد'}
                             </p>
                         </div>
                     </div>
                 </div>
-                <div class="application-card-body">
-                    <div class="application-info-grid">
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ التعيين</span>
-                                <span class="info-value">${assignedDate}</span>
+                <div class="uc-card__body">
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">تاريخ التعيين</span>
+                                <span class="uc-card__info-value">${assignedDate}</span>
                             </div>
                         </div>
-                        <div class="info-item">
-                            <i class="fa-solid fa-user"></i>
-                            <div class="info-content">
-                                <span class="info-label">معين من</span>
-                                <span class="info-value">${assignment.assigned_by_profile?.full_name || 'غير محدد'}</span>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-user"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">معين من</span>
+                                <span class="uc-card__info-value">${assignment.assigned_by_profile?.full_name || 'غير محدد'}</span>
                             </div>
                         </div>
                         ${assignment.assignment_notes ? `
-                            <div class="info-item info-item--full">
-                                <i class="fa-solid fa-note-sticky"></i>
-                                <div class="info-content">
-                                    <span class="info-label">تعليمات</span>
-                                    <span class="info-value">${assignment.assignment_notes}</span>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-note-sticky"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">تعليمات</span>
+                                    <span class="uc-card__info-value">${assignment.assignment_notes}</span>
                                 </div>
                             </div>
                         ` : ''}
                         ${news.review_notes && assignment.status === 'in_progress' ? `
-                            <div class="info-item info-item--full info-box--warning">
-                                <i class="fa-solid fa-exclamation-circle"></i>
-                                <div class="info-content">
-                                    <span class="info-label">ملاحظات المراجعة</span>
-                                    <span class="info-value">${news.review_notes}</span>
+                            <div class="uc-card__info-item info-box--warning">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-exclamation-circle"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">ملاحظات المراجعة</span>
+                                    <span class="uc-card__info-value">${news.review_notes}</span>
                                 </div>
                             </div>
                         ` : ''}
-                    </div>
 
                     ${assignment.status !== 'completed' ? `
                         <div class="progress-container">
@@ -170,21 +168,21 @@ window.NewsWritersManager = (function() {
                         </div>
                     ` : ''}
                 </div>
-                <div class="application-card-footer">
+                <div class="uc-card__footer">
                     ${statusBadge}
                     <div class="news-card__actions">
                         ${assignment.status === 'pending' ? `
-                            <button class="btn btn--primary btn--sm" onclick="NewsWritersManager.startWriting('${assignment.id}')">
+                            <button class="btn btn-primary btn-sm" onclick="NewsWritersManager.startWriting('${assignment.id}')">
                                 <i class="fa-solid fa-play"></i>
                                 بدء الكتابة
                             </button>
                         ` : assignment.status === 'in_progress' ? `
-                            <button class="btn btn--primary btn--sm" onclick="NewsWritersManager.continueWriting('${assignment.id}')">
+                            <button class="btn btn-primary btn-sm" onclick="NewsWritersManager.continueWriting('${assignment.id}')">
                                 <i class="fa-solid fa-pen"></i>
                                 متابعة الكتابة
                             </button>
                         ` : `
-                            <button class="btn btn--outline btn--outline-primary btn--sm" onclick="NewsWritersManager.viewNews('${news.id}')">
+                            <button class="btn btn-outline btn-sm" onclick="NewsWritersManager.viewNews('${news.id}')">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض
                             </button>
@@ -387,11 +385,11 @@ window.NewsWritersManager = (function() {
             footerButtons: [
                 {
                     text: 'إلغاء',
-                    class: 'btn--outline btn--outline-secondary'
+                    class: 'btn-outline'
                 },
                 {
                     text: '<i class="fa-solid fa-save"></i> حفظ المسودة',
-                    class: 'btn--outline btn--outline-primary',
+                    class: 'btn-outline',
                     callback: async () => {
                         const saved = await saveNewsContentNew(assignment, availableFields, false);
                         if (saved) {
@@ -403,7 +401,7 @@ window.NewsWritersManager = (function() {
                 },
                 {
                     text: '<i class="fa-solid fa-paper-plane"></i> إرسال للمراجعة',
-                    class: 'btn--primary',
+                    class: 'btn-primary',
                     callback: async () => {
                         const saved = await saveNewsContentNew(assignment, availableFields, true);
                         if (saved) {
@@ -742,3 +740,5 @@ window.NewsWritersManager = (function() {
         viewNews
     };
 })();
+
+

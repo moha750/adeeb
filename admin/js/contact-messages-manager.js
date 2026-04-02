@@ -149,7 +149,7 @@ class ContactMessagesManager {
         }
 
         const cardsHtml = `
-            <div class="applications-cards-grid">
+            <div class="uc-grid">
                 ${filteredMessages.map(message => this.renderMessageCard(message)).join('')}
             </div>
         `;
@@ -188,60 +188,55 @@ class ContactMessagesManager {
             : this.escapeHtml(message.message);
 
         return `
-            <div class="application-card ${message.status === 'new' ? 'new-message' : ''}">
-                <div class="application-card-header">
-                    <div class="applicant-info">
-                        <div class="applicant-avatar">
+            <div class="uc-card ${message.status === 'new' ? 'uc-card--new' : ''}">
+                <div class="uc-card__header ${message.status === 'new' ? '' : 'uc-card__header--neutral'}">
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__icon">
                             <i class="fa-solid fa-envelope"></i>
                         </div>
-                        <div class="applicant-details">
-                            <h3 class="applicant-name">${this.escapeHtml(message.name)}</h3>
-                            <div>
+                        <div class="uc-card__header-info">
+                            <h3 class="uc-card__title">${this.escapeHtml(message.name)}</h3>
+                            <span class="uc-card__badge">
                                 ${statusBadges[message.status] || statusBadges.new}
-                                ${priorityBadges[message.priority] || priorityBadges.normal}
-                            </div>
+                                ${message.priority && message.priority !== 'normal' ? ' · ' + (priorityBadges[message.priority] || '') : ''}
+                            </span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="application-card-body">
-                    <div class="application-info-grid">
-                        <div class="info-item">
-                            <i class="fa-solid fa-at"></i>
-                            <div class="info-content">
-                                <span class="info-label">البريد الإلكتروني</span>
-                                <span class="info-value">${this.escapeHtml(message.email)}</span>
-                            </div>
+
+                <div class="uc-card__body">
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-at"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">البريد الإلكتروني</span>
+                            <span class="uc-card__info-value">${this.escapeHtml(message.email)}</span>
                         </div>
-                        
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ الإرسال</span>
-                                <span class="info-value">${date} - ${time}</span>
-                            </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">تاريخ الإرسال</span>
+                            <span class="uc-card__info-value">${date} - ${time}</span>
                         </div>
-                        
-                        <div class="info-item full-width">
-                            <i class="fa-solid fa-tag"></i>
-                            <div class="info-content">
-                                <span class="info-label">الموضوع</span>
-                                <span class="info-value">${message.subject ? this.escapeHtml(message.subject) : 'بدون موضوع'}</span>
-                            </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-tag"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">الموضوع</span>
+                            <span class="uc-card__info-value">${message.subject ? this.escapeHtml(message.subject) : 'بدون موضوع'}</span>
                         </div>
-                        
-                        <div class="info-item full-width">
-                            <i class="fa-solid fa-message"></i>
-                            <div class="info-content">
-                                <span class="info-label">محتوى الرسالة</span>
-                                <span class="info-value">${messagePreview}</span>
-                            </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-message"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">محتوى الرسالة</span>
+                            <span class="uc-card__info-value" style="white-space:normal;">${messagePreview}</span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="application-card-footer">
-                    <button class="btn-view-details" onclick="contactMessagesManager.viewMessage('${message.id}')">
+
+                <div class="uc-card__footer">
+                    <button class="btn btn-primary btn-block" onclick="contactMessagesManager.viewMessage('${message.id}')">
                         <i class="fa-solid fa-eye"></i>
                         عرض التفاصيل الكاملة
                     </button>

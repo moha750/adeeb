@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inputs System v3 — Preview</title>
+    <link rel="stylesheet" href="design-tokens.css">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="buttons-system.css">
+    <link rel="stylesheet" href="inputs-system.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-family-base, 'Segoe UI', system-ui, sans-serif);
+            background: #f1f5f9;
+            color: #0f172a;
+            padding: 2rem;
+            min-height: 100vh;
+            direction: rtl;
+        }
+
+        /* ── Page Header ── */
+        .page-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-radius: 1.5rem;
+            padding: 2rem 2.5rem;
+            margin-bottom: 2.5rem;
+            color: white;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.25);
+            position: relative;
+            overflow: hidden;
+        }
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -60px; left: -60px;
+            width: 220px; height: 220px;
+            background: radial-gradient(circle, rgba(61,143,214,0.12) 0%, transparent 68%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            position: relative;
+            z-index: 1;
+        }
+        .page-header h1 i {
+            color: #60a5fa;
+            background: rgba(59,130,246,0.15);
+            padding: 8px;
+            border-radius: 10px;
+        }
+        .page-header p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            position: relative;
+            z-index: 1;
+        }
+        .page-header .badge-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.8rem;
+            position: relative;
+            z-index: 1;
+        }
+        .page-header .badge {
+            background: rgba(255,255,255,0.10);
+            border: 1px solid rgba(255,255,255,0.16);
+            color: rgba(255,255,255,0.80);
+            padding: 0.22rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+
+        /* ── Section ── */
+        .section { margin-bottom: 2.5rem; }
+
+        .section-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #475569;
+            margin-bottom: 1.1rem;
+            padding-bottom: 0.55rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+        }
+        .section-title::before {
+            content: '';
+            width: 3px;
+            height: 14px;
+            background: linear-gradient(180deg, #80aace, #0b4fa7);
+            border-radius: 2px;
+        }
+
+        /* ── Demo Grids ── */
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.25rem;
+        }
+        .demo-grid.cols-1 { grid-template-columns: 1fr; }
+        .demo-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+        .demo-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+
+        @media (max-width: 768px) {
+            .demo-grid,
+            .demo-grid.cols-2,
+            .demo-grid.cols-3 { grid-template-columns: 1fr; }
+            body { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ─── Page Header ─────────────────────────────────────── -->
+<div class="page-header">
+    <h1><i class="fa-solid fa-keyboard"></i> Inputs System v3 — Preview</h1>
+    <p>نظام حقول الإدخال · Gradient Fill · متوافق مع buttons-system.css · unified-cards.css · stats-cards.css</p>
+    <div class="badge-row">
+        <span class="badge">form-* naming</span>
+        <span class="badge">Gradient Fill</span>
+        <span class="badge">RTL Ready</span>
+        <span class="badge">Accessible</span>
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 1 · Basic Text Inputs                                -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 1 · Basic Text Inputs — .form-input</div>
+    <div class="demo-grid">
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-regular fa-user"></i></span>
+                اسم المستخدم
+                <span class="required-dot">*</span>
+            </label>
+            <input type="text" class="form-input" placeholder="أدخل الاسم الكامل">
+            <span class="form-hint">سيظهر هذا الاسم في ملفك الشخصي</span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-regular fa-envelope"></i></span>
+                البريد الإلكتروني
+            </label>
+            <input type="email" class="form-input" placeholder="example@adeeb.sa">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-solid fa-lock"></i></span>
+                كلمة المرور
+                <span class="required-dot">*</span>
+            </label>
+            <div class="form-input-wrap has-icon-end">
+                <input type="password" class="form-input" placeholder="••••••••" id="pwField">
+                <span class="form-icon-end clickable" onclick="togglePw()" title="إظهار/إخفاء">
+                    <i class="fa-regular fa-eye" id="pwEye"></i>
+                </span>
+            </div>
+            <span class="form-hint">8 أحرف على الأقل</span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-solid fa-hashtag"></i></span>
+                رقم العضوية
+            </label>
+            <input type="number" class="form-input" placeholder="1001" min="1">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-solid fa-phone"></i></span>
+                رقم الهاتف
+            </label>
+            <input type="tel" class="form-input" placeholder="+966 5X XXX XXXX">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-solid fa-link"></i></span>
+                الموقع الإلكتروني
+            </label>
+            <input type="url" class="form-input" placeholder="https://example.com">
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 2 · Input with Icons                                 -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 2 · Input with Icons — .form-input-wrap + .form-icon-*</div>
+    <div class="demo-grid">
+
+        <div class="form-group">
+            <label class="form-label">أيقونة بداية</label>
+            <div class="form-input-wrap has-icon-start">
+                <span class="form-icon-start"><i class="fa-solid fa-user"></i></span>
+                <input type="text" class="form-input" placeholder="ابحث باسم العضو">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">أيقونة نهاية</label>
+            <div class="form-input-wrap has-icon-end">
+                <input type="text" class="form-input" placeholder="رابط المنصة">
+                <span class="form-icon-end"><i class="fa-brands fa-twitter"></i></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">أيقونتان — بداية ونهاية</label>
+            <div class="form-input-wrap has-icon-start has-icon-end">
+                <span class="form-icon-start"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="text" class="form-input" placeholder="بحث متقدم...">
+                <span class="form-icon-end clickable" title="مسح">
+                    <i class="fa-solid fa-xmark"></i>
+                </span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Search Bar — Pill</label>
+            <div class="form-input-wrap form-search-bar has-icon-start has-icon-end">
+                <span class="form-icon-start"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="search" class="form-input" placeholder="ابحث عن عضو، خبر، فعالية...">
+                <span class="form-icon-end clickable">
+                    <i class="fa-solid fa-xmark"></i>
+                </span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 4 · States                                           -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 4 · States — has-error / has-success / disabled / readonly</div>
+    <div class="demo-grid">
+
+        <!-- Error -->
+        <div class="form-group has-error">
+            <label class="form-label">
+                البريد الإلكتروني <span class="required-dot">*</span>
+            </label>
+            <div class="form-input-wrap has-icon-start has-icon-end">
+                <span class="form-icon-start"><i class="fa-regular fa-envelope"></i></span>
+                <input type="email" class="form-input is-invalid" value="invalid-email" placeholder="example@adeeb.sa">
+                <span class="form-icon-end form-validation-icon is-error">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                </span>
+            </div>
+            <span class="form-error">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                البريد الإلكتروني غير صحيح
+            </span>
+        </div>
+
+        <!-- Success -->
+        <div class="form-group has-success">
+            <label class="form-label">اسم المستخدم</label>
+            <div class="form-input-wrap has-icon-start has-icon-end">
+                <span class="form-icon-start"><i class="fa-regular fa-user"></i></span>
+                <input type="text" class="form-input is-valid" value="محمد الأحمدي" placeholder="">
+                <span class="form-icon-end form-validation-icon is-success">
+                    <i class="fa-solid fa-circle-check"></i>
+                </span>
+            </div>
+            <span class="form-success">
+                <i class="fa-solid fa-circle-check"></i>
+                الاسم متاح
+            </span>
+        </div>
+
+        <!-- Disabled -->
+        <div class="form-group">
+            <label class="form-label">Disabled</label>
+            <input type="text" class="form-input" placeholder="هذا الحقل معطّل" disabled>
+        </div>
+
+        <!-- Readonly -->
+        <div class="form-group">
+            <label class="form-label">Readonly</label>
+            <input type="text" class="form-input" value="قيمة ثابتة للعرض فقط" readonly>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 5 · Select                                           -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 5 · Select — .form-select</div>
+    <div class="demo-grid">
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-solid fa-layer-group"></i></span>
+                الفئة
+            </label>
+            <select class="form-input form-select">
+                <option value="" disabled selected>اختر فئة...</option>
+                <option>عضو عامل</option>
+                <option>عضو مشارك</option>
+                <option>عضو شرفي</option>
+                <option>منسّق</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-solid fa-globe"></i></span>
+                المنطقة + أيقونة
+            </label>
+            <div class="form-input-wrap has-icon-start">
+                <span class="form-icon-start"><i class="fa-solid fa-map-pin"></i></span>
+                <select class="form-input form-select">
+                    <option value="" disabled selected>اختر المنطقة...</option>
+                    <option>الرياض</option>
+                    <option>جدة</option>
+                    <option>الدمام</option>
+                    <option>مكة المكرمة</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-solid fa-tags"></i></span>
+                الاهتمامات — Multi-select
+            </label>
+            <select class="form-input form-select" multiple>
+                <option>الشعر والأدب</option>
+                <option>القصة القصيرة</option>
+                <option>الرواية</option>
+                <option>المقالة</option>
+                <option>النقد الأدبي</option>
+                <option>السيرة الذاتية</option>
+            </select>
+            <span class="form-hint">اضغط Ctrl/Cmd للاختيار المتعدد</span>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 6 · Textarea                                         -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 6 · Textarea — .form-textarea</div>
+    <div class="demo-grid cols-2">
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-regular fa-file-lines"></i></span>
+                النبذة الشخصية
+            </label>
+            <textarea class="form-input form-textarea" rows="4" id="bioField"
+                placeholder="اكتب نبذة مختصرة عن نفسك..."></textarea>
+            <div class="form-counter" id="bioCounter">0 / 300</div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-regular fa-comment-dots"></i></span>
+                ملاحظات (للقراءة فقط)
+            </label>
+            <textarea class="form-input form-textarea" rows="4" readonly
+                placeholder="هذا الحقل للقراءة فقط">نص تجريبي للقراءة فقط.</textarea>
+            <span class="form-hint">هذا الحقل للقراءة فقط</span>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 7 · Checkbox                                         -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 7 · Checkbox — .form-checkbox</div>
+    <div class="demo-grid cols-3">
+
+        <div class="form-checkbox-group">
+            <label class="form-checkbox">
+                <input type="checkbox" checked>
+                <span>
+                    <span class="form-checkbox-label">عضو نشط</span>
+                    <span class="form-checkbox-hint">يظهر في الدليل العام</span>
+                </span>
+            </label>
+            <label class="form-checkbox">
+                <input type="checkbox">
+                <span>
+                    <span class="form-checkbox-label">أوافق على الشروط</span>
+                </span>
+            </label>
+            <label class="form-checkbox">
+                <input type="checkbox" disabled>
+                <span>
+                    <span class="form-checkbox-label">خيار معطّل</span>
+                </span>
+            </label>
+            <label class="form-checkbox">
+                <input type="checkbox" id="indeterminate">
+                <span>
+                    <span class="form-checkbox-label">Indeterminate</span>
+                </span>
+            </label>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+            <span class="form-label" style="margin-bottom:0.5rem;">الاهتمامات — أفقي</span>
+            <div class="form-checkbox-group horizontal">
+                <label class="form-checkbox">
+                    <input type="checkbox" checked>
+                    <span class="form-checkbox-label">شعر</span>
+                </label>
+                <label class="form-checkbox">
+                    <input type="checkbox" checked>
+                    <span class="form-checkbox-label">رواية</span>
+                </label>
+                <label class="form-checkbox">
+                    <input type="checkbox">
+                    <span class="form-checkbox-label">قصة</span>
+                </label>
+                <label class="form-checkbox">
+                    <input type="checkbox">
+                    <span class="form-checkbox-label">مسرح</span>
+                </label>
+                <label class="form-checkbox">
+                    <input type="checkbox">
+                    <span class="form-checkbox-label">نقد أدبي</span>
+                </label>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 8 · Radio                                            -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 8 · Radio — .form-radio</div>
+    <div class="demo-grid cols-2">
+
+        <div class="form-group">
+            <span class="form-label" style="margin-bottom:0.5rem;">نوع العضوية</span>
+            <div class="form-radio-group">
+                <label class="form-radio">
+                    <input type="radio" name="membership" checked>
+                    <span>
+                        <span class="form-radio-label">عضو عامل</span>
+                        <span class="form-radio-hint">حضور فعلي في الجلسات</span>
+                    </span>
+                </label>
+                <label class="form-radio">
+                    <input type="radio" name="membership">
+                    <span>
+                        <span class="form-radio-label">عضو مشارك</span>
+                        <span class="form-radio-hint">مشاركة عن بُعد</span>
+                    </span>
+                </label>
+                <label class="form-radio">
+                    <input type="radio" name="membership" disabled>
+                    <span>
+                        <span class="form-radio-label">عضو شرفي (مغلق)</span>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <span class="form-label" style="margin-bottom:0.5rem;">الجنس — أفقي</span>
+            <div class="form-radio-group horizontal">
+                <label class="form-radio">
+                    <input type="radio" name="gender" checked>
+                    <span class="form-radio-label">ذكر</span>
+                </label>
+                <label class="form-radio">
+                    <input type="radio" name="gender">
+                    <span class="form-radio-label">أنثى</span>
+                </label>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 9 · Switch                                           -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 9 · Switch — .form-switch</div>
+    <div class="demo-grid cols-3">
+
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <label class="form-switch">
+                <input type="checkbox" checked>
+                <span class="form-switch-label">تفعيل الإشعارات</span>
+            </label>
+            <label class="form-switch">
+                <input type="checkbox">
+                <span class="form-switch-label">الوضع المظلم</span>
+            </label>
+            <label class="form-switch">
+                <input type="checkbox" disabled>
+                <span class="form-switch-label">خاصية معطّلة</span>
+            </label>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <label class="form-switch form-switch-success">
+                <input type="checkbox" checked>
+                <span class="form-switch-label">Success (green)</span>
+            </label>
+            <label class="form-switch form-switch-danger">
+                <input type="checkbox" checked>
+                <span class="form-switch-label">Danger (red)</span>
+            </label>
+            <label class="form-switch form-switch-warning">
+                <input type="checkbox" checked>
+                <span class="form-switch-label">Warning (amber)</span>
+            </label>
+            <label class="form-switch form-switch-violet">
+                <input type="checkbox" checked>
+                <span class="form-switch-label">Violet</span>
+            </label>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 10 · Date / Time                                     -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 10 · Date / Time / Datetime</div>
+    <div class="demo-grid">
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-regular fa-calendar"></i></span>
+                تاريخ الميلاد
+            </label>
+            <input type="date" class="form-input">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-regular fa-clock"></i></span>
+                وقت الجلسة
+            </label>
+            <input type="time" class="form-input">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-regular fa-calendar-check"></i></span>
+                موعد الفعالية
+            </label>
+            <input type="datetime-local" class="form-input">
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 11 · File Upload                                     -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 11 · File Upload — .form-file + .form-dropzone</div>
+    <div class="demo-grid cols-2">
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+                رفع صورة الغلاف
+            </label>
+            <div class="form-file">
+                <input type="file" accept="image/*">
+                <div class="form-dropzone">
+                    <div class="form-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                    <div class="form-dropzone-title">اسحب وأفلت الصورة هنا</div>
+                    <div class="form-dropzone-hint">أو انقر للاختيار · PNG, JPG حتى 5MB</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-solid fa-paperclip"></i></span>
+                المرفقات + Preview
+            </label>
+            <div class="form-file">
+                <input type="file" multiple>
+                <div class="form-dropzone form-dropzone-compact">
+                    <div class="form-dropzone-icon"><i class="fa-solid fa-paperclip"></i></div>
+                    <div>
+                        <div class="form-dropzone-title">انقر لرفع الملفات</div>
+                        <div class="form-dropzone-hint">PDF, DOC, DOCX حتى 10MB</div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-file-list">
+                <div class="form-file-item">
+                    <div class="form-file-icon"><i class="fa-regular fa-file-pdf"></i></div>
+                    <span class="form-file-name">report-2025.pdf</span>
+                    <span class="form-file-size">2.4 MB</span>
+                    <button class="form-file-remove"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="form-file-item">
+                    <div class="form-file-icon"><i class="fa-regular fa-file-word"></i></div>
+                    <span class="form-file-name">meeting-notes.docx</span>
+                    <span class="form-file-size">480 KB</span>
+                    <button class="form-file-remove"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 12 · Range Slider                                    -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 12 · Range Slider — .form-range</div>
+    <div class="demo-grid cols-2">
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-solid fa-sliders"></i></span>
+                مستوى الخبرة
+            </label>
+            <div class="form-range-wrap">
+                <input type="range" class="form-range" min="0" max="100" value="65" id="rangeA"
+                    oninput="updateRange(this,'valA')"
+                    style="background: linear-gradient(to left, rgba(61,143,214,0.14) 35%, #3d77bc 35%)">
+                <div class="form-range-labels">
+                    <span>مبتدئ</span>
+                    <span class="form-range-value" id="valA">65</span>
+                    <span>محترف</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon"><i class="fa-solid fa-star"></i></span>
+                التقييم
+            </label>
+            <div class="form-range-wrap">
+                <input type="range" class="form-range" min="1" max="5" value="4" step="1" id="rangeB"
+                    oninput="updateRange(this,'valB','#10b981')"
+                    style="background: linear-gradient(to left, rgba(61,143,214,0.14) 20%, #10b981 20%)">
+                <div class="form-range-labels">
+                    <span>1</span>
+                    <span class="form-range-value" id="valB">4</span>
+                    <span>5</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 13 · Floating Label                                  -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 13 · Floating Label — .form-float</div>
+    <div class="demo-grid">
+
+        <div class="form-group">
+            <div class="form-float">
+                <input type="text" class="form-input" placeholder=" " id="floatA">
+                <label class="form-float-label" for="floatA">الاسم الكامل</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="form-float has-icon-start">
+                <span class="form-icon-start"><i class="fa-regular fa-envelope"></i></span>
+                <input type="email" class="form-input" placeholder=" " id="floatB">
+                <label class="form-float-label" for="floatB">البريد الإلكتروني</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="form-float is-floated">
+                <select class="form-input form-select" id="floatC">
+                    <option value="" disabled selected hidden></option>
+                    <option>عضو عامل</option>
+                    <option>عضو مشارك</option>
+                </select>
+                <label class="form-float-label" for="floatC">نوع العضوية</label>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 14 · Addon                                           -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 14 · Addon — .form-addon-group + .form-addon-btn</div>
+    <div class="demo-grid cols-2">
+
+        <div class="form-group">
+            <label class="form-label">رابط تويتر</label>
+            <div class="form-addon-group">
+                <span class="form-addon form-addon-start">twitter.com/</span>
+                <input type="text" class="form-input" placeholder="username">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">البحث السريع</label>
+            <div class="form-addon-group">
+                <input type="text" class="form-input" placeholder="ابحث عن عضو...">
+                <button class="form-addon-btn">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    بحث
+                </button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">المبلغ — addon على الطرفين</label>
+            <div class="form-addon-group">
+                <span class="form-addon form-addon-start">ر.س</span>
+                <input type="number" class="form-input" placeholder="0.00">
+                <span class="form-addon form-addon-end">.00</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 15 · Form Section                                    -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 15 · Form Section — .form-section</div>
+    <div class="demo-grid cols-1" style="max-width:680px;">
+
+        <div class="form-section">
+            <label class="form-section-label">
+                <i class="fa-solid fa-users"></i>
+                اختيار المراجعين
+            </label>
+            <span class="form-section-hint">اختر من قائمة أعضاء اللجنة المؤهلين لمراجعة هذا المحتوى</span>
+            <div class="form-section-scroll">
+                <div class="form-checkbox-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" checked>
+                        <span class="form-checkbox-label">أحمد الزهراني</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox">
+                        <span class="form-checkbox-label">سارة المطيري</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox" checked>
+                        <span class="form-checkbox-label">خالد العنزي</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox">
+                        <span class="form-checkbox-label">نورة القحطاني</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 16 · Form Row                                        -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 16 · Form Row — .form-row</div>
+    <div class="demo-grid cols-1" style="max-width:680px;">
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">وقت البداية</label>
+                <input type="time" class="form-input" value="09:00">
+            </div>
+            <div class="form-group">
+                <label class="form-label">وقت النهاية</label>
+                <input type="time" class="form-input" value="11:00">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">البحث</label>
+                <div class="form-input-wrap has-icon-start">
+                    <span class="form-icon-start"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" class="form-input" placeholder="اسم العضو...">
+                </div>
+            </div>
+            <div class="form-row-action">
+                <button class="btn btn-primary" style="height:100%;">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    بحث
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 17 · Form Card — Color Variants                      -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 17 · Form Card — .form-card + color variants</div>
+    <div class="demo-grid">
+
+        <!-- Primary (default) -->
+        <div class="form-card form-card--primary">
+            <div class="form-card-header">
+                <div class="form-card-header-inner">
+                    <div class="form-card-header-icon"><i class="fa-solid fa-user-pen"></i></div>
+                    <div>
+                        <h3>تعديل الملف الشخصي</h3>
+                        <p>primary variant</p>
+                    </div>
+                </div>
+            </div>
+            <div class="form-card-body">
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">الاسم الأول <span class="required-dot">*</span></label>
+                        <input type="text" class="form-input" placeholder="محمد">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">اسم العائلة</label>
+                        <input type="text" class="form-input" placeholder="الأحمدي">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">البريد الإلكتروني</label>
+                    <div class="form-input-wrap has-icon-start">
+                        <span class="form-icon-start"><i class="fa-regular fa-envelope"></i></span>
+                        <input type="email" class="form-input" placeholder="example@adeeb.sa">
+                    </div>
+                </div>
+                <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                    <label class="form-switch">
+                        <input type="checkbox" checked>
+                        <span class="form-switch-label">عرض الملف للعموم</span>
+                    </label>
+                    <label class="form-switch form-switch-success">
+                        <input type="checkbox" checked>
+                        <span class="form-switch-label">إشعارات البريد</span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-card-footer">
+                <button class="btn btn-slate btn-sm">إلغاء</button>
+                <button class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    حفظ
+                </button>
+            </div>
+        </div>
+
+        <!-- Success -->
+        <div class="form-card form-card--success">
+            <div class="form-card-header">
+                <div class="form-card-header-inner">
+                    <div class="form-card-header-icon"><i class="fa-solid fa-circle-check"></i></div>
+                    <div>
+                        <h3>تأكيد القبول</h3>
+                        <p>success variant</p>
+                    </div>
+                </div>
+            </div>
+            <div class="form-card-body">
+                <div class="form-group">
+                    <label class="form-label">رقم العضوية الممنوحة</label>
+                    <input type="text" class="form-input" placeholder="ADR-2025-001">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ملاحظة القبول</label>
+                    <textarea class="form-input form-textarea" rows="3" placeholder="اكتب ملاحظة للعضو..."></textarea>
+                </div>
+            </div>
+            <div class="form-card-footer">
+                <button class="btn btn-success btn-sm">
+                    <i class="fa-solid fa-check"></i>
+                    تأكيد القبول
+                </button>
+            </div>
+        </div>
+
+        <!-- Danger -->
+        <div class="form-card form-card--danger">
+            <div class="form-card-header">
+                <div class="form-card-header-inner">
+                    <div class="form-card-header-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div>
+                        <h3>سبب الرفض</h3>
+                        <p>danger variant</p>
+                    </div>
+                </div>
+            </div>
+            <div class="form-card-body">
+                <div class="form-group">
+                    <label class="form-label">السبب <span class="required-dot">*</span></label>
+                    <select class="form-input form-select">
+                        <option value="" disabled selected>اختر السبب...</option>
+                        <option>عدم استيفاء الشروط</option>
+                        <option>بيانات ناقصة</option>
+                        <option>تكرار الطلب</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">تفاصيل إضافية</label>
+                    <textarea class="form-input form-textarea" rows="2" placeholder="اكتب السبب بالتفصيل..."></textarea>
+                </div>
+            </div>
+            <div class="form-card-footer">
+                <button class="btn btn-danger btn-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                    تأكيد الرفض
+                </button>
+            </div>
+        </div>
+
+        <!-- Violet -->
+        <div class="form-card form-card--violet">
+            <div class="form-card-header">
+                <div class="form-card-header-inner">
+                    <div class="form-card-header-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div>
+                        <h3>إعدادات متقدمة</h3>
+                        <p>violet variant</p>
+                    </div>
+                </div>
+            </div>
+            <div class="form-card-body">
+                <div class="form-group">
+                    <label class="form-label">مستوى الصلاحية</label>
+                    <select class="form-input form-select">
+                        <option>قراءة فقط</option>
+                        <option selected>مشرف</option>
+                        <option>مدير</option>
+                    </select>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:0.6rem;">
+                    <label class="form-switch form-switch-violet">
+                        <input type="checkbox" checked>
+                        <span class="form-switch-label">تفعيل الصلاحيات المتقدمة</span>
+                    </label>
+                    <label class="form-switch form-switch-violet">
+                        <input type="checkbox">
+                        <span class="form-switch-label">وصول API</span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-card-footer">
+                <button class="btn btn-violet btn-sm">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    حفظ الإعدادات
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 18 · Form Actions                                    -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 18 · Form Actions — .form-actions</div>
+    <div class="demo-grid cols-1" style="max-width:600px; display:flex; flex-direction:column; gap:1rem;">
+
+        <div style="background:#fff; border-radius:14px; padding:1.2rem; border:1px solid rgba(61,143,214,0.15);">
+            <div class="form-actions">
+                <button class="btn btn-slate btn-sm">إلغاء</button>
+                <button class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    حفظ التغييرات
+                </button>
+            </div>
+        </div>
+
+        <div style="background:#fff; border-radius:14px; padding:1.2rem; border:1px solid rgba(61,143,214,0.15);">
+            <div class="form-actions form-actions-stretch">
+                <button class="btn btn-slate">إلغاء</button>
+                <button class="btn btn-primary">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    إرسال الطلب
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- § 19 · edit-form-* (surveys-edit-modal compatibility)  -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">§ 19 · edit-form-* — توافق surveys-edit-modal.js</div>
+    <div class="demo-grid cols-1" style="max-width:620px;">
+
+        <div class="edit-form-section">
+            <div class="edit-form-section-title">
+                <i class="fa-regular fa-file-lines"></i>
+                معلومات الاستبيان
+            </div>
+            <input type="text" class="edit-form-input" placeholder="عنوان الاستبيان">
+        </div>
+
+        <div class="edit-form-section">
+            <div class="edit-form-section-title">
+                <i class="fa-regular fa-calendar"></i>
+                المدة الزمنية
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
+                <div>
+                    <label class="form-label">تاريخ البداية</label>
+                    <input type="datetime-local" class="edit-form-input">
+                </div>
+                <div>
+                    <label class="form-label">تاريخ النهاية</label>
+                    <input type="datetime-local" class="edit-form-input">
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<script>
+    /* ── Password toggle ── */
+    function togglePw() {
+        const f   = document.getElementById('pwField');
+        const eye = document.getElementById('pwEye');
+        if (f.type === 'password') {
+            f.type = 'text';
+            eye.className = 'fa-regular fa-eye-slash';
+        } else {
+            f.type = 'password';
+            eye.className = 'fa-regular fa-eye';
+        }
+    }
+
+    /* ── Range fill ── */
+    function updateRange(el, valId, color) {
+        const pct  = ((el.value - el.min) / (el.max - el.min)) * 100;
+        const fill = color || '#3d77bc';
+        el.style.background = `linear-gradient(to left,
+            rgba(61,143,214,0.14) ${100 - pct}%,
+            ${fill} ${100 - pct}%)`;
+        document.getElementById(valId).textContent = el.value;
+    }
+
+    /* Init range fills */
+    document.querySelectorAll('.form-range').forEach(r => {
+        const pct  = ((r.value - r.min) / (r.max - r.min)) * 100;
+        const fill = r.id === 'rangeB' ? '#10b981' : '#3d77bc';
+        r.style.background = `linear-gradient(to left,
+            rgba(61,143,214,0.14) ${100 - pct}%,
+            ${fill} ${100 - pct}%)`;
+    });
+
+    /* ── Indeterminate checkbox ── */
+    document.getElementById('indeterminate').indeterminate = true;
+
+    /* ── Textarea counter ── */
+    const ta      = document.getElementById('bioField');
+    const counter = document.getElementById('bioCounter');
+    if (ta && counter) {
+        ta.addEventListener('input', () => {
+            const len = ta.value.length;
+            const max = 300;
+            counter.textContent = `${len} / ${max}`;
+            counter.className   = 'form-counter' +
+                (len >= max       ? ' at-limit'   :
+                 len >= max * 0.85 ? ' near-limit' : '');
+        });
+    }
+</script>
+</body>
+</html>

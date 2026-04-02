@@ -469,7 +469,6 @@ window.initPermissionsSection = async function() {
     const categoryLabels = {
         admin:      'الإدارة',
         membership: 'العضوية',
-        elections:  'الانتخابات',
         news:       'الأخبار',
         surveys:    'الاستبيانات',
         website:    'الموقع'

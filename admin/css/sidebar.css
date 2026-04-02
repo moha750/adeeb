@@ -3,82 +3,7 @@
    متوافق مع هوية نادي أدِيب
    ============================================================================ */
 
-:root {
-    --sidebar-width: 280px;
-    --sidebar-collapsed-width: 70px;
-    --main-blue: #274060;
-    --accent-blue: #3d8fd6;
-    --light-blue: #6ba8e2;
-    --dark-blue: #1a2a3a;
-    --sidebar-bg: linear-gradient(180deg, #274060 0%, #1a2a3a 100%);
-    --sidebar-hover: rgba(61, 143, 214, 0.15);
-    --sidebar-active: rgba(61, 143, 214, 0.25);
-    --sidebar-shadow: 0 10px 40px rgba(39, 64, 96, 0.3);
-    --transition-speed: 0.4s;
-    --transition-ease: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
 
-/* ============================================================================
-   Layout Container
-   ============================================================================ */
-
-.admin-layout {
-    display: flex;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e6f0f9 100%);
-    position: relative;
-}
-
-/* ============================================================================
-   Sidebar Toggle FAB (Floating Action Button)
-   ============================================================================ */
-
-.sidebar-toggle-fab {
-    position: fixed;
-    top: 50%;
-    right: -30px;
-    transform: translateY(-50%);
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #3d8fd6 0%, #274060 100%);
-    color: white;
-    border: none;
-    box-shadow: 0 8px 25px rgba(61, 143, 214, 0.4);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    z-index: 10;
-}
-
-.sidebar-toggle-fab:hover {
-    right: -25px;
-    transform: translateY(-50%) scale(1.1);
-    box-shadow: 0 12px 35px rgba(61, 143, 214, 0.5);
-    background: linear-gradient(135deg, #4a9ee5 0%, #2c5a7d 100%);
-}
-
-.sidebar-toggle-fab:active {
-    transform: translateY(-50%) scale(0.95);
-}
-
-.sidebar-toggle-fab i {
-    transition: transform 0.3s ease;
-}
-
-.sidebar-toggle-fab:hover i {
-    transform: rotate(90deg);
-}
-
-/* إخفاء الزر عندما يكون الـ Sidebar مفتوح */
-.admin-sidebar.active ~ .sidebar-toggle-fab {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-}
 
 /* ============================================================================
    Sidebar Main Container
@@ -157,12 +82,6 @@
     z-index: 1;
 }
 
-/* إخفاء زر الإغلاق في الشاشات الكبيرة */
-@media (min-width: 1025px) {
-    .admin-sidebar__header .btn--icon {
-        display: none;
-    }
-}
 
 .admin-sidebar__header h3 {
     color: white;
@@ -799,7 +718,7 @@
    Responsive Design
    ============================================================================ */
 
-@media (max-width: 1024px) {
+@media (max-width: 1145px) {
     .admin-sidebar {
         transform: translateX(100%);
     }

@@ -130,18 +130,35 @@
         }
 
         updateScheduleVisibility();
+        updateHeroUI(currentSettings.join_open);
     }
 
     /**
-     * تحديث رؤية إعدادات الجدولة
+     * تحديث Hero Banner حسب حالة الباب
+     */
+    function updateHeroUI(isOpen) {
+        const pill    = document.getElementById('regDoorStatusPill');
+        const label   = document.getElementById('regDoorStatusLabel');
+        const togLabel = document.getElementById('regDoorToggleLabel');
+
+        if (!pill || !label) return;
+
+        if (isOpen) {
+            pill.className   = 'reg-door-status-pill is-open';
+            label.textContent = 'باب التسجيل مفتوح';
+            if (togLabel) { togLabel.textContent = 'الباب مفتوح'; togLabel.className = 'reg-door-toggle-label is-open'; }
+        } else {
+            pill.className   = 'reg-door-status-pill is-closed';
+            label.textContent = 'باب التسجيل مغلق';
+            if (togLabel) { togLabel.textContent = 'الباب مغلق'; togLabel.className = 'reg-door-toggle-label'; }
+        }
+    }
+
+    /**
+     * تحديث رؤية إعدادات الجدولة (دائماً مرئية)
      */
     function updateScheduleVisibility() {
-        const enabled = scheduleToggle.checked;
-        scheduleSettings.style.display = enabled ? 'block' : 'none';
-
-        const mode = scheduleMode.value;
-        openDateGroup.style.display = (mode === 'range' || mode === 'open_only') ? 'block' : 'none';
-        closeDateGroup.style.display = (mode === 'range' || mode === 'close_only') ? 'block' : 'none';
+        // الجدولة دائماً مفعّلة ونمطها range
     }
 
     /**
@@ -149,76 +166,25 @@
      */
     async function saveMembershipSettingsHandler() {
         try {
-            // التحقق من إغلاق باب التسجيل
-            const wasOpen = currentSettings.join_open;
-            const willBeClosed = !joinOpenToggle.checked;
-            
             const settings = {
                 join_open: joinOpenToggle.checked,
-                join_membership_countdown: countdownToggle.checked,
-                join_schedule_enabled: scheduleToggle.checked,
-                join_schedule_mode: scheduleMode.value,
+                join_membership_countdown: true,
+                join_schedule_enabled: true,
+                join_schedule_mode: 'range',
                 join_schedule_open_at: scheduleOpenAt.value ? new Date(scheduleOpenAt.value).toISOString() : null,
                 join_schedule_close_at: scheduleCloseAt.value ? new Date(scheduleCloseAt.value).toISOString() : null,
                 updated_by: currentUser.id
             };
 
-            // إذا تم إغلاق باب التسجيل، اسأل عن الأرشفة
-            if (wasOpen && willBeClosed) {
-                const result = await Swal.fire({
-                    title: 'إغلاق باب التسجيل',
-                    text: 'هل تريد إنشاء أرشيف تلقائي لفترة التسجيل الحالية؟',
-                    icon: 'question',
-                    showCancelButton: true,
-                    showDenyButton: true,
-                    confirmButtonText: 'نعم، إنشاء أرشيف',
-                    denyButtonText: 'لا، إغلاق فقط',
-                    cancelButtonText: 'إلغاء',
-                    confirmButtonColor: '#3b82f6',
-                    denyButtonColor: '#6b7280'
-                });
+            const { error } = await window.sbClient
+                .from('membership_settings')
+                .update(settings)
+                .eq('id', 'default');
 
-                if (result.isDismissed) {
-                    return; // إلغاء العملية
-                }
+            if (error) throw error;
 
-                // حفظ الإعدادات أولاً
-                const { error } = await window.sbClient
-                    .from('membership_settings')
-                    .update(settings)
-                    .eq('id', 'default');
-
-                if (error) throw error;
-
-                // إنشاء الأرشيف إذا وافق المستخدم
-                if (result.isConfirmed) {
-                    try {
-                        const { data: archiveId, error: archiveError } = await window.sbClient.rpc('create_membership_archive');
-                        
-                        if (archiveError) {
-                            console.error('خطأ في إنشاء الأرشيف:', archiveError);
-                            showNotification('تم حفظ الإعدادات ولكن فشل إنشاء الأرشيف', 'warning');
-                        } else {
-                            showNotification('تم حفظ الإعدادات وإنشاء الأرشيف بنجاح', 'success');
-                        }
-                    } catch (archiveError) {
-                        console.error('خطأ في إنشاء الأرشيف:', archiveError);
-                        showNotification('تم حفظ الإعدادات ولكن فشل إنشاء الأرشيف', 'warning');
-                    }
-                } else {
-                    showNotification('تم حفظ الإعدادات بنجاح', 'success');
-                }
-            } else {
-                // حفظ عادي بدون أرشفة
-                const { error } = await window.sbClient
-                    .from('membership_settings')
-                    .update(settings)
-                    .eq('id', 'default');
-
-                if (error) throw error;
-
-                showNotification('تم حفظ الإعدادات بنجاح', 'success');
-            }
+            updateHeroUI(settings.join_open);
+            showNotification('تم حفظ الإعدادات بنجاح', 'success');
 
             currentSettings = { ...currentSettings, ...settings };
         } catch (error) {
@@ -524,13 +490,8 @@
      */
     function bindEvents() {
         // إعدادات التسجيل
-        scheduleToggle.addEventListener('change', updateScheduleVisibility);
-        scheduleMode.addEventListener('change', updateScheduleVisibility);
-        saveMembershipSettings.addEventListener('click', saveMembershipSettingsHandler);
-        resetMembershipSettings.addEventListener('click', () => {
-            loadMembershipSettings();
-            showNotification('تم إعادة تعيين الإعدادات', 'info');
-        });
+        if (joinOpenToggle) joinOpenToggle.addEventListener('change', () => updateHeroUI(joinOpenToggle.checked));
+        if (saveMembershipSettings) saveMembershipSettings.addEventListener('click', saveMembershipSettingsHandler);
 
         // ملاحظة: هذه الأحداث للنموذج القديم فقط (نافذة التفاصيل)
         // أحداث قسم العرض والمراجعة يتم ربطها في دوالها الخاصة
@@ -573,6 +534,30 @@
             'archived': 'badge-secondary'
         };
         return classMap[status] || '';
+    }
+
+    function getStatusHeaderClass(status) {
+        const headerMap = {
+            'new':                    'uc-card__header--info',
+            'under_review':           'uc-card__header--warning',
+            'approved_for_interview': 'uc-card__header--success',
+            'accepted':               'uc-card__header--success',
+            'rejected':               'uc-card__header--danger',
+            'archived':               'uc-card__header--neutral'
+        };
+        return headerMap[status] || '';
+    }
+
+    function getStatusCardClass(status) {
+        const cardMap = {
+            'new':                    'uc-card--info',
+            'under_review':           'uc-card--warning',
+            'approved_for_interview': 'uc-card--success',
+            'accepted':               'uc-card--success',
+            'rejected':               'uc-card--danger',
+            'archived':               'uc-card--neutral'
+        };
+        return cardMap[status] || '';
     }
 
     function formatDateTimeLocal(isoString) {
@@ -685,10 +670,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th class="w-50">الترتيب</th>
                         <th>اسم اللجنة</th>
-                        <th>الوصف</th>
-                        <th class="w-100">المتقدمين</th>
                         <th class="w-120">الحد الأقصى</th>
                         <th class="w-100">الحالة</th>
                     </tr>
@@ -696,41 +678,14 @@
                 <tbody>
         `;
 
-        availableCommittees.forEach((item, index) => {
+        availableCommittees.forEach((item) => {
             const committee = item.committee;
             const isAvailable = item.is_available;
-            const currentCount = item.current_applicants || 0;
-            const maxCount = item.max_applicants || '∞';
-            const isFull = item.max_applicants && currentCount >= item.max_applicants;
 
             html += `
                 <tr>
-                    <td class="text-center">
-                        <div class="d-flex gap-4 justify-content-center">
-                            <button 
-                                class="icon-btn" 
-                                onclick="window.membershipManager.moveCommittee('${item.id}', 'up')"
-                                ${index === 0 ? 'disabled' : ''}
-                                title="تحريك لأعلى">
-                                <i class="fa-solid fa-arrow-up"></i>
-                            </button>
-                            <button 
-                                class="icon-btn" 
-                                onclick="window.membershipManager.moveCommittee('${item.id}', 'down')"
-                                ${index === availableCommittees.length - 1 ? 'disabled' : ''}
-                                title="تحريك لأسفل">
-                                <i class="fa-solid fa-arrow-down"></i>
-                            </button>
-                        </div>
-                    </td>
                     <td>
                         <strong>${committee.committee_name_ar}</strong>
-                    </td>
-                    <td class="max-w-300 text-overflow-ellipsis">
-                        ${committee.description || 'لا يوجد وصف'}
-                    </td>
-                    <td class="text-center">
-                        <span class="badge ${isFull ? 'error' : 'info'}">${currentCount}</span>
                     </td>
                     <td class="text-center">
                         <input 
@@ -1387,7 +1342,7 @@
             return;
         }
 
-        let html = '<div class="applications-cards-grid">';
+        let html = '<div class="uc-grid">';
 
         filtered.forEach(app => {
             const statusBadge = getStatusBadge(app.status);
@@ -1396,79 +1351,77 @@
                 month: 'long',
                 day: 'numeric'
             });
-            
+
             const time = new Date(app.created_at).toLocaleTimeString('ar-SA', {
                 hour: '2-digit',
                 minute: '2-digit'
             });
 
             html += `
-                <div class="application-card">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar">
+                <div class="uc-card ${getStatusCardClass(app.status)}">
+                    <div class="uc-card__header ${getStatusHeaderClass(app.status)}">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
                                 <i class="fa-solid fa-user"></i>
                             </div>
-                            <div class="applicant-details">
-                                <h3 class="applicant-name">${escapeHtml(app.full_name)}</h3>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${escapeHtml(app.full_name)}</h3>
                                 ${statusBadge}
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="application-card-body">
-                        <div class="application-info-grid">
-                            <div class="info-item">
-                                <i class="fa-solid fa-envelope"></i>
-                                <div class="info-content">
-                                    <span class="info-label">البريد الإلكتروني</span>
-                                    <span class="info-value">${escapeHtml(app.email)}</span>
+
+                    <div class="uc-card__body">
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-envelope"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">البريد الإلكتروني</span>
+                                    <span class="uc-card__info-value">${escapeHtml(app.email)}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-phone"></i>
-                                <div class="info-content">
-                                    <span class="info-label">رقم الجوال</span>
-                                    <span class="info-value">${escapeHtml(app.phone || 'غير متوفر')}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">رقم الجوال</span>
+                                    <span class="uc-card__info-value">${escapeHtml(app.phone || 'غير متوفر')}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-calendar"></i>
-                                <div class="info-content">
-                                    <span class="info-label">تاريخ التقديم</span>
-                                    <span class="info-value">${date} - ${time}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">تاريخ التقديم</span>
+                                    <span class="uc-card__info-value">${date} - ${time}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-users"></i>
-                                <div class="info-content">
-                                    <span class="info-label">اللجنة المرغوبة</span>
-                                    <span class="info-value">${escapeHtml(app.preferred_committee || 'غير محدد')}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-users"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">اللجنة المرغوبة</span>
+                                    <span class="uc-card__info-value">${escapeHtml(app.preferred_committee || 'غير محدد')}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-graduation-cap"></i>
-                                <div class="info-content">
-                                    <span class="info-label">الدرجة العلمية</span>
-                                    <span class="info-value">${escapeHtml(app.degree || 'غير محدد')}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">الدرجة العلمية</span>
+                                    <span class="uc-card__info-value">${escapeHtml(app.degree || 'غير محدد')}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item full-width">
-                                <i class="fa-solid fa-star"></i>
-                                <div class="info-content">
-                                    <span class="info-label">المهارات</span>
-                                    <span class="info-value">${escapeHtml(app.skills || 'غير محدد')}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-star"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">المهارات</span>
+                                    <span class="uc-card__info-value">${escapeHtml(app.skills || 'غير محدد')}</span>
                                 </div>
                             </div>
-                        </div>
                     </div>
-                    
-                    <div class="application-card-footer">
+
+                    <div class="uc-card__footer">
                         <button class="btn-view-details" onclick="window.membershipManager.viewApplication('${app.id}')">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل الكاملة
@@ -1633,7 +1586,7 @@
             return;
         }
 
-        let html = '<div class="applications-cards-grid">';
+        let html = '<div class="uc-grid">';
 
         filtered.forEach(app => {
             const statusBadge = getStatusBadge(app.status);
@@ -1642,94 +1595,92 @@
                 month: 'long',
                 day: 'numeric'
             });
-            
+
             const time = new Date(app.created_at).toLocaleTimeString('ar-SA', {
                 hour: '2-digit',
                 minute: '2-digit'
             });
 
             html += `
-                <div class="application-card">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar">
+                <div class="uc-card ${getStatusCardClass(app.status)}">
+                    <div class="uc-card__header ${getStatusHeaderClass(app.status)}">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
                                 <i class="fa-solid fa-user"></i>
                             </div>
-                            <div class="applicant-details">
-                                <h3 class="applicant-name">${escapeHtml(app.full_name)}</h3>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${escapeHtml(app.full_name)}</h3>
                                 ${statusBadge}
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="application-card-body">
-                        <div class="application-info-grid">
-                            <div class="info-item">
-                                <i class="fa-solid fa-envelope"></i>
-                                <div class="info-content">
-                                    <span class="info-label">البريد الإلكتروني</span>
-                                    <span class="info-value">${escapeHtml(app.email)}</span>
+
+                    <div class="uc-card__body">
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-envelope"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">البريد الإلكتروني</span>
+                                    <span class="uc-card__info-value">${escapeHtml(app.email)}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-phone"></i>
-                                <div class="info-content">
-                                    <span class="info-label">رقم الجوال</span>
-                                    <span class="info-value">${escapeHtml(app.phone || 'غير متوفر')}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">رقم الجوال</span>
+                                    <span class="uc-card__info-value">${escapeHtml(app.phone || 'غير متوفر')}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-calendar"></i>
-                                <div class="info-content">
-                                    <span class="info-label">تاريخ التقديم</span>
-                                    <span class="info-value">${date} - ${time}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">تاريخ التقديم</span>
+                                    <span class="uc-card__info-value">${date} - ${time}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-users"></i>
-                                <div class="info-content">
-                                    <span class="info-label">اللجنة المرغوبة</span>
-                                    <span class="info-value">${escapeHtml(app.preferred_committee || 'غير محدد')}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-users"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">اللجنة المرغوبة</span>
+                                    <span class="uc-card__info-value">${escapeHtml(app.preferred_committee || 'غير محدد')}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-graduation-cap"></i>
-                                <div class="info-content">
-                                    <span class="info-label">الدرجة العلمية</span>
-                                    <span class="info-value">${escapeHtml(app.degree || 'غير محدد')}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">الدرجة العلمية</span>
+                                    <span class="uc-card__info-value">${escapeHtml(app.degree || 'غير محدد')}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item full-width">
-                                <i class="fa-solid fa-star"></i>
-                                <div class="info-content">
-                                    <span class="info-label">المهارات</span>
-                                    <span class="info-value">${escapeHtml(app.skills || 'غير محدد')}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-star"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">المهارات</span>
+                                    <span class="uc-card__info-value">${escapeHtml(app.skills || 'غير محدد')}</span>
                                 </div>
                             </div>
-                        </div>
                     </div>
-                    
-                    <div class="application-card-footer">
+
+                    <div class="uc-card__footer">
                         <div class="card-actions-grid">
-                            <button class="btn btn--info btn--sm" onclick="window.membershipManager.viewApplication('${app.id}')">
+                            <button class="btn btn-primary btn-sm" onclick="window.membershipManager.viewApplication('${app.id}')">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض التفاصيل
                             </button>
                             ${app.status === 'new' || app.status === 'under_review' ? `
-                                <button class="btn btn--success btn--sm" onclick="window.membershipManager.approveForInterview('${app.id}')">
+                                <button class="btn btn-success btn-sm" onclick="window.membershipManager.approveForInterview('${app.id}')">
                                     <i class="fa-solid fa-check"></i>
                                     قبول للمقابلة
                                 </button>
-                                <button class="btn btn--warning btn--sm" onclick="window.membershipManager.markUnderReview('${app.id}')">
+                                <button class="btn btn-warning btn-sm" onclick="window.membershipManager.markUnderReview('${app.id}')">
                                     <i class="fa-solid fa-clock"></i>
                                     قيد المراجعة
                                 </button>
-                                <button class="btn btn--danger btn--sm" onclick="window.membershipManager.rejectApplication('${app.id}')">
+                                <button class="btn btn-danger btn-sm" onclick="window.membershipManager.rejectApplication('${app.id}')">
                                     <i class="fa-solid fa-times"></i>
                                     رفض
                                 </button>
@@ -2500,7 +2451,7 @@
             return;
         }
 
-        let html = '<div class="applications-cards-grid">';
+        let html = '<div class="uc-grid">';
 
         filtered.forEach(app => {
             const acceptedAt = app.approved_for_interview_at || app.created_at;
@@ -2511,66 +2462,64 @@
             }) : '-';
 
             html += `
-                <div class="application-card">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar">
+                <div class="uc-card">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
                                 <i class="fa-solid fa-user-clock"></i>
                             </div>
-                            <div class="applicant-details">
-                                <h3 class="applicant-name">${escapeHtml(app.full_name || 'غير محدد')}</h3>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${escapeHtml(app.full_name || 'غير محدد')}</h3>
                                 <span class="badge badge-warning">بانتظار جدولة المقابلة</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="application-card-body">
-                        <div class="application-info-grid">
-                            <div class="info-item">
-                                <i class="fa-solid fa-envelope"></i>
-                                <div class="info-content">
-                                    <span class="info-label">البريد الإلكتروني</span>
-                                    <span class="info-value">${escapeHtml(app.email || 'غير متوفر')}</span>
+                    <div class="uc-card__body">
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-envelope"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">البريد الإلكتروني</span>
+                                    <span class="uc-card__info-value">${escapeHtml(app.email || 'غير متوفر')}</span>
                                 </div>
                             </div>
 
-                            <div class="info-item">
-                                <i class="fa-solid fa-phone"></i>
-                                <div class="info-content">
-                                    <span class="info-label">رقم الجوال</span>
-                                    <span class="info-value">${escapeHtml(app.phone || 'غير متوفر')}</span>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">رقم الجوال</span>
+                                    <span class="uc-card__info-value">${escapeHtml(app.phone || 'غير متوفر')}</span>
                                 </div>
                             </div>
 
-                            <div class="info-item">
-                                <i class="fa-solid fa-users"></i>
-                                <div class="info-content">
-                                    <span class="info-label">اللجنة</span>
-                                    <span class="info-value">${escapeHtml(app.preferred_committee || 'غير محدد')}</span>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-users"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">اللجنة</span>
+                                    <span class="uc-card__info-value">${escapeHtml(app.preferred_committee || 'غير محدد')}</span>
                                 </div>
                             </div>
 
-                            <div class="info-item">
-                                <i class="fa-solid fa-calendar"></i>
-                                <div class="info-content">
-                                    <span class="info-label">تاريخ القبول للمقابلة</span>
-                                    <span class="info-value">${date}</span>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">تاريخ القبول للمقابلة</span>
+                                    <span class="uc-card__info-value">${date}</span>
                                 </div>
                             </div>
-                        </div>
                     </div>
 
-                    <div class="application-card-footer">
+                    <div class="uc-card__footer">
                         <div class="card-actions-grid">
-                            <button class="btn btn--info btn--sm" onclick="window.membershipManager.viewApplication('${app.id}')">
+                            <button class="btn btn-primary btn-sm" onclick="window.membershipManager.viewApplication('${app.id}')">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض التفاصيل
                             </button>
-                            <button class="btn btn--success btn--sm" onclick="window.membershipManager.scheduleInterviewFromBarzakh('${app.id}')">
+                            <button class="btn btn-success btn-sm" onclick="window.membershipManager.scheduleInterviewFromBarzakh('${app.id}')">
                                 <i class="fa-solid fa-calendar-plus"></i>
                                 جدولة مقابلة
                             </button>
-                            <button class="btn btn--danger btn--sm" onclick="window.membershipManager.rejectFromBarzakh('${app.id}', '${escapeHtml(app.full_name || '')}')">
+                            <button class="btn btn-danger btn-sm" onclick="window.membershipManager.rejectFromBarzakh('${app.id}', '${escapeHtml(app.full_name || '')}')">
                                 <i class="fa-solid fa-user-xmark"></i>
                                 حذف/رفض
                             </button>
@@ -2630,7 +2579,7 @@
             return;
         }
 
-        let html = '<div class="applications-cards-grid">';
+        let html = '<div class="uc-grid">';
 
         filtered.forEach(interview => {
             const date = new Date(interview.interview_date).toLocaleDateString('ar-SA', {
@@ -2655,14 +2604,14 @@
             };
 
             html += `
-                <div class="application-card">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar">
+                <div class="uc-card">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
                                 <i class="fa-solid ${typeIcons[interview.interview_type] || 'fa-user-tie'}"></i>
                             </div>
-                            <div class="applicant-details">
-                                <h3 class="applicant-name">${escapeHtml(interview.application?.full_name || 'غير محدد')}</h3>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${escapeHtml(interview.application?.full_name || 'غير محدد')}</h3>
                                 <div>
                                     ${statusBadge}
                                     ${resultBadge}
@@ -2670,90 +2619,88 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="application-card-body">
-                        <div class="application-info-grid">
-                            <div class="info-item">
-                                <i class="fa-solid fa-envelope"></i>
-                                <div class="info-content">
-                                    <span class="info-label">البريد الإلكتروني</span>
-                                    <span class="info-value">${escapeHtml(interview.application?.email || 'غير متوفر')}</span>
+
+                    <div class="uc-card__body">
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-envelope"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">البريد الإلكتروني</span>
+                                    <span class="uc-card__info-value">${escapeHtml(interview.application?.email || 'غير متوفر')}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-phone"></i>
-                                <div class="info-content">
-                                    <span class="info-label">رقم الجوال</span>
-                                    <span class="info-value">${escapeHtml(interview.application?.phone || 'غير متوفر')}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">رقم الجوال</span>
+                                    <span class="uc-card__info-value">${escapeHtml(interview.application?.phone || 'غير متوفر')}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-users"></i>
-                                <div class="info-content">
-                                    <span class="info-label">اللجنة المرغوبة</span>
-                                    <span class="info-value">${escapeHtml(interview.application?.preferred_committee || 'غير محدد')}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-users"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">اللجنة المرغوبة</span>
+                                    <span class="uc-card__info-value">${escapeHtml(interview.application?.preferred_committee || 'غير محدد')}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-calendar-day"></i>
-                                <div class="info-content">
-                                    <span class="info-label">تاريخ المقابلة</span>
-                                    <span class="info-value">${date} - ${time}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-day"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">تاريخ المقابلة</span>
+                                    <span class="uc-card__info-value">${date} - ${time}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid ${typeIcons[interview.interview_type] || 'fa-handshake'}"></i>
-                                <div class="info-content">
-                                    <span class="info-label">نوع المقابلة</span>
-                                    <span class="info-value">${typeBadge}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid ${typeIcons[interview.interview_type] || 'fa-handshake'}"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">نوع المقابلة</span>
+                                    <span class="uc-card__info-value">${typeBadge}</span>
                                 </div>
                             </div>
-                            
+
                             ${interview.location ? `
-                                <div class="info-item">
-                                    <i class="fa-solid fa-location-dot"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">الموقع</span>
-                                        <span class="info-value">${escapeHtml(interview.location)}</span>
+                                <div class="uc-card__info-item">
+                                    <div class="uc-card__info-icon"><i class="fa-solid fa-location-dot"></i></div>
+                                    <div class="uc-card__info-content">
+                                        <span class="uc-card__info-label">الموقع</span>
+                                        <span class="uc-card__info-value">${escapeHtml(interview.location)}</span>
                                     </div>
                                 </div>
                             ` : ''}
-                            
+
                             ${interview.meeting_link ? `
-                                <div class="info-item full-width">
-                                    <i class="fa-solid fa-link"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">رابط المقابلة</span>
-                                        <a href="${escapeHtml(interview.meeting_link)}" target="_blank" class="info-value">
+                                <div class="uc-card__info-item">
+                                    <div class="uc-card__info-icon"><i class="fa-solid fa-link"></i></div>
+                                    <div class="uc-card__info-content">
+                                        <span class="uc-card__info-label">رابط المقابلة</span>
+                                        <a href="${escapeHtml(interview.meeting_link)}" target="_blank" class="uc-card__info-value">
                                             فتح الرابط
                                         </a>
                                     </div>
                                 </div>
                             ` : ''}
-                        </div>
                     </div>
-                    
-                    <div class="application-card-footer">
+
+                    <div class="uc-card__footer">
                         <div class="card-actions-grid">
-                            <button class="btn btn--info btn--sm" onclick="window.membershipManager.viewInterview('${interview.id}')">
+                            <button class="btn btn-primary btn-sm" onclick="window.membershipManager.viewInterview('${interview.id}')">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض التفاصيل
                             </button>
                             ${interview.result === 'pending' || !interview.result ? `
-                                <button class="btn btn--success btn--sm" onclick="window.membershipManager.acceptInterview('${interview.id}')">
+                                <button class="btn btn-success btn-sm" onclick="window.membershipManager.acceptInterview('${interview.id}')">
                                     <i class="fa-solid fa-check"></i>
                                     قبول
                                 </button>
-                                <button class="btn btn--danger btn--sm" onclick="window.membershipManager.rejectInterview('${interview.id}')">
+                                <button class="btn btn-danger btn-sm" onclick="window.membershipManager.rejectInterview('${interview.id}')">
                                     <i class="fa-solid fa-times"></i>
                                     رفض
                                 </button>
                             ` : ''}
-                            <button class="btn btn--warning btn--sm" onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot && interview.slot[0] ? interview.slot[0].id : ''}')">
+                            <button class="btn btn-warning btn-sm" onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot && interview.slot[0] ? interview.slot[0].id : ''}')">
                                 <i class="fa-solid fa-trash-alt"></i>
                                 حذف الموعد
                             </button>
@@ -4385,3 +4332,4 @@ async function archiveMembershipCycle() {
 
 // تصدير الدالة
 window.archiveMembershipCycle = archiveMembershipCycle;
+

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * مدير قسم تعيين المناصب
  */
 
@@ -218,7 +218,7 @@ class PositionsManager {
                     </div>
                     ${showDeleteButton ? `
                     <div class="position-member-actions">
-                        <button class="btn btn--icon btn--icon-sm btn--outline btn--outline-danger" 
+                        <button class="btn btn-icon btn-danger btn-sm" 
                                 onclick="window.positionsManager.removePosition('${member.id}')" 
                                 title="إزالة المنصب">
                             <i class="fa-solid fa-trash"></i>
@@ -602,3 +602,4 @@ window.positionsManager = null;
 if (typeof PositionsManager !== 'undefined') {
     window.PositionsManager = PositionsManager;
 }
+

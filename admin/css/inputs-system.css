@@ -1,0 +1,1820 @@
+/* ============================================================
+   نظام حقول الإدخال — Inputs System  v3
+   Gradient Fill · Premium · Production-ready · Fully Accessible
+   متوافق مع: unified-cards.css & stats-cards.css & buttons-system.css
+   يعتمد على: design-tokens.css
+   ============================================================
+
+   خريطة الكلاسات الأساسية:
+   .form-group       — حاوية الحقل (label + input + hint)
+   .form-label       — التسمية
+   .form-input       — حقل النص / البريد / التاريخ ...
+   .form-select      — القائمة المنسدلة
+   .form-textarea    — حقل النص الطويل
+   .form-hint        — نص مساعد أسفل الحقل
+   .form-error       — رسالة خطأ
+   .form-row         — صف من حقلين
+   .form-actions     — شريط الأزرار أسفل النموذج
+   .form-section     — قسم منطقي داخل النموذج
+   ============================================================ */
+
+
+/* ============================================================
+   § 1  Design Tokens
+   ============================================================ */
+:root {
+    /* — Brand palette (mirrors buttons-system.css) */
+    --fi-blue-50:       #eff6ff;
+    --fi-blue-100:      #dbeafe;
+    --fi-blue-500:      #80aace;
+    --fi-blue-600:      #3d77bc;
+    --fi-blue-700:      #0b4fa7;
+    --fi-blue-rgb:      61, 143, 214;
+
+    /* — Semantic */
+    --fi-red-500:       #ef4444;
+    --fi-red-600:       #dc2626;
+    --fi-red-rgb:       239, 68, 68;
+
+    --fi-green-500:     #10b981;
+    --fi-green-600:     #059669;
+    --fi-green-rgb:     16, 185, 129;
+
+    --fi-amber-500:     #f59e0b;
+    --fi-amber-rgb:     245, 158, 11;
+
+    --fi-violet-500:    #8b5cf6;
+    --fi-violet-600:    #7c3aed;
+    --fi-violet-rgb:    139, 92, 246;
+
+    /* — Text */
+    --fi-text:          #0f172a;
+    --fi-text-muted:    #64748b;
+    --fi-placeholder:   #94a3b8;
+    --fi-label:         #274060;
+    --fi-hint:          #64748b;
+    --fi-error-text:    #dc2626;
+    --fi-success-text:  #059669;
+    --fi-disabled-text: #94a3b8;
+
+    /* — Field backgrounds — Gradient Fill */
+    --fi-bg:            #ffffff;
+    --fi-bg-gradient:   linear-gradient(145deg,
+                            rgba(var(--fi-blue-rgb), 0.045) 0%,
+                            rgba(var(--fi-blue-rgb), 0.015) 50%,
+                            #ffffff 100%);
+    --fi-bg-hover:      linear-gradient(145deg,
+                            rgba(var(--fi-blue-rgb), 0.07) 0%,
+                            rgba(var(--fi-blue-rgb), 0.025) 55%,
+                            #ffffff 100%);
+    --fi-bg-focus:      linear-gradient(145deg,
+                            rgba(var(--fi-blue-rgb), 0.09) 0%,
+                            rgba(var(--fi-blue-rgb), 0.03) 55%,
+                            #ffffff 100%);
+    --fi-bg-subtle:     #f9fafc;
+    --fi-bg-disabled:   #f1f5f9;
+
+    /* — Borders */
+    --fi-border:            rgba(var(--fi-blue-rgb), 0.20);
+    --fi-border-hover:      rgba(var(--fi-blue-rgb), 0.35);
+    --fi-border-focus:      #3d8fd6;
+    --fi-border-error:      var(--fi-red-500);
+    --fi-border-success:    var(--fi-green-500);
+    --fi-border-disabled:   #e2e8f0;
+
+    /* — Focus rings */
+    --fi-ring-focus:    rgba(var(--fi-blue-rgb), 0.22);
+    --fi-ring-error:    rgba(var(--fi-red-rgb),  0.18);
+    --fi-ring-success:  rgba(var(--fi-green-rgb), 0.18);
+
+    /* — Icons */
+    --fi-icon-color:    #94a3b8;
+    --fi-icon-focus:    #3d8fd6;
+
+    /* — Addon */
+    --fi-addon-bg:      rgba(var(--fi-blue-rgb), 0.06);
+    --fi-addon-border:  rgba(var(--fi-blue-rgb), 0.20);
+    --fi-addon-text:    #475569;
+
+    /* — Radius */
+    --fi-r-sm:          10px;
+    --fi-r-md:          12px;
+    --fi-r-lg:          14px;
+    --fi-r-xl:          20px;
+    --fi-r-full:        9999px;
+
+    /* — Spacing */
+    --fi-py-md:         0.625rem;
+    --fi-px-md:         1rem;
+
+    /* — Typography */
+    --fi-fs-xs:         0.7rem;
+    --fi-fs-sm:         0.775rem;
+    --fi-fs-md:         0.875rem;
+    --fi-fw-label:      600;
+    --fi-fw-value:      500;
+    --fi-ls:            0.01em;
+
+    /* — Shadows */
+    --fi-shadow-rest:   0 1px 3px rgba(var(--fi-blue-rgb), 0.06),
+                        0 1px 2px rgba(0, 0, 0, 0.04);
+    --fi-shadow-hover:  0 2px 8px rgba(var(--fi-blue-rgb), 0.12),
+                        0 1px 3px rgba(0, 0, 0, 0.06);
+    --fi-shadow-focus:  0 0 0 3.5px var(--fi-ring-focus),
+                        0 2px 8px rgba(var(--fi-blue-rgb), 0.10);
+    --fi-shadow-error:  0 0 0 3px var(--fi-ring-error);
+    --fi-shadow-success:0 0 0 3px var(--fi-ring-success);
+
+    /* — Motion (mirrors buttons-system.css) */
+    --fi-ease:          cubic-bezier(0.4, 0, 0.2, 1);
+    --fi-ease-spring:   cubic-bezier(0.34, 1.2, 0.64, 1);
+    --fi-ease-back:     cubic-bezier(0.34, 1.56, 0.64, 1);
+    --fi-dur:           170ms;
+    --fi-dur-slow:      260ms;
+    --fi-dur-fast:      80ms;
+
+    /* — Switch */
+    --fi-sw-w:          2.75rem;
+    --fi-sw-h:          1.5rem;
+    --fi-sw-thumb:      1.1rem;
+    --fi-sw-off:        #cbd5e1;
+
+    /* — Range */
+    --fi-range-track-h: 5px;
+    --fi-range-thumb:   18px;
+    --fi-range-track:   rgba(var(--fi-blue-rgb), 0.12);
+}
+
+
+/* ============================================================
+   § 2  Form Group — الحاوية الأساسية
+   ============================================================ */
+
+.form-group {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.35rem;
+    width:          100%;
+}
+
+
+/* ============================================================
+   § 3  Labels & Messages
+   ============================================================ */
+
+/* — Label */
+.form-label {
+    display:        inline-flex;
+    align-items:    center;
+    gap:            0.35rem;
+    font-size:      var(--fi-fs-sm);
+    font-weight:    var(--fi-fw-label);
+    color:          var(--fi-label);
+    letter-spacing: var(--fi-ls);
+    line-height:    1.4;
+    user-select:    none;
+    transition:     color var(--fi-dur) var(--fi-ease);
+}
+
+.form-label .required-dot {
+    color:      var(--fi-error-text);
+    font-size:  0.85em;
+    line-height:1;
+}
+
+/* أيقونة داخل التسمية */
+.form-label .label-icon {
+    display:         inline-flex;
+    align-items:     center;
+    justify-content: center;
+    width:           1.3rem;
+    height:          1.3rem;
+    border-radius:   6px;
+    background:      rgba(var(--fi-blue-rgb), 0.10);
+    color:           var(--fi-border-focus);
+    font-size:       0.72em;
+    flex-shrink:     0;
+    transition:
+        background var(--fi-dur) var(--fi-ease),
+        color      var(--fi-dur) var(--fi-ease);
+}
+
+.form-group:focus-within .form-label {
+    color: #1e3a5f;
+}
+
+.form-group:focus-within .form-label .label-icon {
+    background: rgba(var(--fi-blue-rgb), 0.18);
+    color:      var(--fi-blue-700);
+}
+
+/* — Hint */
+.form-hint {
+    font-size:    var(--fi-fs-xs);
+    font-weight:  500;
+    color:        var(--fi-hint);
+    line-height:  1.4;
+    padding-inline-start: 0.1rem;
+}
+
+/* — Error */
+.form-error {
+    display:     inline-flex;
+    align-items: center;
+    gap:         0.3rem;
+    font-size:   var(--fi-fs-xs);
+    font-weight: 600;
+    color:       var(--fi-error-text);
+    line-height: 1.4;
+    padding-inline-start: 0.1rem;
+    animation:   _fi-shake 0.35s var(--fi-ease-spring);
+}
+
+.form-error i { font-size: 0.8em; flex-shrink: 0; }
+
+@keyframes _fi-shake {
+    0%   { transform: translateX(0); }
+    20%  { transform: translateX(-4px); }
+    40%  { transform: translateX(4px); }
+    60%  { transform: translateX(-3px); }
+    80%  { transform: translateX(2px); }
+    100% { transform: translateX(0); }
+}
+
+/* — Success message */
+.form-success {
+    display:     inline-flex;
+    align-items: center;
+    gap:         0.3rem;
+    font-size:   var(--fi-fs-xs);
+    font-weight: 600;
+    color:       var(--fi-success-text);
+    line-height: 1.4;
+    padding-inline-start: 0.1rem;
+}
+
+.form-success i { font-size: 0.8em; flex-shrink: 0; }
+
+
+/* ============================================================
+   § 4  Input Wrapper — حاوية الحقل + الأيقونات
+   ============================================================ */
+
+.form-input-wrap {
+    position: relative;
+    display:  flex;
+    width:    100%;
+}
+
+/* Icon slots */
+.form-icon-start,
+.form-icon-end {
+    position:       absolute;
+    top:            50%;
+    transform:      translateY(-50%);
+    display:        flex;
+    align-items:    center;
+    color:          var(--fi-icon-color);
+    font-size:      0.9rem;
+    pointer-events: none;
+    z-index:        2;
+    transition:
+        color      var(--fi-dur) var(--fi-ease),
+        transform  var(--fi-dur) var(--fi-ease-spring);
+}
+
+.form-icon-start { inset-inline-start: var(--fi-px-md); }
+.form-icon-end   { inset-inline-end:   var(--fi-px-md); }
+
+/* Focus — illuminate icons */
+.form-input-wrap:focus-within .form-icon-start,
+.form-input-wrap:focus-within .form-icon-end:not(.clickable) {
+    color:     var(--fi-icon-focus);
+    transform: translateY(-50%) scale(1.08);
+}
+
+/* Clickable end icon (password toggle etc.) */
+.form-icon-end.clickable {
+    pointer-events: auto;
+    cursor:         pointer;
+    padding:        0.2rem;
+    border-radius:  6px;
+    transition:
+        color      var(--fi-dur) var(--fi-ease),
+        background var(--fi-dur) var(--fi-ease),
+        transform  var(--fi-dur) var(--fi-ease-spring);
+}
+
+.form-icon-end.clickable:hover {
+    color:      var(--fi-icon-focus);
+    background: rgba(var(--fi-blue-rgb), 0.09);
+    transform:  translateY(-50%) scale(1.1);
+}
+
+/* Padding compensation */
+.form-input-wrap.has-icon-start .form-input { padding-inline-start: calc(var(--fi-px-md) + 1.55rem); }
+.form-input-wrap.has-icon-end   .form-input { padding-inline-end:   calc(var(--fi-px-md) + 1.55rem); }
+
+
+
+/* ============================================================
+   § 5  Base Field — .form-input / .form-select / .form-textarea
+   ============================================================ */
+
+.form-input,
+.form-select,
+.form-textarea {
+    display:          block;
+    width:            100%;
+    min-width:        0;
+    padding:          var(--fi-py-md) var(--fi-px-md);
+    font-size:        var(--fi-fs-md);
+    font-weight:      var(--fi-fw-value);
+    font-family:      inherit;
+    color:            var(--fi-text);
+    background-color: var(--fi-bg);
+    background-image: var(--fi-bg-gradient);
+    border:           1.5px solid var(--fi-border);
+    border-radius:    var(--fi-r-md);
+    box-shadow:       var(--fi-shadow-rest);
+    line-height:      1.5;
+    outline:          none;
+    appearance:       none;
+    -webkit-appearance: none;
+    transition:
+        border-color     var(--fi-dur) var(--fi-ease),
+        box-shadow       var(--fi-dur-slow) var(--fi-ease),
+        background-image var(--fi-dur) var(--fi-ease),
+        color            var(--fi-dur) var(--fi-ease);
+}
+
+.form-input::placeholder {
+    color:       var(--fi-placeholder);
+    font-weight: 400;
+}
+
+/* Hover */
+.form-input:hover:not(:disabled):not([readonly]):not(.is-invalid):not(.is-valid):not(:focus),
+.form-select:hover:not(:disabled):not(.is-invalid):not(.is-valid):not(:focus),
+.form-textarea:hover:not(:disabled):not([readonly]):not(.is-invalid):not(.is-valid):not(:focus) {
+    border-color:     var(--fi-border-hover);
+    box-shadow:       var(--fi-shadow-hover);
+    background-image: var(--fi-bg-hover);
+}
+
+/* Focus */
+.form-input:focus:not(:disabled):not([readonly]),
+.form-select:focus:not(:disabled),
+.form-textarea:focus:not(:disabled):not([readonly]) {
+    border-color:     var(--fi-border-focus);
+    box-shadow:       var(--fi-shadow-focus);
+    background-image: var(--fi-bg-focus);
+}
+
+
+/* ============================================================
+   § 6  Textarea — .form-textarea
+   ============================================================ */
+
+.form-textarea {
+    resize:      vertical;
+    min-height:  100px;
+    line-height: 1.65;
+}
+
+.form-textarea.no-resize   { resize: none; }
+.form-textarea.resize-x    { resize: horizontal; }
+.form-textarea.auto-resize { resize: none; overflow: hidden; }
+
+
+/* ============================================================
+   § 7  Select — .form-select
+   ============================================================ */
+
+.form-select {
+    cursor:             pointer;
+    padding-inline-end: calc(var(--fi-px-md) + 1.4rem);
+    background-image:
+        var(--fi-bg-gradient),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:   no-repeat, no-repeat;
+    background-position: 0 0, calc(100% - 0.75rem) center;
+    background-size:     100%, 1rem;
+}
+
+[dir="rtl"] .form-select {
+    background-position: 0 0, 0.75rem center;
+    padding-inline-end:  var(--fi-px-md);
+    padding-inline-start: calc(var(--fi-px-md) + 1.4rem);
+}
+
+.form-select:focus {
+    background-image:
+        var(--fi-bg-focus),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233d8fd6' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+}
+
+.form-select[multiple] {
+    background-image:   var(--fi-bg-gradient);
+    background-size:    100%;
+    padding-inline-end: var(--fi-px-md);
+    min-height:         8rem;
+    cursor:             default;
+}
+
+.form-select[multiple] option {
+    padding:       0.4rem 0.6rem;
+    border-radius: 6px;
+}
+
+.form-select[multiple] option:checked {
+    background:  linear-gradient(90deg,
+                     rgba(var(--fi-blue-rgb), 0.15),
+                     rgba(var(--fi-blue-rgb), 0.07));
+    color:       #274060;
+    font-weight: 600;
+}
+
+
+/* ============================================================
+   § 8  Shared base — طبّق على .form-input, .form-select,
+        .form-textarea دفعةً واحدة
+   ============================================================ */
+
+/* Number — hide arrows */
+.form-input[type="number"]::-webkit-inner-spin-button,
+.form-input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance:         none;
+    margin:             0;
+}
+
+/* Search — clear button */
+.form-input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance:         none;
+    width:              1rem;
+    height:             1rem;
+    background-image:   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2394a3b8'%3E%3Cpath fill-rule='evenodd' d='M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-size:    cover;
+    cursor:             pointer;
+    opacity:            0.7;
+}
+
+/* Date/Time picker icon */
+.form-input[type="date"]::-webkit-calendar-picker-indicator,
+.form-input[type="time"]::-webkit-calendar-picker-indicator,
+.form-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    opacity:    0.5;
+    cursor:     pointer;
+    filter:     invert(45%) sepia(20%) saturate(800%) hue-rotate(185deg);
+    transition: opacity var(--fi-dur) var(--fi-ease);
+}
+
+.form-input[type="date"]:focus::-webkit-calendar-picker-indicator,
+.form-input[type="time"]:focus::-webkit-calendar-picker-indicator,
+.form-input[type="datetime-local"]:focus::-webkit-calendar-picker-indicator {
+    opacity: 0.9;
+    filter:  invert(35%) sepia(50%) saturate(900%) hue-rotate(190deg);
+}
+
+
+/* ============================================================
+   § 9  State Modifiers
+   ============================================================ */
+
+/* — Error state */
+.is-invalid,
+.form-group.has-error .form-input,
+.form-group.has-error .form-select,
+.form-group.has-error .form-textarea {
+    border-color:     var(--fi-border-error) !important;
+    box-shadow:       var(--fi-shadow-error) !important;
+    background-image: linear-gradient(
+        145deg,
+        rgba(var(--fi-red-rgb), 0.05) 0%,
+        rgba(var(--fi-red-rgb), 0.015) 55%,
+        #ffffff 100%
+    ) !important;
+}
+
+.form-group.has-error .form-label {
+    color: var(--fi-error-text);
+}
+
+.form-group.has-error .form-label .label-icon {
+    background: rgba(var(--fi-red-rgb), 0.10);
+    color:      var(--fi-red-500);
+}
+
+/* — Success state */
+.is-valid,
+.form-group.has-success .form-input,
+.form-group.has-success .form-select,
+.form-group.has-success .form-textarea {
+    border-color:     var(--fi-border-success) !important;
+    box-shadow:       var(--fi-shadow-success) !important;
+    background-image: linear-gradient(
+        145deg,
+        rgba(var(--fi-green-rgb), 0.05) 0%,
+        rgba(var(--fi-green-rgb), 0.015) 55%,
+        #ffffff 100%
+    ) !important;
+}
+
+.form-group.has-success .form-label {
+    color: var(--fi-success-text);
+}
+
+.form-group.has-success .form-label .label-icon {
+    background: rgba(var(--fi-green-rgb), 0.10);
+    color:      var(--fi-green-500);
+}
+
+/* — Disabled */
+.form-input:disabled,
+.form-input[disabled],
+.form-select:disabled,
+.form-textarea:disabled {
+    background-color:  var(--fi-bg-disabled) !important;
+    background-image:  none !important;
+    border-color:      var(--fi-border-disabled) !important;
+    color:             var(--fi-disabled-text) !important;
+    box-shadow:        none !important;
+    cursor:            not-allowed !important;
+    opacity:           0.78;
+}
+
+.form-input:disabled::placeholder,
+.form-select:disabled::placeholder,
+.form-textarea:disabled::placeholder {
+    color: #c1cad8;
+}
+
+/* — Readonly */
+.form-input[readonly],
+.form-textarea[readonly] {
+    background-color: var(--fi-bg-subtle);
+    background-image: none;
+    cursor:           default;
+}
+
+.form-input[readonly]:focus,
+.form-textarea[readonly]:focus {
+    border-color: var(--fi-border);
+    box-shadow:   var(--fi-shadow-rest);
+}
+
+
+/* ============================================================
+   § 11  Inline Addon (button / text prefix/suffix)
+   ============================================================ */
+
+.form-addon-group {
+    display:     flex;
+    width:       100%;
+    align-items: stretch;
+}
+
+.form-addon {
+    display:         flex;
+    align-items:     center;
+    padding:         var(--fi-py-md) var(--fi-px-md);
+    font-size:       var(--fi-fs-sm);
+    font-weight:     600;
+    color:           var(--fi-addon-text);
+    background:      var(--fi-addon-bg);
+    border:          1.5px solid var(--fi-addon-border);
+    white-space:     nowrap;
+    flex-shrink:     0;
+    line-height:     1.5;
+    transition:
+        background   var(--fi-dur) var(--fi-ease),
+        border-color var(--fi-dur) var(--fi-ease);
+}
+
+.form-addon-start {
+    border-inline-end:         none;
+    border-start-start-radius: var(--fi-r-md);
+    border-end-start-radius:   var(--fi-r-md);
+}
+
+.form-addon-end {
+    border-inline-start:      none;
+    border-start-end-radius:  var(--fi-r-md);
+    border-end-end-radius:    var(--fi-r-md);
+}
+
+.form-addon-group .form-input { border-radius: 0; }
+
+.form-addon-group .form-input:first-child {
+    border-start-start-radius: var(--fi-r-md);
+    border-end-start-radius:   var(--fi-r-md);
+}
+
+.form-addon-group .form-input:last-child {
+    border-start-end-radius: var(--fi-r-md);
+    border-end-end-radius:   var(--fi-r-md);
+}
+
+/* Addon button — Gradient Fill (mirrors btn-primary) */
+.form-addon-btn {
+    display:          inline-flex;
+    align-items:      center;
+    justify-content:  center;
+    gap:              0.4rem;
+    padding:          var(--fi-py-md) var(--fi-px-md);
+    font-size:        var(--fi-fs-sm);
+    font-weight:      600;
+    color:            #ffffff;
+    background-image: linear-gradient(155deg, #80aace 0%, #3d77bc 55%, #0b4fa7 100%);
+    border:           1.5px solid var(--fi-blue-700);
+    border-inline-start: none;
+    border-start-end-radius: var(--fi-r-md);
+    border-end-end-radius:   var(--fi-r-md);
+    cursor:           pointer;
+    white-space:      nowrap;
+    position:         relative;
+    overflow:         hidden;
+    box-shadow:       0 2px 8px rgba(var(--fi-blue-rgb), 0.28);
+    transition:
+        background-image var(--fi-dur) var(--fi-ease),
+        box-shadow       var(--fi-dur) var(--fi-ease),
+        transform        var(--fi-dur) var(--fi-ease);
+}
+
+/* Shimmer */
+.form-addon-btn::before {
+    content:    '';
+    position:   absolute;
+    top:        0;
+    left:       -100%;
+    width:      60%;
+    height:     100%;
+    background: linear-gradient(100deg,
+                    transparent 0%,
+                    rgba(255, 255, 255, 0.30) 50%,
+                    transparent 100%);
+    pointer-events: none;
+    z-index:    1;
+    transition: left 0s;
+}
+
+.form-addon-btn:hover::before { left: 140%; transition: left 1.4s ease; }
+
+.form-addon-btn:hover {
+    background-image: linear-gradient(155deg, #3d77bc 0%, #0b4fa7 100%);
+    box-shadow:       0 4px 16px rgba(var(--fi-blue-rgb), 0.40);
+    transform:        translateY(-1px);
+}
+
+.form-addon-btn:active {
+    background-image: linear-gradient(155deg, #0b4fa7 0%, #083d84 100%);
+    box-shadow:       0 1px 4px rgba(0, 0, 0, 0.2);
+    transform:        translateY(0) scale(0.98);
+}
+
+.form-addon-group:focus-within .form-addon {
+    border-color: var(--fi-border-focus);
+}
+
+
+/* ============================================================
+   § 12  Checkbox — .form-checkbox
+   ============================================================ */
+
+.form-checkbox {
+    position:    relative;
+    display:     inline-flex;
+    align-items: flex-start;
+    gap:         0.6rem;
+    cursor:      pointer;
+    user-select: none;
+    line-height: 1.5;
+}
+
+.form-checkbox input[type="checkbox"] {
+    position:         relative;
+    appearance:       none;
+    -webkit-appearance: none;
+    width:            1.15rem;
+    height:           1.15rem;
+    min-width:        1.15rem;
+    border:           1.5px solid rgba(var(--fi-blue-rgb), 0.35);
+    border-radius:    5px;
+    background-color: var(--fi-bg);
+    background-image: var(--fi-bg-gradient);
+    cursor:           pointer;
+    margin:           0;
+    margin-top:       0.15rem;
+    flex-shrink:      0;
+    transition:
+        border-color     var(--fi-dur) var(--fi-ease),
+        background-image var(--fi-dur) var(--fi-ease),
+        background-color var(--fi-dur) var(--fi-ease),
+        box-shadow       var(--fi-dur) var(--fi-ease),
+        transform        var(--fi-dur) var(--fi-ease-spring);
+}
+
+.form-checkbox input[type="checkbox"]:hover {
+    border-color: var(--fi-border-focus);
+    box-shadow:   0 0 0 2.5px rgba(var(--fi-blue-rgb), 0.14);
+}
+
+.form-checkbox input[type="checkbox"]:focus-visible {
+    outline:      none;
+    box-shadow:   0 0 0 3.5px var(--fi-ring-focus);
+    border-color: var(--fi-border-focus);
+}
+
+/* Checked — Gradient Fill */
+.form-checkbox input[type="checkbox"]:checked {
+    background-color:  transparent;
+    background-image:  linear-gradient(135deg, #80aace 0%, #3d77bc 55%, #0b4fa7 100%);
+    border-color:      var(--fi-blue-700);
+    box-shadow:        0 2px 8px rgba(var(--fi-blue-rgb), 0.32);
+    transform:         scale(1.05);
+}
+
+.form-checkbox input[type="checkbox"]:checked::after {
+    content:      '';
+    position:     absolute;
+    top:          2px;
+    left:         4.5px;
+    width:        5px;
+    height:       9px;
+    border:       2px solid #fff;
+    border-top:   none;
+    border-left:  none;
+    transform:    rotate(45deg);
+}
+
+/* Indeterminate */
+.form-checkbox input[type="checkbox"]:indeterminate {
+    background-image: linear-gradient(135deg, #80aace 0%, #3d77bc 55%, #0b4fa7 100%);
+    border-color:     var(--fi-blue-700);
+}
+
+.form-checkbox input[type="checkbox"]:indeterminate::after {
+    content:       '';
+    position:      absolute;
+    top:           50%;
+    left:          50%;
+    transform:     translate(-50%, -50%);
+    width:         8px;
+    height:        2px;
+    background:    #fff;
+    border-radius: 1px;
+    border:        none;
+}
+
+.form-checkbox-label {
+    font-size:   var(--fi-fs-md);
+    font-weight: 500;
+    color:       var(--fi-text);
+    line-height: 1.5;
+}
+
+.form-checkbox-hint {
+    display:    block;
+    font-size:  0.72rem;
+    color:      var(--fi-hint);
+    margin-top: 0.1rem;
+}
+
+.form-checkbox input[type="checkbox"]:disabled {
+    background-image: none;
+    background-color: var(--fi-bg-disabled);
+    border-color:     var(--fi-border-disabled);
+    cursor:           not-allowed;
+    opacity:          0.6;
+}
+
+.form-checkbox:has(input:disabled) { cursor: not-allowed; opacity: 0.7; }
+.form-checkbox:has(input:disabled) .form-checkbox-label { color: var(--fi-disabled-text); }
+
+/* Group */
+.form-checkbox-group {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.5rem;
+}
+
+.form-checkbox-group.horizontal {
+    flex-direction: row;
+    flex-wrap:      wrap;
+    gap:            0.5rem 1.2rem;
+}
+
+.form-checkbox-group.cols-2 {
+    display:               grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap:                   0.5rem;
+}
+
+
+/* ============================================================
+   § 13  Radio — .form-radio
+   ============================================================ */
+
+.form-radio {
+    position:    relative;
+    display:     inline-flex;
+    align-items: flex-start;
+    gap:         0.6rem;
+    cursor:      pointer;
+    user-select: none;
+    line-height: 1.5;
+}
+
+.form-radio input[type="radio"] {
+    appearance:       none;
+    -webkit-appearance: none;
+    width:            1.15rem;
+    height:           1.15rem;
+    min-width:        1.15rem;
+    border:           1.5px solid rgba(var(--fi-blue-rgb), 0.35);
+    border-radius:    50%;
+    background-color: var(--fi-bg);
+    background-image: var(--fi-bg-gradient);
+    cursor:           pointer;
+    margin:           0;
+    margin-top:       0.15rem;
+    position:         relative;
+    flex-shrink:      0;
+    transition:
+        border-color     var(--fi-dur) var(--fi-ease),
+        background-image var(--fi-dur) var(--fi-ease),
+        box-shadow       var(--fi-dur) var(--fi-ease),
+        transform        var(--fi-dur) var(--fi-ease-spring);
+}
+
+.form-radio input[type="radio"]:hover {
+    border-color: var(--fi-border-focus);
+    box-shadow:   0 0 0 2.5px rgba(var(--fi-blue-rgb), 0.14);
+}
+
+.form-radio input[type="radio"]:focus-visible {
+    outline:      none;
+    box-shadow:   0 0 0 3.5px var(--fi-ring-focus);
+    border-color: var(--fi-border-focus);
+}
+
+/* Checked — inset gradient dot */
+.form-radio input[type="radio"]:checked {
+    background-image: none;
+    background-color: #fff;
+    border-color:     var(--fi-border-focus);
+    box-shadow:       inset 0 0 0 3.5px var(--fi-border-focus),
+                      0 2px 8px rgba(var(--fi-blue-rgb), 0.28);
+    transform:        scale(1.05);
+}
+
+.form-radio-label {
+    font-size:   var(--fi-fs-md);
+    font-weight: 500;
+    color:       var(--fi-text);
+    line-height: 1.5;
+}
+
+.form-radio-hint {
+    display:    block;
+    font-size:  0.72rem;
+    color:      var(--fi-hint);
+    margin-top: 0.1rem;
+}
+
+.form-radio input[type="radio"]:disabled {
+    background-image: none;
+    background-color: var(--fi-bg-disabled);
+    border-color:     var(--fi-border-disabled);
+    cursor:           not-allowed;
+    opacity:          0.6;
+}
+
+.form-radio:has(input:disabled) { cursor: not-allowed; opacity: 0.7; }
+
+/* Group */
+.form-radio-group {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.5rem;
+}
+
+.form-radio-group.horizontal {
+    flex-direction: row;
+    flex-wrap:      wrap;
+    gap:            0.5rem 1.2rem;
+}
+
+
+/* ============================================================
+   § 14  Switch — .form-switch
+   ============================================================ */
+
+.form-switch {
+    display:     inline-flex;
+    align-items: center;
+    gap:         0.7rem;
+    cursor:      pointer;
+    user-select: none;
+}
+
+.form-switch input[type="checkbox"] {
+    appearance:   none;
+    -webkit-appearance: none;
+    position:     relative;
+    width:        var(--fi-sw-w);
+    height:       var(--fi-sw-h);
+    border-radius:var(--fi-r-full);
+    background:   var(--fi-sw-off);
+    border:       none;
+    cursor:       pointer;
+    flex-shrink:  0;
+    margin:       0;
+    transition:
+        background var(--fi-dur) var(--fi-ease),
+        box-shadow var(--fi-dur-slow) var(--fi-ease);
+}
+
+/* Thumb */
+.form-switch input[type="checkbox"]::after {
+    content:       '';
+    position:      absolute;
+    top:           50%;
+    inset-inline-start: 3px;
+    transform:     translateY(-50%);
+    width:         var(--fi-sw-thumb);
+    height:        var(--fi-sw-thumb);
+    border-radius: 50%;
+    background:    linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+    box-shadow:    0 1px 5px rgba(0, 0, 0, 0.22);
+    transition:
+        inset-inline-start var(--fi-dur) var(--fi-ease-spring),
+        box-shadow         var(--fi-dur) var(--fi-ease);
+}
+
+/* On */
+.form-switch input[type="checkbox"]:checked {
+    background-image: linear-gradient(135deg, #80aace 0%, #3d77bc 55%, #0b4fa7 100%);
+    background-color: transparent;
+    box-shadow:       0 2px 10px rgba(var(--fi-blue-rgb), 0.38);
+}
+
+.form-switch input[type="checkbox"]:checked::after {
+    inset-inline-start: calc(var(--fi-sw-w) - var(--fi-sw-thumb) - 3px);
+    box-shadow:         0 1px 5px rgba(var(--fi-blue-rgb), 0.30);
+}
+
+.form-switch input[type="checkbox"]:hover:not(:disabled) {
+    box-shadow: 0 0 0 3px rgba(var(--fi-blue-rgb), 0.15);
+}
+
+.form-switch input[type="checkbox"]:focus-visible {
+    outline:    none;
+    box-shadow: 0 0 0 3.5px var(--fi-ring-focus);
+}
+
+.form-switch input[type="checkbox"]:disabled {
+    opacity:    0.55;
+    cursor:     not-allowed;
+    background: #a0aec0;
+}
+
+.form-switch:has(input:disabled) { cursor: not-allowed; opacity: 0.7; }
+
+.form-switch-label {
+    font-size:   var(--fi-fs-md);
+    font-weight: 500;
+    color:       var(--fi-text);
+    line-height: 1.5;
+}
+
+/* Color variants */
+.form-switch.form-switch-success input[type="checkbox"]:checked {
+    background-image: linear-gradient(135deg, #34d399 0%, #10b981 55%, #059669 100%);
+    background-color: transparent;
+    box-shadow:       0 2px 10px rgba(var(--fi-green-rgb), 0.38);
+}
+
+.form-switch.form-switch-danger input[type="checkbox"]:checked {
+    background-image: linear-gradient(135deg, #f87171 0%, #ef4444 55%, #dc2626 100%);
+    background-color: transparent;
+    box-shadow:       0 2px 10px rgba(var(--fi-red-rgb), 0.38);
+}
+
+.form-switch.form-switch-warning input[type="checkbox"]:checked {
+    background-image: linear-gradient(135deg, #fcd34d 0%, #f59e0b 55%, #d97706 100%);
+    background-color: transparent;
+    box-shadow:       0 2px 10px rgba(var(--fi-amber-rgb), 0.38);
+}
+
+.form-switch.form-switch-violet input[type="checkbox"]:checked {
+    background-image: linear-gradient(135deg, #a78bfa 0%, #7c3aed 55%, #5b21b6 100%);
+    background-color: transparent;
+    box-shadow:       0 2px 10px rgba(var(--fi-violet-rgb), 0.38);
+}
+
+
+/* ============================================================
+   § 15  File Upload — .form-file
+   ============================================================ */
+
+.form-file {
+    position: relative;
+    width:    100%;
+}
+
+.form-file input[type="file"] {
+    position: absolute;
+    inset:    0;
+    opacity:  0;
+    width:    100%;
+    height:   100%;
+    cursor:   pointer;
+    z-index:  2;
+}
+
+/* Drop zone — Gradient Fill */
+.form-dropzone {
+    display:          flex;
+    flex-direction:   column;
+    align-items:      center;
+    justify-content:  center;
+    gap:              0.7rem;
+    padding:          2rem 1.5rem;
+    background-color: var(--fi-bg);
+    background-image: linear-gradient(145deg,
+                          rgba(var(--fi-blue-rgb), 0.05) 0%,
+                          rgba(var(--fi-blue-rgb), 0.015) 50%,
+                          transparent 100%);
+    border:           1.5px dashed var(--fi-border-hover);
+    border-radius:    var(--fi-r-xl);
+    text-align:       center;
+    cursor:           pointer;
+    position:         relative;
+    overflow:         hidden;
+    transition:
+        border-color     var(--fi-dur) var(--fi-ease),
+        background-image var(--fi-dur) var(--fi-ease),
+        box-shadow       var(--fi-dur-slow) var(--fi-ease),
+        transform        var(--fi-dur) var(--fi-ease);
+}
+
+/* Decorative circle — mirrors stat-card::after */
+.form-dropzone::after {
+    content:       '';
+    position:      absolute;
+    bottom:        -40px;
+    left:          -40px;
+    width:         160px;
+    height:        160px;
+    background:    radial-gradient(circle,
+                       rgba(var(--fi-blue-rgb), 0.08) 0%,
+                       transparent 68%);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity:       0.7;
+    transition:    transform 0.5s ease, opacity 0.5s ease;
+}
+
+.form-dropzone:hover,
+.form-file:focus-within .form-dropzone {
+    border-color:     var(--fi-border-focus);
+    border-style:     solid;
+    background-image: linear-gradient(145deg,
+                          rgba(var(--fi-blue-rgb), 0.09) 0%,
+                          rgba(var(--fi-blue-rgb), 0.03) 55%,
+                          transparent 100%);
+    box-shadow:       var(--fi-shadow-focus);
+    transform:        translateY(-2px);
+}
+
+.form-dropzone:hover::after { transform: scale(1.25); opacity: 1; }
+
+.form-dropzone.drag-over {
+    border-color:     var(--fi-border-focus);
+    background-image: linear-gradient(145deg,
+                          rgba(var(--fi-blue-rgb), 0.12) 0%,
+                          rgba(var(--fi-blue-rgb), 0.05) 55%,
+                          transparent 100%);
+    box-shadow:       0 0 0 4px var(--fi-ring-focus);
+    transform:        scale(1.01);
+}
+
+/* Dropzone icon — Gradient Fill (mirrors stat-icon) */
+.form-dropzone-icon {
+    width:            3rem;
+    height:           3rem;
+    background-image: linear-gradient(135deg, #80aace 0%, #3d77bc 55%, #0b4fa7 100%);
+    border-radius:    var(--fi-r-md);
+    display:          flex;
+    align-items:      center;
+    justify-content:  center;
+    color:            #ffffff;
+    font-size:        1.35rem;
+    position:         relative;
+    overflow:         hidden;
+    box-shadow:       0 4px 12px rgba(var(--fi-blue-rgb), 0.30);
+    transition:
+        transform  var(--fi-dur) var(--fi-ease-spring),
+        box-shadow var(--fi-dur) var(--fi-ease);
+}
+
+.form-dropzone-icon::before {
+    content:        '';
+    position:       absolute;
+    inset:          0;
+    border-radius:  inherit;
+    background:     linear-gradient(145deg, rgba(255, 255, 255, 0.24) 0%, transparent 55%);
+    pointer-events: none;
+}
+
+.form-dropzone:hover .form-dropzone-icon {
+    transform:  translateY(-2px) scale(1.08);
+    box-shadow: 0 8px 20px rgba(var(--fi-blue-rgb), 0.42);
+}
+
+.form-dropzone-title {
+    font-size:   var(--fi-fs-md);
+    font-weight: 600;
+    color:       var(--fi-text);
+}
+
+.form-dropzone-hint {
+    font-size:   0.75rem;
+    color:       var(--fi-placeholder);
+    font-weight: 500;
+}
+
+/* Compact */
+.form-dropzone.form-dropzone-compact {
+    flex-direction:  row;
+    padding:         0.75rem 1rem;
+    gap:             0.75rem;
+    justify-content: flex-start;
+    text-align:      start;
+}
+
+.form-dropzone-compact .form-dropzone-icon {
+    width:       2.2rem;
+    height:      2.2rem;
+    font-size:   1rem;
+    flex-shrink: 0;
+}
+
+/* Preview list */
+.form-file-list {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.5rem;
+    margin-top:     0.6rem;
+}
+
+.form-file-item {
+    display:          flex;
+    align-items:      center;
+    gap:              0.65rem;
+    padding:          0.55rem 0.8rem;
+    background-color: var(--fi-bg);
+    background-image: linear-gradient(135deg,
+                          rgba(var(--fi-blue-rgb), 0.04) 0%,
+                          transparent 100%);
+    border:           1px solid var(--fi-border);
+    border-radius:    var(--fi-r-sm);
+    font-size:        var(--fi-fs-sm);
+    transition:       all var(--fi-dur) var(--fi-ease);
+}
+
+.form-file-item:hover {
+    border-color:     var(--fi-border-hover);
+    box-shadow:       var(--fi-shadow-hover);
+    background-image: linear-gradient(135deg,
+                          rgba(var(--fi-blue-rgb), 0.07) 0%,
+                          transparent 100%);
+}
+
+.form-file-icon {
+    width:            2rem;
+    height:           2rem;
+    background-image: linear-gradient(135deg,
+                          rgba(var(--fi-blue-rgb), 0.14) 0%,
+                          rgba(var(--fi-blue-rgb), 0.06) 100%);
+    border:           1px solid rgba(var(--fi-blue-rgb), 0.18);
+    border-radius:    6px;
+    display:          flex;
+    align-items:      center;
+    justify-content:  center;
+    color:            #3d8fd6;
+    font-size:        0.85rem;
+    flex-shrink:      0;
+}
+
+.form-file-name {
+    flex:          1;
+    font-weight:   600;
+    color:         var(--fi-text);
+    white-space:   nowrap;
+    overflow:      hidden;
+    text-overflow: ellipsis;
+}
+
+.form-file-size {
+    font-size:   0.7rem;
+    color:       var(--fi-placeholder);
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.form-file-remove {
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    width:           1.4rem;
+    height:          1.4rem;
+    border-radius:   4px;
+    border:          none;
+    background:      transparent;
+    color:           var(--fi-placeholder);
+    cursor:          pointer;
+    font-size:       0.8rem;
+    padding:         0;
+    transition:
+        background var(--fi-dur) var(--fi-ease),
+        color      var(--fi-dur) var(--fi-ease);
+}
+
+.form-file-remove:hover {
+    background: rgba(var(--fi-red-rgb), 0.10);
+    color:      var(--fi-red-600);
+}
+
+
+/* ============================================================
+   § 16  Range Slider — .form-range
+   ============================================================ */
+
+.form-range-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.4rem;
+    width:          100%;
+}
+
+.form-range-track {
+    position:    relative;
+    display:     flex;
+    align-items: center;
+    width:       100%;
+}
+
+input[type="range"].form-range {
+    -webkit-appearance: none;
+    appearance:         none;
+    width:              100%;
+    height:             var(--fi-range-track-h);
+    background:         var(--fi-range-track);
+    border-radius:      var(--fi-r-full);
+    border:             none;
+    outline:            none;
+    cursor:             pointer;
+    margin:             0;
+    padding:            0;
+    transition:         box-shadow var(--fi-dur) var(--fi-ease);
+}
+
+input[type="range"].form-range:focus-visible {
+    box-shadow:    0 0 0 3px var(--fi-ring-focus);
+    border-radius: 3px;
+}
+
+input[type="range"].form-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance:         none;
+    width:              var(--fi-range-thumb);
+    height:             var(--fi-range-thumb);
+    border-radius:      50%;
+    background-image:   linear-gradient(135deg, #80aace 0%, #3d77bc 55%, #0b4fa7 100%);
+    border:             2.5px solid #ffffff;
+    box-shadow:
+        0 2px 8px rgba(var(--fi-blue-rgb), 0.35),
+        0 0 0 1px rgba(var(--fi-blue-rgb), 0.18);
+    cursor:             pointer;
+    transition:
+        transform  var(--fi-dur) var(--fi-ease-spring),
+        box-shadow var(--fi-dur) var(--fi-ease);
+}
+
+input[type="range"].form-range::-webkit-slider-thumb:hover {
+    transform:  scale(1.18);
+    box-shadow:
+        0 4px 14px rgba(var(--fi-blue-rgb), 0.50),
+        0 0 0 1px rgba(var(--fi-blue-rgb), 0.22);
+}
+
+input[type="range"].form-range:active::-webkit-slider-thumb {
+    transform: scale(1.06);
+}
+
+input[type="range"].form-range::-moz-range-thumb {
+    width:         var(--fi-range-thumb);
+    height:        var(--fi-range-thumb);
+    border-radius: 50%;
+    background:    linear-gradient(135deg, #80aace 0%, #3d77bc 55%, #0b4fa7 100%);
+    border:        2.5px solid #ffffff;
+    box-shadow:    0 2px 8px rgba(var(--fi-blue-rgb), 0.35);
+    cursor:        pointer;
+}
+
+.form-range-labels {
+    display:         flex;
+    justify-content: space-between;
+    font-size:       0.7rem;
+    font-weight:     600;
+    color:           var(--fi-hint);
+}
+
+.form-range-value {
+    display:          inline-flex;
+    align-items:      center;
+    justify-content:  center;
+    padding:          0.18rem 0.6rem;
+    background-image: linear-gradient(135deg,
+                          rgba(var(--fi-blue-rgb), 0.14) 0%,
+                          rgba(var(--fi-blue-rgb), 0.06) 100%);
+    border:           1px solid rgba(var(--fi-blue-rgb), 0.20);
+    color:            #274060;
+    border-radius:    var(--fi-r-sm);
+    font-size:        0.78rem;
+    font-weight:      700;
+    min-width:        2.5rem;
+}
+
+
+/* ============================================================
+   § 17  Floating Label — .form-float
+   ============================================================ */
+
+.form-float {
+    position: relative;
+    width:    100%;
+}
+
+.form-float .form-input,
+.form-float .form-select {
+    padding-top:    1.35rem;
+    padding-bottom: 0.4rem;
+}
+
+.form-float-label {
+    position:      absolute;
+    top:           50%;
+    inset-inline-start: var(--fi-px-md);
+    transform:     translateY(-50%);
+    font-size:     var(--fi-fs-md);
+    font-weight:   500;
+    color:         var(--fi-placeholder);
+    pointer-events: none;
+    z-index:       1;
+    line-height:   1;
+    white-space:   nowrap;
+    transition:
+        top         var(--fi-dur) var(--fi-ease),
+        font-size   var(--fi-dur) var(--fi-ease),
+        font-weight var(--fi-dur) var(--fi-ease),
+        color       var(--fi-dur) var(--fi-ease),
+        transform   var(--fi-dur) var(--fi-ease);
+}
+
+/* Floated */
+.form-float .form-input:focus      ~ .form-float-label,
+.form-float .form-select:focus     ~ .form-float-label,
+.form-float .form-input:not(:placeholder-shown) ~ .form-float-label,
+.form-float.is-floated .form-float-label {
+    top:            0.65rem;
+    transform:      translateY(0);
+    font-size:      0.65rem;
+    font-weight:    700;
+    color:          var(--fi-label);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.form-float .form-input:focus ~ .form-float-label,
+.form-float .form-select:focus ~ .form-float-label {
+    color: var(--fi-border-focus);
+}
+
+/* Icon compensation */
+.form-float.has-icon-start .form-input {
+    padding-inline-start: calc(var(--fi-px-md) + 1.55rem);
+}
+
+.form-float.has-icon-start .form-float-label {
+    inset-inline-start: calc(var(--fi-px-md) + 1.55rem);
+}
+
+
+/* ============================================================
+   § 18  Character Counter
+   ============================================================ */
+
+.form-counter {
+    display:          flex;
+    justify-content:  flex-end;
+    font-size:        0.68rem;
+    font-weight:      600;
+    color:            var(--fi-hint);
+    padding-inline-end: 0.1rem;
+    transition:       color var(--fi-dur) var(--fi-ease);
+}
+
+.form-counter.near-limit { color: var(--fi-amber-500); }
+.form-counter.at-limit   { color: var(--fi-error-text); }
+
+
+/* ============================================================
+   § 19  Validation Icon
+   ============================================================ */
+
+.form-validation-icon {
+    display:     flex;
+    align-items: center;
+    font-size:   0.9rem;
+    flex-shrink: 0;
+}
+
+.form-validation-icon.is-error   { color: var(--fi-border-error);   }
+.form-validation-icon.is-success { color: var(--fi-border-success); }
+.form-validation-icon.is-loading { color: var(--fi-placeholder);    }
+
+@keyframes _fi-spin { to { transform: rotate(360deg); } }
+
+.form-validation-icon.is-loading i {
+    animation: _fi-spin 0.7s linear infinite;
+}
+
+
+/* ============================================================
+   § 20  Form Card — .form-card
+   بطاقة تجمع حقولًا في شل موحّد — يطابق uc-card
+   ============================================================ */
+
+.form-card {
+    --_fc-rgb:  61, 143, 214;
+    --_fc-main: #3d8fd6;
+    --_fc-dark: #274060;
+
+    position:         relative;
+    overflow:         hidden;
+    border-radius:    var(--fi-r-xl);
+    background-color: var(--fi-bg);
+    background-image: linear-gradient(145deg,
+                          rgba(var(--_fc-rgb), 0.07) 0%,
+                          rgba(var(--_fc-rgb), 0.025) 45%,
+                          transparent 100%);
+    border:           1px solid rgba(var(--_fc-rgb), 0.16);
+    box-shadow:
+        0 1px 4px  rgba(0, 0, 0, 0.04),
+        0 6px 24px rgba(var(--_fc-rgb), 0.09);
+    transition:
+        box-shadow   var(--fi-dur-slow) var(--fi-ease),
+        border-color var(--fi-dur-slow) var(--fi-ease);
+}
+
+/* Decorative glow — mirrors uc-card::after */
+.form-card::after {
+    content:       '';
+    position:      absolute;
+    bottom:        -50px;
+    left:          -50px;
+    width:         180px;
+    height:        180px;
+    background:    radial-gradient(circle,
+                       rgba(var(--_fc-rgb), 0.08) 0%,
+                       transparent 68%);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity:       0.7;
+    transition:    transform 0.5s ease, opacity 0.5s ease;
+}
+
+.form-card:hover {
+    border-color: rgba(var(--_fc-rgb), 0.26);
+    box-shadow:
+        0 2px 8px  rgba(0, 0, 0, 0.05),
+        0 14px 36px rgba(var(--_fc-rgb), 0.14);
+}
+
+.form-card:hover::after { transform: scale(1.25); opacity: 1; }
+
+/* Header — Gradient Fill (mirrors uc-card__header) */
+.form-card-header {
+    background:  linear-gradient(135deg, var(--_fc-main) 0%, var(--_fc-dark) 100%);
+    position:    relative;
+    overflow:    hidden;
+    flex-shrink: 0;
+}
+
+.form-card-header::before {
+    content:        '';
+    position:       absolute;
+    inset:          0;
+    background:     radial-gradient(circle at 15% 55%, rgba(255,255,255,0.12) 0%, transparent 65%);
+    pointer-events: none;
+}
+
+.form-card-header-inner {
+    display:     flex;
+    align-items: center;
+    gap:         0.65rem;
+    padding:     0.9rem 1.2rem;
+    position:    relative;
+    z-index:     1;
+}
+
+.form-card-header-icon {
+    width:            2.2rem;
+    height:           2.2rem;
+    border-radius:    10px;
+    background:       rgba(255,255,255,0.20);
+    border:           1.5px solid rgba(255,255,255,0.28);
+    display:          flex;
+    align-items:      center;
+    justify-content:  center;
+    font-size:        1rem;
+    color:            rgba(255,255,255,0.95);
+    flex-shrink:      0;
+    position:         relative;
+    overflow:         hidden;
+}
+
+.form-card-header-icon::before {
+    content:        '';
+    position:       absolute;
+    inset:          0;
+    border-radius:  inherit;
+    background:     linear-gradient(145deg, rgba(255,255,255,0.22) 0%, transparent 55%);
+    pointer-events: none;
+}
+
+.form-card-header h3 {
+    font-size:   1rem;
+    font-weight: 700;
+    color:       #ffffff;
+    margin:      0;
+    line-height: 1.3;
+}
+
+.form-card-header p {
+    font-size:   0.78rem;
+    color:       rgba(255,255,255,0.78);
+    margin:      0.2rem 0 0;
+    font-weight: 500;
+}
+
+/* Body */
+.form-card-body {
+    padding:        1.25rem;
+    display:        flex;
+    flex-direction: column;
+    gap:            1rem;
+    position:       relative;
+    z-index:        1;
+}
+
+/* Footer */
+.form-card-footer {
+    padding:         0.9rem 1.25rem;
+    border-top:      1px solid rgba(var(--_fc-rgb), 0.10);
+    display:         flex;
+    gap:             0.6rem;
+    justify-content: flex-end;
+    background:      rgba(var(--_fc-rgb), 0.03);
+    position:        relative;
+    z-index:         1;
+}
+
+/* Color variants */
+.form-card--primary { --_fc-rgb: 61,143,214;  --_fc-main: #3d8fd6; --_fc-dark: #274060; }
+.form-card--success { --_fc-rgb: 16,185,129;  --_fc-main: #10b981; --_fc-dark: #059669; }
+.form-card--warning { --_fc-rgb: 245,158,11;  --_fc-main: #f59e0b; --_fc-dark: #d97706; }
+.form-card--danger  { --_fc-rgb: 239,68,68;   --_fc-main: #ef4444; --_fc-dark: #dc2626; }
+.form-card--violet  { --_fc-rgb: 139,92,246;  --_fc-main: #8b5cf6; --_fc-dark: #7c3aed; }
+.form-card--teal    { --_fc-rgb: 20,184,166;  --_fc-main: #14b8a6; --_fc-dark: #0d9488; }
+.form-card--neutral { --_fc-rgb: 100,116,139; --_fc-main: #64748b; --_fc-dark: #475569; }
+
+
+/* ============================================================
+   § 21  Layout Helpers
+   ============================================================ */
+
+/* Stack — عمود عمودي بمسافات بين form-group */
+.form-stack {
+    display:        flex;
+    flex-direction: column;
+    gap:            1.25rem;
+    width:          100%;
+}
+
+/* Row — صفان أفقيان */
+.form-row {
+    display:     flex;
+    align-items: flex-end;
+    gap:         0.75rem;
+    width:       100%;
+}
+
+.form-row .form-group { flex: 1; }
+.form-row-action      { flex-shrink: 0; }
+
+@media (max-width: 580px) {
+    .form-row { flex-direction: column; align-items: stretch; }
+}
+
+/* Grid داخل form-card */
+.form-grid-2 {
+    display:               grid;
+    grid-template-columns: 1fr 1fr;
+    gap:                   0.9rem 1rem;
+}
+
+@media (max-width: 600px) {
+    .form-grid-2 { grid-template-columns: 1fr; }
+}
+
+/* Actions row */
+.form-actions {
+    display:         flex;
+    align-items:     center;
+    gap:             0.6rem;
+    justify-content: flex-end;
+    flex-wrap:       wrap;
+}
+
+.form-actions.form-actions-start  { justify-content: flex-start; }
+.form-actions.form-actions-center { justify-content: center; }
+.form-actions.form-actions-stretch > * { flex: 1; }
+
+/* Search bar pill */
+.form-search-bar .form-input {
+    border-radius:        var(--fi-r-full);
+    padding-inline-start: 2.8rem;
+}
+
+.form-search-bar .form-icon-start { inset-inline-start: 1rem; }
+
+
+/* ============================================================
+   § 22  Form Section — .form-section
+   أقسام منطقية داخل النموذج (مستخدمة في news-workflow-manager.js)
+   ============================================================ */
+
+.form-section {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.75rem;
+    padding:        1.1rem 1.2rem;
+    background-color: var(--fi-bg);
+    background-image: linear-gradient(145deg,
+                          rgba(var(--fi-blue-rgb), 0.04) 0%,
+                          transparent 100%);
+    border:           1px solid var(--fi-border);
+    border-radius:    var(--fi-r-lg);
+    transition:       border-color var(--fi-dur) var(--fi-ease);
+}
+
+.form-section:focus-within {
+    border-color: var(--fi-border-hover);
+}
+
+.form-section-label {
+    display:        flex;
+    align-items:    center;
+    gap:            0.5rem;
+    font-size:      var(--fi-fs-sm);
+    font-weight:    700;
+    color:          var(--fi-label);
+    letter-spacing: 0.02em;
+}
+
+.form-section-label i {
+    display:          flex;
+    align-items:      center;
+    justify-content:  center;
+    width:            1.6rem;
+    height:           1.6rem;
+    background-image: linear-gradient(135deg,
+                          rgba(var(--fi-blue-rgb), 0.14) 0%,
+                          rgba(var(--fi-blue-rgb), 0.06) 100%);
+    border:           1px solid rgba(var(--fi-blue-rgb), 0.20);
+    border-radius:    7px;
+    color:            #3d8fd6;
+    font-size:        0.75rem;
+    flex-shrink:      0;
+}
+
+.form-section-hint {
+    font-size:   var(--fi-fs-xs);
+    color:       var(--fi-hint);
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.form-section-scroll {
+    overflow-y:  auto;
+    max-height:  260px;
+    padding-inline-end: 0.25rem;
+}
+
+.form-section-scroll::-webkit-scrollbar { width: 4px; }
+.form-section-scroll::-webkit-scrollbar-track { background: transparent; }
+.form-section-scroll::-webkit-scrollbar-thumb {
+    background:    rgba(var(--fi-blue-rgb), 0.25);
+    border-radius: 4px;
+}
+.form-section-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--fi-blue-rgb), 0.45);
+}
+
+
+/* ============================================================
+   § 23  Aliases — توافق مع surveys-edit-modal.js
+   edit-form-* = نفس form-* تمامًا
+   ============================================================ */
+
+.edit-form-input   { }   /* يرث من .form-input عبر الـ JS */
+.edit-form-section { }   /* يرث من .form-section */
+.edit-form-section-title { } /* يرث من .form-section-label */
+
+/* تطبيق نفس أنماط form-input على edit-form-input */
+.edit-form-input {
+    display:          block;
+    width:            100%;
+    min-width:        0;
+    padding:          var(--fi-py-md) var(--fi-px-md);
+    font-size:        var(--fi-fs-md);
+    font-weight:      var(--fi-fw-value);
+    font-family:      inherit;
+    color:            var(--fi-text);
+    background-color: var(--fi-bg);
+    background-image: var(--fi-bg-gradient);
+    border:           1.5px solid var(--fi-border);
+    border-radius:    var(--fi-r-md);
+    box-shadow:       var(--fi-shadow-rest);
+    line-height:      1.5;
+    outline:          none;
+    appearance:       none;
+    -webkit-appearance: none;
+    transition:
+        border-color     var(--fi-dur) var(--fi-ease),
+        box-shadow       var(--fi-dur-slow) var(--fi-ease),
+        background-image var(--fi-dur) var(--fi-ease);
+}
+
+.edit-form-input::placeholder { color: var(--fi-placeholder); font-weight: 400; }
+
+.edit-form-input:hover:not(:disabled):not([readonly]):not(:focus) {
+    border-color:     var(--fi-border-hover);
+    box-shadow:       var(--fi-shadow-hover);
+    background-image: var(--fi-bg-hover);
+}
+
+.edit-form-input:focus:not(:disabled):not([readonly]) {
+    border-color:     var(--fi-border-focus);
+    box-shadow:       var(--fi-shadow-focus);
+    background-image: var(--fi-bg-focus);
+}
+
+.edit-form-input:disabled {
+    background-color:  var(--fi-bg-disabled) !important;
+    background-image:  none !important;
+    border-color:      var(--fi-border-disabled) !important;
+    color:             var(--fi-disabled-text) !important;
+    box-shadow:        none !important;
+    cursor:            not-allowed !important;
+    opacity:           0.78;
+}
+
+.edit-form-section {
+    display:          flex;
+    flex-direction:   column;
+    gap:              0.75rem;
+    padding:          1.1rem 1.2rem;
+    background-color: var(--fi-bg);
+    background-image: linear-gradient(145deg,
+                          rgba(var(--fi-blue-rgb), 0.04) 0%,
+                          transparent 100%);
+    border:           1px solid var(--fi-border);
+    border-radius:    var(--fi-r-lg);
+}
+
+.edit-form-section-title {
+    font-size:      var(--fi-fs-sm);
+    font-weight:    700;
+    color:          var(--fi-label);
+    letter-spacing: 0.02em;
+    display:        flex;
+    align-items:    center;
+    gap:            0.5rem;
+}

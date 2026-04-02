@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام رفع الصور المحسن - Supabase Storage
  * يدعم قص الصور ومعرض الصور
  */
@@ -163,7 +163,7 @@ window.ImageUploadHelper = (function() {
                          class="image-preview">
                     <button type="button" 
                             onclick="document.getElementById('${inputId}').value=''; document.getElementById('${previewId}').style.display='none';"
-                            class="btn btn--danger btn--sm">
+                            class="btn btn-danger btn-sm">
                         <i class="fa-solid fa-times"></i> إلغاء
                     </button>
                 </div>
@@ -745,3 +745,4 @@ window.ImageUploadHelper = (function() {
         getCoverImageUrl
     };
 })();
+

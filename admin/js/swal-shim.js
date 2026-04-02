@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SweetAlert2 Compatibility Shim
  * يحوّل استدعاءات Swal.fire إلى ModalHelper تلقائياً
  * بديل كامل لمكتبة SweetAlert2 الخارجية
@@ -50,6 +50,7 @@
             text = '',
             html = '',
             icon = '',
+            iconClass = '',
             showCancelButton = false,
             showConfirmButton = true,
             confirmButtonText = 'موافق',
@@ -122,22 +123,32 @@
                     ${html}
                 `;
 
+                const iconTypeMap = { warning: 'warning', error: 'danger', question: 'info', info: 'info', success: 'success' };
+                const modalType = iconTypeMap[icon] || '';
+                const confirmBtnClass = {
+                    warning: 'btn-warning',
+                    danger:  'btn-danger',
+                    success: 'btn-success',
+                    info:    'btn-primary'
+                }[modalType] || 'btn-primary';
                 const modalResult = MH.show({
                     title: stripHtml(title),
                     html: bodyHtml,
                     size: size,
+                    type: modalType,
+                    iconClass: iconClass,
                     extraClass: 'modal-form',
                     showFooter: true,
                     footerButtons: [
                         {
                             text: cancelButtonText,
-                            class: 'btn--outline btn--outline-secondary',
+                            class: 'btn-outline',
                             callback: () => {},
                             value: 'cancel'
                         },
                         {
                             text: confirmButtonText,
-                            class: 'btn--primary',
+                            class: confirmBtnClass,
                             callback: async () => {
                                 // Set validation container
                                 currentValidationContainer = document.getElementById('swalShimValidation');
@@ -204,14 +215,14 @@
                 if (showCancelButton) {
                     buttons.push({
                         text: cancelButtonText,
-                        class: 'btn--outline btn--outline-secondary',
+                        class: 'btn-outline',
                         value: 'cancel'
                     });
                 }
                 if (showBtn !== false) {
                     buttons.push({
                         text: confirmButtonText,
-                        class: 'btn--primary',
+                        class: 'btn-primary',
                         value: 'confirm'
                     });
                 }
@@ -288,3 +299,4 @@
     };
 
 })();
+

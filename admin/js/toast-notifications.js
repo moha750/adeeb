@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام Toast Notifications - نادي أدِيب
  * بديل خفيف وأنيق لـ SweetAlert2
  */
@@ -251,8 +251,8 @@ window.Toast = (function() {
                 <input type="text" class="form-input prompt-input" id="promptInput" placeholder="${placeholder}" value="${defaultValue}">
             </div>
             <div class="modal-footer">
-                <button class="btn btn--outline btn--outline-secondary" onclick="Toast.closePrompt(false)">${cancelText}</button>
-                <button class="btn btn--primary" onclick="Toast.closePrompt(true)">${confirmText}</button>
+                <button class="btn btn-secondary" onclick="Toast.closePrompt(false)">${cancelText}</button>
+                <button class="btn btn-primary" onclick="Toast.closePrompt(true)">${confirmText}</button>
             </div>
         `;
 
@@ -357,3 +357,4 @@ window.toastError = window.Toast.error;
 window.toastWarning = window.Toast.warning;
 window.toastInfo = window.Toast.info;
 window.toastLoading = window.Toast.loading;
+

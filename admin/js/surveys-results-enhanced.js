@@ -29,12 +29,8 @@
                     if (tabsContainer) {
                         tabsContainer.querySelectorAll('.tab-btn').forEach(b => {
                             b.classList.remove('active');
-                            b.style.borderBottom = 'none';
-                            b.style.color = '#6b7280';
                         });
                         btn.classList.add('active');
-                        btn.style.borderBottom = '3px solid #3b82f6';
-                        btn.style.color = '#3b82f6';
                     }
                     
                     // إخفاء جميع المحتويات وإظهار المحتوى المطلوب
@@ -43,10 +39,6 @@
                     if (targetTab) {
                         targetTab.style.display = 'block';
                         
-                        // عرض جدول الاستجابات عند التبديل إليه
-                        if (tabName === 'responses-table') {
-                            this.renderResponsesTable();
-                        }
                     }
                 }
             });
@@ -144,10 +136,8 @@
                 const subtitle = document.getElementById('resultsSubtitle');
                 if (subtitle) subtitle.textContent = survey.description || 'عرض نتائج وتحليلات الاستبيان';
 
-                this.renderStatistics();
+                this.renderOverview();
                 this.renderResponses();
-                this.renderAnalytics();
-                this.renderResponsesTable();
 
                 // تهيئة أشرطة الرسوم البيانية بعد تحميل المحتوى
                 setTimeout(() => {
@@ -244,10 +234,10 @@
                     <div class="card-header">
                         <h3><i class="fa-solid fa-chart-bar"></i> إحصائيات الاستبيان</h3>
                         <div style="display:flex;gap:0.5rem;">
-                            <button class="btn btn--outline btn--outline-primary btn--sm" onclick="window.surveysResultsEnhanced.refreshResults()">
+                            <button class="btn btn-outline btn-sm" onclick="window.surveysResultsEnhanced.refreshResults()">
                                 <i class="fa-solid fa-rotate"></i> تحديث
                             </button>
-                            <button class="btn btn--primary btn--sm" onclick="window.surveysResultsEnhanced.openExportModal()">
+                            <button class="btn btn-primary btn-sm" onclick="window.surveysResultsEnhanced.openExportModal()">
                                 <i class="fa-solid fa-download"></i> تصدير
                             </button>
                         </div>
@@ -256,6 +246,116 @@
                         ${questionsHtml}
                     </div>
                 </div>
+            `;
+        }
+
+        renderOverview() {
+            const container = document.getElementById('surveyOverviewContainer');
+            if (!container) return;
+
+            const VISUAL_TYPES = ['single_choice', 'multiple_choice', 'dropdown', 'yes_no',
+                                  'linear_scale', 'rating_stars', 'rating_hearts', 'rating_emojis', 'slider', 'number'];
+            const TEXT_TYPES   = ['short_text', 'long_text', 'email', 'phone', 'url', 'date', 'time', 'datetime'];
+
+            const completedResponses  = currentResponses.filter(r => r.status === 'completed');
+            const inProgressResponses = currentResponses.filter(r => r.status === 'in_progress');
+            const abandonedResponses  = currentResponses.filter(r => r.status === 'abandoned');
+            const completionRate  = this.calculateCompletionRate();
+            const timeStats       = this.analyzeCompletionTimes(completedResponses);
+            const deviceStats     = this.analyzeDevices(currentResponses);
+            const completionTrend = this.analyzeCompletionTrend(currentResponses);
+
+            const visualQuestions = currentQuestions.filter(q => VISUAL_TYPES.includes(q.question_type));
+            const textQuestions   = currentQuestions.filter(q => TEXT_TYPES.includes(q.question_type));
+
+            let questionsHtml = '';
+            if (visualQuestions.length > 0) {
+                questionsHtml += `<div class="results-questions">${visualQuestions.map(q => this.renderQuestionStatistics(q)).join('')}</div>`;
+            }
+            if (textQuestions.length > 0) {
+                questionsHtml += `
+                    <h3 style="display:flex;align-items:center;gap:10px;margin:2rem 0 1rem;">
+                        <i class="fa-solid fa-align-right"></i>الأسئلة النصية
+                    </h3>
+                    <div class="results-questions">${textQuestions.map(q => this.renderQuestionStatistics(q)).join('')}</div>
+                `;
+            }
+            if (!questionsHtml) questionsHtml = '<p class="text-muted">لا توجد أسئلة في هذا الاستبيان</p>';
+
+            const hasTrend = Object.keys(completionTrend).length > 0;
+
+            container.innerHTML = `
+                <div class="stats-grid" style="margin-bottom:1.5rem;">
+                    <div class="stat-card" style="--stat-color:#3b82f6;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                            <div class="stat-content"><div class="stat-value">${currentResponses.length}</div><div class="stat-label">إجمالي الاستجابات</div></div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color:#10b981;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-check-circle"></i></div>
+                            <div class="stat-content"><div class="stat-value">${completedResponses.length}</div><div class="stat-label">مكتملة</div></div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color:#f59e0b;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-spinner"></i></div>
+                            <div class="stat-content"><div class="stat-value">${inProgressResponses.length}</div><div class="stat-label">قيد التقدم</div></div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color:#ef4444;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-ban"></i></div>
+                            <div class="stat-content"><div class="stat-value">${abandonedResponses.length}</div><div class="stat-label">متروكة</div></div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color:#6366f1;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                            <div class="stat-content"><div class="stat-value">${completionRate}%</div><div class="stat-label">معدل الإكمال</div></div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color:#8b5cf6;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+                            <div class="stat-content"><div class="stat-value">${timeStats.average}</div><div class="stat-label">متوسط الوقت</div></div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color:#14b8a6;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-eye"></i></div>
+                            <div class="stat-content"><div class="stat-value">${currentSurveyData.total_views || 0}</div><div class="stat-label">المشاهدات</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:1.5rem;">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-chart-bar"></i> إحصائيات الأسئلة</h3>
+                        <button class="btn btn-outline btn-sm" onclick="window.surveysResultsEnhanced.refreshResults()">
+                            <i class="fa-solid fa-rotate"></i> تحديث
+                        </button>
+                    </div>
+                    <div class="card-body">${questionsHtml}</div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;margin-bottom:1rem;">
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fa-solid fa-mobile-screen"></i> توزيع الأجهزة</h3></div>
+                        <div class="card-body">${this.renderDeviceChart(deviceStats)}</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fa-solid fa-clock"></i> توزيع أوقات الإكمال</h3></div>
+                        <div class="card-body">${this.renderTimeDistributionChart(timeStats)}</div>
+                    </div>
+                </div>
+
+                ${hasTrend ? `
+                <div class="card">
+                    <div class="card-header"><h3><i class="fa-solid fa-chart-area"></i> معدل الإكمال حسب الوقت</h3></div>
+                    <div class="card-body">${this.renderCompletionTrendChart(completionTrend)}</div>
+                </div>` : ''}
             `;
         }
 
@@ -485,9 +585,7 @@
             const container = document.getElementById('surveyResponsesContainer');
             if (!container) return;
 
-            const allResponses = currentResponses;
-
-            if (allResponses.length === 0) {
+            if (currentResponses.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <i class="fa-solid fa-inbox"></i>
@@ -499,92 +597,104 @@
             }
 
             container.innerHTML = `
-                <div class="card">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-list"></i> الاستجابات الفردية (${allResponses.length})</h3>
-                        <div style="display:flex;gap:0.5rem;">
-                            <button class="btn btn--outline btn--outline-primary btn--sm" onclick="window.surveysResultsEnhanced.refreshResults()">
-                                <i class="fa-solid fa-rotate"></i> تحديث
-                            </button>
-                            <button class="btn btn--primary btn--sm" onclick="window.surveysResultsEnhanced.openExportModal()">
-                                <i class="fa-solid fa-download"></i> تصدير
-                            </button>
-                        </div>
+                <div class="filters-bar" style="margin-bottom:1rem;">
+                    <div class="filter-group" style="flex:1;min-width:200px;">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="responsesSearchInput" placeholder="البحث في الاستجابات..." class="input input-text" />
                     </div>
-                    <div class="card-body">
-                        <!-- فلاتر الاستجابات -->
-                        <div class="filters-bar mb-2rem">
-                            <div class="filter-group">
-                                <i class="fa-solid fa-search"></i>
-                                <input type="text" id="responsesSearchInput" placeholder="البحث في الاستجابات..." />
-                            </div>
-                            <select id="responsesStatusFilter" class="filter-select">
-                                <option value="">جميع الحالات</option>
-                                <option value="completed" selected>مكتملة</option>
-                                <option value="in_progress">قيد التقدم</option>
-                                <option value="abandoned">متروكة</option>
-                            </select>
-                            <select id="responsesSortFilter" class="filter-select">
-                                <option value="newest">الأحدث أولاً</option>
-                                <option value="oldest">الأقدم أولاً</option>
-                                <option value="fastest">الأسرع</option>
-                                <option value="slowest">الأبطأ</option>
-                            </select>
-                        </div>
-                        <!-- قائمة الاستجابات -->
-                        <div id="responsesListContainer" class="applications-cards-grid">
-                            ${allResponses.map(r => this.renderResponseCard(r)).join('')}
-                        </div>
+                    <select id="responsesStatusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="completed" selected>مكتملة</option>
+                        <option value="in_progress">قيد التقدم</option>
+                        <option value="abandoned">متروكة</option>
+                    </select>
+                    <select id="responsesSortFilter" class="filter-select">
+                        <option value="newest">الأحدث أولاً</option>
+                        <option value="oldest">الأقدم أولاً</option>
+                        <option value="fastest">الأسرع</option>
+                        <option value="slowest">الأبطأ</option>
+                    </select>
+                    <div style="display:flex;gap:0;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+                        <button id="viewCardsBtn" class="btn btn-sm btn-primary" style="border-radius:0;border:none;"
+                            onclick="window.surveysResultsEnhanced.switchResponsesView('cards')" title="عرض البطاقات">
+                            <i class="fa-solid fa-grip"></i>
+                        </button>
+                        <button id="viewTableBtn" class="btn btn-sm btn-outline" style="border-radius:0;border:none;border-right:1px solid #e5e7eb;"
+                            onclick="window.surveysResultsEnhanced.switchResponsesView('table')" title="عرض الجدول">
+                            <i class="fa-solid fa-table"></i>
+                        </button>
                     </div>
+                </div>
+                <div id="responsesContentArea">
+                    <div id="responsesListContainer" class="uc-grid"></div>
                 </div>
             `;
 
             this.setupResponsesFilters();
+            this.filterResponses();
+        }
+
+        switchResponsesView(view) {
+            const area = document.getElementById('responsesContentArea');
+            const cardsBtn = document.getElementById('viewCardsBtn');
+            const tableBtn = document.getElementById('viewTableBtn');
+            if (!area) return;
+
+            if (view === 'table') {
+                if (cardsBtn) { cardsBtn.classList.remove('btn-primary'); cardsBtn.classList.add('btn-outline'); }
+                if (tableBtn) { tableBtn.classList.remove('btn-outline'); tableBtn.classList.add('btn-primary'); }
+                this.renderResponsesTable();
+            } else {
+                if (cardsBtn) { cardsBtn.classList.remove('btn-outline'); cardsBtn.classList.add('btn-primary'); }
+                if (tableBtn) { tableBtn.classList.remove('btn-primary'); tableBtn.classList.add('btn-outline'); }
+                area.innerHTML = '<div id="responsesListContainer" class="uc-grid"></div>';
+                this.filterResponses();
+            }
         }
 
         renderResponseCard(response) {
             const userName = response.user?.full_name || (response.is_anonymous ? 'المستجيب' : 'غير معروف');
-            const statusClass = response.status === 'completed' ? 'badge-success' : 
+            const statusClass = response.status === 'completed' ? 'badge-success' :
                                response.status === 'in_progress' ? 'badge-warning' : 'badge-danger';
-            const statusText = response.status === 'completed' ? 'مكتملة' : 
+            const statusText = response.status === 'completed' ? 'مكتملة' :
                               response.status === 'in_progress' ? 'قيد التقدم' : 'متروكة';
+            const headerClass = response.status === 'completed' ? 'uc-card__header--success' :
+                               response.status === 'in_progress' ? 'uc-card__header--warning' : 'uc-card__header--danger';
 
             return `
-                <div class="application-card">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar">
+                <div class="uc-card">
+                    <div class="uc-card__header ${headerClass}">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
                                 <i class="fa-solid fa-user"></i>
                             </div>
-                            <div class="applicant-details">
-                                <h3 class="applicant-name">${this.escapeHtml(userName)}</h3>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${this.escapeHtml(userName)}</h3>
                                 <span class="badge ${statusClass}">${statusText}</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="application-card-body">
-                        <div class="application-info-grid">
-                            <div class="info-item">
-                                <i class="fa-solid fa-calendar"></i>
-                                <div class="info-content">
-                                    <span class="info-label">تاريخ الإرسال</span>
-                                    <span class="info-value">${this.formatDate(response.created_at)}</span>
+                    <div class="uc-card__body">
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">تاريخ الإرسال</span>
+                                    <span class="uc-card__info-value">${this.formatDate(response.created_at)}</span>
                                 </div>
                             </div>
 
-                            <div class="info-item">
-                                <i class="fa-solid fa-clock"></i>
-                                <div class="info-content">
-                                    <span class="info-label">وقت الإكمال</span>
-                                    <span class="info-value">${this.formatTime(response.time_spent_seconds)}</span>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-clock"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">وقت الإكمال</span>
+                                    <span class="uc-card__info-value">${this.formatTime(response.time_spent_seconds)}</span>
                                 </div>
                             </div>
-                        </div>
                     </div>
 
-                    <div class="application-card-footer">
-                        <button class="btn btn--info btn--sm" onclick="window.surveysResultsEnhanced.viewResponseDetails('${response.id}')">
+                    <div class="uc-card__footer">
+                        <button class="btn btn-primary btn-sm" onclick="window.surveysResultsEnhanced.viewResponseDetails('${response.id}')">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل
                         </button>
@@ -804,10 +914,10 @@
                 <div class="card-header" style="margin-bottom:1rem;background:#fff;padding:1rem 1.25rem;border-radius:12px;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
                     <h3 style="margin:0;"><i class="fa-solid fa-chart-line"></i> التحليلات المتقدمة</h3>
                     <div style="display:flex;gap:0.5rem;">
-                        <button class="btn btn--outline btn--outline-primary btn--sm" onclick="window.surveysResultsEnhanced.refreshResults()">
+                        <button class="btn btn-outline btn-sm" onclick="window.surveysResultsEnhanced.refreshResults()">
                             <i class="fa-solid fa-rotate"></i> تحديث
                         </button>
-                        <button class="btn btn--primary btn--sm" onclick="window.surveysResultsEnhanced.openExportModal()">
+                        <button class="btn btn-primary btn-sm" onclick="window.surveysResultsEnhanced.openExportModal()">
                             <i class="fa-solid fa-download"></i> تصدير
                         </button>
                     </div>
@@ -1321,22 +1431,22 @@
                 <div style="padding:0.5rem 0;">
                     <p style="color:#6b7280;margin-bottom:1rem;">اختر الحالات التي تريد تصديرها:</p>
                     <label style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;margin-bottom:0.5rem;background:#f9fafb;">
-                        <input type="checkbox" id="exp_all" style="accent-color:#3b82f6;width:16px;height:16px;" onchange="document.querySelectorAll('.exp-status-cb').forEach(cb=>cb.checked=this.checked)" />
+                        <input type="checkbox" id="exp_all" class="input-checkbox" onchange="document.querySelectorAll('.exp-status-cb').forEach(cb=>cb.checked=this.checked)" />
                         <span style="font-weight:600;">الكل</span>
                         <span class="badge badge-info" style="margin-right:auto;">${currentResponses.length}</span>
                     </label>
                     <label style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;margin-bottom:0.5rem;">
-                        <input type="checkbox" class="exp-status-cb" value="completed" checked style="accent-color:#10b981;width:16px;height:16px;" />
+                        <input type="checkbox" class="exp-status-cb input-checkbox" value="completed" checked />
                         <span class="badge badge-success">مكتملة</span>
                         <span style="color:#6b7280;margin-right:auto;">${counts.completed} استجابة</span>
                     </label>
                     <label style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;margin-bottom:0.5rem;">
-                        <input type="checkbox" class="exp-status-cb" value="in_progress" style="accent-color:#f59e0b;width:16px;height:16px;" />
+                        <input type="checkbox" class="exp-status-cb input-checkbox" value="in_progress" />
                         <span class="badge badge-warning">قيد التقدم</span>
                         <span style="color:#6b7280;margin-right:auto;">${counts.in_progress} استجابة</span>
                     </label>
                     <label style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;margin-bottom:0.5rem;">
-                        <input type="checkbox" class="exp-status-cb" value="abandoned" style="accent-color:#ef4444;width:16px;height:16px;" />
+                        <input type="checkbox" class="exp-status-cb input-checkbox" value="abandoned" />
                         <span class="badge badge-danger">متروكة</span>
                         <span style="color:#6b7280;margin-right:auto;">${counts.abandoned} استجابة</span>
                     </label>
@@ -1358,8 +1468,8 @@
                     </div>
                     ${modalHtml}
                     <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.25rem;padding-top:1rem;border-top:1px solid #f3f4f6;">
-                        <button class="btn btn--outline btn--outline-secondary btn--sm" onclick="this.closest('.modal-backdrop').remove()">إلغاء</button>
-                        <button class="btn btn--primary btn--sm" onclick="window.surveysResultsEnhanced._doExport(this.closest('.modal-backdrop'))">
+                        <button class="btn btn-secondary btn-sm" onclick="this.closest('.modal-backdrop').remove()">إلغاء</button>
+                        <button class="btn btn-primary btn-sm" onclick="window.surveysResultsEnhanced._doExport(this.closest('.modal-backdrop'))">
                             <i class="fa-solid fa-download"></i> تصدير CSV
                         </button>
                     </div>
@@ -1425,7 +1535,9 @@
         // تصفية جدول الاستجابات بالحالة
         filterTable() {
             const filter = document.getElementById('tableStatusFilter')?.value || '';
-            const rows = document.querySelectorAll('#surveyResponsesTableContainer table tbody tr');
+            const tableRoot = document.getElementById('responsesContentArea') ||
+                              document.getElementById('surveyResponsesTableContainer');
+            const rows = tableRoot?.querySelectorAll('table tbody tr') || [];
             rows.forEach(row => {
                 const status = row.dataset.status || '';
                 row.style.display = (!filter || status === filter) ? '' : 'none';
@@ -1597,7 +1709,8 @@
         }
 
         async renderResponsesTable() {
-            const container = document.getElementById('surveyResponsesTableContainer');
+            const container = document.getElementById('responsesContentArea') ||
+                              document.getElementById('surveyResponsesTableContainer');
             if (!container || !currentSurveyData || !currentResponses || !currentQuestions) {
                 return;
             }
@@ -1621,11 +1734,11 @@
                             جدول الاستجابات (${currentResponses.length} استجابة)
                         </h3>
                         <div style="display:flex; gap:0.5rem; align-items:center;">
-                            <button class="btn btn--outline btn--outline-primary btn--sm" onclick="window.surveysResultsEnhanced.refreshResults()">
+                            <button class="btn btn-outline btn-sm" onclick="window.surveysResultsEnhanced.refreshResults()">
                                 <i class="fa-solid fa-rotate"></i>
                                 تحديث
                             </button>
-                            <button class="btn btn--primary btn--sm" onclick="window.surveysResultsEnhanced.openExportModal()">
+                            <button class="btn btn-primary btn-sm" onclick="window.surveysResultsEnhanced.openExportModal()">
                                 <i class="fa-solid fa-download"></i>
                                 تصدير
                             </button>
@@ -1640,7 +1753,7 @@
                                     <th style="min-width: 150px;">المستجيب</th>
                                     <th style="min-width: 180px;">
                                         الحالة
-                                        <select id="tableStatusFilter" class="filter-select" style="font-size:0.75rem;padding:2px 6px;margin-right:6px;border-radius:4px;" onchange="window.surveysResultsEnhanced.filterTable()">
+                                        <select id="tableStatusFilter" class="filter-select" onchange="window.surveysResultsEnhanced.filterTable()">
                                             <option value="">الكل</option>
                                             <option value="completed">مكتملة</option>
                                             <option value="in_progress">قيد التقدم</option>
@@ -1803,3 +1916,4 @@
 
     window.surveysResultsEnhanced = new SurveysResultsEnhanced();
 })();
+

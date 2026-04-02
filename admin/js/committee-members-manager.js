@@ -1,4 +1,4 @@
-class CommitteeMembersManager {
+﻿class CommitteeMembersManager {
     constructor() {
         this.supabase = window.sbClient;
         this.currentUser = null;
@@ -170,7 +170,7 @@ class CommitteeMembersManager {
         }
 
         container.innerHTML = `
-            <div class="applications-cards-grid">
+            <div class="uc-grid">
                 ${this.filteredMembers.map(member => this.renderMemberCard(member)).join('')}
             </div>
         `;
@@ -179,67 +179,65 @@ class CommitteeMembersManager {
     renderMemberCard(member) {
         const user = member.profiles;
         const role = member.roles;
-        const statusClass = user?.account_status === 'active' ? 'success' : 
-                          user?.account_status === 'suspended' ? 'danger' : 'warning';
-        const statusText = user?.account_status === 'active' ? 'نشط' : 
-                         user?.account_status === 'suspended' ? 'معلق' : 'غير نشط';
-        
-        const avatarUrl = user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.full_name || 'User')}&background=3d8fd6&color=fff`;
+        const badgeClass = user?.account_status === 'active' ? 'badge-success' :
+                           user?.account_status === 'suspended' ? 'badge-danger' : 'badge-warning';
+        const statusText = user?.account_status === 'active' ? 'نشط' :
+                           user?.account_status === 'suspended' ? 'معلق' : 'غير نشط';
+        const roleLabel = role?.role_name_ar || role?.role_name || 'عضو';
+
+        const avatarUrl = user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.full_name || 'User')}&background=3d8fd6&color=fff&size=200`;
 
         return `
-            <div class="application-card" data-member-id="${member.id}" data-user-id="${user?.id}">
-                <div class="application-card-header">
-                    <div class="applicant-info">
-                        <div class="applicant-avatar">
+            <div class="uc-card" data-member-id="${member.id}" data-user-id="${user?.id}">
+
+                <div class="uc-card__header">
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__icon">
                             <img src="${avatarUrl}" alt="${user?.full_name || 'عضو'}" />
                         </div>
-                        <div class="applicant-details">
-                            <h3 class="applicant-name">${user?.full_name || 'غير محدد'}</h3>
-                            <span class="badge badge-${statusClass}">${statusText}</span>
+                        <div class="uc-card__header-info">
+                            <h3 class="uc-card__title">${user?.full_name || 'غير محدد'}</h3>
+                            <span class="uc-card__badge">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                ${roleLabel}
+                            </span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="application-card-body">
-                    <div class="application-info-grid">
-                        ${user?.email ? `
-                            <div class="info-item">
-                                <i class="fa-solid fa-envelope"></i>
-                                <div class="info-content">
-                                    <span class="info-label">البريد الإلكتروني</span>
-                                    <span class="info-value">${user.email}</span>
-                                </div>
-                            </div>
-                        ` : ''}
-                        
-                        ${user?.phone ? `
-                            <div class="info-item">
-                                <i class="fa-solid fa-phone"></i>
-                                <div class="info-content">
-                                    <span class="info-label">الجوال</span>
-                                    <span class="info-value">${user.phone}</span>
-                                </div>
-                            </div>
-                        ` : ''}
-                        
-                        <div class="info-item">
-                            <i class="fa-solid fa-user-tag"></i>
-                            <div class="info-content">
-                                <span class="info-label">المنصب</span>
-                                <span class="info-value">${role?.role_name_ar || role?.role_name || 'غير محدد'}</span>
-                            </div>
+
+                <div class="uc-card__body">
+                    ${user?.email ? `
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-regular fa-envelope"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">البريد الإلكتروني</span>
+                            <span class="uc-card__info-value">${user.email}</span>
                         </div>
-                        
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ الانضمام</span>
-                                <span class="info-value">${this.formatDate(member.assigned_at)}</span>
-                            </div>
+                    </div>` : ''}
+                    ${user?.phone ? `
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">الجوال</span>
+                            <span class="uc-card__info-value">${user.phone}</span>
+                        </div>
+                    </div>` : ''}
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-regular fa-calendar-alt"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">تاريخ الانضمام</span>
+                            <span class="uc-card__info-value">${this.formatDate(member.assigned_at)}</span>
                         </div>
                     </div>
                 </div>
-                
+
+                <div class="uc-card__footer">
+                    <button class="view-member-btn btn btn-primary btn-block" data-user-id="${user?.id}">
+                        <i class="fa-solid fa-eye"></i>
+                        عرض التفاصيل
+                    </button>
+                </div>
+
             </div>
         `;
     }
@@ -329,8 +327,8 @@ class CommitteeMembersManager {
                     <textarea id="memberNotes" rows="4" placeholder="أضف ملاحظات عن العضو...">${member.notes || ''}</textarea>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn--outline btn--outline-primary" onclick="window.closeModal()">إلغاء</button>
-                    <button type="submit" class="btn btn--primary">حفظ التغييرات</button>
+                    <button type="button" class="btn btn-outline" onclick="window.closeModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
                 </div>
             </form>
         `;
@@ -431,3 +429,4 @@ window.committeeMembersManager = null;
 if (typeof CommitteeMembersManager !== 'undefined') {
     window.CommitteeMembersManager = CommitteeMembersManager;
 }
+

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام قص الصور - Adeeb Image Cropper
  * يوفر واجهة لقص الصور قبل رفعها
  */
@@ -89,10 +89,10 @@ window.ImageCropper = (function() {
                         </div>
                     </div>
                     <div class="image-cropper-footer">
-                        <button type="button" class="btn btn--outline btn--outline-secondary" id="cropperCancelBtn">
+                        <button type="button" class="btn btn-secondary" id="cropperCancelBtn">
                             <i class="fa-solid fa-times"></i> إلغاء
                         </button>
-                        <button type="button" class="btn btn--primary" id="cropperApplyBtn">
+                        <button type="button" class="btn btn-primary" id="cropperApplyBtn">
                             <i class="fa-solid fa-check"></i> تطبيق القص
                         </button>
                     </div>
@@ -500,3 +500,4 @@ window.ImageCropper = (function() {
         closeCropper
     };
 })();
+

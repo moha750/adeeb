@@ -1,1827 +1,1750 @@
 /**
- * مدير نظام الانتخابات لأدِيب
- * يدير عمليات الترشح والتصويت للمناصب القيادية
+ * مدير نظام الانتخابات - نادي أدِيب
  */
 
 class ElectionsManager {
     constructor() {
         this.supabase = window.sbClient;
+        this.elections = [];
+        this.currentElection = null;
         this.currentUser = null;
         this.currentUserRole = null;
+        this.voteWeights = [];
+        this.roles = [];
         this.committees = [];
-        this.elections = [];
-        this.votingTimerInterval = null;
-        this.listenersInitialized = false;
+        this.departments = [];
+        this.initialized = false;
+        this.openSectionListenersSet = false;
     }
 
-    async init(user, userRole) {
-        this.currentUser = user;
-        this.currentUserRole = userRole;
-        await this.loadCommittees();
-        if (!this.listenersInitialized) {
-            this.setupEventListeners();
-            this.listenersInitialized = true;
+    // المناصب المؤهلة للانتخاب فقط
+    static ELIGIBLE_ROLES = ['department_head', 'committee_leader', 'deputy_committee_leader'];
+
+    // الأدوار المرتبطة بالأقسام (department_id) وليس اللجان
+    static DEPARTMENT_BASED_ROLES = ['department_head'];
+
+    // خريطة الحالات والانتقالات المسموحة
+    static STATUS_TRANSITIONS = {
+        'candidacy_open': ['candidacy_closed', 'cancelled'],
+        'candidacy_closed': ['voting_open', 'cancelled'],
+        'voting_open': ['voting_closed', 'cancelled'],
+        'voting_closed': ['completed', 'cancelled'],
+        'completed': [],
+        'cancelled': []
+    };
+
+    static STATUS_LABELS = {
+        'candidacy_open': 'باب الترشح مفتوح',
+        'candidacy_closed': 'الترشح مغلق',
+        'voting_open': 'التصويت مفتوح',
+        'voting_closed': 'التصويت مغلق',
+        'completed': 'مكتمل',
+        'cancelled': 'ملغي'
+    };
+
+    static STATUS_COLORS = {
+        'candidacy_open': '#f59e0b',
+        'candidacy_closed': '#d97706',
+        'voting_open': '#10b981',
+        'voting_closed': '#8b5cf6',
+        'completed': '#059669',
+        'cancelled': '#ef4444'
+    };
+
+    static CANDIDATE_STATUS_LABELS = {
+        'pending': 'قيد المراجعة',
+        'approved': 'مقبول',
+        'rejected': 'مرفوض',
+        'withdrawn': 'منسحب'
+    };
+
+    // =============================================
+    // التهيئة
+    // =============================================
+
+    async init() {
+        if (this.initialized) {
+            await this.loadElections();
+            this.renderElectionsList();
+            return;
         }
+        try {
+            this.currentUser = window.currentUser || (await this.supabase.auth.getUser()).data?.user;
+            await this.loadCurrentUserRole();
+            await Promise.all([
+                this.loadVoteWeights(),
+                this.loadRoles(),
+                this.loadCommittees(),
+                this.loadDepartments()
+            ]);
+            await this.loadElections();
+            this.renderElectionsList();
+            this.setupEventListeners();
+            this.initialized = true;
+        } catch (error) {
+            console.error('Error initializing elections manager:', error);
+            this.showError('حدث خطأ أثناء تهيئة صفحة الانتخابات');
+        }
+    }
+
+    async loadCurrentUserRole() {
+        try {
+            const { data } = await this.supabase
+                .from('user_roles')
+                .select('*, role:roles(*)')
+                .eq('user_id', this.currentUser.id)
+                .eq('is_active', true)
+                .order('role:roles(role_level)', { ascending: false })
+                .limit(1);
+            this.currentUserRole = data?.[0] || null;
+        } catch (e) {
+            console.error('Error loading current user role:', e);
+        }
+    }
+
+    async loadVoteWeights() {
+        const { data } = await this.supabase
+            .from('election_vote_weights')
+            .select('*');
+        this.voteWeights = data || [];
+    }
+
+    async loadRoles() {
+        const { data } = await this.supabase
+            .from('roles')
+            .select('*')
+            .order('role_level', { ascending: false });
+        this.roles = data || [];
     }
 
     async loadCommittees() {
-        try {
-            const { data, error } = await this.supabase
-                .from('committees')
-                .select('*')
-                .eq('is_active', true)
-                .order('committee_name_ar');
-            
-            if (error) throw error;
-            this.committees = data || [];
-            this.populateCommitteeSelect();
-        } catch (error) {
-            console.error('Error loading committees:', error);
-        }
+        const { data } = await this.supabase
+            .from('committees')
+            .select('*')
+            .eq('is_active', true)
+            .order('committee_name_ar');
+        this.committees = data || [];
     }
 
-    populateCommitteeSelect() {
-        const select = document.getElementById('electionCommitteeSelect');
-        if (!select) return;
-        
-        select.innerHTML = '<option value="">-- اختر اللجنة --</option>';
-        this.committees.forEach(c => {
-            select.innerHTML += `<option value="${c.id}">${c.committee_name_ar}</option>`;
-        });
+    async loadDepartments() {
+        const { data } = await this.supabase
+            .from('departments')
+            .select('*')
+            .eq('is_active', true)
+            .order('display_order', { ascending: true });
+        this.departments = data || [];
     }
 
-    setupEventListeners() {
-        // زر فتح نافذة الانتخابات الجديدة
-        document.getElementById('openNewElectionBtn')?.addEventListener('click', () => this.showOpenElectionModal());
-        
-        // أزرار النافذة المنبثقة
-        document.getElementById('closeOpenElectionModal')?.addEventListener('click', () => this.hideOpenElectionModal());
-        document.getElementById('cancelOpenElection')?.addEventListener('click', () => this.hideOpenElectionModal());
-        document.getElementById('submitOpenElection')?.addEventListener('click', () => this.handleOpenElection());
-        
-        // تغيير اللجنة لتحميل المناصب الشاغرة
-        document.getElementById('electionCommitteeSelect')?.addEventListener('change', (e) => this.loadAvailablePositions(e.target.value));
-
-        // أزرار التحديث
-        document.getElementById('refreshElectionsBtn')?.addEventListener('click', () => this.loadElectionsOpen());
-        document.getElementById('refreshCandidatesBtn')?.addEventListener('click', () => this.loadCandidatesReview());
-        document.getElementById('refreshVotingAdminBtn')?.addEventListener('click', () => this.loadVotingAdmin());
-        document.getElementById('refreshElectionResultsBtn')?.addEventListener('click', () => this.loadElectionResults());
-
-        // رفع ملف الترشح
-        const fileZone = document.getElementById('nominationFileZone');
-        const fileInput = document.getElementById('nominationFileInput');
-        
-        if (fileZone && fileInput) {
-            fileZone.addEventListener('click', () => fileInput.click());
-            fileZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                fileZone.style.borderColor = '#3b82f6';
-                fileZone.style.background = '#eff6ff';
-            });
-            fileZone.addEventListener('dragleave', () => {
-                fileZone.style.borderColor = '#d1d5db';
-                fileZone.style.background = '';
-            });
-            fileZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                fileZone.style.borderColor = '#d1d5db';
-                fileZone.style.background = '';
-                if (e.dataTransfer.files.length) {
-                    fileInput.files = e.dataTransfer.files;
-                    this.handleFileSelect(e.dataTransfer.files[0]);
-                }
-            });
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length) {
-                    this.handleFileSelect(e.target.files[0]);
-                }
-            });
-        }
-
-        document.getElementById('removeSelectedFile')?.addEventListener('click', () => this.clearSelectedFile());
-        document.getElementById('submitNominationBtn')?.addEventListener('click', () => this.submitNomination());
-        
-        // إغلاق النافذة عند النقر على الخلفية
-        document.getElementById('openElectionModal')?.addEventListener('click', (e) => {
-            if (e.target.id === 'openElectionModal') {
-                this.hideOpenElectionModal();
-            }
-        });
-    }
-    
-    // ==================== النافذة المنبثقة ====================
-    
-    showOpenElectionModal() {
-        const modalBackdrop = document.getElementById('openElectionModal');
-        if (modalBackdrop) {
-            const modalContent = modalBackdrop.querySelector('.modal');
-            modalBackdrop.classList.remove('d-none');
-            // استخدام setTimeout لضمان تطبيق الانتقالات بشكل صحيح
-            setTimeout(() => {
-                modalBackdrop.classList.add('active');
-                if (modalContent) {
-                    modalContent.classList.add('active');
-                }
-            }, 10);
-            document.body.classList.add('modal-open');
-            // إعادة تعيين النموذج
-            document.getElementById('openElectionForm')?.reset();
-            const positionSelect = document.getElementById('electionPositionSelect');
-            if (positionSelect) {
-                positionSelect.disabled = true;
-                positionSelect.innerHTML = '<option value="">-- اختر اللجنة أولاً --</option>';
-            }
-            this.populateCommitteeSelect();
-        }
-    }
-    
-    hideOpenElectionModal() {
-        const modalBackdrop = document.getElementById('openElectionModal');
-        if (modalBackdrop) {
-            const modalContent = modalBackdrop.querySelector('.modal');
-            modalBackdrop.classList.remove('active');
-            if (modalContent) {
-                modalContent.classList.remove('active');
-            }
-            // الانتظار حتى انتهاء الانتقال قبل إخفاء العنصر
-            setTimeout(() => {
-                modalBackdrop.classList.add('d-none');
-            }, 400);
-            document.body.classList.remove('modal-open');
-        }
-    }
-    
-    async loadAvailablePositions(committeeId) {
-        const positionSelect = document.getElementById('electionPositionSelect');
-        const positionHint = document.getElementById('positionHint');
-        
-        if (!committeeId) {
-            positionSelect.disabled = true;
-            positionSelect.innerHTML = '<option value="">-- اختر اللجنة أولاً --</option>';
-            if (positionHint) positionHint.textContent = 'سيتم عرض المناصب الشاغرة فقط';
-            return;
-        }
-        
-        try {
-            // جلب المناصب المشغولة في هذه اللجنة
-            const { data: occupiedPositions, error: posError } = await this.supabase
-                .from('user_roles')
-                .select('role:roles(role_name)')
-                .eq('committee_id', parseInt(committeeId))
-                .in('role_id', [7, 8]); // committee_leader = 7, deputy_committee_leader = 8
-            
-            if (posError) throw posError;
-            
-            // جلب الانتخابات المفتوحة لهذه اللجنة
-            const { data: openElections, error: elecError } = await this.supabase
-                .from('elections')
-                .select('position_type')
-                .eq('committee_id', parseInt(committeeId))
-                .in('status', ['nomination_open', 'nomination_review', 'voting_open']);
-            
-            if (elecError) throw elecError;
-            
-            const occupiedRoles = (occupiedPositions || []).map(p => p.role?.role_name).filter(Boolean);
-            const electionsInProgress = (openElections || []).map(e => e.position_type);
-            
-            const allPositions = [
-                { value: 'committee_leader', label: 'قائد لجنة' },
-                { value: 'deputy_committee_leader', label: 'نائب قائد لجنة' }
-            ];
-            
-            const availablePositions = allPositions.filter(p => 
-                !occupiedRoles.includes(p.value) && !electionsInProgress.includes(p.value)
-            );
-            
-            positionSelect.disabled = false;
-            
-            if (availablePositions.length === 0) {
-                positionSelect.innerHTML = '<option value="">لا توجد مناصب شاغرة</option>';
-                positionSelect.disabled = true;
-                if (positionHint) positionHint.textContent = 'جميع المناصب مشغولة أو لها انتخابات جارية';
-                if (positionHint) positionHint.style.color = '#ef4444';
-            } else {
-                positionSelect.innerHTML = '<option value="">-- اختر المنصب --</option>';
-                availablePositions.forEach(p => {
-                    positionSelect.innerHTML += `<option value="${p.value}">${p.label}</option>`;
-                });
-                if (positionHint) positionHint.textContent = `${availablePositions.length} منصب شاغر`;
-                if (positionHint) positionHint.style.color = '#10b981';
-            }
-        } catch (error) {
-            console.error('Error loading positions:', error);
-            positionSelect.innerHTML = '<option value="">حدث خطأ</option>';
-            positionSelect.disabled = true;
-        }
-    }
-
-    handleFileSelect(file) {
-        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-        const maxSize = 10 * 1024 * 1024;
-
-        if (!allowedTypes.includes(file.type)) {
-            this.showToast('يرجى اختيار ملف PDF أو Word فقط', 'error');
-            return;
-        }
-
-        if (file.size > maxSize) {
-            this.showToast('حجم الملف يتجاوز 10MB', 'error');
-            return;
-        }
-
-        document.getElementById('selectedFileName').textContent = file.name;
-        document.getElementById('selectedFileSize').textContent = this.formatFileSize(file.size);
-        document.getElementById('selectedFileInfo').style.display = 'block';
-        document.getElementById('nominationFileZone').style.display = 'none';
-    }
-
-    clearSelectedFile() {
-        document.getElementById('nominationFileInput').value = '';
-        document.getElementById('selectedFileInfo').style.display = 'none';
-        document.getElementById('nominationFileZone').style.display = 'block';
-    }
-
-    formatFileSize(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    }
-
-    // ==================== قسم فتح باب الترشح ====================
-
-    async loadElectionsOpen() {
-        try {
-            await this.loadStats();
-            await this.loadCurrentElections();
-        } catch (error) {
-            console.error('Error loading elections:', error);
-        }
-    }
-
-    async loadStats() {
-        try {
-            const { data, error } = await this.supabase
-                .from('elections')
-                .select('status')
-                .neq('status', 'cancelled');
-
-            if (error) throw error;
-
-            const stats = {
-                total: data.length,
-                nominationOpen: data.filter(e => e.status === 'nomination_open').length,
-                votingOpen: data.filter(e => e.status === 'voting_open').length,
-                completed: data.filter(e => e.status === 'completed').length
-            };
-
-            document.getElementById('totalElectionsCount').textContent = stats.total;
-            document.getElementById('openNominationsCount').textContent = stats.nominationOpen;
-            document.getElementById('activeVotingCount').textContent = stats.votingOpen;
-            document.getElementById('completedElectionsCount').textContent = stats.completed;
-        } catch (error) {
-            console.error('Error loading stats:', error);
-        }
-    }
-
-    async loadCurrentElections() {
-        const container = document.getElementById('currentElectionsList');
-        if (!container) return;
-
+    async loadElections() {
         try {
             const { data, error } = await this.supabase
                 .from('elections')
                 .select(`
-                    id,
-                    committee_id,
-                    position_type,
-                    status,
-                    nomination_end_date,
-                    voting_start_date,
-                    voting_end_date,
-                    created_at,
-                    created_by,
-                    committee:committees(committee_name_ar),
-                    creator:profiles!elections_created_by_fkey(full_name)
+                    *,
+                    target_role:target_role_id(id, role_name, role_name_ar, role_level),
+                    target_committee:target_committee_id(id, committee_name_ar),
+                    target_department:target_department_id(id, name_ar),
+                    creator:created_by(id, full_name, avatar_url),
+                    winner:winner_user_id(id, full_name, avatar_url)
                 `)
-                .neq('status', 'cancelled')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
-
-            if (!data || data.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-inbox"></i>
-                        <p>لا توجد انتخابات حالية</p>
-                    </div>`;
-                return;
-            }
-
-            const cardsHtml = await Promise.all(data.map(election => this.renderElectionCard(election)));
-            container.innerHTML = cardsHtml.join('');
-            this.attachElectionCardListeners();
-            this.initCountdownTimers();
+            this.elections = data || [];
         } catch (error) {
             console.error('Error loading elections:', error);
-            container.innerHTML = '<p class="text-danger">حدث خطأ في تحميل الانتخابات</p>';
+            this.showError('حدث خطأ أثناء تحميل الانتخابات');
         }
     }
 
-    async renderElectionCard(election) {
-        const statusLabels = {
-            'nomination_open': { text: 'الترشح مفتوح', class: 'badge-success', icon: 'fa-door-open' },
-            'nomination_review': { text: 'مراجعة الطلبات', class: 'badge-warning', icon: 'fa-clipboard-check' },
-            'voting_open': { text: 'التصويت مفتوح', class: 'badge-primary', icon: 'fa-check-to-slot' },
-            'voting_closed': { text: 'التصويت مغلق', class: 'badge-secondary', icon: 'fa-lock' },
-            'completed': { text: 'منتهية', class: 'badge-info', icon: 'fa-trophy' }
-        };
+    // =============================================
+    // Event Listeners
+    // =============================================
 
-        const positionLabels = {
-            'committee_leader': 'قائد لجنة',
-            'deputy_committee_leader': 'نائب قائد لجنة'
-        };
+    setupEventListeners() {
+        const container = document.getElementById('elections-section');
+        if (!container) return;
 
-        const status = statusLabels[election.status] || { text: election.status, class: 'badge-secondary', icon: 'fa-circle' };
-        const position = positionLabels[election.position_type] || election.position_type;
-        
-        // جلب عدد المترشحين
-        const { count: candidatesCount } = await this.supabase
-            .from('election_candidates')
-            .select('*', { count: 'exact', head: true })
-            .eq('election_id', election.id);
-        
-        // تنسيق التواريخ مع الساعة والدقيقة (12 ساعة)
-        const formatDateTime = (dateString) => {
-            if (!dateString) return '';
-            const date = new Date(dateString);
-            return date.toLocaleString('ar-SA', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
+        // زر إنشاء انتخاب
+        container.querySelector('#createElectionBtn')?.addEventListener('click', () => this.showCreateModal());
+
+        // زر تحديث
+        container.querySelector('#refreshElectionsBtn')?.addEventListener('click', async () => {
+            await this.loadElections();
+            this.renderElectionsList();
+        });
+
+        // فلتر البحث
+        container.querySelector('#electionsSearchInput')?.addEventListener('input', () => this.filterElections());
+        container.querySelector('#electionsStatusFilter')?.addEventListener('change', () => this.filterElections());
+
+        // زر الرجوع للقائمة
+        container.querySelector('#backToElectionsListBtn')?.addEventListener('click', () => this.showListView());
+    }
+
+    // =============================================
+    // عرض قائمة الانتخابات
+    // =============================================
+
+    showListView() {
+        const container = document.getElementById('elections-section');
+        container.querySelector('#elections-list-view').classList.remove('d-none');
+        container.querySelector('#elections-detail-view').classList.add('d-none');
+        this.currentElection = null;
+    }
+
+    renderElectionsList() {
+        const isAdmin = this.canManageElections();
+
+        // إخفاء/إظهار عناصر الإدارة
+        const statsGrid = document.querySelector('#elections-section .stats-grid');
+        const filtersBar = document.querySelector('#elections-section .filters-bar');
+
+        if (!isAdmin) {
+            // عرض العضو: إخفاء الإحصائيات والفلاتر الإدارية
+            if (statsGrid) statsGrid.classList.add('d-none');
+            if (filtersBar) filtersBar.classList.add('d-none');
+        } else {
+            if (statsGrid) statsGrid.classList.remove('d-none');
+            if (filtersBar) filtersBar.classList.remove('d-none');
+            this.renderStats();
+        }
+
+        if (isAdmin) {
+            this.renderElectionsGrid(this.elections);
+        } else {
+            this.renderMemberView();
+        }
+    }
+
+    renderStats() {
+        const stats = {
+            active: 0, candidacy: 0, voting: 0, completed: 0
+        };
+        this.elections.forEach(e => {
+            if (['candidacy_open', 'candidacy_closed', 'voting_open', 'voting_closed'].includes(e.status)) stats.active++;
+            if (['candidacy_open', 'candidacy_closed'].includes(e.status)) stats.candidacy++;
+            if (['voting_open', 'voting_closed'].includes(e.status)) stats.voting++;
+            if (e.status === 'completed') stats.completed++;
+        });
+
+        const set = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+        };
+        set('electionsActiveCount', stats.active);
+        set('electionsCandidacyCount', stats.candidacy);
+        set('electionsVotingCount', stats.voting);
+        set('electionsCompletedCount', stats.completed);
+    }
+
+    renderElectionsGrid(elections) {
+        const grid = document.getElementById('electionsGrid');
+        if (!grid) return;
+
+        if (!elections.length) {
+            grid.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                    <i class="fa-solid fa-check-to-slot fa-3x" style="margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p>لا توجد انتخابات حالياً</p>
+                </div>`;
+            return;
+        }
+
+        grid.innerHTML = elections.map(election => this.renderElectionCard(election)).join('');
+
+        // ربط أحداث النقر
+        grid.querySelectorAll('.uc-card[data-election-id]').forEach(card => {
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', () => {
+                this.showElectionDetail(card.dataset.electionId);
             });
-        };
-        
-        const endDate = formatDateTime(election.voting_end_date);
-        const createdDate = formatDateTime(election.created_at);
-        const nominationEndDate = election.nomination_end_date ? formatDateTime(election.nomination_end_date) : '';
+        });
+    }
 
-        // إضافة العداد التنازلي إذا كان الترشح مفتوحاً
-        const countdownHtml = election.status === 'nomination_open' && election.nomination_end_date ? `
-            <div class="nomination-countdown-wrap active" id="countdown-${election.id}">
-                <div class="nomination-countdown-head">
-                    <i class="fa-solid fa-clock"></i>
-                    <span>الوقت المتبقي لإغلاق الترشح</span>
-                </div>
-                <div class="nomination-countdown-timer" data-end-date="${election.nomination_end_date}">
-                    <div class="nomination-countdown-box">
-                        <span class="days">0</span>
-                        <small>يوم</small>
-                    </div>
-                    <div class="nomination-countdown-box">
-                        <span class="hours">0</span>
-                        <small>ساعة</small>
-                    </div>
-                    <div class="nomination-countdown-box">
-                        <span class="minutes">0</span>
-                        <small>دقيقة</small>
-                    </div>
-                    <div class="nomination-countdown-box">
-                        <span class="seconds">0</span>
-                        <small>ثانية</small>
-                    </div>
-                </div>
-            </div>
-        ` : '';
+    renderElectionCard(election) {
+        const statusLabel = ElectionsManager.STATUS_LABELS[election.status];
+        const statusColor = ElectionsManager.STATUS_COLORS[election.status];
+        const roleName    = election.target_role?.role_name_ar || '';
+        const unitLabel   = election.target_department_id ? 'القسم' : 'اللجنة';
+        const unitName    = election.target_committee?.committee_name_ar
+                         || election.target_department?.name_ar || '';
+        const createdDate = new Date(election.created_at).toLocaleDateString('ar-SA');
 
         return `
-            <div class="application-card" data-election-id="${election.id}">
-                ${countdownHtml}
-                <div class="application-card-header">
-                    <div class="applicant-info">
-                        <div class="applicant-avatar">
-                            <i class="fa-solid fa-vote-yea"></i>
-                        </div>
-                        <div class="applicant-details">
-                            <h4 class="applicant-name">${election.committee?.committee_name_ar || 'لجنة غير محددة'}</h4>
-                            <div>
-                                <span class="badge ${status.class}">
-                                    <i class="fa-solid ${status.icon}"></i>
-                                    ${status.text}
-                                </span>
-                            </div>
-                        </div>
+            <div class="uc-card" data-election-id="${election.id}">
+                <div class="uc-card__header">
+                    <div class="uc-card__icon" style="background: ${statusColor}20; color: ${statusColor};">
+                        <i class="fa-solid fa-check-to-slot"></i>
+                    </div>
+                    <div>
+                        <h3 class="uc-card__title">${this.getElectionName(election)}</h3>
+                        <span style="display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; background: ${statusColor}15; color: ${statusColor}; font-weight: 600;">
+                            ${statusLabel}
+                        </span>
                     </div>
                 </div>
-                <div class="application-card-body">
-                    <div class="application-info-grid">
-                        <div class="info-item">
-                            <i class="fa-solid fa-user-tie"></i>
-                            <div class="info-content">
-                                <span class="info-label">المنصب</span>
-                                <span class="info-value">${position}</span>
-                            </div>
-                        </div>
-                        <div class="info-item">
-                            <i class="fa-solid fa-users"></i>
-                            <div class="info-content">
-                                <span class="info-label">عدد المترشحين</span>
-                                <span class="info-value">${candidatesCount || 0}</span>
-                            </div>
-                        </div>
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar-plus"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ الإنشاء</span>
-                                <span class="info-value">${createdDate}</span>
-                            </div>
-                        </div>
-                        <div class="info-item">
-                            <i class="fa-solid fa-user"></i>
-                            <div class="info-content">
-                                <span class="info-label">أنشأها</span>
-                                <span class="info-value">${election.creator?.full_name || 'غير معروف'}</span>
-                            </div>
-                        </div>
+                <div class="uc-card__body">
+                    <div class="uc-card__info-item">
+                        <span class="uc-card__info-label">المنصب</span>
+                        <span class="uc-card__info-value">${roleName}</span>
+                    </div>
+                    ${unitName ? `
+                    <div class="uc-card__info-item">
+                        <span class="uc-card__info-label">${unitLabel}</span>
+                        <span class="uc-card__info-value">${unitName}</span>
+                    </div>` : ''}
+                    <div class="uc-card__info-item">
+                        <span class="uc-card__info-label">تاريخ الإنشاء</span>
+                        <span class="uc-card__info-value">${createdDate}</span>
                     </div>
                 </div>
-                <div class="application-card-footer">
-                    ${election.status === 'nomination_open' ? `
-                        <button class="btn btn--warning btn--sm close-nomination-btn" data-id="${election.id}">
-                            <i class="fa-solid fa-lock"></i> إغلاق الترشح
-                        </button>
-                        ${election.nomination_end_date ? `
-                            <button class="btn btn--outline btn--outline-primary btn--sm extend-nomination-btn" data-id="${election.id}">
-                                <i class="fa-solid fa-clock"></i> تعديل الوقت
-                            </button>
-                        ` : ''}
-                    ` : ''}
-                    ${election.status === 'nomination_review' ? `
-                        <button class="btn btn--success btn--sm start-voting-btn" data-id="${election.id}">
-                            <i class="fa-solid fa-play"></i> بدء التصويت
-                        </button>
-                    ` : ''}
-                    ${election.status === 'voting_open' ? `
-                        <button class="btn btn--primary btn--sm close-voting-btn" data-id="${election.id}">
-                            <i class="fa-solid fa-stop"></i> إغلاق التصويت
-                        </button>
-                        ${election.voting_end_date ? `
-                            <button class="btn btn--outline btn--outline-primary btn--sm extend-voting-btn" data-id="${election.id}">
-                                <i class="fa-solid fa-clock"></i> تعديل الوقت
-                            </button>
-                        ` : ''}
-                    ` : ''}
-                    <button class="btn btn--outline btn--outline-danger btn--sm cancel-election-btn" data-id="${election.id}">
-                        <i class="fa-solid fa-times"></i> إلغاء الانتخاب
+                <div class="uc-card__footer">
+                    <button class="btn btn-sm btn-outline">
+                        <i class="fa-solid fa-eye"></i> عرض التفاصيل
                     </button>
                 </div>
             </div>`;
     }
 
-    attachElectionCardListeners() {
-        document.querySelectorAll('.close-nomination-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.closeNomination(btn.dataset.id));
+    filterElections() {
+        const search = document.getElementById('electionsSearchInput')?.value?.toLowerCase() || '';
+        const statusFilter = document.getElementById('electionsStatusFilter')?.value || '';
+
+        const filtered = this.elections.filter(e => {
+            const matchSearch = !search ||
+                (e.target_role?.role_name_ar || '').toLowerCase().includes(search) ||
+                (e.target_committee?.committee_name_ar || '').toLowerCase().includes(search);
+            const matchStatus = !statusFilter || e.status === statusFilter;
+            return matchSearch && matchStatus;
         });
-        document.querySelectorAll('.start-voting-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.startVoting(btn.dataset.id));
-        });
-        document.querySelectorAll('.close-voting-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.closeVoting(btn.dataset.id));
-        });
-        document.querySelectorAll('.cancel-election-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.cancelElection(btn.dataset.id));
-        });
-        document.querySelectorAll('.extend-nomination-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.extendNominationTime(btn.dataset.id));
-        });
-        document.querySelectorAll('.extend-voting-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.extendVotingTime(btn.dataset.id));
-        });
+
+        this.renderElectionsGrid(filtered);
     }
 
-    async handleOpenElection() {
-        const committeeId = document.getElementById('electionCommitteeSelect').value;
-        const positionType = document.getElementById('electionPositionSelect').value;
-        const nominationEndDate = document.getElementById('electionNominationEndDate').value;
+    // =============================================
+    // عرض العضو (واجهة مبسطة)
+    // =============================================
 
-        if (!committeeId || !positionType) {
-            this.showToast('يرجى ملء جميع الحقول المطلوبة', 'error');
+    renderMemberView() {
+        const grid = document.getElementById('electionsGrid');
+        if (!grid) return;
+
+        // فقط الانتخابات المفتوحة للترشح أو التصويت أو المكتملة
+        const visibleElections = this.elections.filter(e =>
+            ['candidacy_open', 'voting_open', 'voting_closed', 'completed'].includes(e.status)
+        );
+
+        if (!visibleElections.length) {
+            grid.innerHTML = `
+                <div style="text-align: center; padding: 4rem 2rem; color: var(--text-secondary); grid-column: 1/-1;">
+                    <i class="fa-solid fa-box-open fa-3x" style="margin-bottom: 1rem; opacity: 0.25;"></i>
+                    <p style="font-size: 1.1rem;">لا توجد انتخابات متاحة حالياً</p>
+                    <p style="font-size: 0.85rem; margin-top: 0.5rem;">سيتم إشعارك عند فتح انتخاب جديد</p>
+                </div>`;
             return;
         }
 
-        try {
-            // حساب تواريخ افتراضية للتصويت (7 أيام من الآن للبدء، 14 يوم للانتهاء)
-            const now = new Date();
-            const defaultVotingStart = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-            const defaultVotingEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+        // تقسيم حسب الأولوية: ترشح مفتوح أولاً، ثم تصويت، ثم مكتمل
+        const candidacyOpen = visibleElections.filter(e => e.status === 'candidacy_open');
+        const votingOpen = visibleElections.filter(e => e.status === 'voting_open');
+        const others = visibleElections.filter(e => ['voting_closed', 'completed'].includes(e.status));
 
-            // تحويل nominationEndDate من التوقيت المحلي إلى UTC بشكل صحيح
-            let nominationEndDateUTC = null;
-            if (nominationEndDate) {
-                const localDate = new Date(nominationEndDate);
-                nominationEndDateUTC = localDate.toISOString();
+        let html = '';
+
+        if (candidacyOpen.length) {
+            html += this.renderMemberSection('باب الترشح مفتوح', 'fa-user-plus', '#f59e0b', candidacyOpen, 'candidacy');
+        }
+
+        if (votingOpen.length) {
+            html += this.renderMemberSection('صوّت الآن', 'fa-check-to-slot', '#10b981', votingOpen, 'voting');
+        }
+
+        if (others.length) {
+            html += this.renderMemberSection('انتخابات سابقة', 'fa-flag-checkered', '#6b7280', others, 'past');
+        }
+
+        grid.innerHTML = html;
+
+        // ربط أحداث النقر
+        grid.querySelectorAll('[data-election-id]').forEach(card => {
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', () => {
+                this.showElectionDetail(card.dataset.electionId);
+            });
+        });
+    }
+
+    renderMemberSection(title, icon, color, elections, type) {
+        let html = `
+            <div style="grid-column: 1/-1; margin-top: 0.5rem;">
+                <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; color: ${color}; margin-bottom: 1rem;">
+                    <i class="fa-solid ${icon}"></i> ${title}
+                </h3>
+            </div>`;
+
+        elections.forEach(election => {
+            const roleName   = election.target_role?.role_name_ar || '';
+            const unitName   = election.target_committee?.committee_name_ar
+                            || election.target_department?.name_ar || '';
+            const statusColor = ElectionsManager.STATUS_COLORS[election.status];
+            const isInCommittee = this.isUserInCommittee(election.target_committee_id);
+
+            let actionHint = '';
+            if (type === 'candidacy' && isInCommittee) {
+                actionHint = `<span style="color: #f59e0b; font-size: 0.8rem; font-weight: 600;"><i class="fa-solid fa-star"></i> يمكنك الترشح</span>`;
+            } else if (type === 'voting') {
+                actionHint = `<span style="color: #10b981; font-size: 0.8rem; font-weight: 600;"><i class="fa-solid fa-check-circle"></i> التصويت متاح</span>`;
+            } else if (election.status === 'completed' && election.winner) {
+                actionHint = `<span style="color: #059669; font-size: 0.8rem;"><i class="fa-solid fa-crown"></i> الفائز: ${election.winner.full_name}</span>`;
             }
 
-            const { data, error } = await this.supabase
-                .from('elections')
-                .insert({
-                    committee_id: parseInt(committeeId),
-                    position_type: positionType,
-                    nomination_end_date: nominationEndDateUTC,
-                    voting_start_date: defaultVotingStart.toISOString(),
-                    voting_end_date: defaultVotingEnd.toISOString(),
-                    created_by: this.currentUser.id,
-                    status: 'nomination_open'
-                })
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            await this.logActivity(data.id, 'election_opened', { position_type: positionType });
-            
-            this.showToast('تم فتح باب الترشح بنجاح', 'success');
-            this.hideOpenElectionModal();
-            await this.loadElectionsOpen();
-        } catch (error) {
-            console.error('Error opening election:', error);
-            this.showToast('حدث خطأ أثناء فتح الانتخابات', 'error');
-        }
-    }
-
-    async closeNomination(electionId) {
-        const confirmed = await ModalHelper.confirm({
-            title: 'إغلاق باب الترشح',
-            message: 'هل أنت متأكد من إغلاق باب الترشح؟ لن يتمكن أحد من الترشح بعد ذلك.',
-            type: 'warning',
-            confirmText: 'نعم، إغلاق',
-            cancelText: 'إلغاء'
-        });
-        
-        if (!confirmed) return;
-
-        try {
-            const { error } = await this.supabase
-                .from('elections')
-                .update({ status: 'nomination_review' })
-                .eq('id', electionId);
-
-            if (error) throw error;
-
-            await this.logActivity(electionId, 'nomination_closed', {});
-            this.showToast('تم إغلاق باب الترشح', 'success');
-            await this.loadElectionsOpen();
-        } catch (error) {
-            console.error('Error:', error);
-            this.showToast('حدث خطأ', 'error');
-        }
-    }
-
-    async startVoting(electionId) {
-        const confirmed = await ModalHelper.confirm({
-            title: 'بدء التصويت',
-            message: 'هل أنت متأكد من بدء التصويت؟ سيتمكن الأعضاء من التصويت للمرشحين.',
-            type: 'info',
-            confirmText: 'نعم، ابدأ التصويت',
-            cancelText: 'إلغاء'
-        });
-        
-        if (!confirmed) return;
-
-        try {
-            const { error } = await this.supabase
-                .from('elections')
-                .update({ 
-                    status: 'voting_open',
-                    voting_start_date: new Date().toISOString()
-                })
-                .eq('id', electionId);
-
-            if (error) throw error;
-
-            await this.logActivity(electionId, 'voting_started', {});
-            this.showToast('تم بدء التصويت', 'success');
-            await this.loadElectionsOpen();
-        } catch (error) {
-            console.error('Error:', error);
-            this.showToast('حدث خطأ', 'error');
-        }
-    }
-
-    async closeVoting(electionId) {
-        const confirmed = await ModalHelper.confirm({
-            title: 'إغلاق التصويت',
-            message: 'هل أنت متأكد من إغلاق التصويت؟ سيتم احتساب النتائج النهائية.',
-            type: 'warning',
-            confirmText: 'نعم، إغلاق التصويت',
-            cancelText: 'إلغاء'
-        });
-        
-        if (!confirmed) return;
-
-        try {
-            const { data: candidates, error: candError } = await this.supabase
-                .from('election_candidates')
-                .select('id, user_id, votes_count')
-                .eq('election_id', electionId)
-                .eq('status', 'approved')
-                .order('votes_count', { ascending: false })
-                .limit(1);
-
-            if (candError) throw candError;
-
-            const winnerId = candidates?.[0]?.user_id || null;
-
-            const { error } = await this.supabase
-                .from('elections')
-                .update({ 
-                    status: 'completed',
-                    winner_id: winnerId
-                })
-                .eq('id', electionId);
-
-            if (error) throw error;
-
-            await this.logActivity(electionId, 'voting_closed', { winner_id: winnerId });
-            this.showToast('تم إغلاق التصويت وإعلان النتيجة', 'success');
-            await this.loadElectionsOpen();
-        } catch (error) {
-            console.error('Error:', error);
-            this.showToast('حدث خطأ', 'error');
-        }
-    }
-
-    async extendNominationTime(electionId) {
-        const result = await Swal.fire({
-            title: 'تعديل وقت الترشح',
-            html: `
-                <div style="text-align: right;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الوقت الجديد لإغلاق الترشح</label>
-                    <input type="datetime-local" id="newNominationEndDate" class="swal2-input" style="width: 90%;">
-                </div>
-            `,
-            showCancelButton: true,
-            confirmButtonText: 'تحديث',
-            cancelButtonText: 'إلغاء',
-            preConfirm: () => {
-                const newDate = document.getElementById('newNominationEndDate').value;
-                if (!newDate) {
-                    Swal.showValidationMessage('يرجى اختيار التاريخ والوقت');
-                    return false;
+            let dateInfo = '';
+            if (type === 'candidacy' && election.candidacy_end) {
+                const end = new Date(election.candidacy_end);
+                const now = new Date();
+                const daysLeft = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+                if (daysLeft > 0) {
+                    dateInfo = `<span style="color: var(--text-secondary); font-size: 0.8rem;"><i class="fa-regular fa-clock"></i> متبقي ${daysLeft} يوم</span>`;
                 }
-                return newDate;
-            }
-        });
-
-        if (result.isConfirmed) {
-            try {
-                const { error } = await this.supabase
-                    .from('elections')
-                    .update({ nomination_end_date: new Date(result.value).toISOString() })
-                    .eq('id', electionId);
-
-                if (error) throw error;
-
-                this.showToast('تم تحديث وقت الترشح بنجاح', 'success');
-                await this.loadElections();
-            } catch (error) {
-                console.error('Error:', error);
-                this.showToast('فشل تحديث الوقت', 'error');
-            }
-        }
-    }
-
-    async extendVotingTime(electionId) {
-        const result = await Swal.fire({
-            title: 'تعديل وقت التصويت',
-            html: `
-                <div style="text-align: right;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الوقت الجديد لإغلاق التصويت</label>
-                    <input type="datetime-local" id="newVotingEndDate" class="swal2-input" style="width: 90%;">
-                </div>
-            `,
-            showCancelButton: true,
-            confirmButtonText: 'تحديث',
-            cancelButtonText: 'إلغاء',
-            preConfirm: () => {
-                const newDate = document.getElementById('newVotingEndDate').value;
-                if (!newDate) {
-                    Swal.showValidationMessage('يرجى اختيار التاريخ والوقت');
-                    return false;
+            } else if (type === 'voting' && election.voting_end) {
+                const end = new Date(election.voting_end);
+                const now = new Date();
+                const daysLeft = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+                if (daysLeft > 0) {
+                    dateInfo = `<span style="color: var(--text-secondary); font-size: 0.8rem;"><i class="fa-regular fa-clock"></i> متبقي ${daysLeft} يوم</span>`;
                 }
-                return newDate;
-            }
-        });
-
-        if (result.isConfirmed) {
-            try {
-                const { error } = await this.supabase
-                    .from('elections')
-                    .update({ voting_end_date: new Date(result.value).toISOString() })
-                    .eq('id', electionId);
-
-                if (error) throw error;
-
-                this.showToast('تم تحديث وقت التصويت بنجاح', 'success');
-                await this.loadElections();
-            } catch (error) {
-                console.error('Error:', error);
-                this.showToast('فشل تحديث الوقت', 'error');
-            }
-        }
-    }
-
-    async cancelElection(electionId) {
-        const confirmed = await ModalHelper.confirm({
-            title: 'إلغاء الانتخابات',
-            message: 'هل أنت متأكد من إلغاء هذه الانتخابات؟ سيتم إلغاء جميع الترشيحات والأصوات المرتبطة بها.',
-            type: 'danger',
-            confirmText: 'نعم، إلغاء الانتخابات',
-            cancelText: 'لا، تراجع'
-        });
-        
-        if (!confirmed) return;
-
-        try {
-            const { error } = await this.supabase
-                .from('elections')
-                .update({ status: 'cancelled' })
-                .eq('id', electionId);
-
-            if (error) throw error;
-
-            await this.logActivity(electionId, 'election_cancelled', {});
-            this.showToast('تم إلغاء الانتخابات', 'success');
-            await this.loadElectionsOpen();
-        } catch (error) {
-            console.error('Error:', error);
-            this.showToast('حدث خطأ', 'error');
-        }
-    }
-
-    // ==================== قسم مراجعة الطلبات ====================
-
-    async loadCandidatesReview() {
-        const container = document.getElementById('candidatesReviewList');
-        if (!container) return;
-
-        try {
-            const { data, error } = await this.supabase
-                .from('election_candidates')
-                .select(`
-                    *,
-                    user:profiles!election_candidates_user_id_fkey(id, full_name, avatar_url),
-                    election:elections(
-                        id, position_type, status,
-                        committee:committees(committee_name_ar)
-                    )
-                `)
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-
-            if (!data || data.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-inbox"></i>
-                        <p>لا توجد طلبات ترشح</p>
-                    </div>`;
-                return;
             }
 
-            container.innerHTML = data.map(c => this.renderCandidateCard(c)).join('');
-            this.attachCandidateCardListeners();
-        } catch (error) {
-            console.error('Error:', error);
-            container.innerHTML = '<p class="text-danger">حدث خطأ</p>';
-        }
-    }
-
-    renderCandidateCard(candidate) {
-        const statusLabels = {
-            'pending': { text: 'قيد المراجعة', class: 'badge--warning' },
-            'approved': { text: 'مقبول', class: 'badge--success' },
-            'rejected': { text: 'مرفوض', class: 'badge--danger' },
-            'file_deleted': { text: 'ملف محذوف', class: 'badge--secondary' }
-        };
-
-        const status = statusLabels[candidate.status] || { text: candidate.status, class: '' };
-        const avatar = candidate.user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(candidate.user?.full_name || 'U')}&background=3d8fd6&color=fff`;
-
-        return `
-            <div class="card" style="margin-bottom: 1rem;" data-candidate-id="${candidate.id}">
-                <div class="card-body">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <img src="${avatar}" alt="" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover;">
-                            <div>
-                                <h4 style="margin: 0;">${candidate.user?.full_name || 'مستخدم'}</h4>
-                                <p style="margin: 0; color: #6b7280; font-size: 0.875rem;">
-                                    ${candidate.election?.committee?.committee_name_ar || ''}
-                                    <span class="badge ${status.class}" style="margin-right: 0.5rem;">${status.text}</span>
-                                </p>
-                            </div>
+            html += `
+                <div class="uc-card" data-election-id="${election.id}" style="border-right: 4px solid ${statusColor};">
+                    <div class="uc-card__header">
+                        <div class="uc-card__icon" style="background: ${statusColor}20; color: ${statusColor};">
+                            <i class="fa-solid ${type === 'candidacy' ? 'fa-user-plus' : type === 'voting' ? 'fa-check-to-slot' : 'fa-flag-checkered'}"></i>
                         </div>
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <a href="${candidate.application_file_url}" target="_blank" class="btn btn--outline btn--outline-primary btn--sm">
-                                <i class="fa-solid fa-file"></i> عرض الملف
-                            </a>
-                            ${candidate.status === 'pending' ? `
-                                <button class="btn btn--success btn--sm approve-candidate-btn" data-id="${candidate.id}">
-                                    <i class="fa-solid fa-check"></i> قبول
-                                </button>
-                                <button class="btn btn--danger btn--sm reject-candidate-btn" data-id="${candidate.id}">
-                                    <i class="fa-solid fa-times"></i> رفض
-                                </button>
-                            ` : ''}
+                        <div>
+                            <h3 class="uc-card__title">${this.getElectionName(election)}</h3>
+                            <span style="color: var(--text-secondary); font-size: 0.85rem;">${roleName}${unitName ? ' — ' + unitName : ''}</span>
                         </div>
                     </div>
+                    <div class="uc-card__body">
+                        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                            ${actionHint}
+                            ${dateInfo}
+                        </div>
+                    </div>
+                    <div class="uc-card__footer">
+                        <button class="btn btn-sm ${type === 'candidacy' ? 'btn-warning' : type === 'voting' ? 'btn-success' : 'btn-outline'}">
+                            <i class="fa-solid ${type === 'candidacy' ? 'fa-arrow-left' : type === 'voting' ? 'fa-check-to-slot' : 'fa-eye'}"></i>
+                            ${type === 'candidacy' ? 'عرض التفاصيل والترشح' : type === 'voting' ? 'صوّت الآن' : 'عرض النتائج'}
+                        </button>
+                    </div>
+                </div>`;
+        });
+
+        return html;
+    }
+
+    // =============================================
+    // قسم فتح باب الترشح (elections-open-section)
+    // =============================================
+
+    async initOpenSection() {
+        try {
+            if (!this.initialized) {
+                this.currentUser = window.currentUser || (await this.supabase.auth.getUser()).data?.user;
+                await this.loadCurrentUserRole();
+                await Promise.all([
+                    this.loadVoteWeights(),
+                    this.loadRoles(),
+                    this.loadCommittees(),
+                    this.loadDepartments()
+                ]);
+                this.initialized = true;
+            }
+            await this.loadElections();
+            this.renderOpenSection();
+            this.setupOpenSectionListeners();
+        } catch (error) {
+            console.error('Error initializing open section:', error);
+            this.showError('حدث خطأ أثناء تحميل قسم فتح باب الترشح');
+        }
+    }
+
+    setupOpenSectionListeners() {
+        if (this.openSectionListenersSet) return;
+        const section = document.getElementById('elections-open-section');
+        if (!section) return;
+
+        section.querySelector('#openSectionCreateBtn')?.addEventListener('click', () => {
+            this.showCreateModal();
+        });
+        section.querySelector('#openSectionRefreshBtn')?.addEventListener('click', async () => {
+            await this.loadElections();
+            this.renderOpenSection();
+        });
+
+        this.openSectionListenersSet = true;
+    }
+
+    renderOpenSection() {
+        const grid = document.getElementById('openSectionGrid');
+        const statsEl = document.getElementById('openSectionStats');
+        if (!grid) return;
+
+        const openElections = this.elections.filter(e => e.status === 'candidacy_open');
+
+        // إحصائية سريعة
+        if (statsEl) {
+            statsEl.innerHTML = `
+                <div class="stats-grid" style="--stats-cols: 2;">
+                    <div class="stat-card" style="--stat-color: #f59e0b;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-door-open"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value">${openElections.length}</div>
+                                <div class="stat-label">باب الترشح مفتوح حالياً</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-check-to-slot"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value">${this.elections.filter(e => e.status === 'voting_open').length}</div>
+                                <div class="stat-label">التصويت مفتوح حالياً</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        if (!openElections.length) {
+            grid.innerHTML = `
+                <div style="text-align: center; padding: 4rem 2rem; color: var(--text-secondary); grid-column: 1/-1;">
+                    <i class="fa-solid fa-inbox fa-3x" style="margin-bottom: 1rem; opacity: 0.25;"></i>
+                    <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">لا يوجد باب ترشح مفتوح حالياً</p>
+                    <p style="font-size: 0.85rem;">أنشئ انتخاباً جديداً لفتح باب الترشح</p>
+                </div>`;
+            return;
+        }
+
+        grid.innerHTML = openElections.map(e => this.renderOpenSectionCard(e)).join('');
+
+        // ربط أحداث الأزرار
+        grid.querySelectorAll('.view-candidates-btn').forEach(btn => {
+            btn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                this.showElectionDetail(btn.dataset.electionId);
+            });
+        });
+
+        grid.querySelectorAll('.set-end-date-btn').forEach(btn => {
+            btn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                this.showSetEndDateModal(btn.dataset.electionId);
+            });
+        });
+
+        grid.querySelectorAll('.cancel-election-btn').forEach(btn => {
+            btn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                this.updateElectionStatus(btn.dataset.electionId, 'cancelled');
+            });
+        });
+    }
+
+    renderOpenSectionCard(election) {
+        const roleName = election.target_role?.role_name_ar || '—';
+        const unitLabel = election.target_department_id ? 'القسم' : 'اللجنة';
+        const unitName  = election.target_committee?.committee_name_ar
+                       || election.target_department?.name_ar || '';
+        const createdDate = new Date(election.created_at).toLocaleDateString('ar-SA');
+
+        const candidacyStart = election.candidacy_start
+            ? new Date(election.candidacy_start).toLocaleString('ar-SA', { dateStyle: 'short', timeStyle: 'short' })
+            : null;
+        const candidacyEnd = election.candidacy_end
+            ? new Date(election.candidacy_end).toLocaleString('ar-SA', { dateStyle: 'short', timeStyle: 'short' })
+            : null;
+
+        return `
+            <div class="uc-card" data-election-id="${election.id}">
+                <div class="uc-card__header">
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__icon" style="background: #f59e0b20; color: #f59e0b;">
+                            <i class="fa-solid fa-door-open"></i>
+                        </div>
+                        <div class="uc-card__header-info">
+                            <h3 class="uc-card__title">${this.getElectionName(election)}</h3>
+                            <div class="uc-card__badge" style="background: #f59e0b15; color: #f59e0b;">
+                                <i class="fa-solid fa-circle-dot"></i>
+                                <span>باب الترشح مفتوح</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="uc-card__body">
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-user-tie"></i></div>
+                        <div class="uc-card__info-content">
+                            <div class="uc-card__info-label">المنصب</div>
+                            <div class="uc-card__info-value">${roleName}</div>
+                        </div>
+                    </div>
+                    ${unitName ? `
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid ${election.target_department_id ? 'fa-building' : 'fa-people-group'}"></i></div>
+                        <div class="uc-card__info-content">
+                            <div class="uc-card__info-label">${unitLabel}</div>
+                            <div class="uc-card__info-value">${unitName}</div>
+                        </div>
+                    </div>` : ''}
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-regular fa-calendar"></i></div>
+                        <div class="uc-card__info-content">
+                            <div class="uc-card__info-label">تاريخ الإنشاء</div>
+                            <div class="uc-card__info-value">${createdDate}</div>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-regular fa-clock"></i></div>
+                        <div class="uc-card__info-content">
+                            <div class="uc-card__info-label">بداية الترشح</div>
+                            <div class="uc-card__info-value">${candidacyStart || 'لم يحدد الموعد'}</div>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-flag-checkered"></i></div>
+                        <div class="uc-card__info-content">
+                            <div class="uc-card__info-label">نهاية الترشح</div>
+                            <div class="uc-card__info-value">${candidacyEnd || 'لم يحدد الموعد'}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="uc-card__footer" style="flex-direction: column; gap: 0.5rem;">
+                    <button class="btn btn-warning view-candidates-btn" data-election-id="${election.id}" style="width: 100%;">
+                        <i class="fa-solid fa-users"></i> عرض المرشحين
+                    </button>
+                    ${!election.candidacy_end ? `
+                    <button class="btn btn-outline set-end-date-btn" data-election-id="${election.id}" style="width: 100%;">
+                        <i class="fa-regular fa-calendar-plus"></i> تحديد موعد إغلاق الترشح
+                    </button>` : ''}
+                    <button class="btn btn-danger cancel-election-btn" data-election-id="${election.id}" style="width: 100%;">
+                        <i class="fa-solid fa-ban"></i> إلغاء الانتخاب
+                    </button>
                 </div>
             </div>`;
     }
 
-    attachCandidateCardListeners() {
-        document.querySelectorAll('.approve-candidate-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.reviewCandidate(btn.dataset.id, 'approved'));
-        });
-        document.querySelectorAll('.reject-candidate-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.reviewCandidate(btn.dataset.id, 'rejected'));
+    async showSetEndDateModal(electionId) {
+        const election = this.elections.find(e => e.id === electionId);
+        if (!election) return;
+
+        let modalRef = null;
+        modalRef = await window.ModalHelper.show({
+            title: 'تحديد موعد إغلاق الترشح',
+            size: 'sm',
+            type: 'info',
+            html: `
+                <div class="form-group">
+                    <label class="form-label">تاريخ ووقت إغلاق باب الترشح <span style="color: var(--color-danger);">*</span></label>
+                    <input type="datetime-local" id="candidacyEndInput" class="form-input">
+                </div>`,
+            showFooter: true,
+            footerButtons: [
+                { text: 'إلغاء', class: 'btn btn-outline' },
+                {
+                    text: '<i class="fa-solid fa-check"></i> حفظ',
+                    class: 'btn btn-primary',
+                    keepOpen: true,
+                    callback: async () => {
+                        const val = document.getElementById('candidacyEndInput')?.value;
+                        if (!val) {
+                            const input = document.getElementById('candidacyEndInput');
+                            if (input) input.style.borderColor = 'var(--color-danger)';
+                            this.showError('يرجى تحديد الموعد');
+                            return;
+                        }
+                        try {
+                            const { error } = await this.supabase
+                                .from('elections')
+                                .update({ candidacy_end: new Date(val).toISOString(), updated_at: new Date().toISOString() })
+                                .eq('id', electionId);
+                            if (error) throw error;
+                            modalRef?.close?.();
+                            this.showSuccess('تم تحديد موعد إغلاق الترشح');
+                            await this.loadElections();
+                            this.renderOpenSection();
+                        } catch (err) {
+                            console.error(err);
+                            this.showError('حدث خطأ أثناء الحفظ');
+                        }
+                    }
+                }
+            ]
         });
     }
 
-    async reviewCandidate(candidateId, action) {
-        if (action === 'rejected') {
-            // عرض نافذة منبثقة لإدخال سبب الرفض
-            if (window.ModalHelper) {
-                window.ModalHelper.form({
-                    title: 'رفض المرشح',
-                    fields: [
-                        {
-                            name: 'rejection_reason',
-                            label: 'سبب الرفض (اختياري)',
-                            type: 'textarea',
-                            placeholder: 'اكتب سبب رفض المرشح... (سيظهر للمتقدم إذا تم كتابته)',
-                            required: false,
-                            value: ''
-                        }
-                    ],
-                    submitText: 'رفض المرشح',
-                    cancelText: 'إلغاء',
-                    onSubmit: async (data) => {
-                        try {
-                            const { error } = await this.supabase
-                                .from('election_candidates')
-                                .update({ 
-                                    status: 'rejected',
-                                    rejection_reason: data.rejection_reason || null,
-                                    reviewed_by: this.currentUser.id,
-                                    reviewed_at: new Date().toISOString()
-                                })
-                                .eq('id', candidateId);
+    // =============================================
+    // إنشاء انتخاب جديد
+    // =============================================
 
-                            if (error) throw error;
+    async showCreateModal() {
+        // تحديث بيانات الانتخابات لضمان عدم استخدام بيانات قديمة
+        await this.loadElections();
 
-                            this.showToast('تم رفض المرشح', 'success');
-                            await this.loadCandidatesReview();
-                        } catch (error) {
-                            console.error('Error:', error);
-                            this.showToast('حدث خطأ', 'error');
-                        }
-                    }
-                });
-            } else {
-                const reason = prompt('سبب الرفض (اختياري):');
-                try {
-                    const { error } = await this.supabase
-                        .from('election_candidates')
-                        .update({ 
-                            status: 'rejected',
-                            rejection_reason: reason || null,
-                            reviewed_by: this.currentUser.id,
-                            reviewed_at: new Date().toISOString()
-                        })
-                        .eq('id', candidateId);
+        const eligibleRoles = this.roles.filter(r => ElectionsManager.ELIGIBLE_ROLES.includes(r.role_name));
+        const eligibleRoleIds = eligibleRoles.map(r => r.id);
 
-                    if (error) throw error;
+        // جلب المناصب المشغولة (role_id + committee_id أو department_id)
+        const { data: occupiedData } = await this.supabase
+            .from('user_roles')
+            .select('role_id, committee_id, department_id')
+            .in('role_id', eligibleRoleIds)
+            .eq('is_active', true);
+        const occupied = occupiedData || [];
 
-                    this.showToast('تم رفض المرشح', 'success');
-                    await this.loadCandidatesReview();
-                } catch (error) {
-                    console.error('Error:', error);
-                    this.showToast('حدث خطأ', 'error');
+        // مفاتيح الانتخابات النشطة (role-committee أو role-department)
+        // المسودات والملغاة والمكتملة لا تمنع إنشاء انتخاب جديد
+        const activeElectionKeys = new Set(
+            this.elections
+                .filter(e => !['draft', 'completed', 'cancelled'].includes(e.status))
+                .map(e => e.target_department_id
+                    ? `${e.target_role_id}-dept-${e.target_department_id}`
+                    : `${e.target_role_id}-com-${e.target_committee_id}`)
+        );
+
+        const rolesOptions = eligibleRoles.map(r =>
+            `<option value="${r.id}" data-role-name="${r.role_name}">${r.role_name_ar}</option>`
+        ).join('');
+
+        let modalRef = null;
+        modalRef = await window.ModalHelper.show({
+            title: 'إنشاء انتخاب جديد',
+            size: 'lg',
+            type: 'info',
+            html: `
+                <form id="createElectionForm" style="display: grid; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">المنصب المستهدف <span style="color: var(--color-danger);">*</span></label>
+                        <select id="electionTargetRole" class="form-select" required>
+                            <option value="">اختر المنصب</option>
+                            ${rolesOptions}
+                        </select>
+                    </div>
+                    <div class="form-group" id="entityGroup" style="display: none;">
+                        <label class="form-label" id="entityLabel">— <span style="color: var(--color-danger);">*</span></label>
+                        <select id="electionTargetEntity" class="form-select" data-entity-type="">
+                            <option value="">اختر...</option>
+                        </select>
+                        <p id="noVacancyMsg" style="color: var(--color-danger); font-size: 0.82rem; margin-top: 0.4rem; display: none;">
+                            <i class="fa-solid fa-circle-exclamation"></i> لا توجد مناصب شاغرة لهذا الدور
+                        </p>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">بداية الترشح</label>
+                            <input type="datetime-local" id="electionCandidacyStart" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">نهاية الترشح</label>
+                            <input type="datetime-local" id="electionCandidacyEnd" class="form-input">
+                        </div>
+                    </div>
+                </form>`,
+            showFooter: true,
+            footerButtons: [
+                { text: 'إلغاء', class: 'btn btn-outline' },
+                {
+                    text: '<i class="fa-solid fa-plus"></i> إنشاء',
+                    class: 'btn btn-primary',
+                    keepOpen: true,
+                    callback: () => this.createElection(modalRef)
                 }
+            ]
+        });
+
+        // ربط حدث تغيير المنصب
+        const roleSelect    = document.getElementById('electionTargetRole');
+        const entityGroup   = document.getElementById('entityGroup');
+        const entityLabel   = document.getElementById('entityLabel');
+        const entitySelect  = document.getElementById('electionTargetEntity');
+        const noVacancyMsg  = document.getElementById('noVacancyMsg');
+
+        roleSelect?.addEventListener('change', () => {
+            const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+            const selectedRoleId = Number(roleSelect.value);
+            const roleName = selectedOption?.dataset.roleName || '';
+            entitySelect.value = '';
+
+            if (!selectedRoleId) {
+                entityGroup.style.display = 'none';
+                return;
             }
+
+            const isDeptRole = ElectionsManager.DEPARTMENT_BASED_ROLES.includes(roleName);
+
+            if (isDeptRole) {
+                // عرض الأقسام الشاغرة
+                entityLabel.innerHTML = 'القسم المستهدف <span style="color: var(--color-danger);">*</span>';
+                entitySelect.dataset.entityType = 'department';
+
+                const vacantDepts = this.departments.filter(d => {
+                    const isOccupied = occupied.some(o =>
+                        Number(o.role_id) === selectedRoleId && Number(o.department_id) === d.id
+                    );
+                    const hasActiveElection = activeElectionKeys.has(`${selectedRoleId}-dept-${d.id}`);
+                    return !isOccupied && !hasActiveElection;
+                });
+
+                entitySelect.innerHTML = '<option value="">اختر القسم</option>' +
+                    vacantDepts.map(d => `<option value="${d.id}">${d.name_ar}</option>`).join('');
+
+                noVacancyMsg.style.display = vacantDepts.length ? 'none' : 'block';
+            } else {
+                // عرض اللجان الشاغرة (غير مشغولة وبدون انتخاب نشط)
+                entityLabel.innerHTML = 'اللجنة المستهدفة <span style="color: var(--color-danger);">*</span>';
+                entitySelect.dataset.entityType = 'committee';
+
+                const vacantCommittees = this.committees.filter(c => {
+                    const isOccupied = occupied.some(o =>
+                        Number(o.role_id) === selectedRoleId && Number(o.committee_id) === c.id
+                    );
+                    const hasActiveElection = activeElectionKeys.has(`${selectedRoleId}-com-${c.id}`);
+                    return !isOccupied && !hasActiveElection;
+                });
+
+                entitySelect.innerHTML = '<option value="">اختر اللجنة</option>' +
+                    vacantCommittees.map(c => `<option value="${c.id}">${c.committee_name_ar}</option>`).join('');
+
+                noVacancyMsg.style.display = vacantCommittees.length ? 'none' : 'block';
+            }
+
+            entityGroup.style.display = 'block';
+        });
+    }
+
+    async createElection(modalRef) {
+        const roleSelect    = document.getElementById('electionTargetRole');
+        const entitySelect  = document.getElementById('electionTargetEntity');
+        const entityGroup   = document.getElementById('entityGroup');
+        const targetRoleId  = roleSelect?.value || '';
+        const entityType    = entitySelect?.dataset.entityType || '';
+        const entityId      = entitySelect?.value || '';
+        const candidacyStartRaw = document.getElementById('electionCandidacyStart')?.value;
+        const candidacyEndRaw   = document.getElementById('electionCandidacyEnd')?.value;
+        const candidacyStart = candidacyStartRaw ? new Date(candidacyStartRaw).toISOString() : null;
+        const candidacyEnd   = candidacyEndRaw ? new Date(candidacyEndRaw).toISOString() : null;
+
+        // تحقق مرئي: أحمر على الحقل الفارغ
+        const markInvalid = (el) => {
+            if (!el) return;
+            el.style.borderColor = 'var(--color-danger)';
+            el.addEventListener('change', () => el.style.borderColor = '', { once: true });
+        };
+
+        if (!targetRoleId) {
+            markInvalid(roleSelect);
+            this.showError('يرجى اختيار المنصب أولاً');
+            return;
+        }
+        if (entityGroup?.style.display !== 'none' && !entityId) {
+            markInvalid(entitySelect);
+            this.showError(entityType === 'department' ? 'يرجى اختيار القسم' : 'يرجى اختيار اللجنة');
             return;
         }
 
-        const messages = {
-            'approved': 'هل أنت متأكد من قبول هذا المرشح؟'
+        const insertData = {
+            target_role_id: targetRoleId,
+            target_committee_id: entityType === 'committee' ? entityId : null,
+            target_department_id: entityType === 'department' ? entityId : null,
         };
-
-        if (!confirm(messages[action])) return;
 
         try {
             const { error } = await this.supabase
+                .from('elections')
+                .insert({
+                    ...insertData,
+                    candidacy_start: candidacyStart || null,
+                    candidacy_end: candidacyEnd || null,
+                    status: 'candidacy_open',
+                    created_by: this.currentUser.id
+                });
+
+            if (error) throw error;
+
+            modalRef?.close?.();
+            this.showSuccess('تم إنشاء الانتخاب بنجاح');
+            await this.loadElections();
+            // تحديث القسم المناسب بحسب الواجهة النشطة
+            if (document.getElementById('elections-open-section')?.classList.contains('d-none') === false) {
+                this.renderOpenSection();
+            } else {
+                this.renderElectionsList();
+            }
+        } catch (error) {
+            console.error('Error creating election:', error);
+            this.showError('حدث خطأ أثناء إنشاء الانتخاب');
+        }
+    }
+
+    // =============================================
+    // عرض تفاصيل الانتخاب
+    // =============================================
+
+    async showElectionDetail(electionId) {
+        const election = this.elections.find(e => e.id === electionId);
+        if (!election) return;
+
+        this.currentElection = election;
+
+        // تحميل المرشحين والأصوات
+        const [candidates, myVote, results] = await Promise.all([
+            this.loadCandidates(electionId),
+            this.loadMyVote(electionId),
+            this.loadResults(electionId)
+        ]);
+
+        const container = document.getElementById('elections-section');
+        container.querySelector('#elections-list-view').classList.add('d-none');
+        container.querySelector('#elections-detail-view').classList.remove('d-none');
+
+        this.renderElectionDetail(election, candidates, myVote, results);
+    }
+
+    async loadCandidates(electionId) {
+        const { data } = await this.supabase
+            .from('election_candidates')
+            .select(`
+                *,
+                user:user_id(id, full_name, email, avatar_url),
+                reviewer:reviewed_by(id, full_name)
+            `)
+            .eq('election_id', electionId)
+            .order('created_at', { ascending: true });
+        return data || [];
+    }
+
+    async loadMyVote(electionId) {
+        if (!this.currentUser) return null;
+        const { data } = await this.supabase
+            .from('election_votes')
+            .select('*, candidate:candidate_id(user_id)')
+            .eq('election_id', electionId)
+            .eq('voter_id', this.currentUser.id)
+            .maybeSingle();
+        return data;
+    }
+
+    async loadResults(electionId) {
+        const { data } = await this.supabase.rpc('get_election_results', {
+            p_election_id: electionId
+        });
+        return data || [];
+    }
+
+    renderElectionDetail(election, candidates, myVote, results) {
+        const detailContainer = document.getElementById('election-detail-content');
+        if (!detailContainer) return;
+
+        const canManage = this.canManageElections();
+        const canApprove = this.canApproveCandidates();
+        const isInTargetCommittee = this.isUserInCommittee(election.target_committee_id);
+
+        if (canManage) {
+            this.renderAdminDetail(detailContainer, election, candidates, myVote, results, canApprove, isInTargetCommittee);
+        } else {
+            this.renderMemberDetail(detailContainer, election, candidates, myVote, results, isInTargetCommittee);
+        }
+
+        // ربط أحداث الأزرار
+        this.bindDetailEvents(detailContainer, election, candidates);
+    }
+
+    // عرض تفاصيل الإدارة (العرض الكامل)
+    renderAdminDetail(detailContainer, election, candidates, myVote, results, canApprove, isInTargetCommittee) {
+        const statusLabel = ElectionsManager.STATUS_LABELS[election.status];
+        const statusColor = ElectionsManager.STATUS_COLORS[election.status];
+
+        let html = `
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div class="card-body" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h2 style="margin: 0 0 0.5rem;">${this.getElectionName(election)}</h2>
+                        <span style="display: inline-block; padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.85rem; background: ${statusColor}15; color: ${statusColor}; font-weight: 600;">
+                            ${statusLabel}
+                        </span>
+                    </div>
+                    ${this.renderStatusActions(election)}
+                </div>
+            </div>`;
+
+        html += `
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                <button class="btn btn-outline election-tab active" data-tab="candidates">
+                    <i class="fa-solid fa-users"></i> المرشحون (${candidates.length})
+                </button>
+                <button class="btn btn-outline election-tab" data-tab="voting">
+                    <i class="fa-solid fa-check-to-slot"></i> التصويت
+                </button>
+                <button class="btn btn-outline election-tab" data-tab="results">
+                    <i class="fa-solid fa-chart-bar"></i> النتائج
+                </button>
+            </div>`;
+
+        html += `<div id="election-tab-candidates">${this.renderCandidatesTab(election, candidates, canApprove, isInTargetCommittee)}</div>`;
+        html += `<div id="election-tab-voting" class="d-none">${this.renderVotingTab(election, candidates, myVote)}</div>`;
+        html += `<div id="election-tab-results" class="d-none">${this.renderResultsTab(election, results, true)}</div>`;
+
+        detailContainer.innerHTML = html;
+
+        // ربط أحداث التبويبات
+        detailContainer.querySelectorAll('.election-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                detailContainer.querySelectorAll('.election-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                ['candidates', 'voting', 'results'].forEach(name => {
+                    const el = document.getElementById(`election-tab-${name}`);
+                    if (el) el.classList.toggle('d-none', name !== tab.dataset.tab);
+                });
+            });
+        });
+    }
+
+    // عرض تفاصيل العضو (واجهة مبسطة)
+    renderMemberDetail(detailContainer, election, candidates, myVote, results, isInTargetCommittee) {
+        const statusLabel = ElectionsManager.STATUS_LABELS[election.status];
+        const statusColor = ElectionsManager.STATUS_COLORS[election.status];
+        const approvedCandidates = candidates.filter(c => c.status === 'approved');
+        const alreadyCandidate = candidates.some(c => c.user_id === this.currentUser?.id);
+        const userWeight = this.getUserVoteWeight();
+
+        let html = '';
+
+        // رأس مبسط
+        html += `
+            <div style="text-align: center; padding: 1.5rem 1rem; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0 0 0.75rem; font-size: 1.4rem;">${this.getElectionName(election)}</h2>
+                <span style="display: inline-block; padding: 0.3rem 1rem; border-radius: 999px; font-size: 0.9rem; background: ${statusColor}15; color: ${statusColor}; font-weight: 600;">
+                    ${statusLabel}
+                </span>
+            </div>`;
+
+        // --- مرحلة الترشح ---
+        if (election.status === 'candidacy_open') {
+            // زر الترشح إذا كان العضو مؤهلاً
+            if (isInTargetCommittee && !alreadyCandidate) {
+                html += `
+                    <div class="card" style="margin-bottom: 1.5rem; border: 2px solid var(--color-primary); text-align: center; padding: 2rem;">
+                        <i class="fa-solid fa-hand-point-up fa-2x" style="color: var(--color-primary); margin-bottom: 0.75rem;"></i>
+                        <h3 style="margin-bottom: 0.5rem;">أنت مؤهل للترشح!</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">قدّم ملفك الانتخابي وبيان ترشحك الآن</p>
+                        <button class="btn btn-primary" id="submitCandidacyBtn" style="font-size: 1rem; padding: 0.6rem 2rem;">
+                            <i class="fa-solid fa-user-plus"></i> تقدّم للترشح
+                        </button>
+                    </div>`;
+            } else if (alreadyCandidate) {
+                const myCandidate = candidates.find(c => c.user_id === this.currentUser?.id);
+                const cStatus = ElectionsManager.CANDIDATE_STATUS_LABELS[myCandidate?.status] || '';
+                const cColor = myCandidate?.status === 'approved' ? '#10b981' : myCandidate?.status === 'rejected' ? '#ef4444' : '#f59e0b';
+                html += `
+                    <div class="card" style="margin-bottom: 1.5rem; border: 2px solid ${cColor}; text-align: center; padding: 1.5rem;">
+                        <i class="fa-solid fa-check-circle fa-2x" style="color: ${cColor}; margin-bottom: 0.5rem;"></i>
+                        <p style="font-weight: 600;">لقد تقدمت بطلب ترشح</p>
+                        <span style="display: inline-block; padding: 0.2rem 0.8rem; border-radius: 999px; font-size: 0.85rem; background: ${cColor}15; color: ${cColor}; font-weight: 600; margin-top: 0.5rem;">
+                            ${cStatus}
+                        </span>
+                    </div>`;
+            }
+
+            // قائمة المرشحين الحاليين
+            if (approvedCandidates.length) {
+                html += `<h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-secondary);"><i class="fa-solid fa-users"></i> المرشحون المعتمدون</h3>`;
+                html += this.renderMemberCandidatesList(approvedCandidates);
+            }
+        }
+
+        // --- مرحلة التصويت ---
+        else if (election.status === 'voting_open') {
+            if (myVote) {
+                html += `
+                    <div class="card" style="margin-bottom: 1.5rem; border: 2px solid #10b981; text-align: center; padding: 1.5rem;">
+                        <i class="fa-solid fa-check-circle fa-2x" style="color: #10b981; margin-bottom: 0.5rem;"></i>
+                        <p style="font-weight: 600; font-size: 1.1rem;">شكراً لمشاركتك! تم تسجيل صوتك</p>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.5rem;">وزن صوتك: <strong>${myVote.vote_weight}</strong></p>
+                    </div>`;
+            } else {
+                html += `
+                    <div style="text-align: center; margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-secondary); border-radius: 0.75rem;">
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">وزن صوتك: <strong style="color: var(--color-primary); font-size: 1.1rem;">${userWeight}</strong></p>
+                        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.25rem;">اختر المرشح الذي تراه الأنسب</p>
+                    </div>`;
+            }
+
+            // بطاقات المرشحين للتصويت
+            html += '<div class="uc-grid">';
+            approvedCandidates.forEach(candidate => {
+                const user = candidate.user;
+                const avatar = user?.avatar_url || '../assets/default-avatar.png';
+                const isVotedFor = myVote?.candidate_id === candidate.id;
+
+                html += `
+                    <div class="uc-card" ${isVotedFor ? 'style="border: 2px solid #10b981;"' : ''}>
+                        <div class="uc-card__header" style="flex-direction: column; text-align: center;">
+                            <img src="${avatar}" alt="${user?.full_name}" style="border-radius: 50%; width: 64px; height: 64px; object-fit: cover; margin-bottom: 0.5rem;">
+                            <h3 class="uc-card__title">${user?.full_name || 'غير معروف'}</h3>
+                            ${isVotedFor ? '<span style="color: #10b981; font-size: 0.85rem;"><i class="fa-solid fa-check-circle"></i> اخترت هذا المرشح</span>' : ''}
+                        </div>
+                        ${candidate.candidacy_statement ? `
+                        <div class="uc-card__body">
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; text-align: center;">${candidate.candidacy_statement}</p>
+                        </div>` : ''}
+                        ${candidate.election_file_url ? `
+                        <div style="text-align: center; padding: 0 1rem;">
+                            <a href="${candidate.election_file_url}" target="_blank" class="btn btn-sm btn-outline" style="font-size: 0.8rem;">
+                                <i class="fa-solid fa-file-pdf"></i> الملف الانتخابي
+                            </a>
+                        </div>` : ''}
+                        ${!myVote ? `
+                        <div class="uc-card__footer" style="justify-content: center;">
+                            <button class="btn btn-primary cast-vote-btn" data-candidate-id="${candidate.id}" style="width: 100%;">
+                                <i class="fa-solid fa-check-to-slot"></i> صوّت
+                            </button>
+                        </div>` : ''}
+                    </div>`;
+            });
+            html += '</div>';
+        }
+
+        // --- النتائج ---
+        else if (['voting_closed', 'completed'].includes(election.status)) {
+            if (results.length) {
+                const maxVotes = Math.max(...results.map(r => Number(r.total_weighted_votes)), 1);
+
+                html += `<h3 style="font-size: 1rem; margin-bottom: 1rem; text-align: center;"><i class="fa-solid fa-trophy" style="color: #fbbf24;"></i> النتائج</h3>`;
+                html += '<div style="display: grid; gap: 1rem;">';
+
+                results.forEach((result, index) => {
+                    const percentage = (Number(result.total_weighted_votes) / maxVotes * 100).toFixed(1);
+                    const avatar = result.avatar_url || '../assets/default-avatar.png';
+                    const isWinner = election.winner_user_id === result.user_id;
+                    const medalColors = ['#fbbf24', '#94a3b8', '#cd7f32'];
+                    const medal = index < 3 ? `<span style="color: ${medalColors[index]};"><i class="fa-solid fa-trophy"></i></span>` : '';
+
+                    html += `
+                        <div class="card" ${isWinner ? 'style="border: 2px solid #10b981;"' : ''}>
+                            <div class="card-body">
+                                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                                    <span style="font-size: 1.3rem; font-weight: 700; color: var(--text-secondary);">#${index + 1}</span>
+                                    <img src="${avatar}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                    <div style="flex: 1;">
+                                        <strong>${result.full_name}</strong> ${medal}
+                                        ${isWinner ? '<span style="color: #10b981; font-size: 0.8rem; margin-right: 0.3rem;"><i class="fa-solid fa-crown"></i> الفائز</span>' : ''}
+                                    </div>
+                                    <span style="font-weight: 700; font-size: 1.1rem;">${Number(result.total_weighted_votes).toFixed(1)}</span>
+                                </div>
+                                <div style="background: var(--bg-secondary); border-radius: 999px; height: 8px; overflow: hidden;">
+                                    <div style="background: var(--color-primary); height: 100%; width: ${percentage}%; border-radius: 999px; transition: width 0.5s;"></div>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                html += '</div>';
+            } else {
+                html += `<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">لا توجد نتائج بعد</div>`;
+            }
+        }
+
+        // حالة انتظار
+        else {
+            html += `
+                <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                    <i class="fa-solid fa-hourglass-half fa-2x" style="opacity: 0.3; margin-bottom: 1rem;"></i>
+                    <p>هذا الانتخاب في مرحلة التجهيز</p>
+                </div>`;
+        }
+
+        detailContainer.innerHTML = html;
+    }
+
+    renderMemberCandidatesList(candidates) {
+        let html = '<div class="uc-grid">';
+        candidates.forEach(candidate => {
+            const user = candidate.user;
+            const avatar = user?.avatar_url || '../assets/default-avatar.png';
+            html += `
+                <div class="uc-card">
+                    <div class="uc-card__header" style="flex-direction: column; text-align: center;">
+                        <img src="${avatar}" alt="${user?.full_name}" style="border-radius: 50%; width: 56px; height: 56px; object-fit: cover; margin-bottom: 0.5rem;">
+                        <h3 class="uc-card__title">${user?.full_name || 'غير معروف'}</h3>
+                    </div>
+                    ${candidate.candidacy_statement ? `
+                    <div class="uc-card__body">
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; text-align: center;">${candidate.candidacy_statement}</p>
+                    </div>` : ''}
+                    ${candidate.election_file_url ? `
+                    <div class="uc-card__footer" style="justify-content: center;">
+                        <a href="${candidate.election_file_url}" target="_blank" class="btn btn-sm btn-outline">
+                            <i class="fa-solid fa-file-pdf"></i> الملف الانتخابي
+                        </a>
+                    </div>` : ''}
+                </div>`;
+        });
+        html += '</div>';
+        return html;
+    }
+
+    renderStatusActions(election) {
+        const transitions = ElectionsManager.STATUS_TRANSITIONS[election.status] || [];
+        if (!transitions.length) return '';
+
+        const buttons = transitions.map(nextStatus => {
+            const label = ElectionsManager.STATUS_LABELS[nextStatus];
+            const color = ElectionsManager.STATUS_COLORS[nextStatus];
+            const icon = nextStatus === 'cancelled' ? 'fa-ban' : 'fa-arrow-left';
+            return `<button class="btn btn-sm status-transition-btn" data-next-status="${nextStatus}"
+                        style="background: ${color}; color: white; border: none;">
+                        <i class="fa-solid ${icon}"></i> ${label}
+                    </button>`;
+        }).join('');
+
+        return `<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">${buttons}</div>`;
+    }
+
+    // =============================================
+    // تبويب المرشحين
+    // =============================================
+
+    renderCandidatesTab(election, candidates, canApprove, isInTargetCommittee) {
+        let html = '';
+
+        // زر تقديم ترشح
+        const canSubmitCandidacy = ['candidacy_open'].includes(election.status) && isInTargetCommittee;
+        const alreadyCandidate = candidates.some(c => c.user_id === this.currentUser?.id);
+
+        if (canSubmitCandidacy && !alreadyCandidate) {
+            html += `
+                <div class="card" style="margin-bottom: 1.5rem; border: 2px dashed var(--color-primary-light);">
+                    <div class="card-body" style="text-align: center; padding: 2rem;">
+                        <i class="fa-solid fa-hand-point-up fa-2x" style="color: var(--color-primary); margin-bottom: 0.5rem;"></i>
+                        <p style="margin-bottom: 1rem;">هل ترغب بالتقدم للترشح لهذا المنصب؟</p>
+                        <button class="btn btn-primary" id="submitCandidacyBtn">
+                            <i class="fa-solid fa-user-plus"></i> تقدم للترشح
+                        </button>
+                    </div>
+                </div>`;
+        }
+
+        if (!candidates.length) {
+            html += `<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">لا يوجد مرشحون بعد</div>`;
+            return html;
+        }
+
+        html += '<div class="uc-grid">';
+        candidates.forEach(candidate => {
+            const user = candidate.user;
+            const avatar = user?.avatar_url || '../assets/default-avatar.png';
+            const cStatusLabel = ElectionsManager.CANDIDATE_STATUS_LABELS[candidate.status];
+            const cStatusColor = candidate.status === 'approved' ? '#10b981' :
+                                 candidate.status === 'rejected' ? '#ef4444' :
+                                 candidate.status === 'withdrawn' ? '#6b7280' : '#f59e0b';
+
+            html += `
+                <div class="uc-card">
+                    <div class="uc-card__header">
+                        <img class="uc-card__icon" src="${avatar}" alt="${user?.full_name}" style="border-radius: 50%; width: 48px; height: 48px; object-fit: cover;">
+                        <div>
+                            <h3 class="uc-card__title">${user?.full_name || 'غير معروف'}</h3>
+                            <span style="display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.7rem; background: ${cStatusColor}15; color: ${cStatusColor}; font-weight: 600;">
+                                ${cStatusLabel}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="uc-card__body">
+                        ${candidate.candidacy_statement ? `
+                        <div class="uc-card__info-item">
+                            <span class="uc-card__info-label">بيان الترشح</span>
+                            <span class="uc-card__info-value">${candidate.candidacy_statement}</span>
+                        </div>` : ''}
+                        ${candidate.election_file_url ? `
+                        <div class="uc-card__info-item">
+                            <a href="${candidate.election_file_url}" target="_blank" class="btn btn-sm btn-outline" style="margin-top: 0.5rem;">
+                                <i class="fa-solid fa-file-pdf"></i> الملف الانتخابي
+                            </a>
+                        </div>` : ''}
+                        ${candidate.review_note ? `
+                        <div class="uc-card__info-item">
+                            <span class="uc-card__info-label">ملاحظة المراجعة</span>
+                            <span class="uc-card__info-value">${candidate.review_note}</span>
+                        </div>` : ''}
+                    </div>
+                    ${canApprove && candidate.status === 'pending' ? `
+                    <div class="uc-card__footer">
+                        <button class="btn btn-sm btn-success approve-candidate-btn" data-candidate-id="${candidate.id}">
+                            <i class="fa-solid fa-check"></i> قبول
+                        </button>
+                        <button class="btn btn-sm btn-danger reject-candidate-btn" data-candidate-id="${candidate.id}">
+                            <i class="fa-solid fa-xmark"></i> رفض
+                        </button>
+                    </div>` : ''}
+                </div>`;
+        });
+        html += '</div>';
+        return html;
+    }
+
+    // =============================================
+    // تبويب التصويت
+    // =============================================
+
+    renderVotingTab(election, candidates, myVote) {
+        if (election.status !== 'voting_open') {
+            const msg = ['candidacy_open', 'candidacy_closed'].includes(election.status)
+                ? 'التصويت لم يبدأ بعد' : 'التصويت منتهي';
+            return `<div style="text-align: center; padding: 2rem; color: var(--text-secondary);"><i class="fa-solid fa-clock fa-2x" style="margin-bottom: 0.5rem; opacity: 0.3;"></i><p>${msg}</p></div>`;
+        }
+
+        const approvedCandidates = candidates.filter(c => c.status === 'approved');
+        if (!approvedCandidates.length) {
+            return `<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">لا يوجد مرشحون معتمدون</div>`;
+        }
+
+        // وزن صوت المستخدم الحالي
+        const userWeight = this.getUserVoteWeight();
+
+        let html = `
+            <div class="card" style="margin-bottom: 1.5rem; background: var(--bg-secondary);">
+                <div class="card-body" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <div>
+                        <span style="color: var(--text-secondary); font-size: 0.85rem;">وزن صوتك:</span>
+                        <strong style="font-size: 1.2rem; color: var(--color-primary); margin-right: 0.3rem;">${userWeight}</strong>
+                    </div>
+                    ${myVote ? `
+                    <div style="padding: 0.4rem 1rem; border-radius: 0.5rem; background: #10b98120; color: #10b981; font-weight: 600;">
+                        <i class="fa-solid fa-check-circle"></i> لقد صوّتت بالفعل
+                    </div>` : ''}
+                </div>
+            </div>`;
+
+        html += '<div class="uc-grid">';
+        approvedCandidates.forEach(candidate => {
+            const user = candidate.user;
+            const avatar = user?.avatar_url || '../assets/default-avatar.png';
+            const isVotedFor = myVote?.candidate_id === candidate.id;
+
+            html += `
+                <div class="uc-card" ${isVotedFor ? 'style="border: 2px solid #10b981;"' : ''}>
+                    <div class="uc-card__header">
+                        <img class="uc-card__icon" src="${avatar}" alt="${user?.full_name}" style="border-radius: 50%; width: 48px; height: 48px; object-fit: cover;">
+                        <div>
+                            <h3 class="uc-card__title">${user?.full_name || 'غير معروف'}</h3>
+                            ${isVotedFor ? '<span style="color: #10b981; font-size: 0.8rem;"><i class="fa-solid fa-check"></i> اخترت هذا المرشح</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="uc-card__body">
+                        ${candidate.candidacy_statement ? `<p style="color: var(--text-secondary); font-size: 0.9rem;">${candidate.candidacy_statement}</p>` : ''}
+                    </div>
+                    ${!myVote ? `
+                    <div class="uc-card__footer">
+                        <button class="btn btn-primary cast-vote-btn" data-candidate-id="${candidate.id}">
+                            <i class="fa-solid fa-check-to-slot"></i> صوّت لهذا المرشح
+                        </button>
+                    </div>` : ''}
+                </div>`;
+        });
+        html += '</div>';
+        return html;
+    }
+
+    // =============================================
+    // تبويب النتائج
+    // =============================================
+
+    renderResultsTab(election, results, canManage) {
+        if (!['voting_open', 'voting_closed', 'completed'].includes(election.status)) {
+            return `<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">النتائج غير متاحة بعد</div>`;
+        }
+
+        if (!results.length) {
+            return `<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">لا توجد نتائج</div>`;
+        }
+
+        const maxVotes = Math.max(...results.map(r => Number(r.total_weighted_votes)), 1);
+
+        let html = '<div style="display: grid; gap: 1rem;">';
+        results.forEach((result, index) => {
+            const percentage = (Number(result.total_weighted_votes) / maxVotes * 100).toFixed(1);
+            const avatar = result.avatar_url || '../assets/default-avatar.png';
+            const isWinner = election.winner_user_id === result.user_id;
+            const medalColors = ['#fbbf24', '#94a3b8', '#cd7f32'];
+            const medal = index < 3 ? `<span style="color: ${medalColors[index]}; font-size: 1.3rem; margin-left: 0.5rem;"><i class="fa-solid fa-trophy"></i></span>` : '';
+
+            html += `
+                <div class="card" ${isWinner ? 'style="border: 2px solid #10b981;"' : ''}>
+                    <div class="card-body">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem;">
+                            <span style="font-size: 1.5rem; font-weight: 700; color: var(--text-secondary); min-width: 2rem;">#${index + 1}</span>
+                            <img src="${avatar}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                            <div style="flex: 1;">
+                                <strong>${result.full_name}</strong>
+                                ${medal}
+                                ${isWinner ? '<span style="color: #10b981; font-size: 0.8rem; margin-right: 0.5rem;"><i class="fa-solid fa-crown"></i> الفائز</span>' : ''}
+                            </div>
+                            <div style="text-align: left;">
+                                <strong style="font-size: 1.2rem;">${Number(result.total_weighted_votes).toFixed(1)}</strong>
+                                <span style="color: var(--text-secondary); font-size: 0.8rem;"> نقطة</span>
+                                <br><span style="color: var(--text-secondary); font-size: 0.8rem;">(${result.vote_count} صوت)</span>
+                            </div>
+                        </div>
+                        <div style="background: var(--bg-secondary); border-radius: 999px; height: 8px; overflow: hidden;">
+                            <div style="background: var(--color-primary); height: 100%; width: ${percentage}%; border-radius: 999px; transition: width 0.5s;"></div>
+                        </div>
+                    </div>
+                </div>`;
+        });
+        html += '</div>';
+
+        // زر إعلان الفائز
+        if (canManage && election.status === 'voting_closed' && results.length && !election.winner_user_id) {
+            const topCandidate = results[0];
+            html += `
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <button class="btn btn-success declare-winner-btn" data-candidate-user-id="${topCandidate.user_id}">
+                        <i class="fa-solid fa-crown"></i> إعلان ${topCandidate.full_name} فائزاً
+                    </button>
+                </div>`;
+        }
+
+        return html;
+    }
+
+    // =============================================
+    // ربط أحداث صفحة التفاصيل
+    // =============================================
+
+    bindDetailEvents(container, election) {
+        // تغيير الحالة
+        container.querySelectorAll('.status-transition-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const nextStatus = btn.dataset.nextStatus;
+                await this.updateElectionStatus(election.id, nextStatus);
+            });
+        });
+
+        // تقديم ترشح
+        container.querySelector('#submitCandidacyBtn')?.addEventListener('click', () => {
+            this.showCandidacyModal(election.id);
+        });
+
+        // قبول/رفض مرشح
+        container.querySelectorAll('.approve-candidate-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.reviewCandidate(btn.dataset.candidateId, 'approved');
+            });
+        });
+        container.querySelectorAll('.reject-candidate-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.showRejectModal(btn.dataset.candidateId);
+            });
+        });
+
+        // التصويت
+        container.querySelectorAll('.cast-vote-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.confirmVote(election.id, btn.dataset.candidateId);
+            });
+        });
+
+        // إعلان الفائز
+        container.querySelector('.declare-winner-btn')?.addEventListener('click', (e) => {
+            this.declareWinner(election.id, e.currentTarget.dataset.candidateUserId);
+        });
+    }
+
+    // =============================================
+    // عمليات CRUD
+    // =============================================
+
+    async updateElectionStatus(electionId, newStatus) {
+        const confirmed = await this.confirmAction(
+            newStatus === 'cancelled' ? 'هل أنت متأكد من إلغاء هذا الانتخاب؟' :
+            `هل تريد تغيير حالة الانتخاب إلى "${ElectionsManager.STATUS_LABELS[newStatus]}"؟`
+        );
+        if (!confirmed) return;
+
+        try {
+            const { error } = await this.supabase
+                .from('elections')
+                .update({ status: newStatus, updated_at: new Date().toISOString() })
+                .eq('id', electionId);
+
+            if (error) throw error;
+            this.showSuccess('تم تحديث حالة الانتخاب');
+            await this.loadElections();
+            const openSection = document.getElementById('elections-open-section');
+            if (openSection && !openSection.classList.contains('d-none')) {
+                this.renderOpenSection();
+            } else {
+                await this.showElectionDetail(electionId);
+            }
+        } catch (error) {
+            console.error('Error updating election status:', error);
+            this.showError('حدث خطأ أثناء تحديث الحالة');
+        }
+    }
+
+    async showCandidacyModal(electionId) {
+        await window.ModalHelper.show({
+            title: 'تقديم طلب ترشح',
+            size: 'md',
+            type: 'info',
+            html: `
+                <form id="candidacyForm" style="display: grid; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">بيان الترشح</label>
+                        <textarea id="candidacyStatement" class="form-input" rows="4" placeholder="اكتب بيانك الانتخابي..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الملف الانتخابي (PDF أو صورة)</label>
+                        <input type="file" id="candidacyFile" class="form-input" accept=".pdf,.png,.jpg,.jpeg">
+                    </div>
+                </form>`,
+            showFooter: true,
+            footerButtons: [
+                { text: 'إلغاء', class: 'btn btn-outline', dismiss: true },
+                {
+                    text: '<i class="fa-solid fa-paper-plane"></i> تقديم الترشح',
+                    class: 'btn btn-primary',
+                    callback: () => this.submitCandidacy(electionId)
+                }
+            ]
+        });
+    }
+
+    async submitCandidacy(electionId) {
+        const statement = document.getElementById('candidacyStatement')?.value?.trim();
+        const fileInput = document.getElementById('candidacyFile');
+        let fileUrl = null;
+
+        try {
+            // رفع الملف إذا وُجد
+            if (fileInput?.files?.length) {
+                const file = fileInput.files[0];
+                const ext = file.name.split('.').pop();
+                const path = `${electionId}/${this.currentUser.id}/election-file.${ext}`;
+
+                const { data, error: uploadError } = await this.supabase.storage
+                    .from('election-files')
+                    .upload(path, file, { upsert: true });
+
+                if (uploadError) throw uploadError;
+
+                const { data: urlData } = this.supabase.storage
+                    .from('election-files')
+                    .getPublicUrl(path);
+                fileUrl = urlData?.publicUrl;
+            }
+
+            const { error } = await this.supabase
                 .from('election_candidates')
-                .update({ 
-                    status: action,
+                .insert({
+                    election_id: electionId,
+                    user_id: this.currentUser.id,
+                    candidacy_statement: statement || null,
+                    election_file_url: fileUrl
+                });
+
+            if (error) throw error;
+
+            window.ModalHelper.closeAll?.() || document.querySelector('.modal-backdrop')?.click();
+            this.showSuccess('تم تقديم طلب الترشح بنجاح');
+            await this.showElectionDetail(electionId);
+        } catch (error) {
+            console.error('Error submitting candidacy:', error);
+            this.showError('حدث خطأ أثناء تقديم الترشح');
+        }
+    }
+
+    async reviewCandidate(candidateId, status, note = '') {
+        try {
+            const { error } = await this.supabase
+                .from('election_candidates')
+                .update({
+                    status,
                     reviewed_by: this.currentUser.id,
-                    reviewed_at: new Date().toISOString()
+                    review_note: note || null,
+                    reviewed_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
                 })
                 .eq('id', candidateId);
 
             if (error) throw error;
 
-            this.showToast('تم تحديث حالة المرشح', 'success');
-            await this.loadCandidatesReview();
+            this.showSuccess(status === 'approved' ? 'تم قبول المرشح' : 'تم رفض المرشح');
+            if (this.currentElection) {
+                await this.showElectionDetail(this.currentElection.id);
+            }
         } catch (error) {
-            console.error('Error:', error);
-            this.showToast('حدث خطأ', 'error');
+            console.error('Error reviewing candidate:', error);
+            this.showError('حدث خطأ أثناء مراجعة المرشح');
         }
     }
 
-    // ==================== قسم الترشح للأعضاء ====================
-
-    async loadNominationSection() {
-        const userCommitteeId = this.currentUserRole?.committee_id;
-        if (!userCommitteeId) {
-            document.getElementById('noOpenElectionsMessage').style.display = 'block';
-            document.getElementById('availablePositionsGrid').style.display = 'none';
-            return;
-        }
-
-        try {
-            // جلب جميع الانتخابات المفتوحة للترشح في لجنة المستخدم
-            const { data: elections, error } = await this.supabase
-                .from('elections')
-                .select('*, committee:committees(committee_name_ar)')
-                .eq('committee_id', userCommitteeId)
-                .eq('status', 'nomination_open');
-
-            if (error) throw error;
-
-            // عرض جميع الانتخابات المفتوحة (حتى المنتهية) ما لم تنتقل للتصويت
-            if (!elections || elections.length === 0) {
-                document.getElementById('noOpenElectionsMessage').style.display = 'block';
-                document.getElementById('availablePositionsGrid').style.display = 'none';
-                return;
-            }
-
-            document.getElementById('noOpenElectionsMessage').style.display = 'none';
-            document.getElementById('availablePositionsGrid').style.display = 'grid';
-
-            // عرض كروت المناصب المتاحة
-            await this.renderAvailablePositions(elections);
-
-            // إعداد تحديث دوري للتحقق من انتهاء الوقت
-            if (this.nominationCheckInterval) {
-                clearInterval(this.nominationCheckInterval);
-            }
-            this.nominationCheckInterval = setInterval(async () => {
-                await this.loadNominationSection();
-            }, 30000); // كل 30 ثانية
-
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
-
-    async renderAvailablePositions(elections) {
-        const container = document.getElementById('availablePositionsGrid');
-        if (!container) return;
-
-        const positionLabels = {
-            'committee_leader': 'قائد اللجنة',
-            'deputy_committee_leader': 'نائب قائد اللجنة',
-            'leader': 'قائد اللجنة',
-            'vice_leader': 'نائب قائد اللجنة'
-        };
-
-        let html = '';
-
-        for (const election of elections) {
-            // التحقق من وجود ترشح سابق
-            const { data: existingApp } = await this.supabase
-                .from('election_candidates')
-                .select('*')
-                .eq('election_id', election.id)
-                .eq('user_id', this.currentUser.id)
-                .maybeSingle();
-
-            const positionName = positionLabels[election.position_type] || election.position_type;
-            const endDate = election.nomination_end_date ? new Date(election.nomination_end_date).toLocaleString('ar-SA', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            }) : 'غير محدد';
-
-            // حساب الوقت المتبقي باستخدام countdown-timer.css
-            let timeRemainingHtml = '';
-            let nominationEnded = false;
-            if (election.nomination_end_date) {
-                const now = new Date();
-                const end = new Date(election.nomination_end_date);
-                const diff = end - now;
-                
-                if (diff > 0) {
-                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                    
-                    timeRemainingHtml = `
-                        <div class="nomination-countdown-wrap active" data-end-date="${election.nomination_end_date}">
-                            <div class="nomination-countdown-head">
-                                <i class="fa-solid fa-clock"></i>
-                                <span>الوقت المتبقي لإغلاق الترشح</span>
-                            </div>
-                            <div class="nomination-countdown-timer">
-                                <div class="nomination-countdown-box">
-                                    <span class="days">${days}</span>
-                                    <small>يوم</small>
-                                </div>
-                                <div class="nomination-countdown-box">
-                                    <span class="hours">${hours}</span>
-                                    <small>ساعة</small>
-                                </div>
-                                <div class="nomination-countdown-box">
-                                    <span class="minutes">${minutes}</span>
-                                    <small>دقيقة</small>
-                                </div>
-                                <div class="nomination-countdown-box">
-                                    <span class="seconds">${seconds}</span>
-                                    <small>ثانية</small>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    nominationEnded = true;
-                    timeRemainingHtml = `
-                        <div class="alert" style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 1px solid #f59e0b; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; text-align: center;">
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: #92400e; font-weight: 600;">
-                                <i class="fa-solid fa-clock"></i>
-                                <span>انتهت فترة الترشح لهذا المنصب</span>
-                            </div>
-                            <p style="margin: 0.5rem 0 0; color: #78350f; font-size: 0.875rem;">سيتم الانتقال لمرحلة التصويت قريباً</p>
-                        </div>
-                    `;
-                }
-            }
-
-            html += `
-                <div class="position-card" data-election-id="${election.id}">
-                    <div class="position-card-header">
-                        <div class="position-icon">
-                            <i class="fa-solid ${election.position_type === 'committee_leader' || election.position_type === 'leader' ? 'fa-crown' : 'fa-star'}"></i>
-                        </div>
-                        <h3 class="position-title">${positionName}</h3>
-                    </div>
-                    <div class="position-card-body">
-                        ${timeRemainingHtml}
-                        <div class="position-info">
-                            <div class="position-info-item">
-                                <i class="fa-solid fa-users"></i>
-                                <span>${election.committee?.committee_name_ar || 'غير محدد'}</span>
-                            </div>
-                            <div class="position-info-item">
-                                <i class="fa-solid fa-calendar-xmark"></i>
-                                <span>ينتهي: ${endDate}</span>
-                            </div>
-                        </div>
-                        ${existingApp ? `
-                            <div class="position-status">
-                                <div class="status-badge status-${existingApp.status}">
-                                    <i class="fa-solid ${existingApp.status === 'pending' ? 'fa-clock' : existingApp.status === 'approved' ? 'fa-check-circle' : 'fa-times-circle'}"></i>
-                                    ${existingApp.status === 'pending' ? 'قيد المراجعة' : existingApp.status === 'approved' ? 'تم القبول' : 'تم الرفض'}
-                                </div>
-                            </div>
-                        ` : nominationEnded ? `
-                            <button class="btn btn--secondary btn--block" disabled>
-                                <i class="fa-solid fa-lock"></i>
-                                انتهت فترة الترشح
-                            </button>
-                        ` : `
-                            <button class="btn btn--primary btn--block nominate-btn" data-election-id="${election.id}">
-                                <i class="fa-solid fa-paper-plane"></i>
-                                ترشح لهذا المنصب
-                            </button>
-                        `}
-                    </div>
-                </div>
-            `;
-        }
-
-        container.innerHTML = html;
-
-        // تحديث العدادات التنازلية كل ثانية
-        if (this.timerUpdateInterval) {
-            clearInterval(this.timerUpdateInterval);
-        }
-        this.timerUpdateInterval = setInterval(() => {
-            document.querySelectorAll('.nomination-countdown-wrap').forEach(timer => {
-                const endDate = new Date(timer.dataset.endDate);
-                const now = new Date();
-                const diff = endDate - now;
-                
-                if (diff > 0) {
-                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                    
-                    const daysSpan = timer.querySelector('.days');
-                    const hoursSpan = timer.querySelector('.hours');
-                    const minutesSpan = timer.querySelector('.minutes');
-                    const secondsSpan = timer.querySelector('.seconds');
-                    
-                    if (daysSpan) daysSpan.textContent = days;
-                    if (hoursSpan) hoursSpan.textContent = hours;
-                    if (minutesSpan) minutesSpan.textContent = minutes;
-                    if (secondsSpan) secondsSpan.textContent = seconds;
-                } else {
-                    timer.classList.remove('active');
-                }
-            });
-        }, 1000); // كل ثانية
-
-        // إضافة مستمعي الأحداث لأزرار الترشح
-        document.querySelectorAll('.nominate-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const electionId = e.target.closest('.nominate-btn').dataset.electionId;
-                const election = elections.find(el => el.id === electionId);
-                this.showNominationForm(election);
-            });
-        });
-    }
-
-    showNominationForm(election) {
-        this.currentElection = election;
-        
-        const positionLabels = {
-            'committee_leader': 'قائد اللجنة',
-            'deputy_committee_leader': 'نائب قائد اللجنة',
-            'leader': 'قائد اللجنة',
-            'vice_leader': 'نائب قائد اللجنة'
-        };
-
-        const content = `
-            <div class="nomination-form-modal">
-                <h3 style="margin-bottom: 1rem; color: #1f2937;">
-                    <i class="fa-solid fa-file-upload"></i>
-                    الترشح لمنصب ${positionLabels[election.position_type] || election.position_type}
-                </h3>
-                
-                <div style="background: #eff6ff; border-right: 4px solid #3b82f6; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
-                    <p style="margin: 0; color: #1e40af; font-size: 0.9rem;">
-                        <i class="fa-solid fa-info-circle"></i>
-                        يرجى رفع ملف يحتوي على رؤيتك وخطتك للجنة. الملفات المقبولة: PDF, Word, PowerPoint
-                    </p>
-                </div>
-
+    async showRejectModal(candidateId) {
+        await window.ModalHelper.show({
+            title: 'رفض المرشح',
+            size: 'sm',
+            type: 'danger',
+            html: `
                 <div class="form-group">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">ملف الترشح <span style="color: #ef4444;">*</span></label>
-                    <div class="file-upload-zone-modal" id="nominationFileZoneModal" style="border: 2px dashed #d1d5db; border-radius: 0.75rem; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s;">
-                        <i class="fa-solid fa-cloud-upload-alt" style="font-size: 3rem; color: #9ca3af; margin-bottom: 1rem;"></i>
-                        <p style="margin-bottom: 0.5rem; color: #374151;">اسحب الملف هنا أو اضغط للاختيار</p>
-                        <small style="color: #6b7280;">PDF, DOC, DOCX, PPT, PPTX - الحد الأقصى 10MB</small>
-                        <input type="file" id="nominationFileInputModal" accept=".pdf,.doc,.docx,.ppt,.pptx" style="display: none;">
-                    </div>
-                    <div id="selectedFileInfoModal" style="display: none; margin-top: 1rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <i class="fa-solid fa-file-pdf" style="font-size: 1.5rem; color: #ef4444;"></i>
-                            <div style="flex: 1;">
-                                <p id="selectedFileNameModal" style="margin: 0; font-weight: 500;"></p>
-                                <small id="selectedFileSizeModal" style="color: #6b7280;"></small>
-                            </div>
-                            <button type="button" class="btn btn--icon btn--icon-sm" id="removeSelectedFileModal">
-                                <i class="fa-solid fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        Swal.fire({
-            title: 'تقديم طلب الترشح',
-            html: content,
-            showCancelButton: true,
-            confirmButtonText: '<i class="fa-solid fa-paper-plane"></i> تقديم الطلب',
-            cancelButtonText: 'إلغاء',
-            width: '600px',
-            didOpen: () => {
-                const fileZone = document.getElementById('nominationFileZoneModal');
-                const fileInput = document.getElementById('nominationFileInputModal');
-                let selectedFile = null;
-
-                fileZone.addEventListener('click', () => fileInput.click());
-                
-                fileInput.addEventListener('change', (e) => {
-                    if (e.target.files.length) {
-                        selectedFile = e.target.files[0];
-                        document.getElementById('selectedFileInfoModal').style.display = 'block';
-                        document.getElementById('selectedFileNameModal').textContent = selectedFile.name;
-                        document.getElementById('selectedFileSizeModal').textContent = (selectedFile.size / 1024 / 1024).toFixed(2) + ' MB';
+                    <label class="form-label">سبب الرفض (اختياري)</label>
+                    <textarea id="rejectNote" class="form-input" rows="3" placeholder="اكتب سبب الرفض..."></textarea>
+                </div>`,
+            showFooter: true,
+            footerButtons: [
+                { text: 'إلغاء', class: 'btn btn-outline', dismiss: true },
+                {
+                    text: '<i class="fa-solid fa-xmark"></i> رفض',
+                    class: 'btn btn-danger',
+                    callback: () => {
+                        const note = document.getElementById('rejectNote')?.value?.trim();
+                        this.reviewCandidate(candidateId, 'rejected', note);
                     }
-                });
-
-                document.getElementById('removeSelectedFileModal')?.addEventListener('click', () => {
-                    selectedFile = null;
-                    fileInput.value = '';
-                    document.getElementById('selectedFileInfoModal').style.display = 'none';
-                });
-
-                // حفظ الملف المحدد في الكائن
-                this.selectedNominationFile = null;
-                fileInput.addEventListener('change', () => {
-                    this.selectedNominationFile = fileInput.files[0];
-                });
-            },
-            preConfirm: () => {
-                if (!this.selectedNominationFile) {
-                    Swal.showValidationMessage('يرجى رفع ملف الترشح');
-                    return false;
                 }
-                return true;
-            }
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                await this.submitNominationForElection(election.id, this.selectedNominationFile);
-            }
+            ]
         });
     }
 
-    async submitNominationForElection(electionId, file) {
-        // التحقق من صلاحية الانتخاب وعدم انتهاء الوقت
-        const { data: election, error: electionError } = await this.supabase
-            .from('elections')
-            .select('nomination_end_date, status')
-            .eq('id', electionId)
-            .single();
+    async confirmVote(electionId, candidateId) {
+        const weight = this.getUserVoteWeight();
+        const confirmed = await this.confirmAction(
+            `هل أنت متأكد من التصويت لهذا المرشح؟ وزن صوتك: ${weight}`
+        );
+        if (!confirmed) return;
+        await this.castVote(electionId, candidateId);
+    }
 
-        if (electionError || !election) {
-            await Swal.fire({
-                icon: 'error',
-                title: 'خطأ',
-                text: 'لم يتم العثور على الانتخاب',
-                confirmButtonText: 'حسناً'
-            });
-            return;
-        }
-
-        // التحقق من انتهاء وقت الترشح
-        if (election.nomination_end_date) {
-            const now = new Date();
-            const endDate = new Date(election.nomination_end_date);
-            if (endDate <= now) {
-                await Swal.fire({
-                    icon: 'warning',
-                    title: 'انتهى وقت الترشح',
-                    text: 'عذراً، لقد انتهى الوقت المحدد لتقديم طلبات الترشح',
-                    confirmButtonText: 'حسناً'
-                });
-                await this.loadNominationSection();
-                return;
-            }
-        }
-
-        const allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'rtf', 'odt', 'odp', 'png', 'jpg', 'jpeg', 'gif', 'webp'];
-        const fileExtension = file.name.split('.').pop().toLowerCase();
-        
-        if (!allowedExtensions.includes(fileExtension)) {
-            await Swal.fire({
-                icon: 'error',
-                title: 'خطأ',
-                text: 'نوع الملف غير مدعوم',
-                confirmButtonText: 'حسناً'
-            });
-            return;
-        }
-
-        const fileName = `${this.currentUser.id}_${Date.now()}.${fileExtension}`;
-
+    async castVote(electionId, candidateId) {
         try {
-            Swal.fire({
-                title: 'جاري رفع الملف...',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
+            // جلب الوزن من قاعدة البيانات
+            const { data: weight } = await this.supabase.rpc('get_vote_weight', {
+                p_user_id: this.currentUser.id
             });
 
-            const { data: uploadData, error: uploadError } = await this.supabase.storage
-                .from('election-applications')
-                .upload(fileName, file);
+            // جلب اسم الدور الحالي
+            const roleName = this.currentUserRole?.role?.role_name || 'committee_member';
 
-            if (uploadError) throw uploadError;
-
-            const { data: urlData } = this.supabase.storage
-                .from('election-applications')
-                .getPublicUrl(fileName);
-
-            const { error: insertError } = await this.supabase
-                .from('election_candidates')
-                .insert({
-                    election_id: electionId,
-                    user_id: this.currentUser.id,
-                    application_file_url: urlData.publicUrl,
-                    application_file_name: file.name,
-                    status: 'pending'
-                });
-
-            if (insertError) throw insertError;
-
-            await this.logActivity(electionId, 'nomination_submitted', { user_id: this.currentUser.id });
-
-            await Swal.fire({
-                icon: 'success',
-                title: 'تم تقديم طلبك بنجاح! 🎉',
-                html: `
-                    <div style="text-align: center; padding: 1rem;">
-                        <p style="font-size: 1.1rem; margin-bottom: 1rem; color: #10b981; font-weight: 600;">تم استلام طلب ترشحك بنجاح!</p>
-                        <p style="margin-bottom: 1rem; color: #6b7280;">سيتم مراجعة طلبك من قبل الإدارة، وعند القبول ستدخل السباق الانتخابي.</p>
-                        <div style="background: #f0fdf4; border-right: 4px solid #10b981; padding: 1rem; border-radius: 0.5rem; margin-top: 1.5rem;">
-                            <p style="margin: 0; color: #059669; font-weight: 500;">🌟 نتمنى لك التوفيق والفوز في الانتخابات!</p>
-                        </div>
-                    </div>
-                `,
-                confirmButtonText: 'حسناً'
-            });
-
-            await this.loadNominationSection();
-        } catch (error) {
-            console.error('Error:', error);
-            await Swal.fire({
-                icon: 'error',
-                title: 'خطأ',
-                text: 'حدث خطأ أثناء تقديم الطلب',
-                confirmButtonText: 'حسناً'
-            });
-        }
-    }
-
-    renderNominationCountdown(election) {
-        const countdownContainer = document.getElementById('nominationCountdownContainer');
-        if (!countdownContainer) return;
-
-        if (election.nomination_end_date) {
-            countdownContainer.innerHTML = `
-                <div class="nomination-countdown-wrap active" style="margin-bottom: 1.5rem;">
-                    <div class="nomination-countdown-head">
-                        <i class="fa-solid fa-clock"></i>
-                        <span>الوقت المتبقي لإغلاق الترشح</span>
-                    </div>
-                    <div class="nomination-countdown-timer" data-end-date="${election.nomination_end_date}">
-                        <div class="nomination-countdown-box">
-                            <span class="days">0</span>
-                            <small>يوم</small>
-                        </div>
-                        <div class="nomination-countdown-box">
-                            <span class="hours">0</span>
-                            <small>ساعة</small>
-                        </div>
-                        <div class="nomination-countdown-box">
-                            <span class="minutes">0</span>
-                            <small>دقيقة</small>
-                        </div>
-                        <div class="nomination-countdown-box">
-                            <span class="seconds">0</span>
-                            <small>ثانية</small>
-                        </div>
-                    </div>
-                </div>
-            `;
-            this.initCountdownTimers();
-        } else {
-            countdownContainer.innerHTML = '';
-        }
-    }
-
-    renderNominationStatus(application) {
-        const container = document.getElementById('nominationStatusContent');
-        const statusConfig = {
-            'pending': { icon: 'fa-clock', color: '#f59e0b', text: 'طلبك قيد المراجعة' },
-            'approved': { icon: 'fa-check-circle', color: '#10b981', text: 'تم قبول ترشحك! أنت الآن في السباق الانتخابي' },
-            'rejected': { icon: 'fa-times-circle', color: '#ef4444', text: 'تم رفض طلب ترشحك' },
-            'file_deleted': { icon: 'fa-redo', color: '#6b7280', text: 'تم حذف ملفك. يمكنك التقديم مرة أخرى' }
-        };
-
-        const status = statusConfig[application.status] || statusConfig['pending'];
-
-        container.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: ${status.color}15; border-radius: 0.5rem; border-right: 4px solid ${status.color};">
-                <i class="fa-solid ${status.icon}" style="font-size: 2rem; color: ${status.color};"></i>
-                <div>
-                    <h4 style="margin: 0; color: ${status.color};">${status.text}</h4>
-                    ${application.rejection_reason ? `<p style="margin: 0.5rem 0 0 0; color: #6b7280;">السبب: ${application.rejection_reason}</p>` : ''}
-                </div>
-            </div>`;
-
-        if (application.status === 'file_deleted') {
-            document.getElementById('nominationFormCard').style.display = 'block';
-        }
-    }
-
-    async submitNomination() {
-        const fileInput = document.getElementById('nominationFileInput');
-        if (!fileInput.files.length) {
-            this.showToast('يرجى اختيار ملف الترشح', 'error');
-            return;
-        }
-
-        if (!this.currentElection) {
-            this.showToast('لا يوجد انتخابات مفتوحة', 'error');
-            return;
-        }
-
-        const file = fileInput.files[0];
-        // الملفات المدعومة: PDF, Word, PowerPoint, Text, Images
-        const allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'rtf', 'odt', 'odp', 'png', 'jpg', 'jpeg', 'gif', 'webp'];
-        const fileExtension = file.name.split('.').pop().toLowerCase();
-        
-        if (!allowedExtensions.includes(fileExtension)) {
-            this.showToast('نوع الملف غير مدعوم. الأنواع المدعومة: PDF, Word, PowerPoint, Text, Images', 'error');
-            return;
-        }
-        const fileName = `${this.currentUser.id}_${Date.now()}.${fileExtension}`;
-
-        try {
-            const { data: uploadData, error: uploadError } = await this.supabase.storage
-                .from('election-applications')
-                .upload(fileName, file);
-
-            if (uploadError) throw uploadError;
-
-            const { data: urlData } = this.supabase.storage
-                .from('election-applications')
-                .getPublicUrl(fileName);
-
-            const { error: insertError } = await this.supabase
-                .from('election_candidates')
-                .insert({
-                    election_id: this.currentElection.id,
-                    user_id: this.currentUser.id,
-                    application_file_url: urlData.publicUrl,
-                    application_file_name: file.name,
-                    status: 'pending'
-                });
-
-            if (insertError) throw insertError;
-
-            await this.logActivity(this.currentElection.id, 'nomination_submitted', { user_id: this.currentUser.id });
-
-            if (window.ModalHelper) {
-                window.ModalHelper.show({
-                    title: 'تم تقديم طلبك بنجاح! 🎉',
-                    html: `
-                        <div style="text-align: center; padding: 1rem;">
-                            <div style="font-size: 3rem; margin-bottom: 1rem;">✨</div>
-                            <p style="font-size: 1.1rem; margin-bottom: 1rem; color: #10b981; font-weight: 600;">تم استلام طلب ترشحك بنجاح!</p>
-                            <p style="margin-bottom: 1rem; color: #6b7280;">سيتم مراجعة طلبك من قبل الإدارة، وعند القبول ستدخل السباق الانتخابي.</p>
-                            <div style="background: #f0fdf4; border-right: 4px solid #10b981; padding: 1rem; border-radius: 0.5rem; margin-top: 1.5rem;">
-                                <p style="margin: 0; color: #059669; font-weight: 500;">🌟 نتمنى لك التوفيق والفوز في الانتخابات!</p>
-                            </div>
-                        </div>
-                    `,
-                    type: 'success',
-                    size: 'md'
-                });
-            } else {
-                this.showToast('تم تقديم طلب الترشح بنجاح', 'success');
-            }
-
-            await this.loadNominationSection();
-        } catch (error) {
-            console.error('Error:', error);
-            this.showToast('حدث خطأ أثناء تقديم الطلب', 'error');
-        }
-    }
-
-    // ==================== قسم التصويت للأعضاء ====================
-
-    async loadVotingSection() {
-        const userCommitteeId = this.currentUserRole?.committee_id;
-        if (!userCommitteeId) {
-            document.getElementById('noOpenVotingMessage').style.display = 'block';
-            document.getElementById('votingCandidatesContainer').style.display = 'none';
-            document.getElementById('votingTimerCard').style.display = 'none';
-            return;
-        }
-
-        try {
-            const { data: election, error } = await this.supabase
-                .from('elections')
-                .select('*')
-                .eq('committee_id', userCommitteeId)
-                .eq('status', 'voting_open')
-                .single();
-
-            if (error || !election) {
-                document.getElementById('noOpenVotingMessage').style.display = 'block';
-                document.getElementById('votingCandidatesContainer').style.display = 'none';
-                document.getElementById('votingTimerCard').style.display = 'none';
-                return;
-            }
-
-            document.getElementById('noOpenVotingMessage').style.display = 'none';
-            document.getElementById('votingCandidatesContainer').style.display = 'block';
-            document.getElementById('votingTimerCard').style.display = 'block';
-
-            this.startVotingTimer(election.voting_end_date);
-            await this.loadVotingCandidates(election.id);
-            await this.checkUserVote(election.id);
-
-            this.currentElection = election;
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
-
-startVotingTimer(endDate) {
-    if (this.votingTimerInterval) clearInterval(this.votingTimerInterval);
-
-    const updateTimer = () => {
-        const now = new Date().getTime();
-        const end = new Date(endDate).getTime();
-        const diff = end - now;
-
-        if (diff <= 0) {
-            document.getElementById('votingTimerCard').style.display = 'none';
-            clearInterval(this.votingTimerInterval);
-            return;
-        }
-
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-        document.getElementById('votingDays').textContent = days.toString().padStart(2, '0');
-        document.getElementById('votingHours').textContent = hours.toString().padStart(2, '0');
-        document.getElementById('votingMinutes').textContent = minutes.toString().padStart(2, '0');
-        document.getElementById('votingSeconds').textContent = seconds.toString().padStart(2, '0');
-    };
-
-    updateTimer();
-    this.votingTimerInterval = setInterval(updateTimer, 1000);
-}
-
-    async loadVotingCandidates(electionId) {
-        const container = document.getElementById('votingCandidatesList');
-        if (!container) return;
-
-        try {
-            const { data, error } = await this.supabase
-                .from('election_candidates')
-                .select(`
-                    *,
-                    user:profiles!election_candidates_user_id_fkey(id, full_name, avatar_url)
-                `)
-                .eq('election_id', electionId)
-                .eq('status', 'approved')
-                .order('votes_count', { ascending: false });
-
-            if (error) throw error;
-
-            if (!data || data.length === 0) {
-                container.innerHTML = '<p class="text-center">لا يوجد مرشحون</p>';
-                return;
-            }
-
-            container.innerHTML = data.map(c => this.renderVotingCandidateCard(c)).join('');
-            this.attachVotingListeners();
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
-
-    renderVotingCandidateCard(candidate) {
-        const avatar = candidate.user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(candidate.user?.full_name || 'U')}&background=3d8fd6&color=fff`;
-
-        return `
-            <div class="card" style="margin-bottom: 1rem; text-align: center; padding: 1.5rem;" data-candidate-id="${candidate.id}">
-                <img src="${avatar}" alt="" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: 0 auto 1rem;">
-                <h4 style="margin: 0 0 0.5rem 0;">${candidate.user?.full_name || 'مرشح'}</h4>
-                <p style="margin: 0 0 1rem 0; color: #6b7280;">
-                    <i class="fa-solid fa-chart-simple"></i> ${candidate.votes_count} صوت
-                </p>
-                <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                    <a href="${candidate.application_file_url}" target="_blank" class="btn btn--outline btn--outline-primary btn--sm">
-                        <i class="fa-solid fa-file"></i> ملف الترشح
-                    </a>
-                    <button class="btn btn--primary btn--sm vote-btn" data-id="${candidate.id}" data-name="${candidate.user?.full_name}">
-                        <i class="fa-solid fa-vote-yea"></i> صوّت
-                    </button>
-                </div>
-            </div>`;
-    }
-
-    attachVotingListeners() {
-        document.querySelectorAll('.vote-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.castVote(btn.dataset.id, btn.dataset.name));
-        });
-    }
-
-    async checkUserVote(electionId) {
-        try {
-            const { data, error } = await this.supabase
-                .from('election_votes')
-                .select('*, candidate:election_candidates(user:profiles!election_candidates_user_id_fkey(full_name))')
-                .eq('election_id', electionId)
-                .eq('voter_id', this.currentUser.id)
-                .single();
-
-            if (data) {
-                document.getElementById('userVoteStatusCard').style.display = 'block';
-                document.getElementById('votedForName').textContent = data.candidate?.user?.full_name || 'مرشح';
-                document.querySelectorAll('.vote-btn').forEach(btn => {
-                    btn.disabled = true;
-                    btn.classList.remove('btn--primary');
-                    btn.classList.add('btn--secondary');
-                });
-            }
-        } catch (error) {
-            // لم يصوت بعد
-        }
-    }
-
-    async castVote(candidateId, candidateName) {
-        if (!confirm(`هل أنت متأكد من التصويت لـ ${candidateName}؟`)) return;
-
-        try {
             const { error } = await this.supabase
                 .from('election_votes')
                 .insert({
-                    election_id: this.currentElection.id,
+                    election_id: electionId,
                     voter_id: this.currentUser.id,
-                    candidate_id: candidateId
+                    candidate_id: candidateId,
+                    vote_weight: weight || 1.0,
+                    voter_role_name: roleName
                 });
 
-            if (error) throw error;
-
-            await this.logActivity(this.currentElection.id, 'vote_cast', { candidate_id: candidateId });
-            this.showToast('تم تسجيل صوتك بنجاح', 'success');
-            await this.loadVotingSection();
-        } catch (error) {
-            console.error('Error:', error);
-            if (error.code === '23505') {
-                this.showToast('لقد صوّت مسبقاً', 'error');
-            } else {
-                this.showToast('حدث خطأ أثناء التصويت', 'error');
-            }
-        }
-    }
-
-    // ==================== قسم النتائج ====================
-
-    async loadElectionResults() {
-        const container = document.getElementById('electionResultsList');
-        if (!container) return;
-
-        try {
-            const { data, error } = await this.supabase
-                .from('elections')
-                .select(`
-                    *,
-                    committee:committees(committee_name_ar),
-                    winner:profiles!elections_winner_id_fkey(full_name, avatar_url),
-                    candidates:election_candidates(
-                        id, votes_count, status,
-                        user:profiles!election_candidates_user_id_fkey(full_name, avatar_url)
-                    )
-                `)
-                .in('status', ['completed', 'voting_closed'])
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-
-            if (!data || data.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-inbox"></i>
-                        <p>لا توجد نتائج للعرض</p>
-                    </div>`;
-                return;
-            }
-
-            container.innerHTML = data.map(e => this.renderResultCard(e)).join('');
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
-
-    renderResultCard(election) {
-        const positionLabels = {
-            'committee_leader': 'قائد لجنة',
-            'deputy_committee_leader': 'نائب قائد لجنة'
-        };
-
-        const approvedCandidates = (election.candidates || [])
-            .filter(c => c.status === 'approved')
-            .sort((a, b) => b.votes_count - a.votes_count);
-
-        const totalVotes = approvedCandidates.reduce((sum, c) => sum + c.votes_count, 0);
-
-        return `
-            <div class="card" style="margin-bottom: 1.5rem;">
-                <div class="card-header">
-                    <h3 style="margin: 0;">
-                        <i class="fa-solid fa-trophy" style="color: #f59e0b;"></i>
-                        ${election.committee?.committee_name_ar} - ${positionLabels[election.position_type] || election.position_type}
-                    </h3>
-                </div>
-                <div class="card-body">
-                    ${election.winner ? `
-                        <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #fef3c7; border-radius: 0.5rem; margin-bottom: 1rem;">
-                            <i class="fa-solid fa-crown" style="font-size: 2rem; color: #f59e0b;"></i>
-                            <div>
-                                <p style="margin: 0; color: #92400e; font-weight: 600;">الفائز</p>
-                                <h4 style="margin: 0;">${election.winner.full_name}</h4>
-                            </div>
-                        </div>
-                    ` : ''}
-                    <p style="margin-bottom: 1rem; color: #6b7280;">إجمالي الأصوات: ${totalVotes}</p>
-                    <div>
-                        ${approvedCandidates.map((c, i) => `
-                            <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: ${i === 0 ? '#fef3c7' : '#f9fafb'}; border-radius: 0.5rem; margin-bottom: 0.5rem;">
-                                <span style="font-weight: bold; color: ${i === 0 ? '#f59e0b' : '#6b7280'};">#${i + 1}</span>
-                                <span style="flex: 1;">${c.user?.full_name || 'مرشح'}</span>
-                                <span style="font-weight: 600;">${c.votes_count} صوت</span>
-                                <span style="color: #6b7280;">(${totalVotes > 0 ? Math.round(c.votes_count / totalVotes * 100) : 0}%)</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            </div>`;
-    }
-
-    // ==================== أدوات مساعدة ====================
-
-    initCountdownTimers() {
-        const timers = document.querySelectorAll('.nomination-countdown-timer, .voting-countdown-timer');
-        
-        timers.forEach(timer => {
-            const endDate = new Date(timer.dataset.endDate);
-            
-            const updateTimer = () => {
-                const now = new Date();
-                const diff = endDate - now;
-                
-                if (diff <= 0) {
-                    timer.innerHTML = '<div style="text-align: center; color: #fff; padding: 1rem;">انتهى الوقت</div>';
+            if (error) {
+                if (error.code === '23505') {
+                    this.showError('لقد صوّتت مسبقاً في هذا الانتخاب');
                     return;
                 }
-                
-                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                
-                const daysEl = timer.querySelector('.days');
-                const hoursEl = timer.querySelector('.hours');
-                const minutesEl = timer.querySelector('.minutes');
-                const secondsEl = timer.querySelector('.seconds');
-                
-                if (daysEl) daysEl.textContent = days;
-                if (hoursEl) hoursEl.textContent = hours;
-                if (minutesEl) minutesEl.textContent = minutes;
-                if (secondsEl) secondsEl.textContent = seconds;
-            };
-            
-            updateTimer();
-            setInterval(updateTimer, 1000);
+                throw error;
+            }
+
+            this.showSuccess('تم تسجيل صوتك بنجاح');
+            await this.showElectionDetail(electionId);
+        } catch (error) {
+            console.error('Error casting vote:', error);
+            this.showError('حدث خطأ أثناء التصويت');
+        }
+    }
+
+    async declareWinner(electionId, winnerUserId) {
+        const confirmed = await this.confirmAction('هل أنت متأكد من إعلان هذا المرشح فائزاً؟');
+        if (!confirmed) return;
+
+        try {
+            const { error } = await this.supabase
+                .from('elections')
+                .update({
+                    winner_user_id: winnerUserId,
+                    status: 'completed',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', electionId);
+
+            if (error) throw error;
+
+            this.showSuccess('تم إعلان الفائز بنجاح');
+            await this.loadElections();
+            await this.showElectionDetail(electionId);
+        } catch (error) {
+            console.error('Error declaring winner:', error);
+            this.showError('حدث خطأ أثناء إعلان الفائز');
+        }
+    }
+
+    // =============================================
+    // دوال مساعدة
+    // =============================================
+
+    getElectionName(election) {
+        const role = election.target_role?.role_name_ar || '—';
+        const unit = election.target_committee?.committee_name_ar
+                  || election.target_department?.name_ar;
+        return unit ? `${role} — ${unit}` : role;
+    }
+
+    canManageElections() {
+        return window.PermissionsHelper?.hasPermission('manage_elections') || false;
+    }
+
+    canApproveCandidates() {
+        return window.PermissionsHelper?.hasAnyPermission(['approve_candidates', 'manage_elections']) || false;
+    }
+
+    isUserInCommittee(committeeId) {
+        if (!committeeId || !this.currentUserRole) return false;
+        return this.currentUserRole.committee_id === committeeId;
+    }
+
+    getUserVoteWeight() {
+        if (!this.currentUserRole?.role?.role_name) return 1.0;
+        const found = this.voteWeights.find(w => w.role_name === this.currentUserRole.role.role_name);
+        return found ? Number(found.weight) : 1.0;
+    }
+
+    async confirmAction(message) {
+        return new Promise(resolve => {
+            if (window.ModalHelper?.confirm) {
+                window.ModalHelper.confirm({
+                    title: 'تأكيد',
+                    message,
+                    type: 'warning',
+                    onConfirm: () => resolve(true),
+                    onCancel: () => resolve(false)
+                });
+            } else {
+                resolve(confirm(message));
+            }
         });
     }
 
-    async logActivity(electionId, action, details) {
-        try {
-            await this.supabase
-                .from('election_activity_log')
-                .insert({
-                    election_id: electionId,
-                    user_id: this.currentUser?.id,
-                    action: action,
-                    details: details
-                });
-        } catch (error) {
-            console.error('Error logging activity:', error);
-        }
+    showSuccess(message) {
+        window.Toast?.show({ type: 'success', title: message });
     }
 
-    showToast(message, type = 'info') {
-        if (window.Toast) {
-            window.Toast.show({ message, type });
-        } else {
-            console.log(`[${type}] ${message}`);
-        }
+    showError(message) {
+        window.Toast?.show({ type: 'error', title: message });
     }
 }
 
-window.ElectionsManager = new ElectionsManager();
+// تصدير عام
+window.ElectionsManager = ElectionsManager;
+window.electionsManagerInstance = null;

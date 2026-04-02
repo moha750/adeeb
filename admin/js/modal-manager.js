@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام إدارة النوافذ المنبثقة الموحد
  * يوفر واجهة موحدة لفتح وإغلاق النوافذ المنبثقة في لوحة التحكم
  */
@@ -22,27 +22,22 @@
         modal.id = 'dynamicModal';
         modal.className = 'modal modal-md';
         modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-header-content">
-                        <h3 id="dynamicModalTitle">
-                            <i class="fa-solid fa-info-circle"></i>
-                            عنوان النافذة
-                        </h3>
+            <div class="modal-header">
+                <div class="modal-header-content">
+                    <div class="modal-icon" id="dynamicModalIcon">
+                        <i class="fa-solid fa-info-circle"></i>
                     </div>
-                    <button class="modal-close-x" onclick="closeModal()">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
+                    <h2 class="modal-title" id="dynamicModalTitle">عنوان النافذة</h2>
                 </div>
-                <div class="modal-body" id="dynamicModalBody">
-                    <!-- سيتم ملؤه ديناميكياً -->
-                </div>
-                <div class="modal-footer" id="dynamicModalFooter">
-                    <button class="btn btn--outline btn--outline-primary" onclick="closeModal()">
-                        <i class="fa-solid fa-times"></i>
-                        إغلاق
-                    </button>
-                </div>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="dynamicModalBody">
+                <!-- سيتم ملؤه ديناميكياً -->
+            </div>
+            <div class="modal-footer" id="dynamicModalFooter">
+                <button class="btn btn-outline" onclick="closeModal()">إغلاق</button>
             </div>
         `;
 
@@ -72,9 +67,11 @@
         const bodyEl = document.getElementById('dynamicModalBody');
         const footerEl = document.getElementById('dynamicModalFooter');
 
-        // تعيين العنوان
+        // تعيين العنوان والأيقونة
         const icon = options.icon || 'fa-info-circle';
-        titleEl.innerHTML = `<i class="fa-solid ${icon}"></i> ${title}`;
+        const iconEl = document.getElementById('dynamicModalIcon');
+        if (iconEl) iconEl.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+        titleEl.textContent = title;
 
         // تعيين المحتوى
         bodyEl.innerHTML = content;
@@ -84,7 +81,7 @@
             footerEl.innerHTML = options.footer;
         } else {
             footerEl.innerHTML = `
-                <button class="btn btn--outline btn--outline-primary" onclick="closeModal()">
+                <button class="btn btn-outline" onclick="closeModal()">
                     <i class="fa-solid fa-times"></i>
                     إغلاق
                 </button>
@@ -110,9 +107,12 @@
         const overlay = document.getElementById('dynamicOverlay');
 
         if (modal && overlay) {
+            modal.classList.add('closing');
             overlay.classList.remove('active');
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
+            setTimeout(() => {
+                modal.classList.remove('active', 'closing');
+                document.body.style.overflow = '';
+            }, 280);
         }
     };
 
@@ -138,11 +138,11 @@
             </div>
         `;
 
-        const confirmBtnClass = options.danger ? 'btn--danger' : 'btn--primary';
+        const confirmBtnClass = options.danger ? 'btn-danger' : 'btn-primary';
         const confirmBtnText = options.confirmText || 'تأكيد';
 
         const footer = `
-            <button class="btn btn--outline btn--outline-primary" onclick="closeModal()">
+            <button class="btn btn-outline" onclick="closeModal()">
                 <i class="fa-solid fa-times"></i>
                 إلغاء
             </button>
@@ -182,39 +182,39 @@
         
         fields.forEach(field => {
             formHtml += `<div class="form-group">`;
-            formHtml += `<label>${field.label}${field.required ? ' *' : ''}</label>`;
-            
+            formHtml += `<label class="form-label">${field.label}${field.required ? ' <span class="required">*</span>' : ''}</label>`;
+
             if (field.type === 'textarea') {
-                formHtml += `<textarea id="${field.id}" ${field.required ? 'required' : ''} 
+                formHtml += `<textarea id="${field.id}" class="form-input form-textarea" ${field.required ? 'required' : ''}
                     placeholder="${field.placeholder || ''}" rows="${field.rows || 4}"></textarea>`;
             } else if (field.type === 'select') {
-                formHtml += `<select id="${field.id}" ${field.required ? 'required' : ''}>`;
+                formHtml += `<select id="${field.id}" class="form-select" ${field.required ? 'required' : ''}>`;
                 field.options.forEach(opt => {
                     formHtml += `<option value="${opt.value}">${opt.label}</option>`;
                 });
                 formHtml += `</select>`;
             } else if (field.type === 'checkbox') {
-                formHtml += `<label class="checkbox-label">
+                formHtml += `<label class="form-checkbox">
                     <input type="checkbox" id="${field.id}" ${field.checked ? 'checked' : ''} />
-                    ${field.checkboxLabel || ''}
+                    <span class="form-checkbox-label">${field.checkboxLabel || ''}</span>
                 </label>`;
             } else {
-                formHtml += `<input type="${field.type || 'text'}" id="${field.id}" 
-                    ${field.required ? 'required' : ''} placeholder="${field.placeholder || ''}" 
+                formHtml += `<input type="${field.type || 'text'}" id="${field.id}" class="form-input"
+                    ${field.required ? 'required' : ''} placeholder="${field.placeholder || ''}"
                     value="${field.value || ''}" />`;
             }
-            
+
             formHtml += `</div>`;
         });
         
         formHtml += '</form>';
 
         const footer = `
-            <button class="btn btn--outline btn--outline-primary" onclick="closeModal()">
+            <button class="btn btn-outline" onclick="closeModal()">
                 <i class="fa-solid fa-times"></i>
                 إلغاء
             </button>
-            <button class="btn btn--primary" onclick="window.submitDynamicForm()">
+            <button class="btn btn-primary" onclick="window.submitDynamicForm()">
                 <i class="fa-solid fa-check"></i>
                 ${options.submitText || 'حفظ'}
             </button>
@@ -289,3 +289,5 @@
         createModalElements();
     }
 })();
+
+

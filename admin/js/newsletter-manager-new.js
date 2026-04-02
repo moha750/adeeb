@@ -131,7 +131,7 @@ class NewsletterManager {
         console.log('NewsletterManager: Rendering', this.filteredSubscribers.length, 'subscribers');
 
         container.innerHTML = `
-            <div class="applications-cards-grid">
+            <div class="uc-grid">
                 ${this.filteredSubscribers.map(subscriber => this.renderSubscriberCard(subscriber)).join('')}
             </div>
         `;
@@ -140,90 +140,81 @@ class NewsletterManager {
     }
 
     renderSubscriberCard(subscriber) {
-        const statusBadges = {
-            active: '<span class="badge badge-success">نشط</span>',
-            unsubscribed: '<span class="badge badge-danger">ألغى الاشتراك</span>',
-            bounced: '<span class="badge badge-warning">بريد غير صالح</span>'
-        };
+        const badgeClass = {
+            active: 'badge-success',
+            unsubscribed: 'badge-danger',
+            bounced: 'badge-warning'
+        }[subscriber.status] || '';
+
+        const badgeLabel = {
+            active: 'نشط',
+            unsubscribed: 'ألغى الاشتراك',
+            bounced: 'بريد غير صالح'
+        }[subscriber.status] || 'نشط';
 
         const subscribedDate = new Date(subscriber.subscribed_at).toLocaleDateString('ar-SA', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
+            year: 'numeric', month: 'long', day: 'numeric'
         });
 
-        const subscribedTime = new Date(subscriber.subscribed_at).toLocaleTimeString('ar-SA', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-
-        const lastEmailDate = subscriber.last_email_sent_at 
-            ? new Date(subscriber.last_email_sent_at).toLocaleDateString('ar-SA', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            })
+        const lastEmailDate = subscriber.last_email_sent_at
+            ? new Date(subscriber.last_email_sent_at).toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' })
             : 'لم يتم الإرسال بعد';
 
+        const avatarName = subscriber.email.split('@')[0];
+        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(avatarName)}&background=335c81&color=fff&size=200`;
+
         return `
-            <div class="application-card">
-                <div class="application-card-header">
-                    <div class="applicant-info">
-                        <div class="applicant-avatar">
-                            <i class="fa-solid fa-envelope-open-text"></i>
-                        </div>
-                        <div class="applicant-details">
-                            <h3 class="applicant-name">${subscriber.email}</h3>
-                            ${statusBadges[subscriber.status] || statusBadges.active}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="application-card-body">
-                    <div class="application-info-grid">
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar-plus"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ الاشتراك</span>
-                                <span class="info-value">${subscribedDate} - ${subscribedTime}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="info-item">
-                            <i class="fa-solid fa-paper-plane"></i>
-                            <div class="info-content">
-                                <span class="info-label">عدد الرسائل المرسلة</span>
-                                <span class="info-value">${subscriber.email_count || 0} رسالة</span>
-                            </div>
-                        </div>
-                        
-                        <div class="info-item full-width">
-                            <i class="fa-solid fa-clock"></i>
-                            <div class="info-content">
-                                <span class="info-label">آخر رسالة</span>
-                                <span class="info-value">${lastEmailDate}</span>
+            <div class="uc-card" data-id="${subscriber.id}">
+                <div class="uc-card__header">
+                    <div class="uc-card__header-inner">
+                        <img class="uc-card__icon" src="${avatarUrl}" alt="${subscriber.email}" />
+                        <div class="uc-card__header-info">
+                            <h3 class="uc-card__title">${subscriber.email}</h3>
+                            <div class="uc-card__badge ${badgeClass}">
+                                <i class="fa-solid fa-envelope-open-text"></i>
+                                <span>${badgeLabel}</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <div class="application-card-footer">
-                    <div class="card-actions-grid">
-                        ${subscriber.status === 'active' 
-                            ? `<button class="btn btn--warning btn--sm unsubscribe-btn" data-id="${subscriber.id}">
-                                <i class="fa-solid fa-user-xmark"></i>
-                                إلغاء الاشتراك
-                            </button>`
-                            : `<button class="btn btn--success btn--sm resubscribe-btn" data-id="${subscriber.id}">
-                                <i class="fa-solid fa-user-check"></i>
-                                إعادة الاشتراك
-                            </button>`
-                        }
-                        <button class="btn btn--danger btn--sm delete-subscriber-btn" data-id="${subscriber.id}">
-                            <i class="fa-solid fa-trash"></i>
-                            حذف
-                        </button>
+                <div class="uc-card__body">
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-regular fa-calendar-plus"></i></div>
+                        <div class="uc-card__info-content">
+                            <div class="uc-card__info-label">تاريخ الاشتراك</div>
+                            <div class="uc-card__info-value">${subscribedDate}</div>
+                        </div>
                     </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-paper-plane"></i></div>
+                        <div class="uc-card__info-content">
+                            <div class="uc-card__info-label">عدد الرسائل المرسلة</div>
+                            <div class="uc-card__info-value">${subscriber.email_count || 0} رسالة</div>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-regular fa-clock"></i></div>
+                        <div class="uc-card__info-content">
+                            <div class="uc-card__info-label">آخر رسالة</div>
+                            <div class="uc-card__info-value">${lastEmailDate}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="uc-card__footer">
+                    ${subscriber.status === 'active'
+                        ? `<button class="member-card-action-btn warning unsubscribe-btn" data-id="${subscriber.id}">
+                            <i class="fa-solid fa-user-xmark"></i>
+                            إلغاء الاشتراك
+                        </button>`
+                        : `<button class="member-card-action-btn resubscribe-btn" data-id="${subscriber.id}">
+                            <i class="fa-solid fa-user-check"></i>
+                            إعادة الاشتراك
+                        </button>`
+                    }
+                    <button class="member-card-action-btn secondary delete-subscriber-btn" data-id="${subscriber.id}">
+                        <i class="fa-solid fa-trash"></i>
+                        حذف
+                    </button>
                 </div>
             </div>
         `;

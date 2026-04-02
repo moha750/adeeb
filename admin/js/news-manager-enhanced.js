@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام إدارة الأخبار المطور - نادي أدِيب
  * يدمج جميع وظائف إدارة الأخبار مع workflow الجديد
  */
@@ -67,19 +67,37 @@ window.NewsManagerEnhanced = (function() {
     // تحميل جميع الأخبار
     async function loadAllNews() {
         try {
-            const { data, error } = await sb
-                .from('news')
-                .select(`
-                    *,
-                    committees (committee_name_ar),
-                    created_by_profile:created_by (full_name, avatar_url),
-                    assigned_by_profile:assigned_by (full_name)
-                `)
-                .order('created_at', { ascending: false });
+            const [newsResult, commentsResult] = await Promise.all([
+                sb
+                    .from('news')
+                    .select(`
+                        *,
+                        committees (committee_name_ar),
+                        created_by_profile:created_by (full_name, avatar_url),
+                        assigned_by_profile:assigned_by (full_name)
+                    `)
+                    .order('created_at', { ascending: false }),
+                sb
+                    .from('news_public_comments')
+                    .select('news_id, is_approved')
+            ]);
 
-            if (error) throw error;
+            if (newsResult.error) throw newsResult.error;
 
-            allNews = data || [];
+            const comments = commentsResult.data || [];
+            const commentMap = {};
+            const approvedMap = {};
+            comments.forEach(c => {
+                commentMap[c.news_id] = (commentMap[c.news_id] || 0) + 1;
+                if (c.is_approved) approvedMap[c.news_id] = (approvedMap[c.news_id] || 0) + 1;
+            });
+
+            allNews = (newsResult.data || []).map(n => ({
+                ...n,
+                comments_count: commentMap[n.id] || 0,
+                approved_comments_count: approvedMap[n.id] || 0
+            }));
+
             updateAllStats();
             renderAllSections();
         } catch (error) {
@@ -114,10 +132,17 @@ window.NewsManagerEnhanced = (function() {
             new Date(n.published_at) >= thisMonth
         ).length;
 
+        const totalLikes = publishedNews.reduce((sum, n) => sum + (n.likes_count || 0), 0);
+        const totalComments = publishedNews.reduce((sum, n) => sum + (n.comments_count || 0), 0);
+        const pendingComments = publishedNews.reduce((sum, n) => sum + ((n.comments_count || 0) - (n.approved_comments_count || 0)), 0);
+
         updateStatElement('publishedNewsCount', publishedCount);
         updateStatElement('featuredNewsCount', featuredCount);
         updateStatElement('totalNewsViews', totalViews);
         updateStatElement('thisMonthNewsCount', thisMonthCount);
+        updateStatElement('totalNewsLikes', totalLikes);
+        updateStatElement('totalNewsComments', totalComments);
+        updateStatElement('pendingNewsComments', pendingComments);
     }
 
     // تحديث عنصر إحصائية
@@ -154,7 +179,7 @@ window.NewsManagerEnhanced = (function() {
         }
 
         container.innerHTML = `
-            <div class="items-grid">
+            <div class="uc-grid">
                 ${drafts.map(news => createDraftCard(news)).join('')}
             </div>
         `;
@@ -165,48 +190,46 @@ window.NewsManagerEnhanced = (function() {
         const createdDate = new Date(news.created_at).toLocaleDateString('ar-SA');
         
         return `
-            <div class="application-card">
-                <div class="application-card-header">
-                    <div class="applicant-info">
-                        <div class="applicant-details">
-                            <h4 class="applicant-name">📄 ${news.title}</h4>
+            <div class="uc-card">
+                <div class="uc-card__header">
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__header-info">
+                            <h4 class="uc-card__title">📄 ${news.title}</h4>
                             <div>
                                 <span class="badge badge-secondary"><i class="fa-solid fa-file"></i> مسودة</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="application-card-body">
-                    <div class="application-info-grid">
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ الإنشاء</span>
-                                <span class="info-value">${createdDate}</span>
+                <div class="uc-card__body">
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">تاريخ الإنشاء</span>
+                                <span class="uc-card__info-value">${createdDate}</span>
                             </div>
                         </div>
                         ${news.review_notes ? `
-                            <div class="info-item info-item--full">
-                                <i class="fa-solid fa-note-sticky"></i>
-                                <div class="info-content">
-                                    <span class="info-label">ملاحظات</span>
-                                    <span class="info-value">${news.review_notes}</span>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-note-sticky"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">ملاحظات</span>
+                                    <span class="uc-card__info-value">${news.review_notes}</span>
                                 </div>
                             </div>
                         ` : ''}
-                    </div>
                 </div>
-                <div class="application-card-footer">
+                <div class="uc-card__footer">
                     <div class="news-card__actions">
-                        <button class="btn btn--primary btn--sm" onclick="NewsManagerEnhanced.assignWritersToDraft('${news.id}')">
+                        <button class="btn btn-primary btn-sm" onclick="NewsManagerEnhanced.assignWritersToDraft('${news.id}')">
                             <i class="fa-solid fa-users"></i>
                             تعيين كتّاب
                         </button>
-                        <button class="btn btn--outline btn--outline-primary btn--sm" onclick="NewsManagerEnhanced.editDraft('${news.id}')">
+                        <button class="btn btn-outline btn-sm" onclick="NewsManagerEnhanced.editDraft('${news.id}')">
                             <i class="fa-solid fa-edit"></i>
                             تعديل
                         </button>
-                        <button class="btn btn--icon btn--icon-sm btn--danger" onclick="NewsManagerEnhanced.deleteDraft('${news.id}')">
+                        <button class="btn btn-icon btn-danger btn-sm" onclick="NewsManagerEnhanced.deleteDraft('${news.id}')">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -250,7 +273,7 @@ window.NewsManagerEnhanced = (function() {
         }
 
         container.innerHTML = `
-            <div class="items-grid">
+            <div class="uc-grid">
                 ${inProgressNews.map(news => createInProgressCard(news)).join('')}
             </div>
         `;
@@ -264,51 +287,49 @@ window.NewsManagerEnhanced = (function() {
             : '<span class="badge badge-warning"><i class="fa-solid fa-pen"></i> قيد الكتابة</span>';
 
         return `
-            <div class="application-card">
-                <div class="application-card-header">
-                    <div class="applicant-info">
-                        <div class="applicant-details">
-                            <h4 class="applicant-name">✍️ ${news.title}</h4>
+            <div class="uc-card">
+                <div class="uc-card__header">
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__header-info">
+                            <h4 class="uc-card__title">✍️ ${news.title}</h4>
                             <div>${statusBadge}</div>
                         </div>
                     </div>
                 </div>
-                <div class="application-card-body">
-                    <div class="application-info-grid">
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ التعيين</span>
-                                <span class="info-value">${assignedDate}</span>
+                <div class="uc-card__body">
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">تاريخ التعيين</span>
+                                <span class="uc-card__info-value">${assignedDate}</span>
                             </div>
                         </div>
-                        <div class="info-item">
-                            <i class="fa-solid fa-user"></i>
-                            <div class="info-content">
-                                <span class="info-label">معين من</span>
-                                <span class="info-value">${news.assigned_by_profile?.full_name || 'غير محدد'}</span>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-user"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">معين من</span>
+                                <span class="uc-card__info-value">${news.assigned_by_profile?.full_name || 'غير محدد'}</span>
                             </div>
                         </div>
-                        <div class="info-item">
-                            <i class="fa-solid fa-users"></i>
-                            <div class="info-content">
-                                <span class="info-label">عدد الكتّاب</span>
-                                <span class="info-value">${news.assigned_writers?.length || 0}</span>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-users"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">عدد الكتّاب</span>
+                                <span class="uc-card__info-value">${news.assigned_writers?.length || 0}</span>
                             </div>
                         </div>
-                    </div>
                 </div>
-                <div class="application-card-footer">
+                <div class="uc-card__footer">
                     <div class="news-card__actions">
-                        <button class="btn btn--outline btn--outline-primary btn--sm" onclick="NewsManagerEnhanced.viewNewsDetails('${news.id}')">
+                        <button class="btn btn-outline btn-sm" onclick="NewsManagerEnhanced.viewNewsDetails('${news.id}')">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل
                         </button>
-                        <button class="btn btn--outline btn--outline-warning btn--sm" onclick="NewsManagerEnhanced.editWritersAssignment('${news.id}')">
+                        <button class="btn btn-warning btn-sm" onclick="NewsManagerEnhanced.editWritersAssignment('${news.id}')">
                             <i class="fa-solid fa-user-pen"></i>
                             تعديل الكتّاب
                         </button>
-                        <button class="btn btn--icon btn--icon-sm btn--danger" onclick="NewsManagerEnhanced.deleteNews('${news.id}')" title="حذف نهائي">
+                        <button class="btn btn-icon btn-danger btn-sm" onclick="NewsManagerEnhanced.deleteNews('${news.id}')" title="حذف نهائي">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -335,7 +356,7 @@ window.NewsManagerEnhanced = (function() {
         }
 
         container.innerHTML = `
-            <div class="items-grid">
+            <div class="uc-grid">
                 ${reviewNews.map(news => createReviewCard(news)).join('')}
             </div>
         `;
@@ -346,59 +367,57 @@ window.NewsManagerEnhanced = (function() {
         const submittedDate = news.submitted_at ? new Date(news.submitted_at).toLocaleDateString('ar-SA') : '-';
 
         return `
-            <div class="application-card">
-                <div class="application-card-header">
-                    <div class="applicant-info">
-                        <div class="applicant-details">
-                            <h4 class="applicant-name">✅ ${news.title}</h4>
+            <div class="uc-card">
+                <div class="uc-card__header">
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__header-info">
+                            <h4 class="uc-card__title">✅ ${news.title}</h4>
                             <div>
                                 <span class="badge badge-success"><i class="fa-solid fa-check-circle"></i> جاهز للمراجعة</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="application-card-body">
-                    <div class="application-info-grid">
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ الإرسال</span>
-                                <span class="info-value">${submittedDate}</span>
+                <div class="uc-card__body">
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">تاريخ الإرسال</span>
+                                <span class="uc-card__info-value">${submittedDate}</span>
                             </div>
                         </div>
-                        <div class="info-item">
-                            <i class="fa-solid fa-users"></i>
-                            <div class="info-content">
-                                <span class="info-label">الكتّاب</span>
-                                <span class="info-value">${news.assigned_writers?.length || 0}</span>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-users"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">الكتّاب</span>
+                                <span class="uc-card__info-value">${news.assigned_writers?.length || 0}</span>
                             </div>
                         </div>
-                    </div>
                     ${news.summary ? `
                         <div class="info-box info-box--info">
                             <p class="info-box__text">${news.summary}</p>
                         </div>
                     ` : ''}
                 </div>
-                <div class="application-card-footer">
+                <div class="uc-card__footer">
                     <div class="news-card__actions">
-                        <button class="btn btn--primary btn--sm" onclick="NewsManagerEnhanced.publishNews('${news.id}')">
+                        <button class="btn btn-primary btn-sm" onclick="NewsManagerEnhanced.publishNews('${news.id}')">
                             <i class="fa-solid fa-paper-plane"></i>
                             نشر
                         </button>
-                        <button class="btn btn--outline btn--outline-warning btn--sm" onclick="NewsManagerEnhanced.requestChanges('${news.id}')">
+                        <button class="btn btn-warning btn-sm" onclick="NewsManagerEnhanced.requestChanges('${news.id}')">
                             <i class="fa-solid fa-comment-dots"></i>
                             طلب تعديلات
                         </button>
-                        <button class="btn btn--outline btn--outline-info btn--sm" onclick="NewsManagerEnhanced.directEditNews('${news.id}')">
+                        <button class="btn btn-primary btn-sm" onclick="NewsManagerEnhanced.directEditNews('${news.id}')">
                             <i class="fa-solid fa-pen-to-square"></i>
                             تعديل مباشر
                         </button>
-                        <button class="btn btn--outline btn--outline-primary btn--sm" onclick="NewsManagerEnhanced.previewNews('${news.id}')">
+                        <button class="btn btn-outline btn-sm" onclick="NewsManagerEnhanced.previewNews('${news.id}')">
                             <i class="fa-solid fa-eye"></i>
                             معاينة
                         </button>
-                        <button class="btn btn--icon btn--icon-sm btn--danger" onclick="NewsManagerEnhanced.deleteNews('${news.id}')" title="حذف نهائي">
+                        <button class="btn btn-icon btn-danger btn-sm" onclick="NewsManagerEnhanced.deleteNews('${news.id}')" title="حذف نهائي">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -446,7 +465,7 @@ window.NewsManagerEnhanced = (function() {
         }
 
         container.innerHTML = `
-            <div class="items-grid">
+            <div class="uc-grid">
                 ${publishedNews.map(news => createPublishedCard(news)).join('')}
             </div>
         `;
@@ -454,55 +473,87 @@ window.NewsManagerEnhanced = (function() {
 
     // إنشاء بطاقة خبر منشور
     function createPublishedCard(news) {
-        const publishedDate = news.published_at ? new Date(news.published_at).toLocaleDateString('ar-SA') : '-';
-        const imageUrl = news.image_url || 'https://via.placeholder.com/400x300?text=أديب';
+        const publishedDate = news.published_at ? new Date(news.published_at).toLocaleDateString('ea-EA') : '-';
+        const imageUrl = news.image_url || 'https://via.placeholder.com/800x450?text=أديب';
+        const category = news.committees?.committee_name_ar || news.category || 'عام';
+        const pendingComments = (news.comments_count || 0) - (news.approved_comments_count || 0);
 
         return `
-            <div class="application-card">
-                <div class="application-card-header">
-                    <img src="${imageUrl}" alt="${news.title}" class="news-card__image" onerror="this.src='https://via.placeholder.com/400x300?text=أديب'">
-                    <div class="applicant-info">
-                        <div class="applicant-details">
-                            <h4 class="applicant-name">${news.title}</h4>
-                            <div>
-                                <span class="badge badge-success"><i class="fa-solid fa-check-circle"></i> منشور</span>
-                                ${news.is_featured ? '<span class="badge badge-warning"><i class="fa-solid fa-star"></i> مميز</span>' : ''}
-                            </div>
+            <div class="uc-card">
+                <div class="uc-card__header uc-card__header--media">
+                    <img src="${imageUrl}" alt="${news.title}" class="uc-card__media-img" onerror="this.src='https://via.placeholder.com/800x450?text=أديب'">
+                    <div class="uc-card__options">
+                        <button class="uc-card__options-btn btn btn-white btn-outline btn-icon" onclick="this.nextElementSibling.classList.toggle('d-none')">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
+                        <div class="uc-card__dropdown d-none">
+                            <button class="uc-card__dropdown-item" onclick="NewsManagerEnhanced.archiveNews('${news.id}'); this.closest('.uc-card__dropdown').classList.add('d-none')">
+                                <span class="uc-card__dropdown-icon" style="background:#fef3c7;color:#d97706"><i class="fa-solid fa-archive"></i></span>
+                                أرشفة
+                            </button>
+                            <div class="uc-card__dropdown-divider"></div>
+                            <button class="uc-card__dropdown-item uc-card__dropdown-item--danger" onclick="NewsManagerEnhanced.deleteNewsPermanently('${news.id}'); this.closest('.uc-card__dropdown').classList.add('d-none')">
+                                <span class="uc-card__dropdown-icon" style="background:#fee2e2;color:#dc2626"><i class="fa-solid fa-trash"></i></span>
+                                حذف نهائي
+                            </button>
+                        </div>
+                    </div>
+                    <div class="uc-card__badges-overlay">
+                        <span class="uc-card__badge"><i class="fa-solid fa-check-circle"></i> منشور</span>
+                        ${news.is_featured ? '<span class="uc-card__badge" style="background:rgba(245,158,11,0.25);color:#fde68a"><i class="fa-solid fa-star"></i> مميز</span>' : ''}
+                    </div>
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__header-info">
+                            <h4 class="uc-card__title">${news.title}</h4>
                         </div>
                     </div>
                 </div>
-                <div class="application-card-body">
-                    <div class="application-info-grid">
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ النشر</span>
-                                <span class="info-value">${publishedDate}</span>
-                            </div>
+                <div class="uc-card__body">
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-tag"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">التصنيف</span>
+                            <span class="uc-card__info-value">${category}</span>
                         </div>
-                        <div class="info-item">
-                            <i class="fa-solid fa-eye"></i>
-                            <div class="info-content">
-                                <span class="info-label">المشاهدات</span>
-                                <span class="info-value">${news.views || 0}</span>
-                            </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">تاريخ النشر</span>
+                            <span class="uc-card__info-value">${publishedDate}</span>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-eye"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">المشاهدات</span>
+                            <span class="uc-card__info-value">${(news.views || 0).toLocaleString('ea-EA')}</span>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-heart"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">الإعجابات</span>
+                            <span class="uc-card__info-value">${(news.likes_count || 0).toLocaleString('ea-EA')}</span>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-comments"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">التعليقات${pendingComments > 0 ? ` <span style="color:#d97706;font-weight:700">(${pendingComments} بانتظار الموافقة)</span>` : ''}</span>
+                            <span class="uc-card__info-value">${(news.comments_count || 0).toLocaleString('ea-EA')}</span>
                         </div>
                     </div>
                 </div>
-                <div class="application-card-footer">
-                    <div class="news-card__actions">
-                        <button class="btn btn--outline btn--outline-primary btn--sm" onclick="window.open('/news/news-detail.html?id=${news.id}', '_blank')">
-                            <i class="fa-solid fa-external-link"></i>
-                            عرض في الموقع
-                        </button>
-                        <button class="btn btn--outline btn--outline-secondary btn--sm" onclick="NewsManagerEnhanced.archiveNews('${news.id}')">
-                            <i class="fa-solid fa-archive"></i>
-                            أرشفة
-                        </button>
-                        <button class="btn btn--icon btn--icon-sm btn--danger" onclick="NewsManagerEnhanced.deleteNewsPermanently('${news.id}')" title="حذف نهائي">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
+                <div class="uc-card__footer">
+                    <button class="member-card-view-btn" onclick="window.open('/news/news-detail.html?id=${news.id}', '_blank')">
+                        <i class="fa-solid fa-external-link"></i>
+                        عرض في الموقع
+                    </button>
+                    <button class="member-card-action-btn secondary" onclick="NewsManagerEnhanced.archiveNews('${news.id}')">
+                        <i class="fa-solid fa-archive"></i>
+                        أرشفة
+                    </button>
                 </div>
             </div>
         `;
@@ -528,7 +579,7 @@ window.NewsManagerEnhanced = (function() {
         }
 
         container.innerHTML = `
-            <div class="items-grid">
+            <div class="uc-grid">
                 ${archivedNews.map(news => createArchivedCard(news)).join('')}
             </div>
         `;
@@ -537,18 +588,18 @@ window.NewsManagerEnhanced = (function() {
     // إنشاء بطاقة خبر مؤرشف
     function createArchivedCard(news) {
         return `
-            <div class="application-card application-card--archived">
-                <div class="application-card-header">
-                    <div class="applicant-info">
-                        <div class="applicant-details">
-                            <h4 class="applicant-name">📦 ${news.title}</h4>
+            <div class="uc-card uc-card--archived">
+                <div class="uc-card__header">
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__header-info">
+                            <h4 class="uc-card__title">📦 ${news.title}</h4>
                         </div>
                     </div>
                 </div>
-                <div class="application-card-footer">
+                <div class="uc-card__footer">
                     <span class="badge badge-secondary"><i class="fa-solid fa-archive"></i> مؤرشف</span>
                     <div class="news-card__actions">
-                        <button class="btn btn--outline btn--outline-primary btn--sm" onclick="NewsManagerEnhanced.restoreNews('${news.id}')">
+                        <button class="btn btn-outline btn-sm" onclick="NewsManagerEnhanced.restoreNews('${news.id}')">
                             <i class="fa-solid fa-undo"></i>
                             استعادة
                         </button>
@@ -663,7 +714,7 @@ window.NewsManagerEnhanced = (function() {
             footerButtons: [
                 {
                     text: 'إغلاق',
-                    class: 'btn--outline btn--outline-secondary'
+                    class: 'btn-outline'
                 }
             ]
         });
@@ -878,7 +929,7 @@ window.NewsManagerEnhanced = (function() {
             footerButtons: [
                 {
                     text: 'إغلاق',
-                    class: 'btn--outline btn--outline-secondary'
+                    class: 'btn-outline'
                 }
             ]
         });
@@ -1076,3 +1127,5 @@ window.NewsManagerEnhanced = (function() {
         directEditNews
     };
 })();
+
+

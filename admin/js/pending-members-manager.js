@@ -166,7 +166,7 @@ class PendingMembersManager {
         }
 
         container.innerHTML = `
-            <div class="applications-cards-grid">
+            <div class="uc-grid">
                 ${this.filteredMembers.map(member => this.renderMemberCard(member)).join('')}
             </div>
         `;
@@ -230,70 +230,83 @@ class PendingMembersManager {
      */
     renderMemberCard(member) {
         const isExpired = this.isTokenExpired(member.expires_at);
-        const createdDate = new Date(member.created_at).toLocaleDateString('ar-SA');
-        const expiresDate = new Date(member.expires_at).toLocaleDateString('ar-SA');
-        
+        const createdDate = new Date(member.created_at).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+        const expiresDate = new Date(member.expires_at).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+
         const profile = member.profile || {};
         const fullName = profile.full_name || 'غير محدد';
         const email = profile.email || member.sent_to_email || 'غير محدد';
-        const phone = profile.phone || 'غير محدد';
+        const phone = profile.phone || null;
 
-        const statusClass = isExpired ? 'danger' : 'warning';
+        const badgeClass = isExpired ? 'badge-danger' : 'badge-warning';
         const statusLabel = isExpired ? 'منتهي الصلاحية' : 'قيد الانتظار';
-        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=f59e0b&color=fff`;
+        const statusIcon = isExpired ? 'fa-clock-rotate-left' : 'fa-clock';
+        const heroGradient = isExpired
+            ? 'linear-gradient(135deg, #f75555ff 0%, #ef4444 100%)'
+            : 'linear-gradient(135deg, #ff9720ff 0%, #eb8511ff 100%)';
 
         return `
-            <div class="application-card" data-user-id="${member.user_id}">
-                <div class="application-card-header">
-                    <div class="applicant-info">
-                        <div class="applicant-avatar">
-                            <img src="${avatarUrl}" alt="${fullName}" />
+            <div class="uc-card ${isExpired ? 'uc-card--danger' : 'uc-card--warning'}" data-user-id="${member.user_id}">
+
+                <div class="uc-card__header" style="background: ${heroGradient};">
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__icon">
+                            <i class="fa-solid fa-user"></i>
                         </div>
-                        <div class="applicant-details">
-                            <h3 class="applicant-name">${fullName}</h3>
-                            <span class="badge badge-${statusClass}">${statusLabel}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="application-card-body">
-                    <div class="application-info-grid">
-                        <div class="info-item">
-                            <i class="fa-solid fa-envelope"></i>
-                            <div class="info-content">
-                                <span class="info-label">البريد الإلكتروني</span>
-                                <span class="info-value">${email}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar-plus"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ الإرسال</span>
-                                <span class="info-value">${createdDate}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar-xmark"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ الانتهاء</span>
-                                <span class="info-value">${expiresDate}</span>
-                            </div>
+                        <div class="uc-card__header-info">
+                            <h3 class="uc-card__title">${fullName}</h3>
+                            <span class="uc-card__badge">
+                                <i class="fa-solid ${statusIcon}"></i>
+                                ${statusLabel}
+                            </span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="application-card-footer">
-                    <button class="btn btn--warning btn--sm btn-resend-email" data-user-id="${member.user_id}">
+
+                <div class="uc-card__body">
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-regular fa-envelope"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">البريد الإلكتروني</span>
+                            <span class="uc-card__info-value">${email}</span>
+                        </div>
+                    </div>
+                    ${phone ? `
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">الجوال</span>
+                            <span class="uc-card__info-value">${phone}</span>
+                        </div>
+                    </div>` : ''}
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-regular fa-calendar-plus"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">تاريخ الإرسال</span>
+                            <span class="uc-card__info-value">${createdDate}</span>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-regular fa-calendar-xmark"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">تاريخ انتهاء الرابط</span>
+                            <span class="uc-card__info-value">${expiresDate}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="uc-card__footer">
+                    <button class="btn-resend-email btn btn-warning btn-block" data-user-id="${member.user_id}">
                         <i class="fa-solid fa-paper-plane"></i>
-                        إعادة إرسال الرابط
+                        إعادة إرسال
                     </button>
-                    <button class="btn btn--outline-secondary btn--sm btn-copy-link" data-token="${member.token}">
+                    ${!isExpired ? `
+                    <button class="btn-copy-link btn btn-success btn-block" data-token="${member.token}">
                         <i class="fa-solid fa-copy"></i>
                         نسخ الرابط
-                    </button>
+                    </button>` : ''}
                 </div>
+
             </div>
         `;
     }

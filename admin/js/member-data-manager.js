@@ -21,15 +21,12 @@
             <div class="modal-backdrop" id="changeMemberEmailBackdrop"></div>
             <!-- نافذة تغيير البريد الإلكتروني للعضو -->
             <div class="modal modal-md modal-warning" id="changeMemberEmailModal">
-                <div class="modal-content">
                     <div class="modal-header">
                         <div class="modal-header-content">
-                            <h3>
-                                <i class="fa-solid fa-envelope"></i>
-                                تغيير البريد الإلكتروني
-                            </h3>
+                            <div class="modal-icon"><i class="fa-solid fa-envelope"></i></div>
+                            <h2 class="modal-title">تغيير البريد الإلكتروني</h2>
                         </div>
-                        <button class="modal-close-x" id="closeChangeMemberEmailModal">
+                        <button class="modal-close" id="closeChangeMemberEmailModal">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
@@ -59,31 +56,27 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn--outline btn--outline-secondary" id="cancelChangeMemberEmail">
+                        <button type="button" class="btn btn-secondary" id="cancelChangeMemberEmail">
                             <i class="fa-solid fa-times"></i>
                             إلغاء
                         </button>
-                        <button type="button" class="btn btn--primary" id="saveMemberEmail">
+                        <button type="button" class="btn btn-primary" id="saveMemberEmail">
                             <i class="fa-solid fa-save"></i>
                             تغيير البريد الإلكتروني
                         </button>
                     </div>
-                </div>
             </div>
 
             <!-- خلفية نافذة تغيير كلمة المرور -->
             <div class="modal-backdrop" id="changeMemberPasswordBackdrop"></div>
             <!-- نافذة تغيير كلمة المرور للعضو -->
-            <div class="modal modal-md modal-warning" id="changeMemberPasswordModal">
-                <div class="modal-content">
+            <div class="modal modal-md modal-purple" id="changeMemberPasswordModal">
                     <div class="modal-header">
                         <div class="modal-header-content">
-                            <h3>
-                                <i class="fa-solid fa-key"></i>
-                                تغيير كلمة المرور
-                            </h3>
+                            <div class="modal-icon"><i class="fa-solid fa-key"></i></div>
+                            <h2 class="modal-title">تغيير كلمة المرور</h2>
                         </div>
-                        <button class="modal-close-x" id="closeChangeMemberPasswordModal">
+                        <button class="modal-close" id="closeChangeMemberPasswordModal">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
@@ -114,16 +107,15 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn--outline btn--outline-secondary" id="cancelChangeMemberPassword">
+                        <button type="button" class="btn btn-secondary" id="cancelChangeMemberPassword">
                             <i class="fa-solid fa-times"></i>
                             إلغاء
                         </button>
-                        <button type="button" class="btn btn--primary" id="saveMemberPassword">
+                        <button type="button" class="btn btn-violet" id="saveMemberPassword">
                             <i class="fa-solid fa-save"></i>
                             تغيير كلمة المرور
                         </button>
                     </div>
-                </div>
             </div>
         `;
         
@@ -264,50 +256,57 @@
             return;
         }
 
-        let html = '<div class="applications-cards-grid">';
+        const statusBadgeClass = { active: 'badge-success', inactive: 'badge-warning', suspended: 'badge-danger' };
+        const statusLabel = { active: 'نشط', inactive: 'معلق', suspended: 'عضوية منتهية' };
+
+        let html = '<div class="uc-grid">';
 
         filteredMembers.forEach(member => {
-            const statusBadge = getStatusBadge(member.account_status);
-
+            const badgeClass = statusBadgeClass[member.account_status] || '';
+            const label = statusLabel[member.account_status] || 'غير محدد';
             html += `
-                <div class="application-card">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar">
+                <div class="uc-card" data-user-id="${member.id}">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
                                 <i class="fa-solid fa-user"></i>
                             </div>
-                            <div class="applicant-details">
-                                <h3 class="applicant-name">${member.full_name}</h3>
-                                ${statusBadge}
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${member.full_name}</h3>
+                                <div class="uc-card__badge ${badgeClass}">
+                                    <i class="fa-solid fa-circle-user"></i>
+                                    <span>${label}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="application-card-body">
-                        <div class="application-info-grid">
-                            ${member.phone ? `
-                                <div class="info-item">
-                                    <i class="fa-solid fa-phone"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">الجوال</span>
-                                        <span class="info-value">${member.phone}</span>
-                                    </div>
-                                </div>
-                            ` : ''}
-                        </div>
+                    <div class="uc-card__body">
+                        ${member.email ? `
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-regular fa-envelope"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">البريد الإلكتروني</div>
+                                <div class="uc-card__info-value">${member.email}</div>
+                            </div>
+                        </div>` : ''}
+                        ${member.phone ? `
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">الجوال</div>
+                                <div class="uc-card__info-value">${member.phone}</div>
+                            </div>
+                        </div>` : ''}
                     </div>
-                    
-                    <div class="application-card-footer">
-                        <div class="card-actions-grid">
-                            <button class="btn btn--info btn--sm change-email-btn" data-user-id="${member.id}">
-                                <i class="fa-solid fa-envelope"></i>
-                                تغيير البريد
-                            </button>
-                            <button class="btn btn--warning btn--sm change-password-btn" data-user-id="${member.id}">
-                                <i class="fa-solid fa-key"></i>
-                                تغيير كلمة المرور
-                            </button>
-                        </div>
+                    <div class="uc-card__footer">
+                        <button class="member-card-action-btn secondary change-email-btn btn btn-warning btn-block" data-user-id="${member.id}">
+                            <i class="fa-solid fa-envelope"></i>
+                            تغيير البريد
+                        </button>
+                        <button class="member-card-action-btn warning change-password-btn btn btn-violet btn-block" data-user-id="${member.id}">
+                            <i class="fa-solid fa-key"></i>
+                            كلمة المرور
+                        </button>
                     </div>
                 </div>
             `;
@@ -606,3 +605,4 @@
         loadMembers
     };
 })();
+

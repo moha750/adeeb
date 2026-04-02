@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Modal Helper - بديل لـ SweetAlert2
  * يستخدم modals.css و toast-notifications.js
  */
@@ -28,21 +28,25 @@ window.ModalHelper = (function() {
             modal.id = modalId;
 
             const iconMap = {
-                warning: '⚠️',
-                danger: '🗑️',
-                info: 'ℹ️',
-                success: '✅'
+                warning: 'fa-solid fa-triangle-exclamation',
+                danger: 'fa-solid fa-trash-can',
+                info: 'fa-solid fa-circle-info',
+                success: 'fa-solid fa-circle-check'
             };
 
             modal.innerHTML = `
                 <div class="modal-body">
-                    <div class="modal-confirm-icon ${type}">${iconMap[type] || iconMap.warning}</div>
-                    <div class="modal-confirm-title">${title}</div>
-                    <p class="modal-confirm-message">${message}</p>
+                    <div class="modal-confirm-icon">
+                        <i class="${iconMap[type] || iconMap.warning}"></i>
+                    </div>
+                    <div class="modal-confirm-content">
+                        <h3 class="modal-confirm-title">${title}</h3>
+                        <p class="modal-confirm-message">${message}</p>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn--outline btn--outline-secondary" data-action="cancel">${cancelText}</button>
-                    <button class="btn btn--${type === 'danger' ? 'danger' : 'primary'}" data-action="confirm">${confirmText}</button>
+                    <button class="btn btn-outline" data-action="cancel">${cancelText}</button>
+                    <button class="btn ${type === 'danger' ? 'btn-danger' : 'btn-primary'}" data-action="confirm">${confirmText}</button>
                 </div>
             `;
 
@@ -56,9 +60,9 @@ window.ModalHelper = (function() {
             }, 10);
 
             const closeModal = (confirmed) => {
-                modal.classList.remove('active');
+                modal.classList.add('closing');
                 backdrop.classList.remove('active');
-                
+
                 setTimeout(() => {
                     modal.remove();
                     backdrop.remove();
@@ -67,7 +71,7 @@ window.ModalHelper = (function() {
 
                 if (confirmed && onConfirm) onConfirm();
                 if (!confirmed && onCancel) onCancel();
-                
+
                 resolve(confirmed);
             };
 
@@ -85,6 +89,7 @@ window.ModalHelper = (function() {
             size = 'md', // sm, md, lg, xl
             type = '', // success, warning, danger, info, purple
             extraClass = '', // modal-form, modal-share, etc.
+            iconClass = '', // e.g. 'fa-solid fa-download'
             showClose = true,
             showFooter = false,
             footerButtons = [],
@@ -108,10 +113,11 @@ window.ModalHelper = (function() {
             if (title) {
                 modalHTML += `
                     <div class="modal-header">
+                        ${iconClass ? `<div class="modal-icon"><i class="${iconClass}"></i></div>` : ''}
                         <div class="modal-header-content">
-                            <h3>${title}</h3>
+                            <h2 class="modal-title">${title}</h2>
                         </div>
-                        ${showClose ? '<button class="modal-close-x" data-action="close"><i class="fa-solid fa-xmark"></i></button>' : ''}
+                        ${showClose ? '<button class="modal-close" data-action="close"><i class="fa-solid fa-xmark"></i></button>' : ''}
                     </div>
                 `;
             }
@@ -121,7 +127,7 @@ window.ModalHelper = (function() {
             if (showFooter && footerButtons.length > 0) {
                 modalHTML += '<div class="modal-footer">';
                 footerButtons.forEach((btn, index) => {
-                    modalHTML += `<button class="btn ${btn.class || 'btn--outline btn--outline-secondary'}" data-action="btn-${index}">${btn.text}</button>`;
+                    modalHTML += `<button class="btn ${btn.class || 'btn-outline'}" data-action="btn-${index}">${btn.text}</button>`;
                 });
                 modalHTML += '</div>';
             }
@@ -250,14 +256,14 @@ window.ModalHelper = (function() {
                 footerButtons: [
                     {
                         text: cancelText,
-                        class: 'btn btn--outline btn--outline-secondary',
+                        class: 'btn btn-secondary',
                         callback: () => {
                             if (onCancel) onCancel();
                         }
                     },
                     {
                         text: submitText,
-                        class: 'btn btn--primary',
+                        class: 'btn btn-primary',
                         callback: async () => {
                             const form = document.getElementById('modalForm');
                             if (form && form.checkValidity()) {
@@ -332,3 +338,4 @@ window.ModalHelper = (function() {
 window.showModal = window.ModalHelper.show;
 window.confirmModal = window.ModalHelper.confirm;
 window.formModal = window.ModalHelper.form;
+

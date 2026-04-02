@@ -111,7 +111,7 @@
             return;
         }
 
-        let html = '<div class="applications-cards-grid">';
+        let html = '<div class="uc-grid">';
 
         filtered.forEach(interview => {
             const interviewDate = interview.interview_date ? new Date(interview.interview_date).toLocaleDateString('ar-SA', {
@@ -140,74 +140,72 @@
                 : '<i class="fa-solid fa-user-xmark"></i>';
 
             html += `
-                <div class="application-card">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar ${interview.result === 'accepted' ? 'avatar-accepted' : 'avatar-rejected'}">
+                <div class="uc-card">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon ${interview.result === 'accepted' ? 'avatar-accepted' : 'avatar-rejected'}">
                                 ${avatarIcon}
                             </div>
-                            <div class="applicant-details">
-                                <h3 class="applicant-name">${escapeHtml(interview.application?.full_name || 'غير محدد')}</h3>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${escapeHtml(interview.application?.full_name || 'غير محدد')}</h3>
                                 ${statusBadge}
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="application-card-body">
-                        <div class="application-info-grid">
-                            <div class="info-item">
-                                <i class="fa-solid fa-envelope"></i>
-                                <div class="info-content">
-                                    <span class="info-label">البريد الإلكتروني</span>
-                                    <span class="info-value">${escapeHtml(interview.application?.email || 'غير محدد')}</span>
+
+                    <div class="uc-card__body">
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-envelope"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">البريد الإلكتروني</span>
+                                    <span class="uc-card__info-value">${escapeHtml(interview.application?.email || 'غير محدد')}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-phone"></i>
-                                <div class="info-content">
-                                    <span class="info-label">رقم الجوال</span>
-                                    <span class="info-value">${escapeHtml(interview.application?.phone || 'غير متوفر')}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">رقم الجوال</span>
+                                    <span class="uc-card__info-value">${escapeHtml(interview.application?.phone || 'غير متوفر')}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-users"></i>
-                                <div class="info-content">
-                                    <span class="info-label">اللجنة المرغوبة</span>
-                                    <span class="info-value">${escapeHtml(interview.application?.preferred_committee || 'غير محدد')}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-users"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">اللجنة المرغوبة</span>
+                                    <span class="uc-card__info-value">${escapeHtml(interview.application?.preferred_committee || 'غير محدد')}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-calendar-check"></i>
-                                <div class="info-content">
-                                    <span class="info-label">تاريخ المقابلة</span>
-                                    <span class="info-value">${interviewDate}${interviewTime ? ' - ' + interviewTime : ''}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">تاريخ المقابلة</span>
+                                    <span class="uc-card__info-value">${interviewDate}${interviewTime ? ' - ' + interviewTime : ''}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-clipboard-check"></i>
-                                <div class="info-content">
-                                    <span class="info-label">تاريخ القرار</span>
-                                    <span class="info-value">${decidedDate}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">تاريخ القرار</span>
+                                    <span class="uc-card__info-value">${decidedDate}</span>
                                 </div>
                             </div>
-                            
+
                             ${interview.notes ? `
-                                <div class="info-item full-width">
-                                    <i class="fa-solid fa-note-sticky"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">ملاحظات</span>
-                                        <span class="info-value">${escapeHtml(interview.notes)}</span>
+                                <div class="uc-card__info-item">
+                                    <div class="uc-card__info-icon"><i class="fa-solid fa-note-sticky"></i></div>
+                                    <div class="uc-card__info-content">
+                                        <span class="uc-card__info-label">ملاحظات</span>
+                                        <span class="uc-card__info-value">${escapeHtml(interview.notes)}</span>
                                     </div>
                                 </div>
                             ` : ''}
-                        </div>
                     </div>
-                    
-                    <div class="application-card-footer">
+
+                    <div class="uc-card__footer">
                         <button class="btn-view-details" onclick="window.membershipManager.viewInterview('${interview.id}')">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل الكاملة

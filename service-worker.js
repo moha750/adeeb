@@ -3,9 +3,9 @@
  * يوفر إمكانية العمل بدون إنترنت والتخزين المؤقت
  */
 
-const CACHE_NAME = 'adeeb-v1';
-const STATIC_CACHE = 'adeeb-static-v1';
-const DYNAMIC_CACHE = 'adeeb-dynamic-v1';
+const CACHE_NAME = 'adeeb-v2';
+const STATIC_CACHE = 'adeeb-static-v2';
+const DYNAMIC_CACHE = 'adeeb-dynamic-v2';
 
 // الملفات الأساسية للتخزين المؤقت
 const STATIC_FILES = [
@@ -75,33 +75,33 @@ self.addEventListener('fetch', (event) => {
         return;
     }
     
-    // استراتيجية Cache First للملفات الثابتة
+    // استراتيجية Network First — جلب من الشبكة أولاً، والكاش كـ fallback فقط
     if (request.method === 'GET') {
         event.respondWith(
-            caches.match(request)
-                .then((cachedResponse) => {
-                    if (cachedResponse) {
-                        return cachedResponse;
+            fetch(request)
+                .then((response) => {
+                    // لا نخزن الاستجابات غير الناجحة
+                    if (!response || response.status !== 200 || response.type === 'error') {
+                        return response;
                     }
-                    
-                    return fetch(request)
-                        .then((response) => {
-                            // لا نخزن الاستجابات غير الناجحة
-                            if (!response || response.status !== 200 || response.type === 'error') {
-                                return response;
+
+                    // نسخ الاستجابة للتخزين المؤقت
+                    const responseToCache = response.clone();
+
+                    caches.open(DYNAMIC_CACHE)
+                        .then((cache) => {
+                            cache.put(request, responseToCache);
+                        });
+
+                    return response;
+                })
+                .catch(() => {
+                    // عند فشل الشبكة — استخدم الكاش
+                    return caches.match(request)
+                        .then((cachedResponse) => {
+                            if (cachedResponse) {
+                                return cachedResponse;
                             }
-                            
-                            // نسخ الاستجابة للتخزين المؤقت
-                            const responseToCache = response.clone();
-                            
-                            caches.open(DYNAMIC_CACHE)
-                                .then((cache) => {
-                                    cache.put(request, responseToCache);
-                                });
-                            
-                            return response;
-                        })
-                        .catch(() => {
                             // إرجاع صفحة offline إذا كانت متاحة
                             if (request.destination === 'document') {
                                 return caches.match('/index.html');

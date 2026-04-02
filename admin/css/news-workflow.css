@@ -6,7 +6,6 @@
 .news-card {
     background: white;
     border-radius: 12px;
-    padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
     border: 1px solid #e5e7eb;
@@ -218,12 +217,6 @@
     background: #eff6ff;
 }
 
-.writer-checkbox {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-}
-
 /* ملاحظات المراجعة */
 .review-notes-box {
     padding: 1rem;
@@ -309,9 +302,6 @@
     border-top: 1px solid #f3f4f6;
 }
 
-.news-actions .btn {
-    flex: 1;
-}
 
 /* معاينة الخبر */
 .news-preview-modal {
@@ -391,9 +381,6 @@
         flex-direction: column;
     }
     
-    .news-actions .btn {
-        width: 100%;
-    }
     
     .writer-item {
         flex-direction: column;

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام إدارة الأخبار - نادي أدِيب
  */
 
@@ -69,7 +69,7 @@ window.NewsManager = (function() {
         }
 
         container.innerHTML = `
-            <div class="items-grid">
+            <div class="uc-grid">
                 ${filteredNews.map(news => createNewsCard(news)).join('')}
             </div>
         `;
@@ -81,53 +81,47 @@ window.NewsManager = (function() {
         const imageUrl = news.image_url || 'https://via.placeholder.com/400x300?text=أديب';
 
         return `
-            <div class="application-card">
-                <div class="application-card-header">
-                    <img src="${imageUrl}" alt="${news.title}" class="news-card__image" onerror="this.src='https://via.placeholder.com/400x300?text=أديب'">
-                    <div class="applicant-info">
-                        <div class="applicant-details">
-                            <h4 class="applicant-name">${news.title}</h4>
-                            <p class="news-card__meta">${news.summary || ''}</p>
-                        </div>
+            <div class="uc-card">
+                <div class="uc-card__header uc-card__header--media">
+                    <img src="${imageUrl}" alt="${news.title}" class="uc-card__media-img" onerror="this.src='https://via.placeholder.com/400x300?text=أديب'">
+                    <div class="uc-card__header-inner">
+                        <h4 class="uc-card__title">${news.title}</h4>
+                        ${news.summary ? `<span class="uc-card__badge">${news.summary}</span>` : ''}
                     </div>
                 </div>
-                <div class="application-card-body">
-                    <div class="application-info-grid">
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ النشر</span>
-                                <span class="info-value">${publishedDate}</span>
-                            </div>
+                <div class="uc-card__body">
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">تاريخ النشر</span>
+                            <span class="uc-card__info-value">${publishedDate}</span>
                         </div>
-                        <div class="info-item">
-                            <i class="fa-solid fa-eye"></i>
-                            <div class="info-content">
-                                <span class="info-label">المشاهدات</span>
-                                <span class="info-value">${news.views || 0}</span>
-                            </div>
-                        </div>
-                        ${news.is_featured ? `
-                            <div class="info-item">
-                                <i class="fa-solid fa-star"></i>
-                                <div class="info-content">
-                                    <span class="info-label">خبر مميز</span>
-                                    <span class="info-value">نعم</span>
-                                </div>
-                            </div>
-                        ` : ''}
                     </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-eye"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">المشاهدات</span>
+                            <span class="uc-card__info-value">${news.views || 0}</span>
+                        </div>
+                    </div>
+                    ${news.is_featured ? `
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-star"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">الحالة</span>
+                                <span class="uc-card__info-value">خبر مميز</span>
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>
-                <div class="application-card-footer">
+                <div class="uc-card__footer">
                     ${statusBadge}
-                    <div class="news-card__actions">
-                        <button class="btn btn--icon btn--icon-sm" onclick="NewsManager.editNews('${news.id}')" title="تعديل">
-                            <i class="fa-solid fa-edit"></i>
-                        </button>
-                        <button class="btn btn--icon btn--icon-sm btn--danger" onclick="NewsManager.deleteNews('${news.id}')" title="حذف">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
+                    <button class="btn btn-icon btn-sm" onclick="NewsManager.editNews('${news.id}')" title="تعديل">
+                        <i class="fa-solid fa-edit"></i>
+                    </button>
+                    <button class="btn btn-icon btn-danger btn-sm" onclick="NewsManager.deleteNews('${news.id}')" title="حذف">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
                 </div>
             </div>
         `;
@@ -497,3 +491,4 @@ window.NewsManager = (function() {
         deleteNews
     };
 })();
+

@@ -1,4 +1,4 @@
-// =====================================================
+﻿// =====================================================
 // نظام إدارة أرشيف التسجيل
 // =====================================================
 
@@ -64,7 +64,7 @@ function renderArchivesTable() {
     }
 
     const html = `
-        <div class="applications-cards-grid">
+        <div class="uc-grid uc-grid--wide">
             ${archivedCycles.map(cycle => renderCycleCard(cycle)).join('')}
         </div>
     `;
@@ -98,7 +98,7 @@ function renderCycleCard(cycle) {
     });
 
     return `
-        <div class="archive-card" data-cycle-id="${cycle.id}">
+        <div class="uc-card archive-card" data-cycle-id="${cycle.id}">
             <div class="archive-card-header">
                 <div class="archive-card-title">
                     <i class="fa-solid fa-box-archive"></i>
@@ -206,11 +206,11 @@ function renderCycleCard(cycle) {
             </div>
 
             <div class="archive-card-actions">
-                <button class="btn btn--primary btn--sm" onclick="window.archivesManager.viewCycleDetails('${cycle.id}')">
+                <button class="btn btn-primary btn-sm" onclick="window.archivesManager.viewCycleDetails('${cycle.id}')">
                     <i class="fa-solid fa-eye"></i>
                     عرض التفاصيل الكاملة
                 </button>
-                <button class="btn btn--outline btn--outline-primary btn--sm" onclick="window.archivesManager.exportCycle('${cycle.id}')">
+                <button class="btn btn-outline btn-sm" onclick="window.archivesManager.exportCycle('${cycle.id}')">
                     <i class="fa-solid fa-download"></i>
                     تصدير
                 </button>
@@ -723,3 +723,4 @@ window.archivesManager = {
     viewCycleDetails,
     exportCycle
 };
+

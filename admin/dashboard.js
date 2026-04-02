@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام إدارة نادي أدِيب - لوحة التحكم الرئيسية
  */
 
@@ -90,60 +90,6 @@
             userAvatar.src = currentUser.avatar_url;
         } else if (userAvatar) {
             userAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.full_name)}&background=3d8fd6&color=fff`;
-        }
-    }
-
-    /**
-     * التحقق من وجود انتخابات مفتوحة للترشح وإضافة التبويب
-     */
-    async function checkAndAddNominationTab(menuItems, committeeId) {
-        if (!committeeId) return;
-        
-        try {
-            const { data, error } = await window.sbClient
-                .from('elections')
-                .select('id')
-                .eq('committee_id', committeeId)
-                .eq('status', 'nomination_open')
-                .limit(1);
-            
-            if (!error && data && data.length > 0) {
-                menuItems.push({
-                    id: 'elections-nominate',
-                    icon: 'fa-user-plus',
-                    label: 'الترشح للقيادة',
-                    section: 'elections-nominate-section'
-                });
-            }
-        } catch (error) {
-            console.error('Error checking nomination elections:', error);
-        }
-    }
-
-    /**
-     * التحقق من وجود انتخابات مفتوحة للتصويت وإضافة التبويب
-     */
-    async function checkAndAddVotingTab(menuItems, committeeId) {
-        if (!committeeId) return;
-        
-        try {
-            const { data, error } = await window.sbClient
-                .from('elections')
-                .select('id')
-                .eq('committee_id', committeeId)
-                .eq('status', 'voting_open')
-                .limit(1);
-            
-            if (!error && data && data.length > 0) {
-                menuItems.push({
-                    id: 'elections-vote',
-                    icon: 'fa-vote-yea',
-                    label: 'التصويت',
-                    section: 'elections-vote-section'
-                });
-            }
-        } catch (error) {
-            console.error('Error checking voting elections:', error);
         }
     }
 
@@ -258,6 +204,32 @@
             });
         }
         
+        // الانتخابات — يحتاج view_elections أو manage_elections
+        if (hasAnyPermission(['view_elections', 'manage_elections'])) {
+            const isElectionsAdmin = hasPermission('manage_elections');
+            if (isElectionsAdmin) {
+                menuItems.push({
+                    id: 'elections',
+                    icon: 'fa-check-to-slot',
+                    label: 'الانتخابات',
+                    isDropdown: true,
+                    subItems: [
+                        { id: 'elections-open',       icon: 'fa-door-open',       label: 'فتح باب انتخاب', section: 'elections-open' },
+                        { id: 'elections-candidates', icon: 'fa-user-plus',       label: 'المرشحون',        section: 'elections-candidates' },
+                        { id: 'elections-voting',     icon: 'fa-vote-yea',        label: 'إدارة التصويت',   section: 'elections-voting' },
+                        { id: 'elections-results',    icon: 'fa-flag-checkered',  label: 'إعلان النتائج',   section: 'elections-results' },
+                    ]
+                });
+            } else {
+                menuItems.push({
+                    id: 'elections',
+                    icon: 'fa-hand-point-up',
+                    label: 'ترشَّح الآن',
+                    section: 'elections-section'
+                });
+            }
+        }
+
         // إحصائيات الزيارات — يحتاج view_site_stats
         if (hasPermission('view_site_stats')) {
             menuItems.push({
@@ -297,15 +269,9 @@
             if (hasPermission('manage_registration')) {
                 registrationSubItems.push({
                     id: 'membership-settings',
-                    icon: 'fa-gear',
-                    label: 'إعدادات التسجيل',
+                    icon: 'fa-door-open',
+                    label: 'فتح باب التسجيل',
                     section: 'membership-settings-section'
-                });
-                registrationSubItems.push({
-                    id: 'membership-committees',
-                    icon: 'fa-users-gear',
-                    label: 'اللجان المتاحة',
-                    section: 'membership-committees-section'
                 });
                 registrationSubItems.push({
                     id: 'membership-invitations',
@@ -472,70 +438,6 @@
                 isDropdown: true,
                 subItems: surveysSubItems
             });
-        }
-        
-        // إدارة الانتخابات - قائمة منسدلة
-        // استخدام نظام الصلاحيات الجديد
-        const electionsSubItems = [];
-        
-        // تحديد من يمكنه إدارة الانتخابات باستخدام الصلاحيات
-        const canManageElections = hasPermission('manage_elections');
-        
-        // أقسام إدارية - للمسؤولين المحددين فقط
-        if (canManageElections) {
-            electionsSubItems.push({
-                id: 'elections-open',
-                icon: 'fa-door-open',
-                label: 'فتح باب الترشح',
-                section: 'elections-open-section'
-            });
-            electionsSubItems.push({
-                id: 'elections-review',
-                icon: 'fa-clipboard-check',
-                label: 'مراجعة الطلبات',
-                section: 'elections-review-section'
-            });
-            electionsSubItems.push({
-                id: 'elections-voting-admin',
-                icon: 'fa-gavel',
-                label: 'إدارة التصويت',
-                section: 'elections-voting-admin-section'
-            });
-            electionsSubItems.push({
-                id: 'elections-results',
-                icon: 'fa-trophy',
-                label: 'نتائج الانتخابات',
-                section: 'elections-results-section'
-            });
-        }
-        
-        // أقسام الأعضاء - للأعضاء العاديين فقط (ليس للمسؤولين الكبار)
-        // المسؤولون الكبار لا يحتاجون للترشح
-        const isTopAdmin = canManageElections;
-        
-        // إذا كان مسؤول كبير، أضف قائمة إدارة الانتخابات المنسدلة
-        if (electionsSubItems.length > 0) {
-            menuItems.push({
-                id: 'elections',
-                icon: 'fa-check-to-slot',
-                label: 'إدارة الانتخابات',
-                isDropdown: true,
-                subItems: electionsSubItems
-            });
-        }
-        
-        // للأعضاء العاديين: تبويبات مستقلة للترشح والتصويت (ليست قائمة منسدلة)
-        // سيتم إضافتها ديناميكياً بناءً على وجود انتخابات نشطة
-        // استخدام صلاحية nominate_self
-        if (hasPermission('nominate_self') && !isTopAdmin) {
-            // سيتم التحقق من وجود انتخابات مفتوحة للترشح
-            await checkAndAddNominationTab(menuItems, currentUserRole.committee_id);
-        }
-        
-        // التصويت متاح لمن لديه صلاحية cast_vote (إذا لم يكن مسؤول كبير)
-        if (hasPermission('cast_vote') && !canManageElections) {
-            // سيتم التحقق من وجود انتخابات مفتوحة للتصويت
-            await checkAndAddVotingTab(menuItems, currentUserRole.committee_id);
         }
         
         // الأخبار - نظام متعدد التبويبات
@@ -819,7 +721,6 @@
         'contact-messages-section':             'manage_contact',
         'newsletter-section':                   'manage_newsletter',
         'membership-settings-section':          'manage_registration',
-        'membership-committees-section':        'manage_registration',
         'membership-invitations-section':       'manage_registration',
         'gift-membership-section':              'gift_membership',
         'membership-applications-view-section': 'view_applications',
@@ -835,20 +736,41 @@
         'surveys-templates-section':            'manage_surveys',
         'surveys-archived-section':             'manage_surveys',
         'surveys-deleted-section':              'manage_surveys',
-        'elections-open-section':               'manage_elections',
-        'elections-review-section':             'manage_elections',
-        'elections-voting-admin-section':       'manage_voting',
-        'elections-results-section':            'manage_elections',
         'website-works-section':                'manage_website',
         'website-achievements-section':         'manage_website',
         'website-sponsors-section':             'manage_website',
         'website-faq-section':                  'manage_website',
+        'elections-section':                    'view_elections',
+        'elections-open':                       'manage_elections',
+        'elections-open-section':               'manage_elections',
+        'elections-candidates':                 'manage_elections',
+        'elections-voting':                     'manage_elections',
+        'elections-results':                    'manage_elections',
+    };
+
+    // خريطة مراحل الانتخابات: كل مرحلة لها قسم HTML منفصل أو فلتر مسبق
+    const ELECTIONS_STAGE_MAP = {
+        'elections-open':       { realSection: 'elections-open-section' },
+        'elections-candidates': { realSection: 'elections-section', filter: 'candidacy_open' },
+        'elections-voting':     { realSection: 'elections-section', filter: 'voting_open' },
+        'elections-results':    { realSection: 'elections-section', filter: 'completed' },
     };
 
     // التنقل بين الأقسام
     function navigateToSection(sectionId) {
+        // التحقق من مراحل الانتخابات (virtual section IDs)
+        const elStage = ELECTIONS_STAGE_MAP[sectionId];
+        const realSectionId = elStage ? elStage.realSection : sectionId;
+
+        // حفظ فلتر المرحلة إذا كانت من مراحل الانتخابات
+        if (elStage) {
+            window.electionsStageFilter = elStage.filter;
+        } else if (!sectionId.startsWith('elections-')) {
+            window.electionsStageFilter = null;
+        }
+
         // التحقق من الصلاحية إذا كان القسم محمياً
-        const requiredPermission = PROTECTED_SECTIONS[sectionId];
+        const requiredPermission = PROTECTED_SECTIONS[sectionId] || PROTECTED_SECTIONS[realSectionId];
         if (requiredPermission) {
             const allowed = window.PermissionsHelper?.hasPermission(requiredPermission) || false;
             if (!allowed) {
@@ -862,13 +784,13 @@
         document.querySelectorAll('.admin-section').forEach(section => {
             section.classList.add('d-none');
         });
-        
-        // إظهار القسم المطلوب
-        const targetSection = document.getElementById(sectionId);
+
+        // إظهار القسم الحقيقي المطلوب
+        const targetSection = document.getElementById(realSectionId);
         if (targetSection) {
             targetSection.classList.remove('d-none');
         }
-        
+
         // تحديث القائمة النشطة
         document.querySelectorAll('.nav-item:not([data-dropdown-toggle])').forEach(item => {
             item.classList.remove('active');
@@ -879,19 +801,19 @@
         document.querySelectorAll('.nav-nested-item').forEach(item => {
             item.classList.remove('active');
         });
-        
-        // تفعيل العنصر المناسب
+
+        // تفعيل العنصر المناسب (باستخدام الـ sectionId الأصلي للتمييز بين المراحل)
         const activeItem = document.querySelector(`[data-section="${sectionId}"]`);
         if (activeItem) {
             activeItem.classList.add('active');
-            
+
             // إذا كان العنصر داخل قائمة منسدلة، افتح القائمة
             const parentDropdown = activeItem.closest('.nav-item-dropdown');
             if (parentDropdown) {
                 parentDropdown.classList.add('open');
             }
         }
-        
+
         // إعادة scroll للبداية
         const mainContent = document.getElementById('mainContent');
         if (mainContent) {
@@ -899,9 +821,9 @@
         }
         window.scrollTo(0, 0);
 
-        // تحميل بيانات القسم
-        loadSectionData(sectionId);
-        
+        // تحميل بيانات القسم الحقيقي
+        loadSectionData(realSectionId);
+
         // إغلاق القائمة الجانبية على الشاشات الصغيرة
         if (window.innerWidth < 1024) {
             document.getElementById('sidebar').classList.remove('active');
@@ -964,7 +886,6 @@
                 }
                 break;
             case 'membership-settings-section':
-            case 'membership-committees-section':
                 if (window.membershipManager) {
                     await window.membershipManager.init(currentUser);
                 }
@@ -1160,41 +1081,35 @@
                     await loadDeletedSurveysSection();
                 }
                 break;
-            // أقسام الانتخابات
             case 'elections-open-section':
-                if (window.ElectionsManager) {
-                    await window.ElectionsManager.init(currentUser, currentUserRole);
-                    await window.ElectionsManager.loadElectionsOpen();
+                if (window.ElectionsManager && !window.electionsManagerInstance) {
+                    window.electionsManagerInstance = new window.ElectionsManager();
+                }
+                if (window.electionsManagerInstance) {
+                    await window.electionsManagerInstance.initOpenSection();
                 }
                 break;
-            case 'elections-review-section':
-                if (window.ElectionsManager) {
-                    await window.ElectionsManager.init(currentUser, currentUserRole);
-                    await window.ElectionsManager.loadCandidatesReview();
+
+            case 'elections-section':
+                if (window.ElectionsManager && !window.electionsManagerInstance) {
+                    window.electionsManagerInstance = new window.ElectionsManager();
                 }
-                break;
-            case 'elections-voting-admin-section':
-                if (window.ElectionsManager) {
-                    await window.ElectionsManager.init(currentUser, currentUserRole);
-                    await window.ElectionsManager.loadElectionsOpen();
-                }
-                break;
-            case 'elections-results-section':
-                if (window.ElectionsManager) {
-                    await window.ElectionsManager.init(currentUser, currentUserRole);
-                    await window.ElectionsManager.loadElectionResults();
-                }
-                break;
-            case 'elections-nominate-section':
-                if (window.ElectionsManager) {
-                    await window.ElectionsManager.init(currentUser, currentUserRole);
-                    await window.ElectionsManager.loadNominationSection();
-                }
-                break;
-            case 'elections-vote-section':
-                if (window.ElectionsManager) {
-                    await window.ElectionsManager.init(currentUser, currentUserRole);
-                    await window.ElectionsManager.loadVotingSection();
+                if (window.electionsManagerInstance) {
+                    await window.electionsManagerInstance.init();
+                    // إظهار زر الإنشاء لمن يملك الصلاحية
+                    const createBtn = document.getElementById('createElectionBtn');
+                    if (createBtn && window.PermissionsHelper?.hasPermission('manage_elections')) {
+                        createBtn.style.display = '';
+                    }
+                    // تطبيق فلتر مرحلة الانتخاب إذا تم التنقل من dropdown المراحل
+                    if (window.electionsStageFilter !== null && window.electionsStageFilter !== undefined) {
+                        const filterSelect = document.getElementById('electionsStatusFilter');
+                        if (filterSelect) {
+                            filterSelect.value = window.electionsStageFilter;
+                            filterSelect.dispatchEvent(new Event('change'));
+                        }
+                        window.electionsStageFilter = null;
+                    }
                 }
                 break;
         }
@@ -1246,81 +1161,71 @@
             }
 
             container.innerHTML = `
-                <div class="applications-cards-grid">
+                <div class="uc-grid">
                     ${terminatedMembers.map(member => {
-                        // حساب مدة انتهاء العضوية
                         const terminationDuration = getTerminationDuration(member.updated_at);
-                        
                         return `
-                        <div class="application-card" data-user-id="${member.id}">
-                            <div class="application-card-header">
-                                <div class="applicant-info">
-                                    <div class="applicant-avatar">
-                                        <img src="${member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name)}&background=ef4444&color=fff`}" alt="${member.full_name}" />
+                        <div class="uc-card uc-card--danger" data-user-id="${member.id}">
+                            <div class="uc-card__header uc-card__header--danger">
+                                <div class="uc-card__header-inner">
+                                    <div class="uc-card__icon">
+                                        <i class="fa-solid fa-user-xmark"></i>
                                     </div>
-                                    <div class="applicant-details">
-                                        <h3 class="applicant-name">${member.full_name}</h3>
-                                        <span class="badge badge-danger">عضوية منتهية</span>
+                                    <div class="uc-card__header-info">
+                                        <h3 class="uc-card__title">${member.full_name}</h3>
+                                        <span class="uc-card__badge">
+                                            <i class="fa-solid fa-user-xmark"></i>
+                                            عضوية منتهية
+                                        </span>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div class="application-card-body">
-                                <div class="application-info-grid">
-                                    ${member.email ? `
-                                        <div class="info-item">
-                                            <i class="fa-solid fa-envelope"></i>
-                                            <div class="info-content">
-                                                <span class="info-label">البريد الإلكتروني</span>
-                                                <span class="info-value">${member.email}</span>
-                                            </div>
-                                        </div>
-                                    ` : ''}
-                                    
-                                    ${member.phone ? `
-                                        <div class="info-item">
-                                            <i class="fa-solid fa-phone"></i>
-                                            <div class="info-content">
-                                                <span class="info-label">الجوال</span>
-                                                <span class="info-value">${member.phone}</span>
-                                            </div>
-                                        </div>
-                                    ` : ''}
-                                    
-                                    <div class="info-item">
-                                        <i class="fa-solid fa-calendar-xmark"></i>
-                                        <div class="info-content">
-                                            <span class="info-label">تاريخ الإنهاء</span>
-                                            <span class="info-value">${member.updated_at ? new Date(member.updated_at).toLocaleDateString('ar-SA') : 'غير محدد'}</span>
-                                        </div>
+                            <div class="uc-card__body">
+                                ${member.email ? `
+                                <div class="uc-card__info-item">
+                                    <div class="uc-card__info-icon"><i class="fa-regular fa-envelope"></i></div>
+                                    <div class="uc-card__info-content">
+                                        <span class="uc-card__info-label">البريد الإلكتروني</span>
+                                        <span class="uc-card__info-value">${member.email}</span>
                                     </div>
-                                    
-                                    <div class="info-item">
-                                        <i class="fa-solid fa-hourglass-half"></i>
-                                        <div class="info-content">
-                                            <span class="info-label">مدة الإنهاء</span>
-                                            <span class="info-value">${terminationDuration}</span>
-                                        </div>
+                                </div>` : ''}
+                                ${member.phone ? `
+                                <div class="uc-card__info-item">
+                                    <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
+                                    <div class="uc-card__info-content">
+                                        <span class="uc-card__info-label">الجوال</span>
+                                        <span class="uc-card__info-value">${member.phone}</span>
                                     </div>
-
-                                    ${member.termination_reason ? `
-                                        <div class="info-item full-width">
-                                            <i class="fa-solid fa-comment-dots"></i>
-                                            <div class="info-content">
-                                                <span class="info-label">سبب الإنهاء</span>
-                                                <span class="info-value">${member.termination_reason}</span>
-                                            </div>
-                                        </div>
-                                    ` : ''}
+                                </div>` : ''}
+                                <div class="uc-card__info-item">
+                                    <div class="uc-card__info-icon"><i class="fa-regular fa-calendar-xmark"></i></div>
+                                    <div class="uc-card__info-content">
+                                        <span class="uc-card__info-label">تاريخ الإنهاء</span>
+                                        <span class="uc-card__info-value">${member.updated_at ? new Date(member.updated_at).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' }) : 'غير محدد'}</span>
+                                    </div>
                                 </div>
+                                <div class="uc-card__info-item">
+                                    <div class="uc-card__info-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                                    <div class="uc-card__info-content">
+                                        <span class="uc-card__info-label">مدة الإنهاء</span>
+                                        <span class="uc-card__info-value">${terminationDuration}</span>
+                                    </div>
+                                </div>
+                                ${member.termination_reason ? `
+                                <div class="uc-card__info-item">
+                                    <div class="uc-card__info-icon"><i class="fa-solid fa-comment-dots"></i></div>
+                                    <div class="uc-card__info-content">
+                                        <span class="uc-card__info-label">سبب الإنهاء</span>
+                                        <span class="uc-card__info-value">${member.termination_reason}</span>
+                                    </div>
+                                </div>` : ''}
                             </div>
-                            
-                            <div class="application-card-footer">
-                                <button class="btn btn--success btn--sm btn-restore-membership" data-user-id="${member.id}" data-user-name="${member.full_name}">
+                            <div class="uc-card__footer">
+                                <button class="btn-restore-membership btn btn-block btn-success" data-user-id="${member.id}" data-user-name="${member.full_name}">
                                     <i class="fa-solid fa-rotate-left"></i>
                                     إعادة العضوية
                                 </button>
-                                <button class="btn btn--danger btn--sm btn-delete-permanently" data-user-id="${member.id}" data-user-name="${member.full_name}">
+                                <button class="btn-delete-permanently btn btn-block btn-danger" data-user-id="${member.id}" data-user-name="${member.full_name}">
                                     <i class="fa-solid fa-trash"></i>
                                     حذف نهائي
                                 </button>
@@ -1335,11 +1240,11 @@
             if (searchInput) {
                 searchInput.addEventListener('input', (e) => {
                     const searchTerm = e.target.value.toLowerCase();
-                    const cards = container.querySelectorAll('.application-card');
+                    const cards = container.querySelectorAll('.uc-card');
                     let visibleCount = 0;
                     cards.forEach(card => {
-                        const name = card.querySelector('.applicant-name')?.textContent.toLowerCase() || '';
-                        const email = card.querySelector('.info-value')?.textContent.toLowerCase() || '';
+                        const name = card.querySelector('.uc-card__title')?.textContent.toLowerCase() || '';
+                        const email = card.querySelector('.uc-card__info-value')?.textContent.toLowerCase() || '';
                         if (name.includes(searchTerm) || email.includes(searchTerm)) {
                             card.style.display = '';
                             visibleCount++;
@@ -1347,9 +1252,9 @@
                             card.style.display = 'none';
                         }
                     });
-                    
+
                     // إظهار empty-state إذا لم تكن هناك نتائج
-                    const cardsGrid = container.querySelector('.applications-cards-grid');
+                    const cardsGrid = container.querySelector('.uc-grid');
                     let emptyState = container.querySelector('.empty-state');
                     
                     if (visibleCount === 0 && searchTerm) {
@@ -1399,28 +1304,15 @@
 
     // إعادة عضوية عضو منتهية عضويته
     async function restoreMembership(userId, userName) {
-        const result = await Swal.fire({
+        const confirmed = await ModalHelper.confirm({
             title: 'تأكيد إعادة العضوية',
-            html: `
-                <div class="modal-content-rtl">
-                    <p class="confirm-message">
-                        هل أنت متأكد من إعادة عضوية <strong>${userName}</strong>؟
-                    </p>
-                    <p style="font-size: 0.9rem; color: #6b7280; margin-top: 0.5rem;">
-                        سيتم تفعيل الحساب مجدداً وإتاحة الدخول للنظام.
-                    </p>
-                </div>
-            `,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#10b981',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'نعم، إعادة العضوية',
-            cancelButtonText: 'إلغاء',
-            reverseButtons: true
+            message: `هل أنت متأكد من إعادة عضوية <strong>${userName}</strong>؟<br><span style="font-size:0.875rem;color:#64748b;">سيتم تفعيل الحساب مجدداً وإتاحة الدخول للنظام.</span>`,
+            type: 'info',
+            confirmText: 'نعم، إعادة العضوية',
+            cancelText: 'إلغاء'
         });
 
-        if (!result.isConfirmed) return;
+        if (!confirmed) return;
 
         try {
             showLoading(true);
@@ -1442,22 +1334,11 @@
                 .update({ is_active: true })
                 .eq('user_id', userId);
 
-            await Swal.fire({
-                title: 'تمت إعادة العضوية',
-                html: `<p>تمت إعادة عضوية <strong>${userName}</strong> بنجاح</p>`,
-                icon: 'success',
-                confirmButtonText: 'حسناً'
-            });
-
+            Toast.success(`تمت إعادة عضوية ${userName} بنجاح`);
             await loadTerminatedMembersSection();
         } catch (error) {
             console.error('Error restoring membership:', error);
-            await Swal.fire({
-                title: 'خطأ',
-                text: 'حدث خطأ أثناء إعادة العضوية. يرجى المحاولة مرة أخرى.',
-                icon: 'error',
-                confirmButtonText: 'حسناً'
-            });
+            Toast.error('حدث خطأ أثناء إعادة العضوية. يرجى المحاولة مرة أخرى.');
         } finally {
             showLoading(false);
         }
@@ -1506,75 +1387,41 @@
 
     // حذف عضو نهائياً من قاعدة البيانات
     async function deleteMemberPermanently(userId, userName) {
-        const result = await Swal.fire({
+        const confirmed = await ModalHelper.confirm({
             title: 'تأكيد الحذف النهائي',
-            html: `
-                <div class="modal-content-rtl">
-                    <p class="confirm-message">
-                        هل أنت متأكد من حذف <strong>${userName}</strong> نهائياً؟
-                    </p>
-                    <div class="info-box info-box--danger">
-                        <i class="fa-solid fa-exclamation-triangle"></i>
-                        <p class="warning-title">
-                            تحذير: هذا الإجراء سيقوم بـ:
-                        </p>
-                        <ul class="warning-list">
-                            <li>حذف جميع بيانات المستخدم من قاعدة البيانات</li>
-                            <li>حذف جميع السجلات المرتبطة بالمستخدم</li>
-                            <li>لا يمكن استرجاع البيانات بعد الحذف</li>
-                        </ul>
-                    </div>
-                    <p class="danger-text">
-                        <strong>هذا الإجراء لا يمكن التراجع عنه!</strong>
-                    </p>
-                </div>
-            `,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'نعم، احذف نهائياً',
-            cancelButtonText: 'إلغاء',
-            reverseButtons: true
+            message: `هل أنت متأكد من حذف <strong>${userName}</strong> نهائياً؟<br><span style="font-size:0.875rem;color:#64748b;">سيُحذف العضو وجميع سجلاته من قاعدة البيانات ولا يمكن التراجع عن هذا الإجراء.</span>`,
+            type: 'danger',
+            confirmText: 'نعم، احذف نهائياً',
+            cancelText: 'إلغاء'
         });
 
-        if (!result.isConfirmed) return;
+        if (!confirmed) return;
 
         try {
             showLoading(true);
 
             // 1. حذف من member_onboarding_tokens
             await sb.from('member_onboarding_tokens').delete().eq('user_id', userId);
-            
+
             // 2. حذف من user_roles
             await sb.from('user_roles').delete().eq('user_id', userId);
-            
+
             // 3. حذف من member_details
             await sb.from('member_details').delete().eq('user_id', userId);
-            
+
             // 4. حذف من profiles
             const { error: profileError } = await sb.from('profiles').delete().eq('id', userId);
-            
+
             if (profileError) throw profileError;
 
-            await Swal.fire({
-                title: 'تم الحذف',
-                html: `<p>تم حذف <strong>${userName}</strong> نهائياً من قاعدة البيانات</p>`,
-                icon: 'success',
-                confirmButtonText: 'حسناً'
-            });
+            Toast.success(`تم حذف ${userName} نهائياً من قاعدة البيانات`);
 
             // إعادة تحميل القسم
             await loadTerminatedMembersSection();
 
         } catch (error) {
             console.error('Error deleting member permanently:', error);
-            await Swal.fire({
-                title: 'خطأ',
-                text: 'حدث خطأ أثناء حذف العضو. قد تكون هناك بيانات مرتبطة تمنع الحذف.',
-                icon: 'error',
-                confirmButtonText: 'حسناً'
-            });
+            Toast.error('حدث خطأ أثناء حذف العضو. قد تكون هناك بيانات مرتبطة تمنع الحذف.');
         } finally {
             showLoading(false);
         }
@@ -1606,65 +1453,73 @@
                     return;
                 }
                 container.innerHTML = `
-                    <div class="applications-cards-grid">
-                        ${list.map(survey => `
-                            <div class="application-card">
-                                <div class="application-card-header">
-                                    <div class="applicant-info">
-                                        <div class="applicant-avatar">
+                    <div class="card card--neutral">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-box-archive"></i> الاستبيانات المؤرشفة (${list.length})</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="uc-grid">
+                                ${list.map(survey => `
+                            <div class="uc-card uc-card--neutral">
+                                <div class="uc-card__header uc-card__header--neutral">
+                                    <div class="uc-card__header-inner">
+                                        <div class="uc-card__icon">
                                             <i class="fa-solid fa-clipboard-question"></i>
                                         </div>
-                                        <div class="applicant-details">
-                                            <h3 class="applicant-name">${window.surveysManager.escapeHtml(survey.title)}</h3>
-                                            <span class="badge badge-secondary">مؤرشف</span>
+                                        <div class="uc-card__header-info">
+                                            <h3 class="uc-card__title">${window.surveysManager.escapeHtml(survey.title)}</h3>
+                                            <span class="uc-card__badge">
+                                                <i class="fa-solid fa-box-archive"></i>
+                                                مؤرشف
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="application-card-body">
-                                    <div class="application-info-grid">
-                                        ${survey.archived_at ? `
-                                            <div class="info-item">
-                                                <i class="fa-solid fa-calendar-xmark"></i>
-                                                <div class="info-content">
-                                                    <span class="info-label">تاريخ الأرشفة</span>
-                                                    <span class="info-value">${new Date(survey.archived_at).toLocaleDateString('ar-SA')}</span>
-                                                </div>
+                                <div class="uc-card__body">
+                                    ${survey.archived_at ? `
+                                        <div class="uc-card__info-item">
+                                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
+                                            <div class="uc-card__info-content">
+                                                <span class="uc-card__info-label">تاريخ الأرشفة</span>
+                                                <span class="uc-card__info-value">${new Date(survey.archived_at).toLocaleDateString('ar-SA')}</span>
                                             </div>
-                                        ` : ''}
-                                        ${survey.archived_by_profile ? `
-                                            <div class="info-item">
-                                                <i class="fa-solid fa-user"></i>
-                                                <div class="info-content">
-                                                    <span class="info-label">أرشف بواسطة</span>
-                                                    <span class="info-value">${window.surveysManager.escapeHtml(survey.archived_by_profile.full_name)}</span>
-                                                </div>
+                                        </div>
+                                    ` : ''}
+                                    ${survey.archived_by_profile ? `
+                                        <div class="uc-card__info-item">
+                                            <div class="uc-card__info-icon"><i class="fa-solid fa-user"></i></div>
+                                            <div class="uc-card__info-content">
+                                                <span class="uc-card__info-label">أرشف بواسطة</span>
+                                                <span class="uc-card__info-value">${window.surveysManager.escapeHtml(survey.archived_by_profile.full_name)}</span>
                                             </div>
-                                        ` : ''}
-                                        <div class="info-item">
-                                            <i class="fa-solid fa-question-circle"></i>
-                                            <div class="info-content">
-                                                <span class="info-label">الأسئلة</span>
-                                                <span class="info-value">${survey.survey_questions?.length || 0}</span>
-                                            </div>
+                                        </div>
+                                    ` : ''}
+                                    <div class="uc-card__info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-question-circle"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">الأسئلة</span>
+                                            <span class="uc-card__info-value">${survey.survey_questions?.length || 0}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="application-card-footer">
-                                    <button class="btn btn--outline-secondary btn--sm" onclick="window.surveysManager.exportSurveyToExcel(${survey.id})">
+                                <div class="uc-card__footer">
+                                    <button class="btn btn-secondary btn-sm" onclick="window.surveysManager.exportSurveyToExcel(${survey.id})">
                                         <i class="fa-solid fa-file-excel"></i>
                                         تحميل Excel
                                     </button>
-                                    <button class="btn btn--success btn--sm" onclick="window.surveysManager.unarchiveSurvey(${survey.id}); loadArchivedSurveysSection()">
+                                    <button class="btn btn-success btn-sm" onclick="window.surveysManager.unarchiveSurvey(${survey.id}); loadArchivedSurveysSection()">
                                         <i class="fa-solid fa-box-open"></i>
                                         إلغاء الأرشفة
                                     </button>
-                                    <button class="btn btn--danger btn--sm" onclick="window.surveysManager.deleteSurvey(${survey.id})">
+                                    <button class="btn btn-danger btn-sm" onclick="window.surveysManager.deleteSurvey(${survey.id})">
                                         <i class="fa-solid fa-trash"></i>
                                         حذف
                                     </button>
                                 </div>
                             </div>
                         `).join('')}
+                            </div>
+                        </div>
                     </div>
                 `;
             };
@@ -1719,78 +1574,86 @@
                     return;
                 }
                 container.innerHTML = `
-                    <div class="applications-cards-grid">
-                        ${list.map(survey => {
+                    <div class="card card--danger">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-trash"></i> الاستبيانات المحذوفة (${list.length})</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="uc-grid">
+                                ${list.map(survey => {
                             const permanentDeleteDate = survey.permanent_delete_at
                                 ? new Date(survey.permanent_delete_at).toLocaleDateString('ar-SA')
                                 : null;
                             return `
-                            <div class="application-card">
-                                <div class="application-card-header">
-                                    <div class="applicant-info">
-                                        <div class="applicant-avatar" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                            <div class="uc-card uc-card--danger">
+                                <div class="uc-card__header uc-card__header--danger">
+                                    <div class="uc-card__header-inner">
+                                        <div class="uc-card__icon">
                                             <i class="fa-solid fa-trash"></i>
                                         </div>
-                                        <div class="applicant-details">
-                                            <h3 class="applicant-name">${window.surveysManager.escapeHtml(survey.title)}</h3>
-                                            <span class="badge badge-danger">محذوف</span>
+                                        <div class="uc-card__header-info">
+                                            <h3 class="uc-card__title">${window.surveysManager.escapeHtml(survey.title)}</h3>
+                                            <span class="uc-card__badge">
+                                                <i class="fa-solid fa-trash"></i>
+                                                محذوف
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="application-card-body">
-                                    <div class="application-info-grid">
-                                        ${survey.deleted_at ? `
-                                            <div class="info-item">
-                                                <i class="fa-solid fa-calendar-xmark"></i>
-                                                <div class="info-content">
-                                                    <span class="info-label">تاريخ الحذف</span>
-                                                    <span class="info-value">${new Date(survey.deleted_at).toLocaleDateString('ar-SA')}</span>
-                                                </div>
+                                <div class="uc-card__body">
+                                    ${survey.deleted_at ? `
+                                        <div class="uc-card__info-item">
+                                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
+                                            <div class="uc-card__info-content">
+                                                <span class="uc-card__info-label">تاريخ الحذف</span>
+                                                <span class="uc-card__info-value">${new Date(survey.deleted_at).toLocaleDateString('ar-SA')}</span>
                                             </div>
-                                        ` : ''}
-                                        ${permanentDeleteDate ? `
-                                            <div class="info-item">
-                                                <i class="fa-solid fa-calendar-times"></i>
-                                                <div class="info-content">
-                                                    <span class="info-label">الحذف النهائي في</span>
-                                                    <span class="info-value" style="color: #ef4444;">${permanentDeleteDate}</span>
-                                                </div>
+                                        </div>
+                                    ` : ''}
+                                    ${permanentDeleteDate ? `
+                                        <div class="uc-card__info-item">
+                                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-times"></i></div>
+                                            <div class="uc-card__info-content">
+                                                <span class="uc-card__info-label">الحذف النهائي في</span>
+                                                <span class="uc-card__info-value" style="color:#ef4444;">${permanentDeleteDate}</span>
                                             </div>
-                                        ` : ''}
-                                        ${survey.deleted_by_profile ? `
-                                            <div class="info-item">
-                                                <i class="fa-solid fa-user"></i>
-                                                <div class="info-content">
-                                                    <span class="info-label">حذف بواسطة</span>
-                                                    <span class="info-value">${window.surveysManager.escapeHtml(survey.deleted_by_profile.full_name)}</span>
-                                                </div>
+                                        </div>
+                                    ` : ''}
+                                    ${survey.deleted_by_profile ? `
+                                        <div class="uc-card__info-item">
+                                            <div class="uc-card__info-icon"><i class="fa-solid fa-user"></i></div>
+                                            <div class="uc-card__info-content">
+                                                <span class="uc-card__info-label">حذف بواسطة</span>
+                                                <span class="uc-card__info-value">${window.surveysManager.escapeHtml(survey.deleted_by_profile.full_name)}</span>
                                             </div>
-                                        ` : ''}
-                                        <div class="info-item">
-                                            <i class="fa-solid fa-question-circle"></i>
-                                            <div class="info-content">
-                                                <span class="info-label">الأسئلة</span>
-                                                <span class="info-value">${survey.survey_questions?.length || 0}</span>
-                                            </div>
+                                        </div>
+                                    ` : ''}
+                                    <div class="uc-card__info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-question-circle"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">الأسئلة</span>
+                                            <span class="uc-card__info-value">${survey.survey_questions?.length || 0}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="application-card-footer">
-                                    <button class="btn btn--outline-secondary btn--sm" onclick="window.surveysManager.exportSurveyToExcel(${survey.id})">
+                                <div class="uc-card__footer">
+                                    <button class="btn btn-secondary btn-sm" onclick="window.surveysManager.exportSurveyToExcel(${survey.id})">
                                         <i class="fa-solid fa-file-excel"></i>
                                         تحميل Excel
                                     </button>
-                                    <button class="btn btn--success btn--sm" onclick="window.surveysManager.restoreSurvey(${survey.id}).then(() => loadDeletedSurveysSection())">
+                                    <button class="btn btn-success btn-sm" onclick="window.surveysManager.restoreSurvey(${survey.id}).then(() => loadDeletedSurveysSection())">
                                         <i class="fa-solid fa-rotate-left"></i>
                                         استعادة
                                     </button>
-                                    <button class="btn btn--danger btn--sm" onclick="window.surveysManager.deleteSurveyPermanently(${survey.id}).then(() => loadDeletedSurveysSection())">
+                                    <button class="btn btn-danger btn-sm" onclick="window.surveysManager.deleteSurveyPermanently(${survey.id}).then(() => loadDeletedSurveysSection())">
                                         <i class="fa-solid fa-trash"></i>
                                         حذف نهائي
                                     </button>
                                 </div>
                             </div>
                         `;}).join('')}
+                            </div>
+                        </div>
                     </div>
                 `;
             };
@@ -1945,39 +1808,39 @@
                 return;
             }
 
-            container.innerHTML = committees.map(committee => `
-                <div class="application-card">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar">
-                                <i class="fa-solid fa-users"></i>
+            container.innerHTML = `<div class="uc-grid">${committees.map(committee => `
+                <div class="uc-card" data-committee-id="${committee.id}">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
+                                <i class="fa-solid fa-sitemap"></i>
                             </div>
-                            <div class="applicant-details">
-                                <h4 class="applicant-name">${committee.committee_name_ar}</h4>
-                                <div>
-                                    <span class="badge badge-info"><i class="fa-solid fa-users"></i> ${committee.members_count || 0} عضو</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="application-card-body">
-                        <div class="application-info-grid">
-                            <div class="info-item" style="grid-column: 1 / -1;">
-                                <i class="fa-solid fa-info-circle"></i>
-                                <div class="info-content">
-                                    <span class="info-label">الوصف</span>
-                                    <span class="info-value">${committee.description || 'لا يوجد وصف'}</span>
-                                </div>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${committee.committee_name_ar}</h3>
+                                <span class="uc-badge--info">
+                                    <i class="fa-solid fa-users"></i>
+                                    ${committee.members_count || 0} عضو
+                                </span>
                             </div>
                         </div>
                     </div>
-                    <div class="application-card-footer">
-                        <button class="btn btn--primary btn--sm" onclick="viewCommittee(${committee.id})">
-                            <i class="fa-solid fa-eye"></i> عرض التفاصيل
+                    <div class="uc-card__body">
+                        <div class="uc-card__info-item uc-card__info-item--full">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-info-circle"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">الوصف</div>
+                                <div class="uc-card__info-value">${committee.description || 'لا يوجد وصف'}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uc-card__footer">
+                        <button class="btn btn-primary btn-sm" onclick="viewCommittee(${committee.id})">
+                            <i class="fa-solid fa-eye"></i>
+                            عرض التفاصيل
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `).join('')}</div>`;
         } catch (error) {
             console.error('Error loading committees:', error);
             container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل اللجان</div>';
@@ -2145,22 +2008,24 @@
                 return;
             }
 
-            container.innerHTML = works.map((work, index) => `
-                <div class="application-card">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar" style="background: linear-gradient(135deg, #3d8fd6, #274060); overflow: hidden;">
+            container.innerHTML = `<div class="uc-grid">${works.map((work, index) => `
+                <div class="uc-card">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon" style="overflow: hidden; padding: 0; border-radius: 14px;">
                                 ${work.image_url ? `<img src="${work.image_url}" alt="${work.title}" style="width: 100%; height: 100%; object-fit: cover;" />` : '<i class="fa-solid fa-briefcase"></i>'}
                             </div>
-                            <div class="applicant-details">
-                                <h4 class="applicant-name">${work.title}</h4>
-                                <div>
-                                    ${work.category ? `<span class="badge badge-info">${work.category}</span>` : ''}
-                                    <span class="badge badge-secondary"><i class="fa-solid fa-sort"></i> الترتيب: ${work.order || 0}</span>
+                            <div class="uc-card__header-info">
+                                <h4 class="uc-card__title">${work.title}</h4>
+                                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                                    ${work.category ? `<span class="uc-badge--info">${work.category}</span>` : ''}
+                                    <span class="uc-badge--secondary"><i class="fa-solid fa-sort"></i> الترتيب: ${work.order || 0}</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="order-buttons">
+                    </div>
+                    <div class="uc-card__footer">
+                        <div class="order-buttons" style="margin: 0;">
                             <button class="btn-order" onclick="moveWorkUp('${work.id}', ${work.order || 0})" ${index === 0 ? 'disabled' : ''} title="تحريك لأعلى">
                                 <i class="fa-solid fa-chevron-up"></i>
                             </button>
@@ -2168,17 +2033,15 @@
                                 <i class="fa-solid fa-chevron-down"></i>
                             </button>
                         </div>
-                    </div>
-                    <div class="application-card-footer">
-                        <button class="btn btn--primary btn--sm" onclick="editWork('${work.id}')">
+                        <button class="btn btn-primary btn-sm" onclick="editWork('${work.id}')">
                             <i class="fa-solid fa-edit"></i> تعديل
                         </button>
-                        <button class="btn btn--danger btn--sm" onclick="deleteWork('${work.id}')">
+                        <button class="btn btn-danger btn-sm" onclick="deleteWork('${work.id}')">
                             <i class="fa-solid fa-trash"></i> حذف
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `).join('')}</div>`;
         } catch (error) {
             console.error('Error loading works:', error);
             container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الأعمال</div>';
@@ -2207,22 +2070,24 @@
                 return;
             }
 
-            container.innerHTML = achievements.map((achievement, index) => `
-                <div class="application-card">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            container.innerHTML = `<div class="uc-grid">${achievements.map((achievement, index) => `
+                <div class="uc-card">
+                    <div class="uc-card__header uc-card__header--warning">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
                                 <i class="${achievement.icon_class || 'fa-solid fa-trophy'}"></i>
                             </div>
-                            <div class="applicant-details">
-                                <h4 class="applicant-name">${achievement.label}</h4>
-                                <div>
-                                    <span class="badge badge-warning"><i class="fa-solid fa-hashtag"></i> ${achievement.count_number || 0}${achievement.plus_flag ? '+' : ''}</span>
-                                    <span class="badge badge-secondary"><i class="fa-solid fa-sort"></i> الترتيب: ${achievement.order || 0}</span>
+                            <div class="uc-card__header-info">
+                                <h4 class="uc-card__title">${achievement.label}</h4>
+                                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                                    <span class="uc-badge--secondary"><i class="fa-solid fa-hashtag"></i> ${achievement.count_number || 0}${achievement.plus_flag ? '+' : ''}</span>
+                                    <span class="uc-badge--secondary"><i class="fa-solid fa-sort"></i> الترتيب: ${achievement.order || 0}</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="order-buttons">
+                    </div>
+                    <div class="uc-card__footer">
+                        <div class="order-buttons" style="margin: 0;">
                             <button class="btn-order" onclick="moveAchievementUp('${achievement.id}', ${achievement.order || 0})" ${index === 0 ? 'disabled' : ''} title="تحريك لأعلى">
                                 <i class="fa-solid fa-chevron-up"></i>
                             </button>
@@ -2230,17 +2095,15 @@
                                 <i class="fa-solid fa-chevron-down"></i>
                             </button>
                         </div>
-                    </div>
-                    <div class="application-card-footer">
-                        <button class="btn btn--primary btn--sm" onclick="editAchievement('${achievement.id}')">
+                        <button class="btn btn-primary btn-sm" onclick="editAchievement('${achievement.id}')">
                             <i class="fa-solid fa-edit"></i> تعديل
                         </button>
-                        <button class="btn btn--danger btn--sm" onclick="deleteAchievement('${achievement.id}')">
+                        <button class="btn btn-danger btn-sm" onclick="deleteAchievement('${achievement.id}')">
                             <i class="fa-solid fa-trash"></i> حذف
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `).join('')}</div>`;
         } catch (error) {
             console.error('Error loading achievements:', error);
             container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الإنجازات</div>';
@@ -2269,23 +2132,25 @@
                 return;
             }
 
-            container.innerHTML = sponsors.map((sponsor, index) => `
-                <div class="application-card">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar" style="background: #f8fafc; overflow: hidden;">
-                                ${(sponsor.logo_url || sponsor.logo) ? `<img src="${sponsor.logo_url || sponsor.logo}" alt="${sponsor.name}" style="width: 100%; height: 100%; object-fit: contain; padding: 4px;" />` : '<i class="fa-solid fa-handshake" style="color: #3d8fd6;"></i>'}
+            container.innerHTML = `<div class="uc-grid">${sponsors.map((sponsor, index) => `
+                <div class="uc-card">
+                    <div class="uc-card__header ${sponsor.is_active !== false ? '' : 'uc-card__header--neutral'}">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon" style="overflow: hidden; padding: 0; border-radius: 14px; background: rgba(255,255,255,0.9);">
+                                ${(sponsor.logo_url || sponsor.logo) ? `<img src="${sponsor.logo_url || sponsor.logo}" alt="${sponsor.name}" style="width: 100%; height: 100%; object-fit: contain; padding: 4px;" />` : '<i class="fa-solid fa-handshake"></i>'}
                             </div>
-                            <div class="applicant-details">
-                                <h4 class="applicant-name">${sponsor.name}</h4>
-                                <div>
-                                    ${sponsor.badge ? `<span class="badge badge-gold">${sponsor.badge}</span>` : ''}
-                                    <span class="badge ${sponsor.is_active !== false ? 'badge-success' : 'badge-error'}">${sponsor.is_active !== false ? 'نشط' : 'غير نشط'}</span>
-                                    <span class="badge badge-secondary"><i class="fa-solid fa-sort"></i> الترتيب: ${sponsor.order || 0}</span>
+                            <div class="uc-card__header-info">
+                                <h4 class="uc-card__title">${sponsor.name}</h4>
+                                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                                    ${sponsor.badge ? `<span class="uc-badge--secondary">${sponsor.badge}</span>` : ''}
+                                    <span class="uc-badge--${sponsor.is_active !== false ? 'success' : 'danger'}">${sponsor.is_active !== false ? 'نشط' : 'غير نشط'}</span>
+                                    <span class="uc-badge--secondary"><i class="fa-solid fa-sort"></i> ${sponsor.order || 0}</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="order-buttons">
+                    </div>
+                    <div class="uc-card__footer">
+                        <div class="order-buttons" style="margin: 0;">
                             <button class="btn-order" onclick="moveSponsorUp('${sponsor.id}', ${sponsor.order || 0})" ${index === 0 ? 'disabled' : ''} title="تحريك لأعلى">
                                 <i class="fa-solid fa-chevron-up"></i>
                             </button>
@@ -2293,17 +2158,15 @@
                                 <i class="fa-solid fa-chevron-down"></i>
                             </button>
                         </div>
-                    </div>
-                    <div class="application-card-footer">
-                        <button class="btn btn--primary btn--sm" onclick="editSponsor('${sponsor.id}')">
+                        <button class="btn btn-primary btn-sm" onclick="editSponsor('${sponsor.id}')">
                             <i class="fa-solid fa-edit"></i> تعديل
                         </button>
-                        <button class="btn btn--danger btn--sm" onclick="deleteSponsor('${sponsor.id}')">
+                        <button class="btn btn-danger btn-sm" onclick="deleteSponsor('${sponsor.id}')">
                             <i class="fa-solid fa-trash"></i> حذف
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `).join('')}</div>`;
         } catch (error) {
             console.error('Error loading sponsors:', error);
             container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الشركاء</div>';
@@ -2332,23 +2195,28 @@
                 return;
             }
 
-            container.innerHTML = faqs.map((faq, index) => `
-                <div class="application-card">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
+            container.innerHTML = `<div class="uc-grid">${faqs.map((faq, index) => `
+                <div class="uc-card">
+                    <div class="uc-card__header uc-card__header--purple">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
                                 <i class="fa-solid fa-circle-question"></i>
                             </div>
-                            <div class="applicant-details">
-                                <h4 class="applicant-name">${faq.question}</h4>
-                                <div>
-                                    ${faq.category ? `<span class="badge badge-info">${faq.category}</span>` : ''}
-                                    <span class="badge ${faq.is_active !== false ? 'badge-success' : 'badge-error'}">${faq.is_active !== false ? 'نشط' : 'غير نشط'}</span>
-                                    <span class="badge badge-secondary"><i class="fa-solid fa-sort"></i> الترتيب: ${faq.order || 0}</span>
+                            <div class="uc-card__header-info">
+                                <h4 class="uc-card__title">${faq.question}</h4>
+                                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                                    ${faq.category ? `<span class="uc-badge--secondary">${faq.category}</span>` : ''}
+                                    <span class="uc-badge--${faq.is_active !== false ? 'success' : 'danger'}">${faq.is_active !== false ? 'نشط' : 'غير نشط'}</span>
+                                    <span class="uc-badge--secondary"><i class="fa-solid fa-sort"></i> ${faq.order || 0}</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="order-buttons">
+                    </div>
+                    <div class="uc-card__body">
+                        <div class="uc-card__description">${faq.answer ? faq.answer.substring(0, 150) + (faq.answer.length > 150 ? '...' : '') : ''}</div>
+                    </div>
+                    <div class="uc-card__footer">
+                        <div class="order-buttons" style="margin: 0;">
                             <button class="btn-order" onclick="moveFaqUp('${faq.id}', ${faq.order || 0})" ${index === 0 ? 'disabled' : ''} title="تحريك لأعلى">
                                 <i class="fa-solid fa-chevron-up"></i>
                             </button>
@@ -2356,20 +2224,15 @@
                                 <i class="fa-solid fa-chevron-down"></i>
                             </button>
                         </div>
-                    </div>
-                    <div class="application-card-body" style="padding: 12px 20px; background: rgba(139, 92, 246, 0.03);">
-                        <p style="margin: 0; color: #64748b; font-size: 0.9rem; line-height: 1.6;">${faq.answer ? faq.answer.substring(0, 150) + (faq.answer.length > 150 ? '...' : '') : ''}</p>
-                    </div>
-                    <div class="application-card-footer">
-                        <button class="btn btn--primary btn--sm" onclick="editFaq('${faq.id}')">
+                        <button class="btn btn-primary btn-sm" onclick="editFaq('${faq.id}')">
                             <i class="fa-solid fa-edit"></i> تعديل
                         </button>
-                        <button class="btn btn--danger btn--sm" onclick="deleteFaq('${faq.id}')">
+                        <button class="btn btn-danger btn-sm" onclick="deleteFaq('${faq.id}')">
                             <i class="fa-solid fa-trash"></i> حذف
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `).join('')}</div>`;
         } catch (error) {
             console.error('Error loading FAQ:', error);
             container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الأسئلة الشائعة</div>';
@@ -2592,6 +2455,15 @@
             });
         }
         
+        // إغلاق القائمة الجانبية عند تصغير نافذة المتصفح
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 1145 && sidebar) {
+                sidebar.classList.remove('active');
+                if (overlay) overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
         // تسجيل الخروج (من sidebar footer)
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
@@ -3475,7 +3347,7 @@
                     <p style="margin: 0.5rem 0;"><strong>الوصف:</strong> ${committee.description || 'لا يوجد وصف'}</p>
                     <p style="margin: 0.5rem 0;"><strong>الحالة:</strong> <span class="badge ${committee.is_active ? 'badge-success' : 'badge-danger'}">${committee.is_active ? 'نشطة' : 'غير نشطة'}</span></p>
                     <p style="margin: 0.5rem 0;"><strong>تاريخ الإنشاء:</strong> ${new Date(committee.created_at).toLocaleDateString('ar-SA')}</p>
-                    ${committee.group_link ? `<p style="margin: 0.5rem 0;"><strong>رابط القروب:</strong> <a href="${committee.group_link}" target="_blank" class="btn btn--primary btn--sm" style="display: inline-flex; margin-right: 0.5rem;"><i class="fa-brands fa-whatsapp"></i> افتح الرابط</a></p>` : ''}
+                    ${committee.group_link ? `<p style="margin: 0.5rem 0;"><strong>رابط القروب:</strong> <a href="${committee.group_link}" target="_blank" class="btn btn-primary btn-sm" style="display: inline-flex; margin-right: 0.5rem;"><i class="fa-brands fa-whatsapp"></i> افتح الرابط</a></p>` : ''}
                 </div>
 
                 <h4 style="margin: 1rem 0 0.75rem; color: var(--main-blue, #274060); font-weight: 600;">
@@ -5774,8 +5646,6 @@
                 // إزالة active من جميع الأزرار والمحتويات
                 tabButtons.forEach(btn => {
                     btn.classList.remove('active');
-                    btn.style.borderBottom = 'none';
-                    btn.style.color = '#6b7280';
                 });
 
                 tabContents.forEach(content => {
@@ -5785,8 +5655,6 @@
 
                 // إضافة active للزر والمحتوى المحدد
                 button.classList.add('active');
-                button.style.borderBottom = '3px solid #3b82f6';
-                button.style.color = '#3b82f6';
 
                 const targetContent = document.getElementById(`${targetTab}-tab`);
                 if (targetContent) {
@@ -5822,3 +5690,4 @@
     // تهيئة التطبيق عند تحميل الصفحة
     init();
 })();
+

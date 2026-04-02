@@ -82,27 +82,6 @@ window.PermissionsHelper = (function() {
     }
 
     /**
-     * التحقق من صلاحية إدارة الانتخابات
-     */
-    function canManageElections() {
-        return hasPermission('manage_elections');
-    }
-
-    /**
-     * التحقق من صلاحية الترشح
-     */
-    function canNominateSelf() {
-        return hasPermission('nominate_self');
-    }
-
-    /**
-     * التحقق من صلاحية التصويت
-     */
-    function canVote() {
-        return hasPermission('cast_vote');
-    }
-
-    /**
      * التحقق من صلاحية إدارة الأخبار
      */
     function canManageNews() {
@@ -138,9 +117,6 @@ window.PermissionsHelper = (function() {
         hasAllPermissions,
         getAllPermissions,
         getPermissionsByCategory,
-        canManageElections,
-        canNominateSelf,
-        canVote,
         canManageNews,
         canImpersonate,
         canManageMembership,

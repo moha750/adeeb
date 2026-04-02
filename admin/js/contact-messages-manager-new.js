@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Contact Messages Manager - إعادة بناء كاملة
  * إدارة رسائل التواصل في لوحة التحكم
  */
@@ -142,7 +142,7 @@ class ContactMessagesManager {
         }
 
         container.innerHTML = `
-            <div class="applications-cards-grid">
+            <div class="uc-grid">
                 ${filteredMessages.map(message => this.renderMessageCard(message)).join('')}
             </div>
         `;
@@ -152,83 +152,67 @@ class ContactMessagesManager {
     }
 
     renderMessageCard(message) {
-        const statusBadges = {
-            new: '<span class="badge badge-info">جديد</span>',
-            replied: '<span class="badge badge-success">تم الرد</span>'
-        };
+        const isNew = message.status === 'new';
+        const badgeClass = isNew ? '' : 'badge-success';
+        const badgeLabel = isNew ? 'جديد' : 'تم الرد';
+        const badgeIcon = isNew ? 'fa-envelope' : 'fa-reply';
 
         const date = new Date(message.created_at).toLocaleDateString('ar-SA', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
+            year: 'numeric', month: 'long', day: 'numeric'
         });
-
-        const time = new Date(message.created_at).toLocaleTimeString('ar-SA', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
         const timeSince = this.getTimeSince(message.created_at);
-
-        const messagePreview = message.message.length > 100 
-            ? this.escapeHtml(message.message.substring(0, 100)) + '...' 
+        const messagePreview = message.message.length > 100
+            ? this.escapeHtml(message.message.substring(0, 100)) + '...'
             : this.escapeHtml(message.message);
 
+        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(message.name)}&background=335c81&color=fff&size=200`;
+
         return `
-            <div class="application-card ${message.status === 'new' ? 'new-message' : ''}">
-                <div class="application-card-header">
-                    <div class="applicant-info">
-                        <div class="applicant-avatar">
-                            <i class="fa-solid fa-envelope"></i>
-                        </div>
-                        <div class="applicant-details">
-                            <h3 class="applicant-name">${this.escapeHtml(message.name)}</h3>
-                            <div>
-                                ${statusBadges[message.status] || statusBadges.new}
-                                <span class="badge badge-secondary"><i class="fa-solid fa-clock"></i> ${timeSince}</span>
+            <div class="uc-card${isNew ? ' new-message' : ''}" data-message-id="${message.id}">
+                <div class="uc-card__header">
+                    <div class="uc-card__header-inner">
+                        <img class="uc-card__icon" src="${avatarUrl}" alt="${this.escapeHtml(message.name)}" />
+                        <div class="uc-card__header-info">
+                            <h3 class="uc-card__title">${this.escapeHtml(message.name)}</h3>
+                            <div class="uc-card__badge ${badgeClass}">
+                                <i class="fa-solid ${badgeIcon}"></i>
+                                <span>${badgeLabel} · ${timeSince}</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <div class="application-card-body">
-                    <div class="application-info-grid">
-                        <div class="info-item">
-                            <i class="fa-solid fa-at"></i>
-                            <div class="info-content">
-                                <span class="info-label">البريد الإلكتروني</span>
-                                <span class="info-value">${this.escapeHtml(message.email)}</span>
-                            </div>
+                <div class="uc-card__body">
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-at"></i></div>
+                        <div class="uc-card__info-content">
+                            <div class="uc-card__info-label">البريد الإلكتروني</div>
+                            <div class="uc-card__info-value">${this.escapeHtml(message.email)}</div>
                         </div>
-                        
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ الإرسال</span>
-                                <span class="info-value">${date} - ${time}</span>
-                            </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-tag"></i></div>
+                        <div class="uc-card__info-content">
+                            <div class="uc-card__info-label">الموضوع</div>
+                            <div class="uc-card__info-value">${message.subject ? this.escapeHtml(message.subject) : 'بدون موضوع'}</div>
                         </div>
-                        
-                        <div class="info-item full-width">
-                            <i class="fa-solid fa-tag"></i>
-                            <div class="info-content">
-                                <span class="info-label">الموضوع</span>
-                                <span class="info-value">${message.subject ? this.escapeHtml(message.subject) : 'بدون موضوع'}</span>
-                            </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-regular fa-calendar"></i></div>
+                        <div class="uc-card__info-content">
+                            <div class="uc-card__info-label">تاريخ الإرسال</div>
+                            <div class="uc-card__info-value">${date}</div>
                         </div>
-                        
-                        <div class="info-item full-width">
-                            <i class="fa-solid fa-message"></i>
-                            <div class="info-content">
-                                <span class="info-label">محتوى الرسالة</span>
-                                <span class="info-value">${messagePreview}</span>
-                            </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-message"></i></div>
+                        <div class="uc-card__info-content">
+                            <div class="uc-card__info-label">محتوى الرسالة</div>
+                            <div class="uc-card__info-value">${messagePreview}</div>
                         </div>
                     </div>
                 </div>
-                
-                <div class="application-card-footer">
-                    <button class="btn btn--primary btn--sm btn-view-details" data-message-id="${message.id}">
+                <div class="uc-card__footer">
+                    <button class="member-card-view-btn btn-view-details" data-message-id="${message.id}">
                         <i class="fa-solid fa-eye"></i>
                         عرض التفاصيل الكاملة
                     </button>
@@ -259,33 +243,33 @@ class ContactMessagesManager {
                 title: `رسالة من ${this.escapeHtml(message.name)}`,
                 html: `
                     <div class="modal-content-rtl">
-                        <div class="application-info-grid">
-                            <div class="info-item">
-                                <i class="fa-solid fa-envelope"></i>
-                                <div class="info-content">
-                                    <span class="info-label">البريد الإلكتروني</span>
-                                    <span class="info-value">${this.escapeHtml(message.email)}</span>
+                        <div class="uc-grid">
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-envelope"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">البريد الإلكتروني</span>
+                                    <span class="uc-card__info-value">${this.escapeHtml(message.email)}</span>
                                 </div>
                             </div>
-                            <div class="info-item">
-                                <i class="fa-solid fa-tag"></i>
-                                <div class="info-content">
-                                    <span class="info-label">الموضوع</span>
-                                    <span class="info-value">${message.subject ? this.escapeHtml(message.subject) : 'بدون موضوع'}</span>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-tag"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">الموضوع</span>
+                                    <span class="uc-card__info-value">${message.subject ? this.escapeHtml(message.subject) : 'بدون موضوع'}</span>
                                 </div>
                             </div>
-                            <div class="info-item">
-                                <i class="fa-solid fa-calendar"></i>
-                                <div class="info-content">
-                                    <span class="info-label">التاريخ</span>
-                                    <span class="info-value">${new Date(message.created_at).toLocaleString('ar-SA')}</span>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">التاريخ</span>
+                                    <span class="uc-card__info-value">${new Date(message.created_at).toLocaleString('ar-SA')}</span>
                                 </div>
                             </div>
-                            <div class="info-item full-width">
-                                <i class="fa-solid fa-message"></i>
-                                <div class="info-content">
-                                    <span class="info-label">الرسالة</span>
-                                    <span class="info-value" style="white-space: pre-wrap;">${this.escapeHtml(message.message)}</span>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-message"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">الرسالة</span>
+                                    <span class="uc-card__info-value" style="white-space: pre-wrap;">${this.escapeHtml(message.message)}</span>
                                 </div>
                             </div>
                         </div>
@@ -299,9 +283,9 @@ class ContactMessagesManager {
                 cancelButtonText: 'إغلاق',
                 width: '600px',
                 customClass: {
-                    confirmButton: 'btn btn--primary',
-                    denyButton: 'btn btn--secondary',
-                    cancelButton: 'btn btn--outline'
+                    confirmButton: 'btn btn-primary',
+                    denyButton: 'btn btn-secondary',
+                    cancelButton: 'btn btn-outline'
                 }
             });
 
@@ -405,3 +389,5 @@ class ContactMessagesManager {
 
 // تصدير الـ class
 window.ContactMessagesManager = ContactMessagesManager;
+
+

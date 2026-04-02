@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نظام إدارة التنكر (User Impersonation) - نادي أدِيب
  * متاح لرئيس النادي ومستشاره (المستوى 9 وأعلى)
  */
@@ -314,7 +314,7 @@ window.ImpersonationManager = (function() {
                         <div style="font-weight: 500; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.full_name || 'بدون اسم'}</div>
                         <div style="font-size: 0.75rem; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.email}</div>
                     </div>
-                    <button class="btn btn--primary btn--sm" onclick="ImpersonationManager.selectUserForImpersonation('${user.id}', '${(user.full_name || user.email).replace(/'/g, "\\'")}'); event.stopPropagation();">
+                    <button class="btn btn-primary btn-sm" onclick="ImpersonationManager.selectUserForImpersonation('${user.id}', '${(user.full_name || user.email).replace(/'/g, "\\'")}'); event.stopPropagation();">
                         <i class="fa-solid fa-user-secret"></i>
                         تنكر
                     </button>
@@ -511,7 +511,7 @@ window.ImpersonationManager = (function() {
                 return;
             }
 
-            let cardsHTML = '<div class="items-grid">';
+            let cardsHTML = '<div class="uc-grid">';
 
             history.forEach(session => {
                 const startDate = new Date(session.started_at);
@@ -529,61 +529,61 @@ window.ImpersonationManager = (function() {
                     : '<span class="badge badge-secondary"><i class="fa-solid fa-circle-check"></i> منتهي</span>';
 
                 cardsHTML += `
-                    <div class="application-card">
-                        <div class="application-card-header">
-                            <div class="applicant-info">
-                                <div class="applicant-avatar">
+                    <div class="uc-card">
+                        <div class="uc-card__header ${isActive ? 'uc-card__header--success' : 'uc-card__header--neutral'}">
+                            <div class="uc-card__header-inner">
+                                <div class="uc-card__icon">
                                     <i class="fa-solid fa-user-secret"></i>
                                 </div>
-                                <div class="applicant-details">
-                                    <h4 class="applicant-name">${session.admin_name || 'غير معروف'}</h4>
-                                    <div>${statusBadge}</div>
+                                <div class="uc-card__header-info">
+                                    <h3 class="uc-card__title">${session.admin_name || 'غير معروف'}</h3>
+                                    <span class="uc-card__badge">
+                                        <i class="fa-solid fa-user-secret"></i>
+                                        ${isActive ? 'جلسة نشطة' : 'جلسة منتهية'}
+                                    </span>
                                 </div>
                             </div>
                         </div>
-                        <div class="application-card-body">
-                            <div class="application-info-grid">
-                                <div class="info-item">
-                                    <i class="fa-solid fa-user"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">المستخدم المتنكر به</span>
-                                        <span class="info-value">${session.impersonated_name || 'غير معروف'}</span>
-                                    </div>
+                        <div class="uc-card__body">
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-user"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">المتنكر به</span>
+                                    <span class="uc-card__info-value">${session.impersonated_name || 'غير معروف'}</span>
                                 </div>
-                                <div class="info-item">
-                                    <i class="fa-solid fa-clock"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">بدأت في</span>
-                                        <span class="info-value">${startDate.toLocaleString('ar-SA', { dateStyle: 'short', timeStyle: 'short' })}</span>
-                                    </div>
-                                </div>
-                                <div class="info-item">
-                                    <i class="fa-solid fa-flag-checkered"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">انتهت في</span>
-                                        <span class="info-value">${endDate ? endDate.toLocaleString('ar-SA', { dateStyle: 'short', timeStyle: 'short' }) : 'لا تزال نشطة'}</span>
-                                    </div>
-                                </div>
-                                <div class="info-item">
-                                    <i class="fa-solid fa-hourglass-half"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">المدة</span>
-                                        <span class="info-value">${duration}</span>
-                                    </div>
-                                </div>
-                                ${session.reason ? `
-                                    <div class="info-item">
-                                        <i class="fa-solid fa-comment"></i>
-                                        <div class="info-content">
-                                            <span class="info-label">السبب</span>
-                                            <span class="info-value info-value--italic">${session.reason}</span>
-                                        </div>
-                                    </div>
-                                ` : ''}
                             </div>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-regular fa-clock"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">بدأت في</span>
+                                    <span class="uc-card__info-value">${startDate.toLocaleString('ar-SA', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                                </div>
+                            </div>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-flag-checkered"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">انتهت في</span>
+                                    <span class="uc-card__info-value">${endDate ? endDate.toLocaleString('ar-SA', { dateStyle: 'short', timeStyle: 'short' }) : 'لا تزال نشطة'}</span>
+                                </div>
+                            </div>
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">المدة</span>
+                                    <span class="uc-card__info-value">${duration}</span>
+                                </div>
+                            </div>
+                            ${session.reason ? `
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-comment"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">السبب</span>
+                                    <span class="uc-card__info-value">${session.reason}</span>
+                                </div>
+                            </div>` : ''}
                         </div>
-                        <div class="application-card-footer" style="justify-content: flex-end; align-items: center;">
-                            <span class="session-id" style="font-size: 0.75rem; color: #6b7280; font-family: monospace;">
+                        <div class="uc-card__footer" style="justify-content:flex-end;">
+                            <span style="font-size:0.72rem;color:#94a3b8;font-family:monospace;">
                                 <i class="fa-solid fa-fingerprint"></i> ${session.session_id.substring(0, 8)}...
                             </span>
                         </div>
@@ -748,3 +748,4 @@ window.ImpersonationManager = (function() {
 document.addEventListener('DOMContentLoaded', () => {
     ImpersonationManager.checkImpersonationOnLoad();
 });
+

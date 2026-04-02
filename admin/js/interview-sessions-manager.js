@@ -98,7 +98,7 @@
             return;
         }
 
-        let html = '<div class="applications-cards-grid">';
+        let html = '<div class="uc-grid">';
 
         for (const session of allSessions) {
             const stats = await getSessionStats(session.id);
@@ -148,14 +148,14 @@
                 : 0;
 
             html += `
-                <div class="application-card">
-                    <div class="application-card-header">
-                        <div class="applicant-info">
-                            <div class="applicant-avatar">
+                <div class="uc-card">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
                                 <i class="fa-solid ${typeIcons[session.interview_type] || 'fa-calendar'}"></i>
                             </div>
-                            <div class="applicant-details">
-                                <h3 class="applicant-name">${escapeHtml(session.session_name)}</h3>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${escapeHtml(session.session_name)}</h3>
                                 <div>
                                     ${statusBadge}
                                     <span class="badge badge-info">${typeLabels[session.interview_type] || session.interview_type}</span>
@@ -163,8 +163,8 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="application-card-body">
+
+                    <div class="uc-card__body">
                         ${session.session_description ? `
                             <div>
                                 <p>
@@ -173,80 +173,78 @@
                                 </p>
                             </div>
                         ` : ''}
-                        
-                        <div class="application-info-grid">
-                            <div class="info-item">
-                                <i class="fa-solid fa-calendar-day"></i>
-                                <div class="info-content">
-                                    <span class="info-label">تاريخ الجلسة</span>
-                                    <span class="info-value">${date}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-day"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">تاريخ الجلسة</span>
+                                    <span class="uc-card__info-value">${date}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-clock"></i>
-                                <div class="info-content">
-                                    <span class="info-label">الوقت</span>
-                                    <span class="info-value">${startTime} - ${endTime}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-clock"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">الوقت</span>
+                                    <span class="uc-card__info-value">${startTime} - ${endTime}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-list-ol"></i>
-                                <div class="info-content">
-                                    <span class="info-label">إجمالي الفترات</span>
-                                    <span class="info-value">${stats.total_slots} فترة</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-list-ol"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">إجمالي الفترات</span>
+                                    <span class="uc-card__info-value">${stats.total_slots} فترة</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-check-circle"></i>
-                                <div class="info-content">
-                                    <span class="info-label">الفترات المحجوزة</span>
-                                    <span class="info-value">${stats.booked_slots} من ${stats.total_slots}</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-check-circle"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">الفترات المحجوزة</span>
+                                    <span class="uc-card__info-value">${stats.booked_slots} من ${stats.total_slots}</span>
                                 </div>
                             </div>
-                            
-                            <div class="info-item full-width">
-                                <i class="fa-solid fa-chart-line"></i>
-                                <div class="info-content">
-                                    <span class="info-label">نسبة الحجز</span>
+
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-chart-line"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">نسبة الحجز</span>
                                     <div>
                                         <div>
                                             <div></div>
                                         </div>
-                                        <span class="info-value">${bookingPercentage}%</span>
+                                        <span class="uc-card__info-value">${bookingPercentage}%</span>
                                     </div>
                                 </div>
                             </div>
-                        </div>
                     </div>
-                    
-                    <div class="application-card-footer">
+
+                    <div class="uc-card__footer">
                         <div class="card-actions-grid">
-                            <button class="btn btn--info btn--sm" onclick="window.interviewSessionsManager.viewSession('${session.id}')" title="عرض التفاصيل">
+                            <button class="btn btn-primary btn-sm" onclick="window.interviewSessionsManager.viewSession('${session.id}')" title="عرض التفاصيل">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض
                             </button>
-                            <button class="btn btn--warning btn--sm" onclick="window.interviewSessionsManager.editSession('${session.id}')" title="تعديل الجلسة">
+                            <button class="btn btn-warning btn-sm" onclick="window.interviewSessionsManager.editSession('${session.id}')" title="تعديل الجلسة">
                                 <i class="fa-solid fa-pen-to-square"></i>
                                 تعديل
                             </button>
                             ${session.interview_type === 'online' ? `
-                                <button class="btn btn--secondary btn--sm" onclick="window.interviewSessionsManager.updateMeetingLink('${session.id}')" title="تحديث رابط المقابلة">
+                                <button class="btn btn-secondary btn-sm" onclick="window.interviewSessionsManager.updateMeetingLink('${session.id}')" title="تحديث رابط المقابلة">
                                     <i class="fa-solid fa-video"></i>
                                     الرابط
                                 </button>
                             ` : ''}
-                            <button class="btn btn--secondary btn--sm" onclick="window.interviewSessionsManager.copyLink('${session.public_link_token}')" title="نسخ رابط الحجز">
+                            <button class="btn btn-secondary btn-sm" onclick="window.interviewSessionsManager.copyLink('${session.public_link_token}')" title="نسخ رابط الحجز">
                                 <i class="fa-solid fa-link"></i>
                                 نسخ
                             </button>
-                            <button class="btn ${session.is_active ? 'btn--secondary' : 'btn--success'} btn--sm" onclick="window.interviewSessionsManager.toggleSession('${session.id}', ${!session.is_active})" title="${session.is_active ? 'تعطيل' : 'تفعيل'}">
+                            <button class="btn ${session.is_active ? 'btn-secondary' : 'btn-success'} btn-sm" onclick="window.interviewSessionsManager.toggleSession('${session.id}', ${!session.is_active})" title="${session.is_active ? 'تعطيل' : 'تفعيل'}">
                                 <i class="fa-solid fa-${session.is_active ? 'pause' : 'play'}"></i>
                                 ${session.is_active ? 'تعطيل' : 'تفعيل'}
                             </button>
-                            <button class="btn btn--danger btn--sm" onclick="window.interviewSessionsManager.deleteSession('${session.id}')" title="حذف">
+                            <button class="btn btn-danger btn-sm" onclick="window.interviewSessionsManager.deleteSession('${session.id}')" title="حذف">
                                 <i class="fa-solid fa-trash"></i>
                                 حذف
                             </button>
@@ -1295,3 +1293,5 @@ document.addEventListener('keydown', (e) => {
         window.closeConfirmModal();
     }
 });
+
+

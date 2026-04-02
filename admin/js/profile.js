@@ -44,6 +44,9 @@
         // تحميل بطاقة العضوية
         await loadMembershipCard(memberDetails);
         
+        // تحميل الرابط الشخصي
+        await loadProfileLink(memberDetails);
+
         bindEvents();
     }
 
@@ -69,9 +72,11 @@
             // جلب معلومات اللجنة من user_roles
             const { data: userRole } = await window.sbClient
                 .from('user_roles')
-                .select('committee_id, committees(committee_name_ar)')
+                .select('committee_id, committees(committee_name_ar), roles(role_name, role_level)')
                 .eq('user_id', currentUser.id)
                 .eq('is_active', true)
+                .order('roles(role_level)', { ascending: false })
+                .limit(1)
                 .single();
 
             // جلب آخر تسجيل دخول من auth.users
@@ -123,15 +128,22 @@
             const lastLogin = document.getElementById('profileLastLogin');
             if (lastLogin) {
                 const lastSignIn = authUser?.last_sign_in_at || currentUser.last_sign_in_at;
-                lastLogin.textContent = lastSignIn 
-                    ? new Date(lastSignIn).toLocaleString('ar-SA', {
+                if (lastSignIn) {
+                    const d = new Date(lastSignIn);
+                    const datePart = d.toLocaleDateString('ar-SA', {
                         year: 'numeric',
-                        month: 'numeric',
-                        day: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    const timePart = d.toLocaleTimeString('ar-SA', {
                         hour: '2-digit',
-                        minute: '2-digit'
-                    })
-                    : 'غير معروف';
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                    lastLogin.textContent = `${datePart}، الساعة ${timePart}`;
+                } else {
+                    lastLogin.textContent = 'غير معروف';
+                }
             }
 
             // تحديث رقم الهوية الوطنية في كارد المعلومات الأساسية
@@ -150,12 +162,21 @@
                 });
             }
 
+            // تحديث اللون المفضل
+            const favoriteColorEl = document.getElementById('profileFavoriteColor');
+            if (favoriteColorEl) {
+                favoriteColorEl.textContent = memberDetails?.favorite_color || 'غير محدد';
+            }
+
             // تحديث اللجنة من user_roles
             const committee = document.getElementById('profileCommittee');
             if (committee) {
                 const committeeName = userRole?.committees?.committee_name_ar || memberDetails?.committees?.committee_name_ar;
                 committee.textContent = committeeName || 'غير محدد';
             }
+
+            // عرض حقول المجلس / القسم / اللجنة بناءً على الدور
+            await displayCouncilFields(userRole);
 
             // تحديث آخر تغيير لكلمة المرور
             const lastPasswordChange = document.getElementById('lastPasswordChange');
@@ -256,6 +277,77 @@
     }
 
     /**
+     * عرض حقول المجلس / القسم / اللجنة بناءً على الدور
+     */
+    async function displayCouncilFields(userRole) {
+        const councilRow = document.getElementById('profileCouncilRow');
+        const councilEl = document.getElementById('profileCouncil');
+        const departmentRow = document.getElementById('profileDepartmentRow');
+        const departmentEl = document.getElementById('profileDepartment');
+        const committeeRowBasic = document.getElementById('profileCommitteeRowBasic');
+        const committeeBasicEl = document.getElementById('profileCommitteeBasic');
+
+        if (!userRole) return;
+
+        const roleName = userRole.roles?.role_name || '';
+        const roleLevel = userRole.roles?.role_level || 0;
+
+        // المجلس الإداري: رئيس أدِيب، مستشار الرئيس، الرئيس التنفيذي،
+        // قائد لجنة الموارد البشرية، قائد لجنة الضمان والجودة،
+        // عضو إداري الموارد البشرية، عضو إداري الضمان والجودة
+        const adminCouncilRoles = [
+            'club_president',
+            'president_advisor',
+            'executive_council_president',
+            'hr_committee_leader',
+            'qa_committee_leader',
+            'hr_admin_member',
+            'qa_admin_member'
+        ];
+
+        // المجلس التنفيذي: رئيس قسم، قادة اللجان، نواب اللجان
+        const execCouncilRoles = [
+            'department_head',
+            'committee_leader',
+            'deputy_committee_leader'
+        ];
+
+        if (adminCouncilRoles.includes(roleName)) {
+            if (councilRow) councilRow.style.display = 'flex';
+            if (councilEl) councilEl.textContent = 'المجلس الإداري';
+        } else if (execCouncilRoles.includes(roleName)) {
+            if (councilRow) councilRow.style.display = 'flex';
+            if (councilEl) councilEl.textContent = 'المجلس التنفيذي';
+        }
+
+        // عضو: يظهر له القسم واللجنة
+        if (roleName === 'committee_member') {
+            // جلب بيانات القسم إذا كان الدور عضو لجنة
+            if (userRole.committee_id) {
+                try {
+                    const { data: committeeData } = await window.sbClient
+                        .from('committees')
+                        .select('committee_name_ar, department_id, departments(name_ar)')
+                        .eq('id', userRole.committee_id)
+                        .single();
+
+                    if (committeeData) {
+                        if (committeeRowBasic) committeeRowBasic.style.display = 'flex';
+                        if (committeeBasicEl) committeeBasicEl.textContent = committeeData.committee_name_ar || '-';
+
+                        if (committeeData.departments?.name_ar) {
+                            if (departmentRow) departmentRow.style.display = 'flex';
+                            if (departmentEl) departmentEl.textContent = committeeData.departments.name_ar;
+                        }
+                    }
+                } catch (e) {
+                    console.error('خطأ في جلب بيانات القسم/اللجنة:', e);
+                }
+            }
+        }
+    }
+
+    /**
      * الحصول على معلومات الدور
      */
     function getRoleInfo(roleLevel) {
@@ -337,27 +429,22 @@
 
             if (!data || data.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: #6b7280;">
-                        <i class="fa-solid fa-inbox" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <p style="margin: 0;">لا يوجد نشاط مسجل</p>
+                    <div class="empty-state">
+                        <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
+                        <p class="empty-state__message">لا يوجد نشاط مسجل</p>
                     </div>
                 `;
                 return;
             }
 
             const html = data.map(activity => `
-                <div style="display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; border-bottom: 1px solid #f3f4f6; transition: background 0.2s ease;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
-                    <div style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 8px; background: ${getActivityColor(activity.action_type)}; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <i class="fa-solid ${getActivityIcon(activity.action_type)}" style="color: white; font-size: 18px;"></i>
+                <div class="uc-card__info-item" style="--_uc-color-rgb: ${getActivityColorRgb(activity.action_type)};">
+                    <div class="uc-card__info-icon" style="background: ${getActivityColor(activity.action_type)};">
+                        <i class="fa-solid ${getActivityIcon(activity.action_type)}"></i>
                     </div>
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 500; color: #274060; margin-bottom: 0.25rem; line-height: 1.5;">
-                            ${getActivityText(activity)}
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #6b7280;">
-                            <i class="fa-solid fa-clock" style="font-size: 0.75rem;"></i>
-                            <span>${formatActivityDate(activity.created_at)}</span>
-                        </div>
+                    <div class="uc-card__info-content">
+                        <span class="uc-card__info-value">${getActivityText(activity)}</span>
+                        <span class="uc-card__info-label"><i class="fa-regular fa-clock"></i> ${formatActivityDate(activity.created_at)}</span>
                     </div>
                 </div>
             `).join('');
@@ -369,9 +456,9 @@
             const container = document.getElementById('recentActivityContainer');
             if (container) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: #ef4444;">
-                        <i class="fa-solid fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
-                        <p style="margin: 0;">فشل تحميل النشاط</p>
+                    <div class="empty-state">
+                        <div class="empty-state__icon"><i class="fa-solid fa-exclamation-circle" style="color: var(--color-danger);"></i></div>
+                        <p class="empty-state__message">فشل تحميل النشاط</p>
                     </div>
                 `;
             }
@@ -404,174 +491,423 @@
     }
 
     /**
+     * استخراج الفعل الأساسي من نوع النشاط
+     */
+    function getBaseAction(actionType) {
+        if (!actionType) return 'other';
+        if (actionType === 'login')                          return 'login';
+        if (actionType === 'logout')                         return 'logout';
+        if (actionType.startsWith('create') || actionType.startsWith('add') || actionType.startsWith('grant')) return 'create';
+        if (actionType.startsWith('update') || actionType.startsWith('edit') || actionType.startsWith('change')) return 'update';
+        if (actionType.startsWith('delete') || actionType.startsWith('remove') || actionType.startsWith('cancel')) return 'delete';
+        if (actionType.startsWith('approve') || actionType.startsWith('accept')) return 'approve';
+        if (actionType.startsWith('reject'))                 return 'reject';
+        if (actionType.startsWith('publish') || actionType.startsWith('send')) return 'publish';
+        if (actionType.startsWith('archive'))                return 'archive';
+        if (actionType.startsWith('reply'))                  return 'reply';
+        if (actionType.startsWith('start'))                  return 'start';
+        if (actionType.startsWith('end') || actionType.startsWith('finish') || actionType.startsWith('close')) return 'end';
+        if (actionType.startsWith('impersonate_start'))      return 'impersonate_start';
+        if (actionType.startsWith('impersonate_end'))        return 'impersonate_end';
+        if (actionType.startsWith('impersonate'))            return 'impersonate_start';
+        return 'other';
+    }
+
+    /**
      * الحصول على لون النشاط
      */
     function getActivityColor(actionType) {
+        const base = getBaseAction(actionType);
         const colors = {
-            'login': '#10b981',
-            'logout': '#64748b',
-            'create': '#3b82f6',
-            'update': '#f59e0b',
-            'delete': '#ef4444',
+            'login':   '#10b981',
+            'logout':  '#ef4444',
+            'create':  '#3b82f6',
+            'update':  '#f59e0b',
+            'delete':  '#ef4444',
             'approve': '#10b981',
-            'reject': '#ef4444'
+            'reject':  '#f43f5e',
+            'publish': '#8b5cf6',
+            'archive': '#64748b',
+            'reply':   '#06b6d4',
+            'start':   '#14b8a6',
+            'end':              '#f97316',
+            'impersonate_start':'#a855f7',
+            'impersonate_end':  '#14b8a6',
+            'other':            '#64748b',
         };
-        return colors[actionType] || '#64748b';
+        return colors[base] || '#64748b';
+    }
+
+    /**
+     * الحصول على لون النشاط بصيغة RGB
+     */
+    function getActivityColorRgb(actionType) {
+        const base = getBaseAction(actionType);
+        const colors = {
+            'login':            '16, 185, 129',
+            'logout':           '239, 68, 68',
+            'create':           '59, 130, 246',
+            'update':           '245, 158, 11',
+            'delete':           '239, 68, 68',
+            'approve':          '16, 185, 129',
+            'reject':           '244, 63, 94',
+            'publish':          '139, 92, 246',
+            'archive':          '100, 116, 139',
+            'reply':            '6, 182, 212',
+            'start':            '20, 184, 166',
+            'end':              '249, 115, 22',
+            'impersonate_start':'168, 85, 247',
+            'impersonate_end':  '20, 184, 166',
+            'other':            '100, 116, 139',
+        };
+        return colors[base] || '100, 116, 139';
     }
 
     /**
      * الحصول على أيقونة النشاط
      */
     function getActivityIcon(actionType) {
+        const base = getBaseAction(actionType);
         const icons = {
-            'login': 'fa-right-to-bracket',
-            'logout': 'fa-right-from-bracket',
-            'create': 'fa-plus',
-            'update': 'fa-pen',
-            'delete': 'fa-trash',
-            'approve': 'fa-check',
-            'reject': 'fa-xmark'
+            'login':            'fa-right-to-bracket',
+            'logout':           'fa-right-from-bracket',
+            'create':           'fa-plus',
+            'update':           'fa-pen',
+            'delete':           'fa-trash',
+            'approve':          'fa-check',
+            'reject':           'fa-xmark',
+            'publish':          'fa-paper-plane',
+            'archive':          'fa-box-archive',
+            'reply':            'fa-reply',
+            'start':            'fa-play',
+            'end':              'fa-stop',
+            'impersonate_start':'fa-user-secret',
+            'impersonate_end':  'fa-user-check',
+            'other':            'fa-circle-dot',
         };
-        return icons[actionType] || 'fa-circle';
+        return icons[base] || 'fa-circle-dot';
     }
 
     /**
-     * الحصول على نص النشاط
+     * الحصول على نص النشاط بالعربية
      */
     function getActivityText(activity) {
-        const texts = {
-            'login': 'تسجيل دخول',
-            'logout': 'تسجيل خروج',
-            'create': 'إنشاء',
-            'update': 'تحديث',
-            'delete': 'حذف',
-            'approve': 'موافقة',
-            'reject': 'رفض'
+        const type = activity.action_type || '';
+
+        // جدول نصوص كاملة (action_type مركّب أو بسيط)
+        const fullTexts = {
+            // مصادقة
+            'login':                       'تسجيل دخول',
+            'logout':                      'تسجيل خروج',
+            'impersonate_start':           'بدء انتحال هوية مستخدم',
+            'impersonate_end':             'إنهاء انتحال هوية مستخدم',
+            // أعضاء
+            'create_member':               'إضافة عضو جديد',
+            'update_member':               'تعديل بيانات عضو',
+            'delete_member':               'حذف عضو',
+            'approve_member':              'قبول طلب عضوية',
+            'reject_member':               'رفض طلب عضوية',
+            // عضوية هدية
+            'create_gift_membership':      'منح عضوية هدية',
+            'update_gift_membership':      'تعديل عضوية هدية',
+            'delete_gift_membership':      'إلغاء عضوية هدية',
+            // عضوية
+            'create_membership':           'إنشاء عضوية',
+            'update_membership':           'تحديث عضوية',
+            'approve_membership':          'قبول عضوية',
+            'reject_membership':           'رفض عضوية',
+            'archive_membership':          'أرشفة عضوية',
+            // طلبات معلّقة
+            'approve_pending':             'قبول طلب معلّق',
+            'reject_pending':              'رفض طلب معلّق',
+            // أخبار
+            'create_news':                 'نشر خبر جديد',
+            'update_news':                 'تعديل خبر',
+            'delete_news':                 'حذف خبر',
+            'publish_news':                'نشر خبر',
+            'draft_news':                  'حفظ مسودة خبر',
+            // نشرة بريدية
+            'create_newsletter':           'إنشاء نشرة بريدية',
+            'send_newsletter':             'إرسال نشرة بريدية',
+            'delete_newsletter':           'حذف نشرة بريدية',
+            // انتخابات
+            'create_election':             'إنشاء انتخابات',
+            'update_election':             'تعديل انتخابات',
+            'delete_election':             'حذف انتخابات',
+            'start_election':              'بدء الانتخابات',
+            'end_election':                'إنهاء الانتخابات',
+            // استبيانات
+            'create_survey':               'إنشاء استبيان',
+            'update_survey':               'تعديل استبيان',
+            'delete_survey':               'حذف استبيان',
+            'publish_survey':              'نشر استبيان',
+            // مناصب
+            'create_position':             'إضافة منصب',
+            'update_position':             'تعديل منصب',
+            'delete_position':             'حذف منصب',
+            // مستخدمون
+            'create_user':                 'إضافة مستخدم',
+            'update_user':                 'تعديل مستخدم',
+            'delete_user':                 'حذف مستخدم',
+            // لجنة
+            'create_committee_member':     'إضافة عضو في اللجنة',
+            'update_committee_member':     'تعديل عضو في اللجنة',
+            'delete_committee_member':     'حذف عضو من اللجنة',
+            // مقابلات
+            'create_interview':            'إنشاء جلسة مقابلة',
+            'update_interview':            'تعديل جلسة مقابلة',
+            'delete_interview':            'حذف جلسة مقابلة',
+            // الملف الشخصي
+            'update_profile':              'تحديث الملف الشخصي',
+            'update_avatar':               'تغيير الصورة الشخصية',
+            'update_password':             'تغيير كلمة المرور',
+            // صلاحيات
+            'update_permissions':          'تعديل الصلاحيات',
+            // رسائل التواصل
+            'reply_contact':               'الرد على رسالة تواصل',
+            'delete_contact':              'حذف رسالة تواصل',
+            // أفعال بسيطة
+            'create':                      'إنشاء',
+            'update':                      'تحديث',
+            'delete':                      'حذف',
+            'approve':                     'موافقة',
+            'reject':                      'رفض',
+            'publish':                     'نشر',
+            'archive':                     'أرشفة',
+            'send':                        'إرسال',
+            'reply':                       'رد',
+            'start':                       'بدء',
+            'end':                         'إنهاء',
         };
-        const action = texts[activity.action_type] || activity.action_type;
-        const module = activity.module || '';
-        return `${action} ${module}`;
+
+        if (fullTexts[type]) return fullTexts[type];
+
+        // محاولة action_type + module
+        const moduleLabels = {
+            'members':             'الأعضاء',
+            'member':              'عضو',
+            'membership':          'العضوية',
+            'pending_members':     'الطلبات المعلّقة',
+            'membership_archives': 'أرشيف العضوية',
+            'membership_decisions':'قرارات العضوية',
+            'gift_membership':     'عضوية هدية',
+            'news':                'الأخبار',
+            'news_workflow':       'سير الأخبار',
+            'news_draft':          'مسودة أخبار',
+            'newsletter':          'النشرة البريدية',
+            'elections':           'الانتخابات',
+            'election':            'انتخاب',
+            'positions':           'المناصب',
+            'position':            'منصب',
+            'surveys':             'الاستبيانات',
+            'survey':              'استبيان',
+            'users':               'المستخدمين',
+            'user':                'مستخدم',
+            'committee':           'اللجنة',
+            'committee_members':   'أعضاء اللجنة',
+            'interviews':          'المقابلات',
+            'interview_sessions':  'جلسات المقابلات',
+            'profile':             'الملف الشخصي',
+            'avatar':              'الصورة الشخصية',
+            'permissions':         'الصلاحيات',
+            'contact_messages':    'رسائل التواصل',
+            'contacts':            'جهات الاتصال',
+            'settings':            'الإعدادات',
+        };
+
+        const actionLabels = {
+            'login':   'تسجيل دخول',
+            'logout':  'تسجيل خروج',
+            'create':  'إنشاء',
+            'update':  'تحديث',
+            'delete':  'حذف',
+            'approve': 'موافقة',
+            'reject':  'رفض',
+            'publish': 'نشر',
+            'archive': 'أرشفة',
+            'send':    'إرسال',
+            'reply':   'رد على',
+            'start':   'بدء',
+            'end':     'إنهاء',
+        };
+
+        const moduleKey = activity.module ? `${type}_${activity.module}` : null;
+        if (moduleKey && fullTexts[moduleKey]) return fullTexts[moduleKey];
+
+        const base = getBaseAction(type);
+        const actionText = actionLabels[base] || type;
+        const moduleText = activity.module ? (moduleLabels[activity.module] || '') : '';
+        return `${actionText}${moduleText ? ' ' + moduleText : ''}`;
     }
 
     /**
-     * فتح نافذة تعديل الملف الشخصي
+     * تفعيل التعديل المباشر للحقول
      */
-    async function openEditProfileModal() {
-        const modal = document.getElementById('editBasicInfoModal');
-        const backdrop = document.getElementById('editBasicInfoModalBackdrop');
-        if (!modal) return;
-
-        try {
-            const { data: memberDetails, error } = await window.sbClient
-                .from('member_details')
-                .select('full_name_triple,email,phone,national_id,birth_date,academic_record_number')
-                .eq('user_id', currentUser.id)
-                .single();
-
-            if (error && error.code !== 'PGRST116') {
-                console.error('خطأ في جلب بيانات العضو:', error);
-            }
-
-            document.getElementById('editBasicFullName').value = memberDetails?.full_name_triple || currentUser.full_name || '';
-            document.getElementById('editBasicEmail').value = memberDetails?.email || currentUser.email || '';
-            document.getElementById('editBasicPhone').value = memberDetails?.phone || currentUser.phone || '';
-            document.getElementById('editBasicNationalId').value = memberDetails?.national_id || '';
-            document.getElementById('editBasicBirthDate').value = memberDetails?.birth_date || '';
-            document.getElementById('editBasicAcademicRecord').value = memberDetails?.academic_record_number || '';
-
-            const canChangeName = await checkCanChangeName();
-            const nameWarning = document.getElementById('basicNameChangeWarning');
-            if (nameWarning) nameWarning.style.display = canChangeName ? 'none' : 'block';
-
-            if (backdrop) backdrop.classList.add('active');
-            modal.classList.add('active');
-            document.body.classList.add('modal-open');
-
-            const closeModal = () => {
-                modal.classList.remove('active');
-                if (backdrop) backdrop.classList.remove('active');
-                document.body.classList.remove('modal-open');
-            };
-
-            document.getElementById('closeEditBasicInfoModal').onclick = closeModal;
-            document.getElementById('cancelEditBasicInfoBtn').onclick = closeModal;
-            if (backdrop) backdrop.onclick = closeModal;
-
-            document.getElementById('saveBasicInfoBtn').onclick = async () => {
-                await handleSaveBasicInfoChanges();
-                closeModal();
-            };
-
-        } catch (error) {
-            console.error('خطأ في فتح نافذة المعلومات الأساسية:', error);
-            showNotification('فشل فتح نافذة التعديل', 'error');
-        }
+    function enableInlineEditing() {
+        const infoItems = document.querySelectorAll('#profile-section .info-item');
+        
+        infoItems.forEach(item => {
+            const editBtn = item.querySelector('.btn-edit-inline');
+            const infoValue = item.querySelector('.info-value');
+            
+            if (!editBtn || !infoValue) return;
+            
+            editBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (infoValue.querySelector('input, select, textarea')) return;
+                
+                const currentValue = infoValue.textContent.trim();
+                const fieldId = infoValue.id;
+                const fieldType = getFieldType(fieldId);
+                
+                const input = createInlineInput(fieldType, currentValue, fieldId);
+                infoValue.innerHTML = '';
+                infoValue.appendChild(input);
+                input.focus();
+                
+                const saveEdit = async () => {
+                    const newValue = input.value.trim();
+                    await saveFieldValue(fieldId, newValue, currentValue);
+                };
+                
+                const cancelEdit = () => {
+                    infoValue.textContent = currentValue;
+                };
+                
+                input.addEventListener('blur', saveEdit);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        saveEdit();
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        cancelEdit();
+                    }
+                });
+            });
+        });
     }
-
+    
     /**
-     * حفظ المعلومات الأساسية
+     * إنشاء حقل إدخال مباشر
      */
-    async function handleSaveBasicInfoChanges() {
-        try {
-            const newFullName = document.getElementById('editBasicFullName').value.trim();
-            const newEmail = document.getElementById('editBasicEmail').value.trim();
-            const newPhone = document.getElementById('editBasicPhone').value.trim();
-            const newNationalId = document.getElementById('editBasicNationalId').value.trim();
-            const newBirthDate = document.getElementById('editBasicBirthDate').value;
-            const newAcademicRecord = document.getElementById('editBasicAcademicRecord').value.trim();
-
-            const { data: oldData } = await window.sbClient
-                .from('member_details')
-                .select('full_name_triple')
-                .eq('user_id', currentUser.id)
-                .single();
-
-            const nameChanged = oldData && oldData.full_name_triple !== newFullName;
-            if (nameChanged) {
-                const canChange = await checkCanChangeName();
-                if (!canChange) {
-                    showNotification('لا يمكن تغيير الاسم أكثر من مرة كل 30 يومًا', 'error');
-                    return;
+    function createInlineInput(fieldType, currentValue, fieldId) {
+        let input;
+        
+        if (fieldType.type === 'select') {
+            input = document.createElement('select');
+            input.className = 'form-input inline-edit-input';
+            fieldType.options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.label;
+                if (opt.value === currentValue || opt.label === currentValue) {
+                    option.selected = true;
                 }
+                input.appendChild(option);
+            });
+        } else {
+            input = document.createElement('input');
+            input.type = fieldType.type || 'text';
+            input.className = 'form-input inline-edit-input';
+            input.value = currentValue === 'غير محدد' || currentValue === 'جاري التحميل...' ? '' : currentValue;
+            
+            if (fieldType.placeholder) input.placeholder = fieldType.placeholder;
+            if (fieldType.maxlength) input.maxLength = fieldType.maxlength;
+            if (fieldType.pattern) input.pattern = fieldType.pattern;
+        }
+        
+        return input;
+    }
+    
+    /**
+     * تحديد نوع الحقل
+     */
+    function getFieldType(fieldId) {
+        const fieldTypes = {
+            'profileEmail': { type: 'email', placeholder: 'name@example.com' },
+            'profilePhone': { type: 'tel', placeholder: '05XXXXXXXX', maxlength: 10, pattern: '^05[0-9]{8}$' },
+            'profileNationalIdBasic': { type: 'text', placeholder: '1XXXXXXXXX', maxlength: 10, pattern: '^[12][0-9]{9}$' },
+            'profileBirthDateBasic': { type: 'date' },
+            'profileFavoriteColor': { type: 'text', placeholder: 'مثال: الأزرق، #3498db' },
+            'profileAcademicRecord': { type: 'text', placeholder: '4XXXXXXXX' },
+            'profileAcademicDegree': { 
+                type: 'select',
+                options: [
+                    { value: '', label: 'اختر الدرجة' },
+                    { value: 'high_school', label: 'ثانوية عامة' },
+                    { value: 'diploma', label: 'دبلوم' },
+                    { value: 'bachelor', label: 'بكالوريوس' },
+                    { value: 'master', label: 'ماجستير' },
+                    { value: 'phd', label: 'دكتوراه' },
+                    { value: 'other', label: 'أخرى' }
+                ]
+            },
+            'profileCollege': { type: 'text', placeholder: 'اسم الكلية' },
+            'profileMajor': { type: 'text', placeholder: 'التخصص الدراسي' },
+            'profileTwitter': { type: 'text', placeholder: '@username' },
+            'profileInstagram': { type: 'text', placeholder: '@username' },
+            'profileTiktok': { type: 'text', placeholder: '@username' },
+            'profileLinkedin': { type: 'text', placeholder: 'username' }
+        };
+        
+        return fieldTypes[fieldId] || { type: 'text' };
+    }
+    
+    /**
+     * حفظ قيمة الحقل
+     */
+    async function saveFieldValue(fieldId, newValue, oldValue) {
+        try {
+            const fieldMapping = {
+                'profileEmail': { table: 'member_details', column: 'email' },
+                'profilePhone': { table: 'member_details', column: 'phone' },
+                'profileNationalIdBasic': { table: 'member_details', column: 'national_id' },
+                'profileBirthDateBasic': { table: 'member_details', column: 'birth_date' },
+                'profileFavoriteColor': { table: 'member_details', column: 'favorite_color' },
+                'profileAcademicRecord': { table: 'member_details', column: 'academic_record_number' },
+                'profileAcademicDegree': { table: 'member_details', column: 'academic_degree' },
+                'profileCollege': { table: 'member_details', column: 'college' },
+                'profileMajor': { table: 'member_details', column: 'major' },
+                'profileTwitter': { table: 'member_details', column: 'twitter_account' },
+                'profileInstagram': { table: 'member_details', column: 'instagram_account' },
+                'profileTiktok': { table: 'member_details', column: 'tiktok_account' },
+                'profileLinkedin': { table: 'member_details', column: 'linkedin_account' }
+            };
+            
+            const field = fieldMapping[fieldId];
+            if (!field) {
+                console.error('حقل غير معروف:', fieldId);
+                return;
             }
-
+            
             const updateData = {
-                email: newEmail,
-                phone: newPhone,
-                national_id: newNationalId,
-                birth_date: newBirthDate || null,
-                academic_record_number: newAcademicRecord || null,
+                [field.column]: newValue || null,
                 updated_at: new Date().toISOString()
             };
-            if (nameChanged) {
-                updateData.full_name_triple = newFullName;
-                updateData.name_last_changed = new Date().toISOString();
-            }
-
+            
             const { error } = await window.sbClient
-                .from('member_details')
+                .from(field.table)
                 .update(updateData)
                 .eq('user_id', currentUser.id);
-
+            
             if (error) throw error;
-
-            if (nameChanged) {
+            
+            if (fieldId === 'profilePhone') {
                 await window.sbClient
                     .from('profiles')
-                    .update({ full_name: newFullName, phone: newPhone, updated_at: new Date().toISOString() })
-                    .eq('id', currentUser.id);
-            } else {
-                await window.sbClient
-                    .from('profiles')
-                    .update({ phone: newPhone, updated_at: new Date().toISOString() })
+                    .update({ phone: newValue, updated_at: new Date().toISOString() })
                     .eq('id', currentUser.id);
             }
-
-            showNotification('تم حفظ المعلومات الأساسية بنجاح', 'success');
+            
+            showNotification('تم حفظ التعديل بنجاح', 'success');
             await loadProfileData();
         } catch (error) {
-            console.error('خطأ في حفظ المعلومات الأساسية:', error);
+            console.error('خطأ في حفظ البيانات:', error);
             showNotification('فشل حفظ البيانات: ' + error.message, 'error');
+            document.getElementById(fieldId).textContent = oldValue;
         }
     }
 
@@ -937,166 +1273,18 @@
         input.click();
     }
 
-    /**
-     * فتح نافذة تعديل البيانات الأكاديمية
-     */
-    async function openEditAcademicModal() {
-        const modal = document.getElementById('editAcademicModal');
-        const backdrop = document.getElementById('editAcademicModalBackdrop');
-        if (!modal) return;
-
-        try {
-            const { data: memberDetails } = await window.sbClient
-                .from('member_details')
-                .select('academic_degree,college,major')
-                .eq('user_id', currentUser.id)
-                .single();
-
-            document.getElementById('editAcademicDegreeOnly').value = memberDetails?.academic_degree || '';
-            document.getElementById('editAcademicCollege').value = memberDetails?.college || '';
-            document.getElementById('editAcademicMajor').value = memberDetails?.major || '';
-
-            if (backdrop) backdrop.classList.add('active');
-            modal.classList.add('active');
-            document.body.classList.add('modal-open');
-
-            const closeModal = () => {
-                modal.classList.remove('active');
-                if (backdrop) backdrop.classList.remove('active');
-                document.body.classList.remove('modal-open');
-            };
-
-            document.getElementById('closeEditAcademicModal').onclick = closeModal;
-            document.getElementById('cancelEditAcademicBtn').onclick = closeModal;
-            if (backdrop) backdrop.onclick = closeModal;
-
-            document.getElementById('saveAcademicChangesBtn').onclick = async () => {
-                await handleSaveAcademicChanges();
-                closeModal();
-            };
-
-        } catch (error) {
-            console.error('خطأ في فتح نافذة البيانات الأكاديمية:', error);
-            showNotification('فشل فتح نافذة التعديل', 'error');
-        }
-    }
-
-    /**
-     * حفظ البيانات الأكاديمية
-     */
-    async function handleSaveAcademicChanges() {
-        try {
-            const { error } = await window.sbClient
-                .from('member_details')
-                .update({
-                    academic_degree: document.getElementById('editAcademicDegreeOnly').value || null,
-                    college: document.getElementById('editAcademicCollege').value.trim() || null,
-                    major: document.getElementById('editAcademicMajor').value.trim() || null,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('user_id', currentUser.id);
-
-            if (error) throw error;
-            showNotification('تم حفظ البيانات الأكاديمية بنجاح', 'success');
-            await loadProfileData();
-        } catch (error) {
-            console.error('خطأ في حفظ البيانات الأكاديمية:', error);
-            showNotification('فشل حفظ البيانات: ' + error.message, 'error');
-        }
-    }
-
-    /**
-     * فتح نافذة تعديل حسابات التواصل الاجتماعي
-     */
-    async function openEditSocialModal() {
-        const modal = document.getElementById('editSocialMediaModal');
-        const backdrop = document.getElementById('editSocialMediaModalBackdrop');
-        if (!modal) return;
-
-        try {
-            const { data: memberDetails } = await window.sbClient
-                .from('member_details')
-                .select('twitter_account,instagram_account,tiktok_account,linkedin_account')
-                .eq('user_id', currentUser.id)
-                .single();
-
-            document.getElementById('editSocialTwitter').value = memberDetails?.twitter_account || '';
-            document.getElementById('editSocialInstagram').value = memberDetails?.instagram_account || '';
-            document.getElementById('editSocialTiktok').value = memberDetails?.tiktok_account || '';
-            document.getElementById('editSocialLinkedin').value = memberDetails?.linkedin_account || '';
-
-            if (backdrop) backdrop.classList.add('active');
-            modal.classList.add('active');
-            document.body.classList.add('modal-open');
-
-            const closeModal = () => {
-                modal.classList.remove('active');
-                if (backdrop) backdrop.classList.remove('active');
-                document.body.classList.remove('modal-open');
-            };
-
-            document.getElementById('closeEditSocialModal').onclick = closeModal;
-            document.getElementById('cancelEditSocialBtn').onclick = closeModal;
-            if (backdrop) backdrop.onclick = closeModal;
-
-            document.getElementById('saveSocialChangesBtn').onclick = async () => {
-                await handleSaveSocialChanges();
-                closeModal();
-            };
-
-        } catch (error) {
-            console.error('خطأ في فتح نافذة التواصل الاجتماعي:', error);
-            showNotification('فشل فتح نافذة التعديل', 'error');
-        }
-    }
-
-    /**
-     * حفظ حسابات التواصل الاجتماعي
-     */
-    async function handleSaveSocialChanges() {
-        try {
-            const { error } = await window.sbClient
-                .from('member_details')
-                .update({
-                    twitter_account: document.getElementById('editSocialTwitter').value.trim() || null,
-                    instagram_account: document.getElementById('editSocialInstagram').value.trim() || null,
-                    tiktok_account: document.getElementById('editSocialTiktok').value.trim() || null,
-                    linkedin_account: document.getElementById('editSocialLinkedin').value.trim() || null,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('user_id', currentUser.id);
-
-            if (error) throw error;
-            showNotification('تم حفظ حسابات التواصل الاجتماعي بنجاح', 'success');
-            await loadProfileData();
-        } catch (error) {
-            console.error('خطأ في حفظ حسابات التواصل:', error);
-            showNotification('فشل حفظ البيانات: ' + error.message, 'error');
-        }
-    }
 
     /**
      * ربط الأحداث
      */
     function bindEvents() {
-        const editProfileBtn = document.getElementById('editProfileBtn');
-        const editAcademicBtn = document.getElementById('editAcademicBtn');
-        const editSocialBtn = document.getElementById('editSocialBtn');
         const changePasswordBtn = document.getElementById('changePasswordBtn');
         const viewSessionsBtn = document.getElementById('viewSessionsBtn');
         const changeAvatarBtn = document.getElementById('changeAvatarBtn');
+        const copyProfileLinkBtn = document.getElementById('copyProfileLinkBtn');
+        const openProfileLinkBtn = document.getElementById('openProfileLinkBtn');
 
-        if (editProfileBtn) {
-            editProfileBtn.addEventListener('click', openEditProfileModal);
-        }
-
-        if (editAcademicBtn) {
-            editAcademicBtn.addEventListener('click', openEditAcademicModal);
-        }
-
-        if (editSocialBtn) {
-            editSocialBtn.addEventListener('click', openEditSocialModal);
-        }
+        enableInlineEditing();
 
         if (changePasswordBtn) {
             changePasswordBtn.addEventListener('click', openChangePasswordModal);
@@ -1111,6 +1299,61 @@
             changeAvatarBtn.removeEventListener('click', changeAvatar);
             changeAvatarBtn.addEventListener('click', changeAvatar);
         }
+
+        if (copyProfileLinkBtn) {
+            copyProfileLinkBtn.addEventListener('click', copyProfileLink);
+        }
+
+        if (openProfileLinkBtn) {
+            openProfileLinkBtn.addEventListener('click', openProfileLink);
+        }
+    }
+
+    /**
+     * نسخ الرابط الشخصي
+     */
+    async function copyProfileLink() {
+        try {
+            const profileLinkInput = document.getElementById('profileLinkInput');
+            const profileUrl = profileLinkInput.value;
+
+            if (profileUrl === 'جاري التحميل...' || profileUrl === 'لم يتم إنشاء رابط شخصي بعد') {
+                showNotification('الرابط الشخصي غير متاح حالياً', 'warning');
+                return;
+            }
+
+            await navigator.clipboard.writeText(profileUrl);
+            
+            const copyBtn = document.getElementById('copyProfileLinkBtn');
+            const originalHTML = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> تم النسخ';
+            copyBtn.disabled = true;
+
+            setTimeout(() => {
+                copyBtn.innerHTML = originalHTML;
+                copyBtn.disabled = false;
+            }, 2000);
+
+            showNotification('تم نسخ الرابط بنجاح', 'success');
+        } catch (error) {
+            console.error('خطأ في نسخ الرابط:', error);
+            showNotification('فشل نسخ الرابط', 'error');
+        }
+    }
+
+    /**
+     * فتح الرابط الشخصي في نافذة جديدة
+     */
+    function openProfileLink() {
+        const profileLinkInput = document.getElementById('profileLinkInput');
+        const profileUrl = profileLinkInput.value;
+
+        if (profileUrl === 'جاري التحميل...' || profileUrl === 'لم يتم إنشاء رابط شخصي بعد') {
+            showNotification('الرابط الشخصي غير متاح حالياً', 'warning');
+            return;
+        }
+
+        window.open(profileUrl, '_blank');
     }
 
     /**
@@ -1221,6 +1464,26 @@
 
         } catch (error) {
             console.error('خطأ في تحميل بيانات اللجنة:', error);
+        }
+    }
+
+    /**
+     * تحميل الرابط الشخصي
+     */
+    async function loadProfileLink(memberDetails) {
+        try {
+            const profileLinkInput = document.getElementById('profileLinkInput');
+            if (!profileLinkInput) return;
+
+            if (memberDetails?.profile_slug) {
+                const baseUrl = window.location.origin;
+                const profileUrl = `${baseUrl}/public-profile.html?slug=${memberDetails.profile_slug}`;
+                profileLinkInput.value = profileUrl;
+            } else {
+                profileLinkInput.value = 'لم يتم إنشاء رابط شخصي بعد';
+            }
+        } catch (error) {
+            console.error('خطأ في تحميل الرابط الشخصي:', error);
         }
     }
 

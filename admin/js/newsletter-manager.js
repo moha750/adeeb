@@ -119,7 +119,7 @@ class NewsletterManager {
         }
 
         const cardsHtml = `
-            <div class="applications-cards-grid">
+            <div class="uc-grid">
                 ${this.filteredSubscribers.map(subscriber => this.renderSubscriberCard(subscriber)).join('')}
             </div>
         `;
@@ -155,64 +155,59 @@ class NewsletterManager {
             : 'لم يتم الإرسال بعد';
 
         return `
-            <div class="application-card">
-                <div class="application-card-header">
-                    <div class="applicant-info">
-                        <div class="applicant-avatar">
+            <div class="uc-card">
+                <div class="uc-card__header">
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__icon">
                             <i class="fa-solid fa-envelope-open-text"></i>
                         </div>
-                        <div class="applicant-details">
-                            <h3 class="applicant-name">${subscriber.email}</h3>
-                            ${statusBadges[subscriber.status] || statusBadges.active}
+                        <div class="uc-card__header-info">
+                            <h3 class="uc-card__title">${subscriber.email}</h3>
+                            <span class="uc-card__badge">
+                                ${subscriber.status === 'active' ? '<i class="fa-solid fa-circle-check"></i> نشط' :
+                                  subscriber.status === 'unsubscribed' ? '<i class="fa-solid fa-circle-xmark"></i> ألغى الاشتراك' :
+                                  '<i class="fa-solid fa-exclamation-circle"></i> بريد غير صالح'}
+                            </span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="application-card-body">
-                    <div class="application-info-grid">
-                        <div class="info-item">
-                            <i class="fa-solid fa-calendar-plus"></i>
-                            <div class="info-content">
-                                <span class="info-label">تاريخ الاشتراك</span>
-                                <span class="info-value">${subscribedDate} - ${subscribedTime}</span>
-                            </div>
+
+                <div class="uc-card__body">
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-plus"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">تاريخ الاشتراك</span>
+                            <span class="uc-card__info-value">${subscribedDate} - ${subscribedTime}</span>
                         </div>
-                        
-                        <div class="info-item">
-                            <i class="fa-solid fa-paper-plane"></i>
-                            <div class="info-content">
-                                <span class="info-label">عدد الرسائل المرسلة</span>
-                                <span class="info-value">${subscriber.email_count || 0} رسالة</span>
-                            </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-paper-plane"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">عدد الرسائل المرسلة</span>
+                            <span class="uc-card__info-value">${subscriber.email_count || 0} رسالة</span>
                         </div>
-                        
-                        <div class="info-item full-width">
-                            <i class="fa-solid fa-clock"></i>
-                            <div class="info-content">
-                                <span class="info-label">آخر رسالة</span>
-                                <span class="info-value">${lastEmailDate}</span>
-                            </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-clock"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">آخر رسالة</span>
+                            <span class="uc-card__info-value">${lastEmailDate}</span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="application-card-footer">
-                    <div class="card-actions-grid">
-                        ${subscriber.status === 'active' 
-                            ? `<button class="btn btn--warning btn--sm unsubscribe-btn" data-id="${subscriber.id}">
-                                <i class="fa-solid fa-user-xmark"></i>
-                                إلغاء الاشتراك
+
+                <div class="uc-card__footer">
+                    ${subscriber.status === 'active'
+                        ? `<button class="btn btn-warning btn-sm unsubscribe-btn" data-id="${subscriber.id}">
+                                <i class="fa-solid fa-user-xmark"></i> إلغاء الاشتراك
                             </button>`
-                            : `<button class="btn btn--success btn--sm resubscribe-btn" data-id="${subscriber.id}">
-                                <i class="fa-solid fa-user-check"></i>
-                                إعادة الاشتراك
+                        : `<button class="btn btn-success btn-sm resubscribe-btn" data-id="${subscriber.id}">
+                                <i class="fa-solid fa-user-check"></i> إعادة الاشتراك
                             </button>`
-                        }
-                        <button class="btn btn--danger btn--sm delete-subscriber-btn" data-id="${subscriber.id}">
-                            <i class="fa-solid fa-trash"></i>
-                            حذف
-                        </button>
-                    </div>
+                    }
+                    <button class="btn btn-danger btn-sm delete-subscriber-btn" data-id="${subscriber.id}">
+                        <i class="fa-solid fa-trash"></i> حذف
+                    </button>
                 </div>
             </div>
         `;
@@ -394,3 +389,4 @@ class NewsletterManager {
 
 // تصدير الـ class
 window.NewsletterManager = NewsletterManager;
+

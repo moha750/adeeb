@@ -3,36 +3,6 @@
    متوافق مع هوية نادي أدِيب
    ============================================================================ */
 
-:root {
-    /* Layout Dimensions */
-    --header-height: 70px;
-    --sidebar-width: 280px;
-    --sidebar-collapsed-width: 70px;
-    
-    /* Layout Spacing - قابلة للتحكم من مكان واحد */
-    --layout-gap: 0px;                    /* المسافة بين Header و Sidebar/Main */
-    --sidebar-main-gap: 0px;              /* المسافة بين Sidebar و Main Content */
-    --content-padding: 2rem;              /* Padding داخل Main Content */
-    
-    /* Z-Index Layers - ترتيب الطبقات */
-    --z-header: 900;
-    --z-sidebar: 800;
-    --z-fab: 999;
-    --z-backdrop: 899;
-    --z-content: 1;
-    
-    /* Colors */
-    --main-blue: #274060;
-    --accent-blue: #3d8fd6;
-    --light-blue: #6ba8e2;
-    --dark-blue: #1a2a3a;
-    --background: linear-gradient(135deg, #f8f9fa 0%, #e6f0f9 100%);
-    
-    /* Transitions */
-    --transition-speed: 0.4s;
-    --transition-ease: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
 /* ============================================================================
    Global Resets & Base Styles
    ============================================================================ */
@@ -49,9 +19,9 @@ html {
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: var(--background);
-    color: var(--main-blue);
+    font-family: var(--font-family-base);
+    background: var(--bg-gradient);
+    color: var(--color-primary);
     line-height: 1.6;
     overflow-x: clip;
     position: relative;
@@ -161,132 +131,11 @@ body::before {
     display: none;
 }
 
-/* ============================================================================
-   Section Header
-   ============================================================================ */
-
-.section-header {
-    margin-bottom: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    padding: 1.25rem 1.5rem;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
-    border-radius: 12px;
-    border: 1px solid rgba(61, 143, 214, 0.1);
-    box-shadow: 0 2px 8px rgba(39, 64, 96, 0.06);
-}
-
-.section-header-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    flex: 1;
-    min-width: 200px;
-}
-
-/* العنوان والوصف على اليمين */
-.section-header > h1,
-.section-header > .section-header-content {
-    order: 1;
-    margin-left: auto;
-}
-
-/* الأزرار على اليسار */
-.section-header > .section-header-actions,
-.section-header > .section-actions,
-.section-header > .btn,
-.section-header > button {
-    order: 2;
-    margin-right: auto;
-    margin-left: 0;
-}
-
-/* جعل section-subtitle تحت h1 مباشرة */
-.section-header > h1 + .section-subtitle {
-    width: 100%;
-    flex-basis: 100%;
-    order: 1;
-    margin-top: 0;
-    margin-bottom: 0;
-}
-
-.section-header h1 {
-    font-size: 1.75rem;
-    color: var(--main-blue);
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin: 0;
-    line-height: 1.3;
-}
-
-.section-header h1 i {
-    color: var(--accent-blue);
-    font-size: 1.5rem;
-    background: linear-gradient(135deg, rgba(61, 143, 214, 0.15) 0%, rgba(61, 143, 214, 0.08) 100%);
-    padding: 0.5rem;
-    border-radius: 10px;
-}
-
 .section-subtitle {
     color: #64748b;
     font-size: 0.9rem;
     margin: 0;
     padding-right: 0.25rem;
-}
-
-.section-header-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .section-header {
-        padding: 1rem;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-    
-    .section-header > h1,
-    .section-header > .section-header-content {
-        margin-left: 0;
-        width: 100%;
-        align-items: center;
-    }
-    
-    .section-header > .section-header-actions,
-    .section-header > .section-actions,
-    .section-header > .btn,
-    .section-header > button {
-        margin-right: 0;
-        justify-content: center;
-        width: 100%;
-    }
-    
-    .section-header h1 {
-        font-size: 1.4rem;
-        width: 100%;
-        text-align: center;
-        justify-content: center;
-    }
-    
-    .section-header h1 i {
-        font-size: 1.2rem;
-        padding: 0.4rem;
-    }
-    
-    .section-header-actions {
-        justify-content: center;
-        margin-top: 0.5rem;
-    }
 }
 
 
@@ -385,11 +234,14 @@ body::before {
 .fw-bold { font-weight: 700 !important; }
 
 /* Colors */
-.text-primary { color: var(--accent-blue) !important; }
+.text-primary   { color: var(--accent-blue) !important; }
 .text-secondary { color: #64748b !important; }
-.text-success { color: #10b981 !important; }
-.text-danger { color: #ef4444 !important; }
-.text-warning { color: #f59e0b !important; }
+.text-muted     { color: #9ca3af !important; }
+.text-light     { color: #d1d5db !important; }
+.text-success   { color: #10b981 !important; }
+.text-danger    { color: #ef4444 !important; }
+.text-warning   { color: #f59e0b !important; }
+.text-info      { color: #3b82f6 !important; }
 
 /* Background Colors */
 .bg-white { background-color: white !important; }
@@ -422,14 +274,6 @@ body::before {
         padding: 1.5rem;
     }
 
-    .section-header h1 {
-        font-size: 1.5rem;
-    }
-
-    .section-header h1 i {
-        font-size: 1.4rem;
-    }
-
     /* Grid System Responsive */
     .col-1, .col-2, .col-3, .col-4, .col-5, .col-6,
     .col-7, .col-8, .col-9, .col-10, .col-11, .col-12 {
@@ -443,13 +287,7 @@ body::before {
         padding: 1rem;
     }
 
-    .section-header {
-        margin-bottom: 1.5rem;
-    }
 
-    .section-header h1 {
-        font-size: 1.3rem;
-    }
 }
 
 /* ============================================================================
@@ -587,26 +425,4 @@ body::before {
     background: #f0fdf4;
 }
 
-.image-upload-container .remove-image-btn {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: #ef4444;
-    color: white;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.image-upload-container:hover .remove-image-btn {
-    opacity: 1;
-}
 

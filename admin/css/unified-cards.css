@@ -1,0 +1,1466 @@
+/* ============================================================================
+   نظام الكروت الموحد — Unified Cards System
+   نادي أدِيب — الملف الوحيد المعتمد لجميع الكروت في لوحة التحكم
+   ⚠️  لا تُعرِّف أنماط كروت في أي ملف آخر
+   ============================================================================ */
+
+
+/* ============================================================
+   § 1 · شبكة الكروت — Cards Grid
+   ============================================================ */
+
+.uc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+}
+
+.uc-grid--wide {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+}
+
+.uc-grid--narrow {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+
+/* ============================================================
+   § 2 · البطاقة الأساسية — Base Card  ‹Gradient Fill Style›
+   ============================================================ */
+
+/*
+ * --_uc-color-rgb  : RGB للون المميّز
+ * --_uc-color      : اللون الأساسي
+ * --_uc-color-dark : اللون الداكن للتدرج
+ */
+.uc-card {
+    --_uc-color-rgb:  61, 143, 214;
+    --_uc-color:      #3d8fd6;
+    --_uc-color-dark: #274060;
+
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    background-color: #ffffff;
+    background-image: linear-gradient(
+        145deg,
+        rgba(var(--_uc-color-rgb), 0.09) 0%,
+        rgba(var(--_uc-color-rgb), 0.03) 45%,
+        transparent 100%
+    );
+    border: 1px solid rgba(var(--_uc-color-rgb), 0.16);
+    box-shadow:
+        0 1px 4px  rgba(0, 0, 0, 0.04),
+        0 6px 24px rgba(var(--_uc-color-rgb), 0.10);
+    display: flex;
+    flex-direction: column;
+    transition:
+        transform    0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow   0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.35s ease;
+}
+
+
+/* دائرة زخرفية */
+.uc-card::after {
+    content: '';
+    position: absolute;
+    bottom: -55px;
+    left: -55px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(
+        circle,
+        rgba(var(--_uc-color-rgb), 0.08) 0%,
+        transparent 68%
+    );
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.70;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+.uc-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(var(--_uc-color-rgb), 0.28);
+    box-shadow:
+        0 2px 8px  rgba(0, 0, 0, 0.06),
+        0 18px 44px rgba(var(--_uc-color-rgb), 0.16);
+}
+
+.uc-card:hover .uc-card__body::before {
+    opacity: 1;
+    top: 8px;
+    height: calc(100% - 16px);
+}
+
+.uc-card:hover::after {
+    transform: scale(1.28);
+    opacity: 1;
+}
+
+
+/* ============================================================
+   § 3 · رأس البطاقة — Card Header
+   ============================================================ */
+
+.uc-card__header {
+    background: linear-gradient(135deg, var(--_uc-color) 0%, var(--_uc-color-dark) 100%);
+    position: relative;
+    flex-shrink: 0;
+}
+
+/* بريق ناعم داخل الهيدر */
+.uc-card__header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 15% 55%, rgba(255, 255, 255, 0.12) 0%, transparent 65%);
+    pointer-events: none;
+}
+
+/* ─── متغيرات الألوان — Color Variants ─── */
+
+.uc-card--primary  { --_uc-color-rgb: 61, 143, 214;  --_uc-color: #3d8fd6; --_uc-color-dark: #274060; }
+.uc-card--success  { --_uc-color-rgb: 16, 185, 129;  --_uc-color: #10b981; --_uc-color-dark: #059669; }
+.uc-card--warning  { --_uc-color-rgb: 245, 158, 11;  --_uc-color: #f59e0b; --_uc-color-dark: #d97706; }
+.uc-card--danger   { --_uc-color-rgb: 239, 68, 68;   --_uc-color: #ef4444; --_uc-color-dark: #dc2626; }
+.uc-card--info     { --_uc-color-rgb: 59, 130, 246;  --_uc-color: #3b82f6; --_uc-color-dark: #2563eb; }
+.uc-card--purple   { --_uc-color-rgb: 139, 92, 246;  --_uc-color: #8b5cf6; --_uc-color-dark: #7c3aed; }
+.uc-card--teal     { --_uc-color-rgb: 20, 184, 166;  --_uc-color: #14b8a6; --_uc-color-dark: #0d9488; }
+.uc-card--neutral  { --_uc-color-rgb: 100, 116, 139; --_uc-color: #64748b; --_uc-color-dark: #475569; }
+
+/* توافق مع الكلاسات القديمة على uc-card__header */
+.uc-card__header--success { background: linear-gradient(135deg, #34d399 0%, #059669 100%); }
+.uc-card__header--warning { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); }
+.uc-card__header--danger  { background: linear-gradient(135deg, #f87171 0%, #dc2626 100%); }
+.uc-card__header--info    { background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%); }
+.uc-card__header--purple  { background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); }
+.uc-card__header--neutral { background: linear-gradient(135deg, #94a3b8 0%, #475569 100%); }
+
+
+/* ============================================================
+   § 4 · محتوى الرأس الداخلي — Header Inner
+   ============================================================ */
+
+.uc-card__header-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1.1rem 1.2rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* أيقونة — Gradient Fill */
+.uc-card__icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.20);
+    border: 1.5px solid rgba(255, 255, 255, 0.28);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    color: rgba(255, 255, 255, 0.95);
+    flex-shrink: 0;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* بريق ناعم فوق الأيقونة */
+.uc-card__icon::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(145deg, rgba(255,255,255,0.24) 0%, transparent 55%);
+    pointer-events: none;
+}
+
+.uc-card:hover .uc-card__icon {
+    transform: scale(1.09) rotate(-4deg);
+}
+
+.uc-card__icon img,
+.uc-card__avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+/* معلومات الرأس */
+.uc-card__header-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.uc-card__title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 0.28rem 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.uc-card__title--wrap {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.uc-card__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    background: rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(6px);
+    padding: 0.18rem 0.72rem;
+    border-radius: 40px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.uc-card__badge i { font-size: 0.65rem; }
+
+
+/* ============================================================
+   § 5 · رأس بصورة غلاف — Media Header
+   ============================================================ */
+
+.uc-card__header--media {
+    background: #1e293b;
+    padding: 0;
+    min-height: 160px;
+}
+
+.uc-card__header--media::before {
+    background: linear-gradient(to bottom, transparent 28%, rgba(15, 23, 42, 0.80) 100%);
+    z-index: 1;
+    border-radius: 0;
+}
+
+.uc-card__media-img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+}
+
+.uc-card__header--media .uc-card__header-inner {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    padding: 0.8rem 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+    z-index: 2;
+}
+
+.uc-card__header--media .uc-card__title {
+    font-size: 0.93rem;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+}
+
+
+/* ============================================================
+   § 6 · زر الخيارات — Options Button
+   ============================================================ */
+
+.uc-card__options {
+    position: absolute;
+    top: 0.72rem;
+    left: 0.72rem;
+    z-index: 100;
+}
+
+.uc-card__badges-overlay {
+    position: absolute;
+    top: 0.8rem;
+    right: 0.8rem;
+    z-index: 10;
+    display: flex;
+    gap: 0.3rem;
+}
+
+
+.uc-card__dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+    min-width: 185px;
+    z-index: 10000;
+    overflow: hidden;
+    padding: 0.65rem;
+}
+
+.uc-card__dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.5rem 0.6rem;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    color: #374151;
+    cursor: pointer;
+    text-align: right;
+    transition: background 0.15s;
+}
+
+.uc-card__dropdown-item:hover {
+    background: #f8fafc;
+}
+
+.uc-card__dropdown-item--danger {
+    color: #dc2626;
+}
+
+.uc-card__dropdown-item--danger:hover {
+    background: #fef2f2;
+}
+
+.uc-card__dropdown-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+}
+
+.uc-card__dropdown-divider {
+    border-top: 1px solid #f1f5f9;
+    margin: 4px 0;
+}
+
+
+/* ============================================================
+   § 7 · جسم البطاقة — Card Body
+   ============================================================ */
+
+.uc-card__body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 1rem;
+    flex: 1;
+    justify-content: space-between;
+}
+
+/* شريط جانبي عمودي — يمين RTL، داخل الـ body فقط */
+.uc-card__body::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    right: 0;
+    width: 4px;
+    height: calc(100% - 24px);
+    background: linear-gradient(180deg, var(--_uc-color), var(--_uc-color-dark));
+    border-radius: 4px 0 0 4px;
+    opacity: 0.45;
+    transition: opacity 0.3s ease, height 0.3s ease, top 0.3s ease;
+}
+
+.uc-card__description {
+    font-size: 0.84rem;
+    color: #64748b;
+    line-height: 1.6;
+    margin: 0;
+}
+
+
+/* ============================================================
+   § 8 · عناصر المعلومات — Info Items
+   ============================================================ */
+
+.uc-card__info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.72rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(var(--_uc-color-rgb), 0.04);
+    border: 1px solid rgba(var(--_uc-color-rgb), 0.10);
+    border-radius: 12px;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.uc-card__info-item:hover {
+    background: rgba(var(--_uc-color-rgb), 0.08);
+    border-color: rgba(var(--_uc-color-rgb), 0.20);
+}
+
+/* أيقونة المعلومات — Gradient Fill */
+.uc-card__info-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--_uc-color), var(--_uc-color-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    box-shadow: 0 3px 8px rgba(var(--_uc-color-rgb), 0.28);
+    position: relative;
+}
+
+.uc-card__info-icon::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(145deg, rgba(255,255,255,0.24) 0%, transparent 55%);
+    pointer-events: none;
+}
+
+.uc-card__info-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.uc-card__info-label {
+    display: block;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.45px;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 0.1rem;
+}
+
+.uc-card__info-value {
+    display: block;
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* عنصر معلومات عريض (full-width) */
+.uc-card__info-item--full {
+    grid-column: 1 / -1;
+}
+
+.uc-card__info-item--full .uc-card__info-value {
+    white-space: normal;
+    word-break: break-word;
+}
+
+
+/* ============================================================
+   § 9 · صف الإحصائيات — Stats Row
+   ============================================================ */
+
+.uc-card__stats {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 0.6rem 0.75rem;
+    background: rgba(var(--_uc-color-rgb), 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(var(--_uc-color-rgb), 0.12);
+}
+
+.uc-card__stat {
+    flex: 1;
+    min-width: 55px;
+    text-align: center;
+}
+
+.uc-card__stat-value {
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--_uc-color);
+    line-height: 1.2;
+}
+
+.uc-card__stat-label {
+    display: block;
+    font-size: 0.67rem;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 0.1rem;
+}
+
+
+/* ============================================================
+   § 10 · تذييل البطاقة — Card Footer
+   ============================================================ */
+
+.uc-card__footer {
+    background: rgba(var(--_uc-color-rgb), 0.03);
+    padding: 0.68rem 1rem;
+    border-top: 1px solid rgba(var(--_uc-color-rgb), 0.09);
+    display: flex;
+    gap: 0.42rem;
+    flex-wrap: wrap;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+
+/* ============================================================
+   § 11 · شارات الحالة — Status Badges
+   ============================================================ */
+
+.uc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.22rem 0.7rem;
+    border-radius: 40px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.uc-badge--primary   { background: rgba(39,  64,  96,  0.10); color: #274060; }
+.uc-badge--success   { background: rgba(16,  185, 129, 0.12); color: #065f46; }
+.uc-badge--warning   { background: rgba(245, 158, 11,  0.12); color: #92400e; }
+.uc-badge--danger    { background: rgba(239, 68,  68,  0.12); color: #991b1b; }
+.uc-badge--info      { background: rgba(59,  130, 246, 0.12); color: #1e40af; }
+.uc-badge--secondary { background: rgba(100, 116, 139, 0.10); color: #475569; }
+.uc-badge--purple    { background: rgba(139, 92,  246, 0.12); color: #5b21b6; }
+
+
+/* ============================================================
+   § 12 · حالة العنصر الجديد — New-item highlight
+   ============================================================ */
+
+.uc-card--new {
+    --_uc-color-rgb:  59, 130, 246;
+    --_uc-color:      #3b82f6;
+    --_uc-color-dark: #2563eb;
+    border-color: rgba(59, 130, 246, 0.30);
+    box-shadow:
+        0 0 0 3px rgba(59, 130, 246, 0.08),
+        0 6px 24px rgba(59, 130, 246, 0.12);
+}
+
+
+/* ============================================================
+   § 13 · Responsive
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .uc-grid,
+    .uc-grid--wide,
+    .uc-grid--narrow {
+        grid-template-columns: 1fr;
+    }
+
+    .uc-card__header-inner {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+
+    .uc-card__icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.15rem;
+    }
+
+    .uc-card__title { font-size: 0.92rem; }
+
+    .uc-card__footer { flex-wrap: wrap; }
+
+}
+
+@media (max-width: 480px) {
+    .uc-card { border-radius: 1rem; }
+
+    .uc-card__body { padding: 0.85rem; }
+
+    .uc-card__footer { padding: 0.6rem 0.85rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .uc-card,
+    .uc-card::before,
+    .uc-card::after,
+    .uc-card__info-item,
+    .uc-card__icon { transition: none; }
+
+    .uc-card:hover { transform: none; }
+    .uc-card:hover .uc-card__body::before { top: 12px; height: calc(100% - 24px); opacity: 0.45; }
+    .uc-card:hover::after { transform: none; }
+}
+
+
+/* ============================================================
+   § 14 · بطاقة الأرشيف — Archive Card (دورات العضوية)
+   ============================================================ */
+
+.archive-card .archive-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1.1rem 1.2rem;
+    background: linear-gradient(135deg, #3d8fd6 0%, #274060 100%);
+    border-radius: 1.25rem 1.25rem 0 0;
+}
+
+.archive-card .archive-card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    color: #ffffff;
+}
+
+.archive-card .archive-card-title i {
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.archive-card .archive-card-title h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 0.15rem 0;
+}
+
+.archive-card .archive-card-subtitle {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.75);
+    margin: 0;
+}
+
+.archive-card .archive-card-date {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.12);
+    padding: 0.3rem 0.75rem;
+    border-radius: 40px;
+}
+
+.archive-card .archive-card-description {
+    padding: 0.85rem 1.2rem 0;
+    font-size: 0.85rem;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.archive-card .archive-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+    padding: 1rem 1.2rem;
+}
+
+.archive-card .archive-stat-section {
+    background: rgba(248, 250, 252, 0.9);
+    border: 1px solid rgba(226, 232, 240, 0.6);
+    border-radius: 10px;
+    padding: 0.75rem;
+}
+
+.archive-card .archive-stat-header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 0.6rem;
+}
+
+.archive-card .archive-stat-header i {
+    color: #3d8fd6;
+    font-size: 0.8rem;
+}
+
+.archive-card .archive-stat-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.archive-card .archive-stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+}
+
+.archive-card .archive-stat-item .stat-label { color: #64748b; }
+.archive-card .archive-stat-item .stat-value { font-weight: 700; color: #1e293b; }
+.archive-card .archive-stat-item .stat-value.stat-success { color: #059669; }
+.archive-card .archive-stat-item .stat-value.stat-danger  { color: #dc2626; }
+
+.archive-card .archive-card-actions {
+    padding: 0.7rem 1.2rem;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    gap: 0.5rem;
+}
+
+@media (max-width: 480px) {
+    .archive-card .archive-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* ============================================================
+   § 15 · تخطيط أزرار الترتيب في الفوتر — Order Buttons Layout
+   ============================================================ */
+
+.uc-card__footer .order-buttons {
+    display: flex;
+    gap: 4px;
+    margin-inline-end: auto;
+}
+
+
+/* ============================================================
+   § 16 · شارات النصوص — Badge
+   ============================================================ */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+    transition: var(--transition-fast);
+}
+
+.badge i { font-size: 0.9em; }
+
+.badge--primary { background: rgba(61,143,214,0.12); color: var(--color-primary); border: 1px solid rgba(61,143,214,0.25); }
+.badge--success { background: rgba(16,185,129,0.12); color: var(--color-success-dark); border: 1px solid rgba(16,185,129,0.25); }
+.badge--warning { background: rgba(245,158,11,0.12); color: var(--color-warning-dark); border: 1px solid rgba(245,158,11,0.25); }
+.badge--danger  { background: rgba(239,68,68,0.12);  color: var(--color-danger-dark);  border: 1px solid rgba(239,68,68,0.25); }
+.badge--info    { background: rgba(59,130,246,0.12);  color: var(--color-info-dark);    border: 1px solid rgba(59,130,246,0.25); }
+.badge--purple  { background: rgba(139,92,246,0.12);  color: var(--color-purple-dark);  border: 1px solid rgba(139,92,246,0.25); }
+.badge--teal    { background: rgba(20,184,166,0.12);  color: var(--color-teal-dark);    border: 1px solid rgba(20,184,166,0.25); }
+.badge--lg { padding: 0.5rem 1rem;    font-size: var(--font-size-base); }
+.badge--sm { padding: 0.25rem 0.5rem; font-size: var(--font-size-xs); }
+
+
+/* ============================================================
+   § 17 · بطاقة عامة — Card  ‹Gradient Fill Style›
+   ============================================================ */
+
+/*
+ * متغيرات داخلية للبطاقة
+ * --_card-color-rgb  : RGB للون المميّز (يُعاد في كل variant)
+ * --_card-color      : اللون الأساسي
+ * --_card-color-dark : اللون الداكن (للتدرج)
+ */
+.card {
+    --_card-color-rgb:  61, 143, 214;
+    --_card-color:      #3d8fd6;
+    --_card-color-dark: #274060;
+
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    padding: 0;
+    background-color: #ffffff;
+    background-image: linear-gradient(
+        145deg,
+        rgba(var(--_card-color-rgb), 0.10) 0%,
+        rgba(var(--_card-color-rgb), 0.04) 45%,
+        transparent 100%
+    );
+    border: 1px solid rgba(var(--_card-color-rgb), 0.16);
+    box-shadow:
+        0 1px 4px  rgba(0, 0, 0, 0.04),
+        0 6px 24px rgba(var(--_card-color-rgb), 0.10);
+    transition:
+        transform      0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow     0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color   0.35s ease,
+        background-image 0.35s ease;
+    margin-bottom: var(--spacing-lg);
+}
+
+/* شريط جانبي عمودي (يمين — بداية القراءة RTL) */
+.card::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    right: 0;
+    width: 4px;
+    height: calc(100% - 28px);
+    background: linear-gradient(
+        180deg,
+        var(--_card-color),
+        var(--_card-color-dark)
+    );
+    border-radius: 4px 0 0 4px;
+    opacity: 0.55;
+    transition: opacity 0.3s ease, height 0.3s ease, top 0.3s ease;
+}
+
+/* دائرة زخرفية ناعمة في الزاوية */
+.card::after {
+    content: '';
+    position: absolute;
+    bottom: -55px;
+    left: -55px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(
+        circle,
+        rgba(var(--_card-color-rgb), 0.09) 0%,
+        transparent 68%
+    );
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.7;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(var(--_card-color-rgb), 0.30);
+    box-shadow:
+        0 2px 8px  rgba(0, 0, 0, 0.06),
+        0 18px 44px rgba(var(--_card-color-rgb), 0.16);
+    background-image: linear-gradient(
+        145deg,
+        rgba(var(--_card-color-rgb), 0.14) 0%,
+        rgba(var(--_card-color-rgb), 0.05) 45%,
+        transparent 100%
+    );
+}
+
+.card:hover::before {
+    opacity: 1;
+    top: 10px;
+    height: calc(100% - 20px);
+}
+
+.card:hover::after {
+    transform: scale(1.28);
+    opacity: 1;
+}
+
+.card:focus-within {
+    outline: none;
+    border-color: rgba(var(--_card-color-rgb), 0.38);
+    box-shadow:
+        0 0 0 3px rgba(var(--_card-color-rgb), 0.12),
+        0 6px 24px rgba(var(--_card-color-rgb), 0.14);
+}
+
+
+/* ─── رأس البطاقة ─── */
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    padding: 1.15rem 1.5rem 1.05rem;
+    background: rgba(var(--_card-color-rgb), 0.05);
+    border-bottom: 1px solid rgba(var(--_card-color-rgb), 0.10);
+    position: relative;
+    z-index: 1;
+}
+
+.card-header h2,
+.card-header h3 {
+    margin: 0;
+    color: var(--text-dark, #1e293b);
+    font-size: 1.05rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    line-height: 1.3;
+}
+
+/* أيقونة الهيدر — Gradient Fill */
+.card-header h2 i,
+.card-header h3 i {
+    width: 2.15rem;
+    height: 2.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.92rem;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--_card-color), var(--_card-color-dark));
+    border-radius: 0.6rem;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow:
+        0 4px 12px rgba(var(--_card-color-rgb), 0.32),
+        0 2px 4px  rgba(var(--_card-color-rgb), 0.20);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.35s ease;
+}
+
+/* بريق ناعم فوق الأيقونة */
+.card-header h2 i::before,
+.card-header h3 i::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.28) 0%, transparent 55%);
+    pointer-events: none;
+}
+
+.card:hover .card-header h2 i,
+.card:hover .card-header h3 i {
+    transform: scale(1.08) rotate(-4deg);
+    box-shadow:
+        0 8px 20px rgba(var(--_card-color-rgb), 0.42),
+        0 3px 8px  rgba(var(--_card-color-rgb), 0.22);
+}
+
+
+/* ─── جسم البطاقة ─── */
+
+.card-body {
+    padding: 1.35rem 1.5rem;
+    color: var(--text-secondary, #335c81);
+    line-height: var(--line-height-relaxed);
+    position: relative;
+    z-index: 1;
+}
+
+.card-header + .card-body { padding-top: 1.15rem; }
+
+
+/* ─── تذييل البطاقة ─── */
+
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    padding: 0.9rem 1.5rem;
+    background: rgba(var(--_card-color-rgb), 0.03);
+    border-top: 1px solid rgba(var(--_card-color-rgb), 0.09);
+    position: relative;
+    z-index: 1;
+}
+
+
+/* ─── متغيرات الألوان — Color Variants ─── */
+
+.card--primary {
+    --_card-color-rgb:  61, 143, 214;
+    --_card-color:      #3d8fd6;
+    --_card-color-dark: #274060;
+}
+
+.card--success {
+    --_card-color-rgb:  16, 185, 129;
+    --_card-color:      #10b981;
+    --_card-color-dark: #059669;
+}
+
+.card--warning {
+    --_card-color-rgb:  245, 158, 11;
+    --_card-color:      #f59e0b;
+    --_card-color-dark: #d97706;
+}
+
+.card--danger {
+    --_card-color-rgb:  239, 68, 68;
+    --_card-color:      #ef4444;
+    --_card-color-dark: #dc2626;
+}
+
+.card--info {
+    --_card-color-rgb:  59, 130, 246;
+    --_card-color:      #3b82f6;
+    --_card-color-dark: #2563eb;
+}
+
+.card--purple {
+    --_card-color-rgb:  139, 92, 246;
+    --_card-color:      #8b5cf6;
+    --_card-color-dark: #7c3aed;
+}
+
+.card--teal {
+    --_card-color-rgb:  20, 184, 166;
+    --_card-color:      #14b8a6;
+    --_card-color-dark: #0d9488;
+}
+
+.card--neutral {
+    --_card-color-rgb:  100, 116, 139;
+    --_card-color:      #64748b;
+    --_card-color-dark: #475569;
+}
+
+
+/* ─── حالات خاصة — Special Modifiers ─── */
+
+/* مضغوط */
+.card--compact .card-body   { padding: var(--spacing-md); }
+.card--compact .card-header { padding: 0.85rem var(--spacing-md) 0.8rem; }
+.card--compact .card-footer { padding: 0.65rem var(--spacing-md); }
+
+/* بلا حدود */
+.card--borderless {
+    border-color: transparent;
+    box-shadow: 0 2px 12px rgba(var(--_card-color-rgb), 0.08);
+}
+.card--borderless::before { display: none; }
+
+/* مرفوع */
+.card--elevated {
+    box-shadow:
+        0 4px 10px  rgba(0, 0, 0, 0.05),
+        0 16px 40px rgba(var(--_card-color-rgb), 0.13),
+        0 32px 64px rgba(var(--_card-color-rgb), 0.07);
+}
+.card--elevated:hover {
+    transform: translateY(-7px);
+    box-shadow:
+        0 6px 18px  rgba(0, 0, 0, 0.07),
+        0 24px 56px rgba(var(--_card-color-rgb), 0.19),
+        0 40px 80px rgba(var(--_card-color-rgb), 0.10);
+}
+
+/* زجاجي */
+.card--glass {
+    background-color: rgba(255, 255, 255, 0.65);
+    background-image: linear-gradient(
+        145deg,
+        rgba(var(--_card-color-rgb), 0.07) 0%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border-color: rgba(255, 255, 255, 0.50);
+}
+
+/* قابل للنقر */
+.card--interactive { cursor: pointer; user-select: none; }
+
+.card--interactive:active {
+    transform: translateY(-2px) scale(0.993);
+    transition-duration: 0.10s;
+}
+
+/* تحميل — Skeleton shimmer */
+.card--loading { pointer-events: none; }
+
+.card--loading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        105deg,
+        transparent 30%,
+        rgba(var(--_card-color-rgb), 0.09) 50%,
+        transparent 70%
+    );
+    background-size: 250% 100%;
+    animation: card-shimmer 1.8s ease-in-out infinite;
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+@keyframes card-shimmer {
+    0%   { background-position: 250% 0; }
+    100% { background-position: -250% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card, .card::before, .card::after { transition: none; }
+    .card:hover { transform: none; }
+    .card--loading::after { animation: none; }
+}
+
+/* ─── تبويب الأعضاء المنتهية عضوياتهم — Red Scope ─── */
+
+#terminated-members-section .card {
+    --_card-color-rgb:  239, 68, 68;
+    --_card-color:      #ef4444;
+    --_card-color-dark: #dc2626;
+}
+
+/* ─── تبويب الأعضاء المعلقين — Orange Scope ─── */
+
+#pending-members-section .card {
+    --_card-color-rgb:  245, 158, 11;
+    --_card-color:      #f59e0b;
+    --_card-color-dark: #d97706;
+}
+
+
+/* ============================================================
+   § 18 · حالة فارغة — Empty State
+   ============================================================ */
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-3xl) var(--spacing-lg);
+    color: var(--text-muted);
+}
+
+.empty-state__icon {
+    font-size: 4rem;
+    color: var(--border-medium);
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.5;
+}
+
+.empty-state__title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.empty-state__message {
+    font-size: var(--font-size-base);
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-lg);
+    line-height: var(--line-height-relaxed);
+}
+
+.empty-state__action { margin-top: var(--spacing-lg); }
+
+
+/* ============================================================
+   § 19 · الملف الشخصي — Profile Section
+   ============================================================ */
+
+/* ─── Hero Card ─── */
+
+.profile-hero-card {
+    --_uc-color-rgb:  61, 143, 214;
+    --_uc-color:      #3d8fd6;
+    --_uc-color-dark: #274060;
+}
+
+.profile-hero-card:hover {
+    transform: none;
+}
+
+.profile-hero-header {
+    border-radius: 20px;
+    min-height: auto;
+    background: linear-gradient(135deg, var(--_uc-color) 0%, var(--_uc-color-dark) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-hero-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 15% 55%, rgba(255, 255, 255, 0.10) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.profile-hero-header::after {
+    content: '';
+    position: absolute;
+    top: -80px;
+    left: -80px;
+    width: 260px;
+    height: 260px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.07) 0%, transparent 65%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.profile-hero-inner {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+    padding: 2.25rem 2.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* ─── Avatar ─── */
+
+.profile-hero-avatar {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    flex-shrink: 0;
+}
+
+.profile-hero-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid rgba(255, 255, 255, 0.30);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+    transition: border-color 0.3s ease;
+}
+
+.profile-hero-avatar:hover img {
+    border-color: rgba(255, 255, 255, 0.50);
+}
+
+.profile-avatar-edit-btn {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--color-primary);
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-avatar-edit-btn:hover {
+    transform: scale(1.12);
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+}
+
+/* ─── Hero Info ─── */
+
+.profile-hero-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-hero-name {
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 0.55rem 0;
+    line-height: 1.3;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.profile-hero-role {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(8px);
+    padding: 0.32rem 1rem;
+    border-radius: 40px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.profile-hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: rgba(255, 255, 255, 0.70);
+    font-size: 0.82rem;
+    margin-top: 0.65rem;
+}
+
+.profile-hero-meta i {
+    font-size: 0.75rem;
+}
+
+/* ─── Cards Grid ─── */
+
+.profile-cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-top: 1.25rem;
+}
+
+.profile-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* ─── Edit Button inside info items ─── */
+
+.uc-card__info-item .btn-edit-inline {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    opacity: 0;
+}
+
+.uc-card__info-item:hover .btn-edit-inline {
+    opacity: 1;
+}
+
+.uc-card__info-item .btn-edit-inline:hover {
+    background: rgba(var(--_uc-color-rgb), 0.10);
+    border-color: rgba(var(--_uc-color-rgb), 0.22);
+    color: var(--_uc-color);
+}
+
+/* ─── Inline Edit Input ─── */
+
+.uc-card__info-item .inline-edit-input {
+    padding: 0.28rem 0.5rem;
+    font-size: 0.83rem;
+    height: auto;
+    min-height: 0;
+    border-radius: 8px;
+}
+
+/* ─── Social Icons ─── */
+
+.profile-social-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+.profile-social-icon::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.22) 0%, transparent 55%);
+    pointer-events: none;
+}
+
+.profile-social-icon.twitter   { background: linear-gradient(135deg, #1da1f2, #0c85d0); box-shadow: 0 3px 10px rgba(29, 161, 242, 0.30); }
+.profile-social-icon.instagram { background: linear-gradient(135deg, #f77737, #e1306c, #c13584); box-shadow: 0 3px 10px rgba(225, 48, 108, 0.30); }
+.profile-social-icon.linkedin  { background: linear-gradient(135deg, #0077b5, #005582); box-shadow: 0 3px 10px rgba(0, 119, 181, 0.30); }
+.profile-social-icon.tiktok    { background: linear-gradient(135deg, #25f4ee, #010101, #fe2c55); box-shadow: 0 3px 10px rgba(254, 44, 85, 0.25); }
+
+/* ─── Activity Container ─── */
+
+#recentActivityContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    max-height: 420px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--_uc-color-rgb), 0.35) transparent;
+}
+
+#recentActivityContainer::-webkit-scrollbar {
+    width: 5px;
+}
+
+#recentActivityContainer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#recentActivityContainer::-webkit-scrollbar-thumb {
+    background: rgba(var(--_uc-color-rgb), 0.35);
+    border-radius: 99px;
+}
+
+#recentActivityContainer::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--_uc-color-rgb), 0.60);
+}
+
+/* ─── Profile Responsive ─── */
+
+@media (max-width: 900px) {
+    .profile-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .profile-hero-inner {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.75rem 1.25rem;
+        gap: 1.25rem;
+    }
+
+    .profile-hero-avatar {
+        width: 90px;
+        height: 90px;
+    }
+
+    .profile-hero-name {
+        font-size: 1.3rem;
+    }
+
+    .profile-hero-meta {
+        justify-content: center;
+    }
+
+    .uc-card__info-item .btn-edit-inline {
+        opacity: 1;
+    }
+}
