@@ -1332,44 +1332,36 @@
     gap: 1.25rem;
 }
 
-/* ─── Edit Button inside info items ─── */
+/* ─── Card-Level Edit Button (header – on dark gradient) ─── */
 
-.uc-card__info-item .btn-edit-inline {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    background: transparent;
-    border: 1px solid transparent;
-    color: #94a3b8;
-    cursor: pointer;
+.uc-card__edit-btn {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 0.72rem;
+    gap: 0.35rem;
+    margin-right: auto;
+    padding: 0.38rem 0.85rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.38);
+    background: rgba(255, 255, 255, 0.16);
+    color: rgba(255, 255, 255, 0.93);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    white-space: nowrap;
     flex-shrink: 0;
-    transition: all 0.2s ease;
-    opacity: 0;
 }
 
-.uc-card__info-item:hover .btn-edit-inline {
-    opacity: 1;
+.uc-card__edit-btn:hover {
+    background: rgba(255, 255, 255, 0.26);
+    border-color: rgba(255, 255, 255, 0.60);
+    color: #ffffff;
+    transform: translateY(-1px);
 }
 
-.uc-card__info-item .btn-edit-inline:hover {
-    background: rgba(var(--_uc-color-rgb), 0.10);
-    border-color: rgba(var(--_uc-color-rgb), 0.22);
-    color: var(--_uc-color);
-}
+.uc-card__edit-btn i { font-size: 0.75rem; }
 
-/* ─── Inline Edit Input ─── */
 
-.uc-card__info-item .inline-edit-input {
-    padding: 0.28rem 0.5rem;
-    font-size: 0.83rem;
-    height: auto;
-    min-height: 0;
-    border-radius: 8px;
-}
 
 /* ─── Social Icons ─── */
 
@@ -1460,7 +1452,119 @@
         justify-content: center;
     }
 
-    .uc-card__info-item .btn-edit-inline {
-        opacity: 1;
+    .uc-card__edit-btn { padding: 0.35rem 0.7rem; }
+}
+
+
+/* ============================================================
+   § 10 · تنقل إعدادات النظام — Settings Segmented Control
+   ============================================================ */
+
+/* ── الحاوية المقطعية ── */
+.settings-segmented-nav {
+    display: flex;
+    gap: 4px;
+    background: rgba(var(--color-primary-rgb), 0.055);
+    border-radius: 20px;
+    padding: 5px;
+    margin-bottom: 1.75rem;
+    border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+}
+
+/* ── زر التبويب ── */
+.settings-seg-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0.8rem 0.4rem 0.7rem;
+    border: none;
+    background: transparent;
+    border-radius: 16px;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--text-muted);
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    min-width: 0;
+}
+
+.settings-seg-btn:hover:not(.active) {
+    background: rgba(var(--color-accent-rgb), 0.08);
+    color: var(--color-primary);
+}
+
+.settings-seg-btn:hover:not(.active) .settings-seg-btn__icon {
+    background: rgba(var(--color-accent-rgb), 0.15);
+    color: var(--color-primary-light);
+}
+
+/* الحالة النشطة: "بطاقة طافية" بيضاء */
+.settings-seg-btn.active {
+    background: #ffffff;
+    color: var(--color-primary);
+    box-shadow:
+        0 2px 10px rgba(var(--color-primary-rgb), 0.14),
+        0 1px 3px rgba(0, 0, 0, 0.07);
+}
+
+/* ── أيقونة الزر ── */
+.settings-seg-btn__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    background: rgba(var(--color-accent-rgb), 0.09);
+    color: var(--text-muted);
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* الأيقونة عند التفعيل: gradient + ظل */
+.settings-seg-btn.active .settings-seg-btn__icon {
+    background: linear-gradient(
+        135deg,
+        var(--color-primary)  0%,
+        var(--color-primary-light) 100%
+    );
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(var(--color-primary-rgb), 0.35);
+}
+
+/* ── تسمية الزر ── */
+.settings-seg-btn__label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* ── تجاوبية ── */
+@media (max-width: 680px) {
+    .settings-segmented-nav {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 16px;
+    }
+
+    .settings-segmented-nav::-webkit-scrollbar { display: none; }
+
+    .settings-seg-btn {
+        flex: 0 0 auto;
+        min-width: 72px;
+        padding: 0.6rem 0.5rem;
+    }
+
+    .settings-seg-btn__icon {
+        width: 34px;
+        height: 34px;
+        font-size: 0.9rem;
+        border-radius: 10px;
     }
 }

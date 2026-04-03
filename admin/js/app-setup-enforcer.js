@@ -41,9 +41,8 @@
             if (navLink) {
                 const targetSection = navLink.getAttribute('data-section');
                 
-                // إذا كان المستخدم يحاول الانتقال لقسم غير الإعدادات
-                // وكان الإعداد غير مكتمل، أظهر النافذة
-                if (targetSection && targetSection !== 'settings-section') {
+                // إذا كان الإعداد غير مكتمل، أظهر النافذة
+                if (targetSection) {
                     if (!setupStatus.appInstalled || !setupStatus.notificationsEnabled) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -570,44 +569,10 @@
     }
 
     /**
-     * الانتقال لقسم الإعدادات
+     * الانتقال لقسم الإعدادات (معطل - تم حذف القسم)
      */
     function navigateToSettings(section) {
-        // إخفاء جميع الأقسام
-        document.querySelectorAll('.admin-section').forEach(s => {
-            s.classList.add('d-none');
-        });
-
-        // عرض قسم الإعدادات
-        const settingsSection = document.getElementById('settings-section');
-        if (settingsSection) {
-            settingsSection.classList.remove('d-none');
-            
-            // التمرير للقسم المطلوب
-            setTimeout(() => {
-                if (section === 'pwa') {
-                    const pwaCard = settingsSection.querySelector('.card');
-                    if (pwaCard) {
-                        pwaCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        pwaCard.style.animation = 'highlight 1s ease';
-                    }
-                } else if (section === 'notifications') {
-                    const notifCard = settingsSection.querySelectorAll('.card')[1];
-                    if (notifCard) {
-                        notifCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        notifCard.style.animation = 'highlight 1s ease';
-                    }
-                }
-            }, 300);
-        }
-
-        // تحديث القائمة الجانبية
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('data-section') === 'settings-section') {
-                link.classList.add('active');
-            }
-        });
+        // قسم الإعدادات تم حذفه
     }
 
     /**

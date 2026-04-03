@@ -1,101 +1,108 @@
 /**
- * نظام إدارة الإعدادات
+ * مدير إعدادات لوحة التحكم — نادي أدِيب
+ * يدير تفضيلات المستخدم (مظهر، إشعارات، صفحة افتراضية) عبر localStorage
  */
-
 (function () {
     'use strict';
 
-    const SOUND_KEY = 'adeeb_sound_notifications';
-    const DESKTOP_KEY = 'adeeb_desktop_notifications';
+    const STORAGE_KEYS = {
+        notifications: 'adeeb_notification_settings',
+        fontSize: 'adeeb_font_size',
+        compactMode: 'adeeb_compact_mode',
+        sidebarDefault: 'adeeb_sidebar_default',
+        defaultLanding: 'adeeb_default_landing'
+    };
 
-    /**
-     * تهيئة الإعدادات
-     */
+    // ─── ترحيل المفاتيح القديمة ───
+    function migrateOldKeys() {
+        const oldNotifPrefs = localStorage.getItem('adeeb_notif_prefs');
+        const oldSound = localStorage.getItem('adeeb_sound_notifications');
+        const oldDesktop = localStorage.getItem('adeeb_desktop_notifications');
+
+        if (oldNotifPrefs || oldSound !== null || oldDesktop !== null) {
+            let existing = {};
+            try { existing = JSON.parse(oldNotifPrefs) || {}; } catch { /* ignore */ }
+
+            const merged = {
+                membership: existing.membership ?? true,
+                messages: existing.messages ?? true,
+                activities: existing.activities ?? false,
+                sound: oldSound !== null ? oldSound !== 'false' : true,
+                desktop: oldDesktop !== null ? oldDesktop === 'true' : false
+            };
+
+            localStorage.setItem(STORAGE_KEYS.notifications, JSON.stringify(merged));
+            localStorage.removeItem('adeeb_notif_prefs');
+            localStorage.removeItem('adeeb_sound_notifications');
+            localStorage.removeItem('adeeb_desktop_notifications');
+        }
+    }
+
+    // ─── المظهر ───
+    function applyFontSize() {
+        const size = localStorage.getItem(STORAGE_KEYS.fontSize) || 'medium';
+        const sizeMap = { small: '14px', medium: '16px', large: '18px' };
+        document.documentElement.style.fontSize = sizeMap[size] || '16px';
+    }
+
+    function applyCompactMode() {
+        const compact = localStorage.getItem(STORAGE_KEYS.compactMode) === 'true';
+        if (compact) {
+            document.documentElement.style.setProperty('--spacing-md', '0.65rem');
+            document.documentElement.style.setProperty('--spacing-lg', '1rem');
+            document.documentElement.style.setProperty('--content-padding', '1.25rem');
+        } else {
+            document.documentElement.style.removeProperty('--spacing-md');
+            document.documentElement.style.removeProperty('--spacing-lg');
+            document.documentElement.style.removeProperty('--content-padding');
+        }
+    }
+
+    // ─── الإشعارات ───
+    function getNotificationSettings() {
+        const defaults = { membership: true, messages: true, activities: false, sound: true, desktop: false };
+        try {
+            return { ...defaults, ...JSON.parse(localStorage.getItem(STORAGE_KEYS.notifications)) };
+        } catch { return defaults; }
+    }
+
+    function saveNotificationSettings(settings) {
+        localStorage.setItem(STORAGE_KEYS.notifications, JSON.stringify(settings));
+    }
+
+    // ─── الصفحة الافتراضية ───
+    function getDefaultLanding() {
+        return localStorage.getItem(STORAGE_KEYS.defaultLanding) || 'membership-card-section';
+    }
+
+    function setDefaultLanding(sectionId) {
+        localStorage.setItem(STORAGE_KEYS.defaultLanding, sectionId);
+    }
+
+    // ─── القائمة الجانبية ───
+    function getSidebarDefault() {
+        return localStorage.getItem(STORAGE_KEYS.sidebarDefault) || 'expanded';
+    }
+
+    // ─── التهيئة عند تحميل الصفحة ───
     function init() {
-        loadSettings();
-        bindEvents();
-    }
-
-    /**
-     * تحميل الإعدادات المحفوظة
-     */
-    function loadSettings() {
-        const sound = localStorage.getItem(SOUND_KEY) !== 'false';
-        const desktop = localStorage.getItem(DESKTOP_KEY) === 'true';
-
-        const soundCheckbox = document.getElementById('soundNotifications');
-        if (soundCheckbox) soundCheckbox.checked = sound;
-
-        const desktopCheckbox = document.getElementById('desktopNotifications');
-        if (desktopCheckbox) desktopCheckbox.checked = desktop;
-    }
-
-    /**
-     * حفظ إعدادات الإشعارات
-     */
-    function saveNotificationSettings() {
-        const sound = document.getElementById('soundNotifications')?.checked;
-        const desktop = document.getElementById('desktopNotifications')?.checked;
-
-        localStorage.setItem(SOUND_KEY, sound);
-        localStorage.setItem(DESKTOP_KEY, desktop);
-
-        if (desktop) {
-            requestDesktopPermission();
-        }
-
-        showNotification('تم حفظ إعدادات الإشعارات', 'success');
-    }
-
-    /**
-     * طلب إذن إشعارات سطح المكتب
-     */
-    async function requestDesktopPermission() {
-        if (!('Notification' in window)) {
-            showNotification('المتصفح لا يدعم إشعارات سطح المكتب', 'warning');
-            return;
-        }
-
-        if (Notification.permission === 'granted') {
-            return;
-        }
-
-        if (Notification.permission !== 'denied') {
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                showNotification('تم منح إذن إشعارات سطح المكتب', 'success');
-            }
-        }
-    }
-
-    /**
-     * ربط الأحداث
-     */
-    function bindEvents() {
-        const soundCheckbox = document.getElementById('soundNotifications');
-        const desktopCheckbox = document.getElementById('desktopNotifications');
-
-        if (soundCheckbox) {
-            soundCheckbox.addEventListener('change', saveNotificationSettings);
-        }
-
-        if (desktopCheckbox) {
-            desktopCheckbox.addEventListener('change', saveNotificationSettings);
-        }
-    }
-
-    /**
-     * عرض إشعار
-     */
-    function showNotification(message, type = 'info') {
-        if (window.showNotification) {
-            window.showNotification(message, type);
-        }
+        migrateOldKeys();
+        applyFontSize();
+        applyCompactMode();
     }
 
     window.settingsManager = {
-        init
+        init,
+        applyFontSize,
+        applyCompactMode,
+        getNotificationSettings,
+        saveNotificationSettings,
+        getDefaultLanding,
+        setDefaultLanding,
+        getSidebarDefault,
+        STORAGE_KEYS
     };
 
-    document.addEventListener('DOMContentLoaded', init);
+    // تطبيق فوري عند تحميل السكريبت
+    init();
 })();

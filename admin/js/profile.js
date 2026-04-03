@@ -741,175 +741,147 @@
     }
 
     /**
-     * تفعيل التعديل المباشر للحقول
+     * ربط حقول كل كارد بمدخلات الـ Modal
      */
-    function enableInlineEditing() {
-        const infoItems = document.querySelectorAll('#profile-section .info-item');
-        
-        infoItems.forEach(item => {
-            const editBtn = item.querySelector('.btn-edit-inline');
-            const infoValue = item.querySelector('.info-value');
-            
-            if (!editBtn || !infoValue) return;
-            
-            editBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                if (infoValue.querySelector('input, select, textarea')) return;
-                
-                const currentValue = infoValue.textContent.trim();
-                const fieldId = infoValue.id;
-                const fieldType = getFieldType(fieldId);
-                
-                const input = createInlineInput(fieldType, currentValue, fieldId);
-                infoValue.innerHTML = '';
-                infoValue.appendChild(input);
-                input.focus();
-                
-                const saveEdit = async () => {
-                    const newValue = input.value.trim();
-                    await saveFieldValue(fieldId, newValue, currentValue);
-                };
-                
-                const cancelEdit = () => {
-                    infoValue.textContent = currentValue;
-                };
-                
-                input.addEventListener('blur', saveEdit);
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        saveEdit();
-                    } else if (e.key === 'Escape') {
-                        e.preventDefault();
-                        cancelEdit();
-                    }
-                });
-            });
+    const MODAL_FIELDS = {
+        'basic': {
+            'profileEmail':           'modalEditEmail',
+            'profilePhone':           'modalEditPhone',
+            'profileNationalIdBasic': 'modalEditNationalId',
+            'profileBirthDateBasic':  'modalEditBirthDate',
+            'profileFavoriteColor':   'modalEditFavoriteColor',
+        },
+        'academic': {
+            'profileAcademicRecord': 'modalEditAcademicRecord',
+            'profileAcademicDegree': 'modalEditAcademicDegree',
+            'profileCollege':        'modalEditCollege',
+            'profileMajor':          'modalEditMajor',
+        },
+        'social': {
+            'profileTwitter':   'modalEditTwitter',
+            'profileInstagram': 'modalEditInstagram',
+            'profileLinkedin':  'modalEditLinkedin',
+            'profileTiktok':    'modalEditTiktok',
+        },
+    };
+
+    const FIELD_MAPPING = {
+        'profileEmail':           { column: 'email' },
+        'profilePhone':           { column: 'phone', also: 'profiles' },
+        'profileNationalIdBasic': { column: 'national_id' },
+        'profileBirthDateBasic':  { column: 'birth_date' },
+        'profileFavoriteColor':   { column: 'favorite_color' },
+        'profileAcademicRecord':  { column: 'academic_record_number' },
+        'profileAcademicDegree':  { column: 'academic_degree' },
+        'profileCollege':         { column: 'college' },
+        'profileMajor':           { column: 'major' },
+        'profileTwitter':         { column: 'twitter_account' },
+        'profileInstagram':       { column: 'instagram_account' },
+        'profileTiktok':          { column: 'tiktok_account' },
+        'profileLinkedin':        { column: 'linkedin_account' },
+    };
+
+    /**
+     * ربط أزرار التعديل بالـ Modals
+     */
+    function setupEditModals() {
+        document.querySelectorAll('[data-card-edit]').forEach(btn => {
+            btn.addEventListener('click', () => openEditModal(btn.dataset.cardEdit));
         });
+
+        // basic
+        document.getElementById('closeEditBasicModal')?.addEventListener('click', () => closeEditModal('basic'));
+        document.getElementById('cancelEditBasicBtn')?.addEventListener('click',   () => closeEditModal('basic'));
+        document.getElementById('saveEditBasicBtn')?.addEventListener('click',     () => saveModalEdit('basic'));
+        document.getElementById('editBasicBackdrop')?.addEventListener('click',    () => closeEditModal('basic'));
+
+        // academic
+        document.getElementById('closeEditAcademicModal')?.addEventListener('click', () => closeEditModal('academic'));
+        document.getElementById('cancelEditAcademicBtn')?.addEventListener('click',   () => closeEditModal('academic'));
+        document.getElementById('saveEditAcademicBtn')?.addEventListener('click',     () => saveModalEdit('academic'));
+        document.getElementById('editAcademicBackdrop')?.addEventListener('click',    () => closeEditModal('academic'));
+
+        // social
+        document.getElementById('closeEditSocialModal')?.addEventListener('click', () => closeEditModal('social'));
+        document.getElementById('cancelEditSocialBtn')?.addEventListener('click',   () => closeEditModal('social'));
+        document.getElementById('saveEditSocialBtn')?.addEventListener('click',     () => saveModalEdit('social'));
+        document.getElementById('editSocialBackdrop')?.addEventListener('click',    () => closeEditModal('social'));
     }
-    
-    /**
-     * إنشاء حقل إدخال مباشر
-     */
-    function createInlineInput(fieldType, currentValue, fieldId) {
-        let input;
-        
-        if (fieldType.type === 'select') {
-            input = document.createElement('select');
-            input.className = 'form-input inline-edit-input';
-            fieldType.options.forEach(opt => {
-                const option = document.createElement('option');
-                option.value = opt.value;
-                option.textContent = opt.label;
-                if (opt.value === currentValue || opt.label === currentValue) {
-                    option.selected = true;
-                }
-                input.appendChild(option);
-            });
-        } else {
-            input = document.createElement('input');
-            input.type = fieldType.type || 'text';
-            input.className = 'form-input inline-edit-input';
-            input.value = currentValue === 'غير محدد' || currentValue === 'جاري التحميل...' ? '' : currentValue;
-            
-            if (fieldType.placeholder) input.placeholder = fieldType.placeholder;
-            if (fieldType.maxlength) input.maxLength = fieldType.maxlength;
-            if (fieldType.pattern) input.pattern = fieldType.pattern;
-        }
-        
-        return input;
-    }
-    
-    /**
-     * تحديد نوع الحقل
-     */
-    function getFieldType(fieldId) {
-        const fieldTypes = {
-            'profileEmail': { type: 'email', placeholder: 'name@example.com' },
-            'profilePhone': { type: 'tel', placeholder: '05XXXXXXXX', maxlength: 10, pattern: '^05[0-9]{8}$' },
-            'profileNationalIdBasic': { type: 'text', placeholder: '1XXXXXXXXX', maxlength: 10, pattern: '^[12][0-9]{9}$' },
-            'profileBirthDateBasic': { type: 'date' },
-            'profileFavoriteColor': { type: 'text', placeholder: 'مثال: الأزرق، #3498db' },
-            'profileAcademicRecord': { type: 'text', placeholder: '4XXXXXXXX' },
-            'profileAcademicDegree': { 
-                type: 'select',
-                options: [
-                    { value: '', label: 'اختر الدرجة' },
-                    { value: 'high_school', label: 'ثانوية عامة' },
-                    { value: 'diploma', label: 'دبلوم' },
-                    { value: 'bachelor', label: 'بكالوريوس' },
-                    { value: 'master', label: 'ماجستير' },
-                    { value: 'phd', label: 'دكتوراه' },
-                    { value: 'other', label: 'أخرى' }
-                ]
-            },
-            'profileCollege': { type: 'text', placeholder: 'اسم الكلية' },
-            'profileMajor': { type: 'text', placeholder: 'التخصص الدراسي' },
-            'profileTwitter': { type: 'text', placeholder: '@username' },
-            'profileInstagram': { type: 'text', placeholder: '@username' },
-            'profileTiktok': { type: 'text', placeholder: '@username' },
-            'profileLinkedin': { type: 'text', placeholder: 'username' }
-        };
-        
-        return fieldTypes[fieldId] || { type: 'text' };
-    }
-    
-    /**
-     * حفظ قيمة الحقل
-     */
-    async function saveFieldValue(fieldId, newValue, oldValue) {
-        try {
-            const fieldMapping = {
-                'profileEmail': { table: 'member_details', column: 'email' },
-                'profilePhone': { table: 'member_details', column: 'phone' },
-                'profileNationalIdBasic': { table: 'member_details', column: 'national_id' },
-                'profileBirthDateBasic': { table: 'member_details', column: 'birth_date' },
-                'profileFavoriteColor': { table: 'member_details', column: 'favorite_color' },
-                'profileAcademicRecord': { table: 'member_details', column: 'academic_record_number' },
-                'profileAcademicDegree': { table: 'member_details', column: 'academic_degree' },
-                'profileCollege': { table: 'member_details', column: 'college' },
-                'profileMajor': { table: 'member_details', column: 'major' },
-                'profileTwitter': { table: 'member_details', column: 'twitter_account' },
-                'profileInstagram': { table: 'member_details', column: 'instagram_account' },
-                'profileTiktok': { table: 'member_details', column: 'tiktok_account' },
-                'profileLinkedin': { table: 'member_details', column: 'linkedin_account' }
-            };
-            
-            const field = fieldMapping[fieldId];
-            if (!field) {
-                console.error('حقل غير معروف:', fieldId);
-                return;
+
+    function openEditModal(cardName) {
+        // ملء حقول الـ Modal من قيم الـ spans الحالية
+        Object.entries(MODAL_FIELDS[cardName] || {}).forEach(([fieldId, inputId]) => {
+            const span  = document.getElementById(fieldId);
+            const input = document.getElementById(inputId);
+            if (!span || !input) return;
+            const raw = span.textContent.trim();
+            const value = (raw === 'غير محدد' || raw === 'جاري التحميل...') ? '' : raw;
+            if (input.tagName === 'SELECT') {
+                // محاولة المطابقة بالقيمة أولاً ثم بالنص
+                const byVal  = [...input.options].find(o => o.value === value);
+                const byText = [...input.options].find(o => o.textContent.trim() === value);
+                input.value = byVal ? value : (byText ? byText.value : '');
+            } else {
+                input.value = value;
             }
-            
-            const updateData = {
-                [field.column]: newValue || null,
-                updated_at: new Date().toISOString()
-            };
-            
+        });
+
+        const cap = cardName.charAt(0).toUpperCase() + cardName.slice(1);
+        document.getElementById(`edit${cap}Backdrop`)?.classList.add('active');
+        document.getElementById(`edit${cap}Modal`)?.classList.add('active');
+        // التركيز على أول حقل قابل للتعديل
+        document.getElementById(`edit${cap}Modal`)?.querySelector('.form-input')?.focus();
+    }
+
+    function closeEditModal(cardName) {
+        const cap = cardName.charAt(0).toUpperCase() + cardName.slice(1);
+        document.getElementById(`edit${cap}Backdrop`)?.classList.remove('active');
+        document.getElementById(`edit${cap}Modal`)?.classList.remove('active');
+    }
+
+    async function saveModalEdit(cardName) {
+        const cap     = cardName.charAt(0).toUpperCase() + cardName.slice(1);
+        const saveBtn = document.getElementById(`saveEdit${cap}Btn`);
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
+
+        try {
+            const updateData = { updated_at: new Date().toISOString() };
+            let newPhone;
+
+            Object.entries(MODAL_FIELDS[cardName] || {}).forEach(([fieldId, inputId]) => {
+                const input   = document.getElementById(inputId);
+                const mapping = FIELD_MAPPING[fieldId];
+                if (!input || !mapping) return;
+                const value = input.value.trim() || null;
+                updateData[mapping.column] = value;
+                if (mapping.also === 'profiles') newPhone = value;
+            });
+
             const { error } = await window.sbClient
-                .from(field.table)
+                .from('member_details')
                 .update(updateData)
                 .eq('user_id', currentUser.id);
-            
             if (error) throw error;
-            
-            if (fieldId === 'profilePhone') {
+
+            if (newPhone !== undefined) {
                 await window.sbClient
                     .from('profiles')
-                    .update({ phone: newValue, updated_at: new Date().toISOString() })
+                    .update({ phone: newPhone, updated_at: new Date().toISOString() })
                     .eq('id', currentUser.id);
             }
-            
-            showNotification('تم حفظ التعديل بنجاح', 'success');
+
+            showNotification('تم حفظ التغييرات بنجاح', 'success');
+            closeEditModal(cardName);
             await loadProfileData();
-        } catch (error) {
-            console.error('خطأ في حفظ البيانات:', error);
-            showNotification('فشل حفظ البيانات: ' + error.message, 'error');
-            document.getElementById(fieldId).textContent = oldValue;
+        } catch (err) {
+            console.error('خطأ في حفظ البيانات:', err);
+            showNotification('فشل الحفظ: ' + err.message, 'error');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ التغييرات';
         }
     }
+    
 
     /**
      * التحقق من إمكانية تغيير الاسم
@@ -927,132 +899,6 @@
         }
     }
 
-    /**
-     * حفظ التغييرات على البيانات الشخصية
-     */
-    async function handleSaveProfileChanges() {
-        try {
-            const newFullName = document.getElementById('editFullName').value.trim();
-            const newEmail = document.getElementById('editEmail').value.trim();
-            const newPhone = document.getElementById('editPhone').value.trim();
-            const newNationalId = document.getElementById('editNationalId').value.trim();
-            const newBirthDate = document.getElementById('editBirthDate').value;
-            const newAcademicRecord = document.getElementById('editAcademicRecord').value.trim();
-            const newAcademicDegree = document.getElementById('editAcademicDegree').value;
-            const newCollege = document.getElementById('editCollege').value.trim();
-            const newMajor = document.getElementById('editMajor').value.trim();
-            const newTwitter = document.getElementById('editTwitter').value.trim();
-            const newInstagram = document.getElementById('editInstagram').value.trim();
-            const newTiktok = document.getElementById('editTiktok').value.trim();
-            const newLinkedin = document.getElementById('editLinkedin').value.trim();
-
-            const { data: oldData } = await window.sbClient
-                .from('member_details')
-                .select('full_name_triple')
-                .eq('user_id', currentUser.id)
-                .single();
-
-            const nameChanged = oldData && oldData.full_name_triple !== newFullName;
-
-            if (nameChanged) {
-                const canChange = await checkCanChangeName();
-                if (!canChange) {
-                    showNotification('لا يمكن تغيير الاسم إلا مرة واحدة كل 30 يومًا', 'error');
-                    return;
-                }
-
-                const { error: nameChangeError } = await window.sbClient
-                    .from('profile_name_changes')
-                    .insert({
-                        user_id: currentUser.id,
-                        old_name: oldData.full_name_triple,
-                        new_name: newFullName,
-                        changed_by: currentUser.id
-                    });
-
-                if (nameChangeError) {
-                    console.error('خطأ في تسجيل تغيير الاسم:', nameChangeError);
-                }
-            }
-
-            const { error: updateError } = await window.sbClient
-                .from('member_details')
-                .update({
-                    full_name_triple: newFullName,
-                    email: newEmail,
-                    phone: newPhone,
-                    national_id: newNationalId,
-                    birth_date: newBirthDate,
-                    academic_record_number: newAcademicRecord,
-                    academic_degree: newAcademicDegree,
-                    college: newCollege || null,
-                    major: newMajor || null,
-                    twitter_account: newTwitter || null,
-                    instagram_account: newInstagram || null,
-                    tiktok_account: newTiktok || null,
-                    linkedin_account: newLinkedin || null,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('user_id', currentUser.id);
-
-            if (updateError) throw updateError;
-
-            const { error: profileError } = await window.sbClient
-                .from('profiles')
-                .update({
-                    full_name: newFullName,
-                    phone: newPhone,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', currentUser.id);
-
-            if (profileError) {
-                console.warn('تحذير: فشل تحديث جدول profiles:', profileError);
-            }
-
-            showNotification('تم حفظ التغييرات بنجاح', 'success');
-            
-            await loadProfileData();
-
-        } catch (error) {
-            console.error('خطأ في حفظ التغييرات:', error);
-            showNotification(`فشل حفظ التغييرات: ${error.message}`, 'error');
-        }
-    }
-
-    /**
-     * معالجة تعديل الملف الشخصي
-     */
-    async function handleEditProfile(e) {
-        e.preventDefault();
-
-        const fullName = document.getElementById('editFullName').value.trim();
-        const phone = document.getElementById('editPhone').value.trim();
-
-        try {
-            const { error } = await window.sbClient
-                .from('user_profiles')
-                .update({
-                    full_name: fullName,
-                    phone: phone || null
-                })
-                .eq('id', currentUser.id);
-
-            if (error) throw error;
-
-            showNotification('تم تحديث الملف الشخصي بنجاح', 'success');
-            document.getElementById('editProfileModal').remove();
-            
-            // تحديث البيانات المحلية
-            currentUser.full_name = fullName;
-            currentUser.phone = phone;
-            await loadProfileData();
-
-        } catch (error) {
-            console.error('خطأ في تحديث الملف الشخصي:', error);
-            showNotification(`فشل تحديث الملف الشخصي: ${error.message}`, 'error');
-        }
-    }
 
     /**
      * فتح نافذة تغيير كلمة المرور
@@ -1081,7 +927,6 @@
      */
     async function handleChangePassword() {
         try {
-            const currentPassword = document.getElementById('currentPassword').value;
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmNewPassword').value;
 
@@ -1110,52 +955,6 @@
         }
     }
 
-    /**
-     * فتح نافذة تغيير كلمة المرور (قديم - سيتم حذفه)
-     */
-    function openChangePasswordModalOld() {
-        const modalHtml = `
-            <div class="modal-overlay" id="changePasswordModalOld" onclick="if(event.target === this) this.remove()">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2><i class="fa-solid fa-key"></i> تغيير كلمة المرور</h2>
-                        <button class="modal-close" onclick="document.getElementById('changePasswordModalOld').remove()">
-                            <i class="fa-solid fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="changePasswordFormOld">
-                            <div class="form-group">
-                                <label><strong>كلمة المرور الجديدة</strong></label>
-                                <input type="password" id="newPasswordOld" required minlength="8" placeholder="8 أحرف على الأقل">
-                            </div>
-                            <div class="form-group">
-                                <label><strong>تأكيد كلمة المرور</strong></label>
-                                <input type="password" id="confirmPassword" required minlength="8" placeholder="أعد إدخال كلمة المرور">
-                            </div>
-                            <div>
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-                                تأكد من استخدام كلمة مرور قوية تحتوي على أحرف كبيرة وصغيرة وأرقام
-                            </div>
-                            <div>
-                                <button type="button" class="btn-outline" onclick="document.getElementById('changePasswordModal').remove()">
-                                    إلغاء
-                                </button>
-                                <button type="submit" class="btn-primary">
-                                    <i class="fa-solid fa-check"></i>
-                                    تغيير كلمة المرور
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-        document.getElementById('changePasswordForm').addEventListener('submit', handleChangePassword);
-    }
 
     /**
      * معالجة تغيير كلمة المرور
@@ -1284,7 +1083,7 @@
         const copyProfileLinkBtn = document.getElementById('copyProfileLinkBtn');
         const openProfileLinkBtn = document.getElementById('openProfileLinkBtn');
 
-        enableInlineEditing();
+        setupEditModals();
 
         if (changePasswordBtn) {
             changePasswordBtn.addEventListener('click', openChangePasswordModal);

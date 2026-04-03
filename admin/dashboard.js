@@ -47,8 +47,9 @@
                 await window.sendNotifications.init(currentUser);
             }
             
-            // فتح بطاقة العضوية كصفحة افتراضية
-            navigateToSection('membership-card-section');
+            // فتح الصفحة الافتراضية (حسب تفضيلات المستخدم)
+            const defaultLanding = window.settingsManager?.getDefaultLanding?.() || 'membership-card-section';
+            navigateToSection(defaultLanding);
             
             showLoading(false);
         } catch (error) {
@@ -552,6 +553,14 @@
             });
         }
         
+        // الإعدادات - جميع المستويات
+        menuItems.push({
+            id: 'settings',
+            icon: 'fa-gear',
+            label: 'الإعدادات',
+            section: 'settings-section'
+        });
+
         // الملف الشخصي - جميع المستويات
         menuItems.push({
             id: 'profile',
@@ -572,15 +581,6 @@
             });
         }
 
-        // الإعدادات - جميع المستويات
-        menuItems.push({
-            id: 'settings',
-            icon: 'fa-sliders',
-            label: 'الإعدادات',
-            section: 'settings-section'
-        });
-        
-        
         // دالة مساعدة لبناء عناصر القائمة (تدعم التداخل)
         function buildMenuItem(subItem) {
             if (subItem.isDropdown) {
@@ -984,11 +984,6 @@
                     await window.profileManager.init(currentUser);
                 }
                 break;
-            case 'settings-section':
-                if (window.settingsManager) {
-                    window.settingsManager.init();
-                }
-                break;
             case 'website-news-section':
                 if (window.NewsManager && currentUser) {
                     await window.NewsManager.init(currentUser);
@@ -1081,6 +1076,10 @@
                     await loadDeletedSurveysSection();
                 }
                 break;
+            case 'settings-section':
+                loadSettingsSection();
+                break;
+
             case 'elections-open-section':
                 if (window.ElectionsManager && !window.electionsManagerInstance) {
                     window.electionsManagerInstance = new window.ElectionsManager();
@@ -1112,6 +1111,259 @@
                     }
                 }
                 break;
+        }
+    }
+
+    // ─── تهيئة تبويبات الإعدادات (محدود النطاق) ───
+    function initSettingsTabs() {
+        const container = document.getElementById('settingsTabsContainer');
+        if (!container || container._tabsInitialized) return;
+        container._tabsInitialized = true;
+
+        const tabButtons = container.querySelectorAll('.settings-seg-btn');
+        const tabContents = container.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const targetTab = button.getAttribute('data-tab');
+
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    content.style.display = 'none';
+                });
+
+                button.classList.add('active');
+                const targetContent = document.getElementById(`${targetTab}-tab`);
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                    targetContent.style.display = 'block';
+                }
+            });
+        });
+    }
+
+    // ─── تحميل قسم الإعدادات ───
+    function loadSettingsSection() {
+        // تهيئة التبويبات
+        initSettingsTabs();
+
+        // ══════ تبويب: عام ══════
+        const nameEl = document.getElementById('settingsFullName');
+        const emailEl = document.getElementById('settingsEmail');
+        const roleEl = document.getElementById('settingsRole');
+        if (nameEl && currentUser) nameEl.textContent = currentUser.full_name || '—';
+        if (emailEl && currentUser) emailEl.textContent = currentUser.email || '—';
+        if (roleEl && currentUserRole) roleEl.textContent = currentUserRole.role_name_ar || '—';
+
+        // الصفحة الافتراضية
+        const landingSelect = document.getElementById('settingsDefaultLanding');
+        if (landingSelect && !landingSelect._bound) {
+            landingSelect._bound = true;
+            const savedLanding = window.settingsManager?.getDefaultLanding?.() || 'membership-card-section';
+            landingSelect.value = savedLanding;
+            landingSelect.addEventListener('change', () => {
+                window.settingsManager?.setDefaultLanding?.(landingSelect.value);
+                window.showToast?.('تم حفظ الصفحة الافتراضية', 'success');
+            });
+        }
+
+        // ══════ تبويب: الأمان ══════
+        // زر تغيير كلمة المرور
+        const changePassBtn = document.getElementById('settingsChangePasswordBtn');
+        if (changePassBtn && !changePassBtn._bound) {
+            changePassBtn._bound = true;
+            changePassBtn.addEventListener('click', async () => {
+                const newPass = document.getElementById('settingsNewPassword')?.value?.trim();
+                const confirmPass = document.getElementById('settingsConfirmPassword')?.value?.trim();
+                if (!newPass || !confirmPass) {
+                    window.showToast?.('يرجى تعبئة حقول كلمة المرور', 'warning');
+                    return;
+                }
+                if (newPass !== confirmPass) {
+                    window.showToast?.('كلمتا المرور غير متطابقتين', 'error');
+                    return;
+                }
+                if (newPass.length < 8) {
+                    window.showToast?.('كلمة المرور يجب أن تكون 8 أحرف على الأقل', 'warning');
+                    return;
+                }
+                changePassBtn.disabled = true;
+                changePassBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
+                const { error } = await window.sbClient.auth.updateUser({ password: newPass });
+                changePassBtn.disabled = false;
+                changePassBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ كلمة المرور';
+                if (error) {
+                    window.showToast?.('حدث خطأ أثناء تغيير كلمة المرور', 'error');
+                } else {
+                    window.showToast?.('تم تغيير كلمة المرور بنجاح', 'success');
+                    document.getElementById('settingsCurrentPassword').value = '';
+                    document.getElementById('settingsNewPassword').value = '';
+                    document.getElementById('settingsConfirmPassword').value = '';
+                }
+            });
+        }
+
+        // سجل تسجيل الدخول
+        const loginHistoryEl = document.getElementById('settingsLoginHistory');
+        if (loginHistoryEl && currentUser) {
+            const lastSign = currentUser.last_sign_in_at;
+            if (lastSign) {
+                const formatted = new Intl.DateTimeFormat('ar-SA', {
+                    year: 'numeric', month: 'long', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                }).format(new Date(lastSign));
+                loginHistoryEl.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem; background:var(--bg-secondary,#f8fafc); border-radius:0.5rem; border-right:3px solid var(--color-primary-light,#3d8fd6);">
+                        <i class="fa-solid fa-circle-check" style="color:var(--color-success,#10b981);"></i>
+                        <div>
+                            <div style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">آخر تسجيل دخول</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">${formatted}</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                loginHistoryEl.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">لا توجد بيانات</p>';
+            }
+        }
+
+        // معلومات المتصفح
+        const browserEl = document.getElementById('settingsBrowser');
+        if (browserEl) {
+            const ua = navigator.userAgent;
+            let browser = 'غير معروف';
+            if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Google Chrome';
+            else if (ua.includes('Firefox')) browser = 'Mozilla Firefox';
+            else if (ua.includes('Edg')) browser = 'Microsoft Edge';
+            else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Apple Safari';
+            browserEl.textContent = browser;
+        }
+
+        // نظام التشغيل
+        const osEl = document.getElementById('settingsOS');
+        if (osEl) {
+            const ua = navigator.userAgent;
+            let os = 'غير معروف';
+            if (ua.includes('Windows NT 10')) os = 'Windows 10/11';
+            else if (ua.includes('Windows')) os = 'Windows';
+            else if (ua.includes('Mac OS X')) os = 'macOS';
+            else if (ua.includes('Linux')) os = 'Linux';
+            else if (ua.includes('Android')) os = 'Android';
+            else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+            osEl.textContent = os;
+        }
+
+        // دقة الشاشة
+        const screenEl = document.getElementById('settingsScreenRes');
+        if (screenEl) {
+            screenEl.textContent = `${screen.width} × ${screen.height}`;
+        }
+
+        // ══════ تبويب: الإشعارات ══════
+        const notifPrefs = window.settingsManager?.getNotificationSettings?.() ||
+            { membership: true, messages: true, activities: false, sound: true, desktop: false };
+
+        const notifMap = {
+            notifMembership: notifPrefs.membership,
+            notifMessages: notifPrefs.messages,
+            notifActivities: notifPrefs.activities,
+            notifSound: notifPrefs.sound,
+            notifDesktop: notifPrefs.desktop
+        };
+        Object.entries(notifMap).forEach(([id, val]) => {
+            const el = document.getElementById(id);
+            if (el) el.checked = val ?? false;
+        });
+
+        const saveNotifBtn = document.getElementById('settingsSaveNotificationsBtn');
+        if (saveNotifBtn && !saveNotifBtn._bound) {
+            saveNotifBtn._bound = true;
+            saveNotifBtn.addEventListener('click', () => {
+                const settings = {
+                    membership: document.getElementById('notifMembership')?.checked ?? true,
+                    messages: document.getElementById('notifMessages')?.checked ?? true,
+                    activities: document.getElementById('notifActivities')?.checked ?? false,
+                    sound: document.getElementById('notifSound')?.checked ?? true,
+                    desktop: document.getElementById('notifDesktop')?.checked ?? false
+                };
+                window.settingsManager?.saveNotificationSettings?.(settings);
+
+                // طلب إذن إشعارات سطح المكتب
+                if (settings.desktop && 'Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+                    Notification.requestPermission();
+                }
+
+                window.showToast?.('تم حفظ إعدادات الإشعارات', 'success');
+            });
+        }
+
+        // ══════ تبويب: المظهر ══════
+        // حجم الخط
+        const savedFontSize = localStorage.getItem(window.settingsManager?.STORAGE_KEYS?.fontSize) || 'medium';
+        const fontRadio = document.querySelector(`input[name="settingsFontSize"][value="${savedFontSize}"]`);
+        if (fontRadio) fontRadio.checked = true;
+
+        // الوضع المضغوط
+        const compactEl = document.getElementById('settingsCompactMode');
+        if (compactEl) compactEl.checked = localStorage.getItem(window.settingsManager?.STORAGE_KEYS?.compactMode) === 'true';
+
+        // القائمة الجانبية
+        const savedSidebar = window.settingsManager?.getSidebarDefault?.() || 'expanded';
+        const sidebarRadio = document.querySelector(`input[name="settingsSidebar"][value="${savedSidebar}"]`);
+        if (sidebarRadio) sidebarRadio.checked = true;
+
+        const saveAppearanceBtn = document.getElementById('settingsSaveAppearanceBtn');
+        if (saveAppearanceBtn && !saveAppearanceBtn._bound) {
+            saveAppearanceBtn._bound = true;
+            saveAppearanceBtn.addEventListener('click', () => {
+                const KEYS = window.settingsManager?.STORAGE_KEYS;
+                if (!KEYS) return;
+
+                // حفظ حجم الخط
+                const fontSize = document.querySelector('input[name="settingsFontSize"]:checked')?.value || 'medium';
+                localStorage.setItem(KEYS.fontSize, fontSize);
+                window.settingsManager?.applyFontSize?.();
+
+                // حفظ الوضع المضغوط
+                const compact = document.getElementById('settingsCompactMode')?.checked ?? false;
+                localStorage.setItem(KEYS.compactMode, compact);
+                window.settingsManager?.applyCompactMode?.();
+
+                // حفظ حالة القائمة الجانبية
+                const sidebar = document.querySelector('input[name="settingsSidebar"]:checked')?.value || 'expanded';
+                localStorage.setItem(KEYS.sidebarDefault, sidebar);
+
+                window.showToast?.('تم حفظ إعدادات المظهر', 'success');
+            });
+        }
+
+        // ══════ تبويب: حول النظام ══════
+        // تاريخ آخر تحديث
+        const lastUpdateEl = document.getElementById('settingsLastUpdate');
+        if (lastUpdateEl) {
+            lastUpdateEl.textContent = new Intl.DateTimeFormat('ar-SA', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            }).format(new Date());
+        }
+
+        // إصدار النظام
+        const versionEl = document.getElementById('settingsVersion');
+        if (versionEl && window.CURRENT_VERSION) {
+            versionEl.textContent = `نادي أدِيب ${window.CURRENT_VERSION}`;
+        }
+
+        // زر مسح ذاكرة التخزين المؤقت
+        const clearCacheBtn = document.getElementById('settingsClearCacheBtn');
+        if (clearCacheBtn && !clearCacheBtn._bound) {
+            clearCacheBtn._bound = true;
+            clearCacheBtn.addEventListener('click', async () => {
+                if ('caches' in window) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map(key => caches.delete(key)));
+                }
+                window.showToast?.('تم مسح ذاكرة التخزين المؤقت بنجاح', 'success');
+            });
         }
     }
 
@@ -5634,8 +5886,11 @@
 
     // تهيئة التبويبات الداخلية لنتائج الاستبيانات
     function initSurveyResultsTabs() {
-        const tabButtons = document.querySelectorAll('.tab-btn');
-        const tabContents = document.querySelectorAll('.tab-content');
+        const container = document.getElementById('resultsTabsContainer');
+        if (!container) return;
+
+        const tabButtons = container.querySelectorAll('.tab-btn');
+        const tabContents = container.querySelectorAll('.tab-content');
 
         if (tabButtons.length === 0) return;
 
@@ -5667,7 +5922,7 @@
         });
 
         // تهيئة أشرطة التبويب النشط عند التحميل
-        const activeContent = document.querySelector('.tab-content.active');
+        const activeContent = container.querySelector('.tab-content.active');
         if (activeContent) animateChartBars(activeContent);
     }
 

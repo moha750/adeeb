@@ -33,8 +33,9 @@
                         btn.classList.add('active');
                     }
                     
-                    // إخفاء جميع المحتويات وإظهار المحتوى المطلوب
-                    document.querySelectorAll('.tab-content').forEach(p => p.style.display = 'none');
+                    // إخفاء جميع المحتويات وإظهار المحتوى المطلوب (محدود النطاق)
+                    const parentContainer = btn.closest('.tabs-container') || btn.closest('#resultsTabsContainer');
+                    (parentContainer || document).querySelectorAll('.tab-content').forEach(p => p.style.display = 'none');
                     const targetTab = document.getElementById(`${tabName}-tab`);
                     if (targetTab) {
                         targetTab.style.display = 'block';
@@ -142,7 +143,8 @@
                 // تهيئة أشرطة الرسوم البيانية بعد تحميل المحتوى
                 setTimeout(() => {
                     if (typeof window.animateChartBars === 'function') {
-                        document.querySelectorAll('.tab-content').forEach(tab => window.animateChartBars(tab));
+                        const resultsContainer = document.getElementById('resultsTabsContainer');
+                        (resultsContainer || document).querySelectorAll('.tab-content').forEach(tab => window.animateChartBars(tab));
                     } else {
                         document.querySelectorAll('.results-choice-bar[data-width]').forEach(bar => {
                             const w = bar.getAttribute('data-width');

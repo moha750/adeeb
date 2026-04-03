@@ -798,13 +798,17 @@
                 <div class="profile-cards-grid">
 
                     <!-- المعلومات الأساسية -->
-                    <div class="uc-card uc-card--primary">
+                    <div class="uc-card uc-card--primary" data-card="basic">
                         <div class="uc-card__header">
                             <div class="uc-card__header-inner">
                                 <div class="uc-card__icon"><i class="fa-regular fa-id-card"></i></div>
                                 <div class="uc-card__header-info">
                                     <h3 class="uc-card__title">المعلومات الأساسية</h3>
                                 </div>
+                                <button class="uc-card__edit-btn" data-card-edit="basic" type="button">
+                                    <i class="fa-regular fa-pen-to-square"></i>
+                                    <span>تعديل</span>
+                                </button>
                             </div>
                         </div>
                         <div class="uc-card__body" style="gap: 0.6rem;">
@@ -814,7 +818,6 @@
                                     <span class="uc-card__info-label">البريد الإلكتروني</span>
                                     <span class="uc-card__info-value info-value" id="profileEmail">جاري التحميل...</span>
                                 </div>
-                                <button class="btn-edit-inline" id="editProfileBtn" title="تعديل"><i class="fa-regular fa-pen-to-square"></i></button>
                             </div>
                             <div class="uc-card__info-item info-item">
                                 <div class="uc-card__info-icon"><i class="fa-regular fa-calendar-alt"></i></div>
@@ -829,7 +832,6 @@
                                     <span class="uc-card__info-label">رقم الهاتف</span>
                                     <span class="uc-card__info-value info-value" id="profilePhone">غير محدد</span>
                                 </div>
-                                <button class="btn-edit-inline" data-edit-basic title="تعديل"><i class="fa-regular fa-pen-to-square"></i></button>
                             </div>
                             <div class="uc-card__info-item info-item">
                                 <div class="uc-card__info-icon"><i class="fa-regular fa-id-card"></i></div>
@@ -837,7 +839,6 @@
                                     <span class="uc-card__info-label">رقم الهوية الوطنية</span>
                                     <span class="uc-card__info-value info-value" id="profileNationalIdBasic">غير محدد</span>
                                 </div>
-                                <button class="btn-edit-inline" data-edit-basic title="تعديل"><i class="fa-regular fa-pen-to-square"></i></button>
                             </div>
                             <div class="uc-card__info-item info-item">
                                 <div class="uc-card__info-icon"><i class="fa-solid fa-cake-candles"></i></div>
@@ -845,7 +846,6 @@
                                     <span class="uc-card__info-label">تاريخ الميلاد</span>
                                     <span class="uc-card__info-value info-value" id="profileBirthDateBasic">غير محدد</span>
                                 </div>
-                                <button class="btn-edit-inline" data-edit-basic title="تعديل"><i class="fa-regular fa-pen-to-square"></i></button>
                             </div>
                             <div class="uc-card__info-item info-item">
                                 <div class="uc-card__info-icon"><i class="fa-solid fa-palette"></i></div>
@@ -853,7 +853,6 @@
                                     <span class="uc-card__info-label">اللون المفضل</span>
                                     <span class="uc-card__info-value info-value" id="profileFavoriteColor">غير محدد</span>
                                 </div>
-                                <button class="btn-edit-inline" data-edit-basic title="تعديل"><i class="fa-regular fa-pen-to-square"></i></button>
                             </div>
                             <div class="uc-card__info-item info-item" id="profileCouncilRow" style="display: none;">
                                 <div class="uc-card__info-icon"><i class="fa-solid fa-landmark"></i></div>
@@ -883,13 +882,17 @@
                     <div class="profile-right-col">
 
                         <!-- البيانات الأكاديمية -->
-                        <div class="uc-card uc-card--primary" id="memberDetailsCard">
+                        <div class="uc-card uc-card--primary" id="memberDetailsCard" data-card="academic">
                             <div class="uc-card__header">
                                 <div class="uc-card__header-inner">
                                     <div class="uc-card__icon"><i class="fa-solid fa-graduation-cap"></i></div>
                                     <div class="uc-card__header-info">
                                         <h3 class="uc-card__title">البيانات الأكاديمية</h3>
                                     </div>
+                                    <button class="uc-card__edit-btn" data-card-edit="academic" type="button">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                        <span>تعديل</span>
+                                    </button>
                                 </div>
                             </div>
                             <div class="uc-card__body" style="gap: 0.6rem;">
@@ -899,7 +902,6 @@
                                         <span class="uc-card__info-label">الرقم الأكاديمي</span>
                                         <span class="uc-card__info-value info-value" id="profileAcademicRecord">غير محدد</span>
                                     </div>
-                                    <button class="btn-edit-inline" id="editAcademicBtn" title="تعديل"><i class="fa-regular fa-pen-to-square"></i></button>
                                 </div>
                                 <div class="uc-card__info-item info-item">
                                     <div class="uc-card__info-icon"><i class="fa-solid fa-user-graduate"></i></div>
@@ -907,7 +909,6 @@
                                         <span class="uc-card__info-label">الدرجة الأكاديمية</span>
                                         <span class="uc-card__info-value info-value" id="profileAcademicDegree">غير محدد</span>
                                     </div>
-                                    <button class="btn-edit-inline" data-edit-academic title="تعديل"><i class="fa-regular fa-pen-to-square"></i></button>
                                 </div>
                                 <div class="uc-card__info-item info-item">
                                     <div class="uc-card__info-icon"><i class="fa-solid fa-building-columns"></i></div>
@@ -915,7 +916,6 @@
                                         <span class="uc-card__info-label">الكلية</span>
                                         <span class="uc-card__info-value info-value" id="profileCollege">غير محدد</span>
                                     </div>
-                                    <button class="btn-edit-inline" data-edit-academic title="تعديل"><i class="fa-regular fa-pen-to-square"></i></button>
                                 </div>
                                 <div class="uc-card__info-item info-item">
                                     <div class="uc-card__info-icon"><i class="fa-solid fa-book-open"></i></div>
@@ -923,19 +923,22 @@
                                         <span class="uc-card__info-label">التخصص</span>
                                         <span class="uc-card__info-value info-value" id="profileMajor">غير محدد</span>
                                     </div>
-                                    <button class="btn-edit-inline" data-edit-academic title="تعديل"><i class="fa-regular fa-pen-to-square"></i></button>
                                 </div>
                             </div>
                         </div>
 
                         <!-- حسابات التواصل الاجتماعي -->
-                        <div class="uc-card uc-card--primary">
+                        <div class="uc-card uc-card--primary" data-card="social">
                             <div class="uc-card__header">
                                 <div class="uc-card__header-inner">
                                     <div class="uc-card__icon"><i class="fa-solid fa-share-nodes"></i></div>
                                     <div class="uc-card__header-info">
                                         <h3 class="uc-card__title">حسابات التواصل</h3>
                                     </div>
+                                    <button class="uc-card__edit-btn" data-card-edit="social" type="button">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                        <span>تعديل</span>
+                                    </button>
                                 </div>
                             </div>
                             <div class="uc-card__body" style="gap: 0.6rem;">
@@ -945,7 +948,6 @@
                                         <span class="uc-card__info-label">تويتر (X)</span>
                                         <span class="uc-card__info-value info-value" id="profileTwitter">غير محدد</span>
                                     </div>
-                                    <button class="btn-edit-inline" id="editSocialBtn" title="تعديل"><i class="fa-regular fa-pen-to-square"></i></button>
                                 </div>
                                 <div class="uc-card__info-item info-item">
                                     <div class="uc-card__info-icon"><i class="fa-brands fa-instagram"></i></div>
@@ -953,7 +955,6 @@
                                         <span class="uc-card__info-label">إنستقرام</span>
                                         <span class="uc-card__info-value info-value" id="profileInstagram">غير محدد</span>
                                     </div>
-                                    <button class="btn-edit-inline" data-edit-social title="تعديل"><i class="fa-regular fa-pen-to-square"></i></button>
                                 </div>
                                 <div class="uc-card__info-item info-item">
                                     <div class="uc-card__info-icon"><i class="fa-brands fa-linkedin-in"></i></div>
@@ -961,7 +962,6 @@
                                         <span class="uc-card__info-label">لينكد إن</span>
                                         <span class="uc-card__info-value info-value" id="profileLinkedin">غير محدد</span>
                                     </div>
-                                    <button class="btn-edit-inline" data-edit-social title="تعديل"><i class="fa-regular fa-pen-to-square"></i></button>
                                 </div>
                                 <div class="uc-card__info-item info-item">
                                     <div class="uc-card__info-icon"><i class="fa-brands fa-tiktok"></i></div>
@@ -969,7 +969,6 @@
                                         <span class="uc-card__info-label">تيك توك</span>
                                         <span class="uc-card__info-value info-value" id="profileTiktok">غير محدد</span>
                                     </div>
-                                    <button class="btn-edit-inline" data-edit-social title="تعديل"><i class="fa-regular fa-pen-to-square"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -1622,109 +1621,6 @@
                 </div>
             </section>
 
-            <!-- قسم الإعدادات -->
-            <section id="settings-section" class="admin-section d-none">
-
-                <!-- بطاقة تثبيت التطبيق -->
-                <div class="card">
-                    <div></div>
-                    <div class="card-header">
-                        <h3>
-                            <div>
-                                <i class="fa-solid fa-mobile-screen-button"></i>
-                            </div>
-                            <div>
-                                <div>تطبيق نادي أدِيب</div>
-                                <div>ثبّت التطبيق للحصول على تجربة أفضل</div>
-                            </div>
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <!-- حالة التثبيت -->
-                        <div id="pwaStatusContainer">
-                            <!-- سيتم ملؤها ديناميكياً -->
-                        </div>
-
-                        <!-- مميزات التطبيق -->
-                        <div>
-                            <div>
-                                <div>
-                                    <i class="fa-solid fa-bolt"></i>
-                                </div>
-                                <h4>سريع وخفيف</h4>
-                                <p>تحميل فوري وأداء ممتاز</p>
-                            </div>
-                            <div>
-                                <div>
-                                    <i class="fa-solid fa-wifi"></i>
-                                </div>
-                                <h4>يعمل بدون إنترنت</h4>
-                                <p>تصفح المحتوى حتى بدون اتصال</p>
-                            </div>
-                            <div>
-                                <div>
-                                    <i class="fa-solid fa-bell"></i>
-                                </div>
-                                <h4>إشعارات فورية</h4>
-                                <p>احصل على التحديثات مباشرة</p>
-                            </div>
-                            <div>
-                                <div>
-                                    <i class="fa-solid fa-download"></i>
-                                </div>
-                                <h4>بدون متجر</h4>
-                                <p>تثبيت مباشر من المتصفح</p>
-                            </div>
-                        </div>
-
-                        <!-- زر التثبيت -->
-                        <div id="pwaInstallBtnContainer">
-                            <button id="pwaInstallBtn" class="btn btn-primary btn-lg">
-                                <i class="fa-solid fa-download"></i>
-                                <span>ثبّت التطبيق الآن</span>
-                            </button>
-
-                            <!-- زر التأكيد اليدوي -->
-                            <div>
-                                <p>
-                                    <i class="fa-solid fa-info-circle"></i>
-                                    <strong>هل قمت بتثبيت التطبيق بالفعل؟</strong>
-                                </p>
-                                <button id="pwaConfirmInstallBtn" class="btn btn-outline">
-                                    <i class="fa-solid fa-check"></i>
-                                    <span>نعم، التطبيق مثبت لدي</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- رسالة التثبيت الناجح -->
-                        <div id="pwaInstalledMessage">
-                            <div>
-                                <i class="fa-solid fa-check-circle"></i>
-                                <span>التطبيق مثبت بالفعل على جهازك!</span>
-                            </div>
-                        </div>
-
-                        <!-- معلومات التثبيت -->
-                        <div>
-                            <div>
-                                <div>
-                                    <i class="fa-solid fa-info-circle"></i>
-                                </div>
-                                <div>
-                                    <strong>كيفية التثبيت:</strong>
-                                    <p>
-                                        <strong>iOS:</strong> اضغط على زر المشاركة <i class="fa-solid fa-share"></i> ثم
-                                        اختر "إضافة إلى الشاشة الرئيسية"<br>
-                                        <strong>Android:</strong> افتح قائمة المتصفح (⋮) واختر "تثبيت التطبيق"
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </section>
 
             <!-- قسم إدارة الصلاحيات -->
             <section id="permissions-section" class="admin-section d-none">
@@ -3222,6 +3118,461 @@
 
             </section>
 
+            <!-- =====================================================
+                 قسم الإعدادات
+                 ===================================================== -->
+            <section id="settings-section" class="admin-section d-none">
+
+                <!-- حاوية التبويبات -->
+                <div id="settingsTabsContainer">
+
+                    <!-- شريط التبويبات المقطعي -->
+                    <div class="settings-segmented-nav">
+                        <button class="settings-seg-btn active" data-tab="settings-general">
+                            <span class="settings-seg-btn__icon"><i class="fa-solid fa-sliders"></i></span>
+                            <span class="settings-seg-btn__label">عام</span>
+                        </button>
+                        <button class="settings-seg-btn" data-tab="settings-security">
+                            <span class="settings-seg-btn__icon"><i class="fa-solid fa-lock"></i></span>
+                            <span class="settings-seg-btn__label">الأمان</span>
+                        </button>
+                        <button class="settings-seg-btn" data-tab="settings-notifications">
+                            <span class="settings-seg-btn__icon"><i class="fa-solid fa-bell"></i></span>
+                            <span class="settings-seg-btn__label">الإشعارات</span>
+                        </button>
+                        <button class="settings-seg-btn" data-tab="settings-appearance">
+                            <span class="settings-seg-btn__icon"><i class="fa-solid fa-palette"></i></span>
+                            <span class="settings-seg-btn__label">المظهر</span>
+                        </button>
+                        <button class="settings-seg-btn" data-tab="settings-about">
+                            <span class="settings-seg-btn__icon"><i class="fa-solid fa-circle-info"></i></span>
+                            <span class="settings-seg-btn__label">حول النظام</span>
+                        </button>
+                    </div>
+
+                    <!-- محتوى التبويبات -->
+                    <div class="tabs-content">
+
+                        <!-- ══════════ تبويب: عام ══════════ -->
+                        <div id="settings-general-tab" class="tab-content active">
+                            <!-- إعدادات الحساب -->
+                            <div class="uc-card" style="margin-bottom:1.5rem;">
+                                <div class="uc-card__header">
+                                    <div class="uc-card__header-inner">
+                                        <div class="uc-card__icon"><i class="fa-solid fa-user-gear"></i></div>
+                                        <div class="uc-card__header-info">
+                                            <h3 class="uc-card__title">إعدادات الحساب</h3>
+                                            <p class="uc-card__subtitle">بيانات حسابك الشخصي</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="uc-card__body">
+                                    <div class="uc-card__info-item info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-regular fa-user"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">الاسم الكامل</span>
+                                            <span class="uc-card__info-value" id="settingsFullName">جاري التحميل...</span>
+                                        </div>
+                                    </div>
+                                    <div class="uc-card__info-item info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-regular fa-envelope"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">البريد الإلكتروني</span>
+                                            <span class="uc-card__info-value" id="settingsEmail">جاري التحميل...</span>
+                                        </div>
+                                    </div>
+                                    <div class="uc-card__info-item info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">الدور الوظيفي</span>
+                                            <span class="uc-card__info-value" id="settingsRole">جاري التحميل...</span>
+                                        </div>
+                                    </div>
+                                    <div style="margin-top:1rem;">
+                                        <button class="btn btn-primary btn-sm" onclick="document.querySelector('[data-section=\'profile-section\']')?.click()">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                            تعديل الملف الشخصي
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- الصفحة الافتراضية -->
+                            <div class="uc-card">
+                                <div class="uc-card__header">
+                                    <div class="uc-card__header-inner">
+                                        <div class="uc-card__icon"><i class="fa-solid fa-house"></i></div>
+                                        <div class="uc-card__header-info">
+                                            <h3 class="uc-card__title">التفضيلات العامة</h3>
+                                            <p class="uc-card__subtitle">تخصيص تجربة لوحة التحكم</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="uc-card__body">
+                                    <div class="form-group">
+                                        <label class="form-label">الصفحة الافتراضية عند الدخول</label>
+                                        <select class="form-select" id="settingsDefaultLanding">
+                                            <option value="membership-card-section">بطاقة العضوية</option>
+                                            <option value="settings-section">الإعدادات</option>
+                                            <option value="profile-section">الملف الشخصي</option>
+                                        </select>
+                                        <span class="form-hint">الصفحة التي تظهر تلقائياً عند فتح لوحة التحكم</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ══════════ تبويب: الأمان ══════════ -->
+                        <div id="settings-security-tab" class="tab-content" style="display:none;">
+                            <!-- تغيير كلمة المرور -->
+                            <div class="uc-card" style="margin-bottom:1.5rem;">
+                                <div class="uc-card__header">
+                                    <div class="uc-card__header-inner">
+                                        <div class="uc-card__icon"><i class="fa-solid fa-lock"></i></div>
+                                        <div class="uc-card__header-info">
+                                            <h3 class="uc-card__title">الأمان والخصوصية</h3>
+                                            <p class="uc-card__subtitle">إدارة كلمة المرور والجلسات</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="uc-card__body">
+                                    <div class="form-section" style="margin-bottom:1.25rem;">
+                                        <h4 class="form-section-label">
+                                            <i class="fa-solid fa-key"></i> تغيير كلمة المرور
+                                        </h4>
+                                        <div style="display:flex; flex-direction:column; gap:0.75rem; max-width:400px;">
+                                            <div class="form-group">
+                                                <label class="form-label">كلمة المرور الحالية</label>
+                                                <input type="password" id="settingsCurrentPassword" class="form-input" placeholder="أدخل كلمة المرور الحالية" />
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">كلمة المرور الجديدة</label>
+                                                <input type="password" id="settingsNewPassword" class="form-input" placeholder="أدخل كلمة المرور الجديدة" />
+                                                <span class="form-hint">8 أحرف على الأقل</span>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">تأكيد كلمة المرور الجديدة</label>
+                                                <input type="password" id="settingsConfirmPassword" class="form-input" placeholder="أعد إدخال كلمة المرور الجديدة" />
+                                            </div>
+                                            <div class="form-actions form-actions-start">
+                                                <button class="btn btn-primary btn-sm" id="settingsChangePasswordBtn">
+                                                    <i class="fa-solid fa-floppy-disk"></i>
+                                                    حفظ كلمة المرور
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <hr style="border:none; border-top:1px solid var(--border-color,#e2e8f0); margin:1.25rem 0;" />
+
+                                    <!-- سجل تسجيل الدخول -->
+                                    <div class="form-section">
+                                        <h4 class="form-section-label">
+                                            <i class="fa-solid fa-clock-rotate-left"></i> آخر عمليات تسجيل الدخول
+                                        </h4>
+                                        <div id="settingsLoginHistory" style="display:flex; flex-direction:column; gap:0.5rem;">
+                                            <div style="text-align:center; padding:1.5rem; color:var(--text-muted);">
+                                                <i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- الجلسة الحالية -->
+                            <div class="uc-card">
+                                <div class="uc-card__header">
+                                    <div class="uc-card__header-inner">
+                                        <div class="uc-card__icon"><i class="fa-solid fa-desktop"></i></div>
+                                        <div class="uc-card__header-info">
+                                            <h3 class="uc-card__title">الجلسة الحالية</h3>
+                                            <p class="uc-card__subtitle">معلومات جلسة التصفح النشطة</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="uc-card__body">
+                                    <div class="uc-card__info-item info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-globe"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">المتصفح</span>
+                                            <span class="uc-card__info-value" id="settingsBrowser">جاري التحميل...</span>
+                                        </div>
+                                    </div>
+                                    <div class="uc-card__info-item info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-laptop"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">نظام التشغيل</span>
+                                            <span class="uc-card__info-value" id="settingsOS">جاري التحميل...</span>
+                                        </div>
+                                    </div>
+                                    <div class="uc-card__info-item info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-display"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">دقة الشاشة</span>
+                                            <span class="uc-card__info-value" id="settingsScreenRes">جاري التحميل...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ══════════ تبويب: الإشعارات ══════════ -->
+                        <div id="settings-notifications-tab" class="tab-content" style="display:none;">
+                            <div class="uc-card">
+                                <div class="uc-card__header">
+                                    <div class="uc-card__header-inner">
+                                        <div class="uc-card__icon"><i class="fa-solid fa-bell"></i></div>
+                                        <div class="uc-card__header-info">
+                                            <h3 class="uc-card__title">إعدادات الإشعارات</h3>
+                                            <p class="uc-card__subtitle">تخصيص الإشعارات التي تتلقاها</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="uc-card__body">
+                                    <div style="display:flex; flex-direction:column; gap:0.75rem;">
+
+                                        <!-- إشعارات العضوية -->
+                                        <div class="form-section" style="padding:0.85rem 1rem;">
+                                            <div style="display:flex; align-items:center; justify-content:space-between;">
+                                                <div>
+                                                    <h4 class="form-section-label" style="margin-bottom:0.15rem;">
+                                                        <i class="fa-solid fa-user-plus"></i> إشعارات العضوية
+                                                    </h4>
+                                                    <span class="form-section-hint">طلبات التسجيل والموافقات</span>
+                                                </div>
+                                                <label class="form-switch">
+                                                    <input type="checkbox" id="notifMembership" checked />
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- إشعارات الرسائل -->
+                                        <div class="form-section" style="padding:0.85rem 1rem;">
+                                            <div style="display:flex; align-items:center; justify-content:space-between;">
+                                                <div>
+                                                    <h4 class="form-section-label" style="margin-bottom:0.15rem;">
+                                                        <i class="fa-solid fa-envelope"></i> إشعارات الرسائل
+                                                    </h4>
+                                                    <span class="form-section-hint">رسائل التواصل الجديدة</span>
+                                                </div>
+                                                <label class="form-switch">
+                                                    <input type="checkbox" id="notifMessages" checked />
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- إشعارات الأنشطة -->
+                                        <div class="form-section" style="padding:0.85rem 1rem;">
+                                            <div style="display:flex; align-items:center; justify-content:space-between;">
+                                                <div>
+                                                    <h4 class="form-section-label" style="margin-bottom:0.15rem;">
+                                                        <i class="fa-solid fa-calendar-check"></i> إشعارات الأنشطة
+                                                    </h4>
+                                                    <span class="form-section-hint">الفعاليات والأنشطة الجديدة</span>
+                                                </div>
+                                                <label class="form-switch">
+                                                    <input type="checkbox" id="notifActivities" />
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- إشعارات الصوت -->
+                                        <div class="form-section" style="padding:0.85rem 1rem;">
+                                            <div style="display:flex; align-items:center; justify-content:space-between;">
+                                                <div>
+                                                    <h4 class="form-section-label" style="margin-bottom:0.15rem;">
+                                                        <i class="fa-solid fa-volume-high"></i> إشعارات الصوت
+                                                    </h4>
+                                                    <span class="form-section-hint">تشغيل صوت عند وصول إشعار جديد</span>
+                                                </div>
+                                                <label class="form-switch">
+                                                    <input type="checkbox" id="notifSound" checked />
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- إشعارات سطح المكتب -->
+                                        <div class="form-section" style="padding:0.85rem 1rem;">
+                                            <div style="display:flex; align-items:center; justify-content:space-between;">
+                                                <div>
+                                                    <h4 class="form-section-label" style="margin-bottom:0.15rem;">
+                                                        <i class="fa-solid fa-display"></i> إشعارات سطح المكتب
+                                                    </h4>
+                                                    <span class="form-section-hint">عرض إشعارات المتصفح على سطح المكتب</span>
+                                                </div>
+                                                <label class="form-switch">
+                                                    <input type="checkbox" id="notifDesktop" />
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-actions form-actions-start" style="margin-top:1.25rem;">
+                                        <button class="btn btn-primary btn-sm" id="settingsSaveNotificationsBtn">
+                                            <i class="fa-solid fa-floppy-disk"></i>
+                                            حفظ إعدادات الإشعارات
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ══════════ تبويب: المظهر ══════════ -->
+                        <div id="settings-appearance-tab" class="tab-content" style="display:none;">
+                            <div class="uc-card" style="margin-bottom:1.5rem;">
+                                <div class="uc-card__header">
+                                    <div class="uc-card__header-inner">
+                                        <div class="uc-card__icon"><i class="fa-solid fa-palette"></i></div>
+                                        <div class="uc-card__header-info">
+                                            <h3 class="uc-card__title">المظهر</h3>
+                                            <p class="uc-card__subtitle">تخصيص مظهر لوحة التحكم</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="uc-card__body">
+
+                                    <!-- حجم الخط -->
+                                    <div class="form-section" style="margin-bottom:1.25rem;">
+                                        <h4 class="form-section-label">
+                                            <i class="fa-solid fa-text-height"></i> حجم الخط
+                                        </h4>
+                                        <span class="form-section-hint">اختر حجم الخط المناسب لك</span>
+                                        <div class="form-radio-group horizontal" style="margin-top:0.6rem;">
+                                            <label class="form-radio">
+                                                <input type="radio" name="settingsFontSize" value="small" />
+                                                <span class="form-radio-label">صغير</span>
+                                            </label>
+                                            <label class="form-radio">
+                                                <input type="radio" name="settingsFontSize" value="medium" checked />
+                                                <span class="form-radio-label">متوسط</span>
+                                            </label>
+                                            <label class="form-radio">
+                                                <input type="radio" name="settingsFontSize" value="large" />
+                                                <span class="form-radio-label">كبير</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- الوضع المضغوط -->
+                                    <div class="form-section" style="margin-bottom:1.25rem;">
+                                        <div style="display:flex; align-items:center; justify-content:space-between;">
+                                            <div>
+                                                <h4 class="form-section-label" style="margin-bottom:0.15rem;">
+                                                    <i class="fa-solid fa-compress"></i> الوضع المضغوط
+                                                </h4>
+                                                <span class="form-section-hint">تقليل المسافات لعرض محتوى أكثر</span>
+                                            </div>
+                                            <label class="form-switch">
+                                                <input type="checkbox" id="settingsCompactMode" />
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- حالة القائمة الجانبية -->
+                                    <div class="form-section">
+                                        <h4 class="form-section-label">
+                                            <i class="fa-solid fa-bars"></i> القائمة الجانبية
+                                        </h4>
+                                        <span class="form-section-hint">حالة القائمة الجانبية عند فتح لوحة التحكم</span>
+                                        <div class="form-radio-group horizontal" style="margin-top:0.6rem;">
+                                            <label class="form-radio">
+                                                <input type="radio" name="settingsSidebar" value="expanded" checked />
+                                                <span class="form-radio-label">مفتوحة</span>
+                                            </label>
+                                            <label class="form-radio">
+                                                <input type="radio" name="settingsSidebar" value="collapsed" />
+                                                <span class="form-radio-label">مطوية</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-actions form-actions-start" style="margin-top:1.5rem;">
+                                        <button class="btn btn-primary btn-sm" id="settingsSaveAppearanceBtn">
+                                            <i class="fa-solid fa-floppy-disk"></i>
+                                            حفظ إعدادات المظهر
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ══════════ تبويب: حول النظام ══════════ -->
+                        <div id="settings-about-tab" class="tab-content" style="display:none;">
+                            <!-- معلومات النظام -->
+                            <div class="uc-card" style="margin-bottom:1.5rem;">
+                                <div class="uc-card__header">
+                                    <div class="uc-card__header-inner">
+                                        <div class="uc-card__icon"><i class="fa-solid fa-circle-info"></i></div>
+                                        <div class="uc-card__header-info">
+                                            <h3 class="uc-card__title">معلومات النظام</h3>
+                                            <p class="uc-card__subtitle">تفاصيل الإصدار والبيئة</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="uc-card__body">
+                                    <div class="uc-card__info-item info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-code-branch"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">إصدار النظام</span>
+                                            <span class="uc-card__info-value" id="settingsVersion">نادي أدِيب v2.0</span>
+                                        </div>
+                                    </div>
+                                    <div class="uc-card__info-item info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-database"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">قاعدة البيانات</span>
+                                            <span class="uc-card__info-value">Supabase PostgreSQL</span>
+                                        </div>
+                                    </div>
+                                    <div class="uc-card__info-item info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-regular fa-calendar-check"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">تاريخ آخر تحديث</span>
+                                            <span class="uc-card__info-value" id="settingsLastUpdate">جاري التحميل...</span>
+                                        </div>
+                                    </div>
+                                    <div class="uc-card__info-item info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-globe"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">البيئة</span>
+                                            <span class="uc-card__info-value">
+                                                <span class="badge" style="background:var(--color-success-light,#34d399); color:var(--color-success-dark,#059669); padding:0.2rem 0.6rem; border-radius:9999px; font-size:0.75rem; font-weight:600;">مباشر</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- الدعم والمساعدة -->
+                            <div class="uc-card">
+                                <div class="uc-card__header">
+                                    <div class="uc-card__header-inner">
+                                        <div class="uc-card__icon"><i class="fa-solid fa-life-ring"></i></div>
+                                        <div class="uc-card__header-info">
+                                            <h3 class="uc-card__title">الدعم والمساعدة</h3>
+                                            <p class="uc-card__subtitle">روابط مفيدة وإدارة ذاكرة التخزين</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="uc-card__body">
+                                    <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+                                        <a href="https://adeeb.club" target="_blank" class="btn btn-outline btn-sm">
+                                            <i class="fa-solid fa-globe"></i> موقع النادي
+                                        </a>
+                                        <button class="btn btn-outline btn-sm" id="settingsClearCacheBtn">
+                                            <i class="fa-solid fa-broom"></i> مسح ذاكرة التخزين المؤقت
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div><!-- end .tabs-content -->
+                </div><!-- end #settingsTabsContainer -->
+
+            </section>
+
         </main>
     </div>
 
@@ -4012,7 +4363,6 @@
     <script src="js/membership-archives.js"></script>
     <script src="js/member-migration.js"></script>
     <script src="js/profile.js"></script>
-    <script src="js/settings.js"></script>
     <script src="js/pwa-manager.js"></script>
     <script src="js/pending-members-manager.js"></script>
     <script src="js/users-manager.js"></script>
@@ -4037,8 +4387,152 @@
     <script src="js/elections-manager.js"></script>
     <!-- SweetAlert2 Shim - يحوّل Swal.fire إلى ModalHelper -->
     <script src="js/swal-shim.js"></script>
+    <script src="js/settings.js"></script>
     <script src="dashboard.js"></script>
     <!-- <link rel="stylesheet" href="css/archives.css"> -->
+
+    <!-- ═══════════════════════════════════════════════════════
+         Modals تعديل بيانات الملف الشخصي
+         ═══════════════════════════════════════════════════════ -->
+
+    <!-- Modal: المعلومات الأساسية -->
+    <div class="modal-backdrop" id="editBasicBackdrop"></div>
+    <div class="modal modal-md" id="editBasicModal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <div class="modal-icon"><i class="fa-regular fa-id-card"></i></div>
+                <div>
+                    <h3 class="modal-title">تعديل المعلومات الأساسية</h3>
+                </div>
+            </div>
+            <button class="modal-close" id="closeEditBasicModal" type="button" aria-label="إغلاق">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">البريد الإلكتروني</label>
+                <input type="email" class="form-input" id="modalEditEmail" placeholder="name@example.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">رقم الهاتف</label>
+                <input type="tel" class="form-input" id="modalEditPhone" placeholder="05XXXXXXXX" maxlength="10">
+            </div>
+            <div class="form-group">
+                <label class="form-label">رقم الهوية الوطنية</label>
+                <input type="text" class="form-input" id="modalEditNationalId" placeholder="1XXXXXXXXX" maxlength="10">
+            </div>
+            <div class="form-group">
+                <label class="form-label">تاريخ الميلاد</label>
+                <input type="date" class="form-input" id="modalEditBirthDate">
+            </div>
+            <div class="form-group">
+                <label class="form-label">اللون المفضل</label>
+                <input type="text" class="form-input" id="modalEditFavoriteColor" placeholder="مثال: الأزرق، #3498db">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-success" type="button" id="saveEditBasicBtn">
+                <i class="fa-solid fa-floppy-disk"></i> حفظ التغييرات
+            </button>
+            <button class="btn btn-slate btn-outline" type="button" id="cancelEditBasicBtn">
+                <i class="fa-regular fa-circle-xmark"></i> إلغاء
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal: البيانات الأكاديمية -->
+    <div class="modal-backdrop" id="editAcademicBackdrop"></div>
+    <div class="modal modal-md" id="editAcademicModal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <div class="modal-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                <div>
+                    <h3 class="modal-title">تعديل البيانات الأكاديمية</h3>
+                </div>
+            </div>
+            <button class="modal-close" id="closeEditAcademicModal" type="button" aria-label="إغلاق">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">الرقم الأكاديمي</label>
+                <input type="text" class="form-input" id="modalEditAcademicRecord" placeholder="4XXXXXXXX">
+            </div>
+            <div class="form-group">
+                <label class="form-label">الدرجة الأكاديمية</label>
+                <select class="form-input" id="modalEditAcademicDegree">
+                    <option value="">اختر الدرجة</option>
+                    <option value="high_school">ثانوية عامة</option>
+                    <option value="diploma">دبلوم</option>
+                    <option value="bachelor">بكالوريوس</option>
+                    <option value="master">ماجستير</option>
+                    <option value="phd">دكتوراه</option>
+                    <option value="other">أخرى</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">الكلية</label>
+                <input type="text" class="form-input" id="modalEditCollege" placeholder="اسم الكلية">
+            </div>
+            <div class="form-group">
+                <label class="form-label">التخصص</label>
+                <input type="text" class="form-input" id="modalEditMajor" placeholder="التخصص الدراسي">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-success" type="button" id="saveEditAcademicBtn">
+                <i class="fa-solid fa-floppy-disk"></i> حفظ التغييرات
+            </button>
+            <button class="btn btn-slate btn-outline" type="button" id="cancelEditAcademicBtn">
+                <i class="fa-regular fa-circle-xmark"></i> إلغاء
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal: حسابات التواصل الاجتماعي -->
+    <div class="modal-backdrop" id="editSocialBackdrop"></div>
+    <div class="modal modal-md" id="editSocialModal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <div class="modal-icon"><i class="fa-solid fa-share-nodes"></i></div>
+                <div>
+                    <h3 class="modal-title">تعديل حسابات التواصل</h3>
+                </div>
+            </div>
+            <button class="modal-close" id="closeEditSocialModal" type="button" aria-label="إغلاق">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">تويتر (X)</label>
+                <input type="text" class="form-input" id="modalEditTwitter" placeholder="@username">
+            </div>
+            <div class="form-group">
+                <label class="form-label">إنستقرام</label>
+                <input type="text" class="form-input" id="modalEditInstagram" placeholder="@username">
+            </div>
+            <div class="form-group">
+                <label class="form-label">لينكد إن</label>
+                <input type="text" class="form-input" id="modalEditLinkedin" placeholder="username">
+            </div>
+            <div class="form-group">
+                <label class="form-label">تيك توك</label>
+                <input type="text" class="form-input" id="modalEditTiktok" placeholder="@username">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-success" type="button" id="saveEditSocialBtn">
+                <i class="fa-solid fa-floppy-disk"></i> حفظ التغييرات
+            </button>
+            <button class="btn btn-slate btn-outline" type="button" id="cancelEditSocialBtn">
+                <i class="fa-regular fa-circle-xmark"></i> إلغاء
+            </button>
+        </div>
+    </div>
+
 </body>
 
 </html>
