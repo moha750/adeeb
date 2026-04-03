@@ -859,11 +859,6 @@
    Dark Mode Support (Optional)
    ============================================================================ */
 
-@media (prefers-color-scheme: dark) {
-    .admin-layout {
-        background: linear-gradient(135deg, #1a1a1a 0%, #0f1419 100%);
-    }
-}
 
 /* ============================================================================
    Smooth Transitions for All Interactive Elements

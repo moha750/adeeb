@@ -1463,12 +1463,31 @@
 /* ── الحاوية المقطعية ── */
 .settings-segmented-nav {
     display: flex;
-    gap: 4px;
+    gap: 6px;
     background: rgba(var(--color-primary-rgb), 0.055);
     border-radius: 20px;
-    padding: 5px;
+    padding: 6px;
     margin-bottom: 1.75rem;
-    border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+    border: 1px solid rgba(var(--color-primary-rgb), 0.10);
+    position: relative;
+    overflow: hidden;
+}
+
+/* زخرفة خلفية للشريط — دائرة شفافة مثل الكروت */
+.settings-segmented-nav::after {
+    content: '';
+    position: absolute;
+    bottom: -40px;
+    left: -40px;
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(
+        circle,
+        rgba(var(--color-accent-rgb), 0.07) 0%,
+        transparent 68%
+    );
+    border-radius: 50%;
+    pointer-events: none;
 }
 
 /* ── زر التبويب ── */
@@ -1478,61 +1497,135 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 0.8rem 0.4rem 0.7rem;
-    border: none;
+    gap: 7px;
+    padding: 0.85rem 0.5rem 0.75rem;
+    border: 1px solid transparent;
     background: transparent;
     border-radius: 16px;
     cursor: pointer;
     font-family: inherit;
     color: var(--text-muted);
-    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
     min-width: 0;
+    transition:
+        background    0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        color         0.3s ease,
+        border-color  0.3s ease,
+        box-shadow    0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        transform     0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* شريط سفلي مؤشر — يظهر عند الحالة النشطة */
+.settings-seg-btn::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 55%;
+    height: 3px;
+    background: linear-gradient(
+        90deg,
+        var(--color-primary-light),
+        var(--color-primary)
+    );
+    border-radius: 3px 3px 0 0;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* دائرة زخرفية صغيرة داخل الزر — تظهر عند التفعيل */
+.settings-seg-btn::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    width: 70px;
+    height: 70px;
+    background: radial-gradient(
+        circle,
+        rgba(var(--color-accent-rgb), 0.08) 0%,
+        transparent 70%
+    );
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
 }
 
 .settings-seg-btn:hover:not(.active) {
-    background: rgba(var(--color-accent-rgb), 0.08);
+    background-color: rgba(var(--color-accent-rgb), 0.05);
+    background-image: linear-gradient(
+        145deg,
+        rgba(var(--color-accent-rgb), 0.07) 0%,
+        transparent 100%
+    );
     color: var(--color-primary);
+    transform: translateY(-1px);
 }
 
 .settings-seg-btn:hover:not(.active) .settings-seg-btn__icon {
-    background: rgba(var(--color-accent-rgb), 0.15);
+    background: rgba(var(--color-accent-rgb), 0.14);
     color: var(--color-primary-light);
+    box-shadow: 0 2px 8px rgba(var(--color-accent-rgb), 0.12);
 }
 
-/* الحالة النشطة: "بطاقة طافية" بيضاء */
+/* ── الحالة النشطة — Gradient Fill مثل الكروت ── */
 .settings-seg-btn.active {
-    background: #ffffff;
+    background-color: #ffffff;
+    background-image: linear-gradient(
+        145deg,
+        rgba(var(--color-accent-rgb), 0.10) 0%,
+        rgba(var(--color-accent-rgb), 0.03) 50%,
+        transparent 100%
+    );
     color: var(--color-primary);
+    border-color: rgba(var(--color-accent-rgb), 0.18);
     box-shadow:
-        0 2px 10px rgba(var(--color-primary-rgb), 0.14),
-        0 1px 3px rgba(0, 0, 0, 0.07);
+        0 2px 8px rgba(var(--color-primary-rgb), 0.10),
+        0 6px 20px rgba(var(--color-accent-rgb), 0.08);
+}
+
+.settings-seg-btn.active::before {
+    transform: translateX(-50%) scaleX(1);
+}
+
+.settings-seg-btn.active::after {
+    opacity: 1;
 }
 
 /* ── أيقونة الزر ── */
 .settings-seg-btn__icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.05rem;
     flex-shrink: 0;
-    background: rgba(var(--color-accent-rgb), 0.09);
+    background: rgba(var(--color-accent-rgb), 0.08);
     color: var(--text-muted);
-    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    transition:
+        background 0.3s ease,
+        color      0.3s ease,
+        box-shadow 0.3s ease,
+        transform  0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* الأيقونة عند التفعيل: gradient + ظل */
+/* الأيقونة عند التفعيل: gradient + ظل + رفعة */
 .settings-seg-btn.active .settings-seg-btn__icon {
     background: linear-gradient(
         135deg,
-        var(--color-primary)  0%,
+        var(--color-primary) 0%,
         var(--color-primary-light) 100%
     );
     color: #ffffff;
-    box-shadow: 0 4px 10px rgba(var(--color-primary-rgb), 0.35);
+    box-shadow:
+        0 4px 12px rgba(var(--color-primary-rgb), 0.30),
+        0 1px 3px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
 }
 
 /* ── تسمية الزر ── */
@@ -1541,16 +1634,23 @@
     font-weight: 600;
     line-height: 1;
     white-space: nowrap;
+    transition: color 0.3s ease;
+}
+
+.settings-seg-btn.active .settings-seg-btn__label {
+    color: var(--color-primary);
 }
 
 /* ── تجاوبية ── */
-@media (max-width: 680px) {
+@media (max-width: 435px) {
     .settings-segmented-nav {
         overflow-x: auto;
         flex-wrap: nowrap;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
         border-radius: 16px;
+        gap: 4px;
+        padding: 5px;
     }
 
     .settings-segmented-nav::-webkit-scrollbar { display: none; }
@@ -1558,7 +1658,7 @@
     .settings-seg-btn {
         flex: 0 0 auto;
         min-width: 72px;
-        padding: 0.6rem 0.5rem;
+        padding: 0.65rem 0.5rem;
     }
 
     .settings-seg-btn__icon {
@@ -1566,5 +1666,9 @@
         height: 34px;
         font-size: 0.9rem;
         border-radius: 10px;
+    }
+
+    .settings-seg-btn::before {
+        width: 65%;
     }
 }
