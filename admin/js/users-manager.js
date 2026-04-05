@@ -433,6 +433,38 @@ class UsersManager {
     }
 
     /**
+     * بناء رابط المنصة الاجتماعية من اسم الحساب
+     */
+    static socialUrl(platform, account) {
+        if (account.startsWith('http://') || account.startsWith('https://')) return account;
+        const bases = {
+            twitter:   'https://x.com/',
+            instagram: 'https://www.instagram.com/',
+            linkedin:  'https://www.linkedin.com/in/',
+            tiktok:    'https://www.tiktok.com/@'
+        };
+        return (bases[platform] || '') + account;
+    }
+
+    /**
+     * نسخ قيمة من بطاقة التفاصيل
+     */
+    static copyDetailValue(btn) {
+        const text = btn.dataset.copy;
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            const icon = btn.querySelector('i');
+            const originalClass = icon.className;
+            icon.className = 'fa-solid fa-check';
+            btn.classList.add('mdi-btn--copied');
+            setTimeout(() => {
+                icon.className = originalClass;
+                btn.classList.remove('mdi-btn--copied');
+            }, 1800);
+        }).catch(() => {});
+    }
+
+    /**
      * عرض تفاصيل المستخدم
      */
     async viewUserDetails(userId) {
@@ -466,168 +498,200 @@ class UsersManager {
             console.warn('Error fetching member details:', error);
         }
 
+        let roleLabel = '';
+        if (role && committee) {
+            roleLabel = `${role.role_name_ar} · ${committee.committee_name_ar}`;
+        } else if (role) {
+            roleLabel = role.role_name_ar;
+        } else {
+            roleLabel = 'عضو';
+        }
+
+        const academicDegreeLabels = {
+            'bachelor': 'بكالوريوس', 'Bachelor': 'بكالوريوس', "Bachelor's": 'بكالوريوس',
+            'master':   'ماجستير',   'Master':   'ماجستير',   "Master's":   'ماجستير',
+            'phd':      'دكتوراه',   'PhD':      'دكتوراه',   'doctorate':  'دكتوراه',
+            'diploma':  'دبلوم',     'Diploma':  'دبلوم'
+        };
+        const formatDegree = (v) => academicDegreeLabels[v] || v;
+
+        const hasAcademic = memberDetails && (
+            memberDetails.national_id || memberDetails.full_name_triple ||
+            memberDetails.birth_date || memberDetails.academic_record_number ||
+            memberDetails.academic_degree || memberDetails.college || memberDetails.major
+        );
+
+        const hasSocial = memberDetails && (
+            memberDetails.twitter_account || memberDetails.instagram_account ||
+            memberDetails.linkedin_account || memberDetails.tiktok_account
+        );
+
         const content = `
-            <div class="user-details-modal">
-                <div class="user-details-header">
-                    <img src="${avatarUrl}" alt="${user.full_name}" class="user-avatar-lg" />
-                    <h3 class="user-name-lg">${user.full_name}</h3>
-                </div>
-                <div class="application-info-grid" style="margin-top: 1.5rem;">
-                    <div class="info-item">
-                        <i class="fa-solid fa-envelope"></i>
-                        <div class="info-content">
-                            <span class="info-label">البريد الإلكتروني</span>
-                            <span class="info-value">${user.email || 'غير محدد'}</span>
+            <div class="modal-media modal-media--avatar">
+                <img src="${avatarUrl}" alt="${user.full_name}" />
+                <span class="avatar-name">${user.full_name}</span>
+                <span class="avatar-meta">${roleLabel}</span>
+                <span class="avatar-badge">
+                    <i class="fa-solid fa-circle-check"></i>
+                    ${statusLabels[user.account_status] || user.account_status}
+                </span>
+            </div>
+
+            <div class="modal-section">
+                <h3><i class="fa-solid fa-id-card"></i> البيانات الأساسية</h3>
+                <div class="modal-detail-grid">
+                    ${user.email ? `
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label">البريد الإلكتروني</span>
+                        <span class="modal-detail-value">${user.email}</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--copy" onclick="UsersManager.copyDetailValue(this)" data-copy="${user.email}" title="نسخ"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                    </div>` : ''}
+                    ${(user.phone || memberDetails?.phone) ? `
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label">رقم الجوال</span>
+                        <span class="modal-detail-value" style="direction:ltr;text-align:right;">${user.phone || memberDetails.phone}</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--copy" onclick="UsersManager.copyDetailValue(this)" data-copy="${user.phone || memberDetails.phone}" title="نسخ"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                    </div>` : ''}
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label">الدور</span>
+                        <span class="modal-detail-value">${role?.role_name_ar || 'عضو'}</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--copy" onclick="UsersManager.copyDetailValue(this)" data-copy="${role?.role_name_ar || 'عضو'}" title="نسخ"><i class="fa-regular fa-copy"></i></button>
                         </div>
                     </div>
-                    <div class="info-item">
-                        <i class="fa-solid fa-phone"></i>
-                        <div class="info-content">
-                            <span class="info-label">الجوال</span>
-                            <span class="info-value">${user.phone || memberDetails?.phone || 'غير محدد'}</span>
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label">اللجنة</span>
+                        <span class="modal-detail-value">${committee?.committee_name_ar || 'غير محدد'}</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--copy" onclick="UsersManager.copyDetailValue(this)" data-copy="${committee?.committee_name_ar || 'غير محدد'}" title="نسخ"><i class="fa-regular fa-copy"></i></button>
                         </div>
                     </div>
-                    ${memberDetails?.national_id ? `
-                    <div class="info-item">
-                        <i class="fa-solid fa-id-card"></i>
-                        <div class="info-content">
-                            <span class="info-label">الهوية الوطنية</span>
-                            <span class="info-value">${memberDetails.national_id}</span>
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label">تاريخ الانضمام</span>
+                        <span class="modal-detail-value">${new Date(user.created_at).toLocaleDateString('ar-SA')}</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--copy" onclick="UsersManager.copyDetailValue(this)" data-copy="${new Date(user.created_at).toLocaleDateString('ar-SA')}" title="نسخ"><i class="fa-regular fa-copy"></i></button>
                         </div>
                     </div>
-                    ` : ''}
-                    ${memberDetails?.full_name_triple ? `
-                    <div class="info-item">
-                        <i class="fa-solid fa-signature"></i>
-                        <div class="info-content">
-                            <span class="info-label">الاسم الثلاثي</span>
-                            <span class="info-value">${memberDetails.full_name_triple}</span>
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label">حالة الحساب</span>
+                        <span class="modal-detail-value">${statusLabels[user.account_status] || user.account_status}</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--copy" onclick="UsersManager.copyDetailValue(this)" data-copy="${statusLabels[user.account_status] || user.account_status}" title="نسخ"><i class="fa-regular fa-copy"></i></button>
                         </div>
                     </div>
-                    ` : ''}
-                    ${memberDetails?.birth_date ? `
-                    <div class="info-item">
-                        <i class="fa-solid fa-cake-candles"></i>
-                        <div class="info-content">
-                            <span class="info-label">تاريخ الميلاد</span>
-                            <span class="info-value">${new Date(memberDetails.birth_date).toLocaleDateString('ar-SA')}</span>
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${memberDetails?.academic_record_number ? `
-                    <div class="info-item">
-                        <i class="fa-solid fa-graduation-cap"></i>
-                        <div class="info-content">
-                            <span class="info-label">الرقم الأكاديمي</span>
-                            <span class="info-value">${memberDetails.academic_record_number}</span>
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${memberDetails?.academic_degree ? `
-                    <div class="info-item">
-                        <i class="fa-solid fa-user-graduate"></i>
-                        <div class="info-content">
-                            <span class="info-label">الدرجة الأكاديمية</span>
-                            <span class="info-value">${memberDetails.academic_degree}</span>
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${memberDetails?.college ? `
-                    <div class="info-item">
-                        <i class="fa-solid fa-building-columns"></i>
-                        <div class="info-content">
-                            <span class="info-label">الكلية</span>
-                            <span class="info-value">${memberDetails.college}</span>
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${memberDetails?.major ? `
-                    <div class="info-item">
-                        <i class="fa-solid fa-book"></i>
-                        <div class="info-content">
-                            <span class="info-label">التخصص</span>
-                            <span class="info-value">${memberDetails.major}</span>
-                        </div>
-                    </div>
-                    ` : ''}
-                    <div class="info-item">
-                        <i class="fa-solid fa-user-tag"></i>
-                        <div class="info-content">
-                            <span class="info-label">الدور</span>
-                            <span class="info-value">${role?.role_name_ar || 'غير محدد'}</span>
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <i class="fa-solid fa-users"></i>
-                        <div class="info-content">
-                            <span class="info-label">اللجنة</span>
-                            <span class="info-value">${committee?.committee_name_ar || 'غير محدد'}</span>
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <i class="fa-solid fa-circle-check"></i>
-                        <div class="info-content">
-                            <span class="info-label">حالة الحساب</span>
-                            <span class="info-value">${statusLabels[user.account_status] || user.account_status}</span>
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <i class="fa-solid fa-calendar-plus"></i>
-                        <div class="info-content">
-                            <span class="info-label">تاريخ الانضمام</span>
-                            <span class="info-value">${new Date(user.created_at).toLocaleDateString('ar-SA')}</span>
-                        </div>
-                    </div>
-                    ${memberDetails?.twitter_account ? `
-                    <div class="info-item">
-                        <i class="fa-brands fa-twitter"></i>
-                        <div class="info-content">
-                            <span class="info-label">تويتر</span>
-                            <span class="info-value"><a href="${memberDetails.twitter_account}" target="_blank">${memberDetails.twitter_account}</a></span>
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${memberDetails?.instagram_account ? `
-                    <div class="info-item">
-                        <i class="fa-brands fa-instagram"></i>
-                        <div class="info-content">
-                            <span class="info-label">إنستقرام</span>
-                            <span class="info-value"><a href="${memberDetails.instagram_account}" target="_blank">${memberDetails.instagram_account}</a></span>
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${memberDetails?.linkedin_account ? `
-                    <div class="info-item">
-                        <i class="fa-brands fa-linkedin"></i>
-                        <div class="info-content">
-                            <span class="info-label">لينكد إن</span>
-                            <span class="info-value"><a href="${memberDetails.linkedin_account}" target="_blank">${memberDetails.linkedin_account}</a></span>
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${memberDetails?.tiktok_account ? `
-                    <div class="info-item">
-                        <i class="fa-brands fa-tiktok"></i>
-                        <div class="info-content">
-                            <span class="info-label">تيك توك</span>
-                            <span class="info-value"><a href="${memberDetails.tiktok_account}" target="_blank">${memberDetails.tiktok_account}</a></span>
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${memberDetails?.notes ? `
-                    <div class="info-item" style="grid-column: 1 / -1;">
-                        <i class="fa-solid fa-note-sticky"></i>
-                        <div class="info-content">
-                            <span class="info-label">ملاحظات</span>
-                            <span class="info-value">${memberDetails.notes}</span>
-                        </div>
-                    </div>
-                    ` : ''}
                 </div>
             </div>
+
+            ${hasAcademic ? `
+            <hr class="modal-divider">
+            <div class="modal-section">
+                <h3><i class="fa-solid fa-graduation-cap"></i> البيانات الأكاديمية</h3>
+                <div class="modal-detail-grid">
+                    ${memberDetails.national_id ? `
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label"> رقم الهوية</span>
+                        <span class="modal-detail-value">${memberDetails.national_id}</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--copy" onclick="UsersManager.copyDetailValue(this)" data-copy="${memberDetails.national_id}" title="نسخ"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                    </div>` : ''}
+                    ${memberDetails.birth_date ? `
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label"> تاريخ الميلاد</span>
+                        <span class="modal-detail-value">${new Date(memberDetails.birth_date).toLocaleDateString('ar-SA')}</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--copy" onclick="UsersManager.copyDetailValue(this)" data-copy="${new Date(memberDetails.birth_date).toLocaleDateString('ar-SA')}" title="نسخ"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                    </div>` : ''}
+                    ${memberDetails.academic_degree ? `
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label"> الدرجة الأكاديمية</span>
+                        <span class="modal-detail-value">${formatDegree(memberDetails.academic_degree)}</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--copy" onclick="UsersManager.copyDetailValue(this)" data-copy="${formatDegree(memberDetails.academic_degree)}" title="نسخ"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                    </div>` : ''}
+                    ${memberDetails.academic_record_number ? `
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label"> الرقم الأكاديمي</span>
+                        <span class="modal-detail-value">${memberDetails.academic_record_number}</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--copy" onclick="UsersManager.copyDetailValue(this)" data-copy="${memberDetails.academic_record_number}" title="نسخ"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                    </div>` : ''}
+                    ${memberDetails.college ? `
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label"> الكلية</span>
+                        <span class="modal-detail-value">${memberDetails.college}</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--copy" onclick="UsersManager.copyDetailValue(this)" data-copy="${memberDetails.college}" title="نسخ"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                    </div>` : ''}
+                    ${memberDetails.major ? `
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label"> التخصص</span>
+                        <span class="modal-detail-value">${memberDetails.major}</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--copy" onclick="UsersManager.copyDetailValue(this)" data-copy="${memberDetails.major}" title="نسخ"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                    </div>` : ''}
+                </div>
+            </div>` : ''}
+
+            ${hasSocial ? `
+            <hr class="modal-divider">
+            <div class="modal-section">
+                <h3><i class="fa-solid fa-share-nodes"></i> الحسابات الاجتماعية</h3>
+                <div class="modal-detail-grid">
+                    ${memberDetails.twitter_account ? `
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label"> تويتر</span>
+                        <span class="modal-detail-value">${memberDetails.twitter_account}@</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--visit" onclick="window.open(UsersManager.socialUrl('twitter','${memberDetails.twitter_account}'),'_blank')" title="زيارة"><i class="fa-solid fa-arrow-up-right-from-square"></i></button>
+                        </div>
+                    </div>` : ''}
+                    ${memberDetails.instagram_account ? `
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label"> إنستقرام</span>
+                        <span class="modal-detail-value">${memberDetails.instagram_account}@</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--visit" onclick="window.open(UsersManager.socialUrl('instagram','${memberDetails.instagram_account}'),'_blank')" title="زيارة"><i class="fa-solid fa-arrow-up-right-from-square"></i></button>
+                        </div>
+                    </div>` : ''}
+                    ${memberDetails.linkedin_account ? `
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label"> لينكد إن</span>
+                        <span class="modal-detail-value">${memberDetails.linkedin_account}@</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--visit" onclick="window.open(UsersManager.socialUrl('linkedin','${memberDetails.linkedin_account}'),'_blank')" title="زيارة"><i class="fa-solid fa-arrow-up-right-from-square"></i></button>
+                        </div>
+                    </div>` : ''}
+                    ${memberDetails.tiktok_account ? `
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label"> تيك توك</span>
+                        <span class="modal-detail-value">${memberDetails.tiktok_account}@</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--visit" onclick="window.open(UsersManager.socialUrl('tiktok','${memberDetails.tiktok_account}'),'_blank')" title="زيارة"><i class="fa-solid fa-arrow-up-right-from-square"></i></button>
+                        </div>
+                    </div>` : ''}
+                </div>
+            </div>` : ''}
+
+            ${memberDetails?.notes ? `
+            <hr class="modal-divider">
+            <div class="modal-section">
+                <h3><i class="fa-solid fa-note-sticky"></i> ملاحظات</h3>
+                <p>${memberDetails.notes}</p>
+            </div>` : ''}
         `;
 
-        window.openModal('تفاصيل المستخدم', content, { icon: 'fa-user' });
+        window.openModal('تفاصيل العضو', content, { icon: 'fa-user' });
     }
 
     /**
@@ -657,84 +721,90 @@ class UsersManager {
         ];
 
         const content = `
-        <form id="editUserForm" style="display:grid; gap:1rem;">
-            <h4 style="margin:0 0 0.25rem; color:#374151; font-size:0.95rem; border-bottom:1px solid #e5e7eb; padding-bottom:0.5rem;">البيانات الأساسية</h4>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+        <form id="editUserForm" style="display:grid; gap:1.25rem;">
+            <p class="modal-section-title"><i class="fa-solid fa-user"></i> البيانات الأساسية</p>
+            <div class="modal-form-grid">
                 <div class="form-group">
-                    <label>الاسم الكامل <span style="color:#ef4444">*</span></label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-user"></i></span> الاسم الثلاثي</label>
                     <input type="text" id="ef-full_name" class="form-input" value="${user.full_name || ''}" required />
                 </div>
                 <div class="form-group">
-                    <label>الاسم الثلاثي</label>
-                    <input type="text" id="ef-full_name_triple" class="form-input" value="${md.full_name_triple || ''}" />
-                </div>
-                <div class="form-group">
-                    <label>البريد الإلكتروني <span style="color:#ef4444">*</span></label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-envelope"></i></span> البريد الإلكتروني</label>
                     <input type="email" id="ef-email" class="form-input" value="${user.email || ''}" required />
                 </div>
                 <div class="form-group">
-                    <label>رقم الجوال</label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-phone"></i></span> رقم الجوال</label>
                     <input type="tel" id="ef-phone" class="form-input" value="${user.phone || md.phone || ''}" />
                 </div>
                 <div class="form-group">
-                    <label>رقم الهوية الوطنية</label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-id-card"></i></span> رقم الهوية الوطنية</label>
                     <input type="text" id="ef-national_id" class="form-input" value="${md.national_id || ''}" />
                 </div>
                 <div class="form-group">
-                    <label>تاريخ الميلاد</label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-calendar"></i></span> تاريخ الميلاد</label>
                     <input type="date" id="ef-birth_date" class="form-input" value="${md.birth_date || ''}" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-palette"></i></span> اللون المفضل</label>
+                    <input type="color" id="ef-favorite_color" class="form-input" value="${md.favorite_color || '#3d8fd6'}" style="height:2.6rem;padding:0.25rem 0.4rem;cursor:pointer;" />
                 </div>
             </div>
 
-            <h4 style="margin:0.5rem 0 0.25rem; color:#374151; font-size:0.95rem; border-bottom:1px solid #e5e7eb; padding-bottom:0.5rem;">البيانات الأكاديمية</h4>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+            <hr class="modal-divider">
+
+            <p class="modal-section-title"><i class="fa-solid fa-graduation-cap"></i> البيانات الأكاديمية</p>
+            <div class="modal-form-grid">
                 <div class="form-group">
-                    <label>الدرجة الأكاديمية</label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-graduation-cap"></i></span> الدرجة الأكاديمية</label>
                     <select id="ef-academic_degree" class="form-input">
                         ${academicDegrees.map(d => `<option value="${d.value}" ${md.academic_degree === d.value ? 'selected' : ''}>${d.label}</option>`).join('')}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>الرقم الأكاديمي</label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-hashtag"></i></span> الرقم الأكاديمي</label>
                     <input type="text" id="ef-academic_record_number" class="form-input" value="${md.academic_record_number || ''}" />
                 </div>
                 <div class="form-group">
-                    <label>الكلية</label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-building-columns"></i></span> الكلية</label>
                     <input type="text" id="ef-college" class="form-input" value="${md.college || ''}" />
                 </div>
                 <div class="form-group">
-                    <label>التخصص</label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-book"></i></span> التخصص</label>
                     <input type="text" id="ef-major" class="form-input" value="${md.major || ''}" />
                 </div>
             </div>
 
-            <h4 style="margin:0.5rem 0 0.25rem; color:#374151; font-size:0.95rem; border-bottom:1px solid #e5e7eb; padding-bottom:0.5rem;">الحسابات الاجتماعية</h4>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+            <hr class="modal-divider">
+
+            <p class="modal-section-title"><i class="fa-solid fa-hashtag"></i> الحسابات الاجتماعية</p>
+            <div class="modal-form-grid">
                 <div class="form-group">
-                    <label><i class="fa-brands fa-twitter" style="color:#1da1f2;"></i> تويتر</label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-brands fa-twitter"></i></span> تويتر</label>
                     <input type="url" id="ef-twitter_account" class="form-input" placeholder="https://x.com/..." value="${md.twitter_account || ''}" />
                 </div>
                 <div class="form-group">
-                    <label><i class="fa-brands fa-instagram" style="color:#e1306c;"></i> إنستقرام</label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-brands fa-instagram"></i></span> إنستقرام</label>
                     <input type="url" id="ef-instagram_account" class="form-input" placeholder="https://instagram.com/..." value="${md.instagram_account || ''}" />
                 </div>
                 <div class="form-group">
-                    <label><i class="fa-brands fa-linkedin" style="color:#0077b5;"></i> لينكد إن</label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-brands fa-linkedin"></i></span> لينكد إن</label>
                     <input type="url" id="ef-linkedin_account" class="form-input" placeholder="https://linkedin.com/..." value="${md.linkedin_account || ''}" />
                 </div>
                 <div class="form-group">
-                    <label><i class="fa-brands fa-tiktok"></i> تيك توك</label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-brands fa-tiktok"></i></span> تيك توك</label>
                     <input type="url" id="ef-tiktok_account" class="form-input" placeholder="https://tiktok.com/@..." value="${md.tiktok_account || ''}" />
                 </div>
             </div>
 
+            <hr class="modal-divider">
+
             <div class="form-group">
-                <label>نبذة تعريفية (bio)</label>
+                <label class="form-label"><span class="label-icon"><i class="fa-solid fa-quote-left"></i></span> نبذة تعريفية (bio)</label>
                 <textarea id="ef-bio" class="form-input" rows="2" placeholder="نبذة مختصرة عن العضو...">${user.bio || ''}</textarea>
             </div>
 
             <div class="form-group">
-                <label>ملاحظات</label>
+                <label class="form-label"><span class="label-icon"><i class="fa-solid fa-note-sticky"></i></span> ملاحظات</label>
                 <textarea id="ef-notes" class="form-input" rows="2" placeholder="ملاحظات إدارية...">${md.notes || ''}</textarea>
             </div>
         </form>`;
@@ -769,7 +839,7 @@ class UsersManager {
                 // 2. تحديث member_details (إنشاء إذا لم يوجد)
                 const mdUpdate = {
                     user_id: uid,
-                    full_name_triple: g('ef-full_name_triple'),
+                    favorite_color: g('ef-favorite_color'),
                     national_id: g('ef-national_id'),
                     birth_date: g('ef-birth_date') || null,
                     academic_degree: g('ef-academic_degree'),
@@ -828,46 +898,64 @@ class UsersManager {
             ...committees.map(c => ({ value: String(c.id), label: c.committee_name_ar }))
         ];
 
-        const fields = [
-            {
-                id: 'new-committee',
-                label: `تغيير لجنة العضو: ${user.full_name}`,
-                type: 'select',
-                required: true,
-                options: options.map(o => ({ value: o.value, label: o.label }))
+        const currentCommitteeName = currentCommittee?.committee_name_ar || 'غير محددة';
+        const committeeOptionsHtml = options
+            .map(o => `<option value="${o.value}">${o.label}</option>`)
+            .join('');
+
+        const formHtml = `
+            <div class="modal-info-box box-warning">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>اللجنة الحالية للعضو <strong>${user.full_name}</strong>: <strong>${currentCommitteeName}</strong></span>
+            </div>
+            <div class="modal-form-grid" style="margin-top:1.25rem;">
+                <div class="form-group full-width">
+                    <label class="form-label">
+                        <span class="label-icon"><i class="fa-solid fa-sitemap"></i></span>
+                        اللجنة الجديدة <span class="required-dot">*</span>
+                    </label>
+                    <select id="cc-new-committee" class="form-select" required>
+                        ${committeeOptionsHtml}
+                    </select>
+                </div>
+            </div>`;
+
+        const footer = `
+            <button class="btn btn-outline" onclick="closeModal()">
+                <i class="fa-solid fa-times"></i> إلغاء
+            </button>
+            <button class="btn btn-warning" onclick="window._submitChangeCommittee()">
+                <i class="fa-solid fa-check"></i> حفظ التغيير
+            </button>`;
+
+        window._submitChangeCommittee = async () => {
+            const newCommitteeId = document.getElementById('cc-new-committee')?.value;
+            if (!newCommitteeId) {
+                document.getElementById('cc-new-committee').reportValidity();
+                return;
             }
-        ];
-
-        window.openFormModal(
-            'تغيير اللجنة',
-            fields,
-            async (formData) => {
-                const newCommitteeId = formData['new-committee'];
-                if (!newCommitteeId) return;
-
-                try {
-                    if (currentRole) {
-                        // تحديث الدور الحالي بلجنة جديدة
-                        const { error } = await this.supabase
-                            .from('user_roles')
-                            .update({ committee_id: Number(newCommitteeId) })
-                            .eq('id', currentRole.id);
-                        if (error) throw error;
-                    } else {
-                        window.showErrorModal('خطأ', 'لا يوجد دور محدد لهذا العضو');
-                        return;
-                    }
-
-                    const newCommitteeName = committees.find(c => String(c.id) === newCommitteeId)?.committee_name_ar;
-                    window.showSuccessModal('تم التغيير', `تم نقل العضو إلى لجنة ${newCommitteeName} بنجاح`);
-                    await this.loadUsers();
-                } catch (err) {
-                    console.error('Error changing committee:', err);
-                    window.showErrorModal('خطأ', 'حدث خطأ أثناء تغيير اللجنة');
+            closeModal();
+            try {
+                if (currentRole) {
+                    const { error } = await this.supabase
+                        .from('user_roles')
+                        .update({ committee_id: Number(newCommitteeId) })
+                        .eq('id', currentRole.id);
+                    if (error) throw error;
+                } else {
+                    window.showErrorModal('خطأ', 'لا يوجد دور محدد لهذا العضو');
+                    return;
                 }
-            },
-            { icon: 'fa-sitemap', submitText: 'حفظ التغيير' }
-        );
+                const newCommitteeName = committees.find(c => String(c.id) === newCommitteeId)?.committee_name_ar;
+                window.showSuccessModal('تم التغيير', `تم نقل العضو إلى لجنة ${newCommitteeName} بنجاح`);
+                await this.loadUsers();
+            } catch (err) {
+                console.error('Error changing committee:', err);
+                window.showErrorModal('خطأ', 'حدث خطأ أثناء تغيير اللجنة');
+            }
+        };
+
+        window.openModal('تغيير اللجنة', formHtml, { footer, icon: 'fa-sitemap', variant: 'warning' });
     }
 
     /**
@@ -880,14 +968,17 @@ class UsersManager {
         const result = await Swal.fire({
             title: 'تأكيد إنهاء العضوية',
             iconClass: 'fa-solid fa-user-xmark',
-            icon: 'warning',
+            icon: 'error',
             html: `
-                <div class="form-stack">
-                    <p>هل أنت متأكد من إنهاء عضوية <strong>${user.full_name}</strong>؟</p>
-                    <div class="form-group">
+                <div class="modal-info-box box-danger" style="margin-bottom:1.25rem;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>سيتم إنهاء عضوية <strong>${user.full_name}</strong> نهائياً. هذا الإجراء لا يمكن التراجع عنه.</span>
+                </div>
+                <div class="modal-form-grid">
+                    <div class="form-group full-width">
                         <label class="form-label">
-                            سبب إنهاء العضوية
-                            <span class="form-hint" style="display:inline;margin-inline-start:0.3rem;">(اختياري)</span>
+                            <span class="label-icon"><i class="fa-solid fa-comment-dots"></i></span>
+                            سبب إنهاء العضوية <span class="required-dot">*</span>
                         </label>
                         <div class="form-radio-group">
                             <label class="form-radio">
@@ -895,21 +986,25 @@ class UsersManager {
                                 <span class="form-radio-label">تقدّم العضو بطلب إنهاء عضويته</span>
                             </label>
                             <label class="form-radio">
-                                <input type="radio" name="terminationPreset" value="خروج العضو من مجتمع أدِيب دون إبلاغ لجنة الموارد البشرية بالخروج" onchange="document.getElementById('terminationReasonInput').value=this.value">
-                                <span class="form-radio-label">خروج العضو من مجتمع أدِيب دون إبلاغ لجنة الموارد البشرية بالخروج</span>
+                                <input type="radio" name="terminationPreset" value="خروج العضو من مجتمع أدِيب دون إبلاغ إدارة الموارد البشرية بالخروج" onchange="document.getElementById('terminationReasonInput').value=this.value">
+                                <span class="form-radio-label">خروج العضو من مجتمع أدِيب دون إبلاغ إدارة الموارد البشرية بالخروج</span>
                             </label>
                         </div>
+                        <textarea id="terminationReasonInput" class="form-input form-textarea" rows="2"
+                            placeholder="أو اكتب سبباً مخصصاً..." style="margin-top:0.75rem;"></textarea>
                     </div>
-                                            <textarea id="terminationReasonInput" class="form-input form-textarea" rows="2"
-                            placeholder="أو اكتب سبباً مخصصاً..."></textarea>
-
                 </div>
             `,
             showCancelButton: true,
             confirmButtonText: 'نعم، إنهاء العضوية',
             cancelButtonText: 'إلغاء',
             preConfirm: () => {
-                return document.getElementById('terminationReasonInput')?.value?.trim() || null;
+                const reason = document.getElementById('terminationReasonInput')?.value?.trim();
+                if (!reason) {
+                    Swal.showValidationMessage('يرجى تحديد سبب إنهاء العضوية');
+                    return false;
+                }
+                return reason;
             }
         });
 
@@ -978,111 +1073,117 @@ class UsersManager {
             .order('committee_name_ar');
 
         const content = `
-            <div class="form-stack">
+            <div class="modal-info-box box-info">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>اختر اللجنة والحقول المراد تضمينها في ملف التصدير.</span>
+            </div>
+
+            <div class="modal-section">
+                <p class="modal-section-title"><i class="fa-solid fa-filter"></i> فلترة حسب اللجنة</p>
                 <div class="form-group">
-                    <label class="form-label">فلترة حسب اللجنة</label>
                     <select id="exportCommitteeFilter" class="form-select">
                         <option value="">جميع اللجان</option>
                         ${(committees || []).map(c => `<option value="${c.id}">${c.committee_name_ar}</option>`).join('')}
                     </select>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label class="form-label">الحقول المراد تصديرها</label>
-                    <div class="form-checkbox-group cols-2">
-                        <label class="form-checkbox">
-                            <input type="checkbox" class="export-field" value="full_name" checked>
-                            <span class="form-checkbox-label">الاسم الكامل</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" class="export-field" value="email" checked>
-                            <span class="form-checkbox-label">البريد الإلكتروني</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" class="export-field" value="phone" checked>
-                            <span class="form-checkbox-label">الجوال</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" class="export-field" value="national_id">
-                            <span class="form-checkbox-label">الهوية الوطنية</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" class="export-field" value="academic_record_number">
-                            <span class="form-checkbox-label">الرقم الأكاديمي</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" class="export-field" value="birth_date">
-                            <span class="form-checkbox-label">تاريخ الميلاد</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" class="export-field" value="college">
-                            <span class="form-checkbox-label">الكلية</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" class="export-field" value="major">
-                            <span class="form-checkbox-label">التخصص</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" class="export-field" value="role" checked>
-                            <span class="form-checkbox-label">الدور</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" class="export-field" value="committee" checked>
-                            <span class="form-checkbox-label">اللجنة</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" class="export-field" value="joined_date">
-                            <span class="form-checkbox-label">تاريخ الانضمام</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" class="export-field" value="twitter_account">
-                            <span class="form-checkbox-label">تويتر</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" class="export-field" value="instagram_account">
-                            <span class="form-checkbox-label">إنستقرام</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" class="export-field" value="linkedin_account">
-                            <span class="form-checkbox-label">لينكد إن</span>
-                        </label>
-                    </div>
+            <hr class="modal-divider">
+
+            <div class="modal-section">
+                <p class="modal-section-title"><i class="fa-solid fa-table-columns"></i> الحقول المراد تصديرها</p>
+                <div class="form-checkbox-group cols-2">
+                    <label class="form-checkbox">
+                        <input type="checkbox" class="export-field" value="full_name" checked>
+                        <span class="form-checkbox-label">الاسم الكامل</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox" class="export-field" value="email" checked>
+                        <span class="form-checkbox-label">البريد الإلكتروني</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox" class="export-field" value="phone" checked>
+                        <span class="form-checkbox-label">الجوال</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox" class="export-field" value="national_id">
+                        <span class="form-checkbox-label">الهوية الوطنية</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox" class="export-field" value="academic_record_number">
+                        <span class="form-checkbox-label">الرقم الأكاديمي</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox" class="export-field" value="birth_date">
+                        <span class="form-checkbox-label">تاريخ الميلاد</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox" class="export-field" value="college">
+                        <span class="form-checkbox-label">الكلية</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox" class="export-field" value="major">
+                        <span class="form-checkbox-label">التخصص</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox" class="export-field" value="role" checked>
+                        <span class="form-checkbox-label">الدور</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox" class="export-field" value="committee" checked>
+                        <span class="form-checkbox-label">اللجنة</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox" class="export-field" value="joined_date">
+                        <span class="form-checkbox-label">تاريخ الانضمام</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox" class="export-field" value="twitter_account">
+                        <span class="form-checkbox-label">تويتر</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox" class="export-field" value="instagram_account">
+                        <span class="form-checkbox-label">إنستقرام</span>
+                    </label>
+                    <label class="form-checkbox">
+                        <input type="checkbox" class="export-field" value="linkedin_account">
+                        <span class="form-checkbox-label">لينكد إن</span>
+                    </label>
                 </div>
-                                    <div class="form-actions form-actions-start">
-                        <button class="btn btn-success" onclick="document.querySelectorAll('.export-field').forEach(cb => cb.checked = true)">
-                            تحديد الكل
-                        </button>
-                        <button class="btn btn-danger" onclick="document.querySelectorAll('.export-field').forEach(cb => cb.checked = false)">
-                            إلغاء التحديد
-                        </button>
-                    </div>
+                <div class="form-actions form-actions-start" style="margin-top:0.875rem;">
+                    <button class="btn btn-success btn-sm" type="button" onclick="document.querySelectorAll('.export-field').forEach(cb => cb.checked = true)">
+                        تحديد الكل
+                    </button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="document.querySelectorAll('.export-field').forEach(cb => cb.checked = false)">
+                        إلغاء التحديد
+                    </button>
+                </div>
             </div>
         `;
 
-        const result = await Swal.fire({
-            title: 'تصدير بيانات الأعضاء',
-            html: content,
-            iconClass: 'fa-solid fa-file-export',
-            showCancelButton: true,
-            cancelButtonText: 'إلغاء',
-            confirmButtonText: '<i class="fa-solid fa-download"></i> تصدير كـ Excel',
-            width: '600px',
-            preConfirm: () => {
-                const selectedFields = Array.from(document.querySelectorAll('.export-field:checked')).map(cb => cb.value);
-                const selectedCommittee = document.getElementById('exportCommitteeFilter').value;
-                
-                if (selectedFields.length === 0) {
-                    Swal.showValidationMessage('يرجى اختيار حقل واحد على الأقل');
-                    return false;
-                }
-                
-                return { fields: selectedFields, committee: selectedCommittee };
-            }
-        });
+        const footer = `
+            <button class="btn btn-ghost btn-md" onclick="closeModal()">
+                <i class="fa-solid fa-times"></i> إلغاء
+            </button>
+            <button class="btn btn-success btn-md" onclick="window._doExportMembers()">
+                <i class="fa-solid fa-download"></i> تصدير كـ Excel
+            </button>
+        `;
 
-        if (result.isConfirmed) {
-            await this.exportToExcel(result.value.fields, result.value.committee);
-        }
+        window._doExportMembers = async () => {
+            const selectedFields = Array.from(document.querySelectorAll('.export-field:checked')).map(cb => cb.value);
+            const selectedCommittee = document.getElementById('exportCommitteeFilter')?.value || '';
+
+            if (selectedFields.length === 0) {
+                if (window.Toast) Toast.warning('يرجى اختيار حقل واحد على الأقل');
+                return;
+            }
+
+            closeModal();
+            await this.exportToExcel(selectedFields, selectedCommittee);
+        };
+
+        window.openModal('تصدير بيانات الأعضاء', content, { icon: 'fa-file-export', footer });
     }
 
     /**
@@ -1164,20 +1265,10 @@ class UsersManager {
             link.click();
             document.body.removeChild(link);
 
-            await Swal.fire({
-                icon: 'success',
-                title: 'تم التصدير بنجاح',
-                text: `تم تصدير ${exportData.length} عضو`,
-                confirmButtonText: 'حسناً'
-            });
+            if (window.Toast) Toast.success(`تم تصدير ${exportData.length} عضو بنجاح`);
         } catch (error) {
             console.error('Error exporting:', error);
-            await Swal.fire({
-                icon: 'error',
-                title: 'خطأ',
-                text: 'حدث خطأ أثناء التصدير',
-                confirmButtonText: 'حسناً'
-            });
+            if (window.Toast) Toast.error('حدث خطأ أثناء التصدير');
         }
     }
 

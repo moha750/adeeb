@@ -815,7 +815,7 @@
         const formHtml = `
             <input type="hidden" id="edit-session-id" value="${sessionId}">
             <div class="form-group">
-                <label>اسم الجلسة <span class="required">*</span></label>
+                <label>اسم الجلسة <span class="required-dot">*</span></label>
                 <input type="text" id="session-name" class="form-input" value="${escapeHtml(session.session_name)}">
             </div>
             <div class="form-group">
@@ -823,25 +823,25 @@
                 <textarea id="session-description" class="form-textarea">${escapeHtml(session.session_description || '')}</textarea>
             </div>
             <div class="form-group">
-                <label>تاريخ الجلسة <span class="required">*</span></label>
+                <label>تاريخ الجلسة <span class="required-dot">*</span></label>
                 <input type="date" id="session-date" class="form-input" value="${session.session_date}">
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>وقت البداية <span class="required">*</span></label>
+                    <label>وقت البداية <span class="required-dot">*</span></label>
                     <input type="time" id="session-start" class="form-input" value="${session.start_time}">
                 </div>
                 <div class="form-group">
-                    <label>وقت النهاية <span class="required">*</span></label>
+                    <label>وقت النهاية <span class="required-dot">*</span></label>
                     <input type="time" id="session-end" class="form-input" value="${session.end_time}">
                 </div>
             </div>
             <div class="form-group">
-                <label>مدة كل مقابلة (بالدقائق) <span class="required">*</span></label>
+                <label>مدة كل مقابلة (بالدقائق) <span class="required-dot">*</span></label>
                 <input type="number" id="session-duration" class="form-input" min="5" max="60" value="${session.slot_duration}">
             </div>
             <div class="form-group">
-                <label>نوع المقابلة <span class="required">*</span></label>
+                <label>نوع المقابلة <span class="required-dot">*</span></label>
                 <select id="session-type" class="form-select">
                     <option value="online" ${session.interview_type === 'online' ? 'selected' : ''}>أونلاين</option>
                     <option value="in_person" ${session.interview_type === 'in_person' ? 'selected' : ''}>حضوري</option>
@@ -1034,7 +1034,7 @@
                 <input type="text" class="form-input" value="${session.meeting_link || 'لا يوجد'}" disabled>
             </div>
             <div class="form-group">
-                <label>الرابط الجديد <span class="required">*</span></label>
+                <label>الرابط الجديد <span class="required-dot">*</span></label>
                 <input type="url" id="new-meeting-link" class="form-input" placeholder="https://meet.google.com/xxx">
                 <span class="form-hint">أدخل رابط Zoom أو Google Meet أو Teams</span>
             </div>

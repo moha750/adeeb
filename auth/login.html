@@ -294,7 +294,7 @@
                 // التحقق من حالة الحساب
                 if (profileRow.account_status !== 'active') {
                   status.className = 'alert error';
-                  status.textContent = 'عضويتك منتهية. يرجى التواصل مع لجنة الموارد البشرية.';
+                  status.textContent = 'عضويتك منتهية. يرجى التواصل مع إدارة الموارد البشرية.';
                   await sb.auth.signOut();
                   return;
                 }
@@ -339,7 +339,7 @@
                 
                 // إذا لم يكن لديه أدوار نشطة، أبلغه بالتواصل مع الإدارة
                 status.className = 'alert error';
-                status.textContent = 'حسابك غير مرتبط بأي دور نشط. يرجى التواصل مع لجنة الموارد البشرية.';
+                status.textContent = 'حسابك غير مرتبط بأي دور نشط. يرجى التواصل مع إدارة الموارد البشرية.';
                 await sb.auth.signOut();
                 return;
                 

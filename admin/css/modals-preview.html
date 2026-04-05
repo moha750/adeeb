@@ -283,6 +283,22 @@
         </div>
     </div>
 
+    <!-- معاينة محتوى الـ Body -->
+    <div class="section">
+        <div class="section-label"><i class="fa-solid fa-paintbrush"></i> § 15 — معاينة محتوى الـ Body</div>
+        <div class="btn-grid">
+            <button class="btn btn-primary btn-md" onclick="openModal('modal-content-demo')">
+                <i class="fa-solid fa-layer-group"></i> عناصر المحتوى الكاملة
+            </button>
+            <button class="btn btn-purple btn-md" onclick="openModal('modal-detail-demo')">
+                <i class="fa-solid fa-id-card"></i> عرض تفاصيل عضو
+            </button>
+            <button class="btn btn-warning btn-md" onclick="openModal('modal-form-grid-demo')">
+                <i class="fa-solid fa-table-columns"></i> نموذج بعمودين
+            </button>
+        </div>
+    </div>
+
     <!-- ══════════════════════════════════════════
          § معاينة ثابتة — Inline Preview
          ══════════════════════════════════════════ -->
@@ -519,8 +535,8 @@
         <button class="modal-close" onclick="closeModal('modal-default')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
-        <p style="color:#335c81;line-height:1.7;margin-bottom:1rem;">هذه النافذة تعتمد نموذج <strong>Gradient Fill</strong> المتسق مع بقية مكونات النظام.</p>
-        <p style="color:#64748b;line-height:1.7;font-size:0.9375rem;">الشريط العلوي في الرأس، والدائرة الزخرفية في الزاوية، والـ gradient الخفيف على الخلفية — كلها تنبع من متغير واحد: <code style="background:rgba(61,143,214,0.08);padding:2px 6px;border-radius:5px;font-size:0.85rem;">--modal-color-rgb</code></p>
+        <p>هذه النافذة تعتمد نموذج <strong>Gradient Fill</strong> المتسق مع بقية مكونات النظام.</p>
+        <p>الشريط العلوي في الرأس، والدائرة الزخرفية في الزاوية، والـ gradient الخفيف على الخلفية — كلها تنبع من متغير واحد: <code>--modal-color-rgb</code></p>
     </div>
     <div class="modal-footer">
         <button class="btn btn-ghost btn-md" onclick="closeModal('modal-default')">إغلاق</button>
@@ -541,7 +557,7 @@
         <button class="modal-close" onclick="closeModal('modal-success-live')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
-        <p style="color:#335c81;line-height:1.7;">تم حفظ بيانات العضو بنجاح. يمكنك الآن متابعة العمل أو الانتقال إلى القسم التالي.</p>
+        <p>تم حفظ بيانات العضو بنجاح. يمكنك الآن متابعة العمل أو الانتقال إلى القسم التالي.</p>
     </div>
     <div class="modal-footer">
         <button class="btn btn-success btn-md" onclick="closeModal('modal-success-live')">ممتاز!</button>
@@ -558,7 +574,10 @@
         <button class="modal-close" onclick="closeModal('modal-danger-live')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
-        <p style="color:#335c81;line-height:1.7;">حدث خطأ أثناء تنفيذ العملية. يرجى المحاولة مرة أخرى أو التواصل مع الدعم الفني.</p>
+        <div class="modal-info-box box-danger">
+            <i class="fa-solid fa-circle-xmark"></i>
+            <span>حدث خطأ أثناء تنفيذ العملية. يرجى المحاولة مرة أخرى أو التواصل مع الدعم الفني.</span>
+        </div>
     </div>
     <div class="modal-footer">
         <button class="btn btn-ghost btn-md" onclick="closeModal('modal-danger-live')">إغلاق</button>
@@ -579,7 +598,10 @@
         <button class="modal-close" onclick="closeModal('modal-warning-live')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
-        <p style="color:#335c81;line-height:1.7;">ستؤثر هذه العملية على البيانات الموجودة. تأكد من مراجعة التفاصيل قبل المتابعة.</p>
+        <div class="modal-info-box box-warning">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>ستؤثر هذه العملية على البيانات الموجودة. تأكد من مراجعة التفاصيل قبل المتابعة.</span>
+        </div>
     </div>
     <div class="modal-footer">
         <button class="btn btn-ghost btn-md" onclick="closeModal('modal-warning-live')">إلغاء</button>
@@ -597,8 +619,8 @@
         <button class="modal-close" onclick="closeModal('modal-info-live')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
-        <p style="color:#335c81;line-height:1.7;margin-bottom:1rem;">نظام النوافذ المنبثقة v5 يدعم 7 ألوان دلالية مختلفة، كلها مبنية على محرك <strong>Gradient Fill</strong> الموحد.</p>
-        <p style="color:#64748b;line-height:1.7;font-size:0.9rem;">كل variant يعيد تعريف <code style="background:rgba(59,130,246,0.08);padding:2px 6px;border-radius:5px;">--modal-color-rgb</code> فقط، وتُطبَّق كل الأنماط تلقائياً.</p>
+        <p>نظام النوافذ المنبثقة v5 يدعم 7 ألوان دلالية مختلفة، كلها مبنية على محرك <strong>Gradient Fill</strong> الموحد.</p>
+        <p>كل variant يعيد تعريف <code>--modal-color-rgb</code> فقط، وتُطبَّق كل الأنماط تلقائياً.</p>
     </div>
     <div class="modal-footer">
         <button class="btn btn-info btn-md" onclick="closeModal('modal-info-live')">فهمت</button>
@@ -618,7 +640,7 @@
         <button class="modal-close" onclick="closeModal('modal-purple-live')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
-        <p style="color:#335c81;line-height:1.7;">استمتع بالميزات المتقدمة والحصرية المتاحة لأعضاء نادي أدِيب المميزين.</p>
+        <p>استمتع بالميزات المتقدمة والحصرية المتاحة لأعضاء نادي أدِيب المميزين.</p>
     </div>
     <div class="modal-footer">
         <button class="btn btn-ghost btn-md" onclick="closeModal('modal-purple-live')">لاحقاً</button>
@@ -636,7 +658,7 @@
         <button class="modal-close" onclick="closeModal('modal-teal-live')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
-        <p style="color:#335c81;line-height:1.7;">اللون التيل يناسب المحتوى البيئي والصحي والموضوعات الإيجابية.</p>
+        <p>اللون التيل يناسب المحتوى البيئي والصحي والموضوعات الإيجابية.</p>
     </div>
     <div class="modal-footer">
         <button class="btn btn-ghost btn-md" onclick="closeModal('modal-teal-live')">إغلاق</button>
@@ -793,21 +815,37 @@
         <button class="modal-close" onclick="closeModal('modal-lg-live')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
-        <p style="color:#335c81;line-height:1.7;margin-bottom:1.5rem;">هذه نافذة كبيرة (<code style="background:rgba(61,143,214,0.08);padding:2px 6px;border-radius:5px;">.modal-lg</code>) مناسبة لعرض جداول البيانات والمحتوى الموسّع.</p>
-        <div style="display:grid;gap:0.75rem;">
-            <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr;gap:1rem;padding:0.875rem 1rem;background:linear-gradient(145deg,rgba(61,143,214,0.07),rgba(61,143,214,0.03));border:1px solid rgba(61,143,214,0.14);border-radius:12px;font-weight:700;font-size:0.875rem;color:#274060;">
-                <span>الاسم</span><span>البريد</span><span>التخصص</span><span>الحالة</span>
-            </div>
-            <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr;gap:1rem;padding:0.875rem 1rem;border:1px solid rgba(61,143,214,0.10);border-radius:12px;font-size:0.875rem;color:#335c81;">
-                <span>أحمد الرشيد</span><span>ahmed@adeeb.sa</span><span>شعر</span><span style="color:#10b981;font-weight:600;">نشط</span>
-            </div>
-            <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr;gap:1rem;padding:0.875rem 1rem;border:1px solid rgba(61,143,214,0.10);border-radius:12px;font-size:0.875rem;color:#335c81;">
-                <span>سارة الخالد</span><span>sara@adeeb.sa</span><span>نقد أدبي</span><span style="color:#10b981;font-weight:600;">نشط</span>
-            </div>
-            <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr;gap:1rem;padding:0.875rem 1rem;border:1px solid rgba(61,143,214,0.10);border-radius:12px;font-size:0.875rem;color:#335c81;">
-                <span>محمد الغامدي</span><span>m.ghamdi@adeeb.sa</span><span>قصة قصيرة</span><span style="color:#f59e0b;font-weight:600;">معلق</span>
-            </div>
-        </div>
+        <p>هذه نافذة كبيرة (<code>.modal-lg</code>) مناسبة لعرض جداول البيانات والمحتوى الموسّع.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>الاسم</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>التخصص</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>أحمد الرشيد</td>
+                    <td>ahmed@adeeb.sa</td>
+                    <td>شعر</td>
+                    <td style="color:#10b981;font-weight:600;">نشط</td>
+                </tr>
+                <tr>
+                    <td>سارة الخالد</td>
+                    <td>sara@adeeb.sa</td>
+                    <td>نقد أدبي</td>
+                    <td style="color:#10b981;font-weight:600;">نشط</td>
+                </tr>
+                <tr>
+                    <td>محمد الغامدي</td>
+                    <td>m.ghamdi@adeeb.sa</td>
+                    <td>قصة قصيرة</td>
+                    <td style="color:#f59e0b;font-weight:600;">معلق</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
     <div class="modal-footer modal-footer--between">
         <span style="font-size:0.875rem;color:#64748b;">3 أعضاء · آخر تحديث: اليوم</span>
@@ -815,6 +853,309 @@
             <button class="btn btn-ghost btn-md" onclick="closeModal('modal-lg-live')">إغلاق</button>
             <button class="btn btn-primary btn-md"><i class="fa-solid fa-plus"></i> إضافة عضو</button>
         </div>
+    </div>
+</div>
+
+
+<!-- ── Content Demo — عناصر المحتوى الكاملة ── -->
+<div class="modal modal-lg" id="modal-content-demo">
+    <div class="modal-header">
+        <div class="modal-header-content">
+            <div class="modal-icon"><i class="fa-solid fa-paintbrush"></i></div>
+            <div>
+                <h2 class="modal-title">معاينة عناصر المحتوى</h2>
+                <p class="modal-subtitle">§ 15 — Modal Body Content</p>
+            </div>
+        </div>
+        <button class="modal-close" onclick="closeModal('modal-content-demo')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+
+        <!-- صناديق المعلومات -->
+        <div class="modal-section">
+            <h3><i class="fa-solid fa-circle-info"></i> صناديق المعلومات</h3>
+            <div class="modal-info-box">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>هذا صندوق معلومات يرث لون النافذة تلقائياً من <code>--modal-color-rgb</code></span>
+            </div>
+            <div class="modal-info-box box-success">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>تمت العملية بنجاح — <code>.box-success</code></span>
+            </div>
+            <div class="modal-info-box box-warning">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>تنبيه: تأكد من مراجعة البيانات قبل المتابعة — <code>.box-warning</code></span>
+            </div>
+            <div class="modal-info-box box-danger">
+                <i class="fa-solid fa-circle-xmark"></i>
+                <span>خطأ: لا يمكن تنفيذ هذه العملية — <code>.box-danger</code></span>
+            </div>
+            <div class="modal-info-box box-info">
+                <i class="fa-solid fa-lightbulb"></i>
+                <span>تلميح: يمكنك تغيير اللون بإضافة variant على المودال — <code>.box-info</code></span>
+            </div>
+        </div>
+
+        <hr class="modal-divider">
+
+        <!-- شبكة التفاصيل -->
+        <div class="modal-section">
+            <h3><i class="fa-solid fa-id-card"></i> شبكة التفاصيل</h3>
+            <div class="modal-detail-grid">
+                <div class="modal-detail-item">
+                    <span class="modal-detail-label">الاسم الكامل</span>
+                    <span class="modal-detail-value">أحمد محمد الرشيد</span>
+                </div>
+                <div class="modal-detail-item">
+                    <span class="modal-detail-label">البريد الإلكتروني</span>
+                    <span class="modal-detail-value">ahmed@adeeb.sa</span>
+                </div>
+                <div class="modal-detail-item">
+                    <span class="modal-detail-label">التخصص</span>
+                    <span class="modal-detail-value">شعر عربي</span>
+                </div>
+                <div class="modal-detail-item">
+                    <span class="modal-detail-label">تاريخ الانضمام</span>
+                    <span class="modal-detail-value">١ يناير ٢٠٢٤</span>
+                </div>
+            </div>
+        </div>
+
+        <hr class="modal-divider">
+
+        <!-- صفوف التفاصيل -->
+        <div class="modal-section">
+            <h3><i class="fa-solid fa-list-ul"></i> صفوف التفاصيل</h3>
+            <div class="modal-detail-row">
+                <span class="modal-detail-label">رقم العضوية</span>
+                <span class="modal-detail-value">#ADB-2024-0042</span>
+            </div>
+            <div class="modal-detail-row">
+                <span class="modal-detail-label">نوع العضوية</span>
+                <span class="modal-detail-value">عضو مميز</span>
+            </div>
+            <div class="modal-detail-row">
+                <span class="modal-detail-label">الحالة</span>
+                <span class="modal-detail-value" style="color:#10b981;font-weight:700;">نشط</span>
+            </div>
+            <div class="modal-detail-row">
+                <span class="modal-detail-label">آخر نشاط</span>
+                <span class="modal-detail-value">منذ 3 أيام</span>
+            </div>
+        </div>
+
+        <hr class="modal-divider">
+
+        <!-- الجدول -->
+        <div class="modal-section">
+            <h3><i class="fa-solid fa-table"></i> الجدول</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>العنوان</th>
+                        <th>النوع</th>
+                        <th>التاريخ</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>قصيدة المطر</td>
+                        <td>شعر</td>
+                        <td>١٠ مارس ٢٠٢٤</td>
+                        <td>منشور</td>
+                    </tr>
+                    <tr>
+                        <td>في ظلال الكلمة</td>
+                        <td>مقال</td>
+                        <td>٢٢ فبراير ٢٠٢٤</td>
+                        <td>مسودة</td>
+                    </tr>
+                    <tr>
+                        <td>حكاية من الجنوب</td>
+                        <td>قصة</td>
+                        <td>٥ يناير ٢٠٢٤</td>
+                        <td>منشور</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <hr class="modal-divider">
+
+        <!-- الفقرات والقوائم -->
+        <div class="modal-section">
+            <h3><i class="fa-solid fa-paragraph"></i> الفقرات والقوائم</h3>
+            <p>هذا مثال على فقرة داخل النافذة. يمكنك تضمين <strong>نص غامق</strong> وكذلك <a href="#">رابط تشعبي</a> داخل النص بشكل طبيعي.</p>
+
+            <h4>قائمة نقطية — ul</h4>
+            <ul>
+                <li>يدعم النظام 7 ألوان دلالية مختلفة</li>
+                <li>كل اللون مبني على متغير <code>--modal-color-rgb</code> واحد</li>
+                <li>الحقول والمحتوى يرثان اللون تلقائياً عند تغيير variant</li>
+            </ul>
+
+            <h4>قائمة مرقّمة — ol</h4>
+            <ol>
+                <li>أولاً: تعريف <code>--modal-color-rgb</code> بقيم RGB للون المطلوب</li>
+                <li>ثانياً: إضافة الـ variant class على عنصر <code>.modal</code></li>
+                <li>ثالثاً: يرث المحتوى كله اللون تلقائياً</li>
+            </ol>
+
+            <small><i class="fa-solid fa-circle-info"></i> نص مساعد صغير يظهر أسفل العناصر لإضافة تلميح أو ملاحظة للمستخدم.</small>
+        </div>
+
+        <hr class="modal-divider">
+
+        <!-- .modal-section-title و h4 -->
+        <div class="modal-section">
+            <p class="modal-section-title"><i class="fa-solid fa-tag"></i> عنوان بـ .modal-section-title بدلاً من h3</p>
+            <p>يمكن استخدام <code>.modal-section-title</code> على أي عنصر (p, div, span...) للحصول على نفس مظهر عنوان القسم.</p>
+        </div>
+
+        <hr class="modal-divider">
+
+        <!-- .modal-media -->
+        <div class="modal-section">
+            <h3><i class="fa-solid fa-image"></i> حاوية الصورة — modal-media</h3>
+
+            <!-- Avatar variant -->
+            <div class="modal-media modal-media--avatar">
+                <img src="https://picsum.photos/seed/avatar1/200/200" alt="صورة العضو">
+                <span class="avatar-name">سارة أحمد الخالد</span>
+                <span class="avatar-meta">عضو مميز — لجنة النقد الأدبي</span>
+                <span class="avatar-badge"><i class="fa-solid fa-circle-check"></i> نشط</span>
+            </div>
+
+            <small><i class="fa-solid fa-circle-info"></i> أضف <code>.modal-media--avatar</code> لعرض الصورة الشخصية مع الاسم والبيانات.</small>
+
+            <hr class="modal-divider">
+
+            <!-- Cover image variant -->
+            <div class="modal-media">
+                <img src="https://picsum.photos/seed/adeeb/800/300" alt="صورة غلاف">
+            </div>
+            <small><i class="fa-solid fa-circle-info"></i> بدون الـ modifier — صورة غلاف عادية مع zoom ناعم عند التحويم.</small>
+        </div>
+
+    </div>
+    <div class="modal-footer modal-footer--between">
+        <button class="btn btn-ghost btn-md" onclick="closeModal('modal-content-demo')">إغلاق</button>
+        <button class="btn btn-primary btn-md">تطبيق</button>
+    </div>
+</div>
+
+<!-- ── Detail Demo — عرض تفاصيل عضو ── -->
+<div class="modal modal-md modal-purple" id="modal-detail-demo">
+    <div class="modal-header">
+        <div class="modal-header-content">
+            <div class="modal-icon"><i class="fa-solid fa-user-circle"></i></div>
+            <div>
+                <h2 class="modal-title">تفاصيل العضو</h2>
+                <p class="modal-subtitle">عرض كامل لبيانات العضو</p>
+            </div>
+        </div>
+        <button class="modal-close" onclick="closeModal('modal-detail-demo')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+
+        <div class="modal-media modal-media--avatar">
+            <img src="https://picsum.photos/seed/sara/200/200" alt="صورة العضو">
+            <span class="avatar-name">سارة أحمد الخالد</span>
+            <span class="avatar-meta">لجنة النقد الأدبي</span>
+            <span class="avatar-badge"><i class="fa-solid fa-circle-check"></i> عضو نشط</span>
+        </div>
+
+        <div class="modal-info-box">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>سيتم إنشاء حساب للعضو وإرسال رسالة قبول مباشرة لإكمال التسجيل</span>
+        </div>
+
+        <div class="modal-section">
+            <h3><i class="fa-solid fa-user"></i> البيانات الشخصية</h3>
+            <div class="modal-detail-grid">
+                <div class="modal-detail-item">
+                    <span class="modal-detail-label">الاسم الكامل</span>
+                    <span class="modal-detail-value">سارة أحمد الخالد</span>
+                </div>
+                <div class="modal-detail-item">
+                    <span class="modal-detail-label">رقم الجوال</span>
+                    <span class="modal-detail-value" style="direction:ltr;text-align:left;">+966 50 123 4567</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-section">
+            <h3><i class="fa-solid fa-star"></i> بيانات العضوية</h3>
+            <div class="modal-detail-row">
+                <span class="modal-detail-label">رقم العضوية</span>
+                <span class="modal-detail-value">#ADB-2024-0017</span>
+            </div>
+            <div class="modal-detail-row">
+                <span class="modal-detail-label">نوع العضوية</span>
+                <span class="modal-detail-value">عضو مميز</span>
+            </div>
+            <div class="modal-detail-row">
+                <span class="modal-detail-label">اللجنة</span>
+                <span class="modal-detail-value">لجنة النقد الأدبي</span>
+            </div>
+            <div class="modal-detail-row">
+                <span class="modal-detail-label">تاريخ الانضمام</span>
+                <span class="modal-detail-value">٥ مارس ٢٠٢٤</span>
+            </div>
+        </div>
+
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-ghost btn-md" onclick="closeModal('modal-detail-demo')">إغلاق</button>
+        <button class="btn btn-purple btn-md"><i class="fa-solid fa-pen"></i> تعديل</button>
+    </div>
+</div>
+
+<!-- ── Form Grid Demo — نموذج بعمودين ── -->
+<div class="modal modal-md modal-warning" id="modal-form-grid-demo">
+    <div class="modal-header">
+        <div class="modal-header-content">
+            <div class="modal-icon"><i class="fa-solid fa-table-columns"></i></div>
+            <div>
+                <h2 class="modal-title">إضافة إنجاز</h2>
+                <p class="modal-subtitle">نموذج بتخطيط عمودين — modal-form-grid</p>
+            </div>
+        </div>
+        <button class="modal-close" onclick="closeModal('modal-form-grid-demo')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+        <div class="modal-info-box box-warning">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>الحقول المعلّمة بالنقطة الحمراء <span class="required-dot" style="display:inline-block;vertical-align:middle;margin:0 3px;">*</span> إلزامية ولا يمكن تركها فارغة.</span>
+        </div>
+        <div class="modal-form-grid">
+            <div class="form-group">
+                <label class="form-label">التسمية <span class="required-dot">*</span></label>
+                <input type="text" class="form-input" placeholder="مثال: عدد الأعضاء">
+            </div>
+            <div class="form-group">
+                <label class="form-label">الرقم <span class="required-dot">*</span></label>
+                <input type="number" class="form-input" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">أيقونة Font Awesome <span class="required-dot">*</span></label>
+                <input type="text" class="form-input" placeholder="fa-solid fa-trophy">
+                <small><i class="fa-solid fa-circle-info"></i> مثال: fa-solid fa-trophy، fa-solid fa-users</small>
+            </div>
+            <div class="form-group">
+                <label class="form-label">اللون</label>
+                <input type="text" class="form-input" placeholder="#3d8fd6">
+            </div>
+            <div class="form-group full-width">
+                <label class="form-label">وصف مختصر</label>
+                <textarea class="form-textarea" rows="3" placeholder="أكتب وصفاً مختصراً..."></textarea>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-ghost btn-md" onclick="closeModal('modal-form-grid-demo')">إلغاء</button>
+        <button class="btn btn-warning btn-md"><i class="fa-solid fa-plus"></i> إضافة الإنجاز</button>
     </div>
 </div>
 

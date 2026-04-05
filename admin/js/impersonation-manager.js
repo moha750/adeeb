@@ -303,16 +303,19 @@ window.ImpersonationManager = (function() {
             }
 
             usersList.innerHTML = profiles.map(user => `
-                <div class="user-item" data-user-id="${user.id}" data-user-name="${(user.full_name || user.email).replace(/"/g, '&quot;')}" data-user-email="${user.email}" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #e5e7eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                        ${user.avatar_url 
-                            ? `<img src="${user.avatar_url}" alt="${user.full_name}" style="width: 100%; height: 100%; object-fit: cover;">` 
-                            : `<i class="fa-solid fa-user" style="color: #9ca3af;"></i>`
+                <div class="impersonation-user-item"
+                     data-user-id="${user.id}"
+                     data-user-name="${(user.full_name || user.email).replace(/"/g, '&quot;')}"
+                     data-user-email="${user.email}">
+                    <div class="impersonation-user-item__avatar">
+                        ${user.avatar_url
+                            ? `<img src="${user.avatar_url}" alt="${user.full_name}">`
+                            : `<i class="fa-solid fa-user"></i>`
                         }
                     </div>
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 500; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.full_name || 'بدون اسم'}</div>
-                        <div style="font-size: 0.75rem; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.email}</div>
+                    <div class="impersonation-user-item__info">
+                        <span class="impersonation-user-item__name">${user.full_name || 'بدون اسم'}</span>
+                        <span class="impersonation-user-item__email">${user.email}</span>
                     </div>
                     <button class="btn btn-primary btn-sm" onclick="ImpersonationManager.selectUserForImpersonation('${user.id}', '${(user.full_name || user.email).replace(/'/g, "\\'")}'); event.stopPropagation();">
                         <i class="fa-solid fa-user-secret"></i>
@@ -326,9 +329,9 @@ window.ImpersonationManager = (function() {
             const usersList = document.getElementById('impersonationUsersList');
             if (usersList) {
                 usersList.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: #ef4444;">
-                        <i class="fa-solid fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
-                        <p style="margin: 0;">حدث خطأ في تحميل المستخدمين</p>
+                    <div class="empty-state empty-state--error">
+                        <i class="fa-solid fa-exclamation-circle empty-state__icon"></i>
+                        <p class="empty-state__title">حدث خطأ في تحميل المستخدمين</p>
                     </div>
                 `;
             }

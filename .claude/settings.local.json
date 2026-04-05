@@ -56,7 +56,11 @@
       "Bash(find e:/moham/Downloads/adeeb -type d -name *migrations* -o -name *schema*)",
       "Bash(grep -l \"class.*Manager\" /e/moham/Downloads/adeeb/admin/js/*.js)",
       "Bash(ls /e/moham/Downloads/adeeb/admin/*.html)",
-      "Bash(ls -la /e/moham/Downloads/adeeb/*.html)"
+      "Bash(ls -la /e/moham/Downloads/adeeb/*.html)",
+      "Bash(grep -n \"^/\\\\* ===\\\\|^/\\\\* ---\\\\|^/\\\\* ============\\\\|^  §\\\\|^  ===\\\\|\\\\\\\\.uc-\" c:\\\\Users\\\\moham\\\\adeeb\\\\admin\\\\css\\\\unified-cards.css)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(ls -lh /c/Users/moham/adeeb/supabase/functions/*/)"
     ]
   }
 }

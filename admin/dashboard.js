@@ -115,7 +115,7 @@
         });
         
         // شجرة أدِيب — لمن يملك view_members أو view_pending_members
-        if (hasAnyPermission(['view_members', 'view_pending_members', 'manage_member_data', 'manage_positions'])) {
+        if (hasAnyPermission(['view_members', 'view_pending_members', 'manage_member_data'])) {
             const adeebTreeSubItems = [];
             
             // أعضاء أديب — يحتاج view_members
@@ -148,14 +148,7 @@
                 });
             }
             
-            // تعيين المناصب - باستخدام صلاحية manage_positions
             if (hasPermission('manage_positions')) {
-                adeebTreeSubItems.push({
-                    id: 'positions',
-                    icon: 'fa-user-tie',
-                    label: 'تعيين المناصب',
-                    section: 'positions-section'
-                });
                 // إدارة الصلاحيات - لرئيس النادي فقط
                 adeebTreeSubItems.push({
                     id: 'permissions',
@@ -175,12 +168,12 @@
                 });
             }
             
-            // إدارة اللجان - باستخدام صلاحية manage_committees
+            // إدارة الأقسام واللجان - باستخدام صلاحية manage_committees
             if (hasPermission('manage_committees')) {
                 adeebTreeSubItems.push({
                     id: 'committees',
                     icon: 'fa-sitemap',
-                    label: 'إدارة اللجان',
+                    label: 'إدارة الهيكلة',
                     section: 'committees-section'
                 });
             }
@@ -714,7 +707,6 @@
         'pending-members-section':              'view_pending_members',
         'impersonation-section':                'impersonate_users',
         'member-data-management-section':       'manage_member_data',
-        'positions-section':                    'manage_positions',
         'permissions-section':                  'manage_positions',
         'committees-section':                   'manage_committees',
         'site-visits-section':                  'view_site_stats',
@@ -861,7 +853,7 @@
                 }
                 break;
             case 'committees-section':
-                await loadCommittees();
+                await Promise.all([loadCouncils(), loadDepartments(), loadCommittees(), loadAdminCommittees(), loadCommitteesStats()]);
                 break;
             case 'contact-messages-section':
                 if (window.ContactMessagesManager) {
@@ -898,14 +890,6 @@
             case 'member-data-management-section':
                 if (window.memberDataManager) {
                     await window.memberDataManager.init();
-                }
-                break;
-            case 'positions-section':
-                if (window.PositionsManager && !window.positionsManager) {
-                    window.positionsManager = new window.PositionsManager();
-                }
-                if (window.positionsManager) {
-                    await window.positionsManager.init();
                 }
                 break;
             case 'permissions-section':
@@ -2028,6 +2012,504 @@
         }
     }
 
+    // حساب عدد الأفاتارات المرئية وتحديث شارة العدد المتبقي
+    const AVATAR_STACK_W = 30;
+    const AVATAR_STACK_OVERLAP = 8;
+    const AVATAR_BADGE_W = 30;
+
+    function _calcStack(stack) {
+        const avatars = Array.from(stack.querySelectorAll('.uc-card__avatar-item'));
+        if (avatars.length === 0) return;
+
+        avatars.forEach(a => { a.style.display = ''; });
+        let badge = stack.querySelector('.uc-card__avatar-more');
+        if (badge) badge.style.display = 'none';
+
+        const stackW = stack.clientWidth;
+        if (stackW === 0) return; // قسم مخفي — overflow:hidden يمنع الخروج مؤقتاً
+
+        const totalW      = n => n <= 0 ? 0 : AVATAR_STACK_W + (n - 1) * (AVATAR_STACK_W - AVATAR_STACK_OVERLAP);
+        const totalWBadge = n => totalW(n) + (n > 0 ? AVATAR_BADGE_W - AVATAR_STACK_OVERLAP : AVATAR_BADGE_W);
+
+        if (totalW(avatars.length) <= stackW) return; // كلها تتسع
+
+        let lo = 1, hi = avatars.length - 1, maxFit = 1;
+        while (lo <= hi) {
+            const mid = (lo + hi) >> 1;
+            if (totalWBadge(mid) <= stackW) { maxFit = mid; lo = mid + 1; }
+            else hi = mid - 1;
+        }
+
+        const hidden = avatars.length - maxFit;
+        avatars.forEach((a, i) => { a.style.display = i < maxFit ? '' : 'none'; });
+
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'uc-card__avatar-more';
+            stack.appendChild(badge);
+        }
+        badge.textContent = '+' + hidden;
+        badge.style.display = '';
+    }
+
+    function refreshAvatarStacks(container) {
+        (container || document).querySelectorAll('.uc-card__avatar-stack').forEach(_calcStack);
+    }
+
+    // إعادة الحساب عند تغيير حجم الشاشة (مع تأخير للأداء)
+    let _avatarResizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(_avatarResizeTimer);
+        _avatarResizeTimer = setTimeout(() => {
+            document.querySelectorAll('.uc-card__avatar-stack').forEach(_calcStack);
+        }, 120);
+    });
+
+    async function loadCouncils() {
+        const container = document.getElementById('councilsGrid');
+        if (!container) return;
+
+        try {
+            const { data: councilRows } = await sb.from('councils').select('*').order('id', { ascending: true });
+
+            const councilMeta = {
+                administrative: { icon: 'fa-landmark', types: ['administrative', 'both'] },
+                executive:      { icon: 'fa-landmark', types: ['executive', 'both'] },
+            };
+
+            const councils = (councilRows || []).map(row => ({
+                ...row,
+                ...councilMeta[row.id],
+                name: row.name_ar,
+            }));
+
+            for (const council of councils) {
+                const { data: members } = await sb
+                    .from('user_roles')
+                    .select('user_id, roles(role_name_ar, role_level, council_type), profiles!user_roles_user_id_fkey(full_name, avatar_url)')
+                    .in('roles.council_type', council.types)
+                    .eq('is_active', true)
+                    .not('roles', 'is', null);
+
+                const filtered = (members || []).filter(m => {
+                    if (!m.roles || !council.types.includes(m.roles.council_type)) return false;
+                    if (council.id === 'executive') return m.roles.role_level >= 5;
+                    if (council.id === 'administrative') return m.roles.role_level >= 8;
+                    return true;
+                });
+                filtered.sort((a, b) => (b.roles?.role_level || 0) - (a.roles?.role_level || 0));
+                council.members = filtered;
+                council.members_count = filtered.length;
+                council.president = council.id === 'executive'
+                    ? filtered.find(m => m.roles?.role_name_ar === 'رئيس المجلس التنفيذي')
+                    : filtered.find(m => m.roles?.role_level >= 9);
+            }
+
+            container.innerHTML = councils.map(council => {
+                const avatarStackHtml = council.members.slice(0, 8).map(m => {
+                    const name   = m.profiles?.full_name || '؟';
+                    const avatar = m.profiles?.avatar_url ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3d8fd6&color=fff&size=64`;
+                    return `<img class="uc-card__avatar-item" src="${avatar}" alt="${name}" title="${name}" />`;
+                }).join('');
+
+                const presidentHtml = council.president ? `
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-star"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">${council.president.roles?.role_name_ar || 'الرئيس'}</div>
+                                <div class="uc-card__info-value">${council.president.profiles?.full_name || '—'}</div>
+                            </div>
+                        </div>` : '';
+
+                return `
+                <div class="uc-card" data-council-id="${council.id}">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
+                                <i class="fa-solid ${council.icon}"></i>
+                            </div>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${council.name}</h3>
+                                <span class="uc-card__badge">
+                                    <i class="fa-solid fa-users"></i>
+                                    ${council.members_count} عضو
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uc-card__body">
+                        <div class="uc-card__info-item uc-card__info-item--full">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-align-right"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">الوصف</div>
+                                <div class="uc-card__info-value">${council.description || 'لا يوجد وصف'}</div>
+                            </div>
+                        </div>
+                        ${presidentHtml}
+                        ${council.group_link ? `
+                        <div class="uc-card__info-item uc-card__info-item--full uc-card__info-item--link">
+                            <div class="uc-card__info-icon"><i class="fa-brands fa-whatsapp"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">رابط القروب</div>
+                                <div class="uc-card__info-value">${council.group_link}</div>
+                            </div>
+                            <button class="uc-card__link-btn" onclick="event.stopPropagation(); window.open('${council.group_link}','_blank')" title="فتح الرابط">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </button>
+                        </div>` : ''}
+                        ${council.members.length > 0 ? `
+                        <div class="uc-card__members">
+                            <span class="uc-card__members-label">الأعضاء</span>
+                            <div class="uc-card__avatar-stack">
+                                ${avatarStackHtml}
+                            </div>
+                        </div>` : ''}
+                    </div>
+                    <div class="uc-card__footer">
+                        <button class="btn btn-primary btn-sm" onclick="viewCouncil('${council.id}')">
+                            <i class="fa-solid fa-eye"></i>
+                            عرض التفاصيل
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="editCouncil('${council.id}')">
+                            <i class="fa-solid fa-pen"></i>
+                            تعديل
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            requestAnimationFrame(() => refreshAvatarStacks(container));
+        } catch (error) {
+            console.error('Error loading councils:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل المجالس</div>';
+        }
+    }
+
+    const councilMeta = {
+        administrative: { icon: 'fa-landmark', types: ['administrative', 'both'] },
+        executive:      { icon: 'fa-landmark', types: ['executive', 'both'] },
+    };
+
+    window.viewCouncil = async function(councilId) {
+        try {
+            showLoading(true);
+
+            const { data: row } = await sb.from('councils').select('*').eq('id', councilId).single();
+            if (!row) return;
+            const council = { ...row, ...councilMeta[councilId], name: row.name_ar };
+
+            const { data: members } = await sb
+                .from('user_roles')
+                .select('user_id, roles(role_name_ar, role_level, council_type), profiles!user_roles_user_id_fkey(full_name, avatar_url)')
+                .in('roles.council_type', council.types)
+                .eq('is_active', true)
+                .not('roles', 'is', null);
+
+            const filtered = (members || [])
+                .filter(m => m.roles && council.types.includes(m.roles.council_type))
+                .sort((a, b) => (b.roles?.role_level || 0) - (a.roles?.role_level || 0));
+
+            const membersHtml = filtered.length > 0
+                ? filtered.map(m => {
+                    const name   = m.profiles?.full_name || 'غير محدد';
+                    const avatar = m.profiles?.avatar_url ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3d8fd6&color=fff`;
+                    const role   = m.roles?.role_name_ar || '';
+                    return `
+                    <div class="modal-detail-item" style="flex-direction:row;align-items:center;gap:0.75rem;">
+                        <img src="${avatar}" alt="${name}"
+                             style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" />
+                        <div style="min-width:0;">
+                            <div class="modal-detail-value" style="font-size:0.9rem;">${name}</div>
+                            ${role ? `<div class="modal-detail-label" style="margin-top:0.15rem;">${role}</div>` : ''}
+                        </div>
+                    </div>`;
+                }).join('')
+                : `<p style="color:#64748b;text-align:center;padding:1rem;grid-column:1/-1;">لا يوجد أعضاء</p>`;
+
+            const content = `
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-circle-info"></i> بيانات المجلس</h3>
+                    <div class="modal-detail-grid">
+                        <div class="modal-detail-item" style="grid-column:1/-1;">
+                            <span class="modal-detail-label">الوصف</span>
+                            <span class="modal-detail-value" style="white-space:normal;overflow:visible;">${council.description || 'لا يوجد وصف'}</span>
+                        </div>
+                        ${council.group_link ? `
+                        <div class="modal-detail-item" style="grid-column:1/-1;">
+                            <span class="modal-detail-label">رابط القروب</span>
+                            <span class="modal-detail-value">${council.group_link}</span>
+                            <div class="modal-detail-actions">
+                                <button class="mdi-btn" onclick="window.open('${council.group_link}','_blank')" title="فتح الرابط">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </button>
+                            </div>
+                        </div>` : ''}
+                    </div>
+                </div>
+                <hr class="modal-divider">
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-users"></i> الأعضاء (${filtered.length})</h3>
+                    <div class="modal-detail-grid">
+                        ${membersHtml}
+                    </div>
+                </div>
+            `;
+
+            window.openModal(council.name, content, { icon: council.icon });
+        } catch (error) {
+            console.error('Error viewing council:', error);
+            window.showErrorModal('خطأ', 'حدث خطأ في تحميل تفاصيل المجلس');
+        } finally {
+            showLoading(false);
+        }
+    };
+
+    window.editCouncil = async function(councilId) {
+        try {
+            showLoading(true);
+            const { data: row } = await sb.from('councils').select('*').eq('id', councilId).single();
+            if (!row) return;
+
+
+            const formHtml = `
+                <div class="modal-form-grid">
+                    <div class="form-group full-width">
+                        <label class="form-label">
+                            <span class="label-icon"><i class="fa-solid fa-landmark"></i></span>
+                            اسم المجلس
+                        </label>
+                        <input type="text" class="form-input" value="${row.name_ar || ''}" readonly />
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">
+                            <span class="label-icon"><i class="fa-solid fa-align-right"></i></span>
+                            الوصف
+                        </label>
+                        <textarea id="council-description" rows="3" class="form-input form-textarea" placeholder="وصف المجلس...">${row.description || ''}</textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">
+                            <span class="label-icon"><i class="fa-brands fa-whatsapp"></i></span>
+                            رابط القروب <span class="required-dot">*</span>
+                        </label>
+                        <input type="url" id="council-grouplink" class="form-input" placeholder="https://chat.whatsapp.com/..." value="${row.group_link || ''}" required />
+                    </div>
+                </div>`;
+
+            const footer = `
+                <button class="btn btn-outline" onclick="closeModal()">
+                    <i class="fa-solid fa-times"></i>
+                    إلغاء
+                </button>
+                <button class="btn btn-warning" onclick="window._submitCouncilEdit('${councilId}')">
+                    <i class="fa-solid fa-save"></i>
+                    حفظ التعديلات
+                </button>
+            `;
+
+            window._submitCouncilEdit = async function(id) {
+                const description = document.getElementById('council-description')?.value.trim() || null;
+                const group_link  = document.getElementById('council-grouplink')?.value.trim() || null;
+                if (!group_link) {
+                    document.getElementById('council-grouplink').focus();
+                    return;
+                }
+                if ((description ?? '') === (row.description ?? '') && (group_link ?? '') === (row.group_link ?? '')) {
+                    window.Toast.show({ type: 'info', title: 'لا تغييرات', message: 'لم تقم بأي تعديل' });
+                    return;
+                }
+                try {
+                    showLoading(true);
+                    const { error } = await sb.from('councils')
+                        .update({ description, group_link, updated_at: new Date().toISOString() })
+                        .eq('id', id);
+                    if (error) throw error;
+                    window.closeModal();
+                    await loadCouncils();
+                    window.Toast.show({ type: 'success', title: 'تم الحفظ', message: 'تم تحديث بيانات المجلس بنجاح' });
+                } catch (err) {
+                    console.error('Error updating council:', err);
+                    window.showErrorModal('خطأ', 'حدث خطأ أثناء حفظ التعديلات');
+                } finally {
+                    showLoading(false);
+                }
+            };
+
+            window.openModal('تعديل مجلس', formHtml, { icon: 'fa-pen', variant: 'warning', footer });
+        } catch (error) {
+            console.error('Error editing council:', error);
+            window.showErrorModal('خطأ', 'حدث خطأ أثناء تحميل بيانات المجلس');
+        } finally {
+            showLoading(false);
+        }
+    };
+
+    async function loadCommitteesStats() {
+        try {
+            const [
+                { count: councilsCount },
+                { count: adminCount },
+                { count: deptsCount },
+                { count: committeesCount },
+            ] = await Promise.all([
+                sb.from('councils').select('*', { count: 'exact', head: true }),
+                sb.from('committees').select('*', { count: 'exact', head: true }).eq('is_active', true).is('department_id', null),
+                sb.from('departments').select('*', { count: 'exact', head: true }).eq('is_active', true),
+                sb.from('committees').select('*', { count: 'exact', head: true }).eq('is_active', true).not('department_id', 'is', null),
+            ]);
+
+            const el = id => document.getElementById(id);
+            if (el('statCouncils'))         el('statCouncils').textContent        = councilsCount ?? 0;
+            if (el('statAdminCommittees'))  el('statAdminCommittees').textContent = adminCount ?? 0;
+            if (el('statDepts'))            el('statDepts').textContent           = deptsCount ?? 0;
+            if (el('statCommittees'))       el('statCommittees').textContent      = committeesCount ?? 0;
+        } catch (err) {
+            console.warn('Error loading committees stats:', err);
+        }
+    }
+
+    async function loadDepartments() {
+        const container = document.getElementById('departmentsGrid');
+        if (!container) return;
+
+        try {
+            const { data: departments, error } = await sb
+                .from('departments')
+                .select('*')
+                .eq('is_active', true)
+                .order('display_order', { ascending: true });
+
+            if (error) throw error;
+
+            if (!departments || departments.length === 0) {
+                container.innerHTML = '<div class="empty-state">لا توجد أقسام</div>';
+                return;
+            }
+
+            // جلب أعضاء كل قسم عبر لجانه
+            for (const dept of departments) {
+                const { data: deptCommittees } = await sb
+                    .from('committees')
+                    .select('id, committee_name_ar')
+                    .eq('department_id', dept.id)
+                    .eq('is_active', true);
+
+                const committeeIds = (deptCommittees || []).map(c => c.id);
+                dept.committees_names = (deptCommittees || []).map(c => c.committee_name_ar);
+                let members = [];
+                if (committeeIds.length > 0) {
+                    const { data: memberData } = await sb
+                        .from('user_roles')
+                        .select('user_id, roles(role_name_ar, role_level), profiles!user_roles_user_id_fkey(full_name, avatar_url)')
+                        .in('committee_id', committeeIds)
+                        .eq('is_active', true);
+                    members = (memberData || []).sort((a, b) => (b.roles?.role_level || 0) - (a.roles?.role_level || 0));
+                }
+                dept.members = members;
+                dept.members_count = members.length;
+            }
+
+            container.innerHTML = departments.map(dept => {
+                const deptHead    = dept.members.find(m => m.roles?.role_level === 7);
+
+                const avatarStackHtml = dept.members.map(m => {
+                    const name   = m.profiles?.full_name || '؟';
+                    const avatar = m.profiles?.avatar_url ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3d8fd6&color=fff&size=64`;
+                    return `<img class="uc-card__avatar-item" src="${avatar}" alt="${name}" title="${name}" />`;
+                }).join('');
+
+                return `
+                <div class="uc-card" data-department-id="${dept.id}">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
+                                <i class="fa-solid fa-sitemap"></i>
+                            </div>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${dept.name_ar}</h3>
+                                <span class="uc-card__badge">
+                                    <i class="fa-solid fa-users"></i>
+                                    ${dept.members_count || 0} عضو
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uc-card__body">
+                        <div class="uc-card__info-item uc-card__info-item--full">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-align-right"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">الوصف</div>
+                                <div class="uc-card__info-value">${dept.description || 'لا يوجد وصف'}</div>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-user-tie"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">رئيس القسم</div>
+                                <div class="uc-card__info-value">${deptHead?.profiles?.full_name || 'لم يُعيَّن بعد'}</div>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-filter"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">التصنيف</div>
+                                <div class="uc-card__info-value">تابع للمجلس التنفيذي</div>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item uc-card__info-item--full">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-sitemap"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">اللجان</div>
+                                <div class="uc-card__info-value">${(() => {
+                                    const names = dept.committees_names.map(n => n.replace(/^لجنة\s+/, ''));
+                                    if (names.length === 0) return 'لا توجد لجان';
+                                    if (names.length === 1) return 'يضم لجنة ' + names[0];
+                                    if (names.length === 2) return 'يضم لجنتي ' + names.join(' و');
+                                    return 'يضم لجان ' + names.join(' و');
+                                })()}</div>
+                            </div>
+                        </div>
+                        ${dept.group_link ? `
+                        <div class="uc-card__info-item uc-card__info-item--full uc-card__info-item--link">
+                            <div class="uc-card__info-icon"><i class="fa-brands fa-whatsapp"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">رابط القروب</div>
+                                <div class="uc-card__info-value">${dept.group_link}</div>
+                            </div>
+                            <button class="uc-card__link-btn" onclick="event.stopPropagation(); window.open('${dept.group_link}','_blank')" title="فتح الرابط">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </button>
+                        </div>` : ''}
+                        ${dept.members.length > 0 ? `
+                        <div class="uc-card__members">
+                            <span class="uc-card__members-label">الأعضاء</span>
+                            <div class="uc-card__avatar-stack">
+                                ${avatarStackHtml}
+                            </div>
+                        </div>` : ''}
+                    </div>
+                    <div class="uc-card__footer">
+                        <button class="btn btn-primary btn-sm" onclick="viewDepartment(${dept.id})">
+                            <i class="fa-solid fa-eye"></i>
+                            عرض التفاصيل
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="editDepartment(${dept.id})">
+                            <i class="fa-solid fa-pen"></i>
+                            تعديل
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+            requestAnimationFrame(() => refreshAvatarStacks(container));
+        } catch (error) {
+            console.error('Error loading departments:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الأقسام</div>';
+        }
+    }
+
     async function loadCommittees() {
         const container = document.getElementById('committeesGrid');
         if (!container) return;
@@ -2037,21 +2519,22 @@
             
             const { data: committees, error } = await sb
                 .from('committees')
-                .select('*')
-                .eq('is_active', true);
+                .select('*, departments(name_ar)')
+                .eq('is_active', true)
+                .not('department_id', 'is', null);
 
             if (error) throw error;
 
-            // جلب عدد الأعضاء لكل لجنة
+            // جلب أعضاء كل لجنة
             if (committees && committees.length > 0) {
                 for (const committee of committees) {
-                    // عد الأعضاء
-                    const { count: membersCount } = await sb
+                    const { data: members } = await sb
                         .from('user_roles')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('committee_id', committee.id);
-                    
-                    committee.members_count = membersCount || 0;
+                        .select('user_id, roles(role_name_ar, role_level), profiles!user_roles_user_id_fkey(full_name, avatar_url)')
+                        .eq('committee_id', committee.id)
+                        .eq('is_active', true);
+                    committee.members = (members || []).sort((a, b) => (b.roles?.role_level || 0) - (a.roles?.role_level || 0));
+                    committee.members_count = committee.members.length;
                 }
             }
 
@@ -2060,16 +2543,27 @@
                 return;
             }
 
-            container.innerHTML = `<div class="uc-grid">${committees.map(committee => `
+            container.innerHTML = committees.map(committee => {
+                const cmLeader  = committee.members.find(m => m.roles?.role_level === 6);
+                const cmDeputy  = committee.members.find(m => m.roles?.role_level === 5);
+
+                const avatarStackHtml = committee.members.map(m => {
+                    const name   = m.profiles?.full_name || '؟';
+                    const avatar = m.profiles?.avatar_url ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3d8fd6&color=fff&size=64`;
+                    return `<img class="uc-card__avatar-item" src="${avatar}" alt="${name}" title="${name}" />`;
+                }).join('');
+
+                return `
                 <div class="uc-card" data-committee-id="${committee.id}">
                     <div class="uc-card__header">
                         <div class="uc-card__header-inner">
                             <div class="uc-card__icon">
-                                <i class="fa-solid fa-sitemap"></i>
+                                <i class="fa-solid fa-people-group"></i>
                             </div>
                             <div class="uc-card__header-info">
                                 <h3 class="uc-card__title">${committee.committee_name_ar}</h3>
-                                <span class="uc-badge--info">
+                                <span class="uc-card__badge">
                                     <i class="fa-solid fa-users"></i>
                                     ${committee.members_count || 0} عضو
                                 </span>
@@ -2078,26 +2572,192 @@
                     </div>
                     <div class="uc-card__body">
                         <div class="uc-card__info-item uc-card__info-item--full">
-                            <div class="uc-card__info-icon"><i class="fa-solid fa-info-circle"></i></div>
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-align-right"></i></div>
                             <div class="uc-card__info-content">
                                 <div class="uc-card__info-label">الوصف</div>
                                 <div class="uc-card__info-value">${committee.description || 'لا يوجد وصف'}</div>
                             </div>
                         </div>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-user-tie"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">قائد اللجنة</div>
+                                <div class="uc-card__info-value">${cmLeader?.profiles?.full_name || 'لم يُعيَّن بعد'}</div>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-user-shield"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">نائب اللجنة</div>
+                                <div class="uc-card__info-value">${cmDeputy?.profiles?.full_name || 'لم يُعيَّن بعد'}</div>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-layer-group"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">القسم</div>
+                                <div class="uc-card__info-value">${committee.departments?.name_ar ? 'تابع لقسم ' + committee.departments.name_ar.replace(/^قسم\s+/, '') : 'غير محدد'}</div>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-filter"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">التصنيف</div>
+                                <div class="uc-card__info-value">تابع للمجلس التنفيذي</div>
+                            </div>
+                        </div>
+                        ${committee.group_link ? `
+                        <div class="uc-card__info-item uc-card__info-item--full uc-card__info-item--link">
+                            <div class="uc-card__info-icon"><i class="fa-brands fa-whatsapp"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">رابط القروب</div>
+                                <div class="uc-card__info-value">${committee.group_link}</div>
+                            </div>
+                            <button class="uc-card__link-btn" onclick="event.stopPropagation(); window.open('${committee.group_link}','_blank')" title="فتح الرابط">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </button>
+                        </div>` : ''}
+                        ${committee.members.length > 0 ? `
+                        <div class="uc-card__members">
+                            <span class="uc-card__members-label">الأعضاء</span>
+                            <div class="uc-card__avatar-stack">
+                                ${avatarStackHtml}
+                            </div>
+                        </div>` : ''}
                     </div>
                     <div class="uc-card__footer">
                         <button class="btn btn-primary btn-sm" onclick="viewCommittee(${committee.id})">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل
                         </button>
+                        <button class="btn btn-warning btn-sm" onclick="editCommittee(${committee.id})">
+                            <i class="fa-solid fa-pen"></i>
+                            تعديل
+                        </button>
                     </div>
-                </div>
-            `).join('')}</div>`;
+                </div>`;
+            }).join('');
+            requestAnimationFrame(() => refreshAvatarStacks(container));
         } catch (error) {
             console.error('Error loading committees:', error);
             container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل اللجان</div>';
         } finally {
             showLoading(false);
+        }
+    }
+
+    async function loadAdminCommittees() {
+        const container = document.getElementById('adminCommitteesGrid');
+        if (!container) return;
+
+        try {
+            const { data: committees, error } = await sb
+                .from('committees')
+                .select('*')
+                .eq('is_active', true)
+                .is('department_id', null);
+
+            if (error) throw error;
+
+            if (!committees || committees.length === 0) {
+                container.innerHTML = '<div class="empty-state">لا توجد إدارات</div>';
+                return;
+            }
+
+            for (const committee of committees) {
+                const { data: members } = await sb
+                    .from('user_roles')
+                    .select('user_id, roles(role_name_ar, role_level), profiles!user_roles_user_id_fkey(full_name, avatar_url)')
+                    .eq('committee_id', committee.id)
+                    .eq('is_active', true);
+                committee.members = (members || []).sort((a, b) => (b.roles?.role_level || 0) - (a.roles?.role_level || 0));
+                committee.members_count = committee.members.length;
+            }
+
+            container.innerHTML = committees.map(committee => {
+
+                const leader = committee.members.find(m => m.roles?.role_level >= 8);
+
+                const avatarStackHtml = committee.members.map(m => {
+                    const name   = m.profiles?.full_name || '؟';
+                    const avatar = m.profiles?.avatar_url ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=fff&size=64`;
+                    return `<img class="uc-card__avatar-item" src="${avatar}" alt="${name}" title="${name}" />`;
+                }).join('');
+
+                return `
+                <div class="uc-card" data-committee-id="${committee.id}">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
+                                <i class="fa-solid fa-users-gear"></i>
+                            </div>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${committee.committee_name_ar}</h3>
+                                <span class="uc-card__badge">
+                                    <i class="fa-solid fa-users"></i>
+                                    ${committee.members_count || 0} عضو
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uc-card__body">
+                        <div class="uc-card__info-item uc-card__info-item--full">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-align-right"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">الوصف</div>
+                                <div class="uc-card__info-value">${committee.description || 'لا يوجد وصف'}</div>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-user-tie"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">قائد الإدارة</div>
+                                <div class="uc-card__info-value">${leader?.profiles?.full_name || 'لم يُعيَّن بعد'}</div>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-filter"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">التصنيف</div>
+                                <div class="uc-card__info-value">تابع للمجلس الإداري</div>
+                            </div>
+                        </div>
+                        ${committee.group_link ? `
+                        <div class="uc-card__info-item uc-card__info-item--full uc-card__info-item--link">
+                            <div class="uc-card__info-icon"><i class="fa-brands fa-whatsapp"></i></div>
+                            <div class="uc-card__info-content">
+                                <div class="uc-card__info-label">رابط القروب</div>
+                                <div class="uc-card__info-value">${committee.group_link}</div>
+                            </div>
+                            <button class="uc-card__link-btn" onclick="event.stopPropagation(); window.open('${committee.group_link}','_blank')" title="فتح الرابط">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </button>
+                        </div>` : ''}
+                        ${committee.members.length > 0 ? `
+                        <div class="uc-card__members">
+                            <span class="uc-card__members-label">الأعضاء</span>
+                            <div class="uc-card__avatar-stack">
+                                ${avatarStackHtml}
+                            </div>
+                        </div>` : ''}
+                    </div>
+                    <div class="uc-card__footer">
+                        <button class="btn btn-primary btn-sm" onclick="viewCommittee(${committee.id})">
+                            <i class="fa-solid fa-eye"></i>
+                            عرض التفاصيل
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="editCommittee(${committee.id})">
+                            <i class="fa-solid fa-pen"></i>
+                            تعديل
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+            requestAnimationFrame(() => refreshAvatarStacks(container));
+        } catch (error) {
+            console.error('Error loading admin committees:', error);
+            container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الإدارات</div>';
         }
     }
 
@@ -2793,44 +3453,6 @@
             });
         }
 
-        // نافذة إضافة لجنة
-        const addCommitteeBtn = document.getElementById('addCommitteeBtn');
-        const committeeModal = document.getElementById('committeeModal');
-        const closeCommitteeModal = document.getElementById('closeCommitteeModal');
-        const cancelCommitteeBtn = document.getElementById('cancelCommitteeBtn');
-        const committeeForm = document.getElementById('committeeForm');
-
-        if (addCommitteeBtn) {
-            addCommitteeBtn.addEventListener('click', () => {
-                openCommitteeModal();
-            });
-        }
-
-        if (closeCommitteeModal) {
-            closeCommitteeModal.addEventListener('click', () => {
-                const backdrop = document.getElementById('committeeModalBackdrop');
-                committeeModal.classList.remove('active');
-                if (backdrop) backdrop.classList.remove('active');
-                document.body.classList.remove('modal-open');
-            });
-        }
-
-        if (cancelCommitteeBtn) {
-            cancelCommitteeBtn.addEventListener('click', () => {
-                const backdrop = document.getElementById('committeeModalBackdrop');
-                committeeModal.classList.remove('active');
-                if (backdrop) backdrop.classList.remove('active');
-                document.body.classList.remove('modal-open');
-            });
-        }
-
-        if (committeeForm) {
-            committeeForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await handleCommitteeSubmit();
-            });
-        }
-
         // نافذة إضافة مشروع
         const addProjectBtn = document.getElementById('addProjectBtn');
         const projectModal = document.getElementById('projectModal');
@@ -3453,127 +4075,124 @@
         }
     };
 
-    // فتح نافذة إضافة/تعديل لجنة
-    async function openCommitteeModal(committeeId = null) {
-        const modal = document.getElementById('committeeModal');
-        const backdrop = document.getElementById('committeeModalBackdrop');
-        const title = document.getElementById('committeeModalTitle');
-        const form = document.getElementById('committeeForm');
-
-        // فتح النافذة مع backdrop
-        document.body.classList.add('modal-open');
-        setTimeout(() => {
-            if (backdrop) backdrop.classList.add('active');
-            modal.classList.add('active');
-        }, 10);
-
-        if (committeeId) {
-            title.textContent = 'تعديل لجنة';
-            
-            // تحميل بيانات اللجنة
-            try {
-                const { data: committee, error } = await sb
-                    .from('committees')
-                    .select('*')
-                    .eq('id', committeeId)
-                    .single();
-
-                if (error) throw error;
-
-                document.getElementById('committeeNameAr').value = committee.committee_name_ar || '';
-                document.getElementById('committeeDescription').value = committee.description || '';
-                document.getElementById('committeeGroupLink').value = committee.group_link || '';
-                document.getElementById('committeeIsActive').checked = committee.is_active;
-                
-                form.dataset.committeeId = committeeId;
-            } catch (error) {
-                console.error('Error loading committee:', error);
-                alert('فشل تحميل بيانات اللجنة');
-                modal.classList.remove('active');
-            }
-        } else {
-            title.textContent = 'إضافة لجنة جديدة';
-            form.reset();
-            document.getElementById('committeeIsActive').checked = true;
-            delete form.dataset.committeeId;
-        }
-    }
-
-    // معالجة إرسال نموذج اللجنة
-    async function handleCommitteeSubmit() {
-        const form = document.getElementById('committeeForm');
-        const committeeId = form.dataset.committeeId;
-
-        const nameAr = document.getElementById('committeeNameAr').value;
-        const description = document.getElementById('committeeDescription').value;
-        const groupLink = document.getElementById('committeeGroupLink').value;
-        const isActive = document.getElementById('committeeIsActive').checked;
-
+    // فتح نافذة تعديل لجنة
+    async function openCommitteeModal(committeeId) {
         try {
             showLoading(true);
 
-            if (committeeId) {
-                // تحديث لجنة موجودة
-                const { error } = await sb
-                    .from('committees')
-                    .update({
-                        committee_name_ar: nameAr,
-                        description: description,
-                        group_link: groupLink,
-                        is_active: isActive
-                    })
-                    .eq('id', committeeId);
+            const { data: committee, error } = await sb
+                .from('committees')
+                .select('*')
+                .eq('id', committeeId)
+                .single();
 
-                if (error) throw error;
+            if (error) throw error;
 
-                alert('تم تحديث اللجنة بنجاح!');
-            } else {
-                // إضافة لجنة جديدة
-                const { error } = await sb
-                    .from('committees')
-                    .insert({
-                        committee_name_ar: nameAr,
-                        description: description,
-                        group_link: groupLink,
-                        is_active: isActive
-                    });
+            const isAdmin = !committee.department_id;
+            const entityLabel = isAdmin ? 'الإدارة' : 'اللجنة';
+            const entityIcon  = isAdmin ? 'fa-users-gear' : 'fa-people-group';
 
-                if (error) throw error;
+            const formHtml = `
+                <div class="modal-form-grid">
+                    <div class="form-group full-width">
+                        <label class="form-label">
+                            <span class="label-icon"><i class="fa-solid ${entityIcon}"></i></span>
+                            اسم ${entityLabel}
+                        </label>
+                        <input type="text" id="cm-name" class="form-input" value="${committee.committee_name_ar || ''}" readonly />
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">
+                            <span class="label-icon"><i class="fa-solid fa-align-right"></i></span>
+                            الوصف
+                        </label>
+                        <textarea id="cm-description" rows="3" class="form-input form-textarea" placeholder="وصف اللجنة...">${committee.description || ''}</textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">
+                            <span class="label-icon"><i class="fa-brands fa-whatsapp"></i></span>
+                            رابط القروب <span class="required-dot">*</span>
+                        </label>
+                        <input type="url" id="cm-grouplink" class="form-input" value="${committee.group_link || ''}" placeholder="https://chat.whatsapp.com/..." required />
+                    </div>
+                </div>
+            `;
 
-                alert('تم إضافة اللجنة بنجاح!');
-            }
+            const footer = `
+                <button class="btn btn-outline" onclick="closeModal()">
+                    <i class="fa-solid fa-times"></i>
+                    إلغاء
+                </button>
+                <button class="btn btn-warning" onclick="window._submitCommitteeEdit(${committeeId})">
+                    <i class="fa-solid fa-save"></i>
+                    حفظ التعديلات
+                </button>
+            `;
 
-            // إغلاق النافذة وتحديث القائمة
-            const modal = document.getElementById('committeeModal');
-            const backdrop = document.getElementById('committeeModalBackdrop');
-            modal.classList.remove('active');
-            if (backdrop) backdrop.classList.remove('active');
-            document.body.classList.remove('modal-open');
-            await loadCommittees();
+            window._submitCommitteeEdit = async (id) => {
+                const description = document.getElementById('cm-description').value.trim() || null;
+                const groupLink   = document.getElementById('cm-grouplink').value.trim() || null;
+
+                if (!groupLink) {
+                    document.getElementById('cm-grouplink').focus();
+                    return;
+                }
+                if ((description ?? '') === (committee.description ?? '') && (groupLink ?? '') === (committee.group_link ?? '')) {
+                    window.Toast.show({ type: 'info', title: 'لا تغييرات', message: 'لم تقم بأي تعديل' });
+                    return;
+                }
+
+                try {
+                    showLoading(true);
+                    const { error } = await sb
+                        .from('committees')
+                        .update({ description, group_link: groupLink })
+                        .eq('id', id);
+
+                    if (error) throw error;
+
+                    window.closeModal();
+                    await loadCommittees();
+                    window.Toast.show({ type: 'success', title: 'تم الحفظ', message: 'تم تحديث بيانات اللجنة بنجاح' });
+                } catch (err) {
+                    console.error('Error updating committee:', err);
+                    window.showErrorModal('خطأ', 'حدث خطأ أثناء حفظ التعديلات');
+                } finally {
+                    showLoading(false);
+                }
+            };
+
+            window.openModal(`تعديل ${entityLabel}`, formHtml, {
+                icon: 'fa-pen',
+                variant: 'warning',
+                footer
+            });
 
         } catch (error) {
-            console.error('Error saving committee:', error);
-            alert('حدث خطأ: ' + (error.message || 'خطأ غير معروف'));
+            console.error('Error loading committee:', error);
+            window.showErrorModal('خطأ', 'فشل تحميل بيانات اللجنة');
         } finally {
             showLoading(false);
         }
     }
 
     // دالة عرض لجنة
+    window.editCommittee = function(committeeId) {
+        openCommitteeModal(committeeId);
+    };
+
     window.viewCommittee = async function(committeeId) {
         try {
             showLoading(true);
 
-            // جلب بيانات اللجنة
             const { data: committee, error: committeeError } = await sb
                 .from('committees')
-                .select('*')
+                .select('*, departments(name_ar)')
                 .eq('id', committeeId)
                 .single();
 
             if (committeeError) throw committeeError;
 
-            // جلب الأعضاء مع بيانات الملف الشخصي والأدوار
             const { data: members, error: membersError } = await sb
                 .from('user_roles')
                 .select('user_id, profiles!user_roles_user_id_fkey(full_name, avatar_url), roles(role_name_ar)')
@@ -3582,54 +4201,78 @@
 
             if (membersError) console.warn('Error loading members:', membersError);
 
-            // بناء محتوى النافذة
-            const membersHtml = members && members.length > 0 ? members.map(member => `
-                <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: white; border-radius: 10px; border: 1px solid rgba(61, 143, 214, 0.15);">
-                    <img src="${member.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.profiles?.full_name || 'User')}&background=3d8fd6&color=fff`}" 
-                         style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" alt="" />
-                    <div>
-                        <strong style="color: var(--main-blue, #274060);">${member.profiles?.full_name || 'غير محدد'}</strong>
-                        <div style="font-size: 0.85rem; color: #64748b;">${member.roles?.role_name_ar || ''}</div>
-                    </div>
-                </div>
-            `).join('') : '<p style="color: #64748b; text-align: center; padding: 1rem;">لا يوجد أعضاء</p>';
+            const membersHtml = members && members.length > 0
+                ? members.map(member => {
+                    const name   = member.profiles?.full_name || 'غير محدد';
+                    const avatar = member.profiles?.avatar_url ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3d8fd6&color=fff`;
+                    const role   = member.roles?.role_name_ar || '';
+                    return `
+                    <div class="modal-detail-item" style="flex-direction:row;align-items:center;gap:0.75rem;">
+                        <img src="${avatar}" alt="${name}"
+                             style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" />
+                        <div style="min-width:0;">
+                            <div class="modal-detail-value" style="font-size:0.9rem;">${name}</div>
+                            ${role ? `<div class="modal-detail-label" style="margin-top:0.15rem;">${role}</div>` : ''}
+                        </div>
+                    </div>`;
+                }).join('')
+                : `<p style="color:#64748b;text-align:center;padding:1rem;grid-column:1/-1;">لا يوجد أعضاء</p>`;
 
             const content = `
-                <div style="background: rgba(61, 143, 214, 0.05); padding: 1rem; border-radius: 12px; margin-bottom: 1.25rem; border: 1px solid rgba(61, 143, 214, 0.1);">
-                    <p style="margin: 0.5rem 0;"><strong>الوصف:</strong> ${committee.description || 'لا يوجد وصف'}</p>
-                    <p style="margin: 0.5rem 0;"><strong>الحالة:</strong> <span class="badge ${committee.is_active ? 'badge-success' : 'badge-danger'}">${committee.is_active ? 'نشطة' : 'غير نشطة'}</span></p>
-                    <p style="margin: 0.5rem 0;"><strong>تاريخ الإنشاء:</strong> ${new Date(committee.created_at).toLocaleDateString('ar-SA')}</p>
-                    ${committee.group_link ? `<p style="margin: 0.5rem 0;"><strong>رابط القروب:</strong> <a href="${committee.group_link}" target="_blank" class="btn btn-primary btn-sm" style="display: inline-flex; margin-right: 0.5rem;"><i class="fa-brands fa-whatsapp"></i> افتح الرابط</a></p>` : ''}
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-circle-info"></i> بيانات اللجنة</h3>
+                    <div class="modal-detail-grid">
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">الحالة</span>
+                            <span class="modal-detail-value">${committee.is_active ? 'نشطة' : 'غير نشطة'}</span>
+                        </div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">تاريخ الإنشاء</span>
+                            <span class="modal-detail-value">${new Date(committee.created_at).toLocaleDateString('ar-SA')}</span>
+                        </div>
+                        <div class="modal-detail-item" style="grid-column:1/-1;">
+                            <span class="modal-detail-label">التصنيف</span>
+                            <span class="modal-detail-value">${committee.department_id ? 'تابع للمجلس التنفيذي' : 'تابع للمجلس الإداري'}</span>
+                        </div>
+                        ${committee.department_id ? `
+                        <div class="modal-detail-item" style="grid-column:1/-1;">
+                            <span class="modal-detail-label">القسم</span>
+                            <span class="modal-detail-value">${committee.departments?.name_ar ? 'تتبع اللجنة لقسم ' + committee.departments.name_ar.replace(/^قسم\s+/, '') : 'غير محدد'}</span>
+                        </div>` : ''}
+                        ${committee.description ? `
+                        <div class="modal-detail-item" style="grid-column:1/-1;">
+                            <span class="modal-detail-label">الوصف</span>
+                            <span class="modal-detail-value" style="white-space:normal;overflow:visible;">${committee.description}</span>
+                        </div>` : ''}
+                        ${committee.group_link ? `
+                        <div class="modal-detail-item" style="grid-column:1/-1;">
+                            <span class="modal-detail-label">رابط القروب</span>
+                            <span class="modal-detail-value">${committee.group_link}</span>
+                            <div class="modal-detail-actions">
+                                <button class="mdi-btn" onclick="window.open('${committee.group_link}','_blank')" title="فتح الرابط">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </button>
+                            </div>
+                        </div>` : ''}
+                    </div>
                 </div>
 
-                <h4 style="margin: 1rem 0 0.75rem; color: var(--main-blue, #274060); font-weight: 600;">
-                    <i class="fa-solid fa-users"></i> الأعضاء (${members?.length || 0})
-                </h4>
-                <div style="display: grid; gap: 0.5rem; max-height: 300px; overflow-y: auto;">
-                    ${membersHtml}
+                <hr class="modal-divider">
+
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-users"></i> الأعضاء (${members?.length || 0})</h3>
+                    <div class="modal-detail-grid">
+                        ${membersHtml}
+                    </div>
                 </div>
             `;
 
-            // استخدام ModalHelper.show لعرض النافذة بتنسيق صحيح
-            if (window.ModalHelper) {
-                ModalHelper.show({
-                    title: `<i class="fa-solid fa-users"></i> ${committee.committee_name_ar}`,
-                    html: content,
-                    size: 'md',
-                    type: 'info',
-                    showClose: true
-                });
-            } else {
-                window.openModal(committee.committee_name_ar, content, { icon: 'fa-users' });
-            }
+            window.openModal(committee.committee_name_ar, content, { icon: committee.department_id ? 'fa-people-group' : 'fa-users-gear' });
 
         } catch (error) {
             console.error('Error viewing committee:', error);
-            if (window.Toast) {
-                Toast.error('حدث خطأ في تحميل تفاصيل اللجنة');
-            } else {
-                alert('حدث خطأ في تحميل تفاصيل اللجنة');
-            }
+            window.showErrorModal('خطأ', 'حدث خطأ في تحميل تفاصيل اللجنة');
         } finally {
             showLoading(false);
         }
@@ -3638,6 +4281,202 @@
     // دالة تعديل لجنة
     window.editCommittee = function(committeeId) {
         openCommitteeModal(committeeId);
+    };
+
+    // عرض تفاصيل قسم
+    window.viewDepartment = async function(deptId) {
+        try {
+            showLoading(true);
+
+            const { data: dept, error: deptError } = await sb
+                .from('departments')
+                .select('*')
+                .eq('id', deptId)
+                .single();
+
+            if (deptError) throw deptError;
+
+            // جلب اللجان التابعة للقسم
+            const { data: committees } = await sb
+                .from('committees')
+                .select('id, committee_name_ar')
+                .eq('department_id', deptId)
+                .eq('is_active', true);
+
+            // جلب الأعضاء عبر اللجان
+            const { data: members } = await sb
+                .from('user_roles')
+                .select('user_id, profiles!user_roles_user_id_fkey(full_name, avatar_url), roles(role_name_ar), committees!user_roles_committee_id_fkey(committee_name_ar)')
+                .in('committee_id', (committees || []).map(c => c.id))
+                .eq('is_active', true);
+
+            const membersHtml = members && members.length > 0
+                ? members.map(m => {
+                    const name   = m.profiles?.full_name || 'غير محدد';
+                    const avatar = m.profiles?.avatar_url ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3d8fd6&color=fff`;
+                    const role   = m.roles?.role_name_ar || '';
+                    const committee = m.committees?.committee_name_ar || '';
+                    return `
+                    <div class="modal-detail-item" style="flex-direction:row;align-items:center;gap:0.75rem;">
+                        <img src="${avatar}" alt="${name}"
+                             style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" />
+                        <div style="min-width:0;">
+                            <div class="modal-detail-value" style="font-size:0.9rem;">${name}</div>
+                            ${role ? `<div class="modal-detail-label" style="margin-top:0.1rem;">${role}${committee ? ' · ' + committee : ''}</div>` : ''}
+                        </div>
+                    </div>`;
+                }).join('')
+                : `<p style="color:#64748b;text-align:center;padding:1rem;grid-column:1/-1;">لا يوجد أعضاء</p>`;
+
+            const content = `
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-circle-info"></i> بيانات القسم</h3>
+                    <div class="modal-detail-grid">
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">الحالة</span>
+                            <span class="modal-detail-value">${dept.is_active ? 'نشط' : 'غير نشط'}</span>
+                        </div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">تاريخ الإنشاء</span>
+                            <span class="modal-detail-value">${new Date(dept.created_at).toLocaleDateString('ar-SA')}</span>
+                        </div>
+                        <div class="modal-detail-item" style="grid-column:1/-1;">
+                            <span class="modal-detail-label">التصنيف</span>
+                            <span class="modal-detail-value">تابع للمجلس التنفيذي</span>
+                        </div>
+                                                ${committees && committees.length > 0 ? `
+                        <div class="modal-detail-item" style="grid-column:1/-1;">
+                            <span class="modal-detail-label">اللجان</span>
+                            <span class="modal-detail-value" style="white-space:normal;overflow:visible;">يضم القسم ${committees.map(c => c.committee_name_ar).join(' و')}</span>
+                        </div>` : ''}
+                        ${dept.description ? `
+                        <div class="modal-detail-item" style="grid-column:1/-1;">
+                            <span class="modal-detail-label">الوصف</span>
+                            <span class="modal-detail-value" style="white-space:normal;overflow:visible;">${dept.description}</span>
+                        </div>` : ''}
+                        ${dept.group_link ? `
+                        <div class="modal-detail-item" style="grid-column:1/-1;">
+                            <span class="modal-detail-label">رابط القروب</span>
+                            <span class="modal-detail-value">${dept.group_link}</span>
+                            <div class="modal-detail-actions">
+                                <button class="mdi-btn" onclick="window.open('${dept.group_link}','_blank')" title="فتح الرابط">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </button>
+                            </div>
+                        </div>` : ''}
+                    </div>
+                </div>
+                <hr class="modal-divider">
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-users"></i> الأعضاء (${members?.length || 0})</h3>
+                    <div class="modal-detail-grid">
+                        ${membersHtml}
+                    </div>
+                </div>
+            `;
+
+            window.openModal(dept.name_ar, content, { icon: 'fa-solid fa-sitemap' });
+
+        } catch (error) {
+            console.error('Error viewing department:', error);
+            window.showErrorModal('خطأ', 'حدث خطأ في تحميل تفاصيل القسم');
+        } finally {
+            showLoading(false);
+        }
+    };
+
+    // تعديل قسم
+    window.editDepartment = async function(deptId) {
+        try {
+            showLoading(true);
+
+            const { data: dept, error } = await sb
+                .from('departments')
+                .select('*')
+                .eq('id', deptId)
+                .single();
+
+            if (error) throw error;
+
+            const formHtml = `
+                <div class="modal-form-grid">
+                    <div class="form-group full-width">
+                        <label class="form-label">
+                            <span class="label-icon"><i class="fa-solid fa-sitemap"></i></span>
+                            اسم القسم
+                        </label>
+                        <input type="text" id="dept-name" class="form-input" value="${dept.name_ar || ''}" readonly />
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">
+                            <span class="label-icon"><i class="fa-solid fa-align-right"></i></span>
+                            الوصف
+                        </label>
+                        <textarea id="dept-description" rows="3" class="form-input form-textarea" placeholder="وصف القسم...">${dept.description || ''}</textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">
+                            <span class="label-icon"><i class="fa-brands fa-whatsapp"></i></span>
+                            رابط القروب <span class="required-dot">*</span>
+                        </label>
+                        <input type="url" id="dept-grouplink" class="form-input" value="${dept.group_link || ''}" placeholder="https://chat.whatsapp.com/..." required />
+                    </div>
+                </div>
+            `;
+
+            const footer = `
+                <button class="btn btn-outline" onclick="closeModal()">
+                    <i class="fa-solid fa-times"></i>
+                    إلغاء
+                </button>
+                <button class="btn btn-warning" onclick="window._submitDeptEdit(${deptId})">
+                    <i class="fa-solid fa-save"></i>
+                    حفظ التعديلات
+                </button>
+            `;
+
+            window._submitDeptEdit = async function(id) {
+                const description = document.getElementById('dept-description')?.value.trim() || null;
+                const groupLink   = document.getElementById('dept-grouplink')?.value.trim() || null;
+
+                if (!groupLink) {
+                    document.getElementById('dept-grouplink').focus();
+                    return;
+                }
+                if ((description ?? '') === (dept.description ?? '') && (groupLink ?? '') === (dept.group_link ?? '')) {
+                    window.Toast.show({ type: 'info', title: 'لا تغييرات', message: 'لم تقم بأي تعديل' });
+                    return;
+                }
+
+                try {
+                    showLoading(true);
+                    const { error } = await sb
+                        .from('departments')
+                        .update({ description, group_link: groupLink })
+                        .eq('id', id);
+
+                    if (error) throw error;
+
+                    window.closeModal();
+                    await loadDepartments();
+                    window.Toast.show({ type: 'success', title: 'تم الحفظ', message: 'تم تحديث بيانات القسم بنجاح' });
+                } catch (err) {
+                    console.error('Error updating department:', err);
+                    window.showErrorModal('خطأ', 'حدث خطأ أثناء حفظ التعديلات');
+                } finally {
+                    showLoading(false);
+                }
+            };
+
+            window.openModal('تعديل قسم', formHtml, { icon: 'fa-pen', variant: 'warning', footer });
+
+        } catch (error) {
+            console.error('Error opening department edit:', error);
+            window.showErrorModal('خطأ', 'حدث خطأ في تحميل بيانات القسم');
+        } finally {
+            showLoading(false);
+        }
     };
 
     // دالة حذف لجنة

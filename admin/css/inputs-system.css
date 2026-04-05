@@ -153,7 +153,7 @@
 .form-group {
     display:        flex;
     flex-direction: column;
-    gap:            0.35rem;
+    gap:            0.45rem;
     width:          100%;
 }
 
@@ -176,10 +176,76 @@
     transition:     color var(--fi-dur) var(--fi-ease);
 }
 
-.form-label .required-dot {
-    color:      var(--fi-error-text);
-    font-size:  0.85em;
-    line-height:1;
+.required-dot {
+    position:    relative;
+    display:     inline-block;
+    width:       0.54rem;
+    height:      0.54rem;
+    border-radius: 50%;
+    /* gradient 3D: وميض علوي أبيض ← أحمر ← كرزي عميق */
+    background:  radial-gradient(circle at 33% 28%,
+                     #fca5a5 0%,
+                     #ef4444 40%,
+                     #b91c1c 100%);
+    /* إضاءة داخلية علوية + glow خارجي */
+    box-shadow:
+        inset 0 1.5px 1px rgba(255, 255, 255, 0.52),
+        0 0 0 0   rgba(var(--fi-red-rgb), 0.50),
+        0 1px 5px rgba(var(--fi-red-rgb), 0.38);
+    flex-shrink:  0;
+    font-size:    0;
+    will-change:  box-shadow, transform;
+    animation:    _fi-req-beat 2.6s cubic-bezier(0.35, 0, 0.65, 1) infinite;
+}
+
+/* موجتان sonar — قرص ممتد لا حلقة */
+.form-label .required-dot::before,
+.form-label .required-dot::after {
+    content:       '';
+    position:      absolute;
+    inset:         0;
+    border-radius: 50%;
+    background:    rgba(var(--fi-red-rgb), 0.55);
+    pointer-events: none;
+}
+
+.form-label .required-dot::before {
+    animation: _fi-req-wave 2.6s ease-out infinite;
+}
+
+.form-label .required-dot::after {
+    animation: _fi-req-wave 2.6s ease-out 0.90s infinite;
+}
+
+/* نبضة + glow متمدد */
+@keyframes _fi-req-beat {
+    0%, 100% {
+        transform:  scale(1);
+        box-shadow:
+            inset 0 1.5px 1px rgba(255, 255, 255, 0.52),
+            0 0 0 0   rgba(var(--fi-red-rgb), 0.50),
+            0 1px 5px rgba(var(--fi-red-rgb), 0.38);
+    }
+    25% {
+        transform:  scale(1.18);
+        box-shadow:
+            inset 0 1.5px 1px rgba(255, 255, 255, 0.52),
+            0 0 0 4px rgba(var(--fi-red-rgb), 0.13),
+            0 1px 9px rgba(var(--fi-red-rgb), 0.46);
+    }
+    55% {
+        transform:  scale(1);
+        box-shadow:
+            inset 0 1.5px 1px rgba(255, 255, 255, 0.52),
+            0 0 0 8px rgba(var(--fi-red-rgb), 0),
+            0 1px 5px rgba(var(--fi-red-rgb), 0.22);
+    }
+}
+
+/* موجة sonar تنتشر وتتلاشى */
+@keyframes _fi-req-wave {
+    0%   { transform: scale(1);   opacity: 0.58; }
+    100% { transform: scale(4.2); opacity: 0;    }
 }
 
 /* أيقونة داخل التسمية */
@@ -187,25 +253,33 @@
     display:         inline-flex;
     align-items:     center;
     justify-content: center;
-    width:           1.3rem;
-    height:          1.3rem;
-    border-radius:   6px;
-    background:      rgba(var(--fi-blue-rgb), 0.10);
+    width:           1.45rem;
+    height:          1.45rem;
+    border-radius:   7px;
+    background:      rgba(var(--fi-blue-rgb), 0.09);
+    border:          1px solid rgba(var(--fi-blue-rgb), 0.18);
     color:           var(--fi-border-focus);
-    font-size:       0.72em;
+    font-size:       0.70em;
     flex-shrink:     0;
+    box-shadow:      0 1px 3px rgba(var(--fi-blue-rgb), 0.10);
     transition:
-        background var(--fi-dur) var(--fi-ease),
-        color      var(--fi-dur) var(--fi-ease);
+        background   var(--fi-dur) var(--fi-ease),
+        color        var(--fi-dur) var(--fi-ease),
+        border-color var(--fi-dur) var(--fi-ease),
+        box-shadow   var(--fi-dur) var(--fi-ease),
+        transform    var(--fi-dur) var(--fi-ease);
 }
 
 .form-group:focus-within .form-label {
-    color: #1e3a5f;
+    color: var(--modal-color-dark, #1e3a5f);
 }
 
 .form-group:focus-within .form-label .label-icon {
-    background: rgba(var(--fi-blue-rgb), 0.18);
-    color:      var(--fi-blue-700);
+    background:   rgba(var(--modal-color-rgb, var(--fi-blue-rgb)), 0.16);
+    border-color: rgba(var(--modal-color-rgb, var(--fi-blue-rgb)), 0.35);
+    color:        var(--modal-color, var(--fi-blue-700));
+    box-shadow:   0 1px 5px rgba(var(--modal-color-rgb, var(--fi-blue-rgb)), 0.18);
+    transform:    scale(1.08);
 }
 
 /* — Hint */
@@ -503,8 +577,10 @@
 }
 
 .form-group.has-error .form-label .label-icon {
-    background: rgba(var(--fi-red-rgb), 0.10);
-    color:      var(--fi-red-500);
+    background:   rgba(var(--fi-red-rgb), 0.09);
+    border-color: rgba(var(--fi-red-rgb), 0.22);
+    color:        var(--fi-red-500);
+    box-shadow:   0 1px 3px rgba(var(--fi-red-rgb), 0.12);
 }
 
 /* — Success state */
@@ -527,8 +603,10 @@
 }
 
 .form-group.has-success .form-label .label-icon {
-    background: rgba(var(--fi-green-rgb), 0.10);
-    color:      var(--fi-green-500);
+    background:   rgba(var(--fi-green-rgb), 0.09);
+    border-color: rgba(var(--fi-green-rgb), 0.22);
+    color:        var(--fi-green-500);
+    box-shadow:   0 1px 3px rgba(var(--fi-green-rgb), 0.12);
 }
 
 /* — Disabled */
@@ -554,15 +632,17 @@
 /* — Readonly */
 .form-input[readonly],
 .form-textarea[readonly] {
-    background-color: var(--fi-bg-subtle);
+    background-color: rgba(var(--modal-color-rgb, var(--fi-blue-rgb)), 0.05);
     background-image: none;
+    border-color:     rgba(var(--modal-color-rgb, var(--fi-blue-rgb)), 0.18);
     cursor:           default;
 }
 
 .form-input[readonly]:focus,
 .form-textarea[readonly]:focus {
-    border-color: var(--fi-border);
-    box-shadow:   var(--fi-shadow-rest);
+    border-color: rgba(var(--modal-color-rgb, var(--fi-blue-rgb)), 0.18);
+    box-shadow:   0 1px 3px rgba(var(--modal-color-rgb, var(--fi-blue-rgb)), 0.06),
+                  0 1px 2px rgba(var(--modal-color-rgb, var(--fi-blue-rgb)), 0.04);
 }
 
 

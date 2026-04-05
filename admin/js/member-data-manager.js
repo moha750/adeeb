@@ -31,27 +31,29 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div class="form-error" style="margin-bottom: 1rem;">
+                        <div class="modal-info-box box-warning">
                             <i class="fa-solid fa-exclamation-triangle"></i>
-                            <strong>تحذير:</strong> سيتم تغيير البريد الإلكتروني للعضو فوراً. تأكد من صحة البريد الجديد.
+                            <span><strong>تحذير:</strong> سيتم تغيير البريد الإلكتروني للعضو فوراً. تأكد من صحة البريد الجديد.</span>
                         </div>
-                        <form id="changeMemberEmailForm" class="modal-form-fields">
+                        <form id="changeMemberEmailForm">
                             <input type="hidden" id="memberEmailUserId">
-                            <div class="form-group">
-                                <label>اسم العضو</label>
-                                <input type="text" class="form-input" id="memberEmailName" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>البريد الإلكتروني الحالي</label>
-                                <input type="email" class="form-input" id="memberEmailCurrent" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>البريد الإلكتروني الجديد <span class="required">*</span></label>
-                                <input type="email" class="form-input" id="memberEmailNew" required placeholder="أدخل البريد الإلكتروني الجديد">
-                            </div>
-                            <div class="form-group">
-                                <label>تأكيد البريد الإلكتروني الجديد <span class="required">*</span></label>
-                                <input type="email" class="form-input" id="memberEmailConfirm" required placeholder="أعد إدخال البريد الإلكتروني الجديد">
+                            <div class="modal-form-grid" style="margin-top:1rem;">
+                                <div class="form-group full-width">
+                                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-user"></i></span> اسم العضو</label>
+                                    <input type="text" class="form-input" id="memberEmailName" readonly>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-envelope"></i></span> البريد الإلكتروني الحالي</label>
+                                    <input type="email" class="form-input" id="memberEmailCurrent" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-envelope-open-text"></i></span> البريد الإلكتروني الجديد <span class="required-dot">*</span></label>
+                                    <input type="email" class="form-input" id="memberEmailNew" required placeholder="أدخل البريد الإلكتروني الجديد">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-check-double"></i></span> تأكيد البريد الإلكتروني الجديد <span class="required-dot">*</span></label>
+                                    <input type="email" class="form-input" id="memberEmailConfirm" required placeholder="أعد إدخال البريد الإلكتروني الجديد">
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -81,28 +83,30 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div class="form-error" style="margin-bottom: 1rem;">
+                        <div class="modal-info-box box-danger">
                             <i class="fa-solid fa-exclamation-triangle"></i>
-                            <strong>تحذير:</strong> سيتم تغيير كلمة المرور للعضو فوراً. تأكد من إبلاغ العضو بكلمة المرور الجديدة.
+                            <span><strong>تحذير:</strong> سيتم تغيير كلمة المرور للعضو فوراً. تأكد من إبلاغ العضو بكلمة المرور الجديدة.</span>
                         </div>
-                        <form id="changeMemberPasswordForm" class="modal-form-fields">
+                        <form id="changeMemberPasswordForm">
                             <input type="hidden" id="memberPasswordUserId">
-                            <div class="form-group">
-                                <label>اسم العضو</label>
-                                <input type="text" class="form-input" id="memberPasswordName" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>البريد الإلكتروني</label>
-                                <input type="email" class="form-input" id="memberPasswordEmail" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>كلمة المرور الجديدة <span class="required">*</span></label>
-                                <input type="password" class="form-input" id="memberPasswordNew" required placeholder="أدخل كلمة المرور الجديدة" minlength="8">
-                                <small class="form-hint">يجب أن تكون 8 أحرف على الأقل</small>
-                            </div>
-                            <div class="form-group">
-                                <label>تأكيد كلمة المرور الجديدة <span class="required">*</span></label>
-                                <input type="password" class="form-input" id="memberPasswordConfirm" required placeholder="أعد إدخال كلمة المرور الجديدة">
+                            <div class="modal-form-grid" style="margin-top:1rem;">
+                                <div class="form-group full-width">
+                                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-user"></i></span> اسم العضو</label>
+                                    <input type="text" class="form-input" id="memberPasswordName" readonly>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-envelope"></i></span> البريد الإلكتروني</label>
+                                    <input type="email" class="form-input" id="memberPasswordEmail" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-key"></i></span> كلمة المرور الجديدة <span class="required-dot">*</span></label>
+                                    <input type="password" class="form-input" id="memberPasswordNew" required placeholder="أدخل كلمة المرور الجديدة" minlength="8">
+                                    <small class="form-hint">يجب أن تكون 8 أحرف على الأقل</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-lock"></i></span> تأكيد كلمة المرور الجديدة <span class="required-dot">*</span></label>
+                                    <input type="password" class="form-input" id="memberPasswordConfirm" required placeholder="أعد إدخال كلمة المرور الجديدة">
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -579,22 +583,11 @@
     }
 
     function showError(message) {
-        Swal.fire({
-            icon: 'error',
-            title: 'خطأ',
-            text: message,
-            confirmButtonText: 'حسناً'
-        });
+        if (window.Toast) Toast.error(message);
     }
 
     function showSuccess(message) {
-        Swal.fire({
-            icon: 'success',
-            title: 'نجح',
-            text: message,
-            confirmButtonText: 'حسناً',
-            timer: 3000
-        });
+        if (window.Toast) Toast.success(message);
     }
 
     // تصدير الوظائف العامة

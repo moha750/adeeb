@@ -10,17 +10,21 @@
    ============================================================ */
 
 .uc-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 1.25rem;
 }
 
-.uc-grid--wide {
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+.uc-grid > * {
+    flex: 1 1 300px;
 }
 
-.uc-grid--narrow {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+.uc-grid--wide > * {
+    flex-basis: 360px;
+}
+
+.uc-grid--narrow > * {
+    flex-basis: 250px;
 }
 
 
@@ -475,6 +479,121 @@
 .uc-card__info-item--full .uc-card__info-value {
     white-space: normal;
     word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    overflow: hidden;
+}
+
+/* عنصر رابط — Link Item */
+.uc-card__info-item--link {
+    position: relative;
+    padding-left: 2.6rem;
+}
+
+.uc-card__info-item--link .uc-card__info-value {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.77rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.uc-card__link-btn {
+    position: absolute;
+    left: 0.55rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(var(--_uc-color-rgb), 0.22);
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--_uc-color);
+    font-size: 0.65rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.18s, border-color 0.18s;
+    backdrop-filter: blur(4px);
+}
+
+.uc-card__link-btn:hover {
+    background: rgba(var(--_uc-color-rgb), 0.12);
+    border-color: rgba(var(--_uc-color-rgb), 0.40);
+}
+
+
+/* ============================================================
+   § 8b · أعضاء البطاقة — Card Members
+   ============================================================ */
+
+.uc-card__members {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0.75rem;
+    background: rgba(var(--_uc-color-rgb), 0.04);
+    border: 1px solid rgba(var(--_uc-color-rgb), 0.10);
+    border-radius: 12px;
+    grid-column: 1 / -1;
+}
+
+.uc-card__members-label {
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.uc-card__avatar-stack {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.uc-card__avatar-item {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ffffff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    margin-right: -8px;
+    transition: transform 0.2s ease, z-index 0s;
+    position: relative;
+    z-index: 1;
+}
+
+.uc-card__avatar-item:first-child { margin-right: 0; }
+
+.uc-card__avatar-item:hover {
+    transform: translateY(-2px) scale(1.08);
+    z-index: 10;
+}
+
+.uc-card__avatar-more {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--_uc-color), var(--_uc-color-dark));
+    color: #ffffff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    margin-right: -8px;
+    flex-shrink: 0;
 }
 
 
@@ -523,12 +642,21 @@
     background: rgba(var(--_uc-color-rgb), 0.03);
     padding: 0.68rem 1rem;
     border-top: 1px solid rgba(var(--_uc-color-rgb), 0.09);
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 0.42rem;
-    flex-wrap: wrap;
     align-items: center;
     position: relative;
     z-index: 1;
+}
+
+.uc-card__footer .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.uc-card__footer .btn:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
 }
 
 
@@ -595,8 +723,6 @@
 
     .uc-card__title { font-size: 0.92rem; }
 
-    .uc-card__footer { flex-wrap: wrap; }
-
 }
 
 @media (max-width: 480px) {
@@ -604,7 +730,7 @@
 
     .uc-card__body { padding: 0.85rem; }
 
-    .uc-card__footer { padding: 0.6rem 0.85rem; }
+    .uc-card__footer { padding: 0.6rem 0.85rem; grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -666,6 +792,8 @@
     color: rgba(255,255,255,0.75);
     margin: 0;
 }
+
+
 
 .archive-card .archive-card-date {
     display: flex;
@@ -943,8 +1071,8 @@
 }
 
 /* بريق ناعم فوق الأيقونة */
-.card-header h2 i::before,
-.card-header h3 i::before {
+.card-header h2 i::after,
+.card-header h3 i::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -1464,11 +1592,20 @@
 .settings-segmented-nav {
     display: flex;
     gap: 6px;
-    background: rgba(var(--color-primary-rgb), 0.055);
+    background-color: #ffffff;
+    background-image: linear-gradient(
+        145deg,
+        rgba(var(--color-accent-rgb), 0.08) 0%,
+        rgba(var(--color-accent-rgb), 0.03) 50%,
+        transparent 100%
+    );
     border-radius: 20px;
     padding: 6px;
     margin-bottom: 1.75rem;
-    border: 1px solid rgba(var(--color-primary-rgb), 0.10);
+    border: 1px solid rgba(var(--color-accent-rgb), 0.15);
+    box-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.04),
+        0 6px 20px rgba(var(--color-accent-rgb), 0.08);
     position: relative;
     overflow: hidden;
 }
@@ -1642,7 +1779,7 @@
 }
 
 /* ── تجاوبية ── */
-@media (max-width: 435px) {
+@media (max-width: 630px) {
     .settings-segmented-nav {
         overflow-x: auto;
         flex-wrap: nowrap;
@@ -1656,8 +1793,8 @@
     .settings-segmented-nav::-webkit-scrollbar { display: none; }
 
     .settings-seg-btn {
-        flex: 0 0 auto;
-        min-width: 72px;
+        /* flex: 0 0 auto; */
+        min-width: 90px;
         padding: 0.65rem 0.5rem;
     }
 
@@ -1671,4 +1808,72 @@
     .settings-seg-btn::before {
         width: 65%;
     }
+}
+
+
+/* ============================================================
+   § 20 · عنصر قائمة التنكر — Impersonation User Item
+   ============================================================ */
+
+.impersonation-user-item {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, .06);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.impersonation-user-item:last-child {
+    border-bottom: none;
+}
+
+.impersonation-user-item:hover {
+    background: rgba(0, 0, 0, .035);
+}
+
+.impersonation-user-item__avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #9ca3af;
+    font-size: 1rem;
+}
+
+.impersonation-user-item__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.impersonation-user-item__info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.impersonation-user-item__name {
+    font-weight: 500;
+    color: var(--color-text, #1f2937);
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.impersonation-user-item__email {
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #6b7280);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

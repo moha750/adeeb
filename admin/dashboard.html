@@ -386,17 +386,93 @@
                 </div>
             </section>
 
-            <!-- قسم إدارة اللجان -->
+            <!-- قسم إدارة الهيكلة -->
             <section id="committees-section" class="admin-section d-none">
 
-                <button class="btn btn-primary" id="addCommitteeBtn">
-                    <i class="fa-solid fa-plus"></i>
-                    إضافة لجنة
-                </button>
-
-                <div class="applications-cards-grid" id="committeesGrid">
-                    <!-- سيتم ملؤها ديناميكياً -->
+                <!-- إحصائيات -->
+                <div class="stats-grid mb-2rem">
+                    <div class="stat-card" style="--stat-color: #f59e0b">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-landmark"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="statCouncils">-</div>
+                                <div class="stat-label">مجالس إدارية</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-users-gear"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="statAdminCommittees">-</div>
+                                <div class="stat-label">إدارات تنظيمية</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #3b82f6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-sitemap"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="statDepts">-</div>
+                                <div class="stat-label">أقسام تنفيذية</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-people-group"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="statCommittees">-</div>
+                                <div class="stat-label">لجان تنفيذية</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <div class="card mb-2rem">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-landmark"></i> مجالس أدِيب</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="uc-grid" id="councilsGrid">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-2rem">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-users-gear"></i> إدارات أدِيب</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="uc-grid" id="adminCommitteesGrid">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-2rem">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-sitemap"></i> أقسام أدِيب</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="uc-grid" id="departmentsGrid">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-people-group"></i> لجان أدِيب</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="uc-grid" id="committeesGrid">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+
             </section>
 
             <!-- قسم إحصائيات الزيارات -->
@@ -1265,250 +1341,6 @@
                 </div>
             </section>
 
-            <!-- قسم تعيين المناصب -->
-            <section id="positions-section" class="admin-section d-none">
-            <h1>
-                <i class="fa-solid fa-user-tie"></i>
-                تعيين المناصب
-            </h1>
-            <p class="section-subtitle">إدارة وتعيين المناصب وفقًا لهيكلة أدِيب</p>
-
-                <!-- بطاقات الإحصائيات -->
-                <div class="stats-grid" id="positionsStatsGrid">
-                    <div class="stat-card" style="--stat-color: #dc2626">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-crown"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="clubPresidentCount">0</div>
-                                <div class="stat-label">رئيس النادي</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #ea580c">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-user-shield"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="councilLeadersCount">0</div>
-                                <div class="stat-label">قادة المجالس العليا</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #f59e0b">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-users-gear"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="committeeLeadersCount">0</div>
-                                <div class="stat-label">قادة اللجان</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #10b981">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-users"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="totalMembersCount">0</div>
-                                <div class="stat-label">إجمالي الأعضاء</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- هيكلة المناصب -->
-                <div class="card mb-2rem">
-                    <div class="card-header">
-                        <h3>
-                            <i class="fa-solid fa-sitemap"></i>
-                            هيكلة المناصب في أدِيب
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="positions-hierarchy">
-                            <!-- المستوى 10: رئيس نادي أدِيب -->
-                            <div class="position-level" data-level="10">
-                                <div class="position-level-header">
-                                    <div class="position-level-badge" style="background: #dc2626;">
-                                        <i class="fa-solid fa-crown"></i>
-                                        <span>رئيس نادي أدِيب</span>
-                                    </div>
-                                    <h4>رئيس نادي أدِيب</h4>
-                                </div>
-                                <div class="position-members" id="level-10-members">
-                                    <!-- سيتم ملؤها ديناميكياً -->
-                                </div>
-                            </div>
-
-                            <!-- المستوى 9: قائد لجنة الموارد البشرية -->
-                            <div class="position-level" data-level="9">
-                                <div class="position-level-header">
-                                    <div class="position-level-badge" style="background: #ea580c;">
-                                        <i class="fa-solid fa-user-shield"></i>
-                                        <span>قائد لجنة الموارد البشرية</span>
-                                    </div>
-                                    <h4>قائد لجنة الموارد البشرية</h4>
-                                </div>
-                                <div class="position-members" id="level-9-members">
-                                    <!-- سيتم ملؤها ديناميكياً -->
-                                </div>
-                            </div>
-
-                            <!-- المستوى 8: قائد لجنة الضمان والجودة -->
-                            <div class="position-level" data-level="8">
-                                <div class="position-level-header">
-                                    <div class="position-level-badge" style="background: #f59e0b;">
-                                        <i class="fa-solid fa-shield-halved"></i>
-                                        <span>قائد لجنة الضمان والجودة</span>
-                                    </div>
-                                    <h4>قائد لجنة الضمان والجودة</h4>
-                                </div>
-                                <div class="position-members" id="level-8-members">
-                                    <!-- سيتم ملؤها ديناميكياً -->
-                                </div>
-                            </div>
-
-                            <!-- المستوى 7: عضو إداري -->
-                            <div class="position-level" data-level="7">
-                                <div class="position-level-header">
-                                    <div class="position-level-badge" style="background: #eab308;">
-                                        <i class="fa-solid fa-user-gear"></i>
-                                        <span>عضو إداري</span>
-                                    </div>
-                                    <h4>عضو إداري</h4>
-                                </div>
-                                <div class="position-members" id="level-7-members">
-                                    <!-- سيتم ملؤها ديناميكياً -->
-                                </div>
-                            </div>
-
-                            <!-- المستوى 6: رئيس المجلس التنفيذي -->
-                            <div class="position-level" data-level="6">
-                                <div class="position-level-header">
-                                    <div class="position-level-badge" style="background: #f97316;">
-                                        <i class="fa-solid fa-user-tie"></i>
-                                        <span>رئيس المجلس التنفيذي</span>
-                                    </div>
-                                    <h4>رئيس المجلس التنفيذي</h4>
-                                </div>
-                                <div class="position-members" id="level-6-members">
-                                    <!-- سيتم ملؤها ديناميكياً -->
-                                </div>
-                            </div>
-
-                            <!-- المستوى 5: قائد لجنة -->
-                            <div class="position-level" data-level="5">
-                                <div class="position-level-header">
-                                    <div class="position-level-badge" style="background: #84cc16;">
-                                        <i class="fa-solid fa-users-gear"></i>
-                                        <span>قائد لجنة</span>
-                                    </div>
-                                    <h4>قائد لجنة</h4>
-                                </div>
-                                <div class="position-members" id="level-5-members">
-                                    <!-- سيتم ملؤها ديناميكياً -->
-                                </div>
-                            </div>
-
-                            <!-- المستوى 4: نائب قائد لجنة -->
-                            <div class="position-level" data-level="4">
-                                <div class="position-level-header">
-                                    <div class="position-level-badge" style="background: #22c55e;">
-                                        <i class="fa-solid fa-user-tag"></i>
-                                        <span>نائب قائد لجنة</span>
-                                    </div>
-                                    <h4>نائب قائد لجنة</h4>
-                                </div>
-                                <div class="position-members" id="level-4-members">
-                                    <!-- سيتم ملؤها ديناميكياً -->
-                                </div>
-                            </div>
-
-                            <!-- المستوى 3: عضو لجنة -->
-                            <div class="position-level" data-level="3">
-                                <div class="position-level-header">
-                                    <div class="position-level-badge" style="background: #10b981;">
-                                        <i class="fa-solid fa-user"></i>
-                                        <span>عضو لجنة</span>
-                                    </div>
-                                    <h4>عضو لجنة</h4>
-                                </div>
-                                <div class="position-members" id="level-3-members">
-                                    <!-- سيتم ملؤها ديناميكياً -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- أدوات البحث والتعيين -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>
-                            <i class="fa-solid fa-user-plus"></i>
-                            تعيين منصب جديد
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <form id="assignPositionForm">
-                            <div class="d-grid gap-1-5rem">
-                                <!-- البحث عن العضو -->
-                                <div class="form-group">
-                                    <label>البحث عن العضو <span class="text-danger">*</span></label>
-                                    <div class="search-member-container">
-                                        <input type="text" id="searchMemberInput"
-                                            placeholder="ابحث بالاسم أو البريد الإلكتروني..." autocomplete="off" class="form-input" />
-                                        <div class="search-results" id="searchResults"></div>
-                                    </div>
-                                    <input type="hidden" id="selectedMemberId" name="memberId" required />
-                                    <div id="selectedMemberDisplay" class="selected-member-display"></div>
-                                </div>
-
-                                <!-- اختيار المنصب -->
-                                <div class="form-group">
-                                    <label>المنصب <span class="text-danger">*</span></label>
-                                    <select id="positionRoleSelect" name="roleId" required class="form-input">
-                                        <option value="">اختر المنصب</option>
-                                    </select>
-                                </div>
-
-                                <!-- اختيار اللجنة (يظهر حسب المنصب) -->
-                                <div class="form-group d-none" id="positionCommitteeGroup">
-                                    <label>اللجنة <span class="text-danger">*</span></label>
-                                    <select id="positionCommitteeSelect" name="committeeId" class="form-input">
-                                        <option value="">اختر اللجنة</option>
-                                    </select>
-                                </div>
-
-                                <!-- ملاحظات -->
-                                <div class="form-group">
-                                    <label>ملاحظات (اختياري)</label>
-                                    <textarea id="positionNotes" name="notes" rows="3"
-                                        placeholder="أضف أي ملاحظات حول التعيين..." class="form-input"></textarea>
-                                </div>
-
-                                <!-- أزرار الإجراءات -->
-                                <div class="d-flex gap-1rem justify-content-end">
-                                    <button type="reset" class="btn btn-outline">
-                                        <i class="fa-solid fa-rotate-left"></i>
-                                        إعادة تعيين
-                                    </button>
-                                    <button type="submit" class="btn btn-primary" id="assignPositionBtn">
-                                        <i class="fa-solid fa-check"></i>
-                                        تعيين المنصب
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </section>
-
             <!-- قسم إدارة الصلاحيات -->
             <section id="permissions-section" class="admin-section d-none">
 
@@ -1601,7 +1433,7 @@
                         <form id="editRolePermissionsForm">
                             <div class="d-grid gap-1-5rem">
                                 <div class="form-group">
-                                    <label>اختر المنصب <span class="text-danger">*</span></label>
+                                    <label>اختر المنصب <span class="required-dot">*</span></label>
                                     <select id="editPermissionsRoleSelect" required class="form-input">
                                         <option value="">اختر المنصب</option>
                                     </select>
@@ -2791,26 +2623,25 @@
                         <form id="instantPublishForm">
                             <div style="display: grid; gap: 1.5rem;">
                                 <div class="form-group">
-                                    <label class="form-label">عنوان الخبر <span style="color: #ef4444;">*</span></label>
+                                    <label class="form-label">عنوان الخبر <span class="required-dot">*</span></label>
                                     <input type="text" id="instantNewsTitle" class="form-input"
                                         placeholder="أدخل عنوان الخبر" required>
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label">ملخص الخبر <span style="color: #ef4444;">*</span></label>
+                                    <label class="form-label">ملخص الخبر <span class="required-dot">*</span></label>
                                     <textarea id="instantNewsSummary" class="form-input" rows="2"
                                         placeholder="ملخص مختصر للخبر" required></textarea>
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label">محتوى الخبر <span style="color: #ef4444;">*</span></label>
+                                    <label class="form-label">محتوى الخبر <span class="required-dot">*</span></label>
                                     <textarea id="instantNewsContent" class="form-input" rows="8"
                                         placeholder="محتوى الخبر الكامل" required></textarea>
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label">صورة غلاف الخبر <span
-                                            style="color: #ef4444;">*</span></label>
+                                    <label class="form-label">صورة غلاف الخبر <span class="required-dot">*</span></label>
                                     <div id="instantNewsImageUploadContainer">
                                         <!-- سيتم ملؤه ديناميكياً -->
                                     </div>
@@ -2819,7 +2650,7 @@
                                 <div class="form-group">
                                     <label class="form-label">
                                         <i class="fa-solid fa-camera" style="margin-left: 0.375rem;"></i>
-                                        اسم مصور الغلاف <span style="color: #ef4444;">*</span>
+                                        اسم مصور الغلاف <span class="required-dot">*</span>
                                     </label>
                                     <input type="text" id="instantNewsCoverPhotographer" class="form-input"
                                         placeholder="أدخل اسم مصور صورة الغلاف" required>
@@ -3580,52 +3411,6 @@
     <div class="overlay" id="overlay"></div>
 
 
-    <!-- خلفية نافذة إضافة/تعديل لجنة -->
-    <div class="modal-backdrop" id="committeeModalBackdrop"></div>
-    <!-- نافذة إضافة/تعديل لجنة -->
-    <div class="modal modal-md" id="committeeModal">
-        <div class="modal-header">
-            <div class="modal-header-content">
-                <div class="modal-icon"><i class="fa-solid fa-sitemap"></i></div>
-                <h2 class="modal-title" id="committeeModalTitle">إضافة لجنة جديدة</h2>
-            </div>
-            <button class="modal-close" id="closeCommitteeModal"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <form id="committeeForm">
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>اسم اللجنة <span class="required">*</span></label>
-                    <input type="text" id="committeeNameAr" required class="form-input" />
-                </div>
-                <div class="form-group">
-                    <label>الوصف</label>
-                    <textarea id="committeeDescription" rows="4" class="form-input"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>رابط قروب اللجنة (WhatsApp/Telegram) <span class="required">*</span></label>
-                    <input type="url" id="committeeGroupLink" placeholder="https://chat.whatsapp.com/..." required class="form-input" />
-                    <small>
-                        <i class="fa-solid fa-info-circle"></i>
-                        سيظهر هذا الرابط للأعضاء في تبويب "لجنتي" للانضمام إلى القروب
-                    </small>
-                </div>
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="committeeIsActive" checked />
-                        لجنة نشطة
-                    </label>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" id="cancelCommitteeBtn">إلغاء</button>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fa-solid fa-save"></i>
-                    حفظ
-                </button>
-            </div>
-        </form>
-    </div>
-
     <!-- خلفية نافذة إهداء العضوية -->
     <div class="modal-backdrop" id="userModalBackdrop"></div>
     <!-- نافذة إهداء العضوية -->
@@ -3644,15 +3429,15 @@
                     <span style="color: #1e40af; font-size: 0.875rem;">سيتم إنشاء حساب للعضو وإرسال رسالة قبول مباشرة لإكمال التسجيل</span>
                 </div>
                 <div class="form-group">
-                    <label>الاسم الكامل <span class="required">*</span></label>
+                    <label>الاسم الكامل <span class="required-dot">*</span></label>
                     <input type="text" class="form-input" id="userFullName" required placeholder="الاسم الثلاثي أو الرباعي" />
                 </div>
                 <div class="form-group">
-                    <label>البريد الإلكتروني <span class="required">*</span></label>
+                    <label>البريد الإلكتروني <span class="required-dot">*</span></label>
                     <input type="email" class="form-input" id="userEmail" required placeholder="example@email.com" />
                 </div>
                 <div class="form-group">
-                    <label>اللجنة <span class="required">*</span></label>
+                    <label>اللجنة <span class="required-dot">*</span></label>
                     <select class="form-input" id="userCommitteeSelect" required>
                         <option value="">اختر اللجنة</option>
                     </select>
@@ -3679,7 +3464,7 @@
         </div>
         <form id="workForm" class="modal-body">
                 <div class="form-group">
-                    <label>عنوان العمل *</label>
+                    <label>عنوان العمل <span class="required-dot">*</span></label>
                     <input type="text" id="workTitle" required class="form-input" />
                 </div>
                 <div class="form-group">
@@ -3687,7 +3472,7 @@
                     <input type="text" id="workCategory" placeholder="مثال: كتاب، مقال، فيديو" class="form-input" />
                 </div>
                 <div class="form-group">
-                    <label>صورة العمل *</label>
+                    <label>صورة العمل <span class="required-dot">*</span></label>
                     <div class="image-upload-container" id="workImageUploadContainer">
                         <input type="file" id="workImageFile" accept="image/*" style="display: none;" />
                         <input type="hidden" id="workImage" />
@@ -3728,15 +3513,15 @@
         </div>
         <form id="achievementForm" class="modal-body">
                 <div class="form-group">
-                    <label>التسمية *</label>
+                    <label>التسمية <span class="required-dot">*</span></label>
                     <input type="text" id="achievementLabel" required placeholder="مثال: عدد الأعضاء" class="form-input" />
                 </div>
                 <div class="form-group">
-                    <label>الرقم *</label>
+                    <label>الرقم <span class="required-dot">*</span></label>
                     <input type="number" id="achievementCount" required min="0" class="form-input" />
                 </div>
                 <div class="form-group">
-                    <label>أيقونة Font Awesome *</label>
+                    <label>أيقونة Font Awesome <span class="required-dot">*</span></label>
                     <input type="text" id="achievementIcon" required placeholder="fa-solid fa-trophy" class="form-input" />
                     <small>مثال: fa-solid fa-trophy, fa-solid fa-users</small>
                 </div>
@@ -3772,7 +3557,7 @@
         </div>
         <form id="sponsorForm" class="modal-body">
                 <div class="form-group">
-                    <label>اسم الشريك *</label>
+                    <label>اسم الشريك <span class="required-dot">*</span></label>
                     <input type="text" id="sponsorName" required class="form-input" />
                 </div>
                 <div class="form-group">
@@ -3780,7 +3565,7 @@
                     <textarea id="sponsorDescription" rows="3" class="form-input"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>شعار الشريك *</label>
+                    <label>شعار الشريك <span class="required-dot">*</span></label>
                     <div class="image-upload-container" id="sponsorLogoUploadContainer">
                         <input type="file" id="sponsorLogoFile" accept="image/*" style="display: none;" />
                         <input type="hidden" id="sponsorLogo" />
@@ -3830,11 +3615,11 @@
         </div>
         <form id="faqForm" class="modal-body">
                 <div class="form-group">
-                    <label>السؤال *</label>
+                    <label>السؤال <span class="required-dot">*</span></label>
                     <input type="text" id="faqQuestion" required class="form-input" />
                 </div>
                 <div class="form-group">
-                    <label>الإجابة *</label>
+                    <label>الإجابة <span class="required-dot">*</span></label>
                     <textarea id="faqAnswer" rows="5" required class="form-input"></textarea>
                 </div>
                 <div class="form-group">
@@ -4146,7 +3931,7 @@
                         </h3>
                         <div>
                             <div class="form-group">
-                                <label>الاسم الثلاثي <span>*</span></label>
+                                <label>الاسم الثلاثي <span class="required-dot">*</span></label>
                                 <input type="text" id="editFullName" required placeholder="الاسم الثلاثي الكامل" class="form-input">
                                 <small id="nameChangeWarning">
                                     <i class="fa-solid fa-exclamation-triangle"></i>
@@ -4154,11 +3939,11 @@
                                 </small>
                             </div>
                             <div class="form-group">
-                                <label>البريد الإلكتروني <span>*</span></label>
+                                <label>البريد الإلكتروني <span class="required-dot">*</span></label>
                                 <input type="email" id="editEmail" required placeholder="name@example.com" class="form-input">
                             </div>
                             <div class="form-group">
-                                <label>رقم الجوال <span>*</span></label>
+                                <label>رقم الجوال <span class="required-dot">*</span></label>
                                 <input type="tel" id="editPhone" required placeholder="05XXXXXXXX"
                                     pattern="^05[0-9]{8}$" maxlength="10" class="form-input">
                             </div>
@@ -4173,16 +3958,16 @@
                         </h3>
                         <div>
                             <div class="form-group">
-                                <label>رقم الهوية الوطنية <span>*</span></label>
+                                <label>رقم الهوية الوطنية <span class="required-dot">*</span></label>
                                 <input type="text" id="editNationalId" required placeholder="1XXXXXXXXX"
                                     pattern="^[12][0-9]{9}$" maxlength="10" class="form-input">
                             </div>
                             <div class="form-group">
-                                <label>تاريخ الميلاد <span>*</span></label>
+                                <label>تاريخ الميلاد <span class="required-dot">*</span></label>
                                 <input type="date" id="editBirthDate" required class="form-input">
                             </div>
                             <div class="form-group">
-                                <label>الرقم الأكاديمي <span>*</span></label>
+                                <label>الرقم الأكاديمي <span class="required-dot">*</span></label>
                                 <input type="text" id="editAcademicRecord" required placeholder="4XXXXXXXX" class="form-input">
                             </div>
                         </div>
@@ -4196,7 +3981,7 @@
                         </h3>
                         <div>
                             <div class="form-group">
-                                <label>الدرجة الأكاديمية <span>*</span></label>
+                                <label>الدرجة الأكاديمية <span class="required-dot">*</span></label>
                                 <select id="editAcademicDegree" required class="form-input">
                                     <option value="">اختر الدرجة</option>
                                     <option value="high_school">ثانوية عامة</option>
@@ -4267,17 +4052,17 @@
         <div class="modal-body">
             <form id="changePasswordForm">
                     <div class="form-group">
-                        <label>كلمة المرور الحالية <span>*</span></label>
+                        <label>كلمة المرور الحالية <span class="required-dot">*</span></label>
                         <input type="password" id="currentPassword" required placeholder="أدخل كلمة المرور الحالية" class="form-input">
                     </div>
                     <div class="form-group">
-                        <label>كلمة المرور الجديدة <span>*</span></label>
+                        <label>كلمة المرور الجديدة <span class="required-dot">*</span></label>
                         <input type="password" id="newPassword" required placeholder="أدخل كلمة المرور الجديدة"
                             minlength="8" class="form-input">
                         <small>يجب أن تكون 8 أحرف على الأقل</small>
                     </div>
                     <div class="form-group">
-                        <label>تأكيد كلمة المرور الجديدة <span>*</span></label>
+                        <label>تأكيد كلمة المرور الجديدة <span class="required-dot">*</span></label>
                         <input type="password" id="confirmNewPassword" required
                             placeholder="أعد إدخال كلمة المرور الجديدة" class="form-input">
                     </div>
@@ -4305,29 +4090,30 @@
             <button class="modal-close" id="closeImpersonationModal"><i class="fa-solid fa-xmark"></i></button>
         </div>
             <div class="modal-body">
-                <div class="alert alert-warning" style="margin-bottom: 1rem; padding: 1rem; background: #fff3cd; border-radius: 8px; border-right: 4px solid #ffc107; display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="fa-solid fa-exclamation-triangle" style="color: #856404;"></i>
-                    <p style="margin: 0; color: #856404; font-size: 0.875rem;">
-                        <strong>تحذير:</strong> سيتم تسجيل جميع جلسات التنكر.
-                    </p>
+                <div class="modal-info-box box-warning">
+                    <i class="fa-solid fa-exclamation-triangle"></i>
+                    <span><strong>تحذير:</strong> سيتم تسجيل جميع جلسات التنكر في سجل المراقبة.</span>
                 </div>
-                
-                <div class="form-group">
-                    <label>البحث عن مستخدم</label>
-                    <div class="filter-group" style="margin-bottom: 0;">
-                        <i class="fa-solid fa-search"></i>
-                        <input type="text" id="impersonationUserSearch" placeholder="ابحث بالاسم أو البريد الإلكتروني..." class="form-input">
+
+                <div class="modal-form-grid" style="margin-top:1rem;">
+                    <div class="form-group full-width">
+                        <label class="form-label"><i class="fa-solid fa-search"></i> البحث عن مستخدم</label>
+                        <div class="filter-group" style="margin-bottom: 0;">
+                            <i class="fa-solid fa-search"></i>
+                            <input type="text" id="impersonationUserSearch" placeholder="ابحث بالاسم أو البريد الإلكتروني..." class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label"><i class="fa-solid fa-comment"></i> سبب التنكر <span style="font-weight:400;opacity:.75;">(اختياري)</span></label>
+                        <textarea id="impersonationReason" rows="2" placeholder="مثال: استكشاف مشكلة في الصلاحيات" class="form-input"></textarea>
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label>سبب التنكر (اختياري)</label>
-                    <textarea id="impersonationReason" rows="2" placeholder="مثال: استكشاف مشكلة في الصلاحيات" class="form-input"></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label>اختر المستخدم</label>
-                    <div id="impersonationUsersList" style="max-height: 300px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 0.5rem;">
+
+                <hr class="modal-divider">
+
+                <div class="modal-section">
+                    <p class="modal-section-title"><i class="fa-solid fa-users"></i> اختر المستخدم</p>
+                    <div id="impersonationUsersList" style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border-color, #e5e7eb); border-radius: 0.5rem;">
                         <div style="text-align: center; padding: 2rem; color: #6b7280;">
                             <i class="fa-solid fa-spinner fa-spin fa-2x" style="margin-bottom: 0.5rem;"></i>
                             <p style="margin: 0;">جاري تحميل المستخدمين...</p>
@@ -4367,7 +4153,6 @@
     <script src="js/pending-members-manager.js"></script>
     <script src="js/users-manager.js"></script>
     <script src="js/member-data-manager.js?v=20260131-6"></script>
-    <script src="js/positions-manager.js"></script>
     <script src="js/committee-members-manager.js"></script>
     <script src="js/stats-counter.js"></script>
     <script src="js/modal-manager.js"></script>

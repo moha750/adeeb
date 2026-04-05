@@ -67,6 +67,10 @@
         const bodyEl = document.getElementById('dynamicModalBody');
         const footerEl = document.getElementById('dynamicModalFooter');
 
+        // تعيين variant (warning / success / danger ...)
+        modal.className = modal.className.replace(/\bmodal-\w+/g, '').trim();
+        modal.className = 'modal modal-md' + (options.variant ? ` modal-${options.variant}` : '');
+
         // تعيين العنوان والأيقونة
         const icon = options.icon || 'fa-info-circle';
         const iconEl = document.getElementById('dynamicModalIcon');
@@ -182,7 +186,7 @@
         
         fields.forEach(field => {
             formHtml += `<div class="form-group">`;
-            formHtml += `<label class="form-label">${field.label}${field.required ? ' <span class="required">*</span>' : ''}</label>`;
+            formHtml += `<label class="form-label">${field.label}${field.required ? ' <span class="required-dot">*</span>' : ''}</label>`;
 
             if (field.type === 'textarea') {
                 formHtml += `<textarea id="${field.id}" class="form-input form-textarea" ${field.required ? 'required' : ''}
@@ -214,7 +218,7 @@
                 <i class="fa-solid fa-times"></i>
                 إلغاء
             </button>
-            <button class="btn btn-primary" onclick="window.submitDynamicForm()">
+            <button class="btn btn-${options.variant || 'primary'}" onclick="window.submitDynamicForm()">
                 <i class="fa-solid fa-check"></i>
                 ${options.submitText || 'حفظ'}
             </button>
@@ -242,9 +246,10 @@
             if (onSubmit) onSubmit(formData);
         };
 
-        openModal(title, formHtml, { 
-            footer, 
-            icon: options.icon || 'fa-edit'
+        openModal(title, formHtml, {
+            footer,
+            icon: options.icon || 'fa-edit',
+            variant: options.variant
         });
     };
 

@@ -280,7 +280,7 @@ window.ImageUploadHelper = (function() {
         return `
             <div class="news-gallery-uploader ${currentImages.length > 0 ? 'has-images' : ''}" id="${galleryId}" data-max-images="${maxImages}">
                 <div class="gallery-header">
-                    <h4><i class="fa-solid fa-images"></i> معرض صور الخبر ${required ? '<span class="required">*</span>' : ''}</h4>
+                    <h4><i class="fa-solid fa-images"></i> معرض صور الخبر ${required ? '<span class="required-dot">*</span>' : ''}</h4>
                     <span class="gallery-counter ${currentImages.length >= minImages ? 'valid' : 'invalid'}" id="${galleryId}_counter">
                         ${currentImages.length} / ${maxImages}
                     </span>
@@ -581,7 +581,7 @@ window.ImageUploadHelper = (function() {
                 ` : `
                     <div class="cover-upload-area" id="${inputId}_area" onclick="document.getElementById('${inputId}').click()">
                         <i class="fa-solid fa-cloud-upload-alt"></i>
-                        <p>اضغط لرفع صورة الغلاف ${required ? '<span class="required">*</span>' : ''}</p>
+                        <p>اضغط لرفع صورة الغلاف ${required ? '<span class="required-dot">*</span>' : ''}</p>
                         <span>JPG, PNG, WEBP (الحد الأقصى: 5MB)</span>
                     </div>
                 `}
@@ -702,7 +702,7 @@ window.ImageUploadHelper = (function() {
             container.innerHTML = `
                 <div class="cover-upload-area" id="${inputId}_area" onclick="document.getElementById('${inputId}').click()">
                     <i class="fa-solid fa-cloud-upload-alt"></i>
-                    <p>اضغط لرفع صورة الغلاف <span class="required">*</span></p>
+                    <p>اضغط لرفع صورة الغلاف <span class="required-dot">*</span></p>
                     <span>JPG, PNG, WEBP (الحد الأقصى: 5MB)</span>
                 </div>
                 <input type="file" 

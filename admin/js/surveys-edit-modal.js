@@ -206,7 +206,7 @@
                     <div class="edit-form-grid single-column">
                         <div class="edit-form-group">
                             <label class="edit-form-label">
-                                عنوان الاستبيان <span class="required">*</span>
+                                عنوان الاستبيان <span class="required-dot">*</span>
                             </label>
                             <input type="text" class="edit-form-input" id="editSurveyTitle" 
                                 value="${this.escapeHtml(survey.title || '')}" 
@@ -452,7 +452,7 @@
                         </div>
                         <div class="modal-body">
                             <div class="edit-form-group">
-                                <label class="edit-form-label">نص السؤال <span class="required">*</span></label>
+                                <label class="edit-form-label">نص السؤال <span class="required-dot">*</span></label>
                                 <input type="text" class="edit-form-input" id="questionText" 
                                     value="${this.escapeHtml(question.question_text || '')}"
                                     placeholder="أدخل نص السؤال">

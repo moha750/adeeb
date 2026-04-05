@@ -570,7 +570,7 @@
                         </div>
                         <div class="card-body">
                             <div class="form-group">
-                                <label>عنوان الاستبيان <span class="required">*</span></label>
+                                <label>عنوان الاستبيان <span class="required-dot">*</span></label>
                                 <input type="text" id="surveyTitle" class="form-input" 
                                     placeholder="أدخل عنوان الاستبيان" 
                                     value="${this.currentEditingSurvey?.title || ''}" required />
@@ -721,7 +721,7 @@
                     
                     <div class="question-editor-body">
                         <div class="form-group">
-                            <label>نص السؤال <span class="required">*</span></label>
+                            <label>نص السؤال <span class="required-dot">*</span></label>
                             <input type="text" class="form-input" 
                                 value="${this.escapeHtml(question.question_text)}"
                                 onchange="window.surveysManager.updateQuestion(${index}, 'question_text', this.value)"

@@ -167,14 +167,14 @@ window.NewsManager = (function() {
                     <div class="form-group">
                         <label class="form-label">
                             <i class="fa-solid fa-camera"></i>
-                            مصور الغلاف <span class="required">*</span>
+                            مصور الغلاف <span class="required-dot">*</span>
                         </label>
                         <input type="text" id="newsCoverPhotographer" class="form-input" placeholder="اسم مصور صورة الغلاف" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">
                             <i class="fa-solid fa-images"></i>
-                            مصورو المعرض <span class="required">*</span>
+                            مصورو المعرض <span class="required-dot">*</span>
                         </label>
                         <input type="text" id="newsGalleryPhotographers" class="form-input" placeholder="أسماء المصورين (افصل بفاصلة)" required>
                         <small class="form-hint">مثال: أحمد محمد، سارة علي</small>

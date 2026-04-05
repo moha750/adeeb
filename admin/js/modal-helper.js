@@ -199,7 +199,7 @@ window.ModalHelper = (function() {
             fields.forEach(field => {
                 formHTML += `<div class="form-group">`;
                 if (field.label) {
-                    formHTML += `<label>${field.label}${field.required ? ' <span class="required">*</span>' : ''}</label>`;
+                    formHTML += `<label>${field.label}${field.required ? ' <span class="required-dot">*</span>' : ''}</label>`;
                 }
 
                 switch (field.type) {
