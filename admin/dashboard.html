@@ -560,14 +560,6 @@
             <!-- قسم جميع الاستبيانات -->
             <section id="surveys-all-section" class="admin-section d-none">
 
-                <div class="section-actions">
-                    <button class="btn btn-outline" id="refreshSurveysBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-
-                </div>
-
                 <!-- إحصائيات الاستبيانات -->
                 <div class="stats-grid">
                     <div class="stat-card" style="--stat-color: #3b82f6">
@@ -640,22 +632,121 @@
             <!-- قسم إنشاء استبيان -->
             <section id="surveys-create-section" class="admin-section d-none">
 
-                <!-- نموذج إنشاء الاستبيان -->
-                <div id="surveyBuilderContainer" class="survey-builder">
-                    <!-- سيتم ملؤه ديناميكياً -->
+                <!-- بطاقة: معلومات الاستبيان -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-circle-info"></i> معلومات الاستبيان</h3>
+                    </div>
+                    <div class="card-body card-body--form">
+                        <div class="form-group">
+                            <label class="form-label" for="surveyTitle">
+                                عنوان الاستبيان
+                                <span class="required-dot"></span>
+                            </label>
+                            <input type="text" id="surveyTitle" class="form-input" placeholder="أدخل عنوان الاستبيان" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="surveyDescription">الوصف</label>
+                            <textarea id="surveyDescription" class="form-textarea" rows="3"
+                                placeholder="وصف مختصر للاستبيان (اختياري)"></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="surveyStartDate">تاريخ البدء</label>
+                                <input type="datetime-local" id="surveyStartDate" class="form-input" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="surveyEndDate">تاريخ الانتهاء</label>
+                                <input type="datetime-local" id="surveyEndDate" class="form-input" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="surveyAccessType">إتاحة الاستبيان</label>
+                            <select id="surveyAccessType" class="form-select">
+                                <option value="public">متاح للعامة</option>
+                                <option value="members_only">لأعضاء أدِيب المسجلين فقط</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- أزرار الحفظ والنشر في الأسفل -->
-                <div class="section-footer-actions">
-                    <button class="btn btn-outline" id="saveSurveyDraftBtn">
-                        <i class="fa-solid fa-save"></i>
-                        حفظ كمسودة
-                    </button>
-                    <button class="btn btn-primary" id="publishSurveyBtn">
-                        <i class="fa-solid fa-paper-plane"></i>
-                        نشر الاستبيان
-                    </button>
+                <!-- بطاقة: الإعدادات -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-sliders"></i> الإعدادات</h3>
+                    </div>
+                    <div class="card-body card-body--checks">
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="allowMultipleResponses" />
+                            <span>السماح بإجابات متعددة من نفس المستخدم</span>
+                        </label>
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="allowAnonymous" />
+                            <span>إخفاء هوية المستجيب</span>
+                        </label>
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="showProgressBar" checked />
+                            <span>عرض شريط التقدم للمشاركين</span>
+                        </label>
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="showResults" />
+                            <span>عرض النتائج للمشاركين بعد إكمال الاستبيان</span>
+                        </label>
+                    </div>
                 </div>
+
+                <!-- بطاقة: الأسئلة -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-list-check"></i> الأسئلة</h3>
+                        <button class="btn btn-primary" id="addQuestionBtn" type="button">
+                            <i class="fa-solid fa-plus"></i>
+                            إضافة سؤال
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="questionsContainer">
+                            <!-- الأسئلة تُعرض هنا ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقة: الرسائل المخصصة -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-comments"></i> الرسائل المخصصة</h3>
+                    </div>
+                    <div class="card-body card-body--form">
+                        <div class="form-group">
+                            <label class="form-label" for="welcomeMessage">رسالة الترحيب</label>
+                            <textarea id="welcomeMessage" class="form-textarea" rows="2"
+                                placeholder="رسالة ترحيبية تظهر في بداية الاستبيان (اختياري)"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="thankYouMessage">رسالة الشكر</label>
+                            <textarea id="thankYouMessage" class="form-textarea" rows="2"
+                                placeholder="رسالة شكر تظهر بعد إكمال الاستبيان"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- شريط الإجراءات اللاصق -->
+                <div class="form-actions-sticky">
+                    <div class="form-actions-bar">
+                        <button class="btn btn-outline" id="saveSurveyDraftBtn">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            حفظ كمسودة
+                        </button>
+                        <button class="btn btn-primary" id="publishSurveyBtn">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            نشر الاستبيان
+                        </button>
+                    </div>
+                </div>
+
             </section>
 
             <!-- قسم نتائج الاستبيانات -->

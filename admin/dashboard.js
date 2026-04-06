@@ -3125,7 +3125,13 @@
                         </div>
                     </div>
                     <div class="uc-card__body">
-                        <div class="uc-card__description">${faq.answer ? faq.answer.substring(0, 150) + (faq.answer.length > 150 ? '...' : '') : ''}</div>
+                        <div class="uc-card__description">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-align-left"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">الإجابة</span>
+                                <span class="uc-card__info-value">${faq.answer ? faq.answer.substring(0, 150) + (faq.answer.length > 150 ? '...' : '') : ''}</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="uc-card__footer">
                         <div class="order-buttons" style="margin: 0;">

@@ -745,7 +745,6 @@
 .form-addon-btn:hover {
     background-image: linear-gradient(155deg, #3d77bc 0%, #0b4fa7 100%);
     box-shadow:       0 4px 16px rgba(var(--fi-blue-rgb), 0.40);
-    transform:        translateY(-1px);
 }
 
 .form-addon-btn:active {
@@ -890,6 +889,117 @@
     display:               grid;
     grid-template-columns: repeat(2, 1fr);
     gap:                   0.5rem;
+}
+
+
+/* ============================================================
+   § 12b  Required Toggle — .req-toggle  (مستوحى من .required-dot)
+   ============================================================ */
+
+.req-toggle {
+    display:     inline-flex;
+    cursor:      pointer;
+    user-select: none;
+}
+
+/* إخفاء الـ checkbox الأصلي */
+.req-toggle input[type="checkbox"] {
+    position:       absolute;
+    opacity:        0;
+    width:          0;
+    height:         0;
+    pointer-events: none;
+}
+
+/* الشكل الظاهر: pill */
+.req-toggle-pill {
+    --_card-color-rgb: 61, 143, 214;
+    --_card-color: #3d8fd6;
+    --_card-color-dark: #274060;
+    display:      inline-flex;
+    height: 2.7rem;
+    align-items:  center;
+    gap:          0.45rem;
+    padding:      0.3rem 0.75rem 0.3rem 0.55rem;
+    border-radius: 12px;
+    background-color: #ffffff;
+    background-image: linear-gradient(145deg, rgba(var(--_card-color-rgb), 0.10) 0%, rgba(var(--_card-color-rgb), 0.04) 45%, transparent 100%);
+    color:        var(--fi-hint);
+    font-size:    var(--fi-fs-sm);
+    font-weight:  500;
+    line-height:  1.4;
+    border: 1px solid rgba(var(--_card-color-rgb), 0.16);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04), 0 6px 24px rgba(var(--_card-color-rgb), 0.10);
+    transition:
+        border-color 0.22s ease,
+        background   0.22s ease,
+        color        0.22s ease,
+        box-shadow   0.22s ease;
+}
+
+/* النقطة */
+.req-toggle-dot {
+    position:      relative;
+    display:       inline-block;
+    width:         0.52rem;
+    height:        0.52rem;
+    border-radius: 50%;
+    background:    var(--fi-border);
+    flex-shrink:   0;
+    transition:    background 0.22s ease, box-shadow 0.22s ease;
+}
+
+/* Hover — غير مفعّل */
+.req-toggle:hover .req-toggle-pill {
+    border-color: var(--fi-border-focus);
+    color:        var(--fi-text);
+}
+.req-toggle:hover .req-toggle-dot {
+    background: var(--fi-border-focus);
+}
+
+/* ✅ مفعّل — pill أحمر شفاف */
+.req-toggle input:checked ~ .req-toggle-pill {
+    border-color: rgba(var(--fi-red-rgb), 0.48);
+    background:   rgba(var(--fi-red-rgb), 0.06);
+    color:        #dc2626;
+    box-shadow:   0 0 0 3px rgba(var(--fi-red-rgb), 0.08);
+}
+
+/* ✅ مفعّل — نقطة حمراء نابضة (نفس .required-dot) */
+.req-toggle input:checked ~ .req-toggle-pill .req-toggle-dot {
+    background: radial-gradient(circle at 33% 28%,
+                    #fca5a5 0%,
+                    #ef4444 40%,
+                    #b91c1c 100%);
+    box-shadow:
+        inset 0 1.5px 1px rgba(255, 255, 255, 0.52),
+        0 0 0 0   rgba(var(--fi-red-rgb), 0.50),
+        0 1px 5px rgba(var(--fi-red-rgb), 0.38);
+    animation: _fi-req-beat 2.6s cubic-bezier(0.35, 0, 0.65, 1) infinite;
+}
+
+/* موجتا sonar على النقطة عند التفعيل */
+.req-toggle input:checked ~ .req-toggle-pill .req-toggle-dot::before,
+.req-toggle input:checked ~ .req-toggle-pill .req-toggle-dot::after {
+    content:       '';
+    position:      absolute;
+    inset:         0;
+    border-radius: 50%;
+    background:    rgba(var(--fi-red-rgb), 0.55);
+    pointer-events: none;
+}
+.req-toggle input:checked ~ .req-toggle-pill .req-toggle-dot::before {
+    animation: _fi-req-wave 2.6s ease-out infinite;
+}
+.req-toggle input:checked ~ .req-toggle-pill .req-toggle-dot::after {
+    animation: _fi-req-wave 2.6s ease-out 0.90s infinite;
+}
+
+/* Focus visible */
+.req-toggle input:focus-visible ~ .req-toggle-pill {
+    outline:    none;
+    box-shadow: 0 0 0 3.5px var(--fi-ring-focus);
 }
 
 
@@ -1708,10 +1818,6 @@ input[type="range"].form-range::-moz-range-thumb {
 .form-row .form-group { flex: 1; }
 .form-row-action      { flex-shrink: 0; }
 
-@media (max-width: 580px) {
-    .form-row { flex-direction: column; align-items: stretch; }
-}
-
 /* Grid داخل form-card */
 .form-grid-2 {
     display:               grid;
@@ -1721,6 +1827,10 @@ input[type="range"].form-range::-moz-range-thumb {
 
 @media (max-width: 600px) {
     .form-grid-2 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 550px) {
+    .form-row { flex-direction: column; }
 }
 
 /* Actions row */
@@ -1735,6 +1845,69 @@ input[type="range"].form-range::-moz-range-thumb {
 .form-actions.form-actions-start  { justify-content: flex-start; }
 .form-actions.form-actions-center { justify-content: center; }
 .form-actions.form-actions-stretch > * { flex: 1; }
+
+/* — Sticky Actions Wrapper
+     يُغلّف شريط الأزرار لجعله يلتصق بأسفل النافذة عند التمرير
+     الاستخدام: <div class="form-actions-sticky"><div class="form-actions-bar">…</div></div>
+   ----------------------------------------------------------- */
+.form-actions-sticky {
+    position:   sticky;
+    bottom:     1rem;
+    z-index:    50;
+    margin-top: 0.5rem;
+}
+
+.form-actions-bar {
+    --_card-color-rgb: 61, 143, 214;
+    --_card-color: #3d8fd6;
+    --_card-color-dark: #274060;
+    display:          flex;
+    align-items:      center;
+    justify-content:  flex-end;
+    gap:              0.65rem;
+    padding:          0.85rem 1.25rem;
+    background-color: #ffffff;
+    background-image: linear-gradient(145deg, rgba(var(--_card-color-rgb), 0.10) 0%, rgba(var(--_card-color-rgb), 0.04) 45%, transparent 100%);
+    border-radius:    16px;
+    border: 1px solid rgba(var(--_card-color-rgb), 0.16);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04), 0 6px 24px rgba(var(--_card-color-rgb), 0.10);
+}
+
+.form-actions-bar::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    right: 0;
+    width: 4px;
+    height: calc(100% - 28px);
+    background: linear-gradient(
+        180deg,
+        var(--_card-color),
+        var(--_card-color-dark)
+    );
+    border-radius: 4px 0 0 4px;
+    opacity: 0.55;
+    transition: opacity 0.3s ease, height 0.3s ease, top 0.3s ease;
+}
+
+/* دائرة زخرفية ناعمة في الزاوية */
+.form-actions-bar::after {
+    content: '';
+    position: absolute;
+    bottom: -55px;
+    left: -55px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(
+        circle,
+        rgba(var(--_card-color-rgb), 0.09) 0%,
+        transparent 68%
+    );
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.7;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+}
 
 /* Search bar pill */
 .form-search-bar .form-input {

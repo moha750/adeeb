@@ -28,23 +28,23 @@
 
         getQuestionTypes() {
             return [
-                { value: 'short_text', label: 'نص قصير', icon: 'fa-font' },
-                { value: 'long_text', label: 'نص طويل', icon: 'fa-align-left' },
-                { value: 'single_choice', label: 'اختيار واحد', icon: 'fa-circle-dot' },
-                { value: 'multiple_choice', label: 'اختيارات متعددة', icon: 'fa-square-check' },
-                { value: 'dropdown', label: 'قائمة منسدلة', icon: 'fa-caret-down' },
-                { value: 'linear_scale', label: 'مقياس خطي', icon: 'fa-sliders' },
-                { value: 'rating_stars', label: 'تقييم بالنجوم', icon: 'fa-star' },
-                { value: 'number', label: 'رقم', icon: 'fa-hashtag' },
-                { value: 'email', label: 'بريد إلكتروني', icon: 'fa-envelope' },
-                { value: 'phone', label: 'رقم هاتف', icon: 'fa-phone' },
-                { value: 'url', label: 'رابط', icon: 'fa-link' },
-                { value: 'date', label: 'تاريخ', icon: 'fa-calendar' },
-                { value: 'time', label: 'وقت', icon: 'fa-clock' },
-                { value: 'datetime', label: 'تاريخ ووقت', icon: 'fa-calendar-clock' },
-                { value: 'file_upload', label: 'رفع ملف', icon: 'fa-upload' },
-                { value: 'slider', label: 'شريط منزلق', icon: 'fa-sliders-h' },
-                { value: 'yes_no', label: 'نعم/لا', icon: 'fa-toggle-on' }
+                { value: 'short_text', label: 'نص قصير', icon: 'font' },
+                { value: 'long_text', label: 'نص طويل', icon: 'align-left' },
+                { value: 'single_choice', label: 'اختيار واحد', icon: 'circle-dot' },
+                { value: 'multiple_choice', label: 'اختيارات متعددة', icon: 'square-check' },
+                { value: 'dropdown', label: 'قائمة منسدلة', icon: 'caret-down' },
+                { value: 'linear_scale', label: 'مقياس خطي', icon: 'sliders' },
+                { value: 'rating_stars', label: 'تقييم بالنجوم', icon: 'star' },
+                { value: 'number', label: 'رقم', icon: 'hashtag' },
+                { value: 'email', label: 'بريد إلكتروني', icon: 'envelope' },
+                { value: 'phone', label: 'رقم هاتف', icon: 'phone' },
+                { value: 'url', label: 'رابط', icon: 'link' },
+                { value: 'date', label: 'تاريخ', icon: 'calendar' },
+                { value: 'time', label: 'وقت', icon: 'clock' },
+                { value: 'datetime', label: 'تاريخ ووقت', icon: 'calendar-plus' },
+                { value: 'file_upload', label: 'رفع ملف', icon: 'upload' },
+                { value: 'slider', label: 'شريط منزلق', icon: 'sliders-h' },
+                { value: 'yes_no', label: 'نعم/لا', icon: 'toggle-on' }
             ];
         }
 
@@ -69,7 +69,6 @@
                 statusFilter.addEventListener('change', () => this.filterSurveys());
             }
 
-
             // ربط اختيار الاستبيان من قسم الإحصائيات بقسم الاستجابات الفردية
             const selectSurveyForResults = document.getElementById('selectSurveyForResults');
             if (selectSurveyForResults) {
@@ -81,6 +80,12 @@
                 });
             }
 
+            // زر إضافة سؤال (ثابت في HTML)
+            const addQuestionBtn = document.getElementById('addQuestionBtn');
+            if (addQuestionBtn) {
+                addQuestionBtn.addEventListener('click', () => this.addQuestion());
+            }
+
             this.setupSaveButtons();
         }
 
@@ -88,15 +93,15 @@
             const saveDraftBtn = document.getElementById('saveSurveyDraftBtn');
             if (saveDraftBtn) {
                 saveDraftBtn.replaceWith(saveDraftBtn.cloneNode(true));
-                const newSaveDraftBtn = document.getElementById('saveSurveyDraftBtn');
-                newSaveDraftBtn.addEventListener('click', () => this.saveSurvey('draft'));
+                document.getElementById('saveSurveyDraftBtn')
+                    .addEventListener('click', () => this.saveSurvey('draft'));
             }
 
             const publishBtn = document.getElementById('publishSurveyBtn');
             if (publishBtn) {
                 publishBtn.replaceWith(publishBtn.cloneNode(true));
-                const newPublishBtn = document.getElementById('publishSurveyBtn');
-                newPublishBtn.addEventListener('click', () => this.saveSurvey('active'));
+                document.getElementById('publishSurveyBtn')
+                    .addEventListener('click', () => this.saveSurvey('active'));
             }
         }
 
@@ -245,7 +250,7 @@
                     <div class="surveys-section">
                         <div class="card card--info">
                             <div class="card-header">
-                                <h3><i class="fa-solid fa-calendar-clock survey-icon--scheduled"></i> الاستبيانات المجدولة (${scheduledSurveys.length})</h3>
+                                <h3><i class="fa-solid fa-calendar-days survey-icon--scheduled"></i> الاستبيانات المجدولة (${scheduledSurveys.length})</h3>
                             </div>
                             <div class="card-body">
                                 <div class="uc-grid">
@@ -361,6 +366,15 @@
                 archived: 'مؤرشف'
             };
 
+            const statusIcons = {
+                draft:     'fa-file-pen',
+                active:    'fa-circle-play',
+                paused:    'fa-circle-pause',
+                scheduled: 'fa-calendar-days',
+                closed:    'fa-circle-stop',
+                archived:  'fa-box-archive'
+            };
+
             const typeLabels = {
                 general: 'عام',
                 membership: 'عضوية',
@@ -410,20 +424,32 @@
                     <div class="uc-card__header ${statusHeaderClass[actualStatus] || ''}">
                         <div class="uc-card__header-inner">
                             <div class="uc-card__icon">
-                                <i class="fa-solid fa-clipboard-question"></i>
+                                <i class="fa-solid fa-clipboard-list"></i>
                             </div>
                             <div class="uc-card__header-info">
                                 <h3 class="uc-card__title">${this.escapeHtml(survey.title)}</h3>
                                 <span class="uc-card__badge">
-                                    <i class="fa-solid fa-circle-dot"></i>
+                                    <i class="fa-solid ${statusIcons[actualStatus] || 'fa-circle-dot'}"></i>
                                     ${statusLabels[actualStatus]}
                                 </span>
+                                ${actualStatus === 'active' && survey.start_date ? `
+                                <span class="uc-card__badge">
+                                    <i class="fa-solid fa-calendar-check"></i>
+                                    مجدول
+                                </span>` : ''}
                             </div>
                         </div>
                     </div>
 
                     <div class="uc-card__body">
-                        ${survey.description ? `<p class="uc-card__description">${this.escapeHtml(survey.description)}</p>` : ''}
+                        ${survey.description ? `
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-align-left"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">الوصف</span>
+                                <span class="uc-card__info-value">${this.escapeHtml(survey.description)}</span>
+                            </div>
+                        </div>` : ''}
 
                         <div class="uc-card__info-item">
                             <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
@@ -462,26 +488,12 @@
                     </div>
                     
                     <div class="uc-card__footer">
-                        ${actualStatus === 'draft' ? `
-                        <button class="btn btn-warning btn-sm" onclick="window.surveysManager.editSurvey(${survey.id})">
-                            <i class="fa-solid fa-edit"></i> تعديل
-                        </button>
-                        <button class="btn btn-success btn-sm" onclick="window.surveysManager.publishDraftSurvey(${survey.id})">
-                            <i class="fa-solid fa-paper-plane"></i> نشر
-                        </button>
-                        ` : ''}
                         ${actualStatus === 'active' ? `
                         <button class="btn btn-primary btn-sm" onclick="window.surveysManager.previewSurvey(${survey.id})">
                             <i class="fa-solid fa-eye"></i> معاينة
                         </button>
                         <button class="btn btn-secondary btn-sm" onclick="window.surveysManager.copySurveyLink(${survey.id})">
                             <i class="fa-solid fa-copy"></i> نسخ الرابط
-                        </button>
-                        <button class="btn btn-success btn-sm" onclick="window.surveysManager.shareSurveyModal(${survey.id})">
-                            <i class="fa-solid fa-share-nodes"></i> نشر
-                        </button>
-                        <button class="btn btn-warning btn-sm" onclick="window.surveysManager.editSurvey(${survey.id})">
-                            <i class="fa-solid fa-edit"></i> تعديل
                         </button>
                         <button class="btn btn-primary btn-sm" onclick="window.surveysManager.viewResults(${survey.id})">
                             <i class="fa-solid fa-chart-bar"></i> النتائج
@@ -500,9 +512,6 @@
                         <button class="btn btn-secondary btn-sm" onclick="window.surveysManager.copySurveyLink(${survey.id})">
                             <i class="fa-solid fa-copy"></i> نسخ الرابط
                         </button>
-                        <button class="btn btn-warning btn-sm" onclick="window.surveysManager.editSurvey(${survey.id})">
-                            <i class="fa-solid fa-edit"></i> تعديل
-                        </button>
                         <button class="btn btn-danger btn-sm" onclick="window.surveysManager.endSurvey(${survey.id})">
                             <i class="fa-solid fa-stop-circle"></i> إنهاء
                         </button>
@@ -513,9 +522,6 @@
                         </button>
                         <button class="btn btn-secondary btn-sm" onclick="window.surveysManager.copySurveyLink(${survey.id})">
                             <i class="fa-solid fa-copy"></i> نسخ الرابط
-                        </button>
-                        <button class="btn btn-warning btn-sm" onclick="window.surveysManager.editSurvey(${survey.id})">
-                            <i class="fa-solid fa-edit"></i> تعديل
                         </button>
                         <button class="btn btn-primary btn-sm" onclick="window.surveysManager.viewResults(${survey.id})">
                             <i class="fa-solid fa-chart-bar"></i> النتائج
@@ -528,7 +534,7 @@
                         <button class="btn btn-primary btn-sm" onclick="window.surveysManager.viewResults(${survey.id})">
                             <i class="fa-solid fa-chart-bar"></i> النتائج
                         </button>
-                        <button class="btn btn-secondary btn-sm" onclick="window.surveysManager.archiveSurvey(${survey.id})">
+                        <button class="btn btn-slate" onclick="window.surveysManager.archiveSurvey(${survey.id})">
                             <i class="fa-solid fa-box-archive"></i> أرشفة
                         </button>
                         ` : ''}
@@ -550,125 +556,52 @@
         async showCreateForm() {
             this.currentEditingSurvey = null;
             surveyQuestions = [];
-            this.renderSurveyBuilder();
-            
-            setTimeout(() => {
-                this.setupSaveButtons();
-            }, 100);
+            this._resetCreateForm();
+            this.renderQuestions();
+            this.setupSaveButtons();
+
+            // إعادة ربط زر إضافة سؤال في حال تجديد الصفحة
+            const addBtn = document.getElementById('addQuestionBtn');
+            if (addBtn) {
+                const fresh = addBtn.cloneNode(true);
+                addBtn.replaceWith(fresh);
+                fresh.addEventListener('click', () => this.addQuestion());
+            }
         }
 
-        renderSurveyBuilder() {
-            const container = document.getElementById('surveyBuilderContainer');
-            if (!container) return;
+        _resetCreateForm() {
+            const textFields = {
+                surveyTitle: '',
+                surveyDescription: '',
+                surveyStartDate: '',
+                surveyEndDate: '',
+                welcomeMessage: '',
+                thankYouMessage: 'شكراً لمشاركتك في هذا الاستبيان'
+            };
+            Object.entries(textFields).forEach(([id, val]) => {
+                const el = document.getElementById(id);
+                if (el) el.value = val;
+            });
 
-            container.innerHTML = `
-                <div class="survey-builder-content">
-                    <!-- معلومات الاستبيان الأساسية -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3><i class="fa-solid fa-info-circle"></i> معلومات الاستبيان</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-group">
-                                <label>عنوان الاستبيان <span class="required-dot">*</span></label>
-                                <input type="text" id="surveyTitle" class="form-input" 
-                                    placeholder="أدخل عنوان الاستبيان" 
-                                    value="${this.currentEditingSurvey?.title || ''}" required />
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>الوصف</label>
-                                <textarea id="surveyDescription" class="form-input" rows="3" 
-                                    placeholder="وصف مختصر للاستبيان">${this.currentEditingSurvey?.description || ''}</textarea>
-                            </div>
-                            
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>تاريخ البدء</label>
-                                    <input type="datetime-local" id="surveyStartDate" class="form-input" />
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label>تاريخ الانتهاء</label>
-                                    <input type="datetime-local" id="surveyEndDate" class="form-input" />
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>إتاحة الاستبيان</label>
-                                <select id="surveyAccessType" class="form-input">
-                                    <option value="public">متاح للعامة</option>
-                                    <option value="members_only">لأعضاء أدِيب المسجلين فقط</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>الإعدادات</label>
-                                <div class="checkbox-group">
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="allowMultipleResponses" />
-                                        <span>السماح بإجابات متعددة من نفس المستخدم</span>
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="allowAnonymous" />
-                                        <span>إخفاء هوية المستجيب</span>
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="showProgressBar" checked />
-                                        <span>عرض شريط التقدم</span>
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="showResults" />
-                                        <span>عرض النتائج للمشاركين</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- الأسئلة -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3><i class="fa-solid fa-question-circle"></i> الأسئلة</h3>
-                            <button class="btn btn-primary" onclick="window.surveysManager.addQuestion()">
-                                <i class="fa-solid fa-plus"></i>
-                                إضافة سؤال
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div id="questionsContainer" class="questions-container">
-                                ${surveyQuestions.length === 0 ? `
-                                    <div class="empty-state-small">
-                                        <i class="fa-solid fa-question"></i>
-                                        <p>لم تتم إضافة أي أسئلة بعد</p>
-                                    </div>
-                                ` : this.renderQuestions()}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- رسائل مخصصة -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3><i class="fa-solid fa-message"></i> الرسائل المخصصة</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-group">
-                                <label>رسالة الترحيب</label>
-                                <textarea id="welcomeMessage" class="form-input" rows="2" 
-                                    placeholder="رسالة ترحيبية تظهر في بداية الاستبيان"></textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>رسالة الشكر</label>
-                                <textarea id="thankYouMessage" class="form-input" rows="2" 
-                                    placeholder="رسالة شكر تظهر بعد إكمال الاستبيان">شكراً لمشاركتك في هذا الاستبيان</textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+            const accessType = document.getElementById('surveyAccessType');
+            if (accessType) accessType.value = 'public';
+
+            const checkboxDefaults = {
+                allowMultipleResponses: false,
+                allowAnonymous: false,
+                showProgressBar: true,
+                showResults: false
+            };
+            Object.entries(checkboxDefaults).forEach(([id, val]) => {
+                const el = document.getElementById(id);
+                if (el) el.checked = val;
+            });
+        }
+
+        // احتفظنا بالاسم القديم للتوافق مع أي استدعاء خارجي
+        renderSurveyBuilder() {
+            this._resetCreateForm();
+            this.renderQuestions();
         }
 
         addQuestion() {
@@ -680,132 +613,177 @@
                 options: null,
                 validation_rules: null
             };
-
             surveyQuestions.push(newQuestion);
             this.renderQuestions();
+            // تمرير إلى آخر سؤال
+            setTimeout(() => {
+                const container = document.getElementById('questionsContainer');
+                if (container) {
+                    const last = container.lastElementChild;
+                    if (last) last.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }, 50);
         }
 
         renderQuestions() {
             const container = document.getElementById('questionsContainer');
-            if (!container) return '';
+            if (!container) return;
 
-            const html = surveyQuestions.map((q, index) => this.renderQuestionEditor(q, index)).join('');
-            container.innerHTML = html;
-            return html;
+            if (surveyQuestions.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2.5rem 1rem;">
+                        <div style="width: 56px; height: 56px; border-radius: 16px; background: rgba(61,143,214,0.08); border: 1px solid rgba(61,143,214,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.4rem; color: #3d8fd6;">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <p style="font-size: 0.92rem; font-weight: 600; color: #64748b; margin: 0 0 0.3rem;">لم تُضَف أي أسئلة بعد</p>
+                        <p style="font-size: 0.8rem; color: #94a3b8; margin: 0;">انقر على "إضافة سؤال" لبدء بناء استبيانك</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = surveyQuestions
+                .map((q, i) => this.renderQuestionEditor(q, i))
+                .join('');
         }
 
         renderQuestionEditor(question, index) {
-            const questionType = this.questionTypes.find(t => t.value === question.question_type);
-            
+            const isFirst = index === 0;
+            const isLast  = index === surveyQuestions.length - 1;
+            const qType   = this.questionTypes.find(t => t.value === question.question_type);
+
             return `
-                <div class="question-editor" data-question-index="${index}">
-                    <div class="question-editor-header">
-                        <span class="question-number">سؤال ${index + 1}</span>
-                        <div class="question-actions">
-                            <button class="btn btn-icon btn-sm" onclick="window.surveysManager.moveQuestion(${index}, -1)" 
-                                ${index === 0 ? 'disabled' : ''} title="تحريك لأعلى">
+                <div class="form-section" data-question-index="${index}" style="margin-bottom: 0.8rem;">
+
+                    <!-- رأس السؤال -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 0.6rem;">
+                            <div style="width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, #3d8fd6, #274060); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; flex-shrink: 0;">
+                                ${index + 1}
+                            </div>
+                            <span class="form-section-label">
+                                <i class="fa-solid fa-${qType?.icon || 'question'}"></i>
+                                ${qType?.label || 'سؤال'}
+                            </span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0;">
+                            <button class="btn btn-icon btn-sm btn-outline" type="button"
+                                onclick="window.surveysManager.moveQuestion(${index}, -1)"
+                                ${isFirst ? 'disabled' : ''} title="تحريك للأعلى">
                                 <i class="fa-solid fa-arrow-up"></i>
                             </button>
-                            <button class="btn btn-icon btn-sm" onclick="window.surveysManager.moveQuestion(${index}, 1)" 
-                                ${index === surveyQuestions.length - 1 ? 'disabled' : ''} title="تحريك لأسفل">
+                            <button class="btn btn-icon btn-sm btn-outline" type="button"
+                                onclick="window.surveysManager.moveQuestion(${index}, 1)"
+                                ${isLast ? 'disabled' : ''} title="تحريك للأسفل">
                                 <i class="fa-solid fa-arrow-down"></i>
                             </button>
-                            <button class="btn btn-icon btn-sm" onclick="window.surveysManager.duplicateQuestion(${index})" title="نسخ">
+                            <button class="btn btn-icon btn-sm btn-outline" type="button"
+                                onclick="window.surveysManager.duplicateQuestion(${index})" title="نسخ">
                                 <i class="fa-solid fa-copy"></i>
                             </button>
-                            <button class="btn btn-icon btn-danger btn-sm" onclick="window.surveysManager.deleteQuestion(${index})" title="حذف">
+                            <button class="btn btn-icon btn-sm btn-danger" type="button"
+                                onclick="window.surveysManager.deleteQuestion(${index})" title="حذف">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </div>
                     </div>
-                    
-                    <div class="question-editor-body">
-                        <div class="form-group">
-                            <label>نص السؤال <span class="required-dot">*</span></label>
-                            <input type="text" class="form-input" 
-                                value="${this.escapeHtml(question.question_text)}"
-                                onchange="window.surveysManager.updateQuestion(${index}, 'question_text', this.value)"
-                                placeholder="أدخل نص السؤال" required />
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>نوع السؤال</label>
-                                <select class="form-input" 
-                                    onchange="window.surveysManager.updateQuestion(${index}, 'question_type', this.value)">
-                                    ${this.questionTypes.map(type => `
-                                        <option value="${type.value}" ${question.question_type === type.value ? 'selected' : ''}>
-                                            ${type.label}
-                                        </option>
-                                    `).join('')}
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" 
-                                        ${question.is_required ? 'checked' : ''}
-                                        onchange="window.surveysManager.updateQuestion(${index}, 'is_required', this.checked)" />
-                                    <span>سؤال إجباري</span>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        ${this.renderQuestionOptions(question, index)}
+
+                    <!-- نص السؤال -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            نص السؤال
+                            <span class="required-dot"></span>
+                        </label>
+                        <input type="text" class="form-input"
+                            value="${this.escapeHtml(question.question_text)}"
+                            oninput="window.surveysManager.updateQuestion(${index}, 'question_text', this.value)"
+                            placeholder="أدخل نص السؤال هنا" />
                     </div>
+
+                    <!-- نوع السؤال + إجباري -->
+                    <div style="display:flex; align-items:flex-end; gap:0.75rem;">
+                        <div class="form-group" style="flex:1; margin-bottom:0;">
+                            <label class="form-label">نوع السؤال</label>
+                            <select class="form-select"
+                                onchange="window.surveysManager.updateQuestion(${index}, 'question_type', this.value)">
+                                ${this.questionTypes.map(t => `
+                                    <option value="${t.value}" ${question.question_type === t.value ? 'selected' : ''}>
+                                        ${t.label}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div style="flex-shrink:0; padding-bottom:0.15rem;">
+                            <label class="req-toggle">
+                                <input type="checkbox" ${question.is_required ? 'checked' : ''}
+                                    onchange="window.surveysManager.updateQuestion(${index}, 'is_required', this.checked)" />
+                                <span class="req-toggle-pill">
+                                    <span class="req-toggle-dot"></span>
+                                    <span>إجباري</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    ${this.renderQuestionOptions(question, index)}
                 </div>
             `;
         }
 
         renderQuestionOptions(question, index) {
             const needsOptions = ['single_choice', 'multiple_choice', 'dropdown'].includes(question.question_type);
-            const needsScale = ['linear_scale', 'rating_stars', 'rating_hearts', 'rating_emojis', 'slider'].includes(question.question_type);
-            
+            const needsScale   = ['linear_scale', 'rating_stars', 'rating_hearts', 'rating_emojis', 'slider'].includes(question.question_type);
+
             if (needsOptions) {
-                const options = question.options?.choices || ['', ''];
+                const choices = question.options?.choices || ['', ''];
                 return `
                     <div class="form-group">
-                        <label>الخيارات</label>
-                        <div class="options-list" id="options-${index}">
-                            ${options.map((opt, optIndex) => `
-                                <div class="option-item">
-                                    <input type="text" class="form-input" value="${this.escapeHtml(opt)}"
-                                        onchange="window.surveysManager.updateOption(${index}, ${optIndex}, this.value)"
-                                        placeholder="خيار ${optIndex + 1}" />
-                                    <button class="btn-icon btn-danger" 
-                                        onclick="window.surveysManager.removeOption(${index}, ${optIndex})"
-                                        ${options.length <= 2 ? 'disabled' : ''}>
+                        <label class="form-label">الخيارات</label>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.6rem;">
+                            ${choices.map((opt, oi) => `
+                                <div class="form-addon-group">
+                                    <span class="form-addon form-addon-start" style="min-width: 2.4rem; justify-content: center; font-size: 0.78rem;">
+                                        ${oi + 1}
+                                    </span>
+                                    <input type="text" class="form-input"
+                                        value="${this.escapeHtml(opt)}"
+                                        oninput="window.surveysManager.updateOption(${index}, ${oi}, this.value)"
+                                        placeholder="خيار ${oi + 1}" />
+                                    <button class="form-addon-btn" type="button"
+                                        onclick="window.surveysManager.removeOption(${index}, ${oi})"
+                                        ${choices.length <= 2 ? 'disabled style="opacity:0.45;cursor:not-allowed;"' : ''}>
                                         <i class="fa-solid fa-times"></i>
                                     </button>
                                 </div>
                             `).join('')}
                         </div>
-                        <button class="btn-outline btn-sm" onclick="window.surveysManager.addOption(${index})">
+                        <button class="btn btn-primary" type="button"
+                            onclick="window.surveysManager.addOption(${index})">
                             <i class="fa-solid fa-plus"></i>
                             إضافة خيار
                         </button>
                     </div>
                 `;
             }
-            
+
             if (needsScale) {
                 const scale = question.options?.scale || { min: 1, max: 5 };
                 return `
                     <div class="form-row">
                         <div class="form-group">
-                            <label>الحد الأدنى</label>
+                            <label class="form-label">الحد الأدنى</label>
                             <input type="number" class="form-input" value="${scale.min}"
                                 onchange="window.surveysManager.updateScale(${index}, 'min', this.value)" />
                         </div>
                         <div class="form-group">
-                            <label>الحد الأقصى</label>
+                            <label class="form-label">الحد الأقصى</label>
                             <input type="number" class="form-input" value="${scale.max}"
                                 onchange="window.surveysManager.updateScale(${index}, 'max', this.value)" />
                         </div>
                     </div>
                 `;
             }
-            
+
             return '';
         }
 
@@ -994,27 +972,6 @@
         }
 
 
-        async deleteSurvey(surveyId) {
-            if (!confirm('هل أنت متأكد من حذف هذا الاستبيان؟ سيتم حذف جميع الأسئلة والإجابات المرتبطة به.')) {
-                return;
-            }
-
-            try {
-                const { error } = await sb
-                    .from('surveys')
-                    .delete()
-                    .eq('id', surveyId);
-
-                if (error) throw error;
-
-                this.showSuccess('تم حذف الاستبيان بنجاح');
-                await this.loadAllSurveys();
-
-            } catch (error) {
-                console.error('Error deleting survey:', error);
-                this.showError('حدث خطأ أثناء حذف الاستبيان');
-            }
-        }
 
         async deleteSurveyPermanently(surveyId) {
             const confirmed = await ModalHelper.confirm({
@@ -1065,53 +1022,6 @@
             }
         }
 
-        async publishDraftSurvey(surveyId) {
-            const survey = allSurveys.find(s => s.id === surveyId);
-            if (!survey) return;
-
-            // التحقق من أن الاستبيان يحتوي على الحد الأدنى من المتطلبات
-            if (!survey.title || !survey.title.trim()) {
-                this.showError('لا يمكن نشر الاستبيان بدون عنوان. يرجى تعديل الاستبيان أولاً.');
-                return;
-            }
-
-            // التحقق من وجود أسئلة
-            const { data: questions, error: qError } = await sb
-                .from('survey_questions')
-                .select('id')
-                .eq('survey_id', surveyId);
-
-            if (qError || !questions || questions.length === 0) {
-                this.showError('لا يمكن نشر الاستبيان بدون أسئلة. يرجى إضافة أسئلة أولاً.');
-                return;
-            }
-
-            const confirmed = await ModalHelper.confirm({
-                title: 'نشر الاستبيان',
-                message: `هل أنت متأكد من نشر الاستبيان "${this.escapeHtml(survey.title)}"؟ سيصبح متاحاً للمستخدمين.`,
-                type: 'info',
-                confirmText: 'نعم، انشر',
-                cancelText: 'إلغاء'
-            });
-
-            if (!confirmed) return;
-
-            try {
-                const { error } = await sb
-                    .from('surveys')
-                    .update({ status: 'active' })
-                    .eq('id', surveyId);
-
-                if (error) throw error;
-
-                this.showSuccess('تم نشر الاستبيان بنجاح');
-                await this.loadAllSurveys();
-
-            } catch (error) {
-                console.error('Error publishing survey:', error);
-                this.showError('حدث خطأ أثناء نشر الاستبيان');
-            }
-        }
 
         async endSurvey(surveyId) {
             const survey = allSurveys.find(s => s.id === surveyId);
@@ -1241,102 +1151,7 @@
             });
         }
 
-        async shareSurveyModal(surveyId) {
-            const survey = allSurveys.find(s => s.id === surveyId);
-            if (!survey) return;
-            
-            const surveyUrl = `${window.location.origin}/surveys/survey.html?id=${surveyId}`;
-            const shareText = `شارك في استبيان: ${survey.title}`;
-            
-            const modal = document.createElement('div');
-            modal.className = 'modal-backdrop active';
-            modal.innerHTML = `
-                <div class="modal modal-md active">
-                    <div class="modal-header">
-                        <h3><i class="fa-solid fa-share-nodes"></i> نشر الاستبيان</h3>
-                        <button class="modal-close" onclick="this.closest('.modal-backdrop').remove(); document.body.classList.remove('modal-open');">
-                            <i class="fa-solid fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="share-options">
-                            <div class="share-option" onclick="window.open('https://wa.me/?text=${encodeURIComponent(shareText + ' ' + surveyUrl)}', '_blank')">
-                                <i class="fa-brands fa-whatsapp share-icon--whatsapp"></i>
-                                <span>واتساب</span>
-                            </div>
-                            <div class="share-option" onclick="window.open('https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(surveyUrl)}', '_blank')">
-                                <i class="fa-brands fa-x-twitter share-icon--twitter"></i>
-                                <span>تويتر</span>
-                            </div>
-                            <div class="share-option" onclick="window.open('https://t.me/share/url?url=${encodeURIComponent(surveyUrl)}&text=${encodeURIComponent(shareText)}', '_blank')">
-                                <i class="fa-brands fa-telegram share-icon--telegram"></i>
-                                <span>تيليجرام</span>
-                            </div>
-                            <div class="share-option" onclick="window.open('mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(surveyUrl)}', '_blank')">
-                                <i class="fa-solid fa-envelope share-icon--email"></i>
-                                <span>بريد إلكتروني</span>
-                            </div>
-                        </div>
-                        <div class="share-link-container">
-                            <input type="text" class="share-link-input" value="${surveyUrl}" readonly />
-                            <button class="share-link-copy" onclick="navigator.clipboard.writeText('${surveyUrl}').then(() => window.surveysManager.showSuccess('تم نسخ الرابط'))">
-                                <i class="fa-solid fa-copy"></i> نسخ
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-            document.body.classList.add('modal-open');
-            
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.remove();
-                    document.body.classList.remove('modal-open');
-                }
-            });
-        }
 
-        async editSurvey(surveyId) {
-            // استخدام نظام Modal الجديد للتعديل
-            if (window.surveyEditModal) {
-                window.surveyEditModal.open(surveyId);
-            } else {
-                // Fallback للطريقة القديمة إذا لم يكن Modal متاحاً
-                try {
-                    const survey = allSurveys.find(s => s.id === surveyId);
-                    if (!survey) {
-                        this.showError('لم يتم العثور على الاستبيان');
-                        return;
-                    }
-
-                    const { data: questions, error } = await sb
-                        .from('survey_questions')
-                        .select('*')
-                        .eq('survey_id', surveyId)
-                        .order('question_order');
-
-                    if (error) throw error;
-
-                    this.currentEditingSurvey = survey;
-                    surveyQuestions = questions || [];
-
-                    const createSection = document.querySelector('[data-section="surveys-create-section"]');
-                    if (createSection) {
-                        createSection.click();
-                        
-                        setTimeout(() => {
-                            this.renderSurveyBuilder();
-                            this.populateSurveyForm(survey);
-                            this.setupSaveButtons();
-                        }, 100);
-                    }
-                } catch (error) {
-                    console.error('Error loading survey for edit:', error);
-                    this.showError('حدث خطأ أثناء تحميل الاستبيان');
-                }
-            }
-        }
 
         populateSurveyForm(survey) {
             document.getElementById('surveyTitle').value = survey.title || '';
@@ -1802,24 +1617,6 @@
             `;
         }
 
-        async shareSurvey(surveyId) {
-            const surveyUrl = `${window.location.origin}/surveys/survey.html?id=${surveyId}`;
-            
-            if (navigator.clipboard) {
-                try {
-                    await navigator.clipboard.writeText(surveyUrl);
-                    this.showSuccess('تم نسخ رابط الاستبيان');
-                } catch (err) {
-                    this.showShareDialog(surveyUrl);
-                }
-            } else {
-                this.showShareDialog(surveyUrl);
-            }
-        }
-
-        showShareDialog(url) {
-            alert(`رابط الاستبيان:\n${url}`);
-        }
 
         async loadTemplates() {
             this.showInfo('قريباً: نظام القوالب الجاهزة');
@@ -2022,33 +1819,30 @@
         async deleteSurvey(surveyId) {
             const result = await Swal.fire({
                 title: 'حذف الاستبيان',
-                html: 'هل أنت متأكد من حذف هذا الاستبيان؟<br><strong>سيتم الاحتفاظ به في المحذوفات لمدة 30 يوماً قبل الحذف النهائي.</strong>',
+                text: 'هل أنت متأكد من حذف هذا الاستبيان؟ سيتم نقله إلى الاستبيانات المحذوفة ويُحذف نهائياً بعد 30 يوماً.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'نعم، احذف',
                 cancelButtonText: 'إلغاء',
-                confirmButtonColor: '#ef4444'
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8'
             });
 
             if (!result.isConfirmed) return;
 
             try {
-                const now = new Date();
-                const permanentDeleteDate = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
-
                 const { error } = await sb
                     .from('surveys')
                     .update({
                         is_deleted: true,
-                        deleted_at: now.toISOString(),
-                        deleted_by: currentUser.id,
-                        permanent_delete_at: permanentDeleteDate.toISOString()
+                        deleted_at: new Date().toISOString(),
+                        deleted_by: currentUser.id
                     })
                     .eq('id', surveyId);
 
                 if (error) throw error;
 
-                this.showSuccess('تم نقل الاستبيان إلى المحذوفات. سيتم حذفه نهائياً بعد 30 يوماً.');
+                this.showSuccess('تم نقل الاستبيان إلى المحذوفة');
                 await this.loadAllSurveys();
             } catch (error) {
                 console.error('Error deleting survey:', error);
