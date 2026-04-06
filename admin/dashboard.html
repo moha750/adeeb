@@ -652,17 +652,6 @@
                                 placeholder="وصف مختصر للاستبيان (اختياري)"></textarea>
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label" for="surveyStartDate">تاريخ البدء</label>
-                                <input type="datetime-local" id="surveyStartDate" class="form-input" />
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="surveyEndDate">تاريخ الانتهاء</label>
-                                <input type="datetime-local" id="surveyEndDate" class="form-input" />
-                            </div>
-                        </div>
-
                         <div class="form-group">
                             <label class="form-label" for="surveyAccessType">إتاحة الاستبيان</label>
                             <select id="surveyAccessType" class="form-select">
@@ -729,6 +718,30 @@
                             <label class="form-label" for="thankYouMessage">رسالة الشكر</label>
                             <textarea id="thankYouMessage" class="form-textarea" rows="2"
                                 placeholder="رسالة شكر تظهر بعد إكمال الاستبيان"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقة: جدولة الاستبيان (اختياري) -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-calendar-alt"></i> جدولة الاستبيان</h3>
+                        <span class="badge badge--info">اختياري</span>
+                    </div>
+                    <div class="card-body card-body--form">
+                        <span class="form-section-hint">
+                            <i class="fa-solid fa-circle-info"></i>
+                            حدّد فترة زمنية لإتاحة الاستبيان. إذا تُركت الحقول فارغة، سيكون الاستبيان متاحاً فور نشره بدون تاريخ انتهاء.
+                        </span>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="surveyStartDate">تاريخ البدء</label>
+                                <input type="datetime-local" id="surveyStartDate" class="form-input" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="surveyEndDate">تاريخ الانتهاء</label>
+                                <input type="datetime-local" id="surveyEndDate" class="form-input" />
+                            </div>
                         </div>
                     </div>
                 </div>
