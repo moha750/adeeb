@@ -667,17 +667,17 @@
                             </span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0;">
-                            <button class="btn btn-icon btn-sm btn-outline" type="button"
+                            <button class="btn btn-icon btn-sm btn-slate" type="button"
                                 onclick="window.surveysManager.moveQuestion(${index}, -1)"
                                 ${isFirst ? 'disabled' : ''} title="تحريك للأعلى">
                                 <i class="fa-solid fa-arrow-up"></i>
                             </button>
-                            <button class="btn btn-icon btn-sm btn-outline" type="button"
+                            <button class="btn btn-icon btn-sm btn-slate" type="button"
                                 onclick="window.surveysManager.moveQuestion(${index}, 1)"
                                 ${isLast ? 'disabled' : ''} title="تحريك للأسفل">
                                 <i class="fa-solid fa-arrow-down"></i>
                             </button>
-                            <button class="btn btn-icon btn-sm btn-outline" type="button"
+                            <button class="btn btn-icon btn-sm btn-primary" type="button"
                                 onclick="window.surveysManager.duplicateQuestion(${index})" title="نسخ">
                                 <i class="fa-solid fa-copy"></i>
                             </button>
@@ -713,7 +713,7 @@
                                 `).join('')}
                             </select>
                         </div>
-                        <div style="flex-shrink:0; padding-bottom:0.15rem;">
+                        <div style="flex-shrink:0;">
                             <label class="req-toggle">
                                 <input type="checkbox" ${question.is_required ? 'checked' : ''}
                                     onchange="window.surveysManager.updateQuestion(${index}, 'is_required', this.checked)" />
