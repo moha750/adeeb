@@ -1,0 +1,1602 @@
+/* ============================================================================
+   نتائج وتحليلات الاستبيانات — Results & Analytics
+   إعادة بناء كاملة لتجربة المستخدم
+   ============================================================================ */
+
+.ra {
+    --ra-radius: 16px;
+    --ra-radius-sm: 10px;
+    --ra-radius-lg: 22px;
+    --ra-bg: #f7f8fb;
+    --ra-surface: #ffffff;
+    --ra-border: #e7eaf0;
+    --ra-border-strong: #dde2eb;
+    --ra-text: #1e293b;
+    --ra-muted: #64748b;
+    --ra-faint: #94a3b8;
+    --ra-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.04);
+    --ra-shadow-md: 0 4px 14px rgba(15, 23, 42, 0.06);
+    --ra-shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.10);
+
+    --ra-blue: #3b82f6;
+    --ra-blue-rgb: 59, 130, 246;
+    --ra-green: #10b981;
+    --ra-green-rgb: 16, 185, 129;
+    --ra-amber: #f59e0b;
+    --ra-amber-rgb: 245, 158, 11;
+    --ra-red: #ef4444;
+    --ra-red-rgb: 239, 68, 68;
+    --ra-purple: #8b5cf6;
+    --ra-purple-rgb: 139, 92, 246;
+    --ra-teal: #14b8a6;
+    --ra-teal-rgb: 20, 184, 166;
+    --ra-pink: #ec4899;
+    --ra-pink-rgb: 236, 72, 153;
+    --ra-indigo: #6366f1;
+    --ra-indigo-rgb: 99, 102, 241;
+
+    color: var(--ra-text);
+}
+
+/* ============================================================
+   §1 · لوحة الـ Hub: قائمة الاستبيانات
+   ============================================================ */
+
+.ra-hub {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.ra-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--ra-radius-lg);
+    padding: 1.75rem 1.75rem 1.5rem;
+    background: linear-gradient(135deg, #274060 0%, #3d8fd6 100%);
+    color: #fff;
+    box-shadow: 0 18px 46px rgba(39, 64, 96, 0.22);
+}
+
+.ra-hero::before,
+.ra-hero::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+}
+
+.ra-hero::before {
+    width: 320px;
+    height: 320px;
+    top: -120px;
+    left: -100px;
+}
+
+.ra-hero::after {
+    width: 220px;
+    height: 220px;
+    bottom: -110px;
+    right: -60px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.ra-hero__inner {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.ra-hero__head {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1 1 280px;
+}
+
+.ra-hero__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    backdrop-filter: blur(8px);
+}
+
+.ra-hero__title {
+    margin: 0 0 4px;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.ra-hero__subtitle {
+    margin: 0;
+    font-size: 0.92rem;
+    opacity: 0.85;
+}
+
+.ra-hero__metrics {
+    display: flex;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+}
+
+.ra-hero__metric {
+    min-width: 130px;
+    padding: 0.85rem 1.1rem;
+    background: rgba(255, 255, 255, 0.13);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 14px;
+    backdrop-filter: blur(8px);
+}
+
+.ra-hero__metric-label {
+    display: block;
+    font-size: 0.78rem;
+    opacity: 0.85;
+    margin-bottom: 4px;
+}
+
+.ra-hero__metric-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* — شريط الفلترة — */
+.ra-filterbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.85rem 1rem;
+    background: var(--ra-surface);
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius);
+    box-shadow: var(--ra-shadow-sm);
+}
+
+.ra-search {
+    position: relative;
+    flex: 1 1 260px;
+}
+
+.ra-search input {
+    width: 100%;
+    padding: 0.7rem 2.6rem 0.7rem 0.95rem;
+    border: 1px solid var(--ra-border);
+    border-radius: 12px;
+    background: #f8fafc;
+    font-size: 0.92rem;
+    color: var(--ra-text);
+    transition: border-color .2s, background .2s, box-shadow .2s;
+}
+
+.ra-search input:focus {
+    outline: none;
+    border-color: var(--ra-blue);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(var(--ra-blue-rgb), 0.12);
+}
+
+.ra-search i {
+    position: absolute;
+    top: 50%;
+    right: 0.95rem;
+    transform: translateY(-50%);
+    color: var(--ra-faint);
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.ra-segments {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    background: #f1f5f9;
+    border-radius: 12px;
+}
+
+.ra-segment {
+    padding: 0.55rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--ra-muted);
+    font-size: 0.86rem;
+    font-weight: 600;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background .2s, color .2s, box-shadow .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.ra-segment .ra-segment-count {
+    background: rgba(0, 0, 0, 0.06);
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+}
+
+.ra-segment.is-active {
+    background: var(--ra-surface);
+    color: var(--ra-text);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.10);
+}
+
+.ra-segment.is-active .ra-segment-count {
+    background: rgba(var(--ra-blue-rgb), 0.14);
+    color: var(--ra-blue);
+}
+
+.ra-filterbar .ra-spacer {
+    flex: 1 1 0;
+}
+
+/* — شبكة بطاقات الاستبيانات تستخدم .uc-grid + .uc-card — */
+/* أنماط uc-card معرّفة في css/unified-cards.css.
+   الإضافات أدناه فقط للبطاقات داخل تبويب "النتائج والتحليلات". */
+
+#ra-survey-grid .uc-card {
+    cursor: pointer;
+}
+
+#ra-survey-grid .uc-card .uc-card__info-item--full {
+    align-items: flex-start;
+}
+
+#ra-survey-grid .uc-card .ra-progress-track {
+    height: 8px;
+    background: #eef2f7;
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 6px 0 4px;
+    width: 100%;
+}
+
+#ra-survey-grid .uc-card .ra-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--_uc-color), var(--_uc-color-dark));
+    border-radius: inherit;
+    transition: width .8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#ra-survey-grid .uc-card .ra-card-cta {
+    width: 100%;
+    justify-content: center;
+}
+
+#ra-survey-grid .uc-card .ra-card-cta:hover {
+    background: var(--_uc-color-dark);
+    border-color: var(--_uc-color-dark);
+}
+
+/* — شارة حالة (تُستخدم في رأس صفحة التفاصيل) — */
+.ra-status-pill {
+    --c: var(--ra-blue);
+    --c-rgb: var(--ra-blue-rgb);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: rgba(var(--c-rgb), 0.12);
+    color: var(--c);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ra-status-pill .ra-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--c);
+}
+
+.ra-status-pill[data-pulse="1"] .ra-status-dot {
+    box-shadow: 0 0 0 0 rgba(var(--c-rgb), 0.7);
+    animation: ra-pulse 1.6s infinite;
+}
+
+@keyframes ra-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(var(--c-rgb), 0.55); }
+    70%  { box-shadow: 0 0 0 8px rgba(var(--c-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--c-rgb), 0); }
+}
+
+/* — الحالة الفارغة — */
+.ra-empty {
+    grid-column: 1 / -1;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    background: var(--ra-surface);
+    border: 1px dashed var(--ra-border-strong);
+    border-radius: var(--ra-radius);
+}
+
+.ra-empty__icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 1rem;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #eef2ff, #f0f9ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: var(--ra-blue);
+}
+
+.ra-empty__title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--ra-text);
+    margin-bottom: 6px;
+}
+
+.ra-empty__text {
+    color: var(--ra-muted);
+    font-size: 0.9rem;
+}
+
+
+/* ============================================================
+   §2 · صفحة تحليلات استبيان واحد
+   ============================================================ */
+
+.ra-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.ra-detail__header {
+    background: var(--ra-surface);
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--ra-shadow-sm);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ra-back-btn {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--ra-border);
+    background: #f8fafc;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ra-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background .2s, color .2s, transform .2s;
+    flex-shrink: 0;
+}
+
+.ra-back-btn:hover {
+    background: var(--ra-blue);
+    color: #fff;
+    transform: translateX(2px);
+}
+
+.ra-detail__title-wrap {
+    flex: 1 1 240px;
+    min-width: 0;
+}
+
+.ra-detail__title {
+    margin: 0 0 6px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--ra-text);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.ra-detail__subtitle {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--ra-muted);
+}
+
+.ra-detail__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ra-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--ra-border);
+    background: #fff;
+    color: var(--ra-text);
+    transition: background .2s, border-color .2s, color .2s, transform .2s;
+}
+
+.ra-action:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.ra-action.is-primary {
+    background: linear-gradient(135deg, var(--ra-blue), var(--ra-indigo));
+    color: #fff;
+    border-color: transparent;
+}
+
+.ra-action.is-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(var(--ra-blue-rgb), 0.32);
+}
+
+/* — شريط KPI — */
+.ra-kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.9rem;
+}
+
+.ra-kpi {
+    --c: var(--ra-blue);
+    --c-rgb: var(--ra-blue-rgb);
+    position: relative;
+    overflow: hidden;
+    background: var(--ra-surface);
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius);
+    padding: 1.1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    box-shadow: var(--ra-shadow-sm);
+    transition: transform .25s, border-color .25s, box-shadow .25s;
+}
+
+.ra-kpi:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--c-rgb), 0.4);
+    box-shadow: 0 12px 30px rgba(var(--c-rgb), 0.14);
+}
+
+.ra-kpi::after {
+    content: '';
+    position: absolute;
+    bottom: -32px;
+    left: -28px;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--c-rgb), 0.13), transparent 70%);
+    pointer-events: none;
+}
+
+.ra-kpi__icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: rgba(var(--c-rgb), 0.13);
+    color: var(--c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    z-index: 1;
+}
+
+.ra-kpi__body {
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+    min-width: 0;
+}
+
+.ra-kpi__value {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--ra-text);
+    line-height: 1.1;
+}
+
+.ra-kpi__label {
+    font-size: 0.78rem;
+    color: var(--ra-muted);
+    margin-top: 4px;
+}
+
+.ra-kpi--blue   { --c: var(--ra-blue);   --c-rgb: var(--ra-blue-rgb); }
+.ra-kpi--green  { --c: var(--ra-green);  --c-rgb: var(--ra-green-rgb); }
+.ra-kpi--amber  { --c: var(--ra-amber);  --c-rgb: var(--ra-amber-rgb); }
+.ra-kpi--red    { --c: var(--ra-red);    --c-rgb: var(--ra-red-rgb); }
+.ra-kpi--purple { --c: var(--ra-purple); --c-rgb: var(--ra-purple-rgb); }
+.ra-kpi--teal   { --c: var(--ra-teal);   --c-rgb: var(--ra-teal-rgb); }
+.ra-kpi--indigo { --c: var(--ra-indigo); --c-rgb: var(--ra-indigo-rgb); }
+
+
+/* — التبويبات — */
+.ra-tabs {
+    background: var(--ra-surface);
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius);
+    box-shadow: var(--ra-shadow-sm);
+    overflow: hidden;
+}
+
+.ra-tabs__nav {
+    display: flex;
+    overflow-x: auto;
+    gap: 0;
+    border-bottom: 1px solid var(--ra-border);
+    background: #fafbfc;
+}
+
+.ra-tabs__nav::-webkit-scrollbar {
+    height: 4px;
+}
+
+.ra-tabs__nav::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.ra-tab {
+    position: relative;
+    padding: 1rem 1.4rem;
+    border: none;
+    background: transparent;
+    color: var(--ra-muted);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color .2s, background .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ra-tab:hover {
+    color: var(--ra-text);
+    background: rgba(15, 23, 42, 0.03);
+}
+
+.ra-tab.is-active {
+    color: var(--ra-blue);
+    background: var(--ra-surface);
+}
+
+.ra-tab.is-active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 14px;
+    right: 14px;
+    height: 3px;
+    background: var(--ra-blue);
+    border-radius: 3px 3px 0 0;
+}
+
+.ra-tab__count {
+    background: #e2e8f0;
+    color: var(--ra-muted);
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.ra-tab.is-active .ra-tab__count {
+    background: rgba(var(--ra-blue-rgb), 0.13);
+    color: var(--ra-blue);
+}
+
+.ra-tabs__panel {
+    padding: 1.4rem;
+    display: none;
+}
+
+.ra-tabs__panel.is-active {
+    display: block;
+}
+
+
+/* — شبكة الـ Overview — */
+.ra-overview-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 1.1rem;
+    align-items: start;
+}
+
+@media (max-width: 980px) {
+    .ra-overview-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ra-panel {
+    background: var(--ra-surface);
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius);
+    overflow: hidden;
+    box-shadow: var(--ra-shadow-sm);
+}
+
+.ra-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--ra-border);
+    background: #fafbfc;
+}
+
+.ra-panel__title {
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--ra-text);
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.ra-panel__title i {
+    color: var(--ra-blue);
+}
+
+.ra-panel__sub {
+    font-size: 0.78rem;
+    color: var(--ra-muted);
+    font-weight: 500;
+}
+
+.ra-panel__body {
+    padding: 1.25rem;
+}
+
+/* — قمع الإكمال — */
+.ra-funnel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.ra-funnel-step {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.ra-funnel-step__label {
+    width: 110px;
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ra-text);
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.ra-funnel-step__label i {
+    width: 18px;
+    color: var(--ra-muted);
+}
+
+.ra-funnel-step__bar {
+    flex: 1;
+    height: 30px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.ra-funnel-step__fill {
+    height: 100%;
+    border-radius: inherit;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ra-funnel-step__count {
+    width: 90px;
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ra-muted);
+    text-align: end;
+}
+
+.ra-funnel-step__count strong {
+    color: var(--ra-text);
+    font-size: 0.95rem;
+}
+
+/* — لوحة الأجهزة (دونات) — */
+.ra-donut {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.ra-donut__chart {
+    --size: 160px;
+    width: var(--size);
+    height: var(--size);
+    border-radius: 50%;
+    background: conic-gradient(#e5e7eb 0 100%);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.ra-donut__hole {
+    position: absolute;
+    inset: 18%;
+    border-radius: 50%;
+    background: var(--ra-surface);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.ra-donut__total {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--ra-text);
+    line-height: 1;
+}
+
+.ra-donut__total-label {
+    font-size: 0.7rem;
+    color: var(--ra-muted);
+    margin-top: 4px;
+}
+
+.ra-donut__legend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    flex: 1 1 140px;
+    min-width: 140px;
+}
+
+.ra-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--ra-text);
+}
+
+.ra-legend-item__swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.ra-legend-item__label {
+    flex: 1;
+    color: var(--ra-muted);
+}
+
+.ra-legend-item__value {
+    font-weight: 700;
+    color: var(--ra-text);
+}
+
+/* — معلومات الاستبيان (Side Panel) — */
+.ra-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.ra-info-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.7rem 0.85rem;
+    background: #f8fafc;
+    border-radius: 10px;
+}
+
+.ra-info-row__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid var(--ra-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ra-blue);
+    flex-shrink: 0;
+}
+
+.ra-info-row__content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ra-info-row__label {
+    font-size: 0.74rem;
+    color: var(--ra-muted);
+    margin-bottom: 2px;
+}
+
+.ra-info-row__value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ra-text);
+    word-break: break-word;
+}
+
+
+/* — جدول التايم لاين — */
+.ra-timeline {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    height: 180px;
+    padding: 0.5rem 0 0;
+}
+
+.ra-timeline-day {
+    flex: 1;
+    min-width: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+}
+
+.ra-timeline-bar {
+    width: 100%;
+    max-width: 28px;
+    background: linear-gradient(180deg, var(--ra-blue), rgba(var(--ra-blue-rgb), 0.55));
+    border-radius: 6px 6px 0 0;
+    transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+}
+
+.ra-timeline-bar:hover::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.ra-timeline-label {
+    font-size: 0.65rem;
+    color: var(--ra-muted);
+    transform: rotate(-30deg);
+    transform-origin: center;
+    white-space: nowrap;
+}
+
+
+/* ============================================================
+   §3 · تحليل الأسئلة
+   ============================================================ */
+
+.ra-questions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ra-q-card {
+    background: var(--ra-surface);
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius);
+    overflow: hidden;
+    box-shadow: var(--ra-shadow-sm);
+    transition: border-color .25s, box-shadow .25s;
+}
+
+.ra-q-card:hover {
+    border-color: rgba(var(--ra-blue-rgb), 0.3);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+}
+
+.ra-q-card__head {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--ra-border);
+    background: #fafbfc;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+}
+
+.ra-q-card__num {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(var(--ra-blue-rgb), 0.13);
+    color: var(--ra-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.ra-q-card__main {
+    flex: 1;
+    min-width: 0;
+}
+
+.ra-q-card__title {
+    margin: 0 0 6px;
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--ra-text);
+    line-height: 1.5;
+}
+
+.ra-q-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ra-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: var(--ra-muted);
+}
+
+.ra-tag--blue {
+    background: rgba(var(--ra-blue-rgb), 0.12);
+    color: var(--ra-blue);
+}
+
+.ra-tag--green {
+    background: rgba(var(--ra-green-rgb), 0.12);
+    color: var(--ra-green);
+}
+
+.ra-q-card__body {
+    padding: 1.1rem 1.25rem;
+}
+
+/* — قائمة الخيارات — */
+.ra-choice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.ra-choice {
+    display: grid;
+    grid-template-columns: 1fr 80px;
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+}
+
+.ra-choice__label {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    color: var(--ra-text);
+    font-weight: 500;
+    min-width: 0;
+}
+
+.ra-choice__label-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ra-choice__count {
+    grid-column: 2;
+    text-align: end;
+    font-size: 0.82rem;
+    color: var(--ra-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.ra-choice__count strong {
+    color: var(--ra-text);
+    font-weight: 700;
+    margin-inline-end: 4px;
+}
+
+.ra-choice__bar {
+    grid-column: 1 / -1;
+    height: 10px;
+    background: #f1f5f9;
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+}
+
+.ra-choice__bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    width: 0;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ra-choice__bar-fill[data-leader="1"] {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+/* — الإحصاءات الرقمية — */
+.ra-numeric {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 0.7rem;
+    margin-bottom: 1rem;
+}
+
+.ra-numeric__cell {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 0.85rem;
+    text-align: center;
+}
+
+.ra-numeric__label {
+    font-size: 0.7rem;
+    color: var(--ra-muted);
+    margin-bottom: 4px;
+}
+
+.ra-numeric__value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--ra-text);
+}
+
+/* — قائمة الإجابات النصية — */
+.ra-text-answers {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-inline-end: 4px;
+}
+
+.ra-text-answers::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ra-text-answers::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.ra-text-answer {
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.7rem 0.85rem;
+    background: #f8fafc;
+    border-right: 3px solid var(--ra-blue);
+    border-radius: 8px;
+    font-size: 0.86rem;
+    color: var(--ra-text);
+    line-height: 1.55;
+}
+
+.ra-text-answer i {
+    color: var(--ra-blue);
+    margin-top: 3px;
+}
+
+.ra-text-empty {
+    text-align: center;
+    color: var(--ra-muted);
+    font-size: 0.85rem;
+    padding: 1.5rem 0;
+}
+
+
+/* ============================================================
+   §4 · الاستجابات
+   ============================================================ */
+
+.ra-responses-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.ra-select {
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--ra-border);
+    border-radius: 10px;
+    background: #fff;
+    font-size: 0.85rem;
+    color: var(--ra-text);
+    min-width: 140px;
+    cursor: pointer;
+}
+
+.ra-select:focus {
+    outline: none;
+    border-color: var(--ra-blue);
+    box-shadow: 0 0 0 3px rgba(var(--ra-blue-rgb), 0.12);
+}
+
+.ra-view-toggle {
+    display: inline-flex;
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 4px;
+    margin-inline-start: auto;
+}
+
+.ra-view-toggle button {
+    padding: 0.5rem 0.85rem;
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    color: var(--ra-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: background .2s, color .2s, box-shadow .2s;
+}
+
+.ra-view-toggle button.is-active {
+    background: var(--ra-surface);
+    color: var(--ra-text);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.10);
+}
+
+/* — بطاقات الاستجابات — */
+.ra-resp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.9rem;
+}
+
+.ra-resp-card {
+    --c: var(--ra-blue);
+    --c-rgb: var(--ra-blue-rgb);
+    background: var(--ra-surface);
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius);
+    padding: 1.1rem;
+    cursor: pointer;
+    transition: transform .25s, border-color .25s, box-shadow .25s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.ra-resp-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--c);
+}
+
+.ra-resp-card[data-status="completed"]   { --c: var(--ra-green);  --c-rgb: var(--ra-green-rgb); }
+.ra-resp-card[data-status="in_progress"] { --c: var(--ra-amber);  --c-rgb: var(--ra-amber-rgb); }
+.ra-resp-card[data-status="abandoned"]   { --c: var(--ra-red);    --c-rgb: var(--ra-red-rgb); }
+
+.ra-resp-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--c-rgb), 0.4);
+    box-shadow: 0 12px 28px rgba(var(--c-rgb), 0.13);
+}
+
+.ra-resp-card__top {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.ra-resp-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--c), rgba(var(--c-rgb), 0.6));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.ra-resp-card__name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--ra-text);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.ra-resp-card__sub {
+    font-size: 0.74rem;
+    color: var(--ra-muted);
+    margin-top: 2px;
+}
+
+.ra-resp-card__chips {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.ra-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: var(--ra-muted);
+}
+
+.ra-chip i {
+    font-size: 0.7rem;
+}
+
+.ra-chip--status {
+    background: rgba(var(--c-rgb), 0.13);
+    color: var(--c);
+}
+
+.ra-resp-card__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.9rem;
+    background: #f8fafc;
+    color: var(--ra-text);
+    border: 1px solid var(--ra-border);
+    border-radius: 9px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s, color .2s, border-color .2s;
+    margin-top: auto;
+}
+
+.ra-resp-card__cta:hover {
+    background: var(--c);
+    color: #fff;
+    border-color: var(--c);
+}
+
+/* — جدول الاستجابات — */
+.ra-resp-table-wrap {
+    background: var(--ra-surface);
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius);
+    overflow: hidden;
+    box-shadow: var(--ra-shadow-sm);
+}
+
+.ra-resp-table-scroll {
+    overflow-x: auto;
+}
+
+.ra-resp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+}
+
+.ra-resp-table thead th {
+    background: #fafbfc;
+    color: var(--ra-text);
+    font-weight: 700;
+    padding: 0.85rem 1rem;
+    text-align: start;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--ra-border);
+    position: sticky;
+    top: 0;
+}
+
+.ra-resp-table tbody td {
+    padding: 0.8rem 1rem;
+    color: var(--ra-text);
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.ra-resp-table tbody tr {
+    transition: background .2s;
+}
+
+.ra-resp-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.ra-resp-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.ra-resp-table .ra-cell-truncate {
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ra-resp-table-actions {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.ra-icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--ra-border);
+    background: #fff;
+    color: var(--ra-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .2s, color .2s, border-color .2s;
+}
+
+.ra-icon-btn:hover {
+    background: var(--ra-blue);
+    color: #fff;
+    border-color: var(--ra-blue);
+}
+
+/* — حالة فارغة داخل الاستجابات — */
+.ra-no-data {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--ra-muted);
+}
+
+.ra-no-data i {
+    font-size: 2rem;
+    color: #cbd5e1;
+    margin-bottom: 0.6rem;
+}
+
+.ra-no-data h4 {
+    margin: 0 0 4px;
+    color: var(--ra-text);
+    font-size: 1rem;
+}
+
+/* — Skeleton Loader — */
+.ra-skeleton {
+    background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
+    background-size: 200% 100%;
+    animation: ra-shimmer 1.4s linear infinite;
+    border-radius: 8px;
+}
+
+@keyframes ra-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.ra-skeleton-card {
+    background: var(--ra-surface);
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius);
+    padding: 1.2rem;
+    height: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+/* ============================================================
+   §5 · مودال تفاصيل الاستجابة
+   ============================================================ */
+
+.ra-modal-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ra-modal-detail__head {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.7rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+.ra-modal-detail__cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ra-modal-detail__cell-label {
+    font-size: 0.74rem;
+    color: var(--ra-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.ra-modal-detail__cell-value {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ra-text);
+}
+
+.ra-modal-detail__answers {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.ra-modal-answer {
+    background: #fff;
+    border: 1px solid var(--ra-border);
+    border-radius: 12px;
+    padding: 0.95rem 1.1rem;
+}
+
+.ra-modal-answer__q {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    color: var(--ra-blue);
+    font-weight: 600;
+    font-size: 0.88rem;
+    margin-bottom: 0.55rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px dashed var(--ra-border);
+}
+
+.ra-modal-answer__a {
+    color: var(--ra-text);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+/* — Mini badges in answers — */
+.ra-mini-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(var(--ra-blue-rgb), 0.12);
+    color: var(--ra-blue);
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin: 2px;
+}
+
+.ra-mini-badge--green { background: rgba(var(--ra-green-rgb), 0.13); color: var(--ra-green); }
+.ra-mini-badge--red   { background: rgba(var(--ra-red-rgb), 0.13);   color: var(--ra-red); }
+
+
+/* ============================================================
+   §6 · استجابة (Responsive)
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .ra-hero {
+        padding: 1.4rem 1.25rem;
+    }
+
+    .ra-hero__metric {
+        min-width: 110px;
+        padding: 0.65rem 0.85rem;
+    }
+
+    .ra-hero__metric-value {
+        font-size: 1.2rem;
+    }
+
+    .ra-detail__header {
+        padding: 1rem;
+    }
+
+    .ra-detail__title {
+        font-size: 1.05rem;
+    }
+
+    .ra-tab {
+        padding: 0.85rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .ra-tabs__panel {
+        padding: 1rem;
+    }
+
+    #ra-survey-grid.uc-grid > * {
+        flex-basis: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .ra-funnel-step__label {
+        width: 84px;
+        font-size: 0.78rem;
+    }
+}

@@ -60,7 +60,18 @@
       "Bash(grep -n \"^/\\\\* ===\\\\|^/\\\\* ---\\\\|^/\\\\* ============\\\\|^  §\\\\|^  ===\\\\|\\\\\\\\.uc-\" c:\\\\Users\\\\moham\\\\adeeb\\\\admin\\\\css\\\\unified-cards.css)",
       "Skill(update-config)",
       "Skill(update-config:*)",
-      "Bash(ls -lh /c/Users/moham/adeeb/supabase/functions/*/)"
+      "Bash(ls -lh /c/Users/moham/adeeb/supabase/functions/*/)",
+      "Bash(node -c c:/Users/moham/adeeb/admin/js/surveys-results-enhanced.js)",
+      "Bash(node --check c:/Users/moham/adeeb/admin/js/surveys-results-enhanced.js)",
+      "Bash(node --check c:/Users/moham/adeeb/admin/js/surveys-manager.js)",
+      "Bash(node --check c:/Users/moham/adeeb/admin/dashboard.js)",
+      "Bash(node --check admin/js/surveys-results-enhanced.js)",
+      "Bash(node --check admin/js/surveys-manager.js)",
+      "Bash(node --check admin/dashboard.js)",
+      "Bash(find /c/Users/moham/adeeb -name \"*.sql\" -type f -exec wc -l {} \\\\;)",
+      "Bash(grep -E \"\\\\.css$\")",
+      "Bash(sed 's/.*label: //')",
+      "Bash(sed \"s/,.*//g\")"
     ]
   }
 }

@@ -400,12 +400,6 @@
                     section: 'surveys-create-section'
                 },
                 {
-                    id: 'surveys-results',
-                    icon: 'fa-chart-pie',
-                    label: 'نتائج وتحليلات',
-                    section: 'surveys-results-section'
-                },
-                {
                     id: 'surveys-templates',
                     icon: 'fa-file-lines',
                     label: 'قوالب الاستبيانات',
@@ -433,7 +427,23 @@
                 subItems: surveysSubItems
             });
         }
-        
+
+        // أنشطة وبرامج — يحتاج manage_activities
+        if (hasPermission('manage_activities')) {
+            menuItems.push({
+                id: 'activities',
+                icon: 'fa-calendar-days',
+                label: 'أنشطة وبرامج',
+                isDropdown: true,
+                subItems: [
+                    { id: 'activities-list',         icon: 'fa-list',           label: 'جميع الأنشطة',  section: 'activities-list-section' },
+                    { id: 'activities-create',       icon: 'fa-plus-circle',    label: 'إنشاء نشاط',    section: 'activities-create-section' },
+                    { id: 'activities-reservations', icon: 'fa-calendar-check', label: 'إدارة الحجوزات', section: 'activities-reservations-section' },
+                    { id: 'activities-visitors',     icon: 'fa-users',          label: 'بيانات الزوار',  section: 'activities-visitors-section' },
+                ],
+            });
+        }
+
         // الأخبار - نظام متعدد التبويبات
         // استخدام نظام الصلاحيات الجديد
         const REPORTS_COMMITTEE_ID = 18; // معرف لجنة التقارير والأرشفة
@@ -738,6 +748,10 @@
         'elections-candidates':                 'manage_elections',
         'elections-voting':                     'manage_elections',
         'elections-results':                    'manage_elections',
+        'activities-list-section':              'manage_activities',
+        'activities-create-section':            'manage_activities',
+        'activities-reservations-section':      'manage_activities',
+        'activities-visitors-section':          'manage_activities',
     };
 
     // خريطة مراحل الانتخابات: كل مرحلة لها قسم HTML منفصل أو فلتر مسبق
@@ -749,6 +763,9 @@
     };
 
     // التنقل بين الأقسام
+    // مكشوفة على window حتى تتمكّن الموديولات الأخرى من التنقّل برمجياً
+    // (مثلاً زر "النتائج" داخل كارد استبيان في surveys-manager.js)
+    window.navigateToSection = navigateToSection;
     function navigateToSection(sectionId) {
         // التحقق من مراحل الانتخابات (virtual section IDs)
         const elStage = ELECTIONS_STAGE_MAP[sectionId];
@@ -1035,11 +1052,11 @@
                 }
                 break;
             case 'surveys-results-section':
-                if (window.surveysManager) {
-                    if (currentUser) await window.surveysManager.init(currentUser);
-                    await window.surveysManager.loadResults();
-                    // تهيئة التبويبات الداخلية
-                    initSurveyResultsTabs();
+                if (window.resultsAnalytics) {
+                    if (currentUser && window.surveysManager) {
+                        await window.surveysManager.init(currentUser);
+                    }
+                    await window.resultsAnalytics.init();
                 }
                 break;
             case 'surveys-templates-section':
@@ -1093,6 +1110,48 @@
                         }
                         window.electionsStageFilter = null;
                     }
+                }
+                break;
+
+            case 'activities-list-section':
+                if (window.ActivitiesManager && !window.activitiesManagerInstance) {
+                    window.activitiesManagerInstance = new window.ActivitiesManager();
+                }
+                if (window.activitiesManagerInstance) {
+                    await window.activitiesManagerInstance.init(currentUser);
+                    await window.activitiesManagerInstance.loadActivitiesList();
+                }
+                break;
+
+            case 'activities-create-section':
+                if (window.ActivitiesManager && !window.activitiesManagerInstance) {
+                    window.activitiesManagerInstance = new window.ActivitiesManager();
+                }
+                if (window.activitiesManagerInstance) {
+                    await window.activitiesManagerInstance.init(currentUser);
+                    if (typeof window.activitiesManagerInstance.showCreateForm === 'function') {
+                        window.activitiesManagerInstance.showCreateForm();
+                    }
+                }
+                break;
+
+            case 'activities-reservations-section':
+                if (window.ActivitiesManager && !window.activitiesManagerInstance) {
+                    window.activitiesManagerInstance = new window.ActivitiesManager();
+                }
+                if (window.activitiesManagerInstance) {
+                    await window.activitiesManagerInstance.init(currentUser);
+                    await window.activitiesManagerInstance.loadReservations();
+                }
+                break;
+
+            case 'activities-visitors-section':
+                if (window.ActivitiesManager && !window.activitiesManagerInstance) {
+                    window.activitiesManagerInstance = new window.ActivitiesManager();
+                }
+                if (window.activitiesManagerInstance) {
+                    await window.activitiesManagerInstance.init(currentUser);
+                    await window.activitiesManagerInstance.loadVisitors();
                 }
                 break;
         }
@@ -6728,64 +6787,6 @@
             badge.style.display = unreadCount > 0 ? 'flex' : 'none';
         }
     }
-
-    // تهيئة التبويبات الداخلية لنتائج الاستبيانات
-    function initSurveyResultsTabs() {
-        const container = document.getElementById('resultsTabsContainer');
-        if (!container) return;
-
-        const tabButtons = container.querySelectorAll('.tab-btn');
-        const tabContents = container.querySelectorAll('.tab-content');
-
-        if (tabButtons.length === 0) return;
-
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetTab = button.getAttribute('data-tab');
-
-                // إزالة active من جميع الأزرار والمحتويات
-                tabButtons.forEach(btn => {
-                    btn.classList.remove('active');
-                });
-
-                tabContents.forEach(content => {
-                    content.classList.remove('active');
-                    content.style.display = 'none';
-                });
-
-                // إضافة active للزر والمحتوى المحدد
-                button.classList.add('active');
-
-                const targetContent = document.getElementById(`${targetTab}-tab`);
-                if (targetContent) {
-                    targetContent.classList.add('active');
-                    targetContent.style.display = 'block';
-                    // تهيئة أشرطة الرسوم البيانية في التبويب المحدد
-                    animateChartBars(targetContent);
-                }
-            });
-        });
-
-        // تهيئة أشرطة التبويب النشط عند التحميل
-        const activeContent = container.querySelector('.tab-content.active');
-        if (activeContent) animateChartBars(activeContent);
-    }
-
-    function animateChartBars(container) {
-        requestAnimationFrame(() => {
-            container.querySelectorAll('.results-choice-bar[data-width]').forEach(bar => {
-                const width = bar.getAttribute('data-width');
-                const color = bar.getAttribute('data-color');
-                if (color) bar.style.background = color;
-                bar.style.width = (width || 0) + '%';
-            });
-            container.querySelectorAll('.device-icon[data-color]').forEach(icon => {
-                icon.style.color = icon.getAttribute('data-color');
-            });
-        });
-    }
-
-    window.animateChartBars = animateChartBars;
 
     // تهيئة التطبيق عند تحميل الصفحة
     init();

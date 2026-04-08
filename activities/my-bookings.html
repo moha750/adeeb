@@ -1,0 +1,103 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>حجوزاتي — أنشطة وبرامج أدِيب</title>
+  <meta name="robots" content="noindex" />
+  <meta name="theme-color" content="#274060" />
+
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="../favicon/favicon-16x16.png" />
+
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="stylesheet" href="../activities.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+</head>
+
+<body>
+
+  <header class="ap-header">
+    <div class="ap-header__inner">
+      <a href="../index.html" class="ap-header__logo">
+        <img src="../adeeb-logo.png" alt="نادي أدِيب" />
+      </a>
+      <nav class="ap-header__nav">
+        <a href="../index.html" class="ap-header__nav-link">
+          <i class="fa-solid fa-house"></i>
+          <span>الرئيسية</span>
+        </a>
+        <a href="../activities.html" class="ap-header__nav-link">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span>الأنشطة</span>
+        </a>
+        <a href="my-bookings.html" class="ap-header__nav-link active">
+          <i class="fa-solid fa-bookmark"></i>
+          <span>حجوزاتي</span>
+        </a>
+      </nav>
+      <div class="ap-header__user" id="headerUserArea"></div>
+    </div>
+  </header>
+
+  <main class="ap-main">
+    <section class="ap-list-section">
+      <div class="ap-container">
+
+        <div class="ap-section-head">
+          <h2 class="ap-section-title">حجوزاتي</h2>
+          <p class="ap-section-hint">
+            <i class="fa-solid fa-circle-info"></i>
+            هنا تجد جميع الأنشطة التي حجزت بها مقعدًا. يمكنك إلغاء حجز أي نشاط لم يحن موعده بعد.
+          </p>
+        </div>
+
+        <div id="mbLoadingState" class="ap-state">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <p>جاري تحميل حجوزاتك...</p>
+        </div>
+
+        <div id="mbAuthState" class="ap-state" style="display:none;">
+          <i class="fa-solid fa-user-lock"></i>
+          <p>يجب تسجيل الدخول أولًا لرؤية حجوزاتك.</p>
+          <a href="../activities.html" class="ap-btn ap-btn--primary">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            <span>الذهاب لتسجيل الدخول</span>
+          </a>
+        </div>
+
+        <div id="mbEmptyState" class="ap-state ap-state--empty" style="display:none;">
+          <i class="fa-regular fa-calendar-xmark"></i>
+          <p>ليس لديك أي حجوزات حتى الآن.</p>
+          <a href="../activities.html" class="ap-btn ap-btn--primary">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span>تصفّح الأنشطة المتاحة</span>
+          </a>
+        </div>
+
+        <div id="mbErrorState" class="ap-state ap-state--error" style="display:none;">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <p id="mbErrorMessage">حدث خطأ في تحميل الحجوزات.</p>
+          <button type="button" class="ap-btn ap-btn--outline" onclick="location.reload()">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>إعادة المحاولة</span>
+          </button>
+        </div>
+
+        <div id="mbBookingsContainer" class="ap-bookings-grid" style="display:none;"></div>
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="ap-footer">
+    <p>© نادي أدِيب — جامعة الملك فيصل</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-config.js"></script>
+  <script src="my-bookings.js"></script>
+</body>
+
+</html>

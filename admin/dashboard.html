@@ -46,6 +46,8 @@
     <link rel="stylesheet" href="css/news-workflow.css" />
     <!-- نظام الكروت الموحد — الملف الوحيد لجميع الكروت -->
     <link rel="stylesheet" href="css/unified-cards.css" />
+    <!-- نتائج وتحليلات الاستبيانات — إعادة بناء كاملة -->
+    <link rel="stylesheet" href="css/results-analytics.css" />
 </head>
 
 <body>
@@ -762,82 +764,10 @@
 
             </section>
 
-            <!-- قسم نتائج الاستبيانات -->
+            <!-- قسم نتائج وتحليلات الاستبيانات (إعادة بناء كاملة) -->
             <section id="surveys-results-section" class="admin-section d-none">
-
-                <div class="section-actions" id="resultsHeaderActions" style="display: none;">
-                    <button class="btn btn-outline" id="backToSurveysListHeader">
-                        <i class="fa-solid fa-arrow-right"></i>
-                        رجوع للقائمة
-                    </button>
-                    <button class="btn btn-primary" id="exportSurveyDataBtn">
-                        <i class="fa-solid fa-download"></i>
-                        تصدير
-                    </button>
-                </div>
-
-                <!-- اختيار الاستبيان -->
-                <div class="survey-selector-container" id="surveySelectorContainer">
-                    <div class="card" style="margin-bottom: 1.5rem;">
-                        <div class="card-header">
-                            <h3>
-                                <i class="fa-solid fa-clipboard-list"></i>
-                                اختر استبياناً لعرض نتائجه
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="filters-bar" style="margin-bottom: 1rem;">
-                                <div class="filter-group" style="flex: 1; min-width: 250px;">
-                                    <i class="fa-solid fa-search"></i>
-                                    <input type="text" id="surveyResultsSearch" placeholder="ابحث عن استبيان..." class="input input-text" />
-                                </div>
-                                <select id="surveyResultsStatusFilter" class="filter-select">
-                                    <option value="">جميع الحالات</option>
-                                    <option value="active">نشط</option>
-                                    <option value="closed">منتهية</option>
-                                    <option value="draft">مسودة</option>
-                                </select>
-                            </div>
-                            <div class="survey-selector-grid" id="surveyResultsGrid">
-                                <div class="results-empty-state">
-                                    <div class="results-empty-icon">
-                                        <i class="fa-solid fa-chart-pie"></i>
-                                    </div>
-                                    <div class="results-empty-title">جاري تحميل الاستبيانات...</div>
-                                </div>
-                            </div>
-                            <select id="selectSurveyForResults" class="filter-select" style="display: none;">
-                                <option value="">-- اختر استبياناً --</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- عرض النتائج - تبويبان -->
-                <div id="resultsTabsContainer" style="display: none;">
-                    <div class="tabs-nav"
-                        style="display: flex; gap: 0.5rem; border-bottom: 2px solid #e5e7eb; margin-bottom: 1.5rem;">
-                        <button class="tab-btn active" data-tab="overview">
-                            <i class="fa-solid fa-chart-pie"></i>
-                            الإحصائيات والتحليل
-                        </button>
-                        <button class="tab-btn" data-tab="responses">
-                            <i class="fa-solid fa-users"></i>
-                            الاستجابات
-                        </button>
-                    </div>
-
-                    <div class="tab-content active" id="overview-tab">
-                        <div id="surveyOverviewContainer">
-                            <!-- سيتم ملؤه ديناميكياً -->
-                        </div>
-                    </div>
-
-                    <div class="tab-content" id="responses-tab" style="display: none;">
-                        <div id="surveyResponsesContainer">
-                            <!-- سيتم ملؤه ديناميكياً -->
-                        </div>
-                    </div>
+                <div id="ra-root">
+                    <!-- يتم بناء كامل المحتوى ديناميكياً عبر js/results-analytics.js -->
                 </div>
             </section>
 
@@ -3508,6 +3438,257 @@
 
             </section>
 
+            <!-- ═══════════════════════════════════════════════════════
+                 أنشطة وبرامج أدِيب
+                 ═══════════════════════════════════════════════════════ -->
+
+            <!-- قسم: قائمة الأنشطة -->
+            <section id="activities-list-section" class="admin-section d-none">
+
+                <!-- إحصائيات الأنشطة -->
+                <div class="stats-grid">
+                    <div class="stat-card" style="--stat-color: #3b82f6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-calendar-days"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalActivitiesCount">0</div>
+                                <div class="stat-label">إجمالي الأنشطة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="publishedActivitiesCount">0</div>
+                                <div class="stat-label">منشورة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-calendar-plus"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="upcomingActivitiesCount">0</div>
+                                <div class="stat-label">قادمة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #f59e0b">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-ticket"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalActivityBookingsCount">0</div>
+                                <div class="stat-label">إجمالي الحجوزات</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- شريط الفلاتر والإجراءات -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="activitiesSearchInput" placeholder="البحث في الأنشطة..." class="input input-text" />
+                    </div>
+                    <select id="activitiesStatusFilter" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="draft">مسودة</option>
+                        <option value="published">منشورة</option>
+                        <option value="past">منتهية</option>
+                        <option value="cancelled">ملغاة</option>
+                    </select>
+                    <button class="btn btn-outline" id="refreshActivitiesBtn" type="button">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                    <button class="btn btn-primary" id="goToCreateActivityBtn" type="button">
+                        <i class="fa-solid fa-plus"></i>
+                        إنشاء نشاط جديد
+                    </button>
+                </div>
+
+                <!-- قائمة الأنشطة -->
+                <div id="activitiesListContainer">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </section>
+
+            <!-- قسم: إنشاء/تعديل نشاط -->
+            <section id="activities-create-section" class="admin-section d-none">
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 id="createActivityFormTitle"><i class="fa-solid fa-circle-info"></i> إنشاء نشاط جديد</h3>
+                    </div>
+                    <div class="card-body card-body--form">
+                        <div class="form-group">
+                            <label class="form-label" for="actName">
+                                اسم النشاط <span class="required-dot"></span>
+                            </label>
+                            <input type="text" id="actName" class="form-input" placeholder="مثال: ورشة الكتابة الإبداعية" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="actDescription">الوصف</label>
+                            <textarea id="actDescription" class="form-textarea" rows="3"
+                                placeholder="وصف مختصر يُعرض للزوار"></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="actType">نوع النشاط</label>
+                                <select id="actType" class="form-select">
+                                    <option value="activity">نشاط</option>
+                                    <option value="program">برنامج</option>
+                                    <option value="workshop">ورشة</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="actLocation">المكان</label>
+                                <input type="text" id="actLocation" class="form-input" placeholder="مكان إقامة النشاط" />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="actDate">
+                                    تاريخ النشاط <span class="required-dot"></span>
+                                </label>
+                                <input type="date" id="actDate" class="form-input" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="actStartTime">
+                                    وقت البدء <span class="required-dot"></span>
+                                </label>
+                                <input type="time" id="actStartTime" class="form-input" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="actEndTime">وقت الانتهاء</label>
+                                <input type="time" id="actEndTime" class="form-input" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-chair"></i> المقاعد والكوتا</h3>
+                    </div>
+                    <div class="card-body card-body--form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="actTotalSeats">
+                                    إجمالي عدد المقاعد <span class="required-dot"></span>
+                                </label>
+                                <input type="number" id="actTotalSeats" class="form-input" min="1" placeholder="مثال: 30" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="actMalePercentage">
+                                    نسبة الرجال (%) <span class="required-dot"></span>
+                                </label>
+                                <input type="number" id="actMalePercentage" class="form-input" min="0" max="100" placeholder="0 - 100" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <span class="form-section-hint">
+                                <i class="fa-solid fa-info-circle"></i>
+                                المعاينة: <strong id="seatsPreview">—</strong>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-image"></i> صورة الغلاف والنشر</h3>
+                    </div>
+                    <div class="card-body card-body--form">
+                        <div class="form-group">
+                            <label class="form-label" for="actCoverImageUrl">رابط صورة الغلاف</label>
+                            <input type="url" id="actCoverImageUrl" class="form-input" placeholder="https://..." />
+                        </div>
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="actPublishImmediately" />
+                            <span>نشر النشاط مباشرة (يصبح مرئيًا للزوار)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- شريط الإجراءات -->
+                <div class="form-actions-sticky">
+                    <div class="form-actions-bar">
+                        <button class="btn btn-slate" id="resetActivityFormBtn" type="button">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            إعادة تعيين
+                        </button>
+                        <button class="btn btn-primary" id="saveActivityBtn" type="button">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            حفظ النشاط
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم: إدارة الحجوزات -->
+            <section id="activities-reservations-section" class="admin-section d-none">
+
+                <div class="filters-bar">
+                    <select id="reservationsActivityFilter" class="filter-select">
+                        <option value="">جميع الأنشطة</option>
+                    </select>
+                    <button class="btn btn-outline" id="refreshReservationsBtn" type="button">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                </div>
+
+                <div id="reservationsTableContainer">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </section>
+
+            <!-- قسم: بيانات الزوار -->
+            <section id="activities-visitors-section" class="admin-section d-none">
+
+                <div class="stats-grid">
+                    <div class="stat-card" style="--stat-color: #3d8fd6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="visitorsCount">0</div>
+                                <div class="stat-label">إجمالي الزوار</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filters-bar">
+                    <button class="btn btn-outline" id="refreshVisitorsBtn" type="button">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث
+                    </button>
+                    <button class="btn btn-success" id="exportVisitorsCsvBtn" type="button">
+                        <i class="fa-solid fa-file-csv"></i>
+                        تصدير CSV
+                    </button>
+                </div>
+
+                <div id="visitorsTableContainer">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </section>
+
         </main>
     </div>
 
@@ -4238,7 +4419,6 @@
     <script src="../supabase-config.js"></script>
     <script src="auth-manager.js"></script>
     <script src="js/impersonation-manager.js"></script>
-    <script src="js/results-view-switcher.js"></script>
     <script src="js/contact-messages-manager-new.js"></script>
     <script src="js/newsletter-manager-new.js"></script>
     <script src="js/membership-manager.js"></script>
@@ -4248,8 +4428,7 @@
     <script src="js/site-visits-manager.js"></script>
     <script src="js/surveys-manager.js"></script>
     <script src="js/surveys-edit-modal.js"></script>
-    <script src="js/surveys-results-enhanced.js"></script>
-    <script src="js/survey-responses-viewer.js"></script>
+    <script src="js/results-analytics.js"></script>
     <script src="js/membership-archives.js"></script>
     <script src="js/member-migration.js"></script>
     <script src="js/profile.js"></script>
@@ -4274,6 +4453,7 @@
     <script src="js/permissions-helper.js"></script>
     <script src="js/permissions-manager.js"></script>
     <script src="js/elections-manager.js"></script>
+    <script src="js/activities-manager.js"></script>
     <!-- SweetAlert2 Shim - يحوّل Swal.fire إلى ModalHelper -->
     <script src="js/swal-shim.js"></script>
     <script src="js/settings.js"></script>
