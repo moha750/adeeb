@@ -442,8 +442,9 @@
         // استخدام نظام الصلاحيات الجديد
         const REPORTS_COMMITTEE_ID = 18; // معرف لجنة التقارير والأرشفة
         const isReportsCommittee = currentUserRole.committee_id === REPORTS_COMMITTEE_ID;
-        const canManageNews = hasAnyPermission(['manage_news', 'publish_news', 'instant_publish']);
-        
+        const isReportsLeader = isReportsCommittee && currentUserRole.role_name === 'committee_leader';
+        const canManageNews = hasAnyPermission(['manage_news', 'publish_news', 'instant_publish']) || isReportsLeader;
+
         if (canManageNews) {
             const newsSubItems = [
                 {
@@ -466,8 +467,8 @@
                 }
             ];
 
-            // إضافة تبويب النشر الفوري — يحتاج instant_publish
-            if (hasPermission('instant_publish')) {
+            // إضافة تبويب النشر الفوري — يحتاج instant_publish أو قائدة لجنة التقارير والأرشفة
+            if (hasPermission('instant_publish') || isReportsLeader) {
                 newsSubItems.push({
                     id: 'news-instant-publish',
                     icon: 'fa-bolt',
