@@ -139,18 +139,18 @@
                             <td>${new Date(invitation.created_at).toLocaleDateString('ar-SA')}</td>
                             <td>
                                 <div>
-                                    <button class="btn-sm btn-outline" onclick="window.invitationsManager.copyInvitationLink('${invitation.invitation_code}')" title="نسخ الرابط">
+                                    <button class=" btn-outline" onclick="window.invitationsManager.copyInvitationLink('${invitation.invitation_code}')" title="نسخ الرابط">
                                         <i class="fa-solid fa-copy"></i>
                                     </button>
-                                    <button class="btn-sm btn-info" onclick="window.invitationsManager.viewInvitationDetails('${invitation.id}')" title="التفاصيل">
+                                    <button class=" btn-info" onclick="window.invitationsManager.viewInvitationDetails('${invitation.id}')" title="التفاصيل">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
                                     ${invitation.status === 'active' ? `
-                                        <button class="btn-sm btn-warning" onclick="window.invitationsManager.cancelInvitation('${invitation.id}')" title="إلغاء">
+                                        <button class=" btn-warning" onclick="window.invitationsManager.cancelInvitation('${invitation.id}')" title="إلغاء">
                                             <i class="fa-solid fa-ban"></i>
                                         </button>
                                     ` : ''}
-                                    <button class="btn-sm btn-success" onclick="window.invitationsManager.archiveInvitation('${invitation.id}')" title="أرشفة">
+                                    <button class=" btn-success" onclick="window.invitationsManager.archiveInvitation('${invitation.id}')" title="أرشفة">
                                         <i class="fa-solid fa-box-archive"></i>
                                     </button>
                                 </div>
@@ -267,7 +267,7 @@
                                 <div>
                                     <input type="text" value="${window.location.origin}/membership.html?invite=${invitation.invitation_code}" 
                                            readonly>
-                                    <button class="btn-sm btn-primary" onclick="window.invitationsManager.copyInvitationLink('${invitation.invitation_code}')">
+                                    <button class=" btn-primary" onclick="window.invitationsManager.copyInvitationLink('${invitation.invitation_code}')">
                                         <i class="fa-solid fa-copy"></i>
                                     </button>
                                 </div>

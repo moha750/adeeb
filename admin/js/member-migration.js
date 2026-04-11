@@ -100,10 +100,10 @@
 
         if (filtered.length === 0) {
             container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fa-solid fa-user-check"></i>
-                    <p>لا يوجد أعضاء مقبولين بانتظار الترحيل</p>
-                    <p>جميع المقبولين تم ترحيلهم بنجاح</p>
+                <div class="empty-state empty-state--success">
+                    <div class="empty-state__icon"><i class="fa-solid fa-user-check"></i></div>
+                    <p class="empty-state__title">لا يوجد أعضاء مقبولين بانتظار الترحيل</p>
+                    <p class="empty-state__message">جميع المقبولين تم ترحيلهم بنجاح</p>
                 </div>
             `;
             return;
@@ -209,11 +209,11 @@
                     </div>
                     
                     <div class="migration-card-footer">
-                        <button class="btn-primary btn-sm" onclick="window.memberMigration.migrateSingleMember('${member.id}')">
+                        <button class="btn-primary " onclick="window.memberMigration.migrateSingleMember('${member.id}')">
                             <i class="fa-solid fa-user-plus"></i>
                             ترحيل إلى حساب
                         </button>
-                        <button class="btn-outline btn-sm" onclick="window.memberMigration.viewMemberDetails('${member.id}')">
+                        <button class="btn-outline " onclick="window.memberMigration.viewMemberDetails('${member.id}')">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل
                         </button>

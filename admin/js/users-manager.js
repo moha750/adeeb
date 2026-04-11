@@ -222,24 +222,9 @@ class UsersManager {
 
                 <div class="uc-card__header">
                     <div class="uc-card__options">
-                        <button class="btn-user-options uc-card__options-btn btn btn-white btn-outline btn-icon btn-sm" data-user-id="${user.id}" title="خيارات">
+                        <button class="btn-user-options uc-card__options-btn btn btn-white btn-outline btn-icon" data-user-id="${user.id}" title="خيارات">
                             <i class="fa-solid fa-ellipsis-vertical" style="pointer-events:none;"></i>
                         </button>
-                        <div class="user-options-dropdown uc-card__dropdown" data-user-id="${user.id}" style="display:none;">
-                            <button class="btn-edit-user btn btn-primary btn-block btn-outline" data-user-id="${user.id}">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                                تعديل البيانات
-                            </button>
-                            <button class="btn-change-committee btn btn-warning btn-block btn-outline" style="margin:0.5rem 0;" data-user-id="${user.id}">
-                                <i class="fa-solid fa-sitemap"></i>
-                                تغيير اللجنة
-                            </button>
-                            <div class="uc-card__dropdown-divider"></div>
-                            <button class="btn-terminate-membership btn btn-danger btn-block btn-outline" style="margin-top:0.5rem;" data-user-id="${user.id}">
-                                <i class="fa-solid fa-user-slash"></i>
-                                إنهاء العضوية
-                            </button>
-                        </div>
                     </div>
                     <div class="uc-card__header-inner">
                         <div class="uc-card__icon">
@@ -387,46 +372,110 @@ class UsersManager {
             });
         }
 
-        // زر التصدير
-        const exportBtn = document.getElementById('exportMembersBtn');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => this.showExportDialog());
+        // زر خيارات قائمة الأعضاء
+        const membersOptionsBtn = document.getElementById('membersListOptionsBtn');
+        if (membersOptionsBtn) {
+            let membersDropdown = document.getElementById('membersListOptionsDropdown');
+            if (membersDropdown) membersDropdown.remove();
+            membersDropdown = document.createElement('div');
+            membersDropdown.id = 'membersListOptionsDropdown';
+            membersDropdown.className = 'dropdown-menu';
+            membersDropdown.innerHTML = `
+                <button class="btn btn-slate btn-outline btn-block" data-action="refresh">
+                    <i class="fa-solid fa-rotate"></i> تحديث
+                </button>
+                <button class="btn btn-primary btn-outline btn-block" data-action="export">
+                    <i class="fa-solid fa-file-export"></i> تصدير البيانات
+                </button>
+            `;
+            document.body.appendChild(membersDropdown);
+
+            membersOptionsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = membersDropdown.classList.toggle('show');
+                if (isOpen) {
+                    const rect = membersOptionsBtn.getBoundingClientRect();
+                    membersDropdown.style.top = (rect.bottom + 6) + 'px';
+                    membersDropdown.style.left = rect.left + 'px';
+                }
+            });
+
+            membersDropdown.addEventListener('click', (e) => {
+                const actionBtn = e.target.closest('[data-action]');
+                if (!actionBtn) return;
+                membersDropdown.classList.remove('show');
+                if (actionBtn.dataset.action === 'export') {
+                    this.showExportDialog();
+                } else if (actionBtn.dataset.action === 'refresh') {
+                    this.loadUsers();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#membersListOptionsBtn') && !e.target.closest('#membersListOptionsDropdown')) {
+                    membersDropdown.classList.remove('show');
+                }
+            });
         }
 
         // أزرار عرض التفاصيل وتعديل وإنهاء العضوية (مرة واحدة فقط)
         if (!this._clickListenerBound) {
             this._clickListenerBound = true;
+
+            // إنشاء dropdown واحد في body
+            let userDropdown = document.getElementById('userOptionsDropdown');
+            if (!userDropdown) {
+                userDropdown = document.createElement('div');
+                userDropdown.id = 'userOptionsDropdown';
+                userDropdown.className = 'dropdown-menu';
+                userDropdown.innerHTML = `
+                    <button class="btn btn-primary btn-block btn-outline" data-action="edit">
+                        <i class="fa-solid fa-pen-to-square"></i> تعديل البيانات
+                    </button>
+                    <button class="btn btn-warning btn-block btn-outline" data-action="change-committee">
+                        <i class="fa-solid fa-sitemap"></i> تغيير اللجنة
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="btn btn-danger btn-block btn-outline" data-action="terminate">
+                        <i class="fa-solid fa-user-slash"></i> إنهاء العضوية
+                    </button>
+                `;
+                document.body.appendChild(userDropdown);
+
+                // أحداث عناصر القائمة
+                userDropdown.addEventListener('click', (e) => {
+                    const item = e.target.closest('.dropdown-item');
+                    if (!item) return;
+                    const action = item.dataset.action;
+                    const userId = userDropdown.dataset.activeUserId;
+                    userDropdown.classList.remove('show');
+                    if (action === 'edit') this.editUser(userId);
+                    else if (action === 'change-committee') this.changeCommittee(userId);
+                    else if (action === 'terminate') this.terminateMembership(userId);
+                });
+            }
+
             document.addEventListener('click', (e) => {
                 // زر الخيارات
                 if (e.target.closest('.btn-user-options')) {
                     e.stopPropagation();
                     const btn = e.target.closest('.btn-user-options');
                     const userId = btn.dataset.userId;
-                    const dropdown = document.querySelector(`.user-options-dropdown[data-user-id="${userId}"]`);
-                    // إغلاق كل القوائم الأخرى
-                    document.querySelectorAll('.user-options-dropdown').forEach(d => {
-                        if (d !== dropdown) d.style.display = 'none';
-                    });
-                    const isOpen = dropdown?.style.display === 'block';
-                    if (dropdown) dropdown.style.display = isOpen ? 'none' : 'block';
+                    const wasOpen = userDropdown.classList.contains('show') && userDropdown.dataset.activeUserId === userId;
+
+                    userDropdown.classList.remove('show');
+                    if (wasOpen) return;
+
+                    userDropdown.dataset.activeUserId = userId;
+                    const rect = btn.getBoundingClientRect();
+                    userDropdown.style.top = (rect.bottom + 6) + 'px';
+                    userDropdown.style.left = rect.left + 'px';
+                    userDropdown.classList.add('show');
                 } else if (e.target.closest('.btn-view-user')) {
                     const userId = e.target.closest('.btn-view-user').dataset.userId;
                     this.viewUserDetails(userId);
-                } else if (e.target.closest('.btn-edit-user')) {
-                    const userId = e.target.closest('.btn-edit-user').dataset.userId;
-                    this.editUser(userId);
-                    document.querySelectorAll('.user-options-dropdown').forEach(d => d.style.display = 'none');
-                } else if (e.target.closest('.btn-change-committee')) {
-                    const userId = e.target.closest('.btn-change-committee').dataset.userId;
-                    this.changeCommittee(userId);
-                    document.querySelectorAll('.user-options-dropdown').forEach(d => d.style.display = 'none');
-                } else if (e.target.closest('.btn-terminate-membership')) {
-                    const userId = e.target.closest('.btn-terminate-membership').dataset.userId;
-                    this.terminateMembership(userId);
-                    document.querySelectorAll('.user-options-dropdown').forEach(d => d.style.display = 'none');
-                } else {
-                    // إغلاق عند النقر خارج القائمة
-                    document.querySelectorAll('.user-options-dropdown').forEach(d => d.style.display = 'none');
+                } else if (!e.target.closest('#userOptionsDropdown')) {
+                    userDropdown.classList.remove('show');
                 }
             });
         }
@@ -1151,10 +1200,10 @@ class UsersManager {
                     </label>
                 </div>
                 <div class="form-actions form-actions-start" style="margin-top:0.875rem;">
-                    <button class="btn btn-success btn-sm" type="button" onclick="document.querySelectorAll('.export-field').forEach(cb => cb.checked = true)">
+                    <button class="btn btn-success " type="button" onclick="document.querySelectorAll('.export-field').forEach(cb => cb.checked = true)">
                         تحديد الكل
                     </button>
-                    <button class="btn btn-danger btn-sm" type="button" onclick="document.querySelectorAll('.export-field').forEach(cb => cb.checked = false)">
+                    <button class="btn btn-danger " type="button" onclick="document.querySelectorAll('.export-field').forEach(cb => cb.checked = false)">
                         إلغاء التحديد
                     </button>
                 </div>

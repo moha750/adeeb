@@ -63,10 +63,10 @@ window.WorksManager = (function() {
                             <td>${work.category || '-'}</td>
                             <td>${work.order || 0}</td>
                             <td class="action-buttons">
-                                <button class="btn-sm btn-outline" onclick="WorksManager.editWork('${work.id}')">
+                                <button class=" btn-outline" onclick="WorksManager.editWork('${work.id}')">
                                     <i class="fa-solid fa-edit"></i>
                                 </button>
-                                <button class="btn-sm btn-outline btn-danger" onclick="WorksManager.deleteWork('${work.id}')">
+                                <button class=" btn-outline btn-danger" onclick="WorksManager.deleteWork('${work.id}')">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </td>

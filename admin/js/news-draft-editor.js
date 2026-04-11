@@ -62,7 +62,7 @@ window.NewsDraftEditor = (function() {
                                 <span class="badge badge-${getStatusClass(assignment.status)}">
                                     ${getStatusText(assignment.status)}
                                 </span>
-                                <button type="button" class="remove-writer-btn btn btn-danger btn-sm" data-assignment-id="${assignment.id}" data-writer-id="${assignment.writer_id}">
+                                <button type="button" class="remove-writer-btn btn btn-danger " data-assignment-id="${assignment.id}" data-writer-id="${assignment.writer_id}">
                                     <i class="fa-solid fa-times"></i>
                                 </button>
                             </div>

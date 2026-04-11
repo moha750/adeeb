@@ -39,6 +39,7 @@
     <!-- ⑤ مكونات الصفحات المتخصصة -->
     <link rel="stylesheet" href="css/stats-cards.css" />
     <link rel="stylesheet" href="css/filters.css" />
+    <link rel="stylesheet" href="css/tables.css" />
     <link rel="stylesheet" href="css/toast-notifications.css" />
 
     <!-- ⑥ ميزات متخصصة -->
@@ -46,8 +47,8 @@
     <link rel="stylesheet" href="css/news-workflow.css" />
     <!-- نظام الكروت الموحد — الملف الوحيد لجميع الكروت -->
     <link rel="stylesheet" href="css/unified-cards.css" />
-    <!-- نتائج وتحليلات الاستبيانات — إعادة بناء كاملة -->
-    <link rel="stylesheet" href="css/results-analytics.css" />
+    <!-- تحليلات الاستبيانات (صفحة استبيان واحد) -->
+    <link rel="stylesheet" href="css/survey-analytics.css" />
 </head>
 
 <body>
@@ -79,9 +80,9 @@
                     <div class="notifications-header">
                         <h3>الإشعارات</h3>
                         <div class="d-flex gap-8 align-items-center">
-                            <button class="btn btn-outline btn-sm" id="markAllReadBtn">تعليم الكل
+                            <button class="btn btn-outline" id="markAllReadBtn">تعليم الكل
                                 كمقروء</button>
-                            <button class="btn btn-icon btn-outline btn-sm" id="closeNotificationsBtn" title="إغلاق">
+                            <button class="btn btn-icon btn-outline" id="closeNotificationsBtn" title="إغلاق">
                                 <i class="fa-solid fa-times"></i>
                             </button>
                         </div>
@@ -126,8 +127,10 @@
         </aside>
 
         <!-- زر فتح القائمة الجانبية (عائم) -->
-        <button id="toggleSidebar" class="sidebar-toggle-fab" title="القائمة">
-            <i class="fa-solid fa-bars"></i>
+        <button id="toggleSidebar" class="sidebar-toggle-fab" title="فتح القائمة الجانبية" aria-label="فتح القائمة الجانبية">
+            <span class="sidebar-toggle-fab__pulse" aria-hidden="true"></span>
+            <i class="fa-solid fa-angles-left sidebar-toggle-fab__icon"></i>
+            <span class="sidebar-toggle-fab__label">القائمة</span>
         </button>
 
         <!-- المحتوى الرئيسي -->
@@ -231,7 +234,7 @@
                                 <p style="color: #991b1b; margin: 0; font-size: 0.875rem;">يوجد حالياً جلسة تنكر نشطة
                                 </p>
                             </div>
-                            <button class="btn btn-danger btn-sm" id="endActiveImpersonationBtn">
+                            <button class="btn btn-danger" id="endActiveImpersonationBtn">
                                 <i class="fa-solid fa-stop"></i>
                                 إنهاء الجلسة
                             </button>
@@ -285,12 +288,6 @@
 
             <!-- قسم الأعضاء المعلقين -->
             <section id="pending-members-section" class="admin-section d-none">
-                <div class="section-actions">
-                    <button class="btn btn-outline" id="refreshPendingMembersBtn">
-                        <i class="fa-solid fa-refresh"></i>
-                        تحديث
-                    </button>
-                </div>
 
                 <!-- بطاقات الإحصائيات -->
                 <div class="stats-grid" id="pendingMembersStatsGrid">
@@ -313,6 +310,9 @@
                 <div class="card">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-clock"></i> قائمة الأعضاء المعلقين</h3>
+                        <button class="btn btn-warning btn-icon btn-outline" id="refreshPendingMembersBtn" title="تحديث">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div id="pendingMembersContainer">
@@ -347,9 +347,8 @@
                 <div class="card">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-users"></i> قائمة أعضاء أديب</h3>
-                        <button class="btn btn-primary default" id="exportMembersBtn">
-                            <i class="fa-solid fa-file-export"></i>
-                            تصدير البيانات
+                        <button class="btn btn-primary btn-icon btn-outline" id="membersListOptionsBtn" title="خيارات">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
                         </button>
                     </div>
                     <div class="card-body">
@@ -379,6 +378,9 @@
                 <div class="card">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-user-xmark"></i> قائمة الأعضاء المنتهية عضوياتهم</h3>
+                        <button class="btn btn-danger btn-icon btn-outline" id="refreshTerminatedMembersBtn" title="تحديث" onclick="window.loadTerminatedMembersSection && window.loadTerminatedMembersSection()">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div id="terminatedMembersTable">
@@ -434,6 +436,9 @@
                 <div class="card mb-2rem">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-landmark"></i> مجالس أدِيب</h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="refreshCouncilsBtn" title="تحديث" onclick="window.loadCouncils && window.loadCouncils()">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div class="uc-grid" id="councilsGrid">
@@ -445,6 +450,9 @@
                 <div class="card mt-2rem">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-users-gear"></i> إدارات أدِيب</h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="refreshAdminCommitteesBtn" title="تحديث" onclick="window.loadAdminCommittees && window.loadAdminCommittees()">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div class="uc-grid" id="adminCommitteesGrid">
@@ -456,6 +464,9 @@
                 <div class="card mb-2rem">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-sitemap"></i> أقسام أدِيب</h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="refreshDepartmentsBtn" title="تحديث" onclick="window.loadDepartments && window.loadDepartments()">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div class="uc-grid" id="departmentsGrid">
@@ -467,6 +478,9 @@
                 <div class="card">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-people-group"></i> لجان أدِيب</h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="refreshCommitteesBtn" title="تحديث" onclick="window.loadCommittees && window.loadCommittees()">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div class="uc-grid" id="committeesGrid">
@@ -487,11 +501,11 @@
                         <option value="90">آخر 90 يوم</option>
                         <option value="365">آخر سنة</option>
                     </select>
-                    <button class="btn btn-secondary btn-sm" id="exportVisitsBtn">
+                    <button class="btn btn-secondary" id="exportVisitsBtn">
                         <i class="fa-solid fa-download"></i>
                         تصدير البيانات
                     </button>
-                    <button class="btn btn-outline btn-sm" id="refreshVisitsBtn">
+                    <button class="btn btn-outline" id="refreshVisitsBtn">
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
@@ -771,44 +785,9 @@
                 </div>
             </section>
 
-            <!-- قسم قوالب الاستبيانات -->
-            <section id="surveys-templates-section" class="admin-section d-none">
-
-                <button class="btn btn-primary" id="createTemplateBtn">
-                    <i class="fa-solid fa-plus"></i>
-                    إنشاء قالب جديد
-                </button>
-
-                <!-- فئات القوالب -->
-                <div class="filters-bar">
-                    <select id="templatesFilterCategory" class="filter-select">
-                        <option value="">جميع الفئات</option>
-                        <option value="general">عام</option>
-                        <option value="membership">عضوية</option>
-                        <option value="event">فعالية</option>
-                        <option value="feedback">تقييم</option>
-                        <option value="evaluation">تقويم</option>
-                        <option value="custom">مخصص</option>
-                    </select>
-                    <button class="btn btn-outline" id="refreshTemplatesBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-                </div>
-
-                <!-- قائمة القوالب -->
-                <div id="templatesListContainer" class="templates-grid">
-                </div>
-            </section>
 
             <!-- قسم الاستبيانات المؤرشفة -->
             <section id="surveys-archived-section" class="admin-section d-none">
-                <div class="section-actions">
-                    <button class="btn btn-outline" id="refreshArchivedSurveysBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-                </div>
 
                 <!-- إحصائيات الاستبيانات المؤرشفة -->
                 <div class="stats-grid">
@@ -841,12 +820,7 @@
 
             <!-- قسم الاستبيانات المحذوفة -->
             <section id="surveys-deleted-section" class="admin-section d-none">
-                <div class="section-actions">
-                    <button class="btn btn-outline" id="refreshDeletedSurveysBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-                </div>
+                <div class="section-actions"></div>
 
                 <!-- إحصائيات الاستبيانات المحذوفة -->
                 <div class="stats-grid">
@@ -1287,11 +1261,11 @@
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 0.5rem;">
-                                    <button class="btn btn-primary btn-sm" id="copyProfileLinkBtn" title="نسخ الرابط">
+                                    <button class="btn btn-primary" id="copyProfileLinkBtn" title="نسخ الرابط">
                                         <i class="fa-solid fa-copy"></i>
                                         نسخ الرابط
                                     </button>
-                                    <button class="btn btn-outline btn-sm" id="openProfileLinkBtn" title="فتح الملف العام">
+                                    <button class="btn btn-outline" id="openProfileLinkBtn" title="فتح الملف العام">
                                         <i class="fa-solid fa-external-link-alt"></i>
                                         معاينة
                                     </button>
@@ -1366,6 +1340,9 @@
                             <i class="fa-solid fa-table"></i>
                             قائمة الأعضاء
                         </h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="refreshMemberDataBtn" title="تحديث" onclick="window.memberDataManager && window.memberDataManager.loadMembers()">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div id="memberDataTable">
@@ -1999,7 +1976,7 @@
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
-                    <button class="btn btn-success btn-sm" id="exportInvitationsBtn">
+                    <button class="btn btn-success" id="exportInvitationsBtn">
                         <i class="fa-solid fa-file-export"></i>
                         تصدير
                     </button>
@@ -2039,7 +2016,7 @@
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
-                    <button class="btn btn-success btn-sm" id="exportApplicationsBtn">
+                    <button class="btn btn-success" id="exportApplicationsBtn">
                         <i class="fa-solid fa-file-export"></i>
                         تصدير
                     </button>
@@ -2086,7 +2063,7 @@
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
-                    <button class="btn btn-success btn-sm" id="exportApplicationsReviewBtn">
+                    <button class="btn btn-success" id="exportApplicationsReviewBtn">
                         <i class="fa-solid fa-file-export"></i>
                         تصدير
                     </button>
@@ -2188,7 +2165,7 @@
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
-                    <button class="btn btn-success btn-sm" id="exportBarzakhBtn">
+                    <button class="btn btn-success" id="exportBarzakhBtn">
                         <i class="fa-solid fa-file-export"></i>
                         تصدير
                     </button>
@@ -2232,7 +2209,7 @@
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
-                    <button class="btn btn-success btn-sm" id="exportDecisionsBtn">
+                    <button class="btn btn-success" id="exportDecisionsBtn">
                         <i class="fa-solid fa-file-export"></i>
                         تصدير
                     </button>
@@ -2272,7 +2249,7 @@
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
-                    <button class="btn btn-success btn-sm" id="exportMigrationBtn">
+                    <button class="btn btn-success" id="exportMigrationBtn">
                         <i class="fa-solid fa-file-excel"></i>
                         تصدير Excel
                     </button>
@@ -2334,7 +2311,7 @@
 
             <!-- قسم: مسودات الأخبار (للقادة فقط) -->
             <section id="news-drafts-section" class="admin-section d-none">
-                <button class="btn btn-primary btn-sm" id="createNewsDraftBtn">
+                <button class="btn btn-primary" id="createNewsDraftBtn">
                     <i class="fa-solid fa-plus"></i>
                     إنشاء مسودة جديدة
                 </button>
@@ -2402,7 +2379,7 @@
 
             <!-- قسم: قيد الكتابة (للقادة والكتّاب) -->
             <section id="news-in-progress-section" class="admin-section d-none">
-                <button class="btn btn-outline btn-sm" id="refreshInProgressNewsBtn">
+                <button class="btn btn-outline" id="refreshInProgressNewsBtn">
                     <i class="fa-solid fa-rotate"></i>
                     تحديث
                 </button>
@@ -2433,7 +2410,7 @@
 
             <!-- قسم: جاهز للمراجعة (للقادة فقط) -->
             <section id="news-review-section" class="admin-section d-none">
-                <button class="btn btn-outline btn-sm" id="refreshReviewNewsBtn">
+                <button class="btn btn-outline" id="refreshReviewNewsBtn">
                     <i class="fa-solid fa-rotate"></i>
                     تحديث
                 </button>
@@ -2520,16 +2497,15 @@
                     <select id="publishedNewsCommitteeFilter" class="filter-select">
                         <option value="">جميع اللجان</option>
                     </select>
-                    <button class="btn btn-outline" id="refreshPublishedNewsBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
                 </div>
 
                 <!-- قائمة الأخبار -->
                 <div class="card">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-newspaper"></i> قائمة الأخبار المنشورة</h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="refreshPublishedNewsBtn" title="تحديث">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div id="newsPublishedContainer">
@@ -2541,7 +2517,7 @@
 
             <!-- قسم: الأخبار المؤرشفة -->
             <section id="news-archived-section" class="admin-section d-none">
-                <button class="btn btn-outline btn-sm" id="refreshArchivedNewsBtn">
+                <button class="btn btn-outline" id="refreshArchivedNewsBtn">
                     <i class="fa-solid fa-rotate"></i>
                     تحديث
                 </button>
@@ -2700,19 +2676,19 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                    <label class="form-switch form-switch-warning">
                                         <input type="checkbox" id="instantNewsIsFeatured">
-                                        <span>⭐ خبر مميز</span>
+                                        <span class="form-switch-label">خبر مميز</span>
                                     </label>
                                 </div>
 
                                 <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                                    <button type="button" class="btn btn-secondary btn-sm"
+                                    <button type="button" class="btn btn-secondary"
                                         id="clearInstantNewsBtn">
                                         <i class="fa-solid fa-eraser"></i>
                                         مسح النموذج
                                     </button>
-                                    <button type="submit" class="btn btn-primary btn-sm" id="publishInstantNewsBtn">
+                                    <button type="submit" class="btn btn-primary" id="publishInstantNewsBtn">
                                         <i class="fa-solid fa-paper-plane"></i>
                                         نشر الخبر الآن
                                     </button>
@@ -2768,7 +2744,7 @@
             <!-- قسم أعمالنا -->
             <section id="website-works-section" class="admin-section d-none">
 
-                <button class="btn btn-primary btn-sm" id="addWorkBtn">
+                <button class="btn btn-primary" id="addWorkBtn">
                     <i class="fa-solid fa-plus"></i>
                     إضافة عمل جديد
                 </button>
@@ -2787,7 +2763,7 @@
             <!-- قسم الإنجازات -->
             <section id="website-achievements-section" class="admin-section d-none">
 
-                <button class="btn btn-primary btn-sm" id="addAchievementBtn">
+                <button class="btn btn-primary" id="addAchievementBtn">
                     <i class="fa-solid fa-plus"></i>
                     إضافة إنجاز جديد
                 </button>
@@ -2806,7 +2782,7 @@
             <!-- قسم الشركاء -->
             <section id="website-sponsors-section" class="admin-section d-none">
 
-                <button class="btn btn-primary btn-sm" id="addSponsorBtn">
+                <button class="btn btn-primary" id="addSponsorBtn">
                     <i class="fa-solid fa-plus"></i>
                     إضافة شريك جديد
                 </button>
@@ -2825,7 +2801,7 @@
             <!-- قسم الأسئلة الشائعة -->
             <section id="website-faq-section" class="admin-section d-none">
 
-                <button class="btn btn-primary btn-sm" id="addFaqBtn">
+                <button class="btn btn-primary" id="addFaqBtn">
                     <i class="fa-solid fa-plus"></i>
                     إضافة سؤال جديد
                 </button>
@@ -2973,7 +2949,7 @@
 
                 <!-- عرض التفاصيل -->
                 <div id="elections-detail-view" class="d-none">
-                    <button class="btn btn-outline btn-sm" id="backToElectionsListBtn" style="margin-bottom: 1rem;">
+                    <button class="btn btn-outline" id="backToElectionsListBtn" style="margin-bottom: 1rem;">
                         <i class="fa-solid fa-arrow-right"></i> العودة للقائمة
                     </button>
                     <div id="election-detail-content">
@@ -3054,7 +3030,7 @@
                                         </div>
                                     </div>
                                     <div style="margin-top:1rem;">
-                                        <button class="btn btn-primary btn-sm" onclick="document.querySelector('[data-section=\'profile-section\']')?.click()">
+                                        <button class="btn btn-primary" onclick="document.querySelector('[data-section=\'profile-section\']')?.click()">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                             تعديل الملف الشخصي
                                         </button>
@@ -3120,7 +3096,7 @@
                                                 <input type="password" id="settingsConfirmPassword" class="form-input" placeholder="أعد إدخال كلمة المرور الجديدة" />
                                             </div>
                                             <div class="form-actions form-actions-start">
-                                                <button class="btn btn-primary btn-sm" id="settingsChangePasswordBtn">
+                                                <button class="btn btn-primary" id="settingsChangePasswordBtn">
                                                     <i class="fa-solid fa-floppy-disk"></i>
                                                     حفظ كلمة المرور
                                                 </button>
@@ -3274,7 +3250,7 @@
                                     </div>
 
                                     <div class="form-actions form-actions-start" style="margin-top:1.25rem;">
-                                        <button class="btn btn-primary btn-sm" id="settingsSaveNotificationsBtn">
+                                        <button class="btn btn-primary" id="settingsSaveNotificationsBtn">
                                             <i class="fa-solid fa-floppy-disk"></i>
                                             حفظ إعدادات الإشعارات
                                         </button>
@@ -3353,7 +3329,7 @@
                                     </div>
 
                                     <div class="form-actions form-actions-start" style="margin-top:1.5rem;">
-                                        <button class="btn btn-primary btn-sm" id="settingsSaveAppearanceBtn">
+                                        <button class="btn btn-primary" id="settingsSaveAppearanceBtn">
                                             <i class="fa-solid fa-floppy-disk"></i>
                                             حفظ إعدادات المظهر
                                         </button>
@@ -3422,10 +3398,10 @@
                                 </div>
                                 <div class="uc-card__body">
                                     <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
-                                        <a href="https://adeeb.club" target="_blank" class="btn btn-outline btn-sm">
+                                        <a href="https://adeeb.club" target="_blank" class="btn btn-outline">
                                             <i class="fa-solid fa-globe"></i> موقع النادي
                                         </a>
-                                        <button class="btn btn-outline btn-sm" id="settingsClearCacheBtn">
+                                        <button class="btn btn-outline" id="settingsClearCacheBtn">
                                             <i class="fa-solid fa-broom"></i> مسح ذاكرة التخزين المؤقت
                                         </button>
                                     </div>

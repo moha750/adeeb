@@ -14,6 +14,7 @@ window.ImageCropper = (function() {
     let isResizing = false;
     let dragStart = { x: 0, y: 0 };
     let aspectRatio = null; // null = free, 16/9, 4/3, 1/1
+    let keyHandler = null;
 
     /**
      * فتح نافذة قص الصورة
@@ -46,62 +47,112 @@ window.ImageCropper = (function() {
      */
     function showCropperModal(imageSrc, options) {
         // إزالة أي modal سابق
+        const existingBackdrop = document.getElementById('imageCropperBackdrop');
+        if (existingBackdrop) existingBackdrop.remove();
         const existingModal = document.getElementById('imageCropperModal');
         if (existingModal) existingModal.remove();
 
+        const aspectClass = (isActive) => isActive ? 'btn btn-primary btn-sm cropper-aspect-btn' : 'btn btn-outline btn-sm cropper-aspect-btn';
+
         const modalHTML = `
-            <div id="imageCropperModal" class="image-cropper-modal">
-                <div class="image-cropper-backdrop"></div>
-                <div class="image-cropper-container">
-                    <div class="image-cropper-header">
-                        <h3><i class="fa-solid fa-crop"></i> قص الصورة</h3>
-                        <button type="button" class="image-cropper-close" id="cropperCloseBtn">
-                            <i class="fa-solid fa-times"></i>
-                        </button>
+            <div id="imageCropperBackdrop" class="modal-backdrop"></div>
+            <div id="imageCropperModal" class="modal modal-lg modal-cropper" role="dialog" aria-modal="true" aria-labelledby="cropperTitle">
+                <div class="modal-header">
+                    <div class="modal-header-content">
+                        <div class="modal-icon"><i class="fa-solid fa-crop-simple"></i></div>
+                        <h3 id="cropperTitle" class="modal-title">قص الصورة</h3>
                     </div>
-                    <div class="image-cropper-body">
-                        <div class="image-cropper-preview-container">
-                            <canvas id="cropperCanvas"></canvas>
-                            <div id="cropperOverlay" class="cropper-overlay">
-                                <div id="cropperSelection" class="cropper-selection">
-                                    <div class="cropper-handle nw"></div>
-                                    <div class="cropper-handle ne"></div>
-                                    <div class="cropper-handle sw"></div>
-                                    <div class="cropper-handle se"></div>
-                                    <div class="cropper-handle n"></div>
-                                    <div class="cropper-handle s"></div>
-                                    <div class="cropper-handle e"></div>
-                                    <div class="cropper-handle w"></div>
+                    <button type="button" class="modal-close" id="cropperCloseBtn" aria-label="إغلاق">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="cropper-toolbar">
+                        <div class="cropper-toolbar-hint">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>اسحب الإطار لتحريكه · اسحب المقابض لتغيير الحجم</span>
+                        </div>
+                        <div class="cropper-toolbar-actions">
+                            <button type="button" class="btn btn-outline btn-sm" id="cropperResetBtn" title="إعادة التعيين">
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>إعادة</span>
+                            </button>
+                            <button type="button" class="btn btn-outline btn-sm" id="cropperCenterBtn" title="توسيط التحديد">
+                                <i class="fa-solid fa-arrows-to-dot"></i>
+                                <span>توسيط</span>
+                            </button>
+                            <button type="button" class="btn btn-outline btn-sm" id="cropperMaxBtn" title="تحديد الصورة كاملة">
+                                <i class="fa-solid fa-expand"></i>
+                                <span>كامل</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="cropper-canvas-area">
+                        <canvas id="cropperCanvas"></canvas>
+                        <div id="cropperOverlay" class="cropper-overlay">
+                            <div id="cropperSelection" class="cropper-selection">
+                                <div class="cropper-dimensions-badge" id="cropperDimensionsBadge">
+                                    <i class="fa-solid fa-maximize"></i>
+                                    <span id="cropperDimensionsText">0 × 0</span>
+                                </div>
+                                <div class="cropper-handle nw"></div>
+                                <div class="cropper-handle ne"></div>
+                                <div class="cropper-handle sw"></div>
+                                <div class="cropper-handle se"></div>
+                                <div class="cropper-handle n"></div>
+                                <div class="cropper-handle s"></div>
+                                <div class="cropper-handle e"></div>
+                                <div class="cropper-handle w"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cropper-controls-row">
+                        <div class="cropper-controls">
+                            <span class="cropper-control-label">
+                                <i class="fa-solid fa-ruler-combined"></i> نسبة العرض
+                            </span>
+                            <div class="cropper-aspect-buttons" role="group" aria-label="نسبة العرض">
+                                <button type="button" class="${aspectClass(!aspectRatio)}" data-ratio="free">حر</button>
+                                <button type="button" class="${aspectClass(aspectRatio === 16/9)}" data-ratio="16:9">16:9</button>
+                                <button type="button" class="${aspectClass(aspectRatio === 4/3)}" data-ratio="4:3">4:3</button>
+                                <button type="button" class="${aspectClass(aspectRatio === 1)}" data-ratio="1:1">1:1</button>
+                            </div>
+                        </div>
+                        <div class="cropper-controls">
+                            <span class="cropper-control-label">
+                                <i class="fa-solid fa-eye"></i> معاينة مباشرة
+                            </span>
+                            <div class="cropper-preview-box">
+                                <canvas id="cropperPreviewCanvas" width="120" height="80"></canvas>
+                                <div class="cropper-preview-info">
+                                    <span class="cropper-preview-label">
+                                        <i class="fa-solid fa-crop"></i> النتيجة
+                                    </span>
+                                    <span class="cropper-preview-dims" id="cropperPreviewDims">— × —</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="image-cropper-controls">
-                            <div class="cropper-aspect-buttons">
-                                <button type="button" class="cropper-aspect-btn ${!aspectRatio ? 'active' : ''}" data-ratio="free">حر</button>
-                                <button type="button" class="cropper-aspect-btn ${aspectRatio === 16/9 ? 'active' : ''}" data-ratio="16:9">16:9</button>
-                                <button type="button" class="cropper-aspect-btn ${aspectRatio === 4/3 ? 'active' : ''}" data-ratio="4:3">4:3</button>
-                                <button type="button" class="cropper-aspect-btn ${aspectRatio === 1 ? 'active' : ''}" data-ratio="1:1">1:1</button>
-                            </div>
-                            <div class="cropper-preview-box">
-                                <span>معاينة:</span>
-                                <canvas id="cropperPreviewCanvas" width="120" height="80"></canvas>
-                            </div>
-                        </div>
                     </div>
-                    <div class="image-cropper-footer">
-                        <button type="button" class="btn btn-secondary" id="cropperCancelBtn">
-                            <i class="fa-solid fa-times"></i> إلغاء
-                        </button>
-                        <button type="button" class="btn btn-primary" id="cropperApplyBtn">
-                            <i class="fa-solid fa-check"></i> تطبيق القص
-                        </button>
-                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-slate btn-outline btn-md" id="cropperCancelBtn">
+                        <i class="fa-solid fa-xmark"></i> إلغاء
+                    </button>
+                    <button type="button" class="btn btn-primary btn-md" id="cropperApplyBtn">
+                        <i class="fa-solid fa-check"></i> تطبيق القص
+                    </button>
                 </div>
             </div>
         `;
 
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         document.body.classList.add('modal-open');
+
+        // تفعيل الحركات بعد إدراج العناصر
+        requestAnimationFrame(() => {
+            document.getElementById('imageCropperBackdrop')?.classList.add('active');
+            document.getElementById('imageCropperModal')?.classList.add('active');
+        });
 
         // تحميل الصورة
         originalImage = new Image();
@@ -168,7 +219,7 @@ window.ImageCropper = (function() {
     function updateCropSelection() {
         const selection = document.getElementById('cropperSelection');
         const overlay = document.getElementById('cropperOverlay');
-        
+
         if (!selection || !overlay) return;
 
         overlay.style.width = cropCanvas.width + 'px';
@@ -178,6 +229,70 @@ window.ImageCropper = (function() {
         selection.style.top = cropArea.y + 'px';
         selection.style.width = cropArea.width + 'px';
         selection.style.height = cropArea.height + 'px';
+
+        // تحديث شارة الأبعاد بالأبعاد الحقيقية للصورة الأصلية
+        const dimsText = document.getElementById('cropperDimensionsText');
+        const previewDims = document.getElementById('cropperPreviewDims');
+        if (dimsText && originalImage) {
+            const scaleX = originalImage.width / cropCanvas.width;
+            const scaleY = originalImage.height / cropCanvas.height;
+            const realW = Math.round(cropArea.width * scaleX);
+            const realH = Math.round(cropArea.height * scaleY);
+            dimsText.textContent = `${realW} × ${realH}`;
+            if (previewDims) previewDims.textContent = `${realW} × ${realH}`;
+        }
+    }
+
+    /**
+     * إعادة ضبط منطقة القص إلى الحجم الافتراضي
+     */
+    function resetCropArea() {
+        if (!cropCanvas) return;
+        const initialSize = Math.min(cropCanvas.width, cropCanvas.height) * 0.8;
+        cropArea = {
+            x: (cropCanvas.width - initialSize) / 2,
+            y: (cropCanvas.height - initialSize) / 2,
+            width: initialSize,
+            height: aspectRatio ? initialSize / aspectRatio : initialSize
+        };
+        if (cropArea.y + cropArea.height > cropCanvas.height) {
+            cropArea.height = cropCanvas.height - cropArea.y;
+            if (aspectRatio) cropArea.width = cropArea.height * aspectRatio;
+        }
+        updateCropSelection();
+        updatePreview();
+    }
+
+    /**
+     * توسيط منطقة القص دون تغيير أبعادها
+     */
+    function centerCropArea() {
+        if (!cropCanvas) return;
+        cropArea.x = (cropCanvas.width - cropArea.width) / 2;
+        cropArea.y = (cropCanvas.height - cropArea.height) / 2;
+        updateCropSelection();
+        updatePreview();
+    }
+
+    /**
+     * تكبير منطقة القص لتشمل الصورة كاملة (مع مراعاة النسبة)
+     */
+    function maximizeCropArea() {
+        if (!cropCanvas) return;
+        if (aspectRatio) {
+            const byWidth = { w: cropCanvas.width, h: cropCanvas.width / aspectRatio };
+            const byHeight = { w: cropCanvas.height * aspectRatio, h: cropCanvas.height };
+            const pick = byWidth.h <= cropCanvas.height ? byWidth : byHeight;
+            cropArea.width = pick.w;
+            cropArea.height = pick.h;
+        } else {
+            cropArea.width = cropCanvas.width;
+            cropArea.height = cropCanvas.height;
+        }
+        cropArea.x = (cropCanvas.width - cropArea.width) / 2;
+        cropArea.y = (cropCanvas.height - cropArea.height) / 2;
+        updateCropSelection();
+        updatePreview();
     }
 
     /**
@@ -229,16 +344,37 @@ window.ImageCropper = (function() {
         // إغلاق
         document.getElementById('cropperCloseBtn').onclick = closeCropper;
         document.getElementById('cropperCancelBtn').onclick = closeCropper;
-        modal.querySelector('.image-cropper-backdrop').onclick = closeCropper;
+        document.getElementById('imageCropperBackdrop').onclick = closeCropper;
 
         // تطبيق القص
         document.getElementById('cropperApplyBtn').onclick = () => applyCrop(options);
 
+        // أزرار شريط الأدوات
+        document.getElementById('cropperResetBtn').onclick = resetCropArea;
+        document.getElementById('cropperCenterBtn').onclick = centerCropArea;
+        document.getElementById('cropperMaxBtn').onclick = maximizeCropArea;
+
+        // اختصارات لوحة المفاتيح
+        keyHandler = function(e) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeCropper();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                applyCrop(options);
+            }
+        };
+        document.addEventListener('keydown', keyHandler);
+
         // أزرار نسبة العرض
         modal.querySelectorAll('.cropper-aspect-btn').forEach(btn => {
             btn.onclick = function() {
-                modal.querySelectorAll('.cropper-aspect-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
+                modal.querySelectorAll('.cropper-aspect-btn').forEach(b => {
+                    b.classList.remove('btn-primary');
+                    b.classList.add('btn-outline');
+                });
+                this.classList.remove('btn-outline');
+                this.classList.add('btn-primary');
 
                 const ratio = this.dataset.ratio;
                 if (ratio === 'free') {
@@ -483,16 +619,29 @@ window.ImageCropper = (function() {
      */
     function closeCropper() {
         const modal = document.getElementById('imageCropperModal');
+        const backdrop = document.getElementById('imageCropperBackdrop');
+
         if (modal) {
-            modal.remove();
+            modal.classList.remove('active');
+            modal.classList.add('closing');
         }
-        document.body.classList.remove('modal-open');
-        
+        backdrop?.classList.remove('active');
+
+        setTimeout(() => {
+            modal?.remove();
+            backdrop?.remove();
+            document.body.classList.remove('modal-open');
+        }, 280);
+
         // تنظيف المستمعات
         document.onmousemove = null;
         document.onmouseup = null;
         document.ontouchmove = null;
         document.ontouchend = null;
+        if (keyHandler) {
+            document.removeEventListener('keydown', keyHandler);
+            keyHandler = null;
+        }
     }
 
     return {

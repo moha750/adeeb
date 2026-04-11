@@ -116,8 +116,7 @@
             this.questions = [];         // أسئلة الاستبيان الحالي
             this.responses = [];         // استجابات الاستبيان الحالي
             this.activeTab = 'overview';
-            this.responsesView = 'cards';
-            this.responsesFilters = { status: 'completed', search: '', sort: 'newest' };
+            this.responsesFilters = { status: '', search: '', sort: 'newest' };
         }
 
         // نقطة الدخول من dashboard.js
@@ -150,7 +149,7 @@
                 const root = document.getElementById('ra-root');
                 if (root) root.innerHTML = this.renderDetailSkeleton();
 
-                const [{ data: survey }, { data: questions }, { data: responses }] = await Promise.all([
+                const [surveyRes, questionsRes, responsesRes] = await Promise.all([
                     sb.from('surveys').select('*').eq('id', surveyId).single(),
                     sb.from('survey_questions').select('*').eq('survey_id', surveyId).order('question_order'),
                     sb.from('survey_responses')
@@ -159,13 +158,35 @@
                         .order('created_at', { ascending: false })
                 ]);
 
-                if (!survey) throw new Error('Survey not found');
+                if (surveyRes.error) throw surveyRes.error;
+                if (!surveyRes.data) throw new Error('Survey not found');
+
+                const survey = surveyRes.data;
+                const questions = questionsRes.data;
+                const responses = responsesRes.data;
 
                 this.currentSurvey = survey;
                 this.questions = questions || [];
                 this.responses = this.markAbandoned(responses || []);
                 this.activeTab = 'overview';
-                this.responsesFilters = { status: 'completed', search: '', sort: 'newest' };
+                this.responsesFilters = { status: '', search: '', sort: 'newest' };
+
+                // تحديد إذا كان المستخدم هو مالك الاستبيان أم مستلم مشاركة
+                const effectiveUserId = await window.AuthManager.getEffectiveUserId();
+                this.isOwner = (survey.created_by === effectiveUserId);
+
+                // جلب معلومات من شارك الاستبيان (إذا لم يكن المالك)
+                if (!this.isOwner) {
+                    const { data: shareInfo } = await sb
+                        .from('survey_sharing')
+                        .select('*, shared_by_profile:profiles!survey_sharing_shared_by_profiles_fkey(full_name)')
+                        .eq('survey_id', surveyId)
+                        .eq('shared_with', effectiveUserId)
+                        .single();
+                    this.shareInfo = shareInfo;
+                } else {
+                    this.shareInfo = null;
+                }
 
                 this.renderDetail();
             } catch (err) {
@@ -212,12 +233,16 @@
                             <div class="ra-skeleton" style="width:40%;height:12px;"></div>
                         </div>
                     </div>
-                    <div class="ra-kpi-strip">
+                    <div class="stats-grid">
                         ${Array(6).fill(0).map(() => `
-                            <div class="ra-skeleton-card">
-                                <div class="ra-skeleton" style="height:46px;width:46px;border-radius:12px;"></div>
-                                <div class="ra-skeleton" style="height:24px;width:60%;"></div>
-                                <div class="ra-skeleton" style="height:14px;width:40%;"></div>
+                            <div class="stat-card">
+                                <div class="stat-card-wrapper">
+                                    <div class="ra-skeleton" style="height:64px;width:64px;border-radius:16px;"></div>
+                                    <div class="stat-content">
+                                        <div class="ra-skeleton" style="height:28px;width:60%;margin-bottom:8px;"></div>
+                                        <div class="ra-skeleton" style="height:14px;width:40%;"></div>
+                                    </div>
+                                </div>
                             </div>
                         `).join('')}
                     </div>
@@ -268,40 +293,69 @@
                         </div>
                     </div>
 
-                    <!-- KPI strip -->
-                    <div class="ra-kpi-strip">
-                        ${this.renderKpi('blue',   'fa-users',         totalResponses, 'إجمالي الاستجابات')}
-                        ${this.renderKpi('green',  'fa-check-circle',  completed.length, 'مكتملة')}
-                        ${this.renderKpi('amber',  'fa-spinner',       inProgress.length, 'قيد التقدم')}
-                        ${this.renderKpi('red',    'fa-ban',           abandoned.length, 'متروكة')}
-                        ${this.renderKpi('indigo', 'fa-percent',       completionRate + '%', 'معدل الإكمال')}
-                        ${this.renderKpi('purple', 'fa-clock',         timeStats.averageLabel, 'متوسط وقت الإكمال')}
+                    ${!this.isOwner && this.shareInfo ? `
+                    <!-- شريط تنبيه: مشارك معك -->
+                    <div class="ra-shared-banner">
+                        <i class="fa-solid fa-share-nodes"></i>
+                        <span>هذا الاستبيان مشارك معك من <strong>${escapeHtml(this.shareInfo.shared_by_profile?.full_name || 'غير معروف')}</strong></span>
+                        <span class="ra-shared-banner__perm">
+                            <i class="fa-solid ${this.shareInfo.permission_level === 'view_download' ? 'fa-download' : 'fa-eye'}"></i>
+                            ${this.shareInfo.permission_level === 'view_download' ? 'عرض + تحميل' : 'عرض فقط'}
+                        </span>
+                    </div>
+                    ` : ''}
+
+                    <!-- KPI stats -->
+                    <div class="stats-grid">
+                        ${this.renderKpi('#3b82f6', 'fa-users',         totalResponses, 'إجمالي الاستجابات')}
+                        ${this.renderKpi('#10b981', 'fa-check-circle',  completed.length, 'مكتملة')}
+                        ${this.renderKpi('#f59e0b', 'fa-spinner',       inProgress.length, 'قيد التقدم')}
+                        ${this.renderKpi('#ef4444', 'fa-ban',           abandoned.length, 'متروكة')}
+                        ${this.renderKpi('#14b8a6', 'fa-percent',       completionRate + '%', 'معدل الإكمال')}
+                        ${this.renderKpi('#8b5cf6', 'fa-clock',         timeStats.averageLabel, 'متوسط وقت الإكمال')}
                     </div>
 
                     <!-- Tabs -->
-                    <div class="ra-tabs">
-                        <div class="ra-tabs__nav" role="tablist">
-                            <button class="ra-tab ${this.activeTab === 'overview' ? 'is-active' : ''}" data-tab="overview">
-                                <i class="fa-solid fa-chart-pie"></i>نظرة عامة
-                            </button>
-                            <button class="ra-tab ${this.activeTab === 'questions' ? 'is-active' : ''}" data-tab="questions">
-                                <i class="fa-solid fa-list-check"></i>تحليل الأسئلة
-                                <span class="ra-tab__count">${this.questions.length}</span>
-                            </button>
-                            <button class="ra-tab ${this.activeTab === 'responses' ? 'is-active' : ''}" data-tab="responses">
-                                <i class="fa-solid fa-comments"></i>الاستجابات
-                                <span class="ra-tab__count">${totalResponses}</span>
-                            </button>
-                        </div>
+                    <div class="settings-segmented-nav" role="tablist">
+                        <button class="settings-seg-btn ${this.activeTab === 'overview' ? 'active' : ''}" data-tab="overview">
+                            <span class="settings-seg-btn__icon"><i class="fa-solid fa-chart-pie"></i></span>
+                            <span class="settings-seg-btn__label">نظرة عامة</span>
+                        </button>
+                        <button class="settings-seg-btn ${this.activeTab === 'questions' ? 'active' : ''}" data-tab="questions">
+                            <span class="settings-seg-btn__icon"><i class="fa-solid fa-list-check"></i></span>
+                            <span class="settings-seg-btn__label">
+                                تحليل الأسئلة
+                                <span class="settings-seg-btn__count">${this.questions.length}</span>
+                            </span>
+                        </button>
+                        <button class="settings-seg-btn ${this.activeTab === 'responses' ? 'active' : ''}" data-tab="responses">
+                            <span class="settings-seg-btn__icon"><i class="fa-solid fa-comments"></i></span>
+                            <span class="settings-seg-btn__label">
+                                الاستجابات
+                                <span class="settings-seg-btn__count">${totalResponses}</span>
+                            </span>
+                        </button>
+                        <button class="settings-seg-btn ${this.activeTab === 'responses_table' ? 'active' : ''}" data-tab="responses_table">
+                            <span class="settings-seg-btn__icon"><i class="fa-solid fa-table"></i></span>
+                            <span class="settings-seg-btn__label">
+                                الجدول
+                                <span class="settings-seg-btn__count">${totalResponses}</span>
+                            </span>
+                        </button>
+                    </div>
 
-                        <div class="ra-tabs__panel ${this.activeTab === 'overview' ? 'is-active' : ''}" data-panel="overview">
+                    <div class="tabs-content">
+                        <div class="tab-content" data-panel="overview" style="display:${this.activeTab === 'overview' ? 'block' : 'none'};">
                             ${this.renderOverviewPanel(survey, { completed, inProgress, abandoned, completionRate, timeStats })}
                         </div>
-                        <div class="ra-tabs__panel ${this.activeTab === 'questions' ? 'is-active' : ''}" data-panel="questions">
+                        <div class="tab-content" data-panel="questions" style="display:${this.activeTab === 'questions' ? 'block' : 'none'};">
                             ${this.renderQuestionsPanel()}
                         </div>
-                        <div class="ra-tabs__panel ${this.activeTab === 'responses' ? 'is-active' : ''}" data-panel="responses">
+                        <div class="tab-content" data-panel="responses" style="display:${this.activeTab === 'responses' ? 'block' : 'none'};">
                             ${this.renderResponsesPanel()}
+                        </div>
+                        <div class="tab-content" data-panel="responses_table" style="display:${this.activeTab === 'responses_table' ? 'block' : 'none'};">
+                            ${this.renderResponsesTablePanel()}
                         </div>
                     </div>
                 </div>
@@ -318,11 +372,13 @@
 
         renderKpi(color, icon, value, label) {
             return `
-                <div class="ra-kpi ra-kpi--${color}">
-                    <div class="ra-kpi__icon"><i class="fa-solid ${icon}"></i></div>
-                    <div class="ra-kpi__body">
-                        <div class="ra-kpi__value">${value}</div>
-                        <div class="ra-kpi__label">${label}</div>
+                <div class="stat-card" style="--stat-color: ${color};">
+                    <div class="stat-card-wrapper">
+                        <div class="stat-icon"><i class="fa-solid ${icon}"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value">${value}</div>
+                            <div class="stat-label">${label}</div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -352,14 +408,14 @@
 
             return `
                 <div class="ra-overview-grid">
-                    <div style="display:flex;flex-direction:column;gap:1.1rem;">
+                    <div class="ra-overview-col">
                         <!-- قمع الإكمال -->
-                        <div class="ra-panel">
-                            <div class="ra-panel__header">
-                                <h3 class="ra-panel__title"><i class="fa-solid fa-filter"></i> قمع الإكمال</h3>
-                                <span class="ra-panel__sub">${total} استجابة إجمالية</span>
+                        <div class="card ra-panel">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-filter"></i> نسبة الإكمال</h3>
+                                <span class="badge badge--info">${total} استجابة</span>
                             </div>
-                            <div class="ra-panel__body">
+                            <div class="card-body">
                                 ${total === 0 ? this.emptyBlock('لم يتم استلام أي استجابات بعد', 'fa-inbox') : `
                                     <div class="ra-funnel">
                                         ${funnel.map(step => `
@@ -379,12 +435,12 @@
                         </div>
 
                         <!-- خط الزمني -->
-                        <div class="ra-panel">
-                            <div class="ra-panel__header">
-                                <h3 class="ra-panel__title"><i class="fa-solid fa-chart-column"></i> الاستجابات عبر الوقت</h3>
-                                <span class="ra-panel__sub">آخر ${timeline.length} يوم</span>
+                        <div class="card card--purple ra-panel">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-chart-column"></i> الاستجابات عبر الوقت</h3>
+                                <span class="ra-card-sub">آخر ${timeline.length} يوم</span>
                             </div>
-                            <div class="ra-panel__body">
+                            <div class="card-body">
                                 ${timeline.length === 0 ? this.emptyBlock('لا توجد بيانات كافية', 'fa-chart-line') : `
                                     <div class="ra-timeline">
                                         ${(() => {
@@ -408,13 +464,13 @@
                         </div>
                     </div>
 
-                    <div style="display:flex;flex-direction:column;gap:1.1rem;">
+                    <div class="ra-overview-col">
                         <!-- معلومات الاستبيان -->
-                        <div class="ra-panel">
-                            <div class="ra-panel__header">
-                                <h3 class="ra-panel__title"><i class="fa-solid fa-circle-info"></i> معلومات الاستبيان</h3>
+                        <div class="card card--neutral ra-panel">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-circle-info"></i> معلومات الاستبيان</h3>
                             </div>
-                            <div class="ra-panel__body">
+                            <div class="card-body">
                                 <div class="ra-info-list">
                                     ${this.infoRow('fa-question',         'عدد الأسئلة',     this.questions.length)}
                                     ${this.infoRow('fa-eye',              'المشاهدات',       (survey.total_views || 0).toLocaleString('ar-SA'))}
@@ -426,11 +482,11 @@
                         </div>
 
                         <!-- توزيع الأجهزة -->
-                        <div class="ra-panel">
-                            <div class="ra-panel__header">
-                                <h3 class="ra-panel__title"><i class="fa-solid fa-mobile-screen-button"></i> الأجهزة المستخدمة</h3>
+                        <div class="card card--teal ra-panel">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-mobile-screen-button"></i> الأجهزة المستخدمة</h3>
                             </div>
-                            <div class="ra-panel__body">
+                            <div class="card-body">
                                 ${this.renderDeviceDonut(devices)}
                             </div>
                         </div>
@@ -540,19 +596,19 @@
             }
 
             return `
-                <article class="ra-q-card">
-                    <header class="ra-q-card__head">
-                        <div class="ra-q-card__num">${order}</div>
-                        <div class="ra-q-card__main">
-                            <h3 class="ra-q-card__title">${escapeHtml(question.question_text)}</h3>
-                            <div class="ra-q-card__meta">
-                                <span class="ra-tag ra-tag--blue"><i class="fa-solid fa-tag"></i>${TYPE_LABELS[question.question_type] || question.question_type}</span>
-                                <span class="ra-tag"><i class="fa-solid fa-comment"></i>${answers.length} إجابة</span>
-                                ${question.is_required ? '<span class="ra-tag ra-tag--green"><i class="fa-solid fa-asterisk"></i>إجباري</span>' : ''}
-                            </div>
+                <article class="card ra-q-card">
+                    <div class="card-header">
+                        <h3>
+                            <i class="ra-q-num">${order}</i>
+                            ${escapeHtml(question.question_text)}
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="ra-q-meta">
+                            <span class="ra-tag ra-tag--blue"><i class="fa-solid fa-tag"></i>${TYPE_LABELS[question.question_type] || question.question_type}</span>
+                            <span class="ra-tag"><i class="fa-solid fa-comment"></i>${answers.length} إجابة</span>
+                            ${question.is_required ? '<span class="ra-tag ra-tag--green"><i class="fa-solid fa-asterisk"></i>إجباري</span>' : ''}
                         </div>
-                    </header>
-                    <div class="ra-q-card__body">
                         ${body}
                     </div>
                 </article>
@@ -709,64 +765,80 @@
 
         // ─────────── لوحة الاستجابات ───────────
 
+        renderResponsesFiltersBar(suffix) {
+            const f = this.responsesFilters;
+            return `
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="ra-resp-search-${suffix}" data-resp-filter="search" placeholder="ابحث عن مستجيب..." value="${escapeHtml(f.search)}" />
+                    </div>
+                    <select class="filter-select" id="ra-resp-status-${suffix}" data-resp-filter="status">
+                        <option value="">جميع الحالات</option>
+                        <option value="completed"  ${f.status === 'completed'  ? 'selected' : ''}>المكتملة</option>
+                        <option value="in_progress" ${f.status === 'in_progress' ? 'selected' : ''}>قيد التقدم</option>
+                        <option value="abandoned"  ${f.status === 'abandoned'  ? 'selected' : ''}>المتروكة</option>
+                    </select>
+                    <select class="filter-select" id="ra-resp-sort-${suffix}" data-resp-filter="sort">
+                        <option value="newest"  ${f.sort === 'newest'  ? 'selected' : ''}>الأحدث أولاً</option>
+                        <option value="oldest"  ${f.sort === 'oldest'  ? 'selected' : ''}>الأقدم أولاً</option>
+                        <option value="fastest" ${f.sort === 'fastest' ? 'selected' : ''}>الأسرع</option>
+                        <option value="slowest" ${f.sort === 'slowest' ? 'selected' : ''}>الأبطأ</option>
+                    </select>
+                </div>
+            `;
+        }
+
         renderResponsesPanel() {
             if (!this.responses.length) {
                 return this.emptyBlock('لم يتم استلام أي استجابات بعد', 'fa-inbox');
             }
 
             return `
-                <div class="ra-responses-toolbar">
-                    <div class="ra-search" style="flex:1 1 220px;">
-                        <input type="text" id="ra-resp-search" placeholder="ابحث عن مستجيب..." value="${escapeHtml(this.responsesFilters.search)}" />
-                        <i class="fa-solid fa-search"></i>
+                ${this.renderResponsesFiltersBar('cards')}
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-comments"></i> الاستجابات</h3>
                     </div>
-                    <select class="ra-select" id="ra-resp-status">
-                        <option value="">جميع الحالات</option>
-                        <option value="completed" ${this.responsesFilters.status === 'completed' ? 'selected' : ''}>المكتملة</option>
-                        <option value="in_progress" ${this.responsesFilters.status === 'in_progress' ? 'selected' : ''}>قيد التقدم</option>
-                        <option value="abandoned" ${this.responsesFilters.status === 'abandoned' ? 'selected' : ''}>المتروكة</option>
-                    </select>
-                    <select class="ra-select" id="ra-resp-sort">
-                        <option value="newest"  ${this.responsesFilters.sort === 'newest'  ? 'selected' : ''}>الأحدث أولاً</option>
-                        <option value="oldest"  ${this.responsesFilters.sort === 'oldest'  ? 'selected' : ''}>الأقدم أولاً</option>
-                        <option value="fastest" ${this.responsesFilters.sort === 'fastest' ? 'selected' : ''}>الأسرع</option>
-                        <option value="slowest" ${this.responsesFilters.sort === 'slowest' ? 'selected' : ''}>الأبطأ</option>
-                    </select>
-                    <div class="ra-view-toggle">
-                        <button type="button" class="${this.responsesView === 'cards' ? 'is-active' : ''}" data-view="cards">
-                            <i class="fa-solid fa-grip"></i> بطاقات
-                        </button>
-                        <button type="button" class="${this.responsesView === 'table' ? 'is-active' : ''}" data-view="table">
-                            <i class="fa-solid fa-table"></i> جدول
-                        </button>
+                    <div class="card-body">
+                        <div id="ra-resp-content"></div>
                     </div>
                 </div>
-                <div id="ra-resp-content"></div>
+            `;
+        }
+
+        renderResponsesTablePanel() {
+            if (!this.responses.length) {
+                return this.emptyBlock('لم يتم استلام أي استجابات بعد', 'fa-inbox');
+            }
+
+            return `
+                ${this.renderResponsesFiltersBar('table')}
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-table"></i> جدول الاستجابات</h3>
+                    </div>
+                    <div class="card-body" id="ra-resp-table-content"></div>
+                </div>
             `;
         }
 
         bindResponsesEvents() {
-            const search = document.getElementById('ra-resp-search');
-            const status = document.getElementById('ra-resp-status');
-            const sort = document.getElementById('ra-resp-sort');
-            const viewBtns = document.querySelectorAll('.ra-view-toggle button');
+            const apply = () => {
+                this.renderResponsesContent();
+                this.renderResponsesTableContent();
+            };
 
-            const apply = () => this.renderResponsesContent();
-
-            search?.addEventListener('input', (e) => { this.responsesFilters.search = e.target.value; apply(); });
-            status?.addEventListener('change', (e) => { this.responsesFilters.status = e.target.value; apply(); });
-            sort?.addEventListener('change', (e) => { this.responsesFilters.sort = e.target.value; apply(); });
-
-            viewBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    this.responsesView = btn.dataset.view;
-                    viewBtns.forEach(b => b.classList.remove('is-active'));
-                    btn.classList.add('is-active');
+            document.querySelectorAll('[data-resp-filter]').forEach(el => {
+                const key = el.dataset.respFilter;
+                const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+                el.addEventListener(evt, (e) => {
+                    this.responsesFilters[key] = e.target.value;
                     apply();
                 });
             });
 
-            // Render initial content
+            // Render initial content for whichever panel is currently visible
             apply();
         }
 
@@ -799,17 +871,30 @@
                 return;
             }
 
-            if (this.responsesView === 'table') {
-                container.innerHTML = this.renderResponsesTable(list);
-            } else {
-                container.innerHTML = `
-                    <div class="ra-resp-grid">
-                        ${list.map(r => this.renderResponseCard(r)).join('')}
-                    </div>
-                `;
+            container.innerHTML = `
+                <div class="uc-grid">
+                    ${list.map(r => this.renderResponseCard(r)).join('')}
+                </div>
+            `;
+
+            this.bindResponseOpenHandlers(container);
+        }
+
+        renderResponsesTableContent() {
+            const container = document.getElementById('ra-resp-table-content');
+            if (!container) return;
+
+            const list = this.getFilteredResponses();
+            if (!list.length) {
+                container.innerHTML = this.emptyBlock('لا توجد استجابات تطابق الفلاتر', 'fa-filter-circle-xmark');
+                return;
             }
 
-            // ربط النقر على البطاقات/الأزرار
+            container.innerHTML = this.renderResponsesTable(list);
+            this.bindResponseOpenHandlers(container);
+        }
+
+        bindResponseOpenHandlers(container) {
             container.querySelectorAll('[data-action="open-response"]').forEach(el => {
                 el.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -822,6 +907,9 @@
         renderResponseCard(response) {
             const status = response.status;
             const statusLabel = status === 'completed' ? 'مكتملة' : status === 'in_progress' ? 'قيد التقدم' : 'متروكة';
+            const statusIcon  = status === 'completed' ? 'fa-circle-check' : status === 'in_progress' ? 'fa-hourglass-half' : 'fa-circle-xmark';
+            const variant = status === 'completed' ? 'uc-card--success' : status === 'in_progress' ? 'uc-card--warning' : 'uc-card--danger';
+            const btnClass = status === 'completed' ? 'btn-success' : status === 'in_progress' ? 'btn-warning' : 'btn-danger';
             const userName = response.user?.full_name || (response.is_anonymous ? 'مستجيب مجهول' : 'غير معروف');
             const initial = (userName || '?').trim().charAt(0).toUpperCase();
             const date = formatDate(response.created_at);
@@ -830,64 +918,94 @@
             const deviceIcon = device === 'mobile' ? 'fa-mobile' : device === 'tablet' ? 'fa-tablet' : device === 'desktop' ? 'fa-desktop' : 'fa-circle-question';
 
             return `
-                <article class="ra-resp-card" data-status="${status}" data-action="open-response" data-response-id="${response.id}">
-                    <div class="ra-resp-card__top">
-                        <div class="ra-resp-avatar">${escapeHtml(initial)}</div>
-                        <div style="min-width:0;flex:1;">
-                            <h4 class="ra-resp-card__name">${escapeHtml(userName)}</h4>
-                            <div class="ra-resp-card__sub">${date}</div>
+                <article class="uc-card ${variant}">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon"><i class="fa-solid fa-user"></i></div>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${escapeHtml(userName)}</h3>
+                                <span class="uc-card__badge"><i class="fa-solid ${statusIcon}"></i>${statusLabel}</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="ra-resp-card__chips">
-                        <span class="ra-chip ra-chip--status"><i class="fa-solid fa-circle"></i>${statusLabel}</span>
-                        <span class="ra-chip"><i class="fa-solid fa-clock"></i>${duration}</span>
-                        <span class="ra-chip"><i class="fa-solid ${deviceIcon}"></i>${this.deviceLabel(device)}</span>
+                    <div class="uc-card__body">
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">التاريخ</span>
+                                <span class="uc-card__info-value">${date}</span>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-clock"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">المدة</span>
+                                <span class="uc-card__info-value">${duration}</span>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid ${deviceIcon}"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">الجهاز</span>
+                                <span class="uc-card__info-value">${this.deviceLabel(device)}</span>
+                            </div>
+                        </div>
                     </div>
-                    <button type="button" class="ra-resp-card__cta" data-action="open-response" data-response-id="${response.id}">
-                        <i class="fa-solid fa-eye"></i> عرض الإجابات
-                    </button>
+                    <div class="uc-card__footer">
+                        <button type="button" class="btn ${btnClass}" data-action="open-response" data-response-id="${response.id}">
+                            <i class="fa-solid fa-eye"></i> عرض الإجابات
+                        </button>
+                    </div>
                 </article>
             `;
         }
 
         renderResponsesTable(list) {
+            const questions = this.questions || [];
+
             const rows = list.map((r, i) => {
                 const userName = r.user?.full_name || (r.is_anonymous ? 'مستجيب مجهول' : 'غير معروف');
                 const status = r.status;
                 const statusLabel = status === 'completed' ? 'مكتملة' : status === 'in_progress' ? 'قيد التقدم' : 'متروكة';
-                const statusColor = status === 'completed' ? 'var(--ra-green)' : status === 'in_progress' ? 'var(--ra-amber)' : 'var(--ra-red)';
+                const statusBadge = status === 'completed' ? 'uc-badge--success' : status === 'in_progress' ? 'uc-badge--warning' : 'uc-badge--danger';
+
+                const answersByQuestion = new Map();
+                (r.survey_answers || []).forEach(a => answersByQuestion.set(a.question_id, a));
+
+                const questionCells = questions.map(q => {
+                    const a = answersByQuestion.get(q.id);
+                    const value = a
+                        ? this.formatAnswerForDisplay(a, q)
+                        : `<span class="cell-muted"><i class="fa-solid fa-minus"></i></span>`;
+                    return `<td>${value}</td>`;
+                }).join('');
+
                 return `
                     <tr>
                         <td>${i + 1}</td>
                         <td>${escapeHtml(userName)}</td>
-                        <td><span class="ra-chip" style="background:${this.rgbaFromVar(status)};color:${statusColor};"><i class="fa-solid fa-circle" style="font-size:0.55rem;"></i>${statusLabel}</span></td>
+                        <td><span class="uc-badge ${statusBadge}"><i class="fa-solid fa-circle" style="font-size:0.55rem;"></i>${statusLabel}</span></td>
                         <td>${formatDate(r.created_at)}</td>
-                        <td>${formatDuration(r.time_spent_seconds)}</td>
-                        <td>${this.deviceLabel(r.device_type || 'unknown')}</td>
-                        <td>
-                            <div class="ra-resp-table-actions">
-                                <button class="ra-icon-btn" data-action="open-response" data-response-id="${r.id}" title="عرض">
-                                    <i class="fa-solid fa-eye"></i>
-                                </button>
-                            </div>
-                        </td>
+                        ${questionCells}
                     </tr>
                 `;
             }).join('');
 
+            const questionHeaders = questions
+                .map(q => `<th title="${escapeHtml(q.question_text)}">${escapeHtml(q.question_text)}</th>`)
+                .join('');
+
             return `
-                <div class="ra-resp-table-wrap">
-                    <div class="ra-resp-table-scroll">
-                        <table class="ra-resp-table">
+                <div class="data-table-wrap">
+                    <div class="data-table-scroll">
+                        <table class="data-table data-table--striped data-table--with-index">
                             <thead>
                                 <tr>
                                     <th>#</th>
                                     <th>المستجيب</th>
                                     <th>الحالة</th>
                                     <th>التاريخ</th>
-                                    <th>الوقت</th>
-                                    <th>الجهاز</th>
-                                    <th></th>
+                                    ${questionHeaders}
                                 </tr>
                             </thead>
                             <tbody>${rows}</tbody>
@@ -907,45 +1025,62 @@
             const userName = response.user?.full_name || (response.is_anonymous ? 'مستجيب مجهول' : 'غير معروف');
             const status = response.status;
             const statusLabel = status === 'completed' ? 'مكتملة' : status === 'in_progress' ? 'قيد التقدم' : 'متروكة';
+            const statusType  = status === 'completed' ? 'success' : status === 'in_progress' ? 'warning' : 'danger';
+            const statusBox   = status === 'completed' ? 'box-success' : status === 'in_progress' ? 'box-warning' : 'box-danger';
+            const statusIcon  = status === 'completed' ? 'fa-circle-check' : status === 'in_progress' ? 'fa-hourglass-half' : 'fa-circle-xmark';
 
-            const answers = (response.survey_answers || [])
-                .map(a => {
-                    const q = this.questions.find(qq => qq.id === a.question_id);
-                    if (!q) return '';
+            const answersByQuestion = new Map();
+            (response.survey_answers || []).forEach(a => answersByQuestion.set(a.question_id, a));
+
+            const answerItems = (this.questions || [])
+                .map(q => {
+                    const a = answersByQuestion.get(q.id);
+                    const valueHtml = a
+                        ? this.formatAnswerForDisplay(a, q)
+                        : `<span class="modal-detail-empty"><i class="fa-solid fa-ban"></i> لم تتم الإجابة</span>`;
                     return `
-                        <div class="ra-modal-answer">
-                            <div class="ra-modal-answer__q">
-                                <i class="fa-solid fa-circle-question"></i>
-                                <span>${escapeHtml(q.question_text)}</span>
-                            </div>
-                            <div class="ra-modal-answer__a">${this.formatAnswerForDisplay(a, q)}</div>
+                        <div class="modal-detail-item${a ? '' : ' modal-detail-item--empty'}">
+                            <span class="modal-detail-label">${escapeHtml(q.question_text)}</span>
+                            <span class="modal-detail-value">${valueHtml}</span>
                         </div>
                     `;
                 }).join('');
 
             const html = `
-                <div class="ra-modal-detail">
-                    <div class="ra-modal-detail__head">
-                        <div class="ra-modal-detail__cell">
-                            <span class="ra-modal-detail__cell-label"><i class="fa-solid fa-user"></i>المستجيب</span>
-                            <span class="ra-modal-detail__cell-value">${escapeHtml(userName)}</span>
+                <div class="modal-info-box ${statusBox}">
+                    <i class="fa-solid ${statusIcon}"></i>
+                    <span>حالة هذه الاستجابة: <strong>${statusLabel}</strong></span>
+                </div>
+
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-id-card"></i> معلومات الاستجابة</h3>
+                    <div class="modal-detail-grid">
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">المستجيب</span>
+                            <span class="modal-detail-value">${escapeHtml(userName)}</span>
                         </div>
-                        <div class="ra-modal-detail__cell">
-                            <span class="ra-modal-detail__cell-label"><i class="fa-solid fa-flag"></i>الحالة</span>
-                            <span class="ra-modal-detail__cell-value">${statusLabel}</span>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">الحالة</span>
+                            <span class="modal-detail-value">${statusLabel}</span>
                         </div>
-                        <div class="ra-modal-detail__cell">
-                            <span class="ra-modal-detail__cell-label"><i class="fa-solid fa-calendar"></i>التاريخ</span>
-                            <span class="ra-modal-detail__cell-value">${formatDate(response.created_at)}</span>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">التاريخ</span>
+                            <span class="modal-detail-value">${formatDate(response.created_at)}</span>
                         </div>
-                        <div class="ra-modal-detail__cell">
-                            <span class="ra-modal-detail__cell-label"><i class="fa-solid fa-clock"></i>المدة</span>
-                            <span class="ra-modal-detail__cell-value">${formatDuration(response.time_spent_seconds)}</span>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">المدة</span>
+                            <span class="modal-detail-value">${formatDuration(response.time_spent_seconds)}</span>
                         </div>
                     </div>
-                    <div class="ra-modal-detail__answers">
-                        ${answers || this.emptyBlock('لا توجد إجابات', 'fa-comment-slash')}
-                    </div>
+                </div>
+
+                <hr class="modal-divider">
+
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-comments"></i> الإجابات</h3>
+                    ${(this.questions && this.questions.length)
+                        ? `<div class="modal-detail-grid">${answerItems}</div>`
+                        : this.emptyBlock('لا توجد أسئلة في هذا الاستبيان', 'fa-comment-slash')}
                 </div>
             `;
 
@@ -954,15 +1089,20 @@
                     title: 'تفاصيل الاستجابة',
                     html,
                     size: 'lg',
+                    type: statusType,
+                    iconClass: `fa-solid ${statusIcon}`,
                     showClose: true
                 });
             } else {
                 const modal = document.createElement('div');
                 modal.className = 'modal-backdrop active';
                 modal.innerHTML = `
-                    <div class="modal modal-lg active">
+                    <div class="modal modal-lg modal-${statusType} active">
                         <div class="modal-header">
-                            <h3>تفاصيل الاستجابة</h3>
+                            <div class="modal-icon"><i class="fa-solid ${statusIcon}"></i></div>
+                            <div class="modal-header-content">
+                                <h2 class="modal-title">تفاصيل الاستجابة</h2>
+                            </div>
                             <button class="modal-close" type="button"><i class="fa-solid fa-xmark"></i></button>
                         </div>
                         <div class="modal-body">${html}</div>
@@ -1036,17 +1176,20 @@
             });
 
             document.getElementById('ra-export-btn')?.addEventListener('click', () => this.openExportModal());
+            // share button removed from header – sharing is now done from survey cards
 
             // التبويبات
-            document.querySelectorAll('.ra-tab').forEach(btn => {
+            const raRoot = document.getElementById('ra-root');
+            raRoot?.querySelectorAll('.settings-segmented-nav .settings-seg-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     this.activeTab = btn.dataset.tab;
-                    document.querySelectorAll('.ra-tab').forEach(b => b.classList.remove('is-active'));
-                    document.querySelectorAll('.ra-tabs__panel').forEach(p => p.classList.remove('is-active'));
-                    btn.classList.add('is-active');
-                    document.querySelector(`.ra-tabs__panel[data-panel="${this.activeTab}"]`)?.classList.add('is-active');
+                    raRoot.querySelectorAll('.settings-segmented-nav .settings-seg-btn').forEach(b => b.classList.remove('active'));
+                    raRoot.querySelectorAll('.tabs-content > .tab-content').forEach(p => { p.style.display = 'none'; });
+                    btn.classList.add('active');
+                    const targetPanel = raRoot.querySelector(`.tabs-content > .tab-content[data-panel="${this.activeTab}"]`);
+                    if (targetPanel) targetPanel.style.display = 'block';
 
-                    if (this.activeTab === 'responses') {
+                    if (this.activeTab === 'responses' || this.activeTab === 'responses_table') {
                         this.bindResponsesEvents();
                     }
 
@@ -1059,7 +1202,7 @@
                 });
             });
 
-            if (this.activeTab === 'responses') this.bindResponsesEvents();
+            if (this.activeTab === 'responses' || this.activeTab === 'responses_table') this.bindResponsesEvents();
         }
 
         // ─────────── حسابات ───────────
@@ -1141,15 +1284,6 @@
                 scheduled: 'var(--ra-blue-rgb)', draft: '148,163,184'
             };
             return map[status] || 'var(--ra-blue-rgb)';
-        }
-
-        rgbaFromVar(status) {
-            const map = {
-                completed:   'rgba(16,185,129,0.13)',
-                in_progress: 'rgba(245,158,11,0.13)',
-                abandoned:   'rgba(239,68,68,0.13)'
-            };
-            return map[status] || 'rgba(59,130,246,0.13)';
         }
 
         // ─────────── تحريك ───────────
@@ -1264,6 +1398,238 @@
                     </div>
                 </label>
             `;
+        }
+
+        // ─────────── المشاركة ───────────
+
+        async openShareModal() {
+            if (!this.currentSurvey) return;
+
+            const surveyId = this.currentSurvey.id;
+
+            // جلب أدوار لديها صلاحية manage_surveys
+            const { data: permRoles } = await sb
+                .from('role_permissions')
+                .select('role_id, permissions!inner(permission_key)')
+                .eq('permissions.permission_key', 'manage_surveys');
+            const allowedRoleIds = (permRoles || []).map(r => r.role_id);
+
+            // جلب المشاركات الحالية والمستخدمين المتاحين بالتوازي
+            const [sharesRes, usersRes] = await Promise.all([
+                sb.from('survey_sharing')
+                    .select('*, shared_with_profile:profiles!survey_sharing_shared_with_profiles_fkey(full_name, avatar_url)')
+                    .eq('survey_id', surveyId),
+                sb.from('user_roles')
+                    .select('user_id, role:roles(id, role_name_ar, role_category), committee:committees(committee_name_ar), profiles:profiles!user_roles_user_id_fkey(full_name, avatar_url)')
+                    .eq('is_active', true)
+                    .in('role_id', allowedRoleIds)
+            ]);
+
+            const currentShares = sharesRes.data || [];
+            const roleUsers = usersRes.data || [];
+
+            // بناء قائمة مستخدمين فريدة (بدون المالك وبدون من تم مشاركتهم مسبقاً)
+            const effectiveUserId = await window.AuthManager.getEffectiveUserId();
+            const sharedIds = new Set(currentShares.map(s => s.shared_with));
+            const seen = new Set();
+            const availableUsers = [];
+
+            for (const ru of roleUsers) {
+                if (!ru.user_id || ru.user_id === effectiveUserId || sharedIds.has(ru.user_id) || seen.has(ru.user_id)) continue;
+                seen.add(ru.user_id);
+                availableUsers.push({
+                    id: ru.user_id,
+                    name: ru.profiles?.full_name || 'غير معروف',
+                    avatar: ru.profiles?.avatar_url,
+                    role: ru.role?.role_name_ar || '',
+                    committee: ru.committee?.committee_name_ar || ''
+                });
+            }
+
+            // ترتيب أبجدي
+            availableUsers.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+
+            const sharesRowsHtml = currentShares.map(s => `
+                <tr data-share-id="${s.id}">
+                    <td>${escapeHtml(s.shared_with_profile?.full_name || 'غير معروف')}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" data-remove-share="${s.id}" title="إزالة المشاركة">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            const userOptionsHtml = availableUsers.map(u => {
+                const label = u.committee ? `${u.role} - ${u.committee}` : u.role;
+                return `<option value="${u.id}">${escapeHtml(u.name)}${label ? ` (${escapeHtml(label)})` : ''}</option>`;
+            }).join('');
+
+            const html = `
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-user-plus"></i> مشاركة جديدة</h3>
+
+                    <div class="form-group">
+                        <label class="form-label"><i class="fa-solid fa-user label-icon"></i> المستخدم</label>
+                        <select id="ra-share-user" class="form-select">
+                            <option value="">اختر مستخدم...</option>
+                            ${userOptionsHtml}
+                        </select>
+                    </div>
+
+                </div>
+
+                <hr class="modal-divider">
+
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-users"></i> مشارك معهم حالياً</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>العضو</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="ra-shares-tbody">
+                            ${sharesRowsHtml || '<tr class="empty-row"><td colspan="2" style="text-align:center;color:var(--text-secondary);">لا توجد مشاركات حالياً</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            if (window.ModalHelper && typeof window.ModalHelper.show === 'function') {
+                window.ModalHelper.show({
+                    title: `مشاركة نتائج: ${escapeHtml(this.currentSurvey.title)}`,
+                    iconClass: 'fa-solid fa-share-nodes',
+                    html,
+                    size: 'md',
+                    showClose: true,
+                    showFooter: true,
+                    footerButtons: [
+                        { text: 'إغلاق', class: 'btn btn-outline', keepOpen: false }
+                    ]
+                });
+            } else {
+                const modal = document.createElement('div');
+                modal.className = 'modal-backdrop active';
+                modal.innerHTML = `
+                    <div class="modal modal-md active">
+                        <div class="modal-header">
+                            <h3><i class="fa-solid fa-share-nodes"></i> مشاركة نتائج: ${escapeHtml(this.currentSurvey.title)}</h3>
+                            <button class="modal-close" data-cancel><i class="fa-solid fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            ${html}
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-outline" data-cancel>إغلاق</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                document.body.classList.add('modal-open');
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal || e.target.closest('[data-cancel]')) {
+                        modal.remove();
+                        document.body.classList.remove('modal-open');
+                    }
+                });
+            }
+
+            // ربط الأحداث بعد عرض المودال
+            const self = this;
+            setTimeout(() => {
+                // إضافة مشاركة عند اختيار مستخدم
+                const shareUserSelect = document.getElementById('ra-share-user');
+                if (shareUserSelect) {
+                    shareUserSelect.addEventListener('change', async () => {
+                        const userId = shareUserSelect.value;
+                        if (!userId) return;
+                        const userName = shareUserSelect.options[shareUserSelect.selectedIndex].text;
+
+                        shareUserSelect.disabled = true;
+                        const result = await self.executeShare(userId);
+                        shareUserSelect.disabled = false;
+                        if (!result) { shareUserSelect.value = ''; return; }
+
+                        // إضافة صف جديد للجدول
+                        const tbody = document.getElementById('ra-shares-tbody');
+                        if (tbody) {
+                            tbody.querySelector('.empty-row')?.remove();
+                            const tr = document.createElement('tr');
+                            tr.dataset.shareId = result.id;
+                            tr.innerHTML = `
+                                <td>${escapeHtml(userName)}</td>
+                                <td>
+                                    <button class="btn btn-danger btn-sm" data-remove-share="${result.id}" title="إزالة المشاركة">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </td>
+                            `;
+                            tr.querySelector('[data-remove-share]').addEventListener('click', async (e) => {
+                                const el = e.currentTarget;
+                                await self.removeShare(el.dataset.removeShare);
+                                el.closest('tr')?.remove();
+                                if (!tbody.querySelector('tr')) {
+                                    tbody.innerHTML = '<tr class="empty-row"><td colspan="2" style="text-align:center;color:var(--text-secondary);">لا توجد مشاركات حالياً</td></tr>';
+                                }
+                            });
+                            tbody.appendChild(tr);
+                        }
+
+                        // إزالة المستخدم من القائمة المنسدلة
+                        shareUserSelect.querySelector(`option[value="${userId}"]`)?.remove();
+                        shareUserSelect.value = '';
+                    });
+                }
+
+                // أزرار إزالة المشاركة
+                const raTbody = document.getElementById('ra-shares-tbody');
+                document.querySelectorAll('[data-remove-share]').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const el = e.currentTarget;
+                        const shareId = el.dataset.removeShare;
+                        await self.removeShare(shareId);
+                        el.closest('tr')?.remove();
+                        if (raTbody && !raTbody.querySelector('tr')) {
+                            raTbody.innerHTML = '<tr class="empty-row"><td colspan="2" style="text-align:center;color:var(--text-secondary);">لا توجد مشاركات حالياً</td></tr>';
+                        }
+                    });
+                });
+            }, 80);
+        }
+
+        async executeShare(userId) {
+            const effectiveUserId = await window.AuthManager.getEffectiveUserId();
+
+            const { data, error } = await sb.from('survey_sharing').insert({
+                survey_id: this.currentSurvey.id,
+                shared_by: effectiveUserId,
+                shared_with: userId
+            }).select().single();
+
+            if (error) {
+                if (error.code === '23505') {
+                    showToast('error', 'تم مشاركة هذا الاستبيان مع هذا المستخدم مسبقاً');
+                } else {
+                    console.error('[ra] share error', error);
+                    showToast('error', 'حدث خطأ أثناء المشاركة');
+                }
+                return null;
+            }
+
+            showToast('success', 'تمت المشاركة بنجاح');
+            return data;
+        }
+
+        async removeShare(shareId) {
+            const { error } = await sb.from('survey_sharing').delete().eq('id', shareId);
+            if (error) {
+                console.error('[ra] remove share error', error);
+                showToast('error', 'حدث خطأ أثناء إزالة المشاركة');
+                return;
+            }
+            showToast('success', 'تم إزالة المشاركة');
         }
 
         executeExport() {

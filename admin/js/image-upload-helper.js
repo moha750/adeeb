@@ -142,44 +142,48 @@ window.ImageUploadHelper = (function() {
         return `
             <div class="form-group">
                 <label class="form-label">
+                    <i class="fa-solid fa-image"></i>
                     ${options.label || 'صورة'}
                 </label>
-                
+
                 <!-- معاينة الصورة الحالية -->
                 ${currentImageUrl ? `
                     <div class="image-preview-container">
-                        <img id="${previewId}_current" 
-                             src="${currentImageUrl}" 
-                             alt="الصورة الحالية" 
+                        <img id="${previewId}_current"
+                             src="${currentImageUrl}"
+                             alt="الصورة الحالية"
                              class="image-preview">
                     </div>
                 ` : ''}
-                
+
                 <!-- معاينة الصورة الجديدة -->
                 <div id="${previewId}" class="image-preview-container image-preview-container--hidden">
-                    <img id="${previewId}_img" 
-                         src="" 
-                         alt="معاينة الصورة" 
+                    <img id="${previewId}_img"
+                         src=""
+                         alt="معاينة الصورة"
                          class="image-preview">
-                    <button type="button" 
+                    <button type="button"
                             onclick="document.getElementById('${inputId}').value=''; document.getElementById('${previewId}').style.display='none';"
-                            class="btn btn-danger btn-sm">
+                            class="btn btn-danger">
                         <i class="fa-solid fa-times"></i> إلغاء
                     </button>
                 </div>
-                
-                <!-- حقل رفع الصورة -->
-                <input type="file" 
-                       id="${inputId}" 
-                       accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-                       class="file-input"
-                       onchange="window.ImageUploadHelper.previewImage('${inputId}', '${previewId}')">
-                
-                <p class="form-hint">
-                    <i class="fa-solid fa-info-circle"></i> 
-                    الصيغ المدعومة: JPG, PNG, WEBP, GIF (الحد الأقصى: 5 ميجابايت)
-                </p>
-                
+
+                <!-- حقل رفع الصورة بالتنسيق الموحد -->
+                <div class="form-file">
+                    <input type="file"
+                           id="${inputId}"
+                           accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                           onchange="window.ImageUploadHelper.previewImage('${inputId}', '${previewId}')">
+                    <div class="form-dropzone">
+                        <div class="form-dropzone-icon">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                        </div>
+                        <div class="form-dropzone-title">اسحب وأفلت الصورة هنا</div>
+                        <div class="form-dropzone-hint">أو انقر للاختيار · JPG, PNG, WEBP, GIF حتى 5MB</div>
+                    </div>
+                </div>
+
                 <!-- حقل مخفي للرابط -->
                 <input type="hidden" id="${inputId}_url" value="${currentImageUrl || ''}">
                 <input type="hidden" id="${inputId}_path" value="">
@@ -569,31 +573,40 @@ window.ImageUploadHelper = (function() {
             aspectRatio = 16/9
         } = options;
 
+        return buildCoverUploaderHTML(inputId, currentImageUrl, folder, aspectRatio, required);
+    }
+
+    /**
+     * بناء HTML موحد لرافع صورة الغلاف — بهيكل .form-file / .form-dropzone
+     */
+    function buildCoverUploaderHTML(inputId, currentImageUrl, folder, aspectRatio, required = true) {
+        const hasImage = !!currentImageUrl;
         return `
-            <div class="cover-image-uploader ${currentImageUrl ? 'has-image' : ''}" id="${inputId}_container">
-                ${currentImageUrl ? `
-                    <div class="cover-image-preview" id="${inputId}_preview">
+            <div class="cover-image-uploader${hasImage ? ' has-image' : ''}" id="${inputId}_container">
+                ${hasImage ? `
+                    <div class="image-preview-container" id="${inputId}_preview">
                         <img src="${currentImageUrl}" alt="صورة الغلاف" id="${inputId}_img">
-                        <button type="button" class="change-btn" onclick="document.getElementById('${inputId}').click()">
-                            <i class="fa-solid fa-camera"></i> تغيير الصورة
-                        </button>
                     </div>
-                ` : `
-                    <div class="cover-upload-area" id="${inputId}_area" onclick="document.getElementById('${inputId}').click()">
-                        <i class="fa-solid fa-cloud-upload-alt"></i>
-                        <p>اضغط لرفع صورة الغلاف ${required ? '<span class="required-dot">*</span>' : ''}</p>
-                        <span>JPG, PNG, WEBP (الحد الأقصى: 5MB)</span>
+                ` : ''}
+
+                <div class="form-file">
+                    <input type="file"
+                           id="${inputId}"
+                           accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                           data-folder="${folder}"
+                           data-aspect-ratio="${aspectRatio}"
+                           onchange="window.ImageUploadHelper.handleCoverImageSelect('${inputId}')">
+                    <div class="form-dropzone">
+                        <div class="form-dropzone-icon">
+                            <i class="fa-solid fa-${hasImage ? 'camera-retro' : 'cloud-arrow-up'}"></i>
+                        </div>
+                        <div class="form-dropzone-title">
+                            ${hasImage ? 'تغيير صورة الغلاف' : 'اسحب وأفلت صورة الغلاف هنا'}
+                        </div>
+                        <div class="form-dropzone-hint">أو انقر للاختيار · JPG, PNG, WEBP حتى 5MB</div>
                     </div>
-                `}
-                
-                <input type="file" 
-                       id="${inputId}" 
-                       accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-                       class="hidden-input"
-                       data-folder="${folder}"
-                       data-aspect-ratio="${aspectRatio}"
-                       onchange="window.ImageUploadHelper.handleCoverImageSelect('${inputId}')">
-                
+                </div>
+
                 <input type="hidden" id="${inputId}_url" value="${currentImageUrl || ''}">
             </div>
         `;
@@ -615,11 +628,15 @@ window.ImageUploadHelper = (function() {
 
         // عرض مؤشر التحميل
         container.innerHTML = `
-            <div class="loading-spinner">
-                <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
-                <p>جاري معالجة الصورة...</p>
+            <div class="form-file">
+                <div class="form-dropzone">
+                    <div class="form-dropzone-icon">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                    </div>
+                    <div class="form-dropzone-title">جاري معالجة الصورة...</div>
+                    <div class="form-dropzone-hint">يرجى الانتظار</div>
+                </div>
             </div>
-            <input type="file" id="${inputId}" class="hidden-input">
             <input type="hidden" id="${inputId}_url" value="${urlInput?.value || ''}">
         `;
 
@@ -630,7 +647,6 @@ window.ImageUploadHelper = (function() {
                 if (croppedBlob) {
                     result = await uploadImage(croppedBlob, folder);
                 } else {
-                    // المستخدم ألغى القص - إعادة الواجهة
                     restoreCoverUI(inputId, urlInput?.value, folder, aspectRatio);
                     return;
                 }
@@ -639,25 +655,7 @@ window.ImageUploadHelper = (function() {
             }
 
             if (result.success) {
-                // تحديث الواجهة بالصورة الجديدة
-                container.innerHTML = `
-                    <div class="cover-image-preview" id="${inputId}_preview">
-                        <img src="${result.url}" alt="صورة الغلاف" id="${inputId}_img">
-                        <button type="button" class="change-btn" onclick="document.getElementById('${inputId}').click()">
-                            <i class="fa-solid fa-camera"></i> تغيير الصورة
-                        </button>
-                    </div>
-                    <input type="file" 
-                           id="${inputId}" 
-                           accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-                           class="hidden-input"
-                           data-folder="${folder}"
-                           data-aspect-ratio="${aspectRatio}"
-                           onchange="window.ImageUploadHelper.handleCoverImageSelect('${inputId}')">
-                    <input type="hidden" id="${inputId}_url" value="${result.url}">
-                `;
-                container.classList.add('has-image');
-
+                container.outerHTML = buildCoverUploaderHTML(inputId, result.url, folder, aspectRatio, true);
                 if (window.Toast) {
                     Toast.success('تم رفع صورة الغلاف بنجاح');
                 }
@@ -667,7 +665,7 @@ window.ImageUploadHelper = (function() {
         } catch (error) {
             console.error('Error uploading cover image:', error);
             restoreCoverUI(inputId, urlInput?.value, folder, aspectRatio);
-            
+
             if (window.Toast) {
                 Toast.error('حدث خطأ: ' + error.message);
             }
@@ -680,41 +678,7 @@ window.ImageUploadHelper = (function() {
     function restoreCoverUI(inputId, currentUrl, folder, aspectRatio) {
         const container = document.getElementById(inputId + '_container');
         if (!container) return;
-
-        if (currentUrl) {
-            container.innerHTML = `
-                <div class="cover-image-preview" id="${inputId}_preview">
-                    <img src="${currentUrl}" alt="صورة الغلاف" id="${inputId}_img">
-                    <button type="button" class="change-btn" onclick="document.getElementById('${inputId}').click()">
-                        <i class="fa-solid fa-camera"></i> تغيير الصورة
-                    </button>
-                </div>
-                <input type="file" 
-                       id="${inputId}" 
-                       accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-                       class="hidden-input"
-                       data-folder="${folder}"
-                       data-aspect-ratio="${aspectRatio}"
-                       onchange="window.ImageUploadHelper.handleCoverImageSelect('${inputId}')">
-                <input type="hidden" id="${inputId}_url" value="${currentUrl}">
-            `;
-        } else {
-            container.innerHTML = `
-                <div class="cover-upload-area" id="${inputId}_area" onclick="document.getElementById('${inputId}').click()">
-                    <i class="fa-solid fa-cloud-upload-alt"></i>
-                    <p>اضغط لرفع صورة الغلاف <span class="required-dot">*</span></p>
-                    <span>JPG, PNG, WEBP (الحد الأقصى: 5MB)</span>
-                </div>
-                <input type="file" 
-                       id="${inputId}" 
-                       accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-                       class="hidden-input"
-                       data-folder="${folder}"
-                       data-aspect-ratio="${aspectRatio}"
-                       onchange="window.ImageUploadHelper.handleCoverImageSelect('${inputId}')">
-                <input type="hidden" id="${inputId}_url" value="">
-            `;
-        }
+        container.outerHTML = buildCoverUploaderHTML(inputId, currentUrl || null, folder, aspectRatio, true);
     }
 
     /**

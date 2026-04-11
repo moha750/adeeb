@@ -512,7 +512,7 @@ window.initPermissionsSection = async function() {
 
         const rpSet = new Set((rpData || []).map(r => `${r.role_id}_${r.permission_id}`));
 
-        let html = `<table class="data-table" style="min-width:700px">
+        let html = `<div class="data-table-wrap"><div class="data-table-scroll"><table class="data-table data-table--striped" style="min-width:700px">
             <thead><tr>
                 <th style="min-width:160px">الصلاحية</th>
                 <th style="min-width:80px">الفئة</th>
@@ -533,7 +533,7 @@ window.initPermissionsSection = async function() {
             html += '</tr>';
         });
 
-        html += '</tbody></table>';
+        html += '</tbody></table></div></div>';
         container.innerHTML = html;
     }
 

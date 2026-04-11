@@ -61,7 +61,7 @@ window.NewsManager = (function() {
         if (filteredNews.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
                     <p class="empty-state__title">لا توجد أخبار</p>
                 </div>
             `;
@@ -116,10 +116,10 @@ window.NewsManager = (function() {
                 </div>
                 <div class="uc-card__footer">
                     ${statusBadge}
-                    <button class="btn btn-icon btn-sm" onclick="NewsManager.editNews('${news.id}')" title="تعديل">
+                    <button class="btn btn-icon " onclick="NewsManager.editNews('${news.id}')" title="تعديل">
                         <i class="fa-solid fa-edit"></i>
                     </button>
-                    <button class="btn btn-icon btn-danger btn-sm" onclick="NewsManager.deleteNews('${news.id}')" title="حذف">
+                    <button class="btn btn-icon btn-danger " onclick="NewsManager.deleteNews('${news.id}')" title="حذف">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 </div>

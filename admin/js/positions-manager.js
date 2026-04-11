@@ -218,7 +218,7 @@ class PositionsManager {
                     </div>
                     ${showDeleteButton ? `
                     <div class="position-member-actions">
-                        <button class="btn btn-icon btn-danger btn-sm" 
+                        <button class="btn btn-icon btn-danger " 
                                 onclick="window.positionsManager.removePosition('${member.id}')" 
                                 title="إزالة المنصب">
                             <i class="fa-solid fa-trash"></i>

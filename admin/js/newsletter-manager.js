@@ -111,8 +111,8 @@ class NewsletterManager {
         if (this.filteredSubscribers.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-inbox"></i>
-                    <p>لا توجد اشتراكات</p>
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
+                    <p class="empty-state__title">لا توجد اشتراكات</p>
                 </div>
             `;
             return;
@@ -198,14 +198,14 @@ class NewsletterManager {
 
                 <div class="uc-card__footer">
                     ${subscriber.status === 'active'
-                        ? `<button class="btn btn-warning btn-sm unsubscribe-btn" data-id="${subscriber.id}">
+                        ? `<button class="btn btn-warning  unsubscribe-btn" data-id="${subscriber.id}">
                                 <i class="fa-solid fa-user-xmark"></i> إلغاء الاشتراك
                             </button>`
-                        : `<button class="btn btn-success btn-sm resubscribe-btn" data-id="${subscriber.id}">
+                        : `<button class="btn btn-success  resubscribe-btn" data-id="${subscriber.id}">
                                 <i class="fa-solid fa-user-check"></i> إعادة الاشتراك
                             </button>`
                     }
-                    <button class="btn btn-danger btn-sm delete-subscriber-btn" data-id="${subscriber.id}">
+                    <button class="btn btn-danger  delete-subscriber-btn" data-id="${subscriber.id}">
                         <i class="fa-solid fa-trash"></i> حذف
                     </button>
                 </div>

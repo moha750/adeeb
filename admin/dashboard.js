@@ -390,7 +390,7 @@
                 {
                     id: 'surveys-all',
                     icon: 'fa-list',
-                    label: 'جميع الاستبيانات',
+                    label: 'استبياناتي',
                     section: 'surveys-all-section'
                 },
                 {
@@ -398,12 +398,6 @@
                     icon: 'fa-plus-circle',
                     label: 'إنشاء استبيان',
                     section: 'surveys-create-section'
-                },
-                {
-                    id: 'surveys-templates',
-                    icon: 'fa-file-lines',
-                    label: 'قوالب الاستبيانات',
-                    section: 'surveys-templates-section'
                 },
                 {
                     id: 'surveys-archived',
@@ -421,7 +415,7 @@
             
             menuItems.push({
                 id: 'surveys',
-                icon: 'fa-clipboard-question',
+                icon: 'fa-solid fa-clipboard-list',
                 label: 'استبيانات أدِيب',
                 isDropdown: true,
                 subItems: surveysSubItems
@@ -469,7 +463,20 @@
                     icon: 'fa-clipboard-check',
                     label: 'جاهز للمراجعة',
                     section: 'news-review-section'
-                },
+                }
+            ];
+
+            // إضافة تبويب النشر الفوري — يحتاج instant_publish
+            if (hasPermission('instant_publish')) {
+                newsSubItems.push({
+                    id: 'news-instant-publish',
+                    icon: 'fa-bolt',
+                    label: 'نشر فوري',
+                    section: 'news-instant-publish-section'
+                });
+            }
+
+            newsSubItems.push(
                 {
                     id: 'news-published',
                     icon: 'fa-newspaper',
@@ -482,17 +489,7 @@
                     label: 'الأخبار المؤرشفة',
                     section: 'news-archived-section'
                 }
-            ];
-            
-            // إضافة تبويب النشر الفوري — يحتاج instant_publish
-            if (hasPermission('instant_publish')) {
-                newsSubItems.push({
-                    id: 'news-instant-publish',
-                    icon: 'fa-bolt',
-                    label: 'نشر فوري',
-                    section: 'news-instant-publish-section'
-                });
-            }
+            );
             
             menuItems.push({
                 id: 'news',
@@ -735,7 +732,6 @@
         'surveys-all-section':                  'manage_surveys',
         'surveys-create-section':               'manage_surveys',
         'surveys-results-section':              'manage_surveys',
-        'surveys-templates-section':            'manage_surveys',
         'surveys-archived-section':             'manage_surveys',
         'surveys-deleted-section':              'manage_surveys',
         'website-works-section':                'manage_website',
@@ -833,10 +829,10 @@
         // تحميل بيانات القسم الحقيقي
         loadSectionData(realSectionId);
 
-        // إغلاق القائمة الجانبية على الشاشات الصغيرة
-        if (window.innerWidth < 1024) {
-            document.getElementById('sidebar').classList.remove('active');
-            document.getElementById('overlay').classList.remove('active');
+        // إغلاق القائمة الجانبية عندما تكون في وضع الطي
+        if (window.innerWidth <= 1145) {
+            document.getElementById('sidebar')?.classList.remove('active');
+            document.getElementById('overlay')?.classList.remove('active');
             document.body.style.overflow = '';
         }
     }
@@ -870,6 +866,10 @@
                 }
                 break;
             case 'committees-section':
+                window.loadCouncils = loadCouncils;
+                window.loadDepartments = loadDepartments;
+                window.loadCommittees = loadCommittees;
+                window.loadAdminCommittees = loadAdminCommittees;
                 await Promise.all([loadCouncils(), loadDepartments(), loadCommittees(), loadAdminCommittees(), loadCommitteesStats()]);
                 break;
             case 'contact-messages-section':
@@ -1057,12 +1057,6 @@
                         await window.surveysManager.init(currentUser);
                     }
                     await window.resultsAnalytics.init();
-                }
-                break;
-            case 'surveys-templates-section':
-                if (window.surveysManager) {
-                    if (currentUser) await window.surveysManager.init(currentUser);
-                    await window.surveysManager.loadTemplates();
                 }
                 break;
             case 'surveys-archived-section':
@@ -1447,9 +1441,9 @@
 
             if (!terminatedMembers || terminatedMembers.length === 0) {
                 container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-user-check"></i>
-                        <p>لا يوجد أعضاء منتهية عضوياتهم</p>
+                    <div class="empty-state empty-state--success">
+                        <div class="empty-state__icon"><i class="fa-solid fa-user-check"></i></div>
+                        <p class="empty-state__title">لا يوجد أعضاء منتهية عضوياتهم</p>
                     </div>
                 `;
                 return;
@@ -1722,12 +1716,13 @@
         }
     }
 
+    window.loadTerminatedMembersSection = loadTerminatedMembersSection;
+
     // تحميل قسم الاستبيانات المؤرشفة
     async function loadArchivedSurveysSection() {
         const container = document.getElementById('archivedSurveysListContainer');
         const countEl = document.getElementById('totalArchivedSurveysCount');
         const searchInput = document.getElementById('archivedSurveysSearchInput');
-        const refreshBtn = document.getElementById('refreshArchivedSurveysBtn');
         if (!container) return;
 
         try {
@@ -1739,10 +1734,10 @@
             const renderList = (list) => {
                 if (list.length === 0) {
                     container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fa-solid fa-box-archive"></i>
-                            <h3>لا توجد استبيانات مؤرشفة</h3>
-                            <p>الاستبيانات المؤرشفة ستظهر هنا</p>
+                        <div class="empty-state empty-state--gray">
+                            <div class="empty-state__icon"><i class="fa-solid fa-box-archive"></i></div>
+                            <h3 class="empty-state__title">لا توجد استبيانات مؤرشفة</h3>
+                            <p class="empty-state__message">الاستبيانات المؤرشفة ستظهر هنا</p>
                         </div>
                     `;
                     return;
@@ -1751,6 +1746,9 @@
                     <div class="card card--neutral">
                         <div class="card-header">
                             <h3><i class="fa-solid fa-box-archive"></i> الاستبيانات المؤرشفة (${list.length})</h3>
+                            <button class="btn btn-slate btn-icon btn-outline" title="تحديث" onclick="window.loadArchivedSurveysSection && window.loadArchivedSurveysSection()">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
                         </div>
                         <div class="card-body">
                             <div class="uc-grid">
@@ -1771,42 +1769,42 @@
                                     </div>
                                 </div>
                                 <div class="uc-card__body">
-                                    ${survey.archived_at ? `
-                                        <div class="uc-card__info-item">
-                                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
-                                            <div class="uc-card__info-content">
-                                                <span class="uc-card__info-label">تاريخ الأرشفة</span>
-                                                <span class="uc-card__info-value">${new Date(survey.archived_at).toLocaleDateString('ar-SA')}</span>
-                                            </div>
-                                        </div>
-                                    ` : ''}
-                                    ${survey.archived_by_profile ? `
-                                        <div class="uc-card__info-item">
-                                            <div class="uc-card__info-icon"><i class="fa-solid fa-user"></i></div>
-                                            <div class="uc-card__info-content">
-                                                <span class="uc-card__info-label">أرشف بواسطة</span>
-                                                <span class="uc-card__info-value">${window.surveysManager.escapeHtml(survey.archived_by_profile.full_name)}</span>
-                                            </div>
-                                        </div>
-                                    ` : ''}
                                     <div class="uc-card__info-item">
-                                        <div class="uc-card__info-icon"><i class="fa-solid fa-question-circle"></i></div>
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-align-right"></i></div>
                                         <div class="uc-card__info-content">
-                                            <span class="uc-card__info-label">الأسئلة</span>
-                                            <span class="uc-card__info-value">${survey.survey_questions?.length || 0}</span>
+                                            <span class="uc-card__info-label">الوصف</span>
+                                            <span class="uc-card__info-value${survey.description ? '' : ' uc-card__info-value--empty'}">${survey.description ? window.surveysManager.escapeHtml(survey.description) : 'لا يوجد وصف'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="uc-card__info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">تاريخ الأرشفة</span>
+                                            <span class="uc-card__info-value${survey.archived_at ? '' : ' uc-card__info-value--empty'}">${survey.archived_at ? new Date(survey.archived_at).toLocaleDateString('ar-SA') : 'غير محدد'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="uc-card__info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-user"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">أرشف بواسطة</span>
+                                            <span class="uc-card__info-value${survey.archived_by_profile ? '' : ' uc-card__info-value--empty'}">${survey.archived_by_profile ? window.surveysManager.escapeHtml(survey.archived_by_profile.full_name) : 'غير معروف'}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="uc-card__footer">
-                                    <button class="btn btn-secondary btn-sm" onclick="window.surveysManager.exportSurveyToExcel(${survey.id})">
+                                    <button class="btn btn-primary" onclick="window.surveysManager.viewSurveyDetails(${survey.id})">
+                                        <i class="fa-solid fa-circle-info"></i>
+                                        عرض التفاصيل
+                                    </button>
+                                    <button class="btn btn-slate" onclick="window.surveysManager.exportSurveyToExcel(${survey.id})">
                                         <i class="fa-solid fa-file-excel"></i>
                                         تحميل Excel
                                     </button>
-                                    <button class="btn btn-success btn-sm" onclick="window.surveysManager.unarchiveSurvey(${survey.id}); loadArchivedSurveysSection()">
+                                    <button class="btn btn-success" onclick="window.surveysManager.unarchiveSurvey(${survey.id}); loadArchivedSurveysSection()">
                                         <i class="fa-solid fa-box-open"></i>
                                         إلغاء الأرشفة
                                     </button>
-                                    <button class="btn btn-danger btn-sm" onclick="window.surveysManager.deleteSurvey(${survey.id})">
+                                    <button class="btn btn-danger" onclick="window.surveysManager.deleteSurvey(${survey.id})">
                                         <i class="fa-solid fa-trash"></i>
                                         حذف
                                     </button>
@@ -1828,10 +1826,6 @@
                     renderList(filtered);
                 };
             }
-
-            if (refreshBtn) {
-                refreshBtn.onclick = () => loadArchivedSurveysSection();
-            }
         } catch (error) {
             console.error('Error loading archived surveys:', error);
             container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الاستبيانات المؤرشفة</div>';
@@ -1848,7 +1842,6 @@
         const container = document.getElementById('deletedSurveysListContainer');
         const countEl = document.getElementById('totalDeletedSurveysCount');
         const searchInput = document.getElementById('deletedSurveysSearchInput');
-        const refreshBtn = document.getElementById('refreshDeletedSurveysBtn');
         if (!container) return;
 
         try {
@@ -1860,10 +1853,10 @@
             const renderList = (list) => {
                 if (list.length === 0) {
                     container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fa-solid fa-trash"></i>
-                            <h3>لا توجد استبيانات محذوفة</h3>
-                            <p>الاستبيانات المحذوفة ستظهر هنا</p>
+                        <div class="empty-state empty-state--danger">
+                            <div class="empty-state__icon"><i class="fa-solid fa-trash"></i></div>
+                            <h3 class="empty-state__title">لا توجد استبيانات محذوفة</h3>
+                            <p class="empty-state__message">الاستبيانات المحذوفة ستظهر هنا</p>
                         </div>
                     `;
                     return;
@@ -1872,12 +1865,25 @@
                     <div class="card card--danger">
                         <div class="card-header">
                             <h3><i class="fa-solid fa-trash"></i> الاستبيانات المحذوفة (${list.length})</h3>
+                            <button class="btn btn-danger btn-icon btn-outline" id="deletedSurveysOptionsBtn" title="خيارات">
+                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                            </button>
                         </div>
                         <div class="card-body">
                             <div class="uc-grid">
                                 ${list.map(survey => {
-                            const permanentDeleteDate = survey.permanent_delete_at
-                                ? new Date(survey.permanent_delete_at).toLocaleDateString('ar-SA')
+                            let permanentDeleteDateObj = null;
+                            if (survey.permanent_delete_at) {
+                                permanentDeleteDateObj = new Date(survey.permanent_delete_at);
+                            } else if (survey.deleted_at) {
+                                permanentDeleteDateObj = new Date(survey.deleted_at);
+                                permanentDeleteDateObj.setDate(permanentDeleteDateObj.getDate() + 30);
+                            }
+                            const permanentDeleteDate = permanentDeleteDateObj
+                                ? permanentDeleteDateObj.toLocaleDateString('ar-SA')
+                                : null;
+                            const daysLeft = permanentDeleteDateObj
+                                ? Math.max(0, Math.ceil((permanentDeleteDateObj - new Date()) / (1000 * 60 * 60 * 24)))
                                 : null;
                             return `
                             <div class="uc-card uc-card--danger">
@@ -1896,51 +1902,49 @@
                                     </div>
                                 </div>
                                 <div class="uc-card__body">
-                                    ${survey.deleted_at ? `
-                                        <div class="uc-card__info-item">
-                                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
-                                            <div class="uc-card__info-content">
-                                                <span class="uc-card__info-label">تاريخ الحذف</span>
-                                                <span class="uc-card__info-value">${new Date(survey.deleted_at).toLocaleDateString('ar-SA')}</span>
-                                            </div>
-                                        </div>
-                                    ` : ''}
-                                    ${permanentDeleteDate ? `
-                                        <div class="uc-card__info-item">
-                                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-times"></i></div>
-                                            <div class="uc-card__info-content">
-                                                <span class="uc-card__info-label">الحذف النهائي في</span>
-                                                <span class="uc-card__info-value" style="color:#ef4444;">${permanentDeleteDate}</span>
-                                            </div>
-                                        </div>
-                                    ` : ''}
-                                    ${survey.deleted_by_profile ? `
-                                        <div class="uc-card__info-item">
-                                            <div class="uc-card__info-icon"><i class="fa-solid fa-user"></i></div>
-                                            <div class="uc-card__info-content">
-                                                <span class="uc-card__info-label">حذف بواسطة</span>
-                                                <span class="uc-card__info-value">${window.surveysManager.escapeHtml(survey.deleted_by_profile.full_name)}</span>
-                                            </div>
-                                        </div>
-                                    ` : ''}
                                     <div class="uc-card__info-item">
-                                        <div class="uc-card__info-icon"><i class="fa-solid fa-question-circle"></i></div>
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-align-right"></i></div>
                                         <div class="uc-card__info-content">
-                                            <span class="uc-card__info-label">الأسئلة</span>
-                                            <span class="uc-card__info-value">${survey.survey_questions?.length || 0}</span>
+                                            <span class="uc-card__info-label">الوصف</span>
+                                            <span class="uc-card__info-value${survey.description ? '' : ' uc-card__info-value--empty'}">${survey.description ? window.surveysManager.escapeHtml(survey.description) : 'لا يوجد وصف'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="uc-card__info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">تاريخ الحذف</span>
+                                            <span class="uc-card__info-value${survey.deleted_at ? '' : ' uc-card__info-value--empty'}">${survey.deleted_at ? new Date(survey.deleted_at).toLocaleDateString('ar-SA') : 'غير محدد'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="uc-card__info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-clock"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">الحذف النهائي في</span>
+                                            <span class="uc-card__info-value" style="color:#ef4444;">${permanentDeleteDate ? `${permanentDeleteDate} (${daysLeft} يوم متبقي)` : 'غير محدد'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="uc-card__info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-user"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">حذف بواسطة</span>
+                                            <span class="uc-card__info-value${survey.deleted_by_profile ? '' : ' uc-card__info-value--empty'}">${survey.deleted_by_profile ? window.surveysManager.escapeHtml(survey.deleted_by_profile.full_name) : 'غير معروف'}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="uc-card__footer">
-                                    <button class="btn btn-secondary btn-sm" onclick="window.surveysManager.exportSurveyToExcel(${survey.id})">
+                                    <button class="btn btn-primary" onclick="window.surveysManager.viewSurveyDetails(${survey.id})">
+                                        <i class="fa-solid fa-circle-info"></i>
+                                        عرض التفاصيل
+                                    </button>
+                                    <button class="btn btn-slate" onclick="window.surveysManager.exportSurveyToExcel(${survey.id})">
                                         <i class="fa-solid fa-file-excel"></i>
                                         تحميل Excel
                                     </button>
-                                    <button class="btn btn-success btn-sm" onclick="window.surveysManager.restoreSurvey(${survey.id}).then(() => loadDeletedSurveysSection())">
+                                    <button class="btn btn-success" onclick="window.surveysManager.restoreSurvey(${survey.id}).then(() => loadDeletedSurveysSection())">
                                         <i class="fa-solid fa-rotate-left"></i>
                                         استعادة
                                     </button>
-                                    <button class="btn btn-danger btn-sm" onclick="window.surveysManager.deleteSurveyPermanently(${survey.id}).then(() => loadDeletedSurveysSection())">
+                                    <button class="btn btn-danger" onclick="window.surveysManager.deleteSurveyPermanently(${survey.id}).then(() => loadDeletedSurveysSection())">
                                         <i class="fa-solid fa-trash"></i>
                                         حذف نهائي
                                     </button>
@@ -1955,6 +1959,80 @@
 
             renderList(surveys);
 
+            // إنشاء القائمة المنسدلة في body
+            let dropdown = document.getElementById('deletedSurveysDropdown');
+            if (dropdown) dropdown.remove();
+            dropdown = document.createElement('div');
+            dropdown.id = 'deletedSurveysDropdown';
+            dropdown.className = 'dropdown-menu';
+            dropdown.innerHTML = `
+                <button class="btn btn-slate btn-outline btn-block" id="refreshDeletedSurveysBtn">
+                    <i class="fa-solid fa-rotate"></i> تحديث
+                </button>
+                <button class="btn btn-success btn-outline btn-block" id="restoreAllSurveysBtn">
+                    <i class="fa-solid fa-rotate-left"></i> استعادة الكل
+                </button>
+                <div class="dropdown-divider"></div>
+                <button class="btn btn-danger btn-outline btn-block" id="deleteAllSurveysBtn">
+                    <i class="fa-solid fa-trash-can"></i> حذف الكل نهائياً
+                </button>
+            `;
+            document.body.appendChild(dropdown);
+
+            // فتح/إغلاق القائمة
+            container.addEventListener('click', (e) => {
+                const optionsBtn = e.target.closest('#deletedSurveysOptionsBtn');
+                if (!optionsBtn) return;
+                const isOpen = dropdown.classList.toggle('show');
+                if (isOpen) {
+                    const rect = optionsBtn.getBoundingClientRect();
+                    dropdown.style.top = (rect.bottom + 6) + 'px';
+                    dropdown.style.left = rect.left + 'px';
+                }
+            });
+
+            // حذف الكل نهائياً
+            dropdown.querySelector('#deleteAllSurveysBtn').addEventListener('click', async () => {
+                dropdown.classList.remove('show');
+                const confirmed = await ModalHelper.confirm({
+                    title: 'حذف جميع الاستبيانات نهائياً',
+                    message: `سيتم حذف ${surveys.length} استبيان وجميع بياناتها نهائياً. لا يمكن التراجع عن هذا الإجراء.`,
+                    type: 'danger',
+                    confirmText: 'حذف الكل',
+                    cancelText: 'إلغاء'
+                });
+                if (!confirmed) return;
+                for (const survey of surveys) {
+                    await window.surveysManager.deleteSurveyPermanently(survey.id, true);
+                }
+                await loadDeletedSurveysSection();
+            });
+
+            // استعادة الكل
+            dropdown.querySelector('#restoreAllSurveysBtn').addEventListener('click', async () => {
+                dropdown.classList.remove('show');
+                const confirmed = await ModalHelper.confirm({
+                    title: 'استعادة جميع الاستبيانات',
+                    message: `سيتم استعادة ${surveys.length} استبيان إلى المسودات.`,
+                    type: 'success',
+                    confirmText: 'استعادة الكل',
+                    cancelText: 'إلغاء'
+                });
+                if (!confirmed) return;
+                for (const survey of surveys) {
+                    await sb.from('surveys').update({ status: 'draft', deleted_at: null, deleted_by: null, permanent_delete_at: null }).eq('id', survey.id);
+                }
+                await window.surveysManager.loadAllSurveys();
+                await loadDeletedSurveysSection();
+            });
+
+            // إغلاق القائمة عند الضغط خارجها
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#deletedSurveysOptionsBtn') && !e.target.closest('#deletedSurveysDropdown')) {
+                    dropdown.classList.remove('show');
+                }
+            });
+
             if (searchInput) {
                 searchInput.oninput = (e) => {
                     const term = e.target.value.toLowerCase();
@@ -1963,9 +2041,11 @@
                 };
             }
 
-            if (refreshBtn) {
-                refreshBtn.onclick = () => loadDeletedSurveysSection();
-            }
+            // زر التحديث في القائمة المنسدلة
+            dropdown.querySelector('#refreshDeletedSurveysBtn').addEventListener('click', () => {
+                dropdown.classList.remove('show');
+                loadDeletedSurveysSection();
+            });
         } catch (error) {
             console.error('Error loading deleted surveys:', error);
             container.innerHTML = '<div class="error-state">حدث خطأ أثناء تحميل الاستبيانات المحذوفة</div>';
@@ -2016,7 +2096,7 @@
             }));
 
             if (!usersWithRoles || usersWithRoles.length === 0) {
-                container.innerHTML = '<div class="empty-state">لا يوجد مستخدمين</div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state__icon"><i class="fa-solid fa-users"></i></div><p class="empty-state__title">لا يوجد مستخدمين</p></div>';
                 return;
             }
 
@@ -2053,7 +2133,7 @@
                                     <td><span class="badge ${statusClass}">${status}</span></td>
                                     <td>${new Date(user.created_at).toLocaleDateString('ar-SA')}</td>
                                     <td>
-                                        <button class="btn-sm btn-outline" onclick="editUser('${user.id}')">
+                                        <button class=" btn-outline" onclick="editUser('${user.id}')">
                                             <i class="fa-solid fa-edit"></i>
                                         </button>
                                     </td>
@@ -2226,11 +2306,11 @@
                         </div>` : ''}
                     </div>
                     <div class="uc-card__footer">
-                        <button class="btn btn-primary btn-sm" onclick="viewCouncil('${council.id}')">
+                        <button class="btn btn-primary " onclick="viewCouncil('${council.id}')">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل
                         </button>
-                        <button class="btn btn-warning btn-sm" onclick="editCouncil('${council.id}')">
+                        <button class="btn btn-warning " onclick="editCouncil('${council.id}')">
                             <i class="fa-solid fa-pen"></i>
                             تعديل
                         </button>
@@ -2443,7 +2523,7 @@
             if (error) throw error;
 
             if (!departments || departments.length === 0) {
-                container.innerHTML = '<div class="empty-state">لا توجد أقسام</div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state__icon"><i class="fa-solid fa-sitemap"></i></div><p class="empty-state__title">لا توجد أقسام</p></div>';
                 return;
             }
 
@@ -2551,11 +2631,11 @@
                         </div>` : ''}
                     </div>
                     <div class="uc-card__footer">
-                        <button class="btn btn-primary btn-sm" onclick="viewDepartment(${dept.id})">
+                        <button class="btn btn-primary " onclick="viewDepartment(${dept.id})">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل
                         </button>
-                        <button class="btn btn-warning btn-sm" onclick="editDepartment(${dept.id})">
+                        <button class="btn btn-warning " onclick="editDepartment(${dept.id})">
                             <i class="fa-solid fa-pen"></i>
                             تعديل
                         </button>
@@ -2598,7 +2678,7 @@
             }
 
             if (!committees || committees.length === 0) {
-                container.innerHTML = '<div class="empty-state">لا توجد لجان</div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state__icon"><i class="fa-solid fa-people-group"></i></div><p class="empty-state__title">لا توجد لجان</p></div>';
                 return;
             }
 
@@ -2685,11 +2765,11 @@
                         </div>` : ''}
                     </div>
                     <div class="uc-card__footer">
-                        <button class="btn btn-primary btn-sm" onclick="viewCommittee(${committee.id})">
+                        <button class="btn btn-primary " onclick="viewCommittee(${committee.id})">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل
                         </button>
-                        <button class="btn btn-warning btn-sm" onclick="editCommittee(${committee.id})">
+                        <button class="btn btn-warning " onclick="editCommittee(${committee.id})">
                             <i class="fa-solid fa-pen"></i>
                             تعديل
                         </button>
@@ -2719,7 +2799,7 @@
             if (error) throw error;
 
             if (!committees || committees.length === 0) {
-                container.innerHTML = '<div class="empty-state">لا توجد إدارات</div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state__icon"><i class="fa-solid fa-building"></i></div><p class="empty-state__title">لا توجد إدارات</p></div>';
                 return;
             }
 
@@ -2802,11 +2882,11 @@
                         </div>` : ''}
                     </div>
                     <div class="uc-card__footer">
-                        <button class="btn btn-primary btn-sm" onclick="viewCommittee(${committee.id})">
+                        <button class="btn btn-primary " onclick="viewCommittee(${committee.id})">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل
                         </button>
-                        <button class="btn btn-warning btn-sm" onclick="editCommittee(${committee.id})">
+                        <button class="btn btn-warning " onclick="editCommittee(${committee.id})">
                             <i class="fa-solid fa-pen"></i>
                             تعديل
                         </button>
@@ -2975,7 +3055,7 @@
             if (error) throw error;
 
             if (!works || works.length === 0) {
-                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد أعمال</p></div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div><p class="empty-state__title">لا توجد أعمال</p></div>';
                 return;
             }
 
@@ -3004,10 +3084,10 @@
                                 <i class="fa-solid fa-chevron-down"></i>
                             </button>
                         </div>
-                        <button class="btn btn-primary btn-sm" onclick="editWork('${work.id}')">
+                        <button class="btn btn-primary " onclick="editWork('${work.id}')">
                             <i class="fa-solid fa-edit"></i> تعديل
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteWork('${work.id}')">
+                        <button class="btn btn-danger " onclick="deleteWork('${work.id}')">
                             <i class="fa-solid fa-trash"></i> حذف
                         </button>
                     </div>
@@ -3037,7 +3117,7 @@
             if (error) throw error;
 
             if (!achievements || achievements.length === 0) {
-                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد إنجازات</p></div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div><p class="empty-state__title">لا توجد إنجازات</p></div>';
                 return;
             }
 
@@ -3066,10 +3146,10 @@
                                 <i class="fa-solid fa-chevron-down"></i>
                             </button>
                         </div>
-                        <button class="btn btn-primary btn-sm" onclick="editAchievement('${achievement.id}')">
+                        <button class="btn btn-primary " onclick="editAchievement('${achievement.id}')">
                             <i class="fa-solid fa-edit"></i> تعديل
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteAchievement('${achievement.id}')">
+                        <button class="btn btn-danger " onclick="deleteAchievement('${achievement.id}')">
                             <i class="fa-solid fa-trash"></i> حذف
                         </button>
                     </div>
@@ -3099,7 +3179,7 @@
             if (error) throw error;
 
             if (!sponsors || sponsors.length === 0) {
-                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا يوجد شركاء</p></div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div><p class="empty-state__title">لا يوجد شركاء</p></div>';
                 return;
             }
 
@@ -3129,10 +3209,10 @@
                                 <i class="fa-solid fa-chevron-down"></i>
                             </button>
                         </div>
-                        <button class="btn btn-primary btn-sm" onclick="editSponsor('${sponsor.id}')">
+                        <button class="btn btn-primary " onclick="editSponsor('${sponsor.id}')">
                             <i class="fa-solid fa-edit"></i> تعديل
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteSponsor('${sponsor.id}')">
+                        <button class="btn btn-danger " onclick="deleteSponsor('${sponsor.id}')">
                             <i class="fa-solid fa-trash"></i> حذف
                         </button>
                     </div>
@@ -3162,7 +3242,7 @@
             if (error) throw error;
 
             if (!faqs || faqs.length === 0) {
-                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد أسئلة شائعة</p></div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div><p class="empty-state__title">لا توجد أسئلة شائعة</p></div>';
                 return;
             }
 
@@ -3201,10 +3281,10 @@
                                 <i class="fa-solid fa-chevron-down"></i>
                             </button>
                         </div>
-                        <button class="btn btn-primary btn-sm" onclick="editFaq('${faq.id}')">
+                        <button class="btn btn-primary " onclick="editFaq('${faq.id}')">
                             <i class="fa-solid fa-edit"></i> تعديل
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteFaq('${faq.id}')">
+                        <button class="btn btn-danger " onclick="deleteFaq('${faq.id}')">
                             <i class="fa-solid fa-trash"></i> حذف
                         </button>
                     </div>
@@ -3247,11 +3327,11 @@
                             <span class="badge ${work.is_published ? 'badge-success' : 'badge-warning'}">
                                 ${work.is_published ? 'منشور' : 'مسودة'}
                             </span>
-                            ${work.link_url ? `<a href="${work.link_url}" target="_blank" class="btn-sm btn-secondary">الرابط</a>` : ''}
+                            ${work.link_url ? `<a href="${work.link_url}" target="_blank" class=" btn-secondary">الرابط</a>` : ''}
                         </div>
                         <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                            <button class="btn-sm btn-primary" onclick="editWork(${work.id})">تعديل</button>
-                            <button class="btn-sm btn-danger" onclick="deleteWork(${work.id})">حذف</button>
+                            <button class=" btn-primary" onclick="editWork(${work.id})">تعديل</button>
+                            <button class=" btn-danger" onclick="deleteWork(${work.id})">حذف</button>
                         </div>
                     </div>
                 </div>
@@ -3289,8 +3369,8 @@
                         ${achievement.description ? `<p style="color: #64748b; margin: 0.5rem 0;">${achievement.description}</p>` : ''}
                         ${achievement.achievement_date ? `<p style="color: #64748b; font-size: 0.9rem;"><i class="fa-solid fa-calendar"></i> ${new Date(achievement.achievement_date).toLocaleDateString('ar-SA')}</p>` : ''}
                         <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                            <button class="btn-sm btn-primary" onclick="editAchievement(${achievement.id})">تعديل</button>
-                            <button class="btn-sm btn-danger" onclick="deleteAchievement(${achievement.id})">حذف</button>
+                            <button class=" btn-primary" onclick="editAchievement(${achievement.id})">تعديل</button>
+                            <button class=" btn-danger" onclick="deleteAchievement(${achievement.id})">حذف</button>
                         </div>
                     </div>
                 </div>
@@ -3330,11 +3410,11 @@
                             <span class="badge ${sponsor.is_active ? 'badge-success' : 'badge-warning'}">
                                 ${sponsor.is_active ? 'نشط' : 'غير نشط'}
                             </span>
-                            ${sponsor.link_url || sponsor.link ? `<a href="${sponsor.link_url || sponsor.link}" target="_blank" class="btn-sm btn-secondary">الموقع</a>` : ''}
+                            ${sponsor.link_url || sponsor.link ? `<a href="${sponsor.link_url || sponsor.link}" target="_blank" class=" btn-secondary">الموقع</a>` : ''}
                         </div>
                         <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                            <button class="btn-sm btn-primary" onclick="editSponsor(${sponsor.id})">تعديل</button>
-                            <button class="btn-sm btn-danger" onclick="deleteSponsor(${sponsor.id})">حذف</button>
+                            <button class=" btn-primary" onclick="editSponsor(${sponsor.id})">تعديل</button>
+                            <button class=" btn-danger" onclick="deleteSponsor(${sponsor.id})">حذف</button>
                         </div>
                     </div>
                 </div>
@@ -3376,8 +3456,8 @@
                                 </span>
                             </div>
                             <div style="display: flex; gap: 0.5rem;">
-                                <button class="btn-sm btn-primary" onclick="editFaq(${faq.id})">تعديل</button>
-                                <button class="btn-sm btn-danger" onclick="deleteFaq(${faq.id})">حذف</button>
+                                <button class=" btn-primary" onclick="editFaq(${faq.id})">تعديل</button>
+                                <button class=" btn-danger" onclick="deleteFaq(${faq.id})">حذف</button>
                             </div>
                         </div>
                     </div>
@@ -5431,7 +5511,7 @@
             if (error) throw error;
 
             if (!works || works.length === 0) {
-                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد أعمال</p></div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div><p class="empty-state__title">لا توجد أعمال</p></div>';
                 return;
             }
 
@@ -5454,10 +5534,10 @@
                                 <td>${work.category || '-'}</td>
                                 <td>${work.order || 0}</td>
                                 <td class="action-buttons">
-                                    <button class="btn-sm btn-outline" onclick="editWork(${work.id})">
+                                    <button class=" btn-outline" onclick="editWork(${work.id})">
                                         <i class="fa-solid fa-edit"></i>
                                     </button>
-                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteWork(${work.id})">
+                                    <button class=" btn-outline btn-danger" onclick="deleteWork(${work.id})">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </td>
@@ -5489,7 +5569,7 @@
             if (error) throw error;
 
             if (!achievements || achievements.length === 0) {
-                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد إنجازات</p></div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div><p class="empty-state__title">لا توجد إنجازات</p></div>';
                 return;
             }
 
@@ -5512,10 +5592,10 @@
                                 <td>${ach.count_number || ach.count}${ach.plus_flag || ach.plus ? '+' : ''}</td>
                                 <td>${ach.order || 0}</td>
                                 <td class="action-buttons">
-                                    <button class="btn-sm btn-outline" onclick="editAchievement(${ach.id})">
+                                    <button class=" btn-outline" onclick="editAchievement(${ach.id})">
                                         <i class="fa-solid fa-edit"></i>
                                     </button>
-                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteAchievement(${ach.id})">
+                                    <button class=" btn-outline btn-danger" onclick="deleteAchievement(${ach.id})">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </td>
@@ -5547,7 +5627,7 @@
             if (error) throw error;
 
             if (!sponsors || sponsors.length === 0) {
-                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا يوجد شركاء</p></div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div><p class="empty-state__title">لا يوجد شركاء</p></div>';
                 return;
             }
 
@@ -5572,10 +5652,10 @@
                                 <td>${sponsor.description || '-'}</td>
                                 <td>${sponsor.order || 0}</td>
                                 <td class="action-buttons">
-                                    <button class="btn-sm btn-outline" onclick="editSponsor(${sponsor.id})">
+                                    <button class=" btn-outline" onclick="editSponsor(${sponsor.id})">
                                         <i class="fa-solid fa-edit"></i>
                                     </button>
-                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteSponsor(${sponsor.id})">
+                                    <button class=" btn-outline btn-danger" onclick="deleteSponsor(${sponsor.id})">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </td>
@@ -5607,7 +5687,7 @@
             if (error) throw error;
 
             if (!faqs || faqs.length === 0) {
-                container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد أسئلة</p></div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div><p class="empty-state__title">لا توجد أسئلة</p></div>';
                 return;
             }
 
@@ -5628,10 +5708,10 @@
                                 <td>${faq.answer.substring(0, 100)}${faq.answer.length > 100 ? '...' : ''}</td>
                                 <td>${faq.order || 0}</td>
                                 <td class="action-buttons">
-                                    <button class="btn-sm btn-outline" onclick="editFaq(${faq.id})">
+                                    <button class=" btn-outline" onclick="editFaq(${faq.id})">
                                         <i class="fa-solid fa-edit"></i>
                                     </button>
-                                    <button class="btn-sm btn-outline btn-danger" onclick="deleteFaq(${faq.id})">
+                                    <button class=" btn-outline btn-danger" onclick="deleteFaq(${faq.id})">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </td>

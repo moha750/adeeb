@@ -89,7 +89,7 @@ window.NewsWritersManager = (function() {
         if (filteredAssignments.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
                     <p class="empty-state__title">لا توجد أخبار معينة لك</p>
                 </div>
             `;
@@ -172,17 +172,17 @@ window.NewsWritersManager = (function() {
                     ${statusBadge}
                     <div class="news-card__actions">
                         ${assignment.status === 'pending' ? `
-                            <button class="btn btn-primary btn-sm" onclick="NewsWritersManager.startWriting('${assignment.id}')">
+                            <button class="btn btn-primary " onclick="NewsWritersManager.startWriting('${assignment.id}')">
                                 <i class="fa-solid fa-play"></i>
                                 بدء الكتابة
                             </button>
                         ` : assignment.status === 'in_progress' ? `
-                            <button class="btn btn-primary btn-sm" onclick="NewsWritersManager.continueWriting('${assignment.id}')">
+                            <button class="btn btn-primary " onclick="NewsWritersManager.continueWriting('${assignment.id}')">
                                 <i class="fa-solid fa-pen"></i>
                                 متابعة الكتابة
                             </button>
                         ` : `
-                            <button class="btn btn-outline btn-sm" onclick="NewsWritersManager.viewNews('${news.id}')">
+                            <button class="btn btn-outline " onclick="NewsWritersManager.viewNews('${news.id}')">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض
                             </button>

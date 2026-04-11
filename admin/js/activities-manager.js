@@ -148,9 +148,9 @@ class ActivitiesManager {
         const filtered = this.filterActivities();
         if (filtered.length === 0) {
             container.innerHTML = `
-                <div class="empty-state" style="text-align:center;padding:3rem 1rem;color:#64748b;">
-                    <i class="fa-solid fa-calendar-xmark" style="font-size:2.5rem;display:block;margin-bottom:0.75rem;"></i>
-                    <p>لا توجد أنشطة مطابقة.</p>
+                <div class="empty-state">
+                    <div class="empty-state__icon"><i class="fa-solid fa-calendar-xmark"></i></div>
+                    <p class="empty-state__title">لا توجد أنشطة مطابقة</p>
                 </div>`;
             return;
         }
@@ -226,17 +226,17 @@ class ActivitiesManager {
                 </div>
             </div>
             <div class="uc-card__footer" style="display:flex;flex-wrap:wrap;gap:0.4rem;">
-                <button class="btn btn-outline btn-sm" data-edit-activity="${this.escapeHtml(a.id)}">
+                <button class="btn btn-outline " data-edit-activity="${this.escapeHtml(a.id)}">
                     <i class="fa-solid fa-pen"></i> تعديل
                 </button>
-                <button class="btn ${a.is_published ? 'btn-slate' : 'btn-success'} btn-sm" data-toggle-publish="${this.escapeHtml(a.id)}">
+                <button class="btn ${a.is_published ? 'btn-slate' : 'btn-success'} " data-toggle-publish="${this.escapeHtml(a.id)}">
                     <i class="fa-solid fa-${a.is_published ? 'eye-slash' : 'eye'}"></i>
                     ${a.is_published ? 'إلغاء النشر' : 'نشر'}
                 </button>
-                ${!a.is_cancelled ? `<button class="btn btn-warning btn-sm" data-cancel-activity="${this.escapeHtml(a.id)}">
+                ${!a.is_cancelled ? `<button class="btn btn-warning " data-cancel-activity="${this.escapeHtml(a.id)}">
                     <i class="fa-solid fa-ban"></i> إلغاء
                 </button>` : ''}
-                <button class="btn btn-danger btn-sm" data-delete-activity="${this.escapeHtml(a.id)}">
+                <button class="btn btn-danger " data-delete-activity="${this.escapeHtml(a.id)}">
                     <i class="fa-solid fa-trash"></i> حذف
                 </button>
             </div>
@@ -500,9 +500,9 @@ class ActivitiesManager {
             : this.reservations;
 
         if (filtered.length === 0) {
-            container.innerHTML = `<div class="empty-state" style="text-align:center;padding:3rem 1rem;color:#64748b;">
-                <i class="fa-solid fa-inbox" style="font-size:2.5rem;display:block;margin-bottom:0.75rem;"></i>
-                <p>لا توجد حجوزات بعد.</p>
+            container.innerHTML = `<div class="empty-state">
+                <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
+                <p class="empty-state__title">لا توجد حجوزات بعد</p>
             </div>`;
             return;
         }
@@ -581,9 +581,9 @@ class ActivitiesManager {
         if (!container) return;
 
         if (this.visitors.length === 0) {
-            container.innerHTML = `<div class="empty-state" style="text-align:center;padding:3rem 1rem;color:#64748b;">
-                <i class="fa-solid fa-users-slash" style="font-size:2.5rem;display:block;margin-bottom:0.75rem;"></i>
-                <p>لا يوجد زوار مسجلون بعد.</p>
+            container.innerHTML = `<div class="empty-state">
+                <div class="empty-state__icon"><i class="fa-solid fa-users-slash"></i></div>
+                <p class="empty-state__title">لا يوجد زوار مسجلون بعد</p>
             </div>`;
             return;
         }

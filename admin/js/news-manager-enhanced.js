@@ -170,9 +170,9 @@ window.NewsManagerEnhanced = (function() {
         if (drafts.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
                     <p class="empty-state__title">لا توجد مسودات</p>
-                    <p class="empty-state__text">ابدأ بإنشاء مسودة خبر جديد</p>
+                    <p class="empty-state__message">ابدأ بإنشاء مسودة خبر جديد</p>
                 </div>
             `;
             return;
@@ -221,15 +221,15 @@ window.NewsManagerEnhanced = (function() {
                 </div>
                 <div class="uc-card__footer">
                     <div class="news-card__actions">
-                        <button class="btn btn-primary btn-sm" onclick="NewsManagerEnhanced.assignWritersToDraft('${news.id}')">
+                        <button class="btn btn-primary " onclick="NewsManagerEnhanced.assignWritersToDraft('${news.id}')">
                             <i class="fa-solid fa-users"></i>
                             تعيين كتّاب
                         </button>
-                        <button class="btn btn-outline btn-sm" onclick="NewsManagerEnhanced.editDraft('${news.id}')">
+                        <button class="btn btn-outline " onclick="NewsManagerEnhanced.editDraft('${news.id}')">
                             <i class="fa-solid fa-edit"></i>
                             تعديل
                         </button>
-                        <button class="btn btn-icon btn-danger btn-sm" onclick="NewsManagerEnhanced.deleteDraft('${news.id}')">
+                        <button class="btn btn-icon btn-danger " onclick="NewsManagerEnhanced.deleteDraft('${news.id}')">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -265,7 +265,7 @@ window.NewsManagerEnhanced = (function() {
         if (inProgressNews.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
                     <p class="empty-state__title">لا توجد أخبار قيد الكتابة</p>
                 </div>
             `;
@@ -321,15 +321,15 @@ window.NewsManagerEnhanced = (function() {
                 </div>
                 <div class="uc-card__footer">
                     <div class="news-card__actions">
-                        <button class="btn btn-outline btn-sm" onclick="NewsManagerEnhanced.viewNewsDetails('${news.id}')">
+                        <button class="btn btn-outline " onclick="NewsManagerEnhanced.viewNewsDetails('${news.id}')">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل
                         </button>
-                        <button class="btn btn-warning btn-sm" onclick="NewsManagerEnhanced.editWritersAssignment('${news.id}')">
+                        <button class="btn btn-warning " onclick="NewsManagerEnhanced.editWritersAssignment('${news.id}')">
                             <i class="fa-solid fa-user-pen"></i>
                             تعديل الكتّاب
                         </button>
-                        <button class="btn btn-icon btn-danger btn-sm" onclick="NewsManagerEnhanced.deleteNews('${news.id}')" title="حذف نهائي">
+                        <button class="btn btn-icon btn-danger " onclick="NewsManagerEnhanced.deleteNews('${news.id}')" title="حذف نهائي">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -348,7 +348,7 @@ window.NewsManagerEnhanced = (function() {
         if (reviewNews.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
                     <p class="empty-state__title">لا توجد أخبار جاهزة للمراجعة</p>
                 </div>
             `;
@@ -401,23 +401,23 @@ window.NewsManagerEnhanced = (function() {
                 </div>
                 <div class="uc-card__footer">
                     <div class="news-card__actions">
-                        <button class="btn btn-primary btn-sm" onclick="NewsManagerEnhanced.publishNews('${news.id}')">
+                        <button class="btn btn-primary " onclick="NewsManagerEnhanced.publishNews('${news.id}')">
                             <i class="fa-solid fa-paper-plane"></i>
                             نشر
                         </button>
-                        <button class="btn btn-warning btn-sm" onclick="NewsManagerEnhanced.requestChanges('${news.id}')">
+                        <button class="btn btn-warning " onclick="NewsManagerEnhanced.requestChanges('${news.id}')">
                             <i class="fa-solid fa-comment-dots"></i>
                             طلب تعديلات
                         </button>
-                        <button class="btn btn-primary btn-sm" onclick="NewsManagerEnhanced.directEditNews('${news.id}')">
+                        <button class="btn btn-primary " onclick="NewsManagerEnhanced.directEditNews('${news.id}')">
                             <i class="fa-solid fa-pen-to-square"></i>
                             تعديل مباشر
                         </button>
-                        <button class="btn btn-outline btn-sm" onclick="NewsManagerEnhanced.previewNews('${news.id}')">
+                        <button class="btn btn-outline " onclick="NewsManagerEnhanced.previewNews('${news.id}')">
                             <i class="fa-solid fa-eye"></i>
                             معاينة
                         </button>
-                        <button class="btn btn-icon btn-danger btn-sm" onclick="NewsManagerEnhanced.deleteNews('${news.id}')" title="حذف نهائي">
+                        <button class="btn btn-icon btn-danger " onclick="NewsManagerEnhanced.deleteNews('${news.id}')" title="حذف نهائي">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -457,7 +457,7 @@ window.NewsManagerEnhanced = (function() {
         if (publishedNews.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
                     <p class="empty-state__title">لا توجد أخبار منشورة</p>
                 </div>
             `;
@@ -483,20 +483,9 @@ window.NewsManagerEnhanced = (function() {
                 <div class="uc-card__header uc-card__header--media">
                     <img src="${imageUrl}" alt="${news.title}" class="uc-card__media-img" onerror="this.src='https://via.placeholder.com/800x450?text=أديب'">
                     <div class="uc-card__options">
-                        <button class="uc-card__options-btn btn btn-white btn-outline btn-icon" onclick="this.nextElementSibling.classList.toggle('d-none')">
+                        <button class="uc-card__options-btn btn btn-white btn-outline btn-icon btn-news-options" data-news-id="${news.id}" title="خيارات">
                             <i class="fa-solid fa-ellipsis-vertical"></i>
                         </button>
-                        <div class="uc-card__dropdown d-none">
-                            <button class="uc-card__dropdown-item" onclick="NewsManagerEnhanced.archiveNews('${news.id}'); this.closest('.uc-card__dropdown').classList.add('d-none')">
-                                <span class="uc-card__dropdown-icon" style="background:#fef3c7;color:#d97706"><i class="fa-solid fa-archive"></i></span>
-                                أرشفة
-                            </button>
-                            <div class="uc-card__dropdown-divider"></div>
-                            <button class="uc-card__dropdown-item uc-card__dropdown-item--danger" onclick="NewsManagerEnhanced.deleteNewsPermanently('${news.id}'); this.closest('.uc-card__dropdown').classList.add('d-none')">
-                                <span class="uc-card__dropdown-icon" style="background:#fee2e2;color:#dc2626"><i class="fa-solid fa-trash"></i></span>
-                                حذف نهائي
-                            </button>
-                        </div>
                     </div>
                     <div class="uc-card__badges-overlay">
                         <span class="uc-card__badge"><i class="fa-solid fa-check-circle"></i> منشور</span>
@@ -546,13 +535,13 @@ window.NewsManagerEnhanced = (function() {
                     </div>
                 </div>
                 <div class="uc-card__footer">
-                    <button class="member-card-view-btn" onclick="window.open('/news/news-detail.html?id=${news.id}', '_blank')">
+                    <button class="btn btn-primary" onclick="window.open('/news/news-detail.html?id=${news.id}', '_blank')">
                         <i class="fa-solid fa-external-link"></i>
-                        عرض في الموقع
+                        عرض الخبر
                     </button>
-                    <button class="member-card-action-btn secondary" onclick="NewsManagerEnhanced.archiveNews('${news.id}')">
+                    <button class="btn btn-slate" onclick="NewsManagerEnhanced.archiveNews('${news.id}')">
                         <i class="fa-solid fa-archive"></i>
-                        أرشفة
+                        أرشفة الخبر
                     </button>
                 </div>
             </div>
@@ -571,7 +560,7 @@ window.NewsManagerEnhanced = (function() {
         if (archivedNews.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-inbox empty-state__icon"></i>
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
                     <p class="empty-state__title">لا توجد أخبار مؤرشفة</p>
                 </div>
             `;
@@ -599,7 +588,7 @@ window.NewsManagerEnhanced = (function() {
                 <div class="uc-card__footer">
                     <span class="badge badge-secondary"><i class="fa-solid fa-archive"></i> مؤرشف</span>
                     <div class="news-card__actions">
-                        <button class="btn btn-outline btn-sm" onclick="NewsManagerEnhanced.restoreNews('${news.id}')">
+                        <button class="btn btn-outline " onclick="NewsManagerEnhanced.restoreNews('${news.id}')">
                             <i class="fa-solid fa-undo"></i>
                             استعادة
                         </button>
@@ -988,6 +977,58 @@ window.NewsManagerEnhanced = (function() {
                 btn.addEventListener('click', loadAllNews);
             }
         });
+
+        // قائمة خيارات بطاقة الخبر (dropdown-menu موحد)
+        let newsOptionsDropdown = document.getElementById('newsCardOptionsDropdown');
+        if (!newsOptionsDropdown) {
+            newsOptionsDropdown = document.createElement('div');
+            newsOptionsDropdown.id = 'newsCardOptionsDropdown';
+            newsOptionsDropdown.className = 'dropdown-menu';
+            newsOptionsDropdown.innerHTML = `
+                <button class="btn btn-warning btn-outline btn-block" data-action="archive">
+                    <i class="fa-solid fa-archive"></i> أرشفة
+                </button>
+                <div class="dropdown-divider"></div>
+                <button class="btn btn-danger btn-outline btn-block" data-action="delete">
+                    <i class="fa-solid fa-trash"></i> حذف نهائي
+                </button>
+            `;
+            document.body.appendChild(newsOptionsDropdown);
+
+            newsOptionsDropdown.addEventListener('click', (e) => {
+                const actionBtn = e.target.closest('[data-action]');
+                if (!actionBtn) return;
+                const newsId = newsOptionsDropdown.dataset.activeNewsId;
+                newsOptionsDropdown.classList.remove('show');
+                if (!newsId) return;
+                if (actionBtn.dataset.action === 'archive') {
+                    NewsManagerEnhanced.archiveNews(newsId);
+                } else if (actionBtn.dataset.action === 'delete') {
+                    NewsManagerEnhanced.deleteNewsPermanently(newsId);
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                const trigger = e.target.closest('.btn-news-options');
+                if (trigger) {
+                    e.stopPropagation();
+                    const newsId = trigger.dataset.newsId;
+                    const wasOpen = newsOptionsDropdown.classList.contains('show') &&
+                                    newsOptionsDropdown.dataset.activeNewsId === newsId;
+                    newsOptionsDropdown.classList.remove('show');
+                    if (wasOpen) return;
+                    newsOptionsDropdown.dataset.activeNewsId = newsId;
+                    const rect = trigger.getBoundingClientRect();
+                    newsOptionsDropdown.style.top = (rect.bottom + 6) + 'px';
+                    newsOptionsDropdown.style.left = rect.left + 'px';
+                    newsOptionsDropdown.classList.add('show');
+                    return;
+                }
+                if (!e.target.closest('#newsCardOptionsDropdown')) {
+                    newsOptionsDropdown.classList.remove('show');
+                }
+            });
+        }
 
         // فلاتر البحث
         const searchInputs = [

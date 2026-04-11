@@ -354,9 +354,65 @@ window.AuthManager = (function() {
         return userRole.role_level >= requiredLevel;
     }
 
+    /**
+     * الحصول على ID المستخدم الفعّال (يحترم نظام التنكر)
+     * عند التنكر: يعيد ID المستخدم المتنكَّر به
+     * بدون تنكر: يعيد ID المستخدم الحقيقي
+     */
+    async function getEffectiveUserId() {
+        const profile = await getCurrentUser();
+        if (profile?.id) return profile.id;
+        const { data: { user } } = await sb.auth.getUser();
+        return user?.id || null;
+    }
+
+    /**
+     * التحقق مما إذا كان المستخدم في وضع التنكر حالياً
+     */
+    async function isImpersonating() {
+        const profile = await getCurrentUser();
+        return profile?._isImpersonating === true;
+    }
+
+    /**
+     * استعلام بيانات المستخدم المتنكر به عبر RPC (يتجاوز RLS)
+     * يُستخدم فقط للقراءة أثناء التنكر
+     * @param {string} rpcName - اسم دالة RPC (مثل: impersonate_get_shared_surveys)
+     * @param {object} extraParams - معاملات إضافية (اختياري)
+     * @returns {Array} البيانات أو مصفوفة فارغة
+     */
+    async function impersonateQuery(rpcName, extraParams = {}) {
+        try {
+            const profile = await getCurrentUser();
+            if (!profile?._isImpersonating) {
+                console.warn('[impersonateQuery] ليس في وضع التنكر');
+                return [];
+            }
+
+            const targetUserId = profile.id;
+            const { data, error } = await sb.rpc(rpcName, {
+                p_target_user_id: targetUserId,
+                ...extraParams
+            });
+
+            if (error) {
+                console.error(`[impersonateQuery] خطأ في ${rpcName}:`, error);
+                return [];
+            }
+
+            return data || [];
+        } catch (error) {
+            console.error(`[impersonateQuery] خطأ:`, error);
+            return [];
+        }
+    }
+
     // إرجاع الوظائف العامة
     return {
         getCurrentUser,
+        getEffectiveUserId,
+        isImpersonating,
+        impersonateQuery,
         getUserRole,
         getUserRoles,
         checkRoleLevel,

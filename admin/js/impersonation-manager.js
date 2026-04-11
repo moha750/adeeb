@@ -295,7 +295,7 @@ window.ImpersonationManager = (function() {
             if (!profiles || profiles.length === 0) {
                 usersList.innerHTML = `
                     <div class="empty-state">
-                        <i class="fa-solid fa-users-slash empty-state__icon"></i>
+                        <div class="empty-state__icon"><i class="fa-solid fa-users-slash"></i></div>
                         <p class="empty-state__title">لا يوجد مستخدمين متاحين</p>
                     </div>
                 `;
@@ -317,7 +317,7 @@ window.ImpersonationManager = (function() {
                         <span class="impersonation-user-item__name">${user.full_name || 'بدون اسم'}</span>
                         <span class="impersonation-user-item__email">${user.email}</span>
                     </div>
-                    <button class="btn btn-primary btn-sm" onclick="ImpersonationManager.selectUserForImpersonation('${user.id}', '${(user.full_name || user.email).replace(/'/g, "\\'")}'); event.stopPropagation();">
+                    <button class="btn btn-primary " onclick="ImpersonationManager.selectUserForImpersonation('${user.id}', '${(user.full_name || user.email).replace(/'/g, "\\'")}'); event.stopPropagation();">
                         <i class="fa-solid fa-user-secret"></i>
                         تنكر
                     </button>
@@ -330,7 +330,7 @@ window.ImpersonationManager = (function() {
             if (usersList) {
                 usersList.innerHTML = `
                     <div class="empty-state empty-state--error">
-                        <i class="fa-solid fa-exclamation-circle empty-state__icon"></i>
+                        <div class="empty-state__icon"><i class="fa-solid fa-exclamation-circle"></i></div>
                         <p class="empty-state__title">حدث خطأ في تحميل المستخدمين</p>
                     </div>
                 `;
@@ -506,9 +506,9 @@ window.ImpersonationManager = (function() {
             if (!history || history.length === 0) {
                 tableContainer.innerHTML = `
                     <div class="empty-state">
-                        <i class="fa-solid fa-inbox empty-state__icon"></i>
+                        <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
                         <p class="empty-state__title">لا يوجد سجل للتنكر</p>
-                        <p class="empty-state__text">لم يتم تسجيل أي جلسات تنكر حتى الآن</p>
+                        <p class="empty-state__message">لم يتم تسجيل أي جلسات تنكر حتى الآن</p>
                     </div>
                 `;
                 return;
@@ -602,7 +602,7 @@ window.ImpersonationManager = (function() {
             if (tableContainer) {
                 tableContainer.innerHTML = `
                     <div class="empty-state empty-state--error">
-                        <i class="fa-solid fa-exclamation-circle empty-state__icon"></i>
+                        <div class="empty-state__icon"><i class="fa-solid fa-exclamation-circle"></i></div>
                         <p class="empty-state__title">حدث خطأ في تحميل السجل</p>
                     </div>
                 `;

@@ -511,7 +511,7 @@
                                     <input type="text" class="edit-form-input question-option" 
                                         value="${this.escapeHtml(opt)}" 
                                         placeholder="خيار ${i + 1}">
-                                    <button type="button" class="btn btn-icon btn-danger btn-sm" 
+                                    <button type="button" class="btn btn-icon btn-danger " 
                                         onclick="this.parentElement.remove()" 
                                         ${options.length <= 2 ? 'disabled' : ''}>
                                         <i class="fa-solid fa-times"></i>
@@ -519,7 +519,7 @@
                                 </div>
                             `).join('')}
                         </div>
-                        <button type="button" class="btn btn-outline btn-sm add-option-btn"
+                        <button type="button" class="btn btn-outline  add-option-btn"
                             onclick="window.surveyEditModal.addOption()">
                             <i class="fa-solid fa-plus"></i>
                             إضافة خيار
@@ -561,7 +561,7 @@
                     <input type="text" class="edit-form-input question-option" 
                         value="" 
                         placeholder="خيار ${count}">
-                    <button type="button" class="btn btn-icon btn-danger btn-sm" 
+                    <button type="button" class="btn btn-icon btn-danger " 
                         onclick="this.parentElement.remove()">
                         <i class="fa-solid fa-times"></i>
                     </button>
@@ -674,36 +674,36 @@
             // أزرار تغيير الحالة بناءً على الحالة الحالية
             if (status === 'draft') {
                 buttons = `
-                    <button class="btn btn-success btn-sm" onclick="window.surveyEditModal.changeStatus('active')" title="نشر الاستبيان">
+                    <button class="btn btn-success " onclick="window.surveyEditModal.changeStatus('active')" title="نشر الاستبيان">
                         <i class="fa-solid fa-paper-plane"></i>
                         نشر
                     </button>
                 `;
             } else if (status === 'active') {
                 buttons = `
-                    <button class="btn btn-warning btn-sm" onclick="window.surveyEditModal.changeStatus('paused')" title="إيقاف مؤقت">
+                    <button class="btn btn-warning " onclick="window.surveyEditModal.changeStatus('paused')" title="إيقاف مؤقت">
                         <i class="fa-solid fa-pause"></i>
                         إيقاف
                     </button>
-                    <button class="btn btn-danger btn-sm" onclick="window.surveyEditModal.endSurvey()" title="إنهاء نهائي">
+                    <button class="btn btn-danger " onclick="window.surveyEditModal.endSurvey()" title="إنهاء نهائي">
                         <i class="fa-solid fa-stop"></i>
                         إنهاء
                     </button>
                 `;
             } else if (status === 'paused') {
                 buttons = `
-                    <button class="btn btn-success btn-sm" onclick="window.surveyEditModal.changeStatus('active')" title="تفعيل">
+                    <button class="btn btn-success " onclick="window.surveyEditModal.changeStatus('active')" title="تفعيل">
                         <i class="fa-solid fa-play"></i>
                         تفعيل
                     </button>
-                    <button class="btn btn-secondary btn-sm" onclick="window.surveyEditModal.changeStatus('draft')" title="تحويل لمسودة">
+                    <button class="btn btn-secondary " onclick="window.surveyEditModal.changeStatus('draft')" title="تحويل لمسودة">
                         <i class="fa-solid fa-file-pen"></i>
                         مسودة
                     </button>
                 `;
             } else if (status === 'closed') {
                 buttons = `
-                    <button class="btn btn-primary btn-sm" onclick="window.surveyEditModal.changeStatus('draft')" title="إعادة كمسودة">
+                    <button class="btn btn-primary " onclick="window.surveyEditModal.changeStatus('draft')" title="إعادة كمسودة">
                         <i class="fa-solid fa-rotate-left"></i>
                         إعادة كمسودة
                     </button>

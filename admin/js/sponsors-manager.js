@@ -63,10 +63,10 @@ window.SponsorsManager = (function() {
                             <td>${sponsor.badge || '-'}</td>
                             <td>${sponsor.order || 0}</td>
                             <td class="action-buttons">
-                                <button class="btn-sm btn-outline" onclick="SponsorsManager.editSponsor('${sponsor.id}')">
+                                <button class=" btn-outline" onclick="SponsorsManager.editSponsor('${sponsor.id}')">
                                     <i class="fa-solid fa-edit"></i>
                                 </button>
-                                <button class="btn-sm btn-outline btn-danger" onclick="SponsorsManager.deleteSponsor('${sponsor.id}')">
+                                <button class=" btn-outline btn-danger" onclick="SponsorsManager.deleteSponsor('${sponsor.id}')">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </td>

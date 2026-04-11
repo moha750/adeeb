@@ -87,12 +87,14 @@
         if (allSessions.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-calendar-xmark"></i>
-                    <p>لا توجد جلسات مقابلات</p>
-                    <button class="btn-primary" onclick="window.interviewSessionsManager.createNewSession()">
-                        <i class="fa-solid fa-plus"></i>
-                        إنشاء جلسة جديدة
-                    </button>
+                    <div class="empty-state__icon"><i class="fa-solid fa-calendar-xmark"></i></div>
+                    <p class="empty-state__title">لا توجد جلسات مقابلات</p>
+                    <div class="empty-state__action">
+                        <button class="btn btn-primary" onclick="window.interviewSessionsManager.createNewSession()">
+                            <i class="fa-solid fa-plus"></i>
+                            إنشاء جلسة جديدة
+                        </button>
+                    </div>
                 </div>
             `;
             return;
@@ -222,29 +224,29 @@
 
                     <div class="uc-card__footer">
                         <div class="card-actions-grid">
-                            <button class="btn btn-primary btn-sm" onclick="window.interviewSessionsManager.viewSession('${session.id}')" title="عرض التفاصيل">
+                            <button class="btn btn-primary " onclick="window.interviewSessionsManager.viewSession('${session.id}')" title="عرض التفاصيل">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض
                             </button>
-                            <button class="btn btn-warning btn-sm" onclick="window.interviewSessionsManager.editSession('${session.id}')" title="تعديل الجلسة">
+                            <button class="btn btn-warning " onclick="window.interviewSessionsManager.editSession('${session.id}')" title="تعديل الجلسة">
                                 <i class="fa-solid fa-pen-to-square"></i>
                                 تعديل
                             </button>
                             ${session.interview_type === 'online' ? `
-                                <button class="btn btn-secondary btn-sm" onclick="window.interviewSessionsManager.updateMeetingLink('${session.id}')" title="تحديث رابط المقابلة">
+                                <button class="btn btn-secondary " onclick="window.interviewSessionsManager.updateMeetingLink('${session.id}')" title="تحديث رابط المقابلة">
                                     <i class="fa-solid fa-video"></i>
                                     الرابط
                                 </button>
                             ` : ''}
-                            <button class="btn btn-secondary btn-sm" onclick="window.interviewSessionsManager.copyLink('${session.public_link_token}')" title="نسخ رابط الحجز">
+                            <button class="btn btn-secondary " onclick="window.interviewSessionsManager.copyLink('${session.public_link_token}')" title="نسخ رابط الحجز">
                                 <i class="fa-solid fa-link"></i>
                                 نسخ
                             </button>
-                            <button class="btn ${session.is_active ? 'btn-secondary' : 'btn-success'} btn-sm" onclick="window.interviewSessionsManager.toggleSession('${session.id}', ${!session.is_active})" title="${session.is_active ? 'تعطيل' : 'تفعيل'}">
+                            <button class="btn ${session.is_active ? 'btn-secondary' : 'btn-success'} " onclick="window.interviewSessionsManager.toggleSession('${session.id}', ${!session.is_active})" title="${session.is_active ? 'تعطيل' : 'تفعيل'}">
                                 <i class="fa-solid fa-${session.is_active ? 'pause' : 'play'}"></i>
                                 ${session.is_active ? 'تعطيل' : 'تفعيل'}
                             </button>
-                            <button class="btn btn-danger btn-sm" onclick="window.interviewSessionsManager.deleteSession('${session.id}')" title="حذف">
+                            <button class="btn btn-danger " onclick="window.interviewSessionsManager.deleteSession('${session.id}')" title="حذف">
                                 <i class="fa-solid fa-trash"></i>
                                 حذف
                             </button>

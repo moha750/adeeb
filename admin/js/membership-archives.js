@@ -55,9 +55,9 @@ function renderArchivesTable() {
     if (archivedCycles.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <i class="fa-solid fa-box-archive"></i>
-                <h3>لا توجد دورات مؤرشفة</h3>
-                <p>لم يتم أرشفة أي دورة تسجيل بعد</p>
+                <div class="empty-state__icon"><i class="fa-solid fa-box-archive"></i></div>
+                <h3 class="empty-state__title">لا توجد دورات مؤرشفة</h3>
+                <p class="empty-state__message">لم يتم أرشفة أي دورة تسجيل بعد</p>
             </div>
         `;
         return;
@@ -206,11 +206,11 @@ function renderCycleCard(cycle) {
             </div>
 
             <div class="archive-card-actions">
-                <button class="btn btn-primary btn-sm" onclick="window.archivesManager.viewCycleDetails('${cycle.id}')">
+                <button class="btn btn-primary " onclick="window.archivesManager.viewCycleDetails('${cycle.id}')">
                     <i class="fa-solid fa-eye"></i>
                     عرض التفاصيل الكاملة
                 </button>
-                <button class="btn btn-outline btn-sm" onclick="window.archivesManager.exportCycle('${cycle.id}')">
+                <button class="btn btn-outline " onclick="window.archivesManager.exportCycle('${cycle.id}')">
                     <i class="fa-solid fa-download"></i>
                     تصدير
                 </button>
@@ -409,33 +409,35 @@ function renderStatsSummary(stats) {
 
 function renderApplicationsTab(applications) {
     if (applications.length === 0) {
-        return '<div class="empty-state"><p>لا توجد طلبات</p></div>';
+        return '<div class="empty-state"><p class="empty-state__title">لا توجد طلبات</p></div>';
     }
 
     return `
-        <div class="table-container">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>الاسم</th>
-                        <th>البريد الإلكتروني</th>
-                        <th>الهاتف</th>
-                        <th>الحالة</th>
-                        <th>تاريخ التقديم</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${applications.map(app => `
+        <div class="data-table-wrap">
+            <div class="data-table-scroll">
+                <table class="data-table data-table--striped">
+                    <thead>
                         <tr>
-                            <td>${app.full_name}</td>
-                            <td>${app.email}</td>
-                            <td>${app.phone}</td>
-                            <td><span class="badge badge-${getStatusColor(app.status)}">${getStatusLabel(app.status)}</span></td>
-                            <td>${new Date(app.created_at).toLocaleDateString('ar-SA')}</td>
+                            <th>الاسم</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>الهاتف</th>
+                            <th>الحالة</th>
+                            <th>تاريخ التقديم</th>
                         </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        ${applications.map(app => `
+                            <tr>
+                                <td>${app.full_name}</td>
+                                <td>${app.email}</td>
+                                <td>${app.phone}</td>
+                                <td><span class="badge badge-${getStatusColor(app.status)}">${getStatusLabel(app.status)}</span></td>
+                                <td>${new Date(app.created_at).toLocaleDateString('ar-SA')}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
         </div>
     `;
 }
@@ -446,33 +448,35 @@ function renderApplicationsTab(applications) {
 
 function renderInterviewsTab(interviews) {
     if (interviews.length === 0) {
-        return '<div class="empty-state"><p>لا توجد مقابلات</p></div>';
+        return '<div class="empty-state"><p class="empty-state__title">لا توجد مقابلات</p></div>';
     }
 
     return `
-        <div class="table-container">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>المقابل</th>
-                        <th>تاريخ المقابلة</th>
-                        <th>الحالة</th>
-                        <th>النتيجة</th>
-                        <th>التقييم</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${interviews.map(interview => `
+        <div class="data-table-wrap">
+            <div class="data-table-scroll">
+                <table class="data-table data-table--striped">
+                    <thead>
                         <tr>
-                            <td>${interview.interviewer_name || 'غير محدد'}</td>
-                            <td>${interview.interview_date ? new Date(interview.interview_date).toLocaleDateString('ar-SA') : 'غير محدد'}</td>
-                            <td><span class="badge badge-${getStatusColor(interview.status)}">${getStatusLabel(interview.status)}</span></td>
-                            <td>${interview.result ? `<span class="badge badge-${getResultColor(interview.result)}">${getResultLabel(interview.result)}</span>` : '-'}</td>
-                            <td>${interview.rating ? '⭐'.repeat(interview.rating) : '-'}</td>
+                            <th>المقابل</th>
+                            <th>تاريخ المقابلة</th>
+                            <th>الحالة</th>
+                            <th>النتيجة</th>
+                            <th>التقييم</th>
                         </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        ${interviews.map(interview => `
+                            <tr>
+                                <td>${interview.interviewer_name || 'غير محدد'}</td>
+                                <td>${interview.interview_date ? new Date(interview.interview_date).toLocaleDateString('ar-SA') : 'غير محدد'}</td>
+                                <td><span class="badge badge-${getStatusColor(interview.status)}">${getStatusLabel(interview.status)}</span></td>
+                                <td>${interview.result ? `<span class="badge badge-${getResultColor(interview.result)}">${getResultLabel(interview.result)}</span>` : '-'}</td>
+                                <td>${interview.rating ? '⭐'.repeat(interview.rating) : '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
         </div>
     `;
 }
@@ -483,35 +487,37 @@ function renderInterviewsTab(interviews) {
 
 function renderSessionsTab(sessions) {
     if (sessions.length === 0) {
-        return '<div class="empty-state"><p>لا توجد جلسات</p></div>';
+        return '<div class="empty-state"><p class="empty-state__title">لا توجد جلسات</p></div>';
     }
 
     return `
-        <div class="table-container">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>اسم الجلسة</th>
-                        <th>التاريخ</th>
-                        <th>الموقع</th>
-                        <th>الفترات</th>
-                        <th>المحجوزة</th>
-                        <th>المكتملة</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${sessions.map(session => `
+        <div class="data-table-wrap">
+            <div class="data-table-scroll">
+                <table class="data-table data-table--striped">
+                    <thead>
                         <tr>
-                            <td>${session.session_name}</td>
-                            <td>${new Date(session.session_date).toLocaleDateString('ar-SA')}</td>
-                            <td>${session.location || '-'}</td>
-                            <td>${session.total_slots || 0}</td>
-                            <td>${session.booked_slots || 0}</td>
-                            <td>${session.completed_interviews || 0}</td>
+                            <th>اسم الجلسة</th>
+                            <th>التاريخ</th>
+                            <th>الموقع</th>
+                            <th>الفترات</th>
+                            <th>المحجوزة</th>
+                            <th>المكتملة</th>
                         </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        ${sessions.map(session => `
+                            <tr>
+                                <td>${session.session_name}</td>
+                                <td>${new Date(session.session_date).toLocaleDateString('ar-SA')}</td>
+                                <td>${session.location || '-'}</td>
+                                <td>${session.total_slots || 0}</td>
+                                <td>${session.booked_slots || 0}</td>
+                                <td>${session.completed_interviews || 0}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
         </div>
     `;
 }

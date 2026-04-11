@@ -104,8 +104,8 @@
         if (filtered.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-inbox"></i>
-                    <p>لا توجد قرارات</p>
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
+                    <p class="empty-state__title">لا توجد قرارات</p>
                 </div>
             `;
             return;

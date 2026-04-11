@@ -276,7 +276,7 @@
                     <td>${statusBadge}</td>
                     <td>${date}</td>
                     <td>
-                        <button class="btn-sm btn-primary" onclick="window.membershipManager.viewApplication('${app.id}')">
+                        <button class=" btn-primary" onclick="window.membershipManager.viewApplication('${app.id}')">
                             <i class="fa-solid fa-eye"></i>
                             عرض
                         </button>
@@ -658,9 +658,9 @@
         if (availableCommittees.length === 0) {
             availableCommitteesTable.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-inbox empty-state__icon"></i>
-                    <p>لا توجد لجان متاحة</p>
-                    <p class="text-base">قم بإضافة لجان من قسم إدارة اللجان أولاً</p>
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
+                    <p class="empty-state__title">لا توجد لجان متاحة</p>
+                    <p class="empty-state__message">قم بإضافة لجان من قسم إدارة اللجان أولاً</p>
                 </div>
             `;
             return;
@@ -1335,8 +1335,8 @@
         if (filtered.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-inbox"></i>
-                    <p>لا توجد طلبات</p>
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
+                    <p class="empty-state__title">لا توجد طلبات</p>
                 </div>
             `;
             return;
@@ -1579,8 +1579,8 @@
         if (filtered.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-inbox"></i>
-                    <p>لا توجد طلبات</p>
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
+                    <p class="empty-state__title">لا توجد طلبات</p>
                 </div>
             `;
             return;
@@ -1667,20 +1667,20 @@
 
                     <div class="uc-card__footer">
                         <div class="card-actions-grid">
-                            <button class="btn btn-primary btn-sm" onclick="window.membershipManager.viewApplication('${app.id}')">
+                            <button class="btn btn-primary " onclick="window.membershipManager.viewApplication('${app.id}')">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض التفاصيل
                             </button>
                             ${app.status === 'new' || app.status === 'under_review' ? `
-                                <button class="btn btn-success btn-sm" onclick="window.membershipManager.approveForInterview('${app.id}')">
+                                <button class="btn btn-success " onclick="window.membershipManager.approveForInterview('${app.id}')">
                                     <i class="fa-solid fa-check"></i>
                                     قبول للمقابلة
                                 </button>
-                                <button class="btn btn-warning btn-sm" onclick="window.membershipManager.markUnderReview('${app.id}')">
+                                <button class="btn btn-warning " onclick="window.membershipManager.markUnderReview('${app.id}')">
                                     <i class="fa-solid fa-clock"></i>
                                     قيد المراجعة
                                 </button>
-                                <button class="btn btn-danger btn-sm" onclick="window.membershipManager.rejectApplication('${app.id}')">
+                                <button class="btn btn-danger " onclick="window.membershipManager.rejectApplication('${app.id}')">
                                     <i class="fa-solid fa-times"></i>
                                     رفض
                                 </button>
@@ -1880,11 +1880,11 @@
                             ${escapeHtml(archive.archive_name)}
                         </h3>
                         <div>
-                            <button class="btn-sm btn-primary" onclick="window.membershipManager.viewArchive('${archive.id}')">
+                            <button class=" btn-primary" onclick="window.membershipManager.viewArchive('${archive.id}')">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض التفاصيل
                             </button>
-                            <button class="btn-sm btn-success" onclick="window.membershipManager.downloadArchive('${archive.id}')">
+                            <button class=" btn-success" onclick="window.membershipManager.downloadArchive('${archive.id}')">
                                 <i class="fa-solid fa-download"></i>
                                 تحميل
                             </button>
@@ -2444,8 +2444,8 @@
         if (!filtered.length) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-inbox"></i>
-                    <p>لا يوجد متقدمون في البرزخ</p>
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
+                    <p class="empty-state__title">لا يوجد متقدمون في البرزخ</p>
                 </div>
             `;
             return;
@@ -2511,15 +2511,15 @@
 
                     <div class="uc-card__footer">
                         <div class="card-actions-grid">
-                            <button class="btn btn-primary btn-sm" onclick="window.membershipManager.viewApplication('${app.id}')">
+                            <button class="btn btn-primary " onclick="window.membershipManager.viewApplication('${app.id}')">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض التفاصيل
                             </button>
-                            <button class="btn btn-success btn-sm" onclick="window.membershipManager.scheduleInterviewFromBarzakh('${app.id}')">
+                            <button class="btn btn-success " onclick="window.membershipManager.scheduleInterviewFromBarzakh('${app.id}')">
                                 <i class="fa-solid fa-calendar-plus"></i>
                                 جدولة مقابلة
                             </button>
-                            <button class="btn btn-danger btn-sm" onclick="window.membershipManager.rejectFromBarzakh('${app.id}', '${escapeHtml(app.full_name || '')}')">
+                            <button class="btn btn-danger " onclick="window.membershipManager.rejectFromBarzakh('${app.id}', '${escapeHtml(app.full_name || '')}')">
                                 <i class="fa-solid fa-user-xmark"></i>
                                 حذف/رفض
                             </button>
@@ -2572,8 +2572,8 @@
         if (filtered.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-inbox"></i>
-                    <p>لا توجد مقابلات</p>
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
+                    <p class="empty-state__title">لا توجد مقابلات</p>
                 </div>
             `;
             return;
@@ -2686,21 +2686,21 @@
 
                     <div class="uc-card__footer">
                         <div class="card-actions-grid">
-                            <button class="btn btn-primary btn-sm" onclick="window.membershipManager.viewInterview('${interview.id}')">
+                            <button class="btn btn-primary " onclick="window.membershipManager.viewInterview('${interview.id}')">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض التفاصيل
                             </button>
                             ${interview.result === 'pending' || !interview.result ? `
-                                <button class="btn btn-success btn-sm" onclick="window.membershipManager.acceptInterview('${interview.id}')">
+                                <button class="btn btn-success " onclick="window.membershipManager.acceptInterview('${interview.id}')">
                                     <i class="fa-solid fa-check"></i>
                                     قبول
                                 </button>
-                                <button class="btn btn-danger btn-sm" onclick="window.membershipManager.rejectInterview('${interview.id}')">
+                                <button class="btn btn-danger " onclick="window.membershipManager.rejectInterview('${interview.id}')">
                                     <i class="fa-solid fa-times"></i>
                                     رفض
                                 </button>
                             ` : ''}
-                            <button class="btn btn-warning btn-sm" onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot && interview.slot[0] ? interview.slot[0].id : ''}')">
+                            <button class="btn btn-warning " onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot && interview.slot[0] ? interview.slot[0].id : ''}')">
                                 <i class="fa-solid fa-trash-alt"></i>
                                 حذف الموعد
                             </button>
@@ -3436,7 +3436,7 @@
                     <td>${joinDate}</td>
                     <td>${statusBadge}</td>
                     <td>
-                        <button class="btn-sm btn-primary" onclick="window.membershipManager.viewAcceptedMember('${member.id}')">
+                        <button class=" btn-primary" onclick="window.membershipManager.viewAcceptedMember('${member.id}')">
                             <i class="fa-solid fa-eye"></i>
                             عرض
                         </button>

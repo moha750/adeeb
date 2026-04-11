@@ -300,7 +300,7 @@ class ElectionsManager {
                     </div>
                 </div>
                 <div class="uc-card__footer">
-                    <button class="btn btn-sm btn-outline">
+                    <button class="btn  btn-outline">
                         <i class="fa-solid fa-eye"></i> عرض التفاصيل
                     </button>
                 </div>
@@ -434,7 +434,7 @@ class ElectionsManager {
                         </div>
                     </div>
                     <div class="uc-card__footer">
-                        <button class="btn btn-sm ${type === 'candidacy' ? 'btn-warning' : type === 'voting' ? 'btn-success' : 'btn-outline'}">
+                        <button class="btn  ${type === 'candidacy' ? 'btn-warning' : type === 'voting' ? 'btn-success' : 'btn-outline'}">
                             <i class="fa-solid ${type === 'candidacy' ? 'fa-arrow-left' : type === 'voting' ? 'fa-check-to-slot' : 'fa-eye'}"></i>
                             ${type === 'candidacy' ? 'عرض التفاصيل والترشح' : type === 'voting' ? 'صوّت الآن' : 'عرض النتائج'}
                         </button>
@@ -1102,7 +1102,7 @@ class ElectionsManager {
                         </div>` : ''}
                         ${candidate.election_file_url ? `
                         <div style="text-align: center; padding: 0 1rem;">
-                            <a href="${candidate.election_file_url}" target="_blank" class="btn btn-sm btn-outline" style="font-size: 0.8rem;">
+                            <a href="${candidate.election_file_url}" target="_blank" class="btn  btn-outline" style="font-size: 0.8rem;">
                                 <i class="fa-solid fa-file-pdf"></i> الملف الانتخابي
                             </a>
                         </div>` : ''}
@@ -1185,7 +1185,7 @@ class ElectionsManager {
                     </div>` : ''}
                     ${candidate.election_file_url ? `
                     <div class="uc-card__footer" style="justify-content: center;">
-                        <a href="${candidate.election_file_url}" target="_blank" class="btn btn-sm btn-outline">
+                        <a href="${candidate.election_file_url}" target="_blank" class="btn  btn-outline">
                             <i class="fa-solid fa-file-pdf"></i> الملف الانتخابي
                         </a>
                     </div>` : ''}
@@ -1203,7 +1203,7 @@ class ElectionsManager {
             const label = ElectionsManager.STATUS_LABELS[nextStatus];
             const color = ElectionsManager.STATUS_COLORS[nextStatus];
             const icon = nextStatus === 'cancelled' ? 'fa-ban' : 'fa-arrow-left';
-            return `<button class="btn btn-sm status-transition-btn" data-next-status="${nextStatus}"
+            return `<button class="btn  status-transition-btn" data-next-status="${nextStatus}"
                         style="background: ${color}; color: white; border: none;">
                         <i class="fa-solid ${icon}"></i> ${label}
                     </button>`;
@@ -1269,7 +1269,7 @@ class ElectionsManager {
                         </div>` : ''}
                         ${candidate.election_file_url ? `
                         <div class="uc-card__info-item">
-                            <a href="${candidate.election_file_url}" target="_blank" class="btn btn-sm btn-outline" style="margin-top: 0.5rem;">
+                            <a href="${candidate.election_file_url}" target="_blank" class="btn  btn-outline" style="margin-top: 0.5rem;">
                                 <i class="fa-solid fa-file-pdf"></i> الملف الانتخابي
                             </a>
                         </div>` : ''}
@@ -1281,10 +1281,10 @@ class ElectionsManager {
                     </div>
                     ${canApprove && candidate.status === 'pending' ? `
                     <div class="uc-card__footer">
-                        <button class="btn btn-sm btn-success approve-candidate-btn" data-candidate-id="${candidate.id}">
+                        <button class="btn  btn-success approve-candidate-btn" data-candidate-id="${candidate.id}">
                             <i class="fa-solid fa-check"></i> قبول
                         </button>
-                        <button class="btn btn-sm btn-danger reject-candidate-btn" data-candidate-id="${candidate.id}">
+                        <button class="btn  btn-danger reject-candidate-btn" data-candidate-id="${candidate.id}">
                             <i class="fa-solid fa-xmark"></i> رفض
                         </button>
                     </div>` : ''}

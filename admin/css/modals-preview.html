@@ -280,6 +280,9 @@
             <button class="btn btn-primary btn-md btn-lg" onclick="openModal('modal-lg-live')">
                 <i class="fa-solid fa-expand"></i> نافذة كبيرة
             </button>
+            <button class="btn btn-teal btn-md" onclick="openModal('modal-cropper-live')">
+                <i class="fa-solid fa-crop"></i> § 18 — نافذة قص الصورة
+            </button>
         </div>
     </div>
 
@@ -1156,6 +1159,107 @@
     <div class="modal-footer">
         <button class="btn btn-ghost btn-md" onclick="closeModal('modal-form-grid-demo')">إلغاء</button>
         <button class="btn btn-warning btn-md"><i class="fa-solid fa-plus"></i> إضافة الإنجاز</button>
+    </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     § 18 — Image Cropper Modal (معاينة ثابتة)
+     ══════════════════════════════════════════ -->
+<div class="modal modal-lg modal-cropper" id="modal-cropper-live" role="dialog" aria-modal="true" aria-labelledby="cropperDemoTitle">
+    <div class="modal-header">
+        <div class="modal-header-content">
+            <div class="modal-icon"><i class="fa-solid fa-crop-simple"></i></div>
+            <h3 id="cropperDemoTitle" class="modal-title">قص الصورة</h3>
+        </div>
+        <button class="modal-close" onclick="closeModal('modal-cropper-live')" aria-label="إغلاق">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+    <div class="modal-body">
+        <!-- شريط الأدوات -->
+        <div class="cropper-toolbar">
+            <div class="cropper-toolbar-hint">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>اسحب الإطار لتحريكه · اسحب المقابض لتغيير الحجم</span>
+            </div>
+            <div class="cropper-toolbar-actions">
+                <button type="button" class="btn btn-outline btn-sm" title="إعادة التعيين">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>إعادة</span>
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" title="توسيط التحديد">
+                    <i class="fa-solid fa-arrows-to-dot"></i>
+                    <span>توسيط</span>
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" title="تحديد الصورة كاملة">
+                    <i class="fa-solid fa-expand"></i>
+                    <span>كامل</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- منطقة الكانفس + التحديد -->
+        <div class="cropper-canvas-area">
+            <img class="cropper-sample"
+                 src="https://picsum.photos/id/1018/720/420"
+                 alt="صورة عينة"
+                 width="720"
+                 height="420">
+            <div class="cropper-overlay" style="width:720px;height:420px;max-width:calc(100% - 3rem)">
+                <div class="cropper-selection" style="left:160px;top:70px;width:400px;height:240px">
+                    <div class="cropper-dimensions-badge">
+                        <i class="fa-solid fa-maximize"></i>
+                        <span>1200 × 720</span>
+                    </div>
+                    <div class="cropper-handle nw"></div>
+                    <div class="cropper-handle ne"></div>
+                    <div class="cropper-handle sw"></div>
+                    <div class="cropper-handle se"></div>
+                    <div class="cropper-handle n"></div>
+                    <div class="cropper-handle s"></div>
+                    <div class="cropper-handle e"></div>
+                    <div class="cropper-handle w"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- شريط التحكم: نسبة + معاينة (بطاقتان مفصولتان) -->
+        <div class="cropper-controls-row">
+            <div class="cropper-controls">
+                <span class="cropper-control-label">
+                    <i class="fa-solid fa-ruler-combined"></i> نسبة العرض
+                </span>
+                <div class="cropper-aspect-buttons" role="group" aria-label="نسبة العرض">
+                    <button type="button" class="btn btn-primary btn-sm cropper-aspect-btn" data-ratio="free">حر</button>
+                    <button type="button" class="btn btn-outline btn-sm cropper-aspect-btn" data-ratio="16:9">16:9</button>
+                    <button type="button" class="btn btn-outline btn-sm cropper-aspect-btn" data-ratio="4:3">4:3</button>
+                    <button type="button" class="btn btn-outline btn-sm cropper-aspect-btn" data-ratio="1:1">1:1</button>
+                </div>
+            </div>
+            <div class="cropper-controls">
+                <span class="cropper-control-label">
+                    <i class="fa-solid fa-eye"></i> معاينة مباشرة
+                </span>
+                <div class="cropper-preview-box">
+                    <div class="cropper-preview-sample" style="background:url('https://picsum.photos/id/1018/240/160') center/cover no-repeat"></div>
+                    <div class="cropper-preview-info">
+                        <span class="cropper-preview-label">
+                            <i class="fa-solid fa-crop"></i> النتيجة
+                        </span>
+                        <span class="cropper-preview-dims">1200 × 720</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-slate btn-outline btn-md" onclick="closeModal('modal-cropper-live')">
+            <i class="fa-solid fa-xmark"></i> إلغاء
+        </button>
+        <button class="btn btn-primary btn-md" onclick="closeModal('modal-cropper-live')">
+            <i class="fa-solid fa-check"></i> تطبيق القص
+        </button>
     </div>
 </div>
 

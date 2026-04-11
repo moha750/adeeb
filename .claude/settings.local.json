@@ -71,7 +71,19 @@
       "Bash(find /c/Users/moham/adeeb -name \"*.sql\" -type f -exec wc -l {} \\\\;)",
       "Bash(grep -E \"\\\\.css$\")",
       "Bash(sed 's/.*label: //')",
-      "Bash(sed \"s/,.*//g\")"
+      "Bash(sed \"s/,.*//g\")",
+      "Read(//c/Users/moham/.claude/**)",
+      "Read(//c/Users/moham/**)",
+      "Bash(git check-ignore:*)",
+      "Bash(git rm:*)",
+      "Bash(ls -d */)",
+      "Bash(grep -i \"impersonation\\\\|survey\" /c/Users/moham/adeeb/supabase/migrations/*.sql)",
+      "Bash(grep -r \"survey_responses\\\\|survey_answers\\\\|impersonation\" /c/Users/moham/adeeb/supabase/migrations/*.sql)",
+      "Bash(grep -r \"CREATE TABLE\" /c/Users/moham/adeeb/supabase/migrations/*.sql)",
+      "Bash(grep -r \"rpc\\\\\\(\" /c/Users/moham/adeeb/admin/js/*.js)",
+      "Bash(grep -r \"sb.rpc\\\\|sb\\\\.rpc\" /c/Users/moham/adeeb/admin/js/*.js)",
+      "Bash(find /c/Users/moham/adeeb -type f -name \"*.sql\" -exec grep -l \"get_user_permissions\\\\|start_impersonation\" {} \\\\;)",
+      "Bash(ls c:/Users/moham/adeeb/admin/css/buttons-system*.css)"
     ]
   }
 }

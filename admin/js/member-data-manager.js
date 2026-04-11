@@ -253,8 +253,8 @@
         if (filteredMembers.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-users"></i>
-                    <p>لا توجد أعضاء</p>
+                    <div class="empty-state__icon"><i class="fa-solid fa-users"></i></div>
+                    <p class="empty-state__title">لا توجد أعضاء</p>
                 </div>
             `;
             return;
