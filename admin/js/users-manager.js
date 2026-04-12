@@ -48,6 +48,7 @@ class UsersManager {
                 const { data: userRoles } = await this.supabase
                     .from('user_roles')
                     .select(`
+                        id,
                         role_id,
                         committee_id,
                         role:roles (
