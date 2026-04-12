@@ -444,7 +444,7 @@ class UsersManager {
 
                 // أحداث عناصر القائمة
                 userDropdown.addEventListener('click', (e) => {
-                    const item = e.target.closest('.dropdown-item');
+                    const item = e.target.closest('[data-action]');
                     if (!item) return;
                     const action = item.dataset.action;
                     const userId = userDropdown.dataset.activeUserId;

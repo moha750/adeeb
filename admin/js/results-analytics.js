@@ -1324,16 +1324,16 @@
             };
 
             const html = `
-                <div style="padding:0.5rem 0;">
-                    <p style="color:var(--ra-muted);margin:0 0 1rem;font-size:0.9rem;">اختر الحالات التي تريد تصديرها إلى ملف CSV:</p>
-                    <label class="ra-info-row" style="cursor:pointer;background:#fff;border:1px solid var(--ra-border);">
-                        <input type="checkbox" id="ra-exp-all" />
-                        <div class="ra-info-row__content">
-                            <span class="ra-info-row__value">تحديد الكل</span>
-                            <span class="ra-info-row__label">${this.responses.length} استجابة</span>
-                        </div>
-                    </label>
-                    <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.6rem;">
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-filter"></i> اختر الحالات التي تريد تصديرها إلى ملف CSV</h3>
+                    <div class="form-checkbox-group">
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="ra-exp-all" />
+                            <span>
+                                <span class="form-checkbox-label">تحديد الكل</span>
+                                <span class="form-checkbox-hint">${this.responses.length} استجابة</span>
+                            </span>
+                        </label>
                         ${this.exportCheckRow('completed',   'مكتملة',     counts.completed,   true)}
                         ${this.exportCheckRow('in_progress', 'قيد التقدم', counts.in_progress, false)}
                         ${this.exportCheckRow('abandoned',   'متروكة',     counts.abandoned,   false)}
@@ -1341,16 +1341,36 @@
                 </div>
             `;
 
+            const bindSelectAll = () => {
+                const all = document.getElementById('ra-exp-all');
+                if (!all) return;
+                all.addEventListener('change', () => {
+                    document.querySelectorAll('.ra-exp-cb').forEach(cb => cb.checked = all.checked);
+                });
+            };
+
             if (window.ModalHelper && typeof window.ModalHelper.show === 'function') {
-                window.ModalHelper.show({
+                let modalRef = null;
+                Promise.resolve(window.ModalHelper.show({
                     title: 'تصدير البيانات',
+                    iconClass: 'fa-solid fa-download',
                     html,
                     size: 'md',
                     showClose: true,
-                    confirmText: 'تصدير CSV',
-                    cancelText: 'إلغاء',
-                    onConfirm: () => this.executeExport()
-                });
+                    showFooter: true,
+                    footerButtons: [
+                        { text: 'إلغاء', class: 'btn btn-outline' },
+                        {
+                            text: '<i class="fa-solid fa-download"></i> تصدير CSV',
+                            class: 'btn btn-primary',
+                            keepOpen: true,
+                            callback: () => {
+                                if (this.executeExport()) modalRef?.close?.();
+                            }
+                        }
+                    ]
+                })).then(ref => { modalRef = ref; });
+                setTimeout(bindSelectAll, 50);
             } else {
                 const modal = document.createElement('div');
                 modal.className = 'modal-backdrop active';
@@ -1371,31 +1391,21 @@
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal || e.target.closest('[data-cancel]')) modal.remove();
                     if (e.target.closest('[data-confirm]')) {
-                        this.executeExport(modal);
-                        modal.remove();
+                        if (this.executeExport()) modal.remove();
                     }
                 });
+                setTimeout(bindSelectAll, 50);
             }
-
-            // ربط زر "تحديد الكل"
-            setTimeout(() => {
-                const all = document.getElementById('ra-exp-all');
-                if (all) {
-                    all.addEventListener('change', () => {
-                        document.querySelectorAll('.ra-exp-cb').forEach(cb => cb.checked = all.checked);
-                    });
-                }
-            }, 50);
         }
 
         exportCheckRow(value, label, count, checked) {
             return `
-                <label class="ra-info-row" style="cursor:pointer;background:#fff;border:1px solid var(--ra-border);">
+                <label class="form-checkbox">
                     <input type="checkbox" class="ra-exp-cb" value="${value}" ${checked ? 'checked' : ''} />
-                    <div class="ra-info-row__content">
-                        <span class="ra-info-row__value">${label}</span>
-                        <span class="ra-info-row__label">${count} استجابة</span>
-                    </div>
+                    <span>
+                        <span class="form-checkbox-label">${label}</span>
+                        <span class="form-checkbox-hint">${count} استجابة</span>
+                    </span>
                 </label>
             `;
         }
@@ -1636,13 +1646,13 @@
             const selected = [...document.querySelectorAll('.ra-exp-cb:checked')].map(cb => cb.value);
             if (!selected.length) {
                 showToast('error', 'يرجى اختيار حالة واحدة على الأقل');
-                return;
+                return false;
             }
 
             const rows = this.responses.filter(r => selected.includes(r.status));
             if (!rows.length) {
                 showToast('error', 'لا توجد بيانات للحالات المختارة');
-                return;
+                return false;
             }
 
             let csv = '\uFEFF';
@@ -1682,6 +1692,7 @@
             link.download = `${this.currentSurvey.title}_${new Date().toISOString().split('T')[0]}.csv`;
             link.click();
             showToast('success', `تم تصدير ${rows.length} استجابة بنجاح`);
+            return true;
         }
     }
 

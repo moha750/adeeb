@@ -49,8 +49,7 @@ window.NewsManagerEnhanced = (function() {
     // ملء قوائم اللجان
     function populateCommitteeFilters() {
         const filterIds = [
-            'inProgressNewsCommitteeFilter',
-            'publishedNewsCommitteeFilter'
+            'inProgressNewsCommitteeFilter'
         ];
 
         filterIds.forEach(filterId => {
@@ -143,6 +142,10 @@ window.NewsManagerEnhanced = (function() {
         updateStatElement('totalNewsLikes', totalLikes);
         updateStatElement('totalNewsComments', totalComments);
         updateStatElement('pendingNewsComments', pendingComments);
+
+        // إحصائيات المؤرشفة
+        const archivedNews = allNews.filter(n => n.workflow_status === 'archived' || n.status === 'archived');
+        updateStatElement('archivedNewsCount', archivedNews.length);
     }
 
     // تحديث عنصر إحصائية
@@ -433,14 +436,14 @@ window.NewsManagerEnhanced = (function() {
 
         const searchTerm = document.getElementById('publishedNewsSearchInput')?.value.toLowerCase() || '';
         const categoryFilter = document.getElementById('publishedNewsCategoryFilter')?.value || '';
-        const committeeFilter = document.getElementById('publishedNewsCommitteeFilter')?.value || '';
+        const featuredFilter = document.getElementById('publishedNewsFeaturedFilter')?.value || '';
 
-        let publishedNews = allNews.filter(n => 
+        let publishedNews = allNews.filter(n =>
             n.workflow_status === 'published' || n.status === 'published'
         );
 
         if (searchTerm) {
-            publishedNews = publishedNews.filter(n => 
+            publishedNews = publishedNews.filter(n =>
                 n.title?.toLowerCase().includes(searchTerm) ||
                 n.summary?.toLowerCase().includes(searchTerm)
             );
@@ -450,8 +453,10 @@ window.NewsManagerEnhanced = (function() {
             publishedNews = publishedNews.filter(n => n.category === categoryFilter);
         }
 
-        if (committeeFilter) {
-            publishedNews = publishedNews.filter(n => n.committee_id == committeeFilter);
+        if (featuredFilter === 'featured') {
+            publishedNews = publishedNews.filter(n => n.is_featured);
+        } else if (featuredFilter === 'not_featured') {
+            publishedNews = publishedNews.filter(n => !n.is_featured);
         }
 
         if (publishedNews.length === 0) {
@@ -482,11 +487,6 @@ window.NewsManagerEnhanced = (function() {
             <div class="uc-card">
                 <div class="uc-card__header uc-card__header--media">
                     <img src="${imageUrl}" alt="${news.title}" class="uc-card__media-img" onerror="this.src='https://via.placeholder.com/800x450?text=أديب'">
-                    <div class="uc-card__options">
-                        <button class="uc-card__options-btn btn btn-white btn-outline btn-icon btn-news-options" data-news-id="${news.id}" title="خيارات">
-                            <i class="fa-solid fa-ellipsis-vertical"></i>
-                        </button>
-                    </div>
                     <div class="uc-card__badges-overlay">
                         <span class="uc-card__badge"><i class="fa-solid fa-check-circle"></i> منشور</span>
                         ${news.is_featured ? '<span class="uc-card__badge" style="background:rgba(245,158,11,0.25);color:#fde68a"><i class="fa-solid fa-star"></i> مميز</span>' : ''}
@@ -539,9 +539,21 @@ window.NewsManagerEnhanced = (function() {
                         <i class="fa-solid fa-external-link"></i>
                         عرض الخبر
                     </button>
+                    <button class="btn btn-warning" onclick="NewsManagerEnhanced.directEditNews('${news.id}')">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        تعديل الخبر
+                    </button>
+                    <button class="btn ${news.is_featured ? 'btn-violet' : 'btn-success'}" onclick="NewsManagerEnhanced.toggleFeatured('${news.id}')">
+                        <i class="fa-solid ${news.is_featured ? 'fa-star-half-stroke' : 'fa-star'}"></i>
+                        ${news.is_featured ? 'إلغاء التمييز' : 'جعله مميزاً'}
+                    </button>
                     <button class="btn btn-slate" onclick="NewsManagerEnhanced.archiveNews('${news.id}')">
                         <i class="fa-solid fa-archive"></i>
                         أرشفة الخبر
+                    </button>
+                    <button class="btn btn-danger" onclick="NewsManagerEnhanced.deleteNews('${news.id}')">
+                        <i class="fa-solid fa-trash"></i>
+                        حذف الخبر
                     </button>
                 </div>
             </div>
@@ -553,9 +565,30 @@ window.NewsManagerEnhanced = (function() {
         const container = document.getElementById('newsArchivedContainer');
         if (!container) return;
 
-        const archivedNews = allNews.filter(n => 
+        const searchTerm = document.getElementById('archivedNewsSearchInput')?.value.toLowerCase() || '';
+        const categoryFilter = document.getElementById('archivedNewsCategoryFilter')?.value || '';
+        const featuredFilter = document.getElementById('archivedNewsFeaturedFilter')?.value || '';
+
+        let archivedNews = allNews.filter(n =>
             n.workflow_status === 'archived' || n.status === 'archived'
         );
+
+        if (searchTerm) {
+            archivedNews = archivedNews.filter(n =>
+                (n.title || '').toLowerCase().includes(searchTerm) ||
+                (n.summary || '').toLowerCase().includes(searchTerm)
+            );
+        }
+
+        if (categoryFilter) {
+            archivedNews = archivedNews.filter(n => n.category === categoryFilter);
+        }
+
+        if (featuredFilter === 'featured') {
+            archivedNews = archivedNews.filter(n => n.is_featured);
+        } else if (featuredFilter === 'not_featured') {
+            archivedNews = archivedNews.filter(n => !n.is_featured);
+        }
 
         if (archivedNews.length === 0) {
             container.innerHTML = `
@@ -576,23 +609,82 @@ window.NewsManagerEnhanced = (function() {
 
     // إنشاء بطاقة خبر مؤرشف
     function createArchivedCard(news) {
+        const archivedDate = news.updated_at ? new Date(news.updated_at).toLocaleDateString('ea-EA') : '-';
+        const publishedDate = news.published_at ? new Date(news.published_at).toLocaleDateString('ea-EA') : '-';
+        const imageUrl = news.image_url || 'https://via.placeholder.com/800x450?text=أديب';
+        const category = news.committees?.committee_name_ar || news.category || 'عام';
+
         return `
-            <div class="uc-card uc-card--archived">
-                <div class="uc-card__header">
+            <div class="uc-card uc-card--neutral">
+                <div class="uc-card__header uc-card__header--media">
+                    <img src="${imageUrl}" alt="${news.title}" class="uc-card__media-img" style="filter: grayscale(0.6);" onerror="this.src='https://via.placeholder.com/800x450?text=أديب'">
+                    <div class="uc-card__badges-overlay">
+                        <span class="uc-card__badge"><i class="fa-solid fa-box-archive"></i> مؤرشف</span>
+                        ${news.is_featured ? '<span class="uc-card__badge"><i class="fa-solid fa-star"></i> مميز</span>' : ''}
+                    </div>
                     <div class="uc-card__header-inner">
                         <div class="uc-card__header-info">
-                            <h4 class="uc-card__title">📦 ${news.title}</h4>
+                            <h4 class="uc-card__title">${news.title}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="uc-card__body">
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-tag"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">التصنيف</span>
+                            <span class="uc-card__info-value">${category}</span>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">تاريخ النشر</span>
+                            <span class="uc-card__info-value">${publishedDate}</span>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-box-archive"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">تاريخ الأرشفة</span>
+                            <span class="uc-card__info-value">${archivedDate}</span>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-eye"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">المشاهدات</span>
+                            <span class="uc-card__info-value">${(news.views || 0).toLocaleString('ea-EA')}</span>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-heart"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">الإعجابات</span>
+                            <span class="uc-card__info-value">${(news.likes_count || 0).toLocaleString('ea-EA')}</span>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-comments"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">التعليقات</span>
+                            <span class="uc-card__info-value">${(news.comments_count || 0).toLocaleString('ea-EA')}</span>
                         </div>
                     </div>
                 </div>
                 <div class="uc-card__footer">
-                    <span class="badge badge-secondary"><i class="fa-solid fa-archive"></i> مؤرشف</span>
-                    <div class="news-card__actions">
-                        <button class="btn btn-outline " onclick="NewsManagerEnhanced.restoreNews('${news.id}')">
-                            <i class="fa-solid fa-undo"></i>
-                            استعادة
-                        </button>
-                    </div>
+                    <button class="btn btn-warning" onclick="NewsManagerEnhanced.directEditNews('${news.id}')">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        تعديل الخبر
+                    </button>
+                    <button class="btn btn-success" onclick="NewsManagerEnhanced.restoreNews('${news.id}')">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        استعادة الخبر
+                    </button>
+                    <button class="btn btn-danger" onclick="NewsManagerEnhanced.deleteNews('${news.id}')">
+                        <i class="fa-solid fa-trash"></i>
+                        حذف الخبر
+                    </button>
                 </div>
             </div>
         `;
@@ -652,6 +744,9 @@ window.NewsManagerEnhanced = (function() {
         try {
             await window.NewsWorkflowManager.reviewAndPublish(newsId, 'publish');
             await loadAllNews();
+            if (typeof window.navigateToSection === 'function') {
+                window.navigateToSection('news-published-section');
+            }
         } catch (error) {
             console.error('Error publishing news:', error);
             Toast.error('حدث خطأ عند نشر الخبر');
@@ -714,78 +809,213 @@ window.NewsManagerEnhanced = (function() {
         const news = allNews.find(n => n.id === newsId);
         if (!news) return;
 
-        const fields = [
-            {
-                name: 'title',
-                type: 'text',
-                label: 'عنوان الخبر',
-                value: news.title,
-                required: true
-            },
-            {
-                name: 'summary',
-                type: 'textarea',
-                label: 'الملخص',
-                value: news.summary || '',
-                rows: 3
-            },
-            {
-                name: 'content',
-                type: 'textarea',
-                label: 'المحتوى',
-                value: news.content || '',
-                rows: 8
-            },
-            {
-                name: 'image_url',
-                type: 'image',
-                label: 'صورة الغلاف',
+        const coverInputId = 'editNewsCoverImage';
+        const galleryContainerId = 'editNewsGallery';
+        const currentGallery = Array.isArray(news.gallery_images) ? news.gallery_images : [];
+        const currentGalleryPhotographers = Array.isArray(news.gallery_photographers) ? news.gallery_photographers : [];
+
+        const escapeAttr = (str) => String(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        const escapeText = (str) => String(str || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        const coverUploaderHTML = window.ImageUploadHelper
+            ? window.ImageUploadHelper.createCoverImageUploader({
+                inputId: coverInputId,
+                currentImageUrl: news.image_url || null,
                 folder: 'news',
-                value: news.image_url || ''
-            }
-        ];
+                required: true,
+                aspectRatio: 16/9
+            })
+            : `<input type="url" id="${coverInputId}_url" class="form-input" value="${escapeAttr(news.image_url)}" placeholder="رابط صورة الغلاف">`;
 
-        try {
-            await ModalHelper.form({
-                title: '✏️ تعديلات مباشرة على الخبر',
-                fields: fields,
-                submitText: 'حفظ التعديلات',
-                cancelText: 'إلغاء',
-                onSubmit: async (formData) => {
-                    const loadingToast = Toast.loading('جاري حفظ التعديلات...');
+        const galleryUploaderHTML = window.ImageUploadHelper
+            ? window.ImageUploadHelper.createNewsGalleryUploader({
+                containerId: galleryContainerId,
+                minImages: 2,
+                maxImages: 4,
+                currentImages: currentGallery,
+                currentPhotographers: currentGalleryPhotographers,
+                folder: 'news/gallery',
+                required: true
+            })
+            : '';
 
-                    try {
-                        const updateData = {
-                            title: formData.title,
-                            summary: formData.summary || null,
-                            content: formData.content || null,
-                            updated_at: new Date().toISOString()
-                        };
+        const modalHTML = `
+            <div style="display: grid; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-icon"><i class="fa-solid fa-heading"></i></span>
+                        عنوان الخبر <span class="required-dot">*</span>
+                    </label>
+                    <input type="text" id="editNewsTitle" class="form-input" value="${escapeAttr(news.title)}"
+                        placeholder="أدخل عنوان الخبر" required>
+                </div>
 
-                        if (formData.image_url) {
-                            updateData.image_url = formData.image_url;
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-icon"><i class="fa-solid fa-align-right"></i></span>
+                        ملخص الخبر <span class="required-dot">*</span>
+                    </label>
+                    <textarea id="editNewsSummary" class="form-input" rows="2" style="resize: vertical;"
+                        placeholder="ملخص مختصر للخبر" required>${escapeText(news.summary)}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-icon"><i class="fa-solid fa-file-lines"></i></span>
+                        محتوى الخبر <span class="required-dot">*</span>
+                    </label>
+                    <textarea id="editNewsContent" class="form-input" rows="8" style="resize: vertical;"
+                        placeholder="محتوى الخبر الكامل" required>${escapeText(news.content)}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-icon"><i class="fa-solid fa-image"></i></span>
+                        صورة غلاف الخبر <span class="required-dot">*</span>
+                    </label>
+                    <div id="editNewsCoverContainer">${coverUploaderHTML}</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-icon"><i class="fa-solid fa-camera"></i></span>
+                        اسم مصور الغلاف <span class="required-dot">*</span>
+                    </label>
+                    <input type="text" id="editNewsCoverPhotographer" class="form-input"
+                        value="${escapeAttr(news.cover_photographer)}"
+                        placeholder="أدخل اسم مصور صورة الغلاف" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-icon"><i class="fa-solid fa-images"></i></span>
+                        معرض صور الخبر (2-4 صور إجبارية)
+                    </label>
+                    <div id="editNewsGalleryContainer">${galleryUploaderHTML}</div>
+                </div>
+            </div>
+        `;
+
+        const modal = await ModalHelper.show({
+            title: 'تعديلات مباشرة على الخبر',
+            iconClass: 'fa-solid fa-pen-to-square',
+            html: modalHTML,
+            size: 'lg',
+            extraClass: 'modal-form',
+            showFooter: true,
+            footerButtons: [
+                {
+                    text: 'إلغاء',
+                    class: 'btn-secondary'
+                },
+                {
+                    text: 'حفظ التعديلات',
+                    class: 'btn-primary',
+                    keepOpen: true,
+                    callback: async () => {
+                        const title = document.getElementById('editNewsTitle')?.value.trim() || '';
+                        const summary = document.getElementById('editNewsSummary')?.value.trim() || '';
+                        const content = document.getElementById('editNewsContent')?.value.trim() || '';
+                        const coverPhotographer = document.getElementById('editNewsCoverPhotographer')?.value.trim() || '';
+
+                        if (!title) { Toast.warning('يرجى إدخال عنوان الخبر'); return; }
+                        if (!summary) { Toast.warning('يرجى إدخال ملخص الخبر'); return; }
+                        if (!content) { Toast.warning('يرجى إدخال محتوى الخبر'); return; }
+
+                        const coverImageUrl = window.ImageUploadHelper
+                            ? window.ImageUploadHelper.getCoverImageUrl(coverInputId)
+                            : document.getElementById(coverInputId + '_url')?.value;
+
+                        if (!coverImageUrl) { Toast.warning('يرجى رفع صورة غلاف الخبر'); return; }
+                        if (!coverPhotographer) { Toast.warning('يرجى إدخال اسم مصور صورة الغلاف'); return; }
+
+                        const galleryImages = window.ImageUploadHelper
+                            ? window.ImageUploadHelper.getGalleryUrls(galleryContainerId)
+                            : [];
+                        const galleryPhotographers = window.ImageUploadHelper
+                            ? window.ImageUploadHelper.getGalleryPhotographers(galleryContainerId)
+                            : [];
+
+                        if (galleryImages.length < 2) {
+                            Toast.warning('يجب إضافة صورتين على الأقل في معرض الصور');
+                            return;
                         }
 
-                        const { error } = await sb
-                            .from('news')
-                            .update(updateData)
-                            .eq('id', newsId);
+                        const missingPhotographerIndex = galleryImages.findIndex((_, i) => !galleryPhotographers[i] || !String(galleryPhotographers[i]).trim());
+                        if (missingPhotographerIndex !== -1) {
+                            Toast.warning(`يرجى إدخال اسم مصور الصورة رقم ${missingPhotographerIndex + 1} في المعرض`);
+                            return;
+                        }
 
-                        if (error) throw error;
+                        const loadingToast = Toast.loading('جاري حفظ التعديلات...');
+                        try {
+                            const { error } = await sb
+                                .from('news')
+                                .update({
+                                    title,
+                                    summary,
+                                    content,
+                                    image_url: coverImageUrl,
+                                    cover_photographer: coverPhotographer,
+                                    gallery_images: galleryImages,
+                                    gallery_photographers: galleryPhotographers,
+                                    updated_at: new Date().toISOString()
+                                })
+                                .eq('id', newsId);
 
-                        Toast.close(loadingToast);
-                        Toast.success('تم حفظ التعديلات بنجاح');
-                        await loadAllNews();
-                    } catch (error) {
-                        Toast.close(loadingToast);
-                        Toast.error('حدث خطأ في حفظ التعديلات');
-                        console.error('Error updating news:', error);
-                        throw error;
+                            if (error) throw error;
+
+                            Toast.close(loadingToast);
+                            Toast.success('تم حفظ التعديلات بنجاح');
+                            if (modal && modal.close) modal.close();
+                            await loadAllNews();
+                        } catch (error) {
+                            Toast.close(loadingToast);
+                            Toast.error('حدث خطأ في حفظ التعديلات');
+                            console.error('Error updating news:', error);
+                        }
                     }
                 }
+            ]
+        });
+
+        setTimeout(() => {
+            ['editNewsSummary', 'editNewsContent'].forEach(id => {
+                const ta = document.getElementById(id);
+                if (!ta) return;
+                ta.style.height = 'auto';
+                const contentHeight = ta.scrollHeight;
+                ta.style.minHeight = contentHeight + 'px';
+                ta.style.height = (contentHeight + 120) + 'px';
             });
+        }, 50);
+    }
+
+    async function toggleFeatured(newsId) {
+        const news = allNews.find(n => n.id === newsId);
+        if (!news) return;
+
+        const makeFeatured = !news.is_featured;
+        const loadingToast = Toast.loading(makeFeatured ? 'جاري تمييز الخبر...' : 'جاري إلغاء التمييز...');
+
+        try {
+            const { error } = await sb
+                .from('news')
+                .update({
+                    is_featured: makeFeatured,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', newsId);
+
+            if (error) throw error;
+
+            Toast.close(loadingToast);
+            Toast.success(makeFeatured ? 'تم تمييز الخبر بنجاح' : 'تم إلغاء تمييز الخبر');
+            await loadAllNews();
         } catch (error) {
-            console.error('Error in directEditNews:', error);
+            Toast.close(loadingToast);
+            Toast.error('حدث خطأ في تحديث حالة التمييز');
+            console.error('Error toggling featured:', error);
         }
     }
 
@@ -1033,7 +1263,8 @@ window.NewsManagerEnhanced = (function() {
         // فلاتر البحث
         const searchInputs = [
             'inProgressNewsSearchInput',
-            'publishedNewsSearchInput'
+            'publishedNewsSearchInput',
+            'archivedNewsSearchInput'
         ];
 
         searchInputs.forEach(inputId => {
@@ -1042,6 +1273,7 @@ window.NewsManagerEnhanced = (function() {
                 input.addEventListener('input', () => {
                     if (inputId.includes('inProgress')) renderInProgress();
                     if (inputId.includes('published')) renderPublished();
+                    if (inputId.includes('archived')) renderArchived();
                 });
             }
         });
@@ -1050,7 +1282,9 @@ window.NewsManagerEnhanced = (function() {
         const filters = [
             { id: 'inProgressNewsCommitteeFilter', render: renderInProgress },
             { id: 'publishedNewsCategoryFilter', render: renderPublished },
-            { id: 'publishedNewsCommitteeFilter', render: renderPublished }
+            { id: 'publishedNewsFeaturedFilter', render: renderPublished },
+            { id: 'archivedNewsCategoryFilter', render: renderArchived },
+            { id: 'archivedNewsFeaturedFilter', render: renderArchived }
         ];
 
         filters.forEach(filter => {
@@ -1165,7 +1399,8 @@ window.NewsManagerEnhanced = (function() {
         editWritersAssignment,
         deleteNews,
         deleteNewsPermanently,
-        directEditNews
+        directEditNews,
+        toggleFeatured
     };
 })();
 

@@ -2962,13 +2962,23 @@
                     }
                 }
                 
-                if (!title || !summary || !content) {
-                    Toast.warning('يرجى ملء جميع الحقول المطلوبة');
+                if (!title) {
+                    Toast.warning('يرجى إدخال عنوان الخبر');
                     return;
                 }
-                
+
+                if (!summary) {
+                    Toast.warning('يرجى إدخال ملخص الخبر');
+                    return;
+                }
+
+                if (!content) {
+                    Toast.warning('يرجى إدخال محتوى الخبر');
+                    return;
+                }
+
                 if (!coverPhotographer) {
-                    Toast.warning('يرجى إدخال اسم مصور الغلاف');
+                    Toast.warning('يرجى إدخال اسم مصور صورة الغلاف');
                     return;
                 }
                 
@@ -2992,6 +3002,12 @@
                 
                 if (galleryImages.length < 2) {
                     Toast.warning('يجب إضافة صورتين على الأقل في معرض الصور');
+                    return;
+                }
+
+                const missingPhotographerIndex = galleryImages.findIndex((_, i) => !galleryPhotographers[i] || !String(galleryPhotographers[i]).trim());
+                if (missingPhotographerIndex !== -1) {
+                    Toast.warning(`يرجى إدخال اسم مصور الصورة رقم ${missingPhotographerIndex + 1} في المعرض`);
                     return;
                 }
                 
@@ -3020,10 +3036,15 @@
                     
                     Toast.close(loadingToast);
                     Toast.success('تم نشر الخبر بنجاح!');
-                    
+
                     // إعادة تهيئة النموذج
                     form.reset();
                     initInstantPublishSection();
+
+                    // الانتقال إلى تبويب الأخبار المنشورة
+                    if (typeof navigateToSection === 'function') {
+                        navigateToSection('news-published-section');
+                    }
                 } catch (error) {
                     Toast.close(loadingToast);
                     Toast.error('حدث خطأ: ' + error.message);
@@ -3031,6 +3052,23 @@
             };
         }
         
+        const featuredBtn = document.getElementById('instantNewsFeaturedBtn');
+        const featuredInput = document.getElementById('instantNewsIsFeatured');
+        if (featuredBtn && featuredInput) {
+            const applyFeaturedState = (isOn) => {
+                featuredInput.checked = isOn;
+                featuredBtn.setAttribute('aria-pressed', String(isOn));
+                featuredBtn.classList.toggle('btn-warning', isOn);
+                featuredBtn.classList.toggle('btn-slate', !isOn);
+                const labelSpan = featuredBtn.querySelector('span');
+                if (labelSpan) {
+                    labelSpan.textContent = isOn ? 'تم التمييز' : 'تمييز الخبر';
+                }
+            };
+            applyFeaturedState(featuredInput.checked);
+            featuredBtn.onclick = () => applyFeaturedState(!featuredInput.checked);
+        }
+
         const clearBtn = document.getElementById('clearInstantNewsBtn');
         if (clearBtn) {
             clearBtn.onclick = () => {

@@ -2455,6 +2455,28 @@
                             </div>
                         </div>
                     </div>
+                                        <div class="stat-card" style="--stat-color: #ef4444;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-heart"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalNewsLikes">0</div>
+                                <div class="stat-label">إجمالي الإعجابات</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #06b6d4;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-comments"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalNewsComments">0</div>
+                                <div class="stat-label">إجمالي التعليقات</div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="stat-card" style="--stat-color: #8b5cf6;">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
@@ -2494,8 +2516,10 @@
                         <option value="meetings">اجتماعات</option>
                         <option value="general">عام</option>
                     </select>
-                    <select id="publishedNewsCommitteeFilter" class="filter-select">
-                        <option value="">جميع اللجان</option>
+                    <select id="publishedNewsFeaturedFilter" class="filter-select">
+                        <option value="">جميع الأخبار</option>
+                        <option value="featured">الأخبار المميزة</option>
+                        <option value="not_featured">الأخبار غير المميزة</option>
                     </select>
                 </div>
 
@@ -2517,15 +2541,51 @@
 
             <!-- قسم: الأخبار المؤرشفة -->
             <section id="news-archived-section" class="admin-section d-none">
-                <button class="btn btn-outline" id="refreshArchivedNewsBtn">
-                    <i class="fa-solid fa-rotate"></i>
-                    تحديث
-                </button>
+
+                <!-- إحصائيات -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                    <div class="stat-card" style="--stat-color: #64748b;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-box-archive"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="archivedNewsCount">0</div>
+                                <div class="stat-label">أخبار مؤرشفة</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلاتر -->
+                <div class="filters-bar" style="--filter-color-rgb: 100, 116, 139; --filter-color: #64748b; --filter-color-dark: #475569;">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="archivedNewsSearchInput" placeholder="البحث في الأخبار المؤرشفة..." class="input input-text" />
+                    </div>
+                    <select id="archivedNewsCategoryFilter" class="filter-select">
+                        <option value="">جميع التصنيفات</option>
+                        <option value="events">فعاليات</option>
+                        <option value="achievements">إنجازات</option>
+                        <option value="announcements">إعلانات</option>
+                        <option value="workshops">ورش عمل</option>
+                        <option value="meetings">اجتماعات</option>
+                        <option value="general">عام</option>
+                    </select>
+                    <select id="archivedNewsFeaturedFilter" class="filter-select">
+                        <option value="">جميع الأخبار</option>
+                        <option value="featured">الأخبار المميزة</option>
+                        <option value="not_featured">الأخبار غير المميزة</option>
+                    </select>
+                </div>
 
                 <!-- قائمة الأخبار -->
-                <div class="card">
+                <div class="card card--neutral">
                     <div class="card-header">
-                        <h3><i class="fa-solid fa-archive"></i> قائمة الأخبار المؤرشفة</h3>
+                        <h3><i class="fa-solid fa-box-archive"></i> قائمة الأخبار المؤرشفة</h3>
+                        <button class="btn btn-slate btn-icon btn-outline" id="refreshArchivedNewsBtn" title="تحديث">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div id="newsArchivedContainer">
@@ -2630,7 +2690,7 @@
                         </h3>
                     </div>
                     <div class="card-body">
-                        <form id="instantPublishForm">
+                        <form id="instantPublishForm" novalidate>
                             <div style="display: grid; gap: 1.5rem;">
                                 <div class="form-group">
                                     <label class="form-label">عنوان الخبر <span class="required-dot">*</span></label>
@@ -2667,34 +2727,32 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label">معرض صور الخبر (2-4 صور إجبارية)</label>
                                     <div id="instantNewsGalleryContainer">
                                         <!-- سيتم ملؤه ديناميكياً -->
                                     </div>
-                                    <small style="color: #6b7280; font-size: 0.8rem;">يجب إضافة من 2 إلى 4 صور مع اسم
-                                        المصور لكل صورة</small>
                                 </div>
 
-                                <div class="form-group">
-                                    <label class="form-switch form-switch-warning">
-                                        <input type="checkbox" id="instantNewsIsFeatured">
-                                        <span class="form-switch-label">خبر مميز</span>
-                                    </label>
-                                </div>
-
-                                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                                    <button type="button" class="btn btn-danger"
-                                        id="clearInstantNewsBtn">
-                                        <i class="fa-solid fa-eraser"></i>
-                                        مسح النموذج
-                                    </button>
-                                    <button type="submit" class="btn btn-primary" id="publishInstantNewsBtn">
-                                        <i class="fa-solid fa-paper-plane"></i>
-                                        نشر الخبر الآن
-                                    </button>
-                                </div>
                             </div>
                         </form>
+                    </div>
+                </div>
+
+                <!-- شريط الإجراءات اللاصق -->
+                <div class="form-actions-sticky">
+                    <div class="form-actions-bar">
+                        <input type="checkbox" id="instantNewsIsFeatured" form="instantPublishForm" hidden>
+                        <button type="button" class="btn btn-slate form-actions-bar__switch" id="instantNewsFeaturedBtn" aria-pressed="false">
+                            <i class="fa-solid fa-star"></i>
+                            <span>تمييز الخبر</span>
+                        </button>
+                        <button type="button" class="btn btn-danger" id="clearInstantNewsBtn">
+                            <i class="fa-solid fa-eraser"></i>
+                            <span class="btn-label">مسح النموذج</span>
+                        </button>
+                        <button type="submit" form="instantPublishForm" class="btn btn-primary" id="publishInstantNewsBtn">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span class="btn-label">نشر الخبر الآن</span>
+                        </button>
                     </div>
                 </div>
             </section>
