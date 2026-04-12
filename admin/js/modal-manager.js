@@ -67,9 +67,10 @@
         const bodyEl = document.getElementById('dynamicModalBody');
         const footerEl = document.getElementById('dynamicModalFooter');
 
-        // تعيين variant (warning / success / danger ...)
-        modal.className = modal.className.replace(/\bmodal-\w+/g, '').trim();
-        modal.className = 'modal modal-md' + (options.variant ? ` modal-${options.variant}` : '');
+        // تعيين variant (warning / success / danger ...) + size + cls إضافي
+        const size = options.size || 'md';
+        const extraCls = options.cls || '';
+        modal.className = `modal modal-${size}` + (options.variant ? ` modal-${options.variant}` : '') + (extraCls ? ` ${extraCls}` : '');
 
         // تعيين العنوان والأيقونة
         const icon = options.icon || 'fa-info-circle';
@@ -258,16 +259,20 @@
      */
     window.showSuccessModal = function(title, message) {
         const content = `
-            <div class="confirm-modal">
-                <div class="confirm-icon success">
-                    <i class="fa-solid fa-check-circle"></i>
-                </div>
-                <div class="confirm-message">${title}</div>
-                <div class="confirm-description">${message}</div>
-            </div>
+            <div class="modal-alert-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <h3 class="modal-alert-title">${title}</h3>
+            <p class="modal-alert-message">${message}</p>
+        `;
+        const footer = `
+            <button class="btn btn-success btn-md" onclick="closeModal()">ممتاز!</button>
         `;
 
-        openModal('نجح', content, { icon: 'fa-check-circle' });
+        openModal(title, content, {
+            icon: 'fa-circle-check',
+            variant: 'success',
+            cls: 'modal-alert',
+            footer
+        });
     };
 
     /**
@@ -275,16 +280,20 @@
      */
     window.showErrorModal = function(title, message) {
         const content = `
-            <div class="confirm-modal">
-                <div class="confirm-icon danger">
-                    <i class="fa-solid fa-exclamation-circle"></i>
-                </div>
-                <div class="confirm-message">${title}</div>
-                <div class="confirm-description">${message}</div>
-            </div>
+            <div class="modal-alert-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+            <h3 class="modal-alert-title">${title}</h3>
+            <p class="modal-alert-message">${message}</p>
+        `;
+        const footer = `
+            <button class="btn btn-danger" onclick="closeModal()">إغلاق</button>
         `;
 
-        openModal('خطأ', content, { icon: 'fa-exclamation-circle' });
+        openModal(title, content, {
+            icon: 'fa-triangle-exclamation',
+            variant: 'danger',
+            cls: 'modal-alert',
+            footer
+        });
     };
 
     // تهيئة عند تحميل الصفحة

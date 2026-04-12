@@ -1597,7 +1597,7 @@
         const confirmed = await ModalHelper.confirm({
             title: 'تأكيد إعادة العضوية',
             message: `هل أنت متأكد من إعادة عضوية <strong>${userName}</strong>؟<br><span style="font-size:0.875rem;color:#64748b;">سيتم تفعيل الحساب مجدداً وإتاحة الدخول للنظام.</span>`,
-            type: 'info',
+            type: 'default',
             confirmText: 'نعم، إعادة العضوية',
             cancelText: 'إلغاء'
         });

@@ -914,7 +914,10 @@ class UsersManager {
                 await this.loadUsers();
             } catch (err) {
                 console.error('Error updating user:', err);
-                window.showErrorModal('خطأ', 'حدث خطأ أثناء تحديث البيانات');
+                closeModal();
+                setTimeout(() => {
+                    window.showErrorModal('خطأ', 'حدث خطأ أثناء تحديث البيانات');
+                }, 300);
             }
         };
 
@@ -1051,7 +1054,7 @@ class UsersManager {
             preConfirm: () => {
                 const reason = document.getElementById('terminationReasonInput')?.value?.trim();
                 if (!reason) {
-                    Swal.showValidationMessage('يرجى تحديد سبب إنهاء العضوية');
+                    Swal.showValidationMessage('<div class="modal-info-box box-danger" style="margin:0;text-align:right;"><i class="fa-solid fa-circle-xmark"></i><span>يرجى تحديد سبب إنهاء العضوية</span></div>');
                     return false;
                 }
                 return reason;
@@ -1090,12 +1093,12 @@ class UsersManager {
 
             if (tokensError) console.warn('Error updating tokens:', tokensError);
 
-            Toast.success(`تم إنهاء عضوية ${user.full_name} بنجاح`);
+            window.showSuccessModal('تم إنهاء العضوية', `تم إنهاء عضوية ${user.full_name} بنجاح`);
             await this.loadUsers();
             await this.loadStats();
         } catch (error) {
             console.error('Error terminating membership:', error);
-            Toast.error('حدث خطأ أثناء إنهاء العضوية. يرجى المحاولة مرة أخرى.');
+            window.showErrorModal('خطأ', 'حدث خطأ أثناء إنهاء العضوية. يرجى المحاولة مرة أخرى.');
         }
     }
 

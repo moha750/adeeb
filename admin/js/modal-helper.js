@@ -28,6 +28,7 @@ window.ModalHelper = (function() {
             modal.id = modalId;
 
             const iconMap = {
+                default: 'fa-solid fa-circle-question',
                 warning: 'fa-solid fa-triangle-exclamation',
                 danger: 'fa-solid fa-trash-can',
                 info: 'fa-solid fa-circle-info',

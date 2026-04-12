@@ -119,8 +119,8 @@
 
                 // Add validation message container
                 const bodyHtml = `
-                    <div id="swalShimValidation" class="validation-message validation-message--hidden"></div>
                     ${html}
+                    <div id="swalShimValidation" class="validation-message validation-message--hidden"></div>
                 `;
 
                 const iconTypeMap = { warning: 'warning', error: 'danger', question: 'info', info: 'info', success: 'success' };
@@ -254,7 +254,7 @@
     function showValidationMessage(message) {
         const container = currentValidationContainer || document.getElementById('swalShimValidation');
         if (container) {
-            container.textContent = message;
+            container.innerHTML = message;
             container.style.display = 'block';
         }
     }
