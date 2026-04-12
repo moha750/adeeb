@@ -235,6 +235,10 @@
     color: rgba(255, 255, 255, 0.88);
 }
 
+.uc-card__badge--muted {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.5);
+}
 .uc-card__badge i { font-size: 0.65rem; }
 
 

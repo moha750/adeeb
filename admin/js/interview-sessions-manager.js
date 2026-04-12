@@ -126,11 +126,11 @@
             const isExpired = isSessionExpired(session);
             let statusBadge;
             if (isExpired) {
-                statusBadge = '<span class="badge badge-secondary">منتهية</span>';
+                statusBadge = '<span class="uc-card__badge uc-card__badge--muted">منتهية</span>';
             } else if (session.is_active) {
-                statusBadge = '<span class="badge badge-success">نشط</span>';
+                statusBadge = '<span class="uc-card__badge">نشط</span>';
             } else {
-                statusBadge = '<span class="badge badge-secondary">معطل</span>';
+                statusBadge = '<span class="uc-card__badge uc-card__badge--muted">معطل</span>';
             }
 
             // تحويل الوقت إلى نظام 12 ساعة
@@ -160,21 +160,20 @@
                                 <h3 class="uc-card__title">${escapeHtml(session.session_name)}</h3>
                                 <div>
                                     ${statusBadge}
-                                    <span class="badge badge-info">${typeLabels[session.interview_type] || session.interview_type}</span>
+                                    <span class="uc-card__badge">${typeLabels[session.interview_type] || session.interview_type}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="uc-card__body">
-                        ${session.session_description ? `
-                            <div>
-                                <p>
-                                    <i class="fa-solid fa-quote-right"></i>
-                                    ${escapeHtml(session.session_description)}
-                                </p>
+                        <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-quote-right"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">الوصف</span>
+                                    <span class="uc-card__info-value${session.session_description ? '' : ' text-muted'}">${session.session_description ? escapeHtml(session.session_description) : 'لا يوجد وصف'}</span>
+                                </div>
                             </div>
-                        ` : ''}
 
                             <div class="uc-card__info-item">
                                 <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-day"></i></div>
@@ -223,34 +222,32 @@
                     </div>
 
                     <div class="uc-card__footer">
-                        <div class="card-actions-grid">
-                            <button class="btn btn-primary " onclick="window.interviewSessionsManager.viewSession('${session.id}')" title="عرض التفاصيل">
+                            <button class="btn btn-primary" onclick="window.interviewSessionsManager.viewSession('${session.id}')" title="عرض التفاصيل">
                                 <i class="fa-solid fa-eye"></i>
                                 عرض
                             </button>
-                            <button class="btn btn-warning " onclick="window.interviewSessionsManager.editSession('${session.id}')" title="تعديل الجلسة">
+                            <button class="btn btn-warning" onclick="window.interviewSessionsManager.editSession('${session.id}')" title="تعديل الجلسة">
                                 <i class="fa-solid fa-pen-to-square"></i>
                                 تعديل
                             </button>
                             ${session.interview_type === 'online' ? `
-                                <button class="btn btn-secondary " onclick="window.interviewSessionsManager.updateMeetingLink('${session.id}')" title="تحديث رابط المقابلة">
+                                <button class="btn btn-secondary" onclick="window.interviewSessionsManager.updateMeetingLink('${session.id}')" title="تحديث رابط المقابلة">
                                     <i class="fa-solid fa-video"></i>
                                     الرابط
                                 </button>
                             ` : ''}
-                            <button class="btn btn-secondary " onclick="window.interviewSessionsManager.copyLink('${session.public_link_token}')" title="نسخ رابط الحجز">
+                            <button class="btn btn-secondary" onclick="window.interviewSessionsManager.copyLink('${session.public_link_token}')" title="نسخ رابط الحجز">
                                 <i class="fa-solid fa-link"></i>
                                 نسخ
                             </button>
-                            <button class="btn ${session.is_active ? 'btn-secondary' : 'btn-success'} " onclick="window.interviewSessionsManager.toggleSession('${session.id}', ${!session.is_active})" title="${session.is_active ? 'تعطيل' : 'تفعيل'}">
+                            <button class="btn ${session.is_active ? 'btn-secondary' : 'btn-success'}" onclick="window.interviewSessionsManager.toggleSession('${session.id}', ${!session.is_active})" title="${session.is_active ? 'تعطيل' : 'تفعيل'}">
                                 <i class="fa-solid fa-${session.is_active ? 'pause' : 'play'}"></i>
                                 ${session.is_active ? 'تعطيل' : 'تفعيل'}
                             </button>
-                            <button class="btn btn-danger " onclick="window.interviewSessionsManager.deleteSession('${session.id}')" title="حذف">
+                            <button class="btn btn-danger" onclick="window.interviewSessionsManager.deleteSession('${session.id}')" title="حذف">
                                 <i class="fa-solid fa-trash"></i>
                                 حذف
                             </button>
-                        </div>
                     </div>
                 </div>
             `;
@@ -312,8 +309,9 @@
 
         const bookingRate = totalSlots > 0 ? ((bookedSlots / totalSlots) * 100).toFixed(1) : 0;
 
+        container.className = 'stats-grid';
         container.innerHTML = `
-            <div class="stat-card stat-card--blue">
+            <div class="stat-card" style="--stat-color: #3b82f6;">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-calendar-check"></i>
@@ -324,7 +322,7 @@
                     </div>
                 </div>
             </div>
-            <div class="stat-card stat-card--green">
+            <div class="stat-card" style="--stat-color: #10b981;">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-clock"></i>
@@ -335,7 +333,7 @@
                     </div>
                 </div>
             </div>
-            <div class="stat-card stat-card--purple">
+            <div class="stat-card" style="--stat-color: #8b5cf6;">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-user-check"></i>
@@ -346,7 +344,7 @@
                     </div>
                 </div>
             </div>
-            <div class="stat-card stat-card--yellow">
+            <div class="stat-card" style="--stat-color: #f59e0b;">
                 <div class="stat-badge"><i class="fa-solid fa-percentage"></i> ${bookingRate}%</div>
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
@@ -370,13 +368,16 @@
                 id: 'session-name',
                 label: 'اسم الجلسة',
                 type: 'text',
+                icon: 'fa-heading',
                 placeholder: 'مثال: مقابلات لجنة الإعلام',
-                required: true
+                required: true,
+                fullWidth: true
             },
             {
                 id: 'session-description',
                 label: 'الوصف (اختياري)',
                 type: 'textarea',
+                icon: 'fa-align-right',
                 placeholder: 'وصف مختصر للجلسة',
                 rows: 3
             },
@@ -384,24 +385,28 @@
                 id: 'session-date',
                 label: 'تاريخ الجلسة',
                 type: 'date',
+                icon: 'fa-calendar',
                 required: true
             },
             {
                 id: 'session-start',
                 label: 'وقت البداية',
                 type: 'time',
+                icon: 'fa-clock',
                 required: true
             },
             {
                 id: 'session-end',
                 label: 'وقت النهاية',
                 type: 'time',
+                icon: 'fa-clock',
                 required: true
             },
             {
                 id: 'session-duration',
                 label: 'مدة كل مقابلة (بالدقائق)',
                 type: 'number',
+                icon: 'fa-hourglass-half',
                 value: '15',
                 required: true
             },
@@ -409,6 +414,7 @@
                 id: 'session-type',
                 label: 'نوع المقابلة',
                 type: 'select',
+                icon: 'fa-list-check',
                 options: [
                     { value: 'online', label: 'أونلاين' },
                     { value: 'in_person', label: 'حضوري' },
@@ -420,13 +426,17 @@
                 id: 'session-link',
                 label: 'رابط الاجتماع (للمقابلات الأونلاين)',
                 type: 'url',
-                placeholder: 'https://meet.google.com/xxx'
+                icon: 'fa-link',
+                placeholder: 'https://meet.google.com/xxx',
+                fullWidth: true
             },
             {
                 id: 'session-location',
                 label: 'الموقع (للمقابلات الحضورية)',
                 type: 'text',
-                placeholder: 'مثال: مبنى النادي، الطابق الثاني'
+                icon: 'fa-location-dot',
+                placeholder: 'مثال: مبنى النادي، الطابق الثاني',
+                fullWidth: true
             }
         ];
 
@@ -438,23 +448,19 @@
         // إضافة مستمع لتغيير نوع المقابلة
         setTimeout(() => {
             const typeSelect = document.getElementById('session-type');
-            const linkGroup = document.getElementById('meeting-link-group');
-            const locationGroup = document.getElementById('location-group');
+            const linkGroup = document.getElementById('session-link')?.closest('.form-group');
+            const locationGroup = document.getElementById('session-location')?.closest('.form-group');
 
-            if (typeSelect && linkGroup && locationGroup) {
-                typeSelect.addEventListener('change', () => {
-                    if (typeSelect.value === 'online') {
-                        linkGroup.style.display = 'block';
-                        locationGroup.style.display = 'none';
-                    } else if (typeSelect.value === 'in_person') {
-                        linkGroup.style.display = 'none';
-                        locationGroup.style.display = 'block';
-                    } else {
-                        linkGroup.style.display = 'none';
-                        locationGroup.style.display = 'none';
-                    }
-                });
+            if (!typeSelect || !linkGroup || !locationGroup) return;
+
+            function toggleFields() {
+                const val = typeSelect.value;
+                linkGroup.style.display = val === 'online' ? '' : 'none';
+                locationGroup.style.display = val === 'in_person' ? '' : 'none';
             }
+
+            toggleFields();
+            typeSelect.addEventListener('change', toggleFields);
         }, 100);
     }
 
@@ -489,7 +495,7 @@
             const selectedDateTime = new Date(`${date}T${startTime}`);
             const now = new Date();
             if (selectedDateTime < now) {
-                showNotification('لا يمكن جدولة مقابلة في وقت سابق للوقت الحالي', 'error');
+                Toast.error('لا يمكن جدولة مقابلة في وقت سابق للوقت الحالي');
                 return;
             }
 
@@ -599,16 +605,15 @@
             let slotsTableHtml = '';
             if (slots && slots.length > 0) {
                 slotsTableHtml = `
-                    <div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>الوقت</th>
-                                    <th>الحالة</th>
-                                    <th>المتقدم</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الوقت</th>
+                                <th>الحالة</th>
+                                <th>المتقدم</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                 `;
 
                 slots.forEach(slot => {
@@ -626,7 +631,7 @@
                     } else if (isExpired) {
                         status = '<span class="badge badge-secondary">منتهية</span>';
                     } else {
-                        status = '<span class="badge badge-success">متاح</span>';
+                        status = '<span class="uc-card__badge">متاح</span>';
                     }
 
                     const applicant = slot.booked_by_app
@@ -642,123 +647,91 @@
                     `;
                 });
 
-                slotsTableHtml += '</tbody></table></div>';
+                slotsTableHtml += '</tbody></table>';
             } else {
                 slotsTableHtml = '<p>لا توجد فترات زمنية</p>';
             }
 
             const contentHtml = `
-                <div class="detail-section">
-                    <div class="detail-section-header">
-                        <i class="fa-solid fa-calendar-days"></i>
-                        <h3>معلومات الجلسة</h3>
-                    </div>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-calendar"></i>
-                                التاريخ
-                            </div>
-                            <div class="detail-value">${sessionDate}</div>
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-calendar-days"></i> معلومات الجلسة</h3>
+                    <div class="modal-detail-grid">
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">التاريخ</span>
+                            <span class="modal-detail-value">${sessionDate}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-clock"></i>
-                                الوقت
-                            </div>
-                            <div class="detail-value">${startTime} - ${endTime}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">الوقت</span>
+                            <span class="modal-detail-value">${startTime} - ${endTime}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-hourglass-half"></i>
-                                مدة المقابلة
-                            </div>
-                            <div class="detail-value">${session.slot_duration} دقيقة</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">مدة المقابلة</span>
+                            <span class="modal-detail-value">${session.slot_duration} دقيقة</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-video"></i>
-                                النوع
-                            </div>
-                            <div class="detail-value">${typeBadge}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">النوع</span>
+                            <span class="modal-detail-value">${typeBadge}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-flag"></i>
-                                الحالة
-                            </div>
-                            <div class="detail-value">${statusBadge}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">الحالة</span>
+                            <span class="modal-detail-value">${statusBadge}</span>
                         </div>
                         ${session.location ? `
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <i class="fa-solid fa-location-dot"></i>
-                                    الموقع
-                                </div>
-                                <div class="detail-value">${escapeHtml(session.location)}</div>
-                            </div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">الموقع</span>
+                            <span class="modal-detail-value">${escapeHtml(session.location)}</span>
+                        </div>
+                        ` : ''}
+                        ${session.session_description ? `
+                        <div class="modal-detail-item" style="grid-column: 1 / -1;">
+                            <span class="modal-detail-label">الوصف</span>
+                            <span class="modal-detail-value">${escapeHtml(session.session_description)}</span>
+                        </div>
                         ` : ''}
                     </div>
                 </div>
 
-                <div class="detail-section">
-                    <div class="detail-section-header">
-                        <i class="fa-solid fa-chart-pie"></i>
-                        <h3>الإحصائيات</h3>
-                    </div>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-list"></i>
-                                إجمالي الفترات
-                            </div>
-                            <div class="detail-value"><strong>${stats.total_slots}</strong></div>
+                <hr class="modal-divider">
+
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-chart-pie"></i> الإحصائيات</h3>
+                    <div class="modal-detail-grid">
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">إجمالي الفترات</span>
+                            <span class="modal-detail-value">${stats.total_slots}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-check"></i>
-                                المحجوز
-                            </div>
-                            <div class="detail-value">${stats.booked_slots}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">المحجوز</span>
+                            <span class="modal-detail-value">${stats.booked_slots}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-calendar-check"></i>
-                                المتاح
-                            </div>
-                            <div class="detail-value">${stats.available_slots}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">المتاح</span>
+                            <span class="modal-detail-value">${stats.available_slots}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-percent"></i>
-                                نسبة الحجز
-                            </div>
-                            <div class="detail-value">${stats.booking_rate}%</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">نسبة الحجز</span>
+                            <span class="modal-detail-value">${stats.booking_rate}%</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="detail-section">
-                    <div class="detail-section-header">
-                        <i class="fa-solid fa-link"></i>
-                        <h3>رابط الحجز</h3>
-                    </div>
-                    <div>
-                        <input type="text" value="${bookingLink}" readonly
-                            onclick="this.select()">
-                        <button class="modal-btn modal-btn-primary" 
-                            onclick="navigator.clipboard.writeText('${bookingLink}'); window.interviewSessionsManager.copyLinkNotification();">
-                            <i class="fa-solid fa-copy"></i>
-                            نسخ
-                        </button>
+                <hr class="modal-divider">
+
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-link"></i> رابط الحجز</h3>
+                    <div class="modal-detail-item" style="grid-column: 1 / -1;">
+                        <span class="modal-detail-label">الرابط</span>
+                        <span class="modal-detail-value" style="direction:ltr;text-align:right;">${bookingLink}</span>
+                        <div class="modal-detail-actions">
+                            <button class="mdi-btn mdi-btn--copy" onclick="navigator.clipboard.writeText('${bookingLink}'); window.interviewSessionsManager.copyLinkNotification(this);" title="نسخ الرابط"><i class="fa-regular fa-copy"></i></button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="detail-section">
-                    <div class="detail-section-header">
-                        <i class="fa-solid fa-clock"></i>
-                        <h3>الفترات الزمنية (${slots ? slots.length : 0})</h3>
-                    </div>
+                <hr class="modal-divider">
+
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-clock"></i> الفترات الزمنية (${slots ? slots.length : 0})</h3>
                     ${slotsTableHtml}
                 </div>
             `;
@@ -780,9 +753,9 @@
     function copyLink(token) {
         const link = `${window.location.origin}/booking/booking.html?token=${token}`;
         navigator.clipboard.writeText(link).then(() => {
-            showNotification('تم نسخ رابط الحجز', 'success');
+            Toast.success('تم نسخ رابط الحجز بنجاح', 'نسخ الرابط');
         }).catch(() => {
-            showNotification('فشل نسخ الرابط', 'error');
+            Toast.error('فشل نسخ الرابط', 'خطأ');
         });
     }
 
@@ -814,88 +787,91 @@
         const session = allSessions.find(s => s.id === sessionId);
         if (!session) return;
 
+        const showLink = session.interview_type === 'online';
+        const showLocation = session.interview_type === 'in_person';
+
         const formHtml = `
             <input type="hidden" id="edit-session-id" value="${sessionId}">
-            <div class="form-group">
-                <label>اسم الجلسة <span class="required-dot">*</span></label>
-                <input type="text" id="session-name" class="form-input" value="${escapeHtml(session.session_name)}">
-            </div>
-            <div class="form-group">
-                <label>الوصف (اختياري)</label>
-                <textarea id="session-description" class="form-textarea">${escapeHtml(session.session_description || '')}</textarea>
-            </div>
-            <div class="form-group">
-                <label>تاريخ الجلسة <span class="required-dot">*</span></label>
-                <input type="date" id="session-date" class="form-input" value="${session.session_date}">
-            </div>
-            <div class="form-row">
+            <div class="modal-form-grid">
+                <div class="form-group full-width">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-heading"></i></span> اسم الجلسة <span class="required-dot">*</span></label>
+                    <input type="text" id="session-name" class="form-input" value="${escapeHtml(session.session_name)}">
+                </div>
+                <div class="form-group full-width">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-align-right"></i></span> الوصف (اختياري)</label>
+                    <textarea id="session-description" class="form-input form-textarea" rows="3">${escapeHtml(session.session_description || '')}</textarea>
+                </div>
                 <div class="form-group">
-                    <label>وقت البداية <span class="required-dot">*</span></label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-calendar"></i></span> تاريخ الجلسة <span class="required-dot">*</span></label>
+                    <input type="date" id="session-date" class="form-input" value="${session.session_date}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-hourglass-half"></i></span> مدة كل مقابلة (بالدقائق) <span class="required-dot">*</span></label>
+                    <input type="number" id="session-duration" class="form-input" min="5" max="60" value="${session.slot_duration}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-clock"></i></span> وقت البداية <span class="required-dot">*</span></label>
                     <input type="time" id="session-start" class="form-input" value="${session.start_time}">
                 </div>
                 <div class="form-group">
-                    <label>وقت النهاية <span class="required-dot">*</span></label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-clock"></i></span> وقت النهاية <span class="required-dot">*</span></label>
                     <input type="time" id="session-end" class="form-input" value="${session.end_time}">
                 </div>
-            </div>
-            <div class="form-group">
-                <label>مدة كل مقابلة (بالدقائق) <span class="required-dot">*</span></label>
-                <input type="number" id="session-duration" class="form-input" min="5" max="60" value="${session.slot_duration}">
-            </div>
-            <div class="form-group">
-                <label>نوع المقابلة <span class="required-dot">*</span></label>
-                <select id="session-type" class="form-select">
-                    <option value="online" ${session.interview_type === 'online' ? 'selected' : ''}>أونلاين</option>
-                    <option value="in_person" ${session.interview_type === 'in_person' ? 'selected' : ''}>حضوري</option>
-                    <option value="phone" ${session.interview_type === 'phone' ? 'selected' : ''}>هاتفي</option>
-                </select>
-            </div>
-            <div class="form-group" id="meeting-link-group">
-                <label>رابط الاجتماع</label>
-                <input type="url" id="session-link" class="form-input" value="${session.meeting_link || ''}">
-            </div>
-            <div class="form-group" id="location-group">
-                <label>الموقع</label>
-                <input type="text" id="session-location" class="form-input" value="${session.location || ''}">
+                <div class="form-group full-width">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-list"></i></span> نوع المقابلة <span class="required-dot">*</span></label>
+                    <select id="session-type" class="form-select">
+                        <option value="online" ${session.interview_type === 'online' ? 'selected' : ''}>أونلاين</option>
+                        <option value="in_person" ${session.interview_type === 'in_person' ? 'selected' : ''}>حضوري</option>
+                        <option value="phone" ${session.interview_type === 'phone' ? 'selected' : ''}>هاتفي</option>
+                    </select>
+                </div>
+                <div class="form-group full-width" id="meeting-link-group" style="display:${showLink ? '' : 'none'}">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-link"></i></span> رابط الاجتماع</label>
+                    <input type="url" id="session-link" class="form-input" value="${session.meeting_link || ''}">
+                </div>
+                <div class="form-group full-width" id="location-group" style="display:${showLocation ? '' : 'none'}">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-location-dot"></i></span> الموقع</label>
+                    <input type="text" id="session-location" class="form-input" value="${session.location || ''}">
+                </div>
             </div>
         `;
 
-        const actionsHtml = `
-            <button class="modal-btn modal-btn-primary" onclick="window.interviewSessionsManager.submitEditSession()">
-                <i class="fa-solid fa-save"></i>
-                حفظ التعديلات
-            </button>
-            <button class="modal-btn modal-btn-secondary" onclick="window.closeFormModal()">
+        const footer = `
+            <button class="btn btn-outline" onclick="closeModal()">
                 <i class="fa-solid fa-times"></i>
                 إلغاء
             </button>
+            <button class="btn btn-primary" onclick="window.interviewSessionsManager.submitEditSession()">
+                <i class="fa-solid fa-save"></i>
+                حفظ التعديلات
+            </button>
         `;
 
-        document.getElementById('formModalContent').innerHTML = formHtml;
-        document.getElementById('formModalActions').innerHTML = actionsHtml;
-        window.setFormModalTitle('تعديل جلسة المقابلات', 'fa-edit');
-        window.openFormModal();
+        openModal('تعديل جلسة المقابلات', formHtml, {
+            icon: 'fa-edit',
+            footer: footer,
+            size: 'md',
+            onOpen: () => {
+                const typeSelect = document.getElementById('session-type');
+                const linkGroup = document.getElementById('meeting-link-group');
+                const locationGroup = document.getElementById('location-group');
 
-        setTimeout(() => {
-            const typeSelect = document.getElementById('session-type');
-            const linkGroup = document.getElementById('meeting-link-group');
-            const locationGroup = document.getElementById('location-group');
-
-            if (typeSelect && linkGroup && locationGroup) {
-                typeSelect.addEventListener('change', () => {
-                    if (typeSelect.value === 'online') {
-                        linkGroup.style.display = 'block';
-                        locationGroup.style.display = 'none';
-                    } else if (typeSelect.value === 'in_person') {
-                        linkGroup.style.display = 'none';
-                        locationGroup.style.display = 'block';
-                    } else {
-                        linkGroup.style.display = 'none';
-                        locationGroup.style.display = 'none';
-                    }
-                });
+                if (typeSelect && linkGroup && locationGroup) {
+                    typeSelect.addEventListener('change', () => {
+                        if (typeSelect.value === 'online') {
+                            linkGroup.style.display = '';
+                            locationGroup.style.display = 'none';
+                        } else if (typeSelect.value === 'in_person') {
+                            linkGroup.style.display = 'none';
+                            locationGroup.style.display = '';
+                        } else {
+                            linkGroup.style.display = 'none';
+                            locationGroup.style.display = 'none';
+                        }
+                    });
+                }
             }
-        }, 100);
+        });
     }
 
     async function submitEditSession() {
@@ -927,7 +903,7 @@
             const selectedDateTime = new Date(`${date}T${startTime}`);
             const now = new Date();
             if (selectedDateTime < now) {
-                showNotification('لا يمكن جدولة مقابلة في وقت سابق للوقت الحالي', 'error');
+                Toast.error('لا يمكن جدولة مقابلة في وقت سابق للوقت الحالي');
                 return;
             }
 
@@ -1007,7 +983,7 @@
                 showNotification('تم تحديث الجلسة بنجاح', 'success');
             }
 
-            window.closeFormModal();
+            closeModal();
             await loadSessions();
 
         } catch (error) {
@@ -1056,7 +1032,7 @@
         document.getElementById('formModalContent').innerHTML = formHtml;
         document.getElementById('formModalActions').innerHTML = actionsHtml;
         window.setFormModalTitle('تحديث رابط المقابلة', 'fa-link');
-        window.openFormModal();
+        window.openCustomFormModal();
     }
 
     async function submitUpdateLink() {
@@ -1192,8 +1168,12 @@
     }
 
     // دالة إشعار نسخ الرابط
-    function copyLinkNotification() {
-        showNotification('تم نسخ رابط الحجز', 'success');
+    function copyLinkNotification(btn) {
+        Toast.success('تم نسخ رابط الحجز بنجاح', 'نسخ الرابط');
+        if (btn) {
+            btn.classList.add('mdi-btn--copied');
+            setTimeout(() => btn.classList.remove('mdi-btn--copied'), 1500);
+        }
     }
 
     // تصدير الوظائف
@@ -1222,12 +1202,12 @@
 /**
  * فتح نافذة النموذج
  */
-window.openFormModal = function() {
+window.openCustomFormModal = function() {
     const modal = document.getElementById('formModal');
     if (modal) {
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
-        
+
         const overlay = modal.querySelector('.custom-modal-overlay');
         if (overlay) {
             overlay.onclick = () => window.closeFormModal();

@@ -177,17 +177,19 @@
      * @param {Object} options - خيارات إضافية
      */
     window.openFormModal = function(title, fields, onSubmit, options = {}) {
-        let formHtml = '<form id="dynamicForm">';
-        
+        let formHtml = '<form id="dynamicForm"><div class="modal-form-grid">';
+
         // التحقق من أن fields هو array
         if (!Array.isArray(fields)) {
             console.error('openFormModal: fields must be an array');
             return;
         }
-        
+
         fields.forEach(field => {
-            formHtml += `<div class="form-group">`;
-            formHtml += `<label class="form-label">${field.label}${field.required ? ' <span class="required-dot">*</span>' : ''}</label>`;
+            const fullWidthClass = (field.fullWidth || field.type === 'textarea') ? ' full-width' : '';
+            formHtml += `<div class="form-group${fullWidthClass}">`;
+            const iconHtml = field.icon ? `<span class="label-icon"><i class="fa-solid ${field.icon}"></i></span> ` : '';
+            formHtml += `<label class="form-label">${iconHtml}${field.label}${field.required ? ' <span class="required-dot">*</span>' : ''}</label>`;
 
             if (field.type === 'textarea') {
                 formHtml += `<textarea id="${field.id}" class="form-input form-textarea" ${field.required ? 'required' : ''}
@@ -211,8 +213,8 @@
 
             formHtml += `</div>`;
         });
-        
-        formHtml += '</form>';
+
+        formHtml += '</div></form>';
 
         const footer = `
             <button class="btn btn-outline" onclick="closeModal()">

@@ -324,7 +324,7 @@
     // الحصول على شارة الحالة
     function getStatusBadge(status) {
         const badges = {
-            'active': '<span class="badge badge-success">نشط</span>',
+            'active': '<span class="uc-card__badge">نشط</span>',
             'inactive': '<span class="badge badge-warning">معلق - لم يفعل الحساب</span>',
             'suspended': '<span class="badge badge-danger">عضوية منتهية</span>'
         };

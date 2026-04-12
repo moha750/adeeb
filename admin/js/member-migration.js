@@ -149,7 +149,7 @@
                             </div>
                             <div class="member-details">
                                 <h3>${escapeHtml(app.full_name)}</h3>
-                                <span class="badge badge-success">مقبول نهائياً</span>
+                                <span class="uc-card__badge">مقبول نهائياً</span>
                             </div>
                         </div>
                     </div>
@@ -339,6 +339,7 @@
                 });
 
                 await loadAcceptedMembers();
+                await checkAndAutoArchive();
             } else {
                 throw new Error(data.error || 'فشل الترحيل');
             }
@@ -437,6 +438,94 @@
             confirmButtonText: 'حسناً',
             width: '600px'
         });
+
+        if (successCount > 0) {
+            await checkAndAutoArchive();
+        }
+    }
+
+    /**
+     * التحقق من اكتمال الترحيل وأرشفة الدورة تلقائياً
+     */
+    async function checkAndAutoArchive() {
+        // التحقق من عدم وجود أعضاء متبقين للترحيل
+        if (acceptedMembers.length > 0) return;
+
+        // التأكد مرة أخرى من قاعدة البيانات
+        const { data: remaining, error: checkError } = await window.sbClient
+            .from('membership_interviews')
+            .select('id')
+            .eq('result', 'accepted')
+            .is('migrated_to_user_id', null)
+            .limit(1);
+
+        if (checkError || (remaining && remaining.length > 0)) return;
+
+        // قراءة عنوان الدورة من الإعدادات
+        const { data: settings, error: settingsError } = await window.sbClient
+            .from('membership_settings')
+            .select('cycle_title')
+            .eq('id', 'default')
+            .single();
+
+        if (settingsError || !settings?.cycle_title) {
+            console.warn('لا يوجد عنوان دورة للأرشفة');
+            return;
+        }
+
+        const cycleTitle = settings.cycle_title;
+
+        try {
+            showLoading(document.getElementById('migrationTable'));
+
+            // استدعاء دالة الأرشفة
+            const { data, error } = await window.sbClient.rpc('archive_membership_cycle', {
+                p_cycle_name: cycleTitle,
+                p_cycle_year: new Date().getFullYear(),
+                p_cycle_season: getCurrentSeason(),
+                p_description: `أرشفة تلقائية بعد ترحيل جميع المقبولين - ${new Date().toLocaleDateString('ar-SA')}`,
+                p_archived_by: currentUser?.id
+            });
+
+            if (error) throw error;
+
+            // إغلاق باب التسجيل ومسح عنوان الدورة
+            await window.sbClient
+                .from('membership_settings')
+                .update({
+                    join_open: false,
+                    cycle_title: null,
+                    updated_by: currentUser?.id
+                })
+                .eq('id', 'default');
+
+            await Swal.fire({
+                title: 'تمت الأرشفة بنجاح',
+                html: `
+                    <p>تم ترحيل جميع المقبولين وأرشفة الدورة:</p>
+                    <p><strong>${cycleTitle}</strong></p>
+                    <p>تم إغلاق باب التسجيل وتجهيز النظام لدورة جديدة</p>
+                `,
+                icon: 'success',
+                confirmButtonText: 'حسناً'
+            });
+
+            location.reload();
+        } catch (error) {
+            console.error('خطأ في الأرشفة التلقائية:', error);
+            showNotification('خطأ في أرشفة الدورة: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * تحديد الموسم الحالي
+     */
+    function getCurrentSeason() {
+        const month = new Date().getMonth() + 1;
+        if (month >= 3 && month <= 5) return 'spring';
+        if (month >= 6 && month <= 8) return 'summer';
+        if (month >= 9 && month <= 11) return 'fall';
+        return 'winter';
     }
 
     function viewMemberDetails(interviewId) {

@@ -205,7 +205,7 @@
      */
     function getStatusBadge(status) {
         const badges = {
-            active: '<span class="badge badge-success">نشطة</span>',
+            active: '<span class="uc-card__badge">نشطة</span>',
             used: '<span class="badge badge-info">مستخدمة</span>',
             expired: '<span class="badge badge-warning">منتهية</span>',
             cancelled: '<span class="badge badge-danger">ملغاة</span>'

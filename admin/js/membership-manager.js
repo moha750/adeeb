@@ -24,12 +24,11 @@
     const closeDateGroup = document.getElementById('closeDateGroup');
     const saveMembershipSettings = document.getElementById('saveMembershipSettings');
     const resetMembershipSettings = document.getElementById('resetMembershipSettings');
+    const cycleTitleInput = document.getElementById('cycleTitleInput');
 
     const applicationSearchInput = document.getElementById('applicationSearchInput');
     const applicationStatusFilter = document.getElementById('applicationStatusFilter');
     const applicationCommitteeFilter = document.getElementById('applicationCommitteeFilter');
-    const refreshApplicationsBtn = document.getElementById('refreshApplicationsBtn');
-    const exportApplicationsBtn = document.getElementById('exportApplicationsBtn');
     const applicationsTable = document.getElementById('applicationsTable');
 
     const applicationDetailModal = document.getElementById('applicationDetailModal');
@@ -100,7 +99,8 @@
                 join_schedule_enabled: false,
                 join_schedule_mode: 'range',
                 join_schedule_open_at: null,
-                join_schedule_close_at: null
+                join_schedule_close_at: null,
+                cycle_title: null
             };
 
             // تحديث الواجهة
@@ -129,28 +129,79 @@
             scheduleCloseAt.value = formatDateTimeLocal(currentSettings.join_schedule_close_at);
         }
 
+        if (cycleTitleInput) {
+            cycleTitleInput.value = currentSettings.cycle_title || '';
+        }
+
         updateScheduleVisibility();
         updateHeroUI(currentSettings.join_open);
+        updateStatCards();
     }
 
     /**
-     * تحديث Hero Banner حسب حالة الباب
+     * تحديث بطاقات الإحصائيات
+     */
+    function updateStatCards() {
+        const openDateEl = document.getElementById('regStatOpenDate');
+        const closeDateEl = document.getElementById('regStatCloseDate');
+        if (!currentSettings) return;
+
+        const formatOpts = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+
+        if (currentSettings.join_schedule_open_at && openDateEl) {
+            openDateEl.textContent = new Date(currentSettings.join_schedule_open_at).toLocaleDateString('ar-SA', formatOpts);
+        } else if (openDateEl) {
+            openDateEl.textContent = 'غير محدد';
+        }
+
+        if (currentSettings.join_schedule_close_at && closeDateEl) {
+            closeDateEl.textContent = new Date(currentSettings.join_schedule_close_at).toLocaleDateString('ar-SA', formatOpts);
+        } else if (closeDateEl) {
+            closeDateEl.textContent = 'غير محدد';
+        }
+    }
+
+    /**
+     * تحديث بطاقة التحكم الرئيسية حسب حالة الباب
      */
     function updateHeroUI(isOpen) {
-        const pill    = document.getElementById('regDoorStatusPill');
-        const label   = document.getElementById('regDoorStatusLabel');
-        const togLabel = document.getElementById('regDoorToggleLabel');
+        const heroCard  = document.getElementById('regDoorHero');
+        const header    = document.getElementById('regDoorStatusPill');
+        const label     = document.getElementById('regDoorStatusLabel');
+        const togLabel  = document.getElementById('regDoorToggleLabel');
+        const togText   = document.getElementById('regDoorToggleText');
+        const icon      = document.getElementById('regDoorIcon');
+        const cycleNameBadge = document.getElementById('regDoorCycleName');
+        const cycleNameText  = document.getElementById('regDoorCycleNameText');
+        const cycleTitleSection = document.getElementById('cycleTitleSection');
 
-        if (!pill || !label) return;
+        if (!header || !label) return;
+
+        const cycleTitle = currentSettings?.cycle_title || '';
 
         if (isOpen) {
-            pill.className   = 'reg-door-status-pill is-open';
-            label.textContent = 'باب التسجيل مفتوح';
-            if (togLabel) { togLabel.textContent = 'الباب مفتوح'; togLabel.className = 'reg-door-toggle-label is-open'; }
+            heroCard.className = 'uc-card uc-card--success';
+            header.className = 'uc-card__header uc-card__header--success';
+            label.textContent = 'باب التسجيل مفتوح حالياً';
+            if (icon) icon.className = 'fa-solid fa-door-open';
+            if (togLabel) togLabel.innerHTML = '<i class="fa-solid fa-circle" style="color:#34d399;font-size:0.5rem;"></i> الباب مفتوح';
+            if (togText) togText.textContent = 'مفتوح';
+            // عرض اسم الدورة وإخفاء حقل الإدخال
+            if (cycleNameBadge && cycleTitle) {
+                cycleNameText.textContent = cycleTitle;
+                cycleNameBadge.style.display = 'inline-flex';
+            }
+            if (cycleTitleSection) cycleTitleSection.style.display = 'none';
         } else {
-            pill.className   = 'reg-door-status-pill is-closed';
-            label.textContent = 'باب التسجيل مغلق';
-            if (togLabel) { togLabel.textContent = 'الباب مغلق'; togLabel.className = 'reg-door-toggle-label'; }
+            heroCard.className = 'uc-card uc-card--danger';
+            header.className = 'uc-card__header uc-card__header--danger';
+            label.textContent = 'باب التسجيل مغلق حالياً';
+            if (icon) icon.className = 'fa-solid fa-door-closed';
+            if (togLabel) togLabel.innerHTML = '<i class="fa-solid fa-circle" style="color:#fca5a5;font-size:0.5rem;"></i> الباب مغلق';
+            if (togText) togText.textContent = 'مغلق';
+            // إخفاء اسم الدورة وإظهار حقل الإدخال
+            if (cycleNameBadge) cycleNameBadge.style.display = 'none';
+            if (cycleTitleSection) cycleTitleSection.style.display = '';
         }
     }
 
@@ -166,13 +217,24 @@
      */
     async function saveMembershipSettingsHandler() {
         try {
+            const isOpening = joinOpenToggle.checked;
+            const cycleTitle = cycleTitleInput ? cycleTitleInput.value.trim() : '';
+
+            // منع فتح الباب بدون عنوان الدورة
+            if (isOpening && !cycleTitle) {
+                showNotification('يجب كتابة عنوان الدورة قبل فتح باب التسجيل', 'error');
+                joinOpenToggle.checked = false;
+                return;
+            }
+
             const settings = {
-                join_open: joinOpenToggle.checked,
+                join_open: isOpening,
                 join_membership_countdown: true,
                 join_schedule_enabled: true,
                 join_schedule_mode: 'range',
                 join_schedule_open_at: scheduleOpenAt.value ? new Date(scheduleOpenAt.value).toISOString() : null,
                 join_schedule_close_at: scheduleCloseAt.value ? new Date(scheduleCloseAt.value).toISOString() : null,
+                cycle_title: isOpening ? cycleTitle : null,
                 updated_by: currentUser.id
             };
 
@@ -184,9 +246,9 @@
             if (error) throw error;
 
             updateHeroUI(settings.join_open);
-            showNotification('تم حفظ الإعدادات بنجاح', 'success');
-
             currentSettings = { ...currentSettings, ...settings };
+            updateStatCards();
+            showNotification('تم حفظ الإعدادات بنجاح', 'success');
         } catch (error) {
             console.error('خطأ في حفظ الإعدادات:', error);
             showNotification('خطأ في حفظ الإعدادات', 'error');
@@ -302,8 +364,7 @@
         applicationDetailName.textContent = app.full_name;
         applicationDetailEmail.textContent = app.email;
         applicationDetailPhone.textContent = app.phone || '-';
-        applicationDetailStatus.textContent = getStatusText(app.status);
-        applicationDetailStatus.className = 'badge ' + getStatusClass(app.status);
+        applicationDetailStatus.innerHTML = getStatusBadge(app.status);
         
         applicationDetailDate.textContent = new Date(app.created_at).toLocaleDateString('ar-SA', {
             year: 'numeric',
@@ -446,28 +507,172 @@
             return;
         }
 
-        const headers = ['الاسم', 'البريد الإلكتروني', 'الهاتف', 'الدرجة', 'الكلية', 'التخصص', 'المهارات', 'اللجنة المرغوبة', 'الحالة', 'تاريخ التقديم'];
-        const rows = currentApplications.map(app => [
-            app.full_name,
-            app.email,
-            app.phone || '',
-            app.degree || '',
-            app.college || '',
-            app.major || '',
-            app.skills || '',
-            app.preferred_committee || '',
-            getStatusText(app.status),
-            new Date(app.created_at).toLocaleDateString('ar-SA')
-        ]);
+        // استخراج القيم المتوفرة من البيانات الحالية
+        const committees = [...new Set(currentApplications.map(a => a.preferred_committee).filter(Boolean))].sort();
 
-        const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `membership_applications_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
+        const allStatuses = [
+            { value: 'new', label: 'جديد' },
+            { value: 'approved_for_interview', label: 'مقبول للمقابلة' },
+            { value: 'rejected', label: 'مرفوض' }
+        ];
 
-        showNotification('تم تصدير البيانات بنجاح', 'success');
+        const committeeCheckboxes = committees.map(c => `
+            <label class="form-checkbox">
+                <input type="checkbox" value="${escapeHtml(c)}" data-export-committee>
+                <span class="form-checkbox-label">${escapeHtml(c)}</span>
+            </label>
+        `).join('');
+        const statusOpts = allStatuses.map(s => `<option value="${escapeHtml(s.value)}">${escapeHtml(s.label)}</option>`).join('');
+
+        const allColumns = [
+            { key: 'full_name', label: 'الاسم', checked: true },
+            { key: 'email', label: 'البريد الإلكتروني', checked: true },
+            { key: 'phone', label: 'الهاتف', checked: true },
+            { key: 'degree', label: 'الدرجة', checked: false },
+            { key: 'college', label: 'الكلية', checked: false },
+            { key: 'major', label: 'التخصص', checked: false },
+            { key: 'skills', label: 'المهارات', checked: false },
+            { key: 'preferred_committee', label: 'اللجنة المرغوبة', checked: true },
+            { key: 'status', label: 'الحالة', checked: true },
+            { key: 'created_at', label: 'تاريخ التقديم', checked: true }
+        ];
+
+        const columnsHtml = allColumns.map(col => `
+            <label class="form-checkbox">
+                <input type="checkbox" value="${col.key}" data-export-column ${col.checked ? 'checked' : ''}>
+                <span class="form-checkbox-label">${col.label}</span>
+            </label>
+        `).join('');
+
+        const formHtml = `
+            <div class="modal-form-grid">
+                <div class="form-group full-width">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-users-between-lines"></i></span> اللجان</label>
+                    <div class="export-columns-grid" id="exportCommitteeCheckboxes">
+                        ${committeeCheckboxes}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-filter"></i></span> الحالة</label>
+                    <select id="exportStatusFilter" class="form-select">
+                        <option value="">جميع الحالات</option>
+                        ${statusOpts}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-calendar-days"></i></span> الفترة الزمنية</label>
+                    <select id="exportDateRange" class="form-select">
+                        <option value="">الكل</option>
+                        <option value="7">آخر 7 أيام</option>
+                        <option value="30">آخر 30 يوم</option>
+                        <option value="90">آخر 3 أشهر</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-table-columns"></i></span> الأعمدة المطلوبة</label>
+                    <div class="export-columns-grid">
+                        ${columnsHtml}
+                    </div>
+                </div>
+                <div class="form-group full-width" id="exportPreviewCount">
+                    <small><i class="fa-solid fa-circle-info"></i> سيتم تصدير <strong>${currentApplications.length}</strong> طلب</small>
+                </div>
+            </div>
+        `;
+
+        const footer = `
+            <button class="btn btn-outline" onclick="closeModal()">
+                <i class="fa-solid fa-times"></i> إلغاء
+            </button>
+            <button class="btn btn-primary" id="exportConfirmBtn">
+                <i class="fa-solid fa-file-export"></i> تصدير CSV
+            </button>
+        `;
+
+        openModal('تصدير طلبات العضوية', formHtml, {
+            icon: 'fa-file-export',
+            footer: footer,
+            size: 'md',
+            onOpen: () => {
+                const committeeContainer = document.getElementById('exportCommitteeCheckboxes');
+                const statusEl = document.getElementById('exportStatusFilter');
+                const dateEl = document.getElementById('exportDateRange');
+                const previewEl = document.getElementById('exportPreviewCount');
+
+                function getSelectedCommittees() {
+                    return Array.from(committeeContainer.querySelectorAll('input[data-export-committee]:checked')).map(cb => cb.value);
+                }
+
+                function getFilteredData() {
+                    const selectedCommittees = getSelectedCommittees();
+                    const status = statusEl.value;
+                    const days = dateEl.value;
+
+                    return currentApplications.filter(app => {
+                        if (selectedCommittees.length > 0 && !selectedCommittees.includes(app.preferred_committee)) return false;
+                        if (status && app.status !== status) return false;
+                        if (days) {
+                            const cutoff = new Date();
+                            cutoff.setDate(cutoff.getDate() - parseInt(days));
+                            if (new Date(app.created_at) < cutoff) return false;
+                        }
+                        return true;
+                    });
+                }
+
+                function updatePreview() {
+                    const count = getFilteredData().length;
+                    previewEl.innerHTML = `<small><i class="fa-solid fa-circle-info"></i> سيتم تصدير <strong>${count}</strong> طلب</small>`;
+                }
+
+                committeeContainer.addEventListener('change', updatePreview);
+                [statusEl, dateEl].forEach(el => {
+                    el.addEventListener('change', updatePreview);
+                });
+
+                document.getElementById('exportConfirmBtn').addEventListener('click', () => {
+                    const filtered = getFilteredData();
+                    if (filtered.length === 0) {
+                        showNotification('لا توجد بيانات مطابقة للتصدير', 'warning');
+                        return;
+                    }
+
+                    const checkboxes = document.querySelectorAll('.export-columns-grid input[type="checkbox"][data-export-column]:checked');
+                    const selectedKeys = Array.from(checkboxes).map(cb => cb.value);
+
+                    if (selectedKeys.length === 0) {
+                        showNotification('يرجى اختيار عمود واحد على الأقل', 'warning');
+                        return;
+                    }
+
+                    const columnMap = {
+                        full_name: { header: 'الاسم', get: a => a.full_name },
+                        email: { header: 'البريد الإلكتروني', get: a => a.email },
+                        phone: { header: 'الهاتف', get: a => a.phone || '' },
+                        degree: { header: 'الدرجة', get: a => a.degree || '' },
+                        college: { header: 'الكلية', get: a => a.college || '' },
+                        major: { header: 'التخصص', get: a => a.major || '' },
+                        skills: { header: 'المهارات', get: a => a.skills || '' },
+                        preferred_committee: { header: 'اللجنة المرغوبة', get: a => a.preferred_committee || '' },
+                        status: { header: 'الحالة', get: a => getStatusText(a.status) },
+                        created_at: { header: 'تاريخ التقديم', get: a => new Date(a.created_at).toLocaleDateString('ar-SA') }
+                    };
+
+                    const headers = selectedKeys.map(k => columnMap[k].header);
+                    const rows = filtered.map(app => selectedKeys.map(k => columnMap[k].get(app)));
+
+                    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+                    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `membership_applications_${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
+
+                    closeModal();
+                    showNotification(`تم تصدير ${filtered.length} طلب بنجاح`, 'success');
+                });
+            }
+        });
     }
 
     /**
@@ -507,9 +712,16 @@
      * دوال مساعدة
      */
     function getStatusBadge(status) {
-        const text = getStatusText(status);
-        const className = getStatusClass(status);
-        return `<span class="badge ${className}">${text}</span>`;
+        const statusConfig = {
+            'new': { label: 'جديد', icon: 'fa-solid fa-user-plus' },
+            'under_review': { label: 'قيد المراجعة', icon: 'fa-hourglass-half' },
+            'approved_for_interview': { label: 'مقبول للمقابلة', icon: 'fa-calendar-check' },
+            'accepted': { label: 'مقبول', icon: 'fa-circle-check' },
+            'rejected': { label: 'مرفوض', icon: 'fa-circle-xmark' },
+            'archived': { label: 'مؤرشف', icon: 'fa-box-archive' }
+        };
+        const cfg = statusConfig[status] || { label: status, icon: 'fa-circle-question' };
+        return `<span class="uc-card__badge"><i class="fa-solid ${cfg.icon}"></i> ${cfg.label}</span>`;
     }
 
     function getStatusText(status) {
@@ -524,21 +736,9 @@
         return statusMap[status] || status;
     }
 
-    function getStatusClass(status) {
-        const classMap = {
-            'new': 'badge-info',
-            'under_review': 'badge-warning',
-            'approved_for_interview': 'badge-success',
-            'accepted': 'badge-success',
-            'rejected': 'badge-danger',
-            'archived': 'badge-secondary'
-        };
-        return classMap[status] || '';
-    }
-
     function getStatusHeaderClass(status) {
         const headerMap = {
-            'new':                    'uc-card__header--info',
+            'new':                    'uc-card__header--purple',
             'under_review':           'uc-card__header--warning',
             'approved_for_interview': 'uc-card__header--success',
             'accepted':               'uc-card__header--success',
@@ -550,7 +750,7 @@
 
     function getStatusCardClass(status) {
         const cardMap = {
-            'new':                    'uc-card--info',
+            'new':                    'uc-card--purple',
             'under_review':           'uc-card--warning',
             'approved_for_interview': 'uc-card--success',
             'accepted':               'uc-card--success',
@@ -558,6 +758,18 @@
             'archived':               'uc-card--neutral'
         };
         return cardMap[status] || '';
+    }
+
+    function getStatusBtnClass(status) {
+        const btnMap = {
+            'new':                    'btn-violet',
+            'under_review':           'btn-warning',
+            'approved_for_interview': 'btn-success',
+            'accepted':               'btn-success',
+            'rejected':               'btn-danger',
+            'archived':               'btn-slate'
+        };
+        return btnMap[status] || 'btn-primary';
     }
 
     function formatDateTimeLocal(isoString) {
@@ -655,55 +867,96 @@
     function renderAvailableCommitteesTable() {
         if (!availableCommitteesTable) return;
 
+        // تحديث عداد اللجان في الهيدر
+        const countBadge = document.getElementById('regCommitteesCount');
+        if (countBadge) {
+            const activeCount = availableCommittees.filter(c => c.is_available).length;
+            countBadge.innerHTML = '<i class="fa-solid fa-layer-group"></i> ' + activeCount + ' لجنة مفعّلة من ' + availableCommittees.length;
+        }
+
         if (availableCommittees.length === 0) {
             availableCommitteesTable.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
-                    <p class="empty-state__title">لا توجد لجان متاحة</p>
-                    <p class="empty-state__message">قم بإضافة لجان من قسم إدارة اللجان أولاً</p>
+                <div style="padding: 2.5rem 1.5rem; text-align: center;">
+                    <div style="font-size: 2.5rem; color: var(--text-light); margin-bottom: 0.75rem;">
+                        <i class="fa-solid fa-inbox"></i>
+                    </div>
+                    <p style="font-size: 1rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.35rem;">لا توجد لجان متاحة</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">قم بإضافة لجان من قسم إدارة اللجان أولاً</p>
                 </div>
             `;
             return;
         }
 
         let html = `
-            <table>
-                <thead>
-                    <tr>
-                        <th>اسم اللجنة</th>
-                        <th class="w-120">الحد الأقصى</th>
-                        <th class="w-100">الحالة</th>
-                    </tr>
-                </thead>
-                <tbody>
+            <div class="data-table-wrap" style="border:none; box-shadow:none;">
+                <div class="data-table-scroll">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>اللجنة</th>
+                                <th style="width:100px; text-align:center;">المتقدمين</th>
+                                <th style="width:110px; text-align:center;">الحد الأقصى</th>
+                                <th style="width:90px; text-align:center;">الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
         `;
 
         availableCommittees.forEach((item) => {
             const committee = item.committee;
             const isAvailable = item.is_available;
+            const applicants = item.current_applicants || 0;
+            const maxApplicants = item.max_applicants;
+            const isFull = maxApplicants && applicants >= maxApplicants;
+
+            let progressHtml = '';
+            if (maxApplicants) {
+                const pct = Math.min((applicants / maxApplicants) * 100, 100);
+                const barColor = pct >= 90 ? 'var(--color-danger)' : pct >= 70 ? 'var(--color-warning)' : 'var(--color-teal)';
+                progressHtml = `
+                    <div style="display:flex; align-items:center; gap:0.4rem; justify-content:center;">
+                        <span style="font-weight:600; font-size:0.85rem; color:${isFull ? 'var(--color-danger)' : 'var(--text-dark)'};">${applicants}</span>
+                        <div style="width:40px; height:5px; background:var(--bg-tertiary); border-radius:99px; overflow:hidden;">
+                            <div style="width:${pct}%; height:100%; background:${barColor}; border-radius:99px; transition:width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                progressHtml = `<span style="font-weight:600; font-size:0.85rem;">${applicants}</span>`;
+            }
 
             html += `
                 <tr>
                     <td>
-                        <strong>${committee.committee_name_ar}</strong>
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <div style="width:32px; height:32px; border-radius:10px; background:linear-gradient(135deg, var(--color-teal), var(--color-teal-dark)); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.75rem; flex-shrink:0;">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <strong style="font-size:0.88rem;">${escapeHtml(committee.committee_name_ar)}</strong>
+                        </div>
                     </td>
-                    <td class="text-center">
-                        <input 
-                            type="number" 
-                            value="${item.max_applicants || ''}" 
+                    <td style="text-align:center;">${progressHtml}</td>
+                    <td style="text-align:center;">
+                        <input
+                            type="number"
+                            value="${item.max_applicants || ''}"
                             placeholder="∞"
-                            class="w-80 text-center py-4 px-8"
+                            class="form-input"
+                            style="width:70px; text-align:center; padding:0.35rem 0.4rem; font-size:0.85rem;"
                             onchange="window.membershipManager.updateMaxApplicants('${item.id}', this.value)"
                         />
                     </td>
-                    <td class="text-center">
-                        <label class="toggle-switch m-0">
-                            <input 
-                                type="checkbox" 
+                    <td style="text-align:center;">
+                        <label class="req-toggle" style="cursor:pointer;">
+                            <input
+                                type="checkbox"
                                 ${isAvailable ? 'checked' : ''}
                                 onchange="window.membershipManager.toggleCommitteeAvailability('${item.id}', this.checked)"
                             />
-                            <span class="toggle-slider"></span>
+                            <span class="req-toggle-pill" style="height:2.2rem; padding:0.2rem 0.6rem; font-size:0.78rem; border-radius:10px; --_card-color-rgb:20,184,166; --_card-color:#14b8a6;">
+                                <span class="req-toggle-dot"></span>
+                                <span>${isAvailable ? 'مفعّلة' : 'معطّلة'}</span>
+                            </span>
                         </label>
                     </td>
                 </tr>
@@ -711,8 +964,10 @@
         });
 
         html += `
-                </tbody>
-            </table>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         `;
 
         availableCommitteesTable.innerHTML = html;
@@ -857,174 +1112,122 @@
 
             // بناء محتوى النافذة المنبثقة
             const contentHtml = `
-                <!-- المعلومات الشخصية -->
-                <div class="detail-section">
-                    <div class="detail-section-header">
-                        <i class="fa-solid fa-user"></i>
-                        <h3>المعلومات الشخصية</h3>
-                    </div>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-id-card"></i>
-                                الاسم الكامل
-                            </div>
-                            <div class="detail-value">${escapeHtml(data.full_name)}</div>
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-user"></i> المعلومات الشخصية</h3>
+                    <div class="modal-detail-grid">
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">الاسم الكامل</span>
+                            <span class="modal-detail-value">${escapeHtml(data.full_name)}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-envelope"></i>
-                                البريد الإلكتروني
-                            </div>
-                            <div class="detail-value">${escapeHtml(data.email)}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">البريد الإلكتروني</span>
+                            <span class="modal-detail-value">${escapeHtml(data.email)}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-phone"></i>
-                                رقم الهاتف
-                            </div>
-                            <div class="detail-value">${escapeHtml(data.phone || 'غير متوفر')}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">رقم الهاتف</span>
+                            <span class="modal-detail-value" style="direction:ltr;text-align:right;">${escapeHtml(data.phone || 'غير متوفر')}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-calendar-check"></i>
-                                تاريخ التقديم
-                            </div>
-                            <div class="detail-value">${createdDate} - ${createdTime}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">تاريخ التقديم</span>
+                            <span class="modal-detail-value">${createdDate} - ${createdTime}</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- المعلومات الأكاديمية -->
-                <div class="detail-section">
-                    <div class="detail-section-header">
-                        <i class="fa-solid fa-graduation-cap"></i>
-                        <h3>المعلومات الأكاديمية</h3>
-                    </div>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-award"></i>
-                                الدرجة العلمية
-                            </div>
-                            <div class="detail-value">${escapeHtml(data.degree || 'غير محدد')}</div>
+                <hr class="modal-divider">
+
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-graduation-cap"></i> المعلومات الأكاديمية</h3>
+                    <div class="modal-detail-grid">
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">الدرجة العلمية</span>
+                            <span class="modal-detail-value">${escapeHtml(data.degree || 'غير محدد')}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-building-columns"></i>
-                                الكلية
-                            </div>
-                            <div class="detail-value">${escapeHtml(data.college || 'غير محدد')}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">الكلية</span>
+                            <span class="modal-detail-value">${escapeHtml(data.college || 'غير محدد')}</span>
                         </div>
-                        <div class="detail-item full-width">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-book"></i>
-                                التخصص
-                            </div>
-                            <div class="detail-value">${escapeHtml(data.major || 'غير محدد')}</div>
+                        <div class="modal-detail-item" style="grid-column: 1 / -1;">
+                            <span class="modal-detail-label">التخصص</span>
+                            <span class="modal-detail-value">${escapeHtml(data.major || 'غير محدد')}</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- معلومات التقديم -->
-                <div class="detail-section">
-                    <div class="detail-section-header">
-                        <i class="fa-solid fa-briefcase"></i>
-                        <h3>معلومات التقديم</h3>
-                    </div>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-users"></i>
-                                اللجنة المرغوبة
-                            </div>
-                            <div class="detail-value">${escapeHtml(data.preferred_committee || 'غير محدد')}</div>
+                <hr class="modal-divider">
+
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-briefcase"></i> معلومات التقديم</h3>
+                    <div class="modal-detail-grid">
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">اللجنة المرغوبة</span>
+                            <span class="modal-detail-value">${escapeHtml(data.preferred_committee || 'غير محدد')}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-flag"></i>
-                                الحالة
-                            </div>
-                            <div class="detail-value">${statusBadge}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">الحالة</span>
+                            <span class="modal-detail-value">${getStatusText(data.status)}</span>
                         </div>
-                        <div class="detail-item full-width">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-star"></i>
-                                المهارات
-                            </div>
-                            <div class="detail-value">${escapeHtml(data.skills || 'غير محدد')}</div>
+                        <div class="modal-detail-item" style="grid-column: 1 / -1;">
+                            <span class="modal-detail-label">المهارات</span>
+                            <span class="modal-detail-value">${escapeHtml(data.skills || 'غير محدد')}</span>
                         </div>
                         ${data.portfolio_url ? `
-                            <div class="detail-item full-width">
-                                <div class="detail-label">
-                                    <i class="fa-solid fa-link"></i>
-                                    رابط الأعمال
-                                </div>
-                                <div class="detail-value">
-                                    <a href="${escapeHtml(data.portfolio_url)}" target="_blank">${escapeHtml(data.portfolio_url)}</a>
-                                </div>
-                            </div>
+                        <div class="modal-detail-item" style="grid-column: 1 / -1;">
+                            <span class="modal-detail-label">رابط الأعمال</span>
+                            <span class="modal-detail-value"><a href="${escapeHtml(data.portfolio_url)}" target="_blank">${escapeHtml(data.portfolio_url)}</a></span>
+                        </div>
                         ` : ''}
                     </div>
                 </div>
 
-                <!-- نبذة عن المتقدم -->
-                <div class="detail-section">
-                    <div class="detail-section-header">
-                        <i class="fa-solid fa-comment-dots"></i>
-                        <h3>نبذة عن المتقدم</h3>
+                <hr class="modal-divider">
+
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-comment-dots"></i> نبذة عن المتقدم</h3>
+                    <div class="modal-info-box">
+                        <i class="fa-solid fa-quote-right"></i>
+                        <div>${escapeHtml(data.about || 'لا توجد نبذة')}</div>
                     </div>
-                    <div class="detail-value long-text">${escapeHtml(data.about || 'لا توجد نبذة')}</div>
                 </div>
 
                 ${data.review_notes || data.admin_notes ? `
-                    <div class="detail-section">
-                        <div class="detail-section-header">
-                            <i class="fa-solid fa-note-sticky"></i>
-                            <h3>ملاحظات إدارية</h3>
-                        </div>
-                        <div class="admin-notes-container">
-                            ${data.review_notes ? `
-                                <div class="admin-note review-note">
-                                    <div class="note-header">
-                                        <i class="fa-solid fa-eye"></i>
-                                        <strong>ملاحظات قيد المراجعة</strong>
-                                    </div>
-                                    <div class="note-content">${escapeHtml(data.review_notes)}</div>
-                                </div>
-                            ` : ''}
-                            ${data.admin_notes ? `
-                                <div class="admin-note ${data.status === 'approved_for_interview' ? 'accept-note' : data.status === 'rejected' ? 'reject-note' : ''}">
-                                    <div class="note-header">
-                                        <i class="fa-solid fa-${data.status === 'approved_for_interview' ? 'check-circle' : data.status === 'rejected' ? 'times-circle' : 'note-sticky'}"></i>
-                                        <strong>${data.status === 'approved_for_interview' ? 'ملاحظات القبول' : data.status === 'rejected' ? 'سبب الرفض' : 'ملاحظات إدارية'}</strong>
-                                    </div>
-                                    <div class="note-content">${escapeHtml(data.admin_notes)}</div>
-                                </div>
-                            ` : ''}
-                        </div>
+                <hr class="modal-divider">
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-note-sticky"></i> ملاحظات إدارية</h3>
+                    ${data.review_notes ? `
+                    <div class="modal-info-box box-warning">
+                        <i class="fa-solid fa-eye"></i>
+                        <div><strong>ملاحظات قيد المراجعة</strong><br>${escapeHtml(data.review_notes)}</div>
                     </div>
+                    ` : ''}
+                    ${data.admin_notes ? `
+                    <div class="modal-info-box ${data.status === 'approved_for_interview' ? 'box-success' : data.status === 'rejected' ? 'box-danger' : ''}">
+                        <i class="fa-solid fa-${data.status === 'approved_for_interview' ? 'check-circle' : data.status === 'rejected' ? 'times-circle' : 'note-sticky'}"></i>
+                        <div><strong>${data.status === 'approved_for_interview' ? 'ملاحظات القبول' : data.status === 'rejected' ? 'سبب الرفض' : 'ملاحظات إدارية'}</strong><br>${escapeHtml(data.admin_notes)}</div>
+                    </div>
+                    ` : ''}
+                </div>
                 ` : ''}
             `;
 
             // بناء أزرار الإجراءات - فقط في قسم المراجعة
             let actionsHtml = '';
 
-            // التحقق من القسم الحالي - إذا كان قسم العرض، لا تظهر أزرار الإجراءات
+            // التحقق من القسم الحالي
             const isViewSection = !document.getElementById('membership-applications-view-section')?.classList.contains('d-none');
             const isReviewSection = !document.getElementById('membership-applications-review-section')?.classList.contains('d-none');
 
             if (isReviewSection && (data.status === 'new' || data.status === 'under_review')) {
                 actionsHtml = `
-                    <button class="modal-btn modal-btn-primary" onclick="window.membershipManager.approveForInterview('${data.id}'); window.closeApplicationModal();">
+                    <button class="btn btn-success" onclick="window.membershipManager.approveForInterview('${data.id}'); window.closeApplicationModal();">
                         <i class="fa-solid fa-calendar-check"></i>
                         قبول للمقابلة
                     </button>
-                    <button class="modal-btn modal-btn-warning" onclick="window.membershipManager.markUnderReview('${data.id}'); window.closeApplicationModal();">
+                    <button class="btn btn-warning" onclick="window.membershipManager.markUnderReview('${data.id}'); window.closeApplicationModal();">
                         <i class="fa-solid fa-eye"></i>
                         قيد المراجعة
                     </button>
-                    <button class="modal-btn modal-btn-danger" onclick="window.membershipManager.rejectApplication('${data.id}'); window.closeApplicationModal();">
+                    <button class="btn btn-danger" onclick="window.membershipManager.rejectApplication('${data.id}'); window.closeApplicationModal();">
                         <i class="fa-solid fa-times"></i>
                         رفض الطلب
                     </button>
@@ -1035,6 +1238,7 @@
             document.getElementById('applicationDetailsContent').innerHTML = contentHtml;
             document.getElementById('applicationDetailsActions').innerHTML = actionsHtml;
             window.setModalTitle('تفاصيل الطلب');
+            window.setModalVariant(data.status);
             window.openApplicationModal();
 
         } catch (error) {
@@ -1287,9 +1491,6 @@
     function bindViewEvents() {
         const searchInput = document.getElementById('applicationSearchInput');
         const committeeFilter = document.getElementById('applicationCommitteeFilter');
-        const refreshBtn = document.getElementById('refreshApplicationsBtn');
-        const exportBtn = document.getElementById('exportApplicationsBtn');
-
         if (searchInput) {
             searchInput.removeEventListener('input', renderApplicationsViewTable);
             searchInput.addEventListener('input', renderApplicationsViewTable);
@@ -1298,13 +1499,51 @@
             committeeFilter.removeEventListener('change', renderApplicationsViewTable);
             committeeFilter.addEventListener('change', renderApplicationsViewTable);
         }
-        if (refreshBtn) {
-            refreshBtn.removeEventListener('click', loadApplicationsView);
-            refreshBtn.addEventListener('click', loadApplicationsView);
-        }
-        if (exportBtn) {
-            exportBtn.removeEventListener('click', exportApplications);
-            exportBtn.addEventListener('click', exportApplications);
+
+        // زر خيارات قائمة طلبات العضوية (عرض)
+        const viewOptionsBtn = document.getElementById('applicationsViewOptionsBtn');
+        if (viewOptionsBtn) {
+            let viewDropdown = document.getElementById('applicationsViewOptionsDropdown');
+            if (viewDropdown) viewDropdown.remove();
+            viewDropdown = document.createElement('div');
+            viewDropdown.id = 'applicationsViewOptionsDropdown';
+            viewDropdown.className = 'dropdown-menu';
+            viewDropdown.innerHTML = `
+                <button class="btn btn-slate btn-outline btn-block" data-action="refresh">
+                    <i class="fa-solid fa-rotate"></i> تحديث
+                </button>
+                <button class="btn btn-primary btn-outline btn-block" data-action="export">
+                    <i class="fa-solid fa-file-export"></i> تصدير البيانات
+                </button>
+            `;
+            document.body.appendChild(viewDropdown);
+
+            viewOptionsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = viewDropdown.classList.toggle('show');
+                if (isOpen) {
+                    const rect = viewOptionsBtn.getBoundingClientRect();
+                    viewDropdown.style.top = (rect.bottom + 6) + 'px';
+                    viewDropdown.style.left = rect.left + 'px';
+                }
+            });
+
+            viewDropdown.addEventListener('click', (e) => {
+                const actionBtn = e.target.closest('[data-action]');
+                if (!actionBtn) return;
+                viewDropdown.classList.remove('show');
+                if (actionBtn.dataset.action === 'export') {
+                    exportApplications();
+                } else if (actionBtn.dataset.action === 'refresh') {
+                    loadApplicationsView();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#applicationsViewOptionsBtn') && !e.target.closest('#applicationsViewOptionsDropdown')) {
+                    viewDropdown.classList.remove('show');
+                }
+            });
         }
     }
 
@@ -1422,7 +1661,7 @@
                     </div>
 
                     <div class="uc-card__footer">
-                        <button class="btn-view-details" onclick="window.membershipManager.viewApplication('${app.id}')">
+                        <button class="btn ${getStatusBtnClass(app.status)}" onclick="window.membershipManager.viewApplication('${app.id}')">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل الكاملة
                         </button>
@@ -1666,26 +1905,24 @@
                     </div>
 
                     <div class="uc-card__footer">
-                        <div class="card-actions-grid">
-                            <button class="btn btn-primary " onclick="window.membershipManager.viewApplication('${app.id}')">
-                                <i class="fa-solid fa-eye"></i>
-                                عرض التفاصيل
-                            </button>
-                            ${app.status === 'new' || app.status === 'under_review' ? `
-                                <button class="btn btn-success " onclick="window.membershipManager.approveForInterview('${app.id}')">
-                                    <i class="fa-solid fa-check"></i>
-                                    قبول للمقابلة
-                                </button>
-                                <button class="btn btn-warning " onclick="window.membershipManager.markUnderReview('${app.id}')">
-                                    <i class="fa-solid fa-clock"></i>
-                                    قيد المراجعة
-                                </button>
-                                <button class="btn btn-danger " onclick="window.membershipManager.rejectApplication('${app.id}')">
-                                    <i class="fa-solid fa-times"></i>
-                                    رفض
-                                </button>
-                            ` : ''}
-                        </div>
+                        <button class="btn ${getStatusBtnClass(app.status)}" onclick="window.membershipManager.viewApplication('${app.id}')">
+                            <i class="fa-solid fa-eye"></i>
+                            عرض التفاصيل
+                        </button>
+                        ${app.status === 'new' || app.status === 'under_review' ? `
+                        <button class="btn btn-success" onclick="window.membershipManager.approveForInterview('${app.id}')">
+                            <i class="fa-solid fa-check"></i>
+                            قبول للمقابلة
+                        </button>
+                        <button class="btn btn-warning" onclick="window.membershipManager.markUnderReview('${app.id}')">
+                            <i class="fa-solid fa-clock"></i>
+                            قيد المراجعة
+                        </button>
+                        <button class="btn btn-danger" onclick="window.membershipManager.rejectApplication('${app.id}')">
+                            <i class="fa-solid fa-times"></i>
+                            رفض
+                        </button>
+                        ` : ''}
                     </div>
                 </div>
             `;
@@ -1781,9 +2018,6 @@
         const searchInput = document.getElementById('applicationReviewSearchInput');
         const statusFilter = document.getElementById('applicationReviewStatusFilter');
         const committeeFilter = document.getElementById('applicationReviewCommitteeFilter');
-        const refreshBtn = document.getElementById('refreshApplicationsReviewBtn');
-        const exportBtn = document.getElementById('exportApplicationsReviewBtn');
-
         if (searchInput) {
             searchInput.removeEventListener('input', renderApplicationsReviewTable);
             searchInput.addEventListener('input', renderApplicationsReviewTable);
@@ -1796,13 +2030,51 @@
             committeeFilter.removeEventListener('change', renderApplicationsReviewTable);
             committeeFilter.addEventListener('change', renderApplicationsReviewTable);
         }
-        if (refreshBtn) {
-            refreshBtn.removeEventListener('click', loadApplicationsReview);
-            refreshBtn.addEventListener('click', () => loadApplicationsReview(currentUser));
-        }
-        if (exportBtn) {
-            exportBtn.removeEventListener('click', exportApplications);
-            exportBtn.addEventListener('click', exportApplications);
+
+        // زر خيارات قائمة طلبات العضوية (مراجعة)
+        const reviewOptionsBtn = document.getElementById('applicationsReviewOptionsBtn');
+        if (reviewOptionsBtn) {
+            let reviewDropdown = document.getElementById('applicationsReviewOptionsDropdown');
+            if (reviewDropdown) reviewDropdown.remove();
+            reviewDropdown = document.createElement('div');
+            reviewDropdown.id = 'applicationsReviewOptionsDropdown';
+            reviewDropdown.className = 'dropdown-menu';
+            reviewDropdown.innerHTML = `
+                <button class="btn btn-slate btn-outline btn-block" data-action="refresh">
+                    <i class="fa-solid fa-rotate"></i> تحديث
+                </button>
+                <button class="btn btn-primary btn-outline btn-block" data-action="export">
+                    <i class="fa-solid fa-file-export"></i> تصدير البيانات
+                </button>
+            `;
+            document.body.appendChild(reviewDropdown);
+
+            reviewOptionsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = reviewDropdown.classList.toggle('show');
+                if (isOpen) {
+                    const rect = reviewOptionsBtn.getBoundingClientRect();
+                    reviewDropdown.style.top = (rect.bottom + 6) + 'px';
+                    reviewDropdown.style.left = rect.left + 'px';
+                }
+            });
+
+            reviewDropdown.addEventListener('click', (e) => {
+                const actionBtn = e.target.closest('[data-action]');
+                if (!actionBtn) return;
+                reviewDropdown.classList.remove('show');
+                if (actionBtn.dataset.action === 'export') {
+                    exportApplications();
+                } else if (actionBtn.dataset.action === 'refresh') {
+                    loadApplicationsReview(currentUser);
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#applicationsReviewOptionsBtn') && !e.target.closest('#applicationsReviewOptionsDropdown')) {
+                    reviewDropdown.classList.remove('show');
+                }
+            });
         }
     }
 
@@ -2132,6 +2404,7 @@
             document.getElementById('applicationDetailsContent').innerHTML = contentHtml;
             document.getElementById('applicationDetailsActions').innerHTML = '';
             window.setModalTitle(data.archive_name);
+            window.setModalVariant('archived');
             window.openApplicationModal();
 
         } catch (error) {
@@ -2510,20 +2783,18 @@
                     </div>
 
                     <div class="uc-card__footer">
-                        <div class="card-actions-grid">
-                            <button class="btn btn-primary " onclick="window.membershipManager.viewApplication('${app.id}')">
-                                <i class="fa-solid fa-eye"></i>
-                                عرض التفاصيل
-                            </button>
-                            <button class="btn btn-success " onclick="window.membershipManager.scheduleInterviewFromBarzakh('${app.id}')">
-                                <i class="fa-solid fa-calendar-plus"></i>
-                                جدولة مقابلة
-                            </button>
-                            <button class="btn btn-danger " onclick="window.membershipManager.rejectFromBarzakh('${app.id}', '${escapeHtml(app.full_name || '')}')">
-                                <i class="fa-solid fa-user-xmark"></i>
-                                حذف/رفض
-                            </button>
-                        </div>
+                        <button class="btn ${getStatusBtnClass(app.status)}" onclick="window.membershipManager.viewApplication('${app.id}')">
+                            <i class="fa-solid fa-eye"></i>
+                            عرض التفاصيل
+                        </button>
+                        <button class="btn btn-success" onclick="window.membershipManager.scheduleInterviewFromBarzakh('${app.id}')">
+                            <i class="fa-solid fa-calendar-plus"></i>
+                            جدولة مقابلة
+                        </button>
+                        <button class="btn btn-danger" onclick="window.membershipManager.rejectFromBarzakh('${app.id}', '${escapeHtml(app.full_name || '')}')">
+                            <i class="fa-solid fa-user-xmark"></i>
+                            حذف/رفض
+                        </button>
                     </div>
                 </div>
             `;
@@ -2685,26 +2956,24 @@
                     </div>
 
                     <div class="uc-card__footer">
-                        <div class="card-actions-grid">
-                            <button class="btn btn-primary " onclick="window.membershipManager.viewInterview('${interview.id}')">
-                                <i class="fa-solid fa-eye"></i>
-                                عرض التفاصيل
-                            </button>
-                            ${interview.result === 'pending' || !interview.result ? `
-                                <button class="btn btn-success " onclick="window.membershipManager.acceptInterview('${interview.id}')">
-                                    <i class="fa-solid fa-check"></i>
-                                    قبول
-                                </button>
-                                <button class="btn btn-danger " onclick="window.membershipManager.rejectInterview('${interview.id}')">
-                                    <i class="fa-solid fa-times"></i>
-                                    رفض
-                                </button>
-                            ` : ''}
-                            <button class="btn btn-warning " onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot && interview.slot[0] ? interview.slot[0].id : ''}')">
-                                <i class="fa-solid fa-trash-alt"></i>
-                                حذف الموعد
-                            </button>
-                        </div>
+                        <button class="btn btn-primary" onclick="window.membershipManager.viewInterview('${interview.id}')">
+                            <i class="fa-solid fa-eye"></i>
+                            عرض التفاصيل
+                        </button>
+                        ${interview.result === 'pending' || !interview.result ? `
+                        <button class="btn btn-success" onclick="window.membershipManager.acceptInterview('${interview.id}')">
+                            <i class="fa-solid fa-check"></i>
+                            قبول
+                        </button>
+                        <button class="btn btn-danger" onclick="window.membershipManager.rejectInterview('${interview.id}')">
+                            <i class="fa-solid fa-times"></i>
+                            رفض
+                        </button>
+                        ` : ''}
+                        <button class="btn btn-warning" onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot && interview.slot[0] ? interview.slot[0].id : ''}')">
+                            <i class="fa-solid fa-trash-alt"></i>
+                            حذف الموعد
+                        </button>
                     </div>
                 </div>
             `;
@@ -2960,11 +3229,11 @@
             let actionsHtml = '';
             if (data.result === 'pending' || data.result === null) {
                 actionsHtml = `
-                    <button class="modal-btn modal-btn-primary" onclick="window.membershipManager.acceptInterview('${data.id}'); window.closeApplicationModal();">
+                    <button class="btn btn-success" onclick="window.membershipManager.acceptInterview('${data.id}'); window.closeApplicationModal();">
                         <i class="fa-solid fa-check"></i>
                         قبول المتقدم
                     </button>
-                    <button class="modal-btn modal-btn-danger" onclick="window.membershipManager.rejectInterview('${data.id}'); window.closeApplicationModal();">
+                    <button class="btn btn-danger" onclick="window.membershipManager.rejectInterview('${data.id}'); window.closeApplicationModal();">
                         <i class="fa-solid fa-times"></i>
                         رفض المتقدم
                     </button>
@@ -2975,6 +3244,7 @@
             document.getElementById('applicationDetailsContent').innerHTML = contentHtml;
             document.getElementById('applicationDetailsActions').innerHTML = actionsHtml;
             window.setModalTitle('تفاصيل المقابلة');
+            window.setModalVariant(data.status === 'completed' ? 'accepted' : data.status === 'cancelled' ? 'rejected' : 'approved_for_interview');
             window.openApplicationModal();
 
         } catch (error) {
@@ -3601,6 +3871,7 @@
             document.getElementById('applicationDetailsContent').innerHTML = contentHtml;
             document.getElementById('applicationDetailsActions').innerHTML = '';
             window.setModalTitle('تفاصيل العضو');
+            window.setModalVariant('accepted');
             window.openApplicationModal();
 
         } catch (error) {
@@ -3640,7 +3911,7 @@
     function getInterviewStatusBadge(status) {
         const badges = {
             'scheduled': '<span class="badge badge-primary">مجدولة</span>',
-            'completed': '<span class="badge badge-success">مكتملة</span>',
+            'completed': '<span class="uc-card__badge">مكتملة</span>',
             'cancelled': '<span class="badge badge-danger">ملغاة</span>',
             'rescheduled': '<span class="badge badge-warning">معاد جدولتها</span>'
         };
@@ -3650,7 +3921,7 @@
     function getInterviewResultBadge(result) {
         const badges = {
             'pending': '<span class="badge badge-warning">معلقة</span>',
-            'accepted': '<span class="badge badge-success">مقبول</span>',
+            'accepted': '<span class="uc-card__badge">مقبول</span>',
             'rejected': '<span class="badge badge-danger">مرفوض</span>',
             'no_show': '<span class="badge badge-secondary">لم يحضر</span>'
         };
@@ -3668,7 +3939,7 @@
 
     function getMemberStatusBadge(status) {
         const badges = {
-            'active': '<span class="badge badge-success">نشط</span>',
+            'active': '<span class="uc-card__badge">نشط</span>',
             'inactive': '<span class="badge badge-secondary">غير نشط</span>',
             'suspended': '<span class="badge badge-warning">معلق</span>',
             'terminated': '<span class="badge badge-danger">منتهي</span>'
@@ -4053,7 +4324,7 @@
             document.getElementById('formModalContent').innerHTML = formHtml;
             document.getElementById('formModalActions').innerHTML = actionsHtml;
             window.setFormModalTitle('رفض/حذف متقدم من البرزخ', 'fa-user-xmark');
-            window.openFormModal();
+            window.openCustomFormModal();
 
             // إضافة مستمعات للأحداث
             setTimeout(() => {
@@ -4216,10 +4487,29 @@
  * تحديث عنوان النافذة المنبثقة
  */
 window.setModalTitle = function(title) {
-    const titleElement = document.querySelector('#applicationDetailsModal .custom-modal-title');
+    const titleElement = document.getElementById('applicationDetailsTitle');
     if (titleElement) {
-        titleElement.innerHTML = `<i class="fa-solid fa-file-lines"></i>${title}`;
+        titleElement.textContent = title;
     }
+};
+
+/**
+ * تعيين لون النافذة حسب الحالة
+ */
+window.setModalVariant = function(status) {
+    const modal = document.getElementById('applicationDetailsModal');
+    if (!modal) return;
+    modal.classList.remove('modal-success', 'modal-danger', 'modal-warning', 'modal-purple', 'modal-info', 'modal-teal');
+    const variantMap = {
+        'new': 'modal-purple',
+        'under_review': 'modal-warning',
+        'approved_for_interview': 'modal-success',
+        'accepted': 'modal-success',
+        'rejected': 'modal-danger',
+        'archived': 'modal-info'
+    };
+    const variant = variantMap[status];
+    if (variant) modal.classList.add(variant);
 };
 
 /**
@@ -4227,16 +4517,19 @@ window.setModalTitle = function(title) {
  */
 window.openApplicationModal = function() {
     const modal = document.getElementById('applicationDetailsModal');
+    const backdrop = document.getElementById('applicationDetailsBackdrop');
     if (modal) {
         modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        
+        if (backdrop) backdrop.classList.add('active');
+        document.body.classList.add('modal-open');
+
         // إغلاق عند النقر على الخلفية
-        const overlay = modal.querySelector('.custom-modal-overlay');
-        overlay.onclick = function() {
-            window.closeApplicationModal();
-        };
-        
+        if (backdrop) {
+            backdrop.onclick = function() {
+                window.closeApplicationModal();
+            };
+        }
+
         // إغلاق عند الضغط على ESC
         document.addEventListener('keydown', handleEscapeKey);
     }
@@ -4247,9 +4540,11 @@ window.openApplicationModal = function() {
  */
 window.closeApplicationModal = function() {
     const modal = document.getElementById('applicationDetailsModal');
+    const backdrop = document.getElementById('applicationDetailsBackdrop');
     if (modal) {
         modal.classList.remove('active');
-        document.body.style.overflow = '';
+        if (backdrop) backdrop.classList.remove('active');
+        document.body.classList.remove('modal-open');
         document.removeEventListener('keydown', handleEscapeKey);
     }
 };
@@ -4263,73 +4558,4 @@ function handleEscapeKey(event) {
     }
 }
 
-/**
- * دالة أرشفة دورة التسجيل الحالية
- */
-async function archiveMembershipCycle() {
-    // نافذة تأكيد
-    const confirmed = confirm(`⚠️ تحذير مهم
-
-هذا الإجراء سيقوم بـ:
-• نقل جميع الطلبات إلى الأرشيف
-• نقل جميع المقابلات إلى الأرشيف
-• نقل جميع الجلسات إلى الأرشيف
-• حذف جميع البيانات من الأقسام الحالية
-
-لن تتمكن من التراجع عن هذا الإجراء!
-
-هل أنت متأكد من الأرشفة؟`);
-    
-    if (!confirmed) return;
-    
-    // نافذة إدخال اسم الدورة
-    const cycleName = prompt('أدخل اسم الدورة للأرشيف (مثال: دورة التسجيل - خريف 1446)');
-    
-    if (!cycleName || cycleName.trim() === '') {
-        alert('يجب إدخال اسم الدورة');
-        return;
-    }
-    
-    const cycleYear = prompt('أدخل السنة الهجرية (مثال: 1446)');
-    if (!cycleYear) return;
-    
-    const cycleSeason = prompt('أدخل الموسم (spring, summer, fall, winter)');
-    if (!cycleSeason) return;
-    
-    try {
-        // عرض شريط التحميل
-        const loadingBar = document.getElementById('loadingBar');
-        if (loadingBar) loadingBar.style.display = 'block';
-        
-        // استدعاء دالة الأرشفة
-        const { data, error } = await window.sbClient.rpc('archive_membership_cycle', {
-            p_cycle_name: cycleName.trim(),
-            p_cycle_year: parseInt(cycleYear),
-            p_cycle_season: cycleSeason,
-            p_description: `أرشفة تلقائية - ${new Date().toLocaleDateString('ar-SA')}`,
-            p_archived_by: window.currentUser?.id
-        });
-        
-        if (error) throw error;
-        
-        if (data && data.length > 0 && data[0].success) {
-            alert(`✅ ${data[0].message}\n\nالأقسام الآن فارغة وجاهزة لدورة جديدة.`);
-            
-            // إعادة تحميل الصفحة
-            location.reload();
-        } else {
-            alert('❌ فشلت عملية الأرشفة');
-        }
-        
-    } catch (error) {
-        console.error('خطأ في الأرشفة:', error);
-        alert(`❌ حدث خطأ أثناء الأرشفة:\n${error.message}`);
-    } finally {
-        const loadingBar = document.getElementById('loadingBar');
-        if (loadingBar) loadingBar.style.display = 'none';
-    }
-}
-
-// تصدير الدالة
-window.archiveMembershipCycle = archiveMembershipCycle;
 

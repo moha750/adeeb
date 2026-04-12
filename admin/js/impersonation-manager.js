@@ -528,7 +528,7 @@ window.ImpersonationManager = (function() {
                 
                 const isActive = !session.ended_at;
                 const statusBadge = isActive
-                    ? '<span class="badge badge-success"><i class="fa-solid fa-circle-dot"></i> نشط</span>'
+                    ? '<span class="uc-card__badge"><i class="fa-solid fa-circle-dot"></i> نشط</span>'
                     : '<span class="badge badge-secondary"><i class="fa-solid fa-circle-check"></i> منتهي</span>';
 
                 cardsHTML += `

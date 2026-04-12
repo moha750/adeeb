@@ -83,7 +83,12 @@
       "Bash(grep -r \"rpc\\\\\\(\" /c/Users/moham/adeeb/admin/js/*.js)",
       "Bash(grep -r \"sb.rpc\\\\|sb\\\\.rpc\" /c/Users/moham/adeeb/admin/js/*.js)",
       "Bash(find /c/Users/moham/adeeb -type f -name \"*.sql\" -exec grep -l \"get_user_permissions\\\\|start_impersonation\" {} \\\\;)",
-      "Bash(ls c:/Users/moham/adeeb/admin/css/buttons-system*.css)"
+      "Bash(ls c:/Users/moham/adeeb/admin/css/buttons-system*.css)",
+      "Bash(grep -l \"reg-door\\\\|\\\\.card\\\\.reg-door\" \"c:\\\\Users\\\\moham\\\\adeeb\\\\admin\\\\css\"/*.css)",
+      "Bash(grep -l \"mainNav\\\\|buildNavigation\\\\|loadMenus\" \"c:\\\\Users\\\\moham\\\\adeeb\\\\admin\\\\js\"/*.js)",
+      "Bash(grep -E \"\\\\.\\(js|html|sql\\)$\")",
+      "Bash(grep -i \"interview_sessions\\\\|interview_slots\" /c/Users/moham/adeeb/supabase/migrations/*.sql)",
+      "Bash(wc -l /c/Users/moham/adeeb/booking/*.* /c/Users/moham/adeeb/admin/js/interview-sessions-manager.js)"
     ]
   }
 }

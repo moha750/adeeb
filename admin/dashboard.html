@@ -1779,98 +1779,149 @@
                 </div>
             </section>
 
-            <!-- قسم فتح باب التسجيل (مدمج: الإعدادات + اللجان) -->
+            <!-- قسم فتح باب التسجيل -->
             <section id="membership-settings-section" class="admin-section d-none">
 
-                <!-- Hero Status Banner -->
-                <div class="reg-door-hero" id="regDoorHero">
-                    <div class="reg-door-hero__left">
-                        <div class="reg-door-status-pill" id="regDoorStatusPill">
-                            <span class="reg-door-status-dot" id="regDoorStatusDot"></span>
-                            <span id="regDoorStatusLabel">جاري التحميل...</span>
-                        </div>
-                    </div>
-                    <div class="reg-door-hero__right">
-                        <div class="reg-door-master-toggle-wrap">
-                            <span class="reg-door-toggle-label" id="regDoorToggleLabel">الباب مغلق</span>
-                            <label class="reg-door-master-toggle" title="فتح / إغلاق باب التسجيل">
+                <!-- hidden inputs: always-on values -->
+                <input type="checkbox" id="countdownToggle" checked style="display:none;" />
+                <input type="checkbox" id="scheduleToggle" checked style="display:none;" />
+                <select id="scheduleMode" style="display:none;"><option value="range" selected>range</option></select>
+
+                <!-- ══════ بطاقة التحكم الرئيسية ══════ -->
+                <div class="uc-card uc-card--primary" id="regDoorHero" style="margin-bottom: 1.5rem;">
+                    <div class="uc-card__header" id="regDoorStatusPill">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
+                                <i class="fa-solid fa-door-open" id="regDoorIcon"></i>
+                            </div>
+                            <div class="uc-card__header-info" style="flex:1;">
+                                <h3 class="uc-card__title" id="regDoorStatusLabel">جاري التحميل...</h3>
+                                <span class="uc-card__badge" id="regDoorToggleLabel">
+                                    <i class="fa-solid fa-circle"></i>
+                                    الباب مغلق
+                                </span>
+                                <span class="uc-card__badge" id="regDoorCycleName" style="display:none; margin-top:0.3rem; font-size:0.85rem;">
+                                    <i class="fa-solid fa-tag"></i>
+                                    <span id="regDoorCycleNameText"></span>
+                                </span>
+                            </div>
+                            <label class="req-toggle" title="فتح / إغلاق باب التسجيل" style="cursor:pointer;">
                                 <input type="checkbox" id="joinOpenToggle" />
-                                <span class="reg-door-master-slider">
-                                    <i class="fa-solid fa-door-open reg-door-icon-open"></i>
-                                    <i class="fa-solid fa-door-closed reg-door-icon-closed"></i>
+                                <span class="req-toggle-pill" style="
+                                    height: 3rem;
+                                    padding: 0.4rem 1rem;
+                                    font-size: 0.9rem;
+                                    font-weight: 700;
+                                    border-radius: 14px;
+                                    background: rgba(255,255,255,0.18);
+                                    border-color: rgba(255,255,255,0.35);
+                                    color: #fff;
+                                    backdrop-filter: blur(8px);
+                                    gap: 0.6rem;
+                                ">
+                                    <span class="req-toggle-dot" style="width:0.7rem; height:0.7rem;"></span>
+                                    <span id="regDoorToggleText">مغلق</span>
                                 </span>
                             </label>
                         </div>
                     </div>
+                    <!-- حقل عنوان الدورة -->
+                    <div class="uc-card__body" id="cycleTitleSection" style="padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="cycleTitleInput" style="color: inherit; font-weight: 600;">
+                                <i class="fa-solid fa-heading" style="margin-left: 0.3rem;"></i>
+                                عنوان الدورة <span style="color: #fca5a5; font-size: 0.8rem;">(مطلوب لفتح الباب)</span>
+                            </label>
+                            <input type="text" id="cycleTitleInput" class="form-input"
+                                   placeholder="مثال: دورة التسجيل - خريف 1446"
+                                   style="background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25); color: inherit;" />
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Two-column layout: Settings | Committees -->
-                <div class="reg-door-layout">
-
-                    <!-- ======= Column 1: Settings ======= -->
-                    <div class="reg-door-col">
-
-                        <!-- hidden inputs: always-on values -->
-                        <input type="checkbox" id="countdownToggle" checked style="display:none;" />
-                        <input type="checkbox" id="scheduleToggle" checked style="display:none;" />
-                        <select id="scheduleMode" style="display:none;"><option value="range" selected>range</option></select>
-
-                        <!-- Card: Auto-Schedule -->
-                        <div class="card reg-door-card">
-                            <div class="reg-door-card__header">
-                                <div class="reg-door-card__icon reg-door-card__icon--purple">
-                                    <i class="fa-solid fa-calendar-check"></i>
-                                </div>
-                                <div>
-                                    <h3 class="reg-door-card__title">الجدولة التلقائية</h3>
-                                    <p class="reg-door-card__desc">فتح وإغلاق تلقائي حسب التاريخ</p>
-                                </div>
+                <!-- ══════ بطاقات الإحصائيات ══════ -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                    <div class="stat-card" id="regStatOpen" style="--stat-color: #10b981; --stat-color-dark: #059669; --stat-color-rgb: 16, 185, 129;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-calendar-check"></i>
                             </div>
-                            <div class="card-body" id="scheduleSettings">
-                                <div class="reg-door-schedule-grid">
-                                    <div class="form-group" id="openDateGroup">
-                                        <label class="reg-door-field-label"><i class="fa-solid fa-door-open" style="color:#10b981;"></i> تاريخ الفتح</label>
-                                        <input type="datetime-local" id="scheduleOpenAt" class="form-input" />
-                                    </div>
-                                    <div class="form-group" id="closeDateGroup">
-                                        <label class="reg-door-field-label"><i class="fa-solid fa-door-closed" style="color:#ef4444;"></i> تاريخ الإغلاق</label>
-                                        <input type="datetime-local" id="scheduleCloseAt" class="form-input" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Save Action -->
-                        <div class="reg-door-actions">
-                            <button type="button" class="btn btn-primary reg-door-save-btn" id="saveMembershipSettings">
-                                <i class="fa-solid fa-floppy-disk"></i>
-                                حفظ الجدولة
-                            </button>
-                        </div>
-
-                    </div>
-
-                    <!-- ======= Column 2: Committees ======= -->
-                    <div class="reg-door-col">
-                        <div class="card reg-door-card reg-door-card--committees">
-                            <div class="reg-door-card__header">
-                                <div class="reg-door-card__icon reg-door-card__icon--teal">
-                                    <i class="fa-solid fa-users-gear"></i>
-                                </div>
-                                <div>
-                                    <h3 class="reg-door-card__title">اللجان المتاحة</h3>
-                                    <p class="reg-door-card__desc">تحكّم فيما يظهر للمتقدمين في نموذج التسجيل</p>
-                                </div>
-                            </div>
-                            <div class="card-body reg-door-committees-body">
-                                <div id="availableCommitteesTable">
-                                    <!-- سيتم ملؤها ديناميكياً -->
-                                </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="regStatOpenDate" style="font-size:1.1rem;">--</div>
+                                <div class="stat-label">موعد الفتح المجدول</div>
                             </div>
                         </div>
                     </div>
+                    <div class="stat-card" id="regStatClose" style="--stat-color: #ef4444; --stat-color-dark: #dc2626; --stat-color-rgb: 239, 68, 68;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-calendar-xmark"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="regStatCloseDate" style="font-size:1.1rem;">--</div>
+                                <div class="stat-label">موعد الإغلاق المجدول</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                </div><!-- /.reg-door-layout -->
+                <!-- ══════ شبكة: الجدولة + اللجان ══════ -->
+                <div class="uc-grid">
+
+                    <!-- ── بطاقة الجدولة التلقائية ── -->
+                    <div class="uc-card uc-card--purple">
+                        <div class="uc-card__header">
+                            <div class="uc-card__header-inner">
+                                <div class="uc-card__icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                                <div class="uc-card__header-info">
+                                    <h3 class="uc-card__title">الجدولة التلقائية</h3>
+                                    <span class="uc-card__badge"><i class="fa-solid fa-wand-magic-sparkles"></i> فتح وإغلاق تلقائي</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="uc-card__body" id="scheduleSettings" style="gap: 1rem;">
+                            <div class="form-group" id="openDateGroup">
+                                <label class="form-label" for="scheduleOpenAt">
+                                    <i class="fa-solid fa-play" style="color: var(--color-success); margin-left:0.3rem;"></i>
+                                    تاريخ ووقت الفتح
+                                </label>
+                                <input type="datetime-local" id="scheduleOpenAt" class="form-input" />
+                            </div>
+                            <div class="form-group" id="closeDateGroup">
+                                <label class="form-label" for="scheduleCloseAt">
+                                    <i class="fa-solid fa-stop" style="color: var(--color-danger); margin-left:0.3rem;"></i>
+                                    تاريخ ووقت الإغلاق
+                                </label>
+                                <input type="datetime-local" id="scheduleCloseAt" class="form-input" />
+                            </div>
+                            <div class="form-actions" style="padding-top: 0.5rem;">
+                                <button type="button" class="btn btn-primary" id="saveMembershipSettings">
+                                    <i class="fa-solid fa-floppy-disk"></i>
+                                    حفظ الجدولة
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── بطاقة اللجان المتاحة ── -->
+                    <div class="uc-card uc-card--teal">
+                        <div class="uc-card__header">
+                            <div class="uc-card__header-inner">
+                                <div class="uc-card__icon"><i class="fa-solid fa-users-gear"></i></div>
+                                <div class="uc-card__header-info">
+                                    <h3 class="uc-card__title">اللجان المتاحة للتسجيل</h3>
+                                    <span class="uc-card__badge" id="regCommitteesCount"><i class="fa-solid fa-layer-group"></i> 0 لجنة</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="uc-card__body" style="padding: 0;">
+                            <div id="availableCommitteesTable">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </section>
 
             <!-- قسم إهداء العضوية -->
@@ -2012,20 +2063,15 @@
                     <select id="applicationCommitteeFilter" class="filter-select">
                         <option value="">جميع اللجان</option>
                     </select>
-                    <button class="btn btn-outline" id="refreshApplicationsBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-                    <button class="btn btn-success" id="exportApplicationsBtn">
-                        <i class="fa-solid fa-file-export"></i>
-                        تصدير
-                    </button>
                 </div>
 
                 <!-- جدول الطلبات (عرض فقط) -->
                 <div class="card">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-eye"></i> قائمة طلبات العضوية</h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="applicationsViewOptionsBtn" title="خيارات">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div id="applicationsViewTable">
@@ -2059,20 +2105,15 @@
                     <select id="applicationReviewCommitteeFilter" class="filter-select">
                         <option value="">جميع اللجان</option>
                     </select>
-                    <button class="btn btn-outline" id="refreshApplicationsReviewBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-                    <button class="btn btn-success" id="exportApplicationsReviewBtn">
-                        <i class="fa-solid fa-file-export"></i>
-                        تصدير
-                    </button>
                 </div>
 
                 <!-- جدول الطلبات (مع أزرار الإجراءات) -->
                 <div class="card">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-clipboard-check"></i> قائمة طلبات العضوية</h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="applicationsReviewOptionsBtn" title="خيارات">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div id="applicationsReviewTable">
@@ -2897,7 +2938,12 @@
 
                 <!-- جدول الجلسات -->
                 <div class="card">
-                    <div id="sessionsTable"></div>
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-calendar-check"></i> جلسات المقابلات</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="sessionsTable"></div>
+                    </div>
                 </div>
             </section>
 
@@ -4157,27 +4203,21 @@
         </div>
     </div>
 
-    <!-- نافذة منبثقة احترافية لتفاصيل الطلب -->
-    <div id="applicationDetailsModal" class="custom-modal">
-        <div class="custom-modal-overlay"></div>
-        <div class="custom-modal-container">
-            <div class="custom-modal-header">
-                <h2 class="custom-modal-title">
-                    <i class="fa-solid fa-file-lines"></i>
-                    تفاصيل الطلب
-                </h2>
-                <button class="custom-modal-close" onclick="window.closeApplicationModal()">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+    <!-- نافذة منبثقة لتفاصيل الطلب -->
+    <div class="modal-backdrop" id="applicationDetailsBackdrop"></div>
+    <div class="modal modal-lg" id="applicationDetailsModal">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <div class="modal-icon"><i class="fa-solid fa-file-lines"></i></div>
+                <h2 class="modal-title" id="applicationDetailsTitle">تفاصيل الطلب</h2>
             </div>
-
-            <div class="custom-modal-body" id="applicationDetailsContent">
-                <!-- سيتم ملء المحتوى ديناميكياً -->
-            </div>
-
-            <div class="custom-modal-footer" id="applicationDetailsActions">
-                <!-- سيتم ملء الأزرار ديناميكياً -->
-            </div>
+            <button class="modal-close" onclick="window.closeApplicationModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" id="applicationDetailsContent">
+            <!-- سيتم ملء المحتوى ديناميكياً -->
+        </div>
+        <div class="modal-footer" id="applicationDetailsActions">
+            <!-- سيتم ملء الأزرار ديناميكياً -->
         </div>
     </div>
 
