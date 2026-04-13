@@ -127,7 +127,7 @@
             const isExpired = isSessionExpired(session);
             let statusBadge;
             if (isExpired) {
-                statusBadge = '<span class="uc-card__badge uc-card__badge--muted">منتهية</span>';
+                statusBadge = '<span class="uc-card__badge"><i class="fa-solid fa-clock"></i> منتهية</span>';
             } else if (session.is_active) {
                 statusBadge = '<span class="uc-card__badge">نشط</span>';
             } else {
@@ -151,7 +151,7 @@
                 : 0;
 
             html += `
-                <div class="uc-card">
+                <div class="uc-card${isExpired ? ' uc-card--danger' : ''}">
                     <div class="uc-card__header">
                         <div class="uc-card__header-inner">
                             <div class="uc-card__icon">
@@ -536,7 +536,7 @@
             if (error) throw error;
 
             showNotification('تم إنشاء الجلسة بنجاح', 'success');
-            window.closeFormModal();
+            closeModal();
             await loadSessions();
 
         } catch (error) {
@@ -1009,31 +1009,31 @@
         const formHtml = `
             <input type="hidden" id="update-session-id" value="${sessionId}">
             <div class="form-group">
-                <label>الرابط الحالي</label>
+                <label class="form-label">الرابط الحالي</label>
                 <input type="text" class="form-input" value="${session.meeting_link || 'لا يوجد'}" disabled>
             </div>
             <div class="form-group">
-                <label>الرابط الجديد <span class="required-dot">*</span></label>
+                <label class="form-label">الرابط الجديد <span class="required-dot">*</span></label>
                 <input type="url" id="new-meeting-link" class="form-input" placeholder="https://meet.google.com/xxx">
                 <span class="form-hint">أدخل رابط Zoom أو Google Meet أو Teams</span>
             </div>
         `;
 
-        const actionsHtml = `
-            <button class="modal-btn modal-btn-primary" onclick="window.interviewSessionsManager.submitUpdateLink()">
-                <i class="fa-solid fa-check"></i>
-                تحديث الرابط
-            </button>
-            <button class="modal-btn modal-btn-secondary" onclick="window.closeFormModal()">
+        const footerHtml = `
+            <button class="btn btn-outline" onclick="closeModal()">
                 <i class="fa-solid fa-times"></i>
                 إلغاء
             </button>
+            <button class="btn btn-primary" onclick="window.interviewSessionsManager.submitUpdateLink()">
+                <i class="fa-solid fa-check"></i>
+                تحديث الرابط
+            </button>
         `;
 
-        document.getElementById('formModalContent').innerHTML = formHtml;
-        document.getElementById('formModalActions').innerHTML = actionsHtml;
-        window.setFormModalTitle('تحديث رابط المقابلة', 'fa-link');
-        window.openCustomFormModal();
+        openModal('تحديث رابط المقابلة', formHtml, {
+            icon: 'fa-link',
+            footer: footerHtml
+        });
     }
 
     async function submitUpdateLink() {
@@ -1061,7 +1061,7 @@
             if (error) throw error;
 
             showNotification('تم تحديث رابط المقابلة بنجاح', 'success');
-            window.closeFormModal();
+            closeModal();
             await loadSessions();
 
         } catch (error) {
@@ -1118,7 +1118,7 @@
             if (error) throw error;
 
             showNotification('تم حذف الجلسة بنجاح', 'success');
-            window.closeConfirmModal();
+            closeModal();
             await loadSessions();
 
         } catch (error) {
@@ -1475,29 +1475,30 @@
         const contentHtml = `
             <div>
                 <p>هل أنت متأكد من قبول هذا المتقدم؟</p>
-                <div>
-                    <label>ملاحظات القبول (اختياري)</label>
-                    <textarea id="groupAcceptNotes" placeholder="أضف ملاحظات حول قبول المتقدم..."></textarea>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label class="form-label"><i class="fa-solid fa-note-sticky"></i> ملاحظات القبول (اختياري)</label>
+                    <textarea id="groupAcceptNotes" class="form-input form-textarea" placeholder="أضف ملاحظات حول قبول المتقدم..." rows="3"></textarea>
                 </div>
                 <input type="hidden" id="group-accept-interview-id" value="${interviewId}">
             </div>
         `;
 
-        const actionsHtml = `
-            <button class="modal-btn modal-btn-success" onclick="window.interviewSessionsManager.confirmAcceptGroupBooking()">
-                <i class="fa-solid fa-check"></i>
-                قبول
-            </button>
-            <button class="modal-btn modal-btn-secondary" onclick="window.closeConfirmModal()">
+        const footerHtml = `
+            <button class="btn btn-outline" onclick="closeModal()">
                 <i class="fa-solid fa-times"></i>
                 إلغاء
             </button>
+            <button class="btn btn-success" onclick="window.interviewSessionsManager.confirmAcceptGroupBooking()">
+                <i class="fa-solid fa-check"></i>
+                قبول
+            </button>
         `;
 
-        document.getElementById('confirmModalContent').innerHTML = contentHtml;
-        document.getElementById('confirmModalActions').innerHTML = actionsHtml;
-        window.setConfirmModalTitle('قبول المتقدم', 'fa-circle-check');
-        window.openConfirmModal();
+        openModal('قبول المتقدم', contentHtml, {
+            icon: 'fa-circle-check',
+            variant: 'success',
+            footer: footerHtml
+        });
     }
 
     /**
@@ -1507,7 +1508,7 @@
         try {
             const interviewId = document.getElementById('group-accept-interview-id').value;
             const notes = document.getElementById('groupAcceptNotes')?.value?.trim() || null;
-            window.closeConfirmModal();
+            closeModal();
 
             const { data: interview, error: interviewError } = await window.sbClient
                 .from('membership_interviews')
@@ -1585,29 +1586,30 @@
         const contentHtml = `
             <div>
                 <p>هل أنت متأكد من رفض هذا المتقدم؟</p>
-                <div>
-                    <label>سبب الرفض (اختياري)</label>
-                    <textarea id="groupRejectNotes" placeholder="أضف سبب رفض المتقدم..."></textarea>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label class="form-label"><i class="fa-solid fa-note-sticky"></i> سبب الرفض (اختياري)</label>
+                    <textarea id="groupRejectNotes" class="form-input form-textarea" placeholder="أضف سبب رفض المتقدم..." rows="3"></textarea>
                 </div>
                 <input type="hidden" id="group-reject-interview-id" value="${interviewId}">
             </div>
         `;
 
-        const actionsHtml = `
-            <button class="modal-btn modal-btn-danger" onclick="window.interviewSessionsManager.confirmRejectGroupBooking()">
-                <i class="fa-solid fa-times"></i>
-                رفض
-            </button>
-            <button class="modal-btn modal-btn-secondary" onclick="window.closeConfirmModal()">
+        const footerHtml = `
+            <button class="btn btn-outline" onclick="closeModal()">
                 <i class="fa-solid fa-times"></i>
                 إلغاء
             </button>
+            <button class="btn btn-danger" onclick="window.interviewSessionsManager.confirmRejectGroupBooking()">
+                <i class="fa-solid fa-user-xmark"></i>
+                رفض
+            </button>
         `;
 
-        document.getElementById('confirmModalContent').innerHTML = contentHtml;
-        document.getElementById('confirmModalActions').innerHTML = actionsHtml;
-        window.setConfirmModalTitle('رفض المتقدم', 'fa-circle-xmark');
-        window.openConfirmModal();
+        openModal('رفض المتقدم', contentHtml, {
+            icon: 'fa-circle-xmark',
+            variant: 'danger',
+            footer: footerHtml
+        });
     }
 
     /**
@@ -1617,7 +1619,7 @@
         try {
             const interviewId = document.getElementById('group-reject-interview-id').value;
             const notes = document.getElementById('groupRejectNotes')?.value?.trim() || null;
-            window.closeConfirmModal();
+            closeModal();
 
             const updateData = {
                 result: 'rejected',
@@ -1668,86 +1670,5 @@
     };
 
 })();
-
-// ============================================================================
-// دوال التحكم في النوافذ المنبثقة للنماذج
-// ============================================================================
-
-/**
- * فتح نافذة النموذج
- */
-window.openCustomFormModal = function() {
-    const modal = document.getElementById('formModal');
-    if (modal) {
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-
-        const overlay = modal.querySelector('.custom-modal-overlay');
-        if (overlay) {
-            overlay.onclick = () => window.closeFormModal();
-        }
-    }
-};
-
-/**
- * إغلاق نافذة النموذج
- */
-window.closeFormModal = function() {
-    const modal = document.getElementById('formModal');
-    if (modal) {
-        modal.classList.remove('active');
-        document.body.style.overflow = '';
-    }
-};
-
-/**
- * فتح نافذة التأكيد
- */
-window.openConfirmModal = function() {
-    const modal = document.getElementById('confirmModal');
-    if (modal) {
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-};
-
-/**
- * إغلاق نافذة التأكيد
- */
-window.closeConfirmModal = function() {
-    const modal = document.getElementById('confirmModal');
-    if (modal) {
-        modal.classList.remove('active');
-        document.body.style.overflow = '';
-    }
-};
-
-/**
- * تعيين عنوان نافذة النموذج
- */
-window.setFormModalTitle = function(title, icon = 'fa-edit') {
-    const titleElement = document.getElementById('formModalTitle');
-    if (titleElement) {
-        titleElement.innerHTML = `<i class="fa-solid ${icon}"></i>${title}`;
-    }
-};
-
-/**
- * تعيين عنوان نافذة التأكيد
- */
-window.setConfirmModalTitle = function(title, icon = 'fa-triangle-exclamation') {
-    const titleElement = document.getElementById('confirmModalTitle');
-    if (titleElement) {
-        titleElement.innerHTML = `<i class="fa-solid ${icon}"></i>${title}`;
-    }
-};
-
-// إضافة مستمع ESC للنوافذ
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        window.closeFormModal();
-        window.closeConfirmModal();
-    }
-});
 
 

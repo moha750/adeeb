@@ -1,31 +1,84 @@
-﻿/**
- * Modal Helper - بديل لـ SweetAlert2
+/**
+ * Modal Helper — النظام الموحد للنوافذ المنبثقة
  * يستخدم modals.css و toast-notifications.js
  */
 
 window.ModalHelper = (function() {
-    
-    // عرض modal تأكيد
+
+    // ─── ESC handler عام ───
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const topModal = [...document.querySelectorAll('.modal.active')].pop();
+            if (topModal) {
+                const backdrop = document.getElementById(topModal.id + '-backdrop');
+                _animateClose(topModal, backdrop);
+            }
+        }
+    });
+
+    // ─── دالة إغلاق مشتركة ───
+    function _animateClose(modal, backdrop, callback) {
+        if (!modal) return;
+        modal.classList.add('closing');
+        if (backdrop) backdrop.classList.remove('active');
+
+        setTimeout(() => {
+            modal.remove();
+            if (backdrop) backdrop.remove();
+            // إزالة modal-open فقط إذا لم يتبق نوافذ نشطة
+            if (!document.querySelector('.modal.active')) {
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+            }
+            if (callback) callback();
+        }, 300);
+    }
+
+    // ─── إنشاء عناصر أساسية ───
+    function _createBase(id, sizeClass, typeClass, extraClass) {
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop';
+        backdrop.id = id + '-backdrop';
+
+        const modal = document.createElement('div');
+        modal.className = `modal ${sizeClass}${typeClass}${extraClass}`;
+        modal.id = id;
+
+        document.body.appendChild(backdrop);
+        document.body.appendChild(modal);
+        document.body.classList.add('modal-open');
+        document.body.style.overflow = 'hidden';
+
+        setTimeout(() => {
+            backdrop.classList.add('active');
+            modal.classList.add('active');
+        }, 10);
+
+        return { modal, backdrop };
+    }
+
+    // ════════════════════════════════════════
+    //  confirm — نافذة تأكيد (ترجع Promise)
+    // ════════════════════════════════════════
     function confirm(options = {}) {
         const {
             title = 'تأكيد',
             message = 'هل أنت متأكد؟',
             confirmText = 'تأكيد',
             cancelText = 'إلغاء',
-            type = 'warning', // warning, danger, info
+            type = 'warning',
             onConfirm = null,
             onCancel = null
         } = options;
 
         return new Promise((resolve) => {
-            const modalId = 'confirmModal' + Date.now();
-            const backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop';
-            backdrop.id = modalId + '-backdrop';
-
-            const modal = document.createElement('div');
-            modal.className = `modal modal-confirm modal-${type}`;
-            modal.id = modalId;
+            const id = 'confirmModal' + Date.now();
+            const { modal, backdrop } = _createBase(
+                id,
+                'modal-sm',
+                ` modal-confirm modal-${type}`,
+                ''
+            );
 
             const iconMap = {
                 default: 'fa-solid fa-circle-question',
@@ -34,6 +87,10 @@ window.ModalHelper = (function() {
                 info: 'fa-solid fa-circle-info',
                 success: 'fa-solid fa-circle-check'
             };
+
+            const confirmBtnClass = type === 'danger' ? 'btn-danger' :
+                                    type === 'success' ? 'btn-success' :
+                                    type === 'warning' ? 'btn-warning' : 'btn-primary';
 
             modal.innerHTML = `
                 <div class="modal-body">
@@ -47,143 +104,109 @@ window.ModalHelper = (function() {
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-outline" data-action="cancel">${cancelText}</button>
-                    <button class="btn ${type === 'danger' ? 'btn-danger' : 'btn-primary'}" data-action="confirm">${confirmText}</button>
+                    <button class="btn ${confirmBtnClass}" data-action="confirm">${confirmText}</button>
                 </div>
             `;
 
-            document.body.appendChild(backdrop);
-            document.body.appendChild(modal);
-            document.body.classList.add('modal-open');
-
-            setTimeout(() => {
-                backdrop.classList.add('active');
-                modal.classList.add('active');
-            }, 10);
-
-            const closeModal = (confirmed) => {
-                modal.classList.add('closing');
-                backdrop.classList.remove('active');
-
-                setTimeout(() => {
-                    modal.remove();
-                    backdrop.remove();
-                    document.body.classList.remove('modal-open');
-                }, 300);
-
-                if (confirmed && onConfirm) onConfirm();
-                if (!confirmed && onCancel) onCancel();
-
-                resolve(confirmed);
+            const close = (confirmed) => {
+                _animateClose(modal, backdrop, () => {
+                    if (confirmed && onConfirm) onConfirm();
+                    if (!confirmed && onCancel) onCancel();
+                    resolve(confirmed);
+                });
             };
 
-            modal.querySelector('[data-action="confirm"]').onclick = () => closeModal(true);
-            modal.querySelector('[data-action="cancel"]').onclick = () => closeModal(false);
-            backdrop.onclick = () => closeModal(false);
+            modal.querySelector('[data-action="confirm"]').onclick = () => close(true);
+            modal.querySelector('[data-action="cancel"]').onclick = () => close(false);
+            backdrop.onclick = () => close(false);
         });
     }
 
-    // عرض modal بمحتوى مخصص
+    // ════════════════════════════════════════
+    //  show — نافذة بمحتوى مخصص
+    // ════════════════════════════════════════
     function show(options = {}) {
         const {
             title = '',
             html = '',
-            size = 'md', // sm, md, lg, xl
-            type = '', // success, warning, danger, info, purple
-            extraClass = '', // modal-form, modal-share, etc.
-            iconClass = '', // e.g. 'fa-solid fa-download'
+            size = 'md',
+            type = '',
+            extraClass = '',
+            iconClass = '',
             showClose = true,
             showFooter = false,
             footerButtons = [],
+            footerHtml = '',
+            onOpen = null,
             onClose = null
         } = options;
 
-        return new Promise((resolve) => {
-            const modalId = 'customModal' + Date.now();
-            const backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop';
-            backdrop.id = modalId + '-backdrop';
+        const id = 'modal' + Date.now();
+        const typeClass = type ? ` modal-${type}` : '';
+        const extraCls = extraClass ? ` ${extraClass}` : '';
+        const { modal, backdrop } = _createBase(id, `modal-${size}`, typeClass, extraCls);
 
-            const modal = document.createElement('div');
-            const typeClass = type ? ` modal-${type}` : '';
-            const extraCls = extraClass ? ` ${extraClass}` : '';
-            modal.className = `modal modal-${size}${typeClass}${extraCls}`;
-            modal.id = modalId;
+        let modalHTML = '';
 
-            let modalHTML = '';
-            
-            if (title) {
-                modalHTML += `
-                    <div class="modal-header">
-                        ${iconClass ? `<div class="modal-icon"><i class="${iconClass}"></i></div>` : ''}
-                        <div class="modal-header-content">
-                            <h2 class="modal-title">${title}</h2>
-                        </div>
-                        ${showClose ? '<button class="modal-close" data-action="close"><i class="fa-solid fa-xmark"></i></button>' : ''}
+        if (title) {
+            modalHTML += `
+                <div class="modal-header">
+                    <div class="modal-header-content">
+                        ${iconClass ? `<div class="modal-icon"><i class="fa-solid ${iconClass}"></i></div>` : ''}
+                        <h2 class="modal-title">${title}</h2>
                     </div>
-                `;
-            }
+                    ${showClose ? '<button class="modal-close" data-action="close"><i class="fa-solid fa-xmark"></i></button>' : ''}
+                </div>
+            `;
+        }
 
-            modalHTML += `<div class="modal-body">${html}</div>`;
+        modalHTML += `<div class="modal-body">${html}</div>`;
 
-            if (showFooter && footerButtons.length > 0) {
+        if (showFooter || footerHtml || footerButtons.length > 0) {
+            if (footerHtml) {
+                modalHTML += `<div class="modal-footer">${footerHtml}</div>`;
+            } else if (footerButtons.length > 0) {
                 modalHTML += '<div class="modal-footer">';
-                footerButtons.forEach((btn, index) => {
-                    modalHTML += `<button class="btn ${btn.class || 'btn-outline'}" data-action="btn-${index}">${btn.text}</button>`;
+                footerButtons.forEach((btn, i) => {
+                    modalHTML += `<button class="btn ${btn.class || 'btn-outline'}" data-action="btn-${i}">${btn.text}</button>`;
                 });
                 modalHTML += '</div>';
             }
+        }
 
-            modal.innerHTML = modalHTML;
+        modal.innerHTML = modalHTML;
 
-            document.body.appendChild(backdrop);
-            document.body.appendChild(modal);
-            document.body.classList.add('modal-open');
-
-            setTimeout(() => {
-                backdrop.classList.add('active');
-                modal.classList.add('active');
-            }, 10);
-
-            const closeModal = (result = null) => {
-                modal.classList.add('closing');
-                backdrop.classList.remove('active');
-                
-                setTimeout(() => {
-                    modal.remove();
-                    backdrop.remove();
-                    document.body.classList.remove('modal-open');
-                }, 400);
-
+        const closeModal = (result = null) => {
+            _animateClose(modal, backdrop, () => {
                 if (onClose) onClose(result);
-                resolve(result);
-            };
+            });
+        };
 
-            if (showClose) {
-                const closeBtn = modal.querySelector('[data-action="close"]');
-                if (closeBtn) closeBtn.onclick = () => closeModal(null);
+        if (showClose) {
+            const closeBtn = modal.querySelector('[data-action="close"]');
+            if (closeBtn) closeBtn.onclick = () => closeModal(null);
+        }
+
+        footerButtons.forEach((btn, i) => {
+            const btnEl = modal.querySelector(`[data-action="btn-${i}"]`);
+            if (btnEl) {
+                btnEl.onclick = () => {
+                    if (btn.callback) btn.callback();
+                    if (!btn.keepOpen) closeModal(btn.value || i);
+                };
             }
-
-            footerButtons.forEach((btn, index) => {
-                const btnElement = modal.querySelector(`[data-action="btn-${index}"]`);
-                if (btnElement) {
-                    btnElement.onclick = () => {
-                        if (btn.callback) btn.callback();
-                        if (!btn.keepOpen) closeModal(btn.value || index);
-                    };
-                }
-            });
-
-            backdrop.onclick = () => closeModal(null);
-
-            // إرجاع المودال للتحكم به
-            resolve({
-                element: modal,
-                close: closeModal
-            });
         });
+
+        backdrop.onclick = () => closeModal(null);
+
+        if (onOpen) setTimeout(onOpen, 100);
+
+        return { element: modal, close: closeModal };
     }
 
-    // عرض modal بنموذج
+    // ════════════════════════════════════════
+    //  form — نافذة بنموذج
+    // ════════════════════════════════════════
     function form(options = {}) {
         const {
             title = '',
@@ -196,7 +219,7 @@ window.ModalHelper = (function() {
 
         return new Promise((resolve) => {
             let formHTML = '<form id="modalForm" class="modal-form-fields">';
-            
+
             fields.forEach(field => {
                 formHTML += `<div class="form-group">`;
                 if (field.label) {
@@ -209,9 +232,7 @@ window.ModalHelper = (function() {
                         break;
                     case 'select':
                         formHTML += `<select class="form-select" name="${field.name}" ${field.required ? 'required' : ''}>`;
-                        if (field.placeholder) {
-                            formHTML += `<option value="">${field.placeholder}</option>`;
-                        }
+                        if (field.placeholder) formHTML += `<option value="">${field.placeholder}</option>`;
                         (field.options || []).forEach(opt => {
                             formHTML += `<option value="${opt.value}" ${opt.value === field.value ? 'selected' : ''}>${opt.label}</option>`;
                         });
@@ -240,16 +261,14 @@ window.ModalHelper = (function() {
                         formHTML += `<input type="${field.type || 'text'}" class="form-input" name="${field.name}" placeholder="${field.placeholder || ''}" value="${field.value || ''}" ${field.required ? 'required' : ''}>`;
                 }
 
-                if (field.hint) {
-                    formHTML += `<small class="form-hint">${field.hint}</small>`;
-                }
+                if (field.hint) formHTML += `<small class="form-hint">${field.hint}</small>`;
                 formHTML += `</div>`;
             });
 
             formHTML += '</form>';
 
-            show({
-                title: title,
+            const { close } = show({
+                title,
                 html: formHTML,
                 size: 'md',
                 extraClass: 'modal-form',
@@ -258,43 +277,32 @@ window.ModalHelper = (function() {
                     {
                         text: cancelText,
                         class: 'btn btn-secondary',
-                        callback: () => {
-                            if (onCancel) onCancel();
-                        }
+                        callback: () => { if (onCancel) onCancel(); }
                     },
                     {
                         text: submitText,
                         class: 'btn btn-primary',
                         callback: async () => {
-                            const form = document.getElementById('modalForm');
-                            if (form && form.checkValidity()) {
-                                const formData = new FormData(form);
+                            const formEl = document.getElementById('modalForm');
+                            if (formEl && formEl.checkValidity()) {
+                                const formData = new FormData(formEl);
                                 const data = {};
-                                for (let [key, value] of formData.entries()) {
-                                    data[key] = value;
-                                }
-                                // معالجة checkboxes غير المحددة
+                                for (let [key, value] of formData.entries()) data[key] = value;
                                 fields.forEach(f => {
-                                    if (f.type === 'checkbox' && !data[f.name]) {
-                                        data[f.name] = '';
-                                    }
+                                    if (f.type === 'checkbox' && !data[f.name]) data[f.name] = '';
                                 });
-                                // رفع الصور قبل الإرسال
-                                const imageInputs = form.querySelectorAll('input[data-image-upload="true"]');
+                                const imageInputs = formEl.querySelectorAll('input[data-image-upload="true"]');
                                 for (const imgInput of imageInputs) {
                                     if (imgInput.files && imgInput.files[0] && window.ImageUploadHelper) {
                                         const folder = imgInput.dataset.folder || 'general';
                                         const fieldName = imgInput.dataset.fieldName;
                                         try {
                                             const result = await window.ImageUploadHelper.uploadImage(imgInput.files[0], folder);
-                                            if (result && result.success) {
-                                                data[fieldName] = result.url;
-                                            } else {
-                                                throw new Error(result?.error || 'فشل رفع الصورة');
-                                            }
-                                        } catch (uploadErr) {
-                                            console.error('Image upload error:', uploadErr);
-                                            if (window.Toast) Toast.error('فشل رفع الصورة: ' + uploadErr.message);
+                                            if (result && result.success) data[fieldName] = result.url;
+                                            else throw new Error(result?.error || 'فشل رفع الصورة');
+                                        } catch (err) {
+                                            console.error('Image upload error:', err);
+                                            if (window.Toast) Toast.error('فشل رفع الصورة: ' + err.message);
                                             return;
                                         }
                                     }
@@ -302,23 +310,12 @@ window.ModalHelper = (function() {
                                 try {
                                     if (onSubmit) await onSubmit(data);
                                     resolve(data);
-                                    // إغلاق المودال بعد نجاح العملية
-                                    const modal = document.querySelector('.modal.active');
-                                    const backdrop = document.querySelector('.modal-backdrop.active');
-                                    if (modal) {
-                                        modal.classList.add('closing');
-                                        setTimeout(() => modal.remove(), 400);
-                                    }
-                                    if (backdrop) {
-                                        backdrop.classList.remove('active');
-                                        setTimeout(() => backdrop.remove(), 400);
-                                    }
-                                    document.body.classList.remove('modal-open');
+                                    close();
                                 } catch (error) {
                                     console.error('Error in form submit:', error);
                                 }
                             } else {
-                                form.reportValidity();
+                                formEl.reportValidity();
                             }
                         },
                         keepOpen: true
@@ -328,15 +325,20 @@ window.ModalHelper = (function() {
         });
     }
 
-    return {
-        confirm,
-        show,
-        form
-    };
+    // ════════════════════════════════════════
+    //  closeAll — إغلاق جميع النوافذ النشطة
+    // ════════════════════════════════════════
+    function closeAll() {
+        document.querySelectorAll('.modal.active').forEach(modal => {
+            const backdrop = document.getElementById(modal.id + '-backdrop');
+            _animateClose(modal, backdrop);
+        });
+    }
+
+    return { confirm, show, form, closeAll };
 })();
 
 // اختصارات عامة
 window.showModal = window.ModalHelper.show;
 window.confirmModal = window.ModalHelper.confirm;
 window.formModal = window.ModalHelper.form;
-

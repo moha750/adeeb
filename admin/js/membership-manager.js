@@ -3858,84 +3858,49 @@
      */
     function showCustomConfirm(options) {
         return new Promise((resolve) => {
-            const modal = document.getElementById('confirmModal');
-            const title = document.getElementById('confirmModalTitle');
-            const content = document.getElementById('confirmModalContent');
-            const actions = document.getElementById('confirmModalActions');
+            const bodyHtml = options.html || `<p>${options.text || ''}</p>`;
 
-            title.textContent = options.title || 'تأكيد';
-            
-            if (options.html) {
-                content.innerHTML = options.html;
-            } else {
-                content.innerHTML = `<p>${options.text || ''}</p>`;
-            }
+            const footerBtns = [];
 
-            // بناء الأزرار
-            let buttonsHtml = '';
-            
             if (options.showCancelButton !== false) {
-                buttonsHtml += `
-                    <button class="btn-outline" id="customCancelBtn">
-                        ${options.cancelButtonText || 'إلغاء'}
-                    </button>
-                `;
+                footerBtns.push({
+                    text: options.cancelButtonText || 'إلغاء',
+                    class: 'btn btn-outline',
+                    callback: () => resolve({ isDismissed: true })
+                });
             }
 
             if (options.showDenyButton) {
-                buttonsHtml += `
-                    <button class="btn-outline" id="customDenyBtn">
-                        ${options.denyButtonText || 'لا'}
-                    </button>
-                `;
+                footerBtns.push({
+                    text: options.denyButtonText || 'لا',
+                    class: 'btn btn-outline',
+                    callback: () => resolve({ isDenied: true })
+                });
             }
 
-            buttonsHtml += `
-                <button class="btn-primary" id="customConfirmBtn">
-                    ${options.confirmButtonText || 'تأكيد'}
-                </button>
-            `;
-
-            actions.innerHTML = buttonsHtml;
-
-            // إظهار النافذة
-            modal.classList.add('active');
-            document.getElementById('overlay').classList.add('active');
-
-            // ربط الأحداث
-            const confirmBtn = document.getElementById('customConfirmBtn');
-            const cancelBtn = document.getElementById('customCancelBtn');
-            const denyBtn = document.getElementById('customDenyBtn');
-
-            const closeModal = () => {
-                modal.classList.remove('active');
-                document.getElementById('overlay').classList.remove('active');
-            };
-
-            if (confirmBtn) {
-                confirmBtn.onclick = () => {
+            footerBtns.push({
+                text: options.confirmButtonText || 'تأكيد',
+                class: 'btn btn-primary',
+                keepOpen: !!options.preConfirm,
+                callback: () => {
                     if (options.preConfirm) {
                         const result = options.preConfirm();
                         if (result === false) return;
+                        ModalHelper.closeAll();
                     }
-                    closeModal();
                     resolve({ isConfirmed: true, value: true });
-                };
-            }
+                }
+            });
 
-            if (cancelBtn) {
-                cancelBtn.onclick = () => {
-                    closeModal();
-                    resolve({ isDismissed: true });
-                };
-            }
-
-            if (denyBtn) {
-                denyBtn.onclick = () => {
-                    closeModal();
-                    resolve({ isDenied: true });
-                };
-            }
+            ModalHelper.show({
+                title: options.title || 'تأكيد',
+                html: bodyHtml,
+                size: 'sm',
+                showClose: true,
+                showFooter: true,
+                footerButtons: footerBtns,
+                onClose: () => resolve({ isDismissed: true })
+            });
         });
     }
 
@@ -3944,81 +3909,51 @@
      */
     function showCustomInput(options) {
         return new Promise((resolve) => {
-            const modal = document.getElementById('confirmModal');
-            const title = document.getElementById('confirmModalTitle');
-            const content = document.getElementById('confirmModalContent');
-            const actions = document.getElementById('confirmModalActions');
-
-            title.textContent = options.title || '';
-            
-            let inputHtml = '';
-            if (options.input === 'textarea') {
-                inputHtml = `
-                    <div>
-                        <label>
-                            ${options.inputLabel || ''}
-                        </label>
-                        <textarea 
-                            id="customInputField" 
-                            placeholder="${options.inputPlaceholder || ''}"
-                        ></textarea>
-                    </div>
-                `;
-            } else {
-                inputHtml = `
-                    <div>
-                        <label>
-                            ${options.inputLabel || ''}
-                        </label>
-                        <input 
-                            type="text" 
-                            id="customInputField" 
-                            placeholder="${options.inputPlaceholder || ''}"
-                        />
-                    </div>
-                `;
-            }
-
-            content.innerHTML = inputHtml;
-
-            actions.innerHTML = `
-                <button class="btn-outline" id="customCancelBtn">
-                    ${options.cancelButtonText || 'إلغاء'}
-                </button>
-                <button class="btn-primary" id="customConfirmBtn">
-                    ${options.confirmButtonText || 'تأكيد'}
-                </button>
+            const isTextarea = options.input === 'textarea';
+            const inputHtml = `
+                <div class="form-group">
+                    ${options.inputLabel ? `<label class="form-label">${options.inputLabel}</label>` : ''}
+                    ${isTextarea
+                        ? `<textarea id="customInputField" class="form-input form-textarea" placeholder="${options.inputPlaceholder || ''}" rows="3"></textarea>`
+                        : `<input type="text" id="customInputField" class="form-input" placeholder="${options.inputPlaceholder || ''}" />`
+                    }
+                </div>
             `;
 
-            modal.classList.add('active');
-            document.getElementById('overlay').classList.add('active');
-
-            const inputField = document.getElementById('customInputField');
-            const confirmBtn = document.getElementById('customConfirmBtn');
-            const cancelBtn = document.getElementById('customCancelBtn');
-
-            const closeModal = () => {
-                modal.classList.remove('active');
-                document.getElementById('overlay').classList.remove('active');
-            };
-
-            confirmBtn.onclick = () => {
-                const value = inputField.value.trim();
-                if (options.inputValidator && !value) {
-                    showNotification(options.inputValidator(), 'error');
-                    return;
-                }
-                closeModal();
-                resolve({ value });
-            };
-
-            cancelBtn.onclick = () => {
-                closeModal();
-                resolve({ value: null });
-            };
-
-            // التركيز على حقل الإدخال
-            setTimeout(() => inputField.focus(), 100);
+            ModalHelper.show({
+                title: options.title || '',
+                html: inputHtml,
+                size: 'sm',
+                showClose: true,
+                showFooter: true,
+                footerButtons: [
+                    {
+                        text: options.cancelButtonText || 'إلغاء',
+                        class: 'btn btn-outline',
+                        callback: () => resolve({ value: null })
+                    },
+                    {
+                        text: options.confirmButtonText || 'تأكيد',
+                        class: 'btn btn-primary',
+                        keepOpen: true,
+                        callback: () => {
+                            const inputField = document.getElementById('customInputField');
+                            const value = inputField ? inputField.value.trim() : '';
+                            if (options.inputValidator && !value) {
+                                showNotification(options.inputValidator(), 'error');
+                                return;
+                            }
+                            ModalHelper.closeAll();
+                            resolve({ value });
+                        }
+                    }
+                ],
+                onOpen: () => {
+                    const field = document.getElementById('customInputField');
+                    if (field) field.focus();
+                },
+                onClose: () => resolve({ value: null })
+            });
         });
     }
 
@@ -4036,40 +3971,37 @@
             // عرض نافذة تأكيد موحدة
             const contentHtml = `
                 <div>
-                    <i class="fa-solid fa-triangle-exclamation"></i>
                     <p>هل أنت متأكد من حذف هذا الموعد؟</p>
-                    <div>
-                        <p>
-                            <i class="fa-solid fa-circle-check"></i> حذف الموعد من قاعدة البيانات
-                        </p>
-                        <p>
-                            <i class="fa-solid fa-circle-check"></i> حذف المقابلة المرتبطة
-                        </p>
-                        <p>
-                            <i class="fa-solid fa-circle-check"></i> السماح للمتقدم بحجز موعد جديد
-                        </p>
+                    <div class="modal-info-box box-danger">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <div>
+                            <p><i class="fa-solid fa-circle-check"></i> حذف الموعد من قاعدة البيانات</p>
+                            <p><i class="fa-solid fa-circle-check"></i> حذف المقابلة المرتبطة</p>
+                            <p><i class="fa-solid fa-circle-check"></i> السماح للمتقدم بحجز موعد جديد</p>
+                            <p><strong>هذا الإجراء لا يمكن التراجع عنه!</strong></p>
+                        </div>
                     </div>
-                    <p>⚠️ هذا الإجراء لا يمكن التراجع عنه!</p>
                     <input type="hidden" id="delete-interview-id" value="${interviewId}">
                     <input type="hidden" id="delete-slot-id" value="${slotId}">
                 </div>
             `;
 
-            const actionsHtml = `
-                <button class="modal-btn modal-btn-danger" onclick="window.membershipManager.confirmCancelInterview()">
-                    <i class="fa-solid fa-trash"></i>
-                    نعم، احذف الموعد
-                </button>
-                <button class="modal-btn modal-btn-secondary" onclick="window.closeConfirmModal()">
+            const footerHtml = `
+                <button class="btn btn-outline" onclick="closeModal()">
                     <i class="fa-solid fa-times"></i>
                     إلغاء
                 </button>
+                <button class="btn btn-danger" onclick="window.membershipManager.confirmCancelInterview()">
+                    <i class="fa-solid fa-trash"></i>
+                    نعم، احذف الموعد
+                </button>
             `;
 
-            document.getElementById('confirmModalContent').innerHTML = contentHtml;
-            document.getElementById('confirmModalActions').innerHTML = actionsHtml;
-            window.setConfirmModalTitle('تأكيد حذف الموعد', 'fa-triangle-exclamation');
-            window.openConfirmModal();
+            openModal('تأكيد حذف الموعد', contentHtml, {
+                icon: 'fa-triangle-exclamation',
+                variant: 'danger',
+                footer: footerHtml
+            });
 
         } catch (error) {
             console.error('خطأ في عرض نافذة التأكيد:', error);
@@ -4085,7 +4017,7 @@
             const interviewId = document.getElementById('delete-interview-id').value;
             const slotId = document.getElementById('delete-slot-id').value;
 
-            window.closeConfirmModal();
+            closeModal();
 
             // استدعاء دالة الحذف الإداري
             const { data, error } = await window.sbClient
@@ -4121,28 +4053,31 @@
         try {
             const contentHtml = `
                 <div>
-                    <i class="fa-solid fa-triangle-exclamation"></i>
                     <p>هل أنت متأكد من حذف هذه المقابلة الفردية؟</p>
-                    <p>⚠️ هذا الإجراء لا يمكن التراجع عنه!</p>
+                    <div class="modal-info-box box-danger">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <div><strong>هذا الإجراء لا يمكن التراجع عنه!</strong></div>
+                    </div>
                     <input type="hidden" id="delete-individual-interview-id" value="${interviewId}">
                 </div>
             `;
 
-            const actionsHtml = `
-                <button class="modal-btn modal-btn-danger" onclick="window.membershipManager.confirmCancelIndividualInterview()">
-                    <i class="fa-solid fa-trash"></i>
-                    نعم، احذف المقابلة
-                </button>
-                <button class="modal-btn modal-btn-secondary" onclick="window.closeConfirmModal()">
+            const footerHtml = `
+                <button class="btn btn-outline" onclick="closeModal()">
                     <i class="fa-solid fa-times"></i>
                     إلغاء
                 </button>
+                <button class="btn btn-danger" onclick="window.membershipManager.confirmCancelIndividualInterview()">
+                    <i class="fa-solid fa-trash"></i>
+                    نعم، احذف المقابلة
+                </button>
             `;
 
-            document.getElementById('confirmModalContent').innerHTML = contentHtml;
-            document.getElementById('confirmModalActions').innerHTML = actionsHtml;
-            window.setConfirmModalTitle('تأكيد حذف المقابلة', 'fa-triangle-exclamation');
-            window.openConfirmModal();
+            openModal('تأكيد حذف المقابلة', contentHtml, {
+                icon: 'fa-triangle-exclamation',
+                variant: 'danger',
+                footer: footerHtml
+            });
 
         } catch (error) {
             console.error('خطأ في عرض نافذة التأكيد:', error);
@@ -4156,7 +4091,7 @@
     async function confirmCancelIndividualInterview() {
         try {
             const interviewId = document.getElementById('delete-individual-interview-id').value;
-            window.closeConfirmModal();
+            closeModal();
 
             const { error } = await window.sbClient
                 .from('membership_interviews')
@@ -4236,24 +4171,22 @@
                 <input type="hidden" id="reject-application-id" value="${applicationId}">
             `;
 
-            const actionsHtml = `
-                <button class="modal-btn modal-btn-danger" onclick="window.membershipManager.confirmRejectFromBarzakh()">
-                    <i class="fa-solid fa-check"></i>
-                    تأكيد الرفض
-                </button>
-                <button class="modal-btn modal-btn-secondary" onclick="window.closeFormModal()">
+            const footerHtml = `
+                <button class="btn btn-outline" onclick="closeModal()">
                     <i class="fa-solid fa-times"></i>
                     إلغاء
                 </button>
+                <button class="btn btn-danger" onclick="window.membershipManager.confirmRejectFromBarzakh()">
+                    <i class="fa-solid fa-check"></i>
+                    تأكيد الرفض
+                </button>
             `;
 
-            document.getElementById('formModalContent').innerHTML = formHtml;
-            document.getElementById('formModalActions').innerHTML = actionsHtml;
-            window.setFormModalTitle('رفض/حذف متقدم من البرزخ', 'fa-user-xmark');
-            window.openCustomFormModal();
-
-            // إضافة مستمعات للأحداث
-            setTimeout(() => {
+            openModal('رفض/حذف متقدم من البرزخ', formHtml, {
+                icon: 'fa-user-xmark',
+                variant: 'danger',
+                footer: footerHtml,
+                onOpen: () => {
                 const radioOptions = document.querySelectorAll('.radio-option');
                 const customReasonGroup = document.getElementById('custom-reason-group');
                 const otherRadio = document.getElementById('reason-other');
@@ -4283,7 +4216,8 @@
                         }
                     });
                 });
-            }, 100);
+                }
+            });
 
         } catch (error) {
             console.error('خطأ في عرض نافذة الرفض:', error);
@@ -4318,7 +4252,7 @@
                 rejectionNote = `سبب آخر: ${customReason}`;
             }
 
-            window.closeFormModal();
+            closeModal();
 
             // الحصول على معرف المستخدم الحالي
             const { data: { user } } = await window.sbClient.auth.getUser();

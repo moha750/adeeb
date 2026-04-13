@@ -1,189 +1,68 @@
-﻿/**
- * نظام إدارة النوافذ المنبثقة الموحد
- * يوفر واجهة موحدة لفتح وإغلاق النوافذ المنبثقة في لوحة التحكم
+/**
+ * Modal Manager — طبقة توافق فوق ModalHelper
+ * يوفر: openModal, closeModal, openConfirmModal, openFormModal, showSuccessModal, showErrorModal
  */
 
 (function() {
     'use strict';
 
-    // إنشاء عناصر النافذة المنبثقة الديناميكية
-    function createModalElements() {
-        // التحقق من وجود العناصر مسبقاً
-        if (document.getElementById('dynamicModal')) return;
-
-        // إنشاء الطبقة الشفافة
-        const overlay = document.createElement('div');
-        overlay.id = 'dynamicOverlay';
-        overlay.className = 'modal-backdrop';
-        overlay.addEventListener('click', closeModal);
-
-        // إنشاء النافذة المنبثقة
-        const modal = document.createElement('div');
-        modal.id = 'dynamicModal';
-        modal.className = 'modal modal-md';
-        modal.innerHTML = `
-            <div class="modal-header">
-                <div class="modal-header-content">
-                    <div class="modal-icon" id="dynamicModalIcon">
-                        <i class="fa-solid fa-info-circle"></i>
-                    </div>
-                    <h2 class="modal-title" id="dynamicModalTitle">عنوان النافذة</h2>
-                </div>
-                <button class="modal-close" onclick="closeModal()">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <div class="modal-body" id="dynamicModalBody">
-                <!-- سيتم ملؤه ديناميكياً -->
-            </div>
-            <div class="modal-footer" id="dynamicModalFooter">
-                <button class="btn btn-outline" onclick="closeModal()">إغلاق</button>
-            </div>
-        `;
-
-        document.body.appendChild(overlay);
-        document.body.appendChild(modal);
-
-        // إغلاق عند الضغط على ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.classList.contains('active')) {
-                closeModal();
-            }
-        });
-    }
-
     /**
      * فتح نافذة منبثقة
-     * @param {string} title - عنوان النافذة
-     * @param {string} content - محتوى النافذة (HTML)
-     * @param {Object} options - خيارات إضافية
      */
     window.openModal = function(title, content, options = {}) {
-        createModalElements();
-
-        const modal = document.getElementById('dynamicModal');
-        const overlay = document.getElementById('dynamicOverlay');
-        const titleEl = document.getElementById('dynamicModalTitle');
-        const bodyEl = document.getElementById('dynamicModalBody');
-        const footerEl = document.getElementById('dynamicModalFooter');
-
-        // تعيين variant (warning / success / danger ...) + size + cls إضافي
         const size = options.size || 'md';
-        const extraCls = options.cls || '';
-        modal.className = `modal modal-${size}` + (options.variant ? ` modal-${options.variant}` : '') + (extraCls ? ` ${extraCls}` : '');
-
-        // تعيين العنوان والأيقونة
         const icon = options.icon || 'fa-info-circle';
-        const iconEl = document.getElementById('dynamicModalIcon');
-        if (iconEl) iconEl.innerHTML = `<i class="fa-solid ${icon}"></i>`;
-        titleEl.textContent = title;
 
-        // تعيين المحتوى
-        bodyEl.innerHTML = content;
-
-        // تعيين الأزرار في الذيل
-        if (options.footer) {
-            footerEl.innerHTML = options.footer;
-        } else {
-            footerEl.innerHTML = `
-                <button class="btn btn-outline" onclick="closeModal()">
-                    <i class="fa-solid fa-times"></i>
-                    إغلاق
-                </button>
-            `;
-        }
-
-        // إظهار النافذة
-        overlay.classList.add('active');
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-
-        // تنفيذ callback إذا وجد
-        if (options.onOpen) {
-            setTimeout(options.onOpen, 100);
-        }
+        ModalHelper.show({
+            title,
+            html: content,
+            size,
+            type: options.variant || '',
+            iconClass: icon,
+            extraClass: options.cls || '',
+            showClose: true,
+            footerHtml: options.footer || '',
+            onOpen: options.onOpen || null,
+            onClose: options.onClose || null
+        });
     };
 
     /**
      * إغلاق النافذة المنبثقة
      */
     window.closeModal = function() {
-        const modal = document.getElementById('dynamicModal');
-        const overlay = document.getElementById('dynamicOverlay');
-
-        if (modal && overlay) {
-            modal.classList.add('closing');
-            overlay.classList.remove('active');
-            setTimeout(() => {
-                modal.classList.remove('active', 'closing');
-                document.body.style.overflow = '';
-            }, 280);
-        }
+        ModalHelper.closeAll();
     };
 
     /**
      * فتح نافذة تأكيد
-     * @param {string} title - عنوان النافذة
-     * @param {string} message - رسالة التأكيد
-     * @param {Function} onConfirm - دالة يتم تنفيذها عند التأكيد
-     * @param {Object} options - خيارات إضافية
      */
     window.openConfirmModal = function(title, message, onConfirm, options = {}) {
-        const iconClass = options.danger ? 'danger' : options.success ? 'success' : '';
-        const icon = options.danger ? 'fa-exclamation-triangle' : 
-                     options.success ? 'fa-check-circle' : 'fa-question-circle';
-        
-        const content = `
-            <div class="confirm-modal">
-                <div class="confirm-icon ${iconClass}">
-                    <i class="fa-solid ${icon}"></i>
-                </div>
-                <div class="confirm-message">${title}</div>
-                <div class="confirm-description">${message}</div>
-            </div>
-        `;
+        const type = options.danger ? 'danger' :
+                     options.success ? 'success' :
+                     options.warning ? 'warning' : 'warning';
 
-        const confirmBtnClass = options.danger ? 'btn-danger' : 'btn-primary';
-        const confirmBtnText = options.confirmText || 'تأكيد';
-
-        const footer = `
-            <button class="btn btn-outline" onclick="closeModal()">
-                <i class="fa-solid fa-times"></i>
-                إلغاء
-            </button>
-            <button class="btn ${confirmBtnClass}" onclick="window.confirmModalAction()">
-                <i class="fa-solid fa-check"></i>
-                ${confirmBtnText}
-            </button>
-        `;
-
-        // حفظ دالة التأكيد مؤقتاً
-        window.confirmModalAction = function() {
-            closeModal();
-            if (onConfirm) onConfirm();
-        };
-
-        openModal('تأكيد', content, { 
-            footer, 
-            icon: icon
+        ModalHelper.confirm({
+            title,
+            message,
+            type,
+            confirmText: options.confirmText || 'تأكيد',
+            onConfirm
         });
     };
 
     /**
      * فتح نافذة نموذج
-     * @param {string} title - عنوان النافذة
-     * @param {Array} fields - حقول النموذج
-     * @param {Function} onSubmit - دالة يتم تنفيذها عند الإرسال
-     * @param {Object} options - خيارات إضافية
      */
     window.openFormModal = function(title, fields, onSubmit, options = {}) {
-        let formHtml = '<form id="dynamicForm"><div class="modal-form-grid">';
-
-        // التحقق من أن fields هو array
+        // التحقق من أن fields مصفوفة
         if (!Array.isArray(fields)) {
             console.error('openFormModal: fields must be an array');
             return;
         }
+
+        // بناء HTML النموذج
+        let formHtml = '<form id="dynamicForm"><div class="modal-form-grid">';
 
         fields.forEach(field => {
             const fullWidthClass = (field.fullWidth || field.type === 'textarea') ? ' full-width' : '';
@@ -216,6 +95,22 @@
 
         formHtml += '</div></form>';
 
+        // حفظ دالة الإرسال
+        window.submitDynamicForm = function() {
+            const form = document.getElementById('dynamicForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            const formData = {};
+            fields.forEach(field => {
+                const el = document.getElementById(field.id);
+                formData[field.id] = field.type === 'checkbox' ? el.checked : el.value;
+            });
+            closeModal();
+            if (onSubmit) onSubmit(formData);
+        };
+
         const footer = `
             <button class="btn btn-outline" onclick="closeModal()">
                 <i class="fa-solid fa-times"></i>
@@ -227,32 +122,11 @@
             </button>
         `;
 
-        // حفظ دالة الإرسال مؤقتاً
-        window.submitDynamicForm = function() {
-            const form = document.getElementById('dynamicForm');
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-
-            const formData = {};
-            fields.forEach(field => {
-                const el = document.getElementById(field.id);
-                if (field.type === 'checkbox') {
-                    formData[field.id] = el.checked;
-                } else {
-                    formData[field.id] = el.value;
-                }
-            });
-
-            closeModal();
-            if (onSubmit) onSubmit(formData);
-        };
-
         openModal(title, formHtml, {
             footer,
             icon: options.icon || 'fa-edit',
-            variant: options.variant
+            variant: options.variant,
+            onOpen: options.onOpen
         });
     };
 
@@ -265,16 +139,8 @@
             <h3 class="modal-alert-title">${title}</h3>
             <p class="modal-alert-message">${message}</p>
         `;
-        const footer = `
-            <button class="btn btn-success btn-md" onclick="closeModal()">ممتاز!</button>
-        `;
-
-        openModal(title, content, {
-            icon: 'fa-circle-check',
-            variant: 'success',
-            cls: 'modal-alert',
-            footer
-        });
+        const footer = `<button class="btn btn-success btn-md" onclick="closeModal()">ممتاز!</button>`;
+        openModal(title, content, { icon: 'fa-circle-check', variant: 'success', cls: 'modal-alert', footer });
     };
 
     /**
@@ -286,24 +152,8 @@
             <h3 class="modal-alert-title">${title}</h3>
             <p class="modal-alert-message">${message}</p>
         `;
-        const footer = `
-            <button class="btn btn-danger" onclick="closeModal()">إغلاق</button>
-        `;
-
-        openModal(title, content, {
-            icon: 'fa-triangle-exclamation',
-            variant: 'danger',
-            cls: 'modal-alert',
-            footer
-        });
+        const footer = `<button class="btn btn-danger" onclick="closeModal()">إغلاق</button>`;
+        openModal(title, content, { icon: 'fa-triangle-exclamation', variant: 'danger', cls: 'modal-alert', footer });
     };
 
-    // تهيئة عند تحميل الصفحة
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', createModalElements);
-    } else {
-        createModalElements();
-    }
 })();
-
-
