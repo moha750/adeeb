@@ -2509,35 +2509,10 @@
 
             if (scheduledError) throw scheduledError;
 
-            // جلب جميع الجلسات لملء الفلتر (نشطة + منتهية)
-            const { data: allSessions, error: sessionsError } = await window.sbClient
-                .from('interview_sessions')
-                .select('id, session_name, session_date, end_time, is_active')
-                .order('session_date', { ascending: false });
-
-            if (sessionsError) {
-                console.error('خطأ في جلب الجلسات:', sessionsError);
-            }
-
-            // تصنيف الجلسات إلى نشطة وغير منتهية مقابل منتهية/غير نشطة
-            const now = new Date();
-            const activeNonExpiredSessions = [];
-            const expiredOrInactiveSessions = [];
-
-            (allSessions || []).forEach(session => {
-                const sessionEndDateTime = new Date(`${session.session_date}T${session.end_time}`);
-                const isExpired = sessionEndDateTime < now;
-                const isActive = !!session.is_active;
-
-                if (isActive && !isExpired) {
-                    activeNonExpiredSessions.push(session);
-                } else {
-                    expiredOrInactiveSessions.push(session);
-                }
+            // فلترة المقابلات الفردية فقط (التي ليس لها slot مرتبط بجلسة جماعية)
+            const individualInterviews = (scheduledData || []).filter(interview => {
+                return !interview.slot || interview.slot.length === 0;
             });
-
-            // ملء فلتر الجلسات (مع تمييز النشطة عن المنتهية)
-            populateSessionsFilter(activeNonExpiredSessions, expiredOrInactiveSessions);
 
             // جلب عدد الطلبات المقبولة للمقابلة بدون مقابلات مجدولة (غير مجدولة)
             const { data: approvedApps, error: approvedError } = await window.sbClient
@@ -2558,11 +2533,11 @@
 
             // حفظ البيانات في cache للاستخدام في الفلترة المحلية
             if (container) {
-                container._cachedInterviews = scheduledData || [];
+                container._cachedInterviews = individualInterviews;
             }
-            
-            renderInterviewsTable(scheduledData || []);
-            updateInterviewsStatistics(scheduledData || [], unscheduledCount);
+
+            renderInterviewsTable(individualInterviews);
+            updateInterviewsStatistics(individualInterviews, unscheduledCount);
             bindInterviewsEvents();
         } catch (error) {
             console.error('خطأ في تحميل المقابلات:', error);
@@ -2639,9 +2614,6 @@
     function bindBarzakhEvents() {
         const searchInput = document.getElementById('barzakhSearchInput');
         const committeeFilter = document.getElementById('barzakhCommitteeFilter');
-        const refreshBtn = document.getElementById('refreshBarzakhBtn');
-        const exportBtn = document.getElementById('exportBarzakhBtn');
-
         if (searchInput) {
             searchInput.removeEventListener('input', renderBarzakhTable);
             searchInput.addEventListener('input', renderBarzakhTable);
@@ -2650,13 +2622,51 @@
             committeeFilter.removeEventListener('change', renderBarzakhTable);
             committeeFilter.addEventListener('change', renderBarzakhTable);
         }
-        if (refreshBtn) {
-            refreshBtn.removeEventListener('click', loadBarzakh);
-            refreshBtn.addEventListener('click', loadBarzakh);
-        }
-        if (exportBtn) {
-            exportBtn.removeEventListener('click', exportBarzakh);
-            exportBtn.addEventListener('click', exportBarzakh);
+
+        // زر خيارات قائمة البرزخ
+        const barzakhOptionsBtn = document.getElementById('barzakhOptionsBtn');
+        if (barzakhOptionsBtn) {
+            let barzakhDropdown = document.getElementById('barzakhOptionsDropdown');
+            if (barzakhDropdown) barzakhDropdown.remove();
+            barzakhDropdown = document.createElement('div');
+            barzakhDropdown.id = 'barzakhOptionsDropdown';
+            barzakhDropdown.className = 'dropdown-menu';
+            barzakhDropdown.innerHTML = `
+                <button class="btn btn-slate btn-outline btn-block" data-action="refresh">
+                    <i class="fa-solid fa-rotate"></i> تحديث
+                </button>
+                <button class="btn btn-primary btn-outline btn-block" data-action="export">
+                    <i class="fa-solid fa-file-export"></i> تصدير البيانات
+                </button>
+            `;
+            document.body.appendChild(barzakhDropdown);
+
+            barzakhOptionsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = barzakhDropdown.classList.toggle('show');
+                if (isOpen) {
+                    const rect = barzakhOptionsBtn.getBoundingClientRect();
+                    barzakhDropdown.style.top = (rect.bottom + 6) + 'px';
+                    barzakhDropdown.style.left = rect.left + 'px';
+                }
+            });
+
+            barzakhDropdown.addEventListener('click', (e) => {
+                const actionBtn = e.target.closest('[data-action]');
+                if (!actionBtn) return;
+                barzakhDropdown.classList.remove('show');
+                if (actionBtn.dataset.action === 'export') {
+                    exportBarzakh();
+                } else if (actionBtn.dataset.action === 'refresh') {
+                    loadBarzakh();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#barzakhOptionsBtn') && !e.target.closest('#barzakhOptionsDropdown')) {
+                    barzakhDropdown.classList.remove('show');
+                }
+            });
         }
     }
 
@@ -2735,7 +2745,7 @@
             }) : '-';
 
             html += `
-                <div class="uc-card">
+                <div class="uc-card uc-card--warning">
                     <div class="uc-card__header">
                         <div class="uc-card__header-inner">
                             <div class="uc-card__icon">
@@ -2743,7 +2753,7 @@
                             </div>
                             <div class="uc-card__header-info">
                                 <h3 class="uc-card__title">${escapeHtml(app.full_name || 'غير محدد')}</h3>
-                                <span class="badge badge-warning">بانتظار جدولة المقابلة</span>
+                                <span class="uc-card__badge">بانتظار جدولة المقابلة</span>
                             </div>
                         </div>
                     </div>
@@ -2810,27 +2820,19 @@
     function renderInterviewsTable(interviews) {
         const container = document.getElementById('interviewsTable');
         const searchInput = document.getElementById('interviewsSearchInput');
-        const sessionFilter = document.getElementById('interviewsSessionFilter');
         const sortFilter = document.getElementById('interviewsSortFilter');
 
         if (!container) return;
 
         const searchTerm = searchInput?.value.toLowerCase() || '';
-        const sessionValue = sessionFilter?.value || '';
         const sortValue = sortFilter?.value || 'nearest';
 
-        // فلترة حسب البحث والجلسة
+        // فلترة حسب البحث
         let filtered = interviews.filter(interview => {
-            const matchSearch = !searchTerm || 
+            return !searchTerm ||
                 interview.application?.full_name.toLowerCase().includes(searchTerm) ||
                 interview.application?.email.toLowerCase().includes(searchTerm) ||
                 (interview.application?.phone && interview.application.phone.includes(searchTerm));
-            
-            // فلترة حسب الجلسة المختارة
-            const matchSession = !sessionValue || 
-                (interview.slot && interview.slot[0] && String(interview.slot[0].session_id) === String(sessionValue));
-            
-            return matchSearch && matchSession;
         });
 
         // ترتيب حسب التاريخ
@@ -2970,7 +2972,7 @@
                             رفض
                         </button>
                         ` : ''}
-                        <button class="btn btn-warning" onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot && interview.slot[0] ? interview.slot[0].id : ''}')">
+                        <button class="btn btn-warning" onclick="window.membershipManager.cancelIndividualInterview('${interview.id}')">
                             <i class="fa-solid fa-trash-alt"></i>
                             حذف الموعد
                         </button>
@@ -3031,196 +3033,119 @@
 
             // بناء محتوى النافذة المنبثقة
             const contentHtml = `
-                <!-- معلومات المتقدم -->
-                <div class="detail-section">
-                    <div class="detail-section-header">
-                        <i class="fa-solid fa-user"></i>
-                        <h3>معلومات المتقدم</h3>
-                    </div>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-id-card"></i>
-                                الاسم الكامل
-                            </div>
-                            <div class="detail-value">${escapeHtml(data.application.full_name)}</div>
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-user"></i> معلومات المتقدم</h3>
+                    <div class="modal-detail-grid">
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">الاسم الكامل</span>
+                            <span class="modal-detail-value">${escapeHtml(data.application.full_name)}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-envelope"></i>
-                                البريد الإلكتروني
-                            </div>
-                            <div class="detail-value">${escapeHtml(data.application.email)}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">البريد الإلكتروني</span>
+                            <span class="modal-detail-value">${escapeHtml(data.application.email)}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-phone"></i>
-                                رقم الهاتف
-                            </div>
-                            <div class="detail-value">${escapeHtml(data.application.phone || 'غير متوفر')}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">رقم الهاتف</span>
+                            <span class="modal-detail-value">${escapeHtml(data.application.phone || 'غير متوفر')}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-users"></i>
-                                اللجنة المرغوبة
-                            </div>
-                            <div class="detail-value">${escapeHtml(data.application.preferred_committee)}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">اللجنة المرغوبة</span>
+                            <span class="modal-detail-value">${escapeHtml(data.application.preferred_committee)}</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- معلومات المقابلة -->
-                <div class="detail-section">
-                    <div class="detail-section-header">
-                        <i class="fa-solid fa-calendar-days"></i>
-                        <h3>معلومات المقابلة</h3>
-                    </div>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-calendar-check"></i>
-                                تاريخ المقابلة
-                            </div>
-                            <div class="detail-value">${interviewDate}</div>
+                <hr class="modal-divider">
+
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-calendar-days"></i> معلومات المقابلة</h3>
+                    <div class="modal-detail-grid">
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">تاريخ المقابلة</span>
+                            <span class="modal-detail-value">${interviewDate}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-clock"></i>
-                                وقت المقابلة
-                            </div>
-                            <div class="detail-value">${interviewTime}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">وقت المقابلة</span>
+                            <span class="modal-detail-value">${interviewTime}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-video"></i>
-                                نوع المقابلة
-                            </div>
-                            <div class="detail-value">${typeBadge}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">نوع المقابلة</span>
+                            <span class="modal-detail-value">${typeBadge}</span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-location-dot"></i>
-                                الموقع
-                            </div>
-                            <div class="detail-value">${escapeHtml(data.interview_location || 'غير محدد')}</div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">الموقع</span>
+                            <span class="modal-detail-value">${escapeHtml(data.interview_location || 'غير محدد')}</span>
                         </div>
                         ${data.meeting_link ? `
-                            <div class="detail-item full-width">
-                                <div class="detail-label">
-                                    <i class="fa-solid fa-link"></i>
-                                    رابط الاجتماع
-                                </div>
-                                <div class="detail-value">
-                                    <a href="${escapeHtml(data.meeting_link)}" target="_blank">${escapeHtml(data.meeting_link)}</a>
-                                </div>
-                            </div>
-                        ` : ''}
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-flag"></i>
-                                الحالة
-                            </div>
-                            <div class="detail-value">${statusBadge}</div>
+                        <div class="modal-detail-item" style="grid-column: 1 / -1;">
+                            <span class="modal-detail-label">رابط الاجتماع</span>
+                            <span class="modal-detail-value"><a href="${escapeHtml(data.meeting_link)}" target="_blank">${escapeHtml(data.meeting_link)}</a></span>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <i class="fa-solid fa-check-circle"></i>
-                                النتيجة
-                            </div>
-                            <div class="detail-value">${resultBadge}</div>
+                        ` : ''}
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">الحالة</span>
+                            <span class="modal-detail-value">${statusBadge}</span>
+                        </div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">النتيجة</span>
+                            <span class="modal-detail-value">${resultBadge}</span>
                         </div>
                         ${data.interviewer ? `
-                            <div class="detail-item full-width">
-                                <div class="detail-label">
-                                    <i class="fa-solid fa-user-tie"></i>
-                                    المقابل
-                                </div>
-                                <div class="detail-value">${escapeHtml(data.interviewer.full_name)}</div>
-                            </div>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">المقابل</span>
+                            <span class="modal-detail-value">${escapeHtml(data.interviewer.full_name)}</span>
+                        </div>
                         ` : ''}
                     </div>
                 </div>
 
                 ${data.interviewer_notes ? `
-                    <div class="detail-section">
-                        <div class="detail-section-header">
-                            <i class="fa-solid fa-comment-dots"></i>
-                            <h3>ملاحظات المقابل</h3>
-                        </div>
-                        <div class="detail-value long-text">${escapeHtml(data.interviewer_notes)}</div>
+                    <hr class="modal-divider">
+                    <div class="modal-section">
+                        <h3><i class="fa-solid fa-comment-dots"></i> ملاحظات المقابل</h3>
+                        <p>${escapeHtml(data.interviewer_notes)}</p>
                     </div>
                 ` : ''}
 
                 ${(data.application.review_notes || data.application.admin_notes) ? `
-                    <div class="detail-section">
-                        <div class="detail-section-header">
-                            <i class="fa-solid fa-clipboard-list"></i>
-                            <h3>ملاحظات مرحلة مراجعة الطلبات</h3>
-                        </div>
-                        <div class="admin-notes-container">
-                            ${data.application.review_notes ? `
-                                <div class="admin-note review-note">
-                                    <div class="note-header">
-                                        <i class="fa-solid fa-eye"></i>
-                                        <strong>ملاحظات قيد المراجعة</strong>
-                                    </div>
-                                    <div class="note-content">${escapeHtml(data.application.review_notes)}</div>
-                                </div>
-                            ` : ''}
-                            ${data.application.admin_notes ? `
-                                <div class="admin-note ${data.application.status === 'approved_for_interview' ? 'accept-note' : data.application.status === 'rejected' ? 'reject-note' : ''}">
-                                    <div class="note-header">
-                                        <i class="fa-solid fa-${data.application.status === 'approved_for_interview' ? 'check-circle' : data.application.status === 'rejected' ? 'times-circle' : 'note-sticky'}"></i>
-                                        <strong>${data.application.status === 'approved_for_interview' ? 'ملاحظات القبول للمقابلة' : data.application.status === 'rejected' ? 'سبب الرفض' : 'ملاحظات إدارية'}</strong>
-                                    </div>
-                                    <div class="note-content">${escapeHtml(data.application.admin_notes)}</div>
-                                </div>
-                            ` : ''}
-                        </div>
+                    <hr class="modal-divider">
+                    <div class="modal-section">
+                        <h3><i class="fa-solid fa-clipboard-list"></i> ملاحظات مرحلة مراجعة الطلبات</h3>
+                        ${data.application.review_notes ? `
+                            <div class="modal-info-box box-info">
+                                <i class="fa-solid fa-eye"></i>
+                                <div><strong>ملاحظات قيد المراجعة</strong><br>${escapeHtml(data.application.review_notes)}</div>
+                            </div>
+                        ` : ''}
+                        ${data.application.admin_notes ? `
+                            <div class="modal-info-box ${data.application.status === 'approved_for_interview' ? 'box-success' : data.application.status === 'rejected' ? 'box-danger' : 'box-info'}">
+                                <i class="fa-solid fa-${data.application.status === 'approved_for_interview' ? 'circle-check' : data.application.status === 'rejected' ? 'circle-xmark' : 'note-sticky'}"></i>
+                                <div><strong>${data.application.status === 'approved_for_interview' ? 'ملاحظات القبول للمقابلة' : data.application.status === 'rejected' ? 'سبب الرفض' : 'ملاحظات إدارية'}</strong><br>${escapeHtml(data.application.admin_notes)}</div>
+                            </div>
+                        ` : ''}
                     </div>
                 ` : ''}
 
                 ${(data.result_notes || data.notes) ? `
-                    <div class="detail-section">
-                        <div class="detail-section-header">
-                            <i class="fa-solid fa-note-sticky"></i>
-                            <h3>ملاحظات نتيجة المقابلة</h3>
-                        </div>
-                        <div class="admin-notes-container">
-                            ${data.result_notes ? `
-                                <div class="admin-note ${data.result === 'accepted' ? 'accept-note' : data.result === 'rejected' ? 'reject-note' : ''}">
-                                    <div class="note-header">
-                                        <i class="fa-solid fa-${data.result === 'accepted' ? 'check-circle' : data.result === 'rejected' ? 'times-circle' : 'note-sticky'}"></i>
-                                        <strong>${data.result === 'accepted' ? 'ملاحظات قبول المقابلة' : data.result === 'rejected' ? 'سبب رفض المقابلة' : 'ملاحظات النتيجة'}</strong>
-                                    </div>
-                                    <div class="note-content">${escapeHtml(data.result_notes)}</div>
+                    <hr class="modal-divider">
+                    <div class="modal-section">
+                        <h3><i class="fa-solid fa-note-sticky"></i> ملاحظات نتيجة المقابلة</h3>
+                        ${data.result_notes ? `
+                            <div class="modal-info-box ${data.result === 'accepted' ? 'box-success' : data.result === 'rejected' ? 'box-danger' : 'box-warning'}">
+                                <i class="fa-solid fa-${data.result === 'accepted' ? 'circle-check' : data.result === 'rejected' ? 'circle-xmark' : 'note-sticky'}"></i>
+                                <div><strong>${data.result === 'accepted' ? 'ملاحظات قبول المقابلة' : data.result === 'rejected' ? 'سبب رفض المقابلة' : 'ملاحظات النتيجة'}</strong><br>${escapeHtml(data.result_notes)}</div>
+                            </div>
+                        ` : ''}
+                        ${data.notes ? `
+                            <div class="modal-info-box box-danger">
+                                <i class="fa-solid fa-user-xmark"></i>
+                                <div>
+                                    <strong>رفض من البرزخ</strong> ${data.interview_date ? '' : '(رفض مباشر بدون مقابلة)'}
+                                    <br>${escapeHtml(data.notes)}
+                                    ${data.decided_by_user ? `<br><strong>تم الرفض بواسطة:</strong> ${escapeHtml(data.decided_by_user.full_name)}${data.decided_at ? ` — ${new Date(data.decided_at).toLocaleDateString('ar-SA')}` : ''}` : ''}
                                 </div>
-                            ` : ''}
-                            ${data.notes ? `
-                                <div class="admin-note reject-note">
-                                    <div class="note-header">
-                                        <i class="fa-solid fa-user-xmark"></i>
-                                        <strong>رفض من البرزخ</strong>
-                                        <span>
-                                            ${data.interview_date ? '' : '(رفض مباشر بدون مقابلة)'}
-                                        </span>
-                                    </div>
-                                    <div class="note-content">${escapeHtml(data.notes)}</div>
-                                    ${data.decided_by_user ? `
-                                        <div>
-                                            <i class="fa-solid fa-user-shield"></i>
-                                            تم الرفض بواسطة: <strong>${escapeHtml(data.decided_by_user.full_name)}</strong>
-                                            ${data.decided_at ? `
-                                                <span>
-                                                    <i class="fa-solid fa-clock"></i>
-                                                    ${new Date(data.decided_at).toLocaleDateString('ar-SA')}
-                                                </span>
-                                            ` : ''}
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            ` : ''}
-                        </div>
+                            </div>
+                        ` : ''}
                     </div>
                 ` : ''}
             `;
@@ -3515,56 +3440,12 @@
     }
 
     /**
-     * ملء فلتر الجلسات القائمة
-     */
-    function populateSessionsFilter(activeSessions, expiredSessions) {
-        const sessionFilter = document.getElementById('interviewsSessionFilter');
-        if (!sessionFilter) return;
-
-        // الاحتفاظ بالخيار الافتراضي
-        sessionFilter.innerHTML = '<option value="">جميع الجلسات</option>';
-
-        const formatSessionDate = (session) => new Date(session.session_date).toLocaleDateString('ar-SA', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-
-        const addOptionsToGroup = (groupEl, sessions, isExpiredGroup) => {
-            (sessions || []).forEach(session => {
-                const date = formatSessionDate(session);
-                const option = document.createElement('option');
-                option.value = session.id;
-                option.textContent = isExpiredGroup ? `${session.session_name} (${date}) (منتهية)` : `${session.session_name} (${date})`;
-                groupEl.appendChild(option);
-            });
-        };
-
-        // الجلسات النشطة أولاً
-        if (activeSessions && activeSessions.length) {
-            const activeGroup = document.createElement('optgroup');
-            activeGroup.label = 'الجلسات النشطة';
-            addOptionsToGroup(activeGroup, activeSessions, false);
-            sessionFilter.appendChild(activeGroup);
-        }
-
-        // ثم الجلسات المنتهية / غير النشطة
-        if (expiredSessions && expiredSessions.length) {
-            const expiredGroup = document.createElement('optgroup');
-            expiredGroup.label = 'الجلسات المنتهية';
-            addOptionsToGroup(expiredGroup, expiredSessions, true);
-            sessionFilter.appendChild(expiredGroup);
-        }
-    }
-
-    /**
      * ربط أحداث قسم المقابلات
      */
     function bindInterviewsEvents() {
         const scheduleBtn = document.getElementById('scheduleNewInterviewBtn');
         const searchInput = document.getElementById('interviewsSearchInput');
         const sortFilter = document.getElementById('interviewsSortFilter');
-        const refreshBtn = document.getElementById('refreshInterviewsBtn');
 
         if (scheduleBtn) {
             scheduleBtn.removeEventListener('click', scheduleNewInterview);
@@ -3582,17 +3463,6 @@
             });
         }
         
-        const sessionFilter = document.getElementById('interviewsSessionFilter');
-        if (sessionFilter) {
-            sessionFilter.removeEventListener('change', () => {});
-            sessionFilter.addEventListener('change', () => {
-                const container = document.getElementById('interviewsTable');
-                if (container && container._cachedInterviews) {
-                    renderInterviewsTable(container._cachedInterviews);
-                }
-            });
-        }
-        
         if (sortFilter) {
             sortFilter.removeEventListener('change', () => {});
             sortFilter.addEventListener('change', () => {
@@ -3603,10 +3473,6 @@
             });
         }
         
-        if (refreshBtn) {
-            refreshBtn.removeEventListener('click', loadInterviews);
-            refreshBtn.addEventListener('click', loadInterviews);
-        }
     }
 
     /**
@@ -4238,13 +4104,73 @@
             }
 
             showNotification('تم حذف الموعد بنجاح. يمكن للمتقدم الآن حجز موعد جديد', 'success');
-            
+
             // إعادة تحميل المقابلات
             await loadInterviews();
 
         } catch (error) {
             console.error('خطأ في حذف الموعد:', error);
             showNotification('حدث خطأ أثناء حذف الموعد', 'error');
+        }
+    }
+
+    /**
+     * حذف مقابلة فردية (بدون slot مرتبط)
+     */
+    async function cancelIndividualInterview(interviewId) {
+        try {
+            const contentHtml = `
+                <div>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <p>هل أنت متأكد من حذف هذه المقابلة الفردية؟</p>
+                    <p>⚠️ هذا الإجراء لا يمكن التراجع عنه!</p>
+                    <input type="hidden" id="delete-individual-interview-id" value="${interviewId}">
+                </div>
+            `;
+
+            const actionsHtml = `
+                <button class="modal-btn modal-btn-danger" onclick="window.membershipManager.confirmCancelIndividualInterview()">
+                    <i class="fa-solid fa-trash"></i>
+                    نعم، احذف المقابلة
+                </button>
+                <button class="modal-btn modal-btn-secondary" onclick="window.closeConfirmModal()">
+                    <i class="fa-solid fa-times"></i>
+                    إلغاء
+                </button>
+            `;
+
+            document.getElementById('confirmModalContent').innerHTML = contentHtml;
+            document.getElementById('confirmModalActions').innerHTML = actionsHtml;
+            window.setConfirmModalTitle('تأكيد حذف المقابلة', 'fa-triangle-exclamation');
+            window.openConfirmModal();
+
+        } catch (error) {
+            console.error('خطأ في عرض نافذة التأكيد:', error);
+            showNotification('حدث خطأ أثناء عرض نافذة التأكيد', 'error');
+        }
+    }
+
+    /**
+     * تأكيد حذف المقابلة الفردية
+     */
+    async function confirmCancelIndividualInterview() {
+        try {
+            const interviewId = document.getElementById('delete-individual-interview-id').value;
+            window.closeConfirmModal();
+
+            const { error } = await window.sbClient
+                .from('membership_interviews')
+                .update({ status: 'cancelled' })
+                .eq('id', interviewId);
+
+            if (error) throw error;
+
+            showNotification('تم حذف المقابلة بنجاح', 'success');
+            await loadInterviews();
+
+        } catch (error) {
+            console.error('خطأ في حذف المقابلة:', error);
+            showNotification('حدث خطأ أثناء حذف المقابلة', 'error');
         }
     }
 
@@ -4430,16 +4356,14 @@
         if (!container) return;
 
         container.innerHTML = `
-            <div class="stats-grid">
-                <div class="stat-card stat-card--yellow">
-                    <div class="stat-card-wrapper">
-                        <div class="stat-icon">
-                            <i class="fa-solid fa-user-clock"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-value">${count}</div>
-                            <div class="stat-label">بانتظار جدولة المقابلة</div>
-                        </div>
+            <div class="stat-card" style="--stat-color: #f59e0b;">
+                <div class="stat-card-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-user-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${count}</div>
+                        <div class="stat-label">بانتظار جدولة المقابلة</div>
                     </div>
                 </div>
             </div>
@@ -4471,6 +4395,8 @@
         rejectInterview: rejectInterview,
         cancelInterviewAdmin: cancelInterviewAdmin,
         confirmCancelInterview: confirmCancelInterview,
+        cancelIndividualInterview: cancelIndividualInterview,
+        confirmCancelIndividualInterview: confirmCancelIndividualInterview,
         rejectFromBarzakh: rejectFromBarzakh,
         confirmRejectFromBarzakh: confirmRejectFromBarzakh,
         loadAcceptedMembers: loadAcceptedMembers,

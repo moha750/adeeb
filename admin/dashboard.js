@@ -324,13 +324,13 @@
                     {
                         id: 'interview-sessions',
                         icon: 'fa-calendar-days',
-                        label: 'جلسات المقابلات',
+                        label: 'جدولة مقابلات جماعية',
                         section: 'interview-sessions-section'
                     },
                     {
                         id: 'membership-interviews',
                         icon: 'fa-calendar-check',
-                        label: 'المقابلات',
+                        label: 'جدولة مقابلات فردية',
                         section: 'membership-interviews-section'
                     },
                     {

@@ -233,18 +233,7 @@
         const rejectedPercentage = total > 0 ? Math.round((rejected / total) * 100) : 0;
 
         container.innerHTML = `
-            <div class="stat-card stat-card--blue">
-                <div class="stat-card-wrapper">
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-clipboard-check"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value">${total}</div>
-                        <div class="stat-label">إجمالي القرارات</div>
-                    </div>
-                </div>
-            </div>
-            <div class="stat-card stat-card--green">
+            <div class="stat-card" style="--stat-color: #10b981;">
                 <div class="stat-badge"><i class="fa-solid fa-check"></i> ${acceptedPercentage}%</div>
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
@@ -256,7 +245,7 @@
                     </div>
                 </div>
             </div>
-            <div class="stat-card stat-card--red">
+            <div class="stat-card" style="--stat-color: #ef4444;">
                 <div class="stat-badge"><i class="fa-solid fa-times"></i> ${rejectedPercentage}%</div>
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
@@ -278,9 +267,6 @@
         const searchInput = document.getElementById('decisionsSearchInput');
         const statusFilter = document.getElementById('decisionsStatusFilter');
         const committeeFilter = document.getElementById('decisionsCommitteeFilter');
-        const refreshBtn = document.getElementById('refreshDecisionsBtn');
-        const exportBtn = document.getElementById('exportDecisionsBtn');
-
         // إزالة المستمعات القديمة أولاً
         if (searchInput) {
             const newSearchInput = searchInput.cloneNode(true);
@@ -300,14 +286,50 @@
             newCommitteeFilter.addEventListener('change', renderDecisionsTable);
         }
 
-        if (refreshBtn) {
-            refreshBtn.removeEventListener('click', loadMembershipDecisions);
-            refreshBtn.addEventListener('click', loadMembershipDecisions);
-        }
+        // زر خيارات قائمة نتائج العضوية
+        const decisionsOptionsBtn = document.getElementById('decisionsOptionsBtn');
+        if (decisionsOptionsBtn) {
+            let decisionsDropdown = document.getElementById('decisionsOptionsDropdown');
+            if (decisionsDropdown) decisionsDropdown.remove();
+            decisionsDropdown = document.createElement('div');
+            decisionsDropdown.id = 'decisionsOptionsDropdown';
+            decisionsDropdown.className = 'dropdown-menu';
+            decisionsDropdown.innerHTML = `
+                <button class="btn btn-slate btn-outline btn-block" data-action="refresh">
+                    <i class="fa-solid fa-rotate"></i> تحديث
+                </button>
+                <button class="btn btn-primary btn-outline btn-block" data-action="export">
+                    <i class="fa-solid fa-file-export"></i> تصدير البيانات
+                </button>
+            `;
+            document.body.appendChild(decisionsDropdown);
 
-        if (exportBtn) {
-            exportBtn.removeEventListener('click', exportDecisions);
-            exportBtn.addEventListener('click', exportDecisions);
+            decisionsOptionsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = decisionsDropdown.classList.toggle('show');
+                if (isOpen) {
+                    const rect = decisionsOptionsBtn.getBoundingClientRect();
+                    decisionsDropdown.style.top = (rect.bottom + 6) + 'px';
+                    decisionsDropdown.style.left = rect.left + 'px';
+                }
+            });
+
+            decisionsDropdown.addEventListener('click', (e) => {
+                const actionBtn = e.target.closest('[data-action]');
+                if (!actionBtn) return;
+                decisionsDropdown.classList.remove('show');
+                if (actionBtn.dataset.action === 'export') {
+                    exportDecisions();
+                } else if (actionBtn.dataset.action === 'refresh') {
+                    loadMembershipDecisions();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#decisionsOptionsBtn') && !e.target.closest('#decisionsOptionsDropdown')) {
+                    decisionsDropdown.classList.remove('show');
+                }
+            });
         }
     }
 

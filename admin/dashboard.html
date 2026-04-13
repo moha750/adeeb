@@ -2123,7 +2123,7 @@
                 </div>
             </section>
 
-            <!-- قسم المقابلات -->
+            <!-- قسم جدولة مقابلات فردية -->
             <section id="membership-interviews-section" class="admin-section d-none">
 
                 <!-- إحصائيات المقابلات -->
@@ -2152,33 +2152,25 @@
                     </div>
                 </div>
 
-                <!-- أزرار الإجراءات والفلاتر -->
+                <!-- فلاتر المقابلات الفردية -->
                 <div class="filters-bar">
-                    <button class="btn btn-primary" id="scheduleNewInterviewBtn">
-                        <i class="fa-solid fa-plus"></i>
-                        جدولة مقابلة جديدة
-                    </button>
                     <div class="filter-group">
                         <i class="fa-solid fa-search"></i>
                         <input type="text" id="interviewsSearchInput" placeholder="البحث بالاسم..." class="input input-text" />
                     </div>
-                    <select id="interviewsSessionFilter" class="filter-select">
-                        <option value="">جميع الجلسات</option>
-                    </select>
                     <select id="interviewsSortFilter" class="filter-select">
                         <option value="nearest">الأقرب أولاً</option>
                         <option value="farthest">الأبعد أولاً</option>
                     </select>
-                    <button class="btn btn-outline" id="refreshInterviewsBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
                 </div>
 
                 <!-- جدول المقابلات -->
                 <div class="card">
                     <div class="card-header">
-                        <h3><i class="fa-solid fa-calendar-days"></i> قائمة المقابلات</h3>
+                        <h3><i class="fa-solid fa-calendar-days"></i> جدولة مقابلات فردية</h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="scheduleNewInterviewBtn" title="جدولة مقابلة جديدة">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div id="interviewsTable">
@@ -2190,11 +2182,11 @@
 
             <section id="membership-barzakh-section" class="admin-section d-none">
 
-                <div id="barzakhStatsGrid" class="mb-2rem">
+                <div id="barzakhStatsGrid" class="stats-grid">
                     <!-- سيتم ملؤها ديناميكياً -->
                 </div>
 
-                <div class="filters-bar">
+                <div class="filters-bar" style="--filter-color-rgb: 245, 158, 11; --filter-color: #f59e0b; --filter-color-dark: #d97706;">
                     <div class="filter-group">
                         <i class="fa-solid fa-search"></i>
                         <input type="text" id="barzakhSearchInput" placeholder="البحث بالاسم أو البريد..." class="input input-text" />
@@ -2202,19 +2194,14 @@
                     <select id="barzakhCommitteeFilter" class="filter-select">
                         <option value="">جميع اللجان</option>
                     </select>
-                    <button class="btn btn-outline" id="refreshBarzakhBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-                    <button class="btn btn-success" id="exportBarzakhBtn">
-                        <i class="fa-solid fa-file-export"></i>
-                        تصدير
-                    </button>
                 </div>
 
-                <div class="card">
+                <div class="card card--warning">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-hourglass-half"></i> قائمة البرزخ</h3>
+                        <button class="btn btn-warning btn-icon btn-outline" id="barzakhOptionsBtn" title="خيارات">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div id="barzakhTable">
@@ -2228,7 +2215,7 @@
             <section id="membership-accepted-section" class="admin-section d-none">
 
                 <!-- إحصائيات نتائج العضوية -->
-                <div id="decisionsStatsGrid" class="mb-2rem">
+                <div id="decisionsStatsGrid" class="stats-grid">
                     <!-- سيتم ملؤها ديناميكياً -->
                 </div>
 
@@ -2246,20 +2233,15 @@
                     <select id="decisionsCommitteeFilter" class="filter-select">
                         <option value="">جميع اللجان</option>
                     </select>
-                    <button class="btn btn-outline" id="refreshDecisionsBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-                    <button class="btn btn-success" id="exportDecisionsBtn">
-                        <i class="fa-solid fa-file-export"></i>
-                        تصدير
-                    </button>
                 </div>
 
                 <!-- جدول نتائج العضوية -->
                 <div class="card">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-clipboard-check"></i> قائمة نتائج العضوية</h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="decisionsOptionsBtn" title="خيارات">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div id="decisionsTable">
@@ -2916,7 +2898,7 @@
                 </div>
             </section>
 
-            <!-- قسم جلسات المقابلات -->
+            <!-- قسم جدولة مقابلات جماعية -->
             <section id="interview-sessions-section" class="admin-section d-none">
 
                 <!-- إحصائيات الجلسات -->
@@ -2924,25 +2906,44 @@
                     <!-- سيتم ملؤها ديناميكياً -->
                 </div>
 
-                <!-- أزرار الإجراءات -->
-                <div class="filters-bar">
-                    <button class="btn btn-primary" id="createSessionBtn">
-                        <i class="fa-solid fa-plus"></i>
-                        إنشاء جلسة جديدة
-                    </button>
-                    <button class="btn btn-outline" id="refreshSessionsBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-                </div>
-
                 <!-- جدول الجلسات -->
                 <div class="card">
                     <div class="card-header">
-                        <h3><i class="fa-solid fa-calendar-check"></i> جلسات المقابلات</h3>
+                        <h3><i class="fa-solid fa-calendar-check"></i> جدولة مقابلات جماعية</h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="createSessionBtn" title="إنشاء جلسة جديدة">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div id="sessionsTable"></div>
+                    </div>
+                </div>
+
+                <!-- قسم حجوزات المقابلات الجماعية -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="groupBookingsSearchInput" placeholder="البحث بالاسم..." class="input input-text" />
+                    </div>
+                    <select id="groupBookingsSessionFilter" class="filter-select">
+                        <option value="">جميع الجلسات</option>
+                    </select>
+                    <select id="groupBookingsSortFilter" class="filter-select">
+                        <option value="nearest">الأقرب أولاً</option>
+                        <option value="farthest">الأبعد أولاً</option>
+                    </select>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-users-rectangle"></i> حجوزات المقابلات الجماعية</h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="refreshGroupBookingsBtn" title="تحديث">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="groupBookingsTable">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
                     </div>
                 </div>
             </section>

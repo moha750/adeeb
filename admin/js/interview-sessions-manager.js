@@ -34,6 +34,7 @@
     async function initInterviewSessionsManager(user) {
         currentUser = user;
         await loadSessions();
+        await loadGroupBookings();
         bindEvents();
     }
 
@@ -42,14 +43,14 @@
      */
     function bindEvents() {
         const createBtn = document.getElementById('createSessionBtn');
-        const refreshBtn = document.getElementById('refreshSessionsBtn');
+        const refreshBookingsBtn = document.getElementById('refreshGroupBookingsBtn');
 
         if (createBtn) {
             createBtn.addEventListener('click', createNewSession);
         }
 
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => loadSessions());
+        if (refreshBookingsBtn) {
+            refreshBookingsBtn.addEventListener('click', () => loadGroupBookings());
         }
     }
 
@@ -1176,6 +1177,474 @@
         }
     }
 
+    // ========================================================================
+    // قسم حجوزات المقابلات الجماعية
+    // ========================================================================
+
+    /**
+     * تحميل حجوزات المقابلات الجماعية (المرتبطة بجلسات)
+     */
+    async function loadGroupBookings() {
+        try {
+            const container = document.getElementById('groupBookingsTable');
+            if (!container) return;
+
+            container.innerHTML = '<div><i class="fa-solid fa-spinner fa-spin"></i></div>';
+
+            // جلب المقابلات المجدولة التي لها slot مرتبط بجلسة
+            const { data: interviews, error: interviewsError } = await window.sbClient
+                .from('membership_interviews')
+                .select(`
+                    *,
+                    application:membership_applications(id, full_name, email, phone, preferred_committee),
+                    interviewer:profiles!interviewer_id(full_name),
+                    decided_by_user:profiles!decided_by(full_name),
+                    slot:interview_slots(id, session_id, interview_sessions(id, session_name))
+                `)
+                .eq('status', 'scheduled')
+                .order('interview_date', { ascending: true });
+
+            if (interviewsError) throw interviewsError;
+
+            // فلترة المقابلات الجماعية فقط (التي لها slot مرتبط)
+            const groupInterviews = (interviews || []).filter(interview => {
+                return interview.slot && interview.slot.length > 0;
+            });
+
+            // حفظ في cache للفلترة المحلية
+            container._cachedBookings = groupInterviews;
+
+            populateGroupBookingsSessionFilter(groupInterviews);
+            renderGroupBookings(groupInterviews);
+            bindGroupBookingsEvents();
+
+        } catch (error) {
+            console.error('خطأ في تحميل حجوزات المقابلات الجماعية:', error);
+            showNotification('خطأ في تحميل الحجوزات', 'error');
+        }
+    }
+
+    /**
+     * ملء فلتر الجلسات في قسم الحجوزات
+     */
+    function populateGroupBookingsSessionFilter(interviews) {
+        const filter = document.getElementById('groupBookingsSessionFilter');
+        if (!filter) return;
+
+        const sessionsMap = new Map();
+        interviews.forEach(interview => {
+            if (interview.slot && interview.slot[0] && interview.slot[0].interview_sessions) {
+                const session = interview.slot[0].interview_sessions;
+                if (!sessionsMap.has(session.id)) {
+                    sessionsMap.set(session.id, session.session_name);
+                }
+            }
+        });
+
+        filter.innerHTML = '<option value="">جميع الجلسات</option>';
+        sessionsMap.forEach((name, id) => {
+            filter.innerHTML += `<option value="${id}">${escapeHtml(name)}</option>`;
+        });
+    }
+
+    /**
+     * عرض بطاقات الحجوزات الجماعية
+     */
+    function renderGroupBookings(interviews) {
+        const container = document.getElementById('groupBookingsTable');
+        const searchInput = document.getElementById('groupBookingsSearchInput');
+        const sessionFilter = document.getElementById('groupBookingsSessionFilter');
+        const sortFilter = document.getElementById('groupBookingsSortFilter');
+        if (!container) return;
+
+        const searchTerm = searchInput?.value.toLowerCase() || '';
+        const sessionValue = sessionFilter?.value || '';
+        const sortValue = sortFilter?.value || 'nearest';
+
+        // فلترة
+        let filtered = interviews.filter(interview => {
+            const matchSearch = !searchTerm ||
+                interview.application?.full_name?.toLowerCase().includes(searchTerm) ||
+                interview.application?.email?.toLowerCase().includes(searchTerm) ||
+                (interview.application?.phone && interview.application.phone.includes(searchTerm));
+
+            const matchSession = !sessionValue ||
+                (interview.slot && interview.slot[0] && String(interview.slot[0].session_id) === String(sessionValue));
+
+            return matchSearch && matchSession;
+        });
+
+        // ترتيب
+        filtered.sort((a, b) => {
+            const dateA = new Date(a.interview_date);
+            const dateB = new Date(b.interview_date);
+            return sortValue === 'nearest' ? dateA - dateB : dateB - dateA;
+        });
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
+                    <p class="empty-state__title">لا توجد حجوزات</p>
+                </div>
+            `;
+            return;
+        }
+
+        const typeIcons = {
+            'online': 'fa-video',
+            'in_person': 'fa-building',
+            'phone': 'fa-phone'
+        };
+
+        const typeBadges = {
+            'in_person': '<span class="badge badge-info">حضوري</span>',
+            'online': '<span class="badge badge-primary">أونلاين</span>',
+            'phone': '<span class="badge badge-secondary">هاتفي</span>'
+        };
+
+        const resultBadges = {
+            'pending': '<span class="badge badge-warning">معلقة</span>',
+            'accepted': '<span class="uc-card__badge">مقبول</span>',
+            'rejected': '<span class="badge badge-danger">مرفوض</span>',
+            'no_show': '<span class="badge badge-secondary">لم يحضر</span>'
+        };
+
+        let html = '<div class="uc-grid">';
+
+        filtered.forEach(interview => {
+            const date = new Date(interview.interview_date).toLocaleDateString('ar-SA', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            });
+
+            const time = new Date(interview.interview_date).toLocaleTimeString('ar-SA', {
+                hour: '2-digit', minute: '2-digit'
+            });
+
+            const typeBadge = typeBadges[interview.interview_type] || '<span class="badge badge-secondary">-</span>';
+            const resultBadge = resultBadges[interview.result] || '<span class="badge badge-secondary">-</span>';
+            const sessionName = interview.slot?.[0]?.interview_sessions?.session_name || 'غير محدد';
+
+            html += `
+                <div class="uc-card">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon">
+                                <i class="fa-solid ${typeIcons[interview.interview_type] || 'fa-user-tie'}"></i>
+                            </div>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">${escapeHtml(interview.application?.full_name || 'غير محدد')}</h3>
+                                <div>
+                                    <span class="uc-card__badge">مجدولة</span>
+                                    ${resultBadge}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="uc-card__body">
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-users-rectangle"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">الجلسة</span>
+                                <span class="uc-card__info-value">${escapeHtml(sessionName)}</span>
+                            </div>
+                        </div>
+
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-envelope"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">البريد الإلكتروني</span>
+                                <span class="uc-card__info-value">${escapeHtml(interview.application?.email || 'غير متوفر')}</span>
+                            </div>
+                        </div>
+
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">رقم الجوال</span>
+                                <span class="uc-card__info-value">${escapeHtml(interview.application?.phone || 'غير متوفر')}</span>
+                            </div>
+                        </div>
+
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-users"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">اللجنة المرغوبة</span>
+                                <span class="uc-card__info-value">${escapeHtml(interview.application?.preferred_committee || 'غير محدد')}</span>
+                            </div>
+                        </div>
+
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-day"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">تاريخ المقابلة</span>
+                                <span class="uc-card__info-value">${date} - ${time}</span>
+                            </div>
+                        </div>
+
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid ${typeIcons[interview.interview_type] || 'fa-handshake'}"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">نوع المقابلة</span>
+                                <span class="uc-card__info-value">${typeBadge}</span>
+                            </div>
+                        </div>
+
+                        ${interview.meeting_link ? `
+                            <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-link"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">رابط المقابلة</span>
+                                    <a href="${escapeHtml(interview.meeting_link)}" target="_blank" class="uc-card__info-value">فتح الرابط</a>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="uc-card__footer">
+                        <button class="btn btn-primary" onclick="window.membershipManager.viewInterview('${interview.id}')">
+                            <i class="fa-solid fa-eye"></i>
+                            عرض التفاصيل
+                        </button>
+                        ${interview.result === 'pending' || !interview.result ? `
+                        <button class="btn btn-success" onclick="window.interviewSessionsManager.acceptGroupBooking('${interview.id}')">
+                            <i class="fa-solid fa-check"></i>
+                            قبول
+                        </button>
+                        <button class="btn btn-danger" onclick="window.interviewSessionsManager.rejectGroupBooking('${interview.id}')">
+                            <i class="fa-solid fa-times"></i>
+                            رفض
+                        </button>
+                        ` : ''}
+                        <button class="btn btn-warning" onclick="window.membershipManager.cancelInterviewAdmin('${interview.id}', '${interview.slot?.[0]?.id || ''}')">
+                            <i class="fa-solid fa-trash-alt"></i>
+                            حذف الموعد
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    /**
+     * ربط أحداث قسم الحجوزات
+     */
+    function bindGroupBookingsEvents() {
+        const searchInput = document.getElementById('groupBookingsSearchInput');
+        const sessionFilter = document.getElementById('groupBookingsSessionFilter');
+        const sortFilter = document.getElementById('groupBookingsSortFilter');
+
+        const rerender = () => {
+            const container = document.getElementById('groupBookingsTable');
+            if (container && container._cachedBookings) {
+                renderGroupBookings(container._cachedBookings);
+            }
+        };
+
+        if (searchInput) {
+            searchInput.removeEventListener('input', rerender);
+            searchInput.addEventListener('input', rerender);
+        }
+        if (sessionFilter) {
+            sessionFilter.removeEventListener('change', rerender);
+            sessionFilter.addEventListener('change', rerender);
+        }
+        if (sortFilter) {
+            sortFilter.removeEventListener('change', rerender);
+            sortFilter.addEventListener('change', rerender);
+        }
+    }
+
+    /**
+     * قبول حجز من المقابلات الجماعية
+     */
+    async function acceptGroupBooking(interviewId) {
+        if (!currentUser) {
+            const { data: { user } } = await window.sbClient.auth.getUser();
+            if (!user) {
+                showNotification('يجب تسجيل الدخول أولاً', 'error');
+                return;
+            }
+            currentUser = user;
+        }
+
+        const contentHtml = `
+            <div>
+                <p>هل أنت متأكد من قبول هذا المتقدم؟</p>
+                <div>
+                    <label>ملاحظات القبول (اختياري)</label>
+                    <textarea id="groupAcceptNotes" placeholder="أضف ملاحظات حول قبول المتقدم..."></textarea>
+                </div>
+                <input type="hidden" id="group-accept-interview-id" value="${interviewId}">
+            </div>
+        `;
+
+        const actionsHtml = `
+            <button class="modal-btn modal-btn-success" onclick="window.interviewSessionsManager.confirmAcceptGroupBooking()">
+                <i class="fa-solid fa-check"></i>
+                قبول
+            </button>
+            <button class="modal-btn modal-btn-secondary" onclick="window.closeConfirmModal()">
+                <i class="fa-solid fa-times"></i>
+                إلغاء
+            </button>
+        `;
+
+        document.getElementById('confirmModalContent').innerHTML = contentHtml;
+        document.getElementById('confirmModalActions').innerHTML = actionsHtml;
+        window.setConfirmModalTitle('قبول المتقدم', 'fa-circle-check');
+        window.openConfirmModal();
+    }
+
+    /**
+     * تأكيد قبول حجز جماعي
+     */
+    async function confirmAcceptGroupBooking() {
+        try {
+            const interviewId = document.getElementById('group-accept-interview-id').value;
+            const notes = document.getElementById('groupAcceptNotes')?.value?.trim() || null;
+            window.closeConfirmModal();
+
+            const { data: interview, error: interviewError } = await window.sbClient
+                .from('membership_interviews')
+                .select('id, application_id, result, status')
+                .eq('id', interviewId)
+                .single();
+
+            if (interviewError) throw interviewError;
+
+            if (interview.result === 'accepted' && interview.status === 'completed') {
+                showNotification('تم قبول هذا المتقدم مسبقاً', 'info');
+                await loadGroupBookings();
+                return;
+            }
+
+            const { data: application, error: appError } = await window.sbClient
+                .from('membership_applications')
+                .select('*')
+                .eq('id', interview.application_id)
+                .single();
+
+            if (appError) throw appError;
+
+            const { error: acceptedError } = await window.sbClient
+                .from('membership_accepted_members')
+                .insert({
+                    application_id: application.id,
+                    interview_id: interviewId,
+                    full_name: application.full_name,
+                    email: application.email,
+                    phone: application.phone,
+                    assigned_committee: application.preferred_committee,
+                    added_by: currentUser.id
+                });
+
+            if (acceptedError) {
+                const isConflict = acceptedError.code === '23505' || acceptedError.status === 409;
+                if (!isConflict) throw acceptedError;
+            }
+
+            const { error: updateError } = await window.sbClient
+                .from('membership_interviews')
+                .update({
+                    result: 'accepted',
+                    result_notes: notes,
+                    decided_by: currentUser.id,
+                    decided_at: new Date().toISOString(),
+                    status: 'completed'
+                })
+                .eq('id', interviewId);
+
+            if (updateError) throw updateError;
+
+            showNotification('تم قبول المتقدم بنجاح', 'success');
+            await loadGroupBookings();
+        } catch (error) {
+            console.error('خطأ في قبول المتقدم:', error);
+            showNotification('خطأ في قبول المتقدم', 'error');
+        }
+    }
+
+    /**
+     * رفض حجز من المقابلات الجماعية
+     */
+    async function rejectGroupBooking(interviewId) {
+        if (!currentUser) {
+            const { data: { user } } = await window.sbClient.auth.getUser();
+            if (!user) {
+                showNotification('يجب تسجيل الدخول أولاً', 'error');
+                return;
+            }
+            currentUser = user;
+        }
+
+        const contentHtml = `
+            <div>
+                <p>هل أنت متأكد من رفض هذا المتقدم؟</p>
+                <div>
+                    <label>سبب الرفض (اختياري)</label>
+                    <textarea id="groupRejectNotes" placeholder="أضف سبب رفض المتقدم..."></textarea>
+                </div>
+                <input type="hidden" id="group-reject-interview-id" value="${interviewId}">
+            </div>
+        `;
+
+        const actionsHtml = `
+            <button class="modal-btn modal-btn-danger" onclick="window.interviewSessionsManager.confirmRejectGroupBooking()">
+                <i class="fa-solid fa-times"></i>
+                رفض
+            </button>
+            <button class="modal-btn modal-btn-secondary" onclick="window.closeConfirmModal()">
+                <i class="fa-solid fa-times"></i>
+                إلغاء
+            </button>
+        `;
+
+        document.getElementById('confirmModalContent').innerHTML = contentHtml;
+        document.getElementById('confirmModalActions').innerHTML = actionsHtml;
+        window.setConfirmModalTitle('رفض المتقدم', 'fa-circle-xmark');
+        window.openConfirmModal();
+    }
+
+    /**
+     * تأكيد رفض حجز جماعي
+     */
+    async function confirmRejectGroupBooking() {
+        try {
+            const interviewId = document.getElementById('group-reject-interview-id').value;
+            const notes = document.getElementById('groupRejectNotes')?.value?.trim() || null;
+            window.closeConfirmModal();
+
+            const updateData = {
+                result: 'rejected',
+                decided_by: currentUser.id,
+                decided_at: new Date().toISOString(),
+                status: 'completed'
+            };
+
+            if (notes) {
+                updateData.result_notes = notes;
+            }
+
+            const { error } = await window.sbClient
+                .from('membership_interviews')
+                .update(updateData)
+                .eq('id', interviewId);
+
+            if (error) throw error;
+
+            showNotification('تم رفض المتقدم', 'success');
+            await loadGroupBookings();
+        } catch (error) {
+            console.error('خطأ في رفض المتقدم:', error);
+            showNotification('خطأ في رفض المتقدم', 'error');
+        }
+    }
+
     // تصدير الوظائف
     window.interviewSessionsManager = {
         init: initInterviewSessionsManager,
@@ -1190,7 +1659,12 @@
         copyLink,
         toggleSession,
         deleteSession,
-        confirmDelete
+        confirmDelete,
+        loadGroupBookings,
+        acceptGroupBooking,
+        confirmAcceptGroupBooking,
+        rejectGroupBooking,
+        confirmRejectGroupBooking
     };
 
 })();
