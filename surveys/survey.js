@@ -5,6 +5,15 @@
 
 (function() {
     const sb = window.sbClient;
+
+    // دالة مساعدة للحصول على المستخدم بدون طلب HTTP (تتجنب 401 للزوار)
+    async function _getUser() {
+        try {
+            const { data: { session } } = await sb.auth.getSession();
+            return session?.user || null;
+        } catch (_) { return null; }
+    }
+
     let currentSurvey = null;
     let surveyQuestions = [];
     let currentQuestionIndex = 0;
@@ -88,8 +97,8 @@
 
             // التحقق من أن الاستبيان خاص بأعضاء أديب
             if (survey.access_type === 'members_only') {
-                const { data: { user } } = await sb.auth.getUser();
-                
+                const user = await _getUser();
+
                 if (!user) {
                     // المستخدم غير مسجل الدخول
                     showMembersOnlyMessage(survey);
@@ -143,8 +152,8 @@
 
             // التحقق من إعداد عدم السماح بإجابات متعددة
             if (!survey.allow_multiple_responses) {
-                const { data: { user } } = await sb.auth.getUser();
-                
+                const user = await _getUser();
+
                 if (user) {
                     // التحقق من وجود استجابة سابقة لهذا المستخدم (مكتملة أو قيد التقدم)
                     const { data: existingResponses } = await sb
@@ -175,7 +184,7 @@
             }
 
             // للزوار غير المسجلين: حاول استعادة مسودة محفوظة محلياً
-            const { data: { user: currentUser } } = await sb.auth.getUser();
+            const currentUser = await _getUser();
             if (!currentUser) {
                 const draft = _lsLoad(surveyId);
                 if (draft && draft.responseId) {
@@ -289,7 +298,7 @@
             setSaveStatus('saved');
             // حفظ احتياطي في localStorage للزوار غير المسجلين
             try {
-                const { data: { user: _u } } = await sb.auth.getUser();
+                const _u = await _getUser();
                 if (!_u && currentSurvey) _lsSave(currentSurvey.id);
             } catch (_) {}
         } catch (e) {
@@ -397,7 +406,7 @@
 
     async function createResponse(surveyId) {
         try {
-            const { data: { user } } = await sb.auth.getUser();
+            const user = await _getUser();
 
             // إذا كان الاستبيان يسمح بالإجابات المجهولة، لا نسجل هوية المستخدم
             const isAnonymous = currentSurvey.allow_anonymous;

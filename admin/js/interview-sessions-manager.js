@@ -151,7 +151,7 @@
                 : 0;
 
             html += `
-                <div class="uc-card${isExpired ? ' uc-card--danger' : ''}">
+                <div class="uc-card${isExpired ? ' uc-card--danger' : session.is_active ? ' uc-card--success' : ''}">
                     <div class="uc-card__header">
                         <div class="uc-card__header-inner">
                             <div class="uc-card__icon">
