@@ -1089,7 +1089,7 @@
         try {
             const { data, error } = await window.sbClient
                 .from('membership_applications')
-                .select('*')
+                .select('*, reviewed_by_user:profiles!reviewed_by(full_name)')
                 .eq('id', applicationId)
                 .single();
 
@@ -1193,7 +1193,7 @@
                 ${data.review_notes || data.admin_notes ? `
                 <hr class="modal-divider">
                 <div class="modal-section">
-                    <h3><i class="fa-solid fa-note-sticky"></i> ملاحظات إدارية</h3>
+                    <h3><i class="fa-solid fa-note-sticky"></i> ملاحظات مرحلة القبول المبدئي</h3>
                     ${data.review_notes ? `
                     <div class="modal-info-box box-warning">
                         <i class="fa-solid fa-eye"></i>
@@ -1201,9 +1201,10 @@
                     </div>
                     ` : ''}
                     ${data.admin_notes ? `
-                    <div class="modal-info-box ${data.status === 'approved_for_interview' ? 'box-success' : data.status === 'rejected' ? 'box-danger' : ''}">
-                        <i class="fa-solid fa-${data.status === 'approved_for_interview' ? 'check-circle' : data.status === 'rejected' ? 'times-circle' : 'note-sticky'}"></i>
-                        <div><strong>${data.status === 'approved_for_interview' ? 'ملاحظات القبول' : data.status === 'rejected' ? 'سبب الرفض' : 'ملاحظات إدارية'}</strong><br>${escapeHtml(data.admin_notes)}</div>
+                    <div class="modal-info-box ${data.status === 'rejected' ? 'box-danger' : ''}" style="flex-wrap:wrap;">
+                        <i class="fa-solid fa-${data.status === 'rejected' ? 'times-circle' : 'note-sticky'}"></i>
+                        <div>${escapeHtml(data.admin_notes)}</div>
+                        ${data.reviewed_by_user?.full_name ? `<small style="width:100%;display:flex;align-items:center;gap:0.35rem;opacity:0.65;font-size:0.78rem;margin-top:0.25rem;padding-top:0.5rem;border-top:1px solid rgba(var(--modal-color-rgb,100,116,139),0.12);"><i class="fa-solid fa-pen-nib"></i> بواسطة: ${escapeHtml(data.reviewed_by_user.full_name)}</small>` : ''}
                     </div>
                     ` : ''}
                 </div>
@@ -1237,13 +1238,13 @@
             // عرض النافذة المنبثقة
             document.getElementById('applicationDetailsContent').innerHTML = contentHtml;
             document.getElementById('applicationDetailsActions').innerHTML = actionsHtml;
-            window.setModalTitle('تفاصيل الطلب');
-            window.setModalVariant(data.status);
+            window.setModalTitle('تفاصيل المتقدم');
+            window.setModalVariant('');
             window.openApplicationModal();
 
         } catch (error) {
-            console.error('خطأ في تحميل تفاصيل الطلب:', error);
-            showNotification('خطأ في تحميل تفاصيل الطلب', 'error');
+            console.error('خطأ في تحميل تفاصيل المتقدم:', error);
+            showNotification('خطأ في تحميل تفاصيل المتقدم', 'error');
         }
     }
 
@@ -3971,16 +3972,14 @@
             // عرض نافذة تأكيد موحدة
             const contentHtml = `
                 <div>
-                    <p>هل أنت متأكد من حذف هذا الموعد؟</p>
-                    <div class="modal-info-box box-danger">
+                    <div class="modal-info-box box-warning">
                         <i class="fa-solid fa-triangle-exclamation"></i>
-                        <div>
-                            <p><i class="fa-solid fa-circle-check"></i> حذف الموعد من قاعدة البيانات</p>
-                            <p><i class="fa-solid fa-circle-check"></i> حذف المقابلة المرتبطة</p>
-                            <p><i class="fa-solid fa-circle-check"></i> السماح للمتقدم بحجز موعد جديد</p>
-                            <p><strong>هذا الإجراء لا يمكن التراجع عنه!</strong></p>
-                        </div>
+                        <p>هل أنت متأكد من حذف هذا الموعد؟</p>
                     </div>
+                    <p style="margin: 0.5rem 0 0; font-size: 0.875rem; color: #64748b; line-height: 1.7;">
+                        سيتم حذف الموعد والمقابلة المرتبطة به من قاعدة البيانات، وسيُسمح للمتقدم بحجز موعد جديد.
+                        <br><strong style="color: #b45309;">هذا الإجراء لا يمكن التراجع عنه.</strong>
+                    </p>
                     <input type="hidden" id="delete-interview-id" value="${interviewId}">
                     <input type="hidden" id="delete-slot-id" value="${slotId}">
                 </div>
@@ -3991,7 +3990,7 @@
                     <i class="fa-solid fa-times"></i>
                     إلغاء
                 </button>
-                <button class="btn btn-danger" onclick="window.membershipManager.confirmCancelInterview()">
+                <button class="btn btn-warning" onclick="window.membershipManager.confirmCancelInterview()">
                     <i class="fa-solid fa-trash"></i>
                     نعم، احذف الموعد
                 </button>
@@ -3999,7 +3998,7 @@
 
             openModal('تأكيد حذف الموعد', contentHtml, {
                 icon: 'fa-triangle-exclamation',
-                variant: 'danger',
+                variant: 'warning',
                 footer: footerHtml
             });
 

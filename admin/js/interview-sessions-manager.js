@@ -105,7 +105,7 @@
 
         for (const session of allSessions) {
             const stats = await getSessionStats(session.id);
-            const date = new Date(session.session_date).toLocaleDateString('ar-SA', {
+            const date = new Date(session.session_date).toLocaleDateString('ar-EA', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
@@ -135,12 +135,12 @@
             }
 
             // تحويل الوقت إلى نظام 12 ساعة
-            const startTime = new Date(`2000-01-01 ${session.start_time}`).toLocaleTimeString('ar-SA', {
+            const startTime = new Date(`2000-01-01 ${session.start_time}`).toLocaleTimeString('ar-EA', {
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: true
             });
-            const endTime = new Date(`2000-01-01 ${session.end_time}`).toLocaleTimeString('ar-SA', {
+            const endTime = new Date(`2000-01-01 ${session.end_time}`).toLocaleTimeString('ar-EA', {
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: true
@@ -193,6 +193,14 @@
                             </div>
 
                             <div class="uc-card__info-item">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">مدة المقابلة</span>
+                                    <span class="uc-card__info-value">${session.slot_duration} دقيقة</span>
+                                </div>
+                            </div>
+
+                            <div class="uc-card__info-item">
                                 <div class="uc-card__info-icon"><i class="fa-solid fa-list-ol"></i></div>
                                 <div class="uc-card__info-content">
                                     <span class="uc-card__info-label">إجمالي الفترات</span>
@@ -223,9 +231,9 @@
                     </div>
 
                     <div class="uc-card__footer">
-                            <button class="btn btn-primary" onclick="window.interviewSessionsManager.viewSession('${session.id}')" title="عرض التفاصيل">
-                                <i class="fa-solid fa-eye"></i>
-                                عرض
+                            <button class="btn btn-primary" onclick="window.interviewSessionsManager.showSessionBookings('${session.id}')" title="جدول الحجوزات">
+                                <i class="fa-solid fa-users-rectangle"></i>
+                                الحجوزات
                             </button>
                             <button class="btn btn-warning" onclick="window.interviewSessionsManager.editSession('${session.id}')" title="تعديل الجلسة">
                                 <i class="fa-solid fa-pen-to-square"></i>
@@ -546,6 +554,75 @@
     }
 
     /**
+     * عرض جميع فترات جلسة معينة في نافذة منبثقة
+     */
+    async function showSessionBookings(sessionId) {
+        const session = allSessions.find(s => s.id === sessionId);
+        if (!session) return;
+
+        try {
+            const { data: slots, error } = await window.sbClient
+                .from('interview_slots')
+                .select(`
+                    *,
+                    booked_by_app:membership_applications!booked_by(full_name, preferred_committee)
+                `)
+                .eq('session_id', sessionId)
+                .order('slot_time', { ascending: true });
+
+            if (error) throw error;
+
+            let tableHtml = '';
+
+            if (!slots || slots.length === 0) {
+                tableHtml = `
+                    <div class="empty-state">
+                        <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
+                        <p class="empty-state__title">لا توجد فترات لهذه الجلسة</p>
+                    </div>`;
+            } else {
+                tableHtml = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>الوقت</th>
+                                <th>الحالة</th>
+                                <th>الاسم</th>
+                                <th>اللجنة المرغوبة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${slots.map((slot, i) => {
+                                const time = new Date(slot.slot_time).toLocaleTimeString('ar-EA', { hour: '2-digit', minute: '2-digit', hour12: true });
+                                const statusBadge = slot.is_booked
+                                    ? '<span class="badge badge-success">محجوزة</span>'
+                                    : '<span class="badge badge-secondary">متاحة</span>';
+                                return `
+                                    <tr>
+                                        <td>${i + 1}</td>
+                                        <td>${time}</td>
+                                        <td>${statusBadge}</td>
+                                        <td>${slot.is_booked ? escapeHtml(slot.booked_by_app?.full_name || '-') : '-'}</td>
+                                        <td>${slot.is_booked ? escapeHtml(slot.booked_by_app?.preferred_committee || '-') : '-'}</td>
+                                    </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>`;
+            }
+
+            openModal(`فترات: ${escapeHtml(session.session_name)}`, tableHtml, {
+                icon: 'fa-users-rectangle',
+                size: 'lg'
+            });
+
+        } catch (err) {
+            console.error('خطأ في تحميل الفترات:', err);
+            showNotification('خطأ في تحميل فترات الجلسة', 'error');
+        }
+    }
+
+    /**
      * عرض تفاصيل جلسة
      */
     async function viewSession(sessionId) {
@@ -566,19 +643,19 @@
 
             if (slotsError) throw slotsError;
 
-            const sessionDate = new Date(session.session_date).toLocaleDateString('ar-SA', {
+            const sessionDate = new Date(session.session_date).toLocaleDateString('ar-EA', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             });
 
-            const startTime = new Date(`2000-01-01 ${session.start_time}`).toLocaleTimeString('ar-SA', {
+            const startTime = new Date(`2000-01-01 ${session.start_time}`).toLocaleTimeString('ar-EA', {
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: true
             });
 
-            const endTime = new Date(`2000-01-01 ${session.end_time}`).toLocaleTimeString('ar-SA', {
+            const endTime = new Date(`2000-01-01 ${session.end_time}`).toLocaleTimeString('ar-EA', {
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: true
@@ -618,7 +695,7 @@
                 `;
 
                 slots.forEach(slot => {
-                    const time = new Date(slot.slot_time).toLocaleTimeString('ar-SA', {
+                    const time = new Date(slot.slot_time).toLocaleTimeString('ar-EA', {
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: true
@@ -738,7 +815,7 @@
             `;
 
             document.getElementById('applicationDetailsContent').innerHTML = contentHtml;
-            document.getElementById('applicationDetailsActions').innerHTML = '';
+            document.getElementById('applicationDetailEActions').innerHTML = '';
             window.setModalTitle(session.session_name);
             window.openApplicationModal();
 
@@ -763,16 +840,16 @@
     /**
      * تفعيل/تعطيل جلسة
      */
-    async function toggleSession(sessionId, isActive) {
+    async function toggleSession(sessionId, iEActive) {
         try {
             const { error } = await window.sbClient
                 .from('interview_sessions')
-                .update({ is_active: isActive })
+                .update({ is_active: iEActive })
                 .eq('id', sessionId);
 
             if (error) throw error;
 
-            showNotification(isActive ? 'تم تفعيل الجلسة' : 'تم تعطيل الجلسة', 'success');
+            showNotification(iEActive ? 'تم تفعيل الجلسة' : 'تم تعطيل الجلسة', 'success');
             await loadSessions();
 
         } catch (error) {
@@ -843,7 +920,7 @@
                 إلغاء
             </button>
             <button class="btn btn-primary" onclick="window.interviewSessionsManager.submitEditSession()">
-                <i class="fa-solid fa-save"></i>
+                <i class="fa-solid fa-EAve"></i>
                 حفظ التعديلات
             </button>
         `;
@@ -1010,7 +1087,7 @@
             <input type="hidden" id="update-session-id" value="${sessionId}">
             <div class="form-group">
                 <label class="form-label">الرابط الحالي</label>
-                <input type="text" class="form-input" value="${session.meeting_link || 'لا يوجد'}" disabled>
+                <input type="text" class="form-input" value="${session.meeting_link || 'لا يوجد'}" diEAbled>
             </div>
             <div class="form-group">
                 <label class="form-label">الرابط الجديد <span class="required-dot">*</span></label>
@@ -1077,7 +1154,7 @@
         const session = allSessions.find(s => s.id === sessionId);
         if (!session) return;
 
-        const message = `
+        const mesEAge = `
             <p>هل أنت متأكد من حذف هذه الجلسة؟</p>
             <p><strong>${escapeHtml(session.session_name)}</strong></p>
             <p>⚠️ سيتم حذف جميع الفترات والحجوزات المرتبطة بها</p>
@@ -1085,7 +1162,7 @@
 
         window.openConfirmModal(
             'تأكيد الحذف',
-            message,
+            mesEAge,
             async () => {
                 try {
                     const { error } = await window.sbClient
@@ -1137,7 +1214,7 @@
         }
     }
 
-    function showNotification(message, type = 'info') {
+    function showNotification(mesEAge, type = 'info') {
         const notification = document.createElement('div');
         notification.className = `custom-notification custom-notification-${type}`;
         
@@ -1150,7 +1227,7 @@
         
         notification.innerHTML = `
             <i class="fa-solid ${icons[type] || icons.info}"></i>
-            <span>${message}</span>
+            <span>${mesEAge}</span>
         `;
         
         document.body.appendChild(notification);
@@ -1298,9 +1375,9 @@
         };
 
         const typeBadges = {
-            'in_person': '<span class="badge badge-info">حضوري</span>',
-            'online': '<span class="badge badge-primary">أونلاين</span>',
-            'phone': '<span class="badge badge-secondary">هاتفي</span>'
+            'in_person': '<span class="uc-card__badge">حضوري</span>',
+            'online': '<span class="uc-card__badge">أونلاين</span>',
+            'phone': '<span class="uc-card__badge">هاتفي</span>'
         };
 
         const resultBadges = {
@@ -1313,16 +1390,16 @@
         let html = '<div class="uc-grid">';
 
         filtered.forEach(interview => {
-            const date = new Date(interview.interview_date).toLocaleDateString('ar-SA', {
+            const date = new Date(interview.interview_date).toLocaleDateString('ar-EA', {
                 year: 'numeric', month: 'long', day: 'numeric'
             });
 
-            const time = new Date(interview.interview_date).toLocaleTimeString('ar-SA', {
+            const time = new Date(interview.interview_date).toLocaleTimeString('ar-EA', {
                 hour: '2-digit', minute: '2-digit'
             });
 
             const typeBadge = typeBadges[interview.interview_type] || '<span class="badge badge-secondary">-</span>';
-            const resultBadge = resultBadges[interview.result] || '<span class="badge badge-secondary">-</span>';
+            const resultBadge = resultBadges[interview.result] || '';
             const sessionName = interview.slot?.[0]?.interview_sessions?.session_name || 'غير محدد';
 
             html += `
@@ -1335,7 +1412,8 @@
                             <div class="uc-card__header-info">
                                 <h3 class="uc-card__title">${escapeHtml(interview.application?.full_name || 'غير محدد')}</h3>
                                 <div>
-                                    <span class="uc-card__badge">مجدولة</span>
+                                    <span class="uc-card__badge">محجوزة</span>
+                                    ${typeBadge}
                                     ${resultBadge}
                                 </div>
                             </div>
@@ -1379,33 +1457,24 @@
                             <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-day"></i></div>
                             <div class="uc-card__info-content">
                                 <span class="uc-card__info-label">تاريخ المقابلة</span>
-                                <span class="uc-card__info-value">${date} - ${time}</span>
+                                <span class="uc-card__info-value">${date}</span>
                             </div>
                         </div>
 
                         <div class="uc-card__info-item">
-                            <div class="uc-card__info-icon"><i class="fa-solid ${typeIcons[interview.interview_type] || 'fa-handshake'}"></i></div>
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-clock"></i></div>
                             <div class="uc-card__info-content">
-                                <span class="uc-card__info-label">نوع المقابلة</span>
-                                <span class="uc-card__info-value">${typeBadge}</span>
+                                <span class="uc-card__info-label">وقت المقابلة</span>
+                                <span class="uc-card__info-value">${time}</span>
                             </div>
                         </div>
 
-                        ${interview.meeting_link ? `
-                            <div class="uc-card__info-item">
-                                <div class="uc-card__info-icon"><i class="fa-solid fa-link"></i></div>
-                                <div class="uc-card__info-content">
-                                    <span class="uc-card__info-label">رابط المقابلة</span>
-                                    <a href="${escapeHtml(interview.meeting_link)}" target="_blank" class="uc-card__info-value">فتح الرابط</a>
-                                </div>
-                            </div>
-                        ` : ''}
                     </div>
 
                     <div class="uc-card__footer">
-                        <button class="btn btn-primary" onclick="window.membershipManager.viewInterview('${interview.id}')">
-                            <i class="fa-solid fa-eye"></i>
-                            عرض التفاصيل
+                        <button class="btn btn-primary" onclick="window.membershipManager.viewApplication('${interview.application?.id}')">
+                            <i class="fa-solid fa-user"></i>
+                            عرض المتقدم
                         </button>
                         ${interview.result === 'pending' || !interview.result ? `
                         <button class="btn btn-success" onclick="window.interviewSessionsManager.acceptGroupBooking('${interview.id}')">
@@ -1474,9 +1543,12 @@
 
         const contentHtml = `
             <div>
-                <p>هل أنت متأكد من قبول هذا المتقدم؟</p>
-                <div class="form-group" style="margin-top: 1rem;">
-                    <label class="form-label"><i class="fa-solid fa-note-sticky"></i> ملاحظات القبول (اختياري)</label>
+                <div class="modal-info-box box-success">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <p>هل أنت متأكد من قبول هذا المتقدم؟</p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-note-sticky"></i></span> ملاحظات القبول (اختياري)</label>
                     <textarea id="groupAcceptNotes" class="form-input form-textarea" placeholder="أضف ملاحظات حول قبول المتقدم..." rows="3"></textarea>
                 </div>
                 <input type="hidden" id="group-accept-interview-id" value="${interviewId}">
@@ -1585,9 +1657,12 @@
 
         const contentHtml = `
             <div>
-                <p>هل أنت متأكد من رفض هذا المتقدم؟</p>
-                <div class="form-group" style="margin-top: 1rem;">
-                    <label class="form-label"><i class="fa-solid fa-note-sticky"></i> سبب الرفض (اختياري)</label>
+                <div class="modal-info-box box-danger">
+                    <i class="fa-solid fa-circle-xmark"></i>
+                    <p>هل أنت متأكد من رفض هذا المتقدم؟</p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-note-sticky"></i></span> سبب الرفض (اختياري)</label>
                     <textarea id="groupRejectNotes" class="form-input form-textarea" placeholder="أضف سبب رفض المتقدم..." rows="3"></textarea>
                 </div>
                 <input type="hidden" id="group-reject-interview-id" value="${interviewId}">
@@ -1654,6 +1729,7 @@
         createNewSession,
         submitNewSession,
         viewSession,
+        showSessionBookings,
         editSession,
         submitEditSession,
         updateMeetingLink,
