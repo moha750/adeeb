@@ -131,16 +131,16 @@
                 day: 'numeric'
             }) : 'غير محدد';
 
-            const statusBadge = interview.result === 'accepted' 
-                ? '<span class="status-badge status-accepted">مقبول نهائياً</span>'
-                : '<span class="status-badge status-rejected">مرفوض نهائياً</span>';
+            const statusBadge = interview.result === 'accepted'
+                ? '<span class="uc-card__badge"><i class="fa-solid fa-check"></i> مقبول نهائياً</span>'
+                : '<span class="uc-card__badge"><i class="fa-solid fa-xmark"></i> مرفوض نهائياً</span>';
 
             const avatarIcon = interview.result === 'accepted' 
                 ? '<i class="fa-solid fa-user-check"></i>'
                 : '<i class="fa-solid fa-user-xmark"></i>';
 
             html += `
-                <div class="uc-card">
+                <div class="uc-card ${interview.result === 'accepted' ? 'uc-card--success' : 'uc-card--danger'}">
                     <div class="uc-card__header">
                         <div class="uc-card__header-inner">
                             <div class="uc-card__icon ${interview.result === 'accepted' ? 'avatar-accepted' : 'avatar-rejected'}">
@@ -206,7 +206,7 @@
                     </div>
 
                     <div class="uc-card__footer">
-                        <button class="btn-view-details" onclick="window.membershipManager.viewInterview('${interview.id}')">
+                        <button class="btn ${interview.result === 'accepted' ? 'btn-success' : 'btn-danger'}" onclick="window.membershipManager.viewInterview('${interview.id}')">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل الكاملة
                         </button>
@@ -337,7 +337,153 @@
      * تصدير قرارات العضوية
      */
     function exportDecisions() {
-        showNotification('جاري تطوير ميزة التصدير', 'info');
+        if (currentDecisions.length === 0) {
+            showNotification('لا توجد بيانات للتصدير', 'warning');
+            return;
+        }
+
+        // استخراج اللجان المتوفرة من البيانات الحالية
+        const committees = [...new Set(currentDecisions.map(d => d.application?.preferred_committee).filter(Boolean))].sort();
+
+        const committeeCheckboxes = committees.map(c => `
+            <label class="form-checkbox">
+                <input type="checkbox" value="${escapeHtml(c)}" data-export-committee>
+                <span class="form-checkbox-label">${escapeHtml(c)}</span>
+            </label>
+        `).join('');
+
+        const allColumns = [
+            { key: 'full_name', label: 'الاسم', checked: true },
+            { key: 'email', label: 'البريد الإلكتروني', checked: true },
+            { key: 'phone', label: 'الهاتف', checked: true },
+            { key: 'preferred_committee', label: 'اللجنة المفضلة', checked: true },
+            { key: 'interview_date', label: 'تاريخ المقابلة', checked: true },
+            { key: 'result', label: 'النتيجة', checked: true },
+            { key: 'decided_at', label: 'تاريخ القرار', checked: true },
+            { key: 'interviewer_notes', label: 'ملاحظات المقابل', checked: false },
+            { key: 'result_notes', label: 'ملاحظات النتيجة', checked: false }
+        ];
+
+        const columnsHtml = allColumns.map(col => `
+            <label class="form-checkbox">
+                <input type="checkbox" value="${col.key}" data-export-column ${col.checked ? 'checked' : ''}>
+                <span class="form-checkbox-label">${col.label}</span>
+            </label>
+        `).join('');
+
+        const formHtml = `
+            <div class="modal-form-grid">
+                <div class="form-group full-width">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-users-between-lines"></i></span> اللجان</label>
+                    <div class="export-columns-grid" id="exportDecCommitteeCheckboxes">
+                        ${committeeCheckboxes}
+                    </div>
+                </div>
+                <hr class="modal-divider">
+                <div class="form-group full-width">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-scale-balanced"></i></span> القرار</label>
+                    <select id="exportDecResultFilter" class="form-select">
+                        <option value="">جميع القرارات</option>
+                        <option value="accepted">مقبول نهائياً</option>
+                        <option value="rejected">مرفوض نهائياً</option>
+                    </select>
+                </div>
+                <hr class="modal-divider">
+                <div class="form-group full-width">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-table-columns"></i></span> الأعمدة المطلوبة</label>
+                    <div class="export-columns-grid">
+                        ${columnsHtml}
+                    </div>
+                </div>
+                <div class="form-group full-width" id="exportDecPreviewCount">
+                    <small><i class="fa-solid fa-circle-info"></i> سيتم تصدير <strong>${currentDecisions.length}</strong> سجل</small>
+                </div>
+            </div>
+        `;
+
+        const footer = `
+            <button class="btn btn-outline" onclick="closeModal()">
+                <i class="fa-solid fa-times"></i> إلغاء
+            </button>
+            <button class="btn btn-primary" id="exportDecConfirmBtn">
+                <i class="fa-solid fa-file-export"></i> تصدير CSV
+            </button>
+        `;
+
+        window.openModal('تصدير نتائج المقابلات', formHtml, {
+            icon: 'fa-file-export',
+            footer: footer,
+            size: 'md',
+            onOpen: () => {
+                const committeeContainer = document.getElementById('exportDecCommitteeCheckboxes');
+                const resultEl = document.getElementById('exportDecResultFilter');
+                const previewEl = document.getElementById('exportDecPreviewCount');
+
+                function getSelectedCommittees() {
+                    return Array.from(committeeContainer.querySelectorAll('input[data-export-committee]:checked')).map(cb => cb.value);
+                }
+
+                function getFilteredData() {
+                    const selectedCommittees = getSelectedCommittees();
+                    const result = resultEl.value;
+
+                    return currentDecisions.filter(item => {
+                        if (selectedCommittees.length > 0 && !selectedCommittees.includes(item.application?.preferred_committee)) return false;
+                        if (result && item.result !== result) return false;
+                        return true;
+                    });
+                }
+
+                function updatePreview() {
+                    const count = getFilteredData().length;
+                    previewEl.innerHTML = `<small><i class="fa-solid fa-circle-info"></i> سيتم تصدير <strong>${count}</strong> سجل</small>`;
+                }
+
+                committeeContainer.addEventListener('change', updatePreview);
+                resultEl.addEventListener('change', updatePreview);
+
+                document.getElementById('exportDecConfirmBtn').addEventListener('click', () => {
+                    const filtered = getFilteredData();
+                    if (filtered.length === 0) {
+                        showNotification('لا توجد بيانات مطابقة للتصدير', 'warning');
+                        return;
+                    }
+
+                    const checkboxes = document.querySelectorAll('input[data-export-column]:checked');
+                    const selectedKeys = Array.from(checkboxes).map(cb => cb.value);
+
+                    if (selectedKeys.length === 0) {
+                        showNotification('يرجى اختيار عمود واحد على الأقل', 'warning');
+                        return;
+                    }
+
+                    const columnMap = {
+                        full_name: { header: 'الاسم', get: d => d.application?.full_name || '' },
+                        email: { header: 'البريد الإلكتروني', get: d => d.application?.email || '' },
+                        phone: { header: 'الهاتف', get: d => d.application?.phone || '' },
+                        preferred_committee: { header: 'اللجنة المفضلة', get: d => d.application?.preferred_committee || '' },
+                        interview_date: { header: 'تاريخ المقابلة', get: d => d.interview_date ? new Date(d.interview_date).toLocaleDateString('ar-SA') : '-' },
+                        result: { header: 'النتيجة', get: d => d.result === 'accepted' ? 'مقبول' : 'مرفوض' },
+                        decided_at: { header: 'تاريخ القرار', get: d => d.decided_at ? new Date(d.decided_at).toLocaleDateString('ar-SA') : '-' },
+                        interviewer_notes: { header: 'ملاحظات المقابل', get: d => d.interviewer_notes || '' },
+                        result_notes: { header: 'ملاحظات النتيجة', get: d => d.result_notes || '' }
+                    };
+
+                    const headers = selectedKeys.map(k => columnMap[k].header);
+                    const rows = filtered.map(item => selectedKeys.map(k => columnMap[k].get(item)));
+
+                    const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+                    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `نتائج_المقابلات_${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
+
+                    closeModal();
+                    showNotification(`تم تصدير ${filtered.length} سجل بنجاح`, 'success');
+                });
+            }
+        });
     }
 
     /**

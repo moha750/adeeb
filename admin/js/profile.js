@@ -901,97 +901,6 @@
 
 
     /**
-     * فتح نافذة تغيير كلمة المرور
-     */
-    function openChangePasswordModal() {
-        const modal = document.getElementById('changePasswordModal');
-        if (!modal) return;
-
-        document.getElementById('currentPassword').value = '';
-        document.getElementById('newPassword').value = '';
-        document.getElementById('confirmNewPassword').value = '';
-
-        modal.style.display = 'flex';
-
-        const closeBtn = document.getElementById('closeChangePasswordModal');
-        const cancelBtn = document.getElementById('cancelChangePassword');
-        const saveBtn = document.getElementById('saveNewPassword');
-
-        closeBtn.onclick = () => modal.style.display = 'none';
-        cancelBtn.onclick = () => modal.style.display = 'none';
-        saveBtn.onclick = handleChangePassword;
-    }
-
-    /**
-     * معالجة تغيير كلمة المرور
-     */
-    async function handleChangePassword() {
-        try {
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmNewPassword').value;
-
-            if (newPassword !== confirmPassword) {
-                showNotification('كلمة المرور الجديدة غير متطابقة', 'error');
-                return;
-            }
-
-            if (newPassword.length < 8) {
-                showNotification('كلمة المرور يجب أن تكون 8 أحرف على الأقل', 'error');
-                return;
-            }
-
-            const { error } = await window.sbClient.auth.updateUser({
-                password: newPassword
-            });
-
-            if (error) throw error;
-
-            showNotification('تم تغيير كلمة المرور بنجاح', 'success');
-            document.getElementById('changePasswordModal').style.display = 'none';
-
-        } catch (error) {
-            console.error('خطأ في تغيير كلمة المرور:', error);
-            showNotification(`فشل تغيير كلمة المرور: ${error.message}`, 'error');
-        }
-    }
-
-
-    /**
-     * معالجة تغيير كلمة المرور
-     */
-    async function handleChangePassword(e) {
-        e.preventDefault();
-
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-
-        if (newPassword !== confirmPassword) {
-            showNotification('كلمتا المرور غير متطابقتين', 'warning');
-            return;
-        }
-
-        if (newPassword.length < 8) {
-            showNotification('كلمة المرور يجب أن تكون 8 أحرف على الأقل', 'warning');
-            return;
-        }
-
-        try {
-            const { error } = await window.sbClient.auth.updateUser({
-                password: newPassword
-            });
-
-            if (error) throw error;
-
-            showNotification('تم تغيير كلمة المرور بنجاح', 'success');
-            document.getElementById('changePasswordModal').remove();
-
-        } catch (error) {
-            console.error('خطأ في تغيير كلمة المرور:', error);
-            showNotification(`فشل تغيير كلمة المرور: ${error.message}`, 'error');
-        }
-    }
-
-    /**
      * عرض الجلسات النشطة
      */
     function viewActiveSessions() {
@@ -1077,17 +986,12 @@
      * ربط الأحداث
      */
     function bindEvents() {
-        const changePasswordBtn = document.getElementById('changePasswordBtn');
         const viewSessionsBtn = document.getElementById('viewSessionsBtn');
         const changeAvatarBtn = document.getElementById('changeAvatarBtn');
         const copyProfileLinkBtn = document.getElementById('copyProfileLinkBtn');
         const openProfileLinkBtn = document.getElementById('openProfileLinkBtn');
 
         setupEditModals();
-
-        if (changePasswordBtn) {
-            changePasswordBtn.addEventListener('click', openChangePasswordModal);
-        }
 
         if (viewSessionsBtn) {
             viewSessionsBtn.removeEventListener('click', viewActiveSessions);
@@ -1167,7 +1071,7 @@
     }
 
     /**
-     * تحميل بيانات اللجنة
+     * تحميل بيانات اللجنة والقسم
      */
     async function loadCommitteeData(userRole) {
         try {
@@ -1175,9 +1079,10 @@
                 return;
             }
 
+            // جلب بيانات اللجنة مع القسم
             const { data: committee, error: committeeError } = await window.sbClient
                 .from('committees')
-                .select('*')
+                .select('*, departments(id, name_ar, description, group_link)')
                 .eq('id', userRole.committee_id)
                 .single();
 
@@ -1186,25 +1091,17 @@
                 return;
             }
 
-            // جلب قائد اللجنة (role_id: 7 = قائد لجنة، 8 = نائب قائد لجنة)
-            const { data: leaders, error: leadersError } = await window.sbClient
+            // جلب قادة اللجنة (7 = قائد، 8 = نائب)
+            const { data: leaders } = await window.sbClient
                 .from('user_roles')
                 .select('user_id, role_id, profiles!user_roles_user_id_fkey(full_name), roles(role_name_ar)')
                 .eq('committee_id', userRole.committee_id)
                 .eq('is_active', true)
-                .in('role_id', [7, 8]) // 7 = قائد لجنة، 8 = نائب قائد لجنة
-                .order('role_id', { ascending: true }); // قائد اللجنة أولاً
+                .in('role_id', [7, 8])
+                .order('role_id', { ascending: true });
 
-            if (leadersError) {
-                console.error('خطأ في جلب قادة اللجنة:', leadersError);
-            }
-            
-            console.log('قادة اللجنة:', leaders);
-
-            // اختيار القائد أو النائب
-            const mainLeader = leaders?.find(l => l.role_id === 7); // قائد اللجنة
-            const viceLeader = leaders?.find(l => l.role_id === 8); // نائب قائد اللجنة
-            const displayLeader = mainLeader || viceLeader;
+            const mainLeader = leaders?.find(l => l.role_id === 7);
+            const viceLeader = leaders?.find(l => l.role_id === 8);
 
             // عد أعضاء اللجنة
             const { count: totalMembers } = await window.sbClient
@@ -1213,56 +1110,393 @@
                 .eq('committee_id', userRole.committee_id)
                 .eq('is_active', true);
 
-            // تعبئة البيانات - دعم كلا القسمين (الملف الشخصي و لجنتي)
+            // ═══════════════════════════════════════════
+            // تعبئة تبويب "لجنتي"
+            // ═══════════════════════════════════════════
+
+            const setText = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            };
+
+            setText('myCommitteeNameDisplay', committee.committee_name_ar);
+            setText('myCommitteeDescription', committee.description || 'لا يوجد تعريف متاح');
+            setText('myCommitteeMembersCount', totalMembers || 0);
+            // قائد اللجنة
+            if (mainLeader?.profiles?.full_name) {
+                setText('myCommitteeLeader', mainLeader.profiles.full_name);
+            } else if (viceLeader?.profiles?.full_name) {
+                setText('myCommitteeLeader', viceLeader.profiles.full_name + ' (نائب)');
+            } else {
+                setText('myCommitteeLeader', 'لم يُعيَّن بعد');
+            }
+
+            // نائب القائد
+            setText('myCommitteeViceLeader', viceLeader?.profiles?.full_name || 'لم يُعيَّن بعد');
+
+            // القسم التابعة له
+            const dept = committee.departments;
+            if (dept) {
+                setText('myCommitteeDepartment', dept.name_ar);
+            }
+
+            // دعم الملف الشخصي (القسم القديم إذا وُجد)
             const nameDisplay = document.getElementById('committeeNameDisplay');
             const description = document.getElementById('committeeDescription');
             const leaderDisplay = document.getElementById('committeeLeader');
             const membersCountEl = document.getElementById('committeeMembersCount');
-            
-            const myNameDisplay = document.getElementById('myCommitteeNameDisplay');
-            const myDescription = document.getElementById('myCommitteeDescription');
-            const myLeaderDisplay = document.getElementById('myCommitteeLeader');
-            const myMembersCountEl = document.getElementById('myCommitteeMembersCount');
-            
-            // تنسيق عرض القائد/النائب
+
+            const displayLeader = mainLeader || viceLeader;
             let leaderText = 'غير محدد';
             if (displayLeader?.profiles?.full_name) {
                 const roleTitle = displayLeader.roles?.role_name_ar || (displayLeader.role_id === 7 ? 'قائد اللجنة' : 'نائب قائد اللجنة');
                 leaderText = `${displayLeader.profiles.full_name} (${roleTitle})`;
             }
-            
+
             if (nameDisplay) nameDisplay.textContent = committee.committee_name_ar;
             if (description) description.textContent = committee.description || 'لا يوجد تعريف متاح';
             if (leaderDisplay) leaderDisplay.textContent = leaderText;
             if (membersCountEl) membersCountEl.textContent = totalMembers || 0;
-            
-            if (myNameDisplay) myNameDisplay.textContent = committee.committee_name_ar;
-            if (myDescription) myDescription.textContent = committee.description || 'لا يوجد تعريف متاح';
-            if (myLeaderDisplay) myLeaderDisplay.textContent = leaderText;
-            if (myMembersCountEl) myMembersCountEl.textContent = totalMembers || 0;
 
-            // عرض رابط القروب إذا كان موجوداً
-            const groupLinkContainer = document.getElementById('committeeGroupLinkContainer');
-            const groupLink = document.getElementById('committeeGroupLink');
+            // رابط قروب اللجنة
             const myGroupLinkContainer = document.getElementById('myCommitteeGroupLinkContainer');
             const myGroupLink = document.getElementById('myCommitteeGroupLink');
-            
-            if (committee.group_link) {
-                if (groupLinkContainer && groupLink) {
-                    groupLink.href = committee.group_link;
-                    groupLinkContainer.style.display = 'block';
+            if (committee.group_link && myGroupLinkContainer && myGroupLink) {
+                myGroupLink.href = committee.group_link;
+                myGroupLinkContainer.classList.remove('d-none');
+            }
+
+            const groupLinkContainer = document.getElementById('committeeGroupLinkContainer');
+            const groupLink = document.getElementById('committeeGroupLink');
+            if (committee.group_link && groupLinkContainer && groupLink) {
+                groupLink.href = committee.group_link;
+                groupLinkContainer.style.display = 'block';
+            } else if (groupLinkContainer) {
+                groupLinkContainer.style.display = 'none';
+            }
+
+            // جلب وعرض أعضاء اللجنة (member-chips)
+            await loadCommitteeMembers(userRole.committee_id);
+
+            // ═══════════════════════════════════════════
+            // تعبئة تبويب "قسمي"
+            // ═══════════════════════════════════════════
+
+            const deptCard = document.getElementById('myDepartmentInfoCard');
+            if (dept && deptCard) {
+                setText('myDepartmentNameDisplay', dept.name_ar);
+                setText('myDepartmentDescription', dept.description || 'لا يوجد تعريف متاح');
+
+                // جلب رئيس القسم
+                const { data: deptHeads } = await window.sbClient
+                    .from('user_roles')
+                    .select('profiles!user_roles_user_id_fkey(full_name), roles!inner(role_name, role_name_ar)')
+                    .eq('department_id', dept.id)
+                    .eq('is_active', true)
+                    .eq('roles.role_name', 'department_head')
+                    .limit(1);
+
+                setText('myDepartmentHead', deptHeads?.[0]?.profiles?.full_name || 'لم يُعيَّن بعد');
+
+                // جلب لجان القسم مع عدد الأعضاء
+                const { data: deptCommittees } = await window.sbClient
+                    .from('committees')
+                    .select('id, committee_name_ar, description, is_active')
+                    .eq('department_id', dept.id)
+                    .eq('is_active', true)
+                    .order('committee_name_ar');
+
+                setText('myDepartmentCommitteesCount', deptCommittees?.length || 0);
+
+                // عرض لجان القسم كبطاقات
+                const committeesList = document.getElementById('myDepartmentCommitteesList');
+                if (committeesList && deptCommittees?.length) {
+                    // جلب عدد الأعضاء وقادة كل لجنة
+                    const committeeData = await Promise.all(
+                        deptCommittees.map(async (c) => {
+                            const [{ count }, { data: cLeaders }] = await Promise.all([
+                                window.sbClient
+                                    .from('user_roles')
+                                    .select('*', { count: 'exact', head: true })
+                                    .eq('committee_id', c.id)
+                                    .eq('is_active', true),
+                                window.sbClient
+                                    .from('user_roles')
+                                    .select('role_id, profiles!user_roles_user_id_fkey(full_name)')
+                                    .eq('committee_id', c.id)
+                                    .eq('is_active', true)
+                                    .in('role_id', [7, 8])
+                                    .order('role_id', { ascending: true })
+                            ]);
+                            const leader = cLeaders?.find(l => l.role_id === 7);
+                            const vice = cLeaders?.find(l => l.role_id === 8);
+                            return { ...c, membersCount: count || 0, leaderName: leader?.profiles?.full_name, viceName: vice?.profiles?.full_name };
+                        })
+                    );
+
+                    committeesList.innerHTML = committeeData.map(c => {
+                        const isMyCommittee = c.id === userRole.committee_id;
+                        return `
+                            <div class="uc-card uc-card--primary">
+                                <div class="uc-card__header">
+                                    <div class="uc-card__header-inner">
+                                        <div class="uc-card__icon">
+                                            <i class="fa-solid fa-users"></i>
+                                        </div>
+                                        <div class="uc-card__header-info">
+                                            <h3 class="uc-card__title">${c.committee_name_ar}</h3>
+                                            <span class="uc-card__badge"><i class="fa-solid fa-${isMyCommittee ? 'star' : 'users'}"></i> ${isMyCommittee ? 'لجنتي' : 'لجنة'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="uc-card__body">
+                                    ${c.description ? `
+                                    <div class="uc-card__info-item uc-card__info-item--full">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-info-circle"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">تعريف اللجنة</span>
+                                            <span class="uc-card__info-value" style="white-space: normal;">${c.description}</span>
+                                        </div>
+                                    </div>` : ''}
+                                    <div class="uc-card__info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-user-tie"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">قائد اللجنة</span>
+                                            <span class="uc-card__info-value">${c.leaderName || 'لم يُعيَّن بعد'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="uc-card__info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-user-shield"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">نائب اللجنة</span>
+                                            <span class="uc-card__info-value">${c.viceName || 'لم يُعيَّن بعد'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="uc-card__info-item">
+                                        <div class="uc-card__info-icon"><i class="fa-solid fa-users-line"></i></div>
+                                        <div class="uc-card__info-content">
+                                            <span class="uc-card__info-label">عدد الأعضاء</span>
+                                            <span class="uc-card__info-value">${c.membersCount} عضو</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else if (committeesList) {
+                    committeesList.innerHTML = `
+                        <div class="empty-state" style="text-align: center; padding: 2rem; color: #94a3b8;">
+                            <i class="fa-solid fa-users-slash" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
+                            <p>لا توجد لجان في هذا القسم</p>
+                        </div>
+                    `;
                 }
-                if (myGroupLinkContainer && myGroupLink) {
-                    myGroupLink.href = committee.group_link;
-                    myGroupLinkContainer.style.display = 'block';
+
+                // رابط قروب القسم
+                const deptGroupContainer = document.getElementById('myDepartmentGroupLinkContainer');
+                const deptGroupLink = document.getElementById('myDepartmentGroupLink');
+                if (dept.group_link && deptGroupContainer && deptGroupLink) {
+                    deptGroupLink.href = dept.group_link;
+                    deptGroupContainer.classList.remove('d-none');
                 }
-            } else {
-                if (groupLinkContainer) groupLinkContainer.style.display = 'none';
-                if (myGroupLinkContainer) myGroupLinkContainer.style.display = 'none';
+
+                // جلب أعضاء القسم
+                await loadDepartmentMembers(dept.id, deptCommittees || []);
+            } else if (deptCard) {
+                deptCard.style.display = 'none';
             }
 
         } catch (error) {
             console.error('خطأ في تحميل بيانات اللجنة:', error);
+        }
+    }
+
+    /**
+     * تحميل أعضاء القسم
+     */
+    async function loadDepartmentMembers(departmentId, committees) {
+        const container = document.getElementById('myDepartmentMembersList');
+        if (!container) return;
+
+        try {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: #94a3b8; grid-column: 1 / -1;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 0.75rem; display: block;"></i>
+                    <p>جاري تحميل أعضاء القسم...</p>
+                </div>
+            `;
+
+            // جلب كل الأعضاء النشطين في لجان القسم
+            const committeeIds = committees.map(c => c.id);
+            if (!committeeIds.length) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #94a3b8; grid-column: 1 / -1;">
+                        <i class="fa-solid fa-users-slash" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
+                        <p>لا يوجد أعضاء في هذا القسم</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // جلب أعضاء القسم (رئيس القسم + أعضاء اللجان)
+            const [{ data: committeeMembers }, { data: deptDirectMembers }] = await Promise.all([
+                window.sbClient
+                    .from('user_roles')
+                    .select(`
+                        id, user_id, role_id, assigned_at,
+                        profiles!user_roles_user_id_fkey(id, full_name, email, phone, avatar_url, account_status),
+                        roles(role_name, role_name_ar),
+                        committees(committee_name_ar)
+                    `)
+                    .in('committee_id', committeeIds)
+                    .eq('is_active', true)
+                    .order('assigned_at', { ascending: false }),
+                window.sbClient
+                    .from('user_roles')
+                    .select(`
+                        id, user_id, role_id, assigned_at,
+                        profiles!user_roles_user_id_fkey(id, full_name, email, phone, avatar_url, account_status),
+                        roles(role_name, role_name_ar)
+                    `)
+                    .eq('department_id', departmentId)
+                    .eq('is_active', true)
+                    .order('assigned_at', { ascending: false })
+            ]);
+
+            // دمج الأعضاء وإزالة المكررين
+            const allRaw = [...(deptDirectMembers || []).map(m => ({ ...m, committeeName: null })), ...(committeeMembers || []).map(m => ({ ...m, committeeName: m.committees?.committee_name_ar }))];
+            const seen = new Set();
+            const allMembers = allRaw.filter(m => {
+                if (!m.profiles || m.profiles.account_status !== 'active') return false;
+                if (seen.has(m.user_id)) return false;
+                seen.add(m.user_id);
+                return true;
+            });
+
+            // تحديث إحصائية عدد أعضاء القسم
+            const deptMembersCountEl = document.getElementById('myDepartmentMembersCount');
+            if (deptMembersCountEl) deptMembersCountEl.textContent = allMembers.length;
+
+            renderDepartmentMembers(allMembers);
+
+        } catch (error) {
+            console.error('خطأ في تحميل أعضاء القسم:', error);
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #ef4444; grid-column: 1 / -1;">
+                    <i class="fa-solid fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
+                    <p>حدث خطأ أثناء تحميل الأعضاء</p>
+                </div>
+            `;
+        }
+    }
+
+    function renderDepartmentMembers(members) {
+        const container = document.getElementById('myDepartmentMembersList');
+        if (!container) return;
+
+        if (!members.length) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: #94a3b8; grid-column: 1 / -1;">
+                    <div style="width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, #3d8fd6, #274060); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: #fff; font-size: 1.5rem;">
+                        <i class="fa-solid fa-users-slash"></i>
+                    </div>
+                    <p style="font-weight: 600; color: #1e293b; margin-bottom: 0.25rem;">لا توجد نتائج</p>
+                    <p style="font-size: 0.85rem;">لم يتم العثور على أعضاء مطابقين لبحثك</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = members.map(m => {
+            const user = m.profiles;
+            const role = m.roles;
+            const avatarUrl = user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.full_name || 'User')}&background=3d8fd6&color=fff&size=200`;
+            const roleName = role?.role_name_ar || 'عضو';
+            const committeeName = m.committeeName || '';
+            const badgeLabel = committeeName ? `${roleName} · ${committeeName}` : roleName;
+
+            return `
+                <div class="member-chip">
+                    <img class="member-chip__avatar" src="${avatarUrl}" alt="${user?.full_name || 'عضو'}" />
+                    <div class="member-chip__info">
+                        <span class="member-chip__name">${user?.full_name || 'غير محدد'}</span>
+                        <span class="member-chip__role">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            ${badgeLabel}
+                        </span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    /**
+     * تحميل أعضاء اللجنة (member-chips)
+     */
+    async function loadCommitteeMembers(committeeId) {
+        const container = document.getElementById('myCommitteeMembersList');
+        if (!container) return;
+
+        try {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: #94a3b8; grid-column: 1 / -1;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 0.75rem; display: block;"></i>
+                    <p>جاري تحميل أعضاء اللجنة...</p>
+                </div>
+            `;
+
+            const { data, error } = await window.sbClient
+                .from('user_roles')
+                .select(`
+                    id, user_id, role_id, assigned_at,
+                    profiles!user_roles_user_id_fkey(id, full_name, avatar_url, account_status),
+                    roles(role_name, role_name_ar)
+                `)
+                .eq('committee_id', committeeId)
+                .eq('is_active', true)
+                .order('assigned_at', { ascending: false });
+
+            if (error) throw error;
+
+            const members = (data || []).filter(m => m.profiles?.account_status === 'active');
+
+            if (!members.length) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #94a3b8; grid-column: 1 / -1;">
+                        <i class="fa-solid fa-users-slash" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
+                        <p>لا يوجد أعضاء في اللجنة</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = members.map(m => {
+                const user = m.profiles;
+                const role = m.roles;
+                const avatarUrl = user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.full_name || 'User')}&background=3d8fd6&color=fff&size=200`;
+                const roleLabel = role?.role_name_ar || 'عضو';
+
+                return `
+                    <div class="member-chip">
+                        <img class="member-chip__avatar" src="${avatarUrl}" alt="${user?.full_name || 'عضو'}" />
+                        <div class="member-chip__info">
+                            <span class="member-chip__name">${user?.full_name || 'غير محدد'}</span>
+                            <span class="member-chip__role">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                ${roleLabel}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (error) {
+            console.error('خطأ في تحميل أعضاء اللجنة:', error);
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #ef4444; grid-column: 1 / -1;">
+                    <i class="fa-solid fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
+                    <p>حدث خطأ أثناء تحميل الأعضاء</p>
+                </div>
+            `;
         }
     }
 

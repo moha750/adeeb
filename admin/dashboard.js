@@ -352,8 +352,8 @@
             // نتائج العضوية - عنصر مباشر
             membershipSubItems.push({
                 id: 'membership-accepted',
-                icon: 'fa-user-check',
-                label: 'نتائج العضوية',
+                icon: 'fa-scale-balanced',
+                label: 'نتائج المقابلات',
                 section: 'membership-accepted-section'
             });
             
@@ -570,15 +570,41 @@
             section: 'profile-section'
         });
 
-        // لجنتي — لكل من ينتمي للجنة (له committee_id) ما عدا رئيس النادي ورئيس المجلس التنفيذي
+        // عائلتي — لكل من ينتمي للجنة (له committee_id) ما عدا رئيس النادي ورئيس المجلس التنفيذي
         if (currentUserRole.committee_id &&
             roleName !== 'club_president' &&
             roleName !== 'executive_council_president') {
             menuItems.push({
-                id: 'my-committee',
-                icon: 'fa-users',
-                label: 'لجنتي',
-                section: 'my-committee-section'
+                id: 'my-family',
+                icon: 'fa-heart',
+                label: 'عائلتي',
+                isDropdown: true,
+                subItems: [
+                    {
+                        id: 'my-department',
+                        icon: 'fa-sitemap',
+                        label: 'قسمي',
+                        section: 'my-department-section'
+                    },
+                    {
+                        id: 'my-committee',
+                        icon: 'fa-users',
+                        label: 'لجنتي',
+                        section: 'my-committee-section'
+                    },
+                    {
+                        id: 'adeeb-structure',
+                        icon: 'fa-network-wired',
+                        label: 'هيكلة أدِيب',
+                        section: 'adeeb-structure-section'
+                    },
+                    {
+                        id: 'adeeb-councils',
+                        icon: 'fa-comments',
+                        label: 'مجالس أدِيب',
+                        section: 'adeeb-councils-section'
+                    }
+                ]
             });
         }
 
@@ -955,6 +981,11 @@
                     await window.memberMigration.init(currentUser);
                 }
                 break;
+            case 'my-department-section':
+                if (window.profileManager) {
+                    await window.profileManager.init(currentUser);
+                }
+                break;
             case 'my-committee-section':
                 if (window.profileManager) {
                     await window.profileManager.init(currentUser);
@@ -962,6 +993,9 @@
                 if (window.CommitteeMembersManager && !window.committeeMembersManager) {
                     window.committeeMembersManager = new window.CommitteeMembersManager();
                 }
+                break;
+            case 'adeeb-structure-section':
+                await loadAdeebStructure();
                 break;
             case 'membership-card-section':
             case 'profile-section':
@@ -2204,6 +2238,197 @@
             document.querySelectorAll('.uc-card__avatar-stack').forEach(_calcStack);
         }, 120);
     });
+
+    // ═══════════════════════════════════════════════════════════
+    // هيكلة أدِيب — عرض للقراءة فقط (بدون أزرار تعديل)
+    // ═══════════════════════════════════════════════════════════
+
+    async function loadAdeebStructure() {
+        const container = document.getElementById('orgTreeContainer');
+        if (!container) return;
+
+        container.innerHTML = '<li style="padding:40px 0"><div class="org-tree__node org-tree__node--root"><div class="org-tree__node-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="org-tree__node-name">جاري التحميل...</div></div></li>';
+
+        try {
+            // ── 1. Load all raw data in parallel ──
+            const [
+                { data: councilRows },
+                { data: adminCommittees },
+                { data: departments },
+                { data: deptCommittees },
+            ] = await Promise.all([
+                sb.from('councils').select('*').order('id', { ascending: true }),
+                sb.from('committees').select('*').eq('is_active', true).is('department_id', null),
+                sb.from('departments').select('*').eq('is_active', true).order('display_order', { ascending: true }),
+                sb.from('committees').select('*').eq('is_active', true).not('department_id', 'is', null),
+            ]);
+
+            // ── 2. Update stat cards ──
+            const el = id => document.getElementById(id);
+            if (el('structStatCouncils'))       el('structStatCouncils').textContent       = (councilRows || []).length;
+            if (el('structStatAdminCommittees')) el('structStatAdminCommittees').textContent = (adminCommittees || []).length;
+            if (el('structStatDepts'))           el('structStatDepts').textContent           = (departments || []).length;
+            if (el('structStatCommittees'))      el('structStatCommittees').textContent      = (deptCommittees || []).length;
+
+            // ── 3. Enrich councils with members ──
+            const councilMeta = {
+                administrative: { icon: 'fa-landmark', types: ['administrative', 'both'] },
+                executive:      { icon: 'fa-landmark', types: ['executive', 'both'] },
+            };
+            const councils = (councilRows || []).map(row => ({ ...row, ...councilMeta[row.id], name: row.name_ar }));
+
+            for (const council of councils) {
+                const { data: members } = await sb
+                    .from('user_roles')
+                    .select('user_id, roles(role_name_ar, role_level, council_type), profiles!user_roles_user_id_fkey(full_name, avatar_url)')
+                    .in('roles.council_type', council.types)
+                    .eq('is_active', true)
+                    .not('roles', 'is', null);
+
+                const filtered = (members || []).filter(m => {
+                    if (!m.roles || !council.types.includes(m.roles.council_type)) return false;
+                    if (council.id === 'executive') return m.roles.role_level >= 5;
+                    if (council.id === 'administrative') return m.roles.role_level >= 8;
+                    return true;
+                });
+                filtered.sort((a, b) => (b.roles?.role_level || 0) - (a.roles?.role_level || 0));
+                council.members = filtered;
+                council.members_count = filtered.length;
+                council.president = council.id === 'executive'
+                    ? filtered.find(m => m.roles?.role_name_ar === 'رئيس المجلس التنفيذي')
+                    : filtered.find(m => m.roles?.role_level >= 9);
+            }
+
+            // ── 4. Enrich admin committees with members ──
+            for (const ac of (adminCommittees || [])) {
+                const { data: members } = await sb.from('user_roles')
+                    .select('user_id, roles(role_name_ar, role_level), profiles!user_roles_user_id_fkey(full_name, avatar_url)')
+                    .eq('committee_id', ac.id).eq('is_active', true);
+                ac.members = (members || []).sort((a, b) => (b.roles?.role_level || 0) - (a.roles?.role_level || 0));
+                ac.members_count = ac.members.length;
+                ac.leader = ac.members.find(m => m.roles?.role_level >= 8);
+            }
+
+            // ── 5. Group dept-committees by department, enrich with members ──
+            const deptCommitteeMap = {};
+            for (const c of (deptCommittees || [])) {
+                if (!deptCommitteeMap[c.department_id]) deptCommitteeMap[c.department_id] = [];
+                deptCommitteeMap[c.department_id].push(c);
+            }
+
+            for (const committees of Object.values(deptCommitteeMap)) {
+                for (const c of committees) {
+                    const { data: members } = await sb.from('user_roles')
+                        .select('user_id, roles(role_name_ar, role_level), profiles!user_roles_user_id_fkey(full_name, avatar_url)')
+                        .eq('committee_id', c.id).eq('is_active', true);
+                    c.members = (members || []).sort((a, b) => (b.roles?.role_level || 0) - (a.roles?.role_level || 0));
+                    c.members_count = c.members.length;
+                    c.leader = c.members.find(m => m.roles?.role_level === 6);
+                    c.deputy = c.members.find(m => m.roles?.role_level === 5);
+                }
+            }
+
+            // ── 6. Enrich departments ──
+            for (const dept of (departments || [])) {
+                dept.committees = deptCommitteeMap[dept.id] || [];
+                const seenIds = new Set();
+                const allMembers = [];
+                for (const c of dept.committees) {
+                    for (const m of (c.members || [])) {
+                        if (!seenIds.has(m.user_id)) { seenIds.add(m.user_id); allMembers.push(m); }
+                    }
+                }
+                allMembers.sort((a, b) => (b.roles?.role_level || 0) - (a.roles?.role_level || 0));
+                dept.members = allMembers;
+                dept.members_count = allMembers.length;
+                dept.head = allMembers.find(m => m.roles?.role_level === 7);
+            }
+
+            // ── 7. Helpers ──
+            const node = (type, icon, name, opts = {}) => {
+                const { leaderLabel, leaderName, deputyLabel, deputyName, count, desc } = opts;
+                const fallback = 'لم يُعيَّن بعد';
+                const hasDesc = !!desc || desc === '';
+                return `
+                <div class="org-tree__node org-tree__node--${type}"${hasDesc ? ' data-desc' : ''}>
+                    <div class="org-tree__node-icon"><i class="fa-solid ${icon}"></i></div>
+                    <div class="org-tree__node-info">
+                        <div class="org-tree__node-name">${name}</div>
+                        ${leaderLabel ? `<div class="org-tree__node-sub"><i class="fa-solid fa-user-tie"></i> ${leaderLabel}: ${leaderName || fallback}</div>` : ''}
+                        ${deputyLabel ? `<div class="org-tree__node-sub"><i class="fa-solid fa-user-shield"></i> ${deputyLabel}: ${deputyName || fallback}</div>` : ''}
+                    </div>
+                    ${count !== undefined ? `<div class="org-tree__node-badge"><i class="fa-solid fa-users"></i> ${count} عضو</div>` : ''}
+                    ${hasDesc ? `<div class="org-tree__node-toggle"><i class="fa-solid fa-chevron-down"></i></div>
+                    <div class="org-tree__node-desc">${desc || 'لا يوجد وصف'}</div>` : ''}
+                </div>`;
+            };
+
+            // ── 8. Build tree HTML ──
+            const adminCouncil = councils.find(c => c.id === 'administrative');
+            const execCouncil  = councils.find(c => c.id === 'executive');
+
+            let html = '<li>';
+            html += node('root', 'fa-network-wired', 'الهيكل التنظيمي لأدِيب');
+            html += '<ul>';
+
+            // Administrative council branch
+            if (adminCouncil) {
+                html += '<li>';
+                html += node('council', 'fa-landmark', adminCouncil.name, { leaderLabel: 'الرئيس', leaderName: adminCouncil.president?.profiles?.full_name, count: adminCouncil.members_count, desc: adminCouncil.description });
+                if ((adminCommittees || []).length > 0) {
+                    html += '<ul>';
+                    for (const ac of adminCommittees) {
+                        html += '<li>';
+                        html += node('admin', 'fa-users-gear', ac.committee_name_ar, { leaderLabel: 'القائد', leaderName: ac.leader?.profiles?.full_name, count: ac.members_count, desc: ac.description });
+                        html += '</li>';
+                    }
+                    html += '</ul>';
+                }
+                html += '</li>';
+            }
+
+            // Executive council branch
+            if (execCouncil) {
+                html += '<li>';
+                html += node('council', 'fa-landmark', execCouncil.name, { leaderLabel: 'الرئيس', leaderName: execCouncil.president?.profiles?.full_name, count: execCouncil.members_count, desc: execCouncil.description });
+                if ((departments || []).length > 0) {
+                    html += '<ul>';
+                    for (const dept of departments) {
+                        html += '<li>';
+                        html += node('dept', 'fa-sitemap', dept.name_ar, { leaderLabel: 'رئيس القسم', leaderName: dept.head?.profiles?.full_name, count: dept.members_count, desc: dept.description });
+                        if (dept.committees.length > 0) {
+                            html += '<ul>';
+                            for (const c of dept.committees) {
+                                html += '<li>';
+                                html += node('committee', 'fa-people-group', c.committee_name_ar, { leaderLabel: 'القائد', leaderName: c.leader?.profiles?.full_name, deputyLabel: 'النائب', deputyName: c.deputy?.profiles?.full_name, count: c.members_count, desc: c.description });
+                                html += '</li>';
+                            }
+                            html += '</ul>';
+                        }
+                        html += '</li>';
+                    }
+                    html += '</ul>';
+                }
+                html += '</li>';
+            }
+
+            html += '</ul></li>';
+            container.innerHTML = html;
+
+            // Toggle expandable descriptions
+            container.addEventListener('click', (e) => {
+                const node = e.target.closest('.org-tree__node[data-desc]');
+                if (!node) return;
+                node.classList.toggle('is-open');
+            });
+
+        } catch (error) {
+            console.error('Error loading Adeeb structure:', error);
+            container.innerHTML = '<li style="padding:40px 0"><div class="error-state">حدث خطأ أثناء تحميل الهيكلة</div></li>';
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
 
     async function loadCouncils() {
         const container = document.getElementById('councilsGrid');

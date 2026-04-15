@@ -3074,20 +3074,6 @@
                             <span class="modal-detail-value">${typeBadge}</span>
                         </div>
                         <div class="modal-detail-item">
-                            <span class="modal-detail-label">الموقع</span>
-                            <span class="modal-detail-value">${escapeHtml(data.interview_location || 'غير محدد')}</span>
-                        </div>
-                        ${data.meeting_link ? `
-                        <div class="modal-detail-item" style="grid-column: 1 / -1;">
-                            <span class="modal-detail-label">رابط الاجتماع</span>
-                            <span class="modal-detail-value"><a href="${escapeHtml(data.meeting_link)}" target="_blank">${escapeHtml(data.meeting_link)}</a></span>
-                        </div>
-                        ` : ''}
-                        <div class="modal-detail-item">
-                            <span class="modal-detail-label">الحالة</span>
-                            <span class="modal-detail-value">${statusBadge}</span>
-                        </div>
-                        <div class="modal-detail-item">
                             <span class="modal-detail-label">النتيجة</span>
                             <span class="modal-detail-value">${resultBadge}</span>
                         </div>
@@ -3170,7 +3156,7 @@
             document.getElementById('applicationDetailsContent').innerHTML = contentHtml;
             document.getElementById('applicationDetailsActions').innerHTML = actionsHtml;
             window.setModalTitle('تفاصيل المقابلة');
-            window.setModalVariant(data.status === 'completed' ? 'accepted' : data.status === 'cancelled' ? 'rejected' : 'approved_for_interview');
+            window.setModalVariant(data.result === 'accepted' ? 'accepted' : data.result === 'rejected' ? 'rejected' : 'approved_for_interview');
             window.openApplicationModal();
 
         } catch (error) {
@@ -3788,7 +3774,7 @@
     function getInterviewResultBadge(result) {
         const badges = {
             'pending': '<span class="badge badge-warning">معلقة</span>',
-            'accepted': '<span class="uc-card__badge">مقبول</span>',
+            'accepted': '<span class="badge badge-success">مقبول</span>',
             'rejected': '<span class="badge badge-danger">مرفوض</span>',
             'no_show': '<span class="badge badge-secondary">لم يحضر</span>'
         };
@@ -4120,7 +4106,7 @@
                         سبب الرفض/الحذف
                     </label>
                     <p>
-                        سيتم نقل <strong>${applicantName}</strong> إلى قائمة المرفوضين في نتائج العضوية
+                        سيتم نقل <strong>${applicantName}</strong> إلى قائمة المرفوضين في نتائج المقابلات
                     </p>
                     
                     <div>

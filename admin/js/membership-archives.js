@@ -189,8 +189,8 @@ function renderCycleCard(cycle) {
                 <!-- نتائج العضوية -->
                 <div class="archive-stat-section">
                     <div class="archive-stat-header">
-                        <i class="fa-solid fa-user-check"></i>
-                        <span>نتائج العضوية</span>
+                        <i class="fa-solid fa-scale-balanced"></i>
+                        <span>نتائج المقابلات</span>
                     </div>
                     <div class="archive-stat-items">
                         <div class="archive-stat-item">

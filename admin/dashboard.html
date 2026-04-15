@@ -47,6 +47,8 @@
     <link rel="stylesheet" href="css/news-workflow.css" />
     <!-- نظام الكروت الموحد — الملف الوحيد لجميع الكروت -->
     <link rel="stylesheet" href="css/unified-cards.css" />
+    <!-- شريط التنكر وتأثيره على التخطيط -->
+    <link rel="stylesheet" href="css/impersonation-bar.css" />
     <!-- تحليلات الاستبيانات (صفحة استبيان واحد) -->
     <link rel="stylesheet" href="css/survey-analytics.css" />
 </head>
@@ -889,9 +891,8 @@
                                 <div class="uc-card__header-info">
                                     <h3 class="uc-card__title">المعلومات الأساسية</h3>
                                 </div>
-                                <button class="uc-card__edit-btn" data-card-edit="basic" type="button">
+                                <button class="btn btn-white btn-icon btn-outline" data-card-edit="basic" type="button">
                                     <i class="fa-regular fa-pen-to-square"></i>
-                                    <span>تعديل</span>
                                 </button>
                             </div>
                         </div>
@@ -973,9 +974,8 @@
                                     <div class="uc-card__header-info">
                                         <h3 class="uc-card__title">البيانات الأكاديمية</h3>
                                     </div>
-                                    <button class="uc-card__edit-btn" data-card-edit="academic" type="button">
+                                    <button class="btn btn-white btn-icon btn-outline" data-card-edit="academic" type="button">
                                         <i class="fa-regular fa-pen-to-square"></i>
-                                        <span>تعديل</span>
                                     </button>
                                 </div>
                             </div>
@@ -1019,9 +1019,8 @@
                                     <div class="uc-card__header-info">
                                         <h3 class="uc-card__title">حسابات التواصل</h3>
                                     </div>
-                                    <button class="uc-card__edit-btn" data-card-edit="social" type="button">
+                                    <button class="btn btn-white btn-icon btn-outline" data-card-edit="social" type="button">
                                         <i class="fa-regular fa-pen-to-square"></i>
-                                        <span>تعديل</span>
                                     </button>
                                 </div>
                             </div>
@@ -1079,122 +1078,381 @@
 
             </section>
 
+            <!-- قسم قسمي -->
+            <section id="my-department-section" class="admin-section d-none">
+
+                <!-- إحصائيات القسم -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                    <div class="stat-card" style="--stat-color: #3d8fd6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-users-gear"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="myDepartmentMembersCount">0</div>
+                                <div class="stat-label">أعضاء القسم</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقة القسم الرئيسية -->
+                <div class="uc-card uc-card--primary" id="myDepartmentInfoCard">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner" style="padding: 1.5rem 1.4rem;">
+                            <div class="uc-card__icon" style="width: 62px; height: 62px; font-size: 1.6rem;">
+                                <i class="fa-solid fa-sitemap"></i>
+                            </div>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title" style="font-size: 1.3rem; white-space: normal;" id="myDepartmentNameDisplay">جاري التحميل...</h3>
+                                <span class="uc-card__badge">
+                                    <i class="fa-solid fa-building"></i>
+                                    قسمي
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uc-card__body" style="gap: 0.75rem;">
+                        <!-- الوصف -->
+                        <div class="uc-card__info-item uc-card__info-item--full">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-info-circle"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">تعريف القسم</span>
+                                <span class="uc-card__info-value" style="white-space: normal; -webkit-line-clamp: 3;" id="myDepartmentDescription">جاري التحميل...</span>
+                            </div>
+                        </div>
+                        <!-- رئيس القسم -->
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-user-tie"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">رئيس القسم</span>
+                                <span class="uc-card__info-value" id="myDepartmentHead">جاري التحميل...</span>
+                            </div>
+                        </div>
+                        <!-- عدد اللجان -->
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-layer-group"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">عدد لجان القسم</span>
+                                <span class="uc-card__info-value" id="myDepartmentCommitteesCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- رابط قروب القسم -->
+                    <div class="uc-card__footer d-none" id="myDepartmentGroupLinkContainer" style="grid-template-columns: 1fr;">
+                        <a id="myDepartmentGroupLink" href="#" target="_blank" class="btn btn-success">
+                            <i class="fa-brands fa-whatsapp"></i>
+                            <span>انضم إلى قروب القسم</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- لجان القسم -->
+                <div class="card" style="margin-top: 1.5rem;">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-users-rectangle"></i>
+                            لجان القسم
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="uc-grid" id="myDepartmentCommitteesList">
+                            <!-- سيتم ملؤه ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- أعضاء القسم -->
+                <div class="card" style="margin-top: 1.5rem;">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-users-gear"></i>
+                            أعضاء القسم
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="member-chips" id="myDepartmentMembersList">
+                            <!-- سيتم ملؤه ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
             <!-- قسم لجنتي -->
             <section id="my-committee-section" class="admin-section d-none">
-                <h1>
-                    <i class="fa-solid fa-users"></i>
-                    لجنتي
-                </h1>
-                <p class="section-subtitle">معلومات عن لجنتك ورابط الانضمام</p>
 
-                <div class="card" id="committeeInfoCard">
-                    <div class="card-body">
-                        <div class="d-grid gap-1-5rem">
-                            <div>
+                <!-- إحصائيات اللجنة -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                    <div class="stat-card" style="--stat-color: #3d8fd6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
                                 <i class="fa-solid fa-users"></i>
-                                <h2 id="myCommitteeNameDisplay">جاري التحميل...</h2>
                             </div>
-                            <div>
-                                <div>
-                                    <label>
-                                        <i class="fa-solid fa-info-circle"></i> تعريف اللجنة
-                                    </label>
-                                    <p id="myCommitteeDescription">جاري التحميل...</p>
+                            <div class="stat-content">
+                                <div class="stat-value" id="myCommitteeMembersCount">0</div>
+                                <div class="stat-label">أعضاء اللجنة</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقة اللجنة الرئيسية -->
+                <div class="uc-card uc-card--primary" id="committeeInfoCard">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner" style="padding: 1.5rem 1.4rem;">
+                            <div class="uc-card__icon" style="width: 62px; height: 62px; font-size: 1.6rem;">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title" style="font-size: 1.3rem; white-space: normal;" id="myCommitteeNameDisplay">جاري التحميل...</h3>
+                                <span class="uc-card__badge">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                    لجنتي
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uc-card__body" style="gap: 0.75rem;">
+                        <!-- تعريف اللجنة -->
+                        <div class="uc-card__info-item uc-card__info-item--full">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-info-circle"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">تعريف اللجنة</span>
+                                <span class="uc-card__info-value" style="white-space: normal; -webkit-line-clamp: 3;" id="myCommitteeDescription">جاري التحميل...</span>
+                            </div>
+                        </div>
+                        <!-- قائد اللجنة -->
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-user-tie"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">قائد اللجنة</span>
+                                <span class="uc-card__info-value" id="myCommitteeLeader">جاري التحميل...</span>
+                            </div>
+                        </div>
+                        <!-- نائب القائد -->
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-user-shield"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">نائب القائد</span>
+                                <span class="uc-card__info-value" id="myCommitteeViceLeader">جاري التحميل...</span>
+                            </div>
+                        </div>
+                        <!-- القسم -->
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-sitemap"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">القسم</span>
+                                <span class="uc-card__info-value" id="myCommitteeDepartment">جاري التحميل...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- رابط قروب اللجنة -->
+                    <div class="uc-card__footer d-none" id="myCommitteeGroupLinkContainer" style="grid-template-columns: 1fr;">
+                        <a id="myCommitteeGroupLink" href="#" target="_blank" class="btn btn-success">
+                            <i class="fa-brands fa-whatsapp"></i>
+                            <span>انضم إلى قروب اللجنة</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- أعضاء اللجنة -->
+                <div class="card" style="margin-top: 1.5rem;">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-users-gear"></i>
+                            أعضاء اللجنة
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="member-chips" id="myCommitteeMembersList">
+                            <!-- سيتم ملؤه ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- إدارة الأعضاء - يظهر فقط لقائد اللجنة ونائبه -->
+                <div class="d-none" id="committeeMembersManagementCard">
+                    <div class="card" style="margin-top: 1.5rem;">
+                        <div class="card-header">
+                            <h3>
+                                <i class="fa-solid fa-user-gear"></i>
+                                إدارة أعضاء اللجنة
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- إحصائيات -->
+                            <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                                <div class="stat-card" style="--stat-color: #3b82f6">
+                                    <div class="stat-card-wrapper">
+                                        <div class="stat-icon">
+                                            <i class="fa-solid fa-users"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-value" id="committeeActiveMembersCount">0</div>
+                                            <div class="stat-label">أعضاء نشطين</div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label>
-                                        <i class="fa-solid fa-user-tie"></i> قائد اللجنة
-                                    </label>
-                                    <p id="myCommitteeLeader">جاري التحميل...</p>
+                                <div class="stat-card" style="--stat-color: #10b981">
+                                    <div class="stat-card-wrapper">
+                                        <div class="stat-icon">
+                                            <i class="fa-solid fa-user-check"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-value" id="committeeNewMembersCount">0</div>
+                                            <div class="stat-label">أعضاء جدد (30 يوم)</div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label>
-                                        <i class="fa-solid fa-users-line"></i> عدد الأعضاء
-                                    </label>
-                                    <p id="myCommitteeMembersCount">0</p>
+                                <div class="stat-card" style="--stat-color: #f59e0b">
+                                    <div class="stat-card-wrapper">
+                                        <div class="stat-icon">
+                                            <i class="fa-solid fa-user-clock"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-value" id="committeePendingMembersCount">0</div>
+                                            <div class="stat-label">أعضاء معلقين</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- رابط الانضمام للقروب -->
-                            <div id="myCommitteeGroupLinkContainer">
-                                <h3>
-                                    <i class="fa-brands fa-whatsapp"></i>
-                                    انضم إلى قروب اللجنة
-                                </h3>
-                                <a id="myCommitteeGroupLink" href="#" target="_blank" class="btn btn-primary">
-                                    <i class="fa-brands fa-whatsapp"></i>
-                                    <span>افتح الرابط</span>
+                            <!-- شريط البحث -->
+                            <div class="filters-bar" style="margin-bottom: 1.25rem;">
+                                <div class="filter-group" style="flex: 1;">
+                                    <i class="fa-solid fa-search"></i>
+                                    <input type="text" id="committeeMembersSearchInput" placeholder="البحث عن عضو بالاسم أو البريد أو الجوال..." class="input input-text" />
+                                </div>
+                                <button class="btn btn-outline" id="refreshCommitteeMembersBtn">
+                                    <i class="fa-solid fa-rotate"></i>
+                                    تحديث
+                                </button>
+                            </div>
+
+                            <!-- شبكة الأعضاء -->
+                            <div id="committeeMembersTableContainer">
+                                <!-- سيتم ملؤه ديناميكياً -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- قسم هيكلة أدِيب -->
+            <section id="adeeb-structure-section" class="admin-section d-none">
+
+                <!-- إحصائيات الهيكلة -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                    <div class="stat-card" style="--stat-color: #f59e0b">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-landmark"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="structStatCouncils">0</div>
+                                <div class="stat-label">مجالس إدارية</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-users-gear"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="structStatAdminCommittees">0</div>
+                                <div class="stat-label">إدارات تنظيمية</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #3d8fd6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-sitemap"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="structStatDepts">0</div>
+                                <div class="stat-label">أقسام تنفيذية</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-people-group"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="structStatCommittees">0</div>
+                                <div class="stat-label">لجان تنفيذية</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- الشجرة التنظيمية -->
+                <div class="org-tree-wrapper">
+                    <ul class="org-tree" id="orgTreeContainer">
+                        <!-- سيتم ملؤه ديناميكياً -->
+                    </ul>
+                </div>
+
+            </section>
+
+            <!-- قسم مجالس أدِيب -->
+            <section id="adeeb-councils-section" class="admin-section d-none">
+
+                <div class="uc-grid">
+                    <!-- مجلس أدِيب -->
+                    <div class="uc-card uc-card--success">
+                        <div class="uc-card__header">
+                            <div class="uc-card__header-inner">
+                                <div class="uc-card__icon"><i class="fa-brands fa-whatsapp"></i></div>
+                                <div class="uc-card__header-info">
+                                    <h3 class="uc-card__title">مجلس أدِيب</h3>
+                                    <span class="uc-card__badge"><i class="fa-solid fa-lock-open"></i> مفتوح للجميع</span>
+                                    <span class="uc-card__badge"><i class="fa-solid fa-users"></i> رجال ونساء</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="uc-card__body">
+                            <div class="uc-card__info-item uc-card__info-item--full">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-align-right"></i></div>
+                                <div class="uc-card__info-content">
+                                    <div class="uc-card__info-label">عن المجلس</div>
+                                    <div class="uc-card__info-value">مجلس عام يجمع أعضاء أدِيب للنقاشات والأحاديث، الانضمام اختياري ومتاح لجميع الأعضاء</div>
+                                </div>
+                            </div>
+                            <div class="uc-card__footer">
+                                <a href="https://chat.whatsapp.com/EMmsKK1Eqqf8uI4feSIBPM?mode=gi_t" target="_blank" class="btn btn-success" style="width:100%;text-align:center;text-decoration:none;">
+                                    <i class="fa-brands fa-whatsapp"></i> انضم للمجلس
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- مجلس أدِيبات -->
+                    <div class="uc-card uc-card--success">
+                        <div class="uc-card__header">
+                            <div class="uc-card__header-inner">
+                                <div class="uc-card__icon"><i class="fa-brands fa-whatsapp"></i></div>
+                                <div class="uc-card__header-info">
+                                    <h3 class="uc-card__title">مجلس أدِيبات</h3>
+                                    <span class="uc-card__badge"><i class="fa-solid fa-lock-open"></i> مفتوح للجميع</span>
+                                    <span class="uc-card__badge"><i class="fa-solid fa-venus"></i> نساء فقط</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="uc-card__body">
+                            <div class="uc-card__info-item uc-card__info-item--full">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-align-right"></i></div>
+                                <div class="uc-card__info-content">
+                                    <div class="uc-card__info-label">عن المجلس</div>
+                                    <div class="uc-card__info-value">مجلس عام يجمع الأدِيبات للنقاشات والأحاديث، الانضمام اختياري ومتاح لجميع العضوات</div>
+                                </div>
+                            </div>
+                            <div class="uc-card__footer">
+                                <a href="https://chat.whatsapp.com/K8a7FH1lR0tJv7yrlCnlhC?mode=gi_t" target="_blank" class="btn btn-success" style="width:100%;text-align:center;text-decoration:none;">
+                                    <i class="fa-brands fa-whatsapp"></i> انضمي للمجلس
                                 </a>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- قسم إدارة الأعضاء - يظهر فقط لقائد اللجنة ونائبه -->
-                <div class="card d-none" id="committeeMembersManagementCard">
-                    <div class="card-header">
-                        <h3>
-                            <i class="fa-solid fa-user-gear"></i>
-                            إدارة أعضاء اللجنة
-                        </h3>
-                        <p class="text-muted">عرض وإدارة بيانات أعضاء لجنتك</p>
-                    </div>
-                    <div class="card-body">
-                        <!-- إحصائيات سريعة -->
-                        <div class="stats-grid mb-2rem">
-                            <div class="stat-card" style="--stat-color: #3b82f6">
-                                <div class="stat-card-wrapper">
-                                    <div class="stat-icon">
-                                        <i class="fa-solid fa-users"></i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <div class="stat-value" id="committeeActiveMembersCount">0</div>
-                                        <div class="stat-label">أعضاء نشطين</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="stat-card" style="--stat-color: #10b981">
-                                <div class="stat-card-wrapper">
-                                    <div class="stat-icon">
-                                        <i class="fa-solid fa-user-check"></i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <div class="stat-value" id="committeeNewMembersCount">0</div>
-                                        <div class="stat-label">أعضاء جدد (30 يوم)</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="stat-card" style="--stat-color: #f59e0b">
-                                <div class="stat-card-wrapper">
-                                    <div class="stat-icon">
-                                        <i class="fa-solid fa-user-clock"></i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <div class="stat-value" id="committeePendingMembersCount">0</div>
-                                        <div class="stat-label">أعضاء معلقين</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- فلاتر البحث -->
-                        <div class="filters-bar mb-1-5rem">
-                            <div class="filter-group" style="flex: 1;">
-                                <i class="fa-solid fa-search"></i>
-                                <input type="text" id="committeeMembersSearchInput" placeholder="البحث عن عضو..." class="input input-text" />
-                            </div>
-                            <button class="btn btn-outline" id="refreshCommitteeMembersBtn">
-                                <i class="fa-solid fa-rotate"></i>
-                                تحديث
-                            </button>
-                        </div>
-
-                        <!-- جدول الأعضاء -->
-                        <div id="committeeMembersTableContainer">
-                            <!-- سيتم ملؤه ديناميكياً -->
-                        </div>
-                    </div>
-                </div>
             </section>
 
             <!-- قسم بطاقة العضوية -->
@@ -2238,7 +2496,7 @@
                 <!-- جدول نتائج العضوية -->
                 <div class="card">
                     <div class="card-header">
-                        <h3><i class="fa-solid fa-clipboard-check"></i> قائمة نتائج العضوية</h3>
+                        <h3><i class="fa-solid fa-scale-balanced"></i> قائمة نتائج المقابلات</h3>
                         <button class="btn btn-primary btn-icon btn-outline" id="decisionsOptionsBtn" title="خيارات">
                             <i class="fa-solid fa-ellipsis-vertical"></i>
                         </button>
@@ -2255,7 +2513,7 @@
             <section id="member-migration-section" class="admin-section d-none">
 
                 <!-- إحصائيات الترحيل -->
-                <div id="migrationStatsGrid" class="mb-2rem">
+                <div id="migrationStatsGrid" class="stats-grid mb-2rem">
                     <!-- سيتم ملؤها ديناميكياً -->
                 </div>
 
@@ -2268,41 +2526,18 @@
                     <select id="migrationCommitteeFilter" class="filter-select">
                         <option value="">جميع اللجان</option>
                     </select>
-                    <button class="btn btn-outline" id="refreshMigrationBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-                    <button class="btn btn-success" id="exportMigrationBtn">
-                        <i class="fa-solid fa-file-excel"></i>
-                        تصدير Excel
-                    </button>
-                </div>
-
-                <!-- تعليمات الاستخدام -->
-                <div class="card">
-                    <div class="card-body">
-                        <h3>
-                            <i class="fa-solid fa-info-circle"></i>
-                            كيفية استخدام نظام الترحيل
-                        </h3>
-                        <ul>
-                            <li>يعرض هذا القسم جميع الأعضاء المقبولين الذين لم يتم ترحيلهم بعد</li>
-                            <li>يمكنك تعديل اللجنة لأي عضو قبل الترحيل من القائمة المنسدلة</li>
-                            <li>عند الترحيل، سيتم إنشاء حساب جديد للعضو تلقائياً مع كلمة مرور مؤقتة</li>
-                            <li>سيتم ربط العضو بدور "عضو عادي" واللجنة المحددة</li>
-                            <li>يمكنك ترحيل عضو واحد أو مجموعة من الأعضاء دفعة واحدة</li>
-                        </ul>
-                    </div>
                 </div>
 
                 <!-- جدول الترحيل -->
-                <div class="card">
+                <div class="card card--success">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-users-gear"></i> قائمة الأعضاء للترحيل</h3>
+                        <button class="btn btn-success btn-icon btn-outline" id="migrationOptionsBtn" title="خيارات">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
                     </div>
-                    <div class="card-body">
-                        <div id="migrationTable">
-                            <!-- سيتم ملؤها ديناميكياً -->
+                    <div class="card-body" id="migrationTable">
+                        <!-- سيتم ملؤها ديناميكياً -->
                 </div>
             </section>
 
@@ -4353,44 +4588,6 @@
         </div>
     </div>
 
-    <!-- نافذة تغيير كلمة المرور -->
-    <div class="modal modal-md d-none" id="changePasswordModal">
-        <div class="modal-header">
-            <div class="modal-header-content">
-                <div class="modal-icon"><i class="fa-solid fa-key"></i></div>
-                <h2 class="modal-title">تغيير كلمة المرور</h2>
-            </div>
-            <button class="modal-close" id="closeChangePasswordModal"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div class="modal-body">
-            <form id="changePasswordForm">
-                    <div class="form-group">
-                        <label>كلمة المرور الحالية <span class="required-dot">*</span></label>
-                        <input type="password" id="currentPassword" required placeholder="أدخل كلمة المرور الحالية" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label>كلمة المرور الجديدة <span class="required-dot">*</span></label>
-                        <input type="password" id="newPassword" required placeholder="أدخل كلمة المرور الجديدة"
-                            minlength="8" class="form-input">
-                        <small>يجب أن تكون 8 أحرف على الأقل</small>
-                    </div>
-                    <div class="form-group">
-                        <label>تأكيد كلمة المرور الجديدة <span class="required-dot">*</span></label>
-                        <input type="password" id="confirmNewPassword" required
-                            placeholder="أعد إدخال كلمة المرور الجديدة" class="form-input">
-                    </div>
-                </form>
-            </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-outline"
-                id="cancelChangePassword">إلغاء</button>
-            <button type="button" class="btn btn-primary" id="saveNewPassword">
-                <i class="fa-solid fa-save"></i>
-                تغيير كلمة المرور
-            </button>
-        </div>
-    </div>
-
     <!-- خلفية نافذة التنكر -->
     <div class="modal-backdrop" id="impersonationModalBackdrop"></div>
     <!-- نافذة التنكر كمستخدم آخر -->
@@ -4507,25 +4704,27 @@
             </button>
         </div>
         <div class="modal-body">
-            <div class="form-group">
-                <label class="form-label">البريد الإلكتروني</label>
-                <input type="email" class="form-input" id="modalEditEmail" placeholder="name@example.com">
-            </div>
-            <div class="form-group">
-                <label class="form-label">رقم الهاتف</label>
-                <input type="tel" class="form-input" id="modalEditPhone" placeholder="05XXXXXXXX" maxlength="10">
-            </div>
-            <div class="form-group">
-                <label class="form-label">رقم الهوية الوطنية</label>
-                <input type="text" class="form-input" id="modalEditNationalId" placeholder="1XXXXXXXXX" maxlength="10">
-            </div>
-            <div class="form-group">
-                <label class="form-label">تاريخ الميلاد</label>
-                <input type="date" class="form-input" id="modalEditBirthDate">
-            </div>
-            <div class="form-group">
-                <label class="form-label">اللون المفضل</label>
-                <input type="text" class="form-input" id="modalEditFavoriteColor" placeholder="مثال: الأزرق، #3498db">
+            <div class="modal-form-grid">
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-regular fa-envelope"></i></span> البريد الإلكتروني</label>
+                    <input type="email" class="form-input" id="modalEditEmail" placeholder="name@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-phone"></i></span> رقم الهاتف</label>
+                    <input type="tel" class="form-input" id="modalEditPhone" placeholder="05XXXXXXXX" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-regular fa-id-card"></i></span> رقم الهوية الوطنية</label>
+                    <input type="text" class="form-input" id="modalEditNationalId" placeholder="1XXXXXXXXX" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-regular fa-calendar"></i></span> تاريخ الميلاد</label>
+                    <input type="date" class="form-input" id="modalEditBirthDate">
+                </div>
+                <div class="form-group full-width">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-palette"></i></span> اللون المفضل</label>
+                    <input type="text" class="form-input" id="modalEditFavoriteColor" placeholder="مثال: الأزرق، #3498db">
+                </div>
             </div>
         </div>
         <div class="modal-footer">
@@ -4553,29 +4752,31 @@
             </button>
         </div>
         <div class="modal-body">
-            <div class="form-group">
-                <label class="form-label">الرقم الأكاديمي</label>
-                <input type="text" class="form-input" id="modalEditAcademicRecord" placeholder="4XXXXXXXX">
-            </div>
-            <div class="form-group">
-                <label class="form-label">الدرجة الأكاديمية</label>
-                <select class="form-input" id="modalEditAcademicDegree">
-                    <option value="">اختر الدرجة</option>
-                    <option value="high_school">ثانوية عامة</option>
-                    <option value="diploma">دبلوم</option>
-                    <option value="bachelor">بكالوريوس</option>
-                    <option value="master">ماجستير</option>
-                    <option value="phd">دكتوراه</option>
-                    <option value="other">أخرى</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">الكلية</label>
-                <input type="text" class="form-input" id="modalEditCollege" placeholder="اسم الكلية">
-            </div>
-            <div class="form-group">
-                <label class="form-label">التخصص</label>
-                <input type="text" class="form-input" id="modalEditMajor" placeholder="التخصص الدراسي">
+            <div class="modal-form-grid">
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-hashtag"></i></span> الرقم الأكاديمي</label>
+                    <input type="text" class="form-input" id="modalEditAcademicRecord" placeholder="4XXXXXXXX">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-user-graduate"></i></span> الدرجة الأكاديمية</label>
+                    <select class="form-input" id="modalEditAcademicDegree">
+                        <option value="">اختر الدرجة</option>
+                        <option value="high_school">ثانوية عامة</option>
+                        <option value="diploma">دبلوم</option>
+                        <option value="bachelor">بكالوريوس</option>
+                        <option value="master">ماجستير</option>
+                        <option value="phd">دكتوراه</option>
+                        <option value="other">أخرى</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-building-columns"></i></span> الكلية</label>
+                    <input type="text" class="form-input" id="modalEditCollege" placeholder="اسم الكلية">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-book-open"></i></span> التخصص</label>
+                    <input type="text" class="form-input" id="modalEditMajor" placeholder="التخصص الدراسي">
+                </div>
             </div>
         </div>
         <div class="modal-footer">
@@ -4603,21 +4804,23 @@
             </button>
         </div>
         <div class="modal-body">
-            <div class="form-group">
-                <label class="form-label">تويتر (X)</label>
-                <input type="text" class="form-input" id="modalEditTwitter" placeholder="@username">
-            </div>
-            <div class="form-group">
-                <label class="form-label">إنستقرام</label>
-                <input type="text" class="form-input" id="modalEditInstagram" placeholder="@username">
-            </div>
-            <div class="form-group">
-                <label class="form-label">لينكد إن</label>
-                <input type="text" class="form-input" id="modalEditLinkedin" placeholder="username">
-            </div>
-            <div class="form-group">
-                <label class="form-label">تيك توك</label>
-                <input type="text" class="form-input" id="modalEditTiktok" placeholder="@username">
+            <div class="modal-form-grid">
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-brands fa-x-twitter"></i></span> تويتر (X)</label>
+                    <input type="text" class="form-input" id="modalEditTwitter" placeholder="@username">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-brands fa-instagram"></i></span> إنستقرام</label>
+                    <input type="text" class="form-input" id="modalEditInstagram" placeholder="@username">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-brands fa-linkedin-in"></i></span> لينكد إن</label>
+                    <input type="text" class="form-input" id="modalEditLinkedin" placeholder="username">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><span class="label-icon"><i class="fa-brands fa-tiktok"></i></span> تيك توك</label>
+                    <input type="text" class="form-input" id="modalEditTiktok" placeholder="@username">
+                </div>
             </div>
         </div>
         <div class="modal-footer">

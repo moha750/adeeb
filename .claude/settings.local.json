@@ -90,7 +90,18 @@
       "Bash(grep -i \"interview_sessions\\\\|interview_slots\" /c/Users/moham/adeeb/supabase/migrations/*.sql)",
       "Bash(wc -l /c/Users/moham/adeeb/booking/*.* /c/Users/moham/adeeb/admin/js/interview-sessions-manager.js)",
       "Bash(wc -l /c/Users/moham/adeeb/supabase/migrations/*.sql)",
-      "Bash(find /c/Users/moham/adeeb -type f \\\\\\( -name \"*.sql\" -o -name \"*.ts\" -o -name \"*.js\" \\\\\\) -exec grep -l \"CREATE TABLE.*interview_sessions\" {} \\\\;)"
+      "Bash(find /c/Users/moham/adeeb -type f \\\\\\( -name \"*.sql\" -o -name \"*.ts\" -o -name \"*.js\" \\\\\\) -exec grep -l \"CREATE TABLE.*interview_sessions\" {} \\\\;)",
+      "Bash(find c:/Users/moham/adeeb/admin/css -type f -name \"*.css\" -exec wc -l {} \\\\;)",
+      "Bash(grep -n \"mb-2rem\\\\|empty-state\\\\|card-header\\\\|card-body\" c:/Users/moham/adeeb/admin/css/*.css)",
+      "Bash(grep -n \"\\\\.card\\\\|empty-state\\\\|\\\\.stat-card\\\\|\\\\.stat-card--\" c:/Users/moham/adeeb/admin/css/*.css)",
+      "Bash(grep -n \"^\\\\.card\\\\|^\\\\.empty-state\" c:/Users/moham/adeeb/admin/css/*.css)",
+      "Bash(awk -F: '$1 > 1081 {print; exit}')",
+      "Bash(find /c/Users/moham/adeeb -name \"*.css\" -type f -exec grep -l \"^\\\\.card[[:space:]]*{\" {} \\\\;)",
+      "Bash(grep -n \"hero\\\\|banner\\\\|Hero\\\\|Banner\" /c/Users/moham/adeeb/admin/css/*.css)",
+      "Bash(grep -i \"\\\\.js$\")",
+      "Bash(ls -lh /c/Users/moham/adeeb/admin/css/*.css)",
+      "Bash(xargs ls *)",
+      "Bash(grep -n \"innerHTML\\\\|template\\\\|html\\\\`\" \"c:/Users/moham/adeeb/admin/js/users-manager.js\")"
     ]
   }
 }

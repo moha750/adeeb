@@ -1,21 +1,18 @@
-﻿class CommitteeMembersManager {
+class CommitteeMembersManager {
     constructor() {
         this.supabase = window.sbClient;
         this.currentUser = null;
         this.userCommittee = null;
         this.members = [];
         this.filteredMembers = [];
-        this.roles = [];
+        this.isLeaderOrDeputy = false;
         this.init();
     }
 
     async init() {
         try {
             this.currentUser = await window.AuthManager.getCurrentUser();
-            if (!this.currentUser) {
-                console.error('User not authenticated');
-                return;
-            }
+            if (!this.currentUser) return;
 
             await this.checkLeadershipRole();
             if (this.isLeaderOrDeputy) {
@@ -41,8 +38,8 @@
 
             if (error) throw error;
 
-            const leaderRole = userRoles.find(ur => 
-                ur.role?.role_name === 'committee_leader' || 
+            const leaderRole = userRoles.find(ur =>
+                ur.role?.role_name === 'committee_leader' ||
                 ur.role?.role_name === 'deputy_committee_leader'
             );
 
@@ -51,8 +48,6 @@
                 this.userCommittee = leaderRole.committee;
                 this.userRole = leaderRole.role.role_name;
                 document.getElementById('committeeMembersManagementCard')?.classList.remove('d-none');
-            } else {
-                this.isLeaderOrDeputy = false;
             }
         } catch (error) {
             console.error('Error checking leadership role:', error);
@@ -60,43 +55,20 @@
         }
     }
 
-    async loadRoles() {
-        try {
-            const { data, error } = await this.supabase
-                .from('roles')
-                .select('*')
-                .order('role_level', { ascending: true });
-
-            if (error) throw error;
-
-            this.roles = data || [];
-            this.populateRoleFilter();
-        } catch (error) {
-            console.error('Error loading roles:', error);
-        }
-    }
-
-    populateRoleFilter() {
-        const roleFilter = document.getElementById('committeeMembersRoleFilter');
-        if (!roleFilter) return;
-
-        const committeeRoles = this.roles.filter(r => 
-            r.role_name.includes('committee') || r.role_level >= 3
-        );
-
-        committeeRoles.forEach(role => {
-            const option = document.createElement('option');
-            option.value = role.id;
-            option.textContent = role.display_name || role.role_name;
-            roleFilter.appendChild(option);
-        });
-    }
-
     async loadMembers() {
         try {
             if (!this.userCommittee) return;
 
-            // جلب الأعضاء النشطين فقط (account_status = 'active')
+            const container = document.getElementById('committeeMembersTableContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: #94a3b8;">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 0.75rem; display: block;"></i>
+                        <p>جاري تحميل بيانات الأعضاء...</p>
+                    </div>
+                `;
+            }
+
             const { data, error } = await this.supabase
                 .from('user_roles')
                 .select(`
@@ -125,16 +97,14 @@
                 .eq('committee_id', this.userCommittee.id)
                 .eq('is_active', true)
                 .order('assigned_at', { ascending: false });
-            
-            if (error) throw error;
-            
-            // فلترة الأعضاء النشطين فقط (استبعاد المعلقين)
-            const activeMembers = (data || []).filter(m => m.profiles?.account_status === 'active');
 
-            this.members = activeMembers;
+            if (error) throw error;
+
+            // فلترة الأعضاء النشطين فقط
+            this.members = (data || []).filter(m => m.profiles?.account_status === 'active');
             this.filteredMembers = [...this.members];
             this.updateStats();
-            this.renderMembersTable();
+            this.renderMembers();
         } catch (error) {
             console.error('Error loading members:', error);
             this.showError('حدث خطأ أثناء تحميل بيانات الأعضاء');
@@ -142,28 +112,36 @@
     }
 
     updateStats() {
-        const activeMembers = this.members.filter(m => m.profiles?.account_status === 'active').length;
+        const activeCount = this.members.filter(m => m.profiles?.account_status === 'active').length;
+
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const newMembers = this.members.filter(m => 
-            new Date(m.assigned_at) >= thirtyDaysAgo
-        ).length;
-        const pendingMembers = this.members.filter(m => m.profiles?.account_status === 'inactive').length;
+        const newCount = this.members.filter(m => new Date(m.assigned_at) >= thirtyDaysAgo).length;
 
-        document.getElementById('committeeActiveMembersCount').textContent = activeMembers;
-        document.getElementById('committeeNewMembersCount').textContent = newMembers;
-        document.getElementById('committeePendingMembersCount').textContent = pendingMembers;
+        const pendingCount = this.members.filter(m => m.profiles?.account_status === 'inactive').length;
+
+        const set = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+        };
+
+        set('committeeActiveMembersCount', activeCount);
+        set('committeeNewMembersCount', newCount);
+        set('committeePendingMembersCount', pendingCount);
     }
 
-    renderMembersTable() {
+    renderMembers() {
         const container = document.getElementById('committeeMembersTableContainer');
         if (!container) return;
 
         if (this.filteredMembers.length === 0) {
             container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state__icon"><i class="fa-solid fa-users-slash"></i></div>
-                    <p class="empty-state__title">لا توجد بيانات أعضاء</p>
+                <div class="empty-state" style="text-align: center; padding: 3rem; color: #94a3b8;">
+                    <div style="width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, #3d8fd6, #274060); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: #fff; font-size: 1.5rem;">
+                        <i class="fa-solid fa-users-slash"></i>
+                    </div>
+                    <p style="font-weight: 600; color: #1e293b; margin-bottom: 0.25rem;">لا توجد نتائج</p>
+                    <p style="font-size: 0.85rem;">لم يتم العثور على أعضاء مطابقين لبحثك</p>
                 </div>
             `;
             return;
@@ -174,23 +152,39 @@
                 ${this.filteredMembers.map(member => this.renderMemberCard(member)).join('')}
             </div>
         `;
+
+        this.attachCardListeners();
     }
 
     renderMemberCard(member) {
         const user = member.profiles;
         const role = member.roles;
-        const badgeClass = user?.account_status === 'active' ? 'badge-success' :
-                           user?.account_status === 'suspended' ? 'badge-danger' : 'badge-warning';
-        const statusText = user?.account_status === 'active' ? 'نشط' :
-                           user?.account_status === 'suspended' ? 'معلق' : 'غير نشط';
         const roleLabel = role?.role_name_ar || role?.role_name || 'عضو';
 
-        const avatarUrl = user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.full_name || 'User')}&background=3d8fd6&color=fff&size=200`;
+        const avatarUrl = user?.avatar_url ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.full_name || 'User')}&background=3d8fd6&color=fff&size=200`;
+
+        // تحديد لون البطاقة حسب الدور
+        let colorClass = 'uc-card--primary';
+        if (role?.role_name === 'committee_leader') colorClass = 'uc-card--info';
+        else if (role?.role_name === 'deputy_committee_leader') colorClass = 'uc-card--purple';
+
+        // حساب المدة منذ الانضمام
+        const joinDays = member.assigned_at
+            ? Math.floor((Date.now() - new Date(member.assigned_at).getTime()) / (1000 * 60 * 60 * 24))
+            : null;
+        const isNew = joinDays !== null && joinDays <= 30;
 
         return `
-            <div class="uc-card" data-member-id="${member.id}" data-user-id="${user?.id}">
+            <div class="uc-card ${colorClass}" data-member-id="${member.id}" data-user-id="${user?.id}">
 
                 <div class="uc-card__header">
+                    ${isNew ? `
+                    <div class="uc-card__badges-overlay">
+                        <span class="uc-badge uc-badge--success" style="background: rgba(255,255,255,0.2); color: #fff;">
+                            <i class="fa-solid fa-sparkles"></i> جديد
+                        </span>
+                    </div>` : ''}
                     <div class="uc-card__header-inner">
                         <div class="uc-card__icon">
                             <img src="${avatarUrl}" alt="${user?.full_name || 'عضو'}" />
@@ -231,8 +225,8 @@
                     </div>
                 </div>
 
-                <div class="uc-card__footer">
-                    <button class="view-member-btn btn btn-primary btn-block" data-user-id="${user?.id}">
+                <div class="uc-card__footer" style="grid-template-columns: 1fr;">
+                    <button class="view-member-btn btn btn-primary" data-user-id="${user?.id}">
                         <i class="fa-solid fa-eye"></i>
                         عرض التفاصيل
                     </button>
@@ -242,18 +236,11 @@
         `;
     }
 
-    attachCardEventListeners() {
+    attachCardListeners() {
         document.querySelectorAll('.view-member-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const userId = e.currentTarget.dataset.userId;
                 this.viewMemberDetails(userId);
-            });
-        });
-
-        document.querySelectorAll('.edit-member-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const userId = e.currentTarget.dataset.userId;
-                this.editMember(userId);
             });
         });
     }
@@ -275,34 +262,46 @@
 
             if (error) throw error;
 
+            const avatarUrl = user.avatar_url ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || 'User')}&background=3d8fd6&color=fff&size=200`;
+
+            const activeRoles = user.user_roles.filter(ur => ur.is_active);
+
             const modalContent = `
-                <div class="member-details-modal">
-                    <div class="member-header">
-                        <img src="${user.avatar_url || '../adeeb-logo.png'}" alt="${user.full_name}">
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <!-- رأس الملف الشخصي -->
+                    <div style="display: flex; align-items: center; gap: 1rem; padding: 1.25rem; background: linear-gradient(145deg, rgba(61,143,214,0.08), transparent); border-radius: 16px; border: 1px solid rgba(61,143,214,0.12);">
+                        <img src="${avatarUrl}" alt="${user.full_name}" style="width: 64px; height: 64px; border-radius: 16px; object-fit: cover; border: 2px solid rgba(61,143,214,0.2);" />
                         <div>
-                            <h2>${user.full_name}</h2>
-                            <p>${user.email}</p>
+                            <h3 style="margin: 0 0 0.25rem; font-size: 1.1rem; color: #1e293b;">${user.full_name}</h3>
+                            <p style="margin: 0; font-size: 0.85rem; color: #64748b;">${user.email}</p>
                         </div>
                     </div>
-                    <div class="member-info-grid">
-                        <div class="info-item">
-                            <label><i class="fa-solid fa-phone"></i> الهاتف</label>
-                            <p>${user.phone || 'غير محدد'}</p>
+                    <!-- التفاصيل -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">الهاتف</span>
+                                <span class="uc-card__info-value">${user.phone || 'غير محدد'}</span>
+                            </div>
                         </div>
-                        <div class="info-item">
-                            <label><i class="fa-solid fa-calendar"></i> تاريخ الانضمام</label>
-                            <p>${this.formatDate(user.created_at)}</p>
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">تاريخ الانضمام</span>
+                                <span class="uc-card__info-value">${this.formatDate(user.created_at)}</span>
+                            </div>
                         </div>
-                        <div class="info-item">
-                            <label><i class="fa-solid fa-shield"></i> الحالة</label>
-                            <p>${user.status === 'active' ? 'نشط' : user.status === 'suspended' ? 'معلق' : 'غير نشط'}</p>
-                        </div>
-                        <div class="info-item">
-                            <label><i class="fa-solid fa-user-tag"></i> المناصب</label>
-                            <div>
-                                ${user.user_roles.filter(ur => ur.is_active).map(ur => `
-                                    <span class="badge badge--primary">${ur.role?.display_name || ur.role?.role_name}</span>
-                                `).join('')}
+                        <div class="uc-card__info-item" style="grid-column: 1 / -1;">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-user-tag"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">المناصب</span>
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.25rem;">
+                                    ${activeRoles.map(ur => `
+                                        <span class="uc-badge uc-badge--primary">${ur.role?.role_name_ar || ur.role?.role_name || 'عضو'}</span>
+                                    `).join('')}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -313,51 +312,6 @@
         } catch (error) {
             console.error('Error viewing member details:', error);
             this.showError('حدث خطأ أثناء تحميل بيانات العضو');
-        }
-    }
-
-    async editMember(userId) {
-        const member = this.members.find(m => m.user?.id === userId);
-        if (!member) return;
-
-        const modalContent = `
-            <form id="editMemberForm" class="form">
-                <div class="form-group">
-                    <label>ملاحظات</label>
-                    <textarea id="memberNotes" rows="4" placeholder="أضف ملاحظات عن العضو...">${member.notes || ''}</textarea>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-outline" onclick="window.closeModal()">إلغاء</button>
-                    <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
-                </div>
-            </form>
-        `;
-
-        this.showModal('تعديل بيانات العضو', modalContent);
-
-        document.getElementById('editMemberForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await this.saveMemberEdit(member.id);
-        });
-    }
-
-    async saveMemberEdit(userRoleId) {
-        try {
-            const notes = document.getElementById('memberNotes').value;
-
-            const { error } = await this.supabase
-                .from('user_roles')
-                .update({ notes })
-                .eq('id', userRoleId);
-
-            if (error) throw error;
-
-            this.showSuccess('تم حفظ التغييرات بنجاح');
-            window.closeModal();
-            await this.loadMembers();
-        } catch (error) {
-            console.error('Error saving member edit:', error);
-            this.showError('حدث خطأ أثناء حفظ التغييرات');
         }
     }
 
@@ -378,21 +332,18 @@
         const searchTerm = document.getElementById('committeeMembersSearchInput')?.value.toLowerCase() || '';
 
         this.filteredMembers = this.members.filter(member => {
-            const matchesSearch = !searchTerm || 
-                member.profiles?.full_name?.toLowerCase().includes(searchTerm) ||
+            if (!searchTerm) return true;
+            return member.profiles?.full_name?.toLowerCase().includes(searchTerm) ||
                 member.profiles?.email?.toLowerCase().includes(searchTerm) ||
                 member.profiles?.phone?.includes(searchTerm);
-
-            return matchesSearch;
         });
 
-        this.renderMembersTable();
+        this.renderMembers();
     }
 
     formatDate(dateString) {
         if (!dateString) return 'غير محدد';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('ar-SA', {
+        return new Date(dateString).toLocaleDateString('ar-SA', {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
@@ -402,24 +353,12 @@
     showModal(title, content) {
         if (typeof window.showModal === 'function') {
             window.showModal(title, content);
-        } else {
-            alert(content);
-        }
-    }
-
-    showSuccess(message) {
-        if (typeof window.showToast === 'function') {
-            window.showToast(message, 'success');
-        } else {
-            alert(message);
         }
     }
 
     showError(message) {
         if (typeof window.showToast === 'function') {
             window.showToast(message, 'error');
-        } else {
-            alert(message);
         }
     }
 }
@@ -429,4 +368,3 @@ window.committeeMembersManager = null;
 if (typeof CommitteeMembersManager !== 'undefined') {
     window.CommitteeMembersManager = CommitteeMembersManager;
 }
-

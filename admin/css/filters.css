@@ -716,3 +716,46 @@
     --filter-color:      #f59e0b;
     --filter-color-dark: #d97706;
 }
+
+/* ─── تبويب ترحيل المقبولين — Green Scope ─── */
+
+#member-migration-section {
+    --filter-color-rgb:  16, 185, 129;
+    --filter-color:      #10b981;
+    --filter-color-dark: #059669;
+}
+
+#member-migration-section .form-actions-bar {
+    --_card-color-rgb: 16, 185, 129;
+    --_card-color:     #10b981;
+    --_card-color-dark:#059669;
+}
+
+#member-migration-section .form-select,
+#member-migration-section .form-input {
+    --fi-blue-rgb:      16, 185, 129;
+    --fi-blue-700:      #059669;
+    --fi-border:        rgba(16, 185, 129, 0.20);
+    --fi-border-hover:  rgba(16, 185, 129, 0.35);
+    --fi-border-focus:  #10b981;
+    --fi-ring-focus:    rgba(16, 185, 129, 0.18);
+    --fi-bg-gradient:   linear-gradient(145deg, rgba(16,185,129,0.045) 0%, rgba(16,185,129,0.015) 50%, #ffffff 100%);
+    --fi-bg-hover:      linear-gradient(145deg, rgba(16,185,129,0.07) 0%, rgba(16,185,129,0.025) 55%, #ffffff 100%);
+    --fi-bg-focus:      linear-gradient(145deg, rgba(16,185,129,0.09) 0%, rgba(16,185,129,0.03) 55%, #ffffff 100%);
+    --fi-shadow-rest:   0 1px 3px rgba(16, 185, 129, 0.06);
+}
+
+#member-migration-section .form-checkbox input[type="checkbox"] {
+    border-color: rgba(16, 185, 129, 0.45);
+}
+
+#member-migration-section .form-checkbox input[type="checkbox"]:hover {
+    border-color: #10b981;
+    box-shadow: 0 0 0 2.5px rgba(16, 185, 129, 0.14);
+}
+
+#member-migration-section .form-checkbox input[type="checkbox"]:checked {
+    background-image: linear-gradient(135deg, #6ee7b7 0%, #10b981 55%, #059669 100%);
+    border-color: #059669;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.32);
+}

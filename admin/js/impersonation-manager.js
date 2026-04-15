@@ -161,7 +161,7 @@ window.ImpersonationManager = (function() {
         `;
 
         document.body.insertBefore(banner, document.body.firstChild);
-        document.body.style.paddingTop = '60px';
+        document.body.classList.add('is-impersonating');
     }
 
     /**
@@ -171,8 +171,8 @@ window.ImpersonationManager = (function() {
         const banner = document.getElementById('impersonation-banner');
         if (banner) {
             banner.remove();
-            document.body.style.paddingTop = '0';
         }
+        document.body.classList.remove('is-impersonating');
     }
 
     /**

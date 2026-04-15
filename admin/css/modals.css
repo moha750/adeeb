@@ -1447,6 +1447,11 @@
     grid-column: 1 / -1;
 }
 
+.modal-form-grid .modal-divider {
+    grid-column: 1 / -1;
+    margin: 0.5rem 0;
+}
+
 .export-columns-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));

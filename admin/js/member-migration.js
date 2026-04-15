@@ -27,6 +27,16 @@
 
             if (error) throw error;
             committees = data || [];
+
+            // ملء فلتر اللجان
+            const filter = document.getElementById('migrationCommitteeFilter');
+            if (filter) {
+                let options = '<option value="">جميع اللجان</option>';
+                committees.forEach(c => {
+                    options += `<option value="${escapeHtml(c.committee_name_ar)}">${escapeHtml(c.committee_name_ar)}</option>`;
+                });
+                filter.innerHTML = options;
+            }
         } catch (error) {
             console.error('خطأ في تحميل اللجان:', error);
             showNotification('خطأ في تحميل اللجان', 'error');
@@ -110,120 +120,88 @@
         }
 
         let html = `
-            <div>
-                <button class="btn-primary" onclick="window.memberMigration.migrateAllSelected()" id="migrateSelectedBtn" disabled>
-                    <i class="fa-solid fa-users-gear"></i>
-                    ترحيل المحددين (<span id="selectedCount">0</span>)
-                </button>
-                <label>
-                    <input type="checkbox" id="selectAllCheckbox" onchange="window.memberMigration.toggleSelectAll(this.checked)" />
-                    <span>تحديد الكل</span>
-                </label>
-            </div>
-            <div class="migration-cards-grid">
+            <div class="data-table-wrap">
+                <div class="data-table-scroll">
+                    <table class="data-table data-table--striped">
+                        <thead>
+                            <tr>
+                                <th style="width:2.5rem;text-align:center;">تحديد</th>
+                                <th>الاسم</th>
+                                <th>اللجنة</th>
+                                <th>تاريخ القبول</th>
+                                <th style="text-align:center;">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
         `;
 
         filtered.forEach(member => {
             const app = member.application;
-            const decidedDate = member.decided_at ? new Date(member.decided_at).toLocaleDateString('ar-SA', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            }) : 'غير محدد';
+            const decidedDate = member.decided_at ? new Date(member.decided_at).toLocaleDateString('ar-SA') : '-';
 
-            const committeeOptions = committees.map(c => 
+            const committeeOptions = committees.map(c =>
                 `<option value="${c.id}" ${c.committee_name_ar === app.preferred_committee ? 'selected' : ''}>
                     ${c.committee_name_ar}
                 </option>`
             ).join('');
 
             html += `
-                <div class="migration-card" data-member-id="${member.id}">
-                    <div class="migration-card-header">
-                        <label class="migration-checkbox">
-                            <input type="checkbox" class="member-checkbox" data-member-id="${member.id}" onchange="window.memberMigration.updateSelectedCount()" />
-                        </label>
-                        <div class="member-info">
-                            <div class="member-avatar">
-                                <i class="fa-solid fa-user-graduate"></i>
-                            </div>
-                            <div class="member-details">
-                                <h3>${escapeHtml(app.full_name)}</h3>
-                                <span class="uc-card__badge">مقبول نهائياً</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="migration-card-body">
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <i class="fa-solid fa-envelope"></i>
-                                <div>
-                                    <span class="info-label">البريد الإلكتروني</span>
-                                    <span class="info-value">${escapeHtml(app.email)}</span>
+                        <tr data-member-id="${member.id}">
+                            <td style="text-align:center;">
+                                <label class="form-checkbox"><input type="checkbox" class="member-checkbox" data-member-id="${member.id}" onchange="window.memberMigration.updateSelectedCount()" /></label>
+                            </td>
+                            <td class="cell-strong">${escapeHtml(app.full_name)}</td>
+                            <td>
+                                <select class="committee-select form-select" data-member-id="${member.id}" style="min-width:130px;padding:0.35rem 0.5rem;font-size:0.8125rem;">
+                                    ${committeeOptions}
+                                </select>
+                            </td>
+                            <td class="cell-nowrap cell-muted">${decidedDate}</td>
+                            <td>
+                                <div class="data-table__actions">
+                                    <button class="btn btn-icon btn-success btn-sm" title="ترحيل إلى حساب" onclick="window.memberMigration.migrateSingleMember('${member.id}')">
+                                        <i class="fa-solid fa-user-plus"></i>
+                                    </button>
+                                    <button class="btn btn-icon btn-primary btn-sm" title="عرض التفاصيل" onclick="window.memberMigration.viewMemberDetails('${member.id}')">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
                                 </div>
-                            </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-phone"></i>
-                                <div>
-                                    <span class="info-label">رقم الجوال</span>
-                                    <span class="info-value">${escapeHtml(app.phone || 'غير متوفر')}</span>
-                                </div>
-                            </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-graduation-cap"></i>
-                                <div>
-                                    <span class="info-label">الدرجة العلمية</span>
-                                    <span class="info-value">${escapeHtml(app.degree || 'غير محدد')}</span>
-                                </div>
-                            </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-building-columns"></i>
-                                <div>
-                                    <span class="info-label">الكلية</span>
-                                    <span class="info-value">${escapeHtml(app.college || 'غير محدد')}</span>
-                                </div>
-                            </div>
-                            
-                            <div class="info-item full-width">
-                                <i class="fa-solid fa-users"></i>
-                                <div>
-                                    <span class="info-label">اللجنة</span>
-                                    <select class="committee-select" data-member-id="${member.id}">
-                                        ${committeeOptions}
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="info-item">
-                                <i class="fa-solid fa-calendar-check"></i>
-                                <div>
-                                    <span class="info-label">تاريخ القبول</span>
-                                    <span class="info-value">${decidedDate}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="migration-card-footer">
-                        <button class="btn-primary " onclick="window.memberMigration.migrateSingleMember('${member.id}')">
-                            <i class="fa-solid fa-user-plus"></i>
-                            ترحيل إلى حساب
-                        </button>
-                        <button class="btn-outline " onclick="window.memberMigration.viewMemberDetails('${member.id}')">
-                            <i class="fa-solid fa-eye"></i>
-                            عرض التفاصيل
-                        </button>
-                    </div>
-                </div>
+                            </td>
+                        </tr>
             `;
         });
 
-        html += '</div>';
+        html += '</tbody></table></div></div>';
         container.innerHTML = html;
+
+        // ربط حدث تغيير اللجنة
+        container.querySelectorAll('.committee-select').forEach(select => {
+            select.addEventListener('change', (e) => {
+                saveCommitteeChange(e.target.dataset.memberId, e.target.value);
+            });
+        });
+
+        // شريط إجراءات الترحيل الجماعي (حائم خارج الكارد)
+        const section = document.getElementById('member-migration-section');
+        let actionsBar = document.getElementById('migrationActionsBar');
+        if (!actionsBar) {
+            actionsBar = document.createElement('div');
+            actionsBar.id = 'migrationActionsBar';
+            actionsBar.className = 'form-actions-sticky';
+            actionsBar.innerHTML = `
+                <div class="form-actions-bar">
+                    <button class="btn btn-success" id="selectAllCheckbox" onclick="window.memberMigration.toggleSelectAll()">
+                        <i class="fa-solid fa-check-double"></i>
+                        تحديد الكل
+                    </button>
+                    <button class="btn btn-primary" onclick="window.memberMigration.migrateAllSelected()" id="migrateSelectedBtn" disabled>
+                        <i class="fa-solid fa-users-gear"></i>
+                        ترحيل المحددين
+                    </button>
+                </div>
+            `;
+            section.appendChild(actionsBar);
+        }
     }
 
     function updateMigrationStatistics() {
@@ -233,7 +211,7 @@
         const total = acceptedMembers.length;
 
         container.innerHTML = `
-            <div class="stat-card stat-card--green">
+            <div class="stat-card" style="--stat-color: #10b981;">
                 <div class="stat-card-wrapper">
                     <div class="stat-icon">
                         <i class="fa-solid fa-user-graduate"></i>
@@ -244,35 +222,65 @@
                     </div>
                 </div>
             </div>
-            <div class="stat-card stat-card--blue">
-                <div class="stat-card-wrapper">
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value" id="selectedMigrationCount">0</div>
-                        <div class="stat-label">المحدد للترحيل</div>
-                    </div>
-                </div>
-            </div>
         `;
     }
 
-    function toggleSelectAll(checked) {
+    function toggleSelectAll() {
         const checkboxes = document.querySelectorAll('.member-checkbox');
-        checkboxes.forEach(cb => cb.checked = checked);
+        const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+        checkboxes.forEach(cb => cb.checked = !allChecked);
+        const btn = document.getElementById('selectAllCheckbox');
+        if (btn) {
+            if (allChecked) {
+                btn.innerHTML = '<i class="fa-solid fa-check-double"></i> تحديد الكل';
+                btn.className = 'btn btn-success';
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-xmark"></i> إلغاء التحديد';
+                btn.className = 'btn btn-danger';
+            }
+        }
         updateSelectedCount();
     }
 
     function updateSelectedCount() {
         const checkboxes = document.querySelectorAll('.member-checkbox:checked');
         const count = checkboxes.length;
-        
-        const countEl = document.getElementById('selectedMigrationCount');
+
+        const countEl = document.getElementById('selectedCount');
         const migrateBtn = document.getElementById('migrateSelectedBtn');
-        
+
         if (countEl) countEl.textContent = count;
         if (migrateBtn) migrateBtn.disabled = count === 0;
+    }
+
+    async function saveCommitteeChange(interviewId, committeeId) {
+        const member = acceptedMembers.find(m => m.id === interviewId);
+        if (!member || !member.application) return;
+
+        const committee = committees.find(c => c.id === parseInt(committeeId));
+        if (!committee) return;
+
+        try {
+            const { error } = await window.sbClient
+                .from('membership_applications')
+                .update({ preferred_committee: committee.committee_name_ar })
+                .eq('id', member.application.id);
+
+            if (error) throw error;
+
+            // تحديث البيانات المحلية
+            member.application.preferred_committee = committee.committee_name_ar;
+            showNotification(`تم تغيير اللجنة إلى "${committee.committee_name_ar}" بنجاح`, 'success');
+        } catch (error) {
+            console.error('خطأ في حفظ اللجنة:', error);
+            showNotification('خطأ في حفظ تغيير اللجنة', 'error');
+            // إرجاع القيمة القديمة
+            const select = document.querySelector(`.committee-select[data-member-id="${interviewId}"]`);
+            if (select) {
+                const oldCommittee = committees.find(c => c.committee_name_ar === member.application.preferred_committee);
+                if (oldCommittee) select.value = oldCommittee.id;
+            }
+        }
     }
 
     async function migrateSingleMember(interviewId) {
@@ -533,37 +541,68 @@
         if (!member || !member.application) return;
 
         const app = member.application;
-        
-        Swal.fire({
-            title: 'تفاصيل العضو',
-            html: `
-                <div>
-                    <div>
-                        <strong>الاسم الكامل:</strong> ${escapeHtml(app.full_name)}
+        const decidedDate = member.decided_at ? new Date(member.decided_at).toLocaleDateString('ar-SA') : 'غير محدد';
+
+        const contentHtml = `
+            <div class="modal-section">
+                <h3><i class="fa-solid fa-user"></i> المعلومات الشخصية</h3>
+                <div class="modal-detail-grid">
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label">الاسم الكامل</span>
+                        <span class="modal-detail-value">${escapeHtml(app.full_name)}</span>
                     </div>
-                    <div>
-                        <strong>البريد الإلكتروني:</strong> ${escapeHtml(app.email)}
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label">البريد الإلكتروني</span>
+                        <span class="modal-detail-value">${escapeHtml(app.email)}</span>
                     </div>
-                    <div>
-                        <strong>رقم الجوال:</strong> ${escapeHtml(app.phone || 'غير متوفر')}
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label">رقم الجوال</span>
+                        <span class="modal-detail-value">${escapeHtml(app.phone || 'غير متوفر')}</span>
                     </div>
-                    <div>
-                        <strong>الدرجة العلمية:</strong> ${escapeHtml(app.degree || 'غير محدد')}
-                    </div>
-                    <div>
-                        <strong>الكلية:</strong> ${escapeHtml(app.college || 'غير محدد')}
-                    </div>
-                    <div>
-                        <strong>التخصص:</strong> ${escapeHtml(app.major || 'غير محدد')}
-                    </div>
-                    <div>
-                        <strong>اللجنة المرغوبة:</strong> ${escapeHtml(app.preferred_committee || 'غير محدد')}
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label">اللجنة المرغوبة</span>
+                        <span class="modal-detail-value">${escapeHtml(app.preferred_committee || 'غير محدد')}</span>
                     </div>
                 </div>
-            `,
-            confirmButtonText: 'إغلاق',
-            width: '500px'
-        });
+            </div>
+
+            <hr class="modal-divider">
+
+            <div class="modal-section">
+                <h3><i class="fa-solid fa-graduation-cap"></i> المعلومات الأكاديمية</h3>
+                <div class="modal-detail-grid">
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label">الدرجة العلمية</span>
+                        <span class="modal-detail-value">${escapeHtml(app.degree || 'غير محدد')}</span>
+                    </div>
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label">الكلية</span>
+                        <span class="modal-detail-value">${escapeHtml(app.college || 'غير محدد')}</span>
+                    </div>
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label">التخصص</span>
+                        <span class="modal-detail-value">${escapeHtml(app.major || 'غير محدد')}</span>
+                    </div>
+                    <div class="modal-detail-item">
+                        <span class="modal-detail-label">تاريخ القبول</span>
+                        <span class="modal-detail-value">${decidedDate}</span>
+                    </div>
+                </div>
+            </div>
+
+            ${member.result_notes ? `
+                <hr class="modal-divider">
+                <div class="modal-section">
+                    <h3><i class="fa-solid fa-note-sticky"></i> ملاحظات نتيجة المقابلة</h3>
+                    <div class="modal-info-box box-success">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <div>${escapeHtml(member.result_notes)}</div>
+                    </div>
+                </div>
+            ` : ''}
+        `;
+
+        window.openModal('تفاصيل العضو', contentHtml, { icon: 'fa-user-check', variant: 'success' });
     }
 
     function exportToExcel() {
@@ -629,8 +668,6 @@
     function bindEvents() {
         const searchInput = document.getElementById('migrationSearchInput');
         const committeeFilter = document.getElementById('migrationCommitteeFilter');
-        const refreshBtn = document.getElementById('refreshMigrationBtn');
-        const exportBtn = document.getElementById('exportMigrationBtn');
 
         if (searchInput) {
             searchInput.addEventListener('input', renderMigrationTable);
@@ -640,12 +677,50 @@
             committeeFilter.addEventListener('change', renderMigrationTable);
         }
 
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', loadAcceptedMembers);
-        }
+        // زر خيارات الهيدر
+        const optionsBtn = document.getElementById('migrationOptionsBtn');
+        if (optionsBtn) {
+            let dropdown = document.getElementById('migrationOptionsDropdown');
+            if (dropdown) dropdown.remove();
+            dropdown = document.createElement('div');
+            dropdown.id = 'migrationOptionsDropdown';
+            dropdown.className = 'dropdown-menu';
+            dropdown.innerHTML = `
+                <button class="btn btn-slate btn-outline btn-block" data-action="refresh">
+                    <i class="fa-solid fa-rotate"></i> تحديث
+                </button>
+                <button class="btn btn-primary btn-outline btn-block" data-action="export">
+                    <i class="fa-solid fa-file-excel"></i> تصدير Excel
+                </button>
+            `;
+            document.body.appendChild(dropdown);
 
-        if (exportBtn) {
-            exportBtn.addEventListener('click', exportToExcel);
+            optionsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = dropdown.classList.toggle('show');
+                if (isOpen) {
+                    const rect = optionsBtn.getBoundingClientRect();
+                    dropdown.style.top = (rect.bottom + 6) + 'px';
+                    dropdown.style.left = rect.left + 'px';
+                }
+            });
+
+            dropdown.addEventListener('click', (e) => {
+                const actionBtn = e.target.closest('[data-action]');
+                if (!actionBtn) return;
+                dropdown.classList.remove('show');
+                if (actionBtn.dataset.action === 'export') {
+                    exportToExcel();
+                } else if (actionBtn.dataset.action === 'refresh') {
+                    loadAcceptedMembers();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#migrationOptionsBtn') && !e.target.closest('#migrationOptionsDropdown')) {
+                    dropdown.classList.remove('show');
+                }
+            });
         }
     }
 
@@ -663,8 +738,8 @@
     }
 
     function showNotification(message, type) {
-        if (window.showNotification) {
-            window.showNotification(message, type);
+        if (window.Toast) {
+            window.Toast.show({ message, type });
         } else {
             console.log(`[${type}] ${message}`);
         }

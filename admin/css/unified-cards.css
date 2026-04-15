@@ -688,6 +688,630 @@
 
 
 /* ============================================================
+   § 11b · شريحة العضو — Member Chip  ‹Gradient Fill Style›
+   ============================================================ */
+
+/*
+ * --_mc-color-rgb : RGB للون المميّز
+ * --_mc-color     : اللون الأساسي
+ * --_mc-color-dark: اللون الداكن للتدرج
+ */
+
+.member-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.75rem;
+}
+
+.member-chip {
+    --_mc-color-rgb:  61, 143, 214;
+    --_mc-color:      #3d8fd6;
+    --_mc-color-dark: #274060;
+
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 1rem 0.65rem 0.65rem;
+    background-color: #ffffff;
+    background-image: linear-gradient(
+        145deg,
+        rgba(var(--_mc-color-rgb), 0.09) 0%,
+        rgba(var(--_mc-color-rgb), 0.03) 45%,
+        transparent 100%
+    );
+    border: 1px solid rgba(var(--_mc-color-rgb), 0.15);
+    border-radius: 16px;
+    box-shadow:
+        0 1px 4px  rgba(0, 0, 0, 0.04),
+        0 4px 16px rgba(var(--_mc-color-rgb), 0.08);
+    transition:
+        transform    0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow   0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.35s ease;
+    min-width: 0;
+}
+
+/* شريط جانبي عمودي — يمين RTL */
+.member-chip::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 0;
+    width: 3px;
+    height: calc(100% - 16px);
+    background: linear-gradient(180deg, var(--_mc-color), var(--_mc-color-dark));
+    border-radius: 3px 0 0 3px;
+    opacity: 0.45;
+    transition: opacity 0.3s ease, height 0.3s ease, top 0.3s ease;
+}
+
+/* دائرة زخرفية */
+.member-chip::after {
+    content: '';
+    position: absolute;
+    bottom: -30px;
+    left: -30px;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(
+        circle,
+        rgba(var(--_mc-color-rgb), 0.08) 0%,
+        transparent 68%
+    );
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.7;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+.member-chip:hover {
+    transform: translateY(-3px);
+    border-color: rgba(var(--_mc-color-rgb), 0.28);
+    box-shadow:
+        0 2px 8px  rgba(0, 0, 0, 0.06),
+        0 12px 32px rgba(var(--_mc-color-rgb), 0.14);
+}
+
+.member-chip:hover::before {
+    opacity: 1;
+    top: 6px;
+    height: calc(100% - 12px);
+}
+
+.member-chip:hover::after {
+    transform: scale(1.3);
+    opacity: 1;
+}
+
+/* الصورة */
+.member-chip__avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    object-fit: cover;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(135deg, var(--_mc-color), var(--_mc-color-dark));
+    box-shadow:
+        0 3px 8px rgba(var(--_mc-color-rgb), 0.25);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.member-chip:hover .member-chip__avatar {
+    transform: scale(1.08) rotate(-3deg);
+}
+
+/* المعلومات */
+.member-chip__info {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.member-chip__name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-dark, #1e293b);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.member-chip__role {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--_mc-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    letter-spacing: 0.2px;
+}
+
+.member-chip__role i {
+    font-size: 0.58rem;
+    opacity: 0.75;
+    flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .member-chip {
+        padding: 0.55rem 0.85rem 0.55rem 0.55rem;
+    }
+
+    .member-chip__avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+    }
+
+    .member-chip__name {
+        font-size: 0.84rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .member-chips {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .member-chip {
+        border-radius: 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .member-chip,
+    .member-chip::before,
+    .member-chip::after,
+    .member-chip__avatar { transition: none; }
+
+    .member-chip:hover { transform: none; }
+    .member-chip:hover::before { top: 8px; height: calc(100% - 16px); opacity: 0.45; }
+    .member-chip:hover::after { transform: none; }
+}
+
+
+/* ============================================================
+   § 11c · الشجرة التنظيمية — Org Tree  ‹Vertical / Gradient Fill›
+   ============================================================ */
+
+/* ── Container ── */
+
+.org-tree-wrapper {
+    padding: 8px 0;
+}
+
+/* ── Tree reset & vertical flow ── */
+
+.org-tree,
+.org-tree ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.org-tree {
+    direction: rtl;
+    --_tree-line: rgba(61, 143, 214, 0.22);
+}
+
+/* Each nested UL indents from right (RTL leading edge) */
+.org-tree ul {
+    padding-right: 32px;
+}
+
+/* Root LI — no connectors */
+.org-tree > li::before,
+.org-tree > li::after {
+    display: none;
+}
+
+/* ── Nested LIs — vertical connectors (file-tree style) ── */
+
+.org-tree ul > li {
+    position: relative;
+    padding: 8px 0;
+}
+
+/* Vertical line segment connecting siblings */
+.org-tree ul > li::before {
+    content: '';
+    position: absolute;
+    right: -20px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--_tree-line);
+}
+
+/* Horizontal connector from vertical line to node */
+.org-tree ul > li::after {
+    content: '';
+    position: absolute;
+    right: -20px;
+    top: 36px;
+    width: 20px;
+    height: 2px;
+    background: var(--_tree-line);
+}
+
+/* Last child: L-shaped with rounded corner */
+.org-tree ul > li:last-child::before {
+    bottom: auto;
+    width: 20px;
+    height: 36px;
+    background: transparent;
+    border-right: 2px solid var(--_tree-line);
+    border-bottom: 2px solid var(--_tree-line);
+    border-radius: 0 0 8px 0;
+}
+
+.org-tree ul > li:last-child::after {
+    display: none;
+}
+
+
+/* ── Node card (Gradient Fill — horizontal flex row) ── */
+
+.org-tree__node {
+    --_ot-rgb: var(--node-rgb, 61, 143, 214);
+    --_ot-color: var(--node-color, #3d8fd6);
+    --_ot-color-dark: var(--node-color-dark, #274060);
+
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    background-color: #fff;
+    background-image: linear-gradient(
+        145deg,
+        rgba(var(--_ot-rgb), 0.09) 0%,
+        rgba(var(--_ot-rgb), 0.03) 45%,
+        transparent 100%
+    );
+    border: 1px solid rgba(var(--_ot-rgb), 0.18);
+    border-radius: 14px;
+    box-shadow:
+        0 2px 10px rgba(var(--_ot-rgb), 0.10),
+        0 1px 3px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    z-index: 1;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.35s ease,
+                border-color 0.35s ease;
+}
+
+.org-tree__node:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--_ot-rgb), 0.30);
+    box-shadow:
+        0 8px 28px rgba(var(--_ot-rgb), 0.16),
+        0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* Side accent bar (right — RTL leading) */
+.org-tree__node::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 0;
+    width: 3px;
+    height: calc(100% - 16px);
+    background: linear-gradient(180deg, var(--_ot-color), var(--_ot-color-dark));
+    border-radius: 3px 0 0 3px;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+}
+
+.org-tree__node:hover::before {
+    opacity: 0.85;
+}
+
+/* Decorative radial circle */
+.org-tree__node::after {
+    content: '';
+    position: absolute;
+    bottom: -30px;
+    left: -30px;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(var(--_ot-rgb), 0.07) 0%, transparent 68%);
+    border-radius: 50%;
+    pointer-events: none;
+    transition: transform 0.5s ease;
+    opacity: 0.8;
+}
+
+.org-tree__node:hover::after {
+    transform: scale(1.15);
+    opacity: 1;
+}
+
+
+/* ── Node icon ── */
+
+.org-tree__node-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--_ot-color), var(--_ot-color-dark));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow:
+        0 4px 12px rgba(var(--_ot-rgb), 0.28),
+        0 2px 4px rgba(var(--_ot-rgb), 0.16);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Shine overlay */
+.org-tree__node-icon::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.25) 0%, transparent 55%);
+    pointer-events: none;
+}
+
+.org-tree__node:hover .org-tree__node-icon {
+    transform: scale(1.06) rotate(-3deg);
+}
+
+
+/* ── Node text ── */
+
+.org-tree__node-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.org-tree__node-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-dark, #1e293b);
+    line-height: 1.3;
+    font-family: 'ERA', 'Lyon Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.org-tree__node-sub {
+    font-size: 0.72rem;
+    color: var(--text-light, #64748b);
+    font-weight: 500;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.org-tree__node-sub i {
+    font-size: 0.62rem;
+    color: var(--_ot-color);
+}
+
+
+/* ── Node badge ── */
+
+.org-tree__node-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 8px;
+    background: rgba(var(--_ot-rgb), 0.10);
+    color: var(--_ot-color);
+    font-size: 0.67rem;
+    font-weight: 600;
+    border: 1px solid rgba(var(--_ot-rgb), 0.15);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.org-tree__node-badge i {
+    font-size: 0.58rem;
+}
+
+
+/* ── Toggle button ── */
+
+.org-tree__node-toggle {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(var(--_ot-rgb), 0.08);
+    color: var(--_ot-color);
+    font-size: 0.6rem;
+    flex-shrink: 0;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                background 0.3s ease;
+}
+
+.org-tree__node.is-open .org-tree__node-toggle {
+    transform: rotate(180deg);
+    background: rgba(var(--_ot-rgb), 0.16);
+}
+
+
+/* ── Expandable description ── */
+
+.org-tree__node {
+    flex-wrap: wrap;
+}
+
+.org-tree__node[data-desc] {
+    cursor: pointer;
+}
+
+.org-tree__node-desc {
+    width: 100%;
+    order: 99;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    font-size: 0.78rem;
+    font-family: 'ERA', 'Lyon Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text-light, #475569);
+    line-height: 1.7;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease,
+                margin 0.3s ease,
+                padding 0.3s ease;
+}
+
+.org-tree__node.is-open .org-tree__node-desc {
+    max-height: 200px;
+    opacity: 1;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(var(--_ot-rgb), 0.12);
+}
+
+
+/* ── Root node emphasis ── */
+
+.org-tree > li > .org-tree__node {
+    padding: 14px 20px;
+    border-radius: 16px;
+}
+
+.org-tree > li > .org-tree__node .org-tree__node-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+    border-radius: 14px;
+}
+
+.org-tree > li > .org-tree__node .org-tree__node-name {
+    font-size: 1rem;
+}
+
+
+/* ── Color variants ── */
+
+.org-tree__node--root {
+    --node-rgb: 39, 64, 96;
+    --node-color: #274060;
+    --node-color-dark: #1a2d42;
+}
+
+.org-tree__node--council {
+    --node-rgb: 245, 158, 11;
+    --node-color: #f59e0b;
+    --node-color-dark: #d97706;
+}
+
+.org-tree__node--admin {
+    --node-rgb: 16, 185, 129;
+    --node-color: #10b981;
+    --node-color-dark: #059669;
+}
+
+.org-tree__node--dept {
+    --node-rgb: 61, 143, 214;
+    --node-color: #3d8fd6;
+    --node-color-dark: #274060;
+}
+
+.org-tree__node--committee {
+    --node-rgb: 139, 92, 246;
+    --node-color: #8b5cf6;
+    --node-color-dark: #7c3aed;
+}
+
+
+/* ── Org Tree Responsive ── */
+
+@media (max-width: 768px) {
+    .org-tree ul { padding-right: 24px; }
+
+    .org-tree ul > li::before { right: -14px; }
+    .org-tree ul > li::after  { right: -14px; width: 14px; top: 30px; }
+    .org-tree ul > li:last-child::before {
+        right: -14px; width: 14px; height: 30px;
+        border-radius: 0 0 6px 0;
+    }
+
+    .org-tree__node {
+        padding: 10px 14px;
+        gap: 10px;
+        border-radius: 12px;
+    }
+    .org-tree__node-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+        border-radius: 10px;
+    }
+    .org-tree__node-name { font-size: 0.82rem; }
+    .org-tree__node-sub  { font-size: 0.66rem; }
+
+    .org-tree > li > .org-tree__node .org-tree__node-icon {
+        width: 42px; height: 42px; font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .org-tree ul { padding-right: 18px; }
+
+    .org-tree ul > li::before { right: -10px; }
+    .org-tree ul > li::after  { right: -10px; width: 10px; top: 26px; }
+    .org-tree ul > li:last-child::before {
+        right: -10px; width: 10px; height: 26px;
+    }
+
+    .org-tree__node {
+        padding: 8px 12px;
+        gap: 8px;
+        border-radius: 10px;
+    }
+    .org-tree__node-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 0.82rem;
+        border-radius: 8px;
+    }
+    .org-tree__node-name { font-size: 0.78rem; }
+    .org-tree__node-badge { font-size: 0.6rem; padding: 2px 7px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .org-tree__node,
+    .org-tree__node::before,
+    .org-tree__node::after,
+    .org-tree__node-icon {
+        transition: none !important;
+    }
+    .org-tree__node:hover { transform: none; }
+    .org-tree__node:hover .org-tree__node-icon { transform: none; }
+    .org-tree__node:hover::after { transform: none; }
+}
+
+
+/* ============================================================
    § 12 · حالة العنصر الجديد — New-item highlight
    ============================================================ */
 
@@ -1919,169 +2543,7 @@
 }
 
 
-/* ============================================================
-   § 19.5 · شريط تنبيه التنكر — Impersonation Banner
-   ============================================================ */
-
-.impersonation-banner {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 99999;
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    color: #fff;
-    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.35);
-    font-family: inherit;
-    direction: rtl;
-}
-
-.impersonation-banner__content {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0.75rem 1.25rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    min-height: 60px;
-}
-
-.impersonation-banner__icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.18);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.15rem;
-    flex-shrink: 0;
-}
-
-.impersonation-banner__text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    flex: 1;
-    min-width: 0;
-}
-
-.impersonation-banner__text strong {
-    font-size: 0.95rem;
-    font-weight: 700;
-}
-
-.impersonation-banner__text span {
-    font-size: 0.8rem;
-    opacity: 0.92;
-}
-
-.impersonation-banner__btn {
-    background: #fff;
-    color: #b91c1c;
-    border: none;
-    border-radius: 8px;
-    padding: 0.55rem 1.1rem;
-    font-size: 0.875rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    flex-shrink: 0;
-    font-family: inherit;
-}
-
-.impersonation-banner__btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
-}
-
-@media (max-width: 600px) {
-    .impersonation-banner__content {
-        padding: 0.6rem 0.85rem;
-        gap: 0.65rem;
-    }
-    .impersonation-banner__icon {
-        width: 34px;
-        height: 34px;
-        font-size: 1rem;
-    }
-    .impersonation-banner__text strong { font-size: 0.85rem; }
-    .impersonation-banner__text span { font-size: 0.72rem; }
-    .impersonation-banner__btn {
-        padding: 0.45rem 0.75rem;
-        font-size: 0.78rem;
-    }
-}
-
-/* ============================================================
-   § 20 · عنصر قائمة التنكر — Impersonation User Item
-   ============================================================ */
-
-.impersonation-user-item {
-    display: flex;
-    align-items: center;
-    gap: 0.875rem;
-    padding: 0.65rem 1rem;
-    border-bottom: 1px solid rgba(0, 0, 0, .06);
-    cursor: pointer;
-    transition: background 0.15s ease;
-}
-
-.impersonation-user-item:last-child {
-    border-bottom: none;
-}
-
-.impersonation-user-item:hover {
-    background: rgba(0, 0, 0, .035);
-}
-
-.impersonation-user-item__avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    overflow: hidden;
-    background: #e5e7eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    color: #9ca3af;
-    font-size: 1rem;
-}
-
-.impersonation-user-item__avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.impersonation-user-item__info {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-}
-
-.impersonation-user-item__name {
-    font-weight: 500;
-    color: var(--color-text, #1f2937);
-    font-size: 0.875rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.impersonation-user-item__email {
-    font-size: 0.75rem;
-    color: var(--color-text-muted, #6b7280);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+/* § 19.5 & § 20 — تنسيقات التنكر نُقلت إلى impersonation-bar.css */
 
 /* ─── Dropdown Menu ─── */
 .dropdown-menu {
