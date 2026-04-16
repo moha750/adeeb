@@ -50,8 +50,15 @@
             // فتح الصفحة الافتراضية (حسب تفضيلات المستخدم)
             const defaultLanding = window.settingsManager?.getDefaultLanding?.() || 'membership-card-section';
             navigateToSection(defaultLanding);
-            
+
             showLoading(false);
+
+            // إظهار نافذة الترحيب عند أول تسجيل دخول (لا تُعرض إلا مرة واحدة)
+            if (window.WelcomeModal && !currentUser._isImpersonating) {
+                setTimeout(() => {
+                    window.WelcomeModal.checkAndShow(currentUser, currentUserRole);
+                }, 600);
+            }
         } catch (error) {
             console.error('Error initializing dashboard:', error);
             showError('حدث خطأ أثناء تحميل لوحة التحكم');
@@ -216,12 +223,19 @@
                     ]
                 });
             } else {
-                menuItems.push({
-                    id: 'elections',
-                    icon: 'fa-hand-point-up',
-                    label: 'ترشَّح الآن',
-                    section: 'elections-section'
-                });
+                // العضو العادي: أظهر التبويب فقط عند وجود انتخاب نشط (ترشّح أو تصويت مفتوح)
+                const { count: activeElectionsCount } = await sb
+                    .from('elections')
+                    .select('id', { count: 'exact', head: true })
+                    .in('status', ['candidacy_open', 'voting_open']);
+                if ((activeElectionsCount || 0) > 0) {
+                    menuItems.push({
+                        id: 'elections',
+                        icon: 'fa-hand-point-up',
+                        label: 'ترشَّح الآن',
+                        section: 'elections-section'
+                    });
+                }
             }
         }
 
