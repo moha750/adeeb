@@ -5,174 +5,297 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إكمال بيانات العضوية - نادي أدِيب</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+
+    <!-- ① المتغيرات الموحدة -->
+    <link rel="stylesheet" href="admin/css/design-tokens.css" />
+
+    <!-- ② الخطوط + الـ body/reset والخلفية المتدرّجة -->
+    <link rel="stylesheet" href="admin/css/fonts.css" />
+    <link rel="stylesheet" href="admin/css/layout.css" />
+
+    <!-- ③ نظام المكونات المشتركة -->
+    <link rel="stylesheet" href="admin/css/buttons-system.css" />
+    <link rel="stylesheet" href="admin/css/inputs-system.css" />
+
+    <!-- ④ نظام الكروت الموحد (يحتوي .empty-state) -->
+    <link rel="stylesheet" href="admin/css/unified-cards.css" />
+
+    <!-- ⑤ ملف فارغ — لا توجد تنسيقات مخصّصة لهذه الصفحة -->
     <link rel="stylesheet" href="member-onboarding-new.css" />
-    <style>
-
-
-    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-logo">
-                <i class="fa-solid fa-user-check"></i>
-            </div>
-            <h1>مرحباً بك في نادي أدِيب</h1>
-            <p>يرجى إكمال بياناتك لتفعيل عضويتك</p>
-        </div>
-
-        <div class="content">
-            <!-- Loading State -->
-            <div id="loadingState" class="loading active">
-                <div class="spinner"></div>
-                <p>جاري التحقق من الرابط...</p>
-            </div>
-
-            <!-- Error State -->
-            <div id="errorState" style="display: none;">
-                <div class="alert alert-error">
-                    <i class="fa-solid fa-circle-exclamation"></i>
-                    <span id="errorMessage"></span>
-                </div>
-            </div>
-
-            <!-- Form -->
-            <form id="onboardingForm" style="display: none;">
-                <div class="alert alert-info">
-                    <i class="fa-solid fa-info-circle"></i>
-                    <span>جميع الحقول المطلوبة يجب تعبئتها لتفعيل حسابك</span>
-                </div>
-
-                <!-- البيانات الشخصية -->
-                <div class="form-section">
-                    <h2><i class="fa-solid fa-user"></i> البيانات الشخصية</h2>
-                    <div class="form-grid">
-                        <div class="form-group full-width">
-                            <label><span class="required">*</span> الاسم الثلاثي الكامل</label>
-                            <input type="text" id="fullNameTriple" name="fullNameTriple" required 
-                                   placeholder="مثال: أحمد محمد عبدالله">
-                        </div>
-                        <div class="form-group">
-                            <label><span class="required">*</span> رقم الجوال</label>
-                            <input type="tel" id="phone" name="phone" required 
-                                   placeholder="05xxxxxxxx" pattern="^05[0-9]{8}$">
-                        </div>
-                        <div class="form-group">
-                            <label><span class="required">*</span> البريد الإلكتروني</label>
-                            <input type="email" id="email" name="email" required disabled>
-                        </div>
-                        <div class="form-group">
-                            <label><span class="required">*</span> كلمة المرور</label>
-                            <input type="password" id="password" name="password" required 
-                                   placeholder="8 أحرف على الأقل" minlength="8">
-                        </div>
-                        <div class="form-group">
-                            <label><span class="required">*</span> تأكيد كلمة المرور</label>
-                            <input type="password" id="confirmPassword" name="confirmPassword" required 
-                                   placeholder="أعد إدخال كلمة المرور" minlength="8">
-                        </div>
-                        <div class="form-group">
-                            <label><span class="required">*</span> رقم الهوية الوطنية</label>
-                            <input type="text" id="nationalId" name="nationalId" required 
-                                   placeholder="1xxxxxxxxx" pattern="^[12][0-9]{9}$">
-                        </div>
-                        <div class="form-group">
-                            <label><span class="required">*</span> تاريخ الميلاد</label>
-                            <input type="date" id="birthDate" name="birthDate" required>
-                        </div>
+    <main style="max-width: 920px; margin: 2.5rem auto; padding: 0 1rem;">
+        <article class="form-card form-card--primary">
+            <!-- Header -->
+            <header class="form-card-header">
+                <div class="form-card-header-inner">
+                    <div class="uc-card__icon">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                    <div>
+                        <h3>مرحباً بك في نادي أدِيب</h3>
+                        <p>إكمال بيانات العضوية لتفعيل حسابك</p>
                     </div>
                 </div>
+            </header>
 
-                <!-- البيانات الأكاديمية -->
-                <div class="form-section">
-                    <h2><i class="fa-solid fa-graduation-cap"></i> البيانات الأكاديمية</h2>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label><span class="required">*</span> رقم السجل الأكاديمي</label>
-                            <input type="text" id="academicRecordNumber" name="academicRecordNumber" required 
-                                   placeholder="4xxxxxxxx">
-                        </div>
-                        <div class="form-group">
-                            <label><span class="required">*</span> الدرجة العلمية</label>
-                            <select id="academicDegree" name="academicDegree" required>
-                                <option value="">اختر الدرجة العلمية</option>
-                                <option value="high_school">ثانوية عامة</option>
-                                <option value="diploma">دبلوم</option>
-                                <option value="bachelor">بكالوريوس</option>
-                                <option value="master">ماجستير</option>
-                                <option value="phd">دكتوراه</option>
-                                <option value="other">أخرى</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="collegeGroup" style="display: none;">
-                            <label><span class="required">*</span> الكلية</label>
-                            <input type="text" id="college" name="college" placeholder="مثال: كلية الآداب">
-                        </div>
-                        <div class="form-group" id="majorGroup" style="display: none;">
-                            <label><span class="required">*</span> التخصص</label>
-                            <input type="text" id="major" name="major" placeholder="مثال: اللغة العربية">
-                        </div>
+            <!-- Body -->
+            <div class="form-card-body">
+                <!-- Loading State -->
+                <div id="loadingState" class="empty-state">
+                    <div class="empty-state__icon">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
                     </div>
+                    <h3 class="empty-state__title">جاري التحقق من الرابط...</h3>
+                    <p class="empty-state__message">يرجى الانتظار قليلاً</p>
                 </div>
 
-                <!-- اللجنة -->
-                <div class="form-section">
-                    <h2><i class="fa-solid fa-sitemap"></i> اللجنة</h2>
-                    <div class="form-grid">
-                        <div class="form-group full-width">
-                            <label><span class="required">*</span> اللجنة المختارة</label>
-                            <select id="committeeId" name="committeeId" required disabled>
+                <!-- Error State -->
+                <div id="errorState" class="empty-state empty-state--danger" style="display: none;">
+                    <div class="empty-state__icon">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                    </div>
+                    <h3 class="empty-state__title">رابط غير صالح</h3>
+                    <p class="empty-state__message" id="errorMessage"></p>
+                </div>
+
+                <!-- Form -->
+                <form id="onboardingForm" style="display: none;">
+                    <div class="form-section-hint">
+                        <i class="fa-solid fa-info-circle"></i>
+                        <span>جميع الحقول المطلوبة يجب تعبئتها لتفعيل حسابك</span>
+                    </div>
+
+                    <!-- البيانات الشخصية -->
+                    <section class="form-section">
+                        <div class="form-section-label">
+                            <i class="fa-solid fa-user"></i>
+                            البيانات الشخصية
+                        </div>
+                        <div class="form-grid-2">
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label class="form-label" for="fullNameTriple">
+                                    <span class="required-dot" aria-hidden="true"></span>
+                                    الاسم الثلاثي الكامل
+                                </label>
+                                <input type="text" id="fullNameTriple" name="fullNameTriple" required
+                                       class="form-input"
+                                       placeholder="مثال: أحمد محمد عبدالله">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="phone">
+                                    <span class="required-dot" aria-hidden="true"></span>
+                                    رقم الجوال
+                                </label>
+                                <input type="tel" id="phone" name="phone" required
+                                       class="form-input"
+                                       placeholder="05xxxxxxxx" pattern="^05[0-9]{8}$">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="email">
+                                    <span class="required-dot" aria-hidden="true"></span>
+                                    البريد الإلكتروني
+                                </label>
+                                <input type="email" id="email" name="email" required disabled
+                                       class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="password">
+                                    <span class="required-dot" aria-hidden="true"></span>
+                                    كلمة المرور
+                                </label>
+                                <input type="password" id="password" name="password" required
+                                       class="form-input"
+                                       placeholder="8 أحرف على الأقل" minlength="8">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="confirmPassword">
+                                    <span class="required-dot" aria-hidden="true"></span>
+                                    تأكيد كلمة المرور
+                                </label>
+                                <input type="password" id="confirmPassword" name="confirmPassword" required
+                                       class="form-input"
+                                       placeholder="أعد إدخال كلمة المرور" minlength="8">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="nationalId">
+                                    <span class="required-dot" aria-hidden="true"></span>
+                                    رقم الهوية الوطنية
+                                </label>
+                                <input type="text" id="nationalId" name="nationalId" required
+                                       class="form-input"
+                                       placeholder="1xxxxxxxxx" pattern="^[12][0-9]{9}$">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="birthDate">
+                                    <span class="required-dot" aria-hidden="true"></span>
+                                    تاريخ الميلاد
+                                </label>
+                                <input type="date" id="birthDate" name="birthDate" required
+                                       class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <span class="required-dot" aria-hidden="true"></span>
+                                    الجنس
+                                </label>
+                                <div class="form-radio-group horizontal">
+                                    <label class="form-radio">
+                                        <input type="radio" name="gender" value="male" required>
+                                        <span class="form-radio-label">ذكر</span>
+                                    </label>
+                                    <label class="form-radio">
+                                        <input type="radio" name="gender" value="female" required>
+                                        <span class="form-radio-label">أنثى</span>
+                                    </label>
+                                </div>
+                                <span class="form-hint">مطلوب لتمكين حجز الأنشطة (حصص الذكور/الإناث منفصلة)</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="favoriteColor">
+                                    <i class="fa-solid fa-palette"></i>
+                                    اللون المفضّل
+                                </label>
+                                <input type="color" id="favoriteColor" name="favoriteColor"
+                                       class="form-input" value="#3d8fd6"
+                                       style="height:2.6rem;padding:0.25rem 0.4rem;cursor:pointer;">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- البيانات الأكاديمية -->
+                    <section class="form-section">
+                        <div class="form-section-label">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                            البيانات الأكاديمية
+                        </div>
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label class="form-label" for="academicRecordNumber">
+                                    <span class="required-dot" aria-hidden="true"></span>
+                                    رقم السجل الأكاديمي
+                                </label>
+                                <input type="text" id="academicRecordNumber" name="academicRecordNumber" required
+                                       class="form-input" placeholder="4xxxxxxxx">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="academicDegree">
+                                    <span class="required-dot" aria-hidden="true"></span>
+                                    الدرجة العلمية
+                                </label>
+                                <select id="academicDegree" name="academicDegree" required class="form-select">
+                                    <option value="">اختر الدرجة العلمية</option>
+                                    <option value="high_school">ثانوية عامة</option>
+                                    <option value="diploma">دبلوم</option>
+                                    <option value="bachelor">بكالوريوس</option>
+                                    <option value="master">ماجستير</option>
+                                    <option value="phd">دكتوراه</option>
+                                    <option value="other">أخرى</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="collegeGroup" style="display: none;">
+                                <label class="form-label" for="college">
+                                    <span class="required-dot" aria-hidden="true"></span>
+                                    الكلية
+                                </label>
+                                <input type="text" id="college" name="college"
+                                       class="form-input" placeholder="مثال: كلية الآداب">
+                            </div>
+                            <div class="form-group" id="majorGroup" style="display: none;">
+                                <label class="form-label" for="major">
+                                    <span class="required-dot" aria-hidden="true"></span>
+                                    التخصص
+                                </label>
+                                <input type="text" id="major" name="major"
+                                       class="form-input" placeholder="مثال: اللغة العربية">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- اللجنة -->
+                    <section class="form-section">
+                        <div class="form-section-label">
+                            <i class="fa-solid fa-sitemap"></i>
+                            اللجنة
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="committeeId">
+                                <span class="required-dot" aria-hidden="true"></span>
+                                اللجنة المختارة
+                            </label>
+                            <select id="committeeId" name="committeeId" required disabled class="form-select">
                                 <option value="">جاري التحميل...</option>
                             </select>
                         </div>
+                    </section>
+
+                    <!-- حسابات التواصل الاجتماعي -->
+                    <section class="form-section">
+                        <div class="form-section-label">
+                            <i class="fa-solid fa-share-nodes"></i>
+                            حسابات التواصل الاجتماعي (اختياري)
+                        </div>
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label class="form-label" for="twitterAccount">
+                                    <i class="fa-brands fa-twitter"></i>
+                                    حساب تويتر
+                                </label>
+                                <input type="text" id="twitterAccount" name="twitterAccount"
+                                       class="form-input" placeholder="@username">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="instagramAccount">
+                                    <i class="fa-brands fa-instagram"></i>
+                                    حساب إنستقرام
+                                </label>
+                                <input type="text" id="instagramAccount" name="instagramAccount"
+                                       class="form-input" placeholder="@username">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="tiktokAccount">
+                                    <i class="fa-brands fa-tiktok"></i>
+                                    حساب تيك توك
+                                </label>
+                                <input type="text" id="tiktokAccount" name="tiktokAccount"
+                                       class="form-input" placeholder="@username">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="linkedinAccount">
+                                    <i class="fa-brands fa-linkedin"></i>
+                                    حساب لينكدإن
+                                </label>
+                                <input type="text" id="linkedinAccount" name="linkedinAccount"
+                                       class="form-input" placeholder="username">
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="form-actions form-actions-center">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="fa-solid fa-check"></i>
+                            <span>إكمال التسجيل</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Success State -->
+                <div id="successState" class="empty-state empty-state--success" style="display: none;">
+                    <div class="empty-state__icon">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <h3 class="empty-state__title">تم إكمال بياناتك بنجاح!</h3>
+                    <p class="empty-state__message">يمكنك الآن تسجيل الدخول إلى لوحة التحكم</p>
+                    <div class="empty-state__action">
+                        <a href="auth/login.html" class="btn btn-primary">
+                            <i class="fa-solid fa-right-to-bracket"></i>
+                            <span>تسجيل الدخول</span>
+                        </a>
                     </div>
                 </div>
-
-                <!-- حسابات التواصل الاجتماعي -->
-                <div class="form-section">
-                    <h2><i class="fa-solid fa-share-nodes"></i> حسابات التواصل الاجتماعي <span class="optional">(اختياري)</span></h2>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label><i class="fa-brands fa-twitter"></i> حساب تويتر <span class="optional">(اختياري)</span></label>
-                            <input type="text" id="twitterAccount" name="twitterAccount" placeholder="@username">
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fa-brands fa-instagram"></i> حساب إنستقرام <span class="optional">(اختياري)</span></label>
-                            <input type="text" id="instagramAccount" name="instagramAccount" placeholder="@username">
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fa-brands fa-tiktok"></i> حساب تيك توك <span class="optional">(اختياري)</span></label>
-                            <input type="text" id="tiktokAccount" name="tiktokAccount" placeholder="@username">
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fa-brands fa-linkedin"></i> حساب لينكدإن <span class="optional">(اختياري)</span></label>
-                            <input type="text" id="linkedinAccount" name="linkedinAccount" placeholder="username">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" id="submitBtn">
-                        <i class="fa-solid fa-check"></i>
-                        إكمال التسجيل
-                    </button>
-                </div>
-            </form>
-
-            <!-- Success State -->
-            <div id="successState" class="success-message">
-                <div class="success-icon">
-                    <i class="fa-solid fa-circle-check"></i>
-                </div>
-                <h2 style="color: #333; margin-bottom: 15px;">تم إكمال بياناتك بنجاح!</h2>
-                <p style="color: #666; margin-bottom: 30px;">يمكنك الآن تسجيل الدخول إلى لوحة التحكم</p>
-                <a href="auth/login.html" class="btn btn-primary">
-                    <i class="fa-solid fa-right-to-bracket"></i>
-                    تسجيل الدخول
-                </a>
             </div>
-        </div>
-    </div>
+        </article>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
@@ -195,7 +318,7 @@
             try {
                 // استخدام fetch مباشرة للـ GET request
                 const functionUrl = `${window.SUPABASE_URL}/functions/v1/complete-member-onboarding?token=${token}`;
-                
+
                 const response = await fetch(functionUrl, {
                     method: 'GET',
                     headers: {
@@ -237,10 +360,11 @@
                     option.textContent = committee.committee_name_ar;
                     committeeSelect.appendChild(option);
                 });
+                committeeSelect.disabled = false;
 
                 // تعبئة البيانات الموجودة مسبقاً من application
                 const app = tokenData.application;
-                
+
                 if (app) {
                     // البيانات الشخصية
                     if (app.full_name) {
@@ -252,7 +376,7 @@
                     if (app.email) {
                         document.getElementById('email').value = app.email;
                     }
-                    
+
                     // البيانات الأكاديمية
                     if (app.degree) {
                         const degreeMap = {
@@ -264,14 +388,14 @@
                         };
                         const degreeValue = degreeMap[app.degree] || 'other';
                         document.getElementById('academicDegree').value = degreeValue;
-                        
+
                         // إظهار حقول الكلية والتخصص إذا لم يكن ثانوية
                         if (degreeValue !== 'high_school') {
-                            document.getElementById('collegeGroup').style.display = 'block';
-                            document.getElementById('majorGroup').style.display = 'block';
+                            document.getElementById('collegeGroup').style.display = '';
+                            document.getElementById('majorGroup').style.display = '';
                             document.getElementById('college').required = true;
                             document.getElementById('major').required = true;
-                            
+
                             if (app.college) {
                                 document.getElementById('college').value = app.college;
                             }
@@ -280,7 +404,7 @@
                             }
                         }
                     }
-                    
+
                     // اللجنة المفضلة
                     if (app.preferred_committee) {
                         // البحث عن اللجنة المطابقة
@@ -298,7 +422,7 @@
                 }
 
                 // إخفاء loading وإظهار النموذج
-                document.getElementById('loadingState').classList.remove('active');
+                document.getElementById('loadingState').style.display = 'none';
                 document.getElementById('onboardingForm').style.display = 'block';
 
                 // إعداد event listeners
@@ -319,8 +443,8 @@
                 const majorInput = document.getElementById('major');
 
                 if (value && value !== 'high_school') {
-                    collegeGroup.style.display = 'block';
-                    majorGroup.style.display = 'block';
+                    collegeGroup.style.display = '';
+                    majorGroup.style.display = '';
                     collegeInput.required = true;
                     majorInput.required = true;
                 } else {
@@ -351,8 +475,14 @@
             }
 
             const submitBtn = document.getElementById('submitBtn');
+            submitBtn.classList.add('btn-loading');
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
+
+            const genderValue = (document.querySelector('input[name="gender"]:checked') || {}).value;
+            if (!genderValue) {
+                alert('يرجى اختيار الجنس');
+                return;
+            }
 
             try {
                 const memberDetails = {
@@ -366,6 +496,7 @@
                     college: document.getElementById('college').value || null,
                     major: document.getElementById('major').value || null,
                     committee_id: parseInt(document.getElementById('committeeId').value),
+                    favorite_color: document.getElementById('favoriteColor').value || null,
                     twitter_account: document.getElementById('twitterAccount').value || null,
                     instagram_account: document.getElementById('instagramAccount').value || null,
                     tiktok_account: document.getElementById('tiktokAccount').value || null,
@@ -377,6 +508,7 @@
                     body: {
                         token: token,
                         password: password,
+                        gender: genderValue,
                         member_details: memberDetails
                     }
                 });
@@ -392,19 +524,19 @@
 
                 // إظهار رسالة النجاح
                 document.getElementById('onboardingForm').style.display = 'none';
-                document.getElementById('successState').classList.add('active');
+                document.getElementById('successState').style.display = 'block';
 
             } catch (error) {
                 console.error('Error:', error);
                 alert(error.message || 'حدث خطأ أثناء حفظ البيانات. يرجى المحاولة مرة أخرى.');
+                submitBtn.classList.remove('btn-loading');
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> إكمال التسجيل';
             }
         }
 
         // عرض رسالة خطأ
         function showError(message) {
-            document.getElementById('loadingState').classList.remove('active');
+            document.getElementById('loadingState').style.display = 'none';
             document.getElementById('errorMessage').textContent = message;
             document.getElementById('errorState').style.display = 'block';
         }

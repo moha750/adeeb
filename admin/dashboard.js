@@ -110,7 +110,7 @@
         menuItems.push({
             id: 'membership-card',
             icon: 'fa-id-badge',
-            label: 'بطاقة العضوية',
+            label: 'عضويتي',
             section: 'membership-card-section'
         });
         
@@ -148,15 +148,6 @@
                 });
             }
             
-            if (hasPermission('manage_positions')) {
-                // إدارة الصلاحيات - لرئيس النادي فقط
-                adeebTreeSubItems.push({
-                    id: 'permissions',
-                    icon: 'fa-shield-halved',
-                    label: 'إدارة الصلاحيات',
-                    section: 'permissions-section'
-                });
-            }
             
             // برج المراقبة - باستخدام صلاحية impersonate_users
             if (hasPermission('impersonate_users')) {
@@ -178,6 +169,16 @@
                 });
             }
             
+            // إدارة المناصب — باستخدام صلاحية manage_committees
+            if (hasPermission('manage_committees')) {
+                adeebTreeSubItems.push({
+                    id: 'positions',
+                    icon: 'fa-user-tie',
+                    label: 'إدارة المناصب',
+                    section: 'positions-section'
+                });
+            }
+
             // الأعضاء المعلقين — يحتاج view_pending_members
             if (hasPermission('view_pending_members')) {
                 adeebTreeSubItems.push({
@@ -554,22 +555,6 @@
             });
         }
         
-        // الإعدادات - جميع المستويات
-        menuItems.push({
-            id: 'settings',
-            icon: 'fa-gear',
-            label: 'الإعدادات',
-            section: 'settings-section'
-        });
-
-        // الملف الشخصي - جميع المستويات
-        menuItems.push({
-            id: 'profile',
-            icon: 'fa-user-circle',
-            label: 'الملف الشخصي',
-            section: 'profile-section'
-        });
-
         // عائلتي — لكل من ينتمي للجنة (له committee_id) ما عدا رئيس النادي ورئيس المجلس التنفيذي
         if (currentUserRole.committee_id &&
             roleName !== 'club_president' &&
@@ -580,6 +565,12 @@
                 label: 'عائلتي',
                 isDropdown: true,
                 subItems: [
+                    {
+                        id: 'adeeb-structure',
+                        icon: 'fa-network-wired',
+                        label: 'هيكلة أدِيب',
+                        section: 'adeeb-structure-section'
+                    },
                     {
                         id: 'my-department',
                         icon: 'fa-sitemap',
@@ -593,12 +584,6 @@
                         section: 'my-committee-section'
                     },
                     {
-                        id: 'adeeb-structure',
-                        icon: 'fa-network-wired',
-                        label: 'هيكلة أدِيب',
-                        section: 'adeeb-structure-section'
-                    },
-                    {
                         id: 'adeeb-councils',
                         icon: 'fa-comments',
                         label: 'مجالس أدِيب',
@@ -607,6 +592,22 @@
                 ]
             });
         }
+
+        // الملف الشخصي - جميع المستويات
+        menuItems.push({
+            id: 'profile',
+            icon: 'fa-user-circle',
+            label: 'ملفي الشخصي',
+            section: 'profile-section'
+        });
+
+        // الإعدادات - جميع المستويات (آخر تبويب)
+        menuItems.push({
+            id: 'settings',
+            icon: 'fa-gear',
+            label: 'الإعدادات',
+            section: 'settings-section'
+        });
 
         // دالة مساعدة لبناء عناصر القائمة (تدعم التداخل)
         function buildMenuItem(subItem) {
@@ -741,7 +742,6 @@
         'pending-members-section':              'view_pending_members',
         'impersonation-section':                'impersonate_users',
         'member-data-management-section':       'manage_member_data',
-        'permissions-section':                  'manage_positions',
         'committees-section':                   'manage_committees',
         'site-visits-section':                  'view_site_stats',
         'contact-messages-section':             'manage_contact',
@@ -936,11 +936,6 @@
                     await window.memberDataManager.init();
                 }
                 break;
-            case 'permissions-section':
-                if (window.initPermissionsSection) {
-                    await window.initPermissionsSection();
-                }
-                break;
             case 'membership-applications-view-section':
                 if (window.membershipManager) {
                     await window.membershipManager.loadApplicationsView();
@@ -996,6 +991,9 @@
                 break;
             case 'adeeb-structure-section':
                 await loadAdeebStructure();
+                break;
+            case 'positions-section':
+                await initPositionsSection();
                 break;
             case 'membership-card-section':
             case 'profile-section':
@@ -2425,6 +2423,49 @@
         } catch (error) {
             console.error('Error loading Adeeb structure:', error);
             container.innerHTML = '<li style="padding:40px 0"><div class="error-state">حدث خطأ أثناء تحميل الهيكلة</div></li>';
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // إدارة المناصب — تهيئة القسم والتبويبات
+    // ═══════════════════════════════════════════════════════════
+
+    async function initPositionsSection() {
+        // تهيئة تبويبات المناصب
+        const container = document.getElementById('positionsTabsContainer');
+        if (container && !container._tabsInitialized) {
+            container._tabsInitialized = true;
+
+            const tabButtons = container.querySelectorAll('.settings-seg-btn');
+            const tabContents = container.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const targetTab = button.getAttribute('data-tab');
+
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        content.style.display = 'none';
+                    });
+
+                    button.classList.add('active');
+                    const targetContent = document.getElementById(`${targetTab}-tab`);
+                    if (targetContent) {
+                        targetContent.classList.add('active');
+                        targetContent.style.display = 'block';
+                    }
+                });
+            });
+        }
+
+        // تهيئة مدير المناصب
+        if (window.PositionsManager && !window.positionsManager) {
+            window.positionsManager = new window.PositionsManager();
+        }
+        if (window.positionsManager) {
+            await window.positionsManager.init();
         }
     }
 

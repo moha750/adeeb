@@ -309,24 +309,35 @@
         try {
             showLoading(document.getElementById('migrationTable'));
 
-            // الحصول على session token
-            const { data: { session } } = await window.sbClient.auth.getSession();
-            if (!session) {
-                throw new Error('يجب تسجيل الدخول أولاً');
+            // تحديث الجلسة لضمان توكن صالح
+            const { data: refreshData, error: refreshError } = await window.sbClient.auth.refreshSession();
+            const session = refreshData?.session || (await window.sbClient.auth.getSession()).data.session;
+            if (!session?.access_token) {
+                throw new Error('جلسة منتهية - يرجى تسجيل الدخول مجدداً' + (refreshError ? `: ${refreshError.message}` : ''));
             }
 
-            const { data, error } = await window.sbClient.functions.invoke('migrate-accepted-member', {
-                body: {
+            const response = await fetch(`${window.SUPABASE_URL}/functions/v1/migrate-accepted-member`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'apikey': window.SUPABASE_ANON_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
                     interview_id: interviewId,
                     committee_id: selectedCommitteeId,
                     send_welcome_email: true
-                },
-                headers: {
-                    Authorization: `Bearer ${session.access_token}`
-                }
+                })
             });
 
-            if (error) throw error;
+            const rawText = await response.text();
+            let data = {};
+            try { data = JSON.parse(rawText); } catch (_) {}
+
+            if (!response.ok) {
+                console.error('Migration response:', response.status, rawText);
+                throw new Error(data.error || `HTTP ${response.status}: ${rawText || response.statusText}`);
+            }
 
             if (data.success) {
                 await Swal.fire({
@@ -389,21 +400,37 @@
 
         showLoading(document.getElementById('migrationTable'));
 
+        const { data: { session: bulkSession } } = await window.sbClient.auth.getSession();
+        if (!bulkSession) {
+            showNotification('يجب تسجيل الدخول أولاً', 'error');
+            return;
+        }
+
         for (const interviewId of memberIds) {
             try {
                 const member = acceptedMembers.find(m => m.id === interviewId);
                 const committeeSelect = document.querySelector(`.committee-select[data-member-id="${interviewId}"]`);
                 const selectedCommitteeId = committeeSelect ? parseInt(committeeSelect.value) : null;
 
-                const { data, error } = await window.sbClient.functions.invoke('migrate-accepted-member', {
-                    body: {
+                const response = await fetch(`${window.SUPABASE_URL}/functions/v1/migrate-accepted-member`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${bulkSession.access_token}`,
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
                         interview_id: interviewId,
                         committee_id: selectedCommitteeId,
                         send_welcome_email: true
-                    }
+                    })
                 });
 
-                if (error) throw error;
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
 
                 if (data.success) {
                     successCount++;

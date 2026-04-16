@@ -1392,6 +1392,163 @@
 
             </section>
 
+            <!-- ═══════════════════════════════════════════════════════════
+                 قسم إدارة المناصب
+                 ===================================================== -->
+            <section id="positions-section" class="admin-section d-none">
+
+                <!-- إحصائيات المناصب -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                    <div class="stat-card" style="--stat-color: #f59e0b">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="posStatAdmin">0</div>
+                                <div class="stat-label">أعضاء إداريون</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #3d8fd6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-gears"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="posStatExec">0</div>
+                                <div class="stat-label">أعضاء تنفيذيون</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-user-check"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="posStatRoles">0</div>
+                                <div class="stat-label">مناصب مشغولة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #ef4444">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-chair"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="posStatVacant">0</div>
+                                <div class="stat-label">مناصب شاغرة</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- تبويبات: تعيين منصب / الهيكلة الحالية -->
+                <div id="positionsTabsContainer">
+                    <div class="settings-segmented-nav">
+                        <button class="settings-seg-btn active" data-tab="positions-assign">
+                            <span class="settings-seg-btn__icon"><i class="fa-solid fa-user-plus"></i></span>
+                            <span class="settings-seg-btn__label">تعيين منصب</span>
+                        </button>
+                        <button class="settings-seg-btn" data-tab="positions-hierarchy">
+                            <span class="settings-seg-btn__icon"><i class="fa-solid fa-sitemap"></i></span>
+                            <span class="settings-seg-btn__label">الهيكلة الحالية</span>
+                        </button>
+                    </div>
+
+                    <div class="tabs-content">
+
+                        <!-- ══════════ تبويب: تعيين منصب ══════════ -->
+                        <div id="positions-assign-tab" class="tab-content active">
+                            <div class="uc-card uc-card--allow-overflow" style="margin-bottom: 1.5rem;">
+                                <div class="uc-card__header">
+                                    <div class="uc-card__header-inner">
+                                        <div class="uc-card__icon"><i class="fa-solid fa-user-plus"></i></div>
+                                        <div class="uc-card__header-info">
+                                            <h3 class="uc-card__title">تعيين عضو لمنصب</h3>
+                                            <p class="uc-card__badge">عيّن عضوًا في منصب مباشرةً دون انتخاب</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <form id="assignPositionForm" autocomplete="off">
+                                    <div class="uc-card__body">
+                                      <div class="form-stack">
+
+                                        <!-- البحث عن عضو -->
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="label-icon fa-solid fa-magnifying-glass"></i> البحث عن عضو
+                                            </label>
+                                            <div style="position: relative;">
+                                                <input type="text"
+                                                       id="searchMemberInput"
+                                                       class="form-input"
+                                                       placeholder="اكتب اسم العضو أو بريده الإلكتروني..."
+                                                       autocomplete="off" />
+                                                <input type="hidden" id="selectedMemberId" />
+                                                <div id="searchResults" class="autocomplete-menu"></div>
+                                            </div>
+                                            <!-- بطاقة العضو المختار -->
+                                            <div id="selectedMemberDisplay" class="member-chip d-none" style="margin-top: 0.5rem;"></div>
+                                        </div>
+
+                                        <!-- اختيار المنصب -->
+                                        <div class="form-group">
+                                            <label class="form-label" for="positionRoleSelect">
+                                                <i class="label-icon fa-solid fa-user-tie"></i> المنصب
+                                            </label>
+                                            <select id="positionRoleSelect" class="form-select" required>
+                                                <option value="">اختر المنصب</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- اختيار اللجنة (يظهر عند الحاجة) -->
+                                        <div class="form-group d-none" id="positionCommitteeGroup">
+                                            <label class="form-label" for="positionCommitteeSelect">
+                                                <i class="label-icon fa-solid fa-people-group"></i> اللجنة / الإدارة
+                                            </label>
+                                            <select id="positionCommitteeSelect" class="form-select">
+                                                <option value="">اختر اللجنة</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- ملاحظات -->
+                                        <div class="form-group">
+                                            <label class="form-label" for="positionNotes">
+                                                <i class="label-icon fa-solid fa-note-sticky"></i> ملاحظات <span style="color: var(--text-muted); font-weight: 400;">(اختياري)</span>
+                                            </label>
+                                            <textarea id="positionNotes"
+                                                      class="form-textarea"
+                                                      rows="2"
+                                                      placeholder="مثال: تعيين بقرار من المجلس الإداري..."></textarea>
+                                        </div>
+
+                                      </div>
+                                    </div>
+
+                                    <!-- تذييل البطاقة — أزرار الإجراء -->
+                                    <div class="uc-card__footer">
+                                        <button type="reset" class="btn btn-outline">
+                                            <i class="fa-solid fa-rotate-left"></i> إعادة تعيين
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fa-solid fa-check"></i> تعيين المنصب
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- ══════════ تبويب: الهيكلة الحالية ══════════ -->
+                        <div id="positions-hierarchy-tab" class="tab-content" style="display:none;">
+                            <!-- يُبنى ديناميكياً حسب المناصب الفعلية -->
+                            <div id="positionsHierarchyContainer">
+                                <div class="empty-state">
+                                    <div class="empty-state__icon"><i class="fa-solid fa-spinner fa-spin"></i></div>
+                                    <p class="empty-state__message">جاري التحميل...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </section>
+
             <!-- قسم مجالس أدِيب -->
             <section id="adeeb-councils-section" class="admin-section d-none">
 
@@ -1610,280 +1767,6 @@
                 </div>
             </section>
 
-            <!-- قسم إدارة الصلاحيات -->
-            <section id="permissions-section" class="admin-section d-none">
-
-                <!-- بطاقات الإحصائيات -->
-                <div class="stats-grid" id="permissionsStatsGrid">
-                    <div class="stat-card" style="--stat-color: #6366f1">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-key"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="totalPermissionsCount">0</div>
-                                <div class="stat-label">إجمالي الصلاحيات</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #10b981">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-user-tie"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="totalRolesCount">0</div>
-                                <div class="stat-label">المناصب</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #f59e0b">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-layer-group"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="totalCategoriesCount">0</div>
-                                <div class="stat-label">فئات الصلاحيات</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- فلاتر البحث -->
-                <div class="filters-bar">
-                    <div class="filter-group">
-                        <i class="fa-solid fa-search"></i>
-                        <input type="text" id="permissionsSearchInput" placeholder="البحث في الصلاحيات..." class="input input-text" />
-                    </div>
-                    <select id="permissionsCategoryFilter" class="filter-select">
-                        <option value="">جميع الفئات</option>
-                        <option value="membership">العضوية</option>
-                        <option value="news">الأخبار</option>
-                        <option value="admin">الإدارة</option>
-                        <option value="website">الموقع</option>
-                        <option value="surveys">الاستبيانات</option>
-                    </select>
-                    <select id="permissionsRoleFilter" class="filter-select">
-                        <option value="">جميع المناصب</option>
-                    </select>
-                    <button class="btn btn-outline" id="refreshPermissionsBtn">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-                </div>
-
-                <!-- جدول الصلاحيات -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>
-                            <i class="fa-solid fa-table"></i>
-                            مصفوفة الصلاحيات
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <div style="width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;">
-                            <div id="permissionsMatrixContainer">
-                                <!-- سيتم ملؤها ديناميكياً -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- تعديل صلاحيات منصب -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>
-                            <i class="fa-solid fa-user-shield"></i>
-                            تعديل صلاحيات منصب
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <form id="editRolePermissionsForm">
-                            <div class="d-grid gap-1-5rem">
-                                <div class="form-group">
-                                    <label>اختر المنصب <span class="required-dot">*</span></label>
-                                    <select id="editPermissionsRoleSelect" required class="form-input">
-                                        <option value="">اختر المنصب</option>
-                                    </select>
-                                </div>
-                                <div id="rolePermissionsCheckboxes" class="permissions-checkboxes-grid">
-                                    <!-- سيتم ملؤها ديناميكياً -->
-                                </div>
-                                <div class="d-flex gap-1rem justify-content-end">
-                                    <button type="submit" class="btn btn-primary" id="saveRolePermissionsBtn">
-                                        <i class="fa-solid fa-save"></i>
-                                        حفظ الصلاحيات
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </section>
-
-
-            <!-- قسم إدارة الصلاحيات -->
-            <section id="permissions-section" class="admin-section d-none">
-                <h1>
-                    <i class="fa-solid fa-shield-halved"></i>
-                    إدارة الصلاحيات
-                </h1>
-                <p class="section-subtitle">النظام المركزي لإدارة جميع الصلاحيات</p>
-
-                <!-- إحصائيات الصلاحيات -->
-                <div class="stats-grid" class="mb-2rem">
-                    <div class="stat-card" style="--stat-color: #3b82f6">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-key"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="totalPermissionsCount">0</div>
-                                <div class="stat-label">إجمالي الصلاحيات</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #10b981">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-user-shield"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="totalRolesCount">0</div>
-                                <div class="stat-label">الأدوار النشطة</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #8b5cf6">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-layer-group"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="totalModulesCount">0</div>
-                                <div class="stat-label">الأقسام</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="--stat-color: #f59e0b">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-user-tag"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="totalUserPermsCount">0</div>
-                                <div class="stat-label">صلاحيات خاصة</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- تبويبات الصلاحيات -->
-                <div class="tabs-container">
-                    <div class="tabs-nav">
-                        <button class="tab-btn active" data-tab="permissions-list">
-                            <i class="fa-solid fa-list"></i>
-                            قائمة الصلاحيات
-                        </button>
-                        <button class="tab-btn" data-tab="role-permissions">
-                            <i class="fa-solid fa-user-shield"></i>
-                            صلاحيات الأدوار
-                        </button>
-                        <button class="tab-btn" data-tab="user-permissions">
-                            <i class="fa-solid fa-user-tag"></i>
-                            صلاحيات المستخدمين
-                        </button>
-                        <button class="tab-btn" data-tab="audit-log">
-                            <i class="fa-solid fa-history"></i>
-                            سجل التدقيق
-                        </button>
-                    </div>
-
-                    <!-- محتوى التبويبات -->
-                    <div class="tabs-content">
-                        <!-- قائمة الصلاحيات -->
-                        <div id="permissions-list" class="tab-content active">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3>جميع الصلاحيات المتاحة</h3>
-                                    <div class="filters-bar">
-                                        <select id="moduleFilterPermissions" class="filter-select">
-                                            <option value="">جميع الأقسام</option>
-                                        </select>
-                                        <div class="filter-group">
-                                            <i class="fa-solid fa-search"></i>
-                                            <input type="text" id="searchPermissionsInput" placeholder="البحث..." class="form-input" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div id="permissionsListTable">
-                                        <!-- سيتم ملؤها ديناميكياً -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- صلاحيات الأدوار -->
-                        <div id="role-permissions" class="tab-content">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3>إدارة صلاحيات الأدوار</h3>
-                                    <select id="roleSelectPermissions" class="filter-select">
-                                        <option value="">اختر الدور...</option>
-                                    </select>
-                                </div>
-                                <div class="card-body">
-                                    <div id="rolePermissionsContent">
-                                        <p class="text-muted text-center">اختر دوراً لعرض وتعديل صلاحياته</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- صلاحيات المستخدمين -->
-                        <div id="user-permissions" class="tab-content">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3>الصلاحيات الخاصة للمستخدمين</h3>
-                                    <button class="btn btn-primary" id="addUserPermissionBtn">
-                                        <i class="fa-solid fa-plus"></i>
-                                        إضافة صلاحية خاصة
-                                    </button>
-                                </div>
-                                <div class="card-body">
-                                    <div id="userPermissionsTable">
-                                        <!-- سيتم ملؤها ديناميكياً -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- سجل التدقيق -->
-                        <div id="audit-log" class="tab-content">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3>سجل تغييرات الصلاحيات</h3>
-                                    <div class="filters-bar">
-                                        <select id="actionTypeFilterAudit" class="filter-select">
-                                            <option value="">جميع الإجراءات</option>
-                                            <option value="grant">منح</option>
-                                            <option value="revoke">إلغاء</option>
-                                            <option value="modify">تعديل</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div id="auditLogTable">
-                                        <!-- سيتم ملؤها ديناميكياً -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
 
 
             <!-- قسم إدارة رسائل التواصل -->
@@ -4662,6 +4545,7 @@
     <script src="js/users-manager.js"></script>
     <script src="js/member-data-manager.js?v=20260131-6"></script>
     <script src="js/committee-members-manager.js"></script>
+    <script src="js/positions-manager.js"></script>
     <script src="js/stats-counter.js"></script>
     <script src="js/modal-helper.js"></script>
     <script src="js/modal-manager.js"></script>
@@ -4676,7 +4560,6 @@
     <script src="js/sponsors-manager.js"></script>
     <script src="js/toast-notifications.js"></script>
     <script src="js/permissions-helper.js"></script>
-    <script src="js/permissions-manager.js"></script>
     <script src="js/elections-manager.js"></script>
     <script src="js/activities-manager.js"></script>
     <!-- SweetAlert2 Shim - يحوّل Swal.fire إلى ModalHelper -->

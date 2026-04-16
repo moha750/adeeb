@@ -9,6 +9,7 @@ const corsHeaders = {
 interface OnboardingRequest {
   token: string;
   password: string;
+  gender: 'male' | 'female';
   member_details: {
     full_name_triple: string;
     phone: string;
@@ -20,6 +21,7 @@ interface OnboardingRequest {
     college?: string;
     major?: string;
     committee_id: number;
+    favorite_color?: string;
     twitter_account?: string;
     instagram_account?: string;
     tiktok_account?: string;
@@ -107,11 +109,18 @@ Deno.serve(async (req: Request) => {
     }
 
     // POST: إكمال البيانات
-    const { token, password, member_details }: OnboardingRequest = await req.json();
+    const { token, password, gender, member_details }: OnboardingRequest = await req.json();
 
     if (!token || !password || !member_details) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (gender !== 'male' && gender !== 'female') {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or missing gender (must be male or female)' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -181,10 +190,10 @@ Deno.serve(async (req: Request) => {
       throw new Error('Failed to save member details');
     }
 
-    // تفعيل الحساب بعد إكمال البيانات
+    // تفعيل الحساب + تخزين الجنس (مطلوب لحجز الأنشطة)
     const { error: activateProfileError } = await supabaseClient
       .from('profiles')
-      .update({ account_status: 'active' })
+      .update({ account_status: 'active', gender: gender })
       .eq('id', tokenData.user_id);
 
     if (activateProfileError) {

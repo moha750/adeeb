@@ -125,6 +125,10 @@
 
 /* ─── متغيرات الألوان — Color Variants ─── */
 
+/* مُعدِّل: يسمح للعناصر الأبناء (مثل القوائم المنبثقة) بالخروج من حدود البطاقة */
+.uc-card--allow-overflow { overflow: visible; }
+.uc-card--allow-overflow::after { display: none; }
+
 .uc-card--primary  { --_uc-color-rgb: 61, 143, 214;  --_uc-color: #3d8fd6; --_uc-color-dark: #274060; }
 .uc-card--success  { --_uc-color-rgb: 16, 185, 129;  --_uc-color: #10b981; --_uc-color-dark: #059669; }
 .uc-card--warning  { --_uc-color-rgb: 245, 158, 11;  --_uc-color: #f59e0b; --_uc-color-dark: #d97706; }
@@ -2585,4 +2589,267 @@
 .dropdown-divider {
     height: 1.2px;
     background: linear-gradient(90deg, transparent, rgba(39, 64, 96, 0.15), transparent);
+}
+
+/* ============================================================
+   Autocomplete Menu — قائمة البحث بنمط Fill Gradient للبطاقات
+   ============================================================ */
+
+.autocomplete-menu {
+    --_ac-rgb:    61, 143, 214;
+    --_ac-accent: #3d8fd6;
+    --_ac-dark:   #274060;
+
+    display:   none;
+    position:  absolute;
+    top:       calc(100% + 10px);
+    right:     0;
+    left:      0;
+    z-index:   100;
+    max-height: 380px;
+    overflow:  hidden;
+
+    /* ── Fill Gradient مطابق لـ .uc-card ── */
+    background-color: #ffffff;
+    background-image: linear-gradient(
+        145deg,
+        rgba(var(--_ac-rgb), 0.09) 0%,
+        rgba(var(--_ac-rgb), 0.03) 45%,
+        transparent 100%
+    );
+
+    border:        1px solid rgba(var(--_ac-rgb), 0.16);
+    border-radius: 20px;
+    box-shadow:
+        0 1px 4px  rgba(0, 0, 0, 0.04),
+        0 10px 28px rgba(var(--_ac-rgb), 0.10),
+        0 22px 56px rgba(var(--_ac-rgb), 0.08);
+
+    flex-direction: column;
+    animation: dropdownSlideIn 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.autocomplete-menu.show {
+    display: flex;
+}
+
+/* ── دائرة زخرفية مطابقة لـ .uc-card::after ── */
+.autocomplete-menu::after {
+    content:  '';
+    position: absolute;
+    bottom:   -55px;
+    left:     -55px;
+    width:    180px;
+    height:   180px;
+    background: radial-gradient(
+        circle,
+        rgba(var(--_ac-rgb), 0.08) 0%,
+        transparent 68%
+    );
+    border-radius: 50%;
+    pointer-events: none;
+    opacity:  0.7;
+    z-index:  0;
+}
+
+/* ─── رأس القائمة ─── */
+.autocomplete-menu__header {
+    position:         relative;
+    z-index:          1;
+    display:          flex;
+    align-items:      center;
+    justify-content:  space-between;
+    gap:              0.5rem;
+    padding:          0.65rem 0.9rem;
+    border-bottom:    1px solid rgba(var(--_ac-rgb), 0.08);
+    background: linear-gradient(
+        90deg,
+        rgba(var(--_ac-rgb), 0.05) 0%,
+        transparent 65%
+    );
+    font-size:       0.72rem;
+    font-weight:     600;
+    color:           var(--text-muted, #64748b);
+    letter-spacing:  0.3px;
+    flex-shrink:     0;
+}
+
+.autocomplete-menu__header i { color: var(--_ac-accent); }
+
+.autocomplete-menu__count {
+    display:       inline-flex;
+    align-items:   center;
+    padding:       0.18rem 0.6rem;
+    background:    linear-gradient(135deg, var(--_ac-accent), var(--_ac-dark));
+    color:         #fff;
+    border-radius: 999px;
+    font-size:     0.66rem;
+    font-weight:   700;
+    box-shadow:    0 2px 6px rgba(var(--_ac-rgb), 0.28);
+}
+
+/* ─── قائمة النتائج القابلة للتمرير ─── */
+.autocomplete-menu__list {
+    position:       relative;
+    z-index:        1;
+    overflow-y:     auto;
+    padding:        8px;
+    display:        flex;
+    flex-direction: column;
+    gap:            3px;
+    max-height:     320px;
+
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--_ac-rgb), 0.22) transparent;
+}
+
+.autocomplete-menu__list::-webkit-scrollbar { width: 6px; }
+.autocomplete-menu__list::-webkit-scrollbar-track  { background: transparent; }
+.autocomplete-menu__list::-webkit-scrollbar-thumb  { background: rgba(var(--_ac-rgb), 0.22); border-radius: 3px; }
+.autocomplete-menu__list::-webkit-scrollbar-thumb:hover { background: rgba(var(--_ac-rgb), 0.4); }
+
+/* ─── البطاقة الصغيرة (العنصر) — ترتفع من الخلفية المتدرجة ─── */
+.autocomplete-item {
+    position:      relative;
+    display:       flex;
+    align-items:   center;
+    gap:           0.8rem;
+    padding:       0.6rem 0.85rem;
+    background:    transparent;
+    border:        1px solid transparent;
+    border-radius: 14px;
+    width:         100%;
+    text-align:    start;
+    cursor:        pointer;
+    font-family:   inherit;
+    transition:
+        background   0.24s ease,
+        border-color 0.24s ease,
+        box-shadow   0.28s ease,
+        transform    0.18s ease;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item:focus-visible {
+    background:   #ffffff;
+    border-color: rgba(var(--_ac-rgb), 0.22);
+    box-shadow:
+        0 1px 3px  rgba(var(--_ac-rgb), 0.06),
+        0 6px 18px rgba(var(--_ac-rgb), 0.14);
+    outline: none;
+}
+
+.autocomplete-item:active { transform: scale(0.985); }
+
+/* ─── صورة العضو — مطابقة لـ .member-chip__avatar ─── */
+.autocomplete-item__avatar-wrap {
+    position:    relative;
+    flex-shrink: 0;
+    display:     inline-flex;
+    transition:  transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.autocomplete-item:hover .autocomplete-item__avatar-wrap {
+    transform: scale(1.08) rotate(-3deg);
+}
+
+.autocomplete-item__avatar {
+    width:         42px;
+    height:        42px;
+    border-radius: 14px;
+    object-fit:    cover;
+    display:       block;
+    background: linear-gradient(135deg, var(--_ac-accent), var(--_ac-dark));
+    box-shadow: 0 3px 8px rgba(var(--_ac-rgb), 0.25);
+}
+
+/* ─── المعلومات ─── */
+.autocomplete-item__info {
+    flex:           1;
+    min-width:      0;
+    display:        flex;
+    flex-direction: column;
+    gap:            0.2rem;
+}
+
+.autocomplete-item__name {
+    font-size:     0.88rem;
+    font-weight:   700;
+    color:         var(--text-dark, #1e293b);
+    white-space:   nowrap;
+    overflow:      hidden;
+    text-overflow: ellipsis;
+    line-height:   1.3;
+}
+
+.autocomplete-item__email {
+    font-size:      0.71rem;
+    font-weight:    500;
+    color:          var(--text-muted, #64748b);
+    direction:      ltr;
+    text-align:     right;
+    unicode-bidi:   plaintext;
+    white-space:    nowrap;
+    overflow:       hidden;
+    text-overflow:  ellipsis;
+    line-height:    1.3;
+    letter-spacing: 0.1px;
+}
+
+/* ─── حالة اللا-نتائج ─── */
+.autocomplete-empty {
+    position:         relative;
+    z-index:          1;
+    display:          flex;
+    flex-direction:   column;
+    align-items:      center;
+    justify-content:  center;
+    padding:          2rem 1rem 1.7rem;
+    gap:              0.55rem;
+    text-align:       center;
+}
+
+.autocomplete-empty__icon {
+    width:           58px;
+    height:          58px;
+    border-radius:   16px;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    background: linear-gradient(
+        135deg,
+        rgba(var(--_ac-rgb), 0.16),
+        rgba(var(--_ac-rgb), 0.03)
+    );
+    border:    1px solid rgba(var(--_ac-rgb), 0.15);
+    color:     var(--_ac-accent);
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.autocomplete-empty__text {
+    font-size:   0.86rem;
+    font-weight: 700;
+    color:       var(--text-dark, #1e293b);
+    margin:      0;
+}
+
+.autocomplete-empty__hint {
+    font-size: 0.72rem;
+    color:     var(--text-muted, #94a3b8);
+    margin:    0;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 480px) {
+    .autocomplete-menu      { max-height: 320px; border-radius: 16px; }
+    .autocomplete-menu__list{ max-height: 260px; padding: 6px; }
+    .autocomplete-item      { padding: 0.5rem 0.65rem; gap: 0.6rem; }
+    .autocomplete-item__avatar { width: 36px; height: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .autocomplete-menu,
+    .autocomplete-item,
+    .autocomplete-item__avatar-wrap { animation: none !important; transition: none !important; }
 }

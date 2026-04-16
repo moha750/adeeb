@@ -101,7 +101,13 @@
       "Bash(grep -i \"\\\\.js$\")",
       "Bash(ls -lh /c/Users/moham/adeeb/admin/css/*.css)",
       "Bash(xargs ls *)",
-      "Bash(grep -n \"innerHTML\\\\|template\\\\|html\\\\`\" \"c:/Users/moham/adeeb/admin/js/users-manager.js\")"
+      "Bash(grep -n \"innerHTML\\\\|template\\\\|html\\\\`\" \"c:/Users/moham/adeeb/admin/js/users-manager.js\")",
+      "Bash(grep -E \"\\\\.\\(html|js|css\\)$\")",
+      "Bash(grep -r \"org-tree\\\\|\\\\.tree\\\\|position-\" /c/Users/moham/adeeb/admin/css/*.css)",
+      "Bash(grep -E \"\\\\.js$\")",
+      "mcp__supabase__get_logs",
+      "mcp__supabase__get_edge_function",
+      "mcp__supabase__deploy_edge_function"
     ]
   }
 }
