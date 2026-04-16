@@ -67,7 +67,7 @@
                     </div>
 
                     <!-- البيانات الشخصية -->
-                    <section class="form-section">
+                    <section class="form-section" style="margin-bottom: 1.25rem;">
                         <div class="form-section-label">
                             <i class="fa-solid fa-user"></i>
                             البيانات الشخصية
@@ -75,6 +75,7 @@
                         <div class="form-grid-2">
                             <div class="form-group" style="grid-column: 1 / -1;">
                                 <label class="form-label" for="fullNameTriple">
+                                    <span class="label-icon"><i class="fa-solid fa-id-badge"></i></span>
                                     <span class="required-dot" aria-hidden="true"></span>
                                     الاسم الثلاثي الكامل
                                 </label>
@@ -84,6 +85,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="phone">
+                                    <span class="label-icon"><i class="fa-solid fa-mobile-screen"></i></span>
                                     <span class="required-dot" aria-hidden="true"></span>
                                     رقم الجوال
                                 </label>
@@ -93,7 +95,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="email">
-                                    <span class="required-dot" aria-hidden="true"></span>
+                                    <span class="label-icon"><i class="fa-solid fa-envelope"></i></span>
                                     البريد الإلكتروني
                                 </label>
                                 <input type="email" id="email" name="email" required disabled
@@ -101,6 +103,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="password">
+                                    <span class="label-icon"><i class="fa-solid fa-lock"></i></span>
                                     <span class="required-dot" aria-hidden="true"></span>
                                     كلمة المرور
                                 </label>
@@ -110,6 +113,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="confirmPassword">
+                                    <span class="label-icon"><i class="fa-solid fa-lock"></i></span>
                                     <span class="required-dot" aria-hidden="true"></span>
                                     تأكيد كلمة المرور
                                 </label>
@@ -119,6 +123,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="nationalId">
+                                    <span class="label-icon"><i class="fa-solid fa-id-card"></i></span>
                                     <span class="required-dot" aria-hidden="true"></span>
                                     رقم الهوية الوطنية
                                 </label>
@@ -128,6 +133,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="birthDate">
+                                    <span class="label-icon"><i class="fa-solid fa-cake-candles"></i></span>
                                     <span class="required-dot" aria-hidden="true"></span>
                                     تاريخ الميلاد
                                 </label>
@@ -136,6 +142,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">
+                                    <span class="label-icon"><i class="fa-solid fa-venus-mars"></i></span>
                                     <span class="required-dot" aria-hidden="true"></span>
                                     الجنس
                                 </label>
@@ -153,10 +160,11 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="favoriteColor">
-                                    <i class="fa-solid fa-palette"></i>
+                                    <span class="label-icon"><i class="fa-solid fa-palette"></i></span>
+                                    <span class="required-dot" aria-hidden="true"></span>
                                     اللون المفضّل
                                 </label>
-                                <input type="color" id="favoriteColor" name="favoriteColor"
+                                <input type="color" id="favoriteColor" name="favoriteColor" required
                                        class="form-input" value="#3d8fd6"
                                        style="height:2.6rem;padding:0.25rem 0.4rem;cursor:pointer;">
                             </div>
@@ -164,7 +172,7 @@
                     </section>
 
                     <!-- البيانات الأكاديمية -->
-                    <section class="form-section">
+                    <section class="form-section" style="margin-bottom: 1.25rem;">
                         <div class="form-section-label">
                             <i class="fa-solid fa-graduation-cap"></i>
                             البيانات الأكاديمية
@@ -172,6 +180,7 @@
                         <div class="form-grid-2">
                             <div class="form-group">
                                 <label class="form-label" for="academicRecordNumber">
+                                    <span class="label-icon"><i class="fa-solid fa-hashtag"></i></span>
                                     <span class="required-dot" aria-hidden="true"></span>
                                     رقم السجل الأكاديمي
                                 </label>
@@ -180,6 +189,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="academicDegree">
+                                    <span class="label-icon"><i class="fa-solid fa-award"></i></span>
                                     <span class="required-dot" aria-hidden="true"></span>
                                     الدرجة العلمية
                                 </label>
@@ -195,6 +205,7 @@
                             </div>
                             <div class="form-group" id="collegeGroup" style="display: none;">
                                 <label class="form-label" for="college">
+                                    <span class="label-icon"><i class="fa-solid fa-building-columns"></i></span>
                                     <span class="required-dot" aria-hidden="true"></span>
                                     الكلية
                                 </label>
@@ -203,6 +214,7 @@
                             </div>
                             <div class="form-group" id="majorGroup" style="display: none;">
                                 <label class="form-label" for="major">
+                                    <span class="label-icon"><i class="fa-solid fa-book"></i></span>
                                     <span class="required-dot" aria-hidden="true"></span>
                                     التخصص
                                 </label>
@@ -212,20 +224,21 @@
                         </div>
                     </section>
 
-                    <!-- اللجنة -->
-                    <section class="form-section">
+                    <!-- اللجنة (عرض فقط) -->
+                    <section class="form-section" style="margin-bottom: 1.25rem;">
                         <div class="form-section-label">
                             <i class="fa-solid fa-sitemap"></i>
                             اللجنة
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="committeeId">
-                                <span class="required-dot" aria-hidden="true"></span>
+                                <span class="label-icon"><i class="fa-solid fa-sitemap"></i></span>
                                 اللجنة المختارة
                             </label>
                             <select id="committeeId" name="committeeId" required disabled class="form-select">
                                 <option value="">جاري التحميل...</option>
                             </select>
+                            <span class="form-hint">تم تحديد لجنتك بناءً على طلب العضوية ولا يمكن تعديلها هنا</span>
                         </div>
                     </section>
 
@@ -238,7 +251,7 @@
                         <div class="form-grid-2">
                             <div class="form-group">
                                 <label class="form-label" for="twitterAccount">
-                                    <i class="fa-brands fa-twitter"></i>
+                                    <span class="label-icon"><i class="fa-brands fa-twitter"></i></span>
                                     حساب تويتر
                                 </label>
                                 <input type="text" id="twitterAccount" name="twitterAccount"
@@ -246,7 +259,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="instagramAccount">
-                                    <i class="fa-brands fa-instagram"></i>
+                                    <span class="label-icon"><i class="fa-brands fa-instagram"></i></span>
                                     حساب إنستقرام
                                 </label>
                                 <input type="text" id="instagramAccount" name="instagramAccount"
@@ -254,7 +267,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="tiktokAccount">
-                                    <i class="fa-brands fa-tiktok"></i>
+                                    <span class="label-icon"><i class="fa-brands fa-tiktok"></i></span>
                                     حساب تيك توك
                                 </label>
                                 <input type="text" id="tiktokAccount" name="tiktokAccount"
@@ -262,7 +275,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="linkedinAccount">
-                                    <i class="fa-brands fa-linkedin"></i>
+                                    <span class="label-icon"><i class="fa-brands fa-linkedin"></i></span>
                                     حساب لينكدإن
                                 </label>
                                 <input type="text" id="linkedinAccount" name="linkedinAccount"
@@ -270,13 +283,6 @@
                             </div>
                         </div>
                     </section>
-
-                    <div class="form-actions form-actions-center">
-                        <button type="submit" class="btn btn-primary" id="submitBtn">
-                            <i class="fa-solid fa-check"></i>
-                            <span>إكمال التسجيل</span>
-                        </button>
-                    </div>
                 </form>
 
                 <!-- Success State -->
@@ -294,6 +300,14 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Footer مع زر الإرسال -->
+            <footer class="uc-card__footer" id="formFooter" style="display: none;">
+                <button type="submit" form="onboardingForm" class="btn btn-primary" id="submitBtn">
+                    <i class="fa-solid fa-check"></i>
+                    <span>إكمال التسجيل</span>
+                </button>
+            </footer>
         </article>
     </main>
 
@@ -353,14 +367,13 @@
                     .order('committee_name_ar');
 
                 const committeeSelect = document.getElementById('committeeId');
-                committeeSelect.innerHTML = '<option value="">اختر اللجنة</option>';
+                committeeSelect.innerHTML = '<option value="">لم يتم تحديد لجنة</option>';
                 committees.forEach(committee => {
                     const option = document.createElement('option');
                     option.value = committee.id;
                     option.textContent = committee.committee_name_ar;
                     committeeSelect.appendChild(option);
                 });
-                committeeSelect.disabled = false;
 
                 // تعبئة البيانات الموجودة مسبقاً من application
                 const app = tokenData.application;
@@ -421,9 +434,10 @@
                     document.getElementById('email').value = tokenData.sent_to_email;
                 }
 
-                // إخفاء loading وإظهار النموذج
+                // إخفاء loading وإظهار النموذج + الـ footer
                 document.getElementById('loadingState').style.display = 'none';
                 document.getElementById('onboardingForm').style.display = 'block';
+                document.getElementById('formFooter').style.display = '';
 
                 // إعداد event listeners
                 setupFormListeners();
@@ -524,6 +538,7 @@
 
                 // إظهار رسالة النجاح
                 document.getElementById('onboardingForm').style.display = 'none';
+                document.getElementById('formFooter').style.display = 'none';
                 document.getElementById('successState').style.display = 'block';
 
             } catch (error) {
