@@ -25,22 +25,22 @@
 </head>
 <body>
     <main style="max-width: 920px; margin: 2.5rem auto; padding: 0 1rem;">
-        <article class="form-card form-card--primary">
+        <article class="uc-card uc-card--primary">
             <!-- Header -->
-            <header class="form-card-header">
-                <div class="form-card-header-inner">
+            <div class="uc-card__header">
+                <div class="uc-card__header-inner">
                     <div class="uc-card__icon">
                         <i class="fa-solid fa-user-check"></i>
                     </div>
-                    <div>
-                        <h3>مرحباً بك في نادي أدِيب</h3>
-                        <p>إكمال بيانات العضوية لتفعيل حسابك</p>
+                    <div class="uc-card__header-info">
+                        <h3 class="uc-card__title" style="white-space: normal;">مرحباً بك في نادي أدِيب</h3>
+                        <span class="uc-card__badge">إكمال بيانات العضوية لتفعيل حسابك</span>
                     </div>
                 </div>
-            </header>
+            </div>
 
             <!-- Body -->
-            <div class="form-card-body">
+            <div class="uc-card__body">
                 <!-- Loading State -->
                 <div id="loadingState" class="empty-state">
                     <div class="empty-state__icon">
@@ -76,8 +76,8 @@
                             <div class="form-group" style="grid-column: 1 / -1;">
                                 <label class="form-label" for="fullNameTriple">
                                     <span class="label-icon"><i class="fa-solid fa-id-badge"></i></span>
-                                    <span class="required-dot" aria-hidden="true"></span>
                                     الاسم الثلاثي الكامل
+                                    <span class="required-dot" aria-hidden="true"></span>
                                 </label>
                                 <input type="text" id="fullNameTriple" name="fullNameTriple" required
                                        class="form-input"
@@ -86,8 +86,8 @@
                             <div class="form-group">
                                 <label class="form-label" for="phone">
                                     <span class="label-icon"><i class="fa-solid fa-mobile-screen"></i></span>
-                                    <span class="required-dot" aria-hidden="true"></span>
                                     رقم الجوال
+                                    <span class="required-dot" aria-hidden="true"></span>
                                 </label>
                                 <input type="tel" id="phone" name="phone" required
                                        class="form-input"
@@ -104,8 +104,8 @@
                             <div class="form-group">
                                 <label class="form-label" for="password">
                                     <span class="label-icon"><i class="fa-solid fa-lock"></i></span>
-                                    <span class="required-dot" aria-hidden="true"></span>
                                     كلمة المرور
+                                    <span class="required-dot" aria-hidden="true"></span>
                                 </label>
                                 <input type="password" id="password" name="password" required
                                        class="form-input"
@@ -114,8 +114,8 @@
                             <div class="form-group">
                                 <label class="form-label" for="confirmPassword">
                                     <span class="label-icon"><i class="fa-solid fa-lock"></i></span>
-                                    <span class="required-dot" aria-hidden="true"></span>
                                     تأكيد كلمة المرور
+                                    <span class="required-dot" aria-hidden="true"></span>
                                 </label>
                                 <input type="password" id="confirmPassword" name="confirmPassword" required
                                        class="form-input"
@@ -124,8 +124,8 @@
                             <div class="form-group">
                                 <label class="form-label" for="nationalId">
                                     <span class="label-icon"><i class="fa-solid fa-id-card"></i></span>
-                                    <span class="required-dot" aria-hidden="true"></span>
                                     رقم الهوية الوطنية
+                                    <span class="required-dot" aria-hidden="true"></span>
                                 </label>
                                 <input type="text" id="nationalId" name="nationalId" required
                                        class="form-input"
@@ -134,8 +134,8 @@
                             <div class="form-group">
                                 <label class="form-label" for="birthDate">
                                     <span class="label-icon"><i class="fa-solid fa-cake-candles"></i></span>
-                                    <span class="required-dot" aria-hidden="true"></span>
                                     تاريخ الميلاد
+                                    <span class="required-dot" aria-hidden="true"></span>
                                 </label>
                                 <input type="date" id="birthDate" name="birthDate" required
                                        class="form-input">
@@ -143,8 +143,8 @@
                             <div class="form-group">
                                 <label class="form-label">
                                     <span class="label-icon"><i class="fa-solid fa-venus-mars"></i></span>
-                                    <span class="required-dot" aria-hidden="true"></span>
                                     الجنس
+                                    <span class="required-dot" aria-hidden="true"></span>
                                 </label>
                                 <div class="form-radio-group horizontal">
                                     <label class="form-radio">
@@ -156,13 +156,12 @@
                                         <span class="form-radio-label">أنثى</span>
                                     </label>
                                 </div>
-                                <span class="form-hint">مطلوب لتمكين حجز الأنشطة (حصص الذكور/الإناث منفصلة)</span>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="favoriteColor">
                                     <span class="label-icon"><i class="fa-solid fa-palette"></i></span>
-                                    <span class="required-dot" aria-hidden="true"></span>
                                     اللون المفضّل
+                                    <span class="required-dot" aria-hidden="true"></span>
                                 </label>
                                 <input type="color" id="favoriteColor" name="favoriteColor" required
                                        class="form-input" value="#3d8fd6"
@@ -181,8 +180,8 @@
                             <div class="form-group">
                                 <label class="form-label" for="academicRecordNumber">
                                     <span class="label-icon"><i class="fa-solid fa-hashtag"></i></span>
-                                    <span class="required-dot" aria-hidden="true"></span>
                                     رقم السجل الأكاديمي
+                                    <span class="required-dot" aria-hidden="true"></span>
                                 </label>
                                 <input type="text" id="academicRecordNumber" name="academicRecordNumber" required
                                        class="form-input" placeholder="4xxxxxxxx">
@@ -190,8 +189,8 @@
                             <div class="form-group">
                                 <label class="form-label" for="academicDegree">
                                     <span class="label-icon"><i class="fa-solid fa-award"></i></span>
-                                    <span class="required-dot" aria-hidden="true"></span>
                                     الدرجة العلمية
+                                    <span class="required-dot" aria-hidden="true"></span>
                                 </label>
                                 <select id="academicDegree" name="academicDegree" required class="form-select">
                                     <option value="">اختر الدرجة العلمية</option>
@@ -206,8 +205,8 @@
                             <div class="form-group" id="collegeGroup" style="display: none;">
                                 <label class="form-label" for="college">
                                     <span class="label-icon"><i class="fa-solid fa-building-columns"></i></span>
-                                    <span class="required-dot" aria-hidden="true"></span>
                                     الكلية
+                                    <span class="required-dot" aria-hidden="true"></span>
                                 </label>
                                 <input type="text" id="college" name="college"
                                        class="form-input" placeholder="مثال: كلية الآداب">
@@ -215,8 +214,8 @@
                             <div class="form-group" id="majorGroup" style="display: none;">
                                 <label class="form-label" for="major">
                                     <span class="label-icon"><i class="fa-solid fa-book"></i></span>
-                                    <span class="required-dot" aria-hidden="true"></span>
                                     التخصص
+                                    <span class="required-dot" aria-hidden="true"></span>
                                 </label>
                                 <input type="text" id="major" name="major"
                                        class="form-input" placeholder="مثال: اللغة العربية">
@@ -238,7 +237,7 @@
                             <select id="committeeId" name="committeeId" required disabled class="form-select">
                                 <option value="">جاري التحميل...</option>
                             </select>
-                            <span class="form-hint">تم تحديد لجنتك بناءً على طلب العضوية ولا يمكن تعديلها هنا</span>
+                            <span class="form-hint">تم تحديد لجنتك بناءً على طلب العضوية ولا يمكنك تغييرها هنا</span>
                         </div>
                     </section>
 
