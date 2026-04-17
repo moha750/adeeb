@@ -1053,6 +1053,8 @@
             if (profileError) throw profileError;
 
             currentUser.full_name = newName;
+            const headerName = document.getElementById('userName');
+            if (headerName) headerName.textContent = newName;
             showNotification('تم تغيير الاسم بنجاح', 'success');
             closeChangeNameModal();
             await loadProfileData();
