@@ -1240,11 +1240,15 @@
      * عرض إشعار
      */
     function showNotification(message, type = 'info') {
-        if (window.showNotification) {
-            window.showNotification(message, type);
-        } else {
-            alert(message);
+        if (window.Toast && typeof window.Toast[type] === 'function') {
+            window.Toast[type](message);
+            return;
         }
+        if (window.Toast && typeof window.Toast.show === 'function') {
+            window.Toast.show({ type, message });
+            return;
+        }
+        console[type === 'error' ? 'error' : 'log'](`[${type}] ${message}`);
     }
 
     /**

@@ -88,7 +88,7 @@
     font-size: 0.95rem;
     color: var(--main-blue);
     margin: 0;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-family-base, inherit);
 }
 
 .toast-message {
@@ -96,7 +96,7 @@
     color: #335c81;
     margin: 0;
     line-height: 1.4;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-family-base, inherit);
 }
 
 /* زر الإغلاق - تمت إزالته حسب الطلب */
