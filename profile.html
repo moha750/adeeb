@@ -4,188 +4,230 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>الملف الشخصي - نادي أدِيب</title>
-    
+
     <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-icon-180x180.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="favicon/android-icon-192x192.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
     <link rel="manifest" href="manifest.json">
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="public-profile.css">
-    
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <link rel="stylesheet" href="admin/css/design-tokens.css">
+    <link rel="stylesheet" href="admin/css/fonts.css">
+    <link rel="stylesheet" href="admin/css/layout.css">
+    <link rel="stylesheet" href="admin/css/buttons-system.css">
+    <link rel="stylesheet" href="admin/css/unified-cards.css">
+    <link rel="stylesheet" href="admin/css/membership-card.css">
+
     <meta property="og:type" content="profile">
     <meta property="og:site_name" content="نادي أدِيب">
     <meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loader"></div>
-        <p>جاري تحميل الملف الشخصي...</p>
-    </div>
 
-    <div class="error-screen" id="errorScreen" style="display: none;">
-        <div class="error-content">
-            <i class="fa-solid fa-user-slash"></i>
-            <h2>الملف الشخصي غير موجود</h2>
-            <p>عذراً، لم نتمكن من العثور على هذا الملف الشخصي</p>
-            <a href="/" class="btn-primary">
+    <div class="membership-card-container">
+
+        <section id="loadingScreen" class="admin-section text-center">
+            <i class="fa-solid fa-circle-notch fa-spin fa-3x text-primary"></i>
+            <p class="text-muted mt-3">جاري تحميل الملف الشخصي...</p>
+        </section>
+
+        <section id="errorScreen" class="admin-section text-center d-none">
+            <i class="fa-solid fa-user-slash fa-5x text-danger mb-3"></i>
+            <h2 class="mb-2">الملف الشخصي غير موجود</h2>
+            <p class="text-muted mb-3">عذراً، لم نتمكن من العثور على هذا الملف الشخصي</p>
+            <a href="/" class="btn btn-primary">
                 <i class="fa-solid fa-home"></i>
                 العودة للصفحة الرئيسية
             </a>
-        </div>
-    </div>
+        </section>
 
-    <div class="profile-container" id="profileContainer" style="display: none;">
-        <div class="profile-header">
-            <div class="header-background"></div>
-            <div class="header-content">
-                <div class="profile-avatar-container">
-                    <img src="" alt="الصورة الشخصية" id="profileAvatar" class="profile-avatar">
-                </div>
-                <div class="profile-info">
-                    <h1 id="profileName">جاري التحميل...</h1>
-                    <p class="profile-role" id="profileRole">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        <span>عضو نادي أدِيب</span>
-                    </p>
-                </div>
-            </div>
-        </div>
+        <section id="profileContainer" class="admin-section d-none">
 
-        <div class="profile-body">
-            <div class="profile-grid">
-                <div class="profile-card">
-                    <div class="card-header">
-                        <i class="fa-solid fa-user"></i>
-                        <h3>المعلومات الأساسية</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="info-row">
-                            <div class="info-label">
-                                <i class="fa-solid fa-envelope"></i>
-                                البريد الإلكتروني
-                            </div>
-                            <div class="info-value" id="profileEmail">-</div>
+            <div class="uc-card profile-hero-card mb-4">
+                <div class="profile-hero-header">
+                    <div class="profile-hero-inner">
+                        <div class="profile-hero-avatar">
+                            <img id="profileAvatar" src="" alt="الصورة الشخصية">
                         </div>
-                        <div class="info-row">
-                            <div class="info-label">
-                                <i class="fa-solid fa-calendar-plus"></i>
-                                تاريخ الانضمام
+                        <div class="profile-hero-info">
+                            <h1 id="profileName" class="profile-hero-name">جاري التحميل...</h1>
+                            <div class="profile-hero-role">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span id="profileRole">عضو نادي أدِيب</span>
                             </div>
-                            <div class="info-value" id="profileJoinDate">-</div>
-                        </div>
-                        <div class="info-row" id="committeeRow" style="display: none;">
-                            <div class="info-label">
-                                <i class="fa-solid fa-users"></i>
-                                اللجنة
+                            <div class="profile-hero-meta">
+                                <i class="fa-regular fa-calendar-plus"></i>
+                                <span>تاريخ الانضمام: <span id="profileJoinDate">-</span></span>
                             </div>
-                            <div class="info-value" id="profileCommittee">-</div>
                         </div>
-                        <div class="info-row" id="favoriteColorRow" style="display: none;">
-                            <div class="info-label">
-                                <i class="fa-solid fa-palette"></i>
-                                اللون المفضل
-                            </div>
-                            <div class="info-value" id="profileFavoriteColor">-</div>
-                        </div>
-                        <div class="info-row" id="councilRow" style="display: none;">
-                            <div class="info-label">
-                                <i class="fa-solid fa-landmark"></i>
-                                المجلس
-                            </div>
-                            <div class="info-value" id="profileCouncil">-</div>
-                        </div>
-                        <div class="info-row" id="departmentRow" style="display: none;">
-                            <div class="info-label">
-                                <i class="fa-solid fa-building"></i>
-                                القسم
-                            </div>
-                            <div class="info-value" id="profileDepartmentPublic">-</div>
-                        </div>
-                        <div class="info-row" id="committeeRowPublic" style="display: none;">
-                            <div class="info-label">
-                                <i class="fa-solid fa-users"></i>
-                                اللجنة
-                            </div>
-                            <div class="info-value" id="profileCommitteePublic">-</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="profile-card" id="academicCard" style="display: none;">
-                    <div class="card-header">
-                        <i class="fa-solid fa-graduation-cap"></i>
-                        <h3>المعلومات الأكاديمية</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="info-row" id="degreeRow" style="display: none;">
-                            <div class="info-label">
-                                <i class="fa-solid fa-certificate"></i>
-                                المؤهل الأكاديمي
-                            </div>
-                            <div class="info-value" id="profileDegree">-</div>
-                        </div>
-                        <div class="info-row" id="collegeRow" style="display: none;">
-                            <div class="info-label">
-                                <i class="fa-solid fa-building-columns"></i>
-                                الكلية
-                            </div>
-                            <div class="info-value" id="profileCollege">-</div>
-                        </div>
-                        <div class="info-row" id="majorRow" style="display: none;">
-                            <div class="info-label">
-                                <i class="fa-solid fa-book"></i>
-                                التخصص
-                            </div>
-                            <div class="info-value" id="profileMajor">-</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="profile-card" id="socialCard" style="display: none;">
-                    <div class="card-header">
-                        <i class="fa-solid fa-share-nodes"></i>
-                        <h3>حسابات التواصل الاجتماعي</h3>
-                    </div>
-                    <div class="card-body social-links">
-                        <a href="#" id="twitterLink" class="social-link twitter" target="_blank" style="display: none;">
-                            <i class="fa-brands fa-twitter"></i>
-                            <span>تويتر</span>
-                        </a>
-                        <a href="#" id="instagramLink" class="social-link instagram" target="_blank" style="display: none;">
-                            <i class="fa-brands fa-instagram"></i>
-                            <span>إنستقرام</span>
-                        </a>
-                        <a href="#" id="tiktokLink" class="social-link tiktok" target="_blank" style="display: none;">
-                            <i class="fa-brands fa-tiktok"></i>
-                            <span>تيك توك</span>
-                        </a>
-                        <a href="#" id="linkedinLink" class="social-link linkedin" target="_blank" style="display: none;">
-                            <i class="fa-brands fa-linkedin"></i>
-                            <span>لينكد إن</span>
-                        </a>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="profile-footer">
-            <div class="footer-content">
-                <img src="adeeb-logo.png" alt="نادي أدِيب" class="footer-logo">
-                <p>نادي أدِيب الثقافي الأدبي</p>
-                <div class="footer-links">
-                    <a href="/">الصفحة الرئيسية</a>
-                    <a href="/membership.html">انضم لنا</a>
-                    <a href="https://twitter.com/adeeb_club" target="_blank">
-                        <i class="fa-brands fa-twitter"></i>
-                    </a>
-                    <a href="https://instagram.com/adeeb_club" target="_blank">
-                        <i class="fa-brands fa-instagram"></i>
-                    </a>
+            <div class="profile-cards-grid">
+
+                <div class="uc-card uc-card--primary">
+                    <div class="uc-card__header">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon"><i class="fa-regular fa-id-card"></i></div>
+                            <div class="uc-card__header-info">
+                                <h3 class="uc-card__title">المعلومات الأساسية</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uc-card__body">
+                        <div class="uc-card__info-item">
+                            <div class="uc-card__info-icon"><i class="fa-regular fa-envelope"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">البريد الإلكتروني</span>
+                                <span class="uc-card__info-value" id="profileEmail">-</span>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item d-none" id="phoneRow">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">رقم الجوال</span>
+                                <span class="uc-card__info-value" id="profilePhone">-</span>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item d-none" id="committeeRow">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-users"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">اللجنة</span>
+                                <span class="uc-card__info-value" id="profileCommittee">-</span>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item d-none" id="favoriteColorRow">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-palette"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">اللون المفضل</span>
+                                <span class="uc-card__info-value" id="profileFavoriteColor">-</span>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item d-none" id="birthDateRow">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-cake-candles"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">تاريخ الميلاد</span>
+                                <span class="uc-card__info-value" id="profileBirthDate">-</span>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item d-none" id="councilRow">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-landmark"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">المجلس</span>
+                                <span class="uc-card__info-value" id="profileCouncil">-</span>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item d-none" id="departmentRow">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-building"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">القسم</span>
+                                <span class="uc-card__info-value" id="profileDepartmentPublic">-</span>
+                            </div>
+                        </div>
+                        <div class="uc-card__info-item d-none" id="committeeRowPublic">
+                            <div class="uc-card__info-icon"><i class="fa-solid fa-users"></i></div>
+                            <div class="uc-card__info-content">
+                                <span class="uc-card__info-label">اللجنة</span>
+                                <span class="uc-card__info-value" id="profileCommitteePublic">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-right-col">
+
+                    <div class="uc-card uc-card--primary d-none" id="academicCard">
+                        <div class="uc-card__header">
+                            <div class="uc-card__header-inner">
+                                <div class="uc-card__icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                                <div class="uc-card__header-info">
+                                    <h3 class="uc-card__title">المعلومات الأكاديمية</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="uc-card__body">
+                            <div class="uc-card__info-item d-none" id="degreeRow">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-user-graduate"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">الدرجة الأكاديمية</span>
+                                    <span class="uc-card__info-value" id="profileDegree">-</span>
+                                </div>
+                            </div>
+                            <div class="uc-card__info-item d-none" id="collegeRow">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-building-columns"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">الكلية</span>
+                                    <span class="uc-card__info-value" id="profileCollege">-</span>
+                                </div>
+                            </div>
+                            <div class="uc-card__info-item d-none" id="majorRow">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-book-open"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">التخصص</span>
+                                    <span class="uc-card__info-value" id="profileMajor">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="uc-card uc-card--primary d-none" id="socialCard">
+                        <div class="uc-card__header">
+                            <div class="uc-card__header-inner">
+                                <div class="uc-card__icon"><i class="fa-solid fa-share-nodes"></i></div>
+                                <div class="uc-card__header-info">
+                                    <h3 class="uc-card__title">حسابات التواصل</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="uc-card__body">
+                            <a href="#" id="twitterLink" class="uc-card__info-item d-none" target="_blank" rel="noopener">
+                                <div class="uc-card__info-icon"><i class="fa-brands fa-x-twitter"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">تويتر (X)</span>
+                                    <span class="uc-card__info-value">فتح الحساب</span>
+                                </div>
+                            </a>
+                            <a href="#" id="instagramLink" class="uc-card__info-item d-none" target="_blank" rel="noopener">
+                                <div class="uc-card__info-icon"><i class="fa-brands fa-instagram"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">إنستقرام</span>
+                                    <span class="uc-card__info-value">فتح الحساب</span>
+                                </div>
+                            </a>
+                            <a href="#" id="linkedinLink" class="uc-card__info-item d-none" target="_blank" rel="noopener">
+                                <div class="uc-card__info-icon"><i class="fa-brands fa-linkedin-in"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">لينكد إن</span>
+                                    <span class="uc-card__info-value">فتح الحساب</span>
+                                </div>
+                            </a>
+                            <a href="#" id="tiktokLink" class="uc-card__info-item d-none" target="_blank" rel="noopener">
+                                <div class="uc-card__info-icon"><i class="fa-brands fa-tiktok"></i></div>
+                                <div class="uc-card__info-content">
+                                    <span class="uc-card__info-label">تيك توك</span>
+                                    <span class="uc-card__info-value">فتح الحساب</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
                 </div>
             </div>
-        </div>
+
+            <div class="text-center mt-4">
+                <a href="/" class="btn btn-outline">
+                    <i class="fa-solid fa-home"></i>
+                    الصفحة الرئيسية
+                </a>
+                <a href="/membership.html" class="btn btn-primary">
+                    <i class="fa-solid fa-user-plus"></i>
+                    انضم لنا
+                </a>
+            </div>
+
+        </section>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

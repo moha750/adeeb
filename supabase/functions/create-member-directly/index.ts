@@ -4,6 +4,9 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Max-Age': '86400',
+  'Vary': 'Origin',
 };
 
 interface CreateMemberRequest {
@@ -69,6 +72,72 @@ Deno.serve(async (req: Request) => {
 
     if (!email || !password || !full_name || !committee_id) {
       throw new Error('Missing required fields');
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Idempotency: إذا موجود مسبقاً بنفس الإيميل وبحالة pending_onboarding
+    // نعيد نفس البيانات بدلاً من الفشل (ضروري لأمان إعادة المحاولة)
+    // ─────────────────────────────────────────────────────────────
+    const normalizedEmail = email.trim().toLowerCase();
+    const { data: existingProfile } = await supabaseClient
+      .from('profiles')
+      .select('id, account_status, email')
+      .ilike('email', normalizedEmail)
+      .maybeSingle();
+
+    if (existingProfile) {
+      if (existingProfile.account_status === 'pending_onboarding') {
+        // نحاول إرجاع نفس الـ token الصالح إن وُجد، وإلا ننشئ واحداً جديداً
+        const { data: existingToken } = await supabaseClient
+          .from('member_onboarding_tokens')
+          .select('token, expires_at, is_used')
+          .eq('user_id', existingProfile.id)
+          .eq('is_used', false)
+          .order('expires_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        let replayToken: string;
+        if (existingToken && new Date(existingToken.expires_at) > new Date()) {
+          replayToken = existingToken.token;
+        } else {
+          replayToken = crypto.randomUUID();
+          const newExpires = new Date();
+          newExpires.setDate(newExpires.getDate() + 7);
+          await supabaseClient
+            .from('member_onboarding_tokens')
+            .delete()
+            .eq('user_id', existingProfile.id);
+          await supabaseClient
+            .from('member_onboarding_tokens')
+            .insert({
+              user_id: existingProfile.id,
+              token: replayToken,
+              sent_to_email: existingProfile.email,
+              expires_at: newExpires.toISOString(),
+              is_used: false,
+            });
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            user_id: existingProfile.id,
+            token: replayToken,
+            message: 'العضو موجود مسبقاً بحالة بانتظار إكمال البيانات (استجابة آمنة لإعادة المحاولة)',
+            idempotent: true,
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          }
+        );
+      }
+      // إيميل مستخدم لعضو فعلي/مؤرشف → خطأ واضح للمستخدم
+      return new Response(
+        JSON.stringify({ error: 'هذا البريد مستخدم مسبقاً لعضو موجود', success: false }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // إنشاء المستخدم باستخدام admin.createUser مع email_confirm: true

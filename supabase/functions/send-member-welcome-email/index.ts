@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: 'نادي أدِيب <onboarding@resend.dev>',
+          from: 'نادي أدِيب <noreply@adeeb.club>',
           to: [profile.email],
           subject: '🎉 مبروك! تم قبولك في نادي أدِيب',
           html: `

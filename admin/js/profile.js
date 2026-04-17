@@ -7,6 +7,7 @@
     'use strict';
 
     let currentUser = null;
+    let cachedMemberDetails = null;
 
     /**
      * تهيئة مدير الملف الشخصي
@@ -68,6 +69,8 @@
                 console.error('خطأ في جلب بيانات العضو:', memberError);
                 return null;
             }
+
+            cachedMemberDetails = memberDetails;
 
             // جلب معلومات اللجنة من user_roles
             const { data: userRole } = await window.sbClient
@@ -745,7 +748,6 @@
      */
     const MODAL_FIELDS = {
         'basic': {
-            'profileEmail':           'modalEditEmail',
             'profilePhone':           'modalEditPhone',
             'profileNationalIdBasic': 'modalEditNationalId',
             'profileBirthDateBasic':  'modalEditBirthDate',
@@ -766,7 +768,6 @@
     };
 
     const FIELD_MAPPING = {
-        'profileEmail':           { column: 'email' },
         'profilePhone':           { column: 'phone', also: 'profiles' },
         'profileNationalIdBasic': { column: 'national_id' },
         'profileBirthDateBasic':  { column: 'birth_date' },
@@ -795,6 +796,8 @@
         document.getElementById('saveEditBasicBtn')?.addEventListener('click',     () => saveModalEdit('basic'));
         document.getElementById('editBasicBackdrop')?.addEventListener('click',    () => closeEditModal('basic'));
 
+        setupFavoriteColorSync();
+
         // academic
         document.getElementById('closeEditAcademicModal')?.addEventListener('click', () => closeEditModal('academic'));
         document.getElementById('cancelEditAcademicBtn')?.addEventListener('click',   () => closeEditModal('academic'));
@@ -809,15 +812,29 @@
     }
 
     function openEditModal(cardName) {
-        // ملء حقول الـ Modal من قيم الـ spans الحالية
+        // ملء حقول الـ Modal — نفضّل القيمة الخام من cachedMemberDetails ثم نرجع للـ span
         Object.entries(MODAL_FIELDS[cardName] || {}).forEach(([fieldId, inputId]) => {
             const span  = document.getElementById(fieldId);
             const input = document.getElementById(inputId);
-            if (!span || !input) return;
-            const raw = span.textContent.trim();
-            const value = (raw === 'غير محدد' || raw === 'جاري التحميل...') ? '' : raw;
+            if (!input) return;
+
+            const mapping = FIELD_MAPPING[fieldId];
+            let value = '';
+
+            if (mapping && cachedMemberDetails && cachedMemberDetails[mapping.column] != null) {
+                const raw = cachedMemberDetails[mapping.column];
+                // تاريخ الميلاد يحتاج صيغة YYYY-MM-DD لـ input[type=date]
+                if (input.type === 'date' && typeof raw === 'string') {
+                    value = raw.length >= 10 ? raw.slice(0, 10) : raw;
+                } else {
+                    value = String(raw);
+                }
+            } else if (span) {
+                const raw = span.textContent.trim();
+                value = (raw === 'غير محدد' || raw === 'جاري التحميل...') ? '' : raw;
+            }
+
             if (input.tagName === 'SELECT') {
-                // محاولة المطابقة بالقيمة أولاً ثم بالنص
                 const byVal  = [...input.options].find(o => o.value === value);
                 const byText = [...input.options].find(o => o.textContent.trim() === value);
                 input.value = byVal ? value : (byText ? byText.value : '');
@@ -825,6 +842,13 @@
                 input.value = value;
             }
         });
+
+        if (cardName === 'basic') {
+            const hex = document.getElementById('modalEditFavoriteColor');
+            const valid = normalizeHex(hex?.value);
+            // إذا كانت القيمة المخزّنة hex صالحاً نزامنه بالكامل؛ وإلا نحدّث الـ picker والـ swatch فقط دون مسح النص
+            applyFavoriteColor(valid || '#3d77bc', valid ? 'init' : 'hex');
+        }
 
         const cap = cardName.charAt(0).toUpperCase() + cardName.slice(1);
         document.getElementById(`edit${cap}Backdrop`)?.classList.add('active');
@@ -839,9 +863,77 @@
         document.getElementById(`edit${cap}Modal`)?.classList.remove('active');
     }
 
+    /**
+     * تحويل قيمة اللون لصيغة #RRGGBB
+     */
+    function normalizeHex(raw) {
+        if (!raw || typeof raw !== 'string') return null;
+        const v = raw.trim();
+        if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) return null;
+        return v.length === 4
+            ? '#' + v.slice(1).split('').map(c => c + c).join('')
+            : v;
+    }
+
+    /**
+     * تطبيق لون على مكوّن الـ favorite color (picker + hex + swatch + presets)
+     */
+    function applyFavoriteColor(value, origin) {
+        const normalized = normalizeHex(value);
+        if (!normalized) return;
+
+        const picker  = document.getElementById('favoriteColorPicker');
+        const hex     = document.getElementById('modalEditFavoriteColor');
+        const swatch  = document.getElementById('favoriteColorSwatch');
+        const presets = document.getElementById('favoriteColorPresets');
+
+        if (swatch) swatch.style.background = normalized;
+        if (picker && origin !== 'picker') picker.value = normalized;
+        if (hex && origin !== 'hex') hex.value = normalized.toUpperCase();
+        if (presets) {
+            presets.querySelectorAll('.form-color-preset').forEach(btn => {
+                btn.classList.toggle('is-active',
+                    btn.dataset.color?.toLowerCase() === normalized.toLowerCase());
+            });
+        }
+    }
+
+    /**
+     * ربط تزامن حقل اللون المفضل (يُستدعى مرة واحدة)
+     */
+    function setupFavoriteColorSync() {
+        const picker  = document.getElementById('favoriteColorPicker');
+        const hex     = document.getElementById('modalEditFavoriteColor');
+        const presets = document.getElementById('favoriteColorPresets');
+
+        picker?.addEventListener('input', () => applyFavoriteColor(picker.value, 'picker'));
+
+        // يقبل حروف hex (0-9, a-f) فقط ويضيف # تلقائياً
+        hex?.addEventListener('input', () => {
+            const atEnd = (hex.selectionStart ?? 0) >= hex.value.length;
+            const cleaned = hex.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6).toUpperCase();
+            const formatted = cleaned ? '#' + cleaned : '';
+            if (formatted !== hex.value) {
+                hex.value = formatted;
+                if (atEnd) {
+                    try { hex.setSelectionRange(formatted.length, formatted.length); } catch (_) {}
+                }
+            }
+            if (cleaned.length === 3 || cleaned.length === 6) {
+                applyFavoriteColor('#' + cleaned, 'hex');
+            }
+        });
+
+        presets?.addEventListener('click', (e) => {
+            const btn = e.target.closest('.form-color-preset');
+            if (btn?.dataset.color) applyFavoriteColor(btn.dataset.color, 'preset');
+        });
+    }
+
     async function saveModalEdit(cardName) {
         const cap     = cardName.charAt(0).toUpperCase() + cardName.slice(1);
         const saveBtn = document.getElementById(`saveEdit${cap}Btn`);
+        const originalHTML = saveBtn.innerHTML;
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
 
@@ -877,8 +969,9 @@
         } catch (err) {
             console.error('خطأ في حفظ البيانات:', err);
             showNotification('فشل الحفظ: ' + err.message, 'error');
+        } finally {
             saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ التغييرات';
+            saveBtn.innerHTML = originalHTML;
         }
     }
     
@@ -896,6 +989,79 @@
         } catch (error) {
             console.error('خطأ في التحقق من إمكانية تغيير الاسم:', error);
             return true;
+        }
+    }
+
+    /**
+     * فتح Modal تغيير الاسم
+     */
+    async function openChangeNameModal() {
+        const canChange = await checkCanChangeName();
+        if (canChange === false) {
+            showNotification('لا يمكنك تغيير الاسم حالياً. يرجى التواصل مع الإدارة.', 'warning');
+            return;
+        }
+
+        const input = document.getElementById('modalEditFullNameTriple');
+        const currentName = document.getElementById('profileFullName')?.textContent?.trim() || '';
+        if (input) input.value = (currentName === 'جاري التحميل...') ? '' : currentName;
+
+        document.getElementById('editNameBackdrop')?.classList.add('active');
+        document.getElementById('editNameModal')?.classList.add('active');
+        input?.focus();
+    }
+
+    function closeChangeNameModal() {
+        document.getElementById('editNameBackdrop')?.classList.remove('active');
+        document.getElementById('editNameModal')?.classList.remove('active');
+    }
+
+    /**
+     * حفظ الاسم الجديد
+     */
+    async function saveNameChange() {
+        const input = document.getElementById('modalEditFullNameTriple');
+        const saveBtn = document.getElementById('saveEditNameBtn');
+        const newName = (input?.value || '').trim();
+
+        if (!newName) {
+            showNotification('يرجى إدخال الاسم', 'warning');
+            return;
+        }
+        if (newName.split(/\s+/).length < 3) {
+            showNotification('يجب إدخال الاسم الثلاثي كاملاً', 'warning');
+            return;
+        }
+
+        saveBtn.disabled = true;
+        const originalHTML = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
+
+        try {
+            const nowIso = new Date().toISOString();
+
+            const { error: memberError } = await window.sbClient
+                .from('member_details')
+                .update({ full_name_triple: newName, updated_at: nowIso })
+                .eq('user_id', currentUser.id);
+            if (memberError) throw memberError;
+
+            const { error: profileError } = await window.sbClient
+                .from('profiles')
+                .update({ full_name: newName, updated_at: nowIso })
+                .eq('id', currentUser.id);
+            if (profileError) throw profileError;
+
+            currentUser.full_name = newName;
+            showNotification('تم تغيير الاسم بنجاح', 'success');
+            closeChangeNameModal();
+            await loadProfileData();
+        } catch (err) {
+            console.error('خطأ في تغيير الاسم:', err);
+            showNotification('فشل تغيير الاسم: ' + err.message, 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalHTML;
         }
     }
 
@@ -988,10 +1154,16 @@
     function bindEvents() {
         const viewSessionsBtn = document.getElementById('viewSessionsBtn');
         const changeAvatarBtn = document.getElementById('changeAvatarBtn');
+        const changeNameBtn = document.getElementById('changeNameBtn');
         const copyProfileLinkBtn = document.getElementById('copyProfileLinkBtn');
         const openProfileLinkBtn = document.getElementById('openProfileLinkBtn');
 
         setupEditModals();
+
+        document.getElementById('closeEditNameModal')?.addEventListener('click', closeChangeNameModal);
+        document.getElementById('cancelEditNameBtn')?.addEventListener('click', closeChangeNameModal);
+        document.getElementById('editNameBackdrop')?.addEventListener('click', closeChangeNameModal);
+        document.getElementById('saveEditNameBtn')?.addEventListener('click', saveNameChange);
 
         if (viewSessionsBtn) {
             viewSessionsBtn.removeEventListener('click', viewActiveSessions);
@@ -1001,6 +1173,11 @@
         if (changeAvatarBtn) {
             changeAvatarBtn.removeEventListener('click', changeAvatar);
             changeAvatarBtn.addEventListener('click', changeAvatar);
+        }
+
+        if (changeNameBtn) {
+            changeNameBtn.removeEventListener('click', openChangeNameModal);
+            changeNameBtn.addEventListener('click', openChangeNameModal);
         }
 
         if (copyProfileLinkBtn) {
@@ -1510,7 +1687,7 @@
 
             if (memberDetails?.profile_slug) {
                 const baseUrl = window.location.origin;
-                const profileUrl = `${baseUrl}/public-profile.html?slug=${memberDetails.profile_slug}`;
+                const profileUrl = `${baseUrl}/profile.html?slug=${memberDetails.profile_slug}`;
                 profileLinkInput.value = profileUrl;
             } else {
                 profileLinkInput.value = 'لم يتم إنشاء رابط شخصي بعد';

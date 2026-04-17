@@ -108,7 +108,22 @@
       "mcp__supabase__get_logs",
       "mcp__supabase__get_edge_function",
       "mcp__supabase__deploy_edge_function",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(node -e \"new Function\\(require\\('fs'\\).readFileSync\\('admin/js/gift-membership-manager.js','utf8'\\)\\)\")",
+      "Bash(node -e \"new Function\\(require\\('fs'\\).readFileSync\\('c:/Users/moham/adeeb/admin/js/gift-membership-manager.js', 'utf8'\\)\\)\")",
+      "WebFetch(domain:dns.google)",
+      "mcp__supabase__get_project",
+      "mcp__supabase__get_advisors",
+      "Bash(cat \"c:/Users/moham/adeeb/supabase/functions/create-member-directly/index.ts\")",
+      "Bash(cat \"c:/Users/moham/adeeb/supabase/functions/resend-onboarding-email/index.ts\")",
+      "Bash(cat \"c:/Users/moham/adeeb/supabase/functions/migrate-accepted-member/index.ts\")",
+      "Bash(npx supabase *)",
+      "Bash(command -v jq)",
+      "Bash(jq -Rs .)",
+      "Bash(python -c \"import json,sys; print\\(json.dumps\\(open\\(r'c:/Users/moham/adeeb/supabase/functions/resend-onboarding-email/index.ts',encoding='utf-8'\\).read\\(\\)\\)[:200]\\)\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); const c=fs.readFileSync\\('c:/Users/moham/adeeb/supabase/functions/resend-onboarding-email/index.ts','utf8'\\); fs.writeFileSync\\('/tmp/ron.json', JSON.stringify\\(c\\)\\); console.log\\('ok', c.length, JSON.stringify\\(c\\).length\\);\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); const c=fs.readFileSync\\('c:/Users/moham/adeeb/supabase/functions/migrate-accepted-member/index.ts','utf8'\\); fs.writeFileSync\\('/tmp/mam.json', JSON.stringify\\(c\\)\\); console.log\\('ok', c.length, JSON.stringify\\(c\\).length\\);\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); fs.writeFileSync\\('c:/Users/moham/adeeb/ron-esc.tmp', JSON.stringify\\(fs.readFileSync\\('c:/Users/moham/adeeb/supabase/functions/resend-onboarding-email/index.ts','utf8'\\).replace\\(/\\\\r\\\\n/g,'\\\\n'\\)\\)\\);\")"
     ]
   }
 }

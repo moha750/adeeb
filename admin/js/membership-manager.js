@@ -738,7 +738,7 @@
 
     function getStatusHeaderClass(status) {
         const headerMap = {
-            'new':                    'uc-card__header--purple',
+            'new':                    'uc-card__header--warning',
             'under_review':           'uc-card__header--warning',
             'approved_for_interview': 'uc-card__header--success',
             'accepted':               'uc-card__header--success',
@@ -750,7 +750,7 @@
 
     function getStatusCardClass(status) {
         const cardMap = {
-            'new':                    'uc-card--purple',
+            'new':                    'uc-card--warning',
             'under_review':           'uc-card--warning',
             'approved_for_interview': 'uc-card--success',
             'accepted':               'uc-card--success',
@@ -762,7 +762,7 @@
 
     function getStatusBtnClass(status) {
         const btnMap = {
-            'new':                    'btn-violet',
+            'new':                    'btn-warning',
             'under_review':           'btn-warning',
             'approved_for_interview': 'btn-success',
             'accepted':               'btn-success',
@@ -794,33 +794,15 @@
     }
 
     function showNotification(message, type = 'info') {
-        // إنشاء عنصر الإشعار
-        const notification = document.createElement('div');
-        notification.className = `custom-notification custom-notification-${type}`;
-        
-        const icons = {
-            success: 'fa-circle-check',
-            error: 'fa-circle-xmark',
-            warning: 'fa-triangle-exclamation',
-            info: 'fa-circle-info'
-        };
-        
-        notification.innerHTML = `
-            <i class="fa-solid ${icons[type] || icons.info}"></i>
-            <span>${message}</span>
-        `;
-        
-        // إضافة إلى الصفحة
-        document.body.appendChild(notification);
-        
-        // إظهار الإشعار بعد delay صغير للتأثير
-        setTimeout(() => notification.classList.add('show'), 10);
-        
-        // إخفاء وإزالة الإشعار بعد 3 ثواني
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
+        if (window.Toast && typeof window.Toast[type] === 'function') {
+            window.Toast[type](message);
+            return;
+        }
+        if (window.Toast && typeof window.Toast.show === 'function') {
+            window.Toast.show({ type, message });
+            return;
+        }
+        console[type === 'error' ? 'error' : 'log'](`[${type}] ${message}`);
     }
 
     /**
@@ -1224,9 +1206,9 @@
                         <i class="fa-solid fa-calendar-check"></i>
                         قبول للمقابلة
                     </button>
-                    <button class="btn btn-warning" onclick="window.membershipManager.markUnderReview('${data.id}'); window.closeApplicationModal();">
-                        <i class="fa-solid fa-eye"></i>
-                        قيد المراجعة
+                    <button class="btn btn-violet" onclick="window.membershipManager.directAcceptApplication('${data.id}'); window.closeApplicationModal();">
+                        <i class="fa-solid fa-user-check"></i>
+                        قبول مباشر
                     </button>
                     <button class="btn btn-danger" onclick="window.membershipManager.rejectApplication('${data.id}'); window.closeApplicationModal();">
                         <i class="fa-solid fa-times"></i>
@@ -1292,6 +1274,144 @@
         } catch (error) {
             console.error('خطأ في قبول الطلب:', error);
             showNotification('خطأ في قبول الطلب للمقابلة', 'error');
+        }
+    }
+
+    /**
+     * قبول طلب مباشرة دون مقابلة
+     */
+    async function directAcceptApplication(applicationId) {
+        if (!currentUser) {
+            const { data: { user } } = await window.sbClient.auth.getUser();
+            if (!user) {
+                showNotification('يجب تسجيل الدخول أولاً', 'error');
+                return;
+            }
+            currentUser = user;
+        }
+
+        const { value: acceptNotes } = await showCustomInput({
+            title: 'قبول مباشر دون مقابلة',
+            input: 'textarea',
+            inputLabel: 'ملاحظات القبول (اختياري)',
+            inputPlaceholder: 'أضف ملاحظات حول قبول المتقدم مباشرة...',
+            showCancelButton: true,
+            confirmButtonText: 'قبول مباشر',
+            cancelButtonText: 'إلغاء'
+        });
+
+        if (acceptNotes === null) return;
+
+        try {
+            const { data: application, error: appError } = await window.sbClient
+                .from('membership_applications')
+                .select('*')
+                .eq('id', applicationId)
+                .single();
+
+            if (appError) throw appError;
+
+            const nowIso = new Date().toISOString();
+            const trimmedNotes = acceptNotes && acceptNotes.trim() ? acceptNotes.trim() : null;
+
+            const { data: existingInterview, error: existingInterviewError } = await window.sbClient
+                .from('membership_interviews')
+                .select('id')
+                .eq('application_id', application.id)
+                .maybeSingle();
+
+            if (existingInterviewError) throw existingInterviewError;
+
+            let interviewId = existingInterview?.id || null;
+
+            if (!interviewId) {
+                const { data: newInterview, error: newInterviewError } = await window.sbClient
+                    .from('membership_interviews')
+                    .insert({
+                        application_id: application.id,
+                        status: 'completed',
+                        result: 'accepted',
+                        result_notes: trimmedNotes || 'قبول مباشر دون مقابلة',
+                        decided_by: currentUser.id,
+                        decided_at: nowIso,
+                        created_by: currentUser.id
+                    })
+                    .select('id')
+                    .single();
+
+                if (newInterviewError) throw newInterviewError;
+                interviewId = newInterview.id;
+            } else {
+                const { error: updateInterviewError } = await window.sbClient
+                    .from('membership_interviews')
+                    .update({
+                        status: 'completed',
+                        result: 'accepted',
+                        result_notes: trimmedNotes || 'قبول مباشر دون مقابلة',
+                        decided_by: currentUser.id,
+                        decided_at: nowIso
+                    })
+                    .eq('id', interviewId);
+
+                if (updateInterviewError) throw updateInterviewError;
+            }
+
+            const { data: existingAccepted, error: existingError } = await window.sbClient
+                .from('membership_accepted_members')
+                .select('id, interview_id')
+                .eq('application_id', application.id)
+                .maybeSingle();
+
+            if (existingError) throw existingError;
+
+            if (!existingAccepted) {
+                const { error: acceptedError } = await window.sbClient
+                    .from('membership_accepted_members')
+                    .insert({
+                        application_id: application.id,
+                        interview_id: interviewId,
+                        full_name: application.full_name,
+                        email: application.email,
+                        phone: application.phone,
+                        assigned_committee: application.preferred_committee || 'غير محدد',
+                        notes: trimmedNotes,
+                        added_by: currentUser.id
+                    });
+
+                if (acceptedError) throw acceptedError;
+            } else if (!existingAccepted.interview_id) {
+                const { error: linkError } = await window.sbClient
+                    .from('membership_accepted_members')
+                    .update({ interview_id: interviewId })
+                    .eq('id', existingAccepted.id);
+
+                if (linkError) throw linkError;
+            }
+
+            const updateData = {
+                status: 'accepted',
+                approved_for_interview_by: currentUser.id,
+                approved_for_interview_at: nowIso,
+                reviewed_by: currentUser.id,
+                reviewed_at: nowIso
+            };
+
+            if (acceptNotes && acceptNotes.trim()) {
+                updateData.admin_notes = acceptNotes.trim();
+            }
+
+            const { error: updateError } = await window.sbClient
+                .from('membership_applications')
+                .update(updateData)
+                .eq('id', applicationId);
+
+            if (updateError) throw updateError;
+
+            showNotification('تم قبول المتقدم مباشرة بنجاح', 'success');
+            await loadApplicationsReview(currentUser);
+        } catch (error) {
+            console.error('خطأ في القبول المباشر:', error);
+            showNotification('خطأ في قبول المتقدم مباشرة', 'error');
         }
     }
 
@@ -1419,46 +1539,6 @@
         } catch (error) {
             console.error('خطأ في رفض الطلب:', error);
             showNotification('خطأ في رفض الطلب', 'error');
-        }
-    }
-
-    /**
-     * وضع طلب قيد المراجعة
-     */
-    async function markUnderReview(applicationId) {
-        // طلب ملاحظات اختيارية
-        const { value: reviewNotes } = await showCustomInput({
-            title: 'قيد المراجعة',
-            input: 'textarea',
-            inputLabel: 'ملاحظات المراجعة (اختياري)',
-            inputPlaceholder: 'أضف ملاحظات حول المراجعة...',
-            showCancelButton: true,
-            confirmButtonText: 'وضع قيد المراجعة',
-            cancelButtonText: 'إلغاء'
-        });
-
-        if (reviewNotes === null) return; // ضغط إلغاء
-
-        try {
-            const updateData = {
-                status: 'under_review',
-                reviewed_by: currentUser.id,
-                reviewed_at: new Date().toISOString(),
-                review_notes: reviewNotes && reviewNotes.trim() ? reviewNotes.trim() : null
-            };
-
-            const { error } = await window.sbClient
-                .from('membership_applications')
-                .update(updateData)
-                .eq('id', applicationId);
-
-            if (error) throw error;
-
-            showNotification('تم وضع الطلب قيد المراجعة', 'success');
-            await loadApplicationsReview(currentUser);
-        } catch (error) {
-            console.error('خطأ في تحديث الطلب:', error);
-            showNotification('خطأ في تحديث حالة الطلب', 'error');
         }
     }
 
@@ -1915,9 +1995,9 @@
                             <i class="fa-solid fa-check"></i>
                             قبول للمقابلة
                         </button>
-                        <button class="btn btn-warning" onclick="window.membershipManager.markUnderReview('${app.id}')">
-                            <i class="fa-solid fa-clock"></i>
-                            قيد المراجعة
+                        <button class="btn btn-violet" onclick="window.membershipManager.directAcceptApplication('${app.id}')">
+                            <i class="fa-solid fa-user-check"></i>
+                            قبول مباشر
                         </button>
                         <button class="btn btn-danger" onclick="window.membershipManager.rejectApplication('${app.id}')">
                             <i class="fa-solid fa-times"></i>
@@ -1945,12 +2025,12 @@
             const totalCount = currentApplications.length;
             const approvedForInterviewCount = currentApplications.filter(a => a.status === 'approved_for_interview').length;
             const rejectedCount = currentApplications.filter(a => a.status === 'rejected').length;
-            const underReviewCount = currentApplications.filter(a => a.status === 'under_review').length;
+            const pendingDecisionCount = currentApplications.filter(a => a.status === 'new' || a.status === 'under_review').length;
 
             // حساب النسب المئوية
             const approvedPercentage = totalCount > 0 ? Math.round((approvedForInterviewCount / totalCount) * 100) : 0;
             const rejectedPercentage = totalCount > 0 ? Math.round((rejectedCount / totalCount) * 100) : 0;
-            const reviewPercentage = totalCount > 0 ? Math.round((underReviewCount / totalCount) * 100) : 0;
+            const pendingPercentage = totalCount > 0 ? Math.round((pendingDecisionCount / totalCount) * 100) : 0;
 
             // بناء HTML للإحصائيات
             const html = `
@@ -1990,14 +2070,14 @@
                     </div>
                 </div>
                 <div class="stat-card" style="--stat-color: #f59e0b;">
-                    <div class="stat-badge"><i class="fa-solid fa-clock"></i> ${reviewPercentage}%</div>
+                    <div class="stat-badge"><i class="fa-solid fa-hourglass-half"></i> ${pendingPercentage}%</div>
                     <div class="stat-card-wrapper">
                         <div class="stat-icon">
-                            <i class="fa-solid fa-clock"></i>
+                            <i class="fa-solid fa-user-clock"></i>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-value">${underReviewCount}</div>
-                            <div class="stat-label">قيد المراجعة</div>
+                            <div class="stat-value">${pendingDecisionCount}</div>
+                            <div class="stat-label">الأعضاء الجدد في انتظار القرار</div>
                         </div>
                     </div>
                 </div>
@@ -4294,8 +4374,8 @@
         init: initMembershipManager,
         viewApplication: viewApplication,
         approveForInterview: approveForInterview,
+        directAcceptApplication: directAcceptApplication,
         rejectApplication: rejectApplication,
-        markUnderReview: markUnderReview,
         scheduleInterviewForApplication: scheduleInterviewForApplication,
         scheduleInterviewFromBarzakh: scheduleInterviewFromBarzakh,
         toggleCommitteeAvailability: toggleCommitteeAvailability,

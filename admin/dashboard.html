@@ -867,7 +867,12 @@
                                 </button>
                             </div>
                             <div class="profile-hero-info">
-                                <h1 id="profileFullName" class="profile-hero-name">جاري التحميل...</h1>
+                                <div class="profile-hero-name-wrap" style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.55rem; flex-wrap: wrap;">
+                                    <h1 id="profileFullName" class="profile-hero-name" style="margin: 0;">جاري التحميل...</h1>
+                                    <button id="changeNameBtn" type="button" class="profile-name-edit-btn" title="تغيير الاسم" aria-label="تغيير الاسم">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </button>
+                                </div>
                                 <div class="profile-hero-role">
                                     <span id="profileRole">جاري التحميل...</span>
                                 </div>
@@ -1656,7 +1661,7 @@
                     </div>
 
                     <!-- بطاقة الرابط الشخصي -->
-                    <div class="card mb-2rem" style="display: none;">
+                    <div class="card mb-2rem">
                         <div class="card-header">
                             <h3>
                                 <i class="fa-solid fa-link"></i>
@@ -2068,34 +2073,154 @@
             <!-- قسم إهداء العضوية -->
             <section id="gift-membership-section" class="admin-section d-none">
 
-                <!-- شرح الميزة -->
-                <div class="card" style="margin-bottom: 1.5rem;">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-gift"></i> إهداء العضوية</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-info" style="margin-bottom: 1rem;">
-                            <i class="fa-solid fa-info-circle"></i>
-                            <strong>ما هي عضوية الهدية؟</strong>
-                            <p style="margin: 0.5rem 0 0 0;">
-                                تتيح لك هذه الميزة منح عضوية مباشرة لشخص ما دون الحاجة لملء نموذج التسجيل أو إجراء مقابلة.
-                                سيتم إنشاء حساب للعضو وإرسال رسالة قبول مباشرة على بريده الإلكتروني لإكمال التسجيل.
-                            </p>
-                        </div>
-                        
-                        <div style="text-align: center; padding: 2rem;">
-                            <div style="font-size: 4rem; color: #3d8fd6; margin-bottom: 1rem;">
-                                <i class="fa-solid fa-gift"></i>
+                <!-- إحصائيات الإهداء -->
+                <div class="stats-grid mb-2rem">
+                    <div class="stat-card" style="--stat-color: #3d8fd6; --stat-color-rgb: 61, 143, 214; --stat-color-dark: #274060;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-gift"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="giftTotalCount">0</div>
+                                <div class="stat-label">إجمالي الإهداءات</div>
                             </div>
-                            <h3 style="margin-bottom: 1rem; color: #274060;">منح عضوية هدية</h3>
-                            <p style="color: #64748b; margin-bottom: 1.5rem;">
-                                اضغط على الزر أدناه لإضافة عضو جديد ومنحه عضوية مباشرة
-                            </p>
-                            <button class="btn btn-primary btn-lg" id="addGiftMembershipBtn">
-                                <i class="fa-solid fa-user-plus"></i>
-                                إضافة عضو جديد
-                            </button>
                         </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #8b5cf6; --stat-color-rgb: 139, 92, 246; --stat-color-dark: #7c3aed;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="giftMonthCount">0</div>
+                                <div class="stat-label">هذا الشهر</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981; --stat-color-rgb: 16, 185, 129; --stat-color-dark: #059669;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-user-check"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="giftActivatedCount">0</div>
+                                <div class="stat-label">أكملوا التسجيل</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #f59e0b; --stat-color-rgb: 245, 158, 11; --stat-color-dark: #d97706;">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="giftPendingCount">0</div>
+                                <div class="stat-label">بانتظار الإكمال</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- صندوق الشرح -->
+                <div class="modal-info-box" style="margin-bottom: 1.5rem;">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <div>
+                        <strong>ما هي عضوية الهدية؟</strong>
+                        <p style="margin: 0.35rem 0 0 0;">
+                            تتيح لك هذه الميزة منح عضوية مباشرة لشخص أو مجموعة أشخاص دون الحاجة لملء نموذج تسجيل أو إجراء مقابلة.
+                            سيتم إنشاء حساب لكل عضو وإرسال رابط إكمال التسجيل على بريده الإلكتروني.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- كروت الإجراءات -->
+                <div class="uc-grid uc-grid--wide" style="margin-bottom: 1.5rem;">
+
+                    <!-- منح فردي -->
+                    <article class="uc-card uc-card--primary">
+                        <header class="uc-card__header">
+                            <div class="uc-card__header-inner">
+                                <div class="uc-card__icon"><i class="fa-solid fa-user-plus"></i></div>
+                                <div class="uc-card__header-info">
+                                    <h3 class="uc-card__title">منح عضوية فردية</h3>
+                                    <span class="uc-card__badge"><i class="fa-solid fa-bolt"></i> سريع</span>
+                                </div>
+                            </div>
+                        </header>
+                        <div class="uc-card__body">
+                            <div class="uc-card__info-item uc-card__info-item--full">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-align-right"></i></div>
+                                <div class="uc-card__info-content">
+                                    <div class="uc-card__info-label">الوصف</div>
+                                    <div class="uc-card__info-value">منح العضوية لشخص واحد فقط بشكل فوري.</div>
+                                </div>
+                            </div>
+                            <div class="uc-card__info-item uc-card__info-item--full">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-user-check"></i></div>
+                                <div class="uc-card__info-content">
+                                    <div class="uc-card__info-label">الحساب</div>
+                                    <div class="uc-card__info-value">إنشاء حساب مباشر + تعيين اللجنة فوراً</div>
+                                </div>
+                            </div>
+                            <div class="uc-card__info-item uc-card__info-item--full">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+                                <div class="uc-card__info-content">
+                                    <div class="uc-card__info-label">بريد القبول</div>
+                                    <div class="uc-card__info-value">إرسال رسالة التسجيل تلقائياً بعد الإنشاء</div>
+                                </div>
+                            </div>
+                        </div>
+                        <footer class="uc-card__footer">
+                            <button type="button" class="btn btn-primary" id="addGiftMembershipBtn">
+                                <i class="fa-solid fa-user-plus"></i>
+                                بدء منح فردي
+                            </button>
+                        </footer>
+                    </article>
+
+                    <!-- منح جماعي -->
+                    <article class="uc-card uc-card--primary">
+                        <header class="uc-card__header">
+                            <div class="uc-card__header-inner">
+                                <div class="uc-card__icon"><i class="fa-solid fa-users-gear"></i></div>
+                                <div class="uc-card__header-info">
+                                    <h3 class="uc-card__title">منح عضوية جماعية</h3>
+                                    <span class="uc-card__badge"><i class="fa-solid fa-layer-group"></i> دفعة واحدة</span>
+                                </div>
+                            </div>
+                        </header>
+                        <div class="uc-card__body">
+                            <div class="uc-card__info-item uc-card__info-item--full">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-align-right"></i></div>
+                                <div class="uc-card__info-content">
+                                    <div class="uc-card__info-label">الوصف</div>
+                                    <div class="uc-card__info-value">منح العضوية لعدة أشخاص دفعة واحدة.</div>
+                                </div>
+                            </div>
+                            <div class="uc-card__info-item uc-card__info-item--full">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-paste"></i></div>
+                                <div class="uc-card__info-content">
+                                    <div class="uc-card__info-label">الإدخال</div>
+                                    <div class="uc-card__info-value">إدخال يدوي أو لصق قائمة جاهزة بعدة فواصل</div>
+                                </div>
+                            </div>
+                            <div class="uc-card__info-item uc-card__info-item--full">
+                                <div class="uc-card__info-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                                <div class="uc-card__info-content">
+                                    <div class="uc-card__info-label">التقرير</div>
+                                    <div class="uc-card__info-value">نتائج مفصّلة لكل عضو مع تجاوز الأخطاء الفردية</div>
+                                </div>
+                            </div>
+                        </div>
+                        <footer class="uc-card__footer">
+                            <button type="button" class="btn btn-primary" id="bulkGiftMembershipBtn">
+                                <i class="fa-solid fa-users-gear"></i>
+                                بدء منح جماعي
+                            </button>
+                        </footer>
+                    </article>
+
+                </div>
+
+                <!-- آخر الإهداءات -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-table"></i> جدول الإهداءات</h3>
+                    </div>
+                    <div class="card-body" id="recentGiftsContainer">
+                        <!-- يُملأ ديناميكياً -->
                     </div>
                 </div>
             </section>
@@ -3908,23 +4033,43 @@
         </div>
         <form id="userForm">
             <div class="modal-body">
-                <div class="form-info" style="margin-bottom: 1rem; padding: 1rem; background: linear-gradient(145deg, rgba(61,143,214,0.08), rgba(61,143,214,0.03)); border-radius: 12px; border-right: 3px solid var(--modal-color, #3d8fd6); display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="fa-solid fa-info-circle" style="color: #3d8fd6;"></i>
-                    <span style="color: #1e40af; font-size: 0.875rem;">سيتم إنشاء حساب للعضو وإرسال رسالة قبول مباشرة لإكمال التسجيل</span>
+                <div class="modal-info-box">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <div>
+                        <strong>ماذا يحدث بعد المنح؟</strong>
+                        <p>سيتم إنشاء حساب للعضو تلقائياً، ثم إرسال <strong>رسالة قبول</strong> إلى بريده الإلكتروني لإكمال بيانات التسجيل خلال 7 أيام.</p>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>الاسم الكامل <span class="required-dot">*</span></label>
-                    <input type="text" class="form-input" id="userFullName" required placeholder="الاسم الثلاثي أو الرباعي" />
-                </div>
-                <div class="form-group">
-                    <label>البريد الإلكتروني <span class="required-dot">*</span></label>
-                    <input type="email" class="form-input" id="userEmail" required placeholder="example@email.com" />
-                </div>
-                <div class="form-group">
-                    <label>اللجنة <span class="required-dot">*</span></label>
-                    <select class="form-input" id="userCommitteeSelect" required>
-                        <option value="">اختر اللجنة</option>
-                    </select>
+
+                <h3><i class="fa-solid fa-id-card"></i> بيانات العضو</h3>
+
+                <div class="modal-form-grid">
+                    <div class="form-group full-width">
+                        <label class="form-label" for="userFullName">
+                            <span class="label-icon"><i class="fa-solid fa-user"></i></span>
+                            الاسم الكامل
+                            <span class="required-dot">*</span>
+                        </label>
+                        <input type="text" class="form-input" id="userFullName" required placeholder="الاسم الثلاثي أو الرباعي" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="userEmail">
+                            <span class="label-icon"><i class="fa-solid fa-envelope"></i></span>
+                            البريد الإلكتروني
+                            <span class="required-dot">*</span>
+                        </label>
+                        <input type="email" class="form-input" id="userEmail" required placeholder="example@email.com" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="userCommitteeSelect">
+                            <span class="label-icon"><i class="fa-solid fa-sitemap"></i></span>
+                            اللجنة
+                            <span class="required-dot">*</span>
+                        </label>
+                        <select class="form-input" id="userCommitteeSelect" required>
+                            <option value="">اختر اللجنة</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -3935,6 +4080,148 @@
                 </button>
             </div>
         </form>
+    </div>
+
+    <!-- خلفية نافذة المنح الجماعي -->
+    <div class="modal-backdrop" id="bulkGiftBackdrop"></div>
+    <!-- نافذة المنح الجماعي للعضوية -->
+    <div class="modal modal-lg" id="bulkGiftModal">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <div class="modal-icon"><i class="fa-solid fa-users-gear"></i></div>
+                <h2 class="modal-title">منح عضوية جماعية</h2>
+            </div>
+            <button class="modal-close" id="closeBulkGiftModal"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- مرحلة الإدخال -->
+        <form id="bulkGiftForm" class="modal-content">
+            <div class="modal-body" id="bulkGiftFormBody">
+                <div class="modal-info-box">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <div>
+                        <strong>خطوات المنح الجماعي</strong>
+                        <p>حدد اللجنة المشتركة للجميع، ثم أضف الأعضاء يدوياً أو الصق قائمة بصيغة <code>الاسم الرباعي | البريد الإلكتروني</code> (سطر لكل عضو).</p>
+                    </div>
+                </div>
+
+                <h3><i class="fa-solid fa-sitemap"></i> اللجنة المشتركة</h3>
+
+                <div class="modal-form-grid">
+                    <div class="form-group full-width">
+                        <label class="form-label" for="bulkGiftCommitteeSelect">
+                            <span class="label-icon"><i class="fa-solid fa-sitemap"></i></span>
+                            اللجنة
+                            <span class="required-dot">*</span>
+                        </label>
+                        <select class="form-input" id="bulkGiftCommitteeSelect" required>
+                            <option value="">اختر اللجنة</option>
+                        </select>
+                        <small>سيتم تعيين جميع الأعضاء المُضافين إلى هذه اللجنة.</small>
+                    </div>
+                </div>
+
+                <div class="modal-divider"></div>
+
+                <h3><i class="fa-solid fa-paste"></i> لصق قائمة جاهزة (اختياري)</h3>
+
+                <div class="modal-form-grid">
+                    <div class="form-group full-width">
+                        <label class="form-label" for="bulkGiftPasteArea">
+                            <span class="label-icon"><i class="fa-solid fa-paste"></i></span>
+                            الصق القائمة هنا
+                        </label>
+                        <textarea class="form-input" id="bulkGiftPasteArea" rows="4"
+                                  placeholder="محمد أحمد علي السعيد | mohammed@example.com&#10;سارة خالد عبدالله، sara@example.com&#10;أحمد علي الحسن, ahmed@example.com"></textarea>
+                        <small>المحلل يقبل الفواصل: <code>|</code> <code>،</code> <code>,</code></small>
+                    </div>
+                    <div class="form-group full-width">
+                        <button type="button" class="btn btn-primary" id="bulkGiftParseBtn">
+                            <i class="fa-solid fa-arrow-down"></i>
+                            تحويل إلى صفوف
+                        </button>
+                    </div>
+                </div>
+
+                <div class="modal-divider"></div>
+
+                <h3>
+                    <i class="fa-solid fa-list-check"></i>
+                    قائمة الأعضاء
+                    <span class="uc-badge uc-badge--info" id="bulkGiftRowsCount" style="margin-inline-start:auto; font-weight:600;">0 عضو</span>
+                </h3>
+
+                <div class="modal-form-grid">
+                    <div class="form-group full-width">
+                        <div id="bulkGiftRowsWrap" class="bulk-gift-rows-wrap">
+                            <div id="bulkGiftRows" class="bulk-gift-rows"></div>
+                            <button type="button" class="btn btn-primary btn-outline bulk-gift-add-btn" id="bulkGiftAddRowBtn">
+                                <i class="fa-solid fa-plus"></i>
+                                إضافة صف
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="cancelBulkGiftBtn">إلغاء</button>
+                <button type="submit" class="btn btn-primary" id="bulkGiftSubmitBtn">
+                    <i class="fa-solid fa-gift"></i>
+                    منح (<span id="bulkGiftSubmitCount">0</span>) عضوية
+                </button>
+            </div>
+        </form>
+
+        <!-- مرحلة التقدم والنتائج -->
+        <div id="bulkGiftProgressWrap" class="modal-content" style="display: none;">
+            <div class="modal-body">
+                <div class="modal-info-box" id="bulkGiftProgressBox">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <div>
+                        <strong id="bulkGiftProgressTitle">جاري المعالجة...</strong>
+                        <p id="bulkGiftProgressSubtitle">يُرجى الانتظار حتى اكتمال العملية</p>
+                    </div>
+                </div>
+
+                <div class="bulk-gift-progress-track">
+                    <div id="bulkGiftProgressBar" class="bulk-gift-progress-fill"></div>
+                </div>
+
+                <h3><i class="fa-solid fa-clipboard-list"></i> نتائج العملية</h3>
+
+                <div id="bulkGiftResultsList" class="bulk-gift-results-list"></div>
+
+                <div id="bulkGiftSummary" style="display: none;">
+                    <div class="modal-divider"></div>
+                    <div class="modal-form-grid">
+                        <div class="modal-info-box box-success">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <div>
+                                <strong>نجح</strong>
+                                <p class="bulk-gift-summary-count" id="bulkGiftSuccessCount">0</p>
+                            </div>
+                        </div>
+                        <div class="modal-info-box box-danger">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            <div>
+                                <strong>فشل</strong>
+                                <p class="bulk-gift-summary-count" id="bulkGiftFailedCount">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="bulkGiftResetBtn" style="display: none;">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    عملية جديدة
+                </button>
+                <button type="button" class="btn btn-primary" id="bulkGiftDoneBtn" style="display: none;">
+                    <i class="fa-solid fa-check"></i>
+                    تم
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- نافذة إضافة/تعديل عمل -->
@@ -4526,12 +4813,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
     <script src="../supabase-config.js"></script>
     <script src="auth-manager.js"></script>
+    <script src="js/edge-invoke.js"></script>
     <script src="js/impersonation-manager.js"></script>
     <script src="js/contact-messages-manager-new.js"></script>
     <script src="js/newsletter-manager-new.js"></script>
     <script src="js/membership-manager.js"></script>
     <script src="js/membership-decisions.js"></script>
     <script src="js/membership-invitations.js"></script>
+    <script src="js/gift-membership-manager.js"></script>
     <script src="js/interview-sessions-manager.js"></script>
     <script src="js/site-visits-manager.js"></script>
     <script src="js/surveys-manager.js"></script>
@@ -4573,6 +4862,39 @@
          Modals تعديل بيانات الملف الشخصي
          ═══════════════════════════════════════════════════════ -->
 
+    <!-- Modal: تغيير الاسم -->
+    <div class="modal-backdrop" id="editNameBackdrop"></div>
+    <div class="modal modal-md" id="editNameModal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <div class="modal-icon"><i class="fa-regular fa-user"></i></div>
+                <div>
+                    <h3 class="modal-title">تغيير الاسم</h3>
+                </div>
+            </div>
+            <button class="modal-close" id="closeEditNameModal" type="button" aria-label="إغلاق">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-form-grid">
+                <div class="form-group full-width">
+                    <label class="form-label"><span class="label-icon"><i class="fa-regular fa-id-badge"></i></span> الاسم الثلاثي</label>
+                    <input type="text" class="form-input" id="modalEditFullNameTriple" placeholder="الاسم الأول، اسم الأب، اسم العائلة">
+                    <small class="form-hint" style="color: #64748b; margin-top: 0.35rem; display: block;">يجب أن يتطابق الاسم مع الهوية الرسمية.</small>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-success" type="button" id="saveEditNameBtn">
+                <i class="fa-solid fa-floppy-disk"></i> حفظ التغييرات
+            </button>
+            <button class="btn btn-slate btn-outline" type="button" id="cancelEditNameBtn">
+                <i class="fa-regular fa-circle-xmark"></i> إلغاء
+            </button>
+        </div>
+    </div>
+
     <!-- Modal: المعلومات الأساسية -->
     <div class="modal-backdrop" id="editBasicBackdrop"></div>
     <div class="modal modal-md" id="editBasicModal" role="dialog" aria-modal="true">
@@ -4590,10 +4912,6 @@
         <div class="modal-body">
             <div class="modal-form-grid">
                 <div class="form-group">
-                    <label class="form-label"><span class="label-icon"><i class="fa-regular fa-envelope"></i></span> البريد الإلكتروني</label>
-                    <input type="email" class="form-input" id="modalEditEmail" placeholder="name@example.com">
-                </div>
-                <div class="form-group">
                     <label class="form-label"><span class="label-icon"><i class="fa-solid fa-phone"></i></span> رقم الهاتف</label>
                     <input type="tel" class="form-input" id="modalEditPhone" placeholder="05XXXXXXXX" maxlength="10">
                 </div>
@@ -4605,9 +4923,14 @@
                     <label class="form-label"><span class="label-icon"><i class="fa-regular fa-calendar"></i></span> تاريخ الميلاد</label>
                     <input type="date" class="form-input" id="modalEditBirthDate">
                 </div>
-                <div class="form-group full-width">
+                <div class="form-group">
                     <label class="form-label"><span class="label-icon"><i class="fa-solid fa-palette"></i></span> اللون المفضل</label>
-                    <input type="text" class="form-input" id="modalEditFavoriteColor" placeholder="مثال: الأزرق، #3498db">
+                    <div class="form-color-wrap">
+                        <span class="form-color-swatch" id="favoriteColorSwatch" style="background:#3d77bc;">
+                            <input type="color" id="favoriteColorPicker" value="#3d77bc" aria-label="اختر لوناً">
+                        </span>
+                        <input type="text" class="form-color-value" id="modalEditFavoriteColor" value="" placeholder="#000000" maxlength="7">
+                    </div>
                 </div>
             </div>
         </div>

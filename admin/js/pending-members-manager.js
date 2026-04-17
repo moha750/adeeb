@@ -146,28 +146,11 @@ class PendingMembersManager {
      */
     async resendOnboardingEmail(userId) {
         try {
-            const { data: { session } } = await this.supabase.auth.getSession();
-            if (!session) throw new Error('Not authenticated');
-
-            const response = await fetch(
-                `${this.supabase.supabaseUrl}/functions/v1/resend-onboarding-email`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${session.access_token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ user_id: userId })
-                }
-            );
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || 'Failed to resend email');
+            const res = await window.edgeInvoke('resend-onboarding-email', { user_id: userId });
+            if (!res.ok) {
+                throw new Error(res.error || 'Failed to resend email');
             }
-
-            return result;
+            return res.data;
         } catch (error) {
             console.error('Error resending email:', error);
             throw error;

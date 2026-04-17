@@ -945,6 +945,11 @@
                     await window.invitationsManager.init(currentUser);
                 }
                 break;
+            case 'gift-membership-section':
+                if (window.giftMembershipManager) {
+                    await window.giftMembershipManager.init(currentUser);
+                }
+                break;
             case 'member-data-management-section':
                 if (window.memberDataManager) {
                     await window.memberDataManager.init();
@@ -4388,28 +4393,20 @@
                 throw new Error('يجب تسجيل الدخول كمسؤول');
             }
 
-            // استدعاء Edge Function لإنشاء المستخدم بشكل صحيح
-            const createUserResponse = await fetch(`${window.SUPABASE_URL}/functions/v1/create-member-directly`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${adminSession.access_token}`,
-                    'Content-Type': 'application/json',
-                    'apikey': window.SUPABASE_ANON_KEY
-                },
-                body: JSON.stringify({
-                    email: email,
-                    password: tempPassword,
-                    full_name: fullName,
-                    committee_id: committeeId
-                })
+            // استدعاء Edge Function لإنشاء المستخدم عبر الموحِّد المرن (retry + timeout + backoff)
+            const createRes = await window.edgeInvoke('create-member-directly', {
+                email: email,
+                password: tempPassword,
+                full_name: fullName,
+                committee_id: committeeId
             });
 
-            if (!createUserResponse.ok) {
-                const errorData = await createUserResponse.json();
-                throw new Error(errorData.error || 'فشل إنشاء المستخدم');
+            if (!createRes.ok) {
+                throw new Error(createRes.error || 'فشل إنشاء المستخدم');
             }
 
-            const { user_id: newUserId, token } = await createUserResponse.json();
+            const newUserId = createRes.data?.user_id;
+            const token = createRes.data?.token;
 
             if (!newUserId) {
                 throw new Error('فشل إنشاء المستخدم');
@@ -4417,28 +4414,11 @@
 
             // 2. إرسال رسالة القبول عبر Edge Function
             try {
-                const { data: { session } } = await sb.auth.getSession();
-                if (session && newUserId) {
-                    const response = await fetch(
-                        `${sb.supabaseUrl}/functions/v1/resend-onboarding-email`,
-                        {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${session.access_token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ 
-                                user_id: newUserId
-                            })
-                        }
-                    );
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        console.error('Failed to send onboarding email:', errorData);
-                    } else {
-                        console.log('Onboarding email sent successfully');
-                    }
+                const emailRes = await window.edgeInvoke('resend-onboarding-email', { user_id: newUserId });
+                if (!emailRes.ok) {
+                    console.error('Failed to send onboarding email:', emailRes.error);
+                } else {
+                    console.log('Onboarding email sent successfully');
                 }
             } catch (emailError) {
                 console.error('Email sending error:', emailError);
@@ -4475,6 +4455,12 @@
             form.reset();
             if (window.usersManagerInstance) {
                 await window.usersManagerInstance.init();
+            }
+            if (window.giftMembershipManager) {
+                await Promise.all([
+                    window.giftMembershipManager.loadStats(),
+                    window.giftMembershipManager.loadRecentGifts()
+                ]);
             }
 
         } catch (error) {

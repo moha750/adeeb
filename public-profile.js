@@ -31,16 +31,7 @@
 
             const { data: memberData, error: memberError } = await window.sbClient
                 .from('member_details')
-                .select(`
-                    *,
-                    profiles!member_details_user_id_fkey(
-                        id,
-                        full_name,
-                        email,
-                        avatar_url,
-                        created_at
-                    )
-                `)
+                .select('*')
                 .eq('profile_slug', profileSlug)
                 .single();
 
@@ -49,6 +40,20 @@
                 showError();
                 return;
             }
+
+            const { data: profileData, error: profileError } = await window.sbClient
+                .from('profiles')
+                .select('id, full_name, email, avatar_url, created_at')
+                .eq('id', memberData.user_id)
+                .single();
+
+            if (profileError || !profileData) {
+                console.error('خطأ في جلب بيانات profile:', profileError);
+                showError();
+                return;
+            }
+
+            memberData.profiles = profileData;
 
             const { data: userRole } = await window.sbClient
                 .from('user_roles')
@@ -85,6 +90,11 @@
 
         document.getElementById('profileEmail').textContent = memberData.email || profile.email;
 
+        if (memberData.phone) {
+            document.getElementById('phoneRow').classList.remove('d-none');
+            document.getElementById('profilePhone').textContent = memberData.phone;
+        }
+
         const joinDate = new Date(profile.created_at).toLocaleDateString('ar-SA', {
             year: 'numeric',
             month: 'long',
@@ -93,13 +103,22 @@
         document.getElementById('profileJoinDate').textContent = joinDate;
 
         if (userRole?.committees?.committee_name_ar) {
-            document.getElementById('committeeRow').style.display = 'flex';
+            document.getElementById('committeeRow').classList.remove('d-none');
             document.getElementById('profileCommittee').textContent = userRole.committees.committee_name_ar;
         }
 
         if (memberData.favorite_color) {
-            document.getElementById('favoriteColorRow').style.display = 'flex';
+            document.getElementById('favoriteColorRow').classList.remove('d-none');
             document.getElementById('profileFavoriteColor').textContent = memberData.favorite_color;
+        }
+
+        if (memberData.birth_date) {
+            document.getElementById('birthDateRow').classList.remove('d-none');
+            document.getElementById('profileBirthDate').textContent = new Date(memberData.birth_date).toLocaleDateString('ar-SA', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
         }
 
         const roleName = userRole?.roles?.role_name || '';
@@ -111,15 +130,15 @@
         const execCouncilRoles = ['department_head', 'committee_leader', 'deputy_committee_leader'];
 
         if (adminCouncilRoles.includes(roleName)) {
-            document.getElementById('councilRow').style.display = 'flex';
+            document.getElementById('councilRow').classList.remove('d-none');
             document.getElementById('profileCouncil').textContent = 'المجلس الإداري';
         } else if (execCouncilRoles.includes(roleName)) {
-            document.getElementById('councilRow').style.display = 'flex';
+            document.getElementById('councilRow').classList.remove('d-none');
             document.getElementById('profileCouncil').textContent = 'المجلس التنفيذي';
         }
 
         if (roleName === 'committee_member' && userRole?.committees?.committee_name_ar) {
-            document.getElementById('committeeRowPublic').style.display = 'flex';
+            document.getElementById('committeeRowPublic').classList.remove('d-none');
             document.getElementById('profileCommitteePublic').textContent = userRole.committees.committee_name_ar;
 
             const { data: committeeData } = await window.sbClient
@@ -129,7 +148,7 @@
                 .single();
 
             if (committeeData?.departments?.name_ar) {
-                document.getElementById('departmentRow').style.display = 'flex';
+                document.getElementById('departmentRow').classList.remove('d-none');
                 document.getElementById('profileDepartmentPublic').textContent = committeeData.departments.name_ar;
             }
         }
@@ -137,8 +156,8 @@
         displayAcademicInfo(memberData);
         displaySocialLinks(memberData);
 
-        loadingScreen.style.display = 'none';
-        profileContainer.style.display = 'block';
+        loadingScreen.classList.add('d-none');
+        profileContainer.classList.remove('d-none');
     }
 
     function displayAcademicInfo(memberData) {
@@ -146,26 +165,26 @@
         let hasAcademicInfo = false;
 
         if (memberData.academic_degree) {
-            document.getElementById('degreeRow').style.display = 'flex';
-            document.getElementById('profileDegree').textContent = 
+            document.getElementById('degreeRow').classList.remove('d-none');
+            document.getElementById('profileDegree').textContent =
                 degreeMap[memberData.academic_degree] || memberData.academic_degree;
             hasAcademicInfo = true;
         }
 
         if (memberData.college) {
-            document.getElementById('collegeRow').style.display = 'flex';
+            document.getElementById('collegeRow').classList.remove('d-none');
             document.getElementById('profileCollege').textContent = memberData.college;
             hasAcademicInfo = true;
         }
 
         if (memberData.major) {
-            document.getElementById('majorRow').style.display = 'flex';
+            document.getElementById('majorRow').classList.remove('d-none');
             document.getElementById('profileMajor').textContent = memberData.major;
             hasAcademicInfo = true;
         }
 
         if (hasAcademicInfo) {
-            academicCard.style.display = 'block';
+            academicCard.classList.remove('d-none');
         }
     }
 
@@ -176,35 +195,35 @@
         if (memberData.twitter_account) {
             const link = document.getElementById('twitterLink');
             link.href = `https://twitter.com/${memberData.twitter_account.replace('@', '')}`;
-            link.style.display = 'flex';
+            link.classList.remove('d-none');
             hasSocialLinks = true;
         }
 
         if (memberData.instagram_account) {
             const link = document.getElementById('instagramLink');
             link.href = `https://instagram.com/${memberData.instagram_account.replace('@', '')}`;
-            link.style.display = 'flex';
+            link.classList.remove('d-none');
             hasSocialLinks = true;
         }
 
         if (memberData.tiktok_account) {
             const link = document.getElementById('tiktokLink');
             link.href = `https://tiktok.com/@${memberData.tiktok_account.replace('@', '')}`;
-            link.style.display = 'flex';
+            link.classList.remove('d-none');
             hasSocialLinks = true;
         }
 
         if (memberData.linkedin_account) {
             const link = document.getElementById('linkedinLink');
-            link.href = memberData.linkedin_account.startsWith('http') 
-                ? memberData.linkedin_account 
+            link.href = memberData.linkedin_account.startsWith('http')
+                ? memberData.linkedin_account
                 : `https://linkedin.com/in/${memberData.linkedin_account}`;
-            link.style.display = 'flex';
+            link.classList.remove('d-none');
             hasSocialLinks = true;
         }
 
         if (hasSocialLinks) {
-            socialCard.style.display = 'block';
+            socialCard.classList.remove('d-none');
         }
     }
 
@@ -264,8 +283,8 @@
     }
 
     function showError() {
-        loadingScreen.style.display = 'none';
-        errorScreen.style.display = 'flex';
+        loadingScreen.classList.add('d-none');
+        errorScreen.classList.remove('d-none');
     }
 
     loadPublicProfile();
