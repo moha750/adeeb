@@ -1259,6 +1259,49 @@
         }
 
         // ══════ تبويب: الأمان ══════
+        // تعبئة البريد الحالي
+        const currentEmailInput = document.getElementById('settingsCurrentEmail');
+        if (currentEmailInput && currentUser?.email) {
+            currentEmailInput.value = currentUser.email;
+        }
+
+        // زر تغيير البريد الإلكتروني
+        const changeEmailBtn = document.getElementById('settingsChangeEmailBtn');
+        if (changeEmailBtn && !changeEmailBtn._bound) {
+            changeEmailBtn._bound = true;
+            const originalEmailBtnHTML = changeEmailBtn.innerHTML;
+            changeEmailBtn.addEventListener('click', async () => {
+                const newEmailInput = document.getElementById('settingsNewEmail');
+                const newEmail = newEmailInput?.value?.trim().toLowerCase();
+                if (!newEmail) {
+                    window.showToast?.('يرجى إدخال البريد الإلكتروني الجديد', 'warning');
+                    return;
+                }
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+                    window.showToast?.('صيغة البريد الإلكتروني غير صحيحة', 'error');
+                    return;
+                }
+                if (newEmail === (currentUser?.email || '').toLowerCase()) {
+                    window.showToast?.('البريد الجديد مطابق للبريد الحالي', 'warning');
+                    return;
+                }
+                changeEmailBtn.disabled = true;
+                changeEmailBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الإرسال...';
+                try {
+                    const { error } = await window.sbClient.auth.updateUser({ email: newEmail });
+                    if (error) throw error;
+                    window.showToast?.('تم إرسال رابط التأكيد إلى البريد الجديد. يرجى فتحه لإتمام التغيير.', 'success');
+                    if (newEmailInput) newEmailInput.value = '';
+                } catch (err) {
+                    console.error('خطأ في تغيير البريد:', err);
+                    window.showToast?.('فشل تغيير البريد: ' + (err.message || 'خطأ غير معروف'), 'error');
+                } finally {
+                    changeEmailBtn.disabled = false;
+                    changeEmailBtn.innerHTML = originalEmailBtnHTML;
+                }
+            });
+        }
+
         // زر تغيير كلمة المرور
         const changePassBtn = document.getElementById('settingsChangePasswordBtn');
         if (changePassBtn && !changePassBtn._bound) {
