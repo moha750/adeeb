@@ -43,31 +43,39 @@ class UsersManager {
 
             if (usersError) throw usersError;
 
-            // جلب الأدوار لكل مستخدم
+            // جلب الأدوار وبيانات العضوية لكل مستخدم
             const usersWithRoles = await Promise.all(users.map(async (user) => {
-                const { data: userRoles } = await this.supabase
-                    .from('user_roles')
-                    .select(`
-                        id,
-                        role_id,
-                        committee_id,
-                        role:roles (
+                const [{ data: userRoles }, { data: details }] = await Promise.all([
+                    this.supabase
+                        .from('user_roles')
+                        .select(`
                             id,
-                            role_name_ar,
-                            role_level
-                        ),
-                        committee:committees (
-                            id,
-                            committee_name_ar
-                        )
-                    `)
-                    .eq('user_id', user.id)
-                    .eq('is_active', true)
-                    .limit(1);
+                            role_id,
+                            committee_id,
+                            role:roles (
+                                id,
+                                role_name_ar,
+                                role_level
+                            ),
+                            committee:committees (
+                                id,
+                                committee_name_ar
+                            )
+                        `)
+                        .eq('user_id', user.id)
+                        .eq('is_active', true)
+                        .limit(1),
+                    this.supabase
+                        .from('member_details')
+                        .select('phone')
+                        .eq('user_id', user.id)
+                        .maybeSingle()
+                ]);
 
                 return {
                     ...user,
-                    user_roles: userRoles || []
+                    user_roles: userRoles || [],
+                    member_details: details || null
                 };
             }));
 
@@ -254,12 +262,12 @@ class UsersManager {
                         </div>
                     </div>` : ''}
 
-                    ${user.phone ? `
+                    ${(user.phone || user.member_details?.phone) ? `
                     <div class="uc-card__info-item">
                         <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
                         <div class="uc-card__info-content">
                             <span class="uc-card__info-label">الجوال</span>
-                            <span class="uc-card__info-value">${user.phone}</span>
+                            <span class="uc-card__info-value">${user.phone || user.member_details.phone}</span>
                         </div>
                     </div>` : ''}
 
@@ -291,10 +299,11 @@ class UsersManager {
             // فلتر البحث
             if (this.currentFilters.search) {
                 const searchLower = this.currentFilters.search.toLowerCase();
-                const matchesSearch = 
+                const matchesSearch =
                     user.full_name?.toLowerCase().includes(searchLower) ||
                     user.email?.toLowerCase().includes(searchLower) ||
-                    user.phone?.includes(searchLower);
+                    user.phone?.includes(searchLower) ||
+                    user.member_details?.phone?.includes(searchLower);
                 
                 if (!matchesSearch) return false;
             }
@@ -523,16 +532,7 @@ class UsersManager {
 
         const role = user.user_roles?.[0]?.role;
         const committee = user.user_roles?.[0]?.committee;
-        
-        const statusLabels = {
-            'active': 'نشط',
-            'inactive': 'معلق - لم يفعل الحساب',
-            'suspended': 'عضوية منتهية'
-        };
-        
-        const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=3d8fd6&color=fff&size=100`;
 
-        // جلب بيانات member_details
         let memberDetails = null;
         try {
             const { data, error } = await this.supabase
@@ -540,13 +540,26 @@ class UsersManager {
                 .select('*')
                 .eq('user_id', userId)
                 .single();
-            
-            if (!error && data) {
-                memberDetails = data;
-            }
+            if (!error && data) memberDetails = data;
         } catch (error) {
             console.warn('Error fetching member details:', error);
         }
+
+        const content = UsersManager.buildMemberDetailsContent(user, memberDetails, role, committee);
+        window.openModal('تفاصيل العضو', content, { icon: 'fa-user' });
+    }
+
+    /**
+     * بناء محتوى نافذة تفاصيل العضو (قابل لإعادة الاستخدام من مديري أقسام أخرى)
+     */
+    static buildMemberDetailsContent(user, memberDetails, role, committee) {
+        const statusLabels = {
+            'active': 'نشط',
+            'inactive': 'معلق - لم يفعل الحساب',
+            'suspended': 'عضوية منتهية'
+        };
+
+        const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=3d8fd6&color=fff&size=100`;
 
         let roleLabel = '';
         if (role && committee) {
@@ -741,7 +754,7 @@ class UsersManager {
             </div>` : ''}
         `;
 
-        window.openModal('تفاصيل العضو', content, { icon: 'fa-user' });
+        return content;
     }
 
     /**

@@ -1028,8 +1028,9 @@
             showNotification('يرجى إدخال الاسم', 'warning');
             return;
         }
-        if (newName.split(/\s+/).length < 3) {
-            showNotification('يجب إدخال الاسم الثلاثي كاملاً', 'warning');
+        const partsCount = newName.split(/\s+/).length;
+        if (partsCount < 3 || partsCount > 4) {
+            showNotification('يجب إدخال الاسم الثلاثي أو الرباعي فقط', 'warning');
             return;
         }
 
@@ -1689,14 +1690,15 @@
     async function loadProfileLink(memberDetails) {
         try {
             const profileLinkInput = document.getElementById('profileLinkInput');
-            if (!profileLinkInput) return;
+            const qrContainer = document.getElementById('cardQr');
 
             if (memberDetails?.profile_slug) {
-                const baseUrl = window.location.origin;
-                const profileUrl = `${baseUrl}/profile.html?slug=${memberDetails.profile_slug}`;
-                profileLinkInput.value = profileUrl;
+                const profileUrl = `${window.location.origin}/profile.html?slug=${memberDetails.profile_slug}`;
+                if (profileLinkInput) profileLinkInput.value = profileUrl;
+                renderProfileQr(qrContainer, profileUrl);
             } else {
-                profileLinkInput.value = 'لم يتم إنشاء رابط شخصي بعد';
+                if (profileLinkInput) profileLinkInput.value = 'لم يتم إنشاء رابط شخصي بعد';
+                if (qrContainer) qrContainer.hidden = true;
             }
         } catch (error) {
             console.error('خطأ في تحميل الرابط الشخصي:', error);
@@ -1704,57 +1706,65 @@
     }
 
     /**
+     * رسم QR code داخل بطاقة العضوية
+     */
+    function renderProfileQr(container, url) {
+        if (!container || typeof window.QRCode === 'undefined') return;
+        container.innerHTML = '';
+        container.hidden = false;
+        container.onclick = () => window.open(url, '_blank', 'noopener');
+        new window.QRCode(container, {
+            text: url,
+            width: 128,
+            height: 128,
+            colorDark: '#1a2a3a',
+            colorLight: '#ffffff',
+            correctLevel: window.QRCode.CorrectLevel.M
+        });
+    }
+
+    /**
      * تحميل بيانات بطاقة العضوية
      */
     async function loadMembershipCard(memberDetails) {
         try {
+            const setText = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            };
+
+            const displayName = memberDetails?.full_name_triple || currentUser.full_name || 'غير محدد';
+            const avatarSrc = currentUser.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=3d8fd6&color=fff&size=200`;
+
             const cardAvatar = document.getElementById('cardAvatar');
             if (cardAvatar) {
-                const displayName = memberDetails?.full_name_triple || currentUser.full_name || 'User';
-                cardAvatar.src = currentUser.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=3d8fd6&color=fff&size=200`;
+                cardAvatar.src = avatarSrc;
+                cardAvatar.alt = displayName;
             }
 
-            const cardFullName = document.getElementById('cardFullName');
-            if (cardFullName) {
-                cardFullName.textContent = memberDetails?.full_name_triple || currentUser.full_name || 'غير محدد';
-            }
+            setText('cardFullName', displayName);
 
-            const cardNationalId = document.getElementById('cardNationalId');
-            if (cardNationalId && memberDetails?.national_id) {
-                const maskedId = memberDetails.national_id.substring(0, 3) + '*******';
-                cardNationalId.textContent = maskedId;
-            }
+            const roleInfo = getRoleInfo(currentUser.role_level);
+            setText('cardType', roleInfo.name);
+            setText('cardRole', roleInfo.name);
 
-            const cardAcademicRecord = document.getElementById('cardAcademicRecord');
-            if (cardAcademicRecord && memberDetails?.academic_record_number) {
-                const maskedRecord = memberDetails.academic_record_number.substring(0, 3) + '*******';
-                cardAcademicRecord.textContent = maskedRecord;
-            }
+            const joinDate = new Date(currentUser.created_at).toLocaleDateString('ar-SA', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            setText('cardJoinDate', joinDate);
+            setText('cardJoinDateMirror', joinDate);
 
-            const cardRole = document.getElementById('cardRole');
-            if (cardRole) {
-                const roleInfo = getRoleInfo(currentUser.role_level);
-                cardRole.textContent = roleInfo.name;
-            }
-
-            const cardType = document.getElementById('cardType');
-            if (cardType) {
-                const roleInfo = getRoleInfo(currentUser.role_level);
-                cardType.textContent = roleInfo.name;
-            }
-
-            const cardJoinDate = document.getElementById('cardJoinDate');
-            if (cardJoinDate) {
-                cardJoinDate.textContent = new Date(currentUser.created_at).toLocaleDateString('ar-SA', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                });
-            }
-
-            const cardMemberId = document.getElementById('cardMemberId');
-            if (cardMemberId) {
-                cardMemberId.textContent = currentUser.id.substring(0, 8).toUpperCase();
+            const committeeName = memberDetails?.committees?.committee_name_ar;
+            const committeeContainer = document.getElementById('cardCommitteeContainer');
+            if (committeeContainer) {
+                if (committeeName) {
+                    setText('cardCommittee', committeeName);
+                    committeeContainer.style.display = '';
+                } else {
+                    committeeContainer.style.display = 'none';
+                }
             }
 
         } catch (error) {

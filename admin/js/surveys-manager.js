@@ -184,10 +184,16 @@
             const searchTerm = document.getElementById('surveysSearchInput')?.value.toLowerCase() || '';
             const statusFilter = document.getElementById('surveysStatusFilter')?.value || '';
 
+            // "مشارك معي": إخفاء استبيانات المستخدم وإظهار المشاركة فقط
+            if (statusFilter === 'shared') {
+                this.renderSurveysList([]);
+                return;
+            }
+
             const filtered = allSurveys.filter(survey => {
                 const matchesSearch = survey.title.toLowerCase().includes(searchTerm) ||
                                     (survey.description || '').toLowerCase().includes(searchTerm);
-                const matchesStatus = !statusFilter || survey.status === statusFilter;
+                const matchesStatus = !statusFilter || this.getActualStatus(survey) === statusFilter;
 
                 return matchesSearch && matchesStatus;
             });

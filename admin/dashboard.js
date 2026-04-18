@@ -120,6 +120,51 @@
             label: 'عضويتي',
             section: 'membership-card-section'
         });
+
+                // عائلتي — لكل من ينتمي للجنة (له committee_id) ما عدا رئيس النادي ورئيس المجلس التنفيذي
+        if (currentUserRole.committee_id &&
+            roleName !== 'club_president' &&
+            roleName !== 'executive_council_president') {
+            menuItems.push({
+                id: 'my-family',
+                icon: 'fa-heart',
+                label: 'عائلتي',
+                isDropdown: true,
+                subItems: [
+                    {
+                        id: 'adeeb-structure',
+                        icon: 'fa-network-wired',
+                        label: 'هيكلة أدِيب',
+                        section: 'adeeb-structure-section'
+                    },
+                    {
+                        id: 'my-department',
+                        icon: 'fa-sitemap',
+                        label: 'قسمي',
+                        section: 'my-department-section'
+                    },
+                    (roleName === 'committee_leader' || roleName === 'deputy_committee_leader')
+                        ? {
+                            id: 'manage-my-committee',
+                            icon: 'fa-user-gear',
+                            label: 'إدارة لجنتي',
+                            section: 'manage-my-committee-section'
+                        }
+                        : {
+                            id: 'my-committee',
+                            icon: 'fa-users',
+                            label: 'لجنتي',
+                            section: 'my-committee-section'
+                        },
+                    {
+                        id: 'adeeb-councils',
+                        icon: 'fa-comments',
+                        label: 'مجالس أدِيب',
+                        section: 'adeeb-councils-section'
+                    }
+                ]
+            });
+        }
         
         // شجرة أدِيب — لمن يملك view_members أو view_pending_members
         if (hasAnyPermission(['view_members', 'view_pending_members', 'manage_member_data'])) {
@@ -268,9 +313,54 @@
                 section: 'newsletter-section'
             });
         }
+
+        // أعياد الميلاد — يحتاج view_members
+        if (hasPermission('view_members')) {
+            menuItems.push({
+                id: 'birthdays',
+                icon: 'fa-cake-candles',
+                label: 'أعياد الميلاد',
+                section: 'birthdays-section'
+            });
+        }
         
         // إدارة العضوية — لمن يملك أي صلاحية عضوية
-        if (hasAnyPermission(['manage_registration', 'approve_applications', 'view_applications', 'manage_interviews', 'view_membership_archives'])) {
+        let showMembershipMenu = hasAnyPermission(['manage_registration', 'approve_applications', 'view_applications', 'manage_interviews', 'view_membership_archives']);
+        // للمناصب المقيّدة بلجنة/قسم — أخفِ التبويب إن لم توجد طلبات ضمن نطاقهم
+        if (showMembershipMenu) {
+            const restrictedRoles = ['department_head', 'committee_leader', 'deputy_committee_leader'];
+            const roleLevel = currentUserRole.role_level ?? 0;
+            if (restrictedRoles.includes(roleName) && roleLevel < 8) {
+                try {
+                    const committeeIds = new Set();
+                    if (currentUserRole.committee_id) committeeIds.add(currentUserRole.committee_id);
+                    if (currentUserRole.department_id) {
+                        const { data: deptCommittees } = await window.sbClient
+                            .from('committees').select('id').eq('department_id', currentUserRole.department_id);
+                        (deptCommittees || []).forEach(c => committeeIds.add(c.id));
+                    }
+                    if (committeeIds.size === 0) {
+                        showMembershipMenu = false;
+                    } else {
+                        const { data: committees } = await window.sbClient
+                            .from('committees').select('committee_name_ar').in('id', [...committeeIds]);
+                        const names = (committees || []).map(c => c.committee_name_ar).filter(Boolean);
+                        if (names.length === 0) {
+                            showMembershipMenu = false;
+                        } else {
+                            const { count } = await window.sbClient
+                                .from('membership_applications')
+                                .select('id', { count: 'exact', head: true })
+                                .in('preferred_committee', names);
+                            if (!count || count === 0) showMembershipMenu = false;
+                        }
+                    }
+                } catch (e) {
+                    console.error('[dashboard] membership menu scope check failed:', e);
+                }
+            }
+        }
+        if (showMembershipMenu) {
             const membershipSubItems = [];
             
             // باب التسجيل — يحتاج manage_registration
@@ -372,13 +462,15 @@
                 section: 'membership-accepted-section'
             });
             
-            // ترحيل المقبولين - عنصر مباشر
-            membershipSubItems.push({
-                id: 'member-migration',
-                icon: 'fa-users-gear',
-                label: 'ترحيل المقبولين',
-                section: 'member-migration-section'
-            });
+            // ترحيل المقبولين — يحتاج manage_registration
+            if (hasPermission('manage_registration')) {
+                membershipSubItems.push({
+                    id: 'member-migration',
+                    icon: 'fa-users-gear',
+                    label: 'ترحيل المقبولين',
+                    section: 'member-migration-section'
+                });
+            }
             
             // أرشيف التسجيل — يحتاج view_membership_archives
             if (hasPermission('view_membership_archives')) {
@@ -393,7 +485,7 @@
             menuItems.push({
                 id: 'membership',
                 icon: 'fa-user-plus',
-                label: 'إدارة العضوية',
+                label: 'إدارة باب التسجيل',
                 isDropdown: true,
                 subItems: membershipSubItems
             });
@@ -568,44 +660,6 @@
                 subItems: websiteSubItems
             });
         }
-        
-        // عائلتي — لكل من ينتمي للجنة (له committee_id) ما عدا رئيس النادي ورئيس المجلس التنفيذي
-        if (currentUserRole.committee_id &&
-            roleName !== 'club_president' &&
-            roleName !== 'executive_council_president') {
-            menuItems.push({
-                id: 'my-family',
-                icon: 'fa-heart',
-                label: 'عائلتي',
-                isDropdown: true,
-                subItems: [
-                    {
-                        id: 'adeeb-structure',
-                        icon: 'fa-network-wired',
-                        label: 'هيكلة أدِيب',
-                        section: 'adeeb-structure-section'
-                    },
-                    {
-                        id: 'my-department',
-                        icon: 'fa-sitemap',
-                        label: 'قسمي',
-                        section: 'my-department-section'
-                    },
-                    {
-                        id: 'my-committee',
-                        icon: 'fa-users',
-                        label: 'لجنتي',
-                        section: 'my-committee-section'
-                    },
-                    {
-                        id: 'adeeb-councils',
-                        icon: 'fa-comments',
-                        label: 'مجالس أدِيب',
-                        section: 'adeeb-councils-section'
-                    }
-                ]
-            });
-        }
 
         // الملف الشخصي - جميع المستويات
         menuItems.push({
@@ -769,7 +823,7 @@
         'membership-interviews-section':        'manage_interviews',
         'membership-barzakh-section':           'manage_interviews',
         'membership-archives-section':          'view_membership_archives',
-        'member-migration-section':             'approve_applications',
+        'member-migration-section':             'manage_registration',
         'surveys-all-section':                  'manage_surveys',
         'surveys-create-section':               'manage_surveys',
         'surveys-results-section':              'manage_surveys',
@@ -1004,12 +1058,23 @@
                 if (window.profileManager) {
                     await window.profileManager.init(currentUser);
                 }
+                break;
+            case 'manage-my-committee-section':
                 if (window.CommitteeMembersManager && !window.committeeMembersManager) {
-                    window.committeeMembersManager = new window.CommitteeMembersManager();
+                    window.committeeMembersManager = new window.CommitteeMembersManager({
+                        committee: {
+                            id: currentUserRole.committee_id,
+                            committee_name_ar: currentUserRole.committee_name_ar
+                        },
+                        roleName: currentUserRole.role_name
+                    });
                 }
                 break;
             case 'adeeb-structure-section':
                 await loadAdeebStructure();
+                break;
+            case 'birthdays-section':
+                await loadBirthdaysSection();
                 break;
             case 'positions-section':
                 await initPositionsSection();
@@ -2490,6 +2555,327 @@
             console.error('Error loading Adeeb structure:', error);
             container.innerHTML = '<li style="padding:40px 0"><div class="error-state">حدث خطأ أثناء تحميل الهيكلة</div></li>';
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // أعياد الميلاد — قسم مستقل
+    // ═══════════════════════════════════════════════════════════
+
+    const BIRTHDAY_MONTHS_AR = [
+        'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ];
+
+    function parseBirthDate(dateStr) {
+        // dateStr من Supabase على صيغة YYYY-MM-DD
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return { year: y, month: m - 1, day: d };
+    }
+
+    function computeNextBirthday(bd, today) {
+        // يعالج 29 فبراير: في السنوات غير الكبيسة يُحتفل به 28 فبراير
+        const year = today.getFullYear();
+        const makeDate = (y) => {
+            let day = bd.day;
+            if (bd.month === 1 && bd.day === 29) {
+                const isLeap = (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
+                if (!isLeap) day = 28;
+            }
+            return new Date(y, bd.month, day);
+        };
+
+        let next = makeDate(year);
+        const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        if (next < startOfToday) next = makeDate(year + 1);
+        return next;
+    }
+
+    async function loadBirthdaysSection() {
+        const container = document.getElementById('birthdaysContainer');
+        if (!container) return;
+
+        container.innerHTML = '<div style="padding:40px; text-align:center; color:#6b7280;"><i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...</div>';
+
+        try {
+            const [profilesRes, detailsRes] = await Promise.all([
+                sb.from('profiles')
+                    .select('id, full_name, avatar_url')
+                    .eq('account_status', 'active'),
+                sb.from('member_details')
+                    .select('user_id, birth_date')
+                    .not('birth_date', 'is', null),
+            ]);
+
+            if (profilesRes.error) throw profilesRes.error;
+            if (detailsRes.error) throw detailsRes.error;
+
+            const profileById = new Map(
+                (profilesRes.data || []).map(p => [p.id, p])
+            );
+
+            const today = new Date();
+            const enriched = (detailsRes.data || [])
+                .map(d => {
+                    const profile = profileById.get(d.user_id);
+                    if (!profile) return null;
+
+                    const bd = parseBirthDate(d.birth_date);
+                    const next = computeNextBirthday(bd, today);
+                    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                    const daysUntil = Math.round((next - startOfToday) / 86400000);
+                    return {
+                        user_id: d.user_id,
+                        full_name: profile.full_name || '—',
+                        avatar_url: profile.avatar_url,
+                        bd,
+                        nextDate: next,
+                        daysUntil,
+                        monthIndex: next.getMonth(),
+                        dayOfMonth: next.getDate(),
+                    };
+                })
+                .filter(Boolean)
+                .sort((a, b) => a.daysUntil - b.daysUntil);
+
+            renderBirthdaysUI(enriched, today);
+            populatePrintMonthSelect(today);
+            bindBirthdaySearch();
+            bindBirthdayPrint();
+
+        } catch (err) {
+            console.error('Error loading birthdays:', err);
+            container.innerHTML = '<div class="error-state" style="padding:40px; text-align:center;">حدث خطأ أثناء تحميل أعياد الميلاد</div>';
+        }
+    }
+
+    function renderBirthdaysUI(members, today) {
+        const container = document.getElementById('birthdaysContainer');
+        if (!container) return;
+
+        if (members.length === 0) {
+            container.innerHTML = `
+                <div class="birthdays-empty">
+                    <i class="fa-regular fa-calendar-xmark"></i>
+                    <p>لا يوجد أعضاء نشطون لديهم تاريخ ميلاد مسجَّل</p>
+                </div>`;
+            return;
+        }
+
+        const todays   = members.filter(m => m.daysUntil === 0);
+        const urgents  = members.filter(m => m.daysUntil >= 0 && m.daysUntil <= 7);
+        const currentMonth = today.getMonth();
+        const currentYear  = today.getFullYear();
+        // "باقي هذا الشهر" = ميلاد خلال الشهر الحالي من هذه السنة (وليس السنة القادمة)
+        const thisMonth = members.filter(m =>
+            m.daysUntil > 7
+            && m.monthIndex === currentMonth
+            && m.nextDate.getFullYear() === currentYear
+        );
+
+        // بقية الأشهر مجمَّعة
+        const byMonth = {};
+        members.forEach(m => {
+            if (m.daysUntil >= 0 && m.daysUntil <= 7) return;
+            if (m.monthIndex === currentMonth && m.nextDate.getFullYear() === currentYear) return;
+            if (!byMonth[m.monthIndex]) byMonth[m.monthIndex] = [];
+            byMonth[m.monthIndex].push(m);
+        });
+
+        let html = '';
+
+        // Hero: ميلاد اليوم
+        if (todays.length > 0) {
+            const names = todays.map(m => escapeHtml(m.full_name)).join('، ');
+            const verb  = todays.length === 1 ? 'يحتفل' : 'يحتفلون';
+            html += `
+                <div class="birthday-today-hero">
+                    <i class="fa-solid fa-cake-candles"></i>
+                    <span>اليوم: ${names} ${verb} بميلاده${todays.length > 1 ? 'م' : ''}! 🎉</span>
+                </div>`;
+        }
+
+        // خلال 7 أيام (يشمل اليوم)
+        if (urgents.length > 0) {
+            html += renderBirthdayGroup(
+                `<i class="fa-solid fa-bolt"></i> خلال 7 أيام (${urgents.length})`,
+                urgents
+            );
+        }
+
+        // هذا الشهر
+        if (thisMonth.length > 0) {
+            html += renderBirthdayGroup(
+                `<i class="fa-solid fa-calendar-day"></i> باقي هذا الشهر — ${BIRTHDAY_MONTHS_AR[currentMonth]} (${thisMonth.length})`,
+                thisMonth
+            );
+        }
+
+        // الأشهر القادمة — مطويّة
+        const upcomingMonths = Object.keys(byMonth)
+            .map(Number)
+            .sort((a, b) => {
+                // الشهر الحالي (نفس شهر الميلاد، لكن ميلاد هذه السنة مضى) يُعامَل كالأبعد
+                const diffA = ((a - currentMonth + 12) % 12) || 12;
+                const diffB = ((b - currentMonth + 12) % 12) || 12;
+                return diffA - diffB;
+            });
+
+        if (upcomingMonths.length > 0) {
+            html += `<h3 class="birthday-group-title"><i class="fa-solid fa-calendar-days"></i> الأشهر القادمة</h3>`;
+            upcomingMonths.forEach(mIdx => {
+                const list = byMonth[mIdx];
+                html += `
+                    <div class="birthday-month-accordion" data-month="${mIdx}">
+                        <div class="birthday-month-accordion__header">
+                            <span><i class="fa-solid fa-chevron-left"></i> ${BIRTHDAY_MONTHS_AR[mIdx]}</span>
+                            <span class="birthday-month-accordion__count">${list.length} عضو</span>
+                        </div>
+                        <div class="birthday-month-accordion__body">
+                            <div class="birthday-cards-grid">
+                                ${list.map(renderBirthdayCard).join('')}
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        container.innerHTML = html;
+
+        // Accordion toggle
+        container.querySelectorAll('.birthday-month-accordion__header').forEach(h => {
+            h.addEventListener('click', () => {
+                h.parentElement.classList.toggle('is-open');
+            });
+        });
+    }
+
+    function renderBirthdayGroup(title, members) {
+        return `
+            <h3 class="birthday-group-title">${title}</h3>
+            <div class="birthday-cards-grid">
+                ${members.map(renderBirthdayCard).join('')}
+            </div>`;
+    }
+
+    function renderBirthdayCard(m) {
+        const stripClass = m.daysUntil <= 3
+            ? 'birthday-card__strip--urgent'
+            : m.daysUntil <= 7
+                ? 'birthday-card__strip--soon'
+                : 'birthday-card__strip--later';
+
+        const dayLabel = `${m.dayOfMonth} ${BIRTHDAY_MONTHS_AR[m.monthIndex]}`;
+
+        const countdown = m.daysUntil === 0
+            ? 'اليوم 🎂'
+            : m.daysUntil === 1
+                ? 'غداً'
+                : `باقي ${m.daysUntil} يوماً`;
+
+        const avatar = m.avatar_url
+            ? `<img class="birthday-card__avatar" src="${escapeHtml(m.avatar_url)}" alt="${escapeHtml(m.full_name)}" />`
+            : `<div class="birthday-card__avatar birthday-card__avatar--placeholder"><i class="fa-solid fa-user"></i></div>`;
+
+        return `
+            <div class="birthday-card" data-month="${m.monthIndex}" data-name="${escapeHtml(m.full_name).toLowerCase()}">
+                <div class="birthday-card__strip ${stripClass}">
+                    <i class="fa-solid fa-cake-candles"></i> ${dayLabel}
+                </div>
+                <div class="birthday-card__body">
+                    ${avatar}
+                    <div class="birthday-card__name">${escapeHtml(m.full_name)}</div>
+                    <div class="birthday-card__countdown">${countdown}</div>
+                </div>
+            </div>`;
+    }
+
+    function populatePrintMonthSelect(today) {
+        const sel = document.getElementById('birthdayPrintMonth');
+        if (!sel) return;
+        const currentMonth = today.getMonth();
+        sel.innerHTML = BIRTHDAY_MONTHS_AR
+            .map((n, i) => `<option value="${i}" ${i === currentMonth ? 'selected' : ''}>${n}</option>`)
+            .join('');
+    }
+
+    function bindBirthdaySearch() {
+        const input = document.getElementById('birthdaySearchInput');
+        const container = document.getElementById('birthdaysContainer');
+        if (!input || !container || input._bound) return;
+        input._bound = true;
+
+        input.addEventListener('input', () => {
+            const q = input.value.trim().toLowerCase();
+            const cards = container.querySelectorAll('.birthday-card');
+            cards.forEach(card => {
+                const name = card.getAttribute('data-name') || '';
+                card.style.display = (!q || name.includes(q)) ? '' : 'none';
+            });
+
+            // افتح accordions التي تحوي نتائج مطابقة
+            container.querySelectorAll('.birthday-month-accordion').forEach(acc => {
+                if (!q) {
+                    acc.classList.remove('is-open');
+                    return;
+                }
+                const hasMatch = Array.from(acc.querySelectorAll('.birthday-card'))
+                    .some(c => c.style.display !== 'none');
+                acc.classList.toggle('is-open', hasMatch);
+            });
+        });
+    }
+
+    function bindBirthdayPrint() {
+        const btn = document.getElementById('birthdayPrintBtn');
+        const sel = document.getElementById('birthdayPrintMonth');
+        if (!btn || !sel || btn._bound) return;
+        btn._bound = true;
+
+        btn.addEventListener('click', () => {
+            const monthIdx = Number(sel.value);
+            const monthName = BIRTHDAY_MONTHS_AR[monthIdx];
+
+            const matching = Array.from(document.querySelectorAll('#birthdaysContainer .birthday-card'))
+                .filter(c => c.getAttribute('data-month') === String(monthIdx));
+
+            if (matching.length === 0) {
+                alert(`لا توجد أعياد ميلاد مسجَّلة في شهر ${monthName}`);
+                return;
+            }
+
+            const printView = document.createElement('div');
+            printView.id = 'birthdayPrintView';
+            printView.innerHTML = `
+                <div class="birthday-print-header">
+                    <h2>قائمة أعياد الميلاد — ${escapeHtml(monthName)}</h2>
+                    <p>${matching.length} عضو</p>
+                </div>
+                <div class="birthday-cards-grid"></div>
+            `;
+            const grid = printView.querySelector('.birthday-cards-grid');
+            matching.forEach(c => grid.appendChild(c.cloneNode(true)));
+            document.body.appendChild(printView);
+
+            document.body.classList.add('printing-birthdays');
+
+            const cleanup = () => {
+                document.body.classList.remove('printing-birthdays');
+                printView.remove();
+                window.removeEventListener('afterprint', cleanup);
+            };
+            window.addEventListener('afterprint', cleanup);
+
+            window.print();
+        });
+    }
+
+    function escapeHtml(str) {
+        return String(str ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -4415,6 +4801,8 @@
             return;
         }
 
+        let loadingToast;
+
         try {
             // منع الضغط المتكرر
             if (submitBtn) {
@@ -4424,7 +4812,6 @@
             }
 
             // عرض toast للتحميل
-            let loadingToast;
             if (window.Toast) {
                 loadingToast = window.Toast.loading('جاري إهداء العضوية...');
             }

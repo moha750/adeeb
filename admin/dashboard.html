@@ -636,8 +636,10 @@
                         <option value="">جميع الحالات</option>
                         <option value="draft">مسودة</option>
                         <option value="active">نشط</option>
+                        <option value="scheduled">مجدول</option>
                         <option value="paused">متوقف</option>
                         <option value="closed">منتهية</option>
+                        <option value="shared">مشارك معي</option>
                     </select>
                 </div>
 
@@ -1187,8 +1189,8 @@
             <!-- قسم لجنتي -->
             <section id="my-committee-section" class="admin-section d-none">
 
-                <!-- إحصائيات اللجنة -->
-                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                <!-- إحصائيات اللجنة — للأعضاء العاديين -->
+                <div class="stats-grid" id="committeeRegularTopStats" style="margin-bottom: 1.5rem;">
                     <div class="stat-card" style="--stat-color: #3d8fd6">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
@@ -1276,69 +1278,59 @@
                     </div>
                 </div>
 
-                <!-- إدارة الأعضاء - يظهر فقط لقائد اللجنة ونائبه -->
-                <div class="d-none" id="committeeMembersManagementCard">
-                    <div class="card" style="margin-top: 1.5rem;">
-                        <div class="card-header">
-                            <h3>
-                                <i class="fa-solid fa-user-gear"></i>
-                                إدارة أعضاء اللجنة
-                            </h3>
+            </section>
+
+            <!-- قسم إدارة لجنتي — للقائد والنائب فقط -->
+            <section id="manage-my-committee-section" class="admin-section d-none">
+
+                <!-- إحصائيات اللجنة -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                    <div class="stat-card" style="--stat-color: #3d8fd6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user-check"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="committeeActiveMembersCount">0</div>
+                                <div class="stat-label">الأعضاء النشطين</div>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <!-- إحصائيات -->
-                            <div class="stats-grid" style="margin-bottom: 1.5rem;">
-                                <div class="stat-card" style="--stat-color: #3b82f6">
-                                    <div class="stat-card-wrapper">
-                                        <div class="stat-icon">
-                                            <i class="fa-solid fa-users"></i>
-                                        </div>
-                                        <div class="stat-content">
-                                            <div class="stat-value" id="committeeActiveMembersCount">0</div>
-                                            <div class="stat-label">أعضاء نشطين</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="stat-card" style="--stat-color: #10b981">
-                                    <div class="stat-card-wrapper">
-                                        <div class="stat-icon">
-                                            <i class="fa-solid fa-user-check"></i>
-                                        </div>
-                                        <div class="stat-content">
-                                            <div class="stat-value" id="committeeNewMembersCount">0</div>
-                                            <div class="stat-label">أعضاء جدد (30 يوم)</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="stat-card" style="--stat-color: #f59e0b">
-                                    <div class="stat-card-wrapper">
-                                        <div class="stat-icon">
-                                            <i class="fa-solid fa-user-clock"></i>
-                                        </div>
-                                        <div class="stat-content">
-                                            <div class="stat-value" id="committeePendingMembersCount">0</div>
-                                            <div class="stat-label">أعضاء معلقين</div>
-                                        </div>
-                                    </div>
-                                </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user-plus"></i>
                             </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="committeeNewMembersCount">0</div>
+                                <div class="stat-label">الأعضاء الجدد (آخر 30 يوم)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                            <!-- شريط البحث -->
-                            <div class="filters-bar" style="margin-bottom: 1.25rem;">
-                                <div class="filter-group" style="flex: 1;">
-                                    <i class="fa-solid fa-search"></i>
-                                    <input type="text" id="committeeMembersSearchInput" placeholder="البحث عن عضو بالاسم أو البريد أو الجوال..." class="input input-text" />
-                                </div>
-                                <button class="btn btn-outline" id="refreshCommitteeMembersBtn">
-                                    <i class="fa-solid fa-rotate"></i>
-                                    تحديث
-                                </button>
-                            </div>
+                <!-- شريط البحث -->
+                <div class="filters-bar" style="margin-bottom: 1.25rem;">
+                    <div class="filter-group" style="flex: 1;">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="committeeMembersSearchInput" placeholder="البحث عن عضو بالاسم أو البريد أو الجوال..." class="input input-text" />
+                    </div>
+                </div>
 
-                            <!-- شبكة الأعضاء -->
-                            <div id="committeeMembersTableContainer">
-                                <!-- سيتم ملؤه ديناميكياً -->
-                            </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-user-gear"></i>
+                            <span id="manageMyCommitteeTitle">إدارة أعضاء اللجنة</span>
+                        </h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="refreshCommitteeMembersBtn" title="تحديث">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <!-- شبكة الأعضاء -->
+                        <div id="committeeMembersTableContainer">
+                            <!-- سيتم ملؤه ديناميكياً -->
                         </div>
                     </div>
                 </div>
@@ -1393,6 +1385,28 @@
                     <ul class="org-tree" id="orgTreeContainer">
                         <!-- سيتم ملؤه ديناميكياً -->
                     </ul>
+                </div>
+
+            </section>
+
+            <!-- ═══════════════════════════════════════════════════════════
+                 قسم أعياد الميلاد
+                 ===================================================== -->
+            <section id="birthdays-section" class="admin-section d-none">
+
+                <div class="birthdays-toolbar">
+                    <input type="search" id="birthdaySearchInput"
+                           placeholder="🔍 بحث بالاسم..." class="form-input" />
+                    <select id="birthdayPrintMonth" class="form-input" aria-label="اختر الشهر للطباعة">
+                        <!-- يُملأ ديناميكياً بـ 12 شهراً -->
+                    </select>
+                    <button id="birthdayPrintBtn" class="btn btn-secondary" type="button">
+                        <i class="fa-solid fa-print"></i> طباعة القائمة
+                    </button>
+                </div>
+
+                <div id="birthdaysContainer">
+                    <!-- يُملأ ديناميكياً -->
                 </div>
 
             </section>
@@ -1620,78 +1634,116 @@
             <!-- قسم بطاقة العضوية -->
             <section id="membership-card-section" class="admin-section d-none">
 
-                <div class="membership-card-container">
-                    <!-- البطاقة الرئيسية -->
-                    <div class="membership-card">
-                        <div class="membership-card-shine"></div>
+                <div class="mc-page">
 
-                        <div class="membership-card-content">
-                            <div class="membership-card-header">
-                                <div class="membership-card-logo">
+                    <!-- البطاقة الرئيسية -->
+                    <article class="mc-card" id="membershipCard">
+                        <header class="mc-card__head">
+                            <div class="mc-card__brand">
+                                <div class="mc-card__brand-logo">
                                     <img src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e"
                                         alt="شعار أدِيب">
-                                    <div class="membership-card-logo-text">
-                                        <h3>نادي أدِيب</h3>
-                                        <p>Adeeb Club</p>
-                                    </div>
                                 </div>
-                                <div class="membership-card-type" id="cardType">عضو</div>
-                            </div>
-
-                            <div class="membership-card-info">
-                                <h2 class="membership-card-name" id="cardFullName">جاري التحميل...</h2>
-                                <p class="membership-card-id">رقم العضوية: <span id="cardMemberId">---</span></p>
-                                <div class="membership-card-committee" id="cardCommitteeContainer"
-                                    style="display: none;">
-                                    <i class="fa-solid fa-users"></i>
-                                    <span id="cardCommittee">---</span>
+                                <div class="mc-card__brand-text">
+                                    <strong>نادي أدِيب</strong>
+                                    <span>Adeeb Club</span>
                                 </div>
                             </div>
+                            <div class="mc-card__status" id="cardStatus">
+                                <span>عضوية نشطة</span>
+                            </div>
+                        </header>
 
-                            <div class="membership-card-footer">
-                                <div class="membership-card-date">
-                                    <span class="membership-card-date-label">تاريخ الانضمام</span>
-                                    <span class="membership-card-date-value" id="cardJoinDate">---</span>
-                                </div>
-                                <div class="membership-card-qr">
-                                    <i class="fa-solid fa-qrcode" style="font-size: 2rem; color: #3b82f6;"></i>
-                                </div>
+                        <div class="mc-card__body">
+                            <div class="mc-card__avatar">
+                                <img id="cardAvatar" src="" alt="الصورة الشخصية">
+                            </div>
+                            <div class="mc-card__identity">
+                                <h2 class="mc-card__name" id="cardFullName">جاري التحميل...</h2>
+                                <span class="mc-card__role" id="cardRoleBadge">
+                                    <i class="fa-solid fa-id-badge"></i>
+                                    <span id="cardType">عضو</span>
+                                </span>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- بطاقة الرابط الشخصي -->
-                    <div class="card mb-2rem">
-                        <div class="card-header">
-                            <h3>
+                        <footer class="mc-card__meta">
+                            <div class="mc-card__meta-item">
+                                <span class="mc-card__meta-label">تاريخ الانضمام</span>
+                                <span class="mc-card__meta-value" id="cardJoinDate">---</span>
+                            </div>
+                            <div class="mc-card__qr" id="cardQr" title="امسح الرمز لفتح الملف الشخصي"></div>
+                        </footer>
+                    </article>
+
+                    <!-- اللوحة الجانبية -->
+                    <div class="mc-side">
+
+                        <!-- معلومات العضوية -->
+                        <section class="mc-panel">
+                            <header class="mc-panel__head">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <div class="mc-panel__head-text">
+                                    <h3>تفاصيل العضوية</h3>
+                                    <p>نظرة سريعة على بياناتك في النادي</p>
+                                </div>
+                            </header>
+                            <div class="mc-panel__body">
+                                <div class="mc-info-grid">
+                                    <div class="mc-info-tile">
+                                        <div class="mc-info-tile__icon"><i class="fa-solid fa-user-tie"></i></div>
+                                        <div class="mc-info-tile__text">
+                                            <span class="mc-info-tile__label">الدور</span>
+                                            <span class="mc-info-tile__value" id="cardRole">---</span>
+                                        </div>
+                                    </div>
+                                    <div class="mc-info-tile" id="cardCommitteeContainer" style="display: none;">
+                                        <div class="mc-info-tile__icon"><i class="fa-solid fa-users"></i></div>
+                                        <div class="mc-info-tile__text">
+                                            <span class="mc-info-tile__label">اللجنة</span>
+                                            <span class="mc-info-tile__value" id="cardCommittee">---</span>
+                                        </div>
+                                    </div>
+                                    <div class="mc-info-tile">
+                                        <div class="mc-info-tile__icon"><i class="fa-solid fa-calendar-day"></i></div>
+                                        <div class="mc-info-tile__text">
+                                            <span class="mc-info-tile__label">تاريخ الانضمام</span>
+                                            <span class="mc-info-tile__value" id="cardJoinDateMirror">---</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- الرابط الشخصي -->
+                        <section class="mc-panel">
+                            <header class="mc-panel__head">
                                 <i class="fa-solid fa-link"></i>
-                                الرابط الشخصي
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <p style="color: #6b7280; margin-bottom: 1rem;">
-                                <i class="fa-solid fa-info-circle"></i>
-                                شارك رابطك الشخصي مع الآخرين لعرض ملفك الشخصي العام
-                            </p>
-                            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 300px;">
-                                    <div class="filter-group">
-                                        <i class="fa-solid fa-globe" style="color: #3d8fd6;"></i>
-                                        <input type="text" id="profileLinkInput" readonly class="input input-text" value="جاري التحميل...">
+                                <div class="mc-panel__head-text">
+                                    <h3>الرابط الشخصي</h3>
+                                    <p>شارك صفحتك العامة مع الآخرين</p>
+                                </div>
+                            </header>
+                            <div class="mc-panel__body">
+                                <div class="mc-link">
+                                    <label class="mc-link__field">
+                                        <i class="fa-solid fa-globe"></i>
+                                        <input type="text" id="profileLinkInput" readonly value="جاري التحميل...">
+                                    </label>
+                                    <div class="mc-link__buttons">
+                                        <button class="btn btn-primary" id="copyProfileLinkBtn" title="نسخ الرابط">
+                                            <i class="fa-solid fa-copy"></i>
+                                            <span>نسخ</span>
+                                        </button>
+                                        <button class="btn btn-outline" id="openProfileLinkBtn" title="فتح الملف العام">
+                                            <i class="fa-solid fa-external-link-alt"></i>
+                                            <span>معاينة</span>
+                                        </button>
                                     </div>
                                 </div>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <button class="btn btn-primary" id="copyProfileLinkBtn" title="نسخ الرابط">
-                                        <i class="fa-solid fa-copy"></i>
-                                        نسخ الرابط
-                                    </button>
-                                    <button class="btn btn-outline" id="openProfileLinkBtn" title="فتح الملف العام">
-                                        <i class="fa-solid fa-external-link-alt"></i>
-                                        معاينة
-                                    </button>
-                                </div>
                             </div>
-                        </div>
+                        </section>
+
                     </div>
                 </div>
             </section>
@@ -4836,6 +4888,7 @@
     <script src="version.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="../supabase-config.js"></script>
     <script src="auth-manager.js"></script>
     <script src="js/edge-invoke.js"></script>

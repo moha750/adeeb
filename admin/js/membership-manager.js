@@ -61,11 +61,85 @@
 
     let selectedApplication = null;
 
+    // نطاق اللجان المسموح بها للمستخدم الحالي (null = جميع اللجان)
+    // يُخزَّن هنا كـ Set<string> لأسماء اللجان العربية، أو null للوصول الكامل
+    let _applicantScope = undefined; // undefined = لم يُحتسب بعد
+
+    /**
+     * يحدد اللجان التي يحق للمستخدم الحالي إدارة طلباتها
+     * - رول مستوى ≥ 8 (رئيس النادي، مستشار، رئيس المجلس التنفيذي، ...) → null (الكل)
+     * - hr_admin_member / committee_leader / deputy_committee_leader → لجنتهم
+     * - department_head → كل لجان قسمهم
+     * - غير ذلك → مجموعة فارغة (لا يرى شيئاً)
+     */
+    async function getCurrentUserApplicantScope() {
+        if (_applicantScope !== undefined) return _applicantScope;
+
+        try {
+            const { data: { user } } = await window.sbClient.auth.getUser();
+            if (!user) { _applicantScope = new Set(); return _applicantScope; }
+
+            const { data: rows, error } = await window.sbClient
+                .from('user_roles')
+                .select('committee_id, department_id, roles(role_name, role_level)')
+                .eq('user_id', user.id)
+                .eq('is_active', true);
+            if (error) throw error;
+
+            const roleRows = rows || [];
+
+            // أي دور بمستوى 8 فأكثر = وصول كامل
+            if (roleRows.some(r => (r.roles?.role_level ?? 0) >= 8)) {
+                _applicantScope = null;
+                return null;
+            }
+
+            const committeeIds = new Set();
+            const departmentIds = new Set();
+            roleRows.forEach(r => {
+                const name = r.roles?.role_name;
+                if (['hr_admin_member', 'committee_leader', 'deputy_committee_leader'].includes(name) && r.committee_id) {
+                    committeeIds.add(r.committee_id);
+                }
+                if (name === 'department_head' && r.department_id) {
+                    departmentIds.add(r.department_id);
+                }
+            });
+
+            // توسيع الأقسام إلى لجانها
+            if (departmentIds.size > 0) {
+                const { data: deptCommittees } = await window.sbClient
+                    .from('committees')
+                    .select('id')
+                    .in('department_id', [...departmentIds]);
+                (deptCommittees || []).forEach(c => committeeIds.add(c.id));
+            }
+
+            if (committeeIds.size === 0) {
+                _applicantScope = new Set();
+                return _applicantScope;
+            }
+
+            const { data: committees } = await window.sbClient
+                .from('committees')
+                .select('committee_name_ar')
+                .in('id', [...committeeIds]);
+
+            _applicantScope = new Set((committees || []).map(c => c.committee_name_ar).filter(Boolean));
+            return _applicantScope;
+        } catch (e) {
+            console.error('[membership] getCurrentUserApplicantScope error:', e);
+            _applicantScope = new Set();
+            return _applicantScope;
+        }
+    }
+
     /**
      * تهيئة مدير العضوية
      */
     async function initMembershipManager(user) {
         currentUser = user;
+        _applicantScope = undefined; // إعادة حساب النطاق عند تغيير المستخدم (تنكر أو إعادة دخول)
 
         // تحميل الإعدادات
         await loadMembershipSettings();
@@ -1233,7 +1307,45 @@
     /**
      * قبول طلب للمقابلة
      */
+    // يتأكد من أن الطلب ضمن نطاق لجان المستخدم قبل السماح بإجراء
+    async function ensureApplicationInScope(applicationId) {
+        const scope = await getCurrentUserApplicantScope();
+        if (scope === null) return true;
+        let committeeName = currentApplications.find(a => a.id === applicationId)?.preferred_committee;
+        if (!committeeName) {
+            const { data } = await window.sbClient
+                .from('membership_applications')
+                .select('preferred_committee')
+                .eq('id', applicationId)
+                .single();
+            committeeName = data?.preferred_committee;
+        }
+        if (!committeeName || !scope.has(committeeName)) {
+            showNotification('لا يمكنك إجراء هذا الإجراء على متقدم خارج نطاق لجانك', 'warning');
+            return false;
+        }
+        return true;
+    }
+
+    // يتأكد من أن المقابلة تعود لطلب ضمن نطاق المستخدم
+    async function ensureInterviewInScope(interviewId) {
+        const scope = await getCurrentUserApplicantScope();
+        if (scope === null) return true;
+        const { data, error } = await window.sbClient
+            .from('membership_interviews')
+            .select('application:membership_applications(preferred_committee)')
+            .eq('id', interviewId)
+            .single();
+        const committeeName = data?.application?.preferred_committee;
+        if (error || !committeeName || !scope.has(committeeName)) {
+            showNotification('لا يمكنك إجراء هذا الإجراء على مقابلة خارج نطاق لجانك', 'warning');
+            return false;
+        }
+        return true;
+    }
+
     async function approveForInterview(applicationId) {
+        if (!(await ensureApplicationInScope(applicationId))) return;
         // طلب ملاحظات اختيارية
         const { value: acceptNotes } = await showCustomInput({
             title: 'قبول للمقابلة',
@@ -1281,6 +1393,7 @@
      * قبول طلب مباشرة دون مقابلة
      */
     async function directAcceptApplication(applicationId) {
+        if (!(await ensureApplicationInScope(applicationId))) return;
         if (!currentUser) {
             const { data: { user } } = await window.sbClient.auth.getUser();
             if (!user) {
@@ -1419,6 +1532,7 @@
      * جدولة مقابلة لطلب معين
      */
     async function scheduleInterviewForApplication(applicationId, application) {
+        if (!(await ensureApplicationInScope(applicationId))) return;
         const result = await showCustomConfirm({
             title: 'جدولة المقابلة',
             html: `
@@ -1503,6 +1617,7 @@
      * رفض طلب
      */
     async function rejectApplication(applicationId) {
+        if (!(await ensureApplicationInScope(applicationId))) return;
         const { value: rejectNotes } = await showCustomInput({
             title: 'رفض الطلب',
             input: 'textarea',
@@ -1548,15 +1663,26 @@
     async function loadApplicationsView() {
         try {
             showLoading(document.getElementById('applicationsViewTable'));
-            
-            const { data, error } = await window.sbClient
-                .from('membership_applications')
-                .select('*')
-                .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            const scope = await getCurrentUserApplicantScope();
 
-            currentApplications = data || [];
+            let data = [];
+            if (scope && scope.size === 0) {
+                // لا لجان ضمن نطاق المستخدم → قائمة فارغة
+                data = [];
+            } else {
+                let query = window.sbClient
+                    .from('membership_applications')
+                    .select('*');
+                if (scope instanceof Set) {
+                    query = query.in('preferred_committee', [...scope]);
+                }
+                const { data: rows, error } = await query.order('created_at', { ascending: false });
+                if (error) throw error;
+                data = rows || [];
+            }
+
+            currentApplications = data;
             renderApplicationsViewTable();
             await updateViewStatistics();
             bindViewEvents();
@@ -1763,6 +1889,9 @@
         if (!statsContainer) return;
 
         try {
+            const scope = await getCurrentUserApplicantScope();
+            const isScoped = scope !== null;
+
             // جلب جميع اللجان النشطة من قاعدة البيانات
             const { data: committees, error: committeesError } = await window.sbClient
                 .from('committees')
@@ -1808,28 +1937,30 @@
                 </div>
             `;
 
-            // إضافة بطاقة لكل لجنة
-            const colors = ['#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#14b8a6', '#ec4899'];
-            let colorIndex = 0;
+            // إضافة بطاقة لكل لجنة (فقط للمسؤولين بالنطاق الكامل)
+            if (!isScoped) {
+                const colors = ['#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#14b8a6', '#ec4899'];
+                let colorIndex = 0;
 
-            Object.entries(committeeStats).forEach(([committee, count]) => {
-                const color = colors[colorIndex % colors.length];
-                colorIndex++;
-                
-                html += `
-                    <div class="stat-card" style="--stat-color: ${color};">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-users"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value">${count}</div>
-                                <div class="stat-label">${escapeHtml(committee)}</div>
+                Object.entries(committeeStats).forEach(([committee, count]) => {
+                    const color = colors[colorIndex % colors.length];
+                    colorIndex++;
+
+                    html += `
+                        <div class="stat-card" style="--stat-color: ${color};">
+                            <div class="stat-card-wrapper">
+                                <div class="stat-icon">
+                                    <i class="fa-solid fa-users"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value">${count}</div>
+                                    <div class="stat-label">${escapeHtml(committee)}</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
-            });
+                    `;
+                });
+            }
 
             statsContainer.innerHTML = html;
             
@@ -1845,21 +1976,31 @@
      */
     async function loadApplicationsReview(user) {
         currentUser = user;
-        
+
         try {
             showLoading(document.getElementById('applicationsReviewTable'));
-            
-            const { data, error } = await window.sbClient
-                .from('membership_applications')
-                .select(`
-                    *,
-                    reviewed_by_user:profiles!reviewed_by(full_name)
-                `)
-                .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            const scope = await getCurrentUserApplicantScope();
 
-            currentApplications = data || [];
+            let data = [];
+            if (scope && scope.size === 0) {
+                data = [];
+            } else {
+                let query = window.sbClient
+                    .from('membership_applications')
+                    .select(`
+                        *,
+                        reviewed_by_user:profiles!reviewed_by(full_name)
+                    `);
+                if (scope instanceof Set) {
+                    query = query.in('preferred_committee', [...scope]);
+                }
+                const { data: rows, error } = await query.order('created_at', { ascending: false });
+                if (error) throw error;
+                data = rows || [];
+            }
+
+            currentApplications = data;
             renderApplicationsReviewTable();
             await updateReviewStatistics();
             bindReviewEvents();
@@ -2021,6 +2162,9 @@
         if (!statsContainer) return;
 
         try {
+            const scope = await getCurrentUserApplicantScope();
+            const isScoped = scope !== null;
+
             // حساب الإحصائيات حسب الحالة
             const totalCount = currentApplications.length;
             const approvedForInterviewCount = currentApplications.filter(a => a.status === 'approved_for_interview').length;
@@ -2033,7 +2177,7 @@
             const pendingPercentage = totalCount > 0 ? Math.round((pendingDecisionCount / totalCount) * 100) : 0;
 
             // بناء HTML للإحصائيات
-            const html = `
+            const totalCardHtml = `
                 <div class="stat-card" style="--stat-color: #3b82f6;">
                     <div class="stat-card-wrapper">
                         <div class="stat-icon">
@@ -2045,6 +2189,10 @@
                         </div>
                     </div>
                 </div>
+            `;
+
+            const html = isScoped ? totalCardHtml : `
+                ${totalCardHtml}
                 <div class="stat-card" style="--stat-color: #10b981;">
                     <div class="stat-badge"><i class="fa-solid fa-arrow-up"></i> ${approvedPercentage}%</div>
                     <div class="stat-card-wrapper">
@@ -2590,16 +2738,29 @@
 
             if (scheduledError) throw scheduledError;
 
-            // فلترة المقابلات الفردية فقط (التي ليس لها slot مرتبط بجلسة جماعية)
+            const interviewScope = await getCurrentUserApplicantScope();
+            const inScope = (app) => interviewScope === null
+                || (app?.preferred_committee && interviewScope.has(app.preferred_committee));
+
+            // فلترة المقابلات الفردية فقط (التي ليس لها slot مرتبط بجلسة جماعية) + ضمن نطاق اللجان
             const individualInterviews = (scheduledData || []).filter(interview => {
-                return !interview.slot || interview.slot.length === 0;
+                const noSlot = !interview.slot || interview.slot.length === 0;
+                return noSlot && inScope(interview.application);
             });
 
-            // جلب عدد الطلبات المقبولة للمقابلة بدون مقابلات مجدولة (غير مجدولة)
-            const { data: approvedApps, error: approvedError } = await window.sbClient
+            // جلب عدد الطلبات المقبولة للمقابلة بدون مقابلات مجدولة (غير مجدولة) — ضمن نطاق اللجان
+            let approvedQuery = window.sbClient
                 .from('membership_applications')
                 .select('id')
                 .eq('status', 'approved_for_interview');
+            if (interviewScope instanceof Set) {
+                if (interviewScope.size === 0) {
+                    approvedQuery = approvedQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+                } else {
+                    approvedQuery = approvedQuery.in('preferred_committee', [...interviewScope]);
+                }
+            }
+            const { data: approvedApps, error: approvedError } = await approvedQuery;
 
             if (approvedError) throw approvedError;
 
@@ -2635,10 +2796,20 @@
 
             await updateCommitteeFilter('barzakhCommitteeFilter');
 
-            const { data: approvedApps, error: appsError } = await window.sbClient
+            const barzakhScope = await getCurrentUserApplicantScope();
+
+            let barzakhQuery = window.sbClient
                 .from('membership_applications')
                 .select('id, full_name, email, phone, preferred_committee, approved_for_interview_at, created_at')
-                .eq('status', 'approved_for_interview')
+                .eq('status', 'approved_for_interview');
+            if (barzakhScope instanceof Set) {
+                if (barzakhScope.size === 0) {
+                    barzakhQuery = barzakhQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+                } else {
+                    barzakhQuery = barzakhQuery.in('preferred_committee', [...barzakhScope]);
+                }
+            }
+            const { data: approvedApps, error: appsError } = await barzakhQuery
                 .order('approved_for_interview_at', { ascending: false });
 
             if (appsError) throw appsError;
@@ -2680,6 +2851,7 @@
     }
 
     async function scheduleInterviewFromBarzakh(applicationId) {
+        if (!(await ensureApplicationInScope(applicationId))) return;
         const container = document.getElementById('barzakhTable');
         const source = container?._cachedBarzakh || barzakhApplications;
         const application = (source || []).find(a => String(a.id) === String(applicationId));
@@ -2807,7 +2979,7 @@
 
         if (!filtered.length) {
             container.innerHTML = `
-                <div class="empty-state">
+                <div class="empty-state empty-state--warning">
                     <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
                     <p class="empty-state__title">لا يوجد متقدمون في البرزخ</p>
                 </div>
@@ -3249,6 +3421,7 @@
      * قبول مقابلة
      */
     async function acceptInterview(interviewId) {
+        if (!(await ensureInterviewInScope(interviewId))) return;
         // التأكد من وجود المستخدم الحالي
         if (!currentUser) {
             const { data: { user } } = await window.sbClient.auth.getUser();
@@ -3338,6 +3511,7 @@
      * رفض مقابلة
      */
     async function rejectInterview(interviewId) {
+        if (!(await ensureInterviewInScope(interviewId))) return;
         // التأكد من وجود المستخدم الحالي
         if (!currentUser) {
             const { data: { user } } = await window.sbClient.auth.getUser();
@@ -4028,6 +4202,7 @@
      * حذف موعد المقابلة إدارياً (إجراء قصري)
      */
     async function cancelInterviewAdmin(interviewId, slotId) {
+        if (!(await ensureInterviewInScope(interviewId))) return;
         try {
             // التحقق من وجود slot_id
             if (!slotId || slotId === 'undefined' || slotId === '') {
@@ -4115,6 +4290,7 @@
      * حذف مقابلة فردية (بدون slot مرتبط)
      */
     async function cancelIndividualInterview(interviewId) {
+        if (!(await ensureInterviewInScope(interviewId))) return;
         try {
             const contentHtml = `
                 <div>
@@ -4178,6 +4354,7 @@
      * رفض متقدم من البرزخ
      */
     async function rejectFromBarzakh(applicationId, applicantName) {
+        if (!(await ensureApplicationInScope(applicationId))) return;
         try {
             const formHtml = `
                 <div class="form-group">

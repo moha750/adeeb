@@ -61,9 +61,18 @@
         try {
             showLoading();
 
+            const { data: { user } } = await window.sbClient.auth.getUser();
+            if (!user) {
+                allSessions = [];
+                await renderSessions();
+                await updateStatistics();
+                return;
+            }
+
             const { data, error } = await window.sbClient
                 .from('interview_sessions')
                 .select('*')
+                .eq('created_by', user.id)
                 .order('session_date', { ascending: false });
 
             if (error) throw error;
@@ -524,6 +533,12 @@
                 }
             }
 
+            const { data: { user: authUser } } = await window.sbClient.auth.getUser();
+            if (!authUser) {
+                showNotification('يجب تسجيل الدخول لإنشاء جلسة', 'error');
+                return;
+            }
+
             const { data, error } = await window.sbClient
                 .from('interview_sessions')
                 .insert({
@@ -536,7 +551,8 @@
                     interview_type: type,
                     meeting_link: type === 'online' ? link : null,
                     location: type === 'in_person' ? location : null,
-                    is_active: true
+                    is_active: true,
+                    created_by: authUser.id
                 })
                 .select()
                 .single();
@@ -1268,6 +1284,13 @@
 
             container.innerHTML = '<div><i class="fa-solid fa-spinner fa-spin"></i></div>';
 
+            const { data: { user } } = await window.sbClient.auth.getUser();
+            if (!user) {
+                container._cachedBookings = [];
+                renderGroupBookings([]);
+                return;
+            }
+
             // جلب المقابلات المجدولة التي لها slot مرتبط بجلسة
             const { data: interviews, error: interviewsError } = await window.sbClient
                 .from('membership_interviews')
@@ -1276,16 +1299,18 @@
                     application:membership_applications(id, full_name, email, phone, preferred_committee),
                     interviewer:profiles!interviewer_id(full_name),
                     decided_by_user:profiles!decided_by(full_name),
-                    slot:interview_slots(id, session_id, interview_sessions(id, session_name))
+                    slot:interview_slots(id, session_id, interview_sessions(id, session_name, created_by))
                 `)
                 .eq('status', 'scheduled')
                 .order('interview_date', { ascending: true });
 
             if (interviewsError) throw interviewsError;
 
-            // فلترة المقابلات الجماعية فقط (التي لها slot مرتبط)
+            // فلترة المقابلات الجماعية فقط التي تخص جلسات يملكها المستخدم الحالي
             const groupInterviews = (interviews || []).filter(interview => {
-                return interview.slot && interview.slot.length > 0;
+                if (!interview.slot || interview.slot.length === 0) return false;
+                const session = interview.slot[0]?.interview_sessions;
+                return session && session.created_by === user.id;
             });
 
             // حفظ في cache للفلترة المحلية

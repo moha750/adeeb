@@ -125,7 +125,8 @@
       "Bash(node -e \"const fs=require\\('fs'\\); const c=fs.readFileSync\\('c:/Users/moham/adeeb/supabase/functions/migrate-accepted-member/index.ts','utf8'\\); fs.writeFileSync\\('/tmp/mam.json', JSON.stringify\\(c\\)\\); console.log\\('ok', c.length, JSON.stringify\\(c\\).length\\);\")",
       "Bash(node -e \"const fs=require\\('fs'\\); fs.writeFileSync\\('c:/Users/moham/adeeb/ron-esc.tmp', JSON.stringify\\(fs.readFileSync\\('c:/Users/moham/adeeb/supabase/functions/resend-onboarding-email/index.ts','utf8'\\).replace\\(/\\\\r\\\\n/g,'\\\\n'\\)\\)\\);\")",
       "Bash(cat c:/Users/moham/adeeb/supabase/functions/resend-onboarding-email/index.ts)",
-      "Read(//c/tmp/**)"
+      "Read(//c/tmp/**)",
+      "Bash(supabase functions *)"
     ]
   }
 }

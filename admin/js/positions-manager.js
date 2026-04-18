@@ -183,20 +183,6 @@ class PositionsManager {
         }
     }
 
-    getOccupantFor(roleName, committeeId, departmentId) {
-        if (!this.occupancy || !roleName) return null;
-        if (PositionsManager.GLOBALLY_UNIQUE_ROLES.includes(roleName)) {
-            return this.occupancy.globallyUnique[roleName] || null;
-        }
-        if (PositionsManager.PER_COMMITTEE_UNIQUE.includes(roleName) && committeeId) {
-            return this.occupancy.byCommittee[`${roleName}|${committeeId}`] || null;
-        }
-        if (PositionsManager.PER_DEPARTMENT_UNIQUE.includes(roleName) && departmentId) {
-            return this.occupancy.byDepartment[`${roleName}|${departmentId}`] || null;
-        }
-        return null;
-    }
-
     refreshOccupancyUI() {
         this.populateRolesSelect();
         // أعد تعبئة قائمة اللجان/الأقسام حسب الدور الحالي لتحديث شارات الإشغال
@@ -612,19 +598,6 @@ class PositionsManager {
         const committeeId  = needsCommittee  ? selectedEntityId : null;
         const departmentId = needsDepartment ? selectedEntityId : null;
 
-        // تأكيد الاستبدال إذا كان المنصب مشغولاً بالفعل (عالمي/لجنة/قسم)
-        const occupant = this.getOccupantFor(roleName, committeeId, departmentId);
-        if (occupant) {
-            const confirmed = await window.confirmModal({
-                title: 'استبدال شاغل المنصب',
-                message: `هذا المنصب مشغول حالياً بواسطة ${occupant}. سيتم إلغاء تعيينه واستبداله بالعضو الجديد. هل تريد المتابعة؟`,
-                confirmText: 'نعم، استبدل',
-                cancelText: 'إلغاء',
-                type: 'warning'
-            });
-            if (!confirmed) return;
-        }
-
         try {
             const currentUser = await window.AuthManager.getCurrentUser();
             if (!currentUser) {
@@ -646,24 +619,6 @@ class PositionsManager {
                     .update({ is_active: false })
                     .eq('user_id', memberId)
                     .eq('is_active', true);
-            }
-
-            // إذا كان المنصب مشغولاً من قِبل عضو آخر، ألغِ تفعيل تعيينه أولاً
-            if (occupant) {
-                const deactivateOtherBase = this.supabase
-                    .from('user_roles')
-                    .update({ is_active: false })
-                    .eq('role_id', roleId)
-                    .eq('is_active', true)
-                    .neq('user_id', memberId);
-
-                if (committeeId) {
-                    await deactivateOtherBase.eq('committee_id', committeeId);
-                } else if (departmentId) {
-                    await deactivateOtherBase.eq('department_id', departmentId);
-                } else {
-                    await deactivateOtherBase.is('committee_id', null).is('department_id', null);
-                }
             }
 
             // حذف أي سجلات قديمة بنفس المفتاح الفريد لتجنب خطأ duplicate key
@@ -696,6 +651,20 @@ class PositionsManager {
                 .insert(insertData);
 
             if (insertError) throw insertError;
+
+            // إرسال إيميل تهنئة للمعيَّن الجديد (غير موقف)
+            if (window.edgeInvoke) {
+                try { await window.sbClient?.auth?.refreshSession(); } catch (_) { /* تجاهل */ }
+
+                window.edgeInvoke('send-position-assignment-email', {
+                    userId: memberId,
+                    action: 'assigned',
+                    roleId,
+                    committeeId,
+                    departmentId
+                }).then(res => { if (!res?.ok) console.warn('[positions] assignment email failed:', res); })
+                  .catch(err => console.warn('[positions] assignment email error:', err));
+            }
 
             this.showSuccess('تم تعيين المنصب بنجاح');
             this.resetForm();
@@ -788,6 +757,20 @@ class PositionsManager {
                     });
 
                 if (insertError) throw insertError;
+            }
+
+            // إيميل إشعار للعضو بإزالة المنصب (غير موقف)
+            if (window.edgeInvoke) {
+                try { await window.sbClient?.auth?.refreshSession(); } catch (_) { /* تجاهل */ }
+
+                window.edgeInvoke('send-position-assignment-email', {
+                    userId: currentRole.user_id,
+                    action: 'removed',
+                    roleId: currentRole.role_id,
+                    committeeId: currentRole.committee_id || null,
+                    departmentId: currentRole.department_id || null
+                }).then(res => { if (!res?.ok) console.warn('[positions] removal email failed:', res); })
+                  .catch(err => console.warn('[positions] removal email error:', err));
             }
 
             this.showSuccess('تم إزالة المنصب وإرجاع العضو لمنصب عضو لجنة');

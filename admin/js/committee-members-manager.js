@@ -1,58 +1,42 @@
 class CommitteeMembersManager {
-    constructor() {
+    constructor(options = {}) {
         this.supabase = window.sbClient;
-        this.currentUser = null;
-        this.userCommittee = null;
+        this.userCommittee = options.committee || null;
+        this.userRole = options.roleName || null;
+        this.isLeaderOrDeputy = this.userRole === 'committee_leader' || this.userRole === 'deputy_committee_leader';
         this.members = [];
         this.filteredMembers = [];
-        this.isLeaderOrDeputy = false;
         this.init();
     }
 
     async init() {
+        if (!this.isLeaderOrDeputy || !this.userCommittee?.id) return;
         try {
-            this.currentUser = await window.AuthManager.getCurrentUser();
-            if (!this.currentUser) return;
-
-            await this.checkLeadershipRole();
-            if (this.isLeaderOrDeputy) {
-                await this.loadMembers();
-                this.setupEventListeners();
-            }
+            this.renderTitle();
+            await this.loadMembers();
+            this.setupEventListeners();
         } catch (error) {
             console.error('Error initializing committee members manager:', error);
         }
     }
 
-    async checkLeadershipRole() {
-        try {
-            const { data: userRoles, error } = await this.supabase
-                .from('user_roles')
-                .select(`
-                    *,
-                    role:roles(role_name, role_level),
-                    committee:committees(id, committee_name_ar)
-                `)
-                .eq('user_id', this.currentUser.id)
-                .eq('is_active', true);
-
-            if (error) throw error;
-
-            const leaderRole = userRoles.find(ur =>
-                ur.role?.role_name === 'committee_leader' ||
-                ur.role?.role_name === 'deputy_committee_leader'
-            );
-
-            if (leaderRole) {
-                this.isLeaderOrDeputy = true;
-                this.userCommittee = leaderRole.committee;
-                this.userRole = leaderRole.role.role_name;
-                document.getElementById('committeeMembersManagementCard')?.classList.remove('d-none');
-            }
-        } catch (error) {
-            console.error('Error checking leadership role:', error);
-            this.isLeaderOrDeputy = false;
+    renderTitle() {
+        const el = document.getElementById('manageMyCommitteeTitle');
+        if (el && this.userCommittee?.committee_name_ar) {
+            el.textContent = `إدارة أعضاء ${this.userCommittee.committee_name_ar}`;
         }
+    }
+
+    updateStats() {
+        const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        const newCount = this.members.filter(m => m.assigned_at && new Date(m.assigned_at).getTime() >= thirtyDaysAgo).length;
+
+        const set = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+        };
+        set('committeeActiveMembersCount', this.members.length);
+        set('committeeNewMembersCount', newCount);
     }
 
     async loadMembers() {
@@ -101,7 +85,23 @@ class CommitteeMembersManager {
             if (error) throw error;
 
             // فلترة الأعضاء النشطين فقط
-            this.members = (data || []).filter(m => m.profiles?.account_status === 'active');
+            const activeMembers = (data || []).filter(m => m.profiles?.account_status === 'active');
+
+            // جلب رقم الجوال من member_details كـ fallback
+            const userIds = activeMembers.map(m => m.profiles.id).filter(Boolean);
+            const phonesByUserId = {};
+            if (userIds.length > 0) {
+                const { data: details } = await this.supabase
+                    .from('member_details')
+                    .select('user_id, phone')
+                    .in('user_id', userIds);
+                (details || []).forEach(d => { phonesByUserId[d.user_id] = d.phone; });
+            }
+
+            this.members = activeMembers.map(m => ({
+                ...m,
+                profiles: { ...m.profiles, member_details_phone: phonesByUserId[m.profiles.id] || null }
+            }));
             this.filteredMembers = [...this.members];
             this.updateStats();
             this.renderMembers();
@@ -109,25 +109,6 @@ class CommitteeMembersManager {
             console.error('Error loading members:', error);
             this.showError('حدث خطأ أثناء تحميل بيانات الأعضاء');
         }
-    }
-
-    updateStats() {
-        const activeCount = this.members.filter(m => m.profiles?.account_status === 'active').length;
-
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const newCount = this.members.filter(m => new Date(m.assigned_at) >= thirtyDaysAgo).length;
-
-        const pendingCount = this.members.filter(m => m.profiles?.account_status === 'inactive').length;
-
-        const set = (id, val) => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = val;
-        };
-
-        set('committeeActiveMembersCount', activeCount);
-        set('committeeNewMembersCount', newCount);
-        set('committeePendingMembersCount', pendingCount);
     }
 
     renderMembers() {
@@ -160,14 +141,12 @@ class CommitteeMembersManager {
         const user = member.profiles;
         const role = member.roles;
         const roleLabel = role?.role_name_ar || role?.role_name || 'عضو';
+        const phone = user?.phone || user?.member_details_phone || null;
 
-        const avatarUrl = user?.avatar_url ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.full_name || 'User')}&background=3d8fd6&color=fff&size=200`;
+        const avatarUrl = user?.avatar_url || null;
 
-        // تحديد لون البطاقة حسب الدور
-        let colorClass = 'uc-card--primary';
-        if (role?.role_name === 'committee_leader') colorClass = 'uc-card--info';
-        else if (role?.role_name === 'deputy_committee_leader') colorClass = 'uc-card--purple';
+        // لون البطاقة الافتراضي
+        const colorClass = '';
 
         // حساب المدة منذ الانضمام
         const joinDays = member.assigned_at
@@ -179,22 +158,25 @@ class CommitteeMembersManager {
             <div class="uc-card ${colorClass}" data-member-id="${member.id}" data-user-id="${user?.id}">
 
                 <div class="uc-card__header">
-                    ${isNew ? `
-                    <div class="uc-card__badges-overlay">
-                        <span class="uc-badge uc-badge--success" style="background: rgba(255,255,255,0.2); color: #fff;">
-                            <i class="fa-solid fa-sparkles"></i> جديد
-                        </span>
-                    </div>` : ''}
                     <div class="uc-card__header-inner">
                         <div class="uc-card__icon">
-                            <img src="${avatarUrl}" alt="${user?.full_name || 'عضو'}" />
+                            ${avatarUrl
+                                ? `<img src="${avatarUrl}" alt="${user?.full_name || 'عضو'}" />`
+                                : `<i class="fa-solid fa-user"></i>`}
                         </div>
                         <div class="uc-card__header-info">
                             <h3 class="uc-card__title">${user?.full_name || 'غير محدد'}</h3>
-                            <span class="uc-card__badge">
-                                <i class="fa-solid fa-shield-halved"></i>
-                                ${roleLabel}
-                            </span>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;">
+                                <span class="uc-card__badge">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                    ${roleLabel}
+                                </span>
+                                ${isNew ? `
+                                <span class="uc-card__badge">
+                                    <i class="fa-solid fa-star"></i>
+                                    انضم حديثًا
+                                </span>` : ''}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -208,12 +190,12 @@ class CommitteeMembersManager {
                             <span class="uc-card__info-value">${user.email}</span>
                         </div>
                     </div>` : ''}
-                    ${user?.phone ? `
+                    ${phone ? `
                     <div class="uc-card__info-item">
                         <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
                         <div class="uc-card__info-content">
                             <span class="uc-card__info-label">الجوال</span>
-                            <span class="uc-card__info-value">${user.phone}</span>
+                            <span class="uc-card__info-value">${phone}</span>
                         </div>
                     </div>` : ''}
                     <div class="uc-card__info-item">
@@ -249,66 +231,32 @@ class CommitteeMembersManager {
         try {
             const { data: user, error } = await this.supabase
                 .from('profiles')
-                .select(`
-                    *,
-                    user_roles!inner(
-                        *,
-                        role:roles(*),
-                        committee:committees(*)
-                    )
-                `)
+                .select('*')
                 .eq('id', userId)
                 .single();
 
             if (error) throw error;
 
-            const avatarUrl = user.avatar_url ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || 'User')}&background=3d8fd6&color=fff&size=200`;
+            const { data: memberDetails } = await this.supabase
+                .from('member_details')
+                .select('*')
+                .eq('user_id', userId)
+                .maybeSingle();
 
-            const activeRoles = user.user_roles.filter(ur => ur.is_active);
+            const member = this.members.find(m => m.profiles?.id === userId);
+            const role = member?.roles;
+            const committee = this.userCommittee;
 
-            const modalContent = `
-                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                    <!-- رأس الملف الشخصي -->
-                    <div style="display: flex; align-items: center; gap: 1rem; padding: 1.25rem; background: linear-gradient(145deg, rgba(61,143,214,0.08), transparent); border-radius: 16px; border: 1px solid rgba(61,143,214,0.12);">
-                        <img src="${avatarUrl}" alt="${user.full_name}" style="width: 64px; height: 64px; border-radius: 16px; object-fit: cover; border: 2px solid rgba(61,143,214,0.2);" />
-                        <div>
-                            <h3 style="margin: 0 0 0.25rem; font-size: 1.1rem; color: #1e293b;">${user.full_name}</h3>
-                            <p style="margin: 0; font-size: 0.85rem; color: #64748b;">${user.email}</p>
-                        </div>
-                    </div>
-                    <!-- التفاصيل -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-                        <div class="uc-card__info-item">
-                            <div class="uc-card__info-icon"><i class="fa-solid fa-phone"></i></div>
-                            <div class="uc-card__info-content">
-                                <span class="uc-card__info-label">الهاتف</span>
-                                <span class="uc-card__info-value">${user.phone || 'غير محدد'}</span>
-                            </div>
-                        </div>
-                        <div class="uc-card__info-item">
-                            <div class="uc-card__info-icon"><i class="fa-solid fa-calendar"></i></div>
-                            <div class="uc-card__info-content">
-                                <span class="uc-card__info-label">تاريخ الانضمام</span>
-                                <span class="uc-card__info-value">${this.formatDate(user.created_at)}</span>
-                            </div>
-                        </div>
-                        <div class="uc-card__info-item" style="grid-column: 1 / -1;">
-                            <div class="uc-card__info-icon"><i class="fa-solid fa-user-tag"></i></div>
-                            <div class="uc-card__info-content">
-                                <span class="uc-card__info-label">المناصب</span>
-                                <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.25rem;">
-                                    ${activeRoles.map(ur => `
-                                        <span class="uc-badge uc-badge--primary">${ur.role?.role_name_ar || ur.role?.role_name || 'عضو'}</span>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+            const content = window.UsersManager?.buildMemberDetailsContent
+                ? window.UsersManager.buildMemberDetailsContent(user, memberDetails, role, committee)
+                : null;
 
-            this.showModal('تفاصيل العضو', modalContent);
+            if (!content) {
+                this.showError('تعذر بناء نافذة التفاصيل');
+                return;
+            }
+
+            window.openModal('تفاصيل العضو', content, { icon: 'fa-user' });
         } catch (error) {
             console.error('Error viewing member details:', error);
             this.showError('حدث خطأ أثناء تحميل بيانات العضو');
@@ -335,7 +283,8 @@ class CommitteeMembersManager {
             if (!searchTerm) return true;
             return member.profiles?.full_name?.toLowerCase().includes(searchTerm) ||
                 member.profiles?.email?.toLowerCase().includes(searchTerm) ||
-                member.profiles?.phone?.includes(searchTerm);
+                member.profiles?.phone?.includes(searchTerm) ||
+                member.profiles?.member_details_phone?.includes(searchTerm);
         });
 
         this.renderMembers();
@@ -348,12 +297,6 @@ class CommitteeMembersManager {
             month: 'long',
             day: 'numeric'
         });
-    }
-
-    showModal(title, content) {
-        if (typeof window.showModal === 'function') {
-            window.showModal(title, content);
-        }
     }
 
     showError(message) {
