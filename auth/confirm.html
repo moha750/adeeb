@@ -1,0 +1,109 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تأكيد العملية — نادي أديب</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="googlebot" content="noindex, nofollow" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="../admin/css/fonts.css" />
+    <link rel="stylesheet" href="../admin/css/design-tokens.css" />
+    <link rel="stylesheet" href="../admin/css/buttons-system.css" />
+    <link rel="stylesheet" href="auth-identity.css" />
+  </head>
+  <body>
+    <div class="auth-particles" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="auth-card" role="main">
+      <header class="auth-head">
+        <div class="auth-logo">
+          <img alt="شعار نادي أديب" src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" />
+        </div>
+      </header>
+
+      <div id="confirmIcon" class="auth-confirm-icon info">
+        <i class="fa-solid fa-circle-info"></i>
+      </div>
+
+      <div class="auth-confirm-body">
+        <h1 id="confirmTitle">جاري معالجة طلبك...</h1>
+        <p id="confirmMessage">يرجى الانتظار قليلاً.</p>
+      </div>
+
+      <div class="auth-foot">
+        <a href="login.html" class="btn btn-primary btn-lg"><i class="fa-solid fa-right-to-bracket"></i> الذهاب لتسجيل الدخول</a>
+        <a href="../index.html" class="btn btn-primary btn-outline"><i class="fa-solid fa-globe"></i> العودة إلى موقع أدِيب</a>
+      </div>
+    </div>
+
+    <script>
+      (function renderAuthConfirm() {
+        const iconEl    = document.getElementById('confirmIcon');
+        const titleEl   = document.getElementById('confirmTitle');
+        const messageEl = document.getElementById('confirmMessage');
+
+        const hash = window.location.hash;
+        const search = window.location.search;
+        const params = new URLSearchParams(
+          (hash && hash.length > 1 ? hash.slice(1) : '') ||
+          (search && search.length > 1 ? search.slice(1) : '')
+        );
+
+        const message = params.get('message');
+        const errorDescription = params.get('error_description');
+        const errorCode = params.get('error');
+        const type = params.get('type');
+
+        const translations = {
+          'Confirmation link accepted. Please proceed to confirm link sent to the other email':
+            'تم قبول رابط التأكيد. يرجى فتح الرابط الثاني المُرسل إلى بريدك الآخر لإتمام تغيير البريد الإلكتروني.',
+          'Email link is invalid or has expired':
+            'رابط البريد غير صالح أو انتهت صلاحيته. يرجى طلب رابط جديد.',
+          'Token has expired or is invalid':
+            'الرمز منتهي الصلاحية أو غير صالح. يرجى طلب رابط جديد.',
+          'access_denied':
+            'تم رفض الوصول. قد يكون الرابط قد انتهت صلاحيته.'
+        };
+        const translate = (txt) => translations[txt] || txt;
+
+        let state = 'info';
+        let title = 'تأكيد العملية';
+        let body  = '';
+
+        if (errorDescription || errorCode) {
+          state = 'error';
+          title = 'تعذّر إتمام العملية';
+          body  = translate(errorDescription || errorCode);
+        } else if (message) {
+          const isPartial = /proceed to confirm/i.test(message);
+          state = isPartial ? 'info' : 'success';
+          title = isPartial ? 'بقي خطوة أخيرة' : 'تم بنجاح';
+          body  = translate(message);
+        } else if (type === 'email_change' || type === 'signup' || type === 'recovery') {
+          state = 'success';
+          title = 'تم التأكيد بنجاح';
+          body  = 'تمت معالجة الطلب. يمكنك الآن تسجيل الدخول.';
+        } else {
+          state = 'info';
+          title = 'لا توجد رسالة';
+          body  = 'لم يُستلَم أي رمز تأكيد في الرابط.';
+        }
+
+        const iconMap = {
+          success: 'fa-circle-check',
+          error:   'fa-circle-xmark',
+          info:    'fa-circle-info'
+        };
+        iconEl.className = 'auth-confirm-icon ' + state;
+        iconEl.innerHTML = '<i class="fa-solid ' + iconMap[state] + '"></i>';
+        titleEl.textContent = title;
+        messageEl.textContent = body;
+
+        history.replaceState(null, '', window.location.pathname);
+      })();
+    </script>
+  </body>
+</html>

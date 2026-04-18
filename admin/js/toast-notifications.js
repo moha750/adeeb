@@ -351,7 +351,12 @@ window.Toast = (function() {
 })();
 
 // اختصارات عامة
-window.showToast = window.Toast.show;
+window.showToast = function(message, type = 'info', title = '') {
+    if (message && typeof message === 'object' && !Array.isArray(message)) {
+        return window.Toast.show(message);
+    }
+    return window.Toast.show({ type, title, message });
+};
 window.toastSuccess = window.Toast.success;
 window.toastError = window.Toast.error;
 window.toastWarning = window.Toast.warning;

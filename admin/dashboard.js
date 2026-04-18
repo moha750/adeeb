@@ -1288,7 +1288,11 @@
                 changeEmailBtn.disabled = true;
                 changeEmailBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الإرسال...';
                 try {
-                    const { error } = await window.sbClient.auth.updateUser({ email: newEmail });
+                    const redirectBase = window.location.origin;
+                    const { error } = await window.sbClient.auth.updateUser(
+                        { email: newEmail },
+                        { emailRedirectTo: `${redirectBase}/auth/confirm.html` }
+                    );
                     if (error) throw error;
                     window.showToast?.('تم إرسال رابط التأكيد إلى البريد الجديد. يرجى فتحه لإتمام التغيير.', 'success');
                     if (newEmailInput) newEmailInput.value = '';
