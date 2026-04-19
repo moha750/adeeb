@@ -166,9 +166,9 @@ class PendingMembersManager {
 
         if (this.filteredMembers.length === 0) {
             container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fa-solid fa-user-clock"></i>
-                    <p>لا يوجد أعضاء معلقين</p>
+                <div class="empty-state empty-state--warning">
+                    <div class="empty-state__icon"><i class="fa-solid fa-user-clock"></i></div>
+                    <p class="empty-state__title">لا يوجد أعضاء معلقين</p>
                 </div>
             `;
             return;

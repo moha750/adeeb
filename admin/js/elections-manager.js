@@ -521,10 +521,10 @@ class ElectionsManager {
 
         if (!openElections.length) {
             grid.innerHTML = `
-                <div style="text-align: center; padding: 4rem 2rem; color: var(--text-secondary); grid-column: 1/-1;">
-                    <i class="fa-solid fa-inbox fa-3x" style="margin-bottom: 1rem; opacity: 0.25;"></i>
-                    <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">لا يوجد باب ترشح مفتوح حالياً</p>
-                    <p style="font-size: 0.85rem;">أنشئ انتخاباً جديداً لفتح باب الترشح</p>
+                <div class="empty-state" style="grid-column: 1/-1;">
+                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
+                    <p class="empty-state__title">لا يوجد باب ترشح مفتوح حالياً</p>
+                    <p class="empty-state__message">أنشئ انتخاباً جديداً لفتح باب الترشح</p>
                 </div>`;
             return;
         }
@@ -648,7 +648,7 @@ class ElectionsManager {
             type: 'info',
             html: `
                 <div class="form-group">
-                    <label class="form-label">تاريخ ووقت إغلاق باب الترشح <span style="color: var(--color-danger);">*</span></label>
+                    <label class="form-label">تاريخ ووقت إغلاق باب الترشح <span class="required-dot">*</span></label>
                     <input type="datetime-local" id="candidacyEndInput" class="form-input">
                 </div>`,
             showFooter: true,
@@ -722,35 +722,49 @@ class ElectionsManager {
         let modalRef = null;
         modalRef = await window.ModalHelper.show({
             title: 'إنشاء انتخاب جديد',
+            iconClass: 'fa-door-open',
             size: 'lg',
-            type: 'info',
             html: `
-                <form id="createElectionForm" style="display: grid; gap: 1rem;">
+                <form id="createElectionForm" class="form-stack">
                     <div class="form-group">
-                        <label class="form-label">المنصب المستهدف <span style="color: var(--color-danger);">*</span></label>
+                        <label class="form-label">
+                            <i class="label-icon fa-solid fa-user-tie"></i> المنصب المستهدف <span class="required-dot">*</span>
+                        </label>
                         <select id="electionTargetRole" class="form-select" required>
                             <option value="">اختر المنصب</option>
                             ${rolesOptions}
                         </select>
                     </div>
-                    <div class="form-group" id="entityGroup" style="display: none;">
-                        <label class="form-label" id="entityLabel">— <span style="color: var(--color-danger);">*</span></label>
+                    <div class="form-group d-none" id="entityGroup">
+                        <label class="form-label" id="entityLabel">
+                            <i class="label-icon fa-solid fa-sitemap"></i> — <span class="required-dot">*</span>
+                        </label>
                         <select id="electionTargetEntity" class="form-select" data-entity-type="">
                             <option value="">اختر...</option>
                         </select>
-                        <p id="noVacancyMsg" style="color: var(--color-danger); font-size: 0.82rem; margin-top: 0.4rem; display: none;">
+                        <span id="noVacancyMsg" class="form-error d-none">
                             <i class="fa-solid fa-circle-exclamation"></i> لا توجد مناصب شاغرة لهذا الدور
-                        </p>
+                        </span>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div class="form-group">
-                            <label class="form-label">بداية الترشح</label>
-                            <input type="datetime-local" id="electionCandidacyStart" class="form-input">
+                    <div class="form-group">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="label-icon fa-solid fa-hourglass-start"></i> بداية الترشح
+                                </label>
+                                <input type="datetime-local" id="electionCandidacyStart" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="label-icon fa-solid fa-hourglass-end"></i> نهاية الترشح
+                                </label>
+                                <input type="datetime-local" id="electionCandidacyEnd" class="form-input">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">نهاية الترشح</label>
-                            <input type="datetime-local" id="electionCandidacyEnd" class="form-input">
-                        </div>
+                        <small>
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span><strong>تحديد الأوقات اختياري،</strong> يمكنك إنشاء الانتخاب الآن وتحديد موعد نهاية الترشح لاحقًا.</span>
+                        </small>
                     </div>
                 </form>`,
             showFooter: true,
@@ -779,7 +793,7 @@ class ElectionsManager {
             entitySelect.value = '';
 
             if (!selectedRoleId) {
-                entityGroup.style.display = 'none';
+                entityGroup.classList.add('d-none');
                 return;
             }
 
@@ -787,7 +801,7 @@ class ElectionsManager {
 
             if (isDeptRole) {
                 // عرض الأقسام الشاغرة
-                entityLabel.innerHTML = 'القسم المستهدف <span style="color: var(--color-danger);">*</span>';
+                entityLabel.innerHTML = '<i class="label-icon fa-solid fa-sitemap"></i> القسم المستهدف <span class="required-dot">*</span>';
                 entitySelect.dataset.entityType = 'department';
 
                 const vacantDepts = this.departments.filter(d => {
@@ -801,10 +815,10 @@ class ElectionsManager {
                 entitySelect.innerHTML = '<option value="">اختر القسم</option>' +
                     vacantDepts.map(d => `<option value="${d.id}">${d.name_ar}</option>`).join('');
 
-                noVacancyMsg.style.display = vacantDepts.length ? 'none' : 'block';
+                noVacancyMsg.classList.toggle('d-none', vacantDepts.length > 0);
             } else {
                 // عرض اللجان الشاغرة (غير مشغولة وبدون انتخاب نشط)
-                entityLabel.innerHTML = 'اللجنة المستهدفة <span style="color: var(--color-danger);">*</span>';
+                entityLabel.innerHTML = '<i class="label-icon fa-solid fa-people-group"></i> اللجنة المستهدفة <span class="required-dot">*</span>';
                 entitySelect.dataset.entityType = 'committee';
 
                 const vacantCommittees = this.committees.filter(c => {
@@ -818,10 +832,10 @@ class ElectionsManager {
                 entitySelect.innerHTML = '<option value="">اختر اللجنة</option>' +
                     vacantCommittees.map(c => `<option value="${c.id}">${c.committee_name_ar}</option>`).join('');
 
-                noVacancyMsg.style.display = vacantCommittees.length ? 'none' : 'block';
+                noVacancyMsg.classList.toggle('d-none', vacantCommittees.length > 0);
             }
 
-            entityGroup.style.display = 'block';
+            entityGroup.classList.remove('d-none');
         });
     }
 

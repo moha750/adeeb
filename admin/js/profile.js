@@ -351,23 +351,6 @@
     }
 
     /**
-     * الحصول على معلومات الدور
-     */
-    function getRoleInfo(roleLevel) {
-        const levels = {
-            10: { name: 'رئيس نادي أدِيب', color: '#dc2626' },
-            9: { name: 'قائد إدارة الموارد البشرية', color: '#ea580c' },
-            8: { name: 'قائد إدارة الضمان والجودة', color: '#f59e0b' },
-            7: { name: 'عضو إداري', color: '#eab308' },
-            6: { name: 'رئيس المجلس التنفيذي', color: '#f97316' },
-            5: { name: 'قائد لجنة', color: '#84cc16' },
-            4: { name: 'نائب قائد لجنة', color: '#22c55e' },
-            3: { name: 'عضو لجنة', color: '#10b981' }
-        };
-        return levels[roleLevel] || { name: 'عضو لجنة', color: '#64748b' };
-    }
-
-    /**
      * الحصول على عرض الدور بالطريقة المطلوبة
      */
     async function getRoleDisplay(user, userRole) {
@@ -1190,6 +1173,14 @@
         if (openProfileLinkBtn) {
             openProfileLinkBtn.addEventListener('click', openProfileLink);
         }
+
+        document.querySelectorAll('.mc-flip__btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const target = document.querySelector(btn.dataset.flipTarget || '#membershipCard');
+                target?.classList.toggle('is-flipped');
+            });
+        });
     }
 
     /**
@@ -1685,42 +1676,137 @@
     }
 
     /**
-     * تحميل الرابط الشخصي
+     * تحميل الرابط الشخصي — يملأ حقل الرابط ويرسم QR إن وُجد slug.
      */
     async function loadProfileLink(memberDetails) {
-        try {
-            const profileLinkInput = document.getElementById('profileLinkInput');
-            const qrContainer = document.getElementById('cardQr');
+        const profileLinkInput = document.getElementById('profileLinkInput');
+        const qrContainer = document.getElementById('cardQr');
+        const slug = memberDetails?.profile_slug;
 
-            if (memberDetails?.profile_slug) {
-                const profileUrl = `${window.location.origin}/profile.html?slug=${memberDetails.profile_slug}`;
-                if (profileLinkInput) profileLinkInput.value = profileUrl;
-                renderProfileQr(qrContainer, profileUrl);
-            } else {
-                if (profileLinkInput) profileLinkInput.value = 'لم يتم إنشاء رابط شخصي بعد';
-                if (qrContainer) qrContainer.hidden = true;
-            }
+        if (!slug) {
+            if (profileLinkInput) profileLinkInput.value = 'لم يتم إنشاء رابط شخصي بعد';
+            clearProfileQr(qrContainer);
+            return;
+        }
+
+        const profileUrl = `${window.location.origin}/profile.html?slug=${slug}`;
+        if (profileLinkInput) profileLinkInput.value = profileUrl;
+        await renderProfileQr(qrContainer, profileUrl);
+    }
+
+    /**
+     * رسم QR Code داخل بطاقة العضوية
+     * المكتبة: node-qrcode (soldair) — UMD عبر CDN → window.QRCode
+     * المخرج SVG ليبقى حادًا عند أي حجم عرض.
+     */
+    async function renderProfileQr(container, url) {
+        if (!container) return;
+
+        if (!url) {
+            clearProfileQr(container);
+            return;
+        }
+
+        await waitForQrLibrary();
+
+        if (typeof window.QRCode?.toString !== 'function') {
+            console.warn('مكتبة QRCode لم تُحمَّل');
+            clearProfileQr(container);
+            return;
+        }
+
+        try {
+            const svg = await window.QRCode.toString(url, {
+                type: 'svg',
+                errorCorrectionLevel: 'M',
+                margin: 1,
+                color: {
+                    dark: '#274060',
+                    light: '#00000000'
+                }
+            });
+
+            container.innerHTML = svg;
+            container.hidden = false;
+            container.setAttribute('role', 'button');
+            container.setAttribute('tabindex', '0');
+            container.setAttribute('aria-label', 'افتح الملف الشخصي');
+            container.onclick = () => window.open(url, '_blank', 'noopener');
+            container.onkeydown = (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    window.open(url, '_blank', 'noopener');
+                }
+            };
         } catch (error) {
-            console.error('خطأ في تحميل الرابط الشخصي:', error);
+            console.error('فشل توليد QR:', error);
+            clearProfileQr(container);
         }
     }
 
     /**
-     * رسم QR code داخل بطاقة العضوية
+     * انتظار تحميل مكتبة QRCode (ES module deferred) بحد أقصى 3 ثوانٍ.
      */
-    function renderProfileQr(container, url) {
-        if (!container || typeof window.QRCode === 'undefined') return;
-        container.innerHTML = '';
-        container.hidden = false;
-        container.onclick = () => window.open(url, '_blank', 'noopener');
-        new window.QRCode(container, {
-            text: url,
-            width: 128,
-            height: 128,
-            colorDark: '#1a2a3a',
-            colorLight: '#ffffff',
-            correctLevel: window.QRCode.CorrectLevel.M
+    function waitForQrLibrary() {
+        if (typeof window.QRCode?.toString === 'function') return Promise.resolve();
+        return new Promise(resolve => {
+            const done = () => { cleanup(); resolve(); };
+            const cleanup = () => {
+                window.removeEventListener('qrcode-ready', done);
+                clearTimeout(timer);
+            };
+            const timer = setTimeout(done, 3000);
+            window.addEventListener('qrcode-ready', done, { once: true });
         });
+    }
+
+    /**
+     * إخفاء/تفريغ حاوية QR عند غياب الرابط أو حدوث خطأ.
+     */
+    function clearProfileQr(container) {
+        if (!container) return;
+        container.innerHTML = '';
+        container.hidden = true;
+        container.onclick = null;
+        container.onkeydown = null;
+        container.removeAttribute('role');
+        container.removeAttribute('tabindex');
+        container.removeAttribute('aria-label');
+    }
+
+    /**
+     * استخراج تسمية الدور الحقيقية من user_roles (role_name + اللجنة عند اللزوم).
+     * يتجاوز الاعتماد على role_level الذي قد يتداخل بين أدوار مختلفة.
+     */
+    async function resolveRoleLabel(userId) {
+        try {
+            const { data, error } = await window.sbClient
+                .from('user_roles')
+                .select('committees(committee_name_ar), roles(role_name, role_name_ar, role_level)')
+                .eq('user_id', userId)
+                .eq('is_active', true)
+                .order('roles(role_level)', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (error || !data?.roles) return 'عضو';
+
+            const roleName = data.roles.role_name;
+            const roleNameAr = data.roles.role_name_ar || 'عضو';
+            const committeeName = data.committees?.committee_name_ar || '';
+
+            const committeeScoped = {
+                committee_leader: n => n ? `قائد ${n}` : 'قائد لجنة',
+                deputy_committee_leader: n => n ? `نائب قائد ${n}` : 'نائب قائد لجنة',
+                committee_member: n => n ? `عضو ${n}` : 'عضو لجنة'
+            };
+
+            if (committeeScoped[roleName]) return committeeScoped[roleName](committeeName);
+            return roleNameAr;
+        } catch (err) {
+            console.error('خطأ في استخراج تسمية الدور:', err);
+            return 'عضو';
+        }
     }
 
     /**
@@ -1744,28 +1830,15 @@
 
             setText('cardFullName', displayName);
 
-            const roleInfo = getRoleInfo(currentUser.role_level);
-            setText('cardType', roleInfo.name);
-            setText('cardRole', roleInfo.name);
+            const roleLabel = await resolveRoleLabel(currentUser.id);
+            setText('cardType', roleLabel);
 
-            const joinDate = new Date(currentUser.created_at).toLocaleDateString('ar-SA', {
+            const joinDate = new Date(currentUser.created_at).toLocaleDateString('ea-EA', {
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit'
             });
             setText('cardJoinDate', joinDate);
-            setText('cardJoinDateMirror', joinDate);
-
-            const committeeName = memberDetails?.committees?.committee_name_ar;
-            const committeeContainer = document.getElementById('cardCommitteeContainer');
-            if (committeeContainer) {
-                if (committeeName) {
-                    setText('cardCommittee', committeeName);
-                    committeeContainer.style.display = '';
-                } else {
-                    committeeContainer.style.display = 'none';
-                }
-            }
 
         } catch (error) {
             console.error('خطأ في تحميل بطاقة العضوية:', error);

@@ -126,7 +126,10 @@
       "Bash(node -e \"const fs=require\\('fs'\\); fs.writeFileSync\\('c:/Users/moham/adeeb/ron-esc.tmp', JSON.stringify\\(fs.readFileSync\\('c:/Users/moham/adeeb/supabase/functions/resend-onboarding-email/index.ts','utf8'\\).replace\\(/\\\\r\\\\n/g,'\\\\n'\\)\\)\\);\")",
       "Bash(cat c:/Users/moham/adeeb/supabase/functions/resend-onboarding-email/index.ts)",
       "Read(//c/tmp/**)",
-      "Bash(supabase functions *)"
+      "Bash(supabase functions *)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "WebFetch(domain:www.jsdelivr.com)",
+      "WebFetch(domain:registry.npmjs.org)"
     ]
   }
 }

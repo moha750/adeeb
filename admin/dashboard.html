@@ -1636,114 +1636,107 @@
 
                 <div class="mc-page">
 
-                    <!-- البطاقة الرئيسية -->
-                    <article class="mc-card" id="membershipCard">
-                        <header class="mc-card__head">
-                            <div class="mc-card__brand">
-                                <div class="mc-card__brand-logo">
-                                    <img src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e"
-                                        alt="شعار أدِيب">
-                                </div>
-                                <div class="mc-card__brand-text">
-                                    <strong>نادي أدِيب</strong>
-                                    <span>Adeeb Club</span>
-                                </div>
-                            </div>
-                            <div class="mc-card__status" id="cardStatus">
-                                <span>عضوية نشطة</span>
-                            </div>
-                        </header>
+                    <!-- البطاقة القلّابة -->
+                    <div class="mc-flip" id="membershipCard">
+                        <div class="mc-flip__inner">
 
-                        <div class="mc-card__body">
-                            <div class="mc-card__avatar">
-                                <img id="cardAvatar" src="" alt="الصورة الشخصية">
-                            </div>
-                            <div class="mc-card__identity">
-                                <h2 class="mc-card__name" id="cardFullName">جاري التحميل...</h2>
-                                <span class="mc-card__role" id="cardRoleBadge">
-                                    <i class="fa-solid fa-id-badge"></i>
-                                    <span id="cardType">عضو</span>
-                                </span>
-                            </div>
+                            <!-- الوجه الأمامي -->
+                            <article class="mc-card mc-flip__face mc-flip__face--front">
+                                <header class="mc-card__head">
+                                    <div class="mc-card__brand">
+                                        <img class="mc-card__brand-logo"
+                                            src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e"
+                                            alt="شعار نادي أدِيب">
+                                    </div>
+                                    <div class="mc-card__status" id="cardStatus">
+                                        <span>عضوية نشطة</span>
+                                    </div>
+                                </header>
+
+                                <div class="mc-card__body">
+                                    <div class="mc-card__avatar">
+                                        <img id="cardAvatar" src="" alt="الصورة الشخصية">
+                                    </div>
+                                    <div class="mc-card__identity">
+                                        <h2 class="mc-card__name" id="cardFullName">جاري التحميل...</h2>
+                                        <span class="mc-card__role" id="cardRoleBadge">
+                                            <i class="fa-solid fa-id-badge"></i>
+                                            <span id="cardType">عضو</span>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <footer class="mc-card__meta">
+                                    <div class="mc-card__meta-item">
+                                        <span class="mc-card__meta-label">تاريخ العضوية</span>
+                                        <span class="mc-card__meta-value" id="cardJoinDate">---</span>
+                                    </div>
+                                    <button type="button" class="mc-flip__btn" data-flip-target="#membershipCard"
+                                        aria-label="اقلب البطاقة لعرض QR">
+                                        <i class="fa-solid fa-qrcode"></i>
+                                    </button>
+                                </footer>
+                            </article>
+
+                            <!-- الوجه الخلفي -->
+                            <article class="mc-card mc-flip__face mc-flip__face--back">
+                                <div class="mc-card__back">
+                                    <p class="mc-card__back-title">صفحتي الشخصية العامة</p>
+                                    <div class="mc-card__qr" id="cardQr" title="امسح الرمز لفتح الملف الشخصي"></div>
+                                    <p class="mc-card__back-hint">
+                                        <i class="fa-solid fa-mobile-screen-button"></i>
+                                        امسح الرمز أو اضغط عليه
+                                    </p>
+                                </div>
+                                <button type="button" class="mc-flip__btn mc-flip__btn--back"
+                                    data-flip-target="#membershipCard" aria-label="الرجوع للأمام">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                </button>
+                            </article>
+
                         </div>
-
-                        <footer class="mc-card__meta">
-                            <div class="mc-card__meta-item">
-                                <span class="mc-card__meta-label">تاريخ الانضمام</span>
-                                <span class="mc-card__meta-value" id="cardJoinDate">---</span>
-                            </div>
-                            <div class="mc-card__qr" id="cardQr" title="امسح الرمز لفتح الملف الشخصي"></div>
-                        </footer>
-                    </article>
+                    </div>
 
                     <!-- اللوحة الجانبية -->
                     <div class="mc-side">
-
-                        <!-- معلومات العضوية -->
-                        <section class="mc-panel">
-                            <header class="mc-panel__head">
-                                <i class="fa-solid fa-circle-info"></i>
-                                <div class="mc-panel__head-text">
-                                    <h3>تفاصيل العضوية</h3>
-                                    <p>نظرة سريعة على بياناتك في النادي</p>
+                        <div class="uc-card uc-card--primary">
+                            <header class="uc-card__header">
+                                <div class="uc-card__header-inner">
+                                    <div class="uc-card__icon">
+                                        <i class="fa-solid fa-link"></i>
+                                    </div>
+                                    <div class="uc-card__header-info">
+                                        <h3 class="uc-card__title">الرابط الشخصي</h3>
+                                        <span class="uc-card__badge">
+                                            <i class="fa-solid fa-share-nodes"></i>
+                                            شارك صفحتك العامة
+                                        </span>
+                                    </div>
                                 </div>
                             </header>
-                            <div class="mc-panel__body">
-                                <div class="mc-info-grid">
-                                    <div class="mc-info-tile">
-                                        <div class="mc-info-tile__icon"><i class="fa-solid fa-user-tie"></i></div>
-                                        <div class="mc-info-tile__text">
-                                            <span class="mc-info-tile__label">الدور</span>
-                                            <span class="mc-info-tile__value" id="cardRole">---</span>
-                                        </div>
-                                    </div>
-                                    <div class="mc-info-tile" id="cardCommitteeContainer" style="display: none;">
-                                        <div class="mc-info-tile__icon"><i class="fa-solid fa-users"></i></div>
-                                        <div class="mc-info-tile__text">
-                                            <span class="mc-info-tile__label">اللجنة</span>
-                                            <span class="mc-info-tile__value" id="cardCommittee">---</span>
-                                        </div>
-                                    </div>
-                                    <div class="mc-info-tile">
-                                        <div class="mc-info-tile__icon"><i class="fa-solid fa-calendar-day"></i></div>
-                                        <div class="mc-info-tile__text">
-                                            <span class="mc-info-tile__label">تاريخ الانضمام</span>
-                                            <span class="mc-info-tile__value" id="cardJoinDateMirror">---</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- الرابط الشخصي -->
-                        <section class="mc-panel">
-                            <header class="mc-panel__head">
-                                <i class="fa-solid fa-link"></i>
-                                <div class="mc-panel__head-text">
-                                    <h3>الرابط الشخصي</h3>
-                                    <p>شارك صفحتك العامة مع الآخرين</p>
-                                </div>
-                            </header>
-                            <div class="mc-panel__body">
-                                <div class="mc-link">
-                                    <label class="mc-link__field">
+                            <div class="uc-card__body">
+                                <div class="uc-card__info-item">
+                                    <div class="uc-card__info-icon">
                                         <i class="fa-solid fa-globe"></i>
-                                        <input type="text" id="profileLinkInput" readonly value="جاري التحميل...">
-                                    </label>
-                                    <div class="mc-link__buttons">
-                                        <button class="btn btn-primary" id="copyProfileLinkBtn" title="نسخ الرابط">
-                                            <i class="fa-solid fa-copy"></i>
-                                            <span>نسخ</span>
-                                        </button>
-                                        <button class="btn btn-outline" id="openProfileLinkBtn" title="فتح الملف العام">
-                                            <i class="fa-solid fa-external-link-alt"></i>
-                                            <span>معاينة</span>
-                                        </button>
+                                    </div>
+                                    <div class="uc-card__info-content">
+                                        <span class="uc-card__info-label">رابطك الشخصي</span>
+                                        <input type="text" id="profileLinkInput"
+                                            class="mc-profile-link-input" readonly value="جاري التحميل...">
                                     </div>
                                 </div>
                             </div>
-                        </section>
-
+                            <div class="uc-card__footer">
+                                <button class="btn btn-primary" id="copyProfileLinkBtn" title="نسخ الرابط">
+                                    <i class="fa-solid fa-copy"></i>
+                                    نسخ الرابط
+                                </button>
+                                <button class="btn btn-outline" id="openProfileLinkBtn" title="فتح الملف العام">
+                                    <i class="fa-solid fa-external-link-alt"></i>
+                                    معاينة
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -3253,19 +3246,24 @@
                 <div class="card">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-door-open"></i> الانتخابات المفتوحة للترشح</h3>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button class="btn btn-outline" id="openSectionRefreshBtn">
-                                <i class="fa-solid fa-rotate"></i> تحديث
-                            </button>
-                            <button class="btn btn-primary" id="openSectionCreateBtn">
-                                <i class="fa-solid fa-plus"></i> إنشاء انتخاب جديد
-                            </button>
-                        </div>
+                        <button class="btn btn-primary btn-icon btn-outline" id="openSectionRefreshBtn" title="تحديث">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
                     </div>
                     <div class="card-body">
                         <div class="uc-grid" id="openSectionGrid">
                             <!-- سيتم ملؤها ديناميكياً -->
                         </div>
+                    </div>
+                </div>
+
+                <!-- شريط الإجراءات اللاصق -->
+                <div class="form-actions-sticky">
+                    <div class="form-actions-bar">
+                        <button class="btn btn-primary" id="openSectionCreateBtn">
+                            <i class="fa-solid fa-plus"></i>
+                            إنشاء انتخاب جديد
+                        </button>
                     </div>
                 </div>
 
@@ -4888,7 +4886,11 @@
     <script src="version.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script type="module">
+        import QRCode from 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm';
+        window.QRCode = QRCode;
+        window.dispatchEvent(new Event('qrcode-ready'));
+    </script>
     <script src="../supabase-config.js"></script>
     <script src="auth-manager.js"></script>
     <script src="js/edge-invoke.js"></script>

@@ -188,8 +188,8 @@ class UsersManager {
         if (this.filteredUsers.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-solid fa-users-slash"></i>
-                    <p>لا يوجد مستخدمين</p>
+                    <div class="empty-state__icon"><i class="fa-solid fa-users-slash"></i></div>
+                    <p class="empty-state__title">لا يوجد مستخدمين</p>
                 </div>
             `;
             return;

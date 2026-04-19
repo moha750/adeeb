@@ -1605,7 +1605,7 @@
 
             if (!terminatedMembers || terminatedMembers.length === 0) {
                 container.innerHTML = `
-                    <div class="empty-state empty-state--success">
+                    <div class="empty-state">
                         <div class="empty-state__icon"><i class="fa-solid fa-user-check"></i></div>
                         <p class="empty-state__title">لا يوجد أعضاء منتهية عضوياتهم</p>
                     </div>
@@ -1713,10 +1713,10 @@
                     if (visibleCount === 0 && searchTerm) {
                         if (!emptyState) {
                             emptyState = document.createElement('div');
-                            emptyState.className = 'empty-state';
+                            emptyState.className = 'empty-state empty-state--danger';
                             emptyState.innerHTML = `
-                                <i class="fa-solid fa-search"></i>
-                                <p>لا توجد نتائج مطابقة للبحث</p>
+                                <div class="empty-state__icon"><i class="fa-solid fa-search"></i></div>
+                                <p class="empty-state__title">لا توجد نتائج مطابقة للبحث</p>
                             `;
                             container.appendChild(emptyState);
                         }

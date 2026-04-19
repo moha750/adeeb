@@ -570,6 +570,8 @@ class PositionsManager {
     }
 
     async assignPosition() {
+        if (this.isAssigning) return;
+
         const memberId = document.getElementById('selectedMemberId')?.value;
         const roleId = document.getElementById('positionRoleSelect')?.value;
         const selectedEntityId = document.getElementById('positionCommitteeSelect')?.value;
@@ -598,6 +600,14 @@ class PositionsManager {
         const committeeId  = needsCommittee  ? selectedEntityId : null;
         const departmentId = needsDepartment ? selectedEntityId : null;
 
+        this.isAssigning = true;
+        const submitBtn = document.querySelector('#assignPositionForm button[type="submit"]');
+        const originalBtnHtml = submitBtn?.innerHTML;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التعيين...';
+        }
+
         try {
             const currentUser = await window.AuthManager.getCurrentUser();
             if (!currentUser) {
@@ -605,23 +615,7 @@ class PositionsManager {
                 return;
             }
 
-            const { data: existingRoles, error: checkError } = await this.supabase
-                .from('user_roles')
-                .select('id')
-                .eq('user_id', memberId)
-                .eq('is_active', true);
-
-            if (checkError) throw checkError;
-
-            if (existingRoles && existingRoles.length > 0) {
-                await this.supabase
-                    .from('user_roles')
-                    .update({ is_active: false })
-                    .eq('user_id', memberId)
-                    .eq('is_active', true);
-            }
-
-            // حذف أي سجلات قديمة بنفس المفتاح الفريد لتجنب خطأ duplicate key
+            // 1) حذف أي سجل قديم يصادم القيد الفريد (user_id, role_id, committee_id)
             const deleteBase = this.supabase
                 .from('user_roles')
                 .delete()
@@ -630,12 +624,11 @@ class PositionsManager {
 
             if (committeeId) {
                 await deleteBase.eq('committee_id', committeeId);
-            } else if (departmentId) {
-                await deleteBase.eq('department_id', departmentId);
             } else {
-                await deleteBase.is('committee_id', null).is('department_id', null);
+                await deleteBase.is('committee_id', null);
             }
 
+            // 2) إدراج المنصب الجديد أولاً — لا نعطّل شيئاً قبل التأكد من نجاح الإدراج
             const insertData = {
                 user_id: memberId,
                 role_id: roleId,
@@ -646,11 +639,26 @@ class PositionsManager {
                 notes: notes || null
             };
 
-            const { error: insertError } = await this.supabase
+            const { data: insertedRows, error: insertError } = await this.supabase
                 .from('user_roles')
-                .insert(insertData);
+                .insert(insertData)
+                .select('id');
 
             if (insertError) throw insertError;
+
+            const newRoleId = insertedRows?.[0]?.id;
+
+            // 3) بعد نجاح الإدراج فقط، عطّل باقي الأدوار الفعّالة الأخرى لضمان دور واحد للعضو
+            const deactivateQuery = this.supabase
+                .from('user_roles')
+                .update({ is_active: false })
+                .eq('user_id', memberId)
+                .eq('is_active', true);
+
+            if (newRoleId) deactivateQuery.neq('id', newRoleId);
+
+            const { error: deactivateError } = await deactivateQuery;
+            if (deactivateError) throw deactivateError;
 
             // إرسال إيميل تهنئة للمعيَّن الجديد (غير موقف)
             if (window.edgeInvoke) {
@@ -675,6 +683,12 @@ class PositionsManager {
         } catch (error) {
             console.error('Error assigning position:', error);
             this.showError('حدث خطأ أثناء تعيين المنصب');
+        } finally {
+            this.isAssigning = false;
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                if (originalBtnHtml !== undefined) submitBtn.innerHTML = originalBtnHtml;
+            }
         }
     }
 
@@ -721,13 +735,19 @@ class PositionsManager {
             }
 
             // التحقق من وجود منصب عضو لجنة سابق
-            const { data: existingRole, error: checkError } = await this.supabase
+            const existingRoleQuery = this.supabase
                 .from('user_roles')
                 .select('id')
                 .eq('user_id', currentRole.user_id)
-                .eq('role_id', committeeMemberRole.id)
-                .eq('committee_id', currentRole.committee_id)
-                .maybeSingle();
+                .eq('role_id', committeeMemberRole.id);
+
+            if (currentRole.committee_id == null) {
+                existingRoleQuery.is('committee_id', null);
+            } else {
+                existingRoleQuery.eq('committee_id', currentRole.committee_id);
+            }
+
+            const { data: existingRole, error: checkError } = await existingRoleQuery.maybeSingle();
 
             if (checkError) throw checkError;
 
