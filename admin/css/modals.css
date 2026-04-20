@@ -1218,7 +1218,6 @@
     line-height: 1.65;
     color: var(--modal-color-dark);
     margin: 0;
-    padding-top: 0.45rem;
 }
 
 .modal-info-box > span strong,

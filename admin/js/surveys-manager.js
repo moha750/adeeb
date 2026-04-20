@@ -526,6 +526,8 @@
                     'enable':          () => this.enableSurvey(surveyId),
                     'archive':         () => this.archiveSurvey(surveyId),
                     'delete':          () => this.deleteSurvey(surveyId),
+                    'edit':            () => this.editSurvey(surveyId),
+                    'publish':         () => this.publishSurvey(surveyId),
                     'navigate-create': () => this.navigateToCreate(),
                 };
 
@@ -689,14 +691,14 @@
                     </div>
                     
                     <div class="uc-card__footer">
-                        <button class="btn btn-info" data-action="view-details" data-survey-id="${survey.id}">
+                        <button class="btn btn-primary" data-action="view-details" data-survey-id="${survey.id}">
                             <i class="fa-solid fa-circle-info"></i> عرض التفاصيل
                         </button>
                         ${actualStatus === 'active' ? `
                         <button class="btn btn-primary" data-action="preview" data-survey-id="${survey.id}">
                             <i class="fa-solid fa-eye"></i> معاينة
                         </button>
-                        <button class="btn btn-secondary" data-action="share-survey" data-survey-id="${survey.id}">
+                        <button class="btn btn-success" data-action="share-survey" data-survey-id="${survey.id}">
                             <i class="fa-solid fa-share-nodes"></i> مشاركة
                         </button>
                         <button class="btn btn-primary" data-action="view-results" data-survey-id="${survey.id}">
@@ -724,7 +726,7 @@
                         <button class="btn btn-primary" data-action="preview" data-survey-id="${survey.id}">
                             <i class="fa-solid fa-eye"></i> معاينة
                         </button>
-                        <button class="btn btn-secondary" data-action="share-survey" data-survey-id="${survey.id}">
+                        <button class="btn btn-success" data-action="share-survey" data-survey-id="${survey.id}">
                             <i class="fa-solid fa-share-nodes"></i> مشاركة
                         </button>
                         <button class="btn btn-primary" data-action="view-results" data-survey-id="${survey.id}">
@@ -735,7 +737,7 @@
                         </button>
                         ` : ''}
                         ${actualStatus === 'closed' ? `
-                        <button class="btn btn-secondary" data-action="share-survey" data-survey-id="${survey.id}">
+                        <button class="btn btn-success" data-action="share-survey" data-survey-id="${survey.id}">
                             <i class="fa-solid fa-share-nodes"></i> مشاركة
                         </button>
                         <button class="btn btn-primary" data-action="view-results" data-survey-id="${survey.id}">
@@ -745,6 +747,28 @@
                             <i class="fa-solid fa-box-archive"></i> أرشفة
                         </button>
                         ` : ''}
+                        ${actualStatus === 'draft' ? (() => {
+                            const hasTitle = !!(survey.title && survey.title.trim());
+                            const hasQuestions = (survey.questions_count || 0) > 0;
+                            const canPublish = hasTitle && hasQuestions;
+                            const publishDisabledReason = !hasTitle
+                                ? 'أضف عنواناً للاستبيان قبل النشر'
+                                : !hasQuestions
+                                    ? 'أضف سؤالاً واحداً على الأقل قبل النشر'
+                                    : '';
+                            return `
+                        <button class="btn btn-primary" data-action="edit" data-survey-id="${survey.id}">
+                            <i class="fa-solid fa-pen-to-square"></i> متابعة التحرير
+                        </button>
+                        <button class="btn btn-violet" data-action="preview" data-survey-id="${survey.id}">
+                            <i class="fa-solid fa-eye"></i> معاينة
+                        </button>
+                        <button class="btn btn-success" data-action="publish" data-survey-id="${survey.id}"
+                            ${canPublish ? '' : `disabled title="${publishDisabledReason}"`}>
+                            <i class="fa-solid fa-rocket"></i> نشر الآن
+                        </button>
+                            `;
+                        })() : ''}
                         <button class="btn btn-danger" data-action="delete" data-survey-id="${survey.id}">
                             <i class="fa-solid fa-trash"></i> حذف
                         </button>
@@ -761,10 +785,17 @@
         }
 
         async showCreateForm() {
-            this.currentEditingSurvey = null;
-            surveyQuestions = [];
-            this._resetCreateForm();
-            this.renderQuestions();
+            if (this._pendingEditSurvey) {
+                this._loadSurveyIntoForm(this._pendingEditSurvey);
+                this._pendingEditSurvey = null;
+            } else {
+                this.currentEditingSurvey = null;
+                surveyQuestions = [];
+                this._resetCreateForm();
+                this.renderQuestions();
+            }
+
+            this._updateFormModeIndicator();
             this.setupSaveButtons();
 
             // إعادة ربط زر إضافة سؤال في حال تجديد الصفحة
@@ -774,6 +805,84 @@
                 addBtn.replaceWith(fresh);
                 fresh.addEventListener('click', () => this.addQuestion());
             }
+        }
+
+        _loadSurveyIntoForm(survey) {
+            this.currentEditingSurvey = survey;
+
+            const toLocalDatetime = (iso) => {
+                if (!iso) return '';
+                const d = new Date(iso);
+                const pad = (n) => String(n).padStart(2, '0');
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            };
+
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.value = val ?? '';
+            };
+            const setChk = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.checked = !!val;
+            };
+
+            setVal('surveyTitle', survey.title);
+            setVal('surveyDescription', survey.description);
+            setVal('surveyAccessType', survey.access_type || 'public');
+            setVal('surveyStartDate', toLocalDatetime(survey.start_date));
+            setVal('surveyEndDate', toLocalDatetime(survey.end_date));
+            setVal('welcomeMessage', survey.welcome_message);
+            setVal('thankYouMessage', survey.thank_you_message || 'شكراً لمشاركتك في هذا الاستبيان');
+
+            setChk('allowMultipleResponses', survey.allow_multiple_responses);
+            setChk('allowAnonymous', survey.allow_anonymous);
+            setChk('showProgressBar', survey.show_progress_bar ?? true);
+            setChk('showResults', survey.show_results_to_participants);
+
+            const qs = (survey.survey_questions || [])
+                .slice()
+                .sort((a, b) => (a.question_order ?? 0) - (b.question_order ?? 0));
+            surveyQuestions = qs.map(q => ({
+                id: q.id,
+                question_text: q.question_text || '',
+                question_type: q.question_type || 'short_text',
+                is_required: !!q.is_required,
+                options: q.options,
+                validation_rules: q.validation_rules
+            }));
+
+            this.renderQuestions();
+        }
+
+        _updateFormModeIndicator() {
+            const banner = document.getElementById('surveyFormModeBanner');
+            if (!banner) return;
+
+            if (!this.currentEditingSurvey) {
+                banner.classList.add('d-none');
+                banner.innerHTML = '';
+                return;
+            }
+
+            banner.classList.remove('d-none');
+            banner.innerHTML = `
+                <div class="modal-info-box box-info" style="margin-bottom: 1rem;">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+                        <strong>وضع التحرير</strong>
+                        <button class="btn btn-slate" type="button" onclick="window.surveysManager.cancelEdit()">
+                            <i class="fa-solid fa-xmark"></i> إلغاء التحرير
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        cancelEdit() {
+            this.currentEditingSurvey = null;
+            this._pendingEditSurvey = null;
+            const link = document.querySelector('[data-section="surveys-all-section"]');
+            if (link) link.click();
         }
 
         _resetCreateForm() {
@@ -1121,16 +1230,16 @@
                     start_date: convertLocalDateToISO(document.getElementById('surveyStartDate')?.value),
                     end_date: convertLocalDateToISO(document.getElementById('surveyEndDate')?.value),
                     welcome_message: document.getElementById('welcomeMessage')?.value || null,
-                    thank_you_message: document.getElementById('thankYouMessage')?.value || 'شكراً لمشاركتك',
-                    created_by: currentUser.id
+                    thank_you_message: document.getElementById('thankYouMessage')?.value || 'شكراً لمشاركتك'
                 };
-
-                if (status === 'active') {
-                    surveyData.published_at = new Date().toISOString();
-                }
 
                 let surveyId;
                 if (this.currentEditingSurvey) {
+                    // لا تُعدِّل created_by عند التحديث. اضبط published_at فقط عند أول نشر.
+                    if (status === 'active' && !this.currentEditingSurvey.published_at) {
+                        surveyData.published_at = new Date().toISOString();
+                    }
+
                     const { data, error } = await sb
                         .from('surveys')
                         .update(surveyData)
@@ -1141,6 +1250,11 @@
                     if (error) throw error;
                     surveyId = data.id;
                 } else {
+                    surveyData.created_by = currentUser.id;
+                    if (status === 'active') {
+                        surveyData.published_at = new Date().toISOString();
+                    }
+
                     const { data, error } = await sb
                         .from('surveys')
                         .insert(surveyData)
@@ -1315,6 +1429,71 @@
             } catch (error) {
                 console.error('Error enabling survey:', error);
                 this.showError('حدث خطأ أثناء تفعيل الاستبيان');
+            }
+        }
+
+        async editSurvey(surveyId) {
+            try {
+                const { data: survey, error } = await sb
+                    .from('surveys')
+                    .select('*, survey_questions(*)')
+                    .eq('id', surveyId)
+                    .single();
+
+                if (error || !survey) {
+                    this.showError('تعذّر العثور على الاستبيان');
+                    return;
+                }
+
+                const cached = allSurveys.find(s => s.id === surveyId);
+                if (cached) {
+                    survey.total_responses = cached.total_responses || 0;
+                    survey.total_completed = cached.total_completed || 0;
+                }
+
+                this._pendingEditSurvey = survey;
+
+                const section = document.querySelector('[data-section="surveys-create-section"]');
+                if (section) {
+                    section.click();
+                } else {
+                    await this.showCreateForm();
+                }
+            } catch (err) {
+                console.error('Error loading survey for edit:', err);
+                this.showError('حدث خطأ أثناء تحميل بيانات الاستبيان');
+            }
+        }
+
+        async publishSurvey(surveyId) {
+            const survey = allSurveys.find(s => s.id === surveyId);
+            if (!survey) {
+                this.showError('تعذّر العثور على الاستبيان');
+                return;
+            }
+
+            if (!survey.title || !survey.title.trim()) {
+                this.showError('أضف عنواناً للاستبيان قبل النشر');
+                return;
+            }
+            if ((survey.questions_count || 0) === 0) {
+                this.showError('أضف سؤالاً واحداً على الأقل قبل النشر');
+                return;
+            }
+
+            try {
+                const { error } = await sb
+                    .from('surveys')
+                    .update({ status: 'active' })
+                    .eq('id', surveyId);
+
+                if (error) throw error;
+
+                this.showSuccess('تم نشر الاستبيان بنجاح');
+                await this.loadAllSurveys();
+            } catch (error) {
+                console.error('Error publishing survey:', error);
+                this.showError('حدث خطأ أثناء نشر الاستبيان');
             }
         }
 
