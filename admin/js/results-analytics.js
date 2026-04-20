@@ -226,12 +226,9 @@
         renderDetailSkeleton() {
             return `
                 <div class="ra ra-detail">
-                    <div class="ra-detail__header">
-                        <div class="ra-skeleton" style="width:42px;height:42px;border-radius:12px;"></div>
-                        <div style="flex:1;">
-                            <div class="ra-skeleton" style="width:60%;height:18px;margin-bottom:8px;"></div>
-                            <div class="ra-skeleton" style="width:40%;height:12px;"></div>
-                        </div>
+                    <div class="ra-skeleton" style="width:220px;height:14px;border-radius:6px;margin-bottom:0.75rem;"></div>
+                    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid rgba(0,0,0,0.06);">
+                        <div class="ra-skeleton" style="width:60%;height:24px;border-radius:6px;"></div>
                     </div>
                     <div class="stats-grid">
                         ${Array(6).fill(0).map(() => `
@@ -268,20 +265,28 @@
 
             root.innerHTML = `
                 <div class="ra ra-detail">
-                    <!-- Header -->
-                    <div class="ra-detail__header">
-                        <button class="ra-back-btn" id="ra-back-btn" type="button" title="رجوع">
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </button>
-                        <div class="ra-detail__title-wrap">
-                            <h2 class="ra-detail__title">
-                                ${escapeHtml(survey.title || 'استبيان')}
-                                <span class="ra-status-pill" data-pulse="${info.pulse ? 1 : 0}" style="--c:${this.statusColor(status)};--c-rgb:${this.statusColorRgb(status)};">
-                                    <span class="ra-status-dot"></span>
-                                    ${info.label}
-                                </span>
-                            </h2>
-                            <p class="ra-detail__subtitle">${escapeHtml(survey.description || 'لا يوجد وصف')}</p>
+                    <nav class="page-breadcrumb" aria-label="مسار التنقل">
+                        <ol>
+                            <li>
+                                <button type="button" class="breadcrumb-link" id="backToSurveysListBtn">
+                                    <i class="fa-solid fa-list"></i>
+                                    استبياناتي
+                                </button>
+                            </li>
+                            <li class="breadcrumb-sep" aria-hidden="true">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </li>
+                            <li class="breadcrumb-current" aria-current="page">${escapeHtml(survey.title || 'استبيان')}</li>
+                        </ol>
+                    </nav>
+
+                    <header class="page-header">
+                        <div class="page-header__main">
+                            <h2 class="page-header__title">${escapeHtml(survey.title || 'استبيان')}</h2>
+                            <span class="ra-status-pill" data-pulse="${info.pulse ? 1 : 0}" style="--c:${this.statusColor(status)};--c-rgb:${this.statusColorRgb(status)};">
+                                <span class="ra-status-dot"></span>
+                                ${info.label}
+                            </span>
                         </div>
                         <div class="ra-detail__actions">
                             <button class="ra-action" id="ra-refresh-detail" type="button">
@@ -291,7 +296,11 @@
                                 <i class="fa-solid fa-download"></i><span>تصدير</span>
                             </button>
                         </div>
-                    </div>
+                    </header>
+
+                    ${survey.description ? `
+                    <p class="page-header__subtitle">${escapeHtml(survey.description)}</p>
+                    ` : ''}
 
                     ${!this.isOwner && this.shareInfo ? `
                     <!-- شريط تنبيه: مشارك معك -->
@@ -1159,14 +1168,25 @@
         // ─────────── أحداث Detail ───────────
 
         bindDetailEvents() {
-            document.getElementById('ra-back-btn')?.addEventListener('click', () => {
-                // الرجوع إلى تبويب "جميع الاستبيانات" — لم تعد هناك صفحة قائمة نتائج
+            const goBack = () => {
                 this.currentSurvey = null;
                 if (typeof window.navigateToSection === 'function') {
                     window.navigateToSection('surveys-all-section');
                 }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
+            };
+
+            document.getElementById('backToSurveysListBtn')?.addEventListener('click', goBack);
+
+            if (!this._raEscHandler) {
+                this._raEscHandler = (e) => {
+                    if (e.key !== 'Escape') return;
+                    if (document.querySelector('.modal-backdrop.active, .modal.show, .modal.is-open')) return;
+                    if (!this.currentSurvey) return;
+                    goBack();
+                };
+                document.addEventListener('keydown', this._raEscHandler);
+            }
 
             document.getElementById('ra-refresh-detail')?.addEventListener('click', async () => {
                 const btn = document.getElementById('ra-refresh-detail');

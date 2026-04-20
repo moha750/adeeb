@@ -492,6 +492,13 @@
     --modal-color-dark: #475569;
 }
 
+/* --- Primary (Blue) --- */
+.modal-primary {
+    --modal-color-rgb:  61, 143, 214;
+    --modal-color:      #3d8fd6;
+    --modal-color-dark: #274060;
+}
+
 /* --- Purple --- */
 .modal-purple {
     --modal-color-rgb:  139, 92, 246;
@@ -552,6 +559,31 @@
                             rgba(var(--modal-color-rgb), 0.14)  0%,
                             rgba(var(--modal-color-rgb), 0.055) 55%,
                             #ffffff 100%);
+}
+
+/* أيقونة dropzone — تطابق لون المودال (بدّل التدرّج الأزرق المثبت) */
+.modal-success      .form-dropzone-icon,
+.modal-danger       .form-dropzone-icon,
+.modal-warning      .form-dropzone-icon,
+.modal-info         .form-dropzone-icon,
+.modal-purple       .form-dropzone-icon,
+.modal-teal         .form-dropzone-icon,
+.modal-pink         .form-dropzone-icon {
+    background-image: linear-gradient(135deg,
+                          var(--modal-color) 0%,
+                          var(--modal-color-dark) 100%);
+    box-shadow: 0 4px 12px rgba(var(--modal-color-rgb), 0.30);
+}
+
+/* أيقونة عناصر قائمة الملفات — تطابق لون المودال (بدّل اللون الأزرق المثبت) */
+.modal-success      .form-file-icon,
+.modal-danger       .form-file-icon,
+.modal-warning      .form-file-icon,
+.modal-info         .form-file-icon,
+.modal-purple       .form-file-icon,
+.modal-teal         .form-file-icon,
+.modal-pink         .form-file-icon {
+    color: var(--modal-color-dark);
 }
 
 

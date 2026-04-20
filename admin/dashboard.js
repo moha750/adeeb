@@ -102,6 +102,8 @@
     }
 
     // بناء القائمة الجانبية بناءً على الصلاحيات
+    // مكشوفة لإعادة بناء القائمة بعد تغيّر حالة الترشح (تقديم/سحب…)
+    window.rebuildNavigation = () => buildNavigation();
     async function buildNavigation() {
         const nav = document.getElementById('mainNav');
         if (!nav) return;
@@ -251,37 +253,53 @@
             });
         }
         
-        // الانتخابات — يحتاج view_elections أو manage_elections
-        if (hasAnyPermission(['view_elections', 'manage_elections'])) {
-            const isElectionsAdmin = hasPermission('manage_elections');
-            if (isElectionsAdmin) {
+        // الانتخابات — للأدمن فقط (manage_elections)
+        if (hasPermission('manage_elections')) {
+            menuItems.push({
+                id: 'elections',
+                icon: 'fa-check-to-slot',
+                label: 'الانتخابات',
+                isDropdown: true,
+                subItems: [
+                    { id: 'elections-open',       icon: 'fa-door-open',       label: 'فتح باب انتخاب', section: 'elections-open' },
+                    { id: 'elections-candidates', icon: 'fa-user-plus',       label: 'المرشحون',        section: 'elections-candidates' },
+                    { id: 'elections-voting',     icon: 'fa-vote-yea',        label: 'إدارة التصويت',   section: 'elections-voting' },
+                    { id: 'elections-results',    icon: 'fa-flag-checkered',  label: 'إعلان النتائج',   section: 'elections-results' },
+                ]
+            });
+        }
+
+        // الترشح / ملفي الانتخابي — يتبدّل العنوان حسب وجود طلب ترشح نشط
+        try {
+            const [{ data: eligibleCount, error: eligErr }, { data: activeCandidacies, error: candErr }] = await Promise.all([
+                window.sbClient.rpc('count_eligible_elections', { p_user_id: currentUser.id }),
+                window.sbClient
+                    .from('election_candidates')
+                    .select('id')
+                    .eq('user_id', currentUser.id)
+                    .in('status', ['pending', 'needs_edit', 'approved'])
+                    .limit(1)
+            ]);
+            if (eligErr) throw eligErr;
+            if (candErr) throw candErr;
+            const hasActive = (activeCandidacies || []).length > 0;
+            if (hasActive) {
                 menuItems.push({
-                    id: 'elections',
-                    icon: 'fa-check-to-slot',
-                    label: 'الانتخابات',
-                    isDropdown: true,
-                    subItems: [
-                        { id: 'elections-open',       icon: 'fa-door-open',       label: 'فتح باب انتخاب', section: 'elections-open' },
-                        { id: 'elections-candidates', icon: 'fa-user-plus',       label: 'المرشحون',        section: 'elections-candidates' },
-                        { id: 'elections-voting',     icon: 'fa-vote-yea',        label: 'إدارة التصويت',   section: 'elections-voting' },
-                        { id: 'elections-results',    icon: 'fa-flag-checkered',  label: 'إعلان النتائج',   section: 'elections-results' },
-                    ]
+                    id: 'candidacy',
+                    icon: 'fa-file-signature',
+                    label: 'ملفي الانتخابي',
+                    section: 'candidacy-section'
                 });
-            } else {
-                // العضو العادي: أظهر التبويب فقط عند وجود انتخاب نشط (ترشّح أو تصويت مفتوح)
-                const { count: activeElectionsCount } = await sb
-                    .from('elections')
-                    .select('id', { count: 'exact', head: true })
-                    .in('status', ['candidacy_open', 'voting_open']);
-                if ((activeElectionsCount || 0) > 0) {
-                    menuItems.push({
-                        id: 'elections',
-                        icon: 'fa-hand-point-up',
-                        label: 'ترشَّح الآن',
-                        section: 'elections-section'
-                    });
-                }
+            } else if ((eligibleCount || 0) > 0) {
+                menuItems.push({
+                    id: 'candidacy',
+                    icon: 'fa-person-arrow-up-from-line',
+                    label: 'ترشّح',
+                    section: 'candidacy-section'
+                });
             }
+        } catch (e) {
+            console.error('[dashboard] candidacy menu check failed:', e);
         }
 
         // إحصائيات الزيارات — يحتاج view_site_stats
@@ -833,7 +851,7 @@
         'website-achievements-section':         'manage_website',
         'website-sponsors-section':             'manage_website',
         'website-faq-section':                  'manage_website',
-        'elections-section':                    'view_elections',
+        'elections-section':                    'manage_elections',
         'elections-open':                       'manage_elections',
         'elections-open-section':               'manage_elections',
         'elections-candidates':                 'manage_elections',
@@ -1198,6 +1216,15 @@
                 }
                 if (window.electionsManagerInstance) {
                     await window.electionsManagerInstance.initOpenSection();
+                }
+                break;
+
+            case 'candidacy-section':
+                if (window.ElectionsManager && !window.electionsManagerInstance) {
+                    window.electionsManagerInstance = new window.ElectionsManager();
+                }
+                if (window.electionsManagerInstance) {
+                    await window.electionsManagerInstance.initCandidacySection();
                 }
                 break;
 

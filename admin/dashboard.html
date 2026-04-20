@@ -49,8 +49,6 @@
     <link rel="stylesheet" href="css/unified-cards.css" />
     <!-- شريط التنكر وتأثيره على التخطيط -->
     <link rel="stylesheet" href="css/impersonation-bar.css" />
-    <!-- تحليلات الاستبيانات (صفحة استبيان واحد) -->
-    <link rel="stylesheet" href="css/survey-analytics.css" />
 </head>
 
 <body>
@@ -3237,24 +3235,45 @@
             </section>
 
             <!-- قسم فتح باب الترشح -->
+            <!-- قسم الترشح (للأعضاء المستهدفين) -->
+            <section id="candidacy-section" class="admin-section d-none">
+
+                <!-- عرض القائمة -->
+                <div id="candidacy-list-view">
+                    <div id="candidacyStats" style="margin-bottom: 1.5rem;"></div>
+
+                    <div class="card card--success">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-person-arrow-up-from-line"></i> أبواب الترشح المتاحة لك</h3>
+                            <button class="btn btn-success btn-icon btn-outline" id="candidacyRefreshBtn" title="تحديث">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="uc-grid" id="candidacyGrid">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- عرض التفاصيل (ملفي الانتخابي) -->
+                <div id="candidacy-detail-view" class="d-none">
+                    <div id="candidacyDetailContent">
+                        <!-- سيتم ملؤها ديناميكياً -->
+                    </div>
+                </div>
+
+            </section>
+
             <section id="elections-open-section" class="admin-section d-none">
 
                 <!-- إحصائية سريعة -->
                 <div id="openSectionStats" style="margin-bottom: 1.5rem;"></div>
 
-                <!-- كارد قائمة الانتخابات -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-door-open"></i> الانتخابات المفتوحة للترشح</h3>
-                        <button class="btn btn-primary btn-icon btn-outline" id="openSectionRefreshBtn" title="تحديث">
-                            <i class="fa-solid fa-rotate"></i>
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="uc-grid" id="openSectionGrid">
-                            <!-- سيتم ملؤها ديناميكياً -->
-                        </div>
-                    </div>
+                <!-- مجموعات الانتخابات بحسب الحالة -->
+                <div id="openSectionGrid">
+                    <!-- سيتم ملؤها ديناميكياً بمجموعات منفصلة لكل حالة -->
                 </div>
 
                 <!-- شريط الإجراءات اللاصق -->
@@ -3347,9 +3366,6 @@
 
                 <!-- عرض التفاصيل -->
                 <div id="elections-detail-view" class="d-none">
-                    <button class="btn btn-outline" id="backToElectionsListBtn" style="margin-bottom: 1rem;">
-                        <i class="fa-solid fa-arrow-right"></i> العودة للقائمة
-                    </button>
                     <div id="election-detail-content">
                         <!-- سيتم ملؤها ديناميكياً -->
                     </div>

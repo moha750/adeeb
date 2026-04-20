@@ -129,7 +129,10 @@
       "Bash(supabase functions *)",
       "WebFetch(domain:cdn.jsdelivr.net)",
       "WebFetch(domain:www.jsdelivr.com)",
-      "WebFetch(domain:registry.npmjs.org)"
+      "WebFetch(domain:registry.npmjs.org)",
+      "Bash(grep -E \"\\\\.\\(sql|js|ts\\)$\")",
+      "Bash(git -C \"c:\\\\Users\\\\moham\\\\adeeb\" log --oneline --all -- \"*elections*\")",
+      "Bash(git -C \"c:\\\\Users\\\\moham\\\\adeeb\" show e86c91c:admin/js/elections-manager.js)"
     ]
   }
 }
