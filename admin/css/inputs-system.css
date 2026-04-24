@@ -1861,6 +1861,8 @@ input[type="range"].form-range::-moz-range-thumb {
     --_card-color-rgb: 61, 143, 214;
     --_card-color: #3d8fd6;
     --_card-color-dark: #274060;
+    position:         relative;
+    overflow:         hidden;
     display:          flex;
     align-items:      center;
     justify-content:  flex-end;

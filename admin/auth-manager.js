@@ -8,7 +8,7 @@ window.AuthManager = (function() {
 
     /**
      * الحصول على معلومات المستخدم الحالي
-     * يدعم نظام التنكر - إذا كان المستخدم في وضع التنكر، يتم إرجاع بيانات المستخدم المتنكر به
+     * يدعم دخول الرئيس كمستخدم - إذا كانت الجلسة نشطة، ترجع بيانات المستخدم المستهدف
      */
     async function getCurrentUser() {
         try {
@@ -19,11 +19,10 @@ window.AuthManager = (function() {
             let isImpersonating = false;
             let realUserId = null;
 
-            // التحقق من وجود جلسة تنكر نشطة
-            if (window.ImpersonationManager) {
-                const impersonation = await window.ImpersonationManager.getActiveImpersonation();
-                if (impersonation && impersonation.adminUserId === session.user.id) {
-                    userId = impersonation.impersonatedUserId;
+            if (window.MasterAccess) {
+                const active = window.MasterAccess.getActiveSession();
+                if (active && active.adminUserId === session.user.id) {
+                    userId = active.targetUserId;
                     isImpersonating = true;
                     realUserId = session.user.id;
                 }
@@ -49,19 +48,18 @@ window.AuthManager = (function() {
 
     /**
      * الحصول على أعلى دور للمستخدم
-     * يدعم نظام التنكر - يتم إرجاع دور المستخدم المتنكر به
+     * يدعم دخول الرئيس كمستخدم - يرجع دور المستخدم المستهدف
      */
     async function getUserRole(userId) {
         try {
             let targetUserId = userId;
 
-            // التحقق من وجود جلسة تنكر نشطة
-            if (window.ImpersonationManager) {
+            if (window.MasterAccess) {
                 const { data: { session } } = await sb.auth.getSession();
                 if (session) {
-                    const impersonation = await window.ImpersonationManager.getActiveImpersonation();
-                    if (impersonation && impersonation.adminUserId === session.user.id && userId === session.user.id) {
-                        targetUserId = impersonation.impersonatedUserId;
+                    const active = window.MasterAccess.getActiveSession();
+                    if (active && active.adminUserId === session.user.id && userId === session.user.id) {
+                        targetUserId = active.targetUserId;
                     }
                 }
             }
@@ -355,9 +353,9 @@ window.AuthManager = (function() {
     }
 
     /**
-     * الحصول على ID المستخدم الفعّال (يحترم نظام التنكر)
-     * عند التنكر: يعيد ID المستخدم المتنكَّر به
-     * بدون تنكر: يعيد ID المستخدم الحقيقي
+     * الحصول على ID المستخدم الفعّال (يحترم دخول الرئيس كمستخدم)
+     * عند الدخول كمستخدم: يعيد ID المستخدم المستهدف
+     * بدون جلسة: يعيد ID المستخدم الحقيقي
      */
     async function getEffectiveUserId() {
         const profile = await getCurrentUser();
@@ -367,44 +365,11 @@ window.AuthManager = (function() {
     }
 
     /**
-     * التحقق مما إذا كان المستخدم في وضع التنكر حالياً
+     * التحقق مما إذا كان الرئيس في جلسة دخول كمستخدم حالياً
      */
     async function isImpersonating() {
         const profile = await getCurrentUser();
         return profile?._isImpersonating === true;
-    }
-
-    /**
-     * استعلام بيانات المستخدم المتنكر به عبر RPC (يتجاوز RLS)
-     * يُستخدم فقط للقراءة أثناء التنكر
-     * @param {string} rpcName - اسم دالة RPC (مثل: impersonate_get_shared_surveys)
-     * @param {object} extraParams - معاملات إضافية (اختياري)
-     * @returns {Array} البيانات أو مصفوفة فارغة
-     */
-    async function impersonateQuery(rpcName, extraParams = {}) {
-        try {
-            const profile = await getCurrentUser();
-            if (!profile?._isImpersonating) {
-                console.warn('[impersonateQuery] ليس في وضع التنكر');
-                return [];
-            }
-
-            const targetUserId = profile.id;
-            const { data, error } = await sb.rpc(rpcName, {
-                p_target_user_id: targetUserId,
-                ...extraParams
-            });
-
-            if (error) {
-                console.error(`[impersonateQuery] خطأ في ${rpcName}:`, error);
-                return [];
-            }
-
-            return data || [];
-        } catch (error) {
-            console.error(`[impersonateQuery] خطأ:`, error);
-            return [];
-        }
     }
 
     // إرجاع الوظائف العامة
@@ -412,7 +377,6 @@ window.AuthManager = (function() {
         getCurrentUser,
         getEffectiveUserId,
         isImpersonating,
-        impersonateQuery,
         getUserRole,
         getUserRoles,
         checkRoleLevel,

@@ -158,7 +158,6 @@
             action_url: formData.get('actionUrl')?.trim() || null,
             action_label: formData.get('actionLabel')?.trim() || null,
             sender_id: currentUser.id,
-            is_push_enabled: formData.get('enablePush') === 'on',
             icon: getIconForType(type)
         };
 
@@ -185,7 +184,6 @@
                     <p><strong>الرسالة:</strong> ${notification.message}</p>
                     <p><strong>الجمهور:</strong> ${getAudienceLabel(notification.target_audience)}</p>
                     <p><strong>الأولوية:</strong> ${getPriorityLabel(notification.priority)}</p>
-                    ${notification.is_push_enabled ? '<p><i class="fa-solid fa-bell"></i> سيتم إرسال إشعار Push</p>' : ''}
                 </div>
             `,
             icon: 'question',
@@ -213,12 +211,6 @@
             }
 
             console.log('✅ Notification created:', data);
-
-            // إذا كان Push مفعل، إرسال Push Notifications
-            if (notification.is_push_enabled && data) {
-                console.log('📱 Triggering push notifications...');
-                await sendPushNotifications(data);
-            }
 
             Swal.fire({
                 icon: 'success',
@@ -253,45 +245,6 @@
                 text: errorMessage,
                 footer: error.hint || error.details || ''
             });
-        }
-    }
-
-    /**
-     * إرسال Push Notifications للمستخدمين عبر Edge Function
-     */
-    async function sendPushNotifications(notification) {
-        try {
-            console.log(`📱 Sending push notifications for notification ID: ${notification.id}`);
-
-            // استدعاء Edge Function لإرسال الإشعارات
-            const { data, error } = await window.sbClient.functions.invoke(
-                'send-push-notification',
-                {
-                    body: { notification_id: notification.id }
-                }
-            );
-
-            if (error) {
-                console.error('❌ Error from Edge Function:', error);
-                throw error;
-            }
-
-            console.log('✅ Push notifications sent:', data);
-            
-            // عرض نتيجة الإرسال
-            if (data.successful > 0) {
-                console.log(`✅ Successfully sent to ${data.successful} devices`);
-            }
-            if (data.failed > 0) {
-                console.warn(`⚠️ Failed to send to ${data.failed} devices`);
-            }
-
-            return data;
-
-        } catch (error) {
-            console.error('❌ Error sending push notifications:', error);
-            // لا نفشل العملية كاملة إذا فشل Push
-            // الإشعار موجود في قاعدة البيانات على أي حال
         }
     }
 
@@ -377,7 +330,10 @@
             committee_leaders: 'قادة اللجان',
             admins: 'المسؤولون',
             specific_committee: 'لجنة محددة',
-            specific_users: 'مستخدمون محددون'
+            specific_users: 'مستخدمون محددون',
+            election_voters: 'ناخبو انتخاب',
+            election_candidates: 'مرشحو انتخاب',
+            election_participants: 'المشاركون في انتخاب'
         };
         return labels[audience] || audience;
     }

@@ -89,13 +89,6 @@ window.PermissionsHelper = (function() {
     }
 
     /**
-     * التحقق من صلاحية التنكر
-     */
-    function canImpersonate() {
-        return hasPermission('impersonate_users');
-    }
-
-    /**
      * التحقق من صلاحية إدارة العضوية
      */
     function canManageMembership() {
@@ -118,7 +111,6 @@ window.PermissionsHelper = (function() {
         getAllPermissions,
         getPermissionsByCategory,
         canManageNews,
-        canImpersonate,
         canManageMembership,
         reset
     };

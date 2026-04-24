@@ -132,7 +132,32 @@
       "WebFetch(domain:registry.npmjs.org)",
       "Bash(grep -E \"\\\\.\\(sql|js|ts\\)$\")",
       "Bash(git -C \"c:\\\\Users\\\\moham\\\\adeeb\" log --oneline --all -- \"*elections*\")",
-      "Bash(git -C \"c:\\\\Users\\\\moham\\\\adeeb\" show e86c91c:admin/js/elections-manager.js)"
+      "Bash(git -C \"c:\\\\Users\\\\moham\\\\adeeb\" show e86c91c:admin/js/elections-manager.js)",
+      "Bash(node -c admin/js/elections-manager.js)",
+      "Bash(node --check admin/js/elections-manager.js)",
+      "mcp__supabase__list_extensions",
+      "mcp__supabase__list_migrations",
+      "Bash(node --check \"c:/Users/moham/adeeb/admin/js/elections-manager.js\")",
+      "Bash(node --check \"c:/Users/moham/adeeb/admin/js/notifications-manager.js\")",
+      "Bash(node --check \"c:/Users/moham/adeeb/admin/js/candidates-manager.js\")",
+      "Bash(node --check \"c:/Users/moham/adeeb/admin/js/elections-notifications.js\")",
+      "Bash(grep -E \"\\(^[^/]*\\\\.html$|/[^/]*\\\\.html$\\)\")",
+      "Bash(node -c c:/Users/moham/adeeb/admin/js/elections-manager.js)",
+      "Bash(node -c c:/Users/moham/adeeb/admin/dashboard.js)",
+      "Bash(git -C c:/Users/moham/adeeb diff --stat admin/dashboard.js admin/js/elections-manager.js admin/css/vote-now.css)",
+      "Bash(git -C c:/Users/moham/adeeb status --short admin/css/vote-now.css admin/dashboard.js admin/js/elections-manager.js)",
+      "Bash(node --check admin/js/profile.js)",
+      "Bash(git log *)",
+      "Bash(grep -oE '\\(public\\\\.\\(election|has_election|get_vote_weight|is_user_eligible|get_anonymized|get_candidates_with|get_eligible_elections|get_votable_elections|get_user_candidacies|get_election_results|count_user_election|declare_winner|archive_election|cancel_election|transition_election|submit_candidacy|review_candidate|withdraw_candidacy|cast_vote|set_updated_at_now|prevent_vote_update|get_user_primary_role|auto_grant_winner_role|cascade_membership|sweep_election|lock_election|promote_to_voting|enforce_[a-z_]+\\)[a-z_]*\\)' \"C:\\\\\\\\Users\\\\\\\\moham\\\\\\\\.claude\\\\\\\\projects\\\\\\\\c--Users-moham-adeeb\\\\\\\\bd333ac8-3d77-4262-aa79-bdd20e3ed696\\\\\\\\tool-results\\\\\\\\toolu_013qDobNFWh8jhtCKAhgYdqM.json\")",
+      "Bash(grep -oE '\\(\"detail\":\"[^\"]*\\(election|enforce_single_voting|lock_election|prevent_vote_update|set_updated_at_now\\)[^\"]*\"|\"title\":\"[^\"]*\"\\)' \"C:\\\\\\\\Users\\\\\\\\moham\\\\\\\\.claude\\\\\\\\projects\\\\\\\\c--Users-moham-adeeb\\\\\\\\bd333ac8-3d77-4262-aa79-bdd20e3ed696\\\\\\\\tool-results\\\\\\\\toolu_013qDobNFWh8jhtCKAhgYdqM.json\")",
+      "Bash(grep -oE '\\\\{\"name\":\"[a-z_]+\",\"title\":\"[^\"]+\",\"level\":\"[A-Z]+\"[^}]*\"detail\":\"[^\"]*\"' \"C:\\\\\\\\Users\\\\\\\\moham\\\\\\\\.claude\\\\\\\\projects\\\\\\\\c--Users-moham-adeeb\\\\\\\\bd333ac8-3d77-4262-aa79-bdd20e3ed696\\\\\\\\tool-results\\\\\\\\toolu_013qDobNFWh8jhtCKAhgYdqM.json\")",
+      "Bash(cp \"/c/Users/moham/.claude/projects/c--Users-moham-adeeb/bd333ac8-3d77-4262-aa79-bdd20e3ed696/tool-results/toolu_013qDobNFWh8jhtCKAhgYdqM.json\" /tmp/advisor.json)",
+      "Bash(node -e \"const fs=require\\('fs'\\);const data=JSON.parse\\(fs.readFileSync\\('/tmp/advisor.json','utf-8'\\)\\);const text=data[0].text;const m=text.indexOf\\('{\\\\\"result\\\\\"'\\);const payload=JSON.parse\\(text.substring\\(m\\)\\);const keys=['election','lock_election','prevent_vote','set_updated_at_now','enforce_single_voting','cascade_membership','auto_grant','sweep_election','has_election','get_vote_weight','is_user_eligible','declare_winner','archive_election','submit_candidacy','cast_vote','withdraw_candidacy','review_candidate','cancel_election','transition_election','get_anonymized','get_candidates_with','get_eligible_elections','get_votable_elections','get_user_candidacies','get_election_results','count_user_election','get_user_primary_role'];payload.result.lints.forEach\\(l=>{if\\(keys.some\\(k=>\\(l.detail||''\\).includes\\(k\\)\\)\\){console.log\\(l.level,'|',l.name,'|',l.detail\\);}}\\);\")",
+      "Bash(cp \"/c/Users/moham/.claude/projects/c--Users-moham-adeeb/bd333ac8-3d77-4262-aa79-bdd20e3ed696/tool-results/toolu_013qDobNFWh8jhtCKAhgYdqM.json\" \"/c/Users/moham/adeeb/advisor.json\")",
+      "Bash(node -e \"const fs=require\\('fs'\\);const data=JSON.parse\\(fs.readFileSync\\('advisor.json','utf-8'\\)\\);const text=data[0].text;const m=text.indexOf\\('{\\\\\"result\\\\\"'\\);const payload=JSON.parse\\(text.substring\\(m\\)\\);const keys=['election','lock_election','prevent_vote','set_updated_at_now','enforce_single_voting','cascade_membership','auto_grant','sweep_election','has_election','get_vote_weight','is_user_eligible','declare_winner','archive_election','submit_candidacy','cast_vote','withdraw_candidacy','review_candidate','cancel_election','transition_election','get_anonymized','get_candidates_with','get_eligible_elections','get_votable_elections','get_user_candidacies','get_election_results','count_user_election','get_user_primary_role'];payload.result.lints.forEach\\(l=>{if\\(keys.some\\(k=>\\(l.detail||''\\).includes\\(k\\)\\)\\){console.log\\(l.level,'|',l.name,'|',l.detail\\);}}\\);\")",
+      "Bash(node --check \"c:/Users/moham/adeeb/admin/dashboard.js\")",
+      "Bash(xargs -I {} sh -c 'echo \"{}:\"; head -3 \"c:/Users/moham/adeeb/admin/css/{}\" | grep -E \"^/\\\\*|نظام|نماذج\"')",
+      "Bash(node -c \"c:/Users/moham/adeeb/admin/js/elections-manager.js\")"
     ]
   }
 }

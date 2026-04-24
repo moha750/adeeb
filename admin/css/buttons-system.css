@@ -8,43 +8,48 @@
 
 /* ============================================================
    § 1  CSS Design Tokens
+   ------------------------------------------------------------
+   جميع الألوان تُستهلك من design-tokens.css (المصدر الوحيد).
+   الأسماء أدناه aliases محلية للحفاظ على توافق الكود القديم.
    ============================================================ */
 :root {
-    /* — Brand Blue */
-    --btn-blue-50:  #eff6ff;
-    --btn-blue-100: #dbeafe;
-    --btn-blue-500: #80aace;
-    --btn-blue-600: #3d77bc;
-    --btn-blue-700: #0b4fa7;
+    /* — Brand Blue ← --color-brand-* */
+    --btn-blue-50:  var(--color-brand-50);
+    --btn-blue-100: var(--color-brand-100);
+    --btn-blue-500: var(--color-brand-500);
+    --btn-blue-600: var(--color-brand-600);
+    --btn-blue-700: var(--color-brand-700);
 
-    /* — Violet (NEW) */
-    --btn-violet-50:  #f5f3ff;
-    --btn-violet-100: #ede9fe;
-    --btn-violet-500: #8b5cf6;
-    --btn-violet-600: #7c3aed;
-    --btn-violet-700: #6d28d9;
-    --btn-violet-800: #5b21b6;
+    /* — Violet ← --color-purple-* */
+    --btn-violet-50:  var(--color-purple-50);
+    --btn-violet-100: var(--color-purple-100);
+    --btn-violet-500: var(--color-purple-500);
+    --btn-violet-600: var(--color-purple-600);
+    --btn-violet-700: var(--color-purple-700);
+    --btn-violet-800: var(--color-purple-800);
 
-/* — Semantic */
-    --btn-red-500:   #ef4444;
-    --btn-red-600:   #dc2626;
-    --btn-red-700:   #b91c1c;
+    /* — Semantic — Red ← --color-danger-* */
+    --btn-red-500:   var(--color-danger-500);
+    --btn-red-600:   var(--color-danger-600);
+    --btn-red-700:   var(--color-danger-700);
 
-    --btn-green-500: #10b981;
-    --btn-green-600: #059669;
-    --btn-green-700: #047857;
+    /* — Green ← --color-success-* */
+    --btn-green-500: var(--color-success-500);
+    --btn-green-600: var(--color-success-600);
+    --btn-green-700: var(--color-success-700);
 
-    --btn-amber-500: #f59e0b;
-    --btn-amber-600: #d97706;
-    --btn-amber-700: #b45309;
+    /* — Amber ← --color-warning-* */
+    --btn-amber-500: var(--color-warning-500);
+    --btn-amber-600: var(--color-warning-600);
+    --btn-amber-700: var(--color-warning-700);
 
-    /* — Neutral */
-    --btn-slate-100: #f1f5f9;
-    --btn-slate-200: #e2e8f0;
-    --btn-slate-300: #cbd5e1;
-    --btn-slate-400: #94a3b8;
-    --btn-slate-500: #64748b;
-    --btn-slate-600: #475569;
+    /* — Neutral / Slate ← --color-info-* (الرصاصي هو Info في النظام الموحّد) */
+    --btn-slate-100: var(--color-info-100);
+    --btn-slate-200: var(--color-info-200);
+    --btn-slate-300: var(--color-info-300);
+    --btn-slate-400: var(--color-info-400);
+    --btn-slate-500: var(--color-info-500);
+    --btn-slate-600: var(--color-info-600);
 
     /* — Spacing */
     --btn-py-sm:  0.42rem;
@@ -168,6 +173,9 @@
 .btn-primary::before,
 .btn-violet::before,
 .btn-slate::before,
+.btn-info::before,
+.btn-teal::before,
+.btn-pink::before,
 .btn-danger::before,
 .btn-success::before,
 .btn-warning::before {
@@ -193,6 +201,9 @@
 .btn-primary:hover:not(:disabled):not(.btn-disabled)::before,
 .btn-violet:hover:not(:disabled):not(.btn-disabled)::before,
 .btn-slate:hover:not(:disabled):not(.btn-disabled)::before,
+.btn-info:hover:not(:disabled):not(.btn-disabled)::before,
+.btn-teal:hover:not(:disabled):not(.btn-disabled)::before,
+.btn-pink:hover:not(:disabled):not(.btn-disabled)::before,
 .btn-danger:hover:not(:disabled):not(.btn-disabled)::before,
 .btn-success:hover:not(:disabled):not(.btn-disabled)::before,
 .btn-warning:hover:not(:disabled):not(.btn-disabled)::before {
@@ -301,36 +312,41 @@
         0 0 0 3.5px rgba(148,163,184,0.5) !important;
 }
 
-/* ── Slate (رصاصي — لون الكاردات المؤرشفة) ──────────────── */
-.btn-slate {
-    background-image: linear-gradient(155deg, #94a3b8 0%, #64748b 55%, #475569 100%);
-    border-color:     #475569;
+/* ── Slate / Info (رصاصي — معلومات وكاردات مؤرشفة)
+       .btn-info و .btn-slate متطابقان — الاسمان مدعومان للمعنى الدلالي */
+.btn-slate,
+.btn-info {
+    background-image: linear-gradient(155deg, var(--color-info-400) 0%, var(--color-info-500) 55%, var(--color-info-600) 100%);
+    border-color:     var(--color-info-600);
     color:            #fff;
     box-shadow:
         0 1px 2px  rgba(0,0,0,0.15),
-        0 4px 14px rgba(71,85,105,0.35);
+        0 4px 14px rgba(var(--color-info-rgb), 0.35);
 }
 
-.btn-slate:hover:not(:disabled):not(.btn-disabled) {
-    background-image: linear-gradient(155deg, #64748b 0%, #475569 100%);
+.btn-slate:hover:not(:disabled):not(.btn-disabled),
+.btn-info:hover:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, var(--color-info-500) 0%, var(--color-info-600) 100%);
     box-shadow:
         0 2px 5px  rgba(0,0,0,0.16),
-        0 10px 28px rgba(71,85,105,0.45),
-        0 0 0 0 rgba(71,85,105,0);
+        0 10px 28px rgba(var(--color-info-rgb), 0.45),
+        0 0 0 0 rgba(var(--color-info-rgb), 0);
     transform: scale(1.02);
 }
 
-.btn-slate:active:not(:disabled):not(.btn-disabled) {
-    background-image: linear-gradient(155deg, #475569 0%, #334155 100%);
+.btn-slate:active:not(:disabled):not(.btn-disabled),
+.btn-info:active:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, var(--color-info-600) 0%, var(--color-info-700) 100%);
     box-shadow:       0 1px 4px rgba(0,0,0,0.2);
     transform:        translateY(0) scale(0.975);
 }
 
-.btn-slate:focus-visible {
+.btn-slate:focus-visible,
+.btn-info:focus-visible {
     box-shadow:
         0 2px 5px  rgba(0,0,0,0.15),
-        0 6px 18px rgba(71,85,105,0.4),
-        0 0 0 3.5px rgba(71,85,105,0.4) !important;
+        0 6px 18px rgba(var(--color-info-rgb), 0.4),
+        0 0 0 3.5px rgba(var(--color-info-rgb), 0.4) !important;
 }
 
 
@@ -472,6 +488,70 @@
 }
 
 
+/* ── Teal (تركوازي) ──────────────────────────────────────── */
+.btn-teal {
+    background-image: linear-gradient(155deg, #5eead4 0%, var(--color-teal-600) 60%, #0a6b60 100%);
+    border-color:     var(--color-teal-700);
+    color:            #fff;
+    box-shadow:
+        0 1px 2px  rgba(0,0,0,0.15),
+        0 4px 14px rgba(var(--color-teal-rgb), 0.35);
+}
+
+.btn-teal:hover:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, var(--color-teal-600) 0%, var(--color-teal-700) 100%);
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.16),
+        0 10px 28px rgba(var(--color-teal-rgb), 0.48);
+    transform: scale(1.02);
+}
+
+.btn-teal:active:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, var(--color-teal-700) 0%, var(--color-teal-700) 100%);
+    box-shadow:       0 1px 4px rgba(0,0,0,0.2);
+    transform:        translateY(0) scale(0.975);
+}
+
+.btn-teal:focus-visible {
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.15),
+        0 6px 18px rgba(var(--color-teal-rgb), 0.4),
+        0 0 0 3.5px rgba(var(--color-teal-rgb), 0.38) !important;
+}
+
+
+/* ── Pink (وردي) ─────────────────────────────────────────── */
+.btn-pink {
+    background-image: linear-gradient(155deg, #f472b6 0%, var(--color-pink-600) 60%, #9f1239 100%);
+    border-color:     var(--color-pink-700);
+    color:            #fff;
+    box-shadow:
+        0 1px 2px  rgba(0,0,0,0.15),
+        0 4px 14px rgba(var(--color-pink-rgb), 0.35);
+}
+
+.btn-pink:hover:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, var(--color-pink-600) 0%, var(--color-pink-700) 100%);
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.16),
+        0 10px 28px rgba(var(--color-pink-rgb), 0.48);
+    transform: scale(1.02);
+}
+
+.btn-pink:active:not(:disabled):not(.btn-disabled) {
+    background-image: linear-gradient(155deg, var(--color-pink-700) 0%, var(--color-pink-700) 100%);
+    box-shadow:       0 1px 4px rgba(0,0,0,0.2);
+    transform:        translateY(0) scale(0.975);
+}
+
+.btn-pink:focus-visible {
+    box-shadow:
+        0 2px 5px  rgba(0,0,0,0.15),
+        0 6px 18px rgba(var(--color-pink-rgb), 0.4),
+        0 0 0 3.5px rgba(var(--color-pink-rgb), 0.38) !important;
+}
+
+
 /* ── Warning ─────────────────────────────────────────────── */
 .btn-warning {
     background-image: linear-gradient(155deg, #fcd34d 0%, var(--btn-amber-500) 50%, var(--btn-amber-700) 100%);
@@ -565,16 +645,17 @@
     box-shadow:         0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* ── Slate Outline ───────────────────────────────────────── */
-.btn-slate.btn-outline {
-    --btn-c-border:     #94a3b8;
-    --btn-c-text:       #475569;
-    --btn-c-bg-subtle:  rgba(71,85,105,0.08);
-    --btn-c-grad-from:  #94a3b8;
-    --btn-c-grad-via:   #64748b;
-    --btn-c-grad-to:    #475569;
+/* ── Slate / Info Outline (رصاصي) ───────────────────────── */
+.btn-slate.btn-outline,
+.btn-info.btn-outline {
+    --btn-c-border:     var(--color-info-400);
+    --btn-c-text:       var(--color-info-600);
+    --btn-c-bg-subtle:  rgba(var(--color-info-rgb), 0.08);
+    --btn-c-grad-from:  var(--color-info-400);
+    --btn-c-grad-via:   var(--color-info-500);
+    --btn-c-grad-to:    var(--color-info-600);
     --btn-c-hover-text: #fff;
-    --btn-c-shadow-rgb: 71,85,105;
+    --btn-c-shadow-rgb: var(--color-info-rgb);
     background-image:   none;
     background-color:   var(--btn-c-bg-subtle);
     border-color:       var(--btn-c-border);
@@ -611,6 +692,40 @@
     --btn-c-grad-to:    #036b4a;
     --btn-c-hover-text: #fff;
     --btn-c-shadow-rgb: 16,185,129;
+    background-image:   none;
+    background-color:   var(--btn-c-bg-subtle);
+    border-color:       var(--btn-c-border);
+    color:              var(--btn-c-text);
+    box-shadow:         0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* ── Teal Outline ────────────────────────────────────────── */
+.btn-teal.btn-outline {
+    --btn-c-border:     var(--color-teal-500);
+    --btn-c-text:       var(--color-teal-600);
+    --btn-c-bg-subtle:  rgba(var(--color-teal-rgb), 0.1);
+    --btn-c-grad-from:  #5eead4;
+    --btn-c-grad-via:   var(--color-teal-600);
+    --btn-c-grad-to:    #0a6b60;
+    --btn-c-hover-text: #fff;
+    --btn-c-shadow-rgb: var(--color-teal-rgb);
+    background-image:   none;
+    background-color:   var(--btn-c-bg-subtle);
+    border-color:       var(--btn-c-border);
+    color:              var(--btn-c-text);
+    box-shadow:         0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* ── Pink Outline ────────────────────────────────────────── */
+.btn-pink.btn-outline {
+    --btn-c-border:     var(--color-pink-500);
+    --btn-c-text:       var(--color-pink-600);
+    --btn-c-bg-subtle:  rgba(var(--color-pink-rgb), 0.1);
+    --btn-c-grad-from:  #f472b6;
+    --btn-c-grad-via:   var(--color-pink-600);
+    --btn-c-grad-to:    #9f1239;
+    --btn-c-hover-text: #fff;
+    --btn-c-shadow-rgb: var(--color-pink-rgb);
     background-image:   none;
     background-color:   var(--btn-c-bg-subtle);
     border-color:       var(--btn-c-border);
@@ -723,53 +838,102 @@
 
 
 /* ============================================================
-   § 8  Loading State — Dual-ring Premium Spinner
+   § 8  Loading State — Inline Dual-ring Spinner
+   ============================================================
+   `btn-loading` و `btn-submitting` يتشاركان نفس الشكل البصري:
+     spinner حلقي سطري يسبق نص الزر، مع لون الزر الأصلي.
+   -----------------------------------------------------------
+   • btn-loading  — يُضاف بـ JS بدون تعديل HTML (يحقن الـ spinner
+                    عبر ::before). مناسب لتحويل أي زر إلى حالة
+                    "جارٍ التحميل" دون تغيير نصه.
+                    JS: btn.classList.add('btn-loading');
+
+   • Submitting   — نمط HTML صريح: زر بـ .btn-submitting و
+                    <span class="btn-spinner"></span> قبل النص
+                    (مثل "جاري الإرسال...").
+                    يحافظ على لون الزر الأصلي (لا نستخدم disabled
+                    لأنه يحوّله إلى رمادي).
+                    الاستخدام: نماذج (حفظ/رفع/إرسال)، عمليات حساسة
+                               (حذف، دفع)، عمليات >1 ثانية.
+                    JS: btn.classList.add('btn-submitting');
+                        btn.setAttribute('aria-busy', 'true');
+                        btn.innerHTML = '<span class="btn-spinner"></span> جاري ...';
    ============================================================ */
 .btn-loading {
     cursor:         wait !important;
     pointer-events: none;
 }
 
-/* Fade text to transparent */
-.btn-loading > *:not(span.btn-ripple) {
-    opacity:    0 !important;
-    transform:  scale(0.8) !important;
-    transition:
-        opacity   var(--btn-dur-fast) var(--btn-ease),
-        transform var(--btn-dur-fast) var(--btn-ease);
-}
-
+/* Inline dual-ring spinner prepended to button content */
 .btn-loading::before {
-    display: none !important;
+    content:          '' !important;
+    display:          inline-block !important;
+    position:         static !important;
+    inset:            auto !important;
+    width:            1em !important;
+    height:           1em !important;
+    vertical-align:   -0.15em;
+    border-radius:    50% !important;
+    border:           2px solid transparent !important;
+    border-top-color:    rgba(255,255,255,0.95) !important;
+    border-right-color:  rgba(255,255,255,0.45) !important;
+    border-bottom-color: rgba(255,255,255,0.12) !important;
+    background:       none !important;
+    opacity:          1 !important;
+    animation:        _btn-spin 0.6s linear infinite;
+    flex-shrink:      0;
+    margin-inline-end: 0.15rem;
 }
 
-/* Dual-ring spinner via ::after */
+/* Outline / ghost spinner — uses variant color via CSS variable */
+.btn-loading.btn-outline::before,
+.btn-loading.btn-ghost::before {
+    border-top-color:    var(--btn-c-text,   var(--btn-blue-600)) !important;
+    border-right-color:  rgba(var(--btn-c-shadow-rgb, 79,130,168), 0.38) !important;
+    border-bottom-color: rgba(var(--btn-c-shadow-rgb, 79,130,168), 0.1) !important;
+}
+
 .btn-loading::after {
-    content:          '';
-    position:         absolute;
-    inset:            0;
-    margin:           auto;
-    width:            1.15em;
-    height:           1.15em;
-    border-radius:    50%;
-    border:           2.5px solid transparent;
-    border-top-color:    rgba(255,255,255,0.95);
-    border-right-color:  rgba(255,255,255,0.45);
-    border-bottom-color: rgba(255,255,255,0.12);
-    animation: _btn-spin 0.6s linear infinite;
-    z-index: 9;
-}
-
-/* Outline spinner — uses variant color via CSS variable     */
-.btn-loading.btn-outline::after {
-    border-top-color:    var(--btn-c-text,   var(--btn-blue-600));
-    border-right-color:  rgba(var(--btn-c-shadow-rgb, 79,130,168), 0.38);
-    border-bottom-color: rgba(var(--btn-c-shadow-rgb, 79,130,168), 0.1);
+    display: none !important;
 }
 
 
 @keyframes _btn-spin {
     to { transform: rotate(360deg); }
+}
+
+
+/* ───────────────────────────────────────────────────────────
+   Inline Submitting Spinner — نفس حركة btn-loading مع نص مرئي
+   الاستخدام: <button class="btn btn-primary btn-submitting" aria-busy="true">
+                  <span class="btn-spinner"></span> جاري الإرسال...
+              </button>
+   ملاحظة: لا تستخدم disabled لأنه يحوّل لون الزر إلى رمادي.
+           .btn-submitting يمنع التفاعل مع الحفاظ على لون الزر الأصلي.
+   ─────────────────────────────────────────────────────────── */
+.btn-submitting {
+    cursor:         wait !important;
+    pointer-events: none;
+}
+
+.btn-spinner {
+    display:          inline-block;
+    width:            1em;
+    height:           1em;
+    vertical-align:   -0.15em;
+    border-radius:    50%;
+    border:           2px solid transparent;
+    border-top-color:    rgba(255,255,255,0.95);
+    border-right-color:  rgba(255,255,255,0.45);
+    border-bottom-color: rgba(255,255,255,0.12);
+    animation:        _btn-spin 0.6s linear infinite;
+    flex-shrink:      0;
+}
+
+.btn-outline .btn-spinner {
+    border-top-color:    var(--btn-c-text, var(--btn-blue-600));
+    border-right-color:  rgba(var(--btn-c-shadow-rgb, 79,130,168), 0.38);
+    border-bottom-color: rgba(var(--btn-c-shadow-rgb, 79,130,168), 0.1);
 }
 
 

@@ -616,12 +616,6 @@
             'create_newsletter':           'إنشاء نشرة بريدية',
             'send_newsletter':             'إرسال نشرة بريدية',
             'delete_newsletter':           'حذف نشرة بريدية',
-            // انتخابات
-            'create_election':             'إنشاء انتخابات',
-            'update_election':             'تعديل انتخابات',
-            'delete_election':             'حذف انتخابات',
-            'start_election':              'بدء الانتخابات',
-            'end_election':                'إنهاء الانتخابات',
             // استبيانات
             'create_survey':               'إنشاء استبيان',
             'update_survey':               'تعديل استبيان',
@@ -681,8 +675,6 @@
             'news_workflow':       'سير الأخبار',
             'news_draft':          'مسودة أخبار',
             'newsletter':          'النشرة البريدية',
-            'elections':           'الانتخابات',
-            'election':            'انتخاب',
             'positions':           'المناصب',
             'position':            'منصب',
             'surveys':             'الاستبيانات',

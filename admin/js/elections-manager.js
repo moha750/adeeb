@@ -1,3236 +1,2949 @@
 /**
- * مدير نظام الانتخابات - نادي أدِيب
+ * نظام إدارة الانتخابات — نادي أدِيب
+ * Manager بأوضاع متعددة:
+ *   admin-manage   : Kanban + إنشاء/تحكم/إعلان/أرشفة
+ *   admin-review   : مراجعة المرشحين
+ *   viewer         : قراءة فقط (مستشار/عضو HR)
+ *   member-run     : قائمة الانتخابات المفتوحة للترشح + نموذج ترشح
+ *   member-profile : ترشحاتي — انسحاب/تعديل
+ *   member-vote    : اقتراع مجهّل
+ *
+ * UI: يعتمد فقط على ملفات admin/css/ (unified-cards / buttons-system /
+ *     modals / inputs-system / filters / stats-cards) + inline styles.
  */
 
-class ElectionsManager {
-    constructor() {
-        this.supabase = window.sbClient;
-        this.elections = [];
-        this.currentElection = null;
-        this.currentUser = null;
-        this.currentUserRole = null;
-        this.voteWeights = [];
-        this.roles = [];
-        this.committees = [];
-        this.departments = [];
-        this.initialized = false;
-        this.openSectionListenersSet = false;
+(function() {
+    const sb = window.sbClient;
+
+    const ROLE_LABELS = {
+        department_head:          'رئيس',
+        committee_leader:         'قائد',
+        deputy_committee_leader:  'نائب'
+    };
+
+    const STATUS_LABELS = {
+        candidacy_open:    'ترشح مفتوح',
+        candidacy_closed:  'ترشح مغلق',
+        voting_open:       'تصويت مفتوح',
+        voting_closed:     'تصويت مغلق',
+        completed:         'مكتمل',
+        cancelled:         'ملغى'
+    };
+
+    const CANDIDATE_STATUS_LABELS = {
+        pending:    'قيد المراجعة',
+        approved:   'مقبول',
+        rejected:   'مرفوض',
+        needs_edit: 'بحاجة للتعديل',
+        withdrawn:  'منسحب'
+    };
+
+    const MIME_LABELS = {
+        'application/pdf': 'PDF',
+        'application/msword': 'Word',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word',
+        'text/plain': 'Text',
+        'image/png': 'PNG',
+        'image/jpeg': 'JPEG'
+    };
+
+    const ALLOWED_MIMES = Object.keys(MIME_LABELS);
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    const STORAGE_BUCKET = 'election-files';
+
+    /* ─── ربط الحالات ↔ ألوان النظام الموحّد ─── */
+    const STATUS_BADGE = {
+        candidacy_open:    'primary',
+        candidacy_closed:  'purple',
+        voting_open:       'success',
+        voting_closed:     'warning',
+        completed:         'primary',
+        cancelled:         'danger'
+    };
+
+    const STATUS_CARD = {
+        candidacy_open:    'primary',
+        candidacy_closed:  'purple',
+        voting_open:       'success',
+        voting_closed:     'warning',
+        completed:         'info',
+        cancelled:         'danger'
+    };
+
+    const STATUS_ICON = {
+        candidacy_open:    'bullhorn',
+        candidacy_closed:  'hourglass-end',
+        voting_open:       'check-to-slot',
+        voting_closed:     'flag-checkered',
+        completed:         'trophy',
+        cancelled:         'ban'
+    };
+
+    const CANDIDATE_BADGE = {
+        pending:    'warning',
+        approved:   'success',
+        rejected:   'danger',
+        needs_edit: 'info',
+        withdrawn:  'secondary'
+    };
+
+    /* variants المتوفّرة في .empty-state: success / warning / danger / purple / teal / gray
+       (اللون الافتراضي أزرق = info) */
+    const STATUS_EMPTY = {
+        candidacy_open:    '',
+        candidacy_closed:  'purple',
+        voting_open:       'success',
+        voting_closed:     'warning',
+        completed:         'gray',
+        cancelled:         'danger'
+    };
+
+    function esc(text) {
+        if (text == null) return '';
+        return String(text).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
     }
 
-    // المناصب المؤهلة للانتخاب فقط
-    static ELIGIBLE_ROLES = ['department_head', 'committee_leader', 'deputy_committee_leader'];
-
-    // الأدوار المرتبطة بالأقسام (department_id) وليس اللجان
-    static DEPARTMENT_BASED_ROLES = ['department_head'];
-
-    static STATUS_LABELS = {
-        'candidacy_open': 'باب الترشح مفتوح',
-        'candidacy_closed': 'الترشح مغلق',
-        'voting_open': 'التصويت مفتوح',
-        'voting_closed': 'التصويت مغلق',
-        'completed': 'مكتمل',
-        'cancelled': 'ملغي'
-    };
-
-    static STATUS_COLORS = {
-        'candidacy_open': '#f59e0b',
-        'candidacy_closed': '#d97706',
-        'voting_open': '#10b981',
-        'voting_closed': '#8b5cf6',
-        'completed': '#059669',
-        'cancelled': '#ef4444'
-    };
-
-    static CANDIDATE_STATUS_LABELS = {
-        'pending': 'قيد المراجعة',
-        'approved': 'مقبول',
-        'rejected': 'مرفوض',
-        'withdrawn': 'منسحب',
-        'needs_edit': 'بانتظار التعديل'
-    };
-
-    static CANDIDATE_STATUS_VARIANT = {
-        'pending':   { color: '#f59e0b', uc: 'uc-card--warning', icon: 'fa-clock',              btnClass: 'btn-warning' },
-        'approved':  { color: '#10b981', uc: 'uc-card--success', icon: 'fa-circle-check',       btnClass: 'btn-success' },
-        'rejected':  { color: '#ef4444', uc: 'uc-card--danger',  icon: 'fa-circle-xmark',       btnClass: 'btn-danger' },
-        'withdrawn': { color: '#64748b', uc: 'uc-card--neutral', icon: 'fa-arrow-rotate-left',  btnClass: 'btn-slate' },
-        'needs_edit':{ color: '#3b82f6', uc: 'uc-card--info',    icon: 'fa-pen-to-square',      btnClass: 'btn-primary' }
-    };
-
-    static CANDIDACY_FILE_MAX_BYTES = 5 * 1024 * 1024;
-    static CANDIDACY_FILE_MAX_LABEL = '5 ميغابايت';
-
-    // =============================================
-    // التهيئة
-    // =============================================
-
-    async init() {
-        if (this.initialized) {
-            await this.loadElections();
-            this.renderElectionsList();
-            return;
-        }
+    function fmtDate(iso) {
+        if (!iso) return '—';
         try {
-            this.currentUser = window.currentUser || (await this.supabase.auth.getUser()).data?.user;
-            await this.loadCurrentUserRole();
-            await Promise.all([
-                this.loadVoteWeights(),
-                this.loadRoles(),
-                this.loadCommittees(),
-                this.loadDepartments()
+            return new Date(iso).toLocaleString('ar-SA', {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        } catch (_) { return iso; }
+    }
+
+    /* تنسيق موعد نهاية الترشح: "DD/MM/YYYY الساعة HH:MM" بأرقام إنجليزية */
+    function fmtDeadline(iso) {
+        if (!iso) return '—';
+        try {
+            const d = new Date(iso);
+            const date = d.toLocaleDateString('en-GB'); // 24/04/2026
+            const time = d.toLocaleTimeString('en-GB', {
+                hour: '2-digit', minute: '2-digit', hour12: false
+            });                                         // 22:14
+            return `${date} الساعة ${time}`;
+        } catch (_) { return iso; }
+    }
+
+    /* تنسيق الوقت المتبقي — لحظي */
+    function fmtRemaining(ms) {
+        if (!isFinite(ms) || ms <= 0) return 'انتهى';
+        const s    = Math.floor(ms / 1000);
+        const days = Math.floor(s / 86400);
+        const hrs  = Math.floor((s % 86400) / 3600);
+        const mns  = Math.floor((s % 3600) / 60);
+        const scs  = s % 60;
+        if (days) return `متبقٍ ${days}ي ${hrs}س`;
+        if (hrs)  return `متبقٍ ${hrs}س ${mns}د`;
+        if (mns)  return `متبقٍ ${mns}د ${scs}ث`;
+        return `متبقٍ ${scs}ث`;
+    }
+
+    function toLocalDatetimeValue(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function toast(msg, type = 'info') {
+        if (window.Toast && typeof window.Toast[type] === 'function') {
+            return window.Toast[type](msg);
+        }
+        if (window.showToast) return window.showToast(msg, type);
+        if (window.toast) return window.toast[type]?.(msg) || window.toast(msg);
+        if (window.toastNotifications) return window.toastNotifications.show(msg, type);
+        console.log(`[${type}] ${msg}`);
+    }
+
+    function confirmDialog(message, { icon = 'question', confirmText = 'تأكيد', cancelText = 'إلغاء' } = {}) {
+        if (window.Swal && window.Swal.fire) {
+            return window.Swal.fire({
+                text: message,
+                icon,
+                showCancelButton: true,
+                confirmButtonText: confirmText,
+                cancelButtonText: cancelText
+            }).then(r => r.isConfirmed);
+        }
+        return Promise.resolve(window.confirm(message));
+    }
+
+    /* ─── Helpers مشتركة (شارات / حالات فارغة / تبويبات فرعية) ─── */
+    function statusBadge(status) {
+        const icon = STATUS_ICON[status] || 'circle';
+        return `<span class="uc-card__badge"><i class="fa-solid fa-${icon}"></i> ${esc(STATUS_LABELS[status] || status)}</span>`;
+    }
+
+    function candidateBadge(status) {
+        const color = CANDIDATE_BADGE[status] || 'secondary';
+        return `<span class="uc-badge uc-badge--${color}">${esc(CANDIDATE_STATUS_LABELS[status] || status)}</span>`;
+    }
+
+    function emptyState(icon, title, desc = '', variant = '') {
+        const v = variant ? ` empty-state--${variant}` : '';
+        return `<div class="empty-state${v}">
+            <div class="empty-state__icon"><i class="fa-solid fa-${icon}"></i></div>
+            <h3 class="empty-state__title">${esc(title)}</h3>
+            ${desc ? `<p class="empty-state__message">${esc(desc)}</p>` : ''}
+        </div>`;
+    }
+
+    function loadingState() {
+        return `<div class="empty-state">
+            <div class="empty-state__icon"><i class="fa-solid fa-spinner fa-spin"></i></div>
+            <h3 class="empty-state__title">جارٍ التحميل…</h3>
+        </div>`;
+    }
+
+    function errorState(msg) {
+        return `<div class="empty-state empty-state--danger">
+            <div class="empty-state__icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h3 class="empty-state__title">تعذّر التحميل</h3>
+            <p class="empty-state__message">${esc(msg)}</p>
+        </div>`;
+    }
+
+    /* ─── خطاطة بطاقة انتخاب موحَّدة (uc-card) ─── */
+    function targetLabelOf(e, targetCommitteeAr, targetDeptAr) {
+        if (e.target_role_name === 'department_head') {
+            return `${ROLE_LABELS[e.target_role_name]} ${esc(targetDeptAr || '')}`.trim();
+        }
+        return `${ROLE_LABELS[e.target_role_name]} ${esc(targetCommitteeAr || '')}`.trim();
+    }
+
+    function ucElectionCard({ id, status, target, infoItems = [], footer = '' }) {
+        const color = STATUS_CARD[status] || 'neutral';
+        const icon  = STATUS_ICON[status] || 'circle';
+        return `
+            <div class="uc-card uc-card--${color}" data-election-id="${esc(id)}">
+                <div class="uc-card__header uc-card__header--${color}">
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__icon"><i class="fa-solid fa-${icon}"></i></div>
+                        <div class="uc-card__header-info">
+                            <h4 class="uc-card__title uc-card__title--wrap">${target}</h4>
+                            ${statusBadge(status)}
+                        </div>
+                    </div>
+                </div>
+                <div class="uc-card__body">
+                    ${infoItems.join('')}
+                </div>
+                ${footer ? `<div class="uc-card__footer">${footer}</div>` : ''}
+            </div>
+        `;
+    }
+
+    function infoItem(icon, label, value) {
+        return `
+            <div class="uc-card__info-item">
+                <div class="uc-card__info-icon"><i class="fa-solid fa-${icon}"></i></div>
+                <div class="uc-card__info-content">
+                    <span class="uc-card__info-label">${esc(label)}</span>
+                    <span class="uc-card__info-value">${value}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    /* تبويبات فرعية باستخدام btn-group */
+    function subtabs(items, activeKey, idAttr = '') {
+        return `<div class="btn-group" ${idAttr ? `id="${idAttr}"` : ''} style="margin-bottom:1rem;">${
+            items.map(it => {
+                const active = it.key === activeKey;
+                const cls = active ? 'btn btn-slate btn-sm' : 'btn btn-slate btn-sm btn-outline';
+                const count = (it.count != null)
+                    ? ` <span class="uc-badge uc-badge--${active ? 'primary' : 'secondary'}" style="margin-inline-start:0.4rem;">${it.count}</span>`
+                    : '';
+                const ic = it.icon ? `<i class="fa-solid fa-${it.icon}"></i> ` : '';
+                return `<button class="${cls}" data-tab="${esc(it.key)}">${ic}${esc(it.label)}${count}</button>`;
+            }).join('')
+        }</div>`;
+    }
+
+    function impersonationBanner() {
+        return `<div style="display:flex;align-items:center;gap:0.6rem;padding:0.75rem 1rem;background:#fef3c7;border:1px solid #fde68a;border-radius:10px;color:#92400e;margin-bottom:1rem;font-size:0.88rem;">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>أنت في وضع العرض كمستخدم — لا يمكن التصويت أو الترشح من هذه الجلسة.</span>
+        </div>`;
+    }
+
+    /* صف نتيجة (مع شريط تقدم) */
+    function resultRow({ name, votesText, pct, isWinner, isSelected, candidateId, withRadio }) {
+        const wrap = withRadio ? 'label' : 'div';
+        const borderColor = isSelected ? '#10b981' : (isWinner ? '#f59e0b' : '#e2e8f0');
+        const bg = isSelected ? '#ecfdf5' : (isWinner ? '#fffbeb' : '#fff');
+        const radio = withRadio
+            ? `<input type="radio" name="winnerPick" value="${esc(candidateId)}" ${isSelected ? 'checked' : ''} style="margin-inline-start:0.5rem;flex-shrink:0;" />`
+            : '';
+        const winnerBadge = isWinner
+            ? '<span class="uc-badge uc-badge--warning" style="margin-inline-start:0.5rem;"><i class="fa-solid fa-crown"></i> الفائز</span>'
+            : '';
+        return `
+            <${wrap} ${withRadio ? `data-candidate-id="${esc(candidateId)}"` : ''} style="display:flex;flex-direction:column;gap:0.5rem;padding:0.75rem 0.9rem;border:1.5px solid ${borderColor};background:${bg};border-radius:12px;${withRadio ? 'cursor:pointer;' : ''}">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+                    <div style="display:flex;align-items:center;gap:0.5rem;flex:1;min-width:0;">
+                        ${radio}
+                        <span style="font-weight:600;color:#1e293b;">${name}${winnerBadge}</span>
+                    </div>
+                    <span style="font-size:0.85rem;color:#64748b;font-weight:500;white-space:nowrap;">${votesText}</span>
+                </div>
+                <div style="height:8px;background:#e2e8f0;border-radius:99px;overflow:hidden;">
+                    <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#3b82f6,#10b981);transition:width 0.3s;"></div>
+                </div>
+            </${wrap}>
+        `;
+    }
+
+    class ElectionsManager {
+        constructor() {
+            this.mode = null;
+            this.user = null;
+            this.tabState = null;
+            this.committees = [];
+            this.departments = [];
+        }
+
+        async init(user, mode) {
+            this.user = user;
+            this.mode = mode;
+            this._renderImpersonationNoticeIfNeeded();
+
+            switch (mode) {
+                case 'admin-manage':   return this.renderAdminManage();
+                case 'admin-review':   return this.renderAdminReview();
+                case 'admin-archive':  return this.renderAdminArchive();
+                case 'viewer':         return this.renderViewer();
+                case 'member-run':     return this.renderMemberRun();
+                case 'member-profile': return this.renderMemberProfile();
+                case 'member-vote':    return this.renderMemberVote();
+                default:
+                    console.warn('[ElectionsManager] unknown mode', mode);
+            }
+        }
+
+        _renderImpersonationNoticeIfNeeded() {
+            const isImp = this.user?._isImpersonating === true;
+            document.querySelectorAll('.elections-impersonation-slot').forEach(el => {
+                el.innerHTML = isImp ? impersonationBanner() : '';
+            });
+        }
+
+        async _loadCommitteesDepartments() {
+            if (this.committees.length && this.departments.length) return;
+            const [cRes, dRes] = await Promise.all([
+                sb.from('committees').select('id, committee_name_ar, department_id').eq('is_active', true).order('committee_name_ar'),
+                sb.from('departments').select('id, name_ar').order('name_ar')
             ]);
-            await this.loadElections();
-            this.renderElectionsList();
-            this.setupEventListeners();
-            this.initialized = true;
-        } catch (error) {
-            console.error('Error initializing elections manager:', error);
-            this.showError('حدث خطأ أثناء تهيئة صفحة الانتخابات');
+            this.committees = cRes.data || [];
+            this.departments = dRes.data || [];
         }
-    }
 
-    async loadCurrentUserRole() {
-        try {
-            const { data } = await this.supabase
-                .from('user_roles')
-                .select('*, role:roles(*)')
-                .eq('user_id', this.currentUser.id)
-                .eq('is_active', true);
-            const sorted = (data || []).sort((a, b) =>
-                (b.role?.role_level || 0) - (a.role?.role_level || 0)
-            );
-            this.currentUserRole = sorted[0] || null;
-        } catch (e) {
-            console.error('Error loading current user role:', e);
+        async _loadOccupiedPositions() {
+            const { data, error } = await sb.rpc('get_occupied_positions');
+            if (error) {
+                console.warn('[ElectionsManager] get_occupied_positions failed', error);
+                return { committeeLeaders: new Set(), committeeDeputies: new Set(), departmentHeads: new Set() };
+            }
+            const committeeLeaders  = new Set();
+            const committeeDeputies = new Set();
+            const departmentHeads   = new Set();
+            for (const r of (data || [])) {
+                if (r.role_name === 'committee_leader' && r.committee_id) committeeLeaders.add(r.committee_id);
+                else if (r.role_name === 'deputy_committee_leader' && r.committee_id) committeeDeputies.add(r.committee_id);
+                else if (r.role_name === 'department_head' && r.department_id) departmentHeads.add(r.department_id);
+            }
+            return { committeeLeaders, committeeDeputies, departmentHeads };
         }
-    }
 
-    async loadVoteWeights() {
-        const { data } = await this.supabase
-            .from('election_vote_weights')
-            .select('*');
-        this.voteWeights = data || [];
-    }
+        async _attachCandidatesForOpen(elections) {
+            const openIds = elections.filter(e => e.status === 'candidacy_open').map(e => e.id);
+            if (openIds.length === 0) return;
+            const { data, error } = await sb.from('election_candidates')
+                .select('election_id, candidate_number, status, user:profiles!election_candidates_user_id_fkey(full_name)')
+                .in('election_id', openIds)
+                .neq('status', 'withdrawn')
+                .order('candidate_number', { ascending: true });
+            if (error) {
+                console.warn('[ElectionsManager] load open-election candidates failed', error);
+                return;
+            }
+            const byElection = new Map();
+            for (const c of (data || [])) {
+                if (!byElection.has(c.election_id)) byElection.set(c.election_id, []);
+                byElection.get(c.election_id).push(c);
+            }
+            for (const e of elections) {
+                if (e.status === 'candidacy_open') e._candidates = byElection.get(e.id) || [];
+            }
+        }
 
-    async loadRoles() {
-        const { data } = await this.supabase
-            .from('roles')
-            .select('*')
-            .order('role_level', { ascending: false });
-        this.roles = data || [];
-    }
+        async _loadActiveElectionScopes() {
+            const empty = { committees: new Set(), departmentHeads: new Set() };
+            const { data, error } = await sb.from('elections')
+                .select('target_role_name, target_committee_id, target_department_id')
+                .is('archived_at', null)
+                .not('status', 'in', '(completed,cancelled)');
+            if (error) {
+                console.warn('[ElectionsManager] active election scopes fetch failed', error);
+                return empty;
+            }
+            // لجنة واحدة = انتخاب نشط واحد (أي دور) — قيد DB elections_active_committee_uniq
+            const committees      = new Set();
+            const departmentHeads = new Set();
+            for (const r of (data || [])) {
+                if (r.target_committee_id)                   committees.add(r.target_committee_id);
+                else if (r.target_role_name === 'department_head' && r.target_department_id) departmentHeads.add(r.target_department_id);
+            }
+            return { committees, departmentHeads };
+        }
 
-    async loadCommittees() {
-        const { data } = await this.supabase
-            .from('committees')
-            .select('*')
-            .eq('is_active', true)
-            .order('committee_name_ar');
-        this.committees = data || [];
-    }
+        /* ============================================================
+           Mode: admin-manage — Kanban + إنشاء/تحكم
+           ============================================================ */
+        async renderAdminManage() {
+            const container = document.getElementById('electionsManageContainer');
+            if (!container) return;
 
-    async loadDepartments() {
-        const { data } = await this.supabase
-            .from('departments')
-            .select('*')
-            .eq('is_active', true)
-            .order('display_order', { ascending: true });
-        this.departments = data || [];
-    }
+            container.innerHTML = `
+                <div class="elections-impersonation-slot"></div>
+                <div id="electionsKanbanHost"></div>
+                <div class="form-actions-sticky">
+                    <div class="form-actions-bar">
+                        <button class="btn btn-primary" id="electionsCreateBtn">
+                            <i class="fa-solid fa-plus"></i> انتخاب جديد
+                        </button>
+                    </div>
+                </div>
+            `;
 
-    async loadElections() {
-        try {
-            const { data, error } = await this.supabase
-                .from('elections')
-                .select(`
-                    *,
-                    target_role:target_role_id(id, role_name, role_name_ar, role_level),
-                    target_committee:target_committee_id(id, committee_name_ar),
-                    target_department:target_department_id(id, name_ar),
-                    creator:created_by(id, full_name, avatar_url),
-                    winner:winner_user_id(id, full_name, avatar_url),
-                    candidates_count:election_candidates(count)
-                `)
+            this._renderImpersonationNoticeIfNeeded();
+
+            container.querySelector('#electionsCreateBtn').addEventListener('click', () => this.openCreateElectionModal());
+
+            await this._loadKanban();
+        }
+
+        async _loadKanban() {
+            const host = document.getElementById('electionsKanbanHost');
+            if (!host) return;
+            host.innerHTML = loadingState();
+
+            const { data, error } = await sb.from('elections').select(`
+                *,
+                committee:committees(committee_name_ar),
+                department:departments(name_ar),
+                creator:profiles!elections_created_by_fkey(full_name)
+            `)
+                .is('archived_at', null)
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
-            this.elections = data || [];
-        } catch (error) {
-            console.error('Error loading elections:', error);
-            this.showError('حدث خطأ أثناء تحميل الانتخابات');
-        }
-    }
-
-    // =============================================
-    // Event Listeners
-    // =============================================
-
-    setupEventListeners() {
-        const container = document.getElementById('elections-section');
-        if (!container) return;
-
-        // زر إنشاء انتخاب
-        container.querySelector('#createElectionBtn')?.addEventListener('click', () => this.showCreateModal());
-
-        // زر تحديث
-        container.querySelector('#refreshElectionsBtn')?.addEventListener('click', async () => {
-            await this.loadElections();
-            this.renderElectionsList();
-        });
-
-        // فلتر البحث
-        container.querySelector('#electionsSearchInput')?.addEventListener('input', () => this.filterElections());
-        container.querySelector('#electionsStatusFilter')?.addEventListener('change', () => this.filterElections());
-    }
-
-    // =============================================
-    // عرض قائمة الانتخابات
-    // =============================================
-
-    showListView() {
-        const container = document.getElementById('elections-section');
-        container.querySelector('#elections-list-view').classList.remove('d-none');
-        container.querySelector('#elections-detail-view').classList.add('d-none');
-        this.currentElection = null;
-    }
-
-    renderElectionsList() {
-        this.renderStats();
-        this.renderElectionsGrid(this.elections);
-    }
-
-    renderStats() {
-        const stats = {
-            active: 0, candidacy: 0, voting: 0, completed: 0
-        };
-        this.elections.forEach(e => {
-            if (['candidacy_open', 'candidacy_closed', 'voting_open', 'voting_closed'].includes(e.status)) stats.active++;
-            if (['candidacy_open', 'candidacy_closed'].includes(e.status)) stats.candidacy++;
-            if (['voting_open', 'voting_closed'].includes(e.status)) stats.voting++;
-            if (e.status === 'completed') stats.completed++;
-        });
-
-        const set = (id, val) => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = val;
-        };
-        set('electionsActiveCount', stats.active);
-        set('electionsCandidacyCount', stats.candidacy);
-        set('electionsVotingCount', stats.voting);
-        set('electionsCompletedCount', stats.completed);
-    }
-
-    renderElectionsGrid(elections) {
-        const grid = document.getElementById('electionsGrid');
-        if (!grid) return;
-
-        if (!elections.length) {
-            grid.innerHTML = `
-                <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
-                    <i class="fa-solid fa-check-to-slot fa-3x" style="margin-bottom: 1rem; opacity: 0.3;"></i>
-                    <p>لا توجد انتخابات حالياً</p>
-                </div>`;
-            return;
-        }
-
-        grid.innerHTML = elections.map(election => this.renderElectionCard(election)).join('');
-
-        // ربط أحداث النقر
-        grid.querySelectorAll('.uc-card[data-election-id]').forEach(card => {
-            card.style.cursor = 'pointer';
-            card.addEventListener('click', () => {
-                this.showElectionDetail(card.dataset.electionId);
-            });
-        });
-    }
-
-    renderElectionCard(election) {
-        const statusLabel = ElectionsManager.STATUS_LABELS[election.status];
-        const statusColor = ElectionsManager.STATUS_COLORS[election.status];
-        const roleName    = election.target_role?.role_name_ar || '';
-        const unitLabel   = election.target_department_id ? 'القسم' : 'اللجنة';
-        const unitName    = election.target_committee?.committee_name_ar
-                         || election.target_department?.name_ar || '';
-        const createdDate = new Date(election.created_at).toLocaleDateString('ar-SA');
-
-        return `
-            <div class="uc-card" data-election-id="${election.id}">
-                <div class="uc-card__header">
-                    <div class="uc-card__icon" style="background: ${statusColor}20; color: ${statusColor};">
-                        <i class="fa-solid fa-check-to-slot"></i>
-                    </div>
-                    <div>
-                        <h3 class="uc-card__title">${this.getElectionName(election)}</h3>
-                        <span style="display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; background: ${statusColor}15; color: ${statusColor}; font-weight: 600;">
-                            ${statusLabel}
-                        </span>
-                    </div>
-                </div>
-                <div class="uc-card__body">
-                    <div class="uc-card__info-item">
-                        <span class="uc-card__info-label">المنصب</span>
-                        <span class="uc-card__info-value">${roleName}</span>
-                    </div>
-                    ${unitName ? `
-                    <div class="uc-card__info-item">
-                        <span class="uc-card__info-label">${unitLabel}</span>
-                        <span class="uc-card__info-value">${unitName}</span>
-                    </div>` : ''}
-                    <div class="uc-card__info-item">
-                        <span class="uc-card__info-label">تاريخ الإنشاء</span>
-                        <span class="uc-card__info-value">${createdDate}</span>
-                    </div>
-                </div>
-                <div class="uc-card__footer">
-                    <button class="btn  btn-outline">
-                        <i class="fa-solid fa-eye"></i> عرض التفاصيل
-                    </button>
-                </div>
-            </div>`;
-    }
-
-    filterElections() {
-        const search = document.getElementById('electionsSearchInput')?.value?.toLowerCase() || '';
-        const statusFilter = document.getElementById('electionsStatusFilter')?.value || '';
-
-        const filtered = this.elections.filter(e => {
-            const matchSearch = !search ||
-                (e.target_role?.role_name_ar || '').toLowerCase().includes(search) ||
-                (e.target_committee?.committee_name_ar || '').toLowerCase().includes(search);
-            const matchStatus = !statusFilter || e.status === statusFilter;
-            return matchSearch && matchStatus;
-        });
-
-        this.renderElectionsGrid(filtered);
-    }
-
-    // =============================================
-    // قسم فتح باب الترشح (elections-open-section)
-    // =============================================
-
-    async initOpenSection() {
-        try {
-            if (!this.initialized) {
-                this.currentUser = window.currentUser || (await this.supabase.auth.getUser()).data?.user;
-                await this.loadCurrentUserRole();
-                await Promise.all([
-                    this.loadVoteWeights(),
-                    this.loadRoles(),
-                    this.loadCommittees(),
-                    this.loadDepartments()
-                ]);
-                this.initialized = true;
-            }
-            await this.loadElections();
-            this.renderOpenSection();
-            this.setupOpenSectionListeners();
-        } catch (error) {
-            console.error('Error initializing open section:', error);
-            this.showError('حدث خطأ أثناء تحميل قسم فتح باب الترشح');
-        }
-    }
-
-    setupOpenSectionListeners() {
-        if (this.openSectionListenersSet) return;
-        const section = document.getElementById('elections-open-section');
-        if (!section) return;
-
-        section.querySelector('#openSectionCreateBtn')?.addEventListener('click', () => {
-            this.showCreateModal();
-        });
-        section.querySelector('#openSectionRefreshBtn')?.addEventListener('click', async () => {
-            await this.loadElections();
-            this.renderOpenSection();
-        });
-
-        this.openSectionListenersSet = true;
-    }
-
-    static OPEN_SECTION_STATUSES = ['candidacy_open', 'candidacy_closed', 'voting_open', 'voting_closed'];
-
-    static OPEN_SECTION_VARIANTS = {
-        'candidacy_open': {
-            uc: 'uc-card--success',
-            headerClass: 'uc-card__header--success',
-            btnClass: 'btn-success',
-            color: '#10b981',
-            icon: 'fa-door-open',
-            badgeIcon: 'fa-circle-dot',
-            label: 'باب الترشح مفتوح',
-            statLabel: 'باب الترشح مفتوح',
-            parentCard: 'card--success',
-            groupTitle: 'الانتخابات المفتوحة للترشح',
-            groupIcon: 'fa-door-open'
-        },
-        'candidacy_closed': {
-            uc: 'uc-card--warning',
-            headerClass: 'uc-card__header--warning',
-            btnClass: 'btn-warning',
-            color: '#f59e0b',
-            icon: 'fa-hourglass-half',
-            badgeIcon: 'fa-hourglass-half',
-            label: 'الترشح مغلق — بانتظار فتح التصويت',
-            statLabel: 'بانتظار فتح التصويت',
-            parentCard: 'card--warning',
-            groupTitle: 'الانتخابات بانتظار فتح التصويت',
-            groupIcon: 'fa-hourglass-half'
-        },
-        'voting_open': {
-            uc: 'uc-card--primary',
-            headerClass: 'uc-card__header--info',
-            btnClass: 'btn-primary',
-            color: '#3d8fd6',
-            icon: 'fa-check-to-slot',
-            badgeIcon: 'fa-circle-dot',
-            label: 'باب التصويت مفتوح',
-            statLabel: 'التصويت مفتوح',
-            parentCard: 'card--info',
-            groupTitle: 'الانتخابات المفتوحة للتصويت',
-            groupIcon: 'fa-check-to-slot'
-        },
-        'voting_closed': {
-            uc: 'uc-card--purple',
-            headerClass: 'uc-card__header--purple',
-            btnClass: 'btn-violet',
-            color: '#8b5cf6',
-            icon: 'fa-flag-checkered',
-            badgeIcon: 'fa-trophy',
-            label: 'منتهي — بانتظار إعلان النتائج',
-            statLabel: 'بانتظار إعلان النتائج',
-            parentCard: 'card--purple',
-            groupTitle: 'الانتخابات المنتهية — بانتظار إعلان النتائج',
-            groupIcon: 'fa-flag-checkered'
-        }
-    };
-
-    renderOpenSection() {
-        const grid = document.getElementById('openSectionGrid');
-        const statsEl = document.getElementById('openSectionStats');
-        if (!grid) return;
-
-        const statuses = ElectionsManager.OPEN_SECTION_STATUSES;
-        const variants = ElectionsManager.OPEN_SECTION_VARIANTS;
-        const openElections = this.elections.filter(e => statuses.includes(e.status));
-
-        // إحصائية سريعة لكل حالة
-        if (statsEl) {
-            const cards = statuses.map(st => {
-                const v = variants[st];
-                const count = this.elections.filter(e => e.status === st).length;
-                return `
-                    <div class="stat-card" style="--stat-color: ${v.color};">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon"><i class="fa-solid ${v.icon}"></i></div>
-                            <div class="stat-content">
-                                <div class="stat-value">${count}</div>
-                                <div class="stat-label">${v.statLabel}</div>
-                            </div>
-                        </div>
-                    </div>`;
-            }).join('');
-            statsEl.innerHTML = `<div class="stats-grid" style="--stats-cols: 4;">${cards}</div>`;
-        }
-
-        if (!openElections.length) {
-            grid.innerHTML = `
-                <div class="card">
-                    <div class="card-body">
-                        <div class="empty-state">
-                            <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
-                            <p class="empty-state__title">لا توجد انتخابات نشطة حالياً</p>
-                            <p class="empty-state__message">أنشئ انتخاباً جديداً لفتح باب الترشح</p>
-                        </div>
-                    </div>
-                </div>`;
-            return;
-        }
-
-        // تجميع الانتخابات بحسب الحالة مع الحفاظ على ترتيب التسلسل الطبيعي
-        const groupsHtml = statuses.map(status => {
-            const group = openElections
-                .filter(e => e.status === status)
-                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-            if (!group.length) return '';
-
-            const v = variants[status];
-            const cards = group.map(e => this.renderOpenSectionCard(e)).join('');
-
-            return `
-                <div class="elections-group" style="margin-bottom: 1.5rem;">
-                    <div class="card ${v.parentCard}">
-                        <div class="card-header">
-                            <h3><i class="fa-solid ${v.groupIcon}"></i> ${v.groupTitle} (${group.length})</h3>
-                            <button class="btn ${v.btnClass} btn-icon btn-outline" title="تحديث" data-group-refresh="${status}">
-                                <i class="fa-solid fa-rotate"></i>
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div class="uc-grid">
-                                ${cards}
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-        }).filter(Boolean).join('');
-
-        grid.innerHTML = groupsHtml;
-
-        // ربط زر التحديث لكل مجموعة
-        grid.querySelectorAll('[data-group-refresh]').forEach(btn => {
-            btn.addEventListener('click', async (ev) => {
-                ev.stopPropagation();
-                await this.loadElections();
-                this.renderOpenSection();
-            });
-        });
-
-        // ربط أحداث الأزرار
-        grid.querySelectorAll('.view-candidates-btn').forEach(btn => {
-            btn.addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                this.showElectionDetail(btn.dataset.electionId);
-            });
-        });
-
-        grid.querySelectorAll('.set-end-date-btn').forEach(btn => {
-            btn.addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                this.showSetEndDateModal(btn.dataset.electionId);
-            });
-        });
-
-        grid.querySelectorAll('.cancel-election-btn').forEach(btn => {
-            btn.addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                this.updateElectionStatus(btn.dataset.electionId, 'cancelled');
-            });
-        });
-
-        grid.querySelectorAll('.advance-status-btn').forEach(btn => {
-            btn.addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                const next = btn.dataset.nextStatus;
-                if (next) this.updateElectionStatus(btn.dataset.electionId, next);
-            });
-        });
-
-        grid.querySelectorAll('.announce-winner-btn').forEach(btn => {
-            btn.addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                this.showElectionDetail(btn.dataset.electionId);
-            });
-        });
-    }
-
-    renderOpenSectionCard(election) {
-        const variant = ElectionsManager.OPEN_SECTION_VARIANTS[election.status]
-            || ElectionsManager.OPEN_SECTION_VARIANTS['candidacy_open'];
-        const candidatesCount = Array.isArray(election.candidates_count)
-            ? (election.candidates_count[0]?.count ?? 0)
-            : 0;
-
-        const fmt = (iso) => new Date(iso).toLocaleString('ar-SA', {
-            calendar: 'gregory',
-            numberingSystem: 'latn',
-            dateStyle: 'medium',
-            timeStyle: 'short'
-        }).replace(/،\s*/, ' الساعة ');
-        const end     = election.candidacy_end   ? fmt(election.candidacy_end)   : null;
-        const vStart  = election.voting_start    ? fmt(election.voting_start)    : null;
-        const vEnd    = election.voting_end      ? fmt(election.voting_end)      : null;
-        const created = election.created_at      ? fmt(election.created_at)      : null;
-
-        // الوقت المتبقي حسب الحالة
-        const calcRemaining = (isoEnd) => {
-            if (!isoEnd) return null;
-            const diff = new Date(isoEnd).getTime() - Date.now();
-            if (diff <= 0) return 'انتهى الموعد';
-            const days = Math.floor(diff / 86400000);
-            const hours = Math.floor((diff % 86400000) / 3600000);
-            return days > 0 ? `متبقي ${days} يوم` : `متبقي ${hours} ساعة`;
-        };
-        const candidacyRemaining = calcRemaining(election.candidacy_end);
-        const votingRemaining    = calcRemaining(election.voting_end);
-
-        const unset = '<span style="opacity: 0.55;">لم يُحدَّد</span>';
-
-        // حقول التواريخ حسب الحالة
-        let dateFields = '';
-        if (election.status === 'candidacy_open' || election.status === 'candidacy_closed') {
-            dateFields = `
-                <div class="uc-card__info-item">
-                    <div class="uc-card__info-icon"><i class="fa-solid fa-hourglass-end"></i></div>
-                    <div class="uc-card__info-content">
-                        <span class="uc-card__info-label">نهاية الترشح</span>
-                        <span class="uc-card__info-value">
-                            ${end || unset}${election.status === 'candidacy_open' && candidacyRemaining ? ` <small style="opacity: 0.7;">· ${candidacyRemaining}</small>` : ''}
-                        </span>
-                    </div>
-                </div>`;
-        } else if (election.status === 'voting_open' || election.status === 'voting_closed') {
-            dateFields = `
-                <div class="uc-card__info-item">
-                    <div class="uc-card__info-icon"><i class="fa-solid fa-play"></i></div>
-                    <div class="uc-card__info-content">
-                        <span class="uc-card__info-label">بداية التصويت</span>
-                        <span class="uc-card__info-value">${vStart || unset}</span>
-                    </div>
-                </div>
-
-                <div class="uc-card__info-item">
-                    <div class="uc-card__info-icon"><i class="fa-solid fa-stop"></i></div>
-                    <div class="uc-card__info-content">
-                        <span class="uc-card__info-label">نهاية التصويت</span>
-                        <span class="uc-card__info-value">
-                            ${vEnd || unset}${election.status === 'voting_open' && votingRemaining ? ` <small style="opacity: 0.7;">· ${votingRemaining}</small>` : ''}
-                        </span>
-                    </div>
-                </div>`;
-        }
-
-        // أزرار الفوتر حسب الحالة
-        let footerButtons = '';
-        if (election.status === 'candidacy_open') {
-            footerButtons = `
-                <button class="btn ${variant.btnClass} view-candidates-btn" data-election-id="${election.id}">
-                    <i class="fa-solid fa-users"></i> عرض المرشحين
-                </button>
-                ${!election.candidacy_end ? `
-                <button class="btn btn-primary set-end-date-btn" data-election-id="${election.id}">
-                    <i class="fa-regular fa-calendar-plus"></i> تحديد موعد الإغلاق
-                </button>` : ''}
-                <button class="btn btn-warning advance-status-btn" data-election-id="${election.id}" data-next-status="candidacy_closed">
-                    <i class="fa-solid fa-lock"></i> إغلاق باب الترشح
-                </button>
-                <button class="btn btn-danger cancel-election-btn" data-election-id="${election.id}">
-                    <i class="fa-solid fa-ban"></i> إلغاء الانتخاب
-                </button>`;
-        } else if (election.status === 'candidacy_closed') {
-            footerButtons = `
-                <button class="btn ${variant.btnClass} view-candidates-btn" data-election-id="${election.id}">
-                    <i class="fa-solid fa-users"></i> عرض المرشحين
-                </button>
-                <button class="btn btn-primary advance-status-btn" data-election-id="${election.id}" data-next-status="voting_open">
-                    <i class="fa-solid fa-check-to-slot"></i> فتح باب التصويت
-                </button>
-                <button class="btn btn-success advance-status-btn" data-election-id="${election.id}" data-next-status="candidacy_open">
-                    <i class="fa-solid fa-door-open"></i> إعادة فتح باب الترشح
-                </button>
-                <button class="btn btn-danger cancel-election-btn" data-election-id="${election.id}">
-                    <i class="fa-solid fa-ban"></i> إلغاء الانتخاب
-                </button>`;
-        } else if (election.status === 'voting_open') {
-            footerButtons = `
-                <button class="btn ${variant.btnClass} view-candidates-btn" data-election-id="${election.id}">
-                    <i class="fa-solid fa-chart-column"></i> متابعة التصويت
-                </button>
-                <button class="btn btn-violet btn-outline advance-status-btn" data-election-id="${election.id}" data-next-status="voting_closed">
-                    <i class="fa-solid fa-flag-checkered"></i> إغلاق التصويت
-                </button>
-                <button class="btn btn-danger btn-outline cancel-election-btn" data-election-id="${election.id}">
-                    <i class="fa-solid fa-ban"></i> إلغاء الانتخاب
-                </button>`;
-        } else if (election.status === 'voting_closed') {
-            footerButtons = `
-                <button class="btn ${variant.btnClass} announce-winner-btn" data-election-id="${election.id}">
-                    <i class="fa-solid fa-trophy"></i> إعلان النتائج
-                </button>
-                <button class="btn btn-violet btn-outline view-candidates-btn" data-election-id="${election.id}">
-                    <i class="fa-solid fa-chart-pie"></i> عرض التفاصيل
-                </button>`;
-        }
-
-        return `
-            <div class="uc-card ${variant.uc}" data-election-id="${election.id}" data-election-status="${election.status}">
-                <div class="uc-card__header ${variant.headerClass}">
-                    <div class="uc-card__header-inner">
-                        <div class="uc-card__icon">
-                            <i class="fa-solid ${variant.icon}"></i>
-                        </div>
-                        <div class="uc-card__header-info">
-                            <h3 class="uc-card__title uc-card__title--wrap">${this.getElectionName(election)}</h3>
-                            <span class="uc-card__badge">
-                                <i class="fa-solid ${variant.badgeIcon}"></i>
-                                ${variant.label}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="uc-card__body">
-                    <div class="uc-card__info-item">
-                        <div class="uc-card__info-icon"><i class="fa-solid fa-users"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">عدد المرشحين</span>
-                            <span class="uc-card__info-value">${candidatesCount}</span>
-                        </div>
-                    </div>
-
-                    <div class="uc-card__info-item">
-                        <div class="uc-card__info-icon"><i class="fa-regular fa-calendar-plus"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">تاريخ إنشاء الانتخاب</span>
-                            <span class="uc-card__info-value">${created || unset}</span>
-                        </div>
-                    </div>
-
-                    ${dateFields}
-                </div>
-
-                <div class="uc-card__footer">
-                    ${footerButtons}
-                </div>
-            </div>`;
-    }
-
-    // =============================================
-    // قسم "الترشح" — للأعضاء المستهدفين (candidacy-section)
-    // =============================================
-
-    async initCandidacySection() {
-        try {
-            if (!this.initialized) {
-                this.currentUser = window.currentUser || (await this.supabase.auth.getUser()).data?.user;
-                await this.loadCurrentUserRole();
-                await Promise.all([
-                    this.loadRoles(),
-                    this.loadCommittees(),
-                    this.loadDepartments()
-                ]);
-                this.initialized = true;
-            }
-            await this.loadEligibleElections();
-            await this.loadMyCandidacies();
-            this.setupCandidacySectionListeners();
-
-            const active = this.getActiveCandidacy();
-            if (active) {
-                const election = await this.getCandidacyElection(active.election_id);
-                if (election) {
-                    this.showMyCandidacyFile(election, active);
-                    return;
-                }
-            }
-            this.backToCandidacyList();
-            this.renderCandidacySection();
-        } catch (error) {
-            console.error('Error initializing candidacy section:', error);
-            this.showError('حدث خطأ أثناء تحميل قسم الترشح');
-        }
-    }
-
-    async loadEligibleElections() {
-        const cId = this.currentUserRole?.committee_id || null;
-        const dId = this.currentUserRole?.department_id || null;
-        if (!cId && !dId) { this.eligibleElections = []; return; }
-
-        const orFilters = [];
-        if (cId) orFilters.push(`target_committee_id.eq.${cId}`);
-        if (dId) orFilters.push(`target_department_id.eq.${dId}`);
-
-        const { data, error } = await this.supabase
-            .from('elections')
-            .select(`
-                *,
-                target_role:target_role_id(id, role_name, role_name_ar, role_level),
-                target_committee:target_committee_id(id, committee_name_ar, department_id),
-                target_department:target_department_id(id, name_ar)
-            `)
-            .eq('status', 'candidacy_open')
-            .or(orFilters.join(','))
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            console.error('Error loading eligible elections:', error);
-            this.eligibleElections = [];
-            return;
-        }
-        this.eligibleElections = (data || []).filter(e => this.isEligibleForElection(e));
-    }
-
-    isEligibleForElection(election) {
-        return !this.getIneligibilityReason(election);
-    }
-
-    getIneligibilityReason(election) {
-        const userRoleName      = this.currentUserRole?.role?.role_name;
-        const userCommitteeId   = this.currentUserRole?.committee_id;
-        const userDepartmentId  = this.currentUserRole?.department_id;
-        const targetRoleName    = election?.target_role?.role_name;
-        const targetCommitteeId = election?.target_committee_id;
-        const targetDepartmentId = election?.target_department_id;
-        const targetCommitteeDepartmentId = election?.target_committee?.department_id;
-
-        // (1) عضوية الوحدة المستهدفة
-        if (targetCommitteeId && userCommitteeId !== targetCommitteeId) {
-            return 'لا يحق لك الترشح لهذه اللجنة لأنك لست عضواً فيها';
-        }
-        if (targetDepartmentId && !targetCommitteeId && userDepartmentId !== targetDepartmentId) {
-            return 'لا يحق لك الترشح لهذا القسم لأنك لست عضواً فيه';
-        }
-
-        // (2) أصحاب المناصب العليا ممنوعون
-        const BLOCKED_ROLES = [
-            'club_president',
-            'president_advisor',
-            'executive_council_president',
-            'hr_committee_leader',
-            'qa_committee_leader',
-            'hr_admin_member',
-            'qa_admin_member'
-        ];
-        if (BLOCKED_ROLES.includes(userRoleName)) {
-            return 'لا يحق لك الترشح لأنك تشغل منصباً قيادياً يمنع الترشح — يجب التنازل عنه أولاً';
-        }
-
-        // (3) قائد اللجنة → نائب نفس اللجنة
-        if (userRoleName === 'committee_leader'
-            && targetRoleName === 'deputy_committee_leader'
-            && userCommitteeId
-            && userCommitteeId === targetCommitteeId) {
-            return 'لا يحق لك الترشح لمنصب نائب القائد لأنك تشغل منصب القائد في نفس اللجنة';
-        }
-
-        // (4) رئيس القسم → منصب في لجنة تتبع قسمه
-        if (userRoleName === 'department_head'
-            && ['committee_leader', 'deputy_committee_leader'].includes(targetRoleName)
-            && targetCommitteeDepartmentId
-            && userDepartmentId === targetCommitteeDepartmentId) {
-            return 'لا يحق لك الترشح لمنصب في لجنة تتبع قسماً ترأسه';
-        }
-
-        // (5) طلب ترشح نشط واحد فقط في أي وقت
-        const hasOtherActive = (this.myCandidacies || []).some(c =>
-            c.election_id !== election?.id
-            && ['pending', 'needs_edit', 'approved'].includes(c.status)
-        );
-        if (hasOtherActive) {
-            return 'لديك طلب ترشح نشط حالياً — لا يمكن تقديم طلب جديد حتى يُحسم السابق';
-        }
-
-        return null;
-    }
-
-    async loadMyCandidacies() {
-        if (!this.currentUser) { this.myCandidacies = []; return; }
-        const { data } = await this.supabase
-            .from('election_candidates')
-            .select('*')
-            .eq('user_id', this.currentUser.id);
-        this.myCandidacies = data || [];
-    }
-
-    getActiveCandidacy() {
-        return (this.myCandidacies || []).find(c =>
-            ['pending', 'needs_edit', 'approved'].includes(c.status)
-        ) || null;
-    }
-
-    async getCandidacyElection(electionId) {
-        const cached = (this.eligibleElections || []).find(e => e.id === electionId);
-        if (cached) return cached;
-        const { data, error } = await this.supabase
-            .from('elections')
-            .select(`
-                *,
-                target_role:target_role_id(id, role_name, role_name_ar, role_level),
-                target_committee:target_committee_id(id, committee_name_ar, department_id),
-                target_department:target_department_id(id, name_ar)
-            `)
-            .eq('id', electionId)
-            .maybeSingle();
-        if (error) {
-            console.error('Error fetching candidacy election:', error);
-            return null;
-        }
-        return data || null;
-    }
-
-    setupCandidacySectionListeners() {
-        if (this.candidacySectionListenersSet) return;
-        const section = document.getElementById('candidacy-section');
-        if (!section) return;
-
-        section.querySelector('#candidacyRefreshBtn')?.addEventListener('click', async () => {
-            await this.loadEligibleElections();
-            await this.loadMyCandidacies();
-            this.renderCandidacySection();
-        });
-
-        this.candidacySectionListenersSet = true;
-    }
-
-    renderCandidacySection() {
-        const grid = document.getElementById('candidacyGrid');
-        const statsEl = document.getElementById('candidacyStats');
-        if (!grid) return;
-
-        const eligible = this.eligibleElections || [];
-
-        if (statsEl) {
-            statsEl.innerHTML = `
-                <div class="stats-grid" style="--stats-cols: 1;">
-                    <div class="stat-card" style="--stat-color: #10b981;">
-                        <div class="stat-card-wrapper">
-                            <div class="stat-icon"><i class="fa-solid fa-door-open"></i></div>
-                            <div class="stat-content">
-                                <div class="stat-value">${eligible.length}</div>
-                                <div class="stat-label">أبواب ترشح متاحة لك</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-        }
-
-        if (!eligible.length) {
-            grid.innerHTML = `
-                <div class="empty-state" style="grid-column: 1/-1;">
-                    <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
-                    <p class="empty-state__title">لا توجد أبواب ترشح مفتوحة لك حالياً</p>
-                    <p class="empty-state__message">ستظهر هنا الانتخابات التي تستطيع التقدم للترشح لها</p>
-                </div>`;
-            return;
-        }
-
-        grid.innerHTML = eligible.map(e => this.renderCandidacyCard(e)).join('');
-
-        grid.querySelectorAll('.candidacy-view-detail-btn').forEach(btn => {
-            btn.addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                this.showCandidacyDetail(btn.dataset.electionId);
-            });
-        });
-
-        grid.querySelectorAll('.apply-candidacy-btn').forEach(btn => {
-            btn.addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                this.showCandidacyModal(btn.dataset.electionId);
-            });
-        });
-
-        grid.querySelectorAll('.candidacy-edit-btn').forEach(btn => {
-            btn.addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                this.showEditMyCandidacyModal(btn.dataset.candidateId, btn.dataset.electionId);
-            });
-        });
-
-        grid.querySelectorAll('.candidacy-withdraw-btn').forEach(btn => {
-            btn.addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                this.withdrawMyCandidacy(btn.dataset.candidateId);
-            });
-        });
-    }
-
-    showCandidacyDetail(electionId) {
-        const election = (this.eligibleElections || []).find(e => e.id === electionId);
-        const myCandidacy = (this.myCandidacies || []).find(c => c.election_id === electionId);
-        if (!election || !myCandidacy) return;
-
-        this.currentCandidacyElectionId = electionId;
-        this._candidacyStandalone = false;
-
-        const section = document.getElementById('candidacy-section');
-        if (!section) return;
-        section.querySelector('#candidacy-list-view')?.classList.add('d-none');
-        section.querySelector('#candidacy-detail-view')?.classList.remove('d-none');
-
-        this.renderCandidacyDetail(election, myCandidacy);
-
-        if (!this._candidacyEscHandler) {
-            this._candidacyEscHandler = (e) => {
-                if (e.key !== 'Escape') return;
-                if (document.querySelector('.modal.show, .modal.is-open')) return;
-                if (!this.currentCandidacyElectionId) return;
-                if (this._candidacyStandalone) return;
-                this.backToCandidacyList();
-            };
-            document.addEventListener('keydown', this._candidacyEscHandler);
-        }
-    }
-
-    // وضع "ملفي الانتخابي" — يدخل المستخدم مباشرةً على ملفه دون قائمة الأبواب
-    showMyCandidacyFile(election, myCandidacy) {
-        this.currentCandidacyElectionId = election.id;
-        this._candidacyStandalone = true;
-
-        const section = document.getElementById('candidacy-section');
-        if (!section) return;
-        section.querySelector('#candidacy-list-view')?.classList.add('d-none');
-        section.querySelector('#candidacy-detail-view')?.classList.remove('d-none');
-
-        this.renderCandidacyDetail(election, myCandidacy);
-    }
-
-    backToCandidacyList() {
-        this.currentCandidacyElectionId = null;
-        this._candidacyStandalone = false;
-        const section = document.getElementById('candidacy-section');
-        if (!section) return;
-        section.querySelector('#candidacy-detail-view')?.classList.add('d-none');
-        section.querySelector('#candidacy-list-view')?.classList.remove('d-none');
-    }
-
-    renderCandidacyDetail(election, myCandidacy) {
-        const container = document.getElementById('candidacyDetailContent');
-        if (!container) return;
-
-        const fmt = (iso) => iso ? new Date(iso).toLocaleString('ar-SA', {
-            calendar: 'gregory',
-            numberingSystem: 'latn',
-            dateStyle: 'medium',
-            timeStyle: 'short'
-        }).replace(/،\s*/, ' الساعة ') : '—';
-
-        const variant = ElectionsManager.CANDIDATE_STATUS_VARIANT[myCandidacy.status]
-                     || ElectionsManager.CANDIDATE_STATUS_VARIANT.pending;
-        const statusLabel = ElectionsManager.CANDIDATE_STATUS_LABELS[myCandidacy.status] || myCandidacy.status;
-
-        const positionName = this.getElectionName(election);
-        const roleName = election.target_role?.role_name_ar || '—';
-        const isDept   = !!election.target_department_id;
-        const unitName = election.target_committee?.committee_name_ar
-                      || election.target_department?.name_ar || '';
-        const unitLabel = isDept ? 'القسم' : 'اللجنة';
-        const unitIcon  = isDept ? 'fa-sitemap' : 'fa-people-group';
-
-        const candidacyEnd = election.candidacy_end ? fmt(election.candidacy_end) : null;
-        let remaining = null;
-        if (election.candidacy_end) {
-            const diff = new Date(election.candidacy_end).getTime() - Date.now();
-            if (diff > 0) {
-                const days = Math.floor(diff / 86400000);
-                const hours = Math.floor((diff % 86400000) / 3600000);
-                remaining = days > 0 ? `متبقي ${days} يوم` : `متبقي ${hours} ساعة`;
-            } else {
-                remaining = 'انتهى الموعد';
-            }
-        }
-        const votingStart = election.voting_start ? fmt(election.voting_start) : null;
-        const votingEnd   = election.voting_end ? fmt(election.voting_end) : null;
-
-        const editLog = Array.isArray(myCandidacy.edit_requests_log) ? myCandidacy.edit_requests_log : [];
-        const latestEditAt = editLog.length
-            ? editLog[editLog.length - 1].at
-            : myCandidacy.edit_requested_at;
-        const resubmittedAfterEdit = latestEditAt
-            && myCandidacy.status === 'pending'
-            && myCandidacy.updated_at
-            && new Date(myCandidacy.updated_at) > new Date(latestEditAt);
-
-        const editLogSteps = editLog.length
-            ? editLog.map((entry, i) => ({
-                key: `edit_requested_${i}`,
-                label: editLog.length > 1 ? `طُلب تعديل (${i + 1})` : 'طُلب تعديل',
-                icon: 'fa-pen-to-square',
-                at: entry.at,
-                done: true
-            }))
-            : (myCandidacy.edit_requested_at
-                ? [{ key: 'edit_requested', label: 'طُلب تعديل', icon: 'fa-pen-to-square', at: myCandidacy.edit_requested_at, done: true }]
-                : []);
-
-        const timeline = [
-            { key: 'submitted', label: 'قُدِّم الطلب', icon: 'fa-paper-plane', at: myCandidacy.created_at, done: true, atPrefix: 'تاريخ ' },
-            ...editLogSteps,
-            myCandidacy.status === 'needs_edit'
-                ? { key: 'awaiting_edit', label: 'بانتظار تعديلك', icon: 'fa-hourglass-half', done: false, active: true }
-                : null,
-            resubmittedAfterEdit
-                ? { key: 'resubmitted', label: 'أعدت إرسال الطلب', icon: 'fa-paper-plane', at: myCandidacy.updated_at, done: true }
-                : null,
-            myCandidacy.reviewed_at && myCandidacy.status === 'approved'
-                ? { key: 'approved', label: 'تمت الموافقة', icon: 'fa-circle-check', at: myCandidacy.reviewed_at, done: true }
-                : null,
-            myCandidacy.reviewed_at && myCandidacy.status === 'rejected'
-                ? { key: 'rejected', label: 'رُفض الطلب', icon: 'fa-circle-xmark', at: myCandidacy.reviewed_at, done: true }
-                : null,
-            myCandidacy.status === 'withdrawn'
-                ? { key: 'withdrawn', label: 'انسحبت من الترشح', icon: 'fa-arrow-rotate-left', at: myCandidacy.updated_at, done: true }
-                : null
-        ].filter(Boolean);
-
-        const fileUrl = myCandidacy.election_file_url;
-        const fileExt = fileUrl ? fileUrl.split('.').pop().toLowerCase().split('?')[0] : '';
-        const isImage = ['png', 'jpg', 'jpeg', 'webp'].includes(fileExt);
-        const isPdf = fileExt === 'pdf';
-
-        const canEdit     = myCandidacy.status === 'needs_edit';
-        const canEditContent = myCandidacy.status === 'pending';
-        const canWithdraw = ['pending', 'needs_edit', 'approved'].includes(myCandidacy.status);
-
-        const standalone = !!this._candidacyStandalone;
-        container.innerHTML = `
-            ${standalone ? '' : `
-            <nav class="page-breadcrumb" aria-label="مسار التنقل">
-                <ol>
-                    <li>
-                        <button type="button" class="breadcrumb-link" id="candidacyBackBtn">
-                            <i class="fa-solid fa-person-arrow-up-from-line"></i>
-                            أبواب الترشح
-                        </button>
-                    </li>
-                    <li class="breadcrumb-sep" aria-hidden="true">
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </li>
-                    <li class="breadcrumb-current" aria-current="page">ملفي الانتخابي</li>
-                </ol>
-            </nav>`}
-
-            <div class="card" style="margin-bottom: 1.25rem;">
-                <div class="card-header">
-                    <h3><i class="fa-solid fa-circle-info"></i> تفاصيل المنصب</h3>
-                </div>
-                <div class="card-body">
-                    <div class="uc-grid uc-card--primary" style="--uc-grid-min: 240px; gap: 0.75rem;">
-                        <div class="uc-card__info-item">
-                            <div class="uc-card__info-icon"><i class="fa-solid fa-briefcase"></i></div>
-                            <div class="uc-card__info-content">
-                                <span class="uc-card__info-label">المنصب</span>
-                                <span class="uc-card__info-value">${this.escapeHtml(positionName)}</span>
-                            </div>
-                        </div>
-                        <div class="uc-card__info-item">
-                            <div class="uc-card__info-icon"><i class="fa-solid fa-user-tie"></i></div>
-                            <div class="uc-card__info-content">
-                                <span class="uc-card__info-label">الدور</span>
-                                <span class="uc-card__info-value">${this.escapeHtml(roleName)}</span>
-                            </div>
-                        </div>
-                        ${unitName ? `
-                        <div class="uc-card__info-item">
-                            <div class="uc-card__info-icon"><i class="fa-solid ${unitIcon}"></i></div>
-                            <div class="uc-card__info-content">
-                                <span class="uc-card__info-label">${unitLabel}</span>
-                                <span class="uc-card__info-value">${this.escapeHtml(unitName)}</span>
-                            </div>
-                        </div>` : ''}
-                        <div class="uc-card__info-item">
-                            <div class="uc-card__info-icon"><i class="fa-solid fa-hourglass-end"></i></div>
-                            <div class="uc-card__info-content">
-                                <span class="uc-card__info-label">نهاية الترشح</span>
-                                <span class="uc-card__info-value">
-                                    ${candidacyEnd || '<span style="opacity: 0.55;">لم يُحدَّد</span>'}
-                                    ${remaining ? ` <small style="opacity: 0.7;">· ${remaining}</small>` : ''}
-                                </span>
-                            </div>
-                        </div>
-                        ${votingStart ? `
-                        <div class="uc-card__info-item">
-                            <div class="uc-card__info-icon"><i class="fa-solid fa-check-to-slot"></i></div>
-                            <div class="uc-card__info-content">
-                                <span class="uc-card__info-label">بداية التصويت</span>
-                                <span class="uc-card__info-value">${votingStart}</span>
-                            </div>
-                        </div>` : ''}
-                        ${votingEnd ? `
-                        <div class="uc-card__info-item">
-                            <div class="uc-card__info-icon"><i class="fa-solid fa-flag-checkered"></i></div>
-                            <div class="uc-card__info-content">
-                                <span class="uc-card__info-label">نهاية التصويت</span>
-                                <span class="uc-card__info-value">${votingEnd}</span>
-                            </div>
-                        </div>` : ''}
-                    </div>
-                </div>
-                ${canWithdraw ? `
-                <div class="card-footer">
-                    <button class="btn btn-danger btn-block candidacy-detail-withdraw-btn"
-                            data-candidate-id="${myCandidacy.id}">
-                        <i class="fa-solid fa-arrow-rotate-left"></i> انسحاب من الترشح
-                    </button>
-                </div>` : ''}
-            </div>
-
-            ${myCandidacy.status === 'needs_edit' && myCandidacy.edit_request_note ? `
-            <div class="card" style="margin-bottom: 1.25rem;">
-                <div class="card-header">
-                    <h3><i class="fa-solid fa-comment-dots"></i> ملاحظات الإدارة للتعديل</h3>
-                </div>
-                <div class="card-body">
-                    <p style="white-space: pre-wrap; margin: 0; line-height: 1.8;">${this.escapeHtml(myCandidacy.edit_request_note)}</p>
-                </div>
-                ${canEdit ? `
-                <div class="card-footer">
-                    <button class="btn btn-primary btn-block candidacy-detail-edit-btn"
-                            data-candidate-id="${myCandidacy.id}"
-                            data-election-id="${election.id}">
-                        <i class="fa-solid fa-pen"></i> تعديل طلبي
-                    </button>
-                </div>` : ''}
-            </div>` : ''}
-
-            ${myCandidacy.status === 'rejected' && myCandidacy.review_note ? `
-            <div class="card" style="margin-bottom: 1.25rem;">
-                <div class="card-header">
-                    <h3><i class="fa-solid fa-circle-xmark"></i> سبب الرفض</h3>
-                </div>
-                <div class="card-body">
-                    <p style="white-space: pre-wrap; margin: 0; line-height: 1.8;">${this.escapeHtml(myCandidacy.review_note)}</p>
-                </div>
-            </div>` : ''}
-
-            <div class="card" style="margin-bottom: 1.25rem;">
-                <div class="card-header">
-                    <h3><i class="fa-solid fa-clock-rotate-left"></i> مسار طلبك — ${statusLabel}</h3>
-                </div>
-                <div class="card-body">
-                    <div class="uc-grid uc-card--primary" style="--uc-grid-min: 240px; gap: 0.75rem;">
-                        ${timeline.map(step => `
-                            <div class="uc-card__info-item" style="${step.active ? '' : (step.done ? '' : 'opacity: 0.55;')}">
-                                <div class="uc-card__info-icon"><i class="fa-solid ${step.icon}"></i></div>
-                                <div class="uc-card__info-content">
-                                    <span class="uc-card__info-label">${step.label}</span>
-                                    <span class="uc-card__info-value">${step.at ? `${step.atPrefix || ''}${fmt(step.at)}` : (step.active ? 'الآن' : '—')}</span>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            </div>
-
-            <div class="card" style="margin-bottom: 1.25rem;">
-                <div class="card-header">
-                    <h3><i class="fa-solid fa-align-right"></i> بياني الانتخابي</h3>
-                </div>
-                <div class="card-body">
-                    ${myCandidacy.candidacy_statement ? `
-                        <p style="white-space: pre-wrap; margin: 0; line-height: 1.9;">${this.escapeHtml(myCandidacy.candidacy_statement)}</p>
-                    ` : `
-                        <p style="opacity: 0.6; margin: 0;">لم تُضف بياناً انتخابياً.</p>
-                    `}
-                </div>
-                ${canEditContent ? `
-                <div class="card-footer">
-                    <button class="btn btn-primary btn-block candidacy-detail-edit-btn"
-                            data-candidate-id="${myCandidacy.id}"
-                            data-election-id="${election.id}"
-                            data-scope="statement">
-                        <i class="fa-solid fa-pen"></i> تعديل البيان
-                    </button>
-                </div>` : ''}
-            </div>
-
-            <div class="card" style="margin-bottom: 1.25rem;">
-                <div class="card-header">
-                    <h3><i class="fa-solid fa-paperclip"></i> الملف المرفق</h3>
-                </div>
-                <div class="card-body">
-                    ${fileUrl ? `
-                        ${isImage ? `
-                            <div style="text-align: center;">
-                                <img src="${fileUrl}" alt="الملف الانتخابي"
-                                     style="max-width: 100%; max-height: 480px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08);">
-                            </div>
-                        ` : isPdf ? `
-                            <embed src="${fileUrl}" type="application/pdf"
-                                   style="width: 100%; height: 600px; border: 1px solid rgba(0,0,0,0.08); border-radius: 8px;">
-                        ` : `
-                            <p style="opacity: 0.7; margin: 0;">ملف مرفق — استخدم الأزرار أدناه للفتح أو التحميل.</p>
-                        `}
-                    ` : `
-                        <div class="empty-state">
-                            <div class="empty-state__icon"><i class="fa-solid fa-file-circle-xmark"></i></div>
-                            <p class="empty-state__title">لم تُرفق أي ملف</p>
-                        </div>
-                    `}
-                </div>
-                ${(fileUrl || canEditContent) ? `
-                <div class="uc-card__footer" style="--_uc-color-rgb: 61, 143, 214;">
-                    ${fileUrl ? `
-                    <a href="${fileUrl}" target="_blank" rel="noopener" class="btn btn-slate">
-                        <i class="fa-solid fa-up-right-from-square"></i> فتح في نافذة جديدة
-                    </a>
-                    <a href="${fileUrl}" download class="btn btn-slate">
-                        <i class="fa-solid fa-download"></i> تحميل
-                    </a>` : ''}
-                    ${canEditContent ? `
-                    <button class="btn btn-primary candidacy-detail-edit-btn"
-                            data-candidate-id="${myCandidacy.id}"
-                            data-election-id="${election.id}"
-                            data-scope="file">
-                        <i class="fa-solid fa-pen"></i> تعديل الملف
-                    </button>` : ''}
-                </div>` : ''}
-            </div>
-
-        `;
-
-        container.querySelector('#candidacyBackBtn')?.addEventListener('click', () => this.backToCandidacyList());
-        container.querySelectorAll('.candidacy-detail-edit-btn').forEach(btn => {
-            btn.addEventListener('click', (ev) => {
-                const t = ev.currentTarget;
-                this.showEditMyCandidacyModal(t.dataset.candidateId, t.dataset.electionId, t.dataset.scope || 'all');
-            });
-        });
-        container.querySelector('.candidacy-detail-withdraw-btn')?.addEventListener('click', (ev) => {
-            this.withdrawMyCandidacy(ev.currentTarget.dataset.candidateId);
-        });
-    }
-
-    renderCandidacyCard(election) {
-        const roleName = election.target_role?.role_name_ar || '—';
-        const isDept   = !!election.target_department_id;
-        const unitName = election.target_committee?.committee_name_ar
-                      || election.target_department?.name_ar || '';
-        const unitLabel = isDept ? 'القسم' : 'اللجنة';
-        const unitIcon  = isDept ? 'fa-sitemap' : 'fa-people-group';
-
-        const fmt = (iso) => new Date(iso).toLocaleString('ar-SA', {
-            calendar: 'gregory',
-            numberingSystem: 'latn',
-            dateStyle: 'medium',
-            timeStyle: 'short'
-        }).replace(/،\s*/, ' الساعة ');
-        const end   = election.candidacy_end   ? fmt(election.candidacy_end)   : null;
-
-        let remaining = null;
-        if (election.candidacy_end) {
-            const diff = new Date(election.candidacy_end).getTime() - Date.now();
-            if (diff > 0) {
-                const days = Math.floor(diff / 86400000);
-                const hours = Math.floor((diff % 86400000) / 3600000);
-                remaining = days > 0 ? `متبقي ${days} يوم` : `متبقي ${hours} ساعة`;
-            } else {
-                remaining = 'انتهى الموعد';
-            }
-        }
-
-        const unset = '<span style="opacity: 0.55;">لم يُحدَّد</span>';
-        const myCandidacy = this.myCandidacies?.find(c => c.election_id === election.id);
-        const variant = myCandidacy
-            ? (ElectionsManager.CANDIDATE_STATUS_VARIANT[myCandidacy.status] || ElectionsManager.CANDIDATE_STATUS_VARIANT.pending)
-            : { color: '#10b981', uc: 'uc-card--success', icon: 'fa-door-open' };
-        const statusLabel = myCandidacy ? ElectionsManager.CANDIDATE_STATUS_LABELS[myCandidacy.status] : 'باب الترشح مفتوح';
-        const needsEdit = myCandidacy?.status === 'needs_edit';
-
-        return `
-            <div class="uc-card ${variant.uc}" data-election-id="${election.id}">
-                <div class="uc-card__header">
-                    <div class="uc-card__header-inner">
-                        <div class="uc-card__icon">
-                            <i class="fa-solid ${variant.icon}"></i>
-                        </div>
-                        <div class="uc-card__header-info">
-                            <h3 class="uc-card__title uc-card__title--wrap">${this.getElectionName(election)}</h3>
-                            <span class="uc-card__badge">
-                                <i class="fa-solid fa-circle-dot"></i>
-                                ${statusLabel}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="uc-card__body">
-                    <div class="uc-card__info-item">
-                        <div class="uc-card__info-icon"><i class="fa-solid fa-user-tie"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">الدور</span>
-                            <span class="uc-card__info-value">${roleName}</span>
-                        </div>
-                    </div>
-
-                    ${unitName ? `
-                    <div class="uc-card__info-item">
-                        <div class="uc-card__info-icon"><i class="fa-solid ${unitIcon}"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">${unitLabel}</span>
-                            <span class="uc-card__info-value">${unitName}</span>
-                        </div>
-                    </div>` : ''}
-
-                    <div class="uc-card__info-item">
-                        <div class="uc-card__info-icon"><i class="fa-solid fa-hourglass-end"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">نهاية الترشح</span>
-                            <span class="uc-card__info-value">
-                                ${end || unset}${remaining ? ` <small style="opacity: 0.7;">· ${remaining}</small>` : ''}
-                            </span>
-                        </div>
-                    </div>
-
-                    ${needsEdit && myCandidacy.edit_request_note ? `
-                    <div class="uc-card__info-item">
-                        <div class="uc-card__info-icon"><i class="fa-solid fa-comment-dots"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">ملاحظات الإدارة للتعديل</span>
-                            <span class="uc-card__info-value" style="white-space: pre-wrap;">${this.escapeHtml(myCandidacy.edit_request_note)}</span>
-                        </div>
-                    </div>` : ''}
-
-                    ${myCandidacy?.status === 'rejected' && myCandidacy.review_note ? `
-                    <div class="uc-card__info-item">
-                        <div class="uc-card__info-icon"><i class="fa-solid fa-comment-dots"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">سبب الرفض</span>
-                            <span class="uc-card__info-value" style="white-space: pre-wrap;">${this.escapeHtml(myCandidacy.review_note)}</span>
-                        </div>
-                    </div>` : ''}
-                </div>
-
-                <div class="uc-card__footer">
-                    ${!myCandidacy ? `
-                        <button class="btn btn-success apply-candidacy-btn" data-election-id="${election.id}">
-                            <i class="fa-solid fa-user-plus"></i> تقدم للترشح
-                        </button>
-                    ` : `
-                        <button class="btn ${variant.btnClass || 'btn-primary'} candidacy-view-detail-btn" data-election-id="${election.id}">
-                            <i class="fa-solid fa-file-signature"></i> ملفي الانتخابي
-                        </button>
-                    `}
-                </div>
-            </div>`;
-    }
-
-    async showSetEndDateModal(electionId) {
-        const election = this.elections.find(e => e.id === electionId);
-        if (!election) return;
-
-        let modalRef = null;
-        modalRef = await window.ModalHelper.show({
-            title: 'تحديد موعد إغلاق الترشح',
-            iconClass: 'fa-calendar-xmark',
-            size: 'sm',
-            type: 'primary',
-            html: `
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="label-icon fa-solid fa-hourglass-end"></i> تاريخ ووقت إغلاق باب الترشح <span class="required-dot">*</span>
-                    </label>
-                    <input type="datetime-local" id="candidacyEndInput" class="form-input">
-                </div>`,
-            showFooter: true,
-            footerButtons: [
-                { text: 'إلغاء', class: 'btn btn-outline' },
-                {
-                    text: '<i class="fa-solid fa-check"></i> حفظ',
-                    class: 'btn btn-primary',
-                    keepOpen: true,
-                    callback: async () => {
-                        const val = document.getElementById('candidacyEndInput')?.value;
-                        if (!val) {
-                            const input = document.getElementById('candidacyEndInput');
-                            if (input) input.style.borderColor = 'var(--color-danger)';
-                            this.showError('يرجى تحديد الموعد');
-                            return;
-                        }
-                        try {
-                            const { error } = await this.supabase
-                                .from('elections')
-                                .update({ candidacy_end: new Date(val).toISOString(), updated_at: new Date().toISOString() })
-                                .eq('id', electionId);
-                            if (error) throw error;
-                            modalRef?.close?.();
-                            this.showSuccess('تم تحديد موعد إغلاق الترشح');
-                            await this.loadElections();
-                            this.renderOpenSection();
-                        } catch (err) {
-                            console.error(err);
-                            this.showError('حدث خطأ أثناء الحفظ');
-                        }
-                    }
-                }
-            ]
-        });
-    }
-
-    // =============================================
-    // إنشاء انتخاب جديد
-    // =============================================
-
-    async showCreateModal() {
-        // تحديث بيانات الانتخابات لضمان عدم استخدام بيانات قديمة
-        await this.loadElections();
-
-        const eligibleRoles = this.roles.filter(r => ElectionsManager.ELIGIBLE_ROLES.includes(r.role_name));
-        const eligibleRoleIds = eligibleRoles.map(r => r.id);
-
-        // جلب المناصب المشغولة (role_id + committee_id أو department_id)
-        const { data: occupiedData } = await this.supabase
-            .from('user_roles')
-            .select('role_id, committee_id, department_id')
-            .in('role_id', eligibleRoleIds)
-            .eq('is_active', true);
-        const occupied = occupiedData || [];
-
-        // مفاتيح الانتخابات النشطة (role-committee أو role-department)
-        // المسودات والملغاة والمكتملة لا تمنع إنشاء انتخاب جديد
-        const activeElectionKeys = new Set(
-            this.elections
-                .filter(e => !['draft', 'completed', 'cancelled'].includes(e.status))
-                .map(e => e.target_department_id
-                    ? `${e.target_role_id}-dept-${e.target_department_id}`
-                    : `${e.target_role_id}-com-${e.target_committee_id}`)
-        );
-
-        const rolesOptions = eligibleRoles.map(r =>
-            `<option value="${r.id}" data-role-name="${r.role_name}">${r.role_name_ar}</option>`
-        ).join('');
-
-        let modalRef = null;
-        modalRef = await window.ModalHelper.show({
-            title: 'إنشاء انتخاب جديد',
-            iconClass: 'fa-door-open',
-            size: 'lg',
-            html: `
-                <form id="createElectionForm" class="form-stack">
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="label-icon fa-solid fa-user-tie"></i> المنصب المستهدف <span class="required-dot">*</span>
-                        </label>
-                        <select id="electionTargetRole" class="form-select" required>
-                            <option value="">اختر المنصب</option>
-                            ${rolesOptions}
-                        </select>
-                    </div>
-                    <div class="form-group d-none" id="entityGroup">
-                        <label class="form-label" id="entityLabel">
-                            <i class="label-icon fa-solid fa-sitemap"></i> — <span class="required-dot">*</span>
-                        </label>
-                        <select id="electionTargetEntity" class="form-select" data-entity-type="">
-                            <option value="">اختر...</option>
-                        </select>
-                        <span id="noVacancyMsg" class="form-error d-none">
-                            <i class="fa-solid fa-circle-exclamation"></i> لا توجد مناصب شاغرة لهذا الدور
-                        </span>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="label-icon fa-solid fa-hourglass-end"></i> نهاية الترشح
-                        </label>
-                        <input type="datetime-local" id="electionCandidacyEnd" class="form-input">
-                        <small>
-                            <i class="fa-solid fa-circle-info"></i>
-                            <span>سيُفتح باب الترشح فور الإنشاء. <strong>تحديد موعد النهاية اختياري</strong> — يمكنك ضبطه لاحقًا.</span>
-                        </small>
-                    </div>
-                </form>`,
-            showFooter: true,
-            footerButtons: [
-                { text: 'إلغاء', class: 'btn btn-outline' },
-                {
-                    text: '<i class="fa-solid fa-plus"></i> إنشاء',
-                    class: 'btn btn-primary',
-                    keepOpen: true,
-                    callback: () => this.createElection(modalRef)
-                }
-            ]
-        });
-
-        // ربط حدث تغيير المنصب
-        const roleSelect    = document.getElementById('electionTargetRole');
-        const entityGroup   = document.getElementById('entityGroup');
-        const entityLabel   = document.getElementById('entityLabel');
-        const entitySelect  = document.getElementById('electionTargetEntity');
-        const noVacancyMsg  = document.getElementById('noVacancyMsg');
-
-        roleSelect?.addEventListener('change', () => {
-            const selectedOption = roleSelect.options[roleSelect.selectedIndex];
-            const selectedRoleId = Number(roleSelect.value);
-            const roleName = selectedOption?.dataset.roleName || '';
-            entitySelect.value = '';
-
-            if (!selectedRoleId) {
-                entityGroup.classList.add('d-none');
+            if (error) {
+                console.error(error);
+                host.innerHTML = errorState(error.message);
                 return;
             }
 
-            const isDeptRole = ElectionsManager.DEPARTMENT_BASED_ROLES.includes(roleName);
+            await this._attachCandidatesForOpen(data || []);
 
-            if (isDeptRole) {
-                // عرض الأقسام الشاغرة
-                entityLabel.innerHTML = '<i class="label-icon fa-solid fa-sitemap"></i> القسم المستهدف <span class="required-dot">*</span>';
-                entitySelect.dataset.entityType = 'department';
+            const groups = ['candidacy_open', 'candidacy_closed', 'voting_open', 'voting_closed'];
+            const byStatus = Object.fromEntries(groups.map(s => [s, []]));
+            (data || []).forEach(e => {
+                (byStatus[e.status] || (byStatus[e.status] = [])).push(e);
+            });
 
-                const vacantDepts = this.departments.filter(d => {
-                    const isOccupied = occupied.some(o =>
-                        Number(o.role_id) === selectedRoleId && Number(o.department_id) === d.id
-                    );
-                    const hasActiveElection = activeElectionKeys.has(`${selectedRoleId}-dept-${d.id}`);
-                    return !isOccupied && !hasActiveElection;
+            host.innerHTML =
+                this._renderStatsGrid(groups, byStatus) +
+                groups.map(s => this._renderStatusSection(s, byStatus[s])).join('');
+
+            this._bindCardActions(host);
+            this._bindSectionRefreshButtons(host);
+            this._startCountdownTicker();
+        }
+
+        _bindSectionRefreshButtons(host) {
+            host.querySelectorAll('[data-action="refresh-section"]').forEach(btn => {
+                btn.addEventListener('click', async (ev) => {
+                    ev.preventDefault();
+                    const status = btn.dataset.status;
+                    if (!status) return;
+                    btn.disabled = true;
+                    btn.classList.add('is-spinning');
+                    try { await this._refreshSection(status); }
+                    finally {
+                        btn.disabled = false;
+                        btn.classList.remove('is-spinning');
+                    }
                 });
-
-                entitySelect.innerHTML = '<option value="">اختر القسم</option>' +
-                    vacantDepts.map(d => `<option value="${d.id}">${d.name_ar}</option>`).join('');
-
-                noVacancyMsg.classList.toggle('d-none', vacantDepts.length > 0);
-            } else {
-                // عرض اللجان الشاغرة (غير مشغولة وبدون انتخاب نشط)
-                entityLabel.innerHTML = '<i class="label-icon fa-solid fa-people-group"></i> اللجنة المستهدفة <span class="required-dot">*</span>';
-                entitySelect.dataset.entityType = 'committee';
-
-                const vacantCommittees = this.committees.filter(c => {
-                    const isOccupied = occupied.some(o =>
-                        Number(o.role_id) === selectedRoleId && Number(o.committee_id) === c.id
-                    );
-                    const hasActiveElection = activeElectionKeys.has(`${selectedRoleId}-com-${c.id}`);
-                    return !isOccupied && !hasActiveElection;
-                });
-
-                entitySelect.innerHTML = '<option value="">اختر اللجنة</option>' +
-                    vacantCommittees.map(c => `<option value="${c.id}">${c.committee_name_ar}</option>`).join('');
-
-                noVacancyMsg.classList.toggle('d-none', vacantCommittees.length > 0);
-            }
-
-            entityGroup.classList.remove('d-none');
-        });
-    }
-
-    async createElection(modalRef) {
-        const roleSelect    = document.getElementById('electionTargetRole');
-        const entitySelect  = document.getElementById('electionTargetEntity');
-        const entityGroup   = document.getElementById('entityGroup');
-        const targetRoleId  = roleSelect?.value || '';
-        const entityType    = entitySelect?.dataset.entityType || '';
-        const entityId      = entitySelect?.value || '';
-        const candidacyEndRaw   = document.getElementById('electionCandidacyEnd')?.value;
-        const candidacyEnd   = candidacyEndRaw ? new Date(candidacyEndRaw).toISOString() : null;
-
-        // تحقق مرئي: أحمر على الحقل الفارغ
-        const markInvalid = (el) => {
-            if (!el) return;
-            el.style.borderColor = 'var(--color-danger)';
-            el.addEventListener('change', () => el.style.borderColor = '', { once: true });
-        };
-
-        if (!targetRoleId) {
-            markInvalid(roleSelect);
-            this.showError('يرجى اختيار المنصب أولاً');
-            return;
-        }
-        if (!entityGroup?.classList.contains('d-none') && !entityId) {
-            markInvalid(entitySelect);
-            this.showError(entityType === 'department' ? 'يرجى اختيار القسم' : 'يرجى اختيار اللجنة');
-            return;
+            });
         }
 
-        const insertData = {
-            target_role_id: targetRoleId,
-            target_committee_id: entityType === 'committee' ? entityId : null,
-            target_department_id: entityType === 'department' ? entityId : null,
-        };
-
-        try {
-            const { error } = await this.supabase
-                .from('elections')
-                .insert({
-                    ...insertData,
-                    candidacy_end: candidacyEnd || null,
-                    status: 'candidacy_open',
-                    created_by: this.currentUser.id
-                });
-
-            if (error) throw error;
-
-            modalRef?.close?.();
-            this.showSuccess('تم إنشاء الانتخاب بنجاح');
-            await this.loadElections();
-            // تحديث القسم المناسب بحسب الواجهة النشطة
-            if (document.getElementById('elections-open-section')?.classList.contains('d-none') === false) {
-                this.renderOpenSection();
-            } else {
-                this.renderElectionsList();
-            }
-        } catch (error) {
-            console.error('Error creating election:', error);
-            this.showError('حدث خطأ أثناء إنشاء الانتخاب');
-        }
-    }
-
-    // =============================================
-    // عرض تفاصيل الانتخاب
-    // =============================================
-
-    async showElectionDetail(electionId) {
-        const election = this.elections.find(e => e.id === electionId);
-        if (!election) return;
-
-        this.currentElection = election;
-
-        // تحميل المرشحين والأصوات
-        const [candidates, myVote, results] = await Promise.all([
-            this.loadCandidates(electionId),
-            this.loadMyVote(electionId),
-            this.loadResults(electionId)
-        ]);
-
-        const container = document.getElementById('elections-section');
-        // إذا كان المستخدم في قسم آخر (مثل elections-open-section)، انقله للقسم الرئيسي
-        if (container?.classList.contains('d-none') && typeof window.navigateToSection === 'function') {
-            window.navigateToSection('elections-section');
-        }
-        container.querySelector('#elections-list-view').classList.add('d-none');
-        container.querySelector('#elections-detail-view').classList.remove('d-none');
-
-        this.renderElectionDetail(election, candidates, myVote, results);
-
-        if (!this._electionEscHandler) {
-            this._electionEscHandler = (e) => {
-                if (e.key !== 'Escape') return;
-                if (document.querySelector('.modal.show, .modal.is-open')) return;
-                if (!this.currentElection) return;
-                this.showListView();
-            };
-            document.addEventListener('keydown', this._electionEscHandler);
-        }
-    }
-
-    async loadCandidates(electionId) {
-        const { data } = await this.supabase
-            .from('election_candidates')
-            .select(`
+        async _refreshSection(status) {
+            const { data, error } = await sb.from('elections').select(`
                 *,
-                user:user_id(id, full_name, email, avatar_url),
-                reviewer:reviewed_by(id, full_name)
+                committee:committees(committee_name_ar),
+                department:departments(name_ar),
+                creator:profiles!elections_created_by_fkey(full_name)
             `)
-            .eq('election_id', electionId)
-            .order('created_at', { ascending: true });
-        return data || [];
-    }
-
-    async loadMyVote(electionId) {
-        if (!this.currentUser) return null;
-        const { data } = await this.supabase
-            .from('election_votes')
-            .select('*, candidate:candidate_id(user_id)')
-            .eq('election_id', electionId)
-            .eq('voter_id', this.currentUser.id)
-            .maybeSingle();
-        return data;
-    }
-
-    async loadResults(electionId) {
-        const { data } = await this.supabase.rpc('get_election_results', {
-            p_election_id: electionId
-        });
-        return data || [];
-    }
-
-    renderElectionDetail(election, candidates, myVote, results) {
-        const detailContainer = document.getElementById('election-detail-content');
-        if (!detailContainer) return;
-
-        const canApprove = this.canApproveCandidates();
-        const isInTargetCommittee = this.isUserInCommittee(election.target_committee_id);
-
-        this.renderAdminDetail(detailContainer, election, candidates, myVote, results, canApprove, isInTargetCommittee);
-
-        this.bindDetailEvents(detailContainer, election, candidates);
-    }
-
-    // عرض تفاصيل الإدارة (العرض الكامل)
-    renderAdminDetail(detailContainer, election, candidates, myVote, results, canApprove, isInTargetCommittee) {
-        const electionName = this.getElectionName(election);
-        let html = `
-            <nav class="page-breadcrumb" aria-label="مسار التنقل">
-                <ol>
-                    <li>
-                        <button type="button" class="breadcrumb-link" id="backToElectionsListBtn">
-                            <i class="fa-solid fa-list-check"></i>
-                            الانتخابات
-                        </button>
-                    </li>
-                    <li class="breadcrumb-sep" aria-hidden="true">
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </li>
-                    <li class="breadcrumb-current" aria-current="page">${this.escapeHtml(electionName)}</li>
-                </ol>
-            </nav>`;
-
-        html += `
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-                <button class="btn btn-outline election-tab active" data-tab="candidates">
-                    <i class="fa-solid fa-users"></i> المرشحون (${candidates.length})
-                </button>
-                <button class="btn btn-outline election-tab" data-tab="voting">
-                    <i class="fa-solid fa-check-to-slot"></i> التصويت
-                </button>
-                <button class="btn btn-outline election-tab" data-tab="results">
-                    <i class="fa-solid fa-chart-bar"></i> النتائج
-                </button>
-            </div>`;
-
-        html += `<div id="election-tab-candidates">${this.renderCandidatesTab(election, candidates, canApprove, isInTargetCommittee)}</div>`;
-        html += `<div id="election-tab-voting" class="d-none">${this.renderVotingTab(election, candidates, myVote)}</div>`;
-        html += `<div id="election-tab-results" class="d-none">${this.renderResultsTab(election, results, true)}</div>`;
-
-        detailContainer.innerHTML = html;
-
-        // ربط أحداث التبويبات
-        detailContainer.querySelectorAll('.election-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                detailContainer.querySelectorAll('.election-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                ['candidates', 'voting', 'results'].forEach(name => {
-                    const el = document.getElementById(`election-tab-${name}`);
-                    if (el) el.classList.toggle('d-none', name !== tab.dataset.tab);
-                });
-            });
-        });
-    }
-
-    // =============================================
-    // تبويب المرشحين
-    // =============================================
-
-    renderCandidatesTab(election, candidates, canApprove, isInTargetCommittee) {
-        // حفظ المرشحين الحاليين للوصول من الـ handlers
-        this._currentCandidates = candidates;
-        this._currentFilter = this._currentFilter || 'all';
-        this._currentSearch = this._currentSearch || '';
-
-        let html = '';
-
-        // بانر تقديم ترشح للعضو المؤهّل
-        const canSubmitCandidacy = ['candidacy_open'].includes(election.status) && isInTargetCommittee;
-        const myCandidacy = candidates.find(c => c.user_id === this.currentUser?.id);
-
-        if (canSubmitCandidacy && !myCandidacy) {
-            html += `
-                <div class="card" style="margin-bottom: 1.5rem; border: 2px dashed var(--color-primary-light);">
-                    <div class="card-body" style="text-align: center; padding: 2rem;">
-                        <i class="fa-solid fa-hand-point-up fa-2x" style="color: var(--color-primary); margin-bottom: 0.5rem;"></i>
-                        <p style="margin-bottom: 1rem;">هل ترغب بالتقدم للترشح لهذا المنصب؟</p>
-                        <button class="btn btn-primary" id="submitCandidacyBtn">
-                            <i class="fa-solid fa-user-plus"></i> تقدم للترشح
-                        </button>
-                    </div>
-                </div>`;
-        }
-
-        // بطاقة حالة المرشح نفسه إذا قدّم بالفعل
-        if (myCandidacy) {
-            html += this.renderMyCandidacyBanner(myCandidacy);
-        }
-
-        // إحصائيات
-        const counts = {
-            total: candidates.length,
-            pending: candidates.filter(c => c.status === 'pending').length,
-            approved: candidates.filter(c => c.status === 'approved').length,
-            rejected: candidates.filter(c => c.status === 'rejected').length,
-            needs_edit: candidates.filter(c => c.status === 'needs_edit').length,
-            withdrawn: candidates.filter(c => c.status === 'withdrawn').length
-        };
-
-        html += `
-            <div class="stats-grid" style="margin-bottom: 1.25rem; --stats-cols: 5;">
-                <div class="stat-card" style="--stat-color: #6366f1;">
-                    <div class="stat-card-wrapper">
-                        <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
-                        <div class="stat-content">
-                            <div class="stat-value">${counts.total}</div>
-                            <div class="stat-label">إجمالي الطلبات</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="stat-card" style="--stat-color: #f59e0b;">
-                    <div class="stat-card-wrapper">
-                        <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
-                        <div class="stat-content">
-                            <div class="stat-value">${counts.pending}</div>
-                            <div class="stat-label">قيد المراجعة</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="stat-card" style="--stat-color: #10b981;">
-                    <div class="stat-card-wrapper">
-                        <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
-                        <div class="stat-content">
-                            <div class="stat-value">${counts.approved}</div>
-                            <div class="stat-label">مقبول</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="stat-card" style="--stat-color: #3b82f6;">
-                    <div class="stat-card-wrapper">
-                        <div class="stat-icon"><i class="fa-solid fa-pen-to-square"></i></div>
-                        <div class="stat-content">
-                            <div class="stat-value">${counts.needs_edit}</div>
-                            <div class="stat-label">بانتظار التعديل</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="stat-card" style="--stat-color: #ef4444;">
-                    <div class="stat-card-wrapper">
-                        <div class="stat-icon"><i class="fa-solid fa-circle-xmark"></i></div>
-                        <div class="stat-content">
-                            <div class="stat-value">${counts.rejected}</div>
-                            <div class="stat-label">مرفوض</div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-
-        // شريط الفلاتر (بحث + شرائح)
-        const chip = (key, label, count) => `
-            <button class="filter-chip ${this._currentFilter === key ? 'filter-chip--active' : ''}"
-                    data-candidate-filter="${key}">
-                ${label} <span style="opacity: 0.7;">(${count})</span>
-            </button>`;
-
-        html += `
-            <div class="filters-bar filters-bar--wrap" style="margin-bottom: 1rem;">
-                <div class="filter-group" style="flex: 1; min-width: 220px;">
-                    <i class="fa-solid fa-search"></i>
-                    <input type="text" id="candidateSearchInput" class="form-input"
-                           placeholder="ابحث باسم المرشح..." value="${this._currentSearch}">
-                </div>
-            </div>
-            <div class="filter-chips-container" style="margin-bottom: 1.25rem;">
-                ${chip('all',       'الكل',           counts.total)}
-                ${chip('pending',   'قيد المراجعة',   counts.pending)}
-                ${chip('approved',  'مقبول',          counts.approved)}
-                ${chip('needs_edit','بانتظار التعديل',counts.needs_edit)}
-                ${chip('rejected',  'مرفوض',          counts.rejected)}
-                ${chip('withdrawn', 'منسحب',          counts.withdrawn)}
-            </div>`;
-
-        // تصفية بالبحث فقط (فلتر الحالة يُطبَّق لاحقاً على مستوى المجموعات)
-        const searched = candidates.filter(c => {
-            if (!this._currentSearch) return true;
-            const q = this._currentSearch.toLowerCase();
-            return (c.user?.full_name || '').toLowerCase().includes(q);
-        });
-
-        // مجموعات مرتّبة: قيد المراجعة ← بانتظار التعديل ← مقبول ← مرفوض ← منسحب
-        const GROUP_ORDER = [
-            { key: 'pending',    label: 'قيد المراجعة',    variant: 'warning', icon: 'fa-clock' },
-            { key: 'needs_edit', label: 'بانتظار التعديل', variant: 'info',    icon: 'fa-pen-to-square' },
-            { key: 'approved',   label: 'المقبولين',           variant: 'success', icon: 'fa-circle-check' },
-            { key: 'rejected',   label: 'المرفوضين',           variant: 'danger',  icon: 'fa-circle-xmark' },
-            { key: 'withdrawn',  label: 'المنسحبون',           variant: 'neutral', icon: 'fa-arrow-rotate-left' }
-        ];
-
-        const visibleGroups = GROUP_ORDER
-            .filter(g => this._currentFilter === 'all' || this._currentFilter === g.key)
-            .map(g => ({ ...g, items: searched.filter(c => c.status === g.key) }))
-            .filter(g => g.items.length);
-
-        if (!visibleGroups.length) {
-            html += `
-                <div class="empty-state" style="padding: 3rem 1rem; text-align: center;">
-                    <div class="empty-state__icon" style="font-size: 2.5rem; opacity: 0.4;"><i class="fa-solid fa-inbox"></i></div>
-                    <p class="empty-state__title" style="margin-top: 0.5rem;">${candidates.length ? 'لا نتائج مطابقة للتصفية الحالية' : 'لا يوجد مرشحون بعد'}</p>
-                </div>`;
-            return html;
-        }
-
-        visibleGroups.forEach(group => {
-            const cards = group.items
-                .map(c => this.renderCandidateCard(c, election, canApprove))
-                .join('');
-            html += `
-                <div class="card card--${group.variant}" style="margin-bottom: 1.25rem;">
-                    <div class="card-header">
-                        <h3><i class="fa-solid ${group.icon}"></i> ${group.label} (${group.items.length})</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="uc-grid">${cards}</div>
-                    </div>
-                </div>`;
-        });
-
-        return html;
-    }
-
-    renderMyCandidacyBanner(candidate) {
-        const variant = ElectionsManager.CANDIDATE_STATUS_VARIANT[candidate.status] || ElectionsManager.CANDIDATE_STATUS_VARIANT.pending;
-        const statusLabel = ElectionsManager.CANDIDATE_STATUS_LABELS[candidate.status];
-        const needsEdit = candidate.status === 'needs_edit';
-        const note = needsEdit ? candidate.edit_request_note
-                               : (candidate.status === 'rejected' ? candidate.review_note : null);
-
-        return `
-            <div class="uc-card ${variant.uc}" style="margin-bottom: 1.25rem;">
-                <div class="uc-card__header">
-                    <div class="uc-card__header-inner">
-                        <div class="uc-card__icon"><i class="fa-solid ${variant.icon}"></i></div>
-                        <div class="uc-card__header-info">
-                            <h3 class="uc-card__title">طلب ترشحك</h3>
-                            <span class="uc-card__badge"><i class="fa-solid fa-circle-dot"></i> ${statusLabel}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="uc-card__body">
-                    ${note ? `
-                    <div class="uc-card__info-item">
-                        <div class="uc-card__info-icon"><i class="fa-solid fa-comment-dots"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">${needsEdit ? 'ملاحظات الإدارة للتعديل' : 'سبب الرفض'}</span>
-                            <span class="uc-card__info-value" style="white-space: pre-wrap;">${this.escapeHtml(note)}</span>
-                        </div>
-                    </div>` : ''}
-                </div>
-                ${needsEdit ? `
-                <div class="uc-card__footer">
-                    <button class="btn btn-primary edit-my-candidacy-btn" data-candidate-id="${candidate.id}" data-election-id="${candidate.election_id}">
-                        <i class="fa-solid fa-pen"></i> تعديل طلبي
-                    </button>
-                    <button class="btn btn-danger btn-outline withdraw-my-candidacy-btn" data-candidate-id="${candidate.id}">
-                        <i class="fa-solid fa-arrow-rotate-left"></i> انسحاب
-                    </button>
-                </div>` : (candidate.status === 'pending' ? `
-                <div class="uc-card__footer">
-                    <button class="btn btn-danger btn-outline withdraw-my-candidacy-btn" data-candidate-id="${candidate.id}">
-                        <i class="fa-solid fa-arrow-rotate-left"></i> انسحاب
-                    </button>
-                </div>` : '')}
-            </div>`;
-    }
-
-    renderCandidateCard(candidate, election, canApprove) {
-        const user    = candidate.user;
-        const avatar  = user?.avatar_url || '../assets/default-avatar.png';
-        const variant = ElectionsManager.CANDIDATE_STATUS_VARIANT[candidate.status] || ElectionsManager.CANDIDATE_STATUS_VARIANT.pending;
-        const statusLabel = ElectionsManager.CANDIDATE_STATUS_LABELS[candidate.status];
-
-        const fmt = (iso) => iso ? new Date(iso).toLocaleString('ar-SA', {
-            calendar: 'gregory', numberingSystem: 'latn',
-            dateStyle: 'medium', timeStyle: 'short'
-        }).replace(/،\s*/, ' الساعة ') : null;
-
-        const submittedAt = fmt(candidate.created_at);
-        const reviewedAt  = fmt(candidate.reviewed_at);
-
-        const statement = candidate.candidacy_statement
-            ? (candidate.candidacy_statement.length > 180
-                ? candidate.candidacy_statement.slice(0, 180) + '…'
-                : candidate.candidacy_statement)
-            : null;
-
-        const canReview  = canApprove && ['pending', 'needs_edit'].includes(candidate.status);
-        const canRequestEdit = canApprove && candidate.status === 'pending';
-        const canRevert  = canApprove && ['approved', 'rejected'].includes(candidate.status);
-        const canResetFromEdit = canApprove && candidate.status === 'needs_edit';
-
-        return `
-            <div class="uc-card ${variant.uc}" data-candidate-id="${candidate.id}">
-                <div class="uc-card__header">
-                    <div class="uc-card__header-inner">
-                        <img class="uc-card__icon" src="${avatar}" alt="${this.escapeHtml(user?.full_name || '')}"
-                             style="border-radius: 50%; object-fit: cover;">
-                        <div class="uc-card__header-info">
-                            <h3 class="uc-card__title uc-card__title--wrap">${this.escapeHtml(user?.full_name || 'غير معروف')}</h3>
-                            <span class="uc-card__badge"><i class="fa-solid ${variant.icon}"></i> ${statusLabel}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="uc-card__body">
-                    ${statement ? `
-                    <div class="uc-card__info-item">
-                        <div class="uc-card__info-icon"><i class="fa-solid fa-align-right"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">بيان الترشح</span>
-                            <span class="uc-card__info-value" style="white-space: pre-wrap;">${this.escapeHtml(statement)}</span>
-                        </div>
-                    </div>` : ''}
-
-                    ${submittedAt ? `
-                    <div class="uc-card__info-item">
-                        <div class="uc-card__info-icon"><i class="fa-regular fa-paper-plane"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">تاريخ التقديم</span>
-                            <span class="uc-card__info-value">${submittedAt}</span>
-                        </div>
-                    </div>` : ''}
-
-                    ${reviewedAt && ['approved', 'rejected'].includes(candidate.status) ? `
-                    <div class="uc-card__info-item">
-                        <div class="uc-card__info-icon"><i class="fa-solid fa-user-check"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">تاريخ المراجعة</span>
-                            <span class="uc-card__info-value">${reviewedAt}</span>
-                        </div>
-                    </div>` : ''}
-
-                    ${candidate.status === 'rejected' && candidate.review_note ? `
-                    <div class="uc-card__info-item">
-                        <div class="uc-card__info-icon"><i class="fa-solid fa-comment-dots"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">سبب الرفض</span>
-                            <span class="uc-card__info-value" style="white-space: pre-wrap;">${this.escapeHtml(candidate.review_note)}</span>
-                        </div>
-                    </div>` : ''}
-
-                    ${candidate.status === 'needs_edit' && candidate.edit_request_note ? `
-                    <div class="uc-card__info-item">
-                        <div class="uc-card__info-icon"><i class="fa-solid fa-comment-dots"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">ملاحظات التعديل</span>
-                            <span class="uc-card__info-value" style="white-space: pre-wrap;">${this.escapeHtml(candidate.edit_request_note)}</span>
-                        </div>
-                    </div>` : ''}
-
-                    ${candidate.status === 'withdrawn' && candidate.withdrawal_reason ? `
-                    <div class="uc-card__info-item">
-                        <div class="uc-card__info-icon"><i class="fa-solid fa-comment-dots"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">سبب الانسحاب</span>
-                            <span class="uc-card__info-value" style="white-space: pre-wrap;">${this.escapeHtml(candidate.withdrawal_reason)}</span>
-                        </div>
-                    </div>` : ''}
-
-                    <div class="uc-card__info-item uc-card__info-item--link">
-                        ${candidate.election_file_url ? `
-                            <a class="uc-card__link-btn" href="${candidate.election_file_url}" target="_blank" rel="noopener" title="فتح الملف">
-                                <i class="fa-solid fa-file-arrow-down"></i>
-                            </a>
-                        ` : ''}
-                        <div class="uc-card__info-icon"><i class="fa-solid fa-paperclip"></i></div>
-                        <div class="uc-card__info-content">
-                            <span class="uc-card__info-label">الملف الانتخابي</span>
-                            <span class="uc-card__info-value">
-                                ${candidate.election_file_url
-                                    ? 'متوفّر — اضغط للتحميل'
-                                    : '<span style="opacity: 0.55;">لم يُرفع ملف</span>'
-                                }
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="uc-card__footer" style="flex-wrap: wrap; gap: 0.5rem;">
-                    <button class="btn ${variant.btnClass} view-candidate-btn" data-candidate-id="${candidate.id}">
-                        <i class="fa-solid fa-eye"></i> عرض التفاصيل
-                    </button>
-                    ${canReview ? `
-                        <button class="btn btn-success approve-candidate-btn" data-candidate-id="${candidate.id}">
-                            <i class="fa-solid fa-check"></i> قبول
-                        </button>
-                        <button class="btn btn-danger reject-candidate-btn" data-candidate-id="${candidate.id}">
-                            <i class="fa-solid fa-xmark"></i> رفض
-                        </button>
-                    ` : ''}
-                    ${canRequestEdit ? `
-                        <button class="btn btn-primary request-edit-btn" data-candidate-id="${candidate.id}">
-                            <i class="fa-solid fa-pen-to-square"></i> طلب تعديل
-                        </button>` : ''}
-                    ${canResetFromEdit ? `
-                        <button class="btn btn-slate reset-to-pending-btn" data-candidate-id="${candidate.id}">
-                            <i class="fa-solid fa-rotate-left"></i> التراجع عن طلب التعديل
-                        </button>` : ''}
-                    ${canRevert ? `
-                        <button class="btn btn-warning btn-outline btn-sm reset-to-pending-btn" data-candidate-id="${candidate.id}">
-                            <i class="fa-solid fa-rotate-left"></i> إرجاع للمراجعة
-                        </button>` : ''}
-                </div>
-            </div>`;
-    }
-
-    escapeHtml(str) {
-        if (str == null) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-
-    // =============================================
-    // تبويب التصويت
-    // =============================================
-
-    renderVotingTab(election, candidates, myVote) {
-        if (election.status !== 'voting_open') {
-            const msg = ['candidacy_open', 'candidacy_closed'].includes(election.status)
-                ? 'التصويت لم يبدأ بعد' : 'التصويت منتهي';
-            return `<div style="text-align: center; padding: 2rem; color: var(--text-secondary);"><i class="fa-solid fa-clock fa-2x" style="margin-bottom: 0.5rem; opacity: 0.3;"></i><p>${msg}</p></div>`;
-        }
-
-        const approvedCandidates = candidates.filter(c => c.status === 'approved');
-        if (!approvedCandidates.length) {
-            return `<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">لا يوجد مرشحون معتمدون</div>`;
-        }
-
-        // وزن صوت المستخدم الحالي
-        const userWeight = this.getUserVoteWeight();
-
-        let html = `
-            <div class="card" style="margin-bottom: 1.5rem; background: var(--bg-secondary);">
-                <div class="card-body" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                    <div>
-                        <span style="color: var(--text-secondary); font-size: 0.85rem;">وزن صوتك:</span>
-                        <strong style="font-size: 1.2rem; color: var(--color-primary); margin-right: 0.3rem;">${userWeight}</strong>
-                    </div>
-                    ${myVote ? `
-                    <div style="padding: 0.4rem 1rem; border-radius: 0.5rem; background: #10b98120; color: #10b981; font-weight: 600;">
-                        <i class="fa-solid fa-check-circle"></i> لقد صوّتت بالفعل
-                    </div>` : ''}
-                </div>
-            </div>`;
-
-        html += '<div class="uc-grid">';
-        approvedCandidates.forEach(candidate => {
-            const user = candidate.user;
-            const avatar = user?.avatar_url || '../assets/default-avatar.png';
-            const isVotedFor = myVote?.candidate_id === candidate.id;
-
-            html += `
-                <div class="uc-card" ${isVotedFor ? 'style="border: 2px solid #10b981;"' : ''}>
-                    <div class="uc-card__header">
-                        <img class="uc-card__icon" src="${avatar}" alt="${user?.full_name}" style="border-radius: 50%; width: 48px; height: 48px; object-fit: cover;">
-                        <div>
-                            <h3 class="uc-card__title">${user?.full_name || 'غير معروف'}</h3>
-                            ${isVotedFor ? '<span style="color: #10b981; font-size: 0.8rem;"><i class="fa-solid fa-check"></i> اخترت هذا المرشح</span>' : ''}
-                        </div>
-                    </div>
-                    <div class="uc-card__body">
-                        ${candidate.candidacy_statement ? `<p style="color: var(--text-secondary); font-size: 0.9rem;">${candidate.candidacy_statement}</p>` : ''}
-                    </div>
-                    ${!myVote ? `
-                    <div class="uc-card__footer">
-                        <button class="btn btn-primary cast-vote-btn" data-candidate-id="${candidate.id}">
-                            <i class="fa-solid fa-check-to-slot"></i> صوّت لهذا المرشح
-                        </button>
-                    </div>` : ''}
-                </div>`;
-        });
-        html += '</div>';
-        return html;
-    }
-
-    // =============================================
-    // تبويب النتائج
-    // =============================================
-
-    renderResultsTab(election, results, canManage) {
-        if (!['voting_open', 'voting_closed', 'completed'].includes(election.status)) {
-            return `<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">النتائج غير متاحة بعد</div>`;
-        }
-
-        if (!results.length) {
-            return `<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">لا توجد نتائج</div>`;
-        }
-
-        const maxVotes = Math.max(...results.map(r => Number(r.total_weighted_votes)), 1);
-
-        let html = '<div style="display: grid; gap: 1rem;">';
-        results.forEach((result, index) => {
-            const percentage = (Number(result.total_weighted_votes) / maxVotes * 100).toFixed(1);
-            const avatar = result.avatar_url || '../assets/default-avatar.png';
-            const isWinner = election.winner_user_id === result.user_id;
-            const medalColors = ['#fbbf24', '#94a3b8', '#cd7f32'];
-            const medal = index < 3 ? `<span style="color: ${medalColors[index]}; font-size: 1.3rem; margin-left: 0.5rem;"><i class="fa-solid fa-trophy"></i></span>` : '';
-
-            html += `
-                <div class="card" ${isWinner ? 'style="border: 2px solid #10b981;"' : ''}>
-                    <div class="card-body">
-                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem;">
-                            <span style="font-size: 1.5rem; font-weight: 700; color: var(--text-secondary); min-width: 2rem;">#${index + 1}</span>
-                            <img src="${avatar}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                            <div style="flex: 1;">
-                                <strong>${result.full_name}</strong>
-                                ${medal}
-                                ${isWinner ? '<span style="color: #10b981; font-size: 0.8rem; margin-right: 0.5rem;"><i class="fa-solid fa-crown"></i> الفائز</span>' : ''}
-                            </div>
-                            <div style="text-align: left;">
-                                <strong style="font-size: 1.2rem;">${Number(result.total_weighted_votes).toFixed(1)}</strong>
-                                <span style="color: var(--text-secondary); font-size: 0.8rem;"> نقطة</span>
-                                <br><span style="color: var(--text-secondary); font-size: 0.8rem;">(${result.vote_count} صوت)</span>
-                            </div>
-                        </div>
-                        <div style="background: var(--bg-secondary); border-radius: 999px; height: 8px; overflow: hidden;">
-                            <div style="background: var(--color-primary); height: 100%; width: ${percentage}%; border-radius: 999px; transition: width 0.5s;"></div>
-                        </div>
-                    </div>
-                </div>`;
-        });
-        html += '</div>';
-
-        // زر إعلان الفائز
-        if (canManage && election.status === 'voting_closed' && results.length && !election.winner_user_id) {
-            const topCandidate = results[0];
-            html += `
-                <div style="text-align: center; margin-top: 1.5rem;">
-                    <button class="btn btn-success declare-winner-btn" data-candidate-user-id="${topCandidate.user_id}">
-                        <i class="fa-solid fa-crown"></i> إعلان ${topCandidate.full_name} فائزاً
-                    </button>
-                </div>`;
-        }
-
-        return html;
-    }
-
-    // =============================================
-    // ربط أحداث صفحة التفاصيل
-    // =============================================
-
-    bindDetailEvents(container, election) {
-        // الرجوع لقائمة الانتخابات (breadcrumb)
-        container.querySelector('#backToElectionsListBtn')?.addEventListener('click', () => this.showListView());
-
-        // تقديم ترشح
-        container.querySelector('#submitCandidacyBtn')?.addEventListener('click', () => {
-            this.showCandidacyModal(election.id);
-        });
-
-        // قبول/رفض مرشح
-        container.querySelectorAll('.approve-candidate-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.confirmApprove(btn.dataset.candidateId);
-            });
-        });
-        container.querySelectorAll('.reject-candidate-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.showRejectModal(btn.dataset.candidateId);
-            });
-        });
-
-        // طلب تعديل
-        container.querySelectorAll('.request-edit-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.showRequestEditModal(btn.dataset.candidateId);
-            });
-        });
-
-        // إرجاع للمراجعة (من مقبول/مرفوض/بانتظار التعديل)
-        container.querySelectorAll('.reset-to-pending-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.resetCandidateToPending(btn.dataset.candidateId);
-            });
-        });
-
-        // عرض التفاصيل الكاملة
-        container.querySelectorAll('.view-candidate-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.showCandidateDetailsModal(btn.dataset.candidateId);
-            });
-        });
-
-        // أزرار المرشح نفسه (تعديل/انسحاب)
-        container.querySelectorAll('.edit-my-candidacy-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.showEditMyCandidacyModal(btn.dataset.candidateId, btn.dataset.electionId);
-            });
-        });
-        container.querySelectorAll('.withdraw-my-candidacy-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.withdrawMyCandidacy(btn.dataset.candidateId);
-            });
-        });
-
-        // بحث + شرائح فلترة
-        const searchInput = container.querySelector('#candidateSearchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this._currentSearch = e.target.value;
-                this.rerenderCandidatesTab(election);
-            });
-        }
-        container.querySelectorAll('[data-candidate-filter]').forEach(chip => {
-            chip.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this._currentFilter = chip.dataset.candidateFilter;
-                this.rerenderCandidatesTab(election);
-            });
-        });
-
-        // التصويت
-        container.querySelectorAll('.cast-vote-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.confirmVote(election.id, btn.dataset.candidateId);
-            });
-        });
-
-        // إعلان الفائز
-        container.querySelector('.declare-winner-btn')?.addEventListener('click', (e) => {
-            this.declareWinner(election.id, e.currentTarget.dataset.candidateUserId);
-        });
-    }
-
-    // =============================================
-    // عمليات CRUD
-    // =============================================
-
-    async updateElectionStatus(electionId, newStatus) {
-        const confirmed = await this.confirmAction(
-            newStatus === 'cancelled' ? 'هل أنت متأكد من إلغاء هذا الانتخاب؟' :
-            `هل تريد تغيير حالة الانتخاب إلى "${ElectionsManager.STATUS_LABELS[newStatus]}"؟`
-        );
-        if (!confirmed) return;
-
-        try {
-            const { error } = await this.supabase
-                .from('elections')
-                .update({ status: newStatus, updated_at: new Date().toISOString() })
-                .eq('id', electionId);
+                .is('archived_at', null)
+                .eq('status', status)
+                .order('created_at', { ascending: false });
 
             if (error) {
-                if (error.code === 'P0001') {
-                    this.showError(error.message || 'تعذّر تحديث الحالة');
-                    return;
+                console.error(error);
+                toast(error.message || 'تعذر التحديث', 'error');
+                return;
+            }
+
+            const items = data || [];
+            if (status === 'candidacy_open') await this._attachCandidatesForOpen(items);
+            const icon = STATUS_ICON[status] || 'circle';
+            const bodyHtml = items.length === 0
+                ? emptyState(icon, 'لا يوجد انتخابات في هذه المرحلة', '', STATUS_EMPTY[status] || '')
+                : `<div class="uc-grid">${items.map(e => this._renderAdminFullCard(e)).join('')}</div>`;
+
+            const section = document.querySelector(`[data-section-status="${status}"]`);
+            if (section) {
+                const body = section.querySelector('.card-body');
+                if (body) {
+                    body.innerHTML = bodyHtml;
+                    this._bindCardActions(body);
                 }
-                throw error;
             }
-            this.showSuccess('تم تحديث حالة الانتخاب');
-            await this.loadElections();
-            const openSection = document.getElementById('elections-open-section');
-            if (openSection && !openSection.classList.contains('d-none')) {
-                this.renderOpenSection();
-            } else {
-                await this.showElectionDetail(electionId);
-            }
-        } catch (error) {
-            console.error('Error updating election status:', error);
-            this.showError('حدث خطأ أثناء تحديث الحالة');
+
+            const statValue = document.querySelector(`[data-stat-status="${status}"] .stat-value`);
+            if (statValue) statValue.textContent = items.length;
+
+            if (status === 'candidacy_open') this._startCountdownTicker();
         }
-    }
 
-    async showCandidacyModal(electionId) {
-        const election = this.elections.find(e => e.id === electionId)
-            || this.eligibleElections?.find(e => e.id === electionId);
-        const positionName = election ? this.getElectionName(election) : '';
+        _startCountdownTicker() {
+            this._stopCountdownTicker();
+            this._tickCountdowns();
+            this._countdownInterval = setInterval(() => this._tickCountdowns(), 1000);
+        }
 
-        let modalRef = null;
-        modalRef = await window.ModalHelper.show({
-            title: 'تقديم طلب ترشح',
-            iconClass: 'fa-user-plus',
-            size: 'md',
-            type: 'success',
-            html: `
-                <form id="candidacyForm" class="form-stack">
-                    ${positionName ? `
-                    <small>
-                        <i class="fa-solid fa-circle-info"></i>
-                        <span>ستتقدّم للترشح لمنصب <strong>${positionName}</strong></span>
-                    </small>` : ''}
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="label-icon fa-solid fa-align-right"></i> بيان الترشح
-                        </label>
-                        <textarea id="candidacyStatement" class="form-input" rows="5" placeholder="اكتب بيانك الانتخابي هنا..." style="resize: vertical;"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="label-icon fa-solid fa-file-arrow-up"></i> الملف الانتخابي
-                        </label>
-                        <div class="form-file">
-                            <input type="file" id="candidacyFile" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt">
-                            <div class="form-dropzone">
-                                <div class="form-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-                                <div class="form-dropzone-title">اسحب وأفلت الملف هنا</div>
-                                <div class="form-dropzone-hint">أو انقر للاختيار · PDF, DOC/DOCX, TXT أو صورة · حتى ${ElectionsManager.CANDIDACY_FILE_MAX_LABEL} (اختياري)</div>
-                            </div>
+        _stopCountdownTicker() {
+            if (this._countdownInterval) {
+                clearInterval(this._countdownInterval);
+                this._countdownInterval = null;
+            }
+        }
+
+        _tickCountdowns() {
+            const all = document.querySelectorAll('[data-countdown]');
+            if (all.length === 0) { this._stopCountdownTicker(); return; }
+            const now = Date.now();
+            all.forEach(el => {
+                const t = new Date(el.dataset.countdown).getTime();
+                if (!isFinite(t)) return;
+                el.textContent = '(' + fmtRemaining(t - now) + ')';
+            });
+        }
+
+        _renderStatsGrid(groups, byStatus) {
+            const STAT_COLOR = {
+                candidacy_open:    '#3b82f6',
+                candidacy_closed:  '#8b5cf6',
+                voting_open:       '#10b981',
+                voting_closed:     '#f59e0b'
+            };
+            const cards = groups.map(s => `
+                <div class="stat-card" data-stat-status="${s}" style="--stat-color: ${STAT_COLOR[s]};">
+                    <div class="stat-card-wrapper">
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-${STATUS_ICON[s] || 'circle'}"></i>
                         </div>
-                        <div class="form-file-list" id="candidacyFileList" style="display: none;"></div>
+                        <div class="stat-content">
+                            <div class="stat-value">${(byStatus[s] || []).length}</div>
+                            <div class="stat-label">${esc(STATUS_LABELS[s] || s)}</div>
+                        </div>
                     </div>
-                </form>`,
-            showFooter: true,
-            footerButtons: [
-                { text: 'إلغاء', class: 'btn btn-outline' },
-                {
-                    text: '<i class="fa-solid fa-paper-plane"></i> تقديم الترشح',
-                    class: 'btn btn-success',
-                    keepOpen: true,
-                    callback: () => this.submitCandidacy(electionId, modalRef)
-                }
-            ]
-        });
-
-        const fileInput = modalRef?.element?.querySelector('#candidacyFile');
-        const fileList  = modalRef?.element?.querySelector('#candidacyFileList');
-        if (fileInput && fileList) {
-            const fileIconFor = (name) => {
-                const ext = (name || '').split('.').pop().toLowerCase();
-                if (ext === 'pdf') return 'fa-regular fa-file-pdf';
-                if (['doc', 'docx'].includes(ext)) return 'fa-regular fa-file-word';
-                if (ext === 'txt') return 'fa-regular fa-file-lines';
-                if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext)) return 'fa-regular fa-file-image';
-                return 'fa-regular fa-file';
-            };
-            const fmtSize = (b) => {
-                if (b < 1024) return `${b} B`;
-                if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
-                return `${(b / 1024 / 1024).toFixed(1)} MB`;
-            };
-            const render = () => {
-                const f = fileInput.files?.[0];
-                if (!f) {
-                    fileList.style.display = 'none';
-                    fileList.innerHTML = '';
-                    return;
-                }
-                if (f.size > ElectionsManager.CANDIDACY_FILE_MAX_BYTES) {
-                    this.showError(`الحد الأقصى لحجم الملف الانتخابي هو ${ElectionsManager.CANDIDACY_FILE_MAX_LABEL} — حجم الملف المختار ${fmtSize(f.size)}`);
-                    fileInput.value = '';
-                    fileList.style.display = 'none';
-                    fileList.innerHTML = '';
-                    return;
-                }
-                fileList.style.display = '';
-                fileList.innerHTML = `
-                    <div class="form-file-item">
-                        <div class="form-file-icon"><i class="${fileIconFor(f.name)}"></i></div>
-                        <span class="form-file-name">${this.escapeHtml(f.name)}</span>
-                        <span class="form-file-size">${fmtSize(f.size)}</span>
-                        <button type="button" class="form-file-remove" aria-label="إزالة"><i class="fa-solid fa-xmark"></i></button>
-                    </div>`;
-                fileList.querySelector('.form-file-remove')?.addEventListener('click', () => {
-                    fileInput.value = '';
-                    render();
-                });
-            };
-            fileInput.addEventListener('change', render);
-        }
-    }
-
-    async submitCandidacy(electionId, modalRef = null) {
-        const statement = document.getElementById('candidacyStatement')?.value?.trim();
-        const fileInput = document.getElementById('candidacyFile');
-        let fileUrl = null;
-
-        const election = (this.eligibleElections || []).find(e => e.id === electionId)
-                      || (this.elections || []).find(e => e.id === electionId);
-        const ineligibleReason = election ? this.getIneligibilityReason(election) : null;
-        if (ineligibleReason) {
-            this.showError(ineligibleReason);
-            return;
+                </div>
+            `).join('');
+            return `<div class="stats-grid elections-stats-grid" style="margin-bottom:1.5rem;">${cards}</div>`;
         }
 
-        if (fileInput?.files?.[0]?.size > ElectionsManager.CANDIDACY_FILE_MAX_BYTES) {
-            this.showError(`الحد الأقصى لحجم الملف الانتخابي هو ${ElectionsManager.CANDIDACY_FILE_MAX_LABEL}`);
-            return;
+        _renderStatusSection(status, items, overrideLabel = null) {
+            const color = STATUS_CARD[status] || 'neutral';
+            const icon  = STATUS_ICON[status]  || 'circle';
+            const label = overrideLabel || STATUS_LABELS[status] || status;
+
+            const bodyHtml = items.length === 0
+                ? emptyState(icon, 'لا يوجد انتخابات في هذه المرحلة', '', STATUS_EMPTY[status] || '')
+                : `<div class="uc-grid">${items.map(e => this._renderAdminFullCard(e)).join('')}</div>`;
+
+            return `
+                <div class="card card--${color}" data-section-status="${status}" style="margin-bottom:1.25rem;">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-${icon}"></i> ${esc(label)}</h3>
+                        <button class="btn btn-icon btn-sm btn-card-color" data-action="refresh-section" data-status="${status}" title="تحديث هذا القسم" aria-label="تحديث هذا القسم">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        ${bodyHtml}
+                    </div>
+                </div>
+            `;
         }
 
-        try {
-            // رفع الملف إذا وُجد
-            if (fileInput?.files?.length) {
-                const file = fileInput.files[0];
-                const ext = file.name.split('.').pop();
-                const path = `${electionId}/${this.currentUser.id}/election-file.${ext}`;
+        _renderArchiveList(list) {
+            if (list.length === 0) {
+                return emptyState('box-archive', 'الأرشيف فارغ', 'لا توجد انتخابات مؤرشفة.');
+            }
+            return `<div class="uc-grid">
+                ${list.map(e => this._renderAdminFullCard(e, true)).join('')}
+            </div>`;
+        }
 
-                const { data, error: uploadError } = await this.supabase.storage
-                    .from('election-applications')
-                    .upload(path, file, { upsert: true });
+        /* ============================================================
+           Mode: admin-archive — الانتخابات المؤرشفة (تبويب مستقل)
+           ============================================================ */
+        async renderAdminArchive() {
+            const container = document.getElementById('electionsArchiveContainer');
+            if (!container) return;
 
-                if (uploadError) throw uploadError;
+            container.innerHTML = `
+                <div class="elections-impersonation-slot"></div>
+                <div class="d-flex justify-between align-items-center flex-wrap" style="gap:0.75rem; margin-bottom:1rem;">
+                    <h2 style="margin:0;">الانتخابات المؤرشفة</h2>
+                    <button class="btn btn-slate btn-outline" id="electionsArchiveRefreshBtn">
+                        <i class="fa-solid fa-rotate"></i> تحديث
+                    </button>
+                </div>
+                <div id="electionsArchiveHost"></div>
+            `;
 
-                const { data: urlData } = this.supabase.storage
-                    .from('election-applications')
-                    .getPublicUrl(path);
-                fileUrl = urlData?.publicUrl;
+            this._renderImpersonationNoticeIfNeeded();
+
+            container.querySelector('#electionsArchiveRefreshBtn')
+                .addEventListener('click', () => this.renderAdminArchive());
+
+            const host = container.querySelector('#electionsArchiveHost');
+            host.innerHTML = loadingState();
+
+            const { data, error } = await sb.from('elections').select(`
+                *,
+                committee:committees(committee_name_ar),
+                department:departments(name_ar),
+                creator:profiles!elections_created_by_fkey(full_name)
+            `)
+                .not('archived_at', 'is', null)
+                .order('archived_at', { ascending: false });
+
+            if (error) {
+                console.error(error);
+                host.innerHTML = errorState(error.message);
+                return;
             }
 
-            const { error } = await this.supabase
-                .from('election_candidates')
-                .insert({
-                    election_id: electionId,
-                    user_id: this.currentUser.id,
-                    candidacy_statement: statement || null,
-                    election_file_url: fileUrl
-                });
+            host.innerHTML = this._renderArchiveList(data || []);
+            this._bindCardActions(host);
+        }
 
-            if (error) throw error;
-
-            modalRef?.close?.();
-            this.showSuccess('تم تقديم طلب الترشح بنجاح');
-
-            await window.rebuildNavigation?.();
-
-            const candidacySection = document.getElementById('candidacy-section');
-            if (candidacySection && !candidacySection.classList.contains('d-none')) {
-                window.navigateToSection?.('candidacy-section');
+        _renderCandidatesItem(list) {
+            let body;
+            if (!Array.isArray(list)) {
+                body = '<div style="opacity:0.65>جارٍ التحميل…</div>';
+            } else if (list.length === 0) {
+                body = '<div style="opacity:0.65">لا يوجد مرشحون بعد</div>';
             } else {
-                await this.showElectionDetail(electionId);
+                const rows = list.map(c => {
+                    const badgeColor = CANDIDATE_BADGE[c.status] || 'secondary';
+                    const statusLabel = CANDIDATE_STATUS_LABELS[c.status] || c.status;
+                    const name = esc(c.user?.full_name || '—');
+                    return `
+                        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;font-size:0.83rem;">
+                            <span style="font-weight:700;opacity:0.7;">#${c.candidate_number}</span>
+                            <span style="font-weight:600;color:#1e293b;">${name}</span>
+                            <span class="uc-badge uc-badge--${badgeColor}">${esc(statusLabel)}</span>
+                        </div>
+                    `;
+                }).join('');
+                body = `<div style="display:flex;flex-direction:column;gap:0.35rem;">${rows}</div>`;
             }
-        } catch (error) {
-            console.error('Error submitting candidacy:', error);
-            const dbMsg = error?.code === 'P0001' ? error.message : null;
-            this.showError(dbMsg || 'حدث خطأ أثناء تقديم الترشح');
+            const count = Array.isArray(list) && list.length ? ` (${list.length})` : '';
+            return `
+                <div class="uc-card__info-item uc-card__info-item--full uc-card__info-item--list">
+                    <div class="uc-card__info-icon"><i class="fa-solid fa-user-group"></i></div>
+                    <div class="uc-card__info-content">
+                        <span class="uc-card__info-label">المرشحون${count}</span>
+                        <span class="uc-card__info-value">${body}</span>
+                    </div>
+                </div>
+            `;
         }
-    }
 
-    async reviewCandidate(candidateId, status, note = '') {
-        try {
-            const { error } = await this.supabase
-                .from('election_candidates')
-                .update({
-                    status,
-                    reviewed_by: this.currentUser.id,
-                    review_note: note || null,
-                    reviewed_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', candidateId);
+        _renderAdminFullCard(e, isArchive = false) {
+            const target = targetLabelOf(e, e.committee?.committee_name_ar, e.department?.name_ar);
+            const items = [];
+            if (e.status === 'candidacy_open') {
+                let endValue;
+                if (e.candidacy_end) {
+                    const remainMs = new Date(e.candidacy_end).getTime() - Date.now();
+                    endValue = `${esc(fmtDeadline(e.candidacy_end))} <span class="countdown-tag" data-countdown="${esc(e.candidacy_end)}">(${esc(fmtRemaining(remainMs))})</span>`;
+                } else {
+                    endValue = '<span style="opacity:0.65;">لم يُحدَّد</span>';
+                }
+                items.push(infoItem('calendar', 'نهاية الترشح', endValue));
+                items.push(this._renderCandidatesItem(e._candidates));
+            } else if (e.candidacy_end) {
+                items.push(infoItem('calendar', 'نهاية الترشح', fmtDate(e.candidacy_end)));
+            }
+            if (e.voting_end)               items.push(infoItem('clock',       'نهاية التصويت', fmtDate(e.voting_end)));
+            if (e.creator)                  items.push(infoItem('user',        'أُنشئ بواسطة', esc(e.creator.full_name)));
+            if (isArchive && e.archived_at) items.push(infoItem('box-archive', 'تاريخ الأرشفة', fmtDate(e.archived_at)));
 
+            const footer = isArchive
+                ? this._archiveCardActionsButtons(e)
+                : this._adminCardActionsButtons(e);
+
+            return ucElectionCard({
+                id: e.id,
+                status: e.status,
+                target,
+                infoItems: items,
+                footer
+            });
+        }
+
+        /* أزرار البطاقة المؤرشفة — قراءة فقط */
+        _archiveCardActionsButtons(e) {
+            const btns = [
+                `<button class="btn btn-primary btn-outline" data-action="review-readonly"><i class="fa-solid fa-clipboard-check"></i> المرشحون</button>`,
+                `<button class="btn btn-primary btn-outline" data-action="results"><i class="fa-solid fa-chart-simple"></i> النتائج</button>`
+            ];
+            return btns.join('');
+        }
+
+        /* أزرار الإجراءات للأدمن (داخل تذييل uc-card) */
+        _adminCardActionsButtons(e) {
+            const btns = [];
+            if (e.status !== 'candidacy_open') {
+                btns.push(`<button class="btn btn-primary btn-outline" data-action="review"><i class="fa-solid fa-clipboard-check"></i> المرشحون</button>`);
+            }
+
+            if (e.status === 'candidacy_open') {
+                const hasEnd = !!e.candidacy_end;
+                btns.push(`<button class="btn btn-primary" data-action="set-candidacy-end" data-current="${e.candidacy_end || ''}"><i class="fa-regular fa-calendar-check"></i> ${hasEnd ? 'تعديل موعد الإغلاق' : 'تحديد موعد الإغلاق'}</button>`);
+                btns.push(`<button class="btn btn-warning" data-action="transition" data-target="candidacy_closed"><i class="fa-solid fa-door-closed"></i> إغلاق الترشح</button>`);
+            }
+            if (e.status === 'candidacy_closed') {
+                btns.push(`<button class="btn btn-success" data-action="transition" data-target="voting_open"><i class="fa-solid fa-check-to-slot"></i> فتح التصويت</button>`);
+            }
+            if (e.status === 'voting_open') {
+                btns.push(`<button class="btn btn-warning" data-action="transition" data-target="voting_closed"><i class="fa-solid fa-stop"></i> إغلاق التصويت</button>`);
+            }
+            if (e.status === 'voting_closed') {
+                btns.push(`<button class="btn btn-success" data-action="declare-winner"><i class="fa-solid fa-trophy"></i> إعلان الفائز</button>`);
+            }
+            if (['candidacy_open', 'candidacy_closed'].includes(e.status)) {
+                btns.push(`<button class="btn btn-danger" data-action="cancel"><i class="fa-solid fa-ban"></i> إلغاء</button>`);
+            }
+            return btns.join('');
+        }
+
+        _bindCardActions(host) {
+            host.querySelectorAll('[data-action]').forEach(btn => {
+                btn.addEventListener('click', async (ev) => {
+                    ev.preventDefault();
+                    const card = btn.closest('[data-election-id]');
+                    const id = card?.dataset?.electionId;
+                    const action = btn.dataset.action;
+                    if (!id) return;
+
+                    try {
+                        btn.disabled = true;
+                        if (action === 'transition')      await this._transitionElection(id, btn.dataset.target);
+                        else if (action === 'cancel')     await this._cancelElection(id);
+                        else if (action === 'review')     await this.openCandidatesModal(id, 'admin');
+                        else if (action === 'review-readonly') await this.openCandidatesModal(id, 'viewer');
+                        else if (action === 'declare-winner') await this.openDeclareWinnerModal(id);
+                        else if (action === 'results')    await this.openResultsModal(id);
+                        else if (action === 'set-candidacy-end') await this._setCandidacyEnd(id, btn.dataset.current || null);
+                    } catch (err) {
+                        console.error(err);
+                        toast(err.message || String(err), 'error');
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            });
+        }
+
+        /* ─── create election modal (الانتخاب يُنشأ مباشرة بحالة candidacy_open) ─── */
+        async openCreateElectionModal() {
+            await this._loadCommitteesDepartments();
+            const [occupied, ongoing] = await Promise.all([
+                this._loadOccupiedPositions(),
+                this._loadActiveElectionScopes()
+            ]);
+
+            const { modal, close } = this._openModal({
+                title: 'انتخاب جديد',
+                icon: 'fa-poll-h',
+                size: 'md',
+                color: 'primary',
+                body: `
+                    <form id="electionForm" class="modal-form-grid">
+                        <div class="form-group full-width">
+                            <label class="form-label" for="elTargetRole">
+                                <span class="label-icon"><i class="fa-solid fa-user-tie"></i></span>
+                                المنصب المُنتخَب
+                                <span class="required-dot">*</span>
+                            </label>
+                            <select class="form-select" id="elTargetRole" required>
+                                <option value="">اختر المنصب</option>
+                                <option value="department_head">${ROLE_LABELS.department_head}</option>
+                                <option value="committee_leader">${ROLE_LABELS.committee_leader}</option>
+                                <option value="deputy_committee_leader">${ROLE_LABELS.deputy_committee_leader}</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width" id="elScopeDeptWrap" style="display:none;">
+                            <label class="form-label" for="elDepartmentId">
+                                <span class="label-icon"><i class="fa-solid fa-sitemap"></i></span>
+                                القسم
+                                <span class="required-dot">*</span>
+                            </label>
+                            <select class="form-select" id="elDepartmentId">
+                                <option value="">اختر القسم</option>
+                            </select>
+                            <small><i class="fa-solid fa-circle-info"></i>يُعطَّل القسم إن كان عليه رئيس نشِط، أو انتخاب رئيس قسم جارٍ، أو أي انتخاب نشط في لجانه.</small>
+                        </div>
+                        <div class="form-group full-width" id="elScopeCommWrap" style="display:none;">
+                            <label class="form-label" for="elCommitteeId">
+                                <span class="label-icon"><i class="fa-solid fa-users"></i></span>
+                                اللجنة
+                                <span class="required-dot">*</span>
+                            </label>
+                            <select class="form-select" id="elCommitteeId">
+                                <option value="">اختر اللجنة</option>
+                            </select>
+                            <small><i class="fa-solid fa-circle-info"></i>لكل لجنة انتخاب نشط واحد فقط. وإن كان لقسمها انتخاب رئيس قسم نشط، تُعطَّل اللجنة.</small>
+                        </div>
+                        <div class="form-group full-width">
+                            <label class="form-label" for="elCandidacyEnd">
+                                <span class="label-icon"><i class="fa-regular fa-calendar"></i></span>
+                                نهاية الترشح
+                            </label>
+                            <input type="datetime-local" class="form-input" id="elCandidacyEnd" />
+                            <small><i class="fa-solid fa-circle-info"></i>يُغلق الترشح تلقائياً عند هذا الوقت. اترك الحقل فارغاً للإغلاق اليدوي فقط.</small>
+                        </div>
+                    </form>
+                `,
+                footer: `
+                    <button class="btn btn-slate btn-outline" data-dismiss="modal">إلغاء</button>
+                    <button class="btn btn-primary" id="elSubmitBtn">
+                        <i class="fa-solid fa-floppy-disk"></i> إنشاء الانتخاب
+                    </button>
+                `
+            });
+
+            const roleSel = modal.querySelector('#elTargetRole');
+            const deptWrap = modal.querySelector('#elScopeDeptWrap');
+            const commWrap = modal.querySelector('#elScopeCommWrap');
+            const deptSel = modal.querySelector('#elDepartmentId');
+            const commSel = modal.querySelector('#elCommitteeId');
+
+            // الأقسام التي تحت لجنتها/لجانها انتخاب نشط — لمنع فتح رئيس قسم عليها
+            const deptsWithActiveChildElection = new Set();
+            for (const c of this.committees) {
+                if (ongoing.committees.has(c.id) && c.department_id) {
+                    deptsWithActiveChildElection.add(c.department_id);
+                }
+            }
+
+            const rebuildScopeOptions = () => {
+                const v = roleSel.value;
+                const keepDeptVal = deptSel.value;
+                const keepCommVal = commSel.value;
+
+                deptSel.innerHTML = '<option value="">اختر القسم</option>' +
+                    this.departments.map(d => {
+                        const isOngoing        = v === 'department_head' && ongoing.departmentHeads.has(d.id);
+                        const isOccupied       = v === 'department_head' && occupied.departmentHeads.has(d.id);
+                        const hasChildElection = v === 'department_head' && deptsWithActiveChildElection.has(d.id);
+                        const disabled = (isOngoing || isOccupied || hasChildElection) ? 'disabled' : '';
+                        const suffix = isOngoing        ? ' — مشغول (انتخاب جارٍ)'
+                                     : isOccupied      ? ' — مشغول'
+                                     : hasChildElection ? ' — انتخاب نشط في إحدى لجانه'
+                                     : '';
+                        return `<option value="${d.id}" ${disabled}>${esc(d.name_ar)}${suffix}</option>`;
+                    }).join('');
+
+                commSel.innerHTML = '<option value="">اختر اللجنة</option>' +
+                    this.committees.map(c => {
+                        let isOccupied = false;
+                        // أي انتخاب نشط على اللجنة (أيّاً كان الدور) يمنع فتح انتخاب جديد
+                        const isOngoing        = ongoing.committees.has(c.id);
+                        // انتخاب رئيس قسم الأب نشط → تعطيل اللجان التابعة
+                        const parentDeptOngoing = c.department_id && ongoing.departmentHeads.has(c.department_id);
+                        if (v === 'committee_leader')             isOccupied = occupied.committeeLeaders.has(c.id);
+                        else if (v === 'deputy_committee_leader') isOccupied = occupied.committeeDeputies.has(c.id);
+                        const disabled = (isOngoing || isOccupied || parentDeptOngoing) ? 'disabled' : '';
+                        const suffix = isOngoing         ? ' — انتخاب جارٍ في اللجنة'
+                                     : parentDeptOngoing ? ' — انتخاب رئيس قسم الأب جارٍ'
+                                     : isOccupied       ? ' — مشغول'
+                                     : '';
+                        return `<option value="${c.id}" ${disabled}>${esc(c.committee_name_ar)}${suffix}</option>`;
+                    }).join('');
+
+                if (keepDeptVal) deptSel.value = keepDeptVal;
+                if (keepCommVal) commSel.value = keepCommVal;
+            };
+
+            const updateScope = () => {
+                const v = roleSel.value;
+                deptWrap.style.display = v === 'department_head' ? '' : 'none';
+                commWrap.style.display = (v === 'committee_leader' || v === 'deputy_committee_leader') ? '' : 'none';
+                rebuildScopeOptions();
+            };
+            roleSel.addEventListener('change', updateScope);
+            rebuildScopeOptions();
+
+            const candEndInput = modal.querySelector('#elCandidacyEnd');
+            const applyMinNow = () => { candEndInput.min = toLocalDatetimeValue(new Date().toISOString()); };
+            applyMinNow();
+            candEndInput.addEventListener('focus', applyMinNow);
+
+            modal.querySelector('#elSubmitBtn').addEventListener('click', async () => {
+                const role = roleSel.value;
+                if (!role) return toast('اختر المنصب', 'warning');
+                const deptId = parseInt(modal.querySelector('#elDepartmentId').value) || null;
+                const commId = parseInt(modal.querySelector('#elCommitteeId').value)  || null;
+                if (role === 'department_head' && !deptId) return toast('اختر القسم', 'warning');
+                if (role !== 'department_head' && !commId) return toast('اختر اللجنة', 'warning');
+
+                const candEnd = candEndInput.value;
+                if (candEnd && new Date(candEnd).getTime() <= Date.now()) {
+                    return toast('لا يمكن اختيار وقت/يوم منتهٍ لنهاية الترشح', 'warning');
+                }
+
+                const payload = {
+                    target_role_name:     role,
+                    target_department_id: role === 'department_head' ? deptId : null,
+                    target_committee_id:  role === 'department_head' ? null : commId,
+                    candidacy_end:        candEnd ? new Date(candEnd).toISOString() : null,
+                    created_by:           this.user.id,
+                    status:               'candidacy_open'
+                };
+
+                try {
+                    const { data: inserted, error } = await sb.from('elections')
+                        .insert(payload)
+                        .select('id')
+                        .single();
+                    if (error) throw error;
+                    toast('تم إنشاء الانتخاب', 'success');
+                    close();
+                    await this._loadKanban();
+                    window.rebuildNavigation?.();
+
+                    // إشعار الحدث 1 — فتح باب الترشح
+                    if (inserted?.id) {
+                        const label = await this._fetchElectionLabel(inserted.id);
+                        const endMsg = candEnd
+                            ? ` يمكنك التقدّم حتى ${new Date(candEnd).toLocaleString('ar-SA', { dateStyle: 'medium', timeStyle: 'short' })}.`
+                            : '';
+                        this._sendElectionNotification({
+                            electionId: inserted.id,
+                            audience: 'election_voters',
+                            title: 'فُتح باب الترشح',
+                            message: `فُتح باب الترشح لـ ${label}.${endMsg}`,
+                            type: 'success',
+                            priority: 'high',
+                            metadata: { event: 'candidacy_opened' }
+                        });
+                    }
+                } catch (err) {
+                    console.error(err);
+                    if (err?.code === '23505' && /elections_active_committee_uniq/i.test(err?.message || '')) {
+                        toast('يوجد انتخاب مفتوح حالياً في هذه اللجنة/القسم. أغلقه أولاً قبل فتح انتخاب جديد.', 'error');
+                    } else {
+                        toast(err.message || String(err), 'error');
+                    }
+                }
+            });
+        }
+
+        async _transitionElection(id, newStatus) {
+            let votingEndIso = null;
+            if (newStatus === 'voting_open') {
+                votingEndIso = await this._promptVotingEnd();
+                if (!votingEndIso) return;
+            } else {
+                if (!await confirmDialog(`تحويل الحالة إلى: ${STATUS_LABELS[newStatus]}؟`, { icon: 'warning' })) return;
+            }
+            const { error } = await sb.rpc('transition_election', {
+                p_election: id,
+                p_new_status: newStatus,
+                p_voting_end: votingEndIso
+            });
+            if (error) throw error;
+            toast('تم التحديث', 'success');
+            await this._loadKanban();
+            window.rebuildNavigation?.();
+
+            // إشعار الحدث 6 — إغلاق الترشح يدوياً
+            if (newStatus === 'candidacy_closed') {
+                const label = await this._fetchElectionLabel(id);
+                this._sendElectionNotification({
+                    electionId: id,
+                    audience: 'election_candidates',
+                    title: 'أُغلق باب الترشح',
+                    message: `أُغلق باب الترشح لـ ${label}. لن يُقبل مرشحون جدد.`,
+                    type: 'purple',
+                    priority: 'normal',
+                    metadata: { event: 'candidacy_manually_closed' }
+                });
+            }
+        }
+
+        async _setCandidacyEnd(id, currentIso) {
+            const hasCurrent = !!currentIso;
+            const prefill = hasCurrent ? toLocalDatetimeValue(currentIso) : '';
+            const { modal, close } = this._openModal({
+                title: hasCurrent ? 'تعديل موعد إغلاق الترشح' : 'تحديد موعد إغلاق الترشح',
+                icon: 'fa-regular fa-calendar-check',
+                size: 'sm',
+                body: `
+                    <div class="form-group">
+                        <label class="form-label" for="ceEndInput">
+                            <span class="label-icon"><i class="fa-regular fa-clock"></i></span>
+                            نهاية الترشح
+                        </label>
+                        <input type="datetime-local" class="form-input" id="ceEndInput" value="${esc(prefill)}" />
+                        <small><i class="fa-solid fa-circle-info"></i>يُغلق الترشح تلقائياً عند هذا الوقت. اترك الحقل فارغاً للإغلاق اليدوي فقط.</small>
+                    </div>
+                `,
+                footer: `
+                    <button class="btn btn-success" id="ceSaveBtn"><i class="fa-solid fa-floppy-disk"></i> حفظ</button>
+                    ${hasCurrent ? '<button class="btn btn-danger" id="ceClearBtn"><i class="fa-solid fa-xmark"></i> إزالة الموعد</button>' : ''}
+                    <button class="btn btn-slate btn-outline" data-dismiss="modal">إلغاء</button>
+                `
+            });
+
+            const update = async (iso) => {
+                const { error } = await sb.from('elections').update({ candidacy_end: iso }).eq('id', id);
+                if (error) throw error;
+                toast('تم الحفظ', 'success');
+                close();
+                await this._loadKanban();
+
+                // إشعارات الأحداث 2/3/4
+                const label = await this._fetchElectionLabel(id);
+                if (iso === null) {
+                    // (4) إزالة الموعد
+                    this._sendElectionNotification({
+                        electionId: id,
+                        audience: 'election_participants',
+                        title: 'أُزيل موعد إغلاق الترشح',
+                        message: `أُزيل موعد إغلاق الترشح لـ ${label}. وأصبح مُتاحًا الترشح دون موعد محدد.`,
+                        type: 'warning',
+                        priority: 'normal',
+                        metadata: { event: 'candidacy_end_cleared' }
+                    });
+                } else {
+                    const when = new Date(iso).toLocaleString('ar-SA', { dateStyle: 'medium', timeStyle: 'short' });
+                    if (hasCurrent) {
+                        // (3) تعديل الموعد
+                        this._sendElectionNotification({
+                            electionId: id,
+                            audience: 'election_participants',
+                            title: 'عُدِّل موعد إغلاق الترشح',
+                            message: `عُدِّل موعد إغلاق الترشح لـ ${label} إلى ${when}.`,
+                            type: 'info',
+                            priority: 'normal',
+                            metadata: { event: 'candidacy_end_updated' }
+                        });
+                    } else {
+                        // (2) تحديد موعد لأول مرة
+                        this._sendElectionNotification({
+                            electionId: id,
+                            audience: 'election_participants',
+                            title: 'حُدِّد موعد إغلاق الترشح',
+                            message: `حُدِّد موعد إغلاق الترشح لـ ${label} في ${when}.`,
+                            type: 'info',
+                            priority: 'normal',
+                            metadata: { event: 'candidacy_end_set' }
+                        });
+                    }
+                }
+            };
+
+            modal.querySelector('#ceSaveBtn').addEventListener('click', async () => {
+                const raw = modal.querySelector('#ceEndInput').value;
+                if (!raw) return toast('حدّد الموعد أو اضغط إزالة الموعد', 'warning');
+                const iso = new Date(raw).toISOString();
+                if (new Date(iso) <= new Date()) return toast('الوقت يجب أن يكون في المستقبل', 'warning');
+                try { await update(iso); } catch (err) { toast(err.message || String(err), 'error'); }
+            });
+
+            if (hasCurrent) {
+                modal.querySelector('#ceClearBtn').addEventListener('click', async () => {
+                    try { await update(null); } catch (err) { toast(err.message || String(err), 'error'); }
+                });
+            }
+        }
+
+        _promptVotingEnd() {
+            return new Promise((resolve) => {
+                const { modal, close } = this._openModal({
+                    title: 'فتح التصويت',
+                    icon: 'fa-check-to-slot',
+                    size: 'sm',
+                    body: `
+                        <div class="form-group">
+                            <label class="form-label"><i class="fa-regular fa-clock"></i> نهاية التصويت</label>
+                            <input type="datetime-local" class="form-input" id="vtEndInput" />
+                            <div class="form-hint">سيُغلق التصويت تلقائياً عند هذا الوقت.</div>
+                        </div>
+                    `,
+                    footer: `
+                        <button class="btn btn-success" id="vtConfirmBtn"><i class="fa-solid fa-check"></i> فتح التصويت</button>
+                        <button class="btn btn-slate btn-outline" id="vtCancelBtn">إلغاء</button>
+                    `
+                });
+
+                const cleanup = (value) => { close(); resolve(value); };
+                modal.querySelector('#vtCancelBtn').addEventListener('click', () => cleanup(null));
+                modal.querySelector('#vtConfirmBtn').addEventListener('click', () => {
+                    const raw = modal.querySelector('#vtEndInput').value;
+                    if (!raw) return toast('حدّد نهاية التصويت', 'warning');
+                    const iso = new Date(raw).toISOString();
+                    if (new Date(iso) <= new Date()) return toast('الوقت يجب أن يكون في المستقبل', 'warning');
+                    cleanup(iso);
+                });
+            });
+        }
+
+        async _cancelElection(id) {
+            const reason = await this._openCancelElectionModal();
+            if (!reason) return;
+
+            const label = await this._fetchElectionLabel(id);
+
+            const { data: paths, error } = await sb.rpc('cancel_election', { p_election: id, p_reason: reason });
             if (error) throw error;
 
-            this.showSuccess(status === 'approved' ? 'تم قبول المرشح' : 'تم رفض المرشح');
-            if (this.currentElection) {
-                await this.showElectionDetail(this.currentElection.id);
+            if (Array.isArray(paths) && paths.length > 0) {
+                const { error: rmErr } = await sb.storage.from(STORAGE_BUCKET).remove(paths);
+                if (rmErr) console.warn('[ElectionsManager] فشل حذف ملفات التخزين', rmErr);
             }
-        } catch (error) {
-            console.error('Error reviewing candidate:', error);
-            this.showError('حدث خطأ أثناء مراجعة المرشح');
+
+            toast('تم الإلغاء والتنظيف والأرشفة', 'success');
+            await this._loadKanban();
+            window.rebuildNavigation?.();
+
+            // إشعار الحدث 5 — إلغاء الانتخاب
+            this._sendElectionNotification({
+                electionId: id,
+                audience: 'election_participants',
+                title: 'أُلغي الانتخاب',
+                message: `أُلغي انتخاب ${label}. السبب: ${reason}`,
+                type: 'error',
+                priority: 'high',
+                metadata: { event: 'election_cancelled', reason }
+            });
         }
-    }
 
-    async showRejectModal(candidateId) {
-        await window.ModalHelper.show({
-            title: 'رفض المرشح',
-            size: 'sm',
-            type: 'danger',
-            html: `
-                <div class="form-group">
-                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-circle-xmark"></i></span> سبب الرفض (اختياري)</label>
-                    <textarea id="rejectNote" class="form-input" rows="3" placeholder="اكتب سبب الرفض..." style="resize: vertical;"></textarea>
-                </div>`,
-            showFooter: true,
-            footerButtons: [
-                { text: 'إلغاء', class: 'btn btn-outline', dismiss: true },
-                {
-                    text: '<i class="fa-solid fa-xmark"></i> رفض',
-                    class: 'btn btn-danger',
-                    callback: () => {
-                        const note = document.getElementById('rejectNote')?.value?.trim();
-                        this.reviewCandidate(candidateId, 'rejected', note);
+        _openCancelElectionModal() {
+            return new Promise((resolve) => {
+                const { modal, close } = this._openModal({
+                    title: 'إلغاء الانتخاب',
+                    icon: 'fa-ban',
+                    size: 'md',
+                    color: 'danger',
+                    body: `
+                        <div class="modal-info-box box-danger">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span>سيؤدي الإلغاء إلى <strong>حذف جميع المرشحين والأصوات والملفات</strong> وأرشفة الانتخاب. لا يمكن التراجع عن هذه العملية.</span>
+                        </div>
+                        <form class="modal-form-grid">
+                            <div class="form-group full-width">
+                                <label class="form-label" for="elCancelReason">
+                                    <span class="label-icon"><i class="fa-regular fa-comment-dots"></i></span>
+                                    سبب الإلغاء
+                                    <span class="required-dot">*</span>
+                                </label>
+                                <textarea class="form-textarea" id="elCancelReason" rows="3" placeholder="أدخل سبب الإلغاء…" required></textarea>
+                                <small><i class="fa-solid fa-circle-info"></i>سيُحفظ السبب في سجل التدقيق للرجوع إليه لاحقاً.</small>
+                            </div>
+                        </form>
+                    `,
+                    footer: `
+                        <button class="btn btn-slate btn-outline" data-dismiss="modal" id="elCancelAbortBtn">تراجع</button>
+                        <button class="btn btn-danger" id="elCancelConfirmBtn">
+                            <i class="fa-solid fa-ban"></i> تأكيد الإلغاء
+                        </button>
+                    `
+                });
+
+                let settled = false;
+                const done = (value) => {
+                    if (settled) return;
+                    settled = true;
+                    close();
+                    resolve(value);
+                };
+
+                const reasonInput = modal.querySelector('#elCancelReason');
+                const reasonGroup = reasonInput.closest('.form-group');
+                modal.querySelector('#elCancelConfirmBtn').addEventListener('click', () => {
+                    const txt = reasonInput.value.trim();
+                    if (!txt) {
+                        reasonGroup?.classList.add('has-error');
+                        reasonInput.focus();
+                        toast('سبب الإلغاء مطلوب', 'warning');
+                        return;
                     }
+                    done(txt);
+                });
+                reasonInput.addEventListener('input', () => {
+                    if (reasonInput.value.trim()) reasonGroup?.classList.remove('has-error');
+                });
+                modal.querySelector('#elCancelAbortBtn').addEventListener('click', () => done(null));
+                modal.querySelector('.modal-close')?.addEventListener('click', () => done(null));
+                modal.closest('.elections-modal-host')?.querySelector('.modal-backdrop')
+                    ?.addEventListener('click', () => done(null));
+            });
+        }
+
+        /* ============================================================
+           إشعار داخل التطبيق — يُدرج في notifications
+           ============================================================ */
+        async _sendElectionNotification({ electionId, audience, title, message, type = 'info', priority = 'normal', metadata = {} }) {
+            try {
+                const { error } = await sb.from('notifications').insert({
+                    title,
+                    message,
+                    type,
+                    priority,
+                    icon: 'fa-poll-h',
+                    target_audience: audience,
+                    target_election_id: electionId,
+                    sender_id: this.user?.id || null,
+                    metadata
+                });
+                if (error) {
+                    console.warn('[ElectionsManager] notification insert failed', error);
                 }
-            ]
-        });
-    }
+            } catch (err) {
+                console.warn('[ElectionsManager] notification error', err);
+            }
+        }
 
-    async confirmApprove(candidateId) {
-        const confirmed = await this.confirmAction('هل تريد قبول هذا المرشح؟');
-        if (!confirmed) return;
-        this.reviewCandidate(candidateId, 'approved');
-    }
-
-    async showRequestEditModal(candidateId) {
-        let modalRef = null;
-        modalRef = await window.ModalHelper.show({
-            title: 'طلب تعديل من المرشح',
-            iconClass: 'fa-pen-to-square',
-            size: 'sm',
-            type: 'primary',
-            html: `
-                <div class="form-group">
-                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-pen-to-square"></i></span> ما المطلوب تعديله؟ <span class="required-dot">*</span></label>
-                    <textarea id="editRequestNote" class="form-input" rows="4"
-                              placeholder="اكتب بوضوح ما تريد من المرشح تعديله في بيانه أو ملفه الانتخابي..."
-                              style="resize: vertical;"></textarea>
-                    <small>
-                        <i class="fa-solid fa-circle-info"></i>
-                        <span>سيظهر هذا النص للمرشح، ويستطيع تعديل طلبه وإعادة إرساله.</span>
-                    </small>
-                </div>`,
-            showFooter: true,
-            footerButtons: [
-                { text: 'إلغاء', class: 'btn btn-outline', dismiss: true },
-                {
-                    text: '<i class="fa-solid fa-paper-plane"></i> إرسال طلب التعديل',
-                    class: 'btn btn-primary',
-                    keepOpen: true,
-                    callback: async () => {
-                        const note = document.getElementById('editRequestNote')?.value?.trim();
-                        if (!note) {
-                            this.showError('يرجى كتابة ملاحظات التعديل');
-                            return;
-                        }
-                        await this.requestCandidateEdit(candidateId, note);
-                        modalRef?.close?.();
-                    }
-                }
-            ]
-        });
-    }
-
-    async requestCandidateEdit(candidateId, note) {
-        try {
-            const { data: existing, error: fetchError } = await this.supabase
-                .from('election_candidates')
-                .select('edit_requests_log')
-                .eq('id', candidateId)
+        async _fetchElectionLabel(electionId) {
+            const { data } = await sb.from('elections')
+                .select('target_role_name, committee:committees(committee_name_ar), department:departments(name_ar)')
+                .eq('id', electionId)
                 .single();
-            if (fetchError) throw fetchError;
-
-            const now = new Date().toISOString();
-            const log = Array.isArray(existing?.edit_requests_log) ? existing.edit_requests_log : [];
-            log.push({ at: now, by: this.currentUser.id, note });
-
-            const { error } = await this.supabase
-                .from('election_candidates')
-                .update({
-                    status: 'needs_edit',
-                    edit_request_note: note,
-                    edit_requested_by: this.currentUser.id,
-                    edit_requested_at: now,
-                    edit_requests_log: log,
-                    updated_at: now
-                })
-                .eq('id', candidateId);
-            if (error) throw error;
-            this.showSuccess('تم إرسال طلب التعديل للمرشح');
-            if (this.currentElection) await this.showElectionDetail(this.currentElection.id);
-        } catch (error) {
-            console.error('Error requesting edit:', error);
-            this.showError('حدث خطأ أثناء إرسال طلب التعديل');
+            if (!data) return '—';
+            return targetLabelOf(data, data.committee?.committee_name_ar, data.department?.name_ar);
         }
-    }
 
-    async resetCandidateToPending(candidateId) {
-        const confirmed = await this.confirmAction('هل تريد إرجاع الطلب إلى حالة "قيد المراجعة"؟');
-        if (!confirmed) return;
-        try {
-            const { error } = await this.supabase
-                .from('election_candidates')
-                .update({
-                    status: 'pending',
-                    review_note: null,
-                    reviewed_by: null,
-                    reviewed_at: null,
-                    edit_request_note: null,
-                    edit_requested_by: null,
-                    edit_requested_at: null,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', candidateId);
+        /* ─── declare winner modal ─── */
+        async openDeclareWinnerModal(electionId) {
+            const { data, error } = await sb.rpc('get_candidates_with_identity', { p_election: electionId });
             if (error) throw error;
-            this.showSuccess('تم إرجاع الطلب للمراجعة');
-            if (this.currentElection) await this.showElectionDetail(this.currentElection.id);
-        } catch (error) {
-            console.error('Error resetting candidate:', error);
-            this.showError('حدث خطأ أثناء إرجاع الطلب');
+            const approved = (data || []).filter(c => c.status === 'approved');
+            if (approved.length === 0) {
+                toast('لا يوجد مرشحون مقبولون', 'warning');
+                return;
+            }
+
+            const { modal, close } = this._openModal({
+                title: 'إعلان الفائز',
+                icon: 'fa-trophy',
+                size: 'md',
+                body: `
+                    <div class="modal-info-box box-info">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <div>اختر الفائز بناءً على نتائج التصويت. ستُحدَّث أدوار العضو الفائز تلقائياً.</div>
+                    </div>
+                    <div id="winnerResultsList" style="display:flex;flex-direction:column;gap:0.6rem;margin-top:1rem;"></div>
+                `,
+                footer: `
+                    <button class="btn btn-success" id="confirmWinnerBtn" disabled>
+                        <i class="fa-solid fa-check"></i> إعلان
+                    </button>
+                    <button class="btn btn-slate btn-outline" data-dismiss="modal">إلغاء</button>
+                `
+            });
+
+            const { data: results } = await sb.rpc('get_election_results', { p_election: electionId });
+            const sorted = (results || []).slice().sort((a, b) => Number(b.total_weight) - Number(a.total_weight));
+            let selectedId = sorted[0]?.candidate_id || null;
+
+            const renderResults = () => {
+                const host = modal.querySelector('#winnerResultsList');
+                const max = Math.max(1, ...sorted.map(r => Number(r.total_weight)));
+                host.innerHTML = sorted.map(r => {
+                    const pct = Math.round((Number(r.total_weight) / max) * 100);
+                    return resultRow({
+                        name: `#${r.candidate_number} — ${esc(r.full_name || '—')}`,
+                        votesText: `${Number(r.total_weight).toFixed(1)} نقطة · ${r.total_votes} صوت`,
+                        pct,
+                        isWinner: false,
+                        isSelected: r.candidate_id === selectedId,
+                        candidateId: r.candidate_id,
+                        withRadio: true
+                    });
+                }).join('');
+
+                host.querySelectorAll('input[name="winnerPick"]').forEach(r => {
+                    r.addEventListener('change', () => {
+                        selectedId = r.value;
+                        renderResults();
+                    });
+                });
+            };
+            renderResults();
+            modal.querySelector('#confirmWinnerBtn').disabled = !selectedId;
+
+            modal.querySelector('#confirmWinnerBtn').addEventListener('click', async () => {
+                if (!selectedId) return;
+                if (!await confirmDialog('تأكيد إعلان هذا الفائز؟ سيُعدَّل دوره فوراً وسيُؤرشف الانتخاب تلقائياً.')) return;
+                try {
+                    const { error: err } = await sb.rpc('declare_winner', {
+                        p_election: electionId, p_candidate: selectedId
+                    });
+                    if (err) throw err;
+                    toast('تم إعلان الفائز وأُرشف الانتخاب', 'success');
+                    close();
+                    await this._loadKanban();
+                    window.rebuildNavigation?.();
+                } catch (err) {
+                    console.error(err);
+                    toast(err.message || String(err), 'error');
+                }
+            });
         }
-    }
 
-    async showCandidateDetailsModal(candidateId) {
-        const c = (this._currentCandidates || []).find(x => x.id === candidateId);
-        if (!c) return;
-        const u = c.user || {};
-        const avatar = u.avatar_url || '../assets/default-avatar.png';
-        const variant = ElectionsManager.CANDIDATE_STATUS_VARIANT[c.status] || ElectionsManager.CANDIDATE_STATUS_VARIANT.pending;
-        const statusLabel = ElectionsManager.CANDIDATE_STATUS_LABELS[c.status];
+        async openResultsModal(electionId) {
+            const { data, error } = await sb.rpc('get_election_results', { p_election: electionId });
+            if (error) throw error;
+            const rows = (data || []).slice().sort((a, b) => Number(b.total_weight) - Number(a.total_weight));
+            const max = Math.max(1, ...rows.map(r => Number(r.total_weight)));
+            const body = rows.length === 0
+                ? emptyState('chart-simple', 'لا توجد نتائج')
+                : `<div style="display:flex;flex-direction:column;gap:0.6rem;">${rows.map(r => {
+                    const pct = Math.round((Number(r.total_weight) / max) * 100);
+                    return resultRow({
+                        name: `#${r.candidate_number} — ${esc(r.full_name || '—')}`,
+                        votesText: `${Number(r.total_weight).toFixed(1)} نقطة · ${r.total_votes} صوت`,
+                        pct,
+                        isWinner: !!r.is_winner,
+                        isSelected: false,
+                        withRadio: false
+                    });
+                }).join('')}</div>`;
 
-        const modalTypeMap = {
-            pending: 'warning',
-            approved: 'success',
-            rejected: 'danger',
-            withdrawn: 'info',
-            needs_edit: 'primary'
-        };
-        const modalType = modalTypeMap[c.status] || 'primary';
+            this._openModal({
+                title: 'نتائج الانتخاب',
+                icon: 'fa-chart-simple',
+                size: 'md',
+                body,
+                footer: `<button class="btn btn-primary" data-dismiss="modal">حسناً</button>`
+            });
+        }
 
-        const fmt = (iso) => iso ? new Date(iso).toLocaleString('ar-SA', {
-            calendar: 'gregory', numberingSystem: 'latn', dateStyle: 'medium', timeStyle: 'short'
-        }).replace(/،\s*/, ' الساعة ') : '—';
+        /* ============================================================
+           Mode: admin-review  — مراجعة المرشحين
+           ============================================================ */
+        async renderAdminReview() {
+            const container = document.getElementById('electionsReviewContainer');
+            if (!container) return;
 
-        const reviewerName = c.reviewer?.full_name || null;
-
-        await window.ModalHelper.show({
-            title: 'تفاصيل طلب الترشح',
-            iconClass: 'fa-user-tie',
-            size: 'md',
-            type: modalType,
-            html: `
-                <div class="modal-media modal-media--avatar">
-                    <img src="${avatar}" alt="${this.escapeHtml(u.full_name || '')}">
-                    <div class="avatar-name">${this.escapeHtml(u.full_name || 'غير معروف')}</div>
-                    ${u.email ? `<div class="avatar-meta">${this.escapeHtml(u.email)}</div>` : ''}
-                    <span class="avatar-badge">
-                        <i class="fa-solid ${variant.icon}"></i> ${statusLabel}
-                    </span>
+            container.innerHTML = `
+                <div class="elections-impersonation-slot"></div>
+                <div class="d-flex justify-between align-items-center" style="margin-bottom:1rem;">
+                    <h2 style="margin:0;">مراجعة المرشحين</h2>
+                    <button class="btn btn-slate btn-outline" id="electionsReviewRefresh">
+                        <i class="fa-solid fa-rotate"></i> تحديث
+                    </button>
                 </div>
+                <div id="electionsReviewHost">${loadingState()}</div>
+            `;
+            container.querySelector('#electionsReviewRefresh').addEventListener('click', () => this.renderAdminReview());
+            this._renderImpersonationNoticeIfNeeded();
 
-                <div class="modal-section">
-                    <h3><i class="fa-solid fa-align-right"></i> بيان الترشح</h3>
-                    ${c.candidacy_statement
-                        ? `<p style="white-space: pre-wrap; margin: 0; line-height: 1.8;">${this.escapeHtml(c.candidacy_statement)}</p>`
-                        : `<div class="modal-info-box"><i class="fa-solid fa-circle-info"></i><span>لا يوجد بيان ترشّح.</span></div>`
+            const { data, error } = await sb.from('elections')
+                .select('id, target_role_name, target_committee_id, target_department_id, status, committee:committees(committee_name_ar), department:departments(name_ar)')
+                .is('archived_at', null)
+                .in('status', ['candidacy_open', 'candidacy_closed', 'voting_open', 'voting_closed', 'completed'])
+                .order('created_at', { ascending: false });
+
+            const host = container.querySelector('#electionsReviewHost');
+            if (error) {
+                host.innerHTML = errorState(error.message);
+                return;
+            }
+
+            if ((data || []).length === 0) {
+                host.innerHTML = emptyState('inbox', 'لا توجد انتخابات للمراجعة');
+                return;
+            }
+
+            host.innerHTML = `<div class="uc-grid">${data.map(e => {
+                const target = targetLabelOf(e, e.committee?.committee_name_ar, e.department?.name_ar);
+                return ucElectionCard({
+                    id: e.id,
+                    status: e.status,
+                    target,
+                    infoItems: [],
+                    footer: `<button class="btn btn-primary" data-open-candidates><i class="fa-solid fa-users-viewfinder"></i> عرض المرشحين</button>`
+                });
+            }).join('')}</div>`;
+
+            host.querySelectorAll('[data-open-candidates]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.closest('[data-election-id]').dataset.electionId;
+                    this.openCandidatesModal(id, 'admin');
+                });
+            });
+        }
+
+        async openCandidatesModal(electionId, modeTag = 'admin') {
+            const { data, error } = await sb.rpc('get_candidates_with_identity', { p_election: electionId });
+            if (error) throw error;
+
+            const rows = data || [];
+            const groups = { pending: [], approved: [], needs_edit: [], rejected: [], withdrawn: [] };
+            rows.forEach(c => groups[c.status]?.push(c));
+
+            const tabsItems = [
+                { key: 'pending',    label: 'قيد المراجعة', count: groups.pending.length    },
+                { key: 'approved',   label: 'مقبول',        count: groups.approved.length   },
+                { key: 'needs_edit', label: 'بحاجة للتعديل', count: groups.needs_edit.length },
+                { key: 'rejected',   label: 'مرفوض',        count: groups.rejected.length   },
+                { key: 'withdrawn',  label: 'منسحب',        count: groups.withdrawn.length  }
+            ];
+
+            const { modal } = this._openModal({
+                title: 'المرشحون',
+                icon: 'fa-users',
+                size: 'lg',
+                body: `
+                    ${subtabs(tabsItems, 'pending', 'candModalTabs')}
+                    <div id="candModalList" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
+                `,
+                footer: `<button class="btn btn-slate btn-outline" data-dismiss="modal">إغلاق</button>`
+            });
+
+            const listHost = modal.querySelector('#candModalList');
+            const tabsHost = modal.querySelector('#candModalTabs');
+
+            const setActive = (key) => {
+                tabsHost.querySelectorAll('[data-tab]').forEach(b => {
+                    b.classList.remove('btn-slate');
+                    b.classList.add('btn-slate', 'btn-outline');
+                    const badge = b.querySelector('.uc-badge');
+                    if (badge) {
+                        badge.classList.remove('uc-badge--primary');
+                        badge.classList.add('uc-badge--secondary');
                     }
-                </div>
-
-                <div class="modal-section">
-                    <h3><i class="fa-solid fa-paperclip"></i> الملف الانتخابي</h3>
-                    ${c.election_file_url
-                        ? `<button type="button" class="btn btn-block ${variant.btnClass}" onclick="window.open('${c.election_file_url}', '_blank', 'noopener')">
-                                <i class="fa-solid fa-file-arrow-down"></i> عرض/تحميل الملف
-                            </button>`
-                        : `<div class="modal-info-box"><i class="fa-solid fa-file-circle-xmark"></i><span>لم يُرفَق أي ملف.</span></div>`
+                });
+                const active = tabsHost.querySelector(`[data-tab="${key}"]`);
+                if (active) {
+                    active.classList.remove('btn-outline');
+                    const badge = active.querySelector('.uc-badge');
+                    if (badge) {
+                        badge.classList.remove('uc-badge--secondary');
+                        badge.classList.add('uc-badge--primary');
                     }
-                </div>
+                }
+            };
 
-                <div class="modal-section">
-                    <h3><i class="fa-solid fa-clock-rotate-left"></i> سجل الطلب</h3>
-                    <div class="modal-detail-grid">
-                        <div class="modal-detail-item">
-                            <span class="modal-detail-label">تاريخ التقديم</span>
-                            <span class="modal-detail-value">${fmt(c.created_at)}</span>
+            const render = (filter) => {
+                const items = groups[filter] || [];
+                listHost.innerHTML = items.length === 0
+                    ? emptyState('inbox', 'لا يوجد')
+                    : items.map(c => this._renderCandidateFull(c, modeTag)).join('');
+                this._bindCandidateActions(listHost, electionId, modeTag);
+            };
+            tabsHost.querySelectorAll('[data-tab]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setActive(btn.dataset.tab);
+                    render(btn.dataset.tab);
+                });
+            });
+            render('pending');
+        }
+
+        _renderCandidateFull(c, modeTag) {
+            const avatar = c.avatar_url
+                ? `<img src="${esc(c.avatar_url)}" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0;flex-shrink:0;">`
+                : `<div style="width:54px;height:54px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#94a3b8;flex-shrink:0;border:2px solid #e2e8f0;"><i class="fa-solid fa-user"></i></div>`;
+
+            const fileBadge = c.file_url
+                ? `<a href="${esc(c.file_url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.35rem 0.7rem;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:8px;font-size:0.82rem;text-decoration:none;font-weight:500;">
+                      <i class="fa-solid fa-paperclip"></i> ${esc(c.file_name || 'ملف المرشح')}
+                   </a>`
+                : '';
+
+            const adminActions = (modeTag === 'admin' && c.status === 'pending') ? `
+                <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.6rem;">
+                    <button class="btn btn-success btn-sm" data-action="approve" data-candidate="${c.candidate_id}"><i class="fa-solid fa-check"></i> قبول</button>
+                    <button class="btn btn-warning btn-outline btn-sm" data-action="needs_edit" data-candidate="${c.candidate_id}"><i class="fa-solid fa-pen"></i> طلب تعديل</button>
+                    <button class="btn btn-danger btn-outline btn-sm" data-action="reject" data-candidate="${c.candidate_id}"><i class="fa-solid fa-xmark"></i> رفض</button>
+                </div>
+            ` : (modeTag === 'admin' && c.status === 'needs_edit') ? `
+                <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.6rem;">
+                    <button class="btn btn-success btn-sm" data-action="approve" data-candidate="${c.candidate_id}"><i class="fa-solid fa-check"></i> قبول</button>
+                    <button class="btn btn-danger btn-outline btn-sm" data-action="reject" data-candidate="${c.candidate_id}"><i class="fa-solid fa-xmark"></i> رفض</button>
+                </div>
+            ` : '';
+
+            const note = c.review_note_ar
+                ? `<div style="margin-top:0.5rem;padding:0.5rem 0.75rem;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;font-size:0.82rem;color:#92400e;"><i class="fa-solid fa-note-sticky"></i> ${esc(c.review_note_ar)}</div>`
+                : '';
+
+            return `
+                <div data-candidate-id="${c.candidate_id}" style="display:flex;gap:0.85rem;padding:0.9rem;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+                    ${avatar}
+                    <div style="flex:1;min-width:0;">
+                        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+                            <h5 style="margin:0;font-size:0.95rem;color:#1e293b;font-weight:700;">#${c.candidate_number} — ${esc(c.full_name)}</h5>
+                            ${candidateBadge(c.status)}
                         </div>
-                        <div class="modal-detail-item">
-                            <span class="modal-detail-label">آخر تحديث</span>
-                            <span class="modal-detail-value">${fmt(c.updated_at)}</span>
+                        <div style="font-size:0.78rem;color:#64748b;margin-top:0.2rem;">${esc(c.username || '')} · ${fmtDate(c.submitted_at)}</div>
+                        <div style="margin-top:0.5rem;font-size:0.88rem;color:#334155;white-space:pre-wrap;line-height:1.6;">${esc(c.statement_ar)}</div>
+                        ${fileBadge ? `<div style="margin-top:0.5rem;">${fileBadge}</div>` : ''}
+                        ${note}
+                        ${adminActions}
+                    </div>
+                </div>
+            `;
+        }
+
+        _bindCandidateActions(host, electionId, modeTag) {
+            const statusMap = { approve: 'approved', reject: 'rejected', needs_edit: 'needs_edit' };
+            host.querySelectorAll('[data-action]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const action = btn.dataset.action;
+                    const dbStatus = statusMap[action];
+                    if (!dbStatus) return;
+                    const candidateId = btn.dataset.candidate;
+                    let note = null;
+                    if (action === 'reject' || action === 'needs_edit') {
+                        note = window.prompt('ملاحظة للمرشح (مطلوبة):');
+                        if (!note || !note.trim()) { toast('الملاحظة مطلوبة', 'warning'); return; }
+                    }
+                    try {
+                        btn.disabled = true;
+                        const { error } = await sb.rpc('review_candidate', {
+                            p_candidate: candidateId, p_new_status: dbStatus, p_note_ar: note
+                        });
+                        if (error) throw error;
+                        toast('تم التحديث', 'success');
+                        document.querySelector('.modal.active [data-dismiss="modal"]')?.click();
+                        this.openCandidatesModal(electionId, modeTag);
+                    } catch (err) {
+                        console.error(err);
+                        toast(err.message || String(err), 'error');
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            });
+        }
+
+        /* ============================================================
+           Mode: viewer — مستشار / عضو HR (قراءة)
+           ============================================================ */
+        async renderViewer() {
+            const container = document.getElementById('electionsViewContainer');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div class="elections-impersonation-slot"></div>
+                <div class="d-flex justify-between align-items-center" style="margin-bottom:1rem;">
+                    <h2 style="margin:0;"><i class="fa-solid fa-eye"></i> مرشحو الانتخابات</h2>
+                </div>
+                <div id="viewerElectionsList">${loadingState()}</div>
+            `;
+
+            const { data, error } = await sb.from('elections')
+                .select('id, status, target_role_name, committee:committees(committee_name_ar), department:departments(name_ar)')
+                .is('archived_at', null)
+                .in('status', ['candidacy_open', 'candidacy_closed', 'voting_open', 'voting_closed', 'completed'])
+                .order('created_at', { ascending: false });
+
+            const host = container.querySelector('#viewerElectionsList');
+            if (error) { host.innerHTML = errorState(error.message); return; }
+
+            const visible = [];
+            for (const e of data || []) {
+                const { data: ok } = await sb.rpc('has_election_view_permission', { p_user: this.user.id, p_election: e.id });
+                if (ok) visible.push(e);
+            }
+
+            if (visible.length === 0) {
+                host.innerHTML = emptyState('eye-slash', 'لا توجد انتخابات لعرضها');
+                return;
+            }
+
+            host.innerHTML = `<div class="uc-grid">${visible.map(e => {
+                const target = targetLabelOf(e, e.committee?.committee_name_ar, e.department?.name_ar);
+                const footer = `
+                    <button class="btn btn-primary btn-outline" data-action="view-candidates"><i class="fa-solid fa-users-viewfinder"></i> عرض المرشحين</button>
+                    ${e.status === 'completed' ? `<button class="btn btn-warning btn-outline" data-action="view-results"><i class="fa-solid fa-chart-simple"></i> النتائج</button>` : ''}
+                `;
+                return ucElectionCard({
+                    id: e.id, status: e.status, target,
+                    infoItems: [],
+                    footer
+                });
+            }).join('')}</div>`;
+
+            host.querySelectorAll('[data-action="view-candidates"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.closest('[data-election-id]').dataset.electionId;
+                    this.openCandidatesModal(id, 'viewer');
+                });
+            });
+            host.querySelectorAll('[data-action="view-results"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.closest('[data-election-id]').dataset.electionId;
+                    this.openResultsModal(id);
+                });
+            });
+        }
+
+        /* ============================================================
+           Mode: member-run — ترشح
+           ============================================================ */
+        async renderMemberRun() {
+            const container = document.getElementById('electionsRunContainer');
+            if (!container) return;
+            container.innerHTML = `
+                <div class="elections-impersonation-slot"></div>
+                <div id="runContent">${loadingState()}</div>
+            `;
+            this._renderImpersonationNoticeIfNeeded();
+
+            const { data, error } = await sb.rpc('get_eligible_elections_for_user', { p_user: this.user.id });
+            const host = container.querySelector('#runContent');
+            if (error) { host.innerHTML = errorState(error.message); return; }
+
+            const eligible = data || [];
+            if (eligible.length === 0) {
+                // ربما انسحب المستخدم سابقاً أو رُفض — نستعلم لتمييز السبب
+                const priorInfo = await this._fetchPriorCandidacyInOpenElection();
+                if (priorInfo) {
+                    const targetLabel = targetLabelOf(
+                        { target_role_name: priorInfo.target_role_name },
+                        priorInfo.committee_name_ar,
+                        priorInfo.department_name_ar
+                    );
+                    const msg = priorInfo.status === 'withdrawn'
+                        ? `انسحبت سابقاً من ترشح <strong>${esc(targetLabel)}</strong>. لا يمكن إعادة التقديم لنفس الانتخاب.`
+                        : `رُفض ترشحك السابق لـ <strong>${esc(targetLabel)}</strong>. لا يمكن إعادة التقديم لنفس الانتخاب.`;
+                    host.innerHTML = `
+                        <h2 style="margin:0 0 1rem;"><i class="fa-solid fa-bullhorn"></i> تقديم ترشح</h2>
+                        <div class="modal-info-box box-warning">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <div>${msg} يمكنك متابعة التفاصيل في <strong>ملفي الانتخابي</strong>.</div>
                         </div>
-                        ${['approved', 'rejected'].includes(c.status) ? `
-                        <div class="modal-detail-item${reviewerName ? '' : ' modal-detail-item--empty'}">
-                            <span class="modal-detail-label">المراجِع</span>
-                            <span class="modal-detail-value">${reviewerName ? this.escapeHtml(reviewerName) : '—'}</span>
+                    `;
+                } else {
+                    host.innerHTML = `
+                        <h2 style="margin:0 0 1rem;"><i class="fa-solid fa-bullhorn"></i> تقديم ترشح</h2>
+                        ${emptyState('door-closed', 'لا توجد انتخابات مفتوحة للترشح', 'لم تتطابق أي انتخابات مع معايير أهليتك حالياً.')}
+                    `;
+                }
+                return;
+            }
+
+            // الحالة الطبيعية: انتخاب واحد مؤهَّل (بسبب قواعد التفرّد).
+            // إن توفّر أكثر من واحد (حالة نادرة) نأخذ أوّلها ونُلمح بالبقية.
+            const e = eligible[0];
+            this._renderCandidacyInlinePage(host, e, eligible.length);
+        }
+
+        _renderPositionInfoCard(host, candidacy) {
+            if (!host) return;
+            if (!candidacy) {
+                host.innerHTML = '';
+                return;
+            }
+            const target = targetLabelOf(
+                { target_role_name: candidacy.target_role_name },
+                candidacy.target_committee_ar,
+                candidacy.target_department_ar
+            );
+            let endValue;
+            if (candidacy.candidacy_end) {
+                const remainMs = new Date(candidacy.candidacy_end).getTime() - Date.now();
+                const showCountdown = candidacy.election_status === 'candidacy_open';
+                endValue = showCountdown
+                    ? `${esc(fmtDeadline(candidacy.candidacy_end))} <span class="countdown-tag" data-countdown="${esc(candidacy.candidacy_end)}">(${esc(fmtRemaining(remainMs))})</span>`
+                    : esc(fmtDeadline(candidacy.candidacy_end));
+            } else {
+                endValue = '<span style="opacity:0.65;">لم يُحدَّد</span>';
+            }
+
+            host.innerHTML = `
+                <div class="card card--primary" style="margin-bottom:1.25rem;">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-id-badge"></i> تفاصيل المنصب</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="position-info-grid">
+                            ${infoItem('user-tie', 'المنصب', esc(target))}
+                            ${infoItem('hashtag', 'رقم المرشح', `#${candidacy.candidate_number}`)}
+                            ${infoItem('circle-info', 'حالة الطلب', candidateBadge(candidacy.candidate_status))}
+                            ${infoItem('calendar', 'نهاية الترشح', endValue)}
                         </div>
-                        <div class="modal-detail-item">
-                            <span class="modal-detail-label">تاريخ المراجعة</span>
-                            <span class="modal-detail-value">${fmt(c.reviewed_at)}</span>
-                        </div>` : ''}
+                    </div>
+                    ${candidacy.can_withdraw ? `
+                        <div class="card-footer">
+                            <button class="btn btn-danger btn-block" data-action="withdraw-from-info">
+                                <i class="fa-solid fa-person-walking-arrow-right"></i> انسحاب
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            const withdrawBtn = host.querySelector('[data-action="withdraw-from-info"]');
+            if (withdrawBtn) {
+                withdrawBtn.addEventListener('click', () => this._handleWithdraw(candidacy.candidate_id));
+            }
+
+            this._startCountdownTicker();
+        }
+
+        _canSelfEdit(candidacy) {
+            // التعديل الذاتي مسموح في pending أو needs_edit، طالما الانتخاب مفتوح للترشح وغير مؤرشف
+            if (!candidacy) return false;
+            if (!['pending', 'needs_edit'].includes(candidacy.candidate_status)) return false;
+            if (candidacy.election_status !== 'candidacy_open') return false;
+            if (candidacy.election_archived_at) return false;
+            return true;
+        }
+
+        async _openCandidacyEditModal(candidacy) {
+            try {
+                await this.openCandidacyForm(candidacy.election_id, candidacy.candidate_id);
+            } catch (err) {
+                console.error(err);
+                toast(err.message || String(err), 'error');
+            }
+        }
+
+        async _openStatementOnlyEditModal(candidacy) {
+            if (this.user._isImpersonating) {
+                toast('لا يمكن التعديل أثناء وضع العرض كمستخدم', 'warning');
+                return;
+            }
+            const { modal, close } = this._openModal({
+                title: 'تعديل البيان الانتخابي',
+                icon: 'fa-align-right',
+                size: 'md',
+                color: 'primary',
+                body: `
+                    <form id="stmtEditForm">
+                        <div class="modal-section">
+                            <p class="modal-section-title"><i class="fa-solid fa-align-right"></i> البيان <span class="required-dot">*</span></p>
+                            <textarea class="form-textarea" id="stmtEditTa" rows="8" required>${esc(candidacy.statement_ar || '')}</textarea>
+                        </div>
+                    </form>
+                `,
+                footer: `
+                    <button class="btn btn-success" id="stmtEditSubmit">
+                        <i class="fa-solid fa-paper-plane"></i> حفظ
+                    </button>
+                    <button class="btn btn-slate btn-outline" data-dismiss="modal">إلغاء</button>
+                `
+            });
+
+            const ta = modal.querySelector('#stmtEditTa');
+
+            modal.querySelector('#stmtEditSubmit').addEventListener('click', async (ev) => {
+                ev.preventDefault();
+                const statement = ta.value.trim();
+                if (!statement) {
+                    toast('البيان مطلوب', 'warning');
+                    return;
+                }
+                if (statement === (candidacy.statement_ar || '').trim()) {
+                    toast('لم تُجرِ أي تعديل على البيان', 'warning');
+                    return;
+                }
+                const btn = modal.querySelector('#stmtEditSubmit');
+                btn.disabled = true;
+                try {
+                    const { error } = await sb.rpc('resubmit_candidacy', {
+                        p_candidate:        candidacy.candidate_id,
+                        p_statement_ar:     statement,
+                        p_file_url:         candidacy.file_url,
+                        p_file_name:        candidacy.file_name,
+                        p_file_size_bytes:  candidacy.file_size_bytes || null,
+                        p_file_mime:        candidacy.file_mime
+                    });
+                    if (error) throw error;
+                    toast('تم تحديث البيان', 'success');
+                    close();
+                    await this.renderMemberProfile();
+                    window.rebuildNavigation?.();
+                } catch (err) {
+                    console.error(err);
+                    toast(err.message || String(err), 'error');
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        async _openFileOnlyEditModal(candidacy) {
+            if (this.user._isImpersonating) {
+                toast('لا يمكن التعديل أثناء وضع العرض كمستخدم', 'warning');
+                return;
+            }
+            const hasExisting = !!candidacy.file_url;
+            const { modal, close } = this._openModal({
+                title: hasExisting ? 'تعديل الملف الانتخابي' : 'إرفاق ملف انتخابي',
+                icon: 'fa-paperclip',
+                size: 'md',
+                color: 'primary',
+                body: `
+                    <form id="fileEditForm">
+                        <div class="modal-section">
+                            <p class="modal-section-title"><i class="fa-solid fa-paperclip"></i> ملف الترشح </p>
+                            <div class="form-file">
+                                <input type="file" id="fileEditInput" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" />
+                                <div class="form-dropzone">
+                                    <div class="form-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                                    <div class="form-dropzone-title">اضغط لاختيار ملف أو اسحبه هنا</div>
+                                    <div class="form-dropzone-hint">PDF, Word, نص, صور — حد أقصى 5MB</div>
+                                </div>
+                            </div>
+                            <div class="form-file-list" id="fileEditPreview"></div>
+                        </div>
+                    </form>
+                `,
+                footer: `
+                    <button class="btn btn-success" id="fileEditSubmit">
+                        <i class="fa-solid fa-paper-plane"></i> حفظ
+                    </button>
+                    ${hasExisting ? `<button class="btn btn-danger" id="fileEditRemove">
+                        <i class="fa-solid fa-trash"></i> حذف الملف
+                    </button>` : ''}
+                    <button class="btn btn-slate btn-outline" data-dismiss="modal">إلغاء</button>
+                `
+            });
+
+            const fileInput = modal.querySelector('#fileEditInput');
+            const preview   = modal.querySelector('#fileEditPreview');
+            const dropzone  = modal.querySelector('.form-dropzone');
+            let removeFlag  = false;
+
+            const renderPreview = ({ name, sizeBytes, url, removed } = {}) => {
+                if (removed) {
+                    preview.innerHTML = `
+                        <div class="modal-info-box box-danger">
+                            <i class="fa-solid fa-trash"></i>
+                            <div>سيُحذف الملف الحالي عند الحفظ.</div>
+                        </div>
+                    `;
+                    return;
+                }
+                if (!name) { preview.innerHTML = ''; return; }
+                const sizeKb = sizeBytes ? `${(sizeBytes / 1024).toFixed(1)} KB` : '';
+                const openLink = url
+                    ? `<a class="btn btn-primary btn-outline btn-icon btn-sm" href="${esc(url)}" target="_blank" rel="noopener" title="فتح الملف" aria-label="فتح الملف"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>`
+                    : '';
+                preview.innerHTML = `
+                    <div class="form-file-item">
+                        <div class="form-file-icon"><i class="fa-solid fa-file-lines"></i></div>
+                        <div class="form-file-name">${esc(name)}</div>
+                        ${sizeKb ? `<span class="form-file-size">${esc(sizeKb)}</span>` : ''}
+                        ${openLink}
+                    </div>
+                `;
+            };
+
+            if (hasExisting) {
+                renderPreview({
+                    name: candidacy.file_name,
+                    sizeBytes: candidacy.file_size_bytes,
+                    url: candidacy.file_url
+                });
+            }
+
+            fileInput.addEventListener('change', () => {
+                removeFlag = false;
+                const f = fileInput.files[0];
+                if (f) renderPreview({ name: f.name, sizeBytes: f.size });
+                else if (hasExisting) renderPreview({
+                    name: candidacy.file_name, sizeBytes: candidacy.file_size_bytes, url: candidacy.file_url
+                });
+                else renderPreview();
+            });
+
+            ['dragenter', 'dragover'].forEach(evName => {
+                dropzone.addEventListener(evName, (ev) => {
+                    ev.preventDefault();
+                    dropzone.classList.add('drag-over');
+                });
+            });
+            ['dragleave', 'drop'].forEach(evName => {
+                dropzone.addEventListener(evName, () => dropzone.classList.remove('drag-over'));
+            });
+
+            const removeBtn = modal.querySelector('#fileEditRemove');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', () => {
+                    removeFlag = true;
+                    fileInput.value = '';
+                    renderPreview({ removed: true });
+                });
+            }
+
+            modal.querySelector('#fileEditSubmit').addEventListener('click', async (ev) => {
+                ev.preventDefault();
+                const newFile = fileInput.files[0];
+                if (!newFile && !removeFlag) {
+                    toast(hasExisting ? 'لم تُجرِ أي تعديل على الملف' : 'لم تختر ملفاً للإرفاق', 'warning');
+                    return;
+                }
+
+                let fileMeta = removeFlag
+                    ? { file_url: null, file_name: null, file_size_bytes: null, file_mime: null }
+                    : { file_url: candidacy.file_url, file_name: candidacy.file_name, file_size_bytes: candidacy.file_size_bytes || null, file_mime: candidacy.file_mime };
+
+                if (newFile) {
+                    if (newFile.size > MAX_FILE_SIZE) { toast('حجم الملف يتجاوز 5MB', 'warning'); return; }
+                    if (!ALLOWED_MIMES.includes(newFile.type)) { toast('صيغة الملف غير مدعومة', 'warning'); return; }
+                    try {
+                        fileMeta = await this._uploadCandidateFile(newFile, candidacy.election_id);
+                    } catch (err) {
+                        toast('فشل رفع الملف: ' + (err.message || err), 'error');
+                        return;
+                    }
+                }
+
+                const btn = modal.querySelector('#fileEditSubmit');
+                btn.disabled = true;
+                try {
+                    const { error } = await sb.rpc('resubmit_candidacy', {
+                        p_candidate:        candidacy.candidate_id,
+                        p_statement_ar:     candidacy.statement_ar,
+                        p_file_url:         fileMeta.file_url,
+                        p_file_name:        fileMeta.file_name,
+                        p_file_size_bytes:  fileMeta.file_size_bytes,
+                        p_file_mime:        fileMeta.file_mime
+                    });
+                    if (error) throw error;
+                    toast(removeFlag ? 'تم حذف الملف' : 'تم تحديث الملف', 'success');
+                    close();
+                    await this.renderMemberProfile();
+                    window.rebuildNavigation?.();
+                } catch (err) {
+                    console.error(err);
+                    toast(err.message || String(err), 'error');
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        async _handleWithdraw(candidateId) {
+            try {
+                if (!await confirmDialog('تأكيد الانسحاب من هذا الترشح؟', { icon: 'warning' })) return;
+                const { error } = await sb.rpc('withdraw_candidacy', { p_candidate: candidateId });
+                if (error) throw error;
+                toast('تم الانسحاب', 'success');
+                await this.renderMemberProfile();
+                window.rebuildNavigation?.();
+            } catch (err) {
+                console.error(err);
+                toast(err.message || String(err), 'error');
+            }
+        }
+
+        _renderReviewNoteCard(host, candidacy) {
+            if (!host) return;
+            if (!candidacy
+                || !['rejected', 'needs_edit'].includes(candidacy.candidate_status)
+                || !candidacy.review_note_ar) {
+                host.innerHTML = '';
+                return;
+            }
+            const isRejected = candidacy.candidate_status === 'rejected';
+            const variant = isRejected ? 'danger'  : 'warning';
+            const icon    = isRejected ? 'circle-xmark' : 'pen-to-square';
+            const title   = isRejected ? 'سبب رفض الترشح' : 'سبب طلب التعديل';
+            const showEditBtn = !isRejected && candidacy.can_edit;
+            host.innerHTML = `
+                <div class="card card--${variant}" style="margin-bottom:1.25rem;">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-${icon}"></i> ${esc(title)}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="font-size:0.92rem;color:#1e293b;white-space:pre-wrap;line-height:1.7;">${esc(candidacy.review_note_ar)}</div>
+                    </div>
+                    ${showEditBtn ? `
+                        <div class="card-footer">
+                            <button class="btn btn-warning btn-block" data-action="edit-from-note">
+                                <i class="fa-solid fa-pen"></i> تعديل طلبي
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            const editBtn = host.querySelector('[data-action="edit-from-note"]');
+            if (editBtn) {
+                editBtn.addEventListener('click', async () => {
+                    try {
+                        await this.openCandidacyForm(candidacy.election_id, candidacy.candidate_id);
+                    } catch (err) {
+                        console.error(err);
+                        toast(err.message || String(err), 'error');
+                    }
+                });
+            }
+        }
+
+        _renderStatementCard(host, candidacy) {
+            if (!host) return;
+            if (!candidacy || !candidacy.statement_ar) {
+                host.innerHTML = '';
+                return;
+            }
+            const editable    = this._canSelfEdit(candidacy);
+            const isNeedsEdit = candidacy.candidate_status === 'needs_edit';
+            const showEditBtn = editable || isNeedsEdit;
+            const disabled    = isNeedsEdit ? 'disabled aria-disabled="true"' : '';
+            host.innerHTML = `
+                <div class="card card--primary" style="margin-bottom:1.25rem;">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-align-right"></i> البيان الانتخابي</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="font-size:0.92rem;color:#1e293b;white-space:pre-wrap;line-height:1.7;">${esc(candidacy.statement_ar)}</div>
+                    </div>
+                    ${showEditBtn ? `
+                        <div class="card-footer">
+                            <button class="btn btn-primary btn-block" data-action="edit-from-statement" ${disabled}>
+                                <i class="fa-solid fa-pen"></i> تعديل البيان
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            const btn = host.querySelector('[data-action="edit-from-statement"]');
+            if (btn && !btn.disabled) {
+                btn.addEventListener('click', () => this._openStatementOnlyEditModal(candidacy));
+            }
+        }
+
+        _renderFileCard(host, candidacy) {
+            if (!host) return;
+            if (!candidacy) {
+                host.innerHTML = '';
+                return;
+            }
+
+            const shell = (bodyHtml, footerHtml = '') => `
+                <div class="card card--primary" style="margin-bottom:1.25rem;">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-paperclip"></i> الملف الانتخابي</h3>
+                    </div>
+                    <div class="card-body">${bodyHtml}</div>
+                    ${footerHtml ? `<div class="card-footer">${footerHtml}</div>` : ''}
+                </div>
+            `;
+
+            if (!candidacy.file_url) {
+                const editableNoFile = this._canSelfEdit(candidacy);
+                const isNeedsEditNoFile = candidacy.candidate_status === 'needs_edit';
+                const showEditNoFile = editableNoFile || isNeedsEditNoFile;
+                const disabledNoFile = isNeedsEditNoFile ? 'disabled aria-disabled="true"' : '';
+                host.innerHTML = shell(
+                    emptyState('file-circle-xmark', 'لم يُرفع ملف انتخابي', 'إرفاق الملف اختياري', 'primary'),
+                    showEditNoFile ? `
+                        <button class="btn btn-primary btn-outline btn-block" data-action="edit-from-file" ${disabledNoFile}>
+                            <i class="fa-solid fa-paperclip"></i> إرفاق ملف
+                        </button>
+                    ` : ''
+                );
+                const btn0 = host.querySelector('[data-action="edit-from-file"]');
+                if (btn0 && !btn0.disabled) {
+                    btn0.addEventListener('click', () => this._openFileOnlyEditModal(candidacy));
+                }
+                return;
+            }
+
+            const sizeKb = candidacy.file_size_bytes
+                ? `${(candidacy.file_size_bytes / 1024).toFixed(1)} KB`
+                : '';
+            const mimeLabel = MIME_LABELS[candidacy.file_mime] || '';
+            const meta = [mimeLabel, sizeKb].filter(Boolean).join(' · ');
+
+            const editable    = this._canSelfEdit(candidacy);
+            const isNeedsEdit = candidacy.candidate_status === 'needs_edit';
+            const showEditBtn = editable || isNeedsEdit;
+            const disabled    = isNeedsEdit ? 'disabled aria-disabled="true"' : '';
+            const editBtn = showEditBtn
+                ? `<button class="btn btn-primary btn-block" data-action="edit-from-file" ${disabled}>
+                       <i class="fa-solid fa-pen"></i> تعديل الملف
+                   </button>`
+                : '';
+
+            const footerHtml = `
+                <a class="btn btn-primary btn-block" href="${esc(candidacy.file_url)}" target="_blank" rel="noopener">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> فتح الملف
+                </a>
+                ${editBtn}
+            `;
+
+            host.innerHTML = shell(`
+                <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+                    <div style="width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#eff6ff;color:#1d4ed8;flex-shrink:0;">
+                        <i class="fa-solid fa-file-lines" style="font-size:1.1rem;"></i>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:600;color:#1e293b;font-size:0.95rem;word-break:break-word;">${esc(candidacy.file_name || 'الملف المرفق')}</div>
+                        ${meta ? `<div style="font-size:0.78rem;color:#64748b;margin-top:0.15rem;">${esc(meta)}</div>` : ''}
+                    </div>
+                </div>
+            `, footerHtml);
+
+            const btn = host.querySelector('[data-action="edit-from-file"]');
+            if (btn && !btn.disabled) {
+                btn.addEventListener('click', () => this._openFileOnlyEditModal(candidacy));
+            }
+        }
+
+        async _renderRequestPathCard(host, candidacy) {
+            if (!host) return;
+            if (!candidacy) {
+                host.innerHTML = '';
+                return;
+            }
+
+            const renderShell = (innerHtml) => `
+                <div class="card card--primary" style="margin-bottom:1.25rem;">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-route"></i> مسار طلبك</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="position-info-grid">
+                            ${innerHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            host.innerHTML = renderShell('<div style="opacity:0.65;font-size:0.85rem;">جارٍ التحميل…</div>');
+
+            const { data, error } = await sb.rpc('get_candidate_audit_trail', { p_candidate: candidacy.candidate_id });
+            if (error) {
+                console.warn('[ElectionsManager] audit trail fetch failed', error);
+                host.innerHTML = '';
+                return;
+            }
+
+            const events = data || [];
+            if (events.length === 0) {
+                host.innerHTML = '';
+                return;
+            }
+
+            const items = events.map(ev => this._renderAuditEvent(ev)).join('');
+            host.innerHTML = renderShell(items);
+        }
+
+        _renderAuditEvent(ev) {
+            const when = esc(fmtDate(ev.created_at));
+
+            let icon = 'circle';
+            let label = ev.event_type;
+            let value = when;
+
+            if (ev.event_type === 'candidacy_submitted') {
+                icon = 'paper-plane';
+                label = 'تم تقديم الطلب';
+            } else if (ev.event_type === 'candidate_resubmitted') {
+                icon = 'rotate-right';
+                label = 'أعدتَ تقديم الطلب بعد التعديل';
+            } else if (ev.event_type === 'candidate_updated') {
+                icon = 'pen';
+                label = 'عدّلتَ طلبك';
+            } else if (ev.event_type === 'candidate_withdrawn') {
+                icon = 'person-walking-arrow-right';
+                label = 'تم الانسحاب';
+            } else if (ev.event_type === 'candidate_reviewed') {
+                const newStatus = ev.payload?.new_status;
+                if (newStatus === 'approved') {
+                    icon = 'circle-check';
+                    label = 'قُبل الترشح';
+                } else if (newStatus === 'rejected') {
+                    icon = 'circle-xmark';
+                    label = 'رُفض الترشح';
+                } else if (newStatus === 'needs_edit') {
+                    icon = 'pen-to-square';
+                    label = 'طُلب تعديل';
+                } else {
+                    icon = 'magnifying-glass';
+                    label = `مراجعة (${esc(newStatus || '—')})`;
+                }
+            }
+
+            return infoItem(icon, label, value);
+        }
+
+        async _fetchPriorCandidacyInOpenElection() {
+            // نبحث عن ترشّح سابق للمستخدم (withdrawn/rejected) في انتخاب
+            // لا يزال نشطاً (غير مؤرشف وحالته candidacy_open) لنعرض سبب الحجب.
+            const { data, error } = await sb
+                .from('election_candidates')
+                .select(`
+                    status,
+                    election:elections!inner (
+                        id, target_role_name, status, archived_at,
+                        committee:committees(committee_name_ar),
+                        department:departments(name_ar)
+                    )
+                `)
+                .eq('user_id', this.user.id)
+                .in('status', ['withdrawn', 'rejected'])
+                .order('submitted_at', { ascending: false })
+                .limit(5);
+            if (error || !Array.isArray(data)) return null;
+            const match = data.find(r =>
+                r.election &&
+                r.election.archived_at === null &&
+                r.election.status === 'candidacy_open'
+            );
+            if (!match) return null;
+            return {
+                status:              match.status,
+                target_role_name:    match.election.target_role_name,
+                committee_name_ar:   match.election.committee?.committee_name_ar,
+                department_name_ar:  match.election.department?.name_ar
+            };
+        }
+
+        _renderCandidacyInlinePage(host, e, totalCount = 1) {
+            const target = targetLabelOf(
+                { target_role_name: e.target_role_name },
+                e.target_committee_ar,
+                e.target_department_ar
+            );
+
+            if (e.has_submission) {
+                host.innerHTML = `
+                    <div class="card card--info" style="margin-bottom:1.25rem;">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-bullhorn"></i> تقديم ترشح</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="modal-info-box box-info">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <div>تقدّمت مسبقاً لترشح <strong>${esc(target)}</strong>. تابع حالته وعدِّله من تبويب <strong>ملفي الانتخابي</strong>.</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            let deadlineValue;
+            if (e.candidacy_end) {
+                const remainMs = new Date(e.candidacy_end).getTime() - Date.now();
+                deadlineValue = `${esc(fmtDeadline(e.candidacy_end))} <span class="countdown-tag" data-countdown="${esc(e.candidacy_end)}">(${esc(fmtRemaining(remainMs))})</span>`;
+            } else {
+                deadlineValue = '<span style="opacity:0.65;">لم يُحدَّد</span>';
+            }
+
+            const moreHint = totalCount > 1
+                ? `<div class="modal-info-box box-warning"><i class="fa-solid fa-info-circle"></i><div>لديك أكثر من انتخاب مؤهَّل (${totalCount}). هذا أول ما يظهر — يمكنك إعادة التحميل بعد إرساله.</div></div>`
+                : '';
+
+            host.innerHTML = `
+                <div class="card card--primary" style="margin-bottom:1.25rem;">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-bullhorn"></i> تفاصيل الانتخاب</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="position-info-grid">
+                            ${infoItem('user-tie', 'المنصب', esc(target))}
+                            ${infoItem('calendar', 'نهاية الترشح', deadlineValue)}
+                        </div>
+                        ${moreHint}
                     </div>
                 </div>
 
-                ${c.status === 'rejected' && c.review_note ? `
-                <div class="modal-info-box box-danger">
-                    <i class="fa-solid fa-circle-xmark"></i>
-                    <span><strong>سبب الرفض:</strong> ${this.escapeHtml(c.review_note)}</span>
-                </div>` : ''}
-
-                ${c.status === 'needs_edit' && c.edit_request_note ? `
-                <div class="modal-info-box box-info">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                    <span><strong>ملاحظات طلب التعديل:</strong> ${this.escapeHtml(c.edit_request_note)}</span>
-                </div>` : ''}
-
-                ${c.status === 'withdrawn' && c.withdrawal_reason ? `
-                <div class="modal-info-box">
-                    <i class="fa-solid fa-arrow-rotate-left"></i>
-                    <span><strong>سبب الانسحاب:</strong> ${this.escapeHtml(c.withdrawal_reason)}</span>
-                </div>` : ''}
-            `,
-            showFooter: true,
-            footerButtons: [
-                { text: 'إغلاق', class: 'btn btn-outline', dismiss: true }
-            ]
-        });
-    }
-
-    rerenderCandidatesTab(election) {
-        const container = document.getElementById('election-tab-candidates');
-        if (!container) return;
-        const canApprove = this.canApproveCandidates();
-        const isInTargetCommittee = this.isUserInCommittee(election.target_committee_id);
-        container.innerHTML = this.renderCandidatesTab(
-            election,
-            this._currentCandidates || [],
-            canApprove,
-            isInTargetCommittee
-        );
-        const detailContainer = document.getElementById('election-detail-content');
-        if (detailContainer) this.bindDetailEvents(detailContainer, election);
-    }
-
-    async showEditMyCandidacyModal(candidateId, electionId, scope = 'all') {
-        const c = (this._currentCandidates || []).find(x => x.id === candidateId)
-               || (this.myCandidacies || []).find(x => x.id === candidateId);
-        const election = (this.elections || []).find(e => e.id === electionId)
-                      || (this.eligibleElections || []).find(e => e.id === electionId);
-        const positionName = election ? this.getElectionName(election) : '';
-        const currentStatement = c?.candidacy_statement || '';
-        const editNote = c?.status === 'needs_edit' ? (c?.edit_request_note || '') : '';
-        const currentFileUrl = c?.election_file_url || '';
-        const currentFileName = currentFileUrl
-            ? decodeURIComponent(currentFileUrl.split('/').pop().split('?')[0])
-            : '';
-        const currentFileExt = currentFileName.split('.').pop().toLowerCase();
-        const currentFileIcon = currentFileExt === 'pdf'
-            ? 'fa-regular fa-file-pdf'
-            : (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(currentFileExt)
-                ? 'fa-regular fa-file-image'
-                : 'fa-regular fa-file');
-
-        const showStatement = scope === 'all' || scope === 'statement';
-        const showFile      = scope === 'all' || scope === 'file';
-        const modalTitle = scope === 'statement' ? 'تعديل البيان الانتخابي'
-                         : scope === 'file'      ? 'تعديل الملف الانتخابي'
-                         : 'تعديل طلب الترشح';
-
-        let modalRef = null;
-        modalRef = await window.ModalHelper.show({
-            title: modalTitle,
-            iconClass: 'fa-pen',
-            size: 'md',
-            html: `
-                <form id="editCandidacyForm" class="form-stack">
-                    ${editNote ? `
-                    <div class="modal-info-box box-info">
-                        <i class="fa-solid fa-comment-dots"></i>
-                        <span style="white-space: pre-wrap;"><strong>ملاحظات الإدارة:</strong> ${this.escapeHtml(editNote)}</span>
-                    </div>` : ''}
-                    ${showStatement ? `
-                    <div class="form-group">
-                        <label class="form-label"><span class="label-icon"><i class="fa-solid fa-align-right"></i></span> بيان الترشح</label>
-                        <textarea id="editCandidacyStatement" class="form-input" rows="5"
-                                  style="resize: vertical;"
-                                  placeholder="اكتب بيانك الانتخابي هنا...">${this.escapeHtml(currentStatement)}</textarea>
-                    </div>` : ''}
-                    ${showFile ? `
-                    <div class="form-group">
-                        <label class="form-label"><span class="label-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span> الملف الانتخابي${scope === 'file' ? '' : ' (اختياري)'}</label>
-                        ${currentFileUrl ? `
-                        <div class="form-file-list" id="editCandidacyCurrentFile">
-                            <div class="form-file-item">
-                                <div class="form-file-icon"><i class="${currentFileIcon}"></i></div>
-                                <span class="form-file-name">${this.escapeHtml(currentFileName)}</span>
-                                <a href="${currentFileUrl}" target="_blank" rel="noopener" class="btn btn-primary btn-sm btn-outline btn-icon" title="فتح الملف الحالي">
-                                    <i class="fa-solid fa-up-right-from-square"></i>
-                                </a>
+                <div class="card card--primary" style="margin-bottom:1.25rem;">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-pen-to-square"></i> نموذج الترشح</h3>
+                    </div>
+                    <form id="inlineCandidacyForm" class="card-body">
+                        <div class="modal-section">
+                            <p class="modal-section-title"><i class="fa-solid fa-align-right"></i> بيان الترشح <span class="required-dot">*</span></p>
+                            <textarea class="form-textarea" id="candStatement" rows="8" required></textarea>
+                        </div>
+                        <hr class="modal-divider">
+                        <div class="modal-section">
+                            <p class="modal-section-title"><i class="fa-solid fa-paperclip"></i> ملف الترشح <span style="font-weight:400;color:#64748b;font-size:0.85rem;">(اختياري — حد أقصى 5MB)</span></p>
+                            <div class="form-file">
+                                <input type="file" id="candFile" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" />
+                                <div class="form-dropzone">
+                                    <div class="form-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                                    <div class="form-dropzone-title">اضغط لاختيار ملف أو اسحبه هنا</div>
+                                    <div class="form-dropzone-hint">PDF, Word, نص, صور — حد أقصى 5MB</div>
+                                </div>
                             </div>
-                        </div>` : ''}
-                        <div class="form-file">
-                            <input type="file" id="editCandidacyFile" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt">
-                            <div class="form-dropzone form-dropzone-compact">
-                                <div class="form-dropzone-icon"><i class="fa-solid fa-paperclip"></i></div>
-                                <div>
-                                    <div class="form-dropzone-title">${currentFileUrl ? 'انقر لاستبدال الملف' : 'انقر لرفع الملف الانتخابي'}</div>
-                                    <div class="form-dropzone-hint">PDF, DOC/DOCX, TXT, PNG, JPG · حتى ${ElectionsManager.CANDIDACY_FILE_MAX_LABEL} — اتركه فارغاً للإبقاء على الملف الحالي</div>
+                            <div class="form-file-list" id="candFilePreview"></div>
+                        </div>
+                    </form>
+                    <div class="card-footer">
+                        <button type="submit" form="inlineCandidacyForm" class="btn btn-success btn-block" id="inlineSubmitBtn">
+                            <i class="fa-solid fa-paper-plane"></i> إرسال الترشح
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // معاينة الملف عند الاختيار + سلوك السحب
+            const fileInput = host.querySelector('#candFile');
+            const filePreview = host.querySelector('#candFilePreview');
+            const dropzone = host.querySelector('.form-dropzone');
+            const renderFilePreview = ({ name, sizeBytes } = {}) => {
+                if (!name) { filePreview.innerHTML = ''; return; }
+                const sizeKb = sizeBytes ? `${(sizeBytes / 1024).toFixed(1)} KB` : '';
+                filePreview.innerHTML = `
+                    <div class="form-file-item">
+                        <div class="form-file-icon"><i class="fa-solid fa-file-lines"></i></div>
+                        <div class="form-file-name">${esc(name)}</div>
+                        ${sizeKb ? `<span class="form-file-size">${esc(sizeKb)}</span>` : ''}
+                    </div>
+                `;
+            };
+            fileInput.addEventListener('change', () => {
+                const f = fileInput.files[0];
+                renderFilePreview(f ? { name: f.name, sizeBytes: f.size } : {});
+            });
+            ['dragenter', 'dragover'].forEach(evName => {
+                dropzone.addEventListener(evName, (ev) => {
+                    ev.preventDefault();
+                    dropzone.classList.add('drag-over');
+                });
+            });
+            ['dragleave', 'drop'].forEach(evName => {
+                dropzone.addEventListener(evName, () => dropzone.classList.remove('drag-over'));
+            });
+
+            const ta = host.querySelector('#candStatement');
+
+            host.querySelector('#inlineCandidacyForm').addEventListener('submit', async (ev) => {
+                ev.preventDefault();
+                if (this.user._isImpersonating) {
+                    toast('لا يمكن الترشح أثناء وضع العرض كمستخدم', 'warning');
+                    return;
+                }
+                const statement = ta.value.trim();
+                if (!statement) {
+                    toast('بيان الترشح مطلوب', 'warning');
+                    return;
+                }
+
+                const fileInput = host.querySelector('#candFile');
+                let fileMeta = { file_url: null, file_name: null, file_size_bytes: null, file_mime: null };
+                const file = fileInput.files[0];
+                if (file) {
+                    if (file.size > MAX_FILE_SIZE) { toast('حجم الملف يتجاوز 5MB', 'warning'); return; }
+                    if (!ALLOWED_MIMES.includes(file.type)) { toast('صيغة الملف غير مدعومة', 'warning'); return; }
+                    try {
+                        fileMeta = await this._uploadCandidateFile(file, e.election_id);
+                    } catch (err) {
+                        toast('فشل رفع الملف: ' + (err.message || err), 'error');
+                        return;
+                    }
+                }
+
+                const submitBtn = host.querySelector('#inlineSubmitBtn');
+                submitBtn.disabled = true;
+                try {
+                    const { error } = await sb.rpc('submit_candidacy', {
+                        p_election: e.election_id,
+                        p_statement_ar: statement,
+                        p_file_url: fileMeta.file_url,
+                        p_file_name: fileMeta.file_name,
+                        p_file_size_bytes: fileMeta.file_size_bytes,
+                        p_file_mime: fileMeta.file_mime
+                    });
+                    if (error) throw error;
+                    toast('تم تقديم الترشح', 'success');
+                    window.rebuildNavigation?.();
+                    // ننقل المستخدم مباشرة إلى "ملفي الانتخابي" لمتابعة حالة الترشح
+                    if (typeof window.navigateToSection === 'function') {
+                        window.navigateToSection('elections-my-profile-section');
+                    } else {
+                        // fallback: إن لم تتوفّر دالة التنقل، نعرض حالة "تقدّمت مسبقاً"
+                        this._renderCandidacyInlinePage(host, { ...e, has_submission: true }, totalCount);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    toast(err.message || String(err), 'error');
+                    submitBtn.disabled = false;
+                }
+            });
+
+            this._startCountdownTicker();
+        }
+
+        async openCandidacyForm(electionId, existingCandidateId = null) {
+            if (this.user._isImpersonating) {
+                toast('لا يمكن الترشح أثناء وضع العرض كمستخدم', 'warning');
+                return;
+            }
+
+            let existing = null;
+            if (existingCandidateId) {
+                const { data } = await sb.from('election_candidates').select('*').eq('id', existingCandidateId).single();
+                existing = data;
+            }
+
+            const reviewNoteBox = (existing?.review_note_ar)
+                ? `
+                    <div class="modal-info-box box-warning">
+                        <i class="fa-solid fa-note-sticky"></i>
+                        <div>
+                            <strong>ملاحظة المراجعة:</strong>
+                            <div style="margin-top:0.25rem;white-space:pre-wrap;">${esc(existing.review_note_ar)}</div>
+                        </div>
+                    </div>
+                    <hr class="modal-divider">
+                `
+                : '';
+
+            const { modal, close } = this._openModal({
+                title: existing ? 'تعديل الترشح' : 'تقديم ترشح',
+                icon: 'fa-pen-to-square',
+                size: 'md',
+                color: existing ? 'warning' : 'primary',
+                body: `
+                    <form id="candidacyForm">
+                        ${reviewNoteBox}
+                        <div class="modal-section">
+                            <p class="modal-section-title"><i class="fa-solid fa-align-right"></i> بيان الترشح <span class="required-dot">*</span></p>
+                            <textarea class="form-textarea" id="candStatement" rows="7" required>${esc(existing?.statement_ar || '')}</textarea>
+                        </div>
+                        <hr class="modal-divider">
+                        <div class="modal-section">
+                            <p class="modal-section-title"><i class="fa-solid fa-paperclip"></i> ملف الترشح </p>
+                            <div class="form-file">
+                                <input type="file" id="candFile" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" />
+                                <div class="form-dropzone">
+                                    <div class="form-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                                    <div class="form-dropzone-title">اضغط لاختيار ملف أو اسحبه هنا</div>
+                                    <div class="form-dropzone-hint">PDF, Word, نص, صور — حد أقصى 5MB</div>
+                                </div>
+                            </div>
+                            <div class="form-file-list" id="candFilePreview"></div>
+                        </div>
+                    </form>
+                `,
+                footer: `
+                    <button class="btn btn-success" id="candSubmitBtn">
+                        <i class="fa-solid fa-paper-plane"></i> إرسال
+                    </button>
+                    <button class="btn btn-slate btn-outline" data-dismiss="modal">إلغاء</button>
+                `
+            });
+
+            const ta = modal.querySelector('#candStatement');
+
+            const fileInput   = modal.querySelector('#candFile');
+            const filePreview = modal.querySelector('#candFilePreview');
+            const dropzone    = modal.querySelector('.form-dropzone');
+
+            const modalColor = existing ? 'warning' : 'primary';
+            const renderFilePreview = ({ name, sizeBytes, url } = {}) => {
+                if (!name) { filePreview.innerHTML = ''; return; }
+                const sizeKb = sizeBytes ? `${(sizeBytes / 1024).toFixed(1)} KB` : '';
+                const openLink = url
+                    ? `<a class="btn btn-${modalColor} btn-outline btn-icon btn-sm" href="${esc(url)}" target="_blank" rel="noopener" title="فتح الملف" aria-label="فتح الملف"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>`
+                    : '';
+                filePreview.innerHTML = `
+                    <div class="form-file-item">
+                        <div class="form-file-icon"><i class="fa-solid fa-file-lines"></i></div>
+                        <div class="form-file-name">${esc(name)}</div>
+                        ${sizeKb ? `<span class="form-file-size">${esc(sizeKb)}</span>` : ''}
+                        ${openLink}
+                    </div>
+                `;
+            };
+
+            if (existing?.file_url && existing?.file_name) {
+                renderFilePreview({
+                    name: existing.file_name,
+                    sizeBytes: existing.file_size_bytes,
+                    url: existing.file_url
+                });
+            }
+
+            fileInput.addEventListener('change', () => {
+                const f = fileInput.files[0];
+                if (f) renderFilePreview({ name: f.name, sizeBytes: f.size });
+                else if (existing?.file_url) renderFilePreview({
+                    name: existing.file_name, sizeBytes: existing.file_size_bytes, url: existing.file_url
+                });
+                else renderFilePreview();
+            });
+
+            ['dragenter', 'dragover'].forEach(evName => {
+                dropzone.addEventListener(evName, (ev) => {
+                    ev.preventDefault();
+                    dropzone.classList.add('drag-over');
+                });
+            });
+            ['dragleave', 'drop'].forEach(evName => {
+                dropzone.addEventListener(evName, () => dropzone.classList.remove('drag-over'));
+            });
+
+            modal.querySelector('#candSubmitBtn').addEventListener('click', async (ev) => {
+                ev.preventDefault();
+                const statement = ta.value.trim();
+                if (!statement) {
+                    toast('بيان الترشح مطلوب', 'warning');
+                    return;
+                }
+
+                const fileInput = modal.querySelector('#candFile');
+                const file = fileInput.files[0];
+
+                // عند التعديل: لا تقبل الإرسال إن لم يتغيّر شيء فعلاً
+                if (existing) {
+                    const statementChanged = statement !== (existing.statement_ar || '').trim();
+                    const fileChanged = !!file;
+                    if (!statementChanged && !fileChanged) {
+                        toast('لم تُجرِ أي تعديل. غيّر البيان أو ارفع ملفاً جديداً قبل الإرسال.', 'warning');
+                        return;
+                    }
+                }
+
+                let fileMeta = { file_url: existing?.file_url || null, file_name: existing?.file_name || null, file_size_bytes: existing?.file_size_bytes || null, file_mime: existing?.file_mime || null };
+                if (file) {
+                    if (file.size > MAX_FILE_SIZE) { toast('حجم الملف يتجاوز 5MB', 'warning'); return; }
+                    if (!ALLOWED_MIMES.includes(file.type)) { toast('صيغة الملف غير مدعومة', 'warning'); return; }
+                    try {
+                        const uploaded = await this._uploadCandidateFile(file, electionId);
+                        fileMeta = uploaded;
+                    } catch (err) {
+                        toast('فشل رفع الملف: ' + (err.message || err), 'error');
+                        return;
+                    }
+                }
+
+                try {
+                    modal.querySelector('#candSubmitBtn').disabled = true;
+                    if (existing) {
+                        const { error } = await sb.rpc('resubmit_candidacy', {
+                            p_candidate:        existing.id,
+                            p_statement_ar:     statement,
+                            p_file_url:         fileMeta.file_url,
+                            p_file_name:        fileMeta.file_name,
+                            p_file_size_bytes:  fileMeta.file_size_bytes,
+                            p_file_mime:        fileMeta.file_mime
+                        });
+                        if (error) throw error;
+                        toast('تم تحديث الترشح وإعادته للمراجعة', 'success');
+                    } else {
+                        const { error } = await sb.rpc('submit_candidacy', {
+                            p_election: electionId,
+                            p_statement_ar: statement,
+                            p_file_url: fileMeta.file_url,
+                            p_file_name: fileMeta.file_name,
+                            p_file_size_bytes: fileMeta.file_size_bytes,
+                            p_file_mime: fileMeta.file_mime
+                        });
+                        if (error) throw error;
+                        toast('تم تقديم الترشح', 'success');
+                    }
+                    close();
+                    window.rebuildNavigation?.();
+                    if (this.mode === 'member-run')     await this.renderMemberRun();
+                    if (this.mode === 'member-profile') await this.renderMemberProfile();
+                } catch (err) {
+                    console.error(err);
+                    toast(err.message || String(err), 'error');
+                    modal.querySelector('#candSubmitBtn').disabled = false;
+                }
+            });
+        }
+
+        async _uploadCandidateFile(file, electionId) {
+            const ext = file.name.split('.').pop();
+            const safeName = `${Date.now()}.${ext}`;
+            const path = `${this.user.id}/${electionId}/${safeName}`;
+            const { error: upErr } = await sb.storage.from(STORAGE_BUCKET).upload(path, file, {
+                upsert: false, contentType: file.type
+            });
+            if (upErr) throw upErr;
+            const { data: signed } = await sb.storage.from(STORAGE_BUCKET).createSignedUrl(path, 60 * 60 * 24 * 30);
+            return {
+                file_url: signed?.signedUrl || path,
+                file_name: file.name,
+                file_size_bytes: file.size,
+                file_mime: file.type
+            };
+        }
+
+        /* ============================================================
+           Mode: member-profile — ترشحاتي
+           ============================================================ */
+        async renderMemberProfile() {
+            const container = document.getElementById('electionsMyProfileContainer');
+            if (!container) return;
+            container.innerHTML = `
+                <div class="elections-impersonation-slot"></div>
+                <div id="myProfileTabs"></div>
+                <div id="myPositionInfo"></div>
+                <div id="myReviewNoteCard"></div>
+                <div id="myRequestPath"></div>
+                <div id="myStatementCard"></div>
+                <div id="myFileCard"></div>
+                <div id="myCandidaciesList">${loadingState()}</div>
+            `;
+            this._renderImpersonationNoticeIfNeeded();
+
+            const { data, error } = await sb.rpc('get_user_candidacies', { p_user: this.user.id });
+            const host = container.querySelector('#myCandidaciesList');
+            const tabsHost = container.querySelector('#myProfileTabs');
+            const infoHost = container.querySelector('#myPositionInfo');
+            const pathHost = container.querySelector('#myRequestPath');
+            const stmtHost = container.querySelector('#myStatementCard');
+            const fileHost = container.querySelector('#myFileCard');
+            const noteHost = container.querySelector('#myReviewNoteCard');
+            if (error) { host.innerHTML = errorState(error.message); return; }
+
+            const all = data || [];
+            const current = all.filter(c => !c.election_archived_at);
+            const past    = all.filter(c =>  c.election_archived_at);
+
+            tabsHost.innerHTML = `
+                <div class="settings-segmented-nav" role="tablist" style="margin-bottom:1rem;">
+                    <button class="settings-seg-btn active" data-profile-tab="current">
+                        <span class="settings-seg-btn__icon"><i class="fa-solid fa-bolt"></i></span>
+                        <span class="settings-seg-btn__label">
+                            ملفي الانتخابي الحالي
+                            <span class="settings-seg-btn__count">${current.length}</span>
+                        </span>
+                    </button>
+                    <button class="settings-seg-btn" data-profile-tab="past">
+                        <span class="settings-seg-btn__icon"><i class="fa-solid fa-box-archive"></i></span>
+                        <span class="settings-seg-btn__label">
+                            ملفاتي السابقة
+                            <span class="settings-seg-btn__count">${past.length}</span>
+                        </span>
+                    </button>
+                </div>
+            `;
+
+            const renderList = (rows, emptyLabel) => {
+                if (rows.length === 0) {
+                    host.innerHTML = emptyState('inbox', emptyLabel);
+                    return;
+                }
+                host.innerHTML = `<div class="uc-grid uc-grid--wide">${rows.map(c => this._renderMyCandidacyCard(c)).join('')}</div>`;
+                this._bindMyCandidacyActions(host);
+            };
+
+            const switchTab = (key) => {
+                tabsHost.querySelectorAll('[data-profile-tab]').forEach(b => {
+                    b.classList.toggle('active', b.dataset.profileTab === key);
+                });
+                const rows = (key === 'past') ? past : current;
+                this._renderPositionInfoCard(infoHost, rows[0] || null);
+                this._renderReviewNoteCard(noteHost, rows[0] || null);
+                this._renderStatementCard(stmtHost, rows[0] || null);
+                this._renderFileCard(fileHost, rows[0] || null);
+                this._renderRequestPathCard(pathHost, rows[0] || null);
+                if (key === 'past') {
+                    renderList(rows, 'لا توجد ترشحات سابقة');
+                } else {
+                    // التبويب الحالي يعتمد على الكاردات المخصصة (تفاصيل/بيان/مسار)
+                    host.innerHTML = rows.length === 0
+                        ? emptyState('inbox', 'لا توجد ترشحات حالية')
+                        : '';
+                }
+            };
+
+            tabsHost.querySelectorAll('[data-profile-tab]').forEach(btn => {
+                btn.addEventListener('click', () => switchTab(btn.dataset.profileTab));
+            });
+
+            switchTab('current');
+        }
+
+        _renderMyCandidacyCard(c) {
+            const target = targetLabelOf({ target_role_name: c.target_role_name }, c.target_committee_ar, c.target_department_ar);
+            const note = c.review_note_ar
+                ? `<div class="modal-info-box box-warning" style="margin:0.5rem 0;"><i class="fa-solid fa-note-sticky"></i> <div>${esc(c.review_note_ar)}</div></div>`
+                : '';
+            const btns = [];
+            if (c.can_edit)     btns.push(`<button class="btn btn-warning" data-action="edit"><i class="fa-solid fa-pen"></i> تعديل</button>`);
+            if (c.can_withdraw) btns.push(`<button class="btn btn-danger btn-outline" data-action="withdraw"><i class="fa-solid fa-person-walking-arrow-right"></i> انسحاب</button>`);
+
+            const color = STATUS_CARD[c.election_status] || 'neutral';
+            const icon  = STATUS_ICON[c.election_status] || 'circle';
+
+            return `
+                <div class="uc-card uc-card--${color}" data-candidate-id="${c.candidate_id}" data-election-id="${c.election_id}">
+                    <div class="uc-card__header uc-card__header--${color}">
+                        <div class="uc-card__header-inner">
+                            <div class="uc-card__icon"><i class="fa-solid fa-${icon}"></i></div>
+                            <div class="uc-card__header-info">
+                                <h4 class="uc-card__title uc-card__title--wrap">المرشح #${c.candidate_number} · ${esc(STATUS_LABELS[c.election_status] || '')}</h4>
+                                <div style="display:flex;flex-wrap:wrap;gap:0.4rem;align-items:center;">
+                                    ${candidateBadge(c.candidate_status)}
                                 </div>
                             </div>
                         </div>
-                        <div class="form-file-list" id="editCandidacyFileList" style="display: none;"></div>
-                    </div>` : ''}
-                </form>`,
-            showFooter: true,
-            footerButtons: [
-                { text: 'إلغاء', class: 'btn btn-outline', dismiss: true },
-                {
-                    text: '<i class="fa-solid fa-paper-plane"></i> حفظ وإعادة الإرسال',
-                    class: 'btn btn-primary',
-                    keepOpen: true,
-                    callback: () => this.updateMyCandidacy(candidateId, electionId, modalRef)
-                }
-            ]
-        });
-
-        const fileInput = modalRef?.element?.querySelector('#editCandidacyFile');
-        const fileList  = modalRef?.element?.querySelector('#editCandidacyFileList');
-        const currentFileBox = modalRef?.element?.querySelector('#editCandidacyCurrentFile');
-        if (fileInput && fileList) {
-            const fileIconFor = (name) => {
-                const ext = (name || '').split('.').pop().toLowerCase();
-                if (ext === 'pdf') return 'fa-regular fa-file-pdf';
-                if (['doc', 'docx'].includes(ext)) return 'fa-regular fa-file-word';
-                if (ext === 'txt') return 'fa-regular fa-file-lines';
-                if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext)) return 'fa-regular fa-file-image';
-                return 'fa-regular fa-file';
-            };
-            const fmtSize = (b) => {
-                if (b < 1024) return `${b} B`;
-                if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
-                return `${(b / 1024 / 1024).toFixed(1)} MB`;
-            };
-            const render = () => {
-                const f = fileInput.files?.[0];
-                if (!f) {
-                    fileList.style.display = 'none';
-                    fileList.innerHTML = '';
-                    if (currentFileBox) currentFileBox.style.display = '';
-                    return;
-                }
-                if (f.size > ElectionsManager.CANDIDACY_FILE_MAX_BYTES) {
-                    this.showError(`الحد الأقصى لحجم الملف الانتخابي هو ${ElectionsManager.CANDIDACY_FILE_MAX_LABEL} — حجم الملف المختار ${fmtSize(f.size)}`);
-                    fileInput.value = '';
-                    fileList.style.display = 'none';
-                    fileList.innerHTML = '';
-                    if (currentFileBox) currentFileBox.style.display = '';
-                    return;
-                }
-                if (currentFileBox) currentFileBox.style.display = 'none';
-                fileList.style.display = '';
-                fileList.innerHTML = `
-                    <div class="form-file-item">
-                        <div class="form-file-icon"><i class="${fileIconFor(f.name)}"></i></div>
-                        <span class="form-file-name">${this.escapeHtml(f.name)}</span>
-                        <span class="form-file-size">${fmtSize(f.size)}</span>
-                        <button type="button" class="form-file-remove" aria-label="إزالة"><i class="fa-solid fa-xmark"></i></button>
-                    </div>`;
-                fileList.querySelector('.form-file-remove')?.addEventListener('click', () => {
-                    fileInput.value = '';
-                    render();
-                });
-            };
-            fileInput.addEventListener('change', render);
-        }
-    }
-
-    async updateMyCandidacy(candidateId, electionId, modalRef = null) {
-        const statementInput = document.getElementById('editCandidacyStatement');
-        const fileInput = document.getElementById('editCandidacyFile');
-        const hasStatementField = !!statementInput;
-        const hasFileField      = !!fileInput;
-        const statement = hasStatementField ? (statementInput.value?.trim() || null) : null;
-        const hasNewFile = hasFileField && !!fileInput?.files?.length;
-
-        const current = (this._currentCandidates || []).find(x => x.id === candidateId)
-                     || (this.myCandidacies || []).find(x => x.id === candidateId);
-        const currentStatement = current?.candidacy_statement || null;
-        const statementChanged = hasStatementField && (statement || null) !== (currentStatement || null);
-
-        if (!statementChanged && !hasNewFile) {
-            const msg = hasStatementField && hasFileField ? 'لم تُجرِ أي تعديل على البيان أو الملف الانتخابي'
-                      : hasStatementField ? 'لم تُجرِ أي تعديل على البيان'
-                      : 'لم تختر ملفاً جديداً';
-            this.showError(msg);
-            return;
-        }
-
-        if (hasNewFile && fileInput.files[0].size > ElectionsManager.CANDIDACY_FILE_MAX_BYTES) {
-            this.showError(`الحد الأقصى لحجم الملف الانتخابي هو ${ElectionsManager.CANDIDACY_FILE_MAX_LABEL}`);
-            return;
-        }
-
-        try {
-            const patch = {
-                status: 'pending',
-                updated_at: new Date().toISOString()
-            };
-            if (statementChanged) patch.candidacy_statement = statement;
-
-            if (hasNewFile) {
-                const file = fileInput.files[0];
-                const ext = file.name.split('.').pop();
-                const path = `${electionId}/${this.currentUser.id}/election-file.${ext}`;
-                const { error: uploadError } = await this.supabase.storage
-                    .from('election-applications')
-                    .upload(path, file, { upsert: true });
-                if (uploadError) throw uploadError;
-                const { data: urlData } = this.supabase.storage
-                    .from('election-applications')
-                    .getPublicUrl(path);
-                patch.election_file_url = urlData?.publicUrl || null;
-            }
-
-            const { error } = await this.supabase
-                .from('election_candidates')
-                .update(patch)
-                .eq('id', candidateId);
-            if (error) throw error;
-
-            modalRef?.close?.();
-            this.showSuccess('تم تحديث طلبك وإعادة إرساله للمراجعة');
-
-            await window.rebuildNavigation?.();
-
-            const candidacySection = document.getElementById('candidacy-section');
-            if (candidacySection && !candidacySection.classList.contains('d-none')) {
-                window.navigateToSection?.('candidacy-section');
-            } else if (this.currentElection) {
-                await this.showElectionDetail(this.currentElection.id);
-            }
-        } catch (error) {
-            console.error('Error updating candidacy:', error);
-            this.showError('حدث خطأ أثناء تحديث الطلب');
-        }
-    }
-
-    async withdrawMyCandidacy(candidateId) {
-        await window.ModalHelper.show({
-            title: 'الانسحاب من الترشح',
-            iconClass: 'fa-arrow-rotate-left',
-            size: 'md',
-            type: 'danger',
-            html: `
-                <div class="modal-info-box box-danger">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    <span>هل أنت متأكد من الانسحاب من هذا الترشح؟ هذا الإجراء نهائي.</span>
+                    </div>
+                    <div class="uc-card__body">
+                        ${infoItem('user-tie', 'المنصب', target)}
+                        <div style="font-size:0.88rem;color:#334155;white-space:pre-wrap;line-height:1.6;padding:0.5rem 0.25rem;">${esc(c.statement_ar)}</div>
+                        ${c.file_url ? `<div style="padding:0 0.25rem;"><a href="${esc(c.file_url)}" target="_blank" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.35rem 0.7rem;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:8px;font-size:0.82rem;text-decoration:none;font-weight:500;"><i class="fa-solid fa-paperclip"></i> ${esc(c.file_name || 'الملف')}</a></div>` : ''}
+                        ${note}
+                        ${infoItem('clock', 'قُدم', fmtDate(c.submitted_at))}
+                    </div>
+                    ${btns.length ? `<div class="uc-card__footer">${btns.join('')}</div>` : ''}
                 </div>
-                <div class="form-group">
-                    <label class="form-label">سبب الانسحاب <span class="required-dot">*</span></label>
-                    <textarea id="withdrawalReasonInput" class="form-input" rows="4"
-                              placeholder="اكتب سبب انسحابك من الترشح..."
-                              style="resize: vertical;"></textarea>
-                </div>`,
-            showFooter: true,
-            footerButtons: [
-                { text: 'تراجع', class: 'btn btn-slate', dismiss: true },
-                {
-                    text: '<i class="fa-solid fa-arrow-rotate-left"></i> تأكيد الانسحاب',
-                    class: 'btn btn-danger',
-                    keepOpen: true,
-                    callback: async (_, modalRef) => {
-                        const reason = document.getElementById('withdrawalReasonInput')?.value?.trim();
-                        if (!reason) {
-                            this.showError('يرجى كتابة سبب الانسحاب');
-                            return;
-                        }
-                        await this.performWithdrawal(candidateId, reason);
-                        modalRef?.close?.();
-                    }
-                }
-            ]
-        });
-    }
-
-    async performWithdrawal(candidateId, reason) {
-        try {
-            const now = new Date().toISOString();
-            const { error } = await this.supabase
-                .from('election_candidates')
-                .update({
-                    status: 'withdrawn',
-                    withdrawal_reason: reason,
-                    withdrawn_at: now,
-                    updated_at: now
-                })
-                .eq('id', candidateId);
-            if (error) throw error;
-            this.showSuccess('تم الانسحاب من الترشح');
-
-            await window.rebuildNavigation?.();
-
-            const candidacySection = document.getElementById('candidacy-section');
-            if (candidacySection && !candidacySection.classList.contains('d-none')) {
-                window.navigateToSection?.('candidacy-section');
-            } else if (this.currentElection) {
-                await this.showElectionDetail(this.currentElection.id);
-            }
-        } catch (error) {
-            console.error('Error withdrawing:', error);
-            this.showError('حدث خطأ أثناء الانسحاب');
+            `;
         }
-    }
 
-    async confirmVote(electionId, candidateId) {
-        const weight = this.getUserVoteWeight();
-        const confirmed = await this.confirmAction(
-            `هل أنت متأكد من التصويت لهذا المرشح؟ وزن صوتك: ${weight}`
-        );
-        if (!confirmed) return;
-        await this.castVote(electionId, candidateId);
-    }
+        _bindMyCandidacyActions(host) {
+            host.querySelectorAll('[data-action]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const card = btn.closest('[data-candidate-id]');
+                    const candidateId = card.dataset.candidateId;
+                    const electionId  = card.dataset.electionId;
+                    const action = btn.dataset.action;
+                    if (action === 'edit') {
+                        try { await this.openCandidacyForm(electionId, candidateId); }
+                        catch (err) { console.error(err); toast(err.message || String(err), 'error'); }
+                    } else if (action === 'withdraw') {
+                        await this._handleWithdraw(candidateId);
+                    }
+                });
+            });
+        }
 
-    async castVote(electionId, candidateId) {
-        try {
-            // جلب الوزن من قاعدة البيانات
-            const { data: weight } = await this.supabase.rpc('get_vote_weight', {
-                p_user_id: this.currentUser.id
+        /* ============================================================
+           Mode: member-vote — اقتراع
+           ============================================================ */
+        async renderMemberVote() {
+            const container = document.getElementById('electionsVoteContainer');
+            if (!container) return;
+            container.innerHTML = `
+                <div class="elections-impersonation-slot"></div>
+                <h2 style="margin-bottom:1rem;"><i class="fa-solid fa-check-to-slot"></i> التصويت في الانتخابات</h2>
+                <div id="voteElectionsList">${loadingState()}</div>
+            `;
+            this._renderImpersonationNoticeIfNeeded();
+
+            const { data, error } = await sb.rpc('get_votable_elections_for_user', { p_user: this.user.id });
+            const host = container.querySelector('#voteElectionsList');
+            if (error) { host.innerHTML = errorState(error.message); return; }
+
+            if ((data || []).length === 0) {
+                host.innerHTML = emptyState('inbox', 'لا يوجد انتخابات للتصويت');
+                return;
+            }
+
+            host.innerHTML = `<div class="uc-grid">${data.map(e => {
+                const target = targetLabelOf({ target_role_name: e.target_role_name }, e.target_committee_ar, e.target_department_ar);
+                const btn = e.has_voted
+                    ? `<button class="btn btn-slate btn-outline" disabled><i class="fa-solid fa-check"></i> صوّتت مسبقاً</button>`
+                    : `<button class="btn btn-success" data-action="open-ballot"><i class="fa-solid fa-check-to-slot"></i> فتح الاقتراع</button>`;
+
+                const items = [];
+                if (e.voting_end) items.push(infoItem('clock', 'ينتهي التصويت', fmtDate(e.voting_end)));
+
+                return ucElectionCard({
+                    id: e.election_id,
+                    status: 'voting_open',
+                    target,
+                    infoItems: items,
+                    footer: btn
+                });
+            }).join('')}</div>`;
+
+            host.querySelectorAll('[data-action="open-ballot"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.closest('[data-election-id]').dataset.electionId;
+                    this.openBallot(id);
+                });
+            });
+        }
+
+        async openBallot(electionId) {
+            if (this.user._isImpersonating) {
+                toast('لا يمكن التصويت أثناء وضع العرض كمستخدم', 'warning');
+                return;
+            }
+
+            const { data, error } = await sb.rpc('get_anonymized_candidates', { p_election: electionId });
+            if (error) { toast(error.message, 'error'); return; }
+            const candidates = data || [];
+            if (candidates.length === 0) {
+                toast('لا يوجد مرشحون في هذا الانتخاب', 'warning');
+                return;
+            }
+
+            const { modal, close } = this._openModal({
+                title: 'اقتراع مجهَّل',
+                icon: 'fa-check-to-slot',
+                size: 'lg',
+                body: `
+                    <div class="modal-info-box box-info">
+                        <i class="fa-solid fa-user-secret"></i>
+                        <div>أسماء المرشحين مخفية عمداً. اختر بناءً على البيان والملف المرفق. صوتك سرّي ونهائي.</div>
+                    </div>
+                    <div id="ballotOptions" style="display:flex;flex-direction:column;gap:0.75rem;margin-top:1rem;"></div>
+                `,
+                footer: `
+                    <button class="btn btn-success" id="ballotSubmitBtn" disabled>
+                        <i class="fa-solid fa-paper-plane"></i> إرسال الصوت
+                    </button>
+                    <button class="btn btn-slate btn-outline" data-dismiss="modal">إلغاء</button>
+                `
             });
 
-            // جلب اسم الدور الحالي
-            const roleName = this.currentUserRole?.role?.role_name || 'committee_member';
+            const host = modal.querySelector('#ballotOptions');
+            host.innerHTML = candidates.map(c => `
+                <label data-candidate-id="${c.candidate_id}" data-candidate-number="${c.candidate_number}" style="display:flex;gap:0.75rem;align-items:flex-start;padding:0.85rem 1rem;background:#fff;border:2px solid #e2e8f0;border-radius:14px;cursor:pointer;transition:all 0.2s;position:relative;">
+                    <input type="radio" name="ballotPick" value="${c.candidate_id}" style="margin-top:0.25rem;flex-shrink:0;width:18px;height:18px;accent-color:#10b981;cursor:pointer;">
+                    <div style="flex:1;min-width:0;">
+                        <div style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.18rem 0.65rem;background:#f1f5f9;color:#475569;border-radius:99px;font-size:0.7rem;font-weight:700;margin-bottom:0.5rem;">
+                            <i class="fa-solid fa-hashtag"></i> مرشح ${c.candidate_number}
+                        </div>
+                        <div style="font-size:0.9rem;color:#334155;white-space:pre-wrap;line-height:1.65;">${esc(c.statement_ar)}</div>
+                        ${c.file_url ? `<div style="margin-top:0.6rem;">
+                            <a href="${esc(c.file_url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.35rem 0.7rem;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:8px;font-size:0.82rem;text-decoration:none;font-weight:500;">
+                                <i class="fa-solid fa-paperclip"></i> ${esc(c.file_name || 'ملف المرشح')}
+                            </a>
+                        </div>` : ''}
+                    </div>
+                </label>
+            `).join('');
 
-            const { error } = await this.supabase
-                .from('election_votes')
-                .insert({
-                    election_id: electionId,
-                    voter_id: this.currentUser.id,
-                    candidate_id: candidateId,
-                    vote_weight: weight || 1.0,
-                    voter_role_name: roleName
+            const submitBtn = modal.querySelector('#ballotSubmitBtn');
+            let selectedId = null;
+            host.querySelectorAll('label[data-candidate-id]').forEach(lbl => {
+                lbl.addEventListener('click', () => {
+                    host.querySelectorAll('label[data-candidate-id]').forEach(l => {
+                        l.style.borderColor = '#e2e8f0';
+                        l.style.background = '#fff';
+                        l.style.boxShadow = '';
+                    });
+                    lbl.style.borderColor = '#10b981';
+                    lbl.style.background = '#ecfdf5';
+                    lbl.style.boxShadow = '0 4px 14px rgba(16,185,129,0.18)';
+                    selectedId = lbl.dataset.candidateId;
+                    lbl.querySelector('input[type="radio"]').checked = true;
+                    submitBtn.disabled = false;
                 });
+            });
 
-            if (error) {
-                if (error.code === '23505' && /election_votes/i.test(error.message || '')) {
-                    this.showError('لقد صوّتت مسبقاً في هذا الانتخاب');
-                    return;
+            submitBtn.addEventListener('click', async () => {
+                if (!selectedId) return;
+                if (!await confirmDialog('تأكيد إرسال الصوت؟ لا يمكن التراجع بعد ذلك.')) return;
+                try {
+                    submitBtn.disabled = true;
+                    const { error: err } = await sb.rpc('cast_vote', {
+                        p_election: electionId, p_candidate: selectedId
+                    });
+                    if (err) throw err;
+                    toast('تم إرسال صوتك بنجاح', 'success');
+                    close();
+                    await this.renderMemberVote();
+                    window.rebuildNavigation?.();
+                } catch (err) {
+                    console.error(err);
+                    toast(err.message || String(err), 'error');
+                    submitBtn.disabled = false;
                 }
-                if (error.code === 'P0001') {
-                    this.showError(error.message || 'تعذّر التصويت');
-                    return;
-                }
-                throw error;
-            }
+            });
+        }
 
-            this.showSuccess('تم تسجيل صوتك بنجاح');
-            await this.showElectionDetail(electionId);
-        } catch (error) {
-            console.error('Error casting vote:', error);
-            this.showError('حدث خطأ أثناء التصويت');
+        /* ============================================================
+           Modal helper — يعتمد فقط على modals.css الموجود في admin/css/
+           ============================================================ */
+        _openModal({ title, icon = 'fa-circle-info', size = 'md', color = '', body = '', footer = '' }) {
+            const wrap = document.createElement('div');
+            wrap.className = 'elections-modal-host';
+            const colorCls = color ? ` modal-${color}` : '';
+            wrap.innerHTML = `
+                <div class="modal-backdrop"></div>
+                <div class="modal modal-${size}${colorCls}" role="dialog" aria-modal="true">
+                    <div class="modal-header">
+                        <div class="modal-header-content">
+                            <div class="modal-icon"><i class="fa-solid ${icon}"></i></div>
+                            <div><h3 class="modal-title">${esc(title)}</h3></div>
+                        </div>
+                        <button class="modal-close" type="button" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="modal-body">${body}</div>
+                    ${footer ? `<div class="modal-footer">${footer}</div>` : ''}
+                </div>
+            `;
+            document.body.appendChild(wrap);
+            document.body.style.overflow = 'hidden';
+
+            const backdrop = wrap.querySelector('.modal-backdrop');
+            const modalEl  = wrap.querySelector('.modal');
+
+            // تأخير إضافة .active إطاراً لتفعيل انتقالات CSS (fade + scale)
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    backdrop.classList.add('active');
+                    modalEl.classList.add('active');
+                });
+            });
+
+            let closing = false;
+            const close = () => {
+                if (closing) return;
+                closing = true;
+                backdrop.classList.remove('active');
+                modalEl.classList.remove('active');
+                const cleanup = () => {
+                    document.body.style.overflow = '';
+                    wrap.remove();
+                };
+                const onEnd = (ev) => {
+                    if (ev.target !== modalEl) return;
+                    modalEl.removeEventListener('transitionend', onEnd);
+                    cleanup();
+                };
+                modalEl.addEventListener('transitionend', onEnd);
+                // شبكة أمان في حال لم تُطلق الحدث (مثلاً عند reduced-motion)
+                setTimeout(() => {
+                    if (wrap.isConnected) cleanup();
+                }, 500);
+            };
+
+            wrap.querySelector('.modal-close').addEventListener('click', close);
+            backdrop.addEventListener('click', close);
+            wrap.querySelectorAll('[data-dismiss="modal"]').forEach(b => b.addEventListener('click', close));
+
+            return { modal: modalEl, close };
         }
     }
 
-    async declareWinner(electionId, winnerUserId) {
-        const confirmed = await this.confirmAction('هل أنت متأكد من إعلان هذا المرشح فائزاً؟');
-        if (!confirmed) return;
-
-        try {
-            const { error } = await this.supabase
-                .from('elections')
-                .update({
-                    winner_user_id: winnerUserId,
-                    status: 'completed',
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', electionId);
-
-            if (error) {
-                if (error.code === 'P0001') {
-                    this.showError(error.message || 'تعذّر إعلان الفائز');
-                    return;
-                }
-                throw error;
-            }
-
-            this.showSuccess('تم إعلان الفائز بنجاح');
-            await this.loadElections();
-            await this.showElectionDetail(electionId);
-        } catch (error) {
-            console.error('Error declaring winner:', error);
-            this.showError('حدث خطأ أثناء إعلان الفائز');
-        }
+    window.ElectionsManager = ElectionsManager;
+    if (!window.electionsManagerInstance) {
+        window.electionsManagerInstance = new ElectionsManager();
     }
-
-    // =============================================
-    // دوال مساعدة
-    // =============================================
-
-    getElectionName(election) {
-        const role = election.target_role?.role_name_ar || '—';
-        const unit = election.target_committee?.committee_name_ar
-                  || election.target_department?.name_ar;
-        return unit ? `${role} — ${unit}` : role;
-    }
-
-    canManageElections() {
-        return window.PermissionsHelper?.hasPermission('manage_elections') || false;
-    }
-
-    canApproveCandidates() {
-        return window.PermissionsHelper?.hasAnyPermission(['approve_candidates', 'manage_elections']) || false;
-    }
-
-    isUserInCommittee(committeeId) {
-        if (!committeeId || !this.currentUserRole) return false;
-        return this.currentUserRole.committee_id === committeeId;
-    }
-
-    getUserVoteWeight() {
-        if (!this.currentUserRole?.role?.role_name) return 1.0;
-        const found = this.voteWeights.find(w => w.role_name === this.currentUserRole.role.role_name);
-        return found ? Number(found.weight) : 1.0;
-    }
-
-    async confirmAction(message) {
-        return new Promise(resolve => {
-            if (window.ModalHelper?.confirm) {
-                window.ModalHelper.confirm({
-                    title: 'تأكيد',
-                    message,
-                    type: 'warning',
-                    onConfirm: () => resolve(true),
-                    onCancel: () => resolve(false)
-                });
-            } else {
-                resolve(confirm(message));
-            }
-        });
-    }
-
-    showSuccess(message) {
-        window.Toast?.show({ type: 'success', title: message });
-    }
-
-    showError(message) {
-        window.Toast?.show({ type: 'error', title: message });
-    }
-}
-
-// تصدير عام
-window.ElectionsManager = ElectionsManager;
-window.electionsManagerInstance = null;
+})();

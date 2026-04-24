@@ -129,22 +129,22 @@
 .uc-card--allow-overflow { overflow: visible; }
 .uc-card--allow-overflow::after { display: none; }
 
-.uc-card--primary  { --_uc-color-rgb: 61, 143, 214;  --_uc-color: #3d8fd6; --_uc-color-dark: #274060; }
-.uc-card--success  { --_uc-color-rgb: 16, 185, 129;  --_uc-color: #10b981; --_uc-color-dark: #059669; }
-.uc-card--warning  { --_uc-color-rgb: 245, 158, 11;  --_uc-color: #f59e0b; --_uc-color-dark: #d97706; }
-.uc-card--danger   { --_uc-color-rgb: 239, 68, 68;   --_uc-color: #ef4444; --_uc-color-dark: #dc2626; }
-.uc-card--info     { --_uc-color-rgb: 59, 130, 246;  --_uc-color: #3b82f6; --_uc-color-dark: #2563eb; }
-.uc-card--purple   { --_uc-color-rgb: 139, 92, 246;  --_uc-color: #8b5cf6; --_uc-color-dark: #7c3aed; }
-.uc-card--teal     { --_uc-color-rgb: 20, 184, 166;  --_uc-color: #14b8a6; --_uc-color-dark: #0d9488; }
-.uc-card--neutral  { --_uc-color-rgb: 100, 116, 139; --_uc-color: #64748b; --_uc-color-dark: #475569; }
+.uc-card--primary  { --_uc-color-rgb: var(--color-accent-rgb);  --_uc-color: var(--color-primary-light); --_uc-color-dark: var(--color-primary); }
+.uc-card--success  { --_uc-color-rgb: var(--color-success-rgb); --_uc-color: var(--color-success-500); --_uc-color-dark: var(--color-success-600); }
+.uc-card--warning  { --_uc-color-rgb: var(--color-warning-rgb); --_uc-color: var(--color-warning-500); --_uc-color-dark: var(--color-warning-600); }
+.uc-card--danger   { --_uc-color-rgb: var(--color-danger-rgb);  --_uc-color: var(--color-danger-500);  --_uc-color-dark: var(--color-danger-600); }
+.uc-card--info,
+.uc-card--neutral  { --_uc-color-rgb: var(--color-info-rgb);    --_uc-color: var(--color-info-500);    --_uc-color-dark: var(--color-info-600); }
+.uc-card--purple   { --_uc-color-rgb: var(--color-purple-rgb);  --_uc-color: var(--color-purple-500);  --_uc-color-dark: var(--color-purple-600); }
+.uc-card--teal     { --_uc-color-rgb: var(--color-teal-rgb);    --_uc-color: var(--color-teal-500);    --_uc-color-dark: var(--color-teal-600); }
 
 /* توافق مع الكلاسات القديمة على uc-card__header */
-.uc-card__header--success { background: linear-gradient(135deg, #34d399 0%, #059669 100%); }
-.uc-card__header--warning { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); }
-.uc-card__header--danger  { background: linear-gradient(135deg, #f87171 0%, #dc2626 100%); }
-.uc-card__header--info    { background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%); }
-.uc-card__header--purple  { background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); }
-.uc-card__header--neutral { background: linear-gradient(135deg, #94a3b8 0%, #475569 100%); }
+.uc-card__header--success { background: linear-gradient(135deg, var(--color-success-light) 0%, var(--color-success-600) 100%); }
+.uc-card__header--warning { background: linear-gradient(135deg, var(--color-warning-light) 0%, var(--color-warning-600) 100%); }
+.uc-card__header--danger  { background: linear-gradient(135deg, var(--color-danger-light)  0%, var(--color-danger-600)  100%); }
+.uc-card__header--info,
+.uc-card__header--neutral { background: linear-gradient(135deg, var(--color-info-400)     0%, var(--color-info-600)    100%); }
+.uc-card__header--purple  { background: linear-gradient(135deg, var(--color-purple-light)  0%, var(--color-purple-600)  100%); }
 
 
 /* ============================================================
@@ -478,6 +478,16 @@
     font-weight: 500;
 }
 
+/* حاوية info-items بدون شكل uc-card كامل (كالـ standalone) */
+.position-info-grid {
+    --_uc-color-rgb:  var(--color-accent-rgb);
+    --_uc-color:      var(--color-primary-light);
+    --_uc-color-dark: var(--color-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
 /* عنصر معلومات عريض (full-width) */
 .uc-card__info-item--full {
     grid-column: 1 / -1;
@@ -491,6 +501,26 @@
     -webkit-box-orient: vertical;
     line-clamp: 2;
     overflow: hidden;
+}
+
+/* عنصر قائمة — قيمة متعددة الأسطر بلا اقتطاع (مثل قائمة مرشحين) */
+.uc-card__info-item--list {
+    align-items: flex-start;
+}
+
+.uc-card__info-item--list .uc-card__info-content {
+    min-width: 0;
+}
+
+.uc-card__info-item--list .uc-card__info-value,
+.uc-card__info-item--full.uc-card__info-item--list .uc-card__info-value {
+    display: block;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+    margin-top: 0.25rem;
 }
 
 /* عنصر رابط — Link Item */
@@ -682,13 +712,14 @@
     line-height: 1;
 }
 
-.uc-badge--primary   { background: rgba(39,  64,  96,  0.10); color: #274060; }
-.uc-badge--success   { background: rgba(16,  185, 129, 0.12); color: #065f46; }
-.uc-badge--warning   { background: rgba(245, 158, 11,  0.12); color: #92400e; }
-.uc-badge--danger    { background: rgba(239, 68,  68,  0.12); color: #991b1b; }
-.uc-badge--info      { background: rgba(59,  130, 246, 0.12); color: #1e40af; }
-.uc-badge--secondary { background: rgba(100, 116, 139, 0.10); color: #475569; }
-.uc-badge--purple    { background: rgba(139, 92,  246, 0.12); color: #5b21b6; }
+.uc-badge--primary   { background: rgba(var(--color-primary-rgb), 0.10); color: var(--color-primary); }
+.uc-badge--success   { background: rgba(var(--color-success-rgb), 0.12); color: var(--color-success-800); }
+.uc-badge--warning   { background: rgba(var(--color-warning-rgb), 0.12); color: var(--color-warning-800); }
+.uc-badge--danger    { background: rgba(var(--color-danger-rgb),  0.12); color: var(--color-danger-800); }
+.uc-badge--info      { background: rgba(var(--color-info-rgb),    0.12); color: var(--color-info-700); }
+.uc-badge--secondary { background: rgba(var(--color-info-rgb),    0.08); color: var(--color-info-600); }
+.uc-badge--purple    { background: rgba(var(--color-purple-rgb),  0.12); color: var(--color-purple-800); }
+.uc-badge--teal      { background: rgba(var(--color-teal-rgb),    0.12); color: var(--color-teal-700); }
 
 
 /* ============================================================
@@ -1320,13 +1351,13 @@
    ============================================================ */
 
 .uc-card--new {
-    --_uc-color-rgb:  59, 130, 246;
-    --_uc-color:      #3b82f6;
-    --_uc-color-dark: #2563eb;
-    border-color: rgba(59, 130, 246, 0.30);
+    --_uc-color-rgb:  var(--color-accent-rgb);
+    --_uc-color:      var(--color-primary-light);
+    --_uc-color-dark: var(--color-primary);
+    border-color: rgba(var(--_uc-color-rgb), 0.30);
     box-shadow:
-        0 0 0 3px rgba(59, 130, 246, 0.08),
-        0 6px 24px rgba(59, 130, 246, 0.12);
+        0 0 0 3px rgba(var(--_uc-color-rgb), 0.08),
+        0 6px 24px rgba(var(--_uc-color-rgb), 0.12);
 }
 
 
@@ -1534,13 +1565,13 @@
 
 .badge i { font-size: 0.9em; }
 
-.badge--primary { background: rgba(61,143,214,0.12); color: var(--color-primary); border: 1px solid rgba(61,143,214,0.25); }
-.badge--success { background: rgba(16,185,129,0.12); color: var(--color-success-dark); border: 1px solid rgba(16,185,129,0.25); }
-.badge--warning { background: rgba(245,158,11,0.12); color: var(--color-warning-dark); border: 1px solid rgba(245,158,11,0.25); }
-.badge--danger  { background: rgba(239,68,68,0.12);  color: var(--color-danger-dark);  border: 1px solid rgba(239,68,68,0.25); }
-.badge--info    { background: rgba(59,130,246,0.12);  color: var(--color-info-dark);    border: 1px solid rgba(59,130,246,0.25); }
-.badge--purple  { background: rgba(139,92,246,0.12);  color: var(--color-purple-dark);  border: 1px solid rgba(139,92,246,0.25); }
-.badge--teal    { background: rgba(20,184,166,0.12);  color: var(--color-teal-dark);    border: 1px solid rgba(20,184,166,0.25); }
+.badge--primary { background: rgba(var(--color-accent-rgb),  0.12); color: var(--color-primary);       border: 1px solid rgba(var(--color-accent-rgb),  0.25); }
+.badge--success { background: rgba(var(--color-success-rgb), 0.12); color: var(--color-success-dark);  border: 1px solid rgba(var(--color-success-rgb), 0.25); }
+.badge--warning { background: rgba(var(--color-warning-rgb), 0.12); color: var(--color-warning-dark);  border: 1px solid rgba(var(--color-warning-rgb), 0.25); }
+.badge--danger  { background: rgba(var(--color-danger-rgb),  0.12); color: var(--color-danger-dark);   border: 1px solid rgba(var(--color-danger-rgb),  0.25); }
+.badge--info    { background: rgba(var(--color-info-rgb),    0.12); color: var(--color-info-dark);     border: 1px solid rgba(var(--color-info-rgb),    0.25); }
+.badge--purple  { background: rgba(var(--color-purple-rgb),  0.12); color: var(--color-purple-dark);   border: 1px solid rgba(var(--color-purple-rgb),  0.25); }
+.badge--teal    { background: rgba(var(--color-teal-rgb),    0.12); color: var(--color-teal-dark);     border: 1px solid rgba(var(--color-teal-rgb),    0.25); }
 .badge--lg { padding: 0.5rem 1rem;    font-size: var(--font-size-base); }
 .badge--sm { padding: 0.25rem 0.5rem; font-size: var(--font-size-xs); }
 
@@ -1720,6 +1751,32 @@
         0 3px 8px  rgba(var(--_card-color-rgb), 0.22);
 }
 
+/* زر يستخدم لون البطاقة تلقائياً (متوفر داخل .card--*) */
+.card-header .btn-card-color {
+    background: rgba(var(--_card-color-rgb), 0.10);
+    color: var(--_card-color-dark);
+    border: 1px solid rgba(var(--_card-color-rgb), 0.28);
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.card-header .btn-card-color:hover:not(:disabled) {
+    background: rgba(var(--_card-color-rgb), 0.18);
+    border-color: rgba(var(--_card-color-rgb), 0.45);
+    color: var(--_card-color-dark);
+}
+.card-header .btn-card-color:active:not(:disabled) {
+    transform: scale(0.96);
+}
+.card-header .btn-card-color:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.card-header .btn-card-color.is-spinning i {
+    animation: card-btn-spin 0.7s linear infinite;
+}
+@keyframes card-btn-spin {
+    to { transform: rotate(360deg); }
+}
+
 
 /* ─── جسم البطاقة ─── */
 
@@ -1767,51 +1824,46 @@
 /* ─── متغيرات الألوان — Color Variants ─── */
 
 .card--primary {
-    --_card-color-rgb:  61, 143, 214;
-    --_card-color:      #3d8fd6;
-    --_card-color-dark: #274060;
+    --_card-color-rgb:  var(--color-accent-rgb);
+    --_card-color:      var(--color-primary-light);
+    --_card-color-dark: var(--color-primary);
 }
 
 .card--success {
-    --_card-color-rgb:  16, 185, 129;
-    --_card-color:      #10b981;
-    --_card-color-dark: #059669;
+    --_card-color-rgb:  var(--color-success-rgb);
+    --_card-color:      var(--color-success-500);
+    --_card-color-dark: var(--color-success-600);
 }
 
 .card--warning {
-    --_card-color-rgb:  245, 158, 11;
-    --_card-color:      #f59e0b;
-    --_card-color-dark: #d97706;
+    --_card-color-rgb:  var(--color-warning-rgb);
+    --_card-color:      var(--color-warning-500);
+    --_card-color-dark: var(--color-warning-600);
 }
 
 .card--danger {
-    --_card-color-rgb:  239, 68, 68;
-    --_card-color:      #ef4444;
-    --_card-color-dark: #dc2626;
+    --_card-color-rgb:  var(--color-danger-rgb);
+    --_card-color:      var(--color-danger-500);
+    --_card-color-dark: var(--color-danger-600);
 }
 
-.card--info {
-    --_card-color-rgb:  59, 130, 246;
-    --_card-color:      #3b82f6;
-    --_card-color-dark: #2563eb;
+.card--info,
+.card--neutral {
+    --_card-color-rgb:  var(--color-info-rgb);
+    --_card-color:      var(--color-info-500);
+    --_card-color-dark: var(--color-info-600);
 }
 
 .card--purple {
-    --_card-color-rgb:  139, 92, 246;
-    --_card-color:      #8b5cf6;
-    --_card-color-dark: #7c3aed;
+    --_card-color-rgb:  var(--color-purple-rgb);
+    --_card-color:      var(--color-purple-500);
+    --_card-color-dark: var(--color-purple-600);
 }
 
 .card--teal {
-    --_card-color-rgb:  20, 184, 166;
-    --_card-color:      #14b8a6;
-    --_card-color-dark: #0d9488;
-}
-
-.card--neutral {
-    --_card-color-rgb:  100, 116, 139;
-    --_card-color:      #64748b;
-    --_card-color-dark: #475569;
+    --_card-color-rgb:  var(--color-teal-rgb);
+    --_card-color:      var(--color-teal-500);
+    --_card-color-dark: var(--color-teal-600);
 }
 
 
@@ -1918,8 +1970,8 @@
 
 /* ─── Base ─── */
 .empty-state {
-    --_es-color-rgb: 61, 143, 214;
-    --_es-color:     #3d8fd6;
+    --_es-color-rgb: var(--color-accent-rgb);
+    --_es-color:     var(--color-primary-light);
 
     position: relative;
     overflow: hidden;
@@ -2001,7 +2053,7 @@
 .empty-state--error   { --_es-color-rgb: var(--color-danger-rgb);  --_es-color: var(--color-danger);  }
 .empty-state--purple  { --_es-color-rgb: var(--color-purple-rgb);  --_es-color: var(--color-purple);  }
 .empty-state--teal    { --_es-color-rgb: var(--color-teal-rgb);    --_es-color: var(--color-teal);    }
-.empty-state--gray    { --_es-color-rgb: 142, 150, 163;            --_es-color: #8e96a3;             }
+.empty-state--gray    { --_es-color-rgb: var(--color-info-rgb);    --_es-color: var(--color-info-500); }
 
 /* ─── Nested inside .card — strip card-like chrome ─── */
 .card-body .empty-state {
@@ -2569,8 +2621,6 @@
 }
 
 
-/* § 19.5 & § 20 — تنسيقات التنكر نُقلت إلى impersonation-bar.css */
-
 /* ─── Dropdown Menu ─── */
 .dropdown-menu {
     display: none;
@@ -2986,6 +3036,45 @@
     padding: 4px 10px;
     background: rgba(var(--color-primary-rgb), 0.08);
     border-radius: 999px;
+}
+.birthday-card__fav-color {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.birthday-card__fav-color:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+.birthday-card__fav-color:active {
+    transform: scale(0.97);
+}
+.birthday-card__fav-color-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+    display: inline-block;
+    flex-shrink: 0;
+}
+.birthday-card__fav-color-value {
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.birthday-card__fav-color i {
+    font-size: 0.75rem;
+    color: #94a3b8;
 }
 
 .birthday-month-accordion {

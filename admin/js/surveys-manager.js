@@ -103,34 +103,19 @@
                     return;
                 }
 
-                let data;
-                const impersonating = await window.AuthManager.isImpersonating();
+                const { data, error } = await sb
+                    .from('surveys')
+                    .select(`
+                        *,
+                        created_by_profile:profiles!surveys_created_by_fkey(full_name),
+                        committee:committees(committee_name_ar),
+                        survey_questions(id)
+                    `)
+                    .not('status', 'in', '("archived","deleted")')
+                    .eq('created_by', effectiveUserId)
+                    .order('created_at', { ascending: false });
 
-                if (impersonating) {
-                    // وضع التنكر: استخدام RPC لتجاوز RLS
-                    const rpcData = await window.AuthManager.impersonateQuery('impersonate_get_user_surveys');
-                    data = (rpcData || []).map(s => ({
-                        ...s,
-                        survey_questions: s.survey_questions || [],
-                        created_by_profile: s.created_by_profile || { full_name: null }
-                    }));
-                } else {
-                    // الوضع العادي: استعلام مباشر
-                    const { data: normalData, error } = await sb
-                        .from('surveys')
-                        .select(`
-                            *,
-                            created_by_profile:profiles!surveys_created_by_fkey(full_name),
-                            committee:committees(committee_name_ar),
-                            survey_questions(id)
-                        `)
-                        .not('status', 'in', '("archived","deleted")')
-                        .eq('created_by', effectiveUserId)
-                        .order('created_at', { ascending: false });
-
-                    if (error) throw error;
-                    data = normalData;
-                }
+                if (error) throw error;
 
                 // إضافة عدد الأسئلة والإحصائيات لكل استبيان
                 const surveysWithStats = await Promise.all((data || []).map(async survey => {
@@ -372,26 +357,16 @@
                 const effectiveUserId = await window.AuthManager.getEffectiveUserId();
                 if (!effectiveUserId) return;
 
-                let shares;
-                const impersonating = await window.AuthManager.isImpersonating();
+                const { data: shares, error } = await sb
+                    .from('survey_sharing')
+                    .select(`
+                        *,
+                        survey:surveys(*),
+                        shared_by_profile:profiles!survey_sharing_shared_by_profiles_fkey(full_name)
+                    `)
+                    .eq('shared_with', effectiveUserId);
 
-                if (impersonating) {
-                    // وضع التنكر: استخدام RPC لتجاوز RLS
-                    shares = await window.AuthManager.impersonateQuery('impersonate_get_shared_surveys');
-                } else {
-                    // الوضع العادي: استعلام مباشر
-                    const { data, error } = await sb
-                        .from('survey_sharing')
-                        .select(`
-                            *,
-                            survey:surveys(*),
-                            shared_by_profile:profiles!survey_sharing_shared_by_profiles_fkey(full_name)
-                        `)
-                        .eq('shared_with', effectiveUserId);
-
-                    if (error) { console.error('[surveys] shared surveys error', error); return; }
-                    shares = data;
-                }
+                if (error) { console.error('[surveys] shared surveys error', error); return; }
 
                 // فلترة المنتهية الصلاحية
                 const now = new Date();

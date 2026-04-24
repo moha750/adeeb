@@ -371,17 +371,6 @@ class UsersManager {
             });
         }
 
-        // زر التنكر كمستخدم
-        const impersonateBtn = document.getElementById('impersonateUserBtn');
-        if (impersonateBtn) {
-            this.checkImpersonationPermission(impersonateBtn);
-            impersonateBtn.addEventListener('click', () => {
-                if (window.ImpersonationManager) {
-                    window.ImpersonationManager.openImpersonationDialog();
-                }
-            });
-        }
-
         // زر خيارات قائمة الأعضاء
         const membersOptionsBtn = document.getElementById('membersListOptionsBtn');
         if (membersOptionsBtn) {
@@ -445,6 +434,9 @@ class UsersManager {
                     <button class="btn btn-warning btn-block btn-outline" data-action="change-committee">
                         <i class="fa-solid fa-sitemap"></i> تغيير اللجنة
                     </button>
+                    <button class="btn btn-violet btn-block btn-outline" data-action="master-access" style="display:none;">
+                        <i class="fa-solid fa-user-shield"></i> دخول كـ
+                    </button>
                     <div class="dropdown-divider"></div>
                     <button class="btn btn-danger btn-block btn-outline" data-action="terminate">
                         <i class="fa-solid fa-user-slash"></i> إنهاء العضوية
@@ -458,14 +450,18 @@ class UsersManager {
                     if (!item) return;
                     const action = item.dataset.action;
                     const userId = userDropdown.dataset.activeUserId;
+                    const userName = userDropdown.dataset.activeUserName || '';
                     userDropdown.classList.remove('show');
                     if (action === 'edit') this.editUser(userId);
                     else if (action === 'change-committee') this.changeCommittee(userId);
                     else if (action === 'terminate') this.terminateMembership(userId);
+                    else if (action === 'master-access' && window.MasterAccess) {
+                        window.MasterAccess.startAccess(userId, userName);
+                    }
                 });
             }
 
-            document.addEventListener('click', (e) => {
+            document.addEventListener('click', async (e) => {
                 // زر الخيارات
                 if (e.target.closest('.btn-user-options')) {
                     e.stopPropagation();
@@ -476,7 +472,23 @@ class UsersManager {
                     userDropdown.classList.remove('show');
                     if (wasOpen) return;
 
+                    const user = this.allUsers.find(u => u.id === userId);
                     userDropdown.dataset.activeUserId = userId;
+                    userDropdown.dataset.activeUserName = user?.full_name || '';
+
+                    // إظهار زر "دخول كـ" فقط للرئيس وعلى الحسابات الأخرى
+                    const masterBtn = userDropdown.querySelector('[data-action="master-access"]');
+                    if (masterBtn) {
+                        let show = false;
+                        if (window.MasterAccess) {
+                            const { data: { session } } = await this.supabase.auth.getSession();
+                            const isSelf = session && session.user.id === userId;
+                            const allowed = !isSelf && await window.MasterAccess.canUseMasterAccess();
+                            show = allowed;
+                        }
+                        masterBtn.style.display = show ? 'block' : 'none';
+                    }
+
                     const rect = btn.getBoundingClientRect();
                     userDropdown.style.top = (rect.bottom + 6) + 'px';
                     userDropdown.style.left = rect.left + 'px';
@@ -1112,18 +1124,6 @@ class UsersManager {
         } catch (error) {
             console.error('Error terminating membership:', error);
             window.showErrorModal('خطأ', 'حدث خطأ أثناء إنهاء العضوية. يرجى المحاولة مرة أخرى.');
-        }
-    }
-
-    /**
-     * التحقق من صلاحية التنكر وإظهار الزر
-     */
-    async checkImpersonationPermission(button) {
-        if (window.ImpersonationManager) {
-            const canImpersonate = await window.ImpersonationManager.canImpersonate();
-            if (canImpersonate) {
-                button.style.display = 'block';
-            }
         }
     }
 

@@ -27,6 +27,7 @@
    .modal-detail-grid     — شبكة تفاصيل (key-value)
    .modal-detail-item     — عنصر تفصيل
    .modal-detail-row      — صف تفصيل أفقي
+   .modal-timeline        — مسار أحداث عمودي (.item--success/danger/warning/info/primary)
    .modal-form-grid       — شبكة نماذج (عمودين)
    .modal-media           — حاوية صورة / وسائط
    ============================================================================ */
@@ -37,10 +38,11 @@
    ============================================================ */
 
 :root {
-    /* — Modal color engine (overridden per variant) */
-    --modal-color-rgb:   61, 143, 214;
-    --modal-color:       #3d8fd6;
-    --modal-color-dark:  #274060;
+    /* — Modal color engine (overridden per variant)
+         الافتراضي: أزرق العلامة التجارية من design-tokens.css */
+    --modal-color-rgb:   var(--color-accent-rgb);
+    --modal-color:       var(--color-primary-light);
+    --modal-color-dark:  var(--color-primary);
 
     /* — Backdrop */
     --modal-backdrop-bg: rgba(15, 23, 42, 0.72);
@@ -466,58 +468,58 @@
 
 /* --- Success --- */
 .modal-success {
-    --modal-color-rgb:  16, 185, 129;
-    --modal-color:      #10b981;
-    --modal-color-dark: #059669;
+    --modal-color-rgb:  var(--color-success-rgb);
+    --modal-color:      var(--color-success-500);
+    --modal-color-dark: var(--color-success-600);
 }
 
 /* --- Danger / Error --- */
 .modal-danger {
-    --modal-color-rgb:  239, 68, 68;
-    --modal-color:      #ef4444;
-    --modal-color-dark: #dc2626;
+    --modal-color-rgb:  var(--color-danger-rgb);
+    --modal-color:      var(--color-danger-500);
+    --modal-color-dark: var(--color-danger-600);
 }
 
 /* --- Warning --- */
 .modal-warning {
-    --modal-color-rgb:  245, 158, 11;
-    --modal-color:      #f59e0b;
-    --modal-color-dark: #d97706;
+    --modal-color-rgb:  var(--color-warning-rgb);
+    --modal-color:      var(--color-warning-500);
+    --modal-color-dark: var(--color-warning-600);
 }
 
-/* --- Info --- */
+/* --- Info (رصاصي) — اللون المعتمد للمعلومات في النظام */
 .modal-info {
-    --modal-color-rgb:  100, 116, 139;
-    --modal-color:      #64748b;
-    --modal-color-dark: #475569;
+    --modal-color-rgb:  var(--color-info-rgb);
+    --modal-color:      var(--color-info-500);
+    --modal-color-dark: var(--color-info-600);
 }
 
-/* --- Primary (Blue) --- */
+/* --- Primary (Brand Blue) --- */
 .modal-primary {
-    --modal-color-rgb:  61, 143, 214;
-    --modal-color:      #3d8fd6;
-    --modal-color-dark: #274060;
+    --modal-color-rgb:  var(--color-accent-rgb);
+    --modal-color:      var(--color-primary-light);
+    --modal-color-dark: var(--color-primary);
 }
 
 /* --- Purple --- */
 .modal-purple {
-    --modal-color-rgb:  139, 92, 246;
-    --modal-color:      #8b5cf6;
-    --modal-color-dark: #7c3aed;
+    --modal-color-rgb:  var(--color-purple-rgb);
+    --modal-color:      var(--color-purple-500);
+    --modal-color-dark: var(--color-purple-600);
 }
 
 /* --- Teal --- */
 .modal-teal {
-    --modal-color-rgb:  20, 184, 166;
-    --modal-color:      #14b8a6;
-    --modal-color-dark: #0d9488;
+    --modal-color-rgb:  var(--color-teal-rgb);
+    --modal-color:      var(--color-teal-500);
+    --modal-color-dark: var(--color-teal-600);
 }
 
 /* --- Pink --- */
 .modal-pink {
-    --modal-color-rgb:  236, 72, 153;
-    --modal-color:      #ec4899;
-    --modal-color-dark: #db2777;
+    --modal-color-rgb:  var(--color-pink-rgb);
+    --modal-color:      var(--color-pink-500);
+    --modal-color-dark: var(--color-pink-600);
 }
 
 
@@ -1226,29 +1228,35 @@
     color: var(--modal-color-dark);
 }
 
-/* Variants — أنواع صناديق المعلومات */
+/* Variants — أنواع صناديق المعلومات (تستخدم -800 للنص الداكن لتباين أعلى) */
 .modal-info-box.box-success {
-    --modal-color-rgb:  16, 185, 129;
-    --modal-color:      #10b981;
-    --modal-color-dark: #065f46;
+    --modal-color-rgb:  var(--color-success-rgb);
+    --modal-color:      var(--color-success-500);
+    --modal-color-dark: var(--color-success-800);
 }
 
 .modal-info-box.box-warning {
-    --modal-color-rgb:  245, 158, 11;
-    --modal-color:      #f59e0b;
-    --modal-color-dark: #78350f;
+    --modal-color-rgb:  var(--color-warning-rgb);
+    --modal-color:      var(--color-warning-500);
+    --modal-color-dark: var(--color-warning-800);
 }
 
 .modal-info-box.box-danger {
-    --modal-color-rgb:  239, 68, 68;
-    --modal-color:      #ef4444;
-    --modal-color-dark: #7f1d1d;
+    --modal-color-rgb:  var(--color-danger-rgb);
+    --modal-color:      var(--color-danger-500);
+    --modal-color-dark: var(--color-danger-800);
 }
 
 .modal-info-box.box-info {
-    --modal-color-rgb:  100, 116, 139;
-    --modal-color:      #64748b;
-    --modal-color-dark: #475569;
+    --modal-color-rgb:  var(--color-info-rgb);
+    --modal-color:      var(--color-info-500);
+    --modal-color-dark: var(--color-info-600);
+}
+
+.modal-info-box.box-purple {
+    --modal-color-rgb:  var(--color-purple-rgb);
+    --modal-color:      var(--color-purple-500);
+    --modal-color-dark: var(--color-purple-700);
 }
 
 
@@ -1458,6 +1466,215 @@
 .modal-detail-row .modal-detail-value {
     font-size: 0.8125rem;
     text-align: left;
+}
+
+
+/* --- Timeline — أحداث كبطاقات مراحل (Phase Cards) --- */
+/*   تصميم متوافق مع .modal-detail-item: خلفية متدرّجة + شريط جانبي
+     + رقم مرحلة خلفي + أيقونة بارزة. كل حدث بطاقة مستقلّة.
+     ملاحظة: كل المحدِّدات مسبوقة بـ .modal-body لرفع الخصوصية
+     فوق قواعد القوائم/الفقرات/العناوين العامة. */
+
+.modal-body .modal-timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    counter-reset: modal-timeline;
+}
+
+.modal-body .modal-timeline__item {
+    --timeline-color-rgb: var(--modal-color-rgb);
+    --timeline-color: var(--modal-color);
+    counter-increment: modal-timeline;
+
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    padding: 0.9rem 3.6rem 0.9rem 1rem; /* مساحة على اليمين للأيقونة */
+    border-radius: 14px;
+    list-style: none;
+
+    background-color: #ffffff;
+    background-image: linear-gradient(
+        145deg,
+        rgba(var(--timeline-color-rgb), 0.10) 0%,
+        rgba(var(--timeline-color-rgb), 0.03) 48%,
+        transparent 100%
+    );
+    border: 1px solid rgba(var(--timeline-color-rgb), 0.18);
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.04),
+        0 1px 2px rgba(0, 0, 0, 0.02);
+
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.modal-body .modal-timeline__item:hover {
+    transform: translateX(-3px);
+    border-color: rgba(var(--timeline-color-rgb), 0.32);
+    box-shadow:
+        0 6px 18px rgba(var(--timeline-color-rgb), 0.14),
+        0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+/* شريط جانبي ملوّن على اليمين — هوية لون الحالة */
+.modal-body .modal-timeline__item::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: 0;
+    bottom: 10px;
+    width: 4px;
+    background: linear-gradient(
+        180deg,
+        var(--timeline-color),
+        rgba(var(--timeline-color-rgb), 0.65)
+    );
+    border-radius: 4px 0 0 4px;
+    opacity: 0.7;
+    transition: opacity 0.25s ease, top 0.25s ease, bottom 0.25s ease;
+}
+
+.modal-body .modal-timeline__item:hover::before {
+    opacity: 1;
+    top: 6px;
+    bottom: 6px;
+}
+
+/* رقم المرحلة الخلفي — زخرفة، أرقام إنجليزية */
+.modal-body .modal-timeline__item::after {
+    content: counter(modal-timeline, decimal);
+    position: absolute;
+    bottom: -1.5rem;
+    left: -0.4rem;
+    font-size: 5rem;
+    font-weight: 800;
+    line-height: 1;
+    color: rgba(var(--timeline-color-rgb), 0.09);
+    pointer-events: none;
+    user-select: none;
+    font-family: inherit;
+}
+
+/* أيقونة بارزة في الزاوية العلوية اليمنى — تدرج + ظل */
+.modal-body .modal-timeline__icon {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    color: #fff;
+    background: linear-gradient(
+        135deg,
+        var(--timeline-color),
+        rgba(var(--timeline-color-rgb), 0.78)
+    );
+    box-shadow:
+        0 4px 12px rgba(var(--timeline-color-rgb), 0.32),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transition: transform 0.25s ease;
+}
+
+.modal-body .modal-timeline__item:hover .modal-timeline__icon {
+    transform: rotate(-4deg) scale(1.06);
+}
+
+.modal-body .modal-timeline__label {
+    display: block;
+    margin: 0;
+    padding: 0;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary, #111827);
+    line-height: 1.4;
+    letter-spacing: -0.005em;
+}
+
+.modal-body .modal-timeline__time {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.4rem 0 0;
+    padding: 0.18rem 0.6rem 0.18rem 0.55rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--timeline-color);
+    background: rgba(var(--timeline-color-rgb), 0.1);
+    border: 1px solid rgba(var(--timeline-color-rgb), 0.18);
+    border-radius: 999px;
+    line-height: 1;
+}
+
+.modal-body .modal-timeline__time::before {
+    content: '\f017'; /* fa-clock */
+    font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free', sans-serif;
+    font-weight: 900;
+    font-size: 0.7rem;
+}
+
+.modal-body .modal-timeline__note {
+    position: relative;
+    display: block;
+    margin: 0.7rem 0 0;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.865rem;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    color: var(--text-primary, #111827);
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(var(--timeline-color-rgb), 0.22);
+    border-radius: 9px;
+    backdrop-filter: blur(2px);
+}
+
+.modal-body .modal-timeline__note::before {
+    content: '\f10d'; /* fa-quote-right */
+    font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free', sans-serif;
+    font-weight: 900;
+    position: absolute;
+    top: -8px;
+    right: 0px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: var(--timeline-color);
+}
+
+/* Variants — ألوان الحالات */
+.modal-body .modal-timeline__item--success {
+    --timeline-color-rgb: var(--color-success-rgb);
+    --timeline-color:     var(--color-success-500);
+}
+
+.modal-body .modal-timeline__item--danger {
+    --timeline-color-rgb: var(--color-danger-rgb);
+    --timeline-color:     var(--color-danger-500);
+}
+
+.modal-body .modal-timeline__item--warning {
+    --timeline-color-rgb: var(--color-warning-rgb);
+    --timeline-color:     var(--color-warning-500);
+}
+
+.modal-body .modal-timeline__item--info {
+    --timeline-color-rgb: var(--color-info-rgb);
+    --timeline-color:     var(--color-info-500);
+}
+
+.modal-body .modal-timeline__item--primary {
+    --timeline-color-rgb: var(--color-accent-rgb);
+    --timeline-color:     var(--color-primary-light);
 }
 
 
@@ -2423,11 +2640,11 @@ body.modal-open {
 }
 
 .bulk-gift-result-row--success .bulk-gift-result-row-icon i {
-    color: #10b981;
+    color: var(--color-success-500);
 }
 
 .bulk-gift-result-row--error .bulk-gift-result-row-icon i {
-    color: #ef4444;
+    color: var(--color-danger-500);
 }
 
 .bulk-gift-result-row-body {
@@ -2443,7 +2660,7 @@ body.modal-open {
 
 .bulk-gift-result-row-email {
     font-size: 0.78rem;
-    color: #64748b;
+    color: var(--color-info-500);
     direction: ltr;
     text-align: right;
     overflow: hidden;
@@ -2452,7 +2669,7 @@ body.modal-open {
 
 .bulk-gift-result-row-error {
     font-size: 0.75rem;
-    color: #b91c1c;
+    color: var(--color-danger-700);
     margin-top: 0.25rem;
     padding-inline-end: 2.1rem;
 }

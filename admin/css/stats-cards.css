@@ -13,6 +13,24 @@
     grid-column: span 2;
 }
 
+/* شبكة إحصائيات بأربعة أعمدة (استخدام خاص — مثل إدارة الانتخابات) */
+.stats-grid.elections-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+}
+.stats-grid.elections-stats-grid .stat-card:last-child:nth-child(odd) {
+    grid-column: auto;
+}
+@media (max-width: 1200px) {
+    .stats-grid.elections-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 640px) {
+    .stats-grid.elections-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* البطاقة الأساسية – Gradient Fill */
 .stat-card {
     position: relative;

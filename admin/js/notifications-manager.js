@@ -1,44 +1,28 @@
 /**
- * نظام إدارة الإشعارات الكامل
- * يدعم Push Notifications و Real-time updates
+ * نظام إدارة الإشعارات داخل التطبيق
+ * يدعم Real-time updates عبر Supabase
  */
 
 (function() {
     'use strict';
 
+    const DROPDOWN_VISIBLE = 4;
+
     let currentUser = null;
     let notificationsChannel = null;
-    let pushSubscription = null;
+    let allNotifications = [];
 
-    /**
-     * تهيئة نظام الإشعارات
-     */
     async function init(user) {
         currentUser = user;
-        
-        // تحميل الإشعارات
+
         await loadNotifications();
-        
-        // تحديث عداد الإشعارات
         await updateNotificationsBadge();
-        
-        // الاشتراك في Real-time updates
         subscribeToNotifications();
-        
-        // إعداد الأحداث
         setupEventListeners();
-        
-        // طلب إذن Push Notifications إذا كان التطبيق مثبت
-        if (window.pwaManager && window.pwaManager.checkIfInstalled()) {
-            await requestPushPermission();
-        }
-        
+
         console.log('✅ Notifications system initialized');
     }
 
-    /**
-     * تحميل الإشعارات من قاعدة البيانات
-     */
     async function loadNotifications() {
         try {
             const { data, error } = await window.sbClient
@@ -49,21 +33,136 @@
 
             if (error) throw error;
 
-            displayNotifications(data || []);
+            allNotifications = data || [];
+            renderNotifications();
         } catch (error) {
             console.error('Error loading notifications:', error);
         }
     }
 
-    /**
-     * عرض الإشعارات في القائمة
-     */
-    function displayNotifications(notifications) {
-        const container = document.getElementById('notificationsList');
-        if (!container) return;
+    function buildNotificationItemHtml(notif) {
+        const iconClass = getNotificationIcon(notif.type);
+        const timeAgo = formatTimeAgo(notif.created_at);
 
-        if (notifications.length === 0) {
-            container.innerHTML = `
+        return `
+            <div class="notification-item ${notif.is_read ? 'read' : 'unread'}" data-id="${notif.id}">
+                <div class="notification-icon ${notif.type}">
+                    <i class="${iconClass}"></i>
+                </div>
+                <div class="notification-content">
+                    <h4>${notif.title}</h4>
+                    <p>${notif.message}</p>
+                    <span class="notification-time">${timeAgo}</span>
+                </div>
+                ${notif.action_url ? `
+                    <a href="${notif.action_url}" class="notification-action">
+                        ${notif.action_label || 'عرض'}
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </a>
+                ` : ''}
+                ${notif.is_read
+                    ? '<span class="read-badge"><i class="fa-solid fa-check"></i> مقروء</span>'
+                    : '<div class="unread-dot"></div>'}
+            </div>
+        `;
+    }
+
+    function attachItemListeners(container) {
+        container.querySelectorAll('.notification-item.unread').forEach(item => {
+            item.addEventListener('click', async (e) => {
+                if (!e.target.closest('.notification-action')) {
+                    await markAsRead(parseInt(item.dataset.id));
+                }
+            });
+        });
+
+        container.querySelectorAll('.notification-action').forEach(link => {
+            link.addEventListener('click', async (e) => {
+                const href = link.getAttribute('href') || '';
+                const hashIdx = href.indexOf('#');
+                const isSamePage = !/^https?:\/\//i.test(href)
+                    && (href.startsWith('#')
+                        || href.includes('/dashboard.html')
+                        || href === ''
+                        || href === '#');
+                if (hashIdx === -1 || !isSamePage || typeof window.navigateToSection !== 'function') {
+                    return;
+                }
+                const sectionId = href.slice(hashIdx + 1).trim();
+                if (!sectionId) return;
+
+                e.preventDefault();
+
+                const item = link.closest('.notification-item');
+                const idAttr = item?.dataset?.id;
+                if (idAttr && item.classList.contains('unread')) {
+                    await markAsRead(parseInt(idAttr));
+                }
+
+                document.getElementById('notificationsDropdown')?.classList.remove('active');
+                document.getElementById('notificationsBackdrop')?.classList.remove('active');
+
+                window.navigateToSection(sectionId);
+            });
+        });
+    }
+
+    function renderNotifications() {
+        const container = document.getElementById('notificationsList');
+        if (container) {
+            const total = allNotifications.length;
+
+            if (total === 0) {
+                container.innerHTML = `
+                    <div class="empty-notifications">
+                        <i class="fa-solid fa-bell-slash"></i>
+                        <p>لا توجد إشعارات</p>
+                    </div>
+                `;
+            } else {
+                const visible = allNotifications.slice(0, DROPDOWN_VISIBLE);
+                const itemsHtml = visible.map(buildNotificationItemHtml).join('');
+                const viewAllHtml = total > DROPDOWN_VISIBLE ? `
+                    <button type="button" class="notifications-show-more" id="notificationsViewAllBtn">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>عرض كل الإشعارات</span>
+                        <span class="notifications-show-more__count">${total}</span>
+                    </button>
+                ` : '';
+
+                container.innerHTML = itemsHtml + viewAllHtml;
+                attachItemListeners(container);
+
+                const viewAllBtn = document.getElementById('notificationsViewAllBtn');
+                if (viewAllBtn) {
+                    viewAllBtn.addEventListener('click', () => {
+                        document.getElementById('notificationsDropdown')?.classList.remove('active');
+                        document.getElementById('notificationsBackdrop')?.classList.remove('active');
+                        if (typeof window.navigateToSection === 'function') {
+                            window.navigateToSection('my-notifications-section');
+                        }
+                    });
+                }
+            }
+        }
+
+        renderFullList();
+    }
+
+    function renderFullList() {
+        const fullContainer = document.getElementById('myNotificationsList');
+        if (!fullContainer) return;
+
+        const total = allNotifications.length;
+        const unreadCount = allNotifications.filter(n => !n.is_read).length;
+
+        const totalEl = document.getElementById('myNotificationsTotal');
+        const unreadEl = document.getElementById('myNotificationsUnread');
+        if (totalEl) totalEl.textContent = total;
+        if (unreadEl) unreadEl.textContent = unreadCount;
+
+        if (total === 0) {
+            fullContainer.innerHTML = `
                 <div class="empty-notifications">
                     <i class="fa-solid fa-bell-slash"></i>
                     <p>لا توجد إشعارات</p>
@@ -72,44 +171,10 @@
             return;
         }
 
-        container.innerHTML = notifications.map(notif => {
-            const iconClass = getNotificationIcon(notif.type);
-            const timeAgo = formatTimeAgo(notif.created_at);
-            
-            return `
-                <div class="notification-item ${notif.is_read ? 'read' : 'unread'}" data-id="${notif.id}">
-                    <div class="notification-icon ${notif.type}">
-                        <i class="${iconClass}"></i>
-                    </div>
-                    <div class="notification-content">
-                        <h4>${notif.title}</h4>
-                        <p>${notif.message}</p>
-                        <span class="notification-time">${timeAgo}</span>
-                    </div>
-                    ${notif.action_url ? `
-                        <a href="${notif.action_url}" class="notification-action">
-                            ${notif.action_label || 'عرض'}
-                            <i class="fa-solid fa-arrow-left"></i>
-                        </a>
-                    ` : ''}
-                    ${!notif.is_read ? '<div class="unread-dot"></div>' : ''}
-                </div>
-            `;
-        }).join('');
-
-        // إضافة حدث النقر لتعليم كمقروء
-        container.querySelectorAll('.notification-item.unread').forEach(item => {
-            item.addEventListener('click', async (e) => {
-                if (!e.target.closest('.notification-action')) {
-                    await markAsRead(parseInt(item.dataset.id));
-                }
-            });
-        });
+        fullContainer.innerHTML = allNotifications.map(buildNotificationItemHtml).join('');
+        attachItemListeners(fullContainer);
     }
 
-    /**
-     * تحديث عداد الإشعارات
-     */
     async function updateNotificationsBadge() {
         try {
             const { data, error } = await window.sbClient
@@ -130,9 +195,6 @@
         }
     }
 
-    /**
-     * تعليم إشعار كمقروء
-     */
     async function markAsRead(notificationId) {
         try {
             const { error } = await window.sbClient
@@ -142,15 +204,26 @@
                     user_id: currentUser.id
                 });
 
-            if (error && error.code !== '23505') throw error; // تجاهل خطأ التكرار
+            if (error && error.code !== '23505') throw error;
 
-            // تحديث الواجهة
-            const item = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
-            if (item) {
+            const target = allNotifications.find(n => n.id === notificationId);
+            if (target) target.is_read = true;
+
+            document.querySelectorAll(`.notification-item[data-id="${notificationId}"]`).forEach(item => {
                 item.classList.remove('unread');
                 item.classList.add('read');
                 const dot = item.querySelector('.unread-dot');
-                if (dot) dot.remove();
+                if (dot) {
+                    const badge = document.createElement('span');
+                    badge.className = 'read-badge';
+                    badge.innerHTML = '<i class="fa-solid fa-check"></i> مقروء';
+                    dot.replaceWith(badge);
+                }
+            });
+
+            const unreadEl = document.getElementById('myNotificationsUnread');
+            if (unreadEl) {
+                unreadEl.textContent = allNotifications.filter(n => !n.is_read).length;
             }
 
             await updateNotificationsBadge();
@@ -159,12 +232,8 @@
         }
     }
 
-    /**
-     * تعليم جميع الإشعارات كمقروءة
-     */
     async function markAllAsRead() {
         try {
-            // جلب جميع الإشعارات غير المقروءة
             const { data: unreadNotifs, error: fetchError } = await window.sbClient
                 .rpc('get_user_notifications', {
                     p_user_id: currentUser.id,
@@ -185,7 +254,6 @@
 
             if (error && error.code !== '23505') throw error;
 
-            // تحديث الواجهة
             await loadNotifications();
             await updateNotificationsBadge();
 
@@ -206,9 +274,6 @@
         }
     }
 
-    /**
-     * الاشتراك في Real-time updates
-     */
     function subscribeToNotifications() {
         notificationsChannel = window.sbClient
             .channel('notifications-channel')
@@ -220,195 +285,34 @@
                     table: 'notifications'
                 },
                 async (payload) => {
-                    console.log('New notification received:', payload);
-                    
-                    // التحقق من أن الإشعار موجه للمستخدم
                     const notif = payload.new;
                     const isForUser = await checkIfNotificationIsForUser(notif);
-                    
+
                     if (isForUser) {
-                        // تحديث القائمة
                         await loadNotifications();
                         await updateNotificationsBadge();
-                        
-                        // عرض إشعار Push إذا كان مفعل
-                        if (notif.is_push_enabled && 'Notification' in window && Notification.permission === 'granted') {
-                            showPushNotification(notif);
-                        }
                     }
                 }
             )
             .subscribe();
     }
 
-    /**
-     * التحقق من أن الإشعار موجه للمستخدم
-     */
     async function checkIfNotificationIsForUser(notification) {
         if (notification.target_audience === 'all') return true;
-        
+
         if (notification.target_audience === 'specific_users') {
             return notification.target_user_ids && notification.target_user_ids.includes(currentUser.id);
         }
-        
-        // يمكن إضافة فحوصات إضافية هنا
+
         return true;
     }
 
-    /**
-     * تحديث حالة زر تفعيل Push
-     */
-    function updatePushButtonState() {
-        const enablePushBtn = document.getElementById('enablePushBtn');
-        const pushBtnText = document.getElementById('pushBtnText');
-        const pushStatus = document.getElementById('pushStatus');
-        
-        if (!enablePushBtn) return;
-
-        if (Notification.permission === 'granted' && pushSubscription) {
-            if (pushBtnText) pushBtnText.textContent = 'مفعّل';
-            if (pushStatus) {
-                pushStatus.textContent = '✅ الإشعارات مفعّلة';
-                pushStatus.style.color = '#10b981';
-            }
-            enablePushBtn.disabled = true;
-            enablePushBtn.style.opacity = '0.6';
-        } else if (Notification.permission === 'denied') {
-            if (pushBtnText) pushBtnText.textContent = 'مرفوض';
-            if (pushStatus) {
-                pushStatus.textContent = '❌ تم رفض الإذن';
-                pushStatus.style.color = '#ef4444';
-            }
-            enablePushBtn.disabled = true;
-            enablePushBtn.style.opacity = '0.6';
-        } else {
-            if (pushBtnText) pushBtnText.textContent = 'تفعيل الإشعارات';
-            if (pushStatus) {
-                pushStatus.textContent = 'غير مفعّل';
-                pushStatus.style.color = '#64748b';
-            }
-            enablePushBtn.disabled = false;
-            enablePushBtn.style.opacity = '1';
-        }
-    }
-
-    /**
-     * طلب إذن Push Notifications
-     */
-    async function requestPushPermission() {
-        if (!('Notification' in window)) {
-            alert('متصفحك لا يدعم الإشعارات');
-            return;
-        }
-
-        if (Notification.permission === 'granted') {
-            await subscribeToPush();
-            return;
-        }
-
-        if (Notification.permission === 'denied') {
-            alert('تم رفض إذن الإشعارات مسبقاً. يرجى تفعيلها من إعدادات المتصفح.');
-            return;
-        }
-
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-            await subscribeToPush();
-            alert('✅ تم تفعيل إشعارات الجوال بنجاح!');
-        } else {
-            alert('❌ تم رفض إذن الإشعارات');
-        }
-    }
-
-    /**
-     * الاشتراك في Push Notifications
-     */
-    async function subscribeToPush() {
-        try {
-            const registration = await navigator.serviceWorker.ready;
-            
-            // مفتاح VAPID عام
-            const vapidPublicKey = 'BLZeg372Xih_c0f_RIcXfQbkJ2y_ALIFiZ_583AtDC8CxG1lOPFBcv9XsVFdUT5EKRu0gCZJeddZRJd6GrTDLPc';
-            
-            const subscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-            });
-
-            // حفظ الاشتراك في قاعدة البيانات
-            const subscriptionData = subscription.toJSON();
-            
-            const { error } = await window.sbClient
-                .from('push_subscriptions')
-                .upsert({
-                    user_id: currentUser.id,
-                    endpoint: subscriptionData.endpoint,
-                    p256dh: subscriptionData.keys.p256dh,
-                    auth: subscriptionData.keys.auth,
-                    device_type: getDeviceType(),
-                    browser: getBrowserName()
-                }, {
-                    onConflict: 'user_id,endpoint'
-                });
-
-            if (error) throw error;
-
-            pushSubscription = subscription;
-            console.log('✅ Push subscription saved');
-            updatePushButtonState();
-        } catch (error) {
-            console.error('Error subscribing to push:', error);
-            alert('حدث خطأ أثناء تفعيل الإشعارات: ' + error.message);
-        }
-    }
-
-    /**
-     * عرض Push Notification
-     */
-    function showPushNotification(notification) {
-        if ('Notification' in window && Notification.permission === 'granted') {
-            const iconClass = getNotificationIcon(notification.type);
-            
-            new Notification(notification.title, {
-                body: notification.message,
-                icon: '/favicon/android-icon-192x192.png',
-                badge: '/favicon/android-icon-192x192.png',
-                tag: `notification-${notification.id}`,
-                requireInteraction: notification.priority === 'urgent',
-                data: {
-                    url: notification.action_url
-                }
-            }).onclick = function(event) {
-                event.preventDefault();
-                if (notification.action_url) {
-                    window.open(notification.action_url, '_blank');
-                }
-                this.close();
-            };
-        }
-    }
-
-    /**
-     * إعداد مستمعات الأحداث
-     */
     function setupEventListeners() {
-        // زر تفعيل Push Notifications
-        const enablePushBtn = document.getElementById('enablePushBtn');
-        if (enablePushBtn) {
-            enablePushBtn.addEventListener('click', async () => {
-                await requestPushPermission();
-                updatePushButtonState();
-            });
-            updatePushButtonState();
-        }
-
-        // زر تعليم الكل كمقروء
         const markAllBtn = document.getElementById('markAllReadBtn');
         if (markAllBtn) {
             markAllBtn.addEventListener('click', markAllAsRead);
         }
 
-        // زر تحديث الإشعارات
         const refreshBtn = document.getElementById('refreshNotificationsBtn');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', async () => {
@@ -416,25 +320,37 @@
                 await updateNotificationsBadge();
             });
         }
+
+        const fullMarkAllBtn = document.getElementById('myNotificationsMarkAllBtn');
+        if (fullMarkAllBtn) {
+            fullMarkAllBtn.addEventListener('click', markAllAsRead);
+        }
+
+        const fullRefreshBtn = document.getElementById('myNotificationsRefreshBtn');
+        if (fullRefreshBtn) {
+            fullRefreshBtn.addEventListener('click', async () => {
+                await loadNotifications();
+                await updateNotificationsBadge();
+            });
+        }
     }
 
-    /**
-     * الحصول على أيقونة الإشعار
-     */
+    async function openFullSection() {
+        await loadNotifications();
+    }
+
     function getNotificationIcon(type) {
         const icons = {
             info: 'fa-solid fa-circle-info',
             success: 'fa-solid fa-circle-check',
             warning: 'fa-solid fa-triangle-exclamation',
             error: 'fa-solid fa-circle-exclamation',
-            announcement: 'fa-solid fa-bullhorn'
+            announcement: 'fa-solid fa-bullhorn',
+            purple: 'fa-solid fa-door-closed'
         };
         return icons[type] || icons.info;
     }
 
-    /**
-     * تنسيق الوقت
-     */
     function formatTimeAgo(dateString) {
         const date = new Date(dateString);
         const now = new Date();
@@ -444,51 +360,16 @@
         if (seconds < 3600) return `منذ ${Math.floor(seconds / 60)} دقيقة`;
         if (seconds < 86400) return `منذ ${Math.floor(seconds / 3600)} ساعة`;
         if (seconds < 604800) return `منذ ${Math.floor(seconds / 86400)} يوم`;
-        
+
         return date.toLocaleDateString('ar-SA');
     }
 
-    /**
-     * Helper functions
-     */
-    function urlBase64ToUint8Array(base64String) {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
-    }
-
-    function getDeviceType() {
-        const ua = navigator.userAgent;
-        if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
-            return 'tablet';
-        }
-        if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
-            return 'mobile';
-        }
-        return 'desktop';
-    }
-
-    function getBrowserName() {
-        const ua = navigator.userAgent;
-        if (ua.includes('Firefox')) return 'Firefox';
-        if (ua.includes('Chrome')) return 'Chrome';
-        if (ua.includes('Safari')) return 'Safari';
-        if (ua.includes('Edge')) return 'Edge';
-        return 'Unknown';
-    }
-
-    // تصدير الوظائف
     window.notificationsManager = {
         init,
         loadNotifications,
         updateNotificationsBadge,
         markAsRead,
         markAllAsRead,
-        requestPushPermission
+        openFullSection
     };
 })();

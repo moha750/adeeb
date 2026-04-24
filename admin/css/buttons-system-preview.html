@@ -6,6 +6,7 @@
     <title>Buttons System v4 — Preview + Violet Variant</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="design-tokens.css">
     <link rel="stylesheet" href="buttons-system.css">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -169,11 +170,11 @@
             width: 32px;
             height: 32px;
             border-radius: 9px;
-            background: #eff6ff;
+            background: var(--color-brand-50);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #3b82f6;
+            color: var(--color-brand-600);
             font-size: 0.8rem;
             flex-shrink: 0;
         }
@@ -432,6 +433,96 @@
             gap: 0.5rem;
         }
 
+        /* ─── View Toggle Demo Preview ─── */
+        .view-demo {
+            margin-top:    0.9rem;
+            padding:       1.1rem;
+            background:    #f8fafc;
+            border:        1px solid #eef2f8;
+            border-radius: 14px;
+            min-height:    180px;
+        }
+
+        .view-demo__panel {
+            display:   none;
+            animation: _fadeSlideUp 0.35s cubic-bezier(0.34, 1.1, 0.64, 1) both;
+        }
+
+        .view-demo__panel.is-visible { display: block; }
+
+        .view-demo__cards {
+            display:               grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap:                   0.7rem;
+        }
+
+        .view-demo__card {
+            background:     #fff;
+            border:         1px solid #e2e8f0;
+            border-radius:  10px;
+            padding:        0.85rem;
+            display:        flex;
+            flex-direction: column;
+            gap:            0.4rem;
+        }
+
+        .view-demo__card-header {
+            display:     flex;
+            align-items: center;
+            gap:         0.55rem;
+            font-size:   0.8rem;
+            font-weight: 700;
+            color:       #0f172a;
+        }
+
+        .view-demo__card-icon {
+            width:           28px;
+            height:          28px;
+            border-radius:   8px;
+            background:      linear-gradient(135deg, #8b5cf6, #6d28d9);
+            color:           #fff;
+            display:         flex;
+            align-items:     center;
+            justify-content: center;
+            font-size:       0.75rem;
+            flex-shrink:     0;
+        }
+
+        .view-demo__card-meta {
+            font-size: 0.7rem;
+            color:     #64748b;
+        }
+
+        .view-demo__table-wrap { overflow-x: auto; }
+
+        .view-demo__table {
+            width:           100%;
+            border-collapse: collapse;
+            font-size:       0.78rem;
+            background:      #fff;
+            border-radius:   10px;
+            overflow:        hidden;
+        }
+
+        .view-demo__table thead { background: #f1f5f9; }
+
+        .view-demo__table th,
+        .view-demo__table td {
+            padding:       0.6rem 0.85rem;
+            text-align:    right;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .view-demo__table th {
+            font-size:      0.64rem;
+            font-weight:    700;
+            color:          #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .view-demo__table tbody tr:last-child td { border-bottom: none; }
+
         /* Stagger children in variant grid */
         .variant-cell { animation: _fadeSlideUp 0.4s var(--btn-ease-back, cubic-bezier(0.34,1.1,0.64,1)) both; }
         .variant-cell:nth-child(1) { animation-delay: 0.05s; }
@@ -518,6 +609,30 @@
                 </div>
 
                 <div class="variant-cell">
+                    <button class="btn btn-info">
+                        <i class="fa-solid fa-circle-info"></i> Info
+                    </button>
+                    <span class="variant-label">Info (NEW) — alias لـ Slate</span>
+                    <span class="variant-code">.btn-info</span>
+                </div>
+
+                <div class="variant-cell">
+                    <button class="btn btn-teal">
+                        <i class="fa-solid fa-water"></i> Teal
+                    </button>
+                    <span class="variant-label">Teal (NEW)</span>
+                    <span class="variant-code">.btn-teal</span>
+                </div>
+
+                <div class="variant-cell">
+                    <button class="btn btn-pink">
+                        <i class="fa-solid fa-heart"></i> Pink
+                    </button>
+                    <span class="variant-label">Pink (NEW)</span>
+                    <span class="variant-code">.btn-pink</span>
+                </div>
+
+                <div class="variant-cell">
                     <button class="btn btn-danger">
                         <i class="fa-solid fa-trash"></i> Danger
                     </button>
@@ -593,6 +708,30 @@
                     </button>
                     <span class="variant-label">Slate Outline</span>
                     <span class="variant-code">.btn-slate.btn-outline</span>
+                </div>
+
+                <div class="variant-cell">
+                    <button class="btn btn-info btn-outline">
+                        <i class="fa-solid fa-circle-info"></i> Info
+                    </button>
+                    <span class="variant-label">Info Outline (NEW)</span>
+                    <span class="variant-code">.btn-info.btn-outline</span>
+                </div>
+
+                <div class="variant-cell">
+                    <button class="btn btn-teal btn-outline">
+                        <i class="fa-solid fa-water"></i> Teal
+                    </button>
+                    <span class="variant-label">Teal Outline (NEW)</span>
+                    <span class="variant-code">.btn-teal.btn-outline</span>
+                </div>
+
+                <div class="variant-cell">
+                    <button class="btn btn-pink btn-outline">
+                        <i class="fa-solid fa-heart"></i> Pink
+                    </button>
+                    <span class="variant-label">Pink Outline (NEW)</span>
+                    <span class="variant-code">.btn-pink.btn-outline</span>
                 </div>
 
                 <div class="variant-cell">
@@ -805,6 +944,15 @@
                 <button class="btn btn-danger btn-loading js-load-demo">حذف</button>
             </div>
 
+            <div class="state-row">
+                <span class="state-label">Submitting</span>
+                <button class="btn btn-violet btn-submitting" aria-busy="true"><span class="btn-spinner"></span> جاري الحفظ...</button>
+                <button class="btn btn-primary btn-submitting" aria-busy="true"><span class="btn-spinner"></span> جاري الإرسال...</button>
+                <button class="btn btn-success btn-submitting" aria-busy="true"><span class="btn-spinner"></span> جاري المعالجة...</button>
+                <button class="btn btn-violet btn-outline btn-submitting" aria-busy="true"><span class="btn-spinner"></span> جاري الرفع...</button>
+                <button class="btn btn-danger btn-submitting" aria-busy="true"><span class="btn-spinner"></span> جاري الحذف...</button>
+            </div>
+
         </div>
     </div>
 
@@ -845,7 +993,81 @@
     </div>
 
 
-    <!-- ══ 6. Animation Effects (مع البنفسجي) ═══════════════ -->
+    <!-- ══ 6. View Toggle (Cards ↔ Table) ════════════════════ -->
+    <div class="sc">
+        <div class="sc-head">
+            <div class="sc-head-icon" style="background:#f5f3ff;color:#8b5cf6;"><i class="fa-solid fa-arrows-left-right-to-line"></i></div>
+            <h2>مبدّل العرض</h2>
+            <span class="sc-head-sub">Cards ↔ Table View Toggle</span>
+        </div>
+        <div class="sc-body">
+
+            <div class="state-row" style="justify-content: space-between;">
+                <span class="state-label">اختر العرض</span>
+                <div class="btn-group js-view-toggle" role="tablist" aria-label="تبديل طريقة العرض">
+                    <button class="btn btn-violet" role="tab" aria-selected="true" data-view="cards">
+                        <i class="fa-solid fa-table-cells-large"></i> كروت
+                    </button>
+                    <button class="btn btn-violet btn-outline" role="tab" aria-selected="false" data-view="table">
+                        <i class="fa-solid fa-table-list"></i> جدول
+                    </button>
+                </div>
+            </div>
+
+            <div class="view-demo" id="js-view-demo">
+                <!-- Cards panel -->
+                <div class="view-demo__panel is-visible" data-panel="cards">
+                    <div class="view-demo__cards">
+                        <div class="view-demo__card">
+                            <div class="view-demo__card-header">
+                                <div class="view-demo__card-icon"><i class="fa-solid fa-user"></i></div>
+                                محمد علي
+                            </div>
+                            <div class="view-demo__card-meta">مقبول · قبل 3 أيام</div>
+                        </div>
+                        <div class="view-demo__card">
+                            <div class="view-demo__card-header">
+                                <div class="view-demo__card-icon" style="background: linear-gradient(135deg, var(--color-warning-500), var(--color-warning-600));"><i class="fa-solid fa-clock"></i></div>
+                                سارة خالد
+                            </div>
+                            <div class="view-demo__card-meta">قيد المراجعة · اليوم</div>
+                        </div>
+                        <div class="view-demo__card">
+                            <div class="view-demo__card-header">
+                                <div class="view-demo__card-icon" style="background: linear-gradient(135deg, var(--color-success-500), var(--color-success-600));"><i class="fa-solid fa-check"></i></div>
+                                أحمد ناصر
+                            </div>
+                            <div class="view-demo__card-meta">مقبول · أمس</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Table panel -->
+                <div class="view-demo__panel" data-panel="table">
+                    <div class="view-demo__table-wrap">
+                        <table class="view-demo__table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>الاسم</th>
+                                    <th>الحالة</th>
+                                    <th>التاريخ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>1</td><td>محمد علي</td><td>مقبول</td><td>قبل 3 أيام</td></tr>
+                                <tr><td>2</td><td>سارة خالد</td><td>قيد المراجعة</td><td>اليوم</td></tr>
+                                <tr><td>3</td><td>أحمد ناصر</td><td>مقبول</td><td>أمس</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ══ 7. Animation Effects (مع البنفسجي) ═══════════════ -->
     <div class="sc">
         <div class="sc-head">
             <div class="sc-head-icon" style="background:#f5f3ff;color:#8b5cf6;"><i class="fa-solid fa-wand-sparkles"></i></div>
@@ -885,7 +1107,7 @@
     </div>
 
 
-    <!-- ══ 7. Real-world Usage ════════════════════════════ -->
+    <!-- ══ 8. Real-world Usage ════════════════════════════ -->
     <div class="sc">
         <div class="sc-head">
             <div class="sc-head-icon" style="background:#f5f3ff;color:#8b5cf6;"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
@@ -997,6 +1219,31 @@
                     btn.disabled = false;
                 }, 2800);
             }
+        });
+    });
+
+    /* ── View Toggle (Cards ↔ Table) ── */
+    document.querySelectorAll('.js-view-toggle').forEach(toggle => {
+        const buttons = toggle.querySelectorAll('button[data-view]');
+        const demo    = document.getElementById('js-view-demo');
+        const panels  = demo ? demo.querySelectorAll('.view-demo__panel') : [];
+
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const view = btn.dataset.view;
+                buttons.forEach(b => {
+                    const active = b === btn;
+                    b.classList.toggle('btn-outline', !active);
+                    b.setAttribute('aria-selected', active ? 'true' : 'false');
+                });
+                panels.forEach(p => {
+                    p.classList.remove('is-visible');
+                    if (p.dataset.panel === view) {
+                        void p.offsetWidth;
+                        p.classList.add('is-visible');
+                    }
+                });
+            });
         });
     });
 

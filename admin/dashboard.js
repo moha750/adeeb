@@ -27,7 +27,12 @@
             
             currentUser = authData.user;
             currentUserRole = authData.role;
-            
+
+            // إظهار شريط دخول الرئيس كمستخدم إن كانت الجلسة نشطة
+            if (window.MasterAccess) {
+                await window.MasterAccess.initOnLoad();
+            }
+
             // تحميل صلاحيات المستخدم
             if (window.PermissionsHelper) {
                 await window.PermissionsHelper.loadUserPermissions(currentUser.id);
@@ -102,7 +107,6 @@
     }
 
     // بناء القائمة الجانبية بناءً على الصلاحيات
-    // مكشوفة لإعادة بناء القائمة بعد تغيّر حالة الترشح (تقديم/سحب…)
     window.rebuildNavigation = () => buildNavigation();
     async function buildNavigation() {
         const nav = document.getElementById('mainNav');
@@ -203,16 +207,6 @@
             }
             
             
-            // برج المراقبة - باستخدام صلاحية impersonate_users
-            if (hasPermission('impersonate_users')) {
-                adeebTreeSubItems.push({
-                    id: 'impersonation',
-                    icon: 'fa-user-secret',
-                    label: 'برج المراقبة',
-                    section: 'impersonation-section'
-                });
-            }
-            
             // إدارة الأقسام واللجان - باستخدام صلاحية manage_committees
             if (hasPermission('manage_committees')) {
                 adeebTreeSubItems.push({
@@ -253,55 +247,6 @@
             });
         }
         
-        // الانتخابات — للأدمن فقط (manage_elections)
-        if (hasPermission('manage_elections')) {
-            menuItems.push({
-                id: 'elections',
-                icon: 'fa-check-to-slot',
-                label: 'الانتخابات',
-                isDropdown: true,
-                subItems: [
-                    { id: 'elections-open',       icon: 'fa-door-open',       label: 'فتح باب انتخاب', section: 'elections-open' },
-                    { id: 'elections-candidates', icon: 'fa-user-plus',       label: 'المرشحون',        section: 'elections-candidates' },
-                    { id: 'elections-voting',     icon: 'fa-vote-yea',        label: 'إدارة التصويت',   section: 'elections-voting' },
-                    { id: 'elections-results',    icon: 'fa-flag-checkered',  label: 'إعلان النتائج',   section: 'elections-results' },
-                ]
-            });
-        }
-
-        // الترشح / ملفي الانتخابي — يتبدّل العنوان حسب وجود طلب ترشح نشط
-        try {
-            const [{ data: eligibleCount, error: eligErr }, { data: activeCandidacies, error: candErr }] = await Promise.all([
-                window.sbClient.rpc('count_eligible_elections', { p_user_id: currentUser.id }),
-                window.sbClient
-                    .from('election_candidates')
-                    .select('id')
-                    .eq('user_id', currentUser.id)
-                    .in('status', ['pending', 'needs_edit', 'approved'])
-                    .limit(1)
-            ]);
-            if (eligErr) throw eligErr;
-            if (candErr) throw candErr;
-            const hasActive = (activeCandidacies || []).length > 0;
-            if (hasActive) {
-                menuItems.push({
-                    id: 'candidacy',
-                    icon: 'fa-file-signature',
-                    label: 'ملفي الانتخابي',
-                    section: 'candidacy-section'
-                });
-            } else if ((eligibleCount || 0) > 0) {
-                menuItems.push({
-                    id: 'candidacy',
-                    icon: 'fa-person-arrow-up-from-line',
-                    label: 'ترشّح',
-                    section: 'candidacy-section'
-                });
-            }
-        } catch (e) {
-            console.error('[dashboard] candidacy menu check failed:', e);
-        }
-
         // إحصائيات الزيارات — يحتاج view_site_stats
         if (hasPermission('view_site_stats')) {
             menuItems.push({
@@ -547,6 +492,99 @@
             });
         }
 
+        // =========================================================
+        // الانتخابات — تبويبات ثابتة للأدمن + ديناميكية للعضو/viewer
+        // =========================================================
+        try {
+            const electionsSubItems = [];
+
+            // تبويبات الأدمن الثابتة
+            if (hasPermission('manage_elections')) {
+                electionsSubItems.push({
+                    id: 'elections-manage',
+                    icon: 'fa-gavel',
+                    label: 'إدارة الانتخابات',
+                    section: 'elections-manage-section'
+                });
+                electionsSubItems.push({
+                    id: 'elections-review',
+                    icon: 'fa-clipboard-check',
+                    label: 'مراجعة المرشحين',
+                    section: 'elections-review-section'
+                });
+                electionsSubItems.push({
+                    id: 'elections-archive',
+                    icon: 'fa-box-archive',
+                    label: 'الانتخابات المؤرشفة',
+                    section: 'elections-archive-section'
+                });
+            }
+
+            // تبويبات ديناميكية بناءً على count_user_election_tabs
+            let counts = { can_run: 0, has_submission: 0, can_vote: 0, can_view: 0 };
+            try {
+                const { data: tabData, error: tabErr } = await window.sbClient
+                    .rpc('count_user_election_tabs', { p_user: currentUser.id });
+                if (!tabErr && Array.isArray(tabData) && tabData[0]) {
+                    counts = tabData[0];
+                }
+            } catch (e) {
+                console.warn('[dashboard] count_user_election_tabs failed:', e);
+            }
+
+            // viewer (مستشار/عضو HR)
+            if ((counts.can_view | 0) > 0) {
+                electionsSubItems.push({
+                    id: 'elections-view',
+                    icon: 'fa-eye',
+                    label: 'مرشحو الانتخابات',
+                    section: 'elections-view-section'
+                });
+            }
+
+            // عضو: ترشح (يظهر فقط إذا مؤهل ولم يترشح)
+            if ((counts.can_run | 0) > 0 && (counts.has_submission | 0) === 0) {
+                electionsSubItems.push({
+                    id: 'elections-run',
+                    icon: 'fa-bullhorn',
+                    label: 'ترشح',
+                    section: 'elections-run-section'
+                });
+            }
+
+            // عضو: ملفي الانتخابي
+            if ((counts.has_submission | 0) > 0) {
+                electionsSubItems.push({
+                    id: 'elections-my-profile',
+                    icon: 'fa-folder-open',
+                    label: 'ملفي الانتخابي',
+                    section: 'elections-my-profile-section'
+                });
+            }
+
+            // عضو: التصويت
+            if ((counts.can_vote | 0) > 0) {
+                electionsSubItems.push({
+                    id: 'elections-vote',
+                    icon: 'fa-check-to-slot',
+                    label: 'التصويت',
+                    section: 'elections-vote-section'
+                });
+            }
+
+            if (electionsSubItems.length > 0) {
+                menuItems.push({
+                    id: 'elections',
+                    icon: 'fa-landmark',
+                    label: 'الانتخابات',
+                    isDropdown: true,
+                    subItems: electionsSubItems
+                });
+            }
+        } catch (e) {
+            console.error('[dashboard] elections menu build failed:', e);
+        }
+
         // أنشطة وبرامج — يحتاج manage_activities
         if (hasPermission('manage_activities')) {
             menuItems.push({
@@ -678,6 +716,14 @@
                 subItems: websiteSubItems
             });
         }
+
+        // إشعاراتي - جميع المستويات
+        menuItems.push({
+            id: 'my-notifications',
+            icon: 'fa-bell',
+            label: 'إشعاراتي',
+            section: 'my-notifications-section'
+        });
 
         // الملف الشخصي - جميع المستويات
         menuItems.push({
@@ -826,7 +872,6 @@
         'users-section':                        'view_members',
         'terminated-members-section':           'view_members',
         'pending-members-section':              'view_pending_members',
-        'impersonation-section':                'impersonate_users',
         'member-data-management-section':       'manage_member_data',
         'committees-section':                   'manage_committees',
         'site-visits-section':                  'view_site_stats',
@@ -851,24 +896,14 @@
         'website-achievements-section':         'manage_website',
         'website-sponsors-section':             'manage_website',
         'website-faq-section':                  'manage_website',
-        'elections-section':                    'manage_elections',
-        'elections-open':                       'manage_elections',
-        'elections-open-section':               'manage_elections',
-        'elections-candidates':                 'manage_elections',
-        'elections-voting':                     'manage_elections',
-        'elections-results':                    'manage_elections',
         'activities-list-section':              'manage_activities',
         'activities-create-section':            'manage_activities',
         'activities-reservations-section':      'manage_activities',
         'activities-visitors-section':          'manage_activities',
-    };
-
-    // خريطة مراحل الانتخابات: كل مرحلة لها قسم HTML منفصل أو فلتر مسبق
-    const ELECTIONS_STAGE_MAP = {
-        'elections-open':       { realSection: 'elections-open-section' },
-        'elections-candidates': { realSection: 'elections-section', filter: 'candidacy_open' },
-        'elections-voting':     { realSection: 'elections-section', filter: 'voting_open' },
-        'elections-results':    { realSection: 'elections-section', filter: 'completed' },
+        'elections-manage-section':             'manage_elections',
+        'elections-review-section':             'manage_elections',
+        'elections-archive-section':            'manage_elections',
+        'elections-view-section':               'view_election_candidates',
     };
 
     // التنقل بين الأقسام
@@ -876,19 +911,10 @@
     // (مثلاً زر "النتائج" داخل كارد استبيان في surveys-manager.js)
     window.navigateToSection = navigateToSection;
     function navigateToSection(sectionId) {
-        // التحقق من مراحل الانتخابات (virtual section IDs)
-        const elStage = ELECTIONS_STAGE_MAP[sectionId];
-        const realSectionId = elStage ? elStage.realSection : sectionId;
-
-        // حفظ فلتر المرحلة إذا كانت من مراحل الانتخابات
-        if (elStage) {
-            window.electionsStageFilter = elStage.filter;
-        } else if (!sectionId.startsWith('elections-')) {
-            window.electionsStageFilter = null;
-        }
+        const realSectionId = sectionId;
 
         // التحقق من الصلاحية إذا كان القسم محمياً
-        const requiredPermission = PROTECTED_SECTIONS[sectionId] || PROTECTED_SECTIONS[realSectionId];
+        const requiredPermission = PROTECTED_SECTIONS[sectionId];
         if (requiredPermission) {
             const allowed = window.PermissionsHelper?.hasPermission(requiredPermission) || false;
             if (!allowed) {
@@ -972,11 +998,6 @@
                 break;
             case 'terminated-members-section':
                 await loadTerminatedMembersSection();
-                break;
-            case 'impersonation-section':
-                if (window.ImpersonationManager) {
-                    await window.ImpersonationManager.initImpersonationPage();
-                }
                 break;
             case 'committees-section':
                 window.loadCouncils = loadCouncils;
@@ -1103,6 +1124,11 @@
                     await window.profileManager.init(currentUser);
                 }
                 break;
+            case 'my-notifications-section':
+                if (window.notificationsManager?.openFullSection) {
+                    await window.notificationsManager.openFullSection();
+                }
+                break;
             case 'website-works-section':
                 await loadWebsiteWorksSection();
                 break;
@@ -1210,46 +1236,6 @@
                 loadSettingsSection();
                 break;
 
-            case 'elections-open-section':
-                if (window.ElectionsManager && !window.electionsManagerInstance) {
-                    window.electionsManagerInstance = new window.ElectionsManager();
-                }
-                if (window.electionsManagerInstance) {
-                    await window.electionsManagerInstance.initOpenSection();
-                }
-                break;
-
-            case 'candidacy-section':
-                if (window.ElectionsManager && !window.electionsManagerInstance) {
-                    window.electionsManagerInstance = new window.ElectionsManager();
-                }
-                if (window.electionsManagerInstance) {
-                    await window.electionsManagerInstance.initCandidacySection();
-                }
-                break;
-
-            case 'elections-section':
-                if (window.ElectionsManager && !window.electionsManagerInstance) {
-                    window.electionsManagerInstance = new window.ElectionsManager();
-                }
-                if (window.electionsManagerInstance) {
-                    await window.electionsManagerInstance.init();
-                    // إظهار زر الإنشاء لمن يملك الصلاحية
-                    const createBtn = document.getElementById('createElectionBtn');
-                    if (createBtn && window.PermissionsHelper?.hasPermission('manage_elections')) {
-                        createBtn.style.display = '';
-                    }
-                    // تطبيق فلتر مرحلة الانتخاب إذا تم التنقل من dropdown المراحل
-                    if (window.electionsStageFilter !== null && window.electionsStageFilter !== undefined) {
-                        const filterSelect = document.getElementById('electionsStatusFilter');
-                        if (filterSelect) {
-                            filterSelect.value = window.electionsStageFilter;
-                            filterSelect.dispatchEvent(new Event('change'));
-                        }
-                        window.electionsStageFilter = null;
-                    }
-                }
-                break;
 
             case 'activities-list-section':
                 if (window.ActivitiesManager && !window.activitiesManagerInstance) {
@@ -1290,6 +1276,42 @@
                 if (window.activitiesManagerInstance) {
                     await window.activitiesManagerInstance.init(currentUser);
                     await window.activitiesManagerInstance.loadVisitors();
+                }
+                break;
+
+            case 'elections-manage-section':
+                if (window.electionsManagerInstance) {
+                    await window.electionsManagerInstance.init(currentUser, 'admin-manage');
+                }
+                break;
+            case 'elections-review-section':
+                if (window.electionsManagerInstance) {
+                    await window.electionsManagerInstance.init(currentUser, 'admin-review');
+                }
+                break;
+            case 'elections-archive-section':
+                if (window.electionsManagerInstance) {
+                    await window.electionsManagerInstance.init(currentUser, 'admin-archive');
+                }
+                break;
+            case 'elections-view-section':
+                if (window.electionsManagerInstance) {
+                    await window.electionsManagerInstance.init(currentUser, 'viewer');
+                }
+                break;
+            case 'elections-run-section':
+                if (window.electionsManagerInstance) {
+                    await window.electionsManagerInstance.init(currentUser, 'member-run');
+                }
+                break;
+            case 'elections-my-profile-section':
+                if (window.electionsManagerInstance) {
+                    await window.electionsManagerInstance.init(currentUser, 'member-profile');
+                }
+                break;
+            case 'elections-vote-section':
+                if (window.electionsManagerInstance) {
+                    await window.electionsManagerInstance.init(currentUser, 'member-vote');
                 }
                 break;
         }
@@ -2629,7 +2651,7 @@
                     .select('id, full_name, avatar_url')
                     .eq('account_status', 'active'),
                 sb.from('member_details')
-                    .select('user_id, birth_date')
+                    .select('user_id, birth_date, favorite_color')
                     .not('birth_date', 'is', null),
             ]);
 
@@ -2654,6 +2676,7 @@
                         user_id: d.user_id,
                         full_name: profile.full_name || '—',
                         avatar_url: profile.avatar_url,
+                        favorite_color: d.favorite_color || null,
                         bd,
                         nextDate: next,
                         daysUntil,
@@ -2799,9 +2822,23 @@
                 ? 'غداً'
                 : `باقي ${m.daysUntil} يوماً`;
 
+        const favColor = /^#[0-9a-fA-F]{3,8}$/.test(m.favorite_color || '') ? m.favorite_color : null;
+        const avatarRingStyle = favColor
+            ? ` style="box-shadow: 0 0 0 3px ${favColor}, 0 2px 6px rgba(0,0,0,0.08);"`
+            : '';
+
         const avatar = m.avatar_url
-            ? `<img class="birthday-card__avatar" src="${escapeHtml(m.avatar_url)}" alt="${escapeHtml(m.full_name)}" />`
-            : `<div class="birthday-card__avatar birthday-card__avatar--placeholder"><i class="fa-solid fa-user"></i></div>`;
+            ? `<img class="birthday-card__avatar" src="${escapeHtml(m.avatar_url)}" alt="${escapeHtml(m.full_name)}"${avatarRingStyle} />`
+            : `<div class="birthday-card__avatar birthday-card__avatar--placeholder"${avatarRingStyle}><i class="fa-solid fa-user"></i></div>`;
+
+        const favColorChip = favColor
+            ? `<button type="button" class="birthday-card__fav-color" title="نسخ اللون المفضل: ${favColor}"
+                    onclick="navigator.clipboard.writeText('${favColor}').then(() => { if (window.Toast) Toast.success('تم نسخ اللون ' + '${favColor}', 'نسخ'); });">
+                    <span class="birthday-card__fav-color-swatch" style="background:${favColor};"></span>
+                    <span class="birthday-card__fav-color-value">${favColor}</span>
+                    <i class="fa-regular fa-copy"></i>
+               </button>`
+            : '';
 
         return `
             <div class="birthday-card" data-month="${m.monthIndex}" data-name="${escapeHtml(m.full_name).toLowerCase()}">
@@ -2812,6 +2849,7 @@
                     ${avatar}
                     <div class="birthday-card__name">${escapeHtml(m.full_name)}</div>
                     <div class="birthday-card__countdown">${countdown}</div>
+                    ${favColorChip}
                 </div>
             </div>`;
     }

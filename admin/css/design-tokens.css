@@ -24,52 +24,115 @@
 
     /* ============================================================================
        § 2 · الألوان الدلالية — Semantic Colors
+       ------------------------------------------------------------
+       المصدر الموحّد للألوان الدلالية في المنصة.
+       كل لون يوفر سلم كامل (50/100/500/600/700) + قيم light/base/dark + RGB
+       يستهلكها: buttons-system.css · modals.css · toast-notifications.css · ...
        ============================================================================ */
-    --color-success:      #10b981;
+
+    /* — Success (Emerald) — أخضر: نجاح وتأكيد */
+    --color-success-50:   #ecfdf5;
+    --color-success-100:  #d1fae5;
+    --color-success-500:  #10b981;
+    --color-success-600:  #059669;
+    --color-success-700:  #047857;
+    --color-success-800:  #065f46;
+    --color-success:      var(--color-success-500);
     --color-success-light:#34d399;
-    --color-success-dark: #059669;
+    --color-success-dark: var(--color-success-600);
     --color-success-rgb:  16, 185, 129;
 
-    --color-warning:      #f59e0b;
+    /* — Warning (Amber) — كهرماني: تحذير وانتباه */
+    --color-warning-50:   #fffbeb;
+    --color-warning-100:  #fef3c7;
+    --color-warning-500:  #f59e0b;
+    --color-warning-600:  #d97706;
+    --color-warning-700:  #b45309;
+    --color-warning-800:  #78350f;
+    --color-warning:      var(--color-warning-500);
     --color-warning-light:#fbbf24;
-    --color-warning-dark: #d97706;
+    --color-warning-dark: var(--color-warning-600);
     --color-warning-rgb:  245, 158, 11;
 
-    --color-danger:       #ef4444;
+    /* — Danger (Red) — أحمر: حذف وأخطاء حرجة */
+    --color-danger-50:    #fef2f2;
+    --color-danger-100:   #fee2e2;
+    --color-danger-500:   #ef4444;
+    --color-danger-600:   #dc2626;
+    --color-danger-700:   #b91c1c;
+    --color-danger-800:   #7f1d1d;
+    --color-danger:       var(--color-danger-500);
     --color-danger-light: #f87171;
-    --color-danger-dark:  #dc2626;
+    --color-danger-dark:  var(--color-danger-600);
     --color-danger-rgb:   239, 68, 68;
 
-    --color-info:         #3b82f6;
-    --color-info-light:   #60a5fa;
-    --color-info-dark:    #2563eb;
-    --color-info-rgb:     59, 130, 246;
+    /* — Info (Slate / رصاصي) — معلومات عامة، عناصر محايدة، أزرار ثانوية
+         ملاحظة: تعمّدنا عدم استخدام الأزرق لتجنّب التضارب مع Brand Blue */
+    --color-info-50:      #f8fafc;
+    --color-info-100:     #f1f5f9;
+    --color-info-200:     #e2e8f0;
+    --color-info-300:     #cbd5e1;
+    --color-info-400:     #94a3b8;
+    --color-info-500:     #64748b;
+    --color-info-600:     #475569;
+    --color-info-700:     #334155;
+    --color-info:         var(--color-info-500);
+    --color-info-light:   var(--color-info-400);
+    --color-info-dark:    var(--color-info-600);
+    --color-info-rgb:     100, 116, 139;
 
-    --color-purple:       #8b5cf6;
+    /* — Purple (Violet) — بنفسجي: مزايا وعناصر مميّزة */
+    --color-purple-50:    #f5f3ff;
+    --color-purple-100:   #ede9fe;
+    --color-purple-500:   #8b5cf6;
+    --color-purple-600:   #7c3aed;
+    --color-purple-700:   #6d28d9;
+    --color-purple-800:   #5b21b6;
+    --color-purple:       var(--color-purple-500);
     --color-purple-light: #a78bfa;
-    --color-purple-dark:  #7c3aed;
+    --color-purple-dark:  var(--color-purple-600);
     --color-purple-rgb:   139, 92, 246;
 
-    --color-teal:         #14b8a6;
+    /* — Teal — تركوازي: معلومات إضافية */
+    --color-teal-50:      #f0fdfa;
+    --color-teal-100:     #ccfbf1;
+    --color-teal-500:     #14b8a6;
+    --color-teal-600:     #0d9488;
+    --color-teal-700:     #0f766e;
+    --color-teal:         var(--color-teal-500);
     --color-teal-light:   #2dd4bf;
-    --color-teal-dark:    #0d9488;
+    --color-teal-dark:    var(--color-teal-600);
     --color-teal-rgb:     20, 184, 166;
 
-    --color-pink:         #ec4899;
+    /* — Pink — وردي: مناسبات وتمييز بصري */
+    --color-pink-50:      #fdf2f8;
+    --color-pink-100:     #fce7f3;
+    --color-pink-500:     #ec4899;
+    --color-pink-600:     #db2777;
+    --color-pink-700:     #be185d;
+    --color-pink:         var(--color-pink-500);
     --color-pink-light:   #f472b6;
-    --color-pink-dark:    #db2777;
+    --color-pink-dark:    var(--color-pink-600);
     --color-pink-rgb:     236, 72, 153;
 
+    /* — Brand Blue — أزرق العلامة التجارية (مخصّص لنادي أدِيب، ليس Tailwind) */
+    --color-brand-50:     #eff6ff;
+    --color-brand-100:    #dbeafe;
+    --color-brand-500:    #80aace;
+    --color-brand-600:    #3d77bc;
+    --color-brand-700:    #0b4fa7;
+    --color-brand-rgb:    61, 119, 188;
+
     /* أسماء مختصرة للتوافق مع الكود القديم */
-    --success-color:   #10b981;
-    --error-color:     #ef4444;
-    --warning-color:   #f59e0b;
-    --info-color:      #3b82f6;
-    --purple-color:    #8b5cf6;
+    --success-color:   var(--color-success-500);
+    --error-color:     var(--color-danger-500);
+    --warning-color:   var(--color-warning-500);
+    --info-color:      var(--color-info-500);
+    --purple-color:    var(--color-purple-500);
     --primary-color:   #274060;
-    --secondary-color: #64748b;
-    --danger:          #ef4444;
-    --notification-badge: #ef4444;
+    --secondary-color: var(--color-info-500);
+    --danger:          var(--color-danger-500);
+    --notification-badge: var(--color-danger-500);
 
     /* ============================================================================
        § 3 · ألوان النصوص — Text Colors
