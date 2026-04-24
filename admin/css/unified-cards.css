@@ -488,6 +488,39 @@
     gap: 0.55rem;
 }
 
+/* مزامنة لون info-items مع لون الـ card الحاوي */
+.card--success .position-info-grid {
+    --_uc-color-rgb:  var(--color-success-rgb);
+    --_uc-color:      var(--color-success-500);
+    --_uc-color-dark: var(--color-success-600);
+}
+.card--warning .position-info-grid {
+    --_uc-color-rgb:  var(--color-warning-rgb);
+    --_uc-color:      var(--color-warning-500);
+    --_uc-color-dark: var(--color-warning-600);
+}
+.card--danger .position-info-grid {
+    --_uc-color-rgb:  var(--color-danger-rgb);
+    --_uc-color:      var(--color-danger-500);
+    --_uc-color-dark: var(--color-danger-600);
+}
+.card--info .position-info-grid,
+.card--neutral .position-info-grid {
+    --_uc-color-rgb:  var(--color-info-rgb);
+    --_uc-color:      var(--color-info-500);
+    --_uc-color-dark: var(--color-info-600);
+}
+.card--purple .position-info-grid {
+    --_uc-color-rgb:  var(--color-purple-rgb);
+    --_uc-color:      var(--color-purple-500);
+    --_uc-color-dark: var(--color-purple-600);
+}
+.card--teal .position-info-grid {
+    --_uc-color-rgb:  var(--color-teal-rgb);
+    --_uc-color:      var(--color-teal-500);
+    --_uc-color-dark: var(--color-teal-600);
+}
+
 /* عنصر معلومات عريض (full-width) */
 .uc-card__info-item--full {
     grid-column: 1 / -1;

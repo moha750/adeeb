@@ -2281,6 +2281,34 @@
                     </div>
                 </div>
 
+                <div class="card card--warning" style="margin-bottom:1.25rem;">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-circle-info"></i> تعليمات كتابة البيان الانتخابي</h3>
+                    </div>
+                    <div class="card-body">
+                        <p style="margin:0 0 0.6rem;font-weight:600;color:#1e293b;">بيانك موجَّه لأعضاء لجنتك/قسمك لتقنعهم بالتصويت لك، وليس إلى إدارة النادي لطلب القبول.</p>
+                        <p style="margin:0 0 0.6rem;font-weight:600;color:#1e293b;">اكتب في بيانك:</p>
+                        <div class="position-info-grid">
+                            ${infoItem('lightbulb', 'أفكارك', 'أفكار واضحة وقابلة للتنفيذ لتطوير عمل اللجنة/القسم.')}
+                            ${infoItem('eye',       'رؤيتك',  'تصوّرك لمستقبل اللجنة/القسم خلال فترتك.')}
+                            ${infoItem('bullseye',  'أهدافك', 'أهداف محددة وقابلة للقياس تنوي تحقيقها.')}
+                            ${infoItem('briefcase', 'خبراتك', 'تجاربك السابقة التي تدعم قدرتك على القيادة.')}
+                        </div>
+
+                        <hr class="modal-divider">
+                        <p style="margin:0 0 0.6rem;font-weight:600;color:#1e293b;">الفرق بين البيان والملف الانتخابي:</p>
+                        <div class="position-info-grid">
+                            ${infoItem('align-right', 'البيان الانتخابي (إلزامي)', 'نصّ مكتوب يَظهر لكل أعضاء لجنتك أو قسمك في مرحلة الترشيح. هو واجهتك الأولى ووسيلتك لإقناع الناخبين.')}
+                            ${infoItem('paperclip',   'الملف الانتخابي (اختياري)', 'مرفق إضافي (PDF/Word/صورة) يحتوي تفاصيل أوسع: خطّة موسّعة، صور لإنجازات سابقة، يُكمّل البيان لا يحلّ محله وقد يزيد فرصك للتصويت.')}
+                        </div>
+
+                        <div class="modal-info-box box-danger" style="margin-top:1rem;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <div>تجنّب صياغة البيان كخطاب رسمي للإدارة أو كطلب قبول — اجعله خطاباً مباشراً لزملائك ليصوتو لك.</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card card--primary" style="margin-bottom:1.25rem;">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-pen-to-square"></i> نموذج الترشح</h3>
