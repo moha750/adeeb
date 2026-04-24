@@ -2264,81 +2264,145 @@
             }
 
             const moreHint = totalCount > 1
-                ? `<div class="modal-info-box box-warning"><i class="fa-solid fa-info-circle"></i><div>لديك أكثر من انتخاب مؤهَّل (${totalCount}). هذا أول ما يظهر — يمكنك إعادة التحميل بعد إرساله.</div></div>`
+                ? `<div class="modal-info-box box-warning" style="margin:0;"><i class="fa-solid fa-info-circle"></i><div>لديك أكثر من انتخاب مؤهَّل (${totalCount}). هذا أوّل ما يظهر — يمكنك إعادة التحميل بعد إرسال هذا.</div></div>`
                 : '';
 
             host.innerHTML = `
-                <div class="card card--primary" style="margin-bottom:1.25rem;">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-bullhorn"></i> تفاصيل الانتخاب</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="position-info-grid">
-                            ${infoItem('user-tie', 'المنصب', esc(target))}
-                            ${infoItem('calendar', 'نهاية الترشح', deadlineValue)}
+                <div class="candidacy-flow">
+                    <div class="card card--primary">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-bullhorn"></i> تفاصيل الانتخاب</h3>
                         </div>
-                        ${moreHint}
+                        <div class="card-body">
+                            <div class="position-info-grid">
+                                ${infoItem('user-tie', 'المنصب', esc(target))}
+                                ${infoItem('calendar', 'نهاية الترشح', deadlineValue)}
+                            </div>
+                        </div>
                     </div>
-                </div>
+                    ${moreHint}
 
-                <div class="card card--warning" style="margin-bottom:1.25rem;">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-circle-info"></i> تعليمات كتابة البيان الانتخابي</h3>
-                    </div>
-                    <div class="card-body">
-                        <p style="margin:0 0 0.6rem;font-weight:600;color:#1e293b;">بيانك موجَّه لأعضاء لجنتك/قسمك لتقنعهم بالتصويت لك، وليس إلى إدارة النادي لطلب القبول.</p>
-                        <p style="margin:0 0 0.6rem;font-weight:600;color:#1e293b;">اكتب في بيانك:</p>
-                        <div class="position-info-grid">
-                            ${infoItem('lightbulb', 'أفكارك', 'أفكار واضحة وقابلة للتنفيذ لتطوير عمل اللجنة/القسم.')}
-                            ${infoItem('eye',       'رؤيتك',  'تصوّرك لمستقبل اللجنة/القسم خلال فترتك.')}
-                            ${infoItem('bullseye',  'أهدافك', 'أهداف محددة وقابلة للقياس تنوي تحقيقها.')}
-                            ${infoItem('briefcase', 'خبراتك', 'تجاربك السابقة التي تدعم قدرتك على القيادة.')}
+                    <div class="candidacy-stepper" role="list">
+                        <div class="candidacy-step" data-step="1" data-state="active" role="listitem">
+                            <span class="candidacy-step-num"><span class="candidacy-step-num-text">1</span></span>
+                            <span class="candidacy-step-label">التعليمات</span>
                         </div>
-
-                        <hr class="modal-divider">
-                        <p style="margin:0 0 0.6rem;font-weight:600;color:#1e293b;">الفرق بين البيان والملف الانتخابي:</p>
-                        <div class="position-info-grid">
-                            ${infoItem('align-right', 'البيان الانتخابي (إلزامي)', 'نصّ مكتوب يَظهر لكل أعضاء لجنتك أو قسمك في مرحلة الترشيح. هو واجهتك الأولى ووسيلتك لإقناع الناخبين.')}
-                            ${infoItem('paperclip',   'الملف الانتخابي (اختياري)', 'مرفق إضافي (PDF/Word/صورة) يحتوي تفاصيل أوسع: خطّة موسّعة، صور لإنجازات سابقة، يُكمّل البيان لا يحلّ محله وقد يزيد فرصك للتصويت.')}
-                        </div>
-
-                        <div class="modal-info-box box-danger" style="margin-top:1rem;">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                            <div>تجنّب صياغة البيان كخطاب رسمي للإدارة أو كطلب قبول — اجعله خطاباً مباشراً لزملائك ليصوتو لك.</div>
+                        <div class="candidacy-step-connector"></div>
+                        <div class="candidacy-step" data-step="2" role="listitem">
+                            <span class="candidacy-step-num"><span class="candidacy-step-num-text">2</span></span>
+                            <span class="candidacy-step-label">النموذج</span>
                         </div>
                     </div>
-                </div>
 
-                <div class="card card--primary" style="margin-bottom:1.25rem;">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-pen-to-square"></i> نموذج الترشح</h3>
-                    </div>
-                    <form id="inlineCandidacyForm" class="card-body">
-                        <div class="modal-section">
-                            <p class="modal-section-title"><i class="fa-solid fa-align-right"></i> بيان الترشح <span class="required-dot">*</span></p>
-                            <textarea class="form-textarea" id="candStatement" rows="8" required></textarea>
+                    <div class="card card--warning" data-panel="1">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-circle-info"></i> اقرأ قبل التقديم</h3>
                         </div>
-                        <hr class="modal-divider">
-                        <div class="modal-section">
-                            <p class="modal-section-title"><i class="fa-solid fa-paperclip"></i> ملف الترشح <span style="font-weight:400;color:#64748b;font-size:0.85rem;">(اختياري — حد أقصى 5MB)</span></p>
-                            <div class="form-file">
-                                <input type="file" id="candFile" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" />
-                                <div class="form-dropzone">
-                                    <div class="form-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-                                    <div class="form-dropzone-title">اضغط لاختيار ملف أو اسحبه هنا</div>
-                                    <div class="form-dropzone-hint">PDF, Word, نص, صور — حد أقصى 5MB</div>
+                        <div class="card-body">
+                            <div class="position-info-grid">
+                                <div class="uc-card__info-item uc-card__info-item--list">
+                                    <div class="uc-card__info-icon"><i class="fa-solid fa-user-slash"></i></div>
+                                    <div class="uc-card__info-content">
+                                        <span class="uc-card__info-label">لا تذكر اسمك في البيان</span>
+                                        <span class="uc-card__info-value">البيان الانتخابي يُعرض للمصوتين دون كشف هويتك، لذلك ذكر أسمك في البيان يعرضك للاستبعاد من الانتخاب</span>
+                                    </div>
+                                </div>
+                                <div class="uc-card__info-item uc-card__info-item--list">
+                                    <div class="uc-card__info-icon"><i class="fa-solid fa-bullseye"></i></div>
+                                    <div class="uc-card__info-content">
+                                        <span class="uc-card__info-label">بيانك خطاب لزملائك</span>
+                                        <span class="uc-card__info-value">اكتبه لإقناع أعضاء لجنتك/قسمك بالتصويت لك، ليس لمخاطبة المجلس الإداري أو إدارة الموارد البشرية.</span>
+                                    </div>
+                                </div>
+                                <div class="uc-card__info-item uc-card__info-item--list">
+                                    <div class="uc-card__info-icon"><i class="fa-solid fa-pen-ruler"></i></div>
+                                    <div class="uc-card__info-content">
+                                        <span class="uc-card__info-label">ضمّن في بيانك</span>
+                                        <span class="uc-card__info-value">أفكارك، رؤيتك، أهدافك، وخبراتك السابقة — بصياغة واضحة وقابلة للتنفيذ.</span>
+                                    </div>
+                                </div>
+                                <div class="uc-card__info-item uc-card__info-item--list">
+                                    <div class="uc-card__info-icon"><i class="fa-solid fa-paperclip"></i></div>
+                                    <div class="uc-card__info-content">
+                                        <span class="uc-card__info-label">الملف الانتخابي اختياري</span>
+                                        <span class="uc-card__info-value">خيار إضافي ليس إجباري لتوضيح رؤيتك، أهدافك، وخبراتك بصريًا لتوضيح تفاصيلها وجذب أصوات أكثر.</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="form-file-list" id="candFilePreview"></div>
                         </div>
-                    </form>
-                    <div class="card-footer">
-                        <button type="submit" form="inlineCandidacyForm" class="btn btn-success btn-block" id="inlineSubmitBtn">
-                            <i class="fa-solid fa-paper-plane"></i> إرسال الترشح
-                        </button>
+                        <div class="card-footer candidacy-step-footer">
+                            <label class="form-checkbox" for="candidacyGateAccept">
+                                <input type="checkbox" id="candidacyGateAccept" />
+                                <span class="form-checkbox-label">أقرّ بأنني اطّلعت على التعليمات أعلاه وألتزم بها — بما فيها عدم ذكر اسمي في البيان.</span>
+                            </label>
+                            <button type="button" class="btn btn-warning btn-block" id="candidacyGateContinue" disabled>
+                                متابعة إلى النموذج <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card card--primary" data-panel="2" hidden>
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-pen-to-square"></i> نموذج الترشح</h3>
+                        </div>
+                        <form id="inlineCandidacyForm" class="card-body">
+                            <div class="modal-section">
+                                <label class="modal-section-title" for="candStatement"><i class="fa-solid fa-align-right"></i> بيان الترشح <span class="required-dot">*</span></label>
+                                <textarea class="form-textarea" id="candStatement" rows="8" required placeholder="اكتب بيانك الانتخابي بدون ذكر اسمك…"></textarea>
+                                <div class="candidacy-field-hint"><i class="fa-solid fa-triangle-exclamation"></i> تذكير: لا تذكر اسمك — البيان يُعرض دون كشف الهوية.</div>
+                            </div>
+                            <div class="modal-section">
+                                <p class="modal-section-title"><i class="fa-solid fa-paperclip"></i> ملف الترشح <span class="candidacy-field-optional">(اختياري — حد أقصى 5MB)</span></p>
+                                <div class="form-file">
+                                    <input type="file" id="candFile" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" />
+                                    <div class="form-dropzone">
+                                        <div class="form-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                                        <div class="form-dropzone-title">اضغط لاختيار ملف أو اسحبه هنا</div>
+                                        <div class="form-dropzone-hint">PDF, Word, نص, صور</div>
+                                    </div>
+                                </div>
+                                <div class="form-file-list" id="candFilePreview"></div>
+                            </div>
+                        </form>
+                        <div class="card-footer candidacy-form-footer">
+                            <button type="button" class="btn btn-slate btn-outline" id="candidacyBackBtn">
+                                <i class="fa-solid fa-arrow-right"></i> رجوع للتعليمات
+                            </button>
+                            <button type="submit" form="inlineCandidacyForm" class="btn btn-success" id="inlineSubmitBtn">
+                                <i class="fa-solid fa-paper-plane"></i> إرسال الترشح
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
+
+            // تنقّل بين الخطوتين — لا تظهر الثانية إلا بعد الإقرار
+            const panel1       = host.querySelector('[data-panel="1"]');
+            const panel2       = host.querySelector('[data-panel="2"]');
+            const step1Node    = host.querySelector('.candidacy-step[data-step="1"]');
+            const step2Node    = host.querySelector('.candidacy-step[data-step="2"]');
+            const connector    = host.querySelector('.candidacy-step-connector');
+            const gateAccept   = host.querySelector('#candidacyGateAccept');
+            const gateContinue = host.querySelector('#candidacyGateContinue');
+            const backBtn      = host.querySelector('#candidacyBackBtn');
+
+            const goToStep = (n) => {
+                panel1.hidden = n !== 1;
+                panel2.hidden = n !== 2;
+                step1Node.dataset.state = n === 1 ? 'active' : 'done';
+                step2Node.dataset.state = n === 2 ? 'active' : '';
+                connector.dataset.state = n === 2 ? 'done' : '';
+                if (n === 2) host.querySelector('#candStatement')?.focus({ preventScroll: true });
+            };
+
+            gateAccept.addEventListener('change', () => {
+                gateContinue.disabled = !gateAccept.checked;
+            });
+            gateContinue.addEventListener('click', () => {
+                if (!gateAccept.checked) return;
+                goToStep(2);
+            });
+            backBtn.addEventListener('click', () => goToStep(1));
 
             // معاينة الملف عند الاختيار + سلوك السحب
             const fileInput = host.querySelector('#candFile');

@@ -1270,15 +1270,15 @@ class UsersManager {
                 `)
                 .eq('account_status', 'active');
 
-            if (committeeId) {
-                query = query.eq('user_roles.committee_id', parseInt(committeeId));
-            }
-
             const { data: users, error } = await query;
             if (error) throw error;
 
+            const filteredUsers = committeeId
+                ? users.filter(u => String(u.user_roles?.[0]?.committee_id) === String(committeeId))
+                : users;
+
             // جلب member_details لكل مستخدم
-            const usersWithDetails = await Promise.all(users.map(async (user) => {
+            const usersWithDetails = await Promise.all(filteredUsers.map(async (user) => {
                 const { data: details } = await this.supabase
                     .from('member_details')
                     .select('*')
