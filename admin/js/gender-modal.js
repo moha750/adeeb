@@ -28,7 +28,14 @@ window.GenderModal = (function () {
                             <input type="radio" name="gender" value="female" required>
                             <span class="form-radio-label">أنثى</span>
                         </label>
+                        <label class="form-radio" title="للضحك فقط 😄">
+                            <input type="radio" name="gender" value="other" required disabled>
+                            <span class="form-radio-label">خيار آخر</span>
+                        </label>
                     </div>
+                    <small class="form-hint" style="display:block;text-align:center;margin-top:0.6rem;color:var(--color-text-muted);">
+                      صبعك!! بتختار خيار آخر ها! ما عندنا هاللعب، يا ذكور يا إناث🤨
+                    </small>
                 </form>
             </div>
         `;
