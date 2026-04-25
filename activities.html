@@ -9,43 +9,51 @@
     content="استعرض أنشطة وبرامج نادي أدِيب القادمة واحجز مقعدك في الورش والفعاليات الثقافية والإبداعية." />
   <meta name="theme-color" content="#274060" />
 
-  <!-- favicon -->
   <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png" />
 
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="activities.css" />
+  <!-- Google Fonts: Tajawal -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+
+  <!-- ستايل الصفحة -->
+  <link rel="stylesheet" href="activities.css" />
 </head>
 
 <body>
 
   <!-- ===== الهيدر ===== -->
-  <header class="ap-header">
-    <div class="ap-header__inner">
-      <a href="index.html" class="ap-header__logo">
+  <header class="site-header" id="siteHeader">
+    <div class="site-header__inner">
+      <a href="index.html" class="site-header__brand">
         <img src="adeeb-logo.png" alt="نادي أدِيب" />
       </a>
-      <nav class="ap-header__nav">
-        <a href="index.html" class="ap-header__nav-link">
+
+      <nav class="site-nav">
+        <a href="index.html" class="site-nav__link">
           <i class="fa-solid fa-house"></i>
           <span>الرئيسية</span>
         </a>
-        <a href="activities.html" class="ap-header__nav-link active">
+        <a href="activities.html" class="site-nav__link is-active">
           <i class="fa-solid fa-calendar-days"></i>
           <span>الأنشطة</span>
         </a>
-        <a href="activities/my-bookings.html" class="ap-header__nav-link" id="myBookingsLink">
+        <a href="activities/my-bookings.html" class="site-nav__link" id="myBookingsLink">
           <i class="fa-solid fa-bookmark"></i>
           <span>حجوزاتي</span>
         </a>
       </nav>
-      <div class="ap-header__user" id="headerUserArea">
-        <button type="button" class="ap-btn ap-btn--outline" id="openLoginBtn">
+
+      <div class="site-header__user" id="headerUserArea">
+        <button type="button" class="btn btn--ghost btn--sm" id="openLoginBtn">
           <i class="fa-solid fa-arrow-right-to-bracket"></i>
-          <span>تسجيل الدخول</span>
+          <span>دخول</span>
         </button>
-        <button type="button" class="ap-btn ap-btn--primary" id="openSignupBtn">
+        <button type="button" class="btn btn--primary btn--sm" id="openSignupBtn">
           <i class="fa-solid fa-user-plus"></i>
           <span>إنشاء حساب</span>
         </button>
@@ -54,52 +62,77 @@
   </header>
 
   <!-- ===== المحتوى الرئيسي ===== -->
-  <main class="ap-main">
+  <main class="site-main">
 
-    <section class="ap-hero">
-      <div class="ap-hero__inner">
-        <h1 class="ap-hero__title">أنشطة وبرامج أدِيب</h1>
-        <p class="ap-hero__subtitle">
-          استعرض الأنشطة والبرامج والورش التي ينظمها نادي أدِيب بجامعة الملك فيصل، واحجز مقعدك بسهولة.
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero__bg" aria-hidden="true"></div>
+      <div class="hero__inner">
+        <span class="hero__eyebrow">
+          <i class="fa-solid fa-feather-pointed"></i>
+          نادي أدِيب · أكاديمية أُكسجين
+        </span>
+        <h1 class="hero__title">
+          أنشطة وبرامج <em>تُلهم</em>
+        </h1>
+        <p class="hero__lead">
+          استعرض الورش والبرامج الثقافية والإبداعية التي ينظمها أدِيب وأُكسجين
+          واحجز مقعدك في ثواني بنظام حجز متكامل.
         </p>
+        <a href="#activities" class="hero__cta">
+          <span>تصفّح الأنشطة المتاحة</span>
+          <i class="fa-solid fa-arrow-down"></i>
+        </a>
       </div>
     </section>
 
-    <section class="ap-list-section">
-      <div class="ap-container">
+    <!-- Activities -->
+    <section class="section" id="activities">
+      <div class="container">
 
-        <div class="ap-section-head">
-          <h2 class="ap-section-title">الأنشطة المتاحة</h2>
-          <p class="ap-section-hint">
-            <i class="fa-solid fa-circle-info"></i>
-            يلزم تسجيل حساب لحجز مقعد. لكل نشاط مقاعد محددة للرجال والنساء.
-          </p>
-        </div>
+        <header class="section__head">
+          <div class="section__head-text">
+            <span class="section__kicker">المقاعد محدودة</span>
+            <h2 class="section__title">الأنشطة المتاحة</h2>
+            <p class="section__sub">
+              يلزم تسجيل حساب لحجز مقعد.
+            </p>
+          </div>
+        </header>
 
         <!-- حالة التحميل -->
-        <div id="apLoadingState" class="ap-state">
-          <i class="fa-solid fa-spinner fa-spin"></i>
-          <p>جاري تحميل الأنشطة...</p>
+        <div id="apLoadingState" class="state-card">
+          <div class="state-card__icon state-card__icon--spin">
+            <i class="fa-solid fa-spinner"></i>
+          </div>
+          <h3 class="state-card__title">جاري تحميل الأنشطة</h3>
+          <p class="state-card__msg">لحظة من فضلك...</p>
         </div>
 
         <!-- لا يوجد أنشطة -->
-        <div id="apEmptyState" class="ap-state ap-state--empty" style="display:none;">
-          <i class="fa-regular fa-calendar-xmark"></i>
-          <p>لا توجد أنشطة متاحة حاليًا. عُد لاحقًا.</p>
+        <div id="apEmptyState" class="state-card" style="display:none;">
+          <div class="state-card__icon">
+            <i class="fa-regular fa-calendar-xmark"></i>
+          </div>
+          <h3 class="state-card__title">لا توجد أنشطة حاليًا</h3>
+          <p class="state-card__msg">عُد لاحقًا، نُحضّر شيئًا جميلاً.</p>
         </div>
 
         <!-- خطأ -->
-        <div id="apErrorState" class="ap-state ap-state--error" style="display:none;">
-          <i class="fa-solid fa-triangle-exclamation"></i>
-          <p id="apErrorMessage">حدث خطأ أثناء تحميل الأنشطة.</p>
-          <button type="button" class="ap-btn ap-btn--outline" onclick="location.reload()">
+        <div id="apErrorState" class="state-card state-card--error" style="display:none;">
+          <div class="state-card__icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <h3 class="state-card__title">تعذّر تحميل الأنشطة</h3>
+          <p class="state-card__msg" id="apErrorMessage">حدث خطأ غير متوقع.</p>
+          <button type="button" class="btn btn--ghost btn--sm" onclick="location.reload()">
             <i class="fa-solid fa-rotate-right"></i>
             <span>إعادة المحاولة</span>
           </button>
         </div>
 
         <!-- شبكة البطاقات -->
-        <div id="apActivitiesGrid" class="ap-grid" style="display:none;"></div>
+        <div id="apActivitiesGrid" class="activities-grid" style="display:none;"></div>
 
       </div>
     </section>
@@ -107,45 +140,77 @@
   </main>
 
   <!-- ===== الفوتر ===== -->
-  <footer class="ap-footer">
-    <p>© نادي أدِيب — جامعة الملك فيصل</p>
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <p class="site-footer__line">© نادي أدِيب — أكاديمية أُكسجين</p>
+      <p class="site-footer__line site-footer__line--muted">
+        شراكة تتنفس إبداعًا.
+      </p>
+    </div>
   </footer>
 
-  <!-- ===== مودال: إنشاء حساب زائر ===== -->
-  <div class="ap-modal-backdrop" id="signupBackdrop"></div>
-  <div class="ap-modal" id="signupModal" role="dialog" aria-modal="true" aria-labelledby="signupTitle">
-    <div class="ap-modal__header">
-      <h3 class="ap-modal__title" id="signupTitle">
-        <i class="fa-solid fa-user-plus"></i>
-        إنشاء حساب لحجز مقعد
-      </h3>
-      <button type="button" class="ap-modal__close" data-close-modal="signupModal" aria-label="إغلاق">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+  <!-- ===== شريط التنقّل السفلي (للموبايل فقط) ===== -->
+  <nav class="bottom-nav" aria-label="تنقّل">
+    <div class="bottom-nav__inner">
+      <a href="index.html" class="bottom-nav__link">
+        <i class="fa-solid fa-house"></i>
+        <span>الرئيسية</span>
+      </a>
+      <a href="activities.html" class="bottom-nav__link is-active">
+        <i class="fa-solid fa-calendar-days"></i>
+        <span>الأنشطة</span>
+      </a>
+      <a href="activities/my-bookings.html" class="bottom-nav__link">
+        <i class="fa-solid fa-bookmark"></i>
+        <span>حجوزاتي</span>
+      </a>
     </div>
-    <div class="ap-modal__body">
-      <p class="ap-modal__hint">
-        هذا الحساب لإمكانية حجز المقاعد فقط، ولا يمنحك صلاحيات في لوحة التحكم ولا عضوية في النادي.
-      </p>
+  </nav>
 
-      <div class="ap-form-group">
-        <label class="ap-label" for="signupFullName">الاسم الكامل</label>
-        <input type="text" id="signupFullName" class="ap-input" placeholder="الاسم الثلاثي" />
+  <!-- ===== مودال: إنشاء حساب زائر ===== -->
+  <div class="modal-backdrop" id="signupBackdrop"></div>
+  <div class="modal" id="signupModal" role="dialog" aria-modal="true" aria-labelledby="signupTitle">
+    <button type="button" class="modal__close" data-close-modal="signupModal" aria-label="إغلاق">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <header class="modal__head">
+      <div class="modal__icon">
+        <i class="fa-solid fa-user-plus"></i>
+      </div>
+      <h2 class="modal__title" id="signupTitle">إنشاء حساب لحجز مقعد</h2>
+      <p class="modal__sub">حساب مخصّص للحجز فقط، لا يمنح عضوية في نادي أدِيب أو أكاديمية أُكسجين.</p>
+      <p class="modal__sub">وإذا كنت عضوًا في أدِيب فلا تحتاج لإنشاء حساب، فقط قم بتسجيل الدخول بحسابك الشخصي.</p>
+    </header>
+
+    <div class="modal__body">
+
+      <div class="field">
+        <label class="field__label" for="signupFullName">
+          الاسم الكامل
+          <span class="field__required" aria-hidden="true">*</span>
+        </label>
+        <input type="text" id="signupFullName" class="input" placeholder="الاسم الثلاثي" />
       </div>
 
-      <div class="ap-form-row">
-        <div class="ap-form-group">
-          <label class="ap-label" for="signupPhone">رقم الجوال</label>
-          <input type="tel" id="signupPhone" class="ap-input" placeholder="05XXXXXXXX" maxlength="10" dir="ltr" />
+      <div class="field-row">
+        <div class="field">
+          <label class="field__label" for="signupPhone">
+            رقم الجوال
+            <span class="field__required" aria-hidden="true">*</span>
+          </label>
+          <input type="tel" id="signupPhone" class="input" placeholder="05XXXXXXXX" maxlength="10" dir="ltr" />
         </div>
-        <div class="ap-form-group">
-          <label class="ap-label">الجنس</label>
-          <div class="ap-radio-group">
-            <label class="ap-radio">
+        <div class="field">
+          <span class="field__label">
+            الجنس
+            <span class="field__required" aria-hidden="true">*</span>
+          </span>
+          <div class="seg" role="radiogroup">
+            <label class="seg__opt">
               <input type="radio" name="signupGender" value="male" />
               <span><i class="fa-solid fa-mars"></i> ذكر</span>
             </label>
-            <label class="ap-radio">
+            <label class="seg__opt">
               <input type="radio" name="signupGender" value="female" />
               <span><i class="fa-solid fa-venus"></i> أنثى</span>
             </label>
@@ -153,129 +218,181 @@
         </div>
       </div>
 
-      <div class="ap-form-group">
-        <label class="ap-label" for="signupEmail">البريد الإلكتروني</label>
-        <input type="email" id="signupEmail" class="ap-input" placeholder="name@example.com" dir="ltr" />
+      <div class="field">
+        <label class="field__label" for="signupEmail">
+          البريد الإلكتروني
+          <span class="field__required" aria-hidden="true">*</span>
+        </label>
+        <input type="email" id="signupEmail" class="input" placeholder="name@example.com" dir="ltr" />
       </div>
 
-      <div class="ap-form-group">
-        <label class="ap-label" for="signupPassword">كلمة المرور</label>
-        <input type="password" id="signupPassword" class="ap-input" placeholder="6 أحرف فأكثر" dir="ltr" />
+      <div class="field">
+        <label class="field__label" for="signupPassword">
+          كلمة المرور
+          <span class="field__required" aria-hidden="true">*</span>
+        </label>
+        <input type="password" id="signupPassword" class="input" placeholder="6 أحرف فأكثر" dir="ltr" />
       </div>
 
-      <div class="ap-form-group">
-        <label class="ap-label" for="signupCity">المدينة (اختياري)</label>
-        <input type="text" id="signupCity" class="ap-input" placeholder="مثل: الأحساء" />
+      <div class="field">
+        <label class="field__label" for="signupCity">المدينة <span class="field__hint">(اختياري)</span></label>
+        <input type="text" id="signupCity" class="input" placeholder="مثل: الأحساء" />
       </div>
 
-      <label class="ap-checkbox">
+      <label class="check">
         <input type="checkbox" id="signupAcceptsMarketing" checked />
         <span>أوافق على استلام رسائل ترويجية وتذكيرية بالأنشطة والبرامج القادمة</span>
       </label>
 
-      <div class="ap-alert ap-alert--error" id="signupError" style="display:none;"></div>
+      <div class="alert alert--danger" id="signupError" style="display:none;">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span></span>
+      </div>
     </div>
-    <div class="ap-modal__footer">
-      <button type="button" class="ap-btn ap-btn--outline" data-close-modal="signupModal">إلغاء</button>
-      <button type="button" class="ap-btn ap-btn--primary" id="submitSignupBtn">
-        <i class="fa-solid fa-check"></i>
-        <span>إنشاء الحساب</span>
-      </button>
-    </div>
-    <p class="ap-modal__switch">
-      لديك حساب؟
-      <button type="button" class="ap-link-btn" id="switchToLoginBtn">سجّل الدخول</button>
-    </p>
+
+    <footer class="modal__foot">
+      <p class="modal__switch">
+        لديك حساب؟
+        <button type="button" class="link-btn" id="switchToLoginBtn">سجّل الدخول</button>
+      </p>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" data-close-modal="signupModal">إلغاء</button>
+        <button type="button" class="btn btn--primary" id="submitSignupBtn">
+          <i class="fa-solid fa-check"></i>
+          <span>إنشاء الحساب</span>
+        </button>
+      </div>
+    </footer>
   </div>
 
   <!-- ===== مودال: تسجيل الدخول ===== -->
-  <div class="ap-modal-backdrop" id="loginBackdrop"></div>
-  <div class="ap-modal" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
-    <div class="ap-modal__header">
-      <h3 class="ap-modal__title" id="loginTitle">
+  <div class="modal-backdrop" id="loginBackdrop"></div>
+  <div class="modal modal--sm" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <button type="button" class="modal__close" data-close-modal="loginModal" aria-label="إغلاق">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <header class="modal__head">
+      <div class="modal__icon">
         <i class="fa-solid fa-arrow-right-to-bracket"></i>
-        تسجيل الدخول
-      </h3>
-      <button type="button" class="ap-modal__close" data-close-modal="loginModal" aria-label="إغلاق">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-    <div class="ap-modal__body">
-      <div class="ap-form-group">
-        <label class="ap-label" for="loginEmail">البريد الإلكتروني</label>
-        <input type="email" id="loginEmail" class="ap-input" placeholder="name@example.com" dir="ltr" />
       </div>
-      <div class="ap-form-group">
-        <label class="ap-label" for="loginPassword">كلمة المرور</label>
-        <input type="password" id="loginPassword" class="ap-input" dir="ltr" />
+      <h2 class="modal__title" id="loginTitle">تسجيل الدخول</h2>
+      <p class="modal__sub">أدخل بريدك وكلمة المرور للحجز ومتابعة حجوزاتك.</p>
+    </header>
+
+    <div class="modal__body">
+      <div class="field">
+        <label class="field__label" for="loginEmail">
+          البريد الإلكتروني
+          <span class="field__required" aria-hidden="true">*</span>
+        </label>
+        <input type="email" id="loginEmail" class="input" placeholder="name@example.com" dir="ltr" />
       </div>
-      <div class="ap-alert ap-alert--error" id="loginError" style="display:none;"></div>
+      <div class="field">
+        <label class="field__label" for="loginPassword">
+          كلمة المرور
+          <span class="field__required" aria-hidden="true">*</span>
+        </label>
+        <input type="password" id="loginPassword" class="input" dir="ltr" />
+      </div>
+      <div class="alert alert--danger" id="loginError" style="display:none;">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span></span>
+      </div>
     </div>
-    <div class="ap-modal__footer">
-      <button type="button" class="ap-btn ap-btn--outline" data-close-modal="loginModal">إلغاء</button>
-      <button type="button" class="ap-btn ap-btn--primary" id="submitLoginBtn">
-        <i class="fa-solid fa-arrow-right-to-bracket"></i>
-        <span>دخول</span>
-      </button>
-    </div>
-    <p class="ap-modal__switch">
-      ليس لديك حساب؟
-      <button type="button" class="ap-link-btn" id="switchToSignupBtn">أنشئ حساب جديد</button>
-    </p>
+
+    <footer class="modal__foot">
+      <p class="modal__switch">
+        ليس لديك حساب؟
+        <button type="button" class="link-btn" id="switchToSignupBtn">أنشئ حساب جديد</button>
+      </p>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" data-close-modal="loginModal">إلغاء</button>
+        <button type="button" class="btn btn--primary" id="submitLoginBtn">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          <span>دخول</span>
+        </button>
+      </div>
+    </footer>
   </div>
 
   <!-- ===== مودال: تأكيد الحجز ===== -->
-  <div class="ap-modal-backdrop" id="confirmBackdrop"></div>
-  <div class="ap-modal" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
-    <div class="ap-modal__header">
-      <h3 class="ap-modal__title" id="confirmTitle">
-        <i class="fa-solid fa-circle-check"></i>
-        تأكيد الحجز
-      </h3>
-      <button type="button" class="ap-modal__close" data-close-modal="confirmModal" aria-label="إغلاق">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-    <div class="ap-modal__body">
-      <div id="confirmActivityDetails"></div>
-      <div class="ap-alert ap-alert--info">
-        <i class="fa-solid fa-info-circle"></i>
-        سيتم خصم مقعد من الكوتا الخاصة بجنسك. الكوتا صارمة ولا يمكن تجاوزها.
+  <div class="modal-backdrop" id="confirmBackdrop"></div>
+  <div class="modal" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <button type="button" class="modal__close" data-close-modal="confirmModal" aria-label="إغلاق">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <header class="modal__head">
+      <div class="modal__icon modal__icon--accent">
+        <i class="fa-solid fa-bookmark"></i>
       </div>
-      <div class="ap-alert ap-alert--error" id="confirmError" style="display:none;"></div>
+      <h2 class="modal__title" id="confirmTitle">تأكيد الحجز</h2>
+      <p class="modal__sub">راجع تفاصيل النشاط قبل تأكيد المقعد.</p>
+    </header>
+
+    <div class="modal__body">
+      <div id="confirmActivityDetails"></div>
+      <div class="alert alert--info">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>عدم حضورك للورشة سيؤدي إلى فقدان مقعدك. وعدم إصدار شهادة الحضور.</span>
+      </div>
+      <div class="alert alert--danger" id="confirmError" style="display:none;">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span></span>
+      </div>
     </div>
-    <div class="ap-modal__footer">
-      <button type="button" class="ap-btn ap-btn--outline" data-close-modal="confirmModal">إلغاء</button>
-      <button type="button" class="ap-btn ap-btn--primary" id="submitBookingBtn">
-        <i class="fa-solid fa-check"></i>
-        <span>تأكيد الحجز</span>
-      </button>
-    </div>
+
+    <footer class="modal__foot">
+      <div class="modal__actions modal__actions--center">
+        <button type="button" class="btn btn--ghost" data-close-modal="confirmModal">إلغاء</button>
+        <button type="button" class="btn btn--primary" id="submitBookingBtn">
+          <i class="fa-solid fa-check"></i>
+          <span>تأكيد الحجز</span>
+        </button>
+      </div>
+    </footer>
   </div>
 
   <!-- ===== مودال: نجاح الحجز ===== -->
-  <div class="ap-modal-backdrop" id="successBackdrop"></div>
-  <div class="ap-modal ap-modal--small" id="successModal" role="dialog" aria-modal="true">
-    <div class="ap-modal__body ap-success-body">
-      <div class="ap-success-icon">
-        <i class="fa-solid fa-circle-check"></i>
+  <div class="modal-backdrop" id="successBackdrop"></div>
+  <div class="modal modal--sm modal--center" id="successModal" role="dialog" aria-modal="true">
+    <div class="success">
+      <div class="success__ring">
+        <div class="success__icon">
+          <i class="fa-solid fa-check"></i>
+        </div>
       </div>
-      <h3>تم الحجز بنجاح!</h3>
-      <p>سنرسل لك تذكيرًا بالموعد. يمكنك مراجعة حجوزاتك من صفحة "حجوزاتي".</p>
+      <h2 class="success__title">تم حجز مقعدك بنجاح!</h2>
+      <p class="success__msg">سنرسل لك تذكيرًا بالموعد. يمكنك مراجعة حجوزاتك في أي وقت من صفحة "حجوزاتي".</p>
     </div>
-    <div class="ap-modal__footer">
-      <a href="activities/my-bookings.html" class="ap-btn ap-btn--outline">
-        <i class="fa-solid fa-bookmark"></i>
-        <span>حجوزاتي</span>
-      </a>
-      <button type="button" class="ap-btn ap-btn--primary" data-close-modal="successModal">حسنًا</button>
-    </div>
+    <footer class="modal__foot">
+      <div class="modal__actions modal__actions--center">
+        <a href="activities/my-bookings.html" class="btn btn--ghost">
+          <i class="fa-solid fa-bookmark"></i>
+          <span>حجوزاتي</span>
+        </a>
+        <button type="button" class="btn btn--primary" data-close-modal="successModal">حسنًا</button>
+      </div>
+    </footer>
   </div>
 
   <!-- ===== المكتبات ===== -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script src="activities.js"></script>
+
+  <!-- Header shadow on scroll -->
+  <script>
+    (function () {
+      const h = document.getElementById('siteHeader');
+      const onScroll = () => {
+        if (!h) return;
+        if (window.scrollY > 8) h.classList.add('is-scrolled');
+        else h.classList.remove('is-scrolled');
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    })();
+  </script>
 </body>
 
 </html>

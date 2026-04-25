@@ -11,93 +11,212 @@
   <link rel="icon" type="image/png" sizes="32x32" href="../favicon/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="../favicon/favicon-16x16.png" />
 
-  <link rel="stylesheet" href="../style.css" />
-  <link rel="stylesheet" href="../activities.css" />
+  <!-- Google Fonts: Tajawal -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+
+  <!-- ستايل المشروع -->
+  <link rel="stylesheet" href="../activities.css" />
 </head>
 
 <body>
 
-  <header class="ap-header">
-    <div class="ap-header__inner">
-      <a href="../index.html" class="ap-header__logo">
+  <!-- ===== الهيدر ===== -->
+  <header class="site-header" id="siteHeader">
+    <div class="site-header__inner">
+      <a href="../index.html" class="site-header__brand">
         <img src="../adeeb-logo.png" alt="نادي أدِيب" />
       </a>
-      <nav class="ap-header__nav">
-        <a href="../index.html" class="ap-header__nav-link">
+
+      <nav class="site-nav">
+        <a href="../index.html" class="site-nav__link">
           <i class="fa-solid fa-house"></i>
           <span>الرئيسية</span>
         </a>
-        <a href="../activities.html" class="ap-header__nav-link">
+        <a href="../activities.html" class="site-nav__link">
           <i class="fa-solid fa-calendar-days"></i>
           <span>الأنشطة</span>
         </a>
-        <a href="my-bookings.html" class="ap-header__nav-link active">
+        <a href="my-bookings.html" class="site-nav__link is-active">
           <i class="fa-solid fa-bookmark"></i>
           <span>حجوزاتي</span>
         </a>
       </nav>
-      <div class="ap-header__user" id="headerUserArea"></div>
+
+      <div class="site-header__user" id="headerUserArea"></div>
     </div>
   </header>
 
-  <main class="ap-main">
-    <section class="ap-list-section">
-      <div class="ap-container">
+  <!-- ===== المحتوى ===== -->
+  <main class="site-main">
 
-        <div class="ap-section-head">
-          <h2 class="ap-section-title">حجوزاتي</h2>
-          <p class="ap-section-hint">
-            <i class="fa-solid fa-circle-info"></i>
-            هنا تجد جميع الأنشطة التي حجزت بها مقعدًا. يمكنك إلغاء حجز أي نشاط لم يحن موعده بعد.
-          </p>
+    <!-- Page header (مختصر بدل Hero ضخم) -->
+    <section class="page-head">
+      <div class="container">
+        <a href="../activities.html" class="back-link">
+          <i class="fa-solid fa-arrow-right"></i>
+          <span>عودة للأنشطة</span>
+        </a>
+        <span class="page-head__kicker">
+          <i class="fa-solid fa-bookmark"></i>
+          مساحتك الخاصة
+        </span>
+        <h1 class="page-head__title">حجوزاتي</h1>
+        <p class="page-head__sub">
+          هنا تجد جميع الأنشطة التي حجزت بها مقعدًا. يمكنك إلغاء أي حجز قبل موعده.
+        </p>
+      </div>
+    </section>
+
+    <section class="section section--tight">
+      <div class="container">
+
+        <!-- حالة التحميل -->
+        <div id="mbLoadingState" class="state-card">
+          <div class="state-card__icon state-card__icon--spin">
+            <i class="fa-solid fa-spinner"></i>
+          </div>
+          <h3 class="state-card__title">جاري تحميل حجوزاتك</h3>
+          <p class="state-card__msg">لحظة من فضلك...</p>
         </div>
 
-        <div id="mbLoadingState" class="ap-state">
-          <i class="fa-solid fa-spinner fa-spin"></i>
-          <p>جاري تحميل حجوزاتك...</p>
-        </div>
-
-        <div id="mbAuthState" class="ap-state" style="display:none;">
-          <i class="fa-solid fa-user-lock"></i>
-          <p>يجب تسجيل الدخول أولًا لرؤية حجوزاتك.</p>
-          <a href="../activities.html" class="ap-btn ap-btn--primary">
+        <!-- حالة عدم تسجيل الدخول -->
+        <div id="mbAuthState" class="state-card" style="display:none;">
+          <div class="state-card__icon">
+            <i class="fa-solid fa-user-lock"></i>
+          </div>
+          <h3 class="state-card__title">تحتاج لتسجيل الدخول</h3>
+          <p class="state-card__msg">سجّل دخولك أوّلًا لعرض حجوزاتك.</p>
+          <a href="../activities.html" class="btn btn--primary">
             <i class="fa-solid fa-arrow-right-to-bracket"></i>
             <span>الذهاب لتسجيل الدخول</span>
           </a>
         </div>
 
-        <div id="mbEmptyState" class="ap-state ap-state--empty" style="display:none;">
-          <i class="fa-regular fa-calendar-xmark"></i>
-          <p>ليس لديك أي حجوزات حتى الآن.</p>
-          <a href="../activities.html" class="ap-btn ap-btn--primary">
+        <!-- حالة فارغة -->
+        <div id="mbEmptyState" class="state-card" style="display:none;">
+          <div class="state-card__icon">
+            <i class="fa-regular fa-calendar-xmark"></i>
+          </div>
+          <h3 class="state-card__title">لا توجد حجوزات بعد</h3>
+          <p class="state-card__msg">ابدأ بتصفّح الأنشطة المتاحة واحجز مقعدك في القادم منها.</p>
+          <a href="../activities.html" class="btn btn--primary">
             <i class="fa-solid fa-calendar-days"></i>
             <span>تصفّح الأنشطة المتاحة</span>
           </a>
         </div>
 
-        <div id="mbErrorState" class="ap-state ap-state--error" style="display:none;">
-          <i class="fa-solid fa-triangle-exclamation"></i>
-          <p id="mbErrorMessage">حدث خطأ في تحميل الحجوزات.</p>
-          <button type="button" class="ap-btn ap-btn--outline" onclick="location.reload()">
+        <!-- خطأ -->
+        <div id="mbErrorState" class="state-card state-card--error" style="display:none;">
+          <div class="state-card__icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <h3 class="state-card__title">تعذّر تحميل الحجوزات</h3>
+          <p class="state-card__msg" id="mbErrorMessage">حدث خطأ غير متوقع.</p>
+          <button type="button" class="btn btn--ghost btn--sm" onclick="location.reload()">
             <i class="fa-solid fa-rotate-right"></i>
             <span>إعادة المحاولة</span>
           </button>
         </div>
 
-        <div id="mbBookingsContainer" class="ap-bookings-grid" style="display:none;"></div>
+        <!-- ملخّص (يُملأ بـ JS) + قائمة الحجوزات -->
+        <div id="mbSummary" class="bookings-summary" style="display:none;"></div>
+        <div id="mbBookingsContainer" class="bookings-list" style="display:none;"></div>
 
       </div>
     </section>
+
   </main>
 
-  <footer class="ap-footer">
-    <p>© نادي أدِيب — جامعة الملك فيصل</p>
+  <!-- ===== الفوتر ===== -->
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <p class="site-footer__line">© نادي أدِيب — جامعة الملك فيصل</p>
+      <p class="site-footer__line site-footer__line--muted">
+        صُنع بحبٍّ للقراءة والكتابة.
+      </p>
+    </div>
   </footer>
 
+  <!-- ===== شريط التنقّل السفلي (للموبايل فقط) ===== -->
+  <nav class="bottom-nav" aria-label="تنقّل">
+    <div class="bottom-nav__inner">
+      <a href="../index.html" class="bottom-nav__link">
+        <i class="fa-solid fa-house"></i>
+        <span>الرئيسية</span>
+      </a>
+      <a href="../activities.html" class="bottom-nav__link">
+        <i class="fa-solid fa-calendar-days"></i>
+        <span>الأنشطة</span>
+      </a>
+      <a href="my-bookings.html" class="bottom-nav__link is-active">
+        <i class="fa-solid fa-bookmark"></i>
+        <span>حجوزاتي</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- ===== مودال تأكيد الإلغاء ===== -->
+  <div class="modal-backdrop" id="cancelBackdrop"></div>
+  <div class="modal modal--sm" id="cancelModal" role="dialog" aria-modal="true" aria-labelledby="cancelTitle">
+    <button type="button" class="modal__close" data-close-modal="cancelModal" aria-label="إغلاق">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <header class="modal__head">
+      <div class="modal__icon" style="background:var(--bad-soft); color:var(--bad);">
+        <i class="fa-solid fa-circle-exclamation"></i>
+      </div>
+      <h2 class="modal__title" id="cancelTitle">إلغاء الحجز</h2>
+      <p class="modal__sub">هل أنت متأكد من إلغاء حجزك في هذا النشاط؟ سيتم تحرير المقعد للآخرين.</p>
+    </header>
+    <div class="modal__body">
+      <div id="cancelActivityName" class="confirm">
+        <div class="confirm__head">
+          <h3 class="confirm__title"></h3>
+        </div>
+      </div>
+      <div class="alert alert--warn">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>لا يمكن التراجع عن الإلغاء. سيتعيّن عليك الحجز من جديد إذا غيّرت رأيك.</span>
+      </div>
+      <div class="alert alert--danger" id="cancelError" style="display:none;">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span></span>
+      </div>
+    </div>
+    <footer class="modal__foot">
+      <div class="modal__actions modal__actions--center">
+        <button type="button" class="btn btn--ghost" data-close-modal="cancelModal">تراجع</button>
+        <button type="button" class="btn btn--primary" id="confirmCancelBtn" style="background:var(--bad);">
+          <i class="fa-solid fa-xmark"></i>
+          <span>نعم، ألغِ الحجز</span>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ===== المكتبات ===== -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../supabase-config.js"></script>
   <script src="my-bookings.js"></script>
+
+  <!-- Header shadow on scroll -->
+  <script>
+    (function () {
+      const h = document.getElementById('siteHeader');
+      const onScroll = () => {
+        if (!h) return;
+        if (window.scrollY > 8) h.classList.add('is-scrolled');
+        else h.classList.remove('is-scrolled');
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    })();
+  </script>
 </body>
 
 </html>

@@ -285,10 +285,12 @@ class ActivitiesManager {
         };
         if (totalInput) totalInput.addEventListener('input', recalc);
         if (pctInput) pctInput.addEventListener('input', recalc);
+
+        this.renderCoverUploader(null);
     }
 
     resetCreateForm() {
-        const ids = ['actName', 'actDescription', 'actLocation', 'actDate', 'actStartTime', 'actEndTime', 'actTotalSeats', 'actMalePercentage', 'actCoverImageUrl'];
+        const ids = ['actName', 'actDescription', 'actLocation', 'actDate', 'actStartTime', 'actEndTime', 'actTotalSeats', 'actMalePercentage'];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
@@ -299,8 +301,21 @@ class ActivitiesManager {
         if (publishEl) publishEl.checked = false;
         const preview = document.getElementById('seatsPreview');
         if (preview) preview.textContent = '—';
+        this.renderCoverUploader(null);
         const titleEl = document.getElementById('createActivityFormTitle');
         if (titleEl) titleEl.textContent = this.currentEditingId ? 'تعديل النشاط' : 'إنشاء نشاط جديد';
+    }
+
+    renderCoverUploader(currentImageUrl) {
+        const mount = document.getElementById('actCoverImageMount');
+        if (!mount || !window.ImageUploadHelper) return;
+        mount.innerHTML = window.ImageUploadHelper.createCoverImageUploader({
+            inputId: 'actCoverImage',
+            currentImageUrl: currentImageUrl || null,
+            folder: 'activities',
+            required: false,
+            aspectRatio: 16 / 9,
+        });
     }
 
     async editActivity(id) {
@@ -321,7 +336,7 @@ class ActivitiesManager {
         set('actEndTime', a.end_time);
         set('actTotalSeats', a.total_seats);
         set('actMalePercentage', a.male_percentage);
-        set('actCoverImageUrl', a.cover_image_url);
+        this.renderCoverUploader(a.cover_image_url);
 
         const publishEl = document.getElementById('actPublishImmediately');
         if (publishEl) publishEl.checked = a.is_published;
@@ -336,7 +351,9 @@ class ActivitiesManager {
     }
 
     async saveActivity() {
+        if (this._isSaving) return;
         const sb = window.sbClient;
+        const saveBtn = document.getElementById('saveActivityBtn');
         const name = document.getElementById('actName')?.value.trim();
         const description = document.getElementById('actDescription')?.value.trim();
         const activityType = document.getElementById('actType')?.value || 'activity';
@@ -346,7 +363,9 @@ class ActivitiesManager {
         const endTime = document.getElementById('actEndTime')?.value || null;
         const totalSeats = parseInt(document.getElementById('actTotalSeats')?.value || '0', 10);
         const malePct = parseInt(document.getElementById('actMalePercentage')?.value || '0', 10);
-        const coverImageUrl = document.getElementById('actCoverImageUrl')?.value.trim() || null;
+        const coverImageUrl = (window.ImageUploadHelper
+            ? window.ImageUploadHelper.getCoverImageUrl('actCoverImage')
+            : document.getElementById('actCoverImage_url')?.value) || null;
         const publishImmediately = document.getElementById('actPublishImmediately')?.checked;
 
         if (!name) return this.notifyError('الرجاء إدخال اسم النشاط');
@@ -368,6 +387,11 @@ class ActivitiesManager {
             is_published: !!publishImmediately,
         };
 
+        this._isSaving = true;
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.classList.add('btn--loading');
+        }
         try {
             if (this.currentEditingId) {
                 const { error } = await sb.from('activities').update(payload).eq('id', this.currentEditingId);
@@ -386,6 +410,12 @@ class ActivitiesManager {
         } catch (err) {
             console.error('ActivitiesManager: saveActivity error', err);
             this.notifyError('حدث خطأ في حفظ النشاط: ' + (err.message || ''));
+        } finally {
+            this._isSaving = false;
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('btn--loading');
+            }
         }
     }
 

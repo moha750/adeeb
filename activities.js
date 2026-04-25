@@ -78,6 +78,14 @@
         return div.innerHTML;
     }
 
+    // كتابة نص رسالة داخل modal-info-box (يبحث عن span أولاً)
+    function setBoxMessage(box, msg) {
+        if (!box) return;
+        const span = box.querySelector('span');
+        if (span) span.textContent = msg;
+        else box.textContent = msg;
+    }
+
     function activityTypeLabel(type) {
         switch (type) {
             case 'workshop': return 'ورشة';
@@ -161,16 +169,13 @@
         if (!els.userArea) return;
         if (state.currentProfile) {
             const name = state.currentProfile.full_name || state.currentProfile.email || 'حسابي';
+            const initial = (name || '?').trim().charAt(0);
             els.userArea.innerHTML = `
-                <span class="ap-user-name" style="font-weight:600;color:var(--ap-blue-dark);font-size:0.92rem;">
-                    <i class="fa-solid fa-circle-user"></i>
+                <span class="user-chip">
+                    <span class="user-chip__avatar">${escapeHtml(initial)}</span>
                     ${escapeHtml(name)}
                 </span>
-                <a href="activities/my-bookings.html" class="ap-btn ap-btn--outline">
-                    <i class="fa-solid fa-bookmark"></i>
-                    <span>حجوزاتي</span>
-                </a>
-                <button type="button" class="ap-btn ap-btn--outline" id="logoutBtn">
+                <button type="button" class="btn btn--danger-ghost btn--sm" id="logoutBtn">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i>
                     <span>خروج</span>
                 </button>
@@ -187,11 +192,11 @@
             }
         } else {
             els.userArea.innerHTML = `
-                <button type="button" class="ap-btn ap-btn--outline" id="openLoginBtn">
+                <button type="button" class="btn btn--ghost btn--sm" id="openLoginBtn">
                     <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                    <span>تسجيل الدخول</span>
+                    <span>دخول</span>
                 </button>
-                <button type="button" class="ap-btn ap-btn--primary" id="openSignupBtn">
+                <button type="button" class="btn btn--primary btn--sm" id="openSignupBtn">
                     <i class="fa-solid fa-user-plus"></i>
                     <span>إنشاء حساب</span>
                 </button>
@@ -282,64 +287,89 @@
         });
     }
 
+    function pct(remaining, total) {
+        if (!total || total <= 0) return 0;
+        const booked = Math.max(0, total - (remaining || 0));
+        return Math.min(100, Math.round((booked / total) * 100));
+    }
+
     function renderActivityCard(act) {
+        const totalSeats     = (act.male_seats     || 0) + (act.female_seats     || 0);
         const totalRemaining = (act.male_remaining || 0) + (act.female_remaining || 0);
         const isFull = totalRemaining <= 0;
         const isCancelled = !!act.is_cancelled;
 
-        const cardClasses = ['ap-card'];
-        if (isFull) cardClasses.push('ap-card--full');
-        if (isCancelled) cardClasses.push('ap-card--cancelled');
-
+        // غلاف
         const coverHtml = act.cover_image_url
             ? `<img src="${escapeHtml(act.cover_image_url)}" alt="${escapeHtml(act.name)}" />`
             : `<i class="fa-solid ${activityTypeIcon(act.activity_type)}"></i>`;
 
-        let buttonHtml;
+        // شارة الحالة
+        let statusChip;
         if (isCancelled) {
-            buttonHtml = `<button class="ap-btn ap-btn--outline" disabled><i class="fa-solid fa-ban"></i><span>تم إلغاء النشاط</span></button>`;
+            statusChip = `<span class="chip chip--status is-cancel"><i class="fa-solid fa-ban"></i>ملغي</span>`;
         } else if (isFull) {
-            buttonHtml = `<button class="ap-btn ap-btn--outline" disabled><i class="fa-solid fa-users-slash"></i><span>اكتملت المقاعد</span></button>`;
+            statusChip = `<span class="chip chip--status is-full"><i class="fa-solid fa-users-slash"></i>مكتمل</span>`;
         } else {
-            buttonHtml = `<button class="ap-btn ap-btn--primary" data-book-activity="${escapeHtml(act.id)}"><i class="fa-solid fa-bookmark"></i><span>احجز مقعدك</span></button>`;
+            statusChip = `<span class="chip chip--status"><i class="fa-solid fa-circle"></i>متاح</span>`;
         }
 
+        // الزر
+        let buttonHtml;
+        if (isCancelled) {
+            buttonHtml = `<button class="btn btn--ghost" disabled><i class="fa-solid fa-ban"></i><span>تم إلغاء النشاط</span></button>`;
+        } else if (isFull) {
+            buttonHtml = `<button class="btn btn--ghost" disabled><i class="fa-solid fa-users-slash"></i><span>اكتملت المقاعد</span></button>`;
+        } else {
+            buttonHtml = `<button class="btn btn--primary" data-book-activity="${escapeHtml(act.id)}"><i class="fa-solid fa-bookmark"></i><span>احجز مقعدك</span></button>`;
+        }
+
+        const descHtml = act.description
+            ? `<p class="act-card__desc">${escapeHtml(act.description)}</p>`
+            : '';
+
+        const locationItem = act.location ? `
+                <div class="act-meta__item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span>${escapeHtml(act.location)}</span>
+                </div>` : '';
+
+        const seatsPct = pct(totalRemaining, totalSeats);
+
         return `
-        <article class="${cardClasses.join(' ')}" data-activity-id="${escapeHtml(act.id)}">
-            <div class="ap-card__cover">
+        <article class="act-card" data-activity-id="${escapeHtml(act.id)}">
+            <div class="act-card__cover">
                 ${coverHtml}
-                <span class="ap-card__type-badge">${activityTypeLabel(act.activity_type)}</span>
+                <div class="act-card__chips">
+                    <span class="chip chip--type">${activityTypeLabel(act.activity_type)}</span>
+                    ${statusChip}
+                </div>
             </div>
-            <div class="ap-card__body">
-                <h3 class="ap-card__title">${escapeHtml(act.name)}</h3>
-                ${act.description ? `<p class="ap-card__desc">${escapeHtml(act.description)}</p>` : ''}
-                <div class="ap-card__meta">
-                    <div class="ap-card__meta-item">
-                        <i class="fa-solid fa-calendar"></i>
+            <div class="act-card__body">
+                <h3 class="act-card__title">${escapeHtml(act.name)}</h3>
+                ${descHtml}
+                <div class="act-meta">
+                    <div class="act-meta__item">
+                        <i class="fa-regular fa-calendar"></i>
                         <span>${formatDate(act.activity_date)}</span>
                     </div>
-                    <div class="ap-card__meta-item">
-                        <i class="fa-solid fa-clock"></i>
+                    <div class="act-meta__item">
+                        <i class="fa-regular fa-clock"></i>
                         <span>${formatTime(act.start_time)}${act.end_time ? ' — ' + formatTime(act.end_time) : ''}</span>
                     </div>
-                    ${act.location ? `
-                    <div class="ap-card__meta-item">
-                        <i class="fa-solid fa-location-dot"></i>
-                        <span>${escapeHtml(act.location)}</span>
-                    </div>` : ''}
+                    ${locationItem}
                 </div>
-                <div class="ap-card__seats">
-                    <div class="ap-seat-pill ap-seat-pill--male">
-                        <i class="fa-solid fa-mars ap-seat-pill__icon"></i>رجال
-                        <span class="ap-seat-pill__count">${act.male_remaining}/${act.male_seats}</span>
-                    </div>
-                    <div class="ap-seat-pill ap-seat-pill--female">
-                        <i class="fa-solid fa-venus ap-seat-pill__icon"></i>نساء
-                        <span class="ap-seat-pill__count">${act.female_remaining}/${act.female_seats}</span>
+                <div class="seats">
+                    <div class="seat">
+                        <div class="seat__head">
+                            <span class="seat__head-l"><i class="fa-solid fa-chair"></i> المقاعد</span>
+                            <span class="seat__count">${totalRemaining}<small>/${totalSeats}</small></span>
+                        </div>
+                        <div class="seat__bar"><span style="width:${seatsPct}%"></span></div>
                     </div>
                 </div>
             </div>
-            <div class="ap-card__footer">
+            <div class="act-card__foot">
                 ${buttonHtml}
             </div>
         </article>`;
@@ -365,13 +395,15 @@
         const detailsEl = document.getElementById('confirmActivityDetails');
         if (detailsEl) {
             detailsEl.innerHTML = `
-            <div class="ap-confirm-details">
-                <h4>${escapeHtml(act.name)}</h4>
-                <ul>
-                    <li><i class="fa-solid fa-calendar"></i><span>${formatDate(act.activity_date)}</span></li>
-                    <li><i class="fa-solid fa-clock"></i><span>${formatTime(act.start_time)}${act.end_time ? ' — ' + formatTime(act.end_time) : ''}</span></li>
+            <div class="confirm">
+                <div class="confirm__head">
+                    <h3 class="confirm__title">${escapeHtml(act.name)}</h3>
+                </div>
+                <ul class="confirm__list">
+                    <li><i class="fa-regular fa-calendar"></i><span>${formatDate(act.activity_date)}</span></li>
+                    <li><i class="fa-regular fa-clock"></i><span>${formatTime(act.start_time)}${act.end_time ? ' — ' + formatTime(act.end_time) : ''}</span></li>
                     ${act.location ? `<li><i class="fa-solid fa-location-dot"></i><span>${escapeHtml(act.location)}</span></li>` : ''}
-                    <li><i class="fa-solid fa-user"></i><span>سيتم الحجز باسم: ${escapeHtml(state.currentProfile.full_name || state.currentProfile.email)}</span></li>
+                    <li><i class="fa-regular fa-user"></i><span>الحاجز: <b>${escapeHtml(state.currentProfile.full_name || state.currentProfile.email)}</b></span></li>
                 </ul>
             </div>`;
         }
@@ -387,14 +419,15 @@
 
         // الأعضاء يجب أن يكون لديهم gender في profiles
         if (state.accountType === 'member' && !state.currentProfile.gender) {
-            errBox.textContent = 'لا يمكن الحجز قبل تحديد الجنس في ملفك الشخصي بلوحة التحكم.';
-            errBox.style.display = 'block';
+            setBoxMessage(errBox, 'لا يمكن الحجز قبل تحديد الجنس في ملفك الشخصي بلوحة التحكم.');
+            errBox.style.display = 'flex';
             return;
         }
 
         btn.disabled = true;
+        btn.classList.add('btn--loading');
         const original = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>جاري الحجز...</span>';
+        btn.innerHTML = '<span>جاري الحجز...</span>';
 
         try {
             const { data, error } = await sb.rpc('book_activity_seat', { p_activity_id: state.selectedActivityId });
@@ -406,10 +439,11 @@
             loadActivities();
         } catch (err) {
             console.error('[activities] booking error:', err);
-            errBox.textContent = humanizeError(err.message || String(err));
-            errBox.style.display = 'block';
+            setBoxMessage(errBox, humanizeError(err.message || String(err)));
+            errBox.style.display = 'flex';
         } finally {
             btn.disabled = false;
+            btn.classList.remove('btn--loading');
             btn.innerHTML = original;
         }
     }
@@ -440,6 +474,7 @@
         const btn = document.getElementById('submitSignupBtn');
         const errBox = document.getElementById('signupError');
         errBox.style.display = 'none';
+        setBoxMessage(errBox, '');
 
         const fullName = document.getElementById('signupFullName').value.trim();
         const phoneRaw = document.getElementById('signupPhone').value.trim();
@@ -450,7 +485,11 @@
         const genderRadio = document.querySelector('input[name="signupGender"]:checked');
 
         // تحقق
-        if (!fullName || fullName.length < 3) return showSignupError('الرجاء إدخال الاسم الكامل.');
+        if (!fullName) return showSignupError('الرجاء إدخال الاسم الكامل.');
+        const arabicNameRe = /^[ء-ي]+(?:\s+[ء-ي]+){2,3}$/;
+        if (!arabicNameRe.test(fullName)) {
+            return showSignupError('الاسم يجب أن يكون ثلاثيًا أو رباعيًا وبحروف عربية فقط (بدون أرقام أو رموز).');
+        }
         const phone = normalizePhone(phoneRaw);
         if (!phone) return showSignupError('رقم الجوال غير صحيح. يجب أن يبدأ بـ 05 ويتكون من 10 أرقام.');
         if (!genderRadio) return showSignupError('الرجاء اختيار الجنس.');
@@ -458,8 +497,9 @@
         if (!password || password.length < 6) return showSignupError('كلمة المرور يجب أن تكون 6 أحرف فأكثر.');
 
         btn.disabled = true;
+        btn.classList.add('btn--loading');
         const original = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>جاري إنشاء الحساب...</span>';
+        btn.innerHTML = '<span>جاري إنشاء الحساب...</span>';
 
         try {
             // 1. أنشئ حساب Supabase Auth
@@ -505,14 +545,15 @@
             showSignupError(err.message || 'حدث خطأ أثناء إنشاء الحساب.');
         } finally {
             btn.disabled = false;
+            btn.classList.remove('btn--loading');
             btn.innerHTML = original;
         }
     }
 
     function showSignupError(msg) {
         const errBox = document.getElementById('signupError');
-        errBox.textContent = msg;
-        errBox.style.display = 'block';
+        setBoxMessage(errBox, msg);
+        errBox.style.display = 'flex';
     }
 
     // ============================================
@@ -527,14 +568,15 @@
         const password = document.getElementById('loginPassword').value;
 
         if (!email || !password) {
-            errBox.textContent = 'الرجاء إدخال البريد وكلمة المرور.';
-            errBox.style.display = 'block';
+            setBoxMessage(errBox, 'الرجاء إدخال البريد وكلمة المرور.');
+            errBox.style.display = 'flex';
             return;
         }
 
         btn.disabled = true;
+        btn.classList.add('btn--loading');
         const original = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>جاري الدخول...</span>';
+        btn.innerHTML = '<span>جاري الدخول...</span>';
 
         try {
             const { error } = await sb.auth.signInWithPassword({ email, password });
@@ -548,10 +590,11 @@
             }
         } catch (err) {
             console.error('[activities] login error:', err);
-            errBox.textContent = err.message || 'فشل تسجيل الدخول.';
-            errBox.style.display = 'block';
+            setBoxMessage(errBox, err.message || 'فشل تسجيل الدخول.');
+            errBox.style.display = 'flex';
         } finally {
             btn.disabled = false;
+            btn.classList.remove('btn--loading');
             btn.innerHTML = original;
         }
     }

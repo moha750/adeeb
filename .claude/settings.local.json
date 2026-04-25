@@ -157,7 +157,13 @@
       "Bash(node -e \"const fs=require\\('fs'\\);const data=JSON.parse\\(fs.readFileSync\\('advisor.json','utf-8'\\)\\);const text=data[0].text;const m=text.indexOf\\('{\\\\\"result\\\\\"'\\);const payload=JSON.parse\\(text.substring\\(m\\)\\);const keys=['election','lock_election','prevent_vote','set_updated_at_now','enforce_single_voting','cascade_membership','auto_grant','sweep_election','has_election','get_vote_weight','is_user_eligible','declare_winner','archive_election','submit_candidacy','cast_vote','withdraw_candidacy','review_candidate','cancel_election','transition_election','get_anonymized','get_candidates_with','get_eligible_elections','get_votable_elections','get_user_candidacies','get_election_results','count_user_election','get_user_primary_role'];payload.result.lints.forEach\\(l=>{if\\(keys.some\\(k=>\\(l.detail||''\\).includes\\(k\\)\\)\\){console.log\\(l.level,'|',l.name,'|',l.detail\\);}}\\);\")",
       "Bash(node --check \"c:/Users/moham/adeeb/admin/dashboard.js\")",
       "Bash(xargs -I {} sh -c 'echo \"{}:\"; head -3 \"c:/Users/moham/adeeb/admin/css/{}\" | grep -E \"^/\\\\*|نظام|نماذج\"')",
-      "Bash(node -c \"c:/Users/moham/adeeb/admin/js/elections-manager.js\")"
+      "Bash(node -c \"c:/Users/moham/adeeb/admin/js/elections-manager.js\")",
+      "Bash(node -e \"const fs=require\\('fs'\\);const c=fs.readFileSync\\('c:/Users/moham/adeeb/admin/js/elections-manager.js','utf8'\\);try{new Function\\(c\\);console.log\\('OK — parsed'\\);}catch\\(e\\){console.log\\('FAIL:',e.message\\);}\")",
+      "Bash(node -e \"const fs=require\\('fs'\\);const c=fs.readFileSync\\('c:/Users/moham/adeeb/admin/js/elections-manager.js','utf8'\\);try{new Function\\(c\\);console.log\\('OK'\\);}catch\\(e\\){console.log\\('FAIL:',e.message\\);}\")",
+      "Bash(awk '{print $NF}')",
+      "Bash(node -c c:/Users/moham/adeeb/assets/story-animations.js)",
+      "Bash(node -e \"const fs=require\\('fs'\\);const c=fs.readFileSync\\('c:/Users/moham/adeeb/assets/story-animations.css','utf8'\\);console.log\\('CSS lines:',c.split\\('\\\\n'\\).length,'chars:',c.length\\);console.log\\('Has @keyframes:',\\(c.match\\(/@keyframes/g\\)||[]\\).length\\);console.log\\('Has @media:',\\(c.match\\(/@media/g\\)||[]\\).length\\);\")",
+      "Bash(node -c c:/Users/moham/adeeb/script.js)"
     ]
   }
 }
