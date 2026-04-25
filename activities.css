@@ -11,22 +11,22 @@
 
 :root {
     /* — Surfaces */
-    --bg:              #F7F4EE;     /* خلفية كريمية دافئة */
-    --bg-tint:         #F2EDE3;     /* لمسة أعمق */
+    --bg:              #F4F5FA;     /* خلفية فاتحة مزرقة */
+    --bg-tint:         #E9EBF3;     /* لمسة أعمق */
     --surface:         #FFFFFF;
-    --surface-soft:    #FBF8F3;
-    --surface-glass:   rgba(255, 252, 247, 0.78);
+    --surface-soft:    #F7F8FC;
+    --surface-glass:   rgba(247, 248, 252, 0.78);
 
     /* — Brand */
-    --brand:           #274060;     /* أزرق النادي */
-    --brand-deep:      #18293F;
-    --brand-soft:      #E8EFF7;
-    --brand-tint:      #F1F5FA;
+    --brand:           #335c81;     /* أزرق النادي */
+    --brand-deep:      #274060;
+    --brand-soft:      #ADB4D7;
+    --brand-tint:      #EDEFF6;
 
-    /* — Accent (ذهبي/أدبي) */
-    --accent:          #C9A876;
-    --accent-deep:     #A8884F;
-    --accent-soft:     #F5EEE0;
+    /* — Accent (بنفسجي) */
+    --accent:          #6866AA;
+    --accent-deep:     #514F8E;
+    --accent-soft:     #DCDCEC;
 
     /* — Ink */
     --ink:             #1A2332;
@@ -35,9 +35,9 @@
     --ink-faint:       #B6BDC6;
 
     /* — Lines */
-    --line:            #ECE6DA;
-    --line-soft:       #F2EDE3;
-    --line-strong:     #DDD4C2;
+    --line:            #E2E5F0;
+    --line-soft:       #EDEFF6;
+    --line-strong:     #C9CEE2;
 
     /* — Semantic */
     --ok:              #2D7A5F;
@@ -73,17 +73,17 @@
     --r-full:          999px;
 
     /* — Shadows (طبقية، ناعمة، مبنية على لون النادي) */
-    --sh-xs:           0 1px 2px rgba(27, 42, 61, 0.04);
-    --sh-sm:           0 1px 3px rgba(27, 42, 61, 0.06),
-                       0 1px 2px rgba(27, 42, 61, 0.04);
-    --sh-md:           0 4px 8px rgba(27, 42, 61, 0.05),
-                       0 2px 4px rgba(27, 42, 61, 0.04);
-    --sh-card:         0 1px 2px rgba(27, 42, 61, 0.05),
-                       0 8px 24px rgba(27, 42, 61, 0.06);
-    --sh-card-h:       0 4px 8px rgba(27, 42, 61, 0.08),
-                       0 16px 36px rgba(27, 42, 61, 0.10);
-    --sh-modal:        0 30px 80px rgba(24, 41, 63, 0.20),
-                       0 10px 30px rgba(24, 41, 63, 0.10);
+    --sh-xs:           0 1px 2px rgba(39, 64, 96, 0.04);
+    --sh-sm:           0 1px 3px rgba(39, 64, 96, 0.06),
+                       0 1px 2px rgba(39, 64, 96, 0.04);
+    --sh-md:           0 4px 8px rgba(39, 64, 96, 0.05),
+                       0 2px 4px rgba(39, 64, 96, 0.04);
+    --sh-card:         0 1px 2px rgba(39, 64, 96, 0.05),
+                       0 8px 24px rgba(39, 64, 96, 0.06);
+    --sh-card-h:       0 4px 8px rgba(39, 64, 96, 0.08),
+                       0 16px 36px rgba(39, 64, 96, 0.10);
+    --sh-modal:        0 30px 80px rgba(39, 64, 96, 0.20),
+                       0 10px 30px rgba(39, 64, 96, 0.10);
     --sh-focus:        0 0 0 4px rgba(39, 64, 96, 0.16);
 
     /* — Type */
@@ -141,7 +141,7 @@ body {
     background: var(--bg);
     background-image:
         radial-gradient(ellipse 800px 400px at 85% -10%,
-            rgba(201, 168, 118, 0.10), transparent 60%),
+            rgba(104, 102, 170, 0.10), transparent 60%),
         radial-gradient(ellipse 1000px 500px at 10% 20%,
             rgba(39, 64, 96, 0.06), transparent 65%);
     background-attachment: fixed;
@@ -217,7 +217,7 @@ h1, h2, h3, h4, h5, h6, p {
 
 .site-header.is-scrolled {
     border-bottom-color: var(--line);
-    background: rgba(255, 252, 247, 0.92);
+    background: rgba(247, 248, 252, 0.92);
     box-shadow: var(--sh-sm);
 }
 
@@ -308,7 +308,7 @@ h1, h2, h3, h4, h5, h6, p {
     backdrop-filter: saturate(180%) blur(18px);
     -webkit-backdrop-filter: saturate(180%) blur(18px);
     border-top: 1px solid var(--line);
-    box-shadow: 0 -8px 24px rgba(24, 41, 63, 0.06);
+    box-shadow: 0 -8px 24px rgba(39, 64, 96, 0.06);
     padding-bottom: env(safe-area-inset-bottom);
 }
 
@@ -421,14 +421,14 @@ h1, h2, h3, h4, h5, h6, p {
 .btn--primary {
     background: var(--brand);
     color: #fff;
-    box-shadow: 0 1px 2px rgba(24, 41, 63, 0.2),
-                0 6px 16px rgba(24, 41, 63, 0.18);
+    box-shadow: 0 1px 2px rgba(39, 64, 96, 0.2),
+                0 6px 16px rgba(39, 64, 96, 0.18);
 }
 
 .btn--primary:hover:not(:disabled) {
     background: var(--brand-deep);
-    box-shadow: 0 1px 2px rgba(24, 41, 63, 0.25),
-                0 10px 24px rgba(24, 41, 63, 0.28);
+    box-shadow: 0 1px 2px rgba(39, 64, 96, 0.25),
+                0 10px 24px rgba(39, 64, 96, 0.28);
     transform: translateY(-1px);
 }
 
@@ -461,8 +461,8 @@ h1, h2, h3, h4, h5, h6, p {
 .btn--accent {
     background: var(--accent);
     color: #fff;
-    box-shadow: 0 1px 2px rgba(168, 136, 79, 0.25),
-                0 6px 16px rgba(168, 136, 79, 0.30);
+    box-shadow: 0 1px 2px rgba(81, 79, 142, 0.25),
+                0 6px 16px rgba(81, 79, 142, 0.30);
 }
 
 .btn--accent:hover:not(:disabled) {
@@ -576,7 +576,7 @@ h1, h2, h3, h4, h5, h6, p {
     z-index: -1;
     background:
         radial-gradient(ellipse 600px 300px at 80% 20%,
-            rgba(201, 168, 118, 0.18), transparent 60%),
+            rgba(104, 102, 170, 0.18), transparent 60%),
         radial-gradient(ellipse 700px 400px at 15% 85%,
             rgba(39, 64, 96, 0.10), transparent 60%);
 }
@@ -665,16 +665,16 @@ h1, h2, h3, h4, h5, h6, p {
     color: #fff;
     font-weight: 700;
     font-size: var(--fs-sm);
-    box-shadow: 0 1px 2px rgba(24, 41, 63, 0.2),
-                0 8px 24px rgba(24, 41, 63, 0.18);
+    box-shadow: 0 1px 2px rgba(39, 64, 96, 0.2),
+                0 8px 24px rgba(39, 64, 96, 0.18);
     transition: all var(--t-base) var(--ease);
 }
 
 .hero__cta:hover {
     background: var(--brand-deep);
     transform: translateY(-2px);
-    box-shadow: 0 1px 2px rgba(24, 41, 63, 0.25),
-                0 12px 32px rgba(24, 41, 63, 0.28);
+    box-shadow: 0 1px 2px rgba(39, 64, 96, 0.25),
+                0 12px 32px rgba(39, 64, 96, 0.28);
 }
 
 .hero__cta i {
@@ -859,9 +859,9 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 .chip--type {
-    background: rgba(255, 252, 247, 0.92);
+    background: rgba(247, 248, 252, 0.92);
     color: var(--brand-deep);
-    border: 1px solid rgba(24, 41, 63, 0.08);
+    border: 1px solid rgba(39, 64, 96, 0.08);
 }
 
 .chip--status {
@@ -1127,7 +1127,7 @@ h1, h2, h3, h4, h5, h6, p {
     border-bottom: 1px solid var(--line-soft);
     background:
         radial-gradient(ellipse 320px 120px at 50% 0%,
-            rgba(201, 168, 118, 0.12), transparent 70%);
+            rgba(104, 102, 170, 0.12), transparent 70%);
 }
 
 .modal__icon {
@@ -1674,7 +1674,7 @@ h1, h2, h3, h4, h5, h6, p {
     text-align: center;
     background:
         radial-gradient(ellipse 600px 240px at 50% 0%,
-            rgba(201, 168, 118, 0.12), transparent 70%);
+            rgba(104, 102, 170, 0.12), transparent 70%);
 }
 
 .back-link {
