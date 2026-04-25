@@ -58,6 +58,12 @@
 
             showLoading(false);
 
+            // إلزام تحديد الجنس للأعضاء القدامى الذين لم يحدّدوه
+            // (يجب أن يُعالَج قبل نافذة الترحيب)
+            if (window.GenderModal && !currentUser._isImpersonating && !currentUser.gender) {
+                await window.GenderModal.checkAndShow(currentUser);
+            }
+
             // إظهار نافذة الترحيب عند أول تسجيل دخول (لا تُعرض إلا مرة واحدة)
             if (window.WelcomeModal && !currentUser._isImpersonating) {
                 setTimeout(() => {
