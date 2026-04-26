@@ -163,7 +163,11 @@
       "Bash(awk '{print $NF}')",
       "Bash(node -c c:/Users/moham/adeeb/assets/story-animations.js)",
       "Bash(node -e \"const fs=require\\('fs'\\);const c=fs.readFileSync\\('c:/Users/moham/adeeb/assets/story-animations.css','utf8'\\);console.log\\('CSS lines:',c.split\\('\\\\n'\\).length,'chars:',c.length\\);console.log\\('Has @keyframes:',\\(c.match\\(/@keyframes/g\\)||[]\\).length\\);console.log\\('Has @media:',\\(c.match\\(/@media/g\\)||[]\\).length\\);\")",
-      "Bash(node -c c:/Users/moham/adeeb/script.js)"
+      "Bash(node -c c:/Users/moham/adeeb/script.js)",
+      "Bash(node --check /Users/m7_almattar/adeeb/admin/js/elections-manager.js)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(/usr/bin/osascript -l JavaScript -e \"const fs = $.NSString.stringWithContentsOfFileEncodingError\\('/Users/m7_almattar/adeeb/admin/js/elections-manager.js', 4, $\\(\\)\\); try { new Function\\(fs.js\\); 'OK' } catch\\(e\\) { 'FAIL: ' + e.message }\")",
+      "Bash(/usr/bin/osascript -l JavaScript -e ' *)"
     ]
   }
 }

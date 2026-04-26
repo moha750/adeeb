@@ -3731,19 +3731,29 @@
                         <option value="past">منتهية</option>
                         <option value="cancelled">ملغاة</option>
                     </select>
-                    <button class="btn btn-outline" id="refreshActivitiesBtn" type="button">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-                    <button class="btn btn-primary" id="goToCreateActivityBtn" type="button">
-                        <i class="fa-solid fa-plus"></i>
-                        إنشاء نشاط جديد
-                    </button>
                 </div>
 
                 <!-- قائمة الأنشطة -->
-                <div id="activitiesListContainer">
-                    <!-- سيتم ملؤها ديناميكياً -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-calendar-days"></i> قائمة الأنشطة</h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="refreshActivitiesBtn" type="button" title="تحديث">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="activitiesListContainer">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions-sticky">
+                    <div class="form-actions-bar">
+                        <button class="btn btn-primary" id="goToCreateActivityBtn" type="button">
+                            <i class="fa-solid fa-plus"></i> إنشاء نشاط جديد
+                        </button>
+                    </div>
                 </div>
             </section>
 

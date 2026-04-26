@@ -363,7 +363,7 @@
                     <div class="seat">
                         <div class="seat__head">
                             <span class="seat__head-l"><i class="fa-solid fa-chair"></i> المقاعد</span>
-                            <span class="seat__count">${totalRemaining}<small>/${totalSeats}</small></span>
+                            <span class="seat__count"><small>${totalSeats}/</small>${Math.max(0, totalSeats - totalRemaining)}</span>
                         </div>
                         <div class="seat__bar"><span style="width:${seatsPct}%"></span></div>
                     </div>

@@ -170,7 +170,7 @@ class ActivitiesManager {
         } else if (isPast) {
             statusBadge = `<span class="uc-card__badge" style="background:rgba(100,116,139,0.15);color:#475569;"><i class="fa-solid fa-clock-rotate-left"></i> منتهٍ</span>`;
         } else if (a.is_published) {
-            statusBadge = `<span class="uc-card__badge" style="background:rgba(16,185,129,0.12);color:#047857;"><i class="fa-solid fa-circle-check"></i> منشور</span>`;
+            statusBadge = `<span class="uc-card__badge"><i class="fa-solid fa-circle-check"></i> منشور</span>`;
         } else {
             statusBadge = `<span class="uc-card__badge" style="background:rgba(245,158,11,0.12);color:#b45309;"><i class="fa-solid fa-pen"></i> مسودة</span>`;
         }
@@ -179,7 +179,7 @@ class ActivitiesManager {
         <div class="uc-card" data-activity-id="${this.escapeHtml(a.id)}">
             <div class="uc-card__header">
                 <div class="uc-card__header-inner">
-                    <div class="uc-card__icon" style="background:linear-gradient(135deg,#274060,#3d8fd6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">
+                    <div class="uc-card__icon">
                         <i class="fa-solid fa-calendar-day"></i>
                     </div>
                     <div class="uc-card__header-info">
