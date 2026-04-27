@@ -167,7 +167,9 @@
       "Bash(node --check /Users/m7_almattar/adeeb/admin/js/elections-manager.js)",
       "Bash(echo \"exit:$?\")",
       "Bash(/usr/bin/osascript -l JavaScript -e \"const fs = $.NSString.stringWithContentsOfFileEncodingError\\('/Users/m7_almattar/adeeb/admin/js/elections-manager.js', 4, $\\(\\)\\); try { new Function\\(fs.js\\); 'OK' } catch\\(e\\) { 'FAIL: ' + e.message }\")",
-      "Bash(/usr/bin/osascript -l JavaScript -e ' *)"
+      "Bash(/usr/bin/osascript -l JavaScript -e ' *)",
+      "PowerShell(claude mcp list 2>&1)",
+      "Bash(python -c ' *)"
     ]
   }
 }

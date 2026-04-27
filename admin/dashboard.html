@@ -3780,17 +3780,29 @@
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label" for="actType">نوع النشاط</label>
+                                <label class="form-label" for="actType">
+                                    نوع النشاط <span class="required-dot"></span>
+                                </label>
                                 <select id="actType" class="form-select">
-                                    <option value="activity">نشاط</option>
-                                    <option value="program">برنامج</option>
+                                    <option value="">— اختر —</option>
                                     <option value="workshop">ورشة</option>
+                                    <option value="dialogue">جلسة حوارية</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="actLocation">المكان</label>
+                                <label class="form-label" for="actLocation">
+                                    المكان <span class="required-dot"></span>
+                                </label>
                                 <input type="text" id="actLocation" class="form-input" placeholder="مكان إقامة النشاط" />
                             </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="actLocationUrl">
+                                رابط الموقع على خرائط قوقل <span class="required-dot"></span>
+                            </label>
+                            <input type="url" id="actLocationUrl" class="form-input" dir="ltr"
+                                placeholder="https://maps.app.goo.gl/..." />
                         </div>
 
                         <div class="form-row">
@@ -3807,7 +3819,9 @@
                                 <input type="time" id="actStartTime" class="form-input" />
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="actEndTime">وقت الانتهاء</label>
+                                <label class="form-label" for="actEndTime">
+                                    وقت الانتهاء <span class="required-dot"></span>
+                                </label>
                                 <input type="time" id="actEndTime" class="form-input" />
                             </div>
                         </div>
@@ -3821,22 +3835,24 @@
                     <div class="card-body card-body--form">
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label" for="actTotalSeats">
-                                    إجمالي عدد المقاعد <span class="required-dot"></span>
+                                <label class="form-label" for="actMaleSeats">
+                                    <i class="fa-solid fa-mars"></i>
+                                    مقاعد الرجال <span class="required-dot"></span>
                                 </label>
-                                <input type="number" id="actTotalSeats" class="form-input" min="1" placeholder="مثال: 30" />
+                                <input type="number" id="actMaleSeats" class="form-input" min="0" placeholder="مثال: 15" />
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="actMalePercentage">
-                                    نسبة الرجال (%) <span class="required-dot"></span>
+                                <label class="form-label" for="actFemaleSeats">
+                                    <i class="fa-solid fa-venus"></i>
+                                    مقاعد النساء <span class="required-dot"></span>
                                 </label>
-                                <input type="number" id="actMalePercentage" class="form-input" min="0" max="100" placeholder="0 - 100" />
+                                <input type="number" id="actFemaleSeats" class="form-input" min="0" placeholder="مثال: 15" />
                             </div>
                         </div>
                         <div class="form-group">
                             <span class="form-section-hint">
                                 <i class="fa-solid fa-info-circle"></i>
-                                المعاينة: <strong id="seatsPreview">—</strong>
+                                الإجمالي: <strong id="seatsPreview">—</strong>
                             </span>
                         </div>
                     </div>
@@ -3854,23 +3870,19 @@
                             </label>
                             <div id="actCoverImageMount"></div>
                         </div>
-                        <label class="form-checkbox">
-                            <input type="checkbox" id="actPublishImmediately" />
-                            <span>نشر النشاط مباشرة (يصبح مرئيًا للزوار)</span>
-                        </label>
                     </div>
                 </div>
 
                 <!-- شريط الإجراءات -->
                 <div class="form-actions-sticky">
                     <div class="form-actions-bar">
-                        <button class="btn btn-slate" id="resetActivityFormBtn" type="button">
-                            <i class="fa-solid fa-rotate-left"></i>
-                            إعادة تعيين
+                        <button class="btn btn-info" id="saveActivityDraftBtn" type="button">
+                            <i class="fa-solid fa-pen"></i>
+                            حفظ كمسودة
                         </button>
                         <button class="btn btn-primary" id="saveActivityBtn" type="button">
-                            <i class="fa-solid fa-floppy-disk"></i>
-                            حفظ النشاط
+                            <i class="fa-solid fa-circle-check"></i>
+                            نشر النشاط
                         </button>
                     </div>
                 </div>
@@ -3882,6 +3894,11 @@
                 <div class="filters-bar">
                     <select id="reservationsActivityFilter" class="filter-select">
                         <option value="">جميع الأنشطة</option>
+                    </select>
+                    <select id="reservationsWhatsappFilter" class="filter-select">
+                        <option value="">جميع حالات التأكيد</option>
+                        <option value="pending">بانتظار تأكيد واتساب</option>
+                        <option value="confirmed">تم تأكيد الواتساب</option>
                     </select>
                     <button class="btn btn-outline" id="refreshReservationsBtn" type="button">
                         <i class="fa-solid fa-rotate"></i>
@@ -3924,6 +3941,136 @@
 
                 <div id="visitorsTableContainer">
                     <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </section>
+
+            <!-- قسم: تسجيل الحضور -->
+            <section id="activities-attendance-section" class="admin-section d-none">
+
+                <!-- إدارة منسّقي الأنشطة (للأدمن فقط) -->
+                <div id="attendanceCoordinatorAdmin" class="card mb-2 d-none">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-user-shield"></i> إسداء مهمة تسجيل الحضور</h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="attendanceCoordsRefreshBtn" type="button" title="تحديث">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                    <div class="card-body card-body--form" style="z-index:5;">
+                        <div class="form-group">
+                            <label class="form-label" for="attendanceCoordSearch">
+                                <i class="label-icon fa-solid fa-magnifying-glass"></i>
+                                البحث عن عضو لإسداء المهمة
+                            </label>
+                            <div class="form-input-wrap has-icon-start">
+                                <span class="form-icon-start"><i class="fa-solid fa-search"></i></span>
+                                <input type="search" id="attendanceCoordSearch" class="form-input"
+                                       placeholder="ابحث بالاسم أو البريد أو الجوال…" autocomplete="off" />
+                                <div id="attendanceCoordSearchResults" class="autocomplete-menu"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body" id="attendanceCoordList">
+                        <!-- يُملأ ديناميكيًا -->
+                    </div>
+                </div>
+
+                <!-- شاشة "لا يوجد نشاط نشط الآن" -->
+                <div id="attendanceEmptyState" class="d-none">
+                    <div class="empty-state">
+                        <div class="empty-state__icon"><i class="fa-regular fa-calendar"></i></div>
+                        <p class="empty-state__title">لا يوجد نشاط نشط الآن</p>
+                        <p class="empty-state__msg">ستظهر الأنشطة هنا قبل بدئها بساعة، وتختفي بعد ساعة من انتهائها.</p>
+                        <div style="margin-top:1rem;">
+                            <button class="btn btn-outline" id="attendanceRefreshBtn" type="button">
+                                <i class="fa-solid fa-rotate"></i> تحديث
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1) قائمة الأنشطة الحيّة الآن -->
+                <div id="attendanceActivitiesView" class="d-none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-clipboard-check"></i> اختر النشاط لتسجيل حضوره</h3>
+                            <button class="btn btn-primary btn-icon btn-outline" id="attendanceRefreshBtn2" type="button" title="تحديث">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="attendanceActivitiesList">
+                                <!-- يُملأ ديناميكيًا -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2) قائمة المسجّلين لنشاط محدد -->
+                <div id="attendanceRosterView" class="d-none">
+                    <nav class="page-breadcrumb" aria-label="مسار التنقل">
+                        <ol>
+                            <li>
+                                <button type="button" class="breadcrumb-link" id="attendanceBackBtn">
+                                    <i class="fa-solid fa-clipboard-check"></i>
+                                    اختر النشاط
+                                </button>
+                            </li>
+                            <li class="breadcrumb-sep" aria-hidden="true">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </li>
+                            <li class="breadcrumb-current" id="attendanceBreadcrumbCurrent" aria-current="page">—</li>
+                        </ol>
+                    </nav>
+
+                    <div class="stats-grid">
+                        <div class="stat-card" style="--stat-color: #10b981">
+                            <div class="stat-card-wrapper">
+                                <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="attendanceStatAttended">0</div>
+                                    <div class="stat-label">حاضر</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card" style="--stat-color: #ef4444">
+                            <div class="stat-card-wrapper">
+                                <div class="stat-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="attendanceStatNoShow">0</div>
+                                    <div class="stat-label">لم يحضر</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card" style="--stat-color: #64748b">
+                            <div class="stat-card-wrapper">
+                                <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="attendanceStatPending">0</div>
+                                    <div class="stat-label">بانتظار</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filters-bar">
+                        <div class="filter-group">
+                            <i class="fa-solid fa-search"></i>
+                            <input type="search" id="attendanceSearchInput" class="input input-text"
+                                   placeholder="ابحث بالاسم أو الجوال…" autocomplete="off" />
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-users"></i> <span id="attendanceRosterTitle">—</span></h3>
+                            <button class="btn btn-primary btn-icon btn-outline" id="attendanceRefreshRosterBtn" type="button" title="تحديث القائمة">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                        </div>
+                        <div class="card-body" id="attendanceRosterList">
+                            <!-- يُملأ ديناميكيًا -->
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -4725,6 +4872,7 @@
     <script src="js/send-notifications.js"></script>
     <script src="js/permissions-helper.js"></script>
     <script src="js/activities-manager.js"></script>
+    <script src="js/attendance-manager.js"></script>
     <!-- SweetAlert2 Shim - يحوّل Swal.fire إلى ModalHelper -->
     <script src="js/swal-shim.js"></script>
     <script src="js/settings.js"></script>

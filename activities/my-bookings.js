@@ -171,8 +171,11 @@
                     reserved_at,
                     cancelled_at,
                     gender_at_booking,
+                    attendance_status,
+                    attended_at,
+                    certificate_serial,
                     activity:activities (
-                        id, name, description, activity_type, location,
+                        id, name, description, activity_type, location, location_url,
                         activity_date, start_time, end_time, is_cancelled,
                         cover_image_url
                     )
@@ -268,6 +271,8 @@
                 ? `<img src="${escapeHtml(a.cover_image_url)}" alt="${escapeHtml(a.name)}" />`
                 : `<i class="fa-solid ${activityTypeIcon(a.activity_type)}"></i>`;
 
+            const certBlock = renderCertificateBlock(b);
+
             return `
             <article class="booking ${st === 'cancelled' || st === 'event-cancelled' || st === 'past' ? 'is-dim' : ''}" data-reservation-id="${escapeHtml(b.id)}">
                 <div class="booking__media">
@@ -282,8 +287,13 @@
                     <div class="booking__meta">
                         <span><i class="fa-regular fa-calendar"></i> ${formatDate(a.activity_date)}</span>
                         <span><i class="fa-regular fa-clock"></i> ${formatTime(a.start_time)}${a.end_time ? ' — ' + formatTime(a.end_time) : ''}</span>
-                        ${a.location ? `<span><i class="fa-solid fa-location-dot"></i> ${escapeHtml(a.location)}</span>` : ''}
+                        ${a.location ? (
+                            a.location_url
+                                ? `<a href="${escapeHtml(a.location_url)}" target="_blank" rel="noopener noreferrer" class="booking__loc-link"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(a.location)} <i class="fa-solid fa-up-right-from-square" style="font-size:0.7em;"></i></a>`
+                                : `<span><i class="fa-solid fa-location-dot"></i> ${escapeHtml(a.location)}</span>`
+                        ) : ''}
                     </div>
+                    ${certBlock}
                 </div>
                 ${cancelBtn ? `<div class="booking__action">${cancelBtn}</div>` : ''}
             </article>`;
@@ -293,6 +303,65 @@
         els.container.querySelectorAll('[data-cancel-reservation]').forEach(btn => {
             btn.addEventListener('click', () => openCancelModal(btn.dataset.cancelReservation, btn.dataset.activityName));
         });
+
+        // ربط أزرار تنزيل الشهادة
+        els.container.querySelectorAll('[data-download-certificate]').forEach(btn => {
+            btn.addEventListener('click', () => downloadCertificateForBooking(btn.dataset.downloadCertificate, btn));
+        });
+    }
+
+    function renderCertificateBlock(b) {
+        const a = b.activity;
+        if (!a || b.status === 'cancelled') return '';
+        if (b.attendance_status === 'attended' && b.certificate_serial) {
+            return `
+            <div class="booking__cert" style="margin-top:0.75rem;padding:0.7rem 0.85rem;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:0.5rem;color:#047857;font-weight:600;">
+                    <i class="fa-solid fa-award"></i>
+                    <span>شهادة الحضور جاهزة</span>
+                    <span style="font-family:'Courier New',monospace;font-size:0.85rem;color:#065f46;direction:ltr;">${escapeHtml(b.certificate_serial)}</span>
+                </div>
+                <button type="button" class="btn btn--primary btn--sm" data-download-certificate="${escapeHtml(b.id)}">
+                    <i class="fa-solid fa-download"></i>
+                    <span>تنزيل الشهادة</span>
+                </button>
+            </div>`;
+        }
+        if (b.attendance_status === 'no_show') {
+            return `
+            <div class="booking__cert" style="margin-top:0.75rem;padding:0.6rem 0.85rem;background:#f1f5f9;border-radius:8px;color:#64748b;font-size:0.9rem;">
+                <i class="fa-solid fa-circle-info"></i>
+                لم يُسجَّل حضورك في هذا النشاط، لذا لا تتوفر شهادة.
+            </div>`;
+        }
+        return '';
+    }
+
+    async function downloadCertificateForBooking(reservationId, btn) {
+        const b = bookings.find(x => x.id === reservationId);
+        if (!b || !b.activity || !b.certificate_serial) return;
+        if (!window.AdeebCertificate) {
+            alert('وحدة الشهادة غير محمّلة');
+            return;
+        }
+        const original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>جاري التجهيز…</span>';
+        try {
+            await window.AdeebCertificate.downloadCertificate({
+                holderName:   currentProfile?.full_name || 'حاضر',
+                activityName: b.activity.name,
+                activityType: b.activity.activity_type,
+                activityDate: b.activity.activity_date,
+                serial:       b.certificate_serial,
+            });
+        } catch (err) {
+            console.error('[my-bookings] downloadCertificate:', err);
+            alert('فشل تنزيل الشهادة: ' + (err.message || err));
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = original;
+        }
     }
 
     // ============================================

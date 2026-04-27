@@ -271,6 +271,7 @@
             }
             renderActivities();
             showState('grid');
+            focusActivityFromHash();
         } catch (err) {
             console.error('[activities] loadActivities error:', err);
             showError(err.message || 'حدث خطأ في تحميل الأنشطة');
@@ -284,6 +285,22 @@
         // ربط أزرار الحجز
         els.grid.querySelectorAll('[data-book-activity]').forEach(btn => {
             btn.addEventListener('click', () => onBookClick(btn.dataset.bookActivity));
+        });
+    }
+
+    function focusActivityFromHash() {
+        const hash = (window.location.hash || '').replace(/^#/, '').trim();
+        if (!hash || !els.grid) return;
+        const card = els.grid.querySelector(`[data-activity-id="${CSS.escape(hash)}"]`);
+        if (!card) return;
+
+        // ننتظر إطارَين حتى يُطبَّق showState('grid') ويصبح العنصر مرئيًا
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                card.classList.add('act-card--highlight');
+                setTimeout(() => card.classList.remove('act-card--highlight'), 2400);
+            });
         });
     }
 

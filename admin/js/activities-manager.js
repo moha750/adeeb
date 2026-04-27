@@ -13,7 +13,7 @@ class ActivitiesManager {
         this.reservations = [];
         this.visitors = [];
         this.currentEditingId = null;
-        this.filters = { search: '', status: '', activityFilter: '' };
+        this.filters = { search: '', status: '', activityFilter: '', whatsappStatus: '' };
         console.log('ActivitiesManager: Initialized');
     }
 
@@ -32,6 +32,8 @@ class ActivitiesManager {
     // 1. قائمة الأنشطة
     // ============================================
     attachListListeners() {
+        if (this._listListenersAttached) return;
+        this._listListenersAttached = true;
         const searchInput = document.getElementById('activitiesSearchInput');
         const statusFilter = document.getElementById('activitiesStatusFilter');
         const refreshBtn = document.getElementById('refreshActivitiesBtn');
@@ -102,13 +104,22 @@ class ActivitiesManager {
         }
     }
 
+    isActivityPast(a) {
+        const now = new Date();
+        const datePart = a.activity_date;
+        if (!datePart) return false;
+        const endTime = a.end_time || '23:59:59';
+        // ملاحظة: يفترض أن activity_date و end_time بتوقيت محلي (السعودية)
+        const endIso = `${datePart}T${endTime.length === 5 ? endTime + ':00' : endTime}`;
+        const endDt = new Date(endIso);
+        return endDt.getTime() <= now.getTime();
+    }
+
     updateStatistics() {
         const total = this.activities.length;
         const published = this.activities.filter(a => a.is_published && !a.is_cancelled).length;
         const upcoming = this.activities.filter(a => {
-            const d = new Date(a.activity_date);
-            const today = new Date(); today.setHours(0, 0, 0, 0);
-            return d >= today && a.is_published && !a.is_cancelled;
+            return !this.isActivityPast(a) && a.is_published && !a.is_cancelled;
         }).length;
         const totalBookings = this.activities.reduce((s, a) => s + (a.male_booked + a.female_booked), 0);
 
@@ -128,13 +139,12 @@ class ActivitiesManager {
                 a.name.toLowerCase().includes(this.filters.search.toLowerCase()) ||
                 (a.description && a.description.toLowerCase().includes(this.filters.search.toLowerCase()));
 
-            const today = new Date(); today.setHours(0, 0, 0, 0);
-            const actDate = new Date(a.activity_date);
+            const isPast = this.isActivityPast(a);
 
             let statusMatch = true;
             if (this.filters.status === 'draft') statusMatch = !a.is_published && !a.is_cancelled;
-            else if (this.filters.status === 'published') statusMatch = a.is_published && !a.is_cancelled && actDate >= today;
-            else if (this.filters.status === 'past') statusMatch = actDate < today;
+            else if (this.filters.status === 'published') statusMatch = a.is_published && !a.is_cancelled && !isPast;
+            else if (this.filters.status === 'past') statusMatch = isPast;
             else if (this.filters.status === 'cancelled') statusMatch = a.is_cancelled;
 
             return matchSearch && statusMatch;
@@ -160,19 +170,17 @@ class ActivitiesManager {
     }
 
     renderActivityCard(a) {
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        const actDate = new Date(a.activity_date);
-        const isPast = actDate < today;
+        const isPast = this.isActivityPast(a);
 
         let statusBadge;
         if (a.is_cancelled) {
-            statusBadge = `<span class="uc-card__badge" style="background:rgba(239,68,68,0.1);color:#dc2626;"><i class="fa-solid fa-ban"></i> ملغي</span>`;
+            statusBadge = `<span class="uc-card__badge"><i class="fa-solid fa-ban"></i> ملغي</span>`;
         } else if (isPast) {
-            statusBadge = `<span class="uc-card__badge" style="background:rgba(100,116,139,0.15);color:#475569;"><i class="fa-solid fa-clock-rotate-left"></i> منتهٍ</span>`;
+            statusBadge = `<span class="uc-card__badge"><i class="fa-solid fa-clock-rotate-left"></i> مُنتهي</span>`;
         } else if (a.is_published) {
             statusBadge = `<span class="uc-card__badge"><i class="fa-solid fa-circle-check"></i> منشور</span>`;
         } else {
-            statusBadge = `<span class="uc-card__badge" style="background:rgba(245,158,11,0.12);color:#b45309;"><i class="fa-solid fa-pen"></i> مسودة</span>`;
+            statusBadge = `<span class="uc-card__badge"><i class="fa-solid fa-pen"></i> مسودة</span>`;
         }
 
         return `
@@ -225,18 +233,21 @@ class ActivitiesManager {
                     </div>
                 </div>
             </div>
-            <div class="uc-card__footer" style="display:flex;flex-wrap:wrap;gap:0.4rem;">
-                <button class="btn btn-outline " data-edit-activity="${this.escapeHtml(a.id)}">
+            <div class="uc-card__footer">
+                <button class="btn btn-violet" data-edit-activity="${this.escapeHtml(a.id)}">
                     <i class="fa-solid fa-pen"></i> تعديل
                 </button>
-                <button class="btn ${a.is_published ? 'btn-slate' : 'btn-success'} " data-toggle-publish="${this.escapeHtml(a.id)}">
+                <button class="btn ${a.is_published ? 'btn-slate' : 'btn-success'}" data-toggle-publish="${this.escapeHtml(a.id)}">
                     <i class="fa-solid fa-${a.is_published ? 'eye-slash' : 'eye'}"></i>
                     ${a.is_published ? 'إلغاء النشر' : 'نشر'}
                 </button>
-                ${!a.is_cancelled ? `<button class="btn btn-warning " data-cancel-activity="${this.escapeHtml(a.id)}">
+                ${(a.is_published && !a.is_cancelled) ? `<button class="btn btn-success" data-copy-booking-link="${this.escapeHtml(a.id)}">
+                    <i class="fa-solid fa-link"></i> نسخ رابط الحجز
+                </button>` : ''}
+                ${!a.is_cancelled ? `<button class="btn btn-warning" data-cancel-activity="${this.escapeHtml(a.id)}">
                     <i class="fa-solid fa-ban"></i> إلغاء
                 </button>` : ''}
-                <button class="btn btn-danger " data-delete-activity="${this.escapeHtml(a.id)}">
+                <button class="btn btn-danger" data-delete-activity="${this.escapeHtml(a.id)}">
                     <i class="fa-solid fa-trash"></i> حذف
                 </button>
             </div>
@@ -259,51 +270,86 @@ class ActivitiesManager {
         container.querySelectorAll('[data-delete-activity]').forEach(b => {
             b.addEventListener('click', () => this.deleteActivity(b.dataset.deleteActivity));
         });
+        container.querySelectorAll('[data-copy-booking-link]').forEach(b => {
+            b.addEventListener('click', () => this.copyBookingLink(b.dataset.copyBookingLink));
+        });
+    }
+
+    buildBookingUrl(activityId) {
+        const origin = window.location.origin;
+        const path = window.location.pathname;
+        // /admin/dashboard.html → /activities.html
+        const base = path.replace(/\/admin\/[^/]*$/, '/');
+        return `${origin}${base}activities.html#${activityId}`;
+    }
+
+    async copyBookingLink(activityId) {
+        const url = this.buildBookingUrl(activityId);
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(url);
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = url;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+            this.notifySuccess('تم نسخ رابط الحجز');
+        } catch (err) {
+            console.error('ActivitiesManager: copyBookingLink error', err);
+            this.notifyError('تعذّر نسخ الرابط: ' + (err.message || ''));
+        }
     }
 
     // ============================================
     // 2. نموذج الإنشاء/التعديل
     // ============================================
     attachCreateFormListeners() {
+        if (this._createFormListenersAttached) return;
+        this._createFormListenersAttached = true;
         const saveBtn = document.getElementById('saveActivityBtn');
-        const resetBtn = document.getElementById('resetActivityFormBtn');
-        const totalInput = document.getElementById('actTotalSeats');
-        const pctInput = document.getElementById('actMalePercentage');
+        const saveDraftBtn = document.getElementById('saveActivityDraftBtn');
+        const maleInput = document.getElementById('actMaleSeats');
+        const femaleInput = document.getElementById('actFemaleSeats');
 
-        if (saveBtn) saveBtn.addEventListener('click', () => this.saveActivity());
-        if (resetBtn) resetBtn.addEventListener('click', () => this.resetCreateForm());
+        if (saveBtn) saveBtn.addEventListener('click', () => this.saveActivity({ publish: true }));
+        if (saveDraftBtn) saveDraftBtn.addEventListener('click', () => this.saveActivity({ publish: false }));
 
         const recalc = () => {
-            const total = parseInt(totalInput?.value || '0', 10);
-            const pct = parseInt(pctInput?.value || '0', 10);
-            if (total > 0 && pct >= 0 && pct <= 100) {
-                const male = Math.floor(total * pct / 100);
-                const female = total - male;
-                const preview = document.getElementById('seatsPreview');
-                if (preview) preview.textContent = `رجال: ${male} مقعد — نساء: ${female} مقعد`;
+            const male = parseInt(maleInput?.value || '0', 10) || 0;
+            const female = parseInt(femaleInput?.value || '0', 10) || 0;
+            const preview = document.getElementById('seatsPreview');
+            if (preview) {
+                const total = male + female;
+                preview.textContent = total > 0
+                    ? `${total} مقعد (رجال: ${male} — نساء: ${female})`
+                    : '—';
             }
         };
-        if (totalInput) totalInput.addEventListener('input', recalc);
-        if (pctInput) pctInput.addEventListener('input', recalc);
+        if (maleInput) maleInput.addEventListener('input', recalc);
+        if (femaleInput) femaleInput.addEventListener('input', recalc);
 
         this.renderCoverUploader(null);
     }
 
     resetCreateForm() {
-        const ids = ['actName', 'actDescription', 'actLocation', 'actDate', 'actStartTime', 'actEndTime', 'actTotalSeats', 'actMalePercentage'];
+        const ids = ['actName', 'actDescription', 'actLocation', 'actLocationUrl', 'actDate', 'actStartTime', 'actEndTime', 'actMaleSeats', 'actFemaleSeats'];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
         const typeEl = document.getElementById('actType');
         if (typeEl) typeEl.value = 'activity';
-        const publishEl = document.getElementById('actPublishImmediately');
-        if (publishEl) publishEl.checked = false;
         const preview = document.getElementById('seatsPreview');
         if (preview) preview.textContent = '—';
         this.renderCoverUploader(null);
         const titleEl = document.getElementById('createActivityFormTitle');
         if (titleEl) titleEl.textContent = this.currentEditingId ? 'تعديل النشاط' : 'إنشاء نشاط جديد';
+        this.updateSaveButtonsState(null);
     }
 
     renderCoverUploader(currentImageUrl) {
@@ -331,55 +377,126 @@ class ActivitiesManager {
         set('actDescription', a.description);
         set('actType', a.activity_type);
         set('actLocation', a.location);
+        set('actLocationUrl', a.location_url);
         set('actDate', a.activity_date);
         set('actStartTime', a.start_time);
         set('actEndTime', a.end_time);
-        set('actTotalSeats', a.total_seats);
-        set('actMalePercentage', a.male_percentage);
+        set('actMaleSeats', a.male_seats);
+        set('actFemaleSeats', a.female_seats);
         this.renderCoverUploader(a.cover_image_url);
 
-        const publishEl = document.getElementById('actPublishImmediately');
-        if (publishEl) publishEl.checked = a.is_published;
-
         const preview = document.getElementById('seatsPreview');
-        if (preview) preview.textContent = `رجال: ${a.male_seats} مقعد — نساء: ${a.female_seats} مقعد`;
+        if (preview) preview.textContent = `${a.total_seats} مقعد (رجال: ${a.male_seats} — نساء: ${a.female_seats})`;
 
         const titleEl = document.getElementById('createActivityFormTitle');
         if (titleEl) titleEl.textContent = 'تعديل النشاط';
 
+        this.updateSaveButtonsState(a);
+
         if (window.navigateToSection) window.navigateToSection('activities-create-section');
     }
 
-    async saveActivity() {
+    updateSaveButtonsState(activity) {
+        const saveDraftBtn = document.getElementById('saveActivityDraftBtn');
+        const saveBtn = document.getElementById('saveActivityBtn');
+        const isPublished = !!(activity && activity.is_published && !activity.is_cancelled);
+        if (saveDraftBtn) {
+            saveDraftBtn.style.display = isPublished ? 'none' : '';
+            saveDraftBtn.disabled = false;
+            saveDraftBtn.title = '';
+        }
+        if (saveBtn) {
+            saveBtn.innerHTML = isPublished
+                ? '<i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات'
+                : '<i class="fa-solid fa-circle-check"></i> نشر النشاط';
+        }
+    }
+
+    async saveActivity({ publish = true } = {}) {
         if (this._isSaving) return;
         const sb = window.sbClient;
         const saveBtn = document.getElementById('saveActivityBtn');
+        const saveDraftBtn = document.getElementById('saveActivityDraftBtn');
         const name = document.getElementById('actName')?.value.trim();
         const description = document.getElementById('actDescription')?.value.trim();
-        const activityType = document.getElementById('actType')?.value || 'activity';
+        const activityType = document.getElementById('actType')?.value || '';
         const location = document.getElementById('actLocation')?.value.trim();
+        const locationUrl = document.getElementById('actLocationUrl')?.value.trim();
         const activityDate = document.getElementById('actDate')?.value;
         const startTime = document.getElementById('actStartTime')?.value;
-        const endTime = document.getElementById('actEndTime')?.value || null;
-        const totalSeats = parseInt(document.getElementById('actTotalSeats')?.value || '0', 10);
-        const malePct = parseInt(document.getElementById('actMalePercentage')?.value || '0', 10);
+        const endTime = document.getElementById('actEndTime')?.value;
+        const maleSeatsRaw = document.getElementById('actMaleSeats')?.value;
+        const femaleSeatsRaw = document.getElementById('actFemaleSeats')?.value;
+        const maleSeats = parseInt(maleSeatsRaw || '', 10);
+        const femaleSeats = parseInt(femaleSeatsRaw || '', 10);
         const coverImageUrl = (window.ImageUploadHelper
             ? window.ImageUploadHelper.getCoverImageUrl('actCoverImage')
             : document.getElementById('actCoverImage_url')?.value) || null;
-        const publishImmediately = document.getElementById('actPublishImmediately')?.checked;
+        const publishImmediately = !!publish;
 
         if (!name) return this.notifyError('الرجاء إدخال اسم النشاط');
+        if (!activityType) return this.notifyError('الرجاء تحديد نوع النشاط');
+        if (!location) return this.notifyError('الرجاء تحديد مكان النشاط');
+        if (!locationUrl) return this.notifyError('الرجاء إدخال رابط الموقع على خرائط قوقل');
+        if (!/^https?:\/\//i.test(locationUrl)) {
+            return this.notifyError('رابط الموقع يجب أن يبدأ بـ http:// أو https://');
+        }
         if (!activityDate) return this.notifyError('الرجاء تحديد تاريخ النشاط');
         if (!startTime) return this.notifyError('الرجاء تحديد وقت البدء');
-        if (totalSeats <= 0) return this.notifyError('عدد المقاعد يجب أن يكون أكبر من صفر');
-        if (malePct < 0 || malePct > 100) return this.notifyError('نسبة الرجال يجب أن تكون بين 0 و 100');
+        if (!endTime) return this.notifyError('الرجاء تحديد وقت الانتهاء');
+        if (Number.isNaN(maleSeats) || maleSeats < 0) return this.notifyError('الرجاء إدخال عدد صحيح غير سالب لمقاعد الرجال');
+        if (Number.isNaN(femaleSeats) || femaleSeats < 0) return this.notifyError('الرجاء إدخال عدد صحيح غير سالب لمقاعد النساء');
 
-        const maleSeats = Math.floor(totalSeats * malePct / 100);
-        const femaleSeats = totalSeats - maleSeats;
+        const totalSeats = maleSeats + femaleSeats;
+        if (totalSeats <= 0) return this.notifyError('إجمالي المقاعد يجب أن يكون أكبر من صفر');
+
+        // التحقق من تسلسل الوقت
+        if (endTime <= startTime) {
+            return this.notifyError('وقت الانتهاء يجب أن يكون بعد وقت البدء');
+        }
+
+        // منع نشر نشاط في تاريخ ماضٍ
+        if (publishImmediately) {
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const selected = new Date(activityDate);
+            if (selected < today) {
+                return this.notifyError('لا يمكن نشر نشاط في تاريخ ماضٍ');
+            }
+        }
+
+        // male_percentage محسوب للحفاظ على توافق الحقل في DB (تقريب لأقرب صحيح)
+        const malePct = Math.round((maleSeats * 100) / totalSeats);
+
+        // عند التعديل: تحقق من عدم نزول المقاعد تحت الحجوزات المؤكدة الحالية
+        if (this.currentEditingId) {
+            const current = this.activities.find(x => x.id === this.currentEditingId);
+            if (current) {
+                const maleBooked = current.male_booked || 0;
+                const femaleBooked = current.female_booked || 0;
+                const totalBooked = maleBooked + femaleBooked;
+
+                if (totalSeats < totalBooked) {
+                    return this.notifyError(
+                        `لا يمكن تخفيض إجمالي المقاعد إلى ${totalSeats} لأن هناك ${totalBooked} حجزًا مؤكدًا فعلًا. الحد الأدنى المسموح: ${totalBooked}`
+                    );
+                }
+                if (maleSeats < maleBooked) {
+                    return this.notifyError(
+                        `كوتا الرجال (${maleSeats}) أقل من الحجوزات المؤكدة للرجال (${maleBooked}). عدّل النسبة أو زد إجمالي المقاعد`
+                    );
+                }
+                if (femaleSeats < femaleBooked) {
+                    return this.notifyError(
+                        `كوتا النساء (${femaleSeats}) أقل من الحجوزات المؤكدة للنساء (${femaleBooked}). عدّل النسبة أو زد إجمالي المقاعد`
+                    );
+                }
+            }
+        }
 
         const payload = {
             name, description: description || null, activity_type: activityType,
-            location: location || null, activity_date: activityDate,
+            location, location_url: locationUrl,
+            activity_date: activityDate,
             start_time: startTime, end_time: endTime,
             total_seats: totalSeats, male_percentage: malePct,
             male_seats: maleSeats, female_seats: femaleSeats,
@@ -387,11 +504,27 @@ class ActivitiesManager {
             is_published: !!publishImmediately,
         };
 
-        this._isSaving = true;
-        if (saveBtn) {
-            saveBtn.disabled = true;
-            saveBtn.classList.add('btn--loading');
+        // عند نشر نشاط ملغي مسبقًا: ارفع علامة الإلغاء حتى لا تتعارض الحالتان
+        if (publishImmediately && this.currentEditingId) {
+            const current = this.activities.find(x => x.id === this.currentEditingId);
+            if (current?.is_cancelled) {
+                const ok = await this.confirmAction(
+                    'إعادة تفعيل نشاط ملغي',
+                    'هذا النشاط معلَّم كـ "ملغي". هل تريد إزالة علامة الإلغاء ونشره من جديد؟'
+                );
+                if (!ok) return;
+                payload.is_cancelled = false;
+            }
         }
+
+        this._isSaving = true;
+        const activeBtn = publishImmediately ? saveBtn : saveDraftBtn;
+        const otherBtn = publishImmediately ? saveDraftBtn : saveBtn;
+        if (activeBtn) {
+            activeBtn.disabled = true;
+            activeBtn.classList.add('btn--loading');
+        }
+        if (otherBtn) otherBtn.disabled = true;
         try {
             if (this.currentEditingId) {
                 const { error } = await sb.from('activities').update(payload).eq('id', this.currentEditingId);
@@ -412,10 +545,11 @@ class ActivitiesManager {
             this.notifyError('حدث خطأ في حفظ النشاط: ' + (err.message || ''));
         } finally {
             this._isSaving = false;
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.classList.remove('btn--loading');
+            if (activeBtn) {
+                activeBtn.disabled = false;
+                activeBtn.classList.remove('btn--loading');
             }
+            if (otherBtn) otherBtn.disabled = false;
         }
     }
 
@@ -472,11 +606,20 @@ class ActivitiesManager {
     // 3. الحجوزات
     // ============================================
     attachReservationsListeners() {
+        if (this._reservationsListenersAttached) return;
+        this._reservationsListenersAttached = true;
         const filter = document.getElementById('reservationsActivityFilter');
+        const whatsappFilter = document.getElementById('reservationsWhatsappFilter');
         const refresh = document.getElementById('refreshReservationsBtn');
         if (filter) {
             filter.addEventListener('change', (e) => {
                 this.filters.activityFilter = e.target.value;
+                this.renderReservationsTable();
+            });
+        }
+        if (whatsappFilter) {
+            whatsappFilter.addEventListener('change', (e) => {
+                this.filters.whatsappStatus = e.target.value;
                 this.renderReservationsTable();
             });
         }
@@ -490,7 +633,8 @@ class ActivitiesManager {
                 .from('activity_reservations')
                 .select(`
                     id, status, gender_at_booking, reserved_at, cancelled_at,
-                    activity:activities (id, name, activity_date, start_time),
+                    whatsapp_confirmed_at, attendance_status, attended_at, certificate_serial,
+                    activity:activities (id, name, activity_date, start_time, location, end_time),
                     visitor:visitors (id, full_name, email, phone),
                     member:profiles!member_user_id (id, full_name, email, phone)
                 `)
@@ -498,6 +642,28 @@ class ActivitiesManager {
 
             if (error) throw error;
             this.reservations = data || [];
+
+            // أعضاء أديب: قد لا يكون رقم الجوال محفوظًا في profiles بل في member_details
+            const memberIdsMissingPhone = Array.from(new Set(
+                this.reservations
+                    .filter(r => r.member && !r.member.phone && r.member.id)
+                    .map(r => r.member.id)
+            ));
+            if (memberIdsMissingPhone.length > 0) {
+                const { data: details, error: detErr } = await sb
+                    .from('member_details')
+                    .select('user_id, phone')
+                    .in('user_id', memberIdsMissingPhone);
+                if (!detErr && details) {
+                    const phoneMap = {};
+                    details.forEach(d => { if (d.phone) phoneMap[d.user_id] = d.phone; });
+                    this.reservations.forEach(r => {
+                        if (r.member && !r.member.phone && phoneMap[r.member.id]) {
+                            r.member.phone = phoneMap[r.member.id];
+                        }
+                    });
+                }
+            }
 
             // املأ فلتر الأنشطة
             const filter = document.getElementById('reservationsActivityFilter');
@@ -525,9 +691,15 @@ class ActivitiesManager {
         const container = document.getElementById('reservationsTableContainer');
         if (!container) return;
 
-        const filtered = this.filters.activityFilter
+        let filtered = this.filters.activityFilter
             ? this.reservations.filter(r => r.activity?.id === this.filters.activityFilter)
             : this.reservations;
+
+        if (this.filters.whatsappStatus === 'pending') {
+            filtered = filtered.filter(r => r.status === 'confirmed' && !r.whatsapp_confirmed_at);
+        } else if (this.filters.whatsappStatus === 'confirmed') {
+            filtered = filtered.filter(r => !!r.whatsapp_confirmed_at);
+        }
 
         if (filtered.length === 0) {
             container.innerHTML = `<div class="empty-state">
@@ -537,51 +709,180 @@ class ActivitiesManager {
             return;
         }
 
-        const rows = filtered.map(r => {
+        const rows = filtered.map((r, i) => {
             const guest = r.visitor || r.member || {};
-            const accountType = r.visitor ? '<span style="color:#3d8fd6;font-weight:600;">زائر</span>' : '<span style="color:#274060;font-weight:600;">عضو</span>';
+            const accountBadge = r.visitor
+                ? `<span class="uc-badge uc-badge--info"><i class="fa-solid fa-user"></i> زائر</span>`
+                : `<span class="uc-badge uc-badge--primary"><i class="fa-solid fa-id-badge"></i> عضو</span>`;
             const genderLabel = r.gender_at_booking === 'male' ? 'ذكر' : 'أنثى';
-            const statusLabel = r.status === 'confirmed'
-                ? '<span style="color:#10b981;font-weight:600;">مؤكد</span>'
-                : '<span style="color:#ef4444;font-weight:600;">ملغي</span>';
+            const statusBadge = r.status === 'confirmed'
+                ? `<span class="uc-badge uc-badge--success"><i class="fa-solid fa-circle" style="font-size:0.55rem;"></i>مؤكد</span>`
+                : `<span class="uc-badge uc-badge--danger"><i class="fa-solid fa-circle" style="font-size:0.55rem;"></i>ملغي</span>`;
+
+            const waCell = this.renderWhatsappCell(r, guest);
+            const confirmCell = this.renderWhatsappConfirmCell(r);
+            const phoneCell = guest.phone
+                ? `<span dir="ltr">${this.escapeHtml(guest.phone)}</span>`
+                : `<span class="cell-muted"><i class="fa-solid fa-minus"></i></span>`;
 
             return `
             <tr>
+                <td>${i + 1}</td>
                 <td>${this.escapeHtml(r.activity?.name || '—')}</td>
                 <td>${this.escapeHtml(guest.full_name || '—')}</td>
-                <td dir="ltr">${this.escapeHtml(guest.phone || '—')}</td>
-                <td dir="ltr">${this.escapeHtml(guest.email || '—')}</td>
+                <td>${phoneCell}</td>
                 <td>${genderLabel}</td>
-                <td>${accountType}</td>
-                <td>${statusLabel}</td>
-                <td>${new Date(r.reserved_at).toLocaleString('ar-SA')}</td>
+                <td>${accountBadge}</td>
+                <td>${statusBadge}</td>
+                <td>${waCell}</td>
+                <td>${confirmCell}</td>
+                <td>${new Date(r.reserved_at).toLocaleDateString('ar-SA')}</td>
             </tr>`;
         }).join('');
 
         container.innerHTML = `
-        <div class="table-wrapper" style="overflow-x:auto;background:#fff;border-radius:12px;border:1px solid #e2e8f0;">
-            <table style="width:100%;border-collapse:collapse;">
-                <thead style="background:#f4f7fb;">
-                    <tr>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">النشاط</th>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">الاسم</th>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">الجوال</th>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">البريد</th>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">الجنس</th>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">نوع الحساب</th>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">الحالة</th>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">تاريخ الحجز</th>
-                    </tr>
-                </thead>
-                <tbody>${rows.replace(/<tr>/g, '<tr style="border-bottom:1px solid #f1f5f9;">').replace(/<td>/g, '<td style="padding:0.75rem;">')}</tbody>
-            </table>
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-table"></i> جدول الحجوزات</h3>
+            </div>
+            <div class="card-body">
+                <div class="data-table-wrap">
+                    <div class="data-table-scroll">
+                        <table class="data-table data-table--striped data-table--with-index">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>النشاط</th>
+                                    <th>الاسم</th>
+                                    <th>الجوال</th>
+                                    <th>الجنس</th>
+                                    <th>نوع الحساب</th>
+                                    <th>الحالة</th>
+                                    <th>واتساب</th>
+                                    <th>تأكيد التواصل</th>
+                                    <th>تاريخ الحجز</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>`;
+
+        this.attachReservationRowListeners();
+    }
+
+    // ============================================
+    // واتساب: بناء الزر والقالب
+    // ============================================
+    normalizePhoneForWhatsapp(phone) {
+        if (!phone) return null;
+        // إزالة كل ما ليس رقمًا (بما في ذلك +، مسافات، شرطات، أقواس)
+        let digits = String(phone).replace(/\D+/g, '');
+        if (!digits) return null;
+        // أرقام السعودية: 05XXXXXXXX → 9665XXXXXXXX، 5XXXXXXXX → 9665XXXXXXXX
+        if (digits.startsWith('00')) digits = digits.slice(2);
+        if (digits.startsWith('05') && digits.length === 10) digits = '966' + digits.slice(1);
+        else if (digits.startsWith('5') && digits.length === 9) digits = '966' + digits;
+        // التحقق من طول معقول لرقم دولي (8-15 رقمًا)
+        if (digits.length < 8 || digits.length > 15) return null;
+        return digits;
+    }
+
+    buildWhatsappMessage(r, guest) {
+        const a = r.activity || {};
+        const dateStr = a.activity_date
+            ? new Date(a.activity_date).toLocaleDateString('ar-SA', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
+            : '';
+        const timeStr = this.formatTime(a.start_time) + (a.end_time ? ' - ' + this.formatTime(a.end_time) : '');
+        const lines = [
+            'السلام عليكم ' + (guest.full_name || '') + '،',
+            '',
+            'نؤكد حجزك في ورشة "' + (a.name || '') + '".', '',
+            'التاريخ: ' + dateStr, '',
+            'الوقت: ' + timeStr, '',
+            'ملاحظة: ' + "يُفضل إحضار جهاز لاب توب للتطبيق العملي ببرنامج الفوتوشوب.", '',
+        ];
+        if (a.location) {
+            lines.push('الموقع: ' + a.location);
+            lines.push('https://maps.app.goo.gl/tK5Z1vLVmMCz2CkH7?g_st=ic');
+        }
+        lines.push('', 'نسعد بحضورك.', 'مع تحيات نادي أدِيب');
+        return lines.join('\n');
+    }
+
+    renderWhatsappCell(r, guest) {
+        const phone = this.normalizePhoneForWhatsapp(guest.phone);
+        if (!phone) {
+            return `<button type="button" class="btn btn-outline btn-sm" disabled title="لا يوجد رقم جوال صالح">
+                <i class="fa-brands fa-whatsapp"></i> غير متاح
+            </button>`;
+        }
+        const msg = this.buildWhatsappMessage(r, guest);
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+        return `<a class="btn btn-success btn-sm" href="${this.escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
+            <i class="fa-brands fa-whatsapp"></i> تواصل
+        </a>`;
+    }
+
+    renderWhatsappConfirmCell(r) {
+        if (r.status === 'cancelled') {
+            return '<span class="cell-muted">—</span>';
+        }
+        if (r.whatsapp_confirmed_at) {
+            const when = new Date(r.whatsapp_confirmed_at).toLocaleDateString('ar-SA');
+            return `<span class="uc-badge uc-badge--success" title="تم التأكيد">
+                <i class="fa-solid fa-check-circle"></i> ${this.escapeHtml(when)}
+            </span>`;
+        }
+        return `<button type="button" class="btn btn-warning btn-sm" data-confirm-whatsapp="${this.escapeHtml(r.id)}">
+            <i class="fa-solid fa-check"></i> تم التأكيد
+        </button>`;
+    }
+
+    attachReservationRowListeners() {
+        const container = document.getElementById('reservationsTableContainer');
+        if (!container) return;
+        container.querySelectorAll('[data-confirm-whatsapp]').forEach(btn => {
+            btn.addEventListener('click', () => this.confirmWhatsapp(btn.dataset.confirmWhatsapp, btn));
+        });
+    }
+
+    async confirmWhatsapp(reservationId, btn) {
+        if (!reservationId) return;
+        const original = btn?.innerHTML;
+        try {
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري…';
+            }
+            const sb = window.sbClient;
+            const { error } = await sb.rpc('confirm_whatsapp', { p_reservation_id: reservationId });
+            if (error) throw error;
+            this.notifySuccess('تم تسجيل تأكيد التواصل عبر واتساب');
+            const row = this.reservations.find(r => r.id === reservationId);
+            if (row) row.whatsapp_confirmed_at = new Date().toISOString();
+            this.renderReservationsTable();
+        } catch (err) {
+            console.error('ActivitiesManager: confirmWhatsapp error', err);
+            const msg = (err.message || '').includes('NOT_AUTHORIZED')
+                ? 'لا تملك صلاحية تأكيد الواتساب'
+                : 'فشل تسجيل التأكيد: ' + (err.message || '');
+            this.notifyError(msg);
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = original;
+            }
+        }
     }
 
     // ============================================
     // 4. بيانات الزوار
     // ============================================
     attachVisitorsListeners() {
+        if (this._visitorsListenersAttached) return;
+        this._visitorsListenersAttached = true;
         const refresh = document.getElementById('refreshVisitorsBtn');
         const exportBtn = document.getElementById('exportVisitorsCsvBtn');
         if (refresh) refresh.addEventListener('click', () => this.loadVisitors());

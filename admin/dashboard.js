@@ -591,8 +591,10 @@
             console.error('[dashboard] elections menu build failed:', e);
         }
 
-        // أنشطة وبرامج — يحتاج manage_activities
-        if (hasPermission('manage_activities')) {
+        // أنشطة وبرامج — يحتاج manage_activities (يشمل بند تسجيل الحضور داخل القائمة)
+        const canManageActivities = hasPermission('manage_activities');
+        const isActivityCoordinator = !!currentUserRole.is_activity_coordinator;
+        if (canManageActivities) {
             menuItems.push({
                 id: 'activities',
                 icon: 'fa-calendar-days',
@@ -603,7 +605,16 @@
                     { id: 'activities-create',       icon: 'fa-plus-circle',    label: 'إنشاء نشاط',    section: 'activities-create-section' },
                     { id: 'activities-reservations', icon: 'fa-calendar-check', label: 'إدارة الحجوزات', section: 'activities-reservations-section' },
                     { id: 'activities-visitors',     icon: 'fa-users',          label: 'بيانات الزوار',  section: 'activities-visitors-section' },
+                    { id: 'activities-attendance',   icon: 'fa-clipboard-check',label: 'تسجيل الحضور',  section: 'activities-attendance-section' },
                 ],
+            });
+        } else if (isActivityCoordinator) {
+            // منسّق نشاط فقط — بند مستقل في القائمة الجانبية
+            menuItems.push({
+                id: 'activities-attendance',
+                icon: 'fa-clipboard-check',
+                label: 'تسجيل الحضور',
+                section: 'activities-attendance-section',
             });
         }
 
@@ -906,6 +917,9 @@
         'activities-create-section':            'manage_activities',
         'activities-reservations-section':      'manage_activities',
         'activities-visitors-section':          'manage_activities',
+        // activities-attendance-section: محمي على مستوى DB عبر mark_attendance/RPC
+        // (يقبل admin أو activity_coordinator)؛ لا نضع قيدًا أمامياً هنا حتى يتمكّن
+        // المنسّق من فتحه دون امتلاك صلاحية manage_activities.
         'elections-manage-section':             'manage_elections',
         'elections-review-section':             'manage_elections',
         'elections-archive-section':            'manage_elections',
@@ -1282,6 +1296,15 @@
                 if (window.activitiesManagerInstance) {
                     await window.activitiesManagerInstance.init(currentUser);
                     await window.activitiesManagerInstance.loadVisitors();
+                }
+                break;
+
+            case 'activities-attendance-section':
+                if (window.AttendanceManager && !window.attendanceManagerInstance) {
+                    window.attendanceManagerInstance = new window.AttendanceManager();
+                }
+                if (window.attendanceManagerInstance) {
+                    await window.attendanceManagerInstance.init(currentUser, currentUserRole);
                 }
                 break;
 

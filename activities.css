@@ -810,6 +810,16 @@ h1, h2, h3, h4, h5, h6, p {
     border-color: var(--line-strong);
 }
 
+.act-card--highlight {
+    animation: actCardHighlight 2.4s ease-out;
+}
+
+@keyframes actCardHighlight {
+    0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.55); }
+    25%  { box-shadow: 0 0 0 6px rgba(59,130,246,0.35); }
+    100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+}
+
 /* — غلاف */
 .act-card__cover {
     position: relative;
@@ -1918,6 +1928,30 @@ h1, h2, h3, h4, h5, h6, p {
 
 .booking__meta i {
     color: var(--accent-deep);
+    font-size: 0.85em;
+}
+
+.booking__loc-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    color: var(--brand);
+    text-decoration: none;
+    border-bottom: 1px dashed currentColor;
+    transition: color var(--t-base) var(--ease),
+                border-color var(--t-base) var(--ease),
+                transform var(--t-base) var(--ease);
+}
+
+.booking__loc-link:hover,
+.booking__loc-link:focus-visible {
+    color: var(--brand-deep, var(--brand));
+    border-bottom-color: transparent;
+    transform: translateY(-1px);
+}
+
+.booking__loc-link i {
+    color: inherit;
     font-size: 0.85em;
 }
 

@@ -81,8 +81,18 @@ window.AuthManager = (function() {
 
             if (!userRoles || userRoles.length === 0) return null;
 
-            // ترتيب الأدوار حسب المستوى يدوياً
-            const sortedRoles = userRoles.sort((a, b) => {
+            // activity_coordinator دور إضافي (يمنح صلاحية تسجيل الحضور فقط)
+            // نستثنيه من اختيار الدور الأساسي حتى لا يُغيّر هوية العضو الظاهرة.
+            // يبقى موجودًا في userRoles ويُكتشف لاحقًا عبر is_activity_coordinator.
+            const isActivityCoordinator = userRoles.some(ur =>
+                ur.role?.role_name === 'activity_coordinator'
+            );
+            const nonCoordRoles = userRoles.filter(ur =>
+                ur.role?.role_name !== 'activity_coordinator'
+            );
+            const primaryPool = nonCoordRoles.length > 0 ? nonCoordRoles : userRoles;
+
+            const sortedRoles = primaryPool.sort((a, b) => {
                 return (b.role?.role_level || 0) - (a.role?.role_level || 0);
             });
 
@@ -93,7 +103,8 @@ window.AuthManager = (function() {
                 role_name_ar: userRole.role?.role_name_ar,
                 role_level: userRole.role?.role_level,
                 role_category: userRole.role?.role_category,
-                committee_name_ar: userRole.committee?.committee_name_ar
+                committee_name_ar: userRole.committee?.committee_name_ar,
+                is_activity_coordinator: isActivityCoordinator,
             };
         } catch (error) {
             console.error('Error getting user role:', error);

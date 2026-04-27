@@ -1772,20 +1772,25 @@
      */
     async function resolveRoleLabel(userId) {
         try {
+            // نجلب جميع الأدوار النشطة، ثم نستثني activity_coordinator
+            // لأنه دور إضافي (يمنح صلاحية تسجيل الحضور فقط) ولا يمثل هوية العضو الأساسية.
             const { data, error } = await window.sbClient
                 .from('user_roles')
                 .select('committees(committee_name_ar), roles(role_name, role_name_ar, role_level)')
                 .eq('user_id', userId)
                 .eq('is_active', true)
-                .order('roles(role_level)', { ascending: false })
-                .limit(1)
-                .maybeSingle();
+                .order('roles(role_level)', { ascending: false });
 
-            if (error || !data?.roles) return 'عضو';
+            if (error || !data || data.length === 0) return 'عضو';
 
-            const roleName = data.roles.role_name;
-            const roleNameAr = data.roles.role_name_ar || 'عضو';
-            const committeeName = data.committees?.committee_name_ar || '';
+            const nonCoord = data.filter(d => d.roles?.role_name !== 'activity_coordinator');
+            const pool = nonCoord.length > 0 ? nonCoord : data;
+            const top = pool[0];
+            if (!top?.roles) return 'عضو';
+
+            const roleName = top.roles.role_name;
+            const roleNameAr = top.roles.role_name_ar || 'عضو';
+            const committeeName = top.committees?.committee_name_ar || '';
 
             const committeeScoped = {
                 committee_leader: n => n ? `قائد ${n}` : 'قائد لجنة',
