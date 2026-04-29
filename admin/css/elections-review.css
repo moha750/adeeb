@@ -1,0 +1,625 @@
+/* ============================================================================
+   Elections — Candidate Review (UI/UX Rebuild)
+   نادي أدِيب — التصميم المخصّص لتبويب "مراجعة المرشحين"
+   يعتمد فقط على design-tokens.css
+   ============================================================================ */
+
+
+/* ============================================================
+   § 1 · غلاف الصفحة
+   ============================================================ */
+.er-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+
+/* ============================================================
+   § 2 · شريط أدوات الصفحة (عنوان + تحديث)
+   ============================================================ */
+.er-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.er-toolbar__title {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: var(--text-dark);
+}
+
+.er-toolbar__title i {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-md);
+    background: rgba(var(--color-accent-rgb), 0.12);
+    color: var(--color-primary-light);
+    display: grid;
+    place-items: center;
+    font-size: 1rem;
+}
+
+.er-toolbar__title h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1.2;
+}
+
+.er-review-stats {
+    margin-bottom: 0;
+}
+
+
+/* ============================================================
+   § 3 · صف عدّاد المرشحين داخل بطاقة الانتخاب
+   ============================================================ */
+.er-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    width: 100%;
+}
+
+.er-counts--empty {
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 0.4rem 0;
+}
+
+.er-counts__num {
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: var(--radius-full);
+    padding: 0.1rem 0.5rem;
+    min-width: 22px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-inline-start: 0.2rem;
+}
+
+
+/* ============================================================
+   § 3.1 · رأس صفحة المرشحين
+   ============================================================ */
+.cr-page-header {
+    --cr-color:     #3d8fd6;
+    --cr-color-rgb: 61, 143, 214;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    background: linear-gradient(
+        135deg,
+        rgba(var(--cr-color-rgb), 0.10) 0%,
+        rgba(var(--cr-color-rgb), 0.02) 100%
+    );
+    border: 1px solid rgba(var(--cr-color-rgb), 0.20);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 14px rgba(var(--cr-color-rgb), 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.cr-page-header::after {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    inset-inline-start: -60px;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--cr-color-rgb), 0.10) 0%, transparent 65%);
+    pointer-events: none;
+}
+
+.cr-page-header--primary   { --cr-color: #3d8fd6; --cr-color-rgb: 61, 143, 214; }
+.cr-page-header--purple    { --cr-color: #8b5cf6; --cr-color-rgb: 139, 92, 246; }
+.cr-page-header--success   { --cr-color: #10b981; --cr-color-rgb: 16, 185, 129; }
+.cr-page-header--warning   { --cr-color: #f59e0b; --cr-color-rgb: 245, 158, 11; }
+.cr-page-header--danger    { --cr-color: #ef4444; --cr-color-rgb: 239, 68, 68; }
+.cr-page-header--info,
+.cr-page-header--secondary { --cr-color: #64748b; --cr-color-rgb: 100, 116, 139; }
+
+.cr-page-header__icon {
+    flex-shrink: 0;
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    background: var(--cr-color);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 1.3rem;
+    box-shadow: 0 6px 18px rgba(var(--cr-color-rgb), 0.32);
+    position: relative;
+    z-index: 1;
+}
+
+.cr-page-header__icon::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.28) 0%, transparent 55%);
+    pointer-events: none;
+}
+
+.cr-page-header__info {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.cr-page-header__title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.cr-page-header__meta {
+    margin-top: 0.55rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+
+/* ============================================================
+   § 4 · قائمة المرشحين داخل النافذة/الصفحة
+   ============================================================ */
+.cr-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+}
+
+.cr-list .empty-state {
+    background: var(--bg-secondary);
+    border: 1px dashed var(--border-medium);
+    border-radius: var(--radius-md);
+    padding: 2rem 1rem;
+}
+
+
+/* ============================================================
+   § 6 · بطاقة المرشح
+   ============================================================ */
+.cr-cand {
+    --cr-status-color: var(--color-info-500);
+    --cr-status-rgb:   100, 116, 139;
+    position: relative;
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.cr-cand::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    inset-inline-end: 0;
+    width: 4px;
+    background: var(--cr-status-color);
+}
+
+.cr-cand:hover {
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+    border-color: rgba(var(--cr-status-rgb), 0.35);
+}
+
+.cr-cand--pending    { --cr-status-color: var(--color-warning-500); --cr-status-rgb: 245, 158, 11; }
+.cr-cand--approved   { --cr-status-color: var(--color-success-500); --cr-status-rgb: 16, 185, 129; }
+.cr-cand--rejected   { --cr-status-color: var(--color-danger-500);  --cr-status-rgb: 239, 68, 68;  }
+.cr-cand--needs_edit { --cr-status-color: var(--color-info-500);    --cr-status-rgb: 100, 116, 139; }
+.cr-cand--withdrawn  { --cr-status-color: var(--color-info-400);    --cr-status-rgb: 148, 163, 184; }
+
+.cr-cand__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.95rem;
+    padding: 1rem 1.15rem 0.5rem;
+}
+
+.cr-cand__avatar {
+    flex-shrink: 0;
+    position: relative;
+    width: 64px;
+    height: 64px;
+}
+
+.cr-cand__avatar img,
+.cr-cand__avatar__placeholder {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.08),
+        0 0 0 2px rgba(var(--cr-status-rgb), 0.30);
+    background: #fff;
+}
+
+.cr-cand__avatar__placeholder {
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    color: var(--text-light);
+    font-size: 1.5rem;
+}
+
+.cr-cand__num {
+    position: absolute;
+    bottom: -4px;
+    inset-inline-start: -4px;
+    background: var(--cr-status-color);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    min-width: 26px;
+    height: 24px;
+    padding: 0 7px;
+    border-radius: var(--radius-full);
+    display: inline-grid;
+    place-items: center;
+    border: 2px solid #fff;
+    line-height: 1;
+}
+
+.cr-cand__id {
+    flex: 1;
+    min-width: 0;
+}
+
+.cr-cand__name {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.cr-cand__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-full);
+    font-size: 0.74rem;
+    font-weight: 700;
+    background: rgba(var(--cr-status-rgb), 0.12);
+    color: var(--cr-status-color);
+    border: 1px solid rgba(var(--cr-status-rgb), 0.20);
+    line-height: 1;
+}
+
+.cr-cand__meta {
+    margin-top: 0.4rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.95rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.cr-cand__meta__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.cr-cand__meta__item i {
+    color: var(--text-light);
+    font-size: 0.8rem;
+}
+
+.cr-cand__body {
+    padding: 0.55rem 1.15rem 1rem;
+}
+
+.cr-cand__statement {
+    position: relative;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 0.95rem 1.05rem;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.cr-cand__statement::before {
+    content: '\f10d';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: -10px;
+    inset-inline-end: 14px;
+    background: #fff;
+    padding: 0 0.4rem;
+    color: var(--cr-status-color);
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+.cr-cand__file {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-top: 0.75rem;
+    padding: 0.55rem 0.85rem 0.55rem 0.55rem;
+    background: var(--color-brand-50);
+    border: 1px solid var(--color-brand-100);
+    border-radius: var(--radius-md);
+    color: var(--color-brand-700);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+    max-width: 100%;
+}
+
+.cr-cand__file:hover {
+    background: var(--color-brand-100);
+    border-color: var(--color-brand-500);
+    transform: translateY(-1px);
+}
+
+.cr-cand__file__icon {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(var(--color-brand-rgb), 0.18);
+    color: var(--color-brand-700);
+    display: grid;
+    place-items: center;
+    font-size: 0.95rem;
+}
+
+.cr-cand__file__meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+    min-width: 0;
+}
+
+.cr-cand__file__name {
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 22ch;
+}
+
+.cr-cand__file__size {
+    font-size: 0.72rem;
+    color: var(--color-brand-600);
+    font-weight: 500;
+}
+
+.cr-cand__note {
+    margin-top: 0.85rem;
+    display: flex;
+    gap: 0.7rem;
+    padding: 0.8rem 0.95rem;
+    background: var(--color-warning-50);
+    border: 1px solid var(--color-warning-100);
+    border-radius: var(--radius-md);
+}
+
+.cr-cand__note__icon {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: rgba(245, 158, 11, 0.20);
+    color: var(--color-warning-700);
+    display: grid;
+    place-items: center;
+    font-size: 0.85rem;
+}
+
+.cr-cand__note__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.cr-cand__note__lbl {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-warning-700);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.cr-cand__note__text {
+    margin: 0.2rem 0 0;
+    font-size: 0.85rem;
+    color: var(--color-warning-800);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+
+/* ============================================================
+   § 7 · شريط الإجراءات
+   ============================================================ */
+.cr-cand__actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.5rem;
+    padding: 0.85rem 1.15rem;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-light);
+}
+
+.cr-act {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0.9rem;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: #fff;
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background var(--transition-fast),
+        color var(--transition-fast),
+        border-color var(--transition-fast);
+    font-family: inherit;
+}
+
+.cr-act:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.cr-act:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.cr-act:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.cr-act--approve {
+    background: var(--color-success-500);
+    color: #fff;
+    border-color: var(--color-success-600);
+}
+.cr-act--approve:hover { background: var(--color-success-600); }
+
+.cr-act--needs_edit {
+    background: #fff;
+    color: var(--color-warning-700);
+    border-color: var(--color-warning-100);
+}
+.cr-act--needs_edit:hover {
+    background: var(--color-warning-50);
+    border-color: var(--color-warning-500);
+}
+
+.cr-act--reject {
+    background: #fff;
+    color: var(--color-danger-600);
+    border-color: var(--color-danger-100);
+}
+.cr-act--reject:hover {
+    background: var(--color-danger-50);
+    border-color: var(--color-danger-500);
+}
+
+
+/* ============================================================
+   § 8 · نافذة كتابة ملاحظة المراجعة
+   ============================================================ */
+.cr-note-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.cr-note-form__lbl {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.cr-note-form__hint {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.55;
+}
+
+.cr-note-form__textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 0.8rem 0.95rem;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    resize: vertical;
+    background: var(--bg-secondary);
+    color: var(--text-dark);
+    transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.cr-note-form__textarea:focus {
+    outline: none;
+    border-color: var(--color-primary-light);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(61, 143, 214, 0.16);
+}
+
+
+/* ============================================================
+   § 9 · حالات التحميل والشاشة الفارغة
+   ============================================================ */
+.er-skeleton {
+    background: var(--bg-secondary);
+    border: 1px dashed var(--border-medium);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+
+/* ============================================================
+   § 10 · استجابة للشاشات الصغيرة
+   ============================================================ */
+@media (max-width: 768px) {
+    .er-toolbar__title h2 { font-size: 1.1rem; }
+    .er-toolbar__title i  { width: 34px; height: 34px; font-size: 0.95rem; }
+    .cr-page-header { padding: 1rem; gap: 0.85rem; }
+    .cr-page-header__icon { width: 46px; height: 46px; font-size: 1.1rem; }
+    .cr-page-header__title { font-size: 1.05rem; }
+    .cr-cand__head { padding: 0.85rem 0.95rem 0.4rem; gap: 0.75rem; }
+    .cr-cand__avatar,
+    .cr-cand__avatar img,
+    .cr-cand__avatar__placeholder { width: 54px; height: 54px; }
+    .cr-cand__avatar { width: 54px; height: 54px; }
+    .cr-cand__body { padding: 0.5rem 0.95rem 0.85rem; }
+    .cr-cand__actions { padding: 0.7rem 0.95rem; grid-template-columns: 1fr; }
+}

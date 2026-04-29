@@ -169,7 +169,17 @@
       "Bash(/usr/bin/osascript -l JavaScript -e \"const fs = $.NSString.stringWithContentsOfFileEncodingError\\('/Users/m7_almattar/adeeb/admin/js/elections-manager.js', 4, $\\(\\)\\); try { new Function\\(fs.js\\); 'OK' } catch\\(e\\) { 'FAIL: ' + e.message }\")",
       "Bash(/usr/bin/osascript -l JavaScript -e ' *)",
       "PowerShell(claude mcp list 2>&1)",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(node -e \"const fs=require\\('fs'\\);const css=fs.readFileSync\\('c:/Users/moham/adeeb/admin/css/elections-review.css','utf8'\\);let depth=0,line=1,col=0,bad=null;for\\(const ch of css\\){col++;if\\(ch==='\\\\n'\\){line++;col=0}if\\(ch==='{'\\)depth++;else if\\(ch==='}'\\){depth--;if\\(depth<0\\){bad={line,col};break}}}console.log\\('finalDepth:',depth,'firstNegative:',bad\\);\")",
+      "Bash(node --check c:/Users/moham/adeeb/admin/js/elections-manager.js)",
+      "Bash(python -m http.server 8765)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8765/activities.html)",
+      "Bash(node -e \"const http=require\\('http'\\),fs=require\\('fs'\\),p=require\\('path'\\);const root='c:/Users/moham/adeeb';const types={'.html':'text/html;charset=utf-8','.js':'application/javascript;charset=utf-8','.css':'text/css;charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.json':'application/json'};http.createServer\\(\\(req,res\\)=>{let f=decodeURIComponent\\(req.url.split\\('?'\\)[0]\\);if\\(f==='/'\\)f='/activities.html';const fp=p.join\\(root,f\\);fs.readFile\\(fp,\\(e,d\\)=>{if\\(e\\){res.writeHead\\(404\\);res.end\\(\\);return;}res.writeHead\\(200,{'Content-Type':types[p.extname\\(fp\\)]||'application/octet-stream'}\\);res.end\\(d\\);}\\);}\\).listen\\(8765,\\(\\)=>console.log\\('listening 8765'\\)\\);\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8765/activities.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8765/activities.js)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8765/activities.css)",
+      "Bash(node -c /c/Users/moham/adeeb/admin/js/activity-archive-manager.js)",
+      "Bash(node -c /c/Users/moham/adeeb/admin/js/activities-manager.js)"
     ]
   }
 }

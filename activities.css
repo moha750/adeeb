@@ -881,6 +881,7 @@ h1, h2, h3, h4, h5, h6, p {
 
 .chip--status.is-full   { background: var(--ink-muted); }
 .chip--status.is-cancel { background: var(--bad); }
+.chip--status.is-ended  { background: var(--ink-soft); }
 
 .chip--status i { font-size: 0.65em; }
 
@@ -2003,4 +2004,30 @@ h1, h2, h3, h4, h5, h6, p {
         width: 72px;
         height: 72px;
     }
+}
+
+
+/* ============================================================
+   § 16 · قسم الأنشطة المنتهية
+   ============================================================ */
+
+.section--ended {
+    padding-top: 0;
+}
+
+.section--ended .section__head {
+    padding-top: var(--s-7);
+    border-top: 1px dashed var(--line-strong);
+}
+
+.act-card--ended {
+    opacity: 0.82;
+}
+
+.act-card--ended:hover {
+    transform: translateY(-2px);
+}
+
+.act-card--ended .act-card__cover img {
+    filter: grayscale(0.35);
 }

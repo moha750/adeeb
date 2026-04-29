@@ -77,6 +77,13 @@
     min-width: 0;
 }
 
+/* Modifier: يجعل كل العناصر تتمدّد لتغطية كامل عرض الشريط بالتساوي */
+.filters-bar.filters-bar--stretch .filter-select,
+.filters-bar.filters-bar--stretch .filter-group {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
 
 /* ============================================================
    § 2 · حقل البحث / الإدخال — Filter Group
@@ -647,6 +654,12 @@
         flex: 1 1 auto;
         min-width: 0;
     }
+
+    /* --stretch: على الأجهزة المتوسطة كل حقلين/ثلاثة في صف، بحد أدنى 220px */
+    .filters-bar.filters-bar--stretch .filter-select,
+    .filters-bar.filters-bar--stretch .filter-group {
+        flex: 1 1 220px;
+    }
 }
 
 @media (max-width: 576px) {
@@ -654,6 +667,12 @@
 
     .filter-group,
     .filter-select { width: 100%; min-width: auto; }
+
+    /* --stretch: على الجوال كل حقل في صف مستقل */
+    .filters-bar.filters-bar--stretch .filter-select,
+    .filters-bar.filters-bar--stretch .filter-group {
+        flex: 1 1 100%;
+    }
 
     .filter-advanced-content { grid-template-columns: 1fr; }
 

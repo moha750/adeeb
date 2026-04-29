@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>أداة ضبط مواقع شهادة نادي أديب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* خطوط أديب الرسمية — Lyon Arabic للعربية و ERA للإنجليزية */
+        @font-face {
+            font-family: 'Lyon Arabic';
+            src: url('../fonts/COMM - Lyon Arabic Display Light.otf') format('opentype');
+            font-weight: 300; font-style: normal; font-display: swap;
+        }
+        @font-face {
+            font-family: 'Lyon Arabic';
+            src: url('../fonts/COMM - Lyon Arabic Display Regular.otf') format('opentype');
+            font-weight: 400; font-style: normal; font-display: swap;
+        }
+        @font-face {
+            font-family: 'Lyon Arabic';
+            src: url('../fonts/COMM - Lyon Arabic Display Medium.otf') format('opentype');
+            font-weight: 500; font-style: normal; font-display: swap;
+        }
+        @font-face {
+            font-family: 'Lyon Arabic';
+            src: url('../fonts/COMM - Lyon Arabic Display Bold.otf') format('opentype');
+            font-weight: 700; font-style: normal; font-display: swap;
+        }
+        @font-face {
+            font-family: 'Lyon Arabic';
+            src: url('../fonts/COMM - Lyon Arabic Display Black.otf') format('opentype');
+            font-weight: 900; font-style: normal; font-display: swap;
+        }
+        @font-face {
+            font-family: 'ERA';
+            src: url('../fonts/ERASLGHT.TTF') format('truetype');
+            font-weight: 300; font-style: normal; font-display: swap;
+        }
+        @font-face {
+            font-family: 'ERA';
+            src: url('../fonts/ERASMD.TTF') format('truetype');
+            font-weight: 400; font-style: normal; font-display: swap;
+        }
+        @font-face {
+            font-family: 'ERA';
+            src: url('../fonts/ERASDEMI.TTF') format('truetype');
+            font-weight: 600; font-style: normal; font-display: swap;
+        }
+        @font-face {
+            font-family: 'ERA';
+            src: url('../fonts/ERASBD.TTF') format('truetype');
+            font-weight: 700; font-style: normal; font-display: swap;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'ERA', 'Lyon Arabic', system-ui, sans-serif;
+            background: #f3f4f6;
+            color: #111827;
+        }
+        .layout {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 20px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .panel {
+            background: #fff;
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            overflow-y: auto;
+            max-height: calc(100vh - 40px);
+        }
+        .panel h2 {
+            margin: 0 0 14px 0;
+            font-size: 1.1rem;
+            color: #1f2937;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+        .field-block {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .field-block h3 {
+            margin: 0 0 10px 0;
+            font-size: 0.95rem;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .row label { width: 70px; font-size: 0.8rem; color: #6b7280; }
+        .row input[type="range"] { flex: 1; }
+        .row input[type="number"] { width: 70px; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; }
+        .row input[type="text"] { flex: 1; padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; }
+        .row input[type="color"] { width: 40px; height: 30px; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; }
+        .row select { padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; }
+        .gender-toggle {
+            display: flex;
+            gap: 0;
+            margin-bottom: 14px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 3px;
+        }
+        .gender-toggle button {
+            flex: 1;
+            padding: 8px;
+            border: 0;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: #6b7280;
+            transition: all 0.15s;
+        }
+        .gender-toggle button.active {
+            background: #fff;
+            color: #1f2937;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            font-weight: 600;
+        }
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 14px;
+        }
+        .btn {
+            padding: 10px 14px;
+            border: 0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-primary { background: #3b82f6; color: #fff; }
+        .btn-success { background: #10b981; color: #fff; }
+        .btn-secondary { background: #6b7280; color: #fff; }
+        .btn:hover { opacity: 0.9; }
+        .preview-area {
+            background: #fff;
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .preview-area h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #1f2937;
+        }
+        .preview-info {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        /* القالب — A4 landscape بأبعاد عرض ثابتة، ارتفاع نسبي */
+        #cert-canvas {
+            position: relative;
+            width: 100%;
+            max-width: 1414px;
+            aspect-ratio: 1414 / 1000;
+            margin: 0 auto;
+            background-color: #f3f4f6;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        #cert-canvas.template-missing::before {
+            content: 'لا توجد صورة قالب — ارفع template-male.png و template-female.png في assets/certificates/';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            font-size: 1rem;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .cert-text {
+            position: absolute;
+            /* ERA أولاً للأرقام/الإنجليزية، Lyon Arabic كـ fallback للعربية */
+            font-family: 'ERA', 'Lyon Arabic', system-ui, sans-serif;
+            white-space: nowrap;
+            line-height: 1;
+            transform: translate(-50%, -50%); /* مرجع: مركز النص */
+        }
+
+        #cert-qr {
+            position: absolute;
+            transform: translate(-50%, -50%);
+        }
+        #cert-qr img, #cert-qr canvas { display: block; }
+
+        .json-output {
+            background: #1f2937;
+            color: #d1fae5;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: "JetBrains Mono", "Cascadia Code", monospace;
+            font-size: 0.8rem;
+            white-space: pre;
+            overflow-x: auto;
+            direction: ltr;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        details summary {
+            cursor: pointer;
+            padding: 8px 0;
+            color: #4b5563;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- لوحة التحكم -->
+        <aside class="panel">
+            <h2><i class="fa-solid fa-sliders"></i> ضبط مواقع النصوص</h2>
+
+            <div class="gender-toggle">
+                <button id="genderMale" class="active" data-gender="male">
+                    <i class="fa-solid fa-mars"></i> ذكر
+                </button>
+                <button id="genderFemale" data-gender="female">
+                    <i class="fa-solid fa-venus"></i> أنثى
+                </button>
+            </div>
+
+            <!-- اسم الحاضر -->
+            <div class="field-block" data-field="holderName">
+                <h3><i class="fa-solid fa-user"></i> اسم الحاضر</h3>
+                <div class="row">
+                    <label>النص</label>
+                    <input type="text" data-prop="text" value="محمد بن إسماعيل المطر" />
+                </div>
+                <div class="row">
+                    <label>X (%)</label>
+                    <input type="range" data-prop="x" min="0" max="100" step="0.1" value="50" />
+                    <input type="number" data-prop="x" min="0" max="100" step="0.1" value="50" />
+                </div>
+                <div class="row">
+                    <label>Y (%)</label>
+                    <input type="range" data-prop="y" min="0" max="100" step="0.1" value="48" />
+                    <input type="number" data-prop="y" min="0" max="100" step="0.1" value="48" />
+                </div>
+                <div class="row">
+                    <label>الحجم</label>
+                    <input type="range" data-prop="size" min="20" max="120" step="1" value="56" />
+                    <input type="number" data-prop="size" min="20" max="120" step="1" value="56" />
+                </div>
+                <div class="row">
+                    <label>اللون</label>
+                    <input type="color" data-prop="color" value="#1f2937" />
+                    <input type="text" data-prop="color" value="#1f2937" />
+                </div>
+                <div class="row">
+                    <label>السماكة</label>
+                    <select data-prop="weight">
+                        <option value="400">عادي</option>
+                        <option value="600">شبه عريض</option>
+                        <option value="700" selected>عريض</option>
+                        <option value="900">أسود</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- اسم النشاط -->
+            <div class="field-block" data-field="activityName">
+                <h3><i class="fa-solid fa-calendar-day"></i> اسم النشاط</h3>
+                <div class="row">
+                    <label>النص</label>
+                    <input type="text" data-prop="text" value="ورشة الكتابة الإبداعية" />
+                </div>
+                <div class="row">
+                    <label>X (%)</label>
+                    <input type="range" data-prop="x" min="0" max="100" step="0.1" value="50" />
+                    <input type="number" data-prop="x" min="0" max="100" step="0.1" value="50" />
+                </div>
+                <div class="row">
+                    <label>Y (%)</label>
+                    <input type="range" data-prop="y" min="0" max="100" step="0.1" value="62" />
+                    <input type="number" data-prop="y" min="0" max="100" step="0.1" value="62" />
+                </div>
+                <div class="row">
+                    <label>الحجم</label>
+                    <input type="range" data-prop="size" min="20" max="100" step="1" value="38" />
+                    <input type="number" data-prop="size" min="20" max="100" step="1" value="38" />
+                </div>
+                <div class="row">
+                    <label>اللون</label>
+                    <input type="color" data-prop="color" value="#374151" />
+                    <input type="text" data-prop="color" value="#374151" />
+                </div>
+                <div class="row">
+                    <label>السماكة</label>
+                    <select data-prop="weight">
+                        <option value="400">عادي</option>
+                        <option value="600" selected>شبه عريض</option>
+                        <option value="700">عريض</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- رقم الشهادة -->
+            <div class="field-block" data-field="serial">
+                <h3><i class="fa-solid fa-hashtag"></i> رقم الشهادة</h3>
+                <div class="row">
+                    <label>النص</label>
+                    <input type="text" data-prop="text" value="ADEEB-2026-0001" />
+                </div>
+                <div class="row">
+                    <label>X (%)</label>
+                    <input type="range" data-prop="x" min="0" max="100" step="0.1" value="20" />
+                    <input type="number" data-prop="x" min="0" max="100" step="0.1" value="20" />
+                </div>
+                <div class="row">
+                    <label>Y (%)</label>
+                    <input type="range" data-prop="y" min="0" max="100" step="0.1" value="92" />
+                    <input type="number" data-prop="y" min="0" max="100" step="0.1" value="92" />
+                </div>
+                <div class="row">
+                    <label>الحجم</label>
+                    <input type="range" data-prop="size" min="14" max="60" step="1" value="22" />
+                    <input type="number" data-prop="size" min="14" max="60" step="1" value="22" />
+                </div>
+                <div class="row">
+                    <label>اللون</label>
+                    <input type="color" data-prop="color" value="#6b7280" />
+                    <input type="text" data-prop="color" value="#6b7280" />
+                </div>
+                <div class="row">
+                    <label>السماكة</label>
+                    <select data-prop="weight">
+                        <option value="400" selected>عادي</option>
+                        <option value="600">شبه عريض</option>
+                        <option value="700">عريض</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- رمز QR -->
+            <div class="field-block" data-field="qr">
+                <h3><i class="fa-solid fa-qrcode"></i> رمز QR</h3>
+                <div class="row">
+                    <label>X (%)</label>
+                    <input type="range" data-prop="x" min="0" max="100" step="0.1" value="85" />
+                    <input type="number" data-prop="x" min="0" max="100" step="0.1" value="85" />
+                </div>
+                <div class="row">
+                    <label>Y (%)</label>
+                    <input type="range" data-prop="y" min="0" max="100" step="0.1" value="88" />
+                    <input type="number" data-prop="y" min="0" max="100" step="0.1" value="88" />
+                </div>
+                <div class="row">
+                    <label>الحجم (px)</label>
+                    <input type="range" data-prop="size" min="50" max="200" step="2" value="110" />
+                    <input type="number" data-prop="size" min="50" max="200" step="2" value="110" />
+                </div>
+                <div class="row">
+                    <label>اللون</label>
+                    <input type="color" data-prop="color" value="#1f2937" />
+                    <input type="text" data-prop="color" value="#1f2937" />
+                </div>
+                <p style="font-size:0.75rem;color:#6b7280;margin:4px 0 0;">الخلفية شفافة دائماً</p>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-success" id="downloadPdfBtn">
+                    <i class="fa-solid fa-file-pdf"></i> تحميل كـ PDF (للاختبار)
+                </button>
+                <button class="btn btn-primary" id="copyJsonBtn">
+                    <i class="fa-solid fa-copy"></i> نسخ JSON الإعدادات
+                </button>
+                <button class="btn btn-secondary" id="resetBtn">
+                    <i class="fa-solid fa-rotate-left"></i> استعادة الإعدادات الافتراضية
+                </button>
+            </div>
+
+            <details style="margin-top:14px;">
+                <summary>JSON الإعدادات الحالية</summary>
+                <div class="json-output" id="jsonOutput"></div>
+            </details>
+        </aside>
+
+        <!-- منطقة المعاينة -->
+        <main class="preview-area">
+            <h2><i class="fa-solid fa-eye"></i> المعاينة الحية</h2>
+            <p class="preview-info">
+                المعاينة بأبعاد A4 landscape (1414×1000). كل النسب محسوبة من حدود القالب — موضع النص = مركزه.
+            </p>
+            <div id="cert-canvas">
+                <div id="cert-text-holderName" class="cert-text"></div>
+                <div id="cert-text-activityName" class="cert-text"></div>
+                <div id="cert-text-serial" class="cert-text"></div>
+                <div id="cert-qr"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const STATE = {
+            gender: 'male',
+            holderName: { text: 'محمد بن إسماعيل المطر', x: 50, y: 48, size: 56, color: '#1f2937', weight: '700' },
+            activityName: { text: 'ورشة الكتابة الإبداعية', x: 50, y: 62, size: 38, color: '#374151', weight: '600' },
+            serial: { text: 'ADEEB-2026-0001', x: 20, y: 92, size: 22, color: '#6b7280', weight: '400' },
+            qr: { x: 85, y: 88, size: 110, color: '#1f2937' },
+        };
+
+        const VERIFY_BASE = window.location.origin + window.location.pathname.replace(/\/admin\/[^/]*$/, '/') + 'activities/verify.html';
+
+        const canvas = document.getElementById('cert-canvas');
+        const qrEl = document.getElementById('cert-qr');
+
+        function applyTemplate() {
+            const url = `../assets/certificates/template-${STATE.gender}.png`;
+            const img = new Image();
+            img.onload = () => {
+                canvas.style.backgroundImage = `url("${url}")`;
+                canvas.classList.remove('template-missing');
+            };
+            img.onerror = () => {
+                canvas.style.backgroundImage = '';
+                canvas.classList.add('template-missing');
+            };
+            img.src = url;
+        }
+
+        function applyText(field) {
+            const cfg = STATE[field];
+            const el = document.getElementById('cert-text-' + field);
+            if (!el || !cfg) return;
+            el.textContent = cfg.text;
+            el.style.left = cfg.x + '%';
+            el.style.top = cfg.y + '%';
+            el.style.fontSize = cfg.size + 'px';
+            el.style.color = cfg.color;
+            el.style.fontWeight = cfg.weight;
+        }
+
+        function applyQR() {
+            const cfg = STATE.qr;
+            qrEl.style.left = cfg.x + '%';
+            qrEl.style.top = cfg.y + '%';
+            qrEl.style.width = cfg.size + 'px';
+            qrEl.style.height = cfg.size + 'px';
+
+            qrEl.innerHTML = '';
+            const verifyUrl = `${VERIFY_BASE}?serial=${encodeURIComponent(STATE.serial.text)}`;
+            new QRCode(qrEl, {
+                text: verifyUrl,
+                width: cfg.size,
+                height: cfg.size,
+                colorDark:  cfg.color,
+                colorLight: 'rgba(255,255,255,0)', // خلفية شفافة
+                correctLevel: QRCode.CorrectLevel.M,
+            });
+
+            // qrcodejs ينشئ canvas + img كنسخة احتياطية. الـ img يأخذ data:image/png من الـ canvas
+            // والذي قد يفقد الشفافية. نخفي img ونُبقي الـ canvas فقط لضمان الشفافية الحقيقية.
+            requestAnimationFrame(() => {
+                const img = qrEl.querySelector('img');
+                if (img) img.style.display = 'none';
+                const cv = qrEl.querySelector('canvas');
+                if (cv) cv.style.display = 'block';
+            });
+        }
+
+        function syncJsonOutput() {
+            document.getElementById('jsonOutput').textContent = JSON.stringify(STATE, null, 2);
+        }
+
+        function rerender() {
+            applyTemplate();
+            applyText('holderName');
+            applyText('activityName');
+            applyText('serial');
+            applyQR();
+            syncJsonOutput();
+        }
+
+        // ربط أزرار الجنس
+        document.querySelectorAll('.gender-toggle button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.gender-toggle button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                STATE.gender = btn.dataset.gender;
+                applyTemplate();
+                syncJsonOutput();
+            });
+        });
+
+        // ربط جميع الحقول
+        document.querySelectorAll('.field-block').forEach(block => {
+            const field = block.dataset.field;
+            block.querySelectorAll('[data-prop]').forEach(input => {
+                const prop = input.dataset.prop;
+                // مزامنة بين range/number/color/text المرتبطة بنفس prop
+                input.addEventListener('input', () => {
+                    let val = input.value;
+                    if (input.type === 'range' || input.type === 'number') val = parseFloat(val);
+                    STATE[field][prop] = val;
+
+                    // مزامنة مع شقيق له نفس data-prop
+                    block.querySelectorAll(`[data-prop="${prop}"]`).forEach(other => {
+                        if (other !== input) other.value = input.value;
+                    });
+
+                    if (field === 'qr' || prop === 'text' && field === 'serial') {
+                        applyQR(); // QR يعتمد على serial.text أيضاً
+                    }
+                    if (field !== 'qr') applyText(field);
+                    syncJsonOutput();
+                });
+            });
+        });
+
+        // أزرار التحكم
+        document.getElementById('copyJsonBtn').addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(JSON.stringify(STATE, null, 2));
+                alert('✅ تم نسخ JSON الإعدادات');
+            } catch (e) {
+                alert('تعذّر النسخ — استخدم النص يدوياً من قسم JSON');
+            }
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (!confirm('استعادة الإعدادات الافتراضية؟')) return;
+            location.reload();
+        });
+
+        document.getElementById('downloadPdfBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('downloadPdfBtn');
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التوليد…';
+            try {
+                await new Promise(r => setTimeout(r, 100));
+                const canvasImg = await html2canvas(canvas, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                });
+                const imgData = canvasImg.toDataURL('image/jpeg', 0.95);
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+                const pw = pdf.internal.pageSize.getWidth();
+                const ph = pdf.internal.pageSize.getHeight();
+                pdf.addImage(imgData, 'JPEG', 0, 0, pw, ph);
+                pdf.save(`test-certificate-${STATE.gender}.pdf`);
+            } catch (err) {
+                alert('فشل توليد PDF: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = original;
+            }
+        });
+
+        // التشغيل الأولي
+        rerender();
+    </script>
+</body>
+</html>

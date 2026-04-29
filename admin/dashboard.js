@@ -917,6 +917,7 @@
         'activities-create-section':            'manage_activities',
         'activities-reservations-section':      'manage_activities',
         'activities-visitors-section':          'manage_activities',
+        'activities-archive-section':           'manage_activities',
         // activities-attendance-section: محمي على مستوى DB عبر mark_attendance/RPC
         // (يقبل admin أو activity_coordinator)؛ لا نضع قيدًا أمامياً هنا حتى يتمكّن
         // المنسّق من فتحه دون امتلاك صلاحية manage_activities.
@@ -1305,6 +1306,14 @@
                 }
                 if (window.attendanceManagerInstance) {
                     await window.attendanceManagerInstance.init(currentUser, currentUserRole);
+                }
+                break;
+
+            case 'activities-archive-section':
+                // التهيئة فقط — البيانات تُحمَّل عبر openArchive(activityId)
+                // الذي يُستدعى من زر "عرض التفاصيل" في بطاقة النشاط.
+                if (window.ActivityArchiveManager && !window.activityArchiveManagerInstance) {
+                    window.activityArchiveManagerInstance = new window.ActivityArchiveManager();
                 }
                 break;
 

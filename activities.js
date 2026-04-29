@@ -34,6 +34,8 @@
         error:          document.getElementById('apErrorState'),
         errorMsg:       document.getElementById('apErrorMessage'),
         grid:           document.getElementById('apActivitiesGrid'),
+        endedSection:   document.getElementById('endedActivities'),
+        endedGrid:      document.getElementById('apEndedGrid'),
         userArea:       document.getElementById('headerUserArea'),
         openLoginBtn:   document.getElementById('openLoginBtn'),
         openSignupBtn:  document.getElementById('openSignupBtn'),
@@ -267,14 +269,36 @@
             state.activities = data || [];
             if (state.activities.length === 0) {
                 showState('empty');
-                return;
+            } else {
+                renderActivities();
+                showState('grid');
+                focusActivityFromHash();
             }
-            renderActivities();
-            showState('grid');
-            focusActivityFromHash();
         } catch (err) {
             console.error('[activities] loadActivities error:', err);
             showError(err.message || 'حدث خطأ في تحميل الأنشطة');
+        }
+
+        loadEndedActivities();
+    }
+
+    async function loadEndedActivities() {
+        if (!els.endedSection || !els.endedGrid) return;
+        try {
+            const { data, error } = await sb.rpc('get_ended_activities_with_seats', { p_limit: 30 });
+            if (error) throw error;
+
+            const ended = data || [];
+            if (ended.length === 0) {
+                els.endedSection.style.display = 'none';
+                return;
+            }
+
+            els.endedGrid.innerHTML = ended.map(act => renderActivityCard(act, true)).join('');
+            els.endedSection.style.display = 'block';
+        } catch (err) {
+            console.error('[activities] loadEndedActivities error:', err);
+            els.endedSection.style.display = 'none';
         }
     }
 
@@ -310,7 +334,7 @@
         return Math.min(100, Math.round((booked / total) * 100));
     }
 
-    function renderActivityCard(act) {
+    function renderActivityCard(act, isEnded = false) {
         const totalSeats     = (act.male_seats     || 0) + (act.female_seats     || 0);
         const totalRemaining = (act.male_remaining || 0) + (act.female_remaining || 0);
         const isFull = totalRemaining <= 0;
@@ -323,7 +347,9 @@
 
         // شارة الحالة
         let statusChip;
-        if (isCancelled) {
+        if (isEnded) {
+            statusChip = `<span class="chip chip--status is-ended"><i class="fa-solid fa-flag-checkered"></i>منتهي</span>`;
+        } else if (isCancelled) {
             statusChip = `<span class="chip chip--status is-cancel"><i class="fa-solid fa-ban"></i>ملغي</span>`;
         } else if (isFull) {
             statusChip = `<span class="chip chip--status is-full"><i class="fa-solid fa-users-slash"></i>مكتمل</span>`;
@@ -333,7 +359,9 @@
 
         // الزر
         let buttonHtml;
-        if (isCancelled) {
+        if (isEnded) {
+            buttonHtml = `<button class="btn btn--ghost" disabled><i class="fa-solid fa-flag-checkered"></i><span>انتهى النشاط</span></button>`;
+        } else if (isCancelled) {
             buttonHtml = `<button class="btn btn--ghost" disabled><i class="fa-solid fa-ban"></i><span>تم إلغاء النشاط</span></button>`;
         } else if (isFull) {
             buttonHtml = `<button class="btn btn--ghost" disabled><i class="fa-solid fa-users-slash"></i><span>اكتملت المقاعد</span></button>`;
@@ -354,7 +382,7 @@
         const seatsPct = pct(totalRemaining, totalSeats);
 
         return `
-        <article class="act-card" data-activity-id="${escapeHtml(act.id)}">
+        <article class="act-card${isEnded ? ' act-card--ended' : ''}" data-activity-id="${escapeHtml(act.id)}">
             <div class="act-card__cover">
                 ${coverHtml}
                 <div class="act-card__chips">

@@ -1,0 +1,76 @@
+/* =============================================
+   صفحة تفاصيل النشاط (drill-down)
+   تعتمد على أنماط النظام: stats-grid, stat-card, card, data-table,
+   uc-card, uc-grid, uc-badge, filters-bar, empty-state.
+   هذا الملف يضيف فقط ما لا يتوفر افتراضياً.
+   ============================================= */
+
+/* ----- شريط التبويبات الداخلية ----- */
+.aa-tabs {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+
+/* ----- التنبيهات الذكية ----- */
+.aa-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.aa-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    font-size: 0.92rem;
+    font-weight: 500;
+}
+
+.aa-alert i { font-size: 1.05rem; flex-shrink: 0; }
+
+.aa-alert--warning {
+    background: #fef3c7;
+    border-color: #fcd34d;
+    color: #92400e;
+}
+
+.aa-alert--danger {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #991b1b;
+}
+
+.aa-alert--success {
+    background: #d1fae5;
+    border-color: #6ee7b7;
+    color: #065f46;
+}
+
+/* ----- رقم الشهادة (نسخ بنقرة) ----- */
+.aa-cert-serial {
+    font-family: var(--font-mono, ui-monospace, "SFMono-Regular", Menlo, monospace);
+    direction: ltr;
+    background: rgba(39, 64, 96, 0.06);
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border: 1px solid rgba(39, 64, 96, 0.10);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.aa-cert-serial:hover {
+    background: rgba(39, 64, 96, 0.12);
+    border-color: rgba(39, 64, 96, 0.20);
+}
+
+.aa-cert-serial i { font-size: 0.75rem; opacity: 0.6; }

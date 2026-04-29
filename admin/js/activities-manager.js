@@ -13,7 +13,13 @@ class ActivitiesManager {
         this.reservations = [];
         this.visitors = [];
         this.currentEditingId = null;
-        this.filters = { search: '', status: '', activityFilter: '', whatsappStatus: '' };
+        this.filters = {
+            search: '',
+            status: '',
+            activityFilter: '',
+            whatsappStatus: '',
+            reservationsPeriod: this._loadReservationsPeriod(),
+        };
         console.log('ActivitiesManager: Initialized');
     }
 
@@ -173,18 +179,23 @@ class ActivitiesManager {
         const isPast = this.isActivityPast(a);
 
         let statusBadge;
+        let cardVariant;
         if (a.is_cancelled) {
             statusBadge = `<span class="uc-card__badge"><i class="fa-solid fa-ban"></i> ملغي</span>`;
+            cardVariant = 'uc-card--danger';
         } else if (isPast) {
             statusBadge = `<span class="uc-card__badge"><i class="fa-solid fa-clock-rotate-left"></i> مُنتهي</span>`;
+            cardVariant = 'uc-card--warning';
         } else if (a.is_published) {
             statusBadge = `<span class="uc-card__badge"><i class="fa-solid fa-circle-check"></i> منشور</span>`;
+            cardVariant = 'uc-card--success';
         } else {
             statusBadge = `<span class="uc-card__badge"><i class="fa-solid fa-pen"></i> مسودة</span>`;
+            cardVariant = 'uc-card--purple';
         }
 
         return `
-        <div class="uc-card" data-activity-id="${this.escapeHtml(a.id)}">
+        <div class="uc-card ${cardVariant}" data-activity-id="${this.escapeHtml(a.id)}">
             <div class="uc-card__header">
                 <div class="uc-card__header-inner">
                     <div class="uc-card__icon">
@@ -234,17 +245,20 @@ class ActivitiesManager {
                 </div>
             </div>
             <div class="uc-card__footer">
-                <button class="btn btn-violet" data-edit-activity="${this.escapeHtml(a.id)}">
-                    <i class="fa-solid fa-pen"></i> تعديل
+                <button class="btn ${isPast ? 'btn-primary' : 'btn-outline'}" data-view-archive="${this.escapeHtml(a.id)}">
+                    <i class="fa-solid fa-circle-info"></i> عرض التفاصيل
                 </button>
-                <button class="btn ${a.is_published ? 'btn-slate' : 'btn-success'}" data-toggle-publish="${this.escapeHtml(a.id)}">
+                ${!isPast ? `<button class="btn btn-violet" data-edit-activity="${this.escapeHtml(a.id)}">
+                    <i class="fa-solid fa-pen"></i> تعديل
+                </button>` : ''}
+                ${!isPast ? `<button class="btn ${a.is_published ? 'btn-slate' : 'btn-success'}" data-toggle-publish="${this.escapeHtml(a.id)}">
                     <i class="fa-solid fa-${a.is_published ? 'eye-slash' : 'eye'}"></i>
                     ${a.is_published ? 'إلغاء النشر' : 'نشر'}
-                </button>
-                ${(a.is_published && !a.is_cancelled) ? `<button class="btn btn-success" data-copy-booking-link="${this.escapeHtml(a.id)}">
+                </button>` : ''}
+                ${(a.is_published && !a.is_cancelled && !isPast) ? `<button class="btn btn-success" data-copy-booking-link="${this.escapeHtml(a.id)}">
                     <i class="fa-solid fa-link"></i> نسخ رابط الحجز
                 </button>` : ''}
-                ${!a.is_cancelled ? `<button class="btn btn-warning" data-cancel-activity="${this.escapeHtml(a.id)}">
+                ${(!a.is_cancelled && !isPast) ? `<button class="btn btn-warning" data-cancel-activity="${this.escapeHtml(a.id)}">
                     <i class="fa-solid fa-ban"></i> إلغاء
                 </button>` : ''}
                 <button class="btn btn-danger" data-delete-activity="${this.escapeHtml(a.id)}">
@@ -258,6 +272,9 @@ class ActivitiesManager {
         const container = document.getElementById('activitiesListContainer');
         if (!container) return;
 
+        container.querySelectorAll('[data-view-archive]').forEach(b => {
+            b.addEventListener('click', () => this.openArchive(b.dataset.viewArchive));
+        });
         container.querySelectorAll('[data-edit-activity]').forEach(b => {
             b.addEventListener('click', () => this.editActivity(b.dataset.editActivity));
         });
@@ -273,6 +290,18 @@ class ActivitiesManager {
         container.querySelectorAll('[data-copy-booking-link]').forEach(b => {
             b.addEventListener('click', () => this.copyBookingLink(b.dataset.copyBookingLink));
         });
+    }
+
+    openArchive(activityId) {
+        if (!activityId) return;
+        if (!window.ActivityArchiveManager) {
+            this.notifyError('لم يتم تحميل وحدة تفاصيل النشاط');
+            return;
+        }
+        if (!window.activityArchiveManagerInstance) {
+            window.activityArchiveManagerInstance = new window.ActivityArchiveManager();
+        }
+        window.activityArchiveManagerInstance.openArchive(activityId);
     }
 
     buildBookingUrl(activityId) {
@@ -608,9 +637,17 @@ class ActivitiesManager {
     attachReservationsListeners() {
         if (this._reservationsListenersAttached) return;
         this._reservationsListenersAttached = true;
+        const periodFilter = document.getElementById('reservationsPeriodFilter');
         const filter = document.getElementById('reservationsActivityFilter');
         const whatsappFilter = document.getElementById('reservationsWhatsappFilter');
-        const refresh = document.getElementById('refreshReservationsBtn');
+        if (periodFilter) {
+            periodFilter.value = this.filters.reservationsPeriod;
+            periodFilter.addEventListener('change', (e) => {
+                this.filters.reservationsPeriod = e.target.value;
+                this._saveReservationsPeriod(e.target.value);
+                this.renderReservationsTable();
+            });
+        }
         if (filter) {
             filter.addEventListener('change', (e) => {
                 this.filters.activityFilter = e.target.value;
@@ -623,7 +660,63 @@ class ActivitiesManager {
                 this.renderReservationsTable();
             });
         }
-        if (refresh) refresh.addEventListener('click', () => this.loadReservations());
+    }
+
+    _loadReservationsPeriod() {
+        try {
+            const v = localStorage.getItem('admin.reservations.period');
+            if (v === 'active' || v === 'past' || v === 'all') return v;
+        } catch (e) { /* localStorage unavailable */ }
+        return 'active';
+    }
+
+    _saveReservationsPeriod(value) {
+        try { localStorage.setItem('admin.reservations.period', value); } catch (e) { /* ignore */ }
+    }
+
+    _updateReservationsStats(scopedList) {
+        const total     = scopedList.length;
+        const confirmed = scopedList.filter(r => r.status === 'confirmed').length;
+        const cancelled = scopedList.filter(r => r.status === 'cancelled').length;
+        const pending   = scopedList.filter(r => r.status === 'confirmed' && !r.whatsapp_confirmed_at).length;
+        const male      = scopedList.filter(r => r.gender_at_booking === 'male').length;
+        const female    = scopedList.filter(r => r.gender_at_booking === 'female').length;
+        const members   = scopedList.filter(r => !!r.member).length;
+        const visitors  = scopedList.filter(r => !!r.visitor).length;
+
+        const set = (id, v) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = v;
+        };
+        set('resStatTotal', total);
+        set('resStatConfirmed', confirmed);
+        set('resStatPending', pending);
+        set('resStatCancelled', cancelled);
+        set('resStatMale', male);
+        set('resStatFemale', female);
+        set('resStatMembers', members);
+        set('resStatVisitors', visitors);
+    }
+
+    _refreshPeriodFilterCounts(activeCount, pastCount) {
+        const sel = document.getElementById('reservationsPeriodFilter');
+        if (!sel) return;
+        const labels = {
+            active: `النشطة والقادمة (${activeCount})`,
+            past:   `المنتهية (${pastCount})`,
+            all:    `الكل (${activeCount + pastCount})`,
+        };
+        Array.from(sel.options).forEach(opt => {
+            if (labels[opt.value]) opt.textContent = labels[opt.value];
+        });
+    }
+
+    _isReservationActivityPast(r) {
+        const a = r.activity;
+        if (!a || !a.activity_date) return false;
+        const endTime = a.end_time || '23:59:59';
+        const endIso = `${a.activity_date}T${endTime.length === 5 ? endTime + ':00' : endTime}`;
+        return new Date(endIso).getTime() <= Date.now();
     }
 
     async loadReservations() {
@@ -691,9 +784,26 @@ class ActivitiesManager {
         const container = document.getElementById('reservationsTableContainer');
         if (!container) return;
 
-        let filtered = this.filters.activityFilter
-            ? this.reservations.filter(r => r.activity?.id === this.filters.activityFilter)
-            : this.reservations;
+        // عدّادات الفترات (تُحدَّث في الـ dropdown قبل تطبيق فلتر الفترة نفسه)
+        const activeCount = this.reservations.filter(r => !this._isReservationActivityPast(r)).length;
+        const pastCount = this.reservations.length - activeCount;
+        this._refreshPeriodFilterCounts(activeCount, pastCount);
+
+        let filtered = this.reservations;
+
+        // فلتر الفترة (افتراضي: النشطة والقادمة)
+        if (this.filters.reservationsPeriod === 'active') {
+            filtered = filtered.filter(r => !this._isReservationActivityPast(r));
+        } else if (this.filters.reservationsPeriod === 'past') {
+            filtered = filtered.filter(r => this._isReservationActivityPast(r));
+        }
+
+        // الإحصائيات تُحسب على نطاق الفترة المختارة (قبل فلاتر النشاط/واتساب)
+        this._updateReservationsStats(filtered);
+
+        if (this.filters.activityFilter) {
+            filtered = filtered.filter(r => r.activity?.id === this.filters.activityFilter);
+        }
 
         if (this.filters.whatsappStatus === 'pending') {
             filtered = filtered.filter(r => r.status === 'confirmed' && !r.whatsapp_confirmed_at);
@@ -744,6 +854,9 @@ class ActivitiesManager {
         <div class="card">
             <div class="card-header">
                 <h3><i class="fa-solid fa-table"></i> جدول الحجوزات</h3>
+                <button class="btn btn-primary btn-icon btn-outline" id="refreshReservationsBtn" type="button" title="تحديث">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
             </div>
             <div class="card-body">
                 <div class="data-table-wrap">
@@ -799,10 +912,9 @@ class ActivitiesManager {
         const lines = [
             'السلام عليكم ' + (guest.full_name || '') + '،',
             '',
-            'نؤكد حجزك في ورشة "' + (a.name || '') + '".', '',
+            'نؤكد حجزك في جلسة "' + (a.name || '') + '".', '',
             'التاريخ: ' + dateStr, '',
             'الوقت: ' + timeStr, '',
-            'ملاحظة: ' + "يُفضل إحضار جهاز لاب توب للتطبيق العملي ببرنامج الفوتوشوب.", '',
         ];
         if (a.location) {
             lines.push('الموقع: ' + a.location);
@@ -847,6 +959,10 @@ class ActivitiesManager {
         container.querySelectorAll('[data-confirm-whatsapp]').forEach(btn => {
             btn.addEventListener('click', () => this.confirmWhatsapp(btn.dataset.confirmWhatsapp, btn));
         });
+        const refreshBtn = container.querySelector('#refreshReservationsBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => this.loadReservations());
+        }
     }
 
     async confirmWhatsapp(reservationId, btn) {
@@ -883,10 +999,71 @@ class ActivitiesManager {
     attachVisitorsListeners() {
         if (this._visitorsListenersAttached) return;
         this._visitorsListenersAttached = true;
-        const refresh = document.getElementById('refreshVisitorsBtn');
-        const exportBtn = document.getElementById('exportVisitorsCsvBtn');
-        if (refresh) refresh.addEventListener('click', () => this.loadVisitors());
-        if (exportBtn) exportBtn.addEventListener('click', () => this.exportVisitorsCsv());
+        // الأزرار تُربط داخل renderVisitorsTable لأنها أصبحت في card-header المُعاد بناؤه
+    }
+
+    _updateVisitorsStats() {
+        const total  = this.visitors.length;
+        const male   = this.visitors.filter(v => v.gender === 'male').length;
+        const female = this.visitors.filter(v => v.gender === 'female').length;
+        const set = (id, v) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = v;
+        };
+        set('visitorsCount', total);
+        set('visitorsMaleCount', male);
+        set('visitorsFemaleCount', female);
+    }
+
+    attachVisitorsRowListeners() {
+        const container = document.getElementById('visitorsTableContainer');
+        if (!container) return;
+
+        const optionsBtn = container.querySelector('#visitorsListOptionsBtn');
+        if (!optionsBtn) return;
+
+        // أنشئ القائمة المنسدلة في body مرة واحدة فقط
+        let dropdown = document.getElementById('visitorsListOptionsDropdown');
+        if (!dropdown) {
+            dropdown = document.createElement('div');
+            dropdown.id = 'visitorsListOptionsDropdown';
+            dropdown.className = 'dropdown-menu';
+            dropdown.innerHTML = `
+                <button class="btn btn-slate btn-outline btn-block" data-action="refresh">
+                    <i class="fa-solid fa-rotate"></i> تحديث
+                </button>
+                <button class="btn btn-primary btn-outline btn-block" data-action="export">
+                    <i class="fa-solid fa-file-export"></i> تصدير البيانات
+                </button>
+            `;
+            document.body.appendChild(dropdown);
+
+            dropdown.addEventListener('click', (e) => {
+                const actionBtn = e.target.closest('[data-action]');
+                if (!actionBtn) return;
+                dropdown.classList.remove('show');
+                if (actionBtn.dataset.action === 'export') this.exportVisitorsCsv();
+                else if (actionBtn.dataset.action === 'refresh') this.loadVisitors();
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#visitorsListOptionsBtn')
+                    && !e.target.closest('#visitorsListOptionsDropdown')) {
+                    dropdown.classList.remove('show');
+                }
+            });
+        }
+
+        // اربط زر التبديل من جديد بعد كل re-render
+        optionsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = dropdown.classList.toggle('show');
+            if (isOpen) {
+                const rect = optionsBtn.getBoundingClientRect();
+                dropdown.style.top = (rect.bottom + 6) + 'px';
+                dropdown.style.left = rect.left + 'px';
+            }
+        });
     }
 
     async loadVisitors() {
@@ -899,8 +1076,7 @@ class ActivitiesManager {
             if (error) throw error;
             this.visitors = data || [];
             this.renderVisitorsTable();
-            const countEl = document.getElementById('visitorsCount');
-            if (countEl) countEl.textContent = this.visitors.length;
+            this._updateVisitorsStats();
         } catch (err) {
             console.error('ActivitiesManager: loadVisitors error', err);
             this.notifyError('حدث خطأ في تحميل الزوار: ' + (err.message || ''));
@@ -912,41 +1088,92 @@ class ActivitiesManager {
         if (!container) return;
 
         if (this.visitors.length === 0) {
-            container.innerHTML = `<div class="empty-state">
-                <div class="empty-state__icon"><i class="fa-solid fa-users-slash"></i></div>
-                <p class="empty-state__title">لا يوجد زوار مسجلون بعد</p>
+            container.innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-table"></i> جدول الزوار</h3>
+                    <div class="va-menu" id="visitorsActionsMenu">
+                        <button class="btn btn-primary btn-icon btn-outline" type="button" data-va-toggle title="خيارات" aria-haspopup="true" aria-expanded="false">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
+                        <div class="va-menu__list" role="menu">
+                            <button class="va-menu__item" id="exportVisitorsCsvBtn" type="button" role="menuitem">
+                                <i class="fa-solid fa-file-csv"></i> تصدير CSV
+                            </button>
+                            <button class="va-menu__item" id="refreshVisitorsBtn" type="button" role="menuitem">
+                                <i class="fa-solid fa-rotate"></i> تحديث
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="empty-state">
+                        <div class="empty-state__icon"><i class="fa-solid fa-users-slash"></i></div>
+                        <p class="empty-state__title">لا يوجد زوار مسجلون بعد</p>
+                    </div>
+                </div>
             </div>`;
+            this.attachVisitorsRowListeners();
             return;
         }
 
-        const rows = this.visitors.map(v => `
-            <tr style="border-bottom:1px solid #f1f5f9;">
-                <td style="padding:0.75rem;">${this.escapeHtml(v.full_name)}</td>
-                <td style="padding:0.75rem;" dir="ltr">${this.escapeHtml(v.phone)}</td>
-                <td style="padding:0.75rem;" dir="ltr">${this.escapeHtml(v.email)}</td>
-                <td style="padding:0.75rem;">${v.gender === 'male' ? 'ذكر' : 'أنثى'}</td>
-                <td style="padding:0.75rem;">${this.escapeHtml(v.city || '—')}</td>
-                <td style="padding:0.75rem;">${v.accepts_marketing ? '<i class="fa-solid fa-check" style="color:#10b981;"></i>' : '<i class="fa-solid fa-xmark" style="color:#ef4444;"></i>'}</td>
-                <td style="padding:0.75rem;">${new Date(v.created_at).toLocaleDateString('ar-SA')}</td>
-            </tr>`).join('');
+        const rows = this.visitors.map((v, i) => {
+            const genderLabel = v.gender === 'male' ? 'ذكر' : 'أنثى';
+            const marketingBadge = v.accepts_marketing
+                ? `<span class="uc-badge uc-badge--success"><i class="fa-solid fa-circle" style="font-size:0.55rem;"></i>نعم</span>`
+                : `<span class="uc-badge uc-badge--danger"><i class="fa-solid fa-circle" style="font-size:0.55rem;"></i>لا</span>`;
+            const phoneCell = v.phone
+                ? `<span dir="ltr">${this.escapeHtml(v.phone)}</span>`
+                : `<span class="cell-muted"><i class="fa-solid fa-minus"></i></span>`;
+            const emailCell = v.email
+                ? `<span dir="ltr">${this.escapeHtml(v.email)}</span>`
+                : `<span class="cell-muted"><i class="fa-solid fa-minus"></i></span>`;
+
+            return `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${this.escapeHtml(v.full_name || '—')}</td>
+                <td>${phoneCell}</td>
+                <td>${emailCell}</td>
+                <td>${genderLabel}</td>
+                <td>${this.escapeHtml(v.city || '—')}</td>
+                <td>${marketingBadge}</td>
+                <td>${new Date(v.created_at).toLocaleDateString('ar-SA')}</td>
+            </tr>`;
+        }).join('');
 
         container.innerHTML = `
-        <div class="table-wrapper" style="overflow-x:auto;background:#fff;border-radius:12px;border:1px solid #e2e8f0;">
-            <table style="width:100%;border-collapse:collapse;">
-                <thead style="background:#f4f7fb;">
-                    <tr>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">الاسم</th>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">الجوال</th>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">البريد</th>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">الجنس</th>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">المدينة</th>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">يقبل الترويج</th>
-                        <th style="padding:0.85rem;text-align:right;border-bottom:1px solid #e2e8f0;">تاريخ التسجيل</th>
-                    </tr>
-                </thead>
-                <tbody>${rows}</tbody>
-            </table>
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-table"></i> جدول الزوار</h3>
+                <button class="btn btn-primary btn-outline btn-icon" id="visitorsListOptionsBtn" type="button" title="خيارات">
+                    <i class="fa-solid fa-ellipsis-vertical" style="pointer-events:none;"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="data-table-wrap">
+                    <div class="data-table-scroll">
+                        <table class="data-table data-table--striped data-table--with-index">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>الاسم</th>
+                                    <th>الجوال</th>
+                                    <th>البريد</th>
+                                    <th>الجنس</th>
+                                    <th>المدينة</th>
+                                    <th>يقبل الترويج</th>
+                                    <th>تاريخ التسجيل</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>`;
+
+        this.attachVisitorsRowListeners();
     }
 
     exportVisitorsCsv() {

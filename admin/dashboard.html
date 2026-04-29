@@ -48,6 +48,9 @@
     <link rel="stylesheet" href="css/news-workflow.css?v=20260423e" />
     <!-- نظام الكروت الموحد — الملف الوحيد لجميع الكروت -->
     <link rel="stylesheet" href="css/unified-cards.css?v=20260424a" />
+    <!-- مراجعة المرشحين (تصميم مخصّص) -->
+    <link rel="stylesheet" href="css/elections-review.css?v=20260428g" />
+    <link rel="stylesheet" href="css/activity-archive.css?v=20260430a" />
     <!-- شريط دخول الرئيس كمستخدم -->
     <link rel="stylesheet" href="css/master-access.css?v=20260423e" />
 </head>
@@ -3891,7 +3894,104 @@
             <!-- قسم: إدارة الحجوزات -->
             <section id="activities-reservations-section" class="admin-section d-none">
 
-                <div class="filters-bar">
+                <!-- إحصائيات الحجوزات -->
+                <div class="stats-grid">
+                    <div class="stat-card" style="--stat-color: #3b82f6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-ticket"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="resStatTotal">0</div>
+                                <div class="stat-label">إجمالي الحجوزات</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="resStatConfirmed">0</div>
+                                <div class="stat-label">حجوزات مؤكدة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #f59e0b">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="resStatPending">0</div>
+                                <div class="stat-label">بانتظار التأكيد</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #ef4444">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-ban"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="resStatCancelled">0</div>
+                                <div class="stat-label">حجوزات ملغاة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #2563eb">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-mars"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="resStatMale">0</div>
+                                <div class="stat-label">رجال</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #ec4899">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-venus"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="resStatFemale">0</div>
+                                <div class="stat-label">نساء</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #8b5cf6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-id-badge"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="resStatMembers">0</div>
+                                <div class="stat-label">أعضاء</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #0ea5e9">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="resStatVisitors">0</div>
+                                <div class="stat-label">زوار</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filters-bar filters-bar--stretch">
+                    <select id="reservationsPeriodFilter" class="filter-select">
+                        <option value="active">النشطة والقادمة</option>
+                        <option value="past">المنتهية</option>
+                        <option value="all">الكل</option>
+                    </select>
                     <select id="reservationsActivityFilter" class="filter-select">
                         <option value="">جميع الأنشطة</option>
                     </select>
@@ -3900,10 +4000,6 @@
                         <option value="pending">بانتظار تأكيد واتساب</option>
                         <option value="confirmed">تم تأكيد الواتساب</option>
                     </select>
-                    <button class="btn btn-outline" id="refreshReservationsBtn" type="button">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
                 </div>
 
                 <div id="reservationsTableContainer">
@@ -3914,8 +4010,8 @@
             <!-- قسم: بيانات الزوار -->
             <section id="activities-visitors-section" class="admin-section d-none">
 
-                <div class="stats-grid">
-                    <div class="stat-card" style="--stat-color: #3d8fd6">
+                <div class="stats-grid stats-grid--manual-span">
+                    <div class="stat-card stat-card--span-2" style="--stat-color: #3d8fd6">
                         <div class="stat-card-wrapper">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-users"></i>
@@ -3926,17 +4022,28 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="filters-bar">
-                    <button class="btn btn-outline" id="refreshVisitorsBtn" type="button">
-                        <i class="fa-solid fa-rotate"></i>
-                        تحديث
-                    </button>
-                    <button class="btn btn-success" id="exportVisitorsCsvBtn" type="button">
-                        <i class="fa-solid fa-file-csv"></i>
-                        تصدير CSV
-                    </button>
+                    <div class="stat-card" style="--stat-color: #2563eb">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-mars"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="visitorsMaleCount">0</div>
+                                <div class="stat-label">رجال</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #ec4899">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-venus"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="visitorsFemaleCount">0</div>
+                                <div class="stat-label">نساء</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="visitorsTableContainer">
@@ -3981,7 +4088,7 @@
                         <p class="empty-state__title">لا يوجد نشاط نشط الآن</p>
                         <p class="empty-state__msg">ستظهر الأنشطة هنا قبل بدئها بساعة، وتختفي بعد ساعة من انتهائها.</p>
                         <div style="margin-top:1rem;">
-                            <button class="btn btn-outline" id="attendanceRefreshBtn" type="button">
+                            <button class="btn btn-primary btn-outline" id="attendanceRefreshBtn" type="button">
                                 <i class="fa-solid fa-rotate"></i> تحديث
                             </button>
                         </div>
@@ -4071,6 +4178,28 @@
                             <!-- يُملأ ديناميكيًا -->
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <!-- قسم: تفاصيل النشاط (drill-down من قائمة الأنشطة) -->
+            <section id="activities-archive-section" class="admin-section d-none">
+                <nav class="page-breadcrumb" aria-label="مسار التنقل">
+                    <ol>
+                        <li>
+                            <button type="button" class="breadcrumb-link" id="archiveBackBtn">
+                                <i class="fa-solid fa-list"></i>
+                                قائمة الأنشطة
+                            </button>
+                        </li>
+                        <li class="breadcrumb-sep" aria-hidden="true">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </li>
+                        <li class="breadcrumb-current" aria-current="page">تفاصيل النشاط</li>
+                    </ol>
+                </nav>
+
+                <div id="archiveContent">
+                    <!-- يُملأ ديناميكيًا بواسطة ActivityArchiveManager -->
                 </div>
             </section>
 
@@ -4873,6 +5002,7 @@
     <script src="js/permissions-helper.js"></script>
     <script src="js/activities-manager.js"></script>
     <script src="js/attendance-manager.js"></script>
+    <script src="js/activity-archive-manager.js"></script>
     <!-- SweetAlert2 Shim - يحوّل Swal.fire إلى ModalHelper -->
     <script src="js/swal-shim.js"></script>
     <script src="js/settings.js"></script>

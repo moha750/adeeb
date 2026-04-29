@@ -13,6 +13,16 @@
     grid-column: span 2;
 }
 
+/* Modifier على الحاوية: يُلغي السلوك التلقائي لتمديد آخر بطاقة، ويتيح
+   التحكم اليدوي في أي بطاقة تمتد عبر .stat-card--span-2. */
+.stats-grid--manual-span .stat-card:last-child:nth-child(odd) {
+    grid-column: auto;
+}
+
+.stats-grid--manual-span .stat-card--span-2 {
+    grid-column: span 2;
+}
+
 /* شبكة إحصائيات بأربعة أعمدة (استخدام خاص — مثل إدارة الانتخابات) */
 .stats-grid.elections-stats-grid {
     grid-template-columns: repeat(4, 1fr);
@@ -318,6 +328,11 @@
     }
 
     .stats-grid .stat-card:last-child:nth-child(odd) {
+        grid-column: span 1;
+    }
+
+    /* في الشاشات الصغيرة: alle البطاقات في عمود واحد بغض النظر عن --span-2 */
+    .stats-grid--manual-span .stat-card--span-2 {
         grid-column: span 1;
     }
 

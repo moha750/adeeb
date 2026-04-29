@@ -1,6 +1,6 @@
 /**
  * صفحة التحقق العامة من شهادة حضور
- * تستقبل ?serial=ADB-YYYY-NNNN وتستدعي RPC get_certificate_data
+ * تستقبل ?serial=ADEEB-YYYY-NNNN وتستدعي RPC get_certificate_data
  * (متاحة للزوار غير المسجّلين). لا تكشف بيانات حساسة.
  */
 
