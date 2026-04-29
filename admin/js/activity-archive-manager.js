@@ -780,6 +780,7 @@ class ActivityArchiveManager {
                 activityName:  a.name,
                 activityType:  a.activity_type,
                 activityDate:  a.activity_date,
+                gender:        reservation.gender_at_booking,
             });
             this.notifySuccess('تم تحميل الشهادة');
         } catch (err) {

@@ -258,7 +258,11 @@
             const a = b.activity;
             if (!a) return '';
             const st = bookingState(b);
-            const canCancel = (st === 'upcoming');
+            // لا يجوز إلغاء حجز سُجِّل فيه حضور/غياب أو صدرت له شهادة
+            // (الـ DB تمنع ذلك عبر CHECK constraint، لكن إخفاء الزر أنظف لتجربة المستخدم)
+            const canCancel = (st === 'upcoming')
+                && b.attendance_status === 'registered'
+                && !b.certificate_serial;
 
             const cancelBtn = canCancel
                 ? `<button class="btn btn--danger-ghost btn--sm" data-cancel-reservation="${escapeHtml(b.id)}" data-activity-name="${escapeHtml(a.name)}">
@@ -354,6 +358,7 @@
                 activityType: b.activity.activity_type,
                 activityDate: b.activity.activity_date,
                 serial:       b.certificate_serial,
+                gender:       b.gender_at_booking,
             });
         } catch (err) {
             console.error('[my-bookings] downloadCertificate:', err);

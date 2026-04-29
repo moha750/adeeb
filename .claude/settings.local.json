@@ -179,7 +179,10 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8765/activities.js)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8765/activities.css)",
       "Bash(node -c /c/Users/moham/adeeb/admin/js/activity-archive-manager.js)",
-      "Bash(node -c /c/Users/moham/adeeb/admin/js/activities-manager.js)"
+      "Bash(node -c /c/Users/moham/adeeb/admin/js/activities-manager.js)",
+      "Bash(node -c /c/Users/moham/adeeb/admin/js/attendance-manager.js)",
+      "Bash(node -c /c/Users/moham/adeeb/activities/certificate.js)",
+      "Bash(node -c /c/Users/moham/adeeb/activities/my-bookings.js)"
     ]
   }
 }

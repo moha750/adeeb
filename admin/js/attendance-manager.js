@@ -223,18 +223,16 @@ class AttendanceManager {
     }
 
     updateStats() {
-        let attended = 0, noShow = 0, pending = 0;
+        let attended = 0, pending = 0;
         for (const r of this.roster) {
-            if (r.attendance_status === 'attended')      attended++;
-            else if (r.attendance_status === 'no_show')  noShow++;
-            else                                          pending++;
+            if (r.attendance_status === 'attended') attended++;
+            else                                     pending++;  // registered + no_show نادرة جداً قبل الإغلاق
         }
         const set = (id, v) => {
             const el = document.getElementById(id);
             if (el) el.textContent = v;
         };
         set('attendanceStatAttended', attended);
-        set('attendanceStatNoShow',   noShow);
         set('attendanceStatPending',  pending);
     }
 
@@ -267,12 +265,17 @@ class AttendanceManager {
                 : '';
             const stateBadge = r.attendance_status === 'attended'
                 ? `<span class="uc-badge uc-badge--success"><i class="fa-solid fa-circle-check"></i> حاضر</span>`
-                : r.attendance_status === 'no_show'
-                    ? `<span class="uc-badge uc-badge--danger"><i class="fa-solid fa-circle-xmark"></i> لم يحضر</span>`
-                    : `<span class="uc-badge"><i class="fa-solid fa-clock"></i> بانتظار</span>`;
+                : `<span class="uc-badge"><i class="fa-solid fa-clock"></i> بانتظار</span>`;
             const phoneCell = r.phone
                 ? `<span class="text-muted" dir="ltr">${this.escapeHtml(r.phone)}</span>`
                 : '';
+
+            // زر toggle: لو حاضر → يتراجع لـ registered، وإلا → يُسجَّل حاضراً
+            const isAttended = r.attendance_status === 'attended';
+            const toggleStatus = isAttended ? 'registered' : 'attended';
+            const toggleClass  = isAttended ? 'btn-slate' : 'btn-success';
+            const toggleIcon   = isAttended ? 'fa-rotate-left' : 'fa-check';
+            const toggleLabel  = isAttended ? 'تراجع' : 'حاضر';
 
             return `
             <tr data-reservation-id="${this.escapeHtml(r.reservation_id)}">
@@ -284,12 +287,9 @@ class AttendanceManager {
                 <td>${wa}</td>
                 <td>${stateBadge}</td>
                 <td>
-                    <div style="display:flex;gap:0.4rem;flex-wrap:wrap;justify-content:flex-end;">
-                        <button type="button" class="btn btn-success btn-sm ${r.attendance_status === 'attended' ? 'is-active' : ''}" data-mark="attended">
-                            <i class="fa-solid fa-check"></i> حاضر
-                        </button>
-                        <button type="button" class="btn btn-danger btn-sm ${r.attendance_status === 'no_show' ? 'is-active' : ''}" data-mark="no_show">
-                            <i class="fa-solid fa-xmark"></i> لم يحضر
+                    <div style="display:flex;gap:0.4rem;justify-content:flex-end;">
+                        <button type="button" class="btn ${toggleClass} btn-sm" data-mark="${toggleStatus}">
+                            <i class="fa-solid ${toggleIcon}"></i> ${toggleLabel}
                         </button>
                     </div>
                 </td>
@@ -339,7 +339,7 @@ class AttendanceManager {
                 r.certificate_serial = (status === 'attended') ? data : null;
             }
             this.renderRoster();
-            const labels = { attended:'حاضر', no_show:'لم يحضر' };
+            const labels = { attended: 'حاضر', registered: 'بانتظار' };
             this.notifySuccess(`تم تحديث الحالة إلى: ${labels[status] || status}`);
         } catch (err) {
             console.error('AttendanceManager: markAttendance error', err);
