@@ -182,7 +182,28 @@
       "Bash(node -c /c/Users/moham/adeeb/admin/js/activities-manager.js)",
       "Bash(node -c /c/Users/moham/adeeb/admin/js/attendance-manager.js)",
       "Bash(node -c /c/Users/moham/adeeb/activities/certificate.js)",
-      "Bash(node -c /c/Users/moham/adeeb/activities/my-bookings.js)"
+      "Bash(node -c /c/Users/moham/adeeb/activities/my-bookings.js)",
+      "Bash(where npx *)",
+      "Bash(npx --version)",
+      "Bash(npx -y @supabase/mcp-server-supabase@latest --help)",
+      "PowerShell($env:SUPABASE_ACCESS_TOKEN=\"sbp_833e7976768f8fb3bcf10856ffda745311e11002\"; echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{},\"clientInfo\":{\"name\":\"test\",\"version\":\"1.0\"}}}' | npx -y @supabase/mcp-server-supabase@latest --project-ref=nnlhkfeybyhvlinbqqfa --read-only=false 2>&1 | Select-Object -First 30)",
+      "Bash(supabase --version)",
+      "Bash(supabase projects *)",
+      "Bash(curl -s \"https://nnlhkfeybyhvlinbqqfa.supabase.co/rest/v1/elections?status=eq.cancelled&select=id,target_role_name,target_committee_id,target_department_id,status,title_ar,created_at,archived_at\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ubGhrZmV5YnlodmxpbmJxcWZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODIyODcsImV4cCI6MjA4NDE1ODI4N30.VhQgdxHt6YOQu8IJ-eni6_9qIeua1ZM3hx8hVe3YgZg\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ubGhrZmV5YnlodmxpbmJxcWZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODIyODcsImV4cCI6MjA4NDE1ODI4N30.VhQgdxHt6YOQu8IJ-eni6_9qIeua1ZM3hx8hVe3YgZg\")",
+      "Bash(curl -s \"https://nnlhkfeybyhvlinbqqfa.supabase.co/rest/v1/elections?status=eq.cancelled&select=*\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ubGhrZmV5YnlodmxpbmJxcWZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODIyODcsImV4cCI6MjA4NDE1ODI4N30.VhQgdxHt6YOQu8IJ-eni6_9qIeua1ZM3hx8hVe3YgZg\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ubGhrZmV5YnlodmxpbmJxcWZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODIyODcsImV4cCI6MjA4NDE1ODI4N30.VhQgdxHt6YOQu8IJ-eni6_9qIeua1ZM3hx8hVe3YgZg\")",
+      "Bash(curl -s \"https://nnlhkfeybyhvlinbqqfa.supabase.co/rest/v1/elections?select=id,target_role_name,status,archived_at,created_at&order=created_at.desc\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ubGhrZmV5YnlodmxpbmJxcWZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODIyODcsImV4cCI6MjA4NDE1ODI4N30.VhQgdxHt6YOQu8IJ-eni6_9qIeua1ZM3hx8hVe3YgZg\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ubGhrZmV5YnlodmxpbmJxcWZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODIyODcsImV4cCI6MjA4NDE1ODI4N30.VhQgdxHt6YOQu8IJ-eni6_9qIeua1ZM3hx8hVe3YgZg\")",
+      "Bash(python -m json.tool)",
+      "Bash(curl -sI \"https://nnlhkfeybyhvlinbqqfa.supabase.co/rest/v1/elections?select=count\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ubGhrZmV5YnlodmxpbmJxcWZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODIyODcsImV4cCI6MjA4NDE1ODI4N30.VhQgdxHt6YOQu8IJ-eni6_9qIeua1ZM3hx8hVe3YgZg\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ubGhrZmV5YnlodmxpbmJxcWZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODIyODcsImV4cCI6MjA4NDE1ODI4N30.VhQgdxHt6YOQu8IJ-eni6_9qIeua1ZM3hx8hVe3YgZg\" -H \"Prefer: count=exact\" -H \"Range: 0-0\")",
+      "Bash(supabase link *)",
+      "Bash(curl -s -X POST \"https://api.supabase.com/v1/projects/nnlhkfeybyhvlinbqqfa/database/query\" -H \"Authorization: Bearer sbp_833e7976768f8fb3bcf10856ffda745311e11002\" -H \"Content-Type: application/json\" -d '{\"query\":\"SELECT id, target_role_name, target_committee_id, target_department_id, status, archived_at, created_at FROM elections WHERE status = '\"'\"'cancelled'\"'\"' ORDER BY created_at DESC;\"}')",
+      "Bash(curl -s -X POST \"https://api.supabase.com/v1/projects/nnlhkfeybyhvlinbqqfa/database/query\" -H \"Authorization: Bearer sbp_833e7976768f8fb3bcf10856ffda745311e11002\" -H \"Content-Type: application/json\" -d '{\"query\":\"SELECT al.election_id, e.target_committee_id, c.name AS committee_name, al.event_type, al.payload, al.actor_id, al.created_at FROM election_audit_log al JOIN elections e ON e.id = al.election_id LEFT JOIN committees c ON c.id = e.target_committee_id WHERE e.status = '\"'\"'cancelled'\"'\"' ORDER BY al.election_id, al.created_at;\"}')",
+      "Bash(curl -s -X POST \"https://api.supabase.com/v1/projects/nnlhkfeybyhvlinbqqfa/database/query\" -H \"Authorization: Bearer sbp_833e7976768f8fb3bcf10856ffda745311e11002\" -H \"Content-Type: application/json\" -d '{\"query\":\"SELECT column_name FROM information_schema.columns WHERE table_name='\"'\"'committees'\"'\"' AND table_schema='\"'\"'public'\"'\"';\"}')",
+      "Bash(curl -s -X POST \"https://api.supabase.com/v1/projects/nnlhkfeybyhvlinbqqfa/database/query\" -H \"Authorization: Bearer sbp_833e7976768f8fb3bcf10856ffda745311e11002\" -H \"Content-Type: application/json\" -d '{\"query\":\"SELECT al.election_id, c.committee_name_ar, al.event_type, al.payload, al.actor_id, al.created_at FROM election_audit_log al JOIN elections e ON e.id = al.election_id LEFT JOIN committees c ON c.id = e.target_committee_id WHERE e.status = '\"'\"'cancelled'\"'\"' ORDER BY al.election_id, al.created_at;\"}')",
+      "Bash(curl -s -X POST https://api.supabase.com/v1/projects/nnlhkfeybyhvlinbqqfa/database/query -H 'Authorization: Bearer sbp_833e7976768f8fb3bcf10856ffda745311e11002' -H 'Content-Type: application/json' -d '{\"query\":\"SELECT id, status, archived_at, candidacy_end, candidacy_extended_once, target_committee_id FROM elections WHERE target_committee_id IN \\(3,6\\) AND target_role_name=$$committee_leader$$ ORDER BY target_committee_id, created_at;\"}')"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }
