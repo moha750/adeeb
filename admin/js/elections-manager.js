@@ -684,6 +684,332 @@
             this._bindCardActions(host);
         }
 
+        /* ============================================================
+           أرشيف — صفحة تفاصيل full-takeover
+           ============================================================ */
+        async openArchiveDetail(electionId) {
+            const container = document.getElementById('electionsArchiveContainer');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div class="elections-impersonation-slot"></div>
+                <div id="archiveDetailHost">${loadingState()}</div>
+            `;
+            this._renderImpersonationNoticeIfNeeded();
+
+            const host = container.querySelector('#archiveDetailHost');
+
+            const [
+                { data: election, error: eErr },
+                { data: adminFlag }
+            ] = await Promise.all([
+                sb.from('elections').select(`
+                    *,
+                    committee:committees(committee_name_ar),
+                    department:departments(name_ar),
+                    creator:profiles!elections_created_by_fkey(full_name),
+                    winner:election_candidates!elections_winner_fk(
+                        candidate_number,
+                        user:profiles!election_candidates_user_id_fkey(full_name)
+                    )
+                `).eq('id', electionId).maybeSingle(),
+                sb.rpc('has_election_admin_permission', { p_user: this.user.id })
+            ]);
+
+            if (eErr) { host.innerHTML = errorState(eErr.message); return; }
+            if (!election) { host.innerHTML = errorState('الانتخاب غير موجود'); return; }
+
+            const isAdmin = adminFlag === true;
+            const isCancelled = election.status === 'cancelled';
+            const target = targetLabelOf(
+                election,
+                election.committee?.committee_name_ar,
+                election.department?.name_ar
+            );
+
+            const tabs = [
+                { id: 'summary',     icon: 'circle-info',     label: 'ملخّص' },
+                { id: 'candidates',  icon: 'id-badge',        label: 'المرشّحون' },
+                { id: 'results',     icon: 'chart-column',    label: 'النتائج' },
+                { id: 'voters',      icon: 'users-line',      label: 'المصوّتون' }
+            ];
+            if (isAdmin) tabs.push({ id: 'vote-detail', icon: 'list-check', label: 'تفصيل الأصوات' });
+            tabs.push({ id: 'audit', icon: 'clock-rotate-left', label: 'سجل التدقيق' });
+
+            host.innerHTML = `
+                <div class="archive-detail ${isCancelled ? 'archive-detail--cancelled' : ''}">
+                    <button class="archive-detail__back" type="button" data-action="back-to-archive">
+                        <i class="fa-solid fa-arrow-right"></i> رجوع للأرشيف
+                    </button>
+
+                    <header class="archive-detail__header">
+                        <div class="archive-detail__chip">
+                            <i class="fa-solid fa-${isCancelled ? 'ban' : 'trophy'}"></i>
+                            ${isCancelled ? 'انتخاب ملغى' : 'انتخاب مكتمل'}
+                        </div>
+                        <h1 class="archive-detail__title">${esc(target)}</h1>
+                        <div class="archive-detail__meta">
+                            ${election.archived_at ? `<span><i class="fa-solid fa-box-archive"></i> أُرشف: ${esc(fmtDate(election.archived_at))}</span>` : ''}
+                            ${election.creator ? `<span><i class="fa-regular fa-user"></i> ${esc(election.creator.full_name)}</span>` : ''}
+                        </div>
+                    </header>
+
+                    <nav class="archive-tabs" role="tablist">
+                        ${tabs.map((t, i) => `
+                            <button class="archive-tabs__btn ${i === 0 ? 'is-active' : ''}" data-atab="${t.id}" role="tab">
+                                <i class="fa-solid fa-${t.icon}"></i> ${t.label}
+                            </button>
+                        `).join('')}
+                    </nav>
+
+                    <div class="archive-panel is-active" data-apanel="summary">
+                        ${this._renderArchiveSummary(election)}
+                    </div>
+                    <div class="archive-panel" data-apanel="candidates">${loadingState()}</div>
+                    <div class="archive-panel" data-apanel="results">${loadingState()}</div>
+                    <div class="archive-panel" data-apanel="voters">${loadingState()}</div>
+                    ${isAdmin ? `<div class="archive-panel" data-apanel="vote-detail">${loadingState()}</div>` : ''}
+                    <div class="archive-panel" data-apanel="audit">${loadingState()}</div>
+                </div>
+            `;
+
+            host.querySelector('[data-action="back-to-archive"]').addEventListener('click', () => {
+                this.renderAdminArchive();
+            });
+
+            const tabBtns = host.querySelectorAll('.archive-tabs__btn');
+            const panels  = host.querySelectorAll('.archive-panel');
+            const loaded  = new Set(['summary']);
+            tabBtns.forEach(b => b.addEventListener('click', () => {
+                tabBtns.forEach(x => x.classList.toggle('is-active', x === b));
+                panels.forEach(p => p.classList.toggle('is-active', p.dataset.apanel === b.dataset.atab));
+                if (!loaded.has(b.dataset.atab)) {
+                    loaded.add(b.dataset.atab);
+                    this._loadArchivePanel(host, electionId, b.dataset.atab, isAdmin);
+                }
+            }));
+        }
+
+        _renderArchiveSummary(e) {
+            const winnerLine = e.winner_candidate_id && e.winner
+                ? `<div class="archive-summary__winner">
+                       <i class="fa-solid fa-trophy"></i>
+                       <strong>الفائز:</strong>
+                       <span>المرشّح رقم ${e.winner.candidate_number} — ${esc(e.winner.user?.full_name || '—')}</span>
+                   </div>`
+                : '';
+
+            const rows = [
+                ['الحالة', STATUS_LABELS[e.status] || e.status, 'circle-info'],
+                ['تاريخ الإنشاء', fmtDate(e.created_at), 'calendar-plus'],
+                e.candidacy_end ? ['نهاية الترشّح', fmtDate(e.candidacy_end), 'calendar-check'] : null,
+                e.voting_opened_at ? ['فتح التصويت', fmtDate(e.voting_opened_at), 'door-open'] : null,
+                e.voting_end ? ['نهاية التصويت', fmtDate(e.voting_end), 'flag-checkered'] : null,
+                e.winner_declared_at ? ['إعلان الفائز', fmtDate(e.winner_declared_at), 'trophy'] : null,
+                e.archived_at ? ['تاريخ الأرشفة', fmtDate(e.archived_at), 'box-archive'] : null,
+            ].filter(Boolean);
+
+            return `
+                ${winnerLine}
+                <div class="archive-summary__grid">
+                    ${rows.map(([label, value, icon]) => `
+                        <div class="archive-summary__cell">
+                            <div class="archive-summary__icon"><i class="fa-solid fa-${icon}"></i></div>
+                            <div>
+                                <div class="archive-summary__label">${esc(label)}</div>
+                                <div class="archive-summary__value">${esc(value || '—')}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async _loadArchivePanel(host, electionId, tab, isAdmin) {
+            const panel = host.querySelector(`[data-apanel="${tab}"]`);
+            if (!panel) return;
+
+            try {
+                if (tab === 'candidates') {
+                    const { data, error } = await sb.rpc('get_candidates_with_identity', { p_election: electionId });
+                    if (error) throw error;
+                    const list = data || [];
+                    if (list.length === 0) {
+                        panel.innerHTML = `<div class="archive-empty">
+                            <i class="fa-solid fa-users-slash"></i>
+                            <p>لا يوجد مرشّحون مسجَّلون.</p>
+                            <small>قد يكون هذا الانتخاب أُلغي قبل تفعيل الأرشفة الكاملة.</small>
+                        </div>`;
+                        return;
+                    }
+                    panel.innerHTML = `<div class="director__list">
+                        ${list.map(c => `
+                            <div class="director__row">
+                                <span class="director__row-num">${c.candidate_number}</span>
+                                <div class="director__row-main">
+                                    <div class="director__row-name">${esc(c.full_name || '—')}</div>
+                                    <div class="director__row-sub">
+                                        <span class="director__chip director__chip--${esc(c.status || 'pending')}">${esc(CANDIDATE_STATUS_LABELS[c.status] || c.status)}</span>
+                                        ${c.submitted_at ? `<span class="director__row-meta"><i class="fa-regular fa-clock"></i> ${esc(fmtDate(c.submitted_at))}</span>` : ''}
+                                    </div>
+                                    ${c.statement_ar ? `<div class="archive-statement">${esc(c.statement_ar)}</div>` : ''}
+                                </div>
+                                ${c.file_url ? `<a class="director__row-file" href="${esc(c.file_url)}" target="_blank" rel="noopener" title="ملف المرشح"><i class="fa-solid fa-paperclip"></i></a>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>`;
+                }
+
+                else if (tab === 'results') {
+                    const { data, error } = await sb.rpc('get_election_results', { p_election: electionId });
+                    if (error) throw error;
+                    const list = data || [];
+                    if (list.length === 0) {
+                        panel.innerHTML = `<div class="archive-empty">
+                            <i class="fa-solid fa-chart-simple"></i>
+                            <p>لا توجد أصوات مسجَّلة.</p>
+                        </div>`;
+                        return;
+                    }
+                    const sorted = [...list].sort((a, b) => (b.total_weight || 0) - (a.total_weight || 0));
+                    const maxW = Math.max(1, ...sorted.map(r => Number(r.total_weight) || 0));
+                    panel.innerHTML = `<div class="director__results-list">
+                        ${sorted.map(r => {
+                            const w = Number(r.total_weight) || 0;
+                            const pct = Math.round((w / maxW) * 100);
+                            return `
+                                <div class="director__bar-row ${r.is_winner ? 'is-winner' : ''}">
+                                    <div class="director__bar-head">
+                                        <span class="director__row-num">${r.candidate_number}</span>
+                                        <span class="director__bar-name">${r.is_winner ? '<i class="fa-solid fa-trophy" style="color:#fbbf24"></i> ' : ''}${esc(r.full_name || '—')}</span>
+                                        <span class="director__bar-vals">
+                                            <strong>${w.toFixed(1)}</strong>
+                                            <span class="director__bar-votes">(${r.total_votes || 0} صوت)</span>
+                                        </span>
+                                    </div>
+                                    <div class="director__bar"><span class="director__bar-fill" style="width:${pct}%"></span></div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>`;
+                }
+
+                else if (tab === 'voters') {
+                    const { data, error } = await sb.rpc('get_election_voters_participation', { p_election: electionId });
+                    if (error) throw error;
+                    const list = data || [];
+                    if (list.length === 0) {
+                        panel.innerHTML = `<div class="archive-empty">
+                            <i class="fa-solid fa-users-slash"></i>
+                            <p>لا يوجد مصوّتون مؤهَّلون مسجَّلون.</p>
+                        </div>`;
+                        return;
+                    }
+                    panel.innerHTML = `<div class="director__list">
+                        ${list.map(v => `
+                            <div class="director__row ${v.has_voted ? 'is-voted' : 'is-pending'}">
+                                <span class="director__row-status"><i class="fa-solid fa-${v.has_voted ? 'circle-check' : 'minus'}"></i></span>
+                                <div class="director__row-main">
+                                    <div class="director__row-name">${esc(v.full_name || '—')}</div>
+                                    <div class="director__row-sub">
+                                        <span class="director__chip">${esc(ROLE_LABELS[v.role_name] || v.role_name || 'عضو')}</span>
+                                        ${v.has_voted && v.voted_at ? `<span class="director__row-meta"><i class="fa-regular fa-clock"></i> ${esc(fmtDate(v.voted_at))}</span>` : ''}
+                                        ${v.has_voted && v.vote_weight ? `<span class="director__row-meta"><i class="fa-solid fa-scale-balanced"></i> وزن ${Number(v.vote_weight).toFixed(1)}</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>`;
+                }
+
+                else if (tab === 'vote-detail') {
+                    const { data, error } = await sb.rpc('get_election_vote_detail', { p_election: electionId });
+                    if (error) {
+                        panel.innerHTML = `<div class="archive-empty">
+                            <i class="fa-solid fa-lock"></i>
+                            <p>${esc(error.message || 'تعذّر تحميل تفصيل الأصوات')}</p>
+                        </div>`;
+                        return;
+                    }
+                    const list = data || [];
+                    if (list.length === 0) {
+                        panel.innerHTML = `<div class="archive-empty">
+                            <i class="fa-solid fa-list-check"></i>
+                            <p>لا توجد أصوات مسجَّلة.</p>
+                        </div>`;
+                        return;
+                    }
+                    panel.innerHTML = `
+                        <div class="archive-vote-table">
+                            <div class="archive-vote-row archive-vote-row--head">
+                                <div>الناخب</div>
+                                <div>الدور</div>
+                                <div>صوّت لـ</div>
+                                <div>الوزن / الوقت</div>
+                            </div>
+                            ${list.map(r => `
+                                <div class="archive-vote-row">
+                                    <div class="archive-vote-cell archive-vote-cell--name">
+                                        <i class="fa-regular fa-user"></i> ${esc(r.voter_name || '—')}
+                                    </div>
+                                    <div class="archive-vote-cell">
+                                        <span class="director__chip">${esc(ROLE_LABELS[r.voter_role] || r.voter_role || '—')}</span>
+                                    </div>
+                                    <div class="archive-vote-cell archive-vote-cell--target">
+                                        <span class="director__row-num">${r.candidate_number}</span>
+                                        <span>${esc(r.candidate_name || '—')}</span>
+                                    </div>
+                                    <div class="archive-vote-cell archive-vote-cell--meta">
+                                        <span><i class="fa-solid fa-scale-balanced"></i> ${Number(r.vote_weight).toFixed(1)}</span>
+                                        <span><i class="fa-regular fa-clock"></i> ${esc(fmtDate(r.voted_at))}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                else if (tab === 'audit') {
+                    const { data, error } = await sb.rpc('get_election_audit_log', { p_election: electionId });
+                    if (error) throw error;
+                    const list = data || [];
+                    if (list.length === 0) {
+                        panel.innerHTML = `<div class="archive-empty">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            <p>لا توجد أحداث مسجَّلة.</p>
+                        </div>`;
+                        return;
+                    }
+                    panel.innerHTML = `<ul class="archive-timeline">
+                        ${list.map(ev => {
+                            const payloadStr = ev.payload && Object.keys(ev.payload).length
+                                ? `<details class="archive-timeline__payload">
+                                       <summary>عرض البيانات</summary>
+                                       <pre>${esc(JSON.stringify(ev.payload, null, 2))}</pre>
+                                   </details>`
+                                : '';
+                            return `
+                                <li class="archive-timeline__item">
+                                    <div class="archive-timeline__dot"></div>
+                                    <div class="archive-timeline__card">
+                                        <div class="archive-timeline__head">
+                                            <span class="archive-timeline__event">${esc(ev.event_type)}</span>
+                                            <span class="archive-timeline__time"><i class="fa-regular fa-clock"></i> ${esc(fmtDate(ev.created_at))}</span>
+                                        </div>
+                                        ${ev.actor_name ? `<div class="archive-timeline__actor"><i class="fa-regular fa-user"></i> ${esc(ev.actor_name)}</div>` : '<div class="archive-timeline__actor archive-timeline__actor--system"><i class="fa-solid fa-robot"></i> النظام</div>'}
+                                        ${payloadStr}
+                                    </div>
+                                </li>
+                            `;
+                        }).join('')}
+                    </ul>`;
+                }
+            } catch (err) {
+                console.error('[ArchiveDetail] tab load failed', tab, err);
+                panel.innerHTML = errorState(err.message || String(err));
+            }
+        }
+
         _renderCandidatesItem(list) {
             let body;
             if (!Array.isArray(list)) {
@@ -750,13 +1076,9 @@
             });
         }
 
-        /* أزرار البطاقة المؤرشفة — قراءة فقط */
+        /* أزرار البطاقة المؤرشفة — صفحة تفاصيل موحَّدة */
         _archiveCardActionsButtons(e) {
-            const btns = [
-                `<button class="btn btn-primary btn-outline" data-action="review-readonly"><i class="fa-solid fa-clipboard-check"></i> المرشحون</button>`,
-                `<button class="btn btn-primary btn-outline" data-action="results"><i class="fa-solid fa-chart-simple"></i> النتائج</button>`
-            ];
-            return btns.join('');
+            return `<button class="btn btn-primary" data-action="archive-detail"><i class="fa-solid fa-folder-open"></i> عرض كل التفاصيل</button>`;
         }
 
         /* أزرار الإجراءات للأدمن (داخل تذييل uc-card) */
@@ -803,6 +1125,7 @@
                         else if (action === 'review-readonly') await this.openCandidatesModal(id, 'viewer');
                         else if (action === 'declare-winner') await this.openDeclareWinnerModal(id);
                         else if (action === 'results')    await this.openResultsModal(id);
+                        else if (action === 'archive-detail') await this.openArchiveDetail(id);
                         else if (action === 'set-candidacy-end') await this._setCandidacyEnd(id, btn.dataset.current || null);
                     } catch (err) {
                         console.error(err);
@@ -1202,15 +1525,10 @@
 
             const label = await this._fetchElectionLabel(id);
 
-            const { data: paths, error } = await sb.rpc('cancel_election', { p_election: id, p_reason: reason });
+            const { error } = await sb.rpc('cancel_election', { p_election: id, p_reason: reason });
             if (error) throw error;
 
-            if (Array.isArray(paths) && paths.length > 0) {
-                const { error: rmErr } = await sb.storage.from(STORAGE_BUCKET).remove(paths);
-                if (rmErr) console.warn('[ElectionsManager] فشل حذف ملفات التخزين', rmErr);
-            }
-
-            toast('تم الإلغاء والتنظيف والأرشفة', 'success');
+            toast('تم إلغاء الانتخاب وأرشفته (مع الحفاظ على كامل البيانات)', 'success');
             await this._loadKanban();
             window.rebuildNavigation?.();
 
@@ -2138,10 +2456,10 @@
         }
 
         _canSelfEdit(candidacy) {
-            // التعديل الذاتي مسموح في pending أو needs_edit، طالما الانتخاب مفتوح للترشح وغير مؤرشف
+            // التعديل الذاتي مسموح في pending أو needs_edit، أثناء candidacy_open أو candidacy_closed، وغير مؤرشف
             if (!candidacy) return false;
             if (!['pending', 'needs_edit'].includes(candidacy.candidate_status)) return false;
-            if (candidacy.election_status !== 'candidacy_open') return false;
+            if (!['candidacy_open', 'candidacy_closed'].includes(candidacy.election_status)) return false;
             if (candidacy.election_archived_at) return false;
             return true;
         }
@@ -3317,6 +3635,10 @@
                 clearInterval(this._voteCountdownInterval);
                 this._voteCountdownInterval = null;
             }
+            if (this._directorAutoRefresh) {
+                clearInterval(this._directorAutoRefresh);
+                this._directorAutoRefresh = null;
+            }
         }
 
         async openBallot(electionId) {
@@ -3331,12 +3653,16 @@
             const [
                 { data: cands, error: candErr },
                 { data: list, error: listErr },
-                { data: ownCands }
+                { data: ownCands },
+                { data: adminFlag }
             ] = await Promise.all([
                 sb.rpc('get_anonymized_candidates', { p_election: electionId }),
                 sb.rpc('get_votable_elections_for_user', { p_user: this.user.id }),
-                sb.rpc('get_user_candidacies', { p_user: this.user.id })
+                sb.rpc('get_user_candidacies', { p_user: this.user.id }),
+                sb.rpc('has_election_admin_permission', { p_user: this.user.id })
             ]);
+
+            const isAdminViewer = adminFlag === true;
 
             if (candErr) { stage.innerHTML = errorState(candErr.message); return; }
             if (listErr) { stage.innerHTML = errorState(listErr.message); return; }
@@ -3428,9 +3754,12 @@
                    </div>`
                 : '';
 
+            const directorHtml = isAdminViewer ? this._renderDirectorPanel(electionId) : '';
+
             stage.innerHTML = `
                 <div class="arena" data-election-id="${esc(electionId)}">
                     ${switcherHtml}
+                    ${directorHtml}
 
                     <header class="arena__belt">
                         <div class="arena__live-strip">
@@ -3534,6 +3863,202 @@
             });
 
             this._startBallotCountdown(stage);
+
+            if (isAdminViewer) {
+                this._bindDirectorPanel(stage, electionId);
+            }
+        }
+
+        _renderDirectorPanel(electionId) {
+            return `
+                <details class="director" data-election-id="${esc(electionId)}">
+                    <summary class="director__summary">
+                        <div class="director__summary-left">
+                            <span class="director__badge"><i class="fa-solid fa-clapperboard"></i> لوحة المدير</span>
+                            <span class="director__hint">المرشّحون · المصوّتون · النتائج</span>
+                        </div>
+                        <div class="director__stats" id="directorStats">
+                            <span class="director__stat-loading"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down director__caret"></i>
+                    </summary>
+
+                    <div class="director__body">
+                        <nav class="director__tabs" role="tablist">
+                            <button class="director__tab is-active" data-dtab="candidates" role="tab">
+                                <i class="fa-solid fa-id-badge"></i> المرشّحون
+                            </button>
+                            <button class="director__tab" data-dtab="voters" role="tab">
+                                <i class="fa-solid fa-users-line"></i> المصوّتون
+                            </button>
+                            <button class="director__tab" data-dtab="results" role="tab">
+                                <i class="fa-solid fa-chart-column"></i> النتائج اللحظية
+                            </button>
+                            <button class="director__refresh" type="button" title="تحديث">
+                                <i class="fa-solid fa-arrows-rotate"></i>
+                            </button>
+                        </nav>
+
+                        <div class="director__panel is-active" data-dpanel="candidates">
+                            ${loadingState()}
+                        </div>
+                        <div class="director__panel" data-dpanel="voters">
+                            ${loadingState()}
+                        </div>
+                        <div class="director__panel" data-dpanel="results">
+                            <div class="director__results-gate">
+                                <i class="fa-solid fa-eye-slash"></i>
+                                <p>النتائج المرحلية مخفيّة لتفادي تأثير القطيع. اضغط للكشف.</p>
+                                <button class="director__reveal-btn" type="button">
+                                    <i class="fa-solid fa-eye"></i> كشف النتائج المرحلية
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            `;
+        }
+
+        _bindDirectorPanel(stage, electionId) {
+            const root = stage.querySelector('.director');
+            if (!root) return;
+
+            const tabs   = root.querySelectorAll('.director__tab');
+            const panels = root.querySelectorAll('.director__panel');
+            tabs.forEach(t => t.addEventListener('click', () => {
+                tabs.forEach(x => x.classList.toggle('is-active', x === t));
+                panels.forEach(p => p.classList.toggle('is-active', p.dataset.dpanel === t.dataset.dtab));
+            }));
+
+            root.querySelector('.director__refresh').addEventListener('click', () => {
+                this._loadDirectorData(root, electionId, /*resultsRevealed*/ false);
+            });
+
+            root.addEventListener('toggle', () => {
+                if (root.open) {
+                    this._loadDirectorData(root, electionId, false);
+                    this._directorAutoRefresh = setInterval(() => {
+                        if (root.open) this._loadDirectorData(root, electionId, root.dataset.resultsShown === '1');
+                    }, 30000);
+                } else {
+                    if (this._directorAutoRefresh) {
+                        clearInterval(this._directorAutoRefresh);
+                        this._directorAutoRefresh = null;
+                    }
+                }
+            });
+
+            root.querySelector('.director__reveal-btn').addEventListener('click', () => {
+                root.dataset.resultsShown = '1';
+                this._loadDirectorData(root, electionId, true);
+            });
+        }
+
+        async _loadDirectorData(root, electionId, includeResults) {
+            const cPanel = root.querySelector('[data-dpanel="candidates"]');
+            const vPanel = root.querySelector('[data-dpanel="voters"]');
+            const rPanel = root.querySelector('[data-dpanel="results"]');
+            const statsEl = root.querySelector('#directorStats');
+
+            const tasks = [
+                sb.rpc('get_candidates_with_identity', { p_election: electionId }),
+                sb.rpc('get_election_voters_participation', { p_election: electionId })
+            ];
+            if (includeResults) {
+                tasks.push(sb.rpc('get_election_results', { p_election: electionId }));
+            }
+
+            const results = await Promise.all(tasks);
+            const cands  = results[0]?.data || [];
+            const voters = results[1]?.data || [];
+            const live   = includeResults ? (results[2]?.data || []) : null;
+
+            const votersErr = results[1]?.error?.message;
+            if (votersErr && /غير مصرح|permission/i.test(votersErr)) {
+                vPanel.innerHTML = errorState(votersErr);
+            }
+
+            // —— stats
+            const total  = voters.length;
+            const voted  = voters.filter(v => v.has_voted).length;
+            const pct    = total ? Math.round((voted / total) * 100) : 0;
+            statsEl.innerHTML = `
+                <span class="director__stat"><strong>${voted}</strong>/${total}</span>
+                <span class="director__progress"><span class="director__progress-fill" style="width:${pct}%"></span></span>
+                <span class="director__pct">${pct}%</span>
+            `;
+
+            // —— candidates panel
+            cPanel.innerHTML = cands.length === 0
+                ? emptyState('users', 'لا يوجد مرشّحون')
+                : `<div class="director__list">
+                       ${cands.map(c => `
+                           <div class="director__row">
+                               <span class="director__row-num">${c.candidate_number}</span>
+                               <div class="director__row-main">
+                                   <div class="director__row-name">${esc(c.full_name || '—')}</div>
+                                   <div class="director__row-sub">
+                                       <span class="director__chip director__chip--${esc(c.status || 'pending')}">${esc(CANDIDATE_STATUS_LABELS[c.status] || c.status)}</span>
+                                       ${c.submitted_at ? `<span class="director__row-meta"><i class="fa-regular fa-clock"></i> ${esc(fmtDate(c.submitted_at))}</span>` : ''}
+                                   </div>
+                               </div>
+                               ${c.file_url ? `<a class="director__row-file" href="${esc(c.file_url)}" target="_blank" rel="noopener" title="ملف المرشح"><i class="fa-solid fa-paperclip"></i></a>` : ''}
+                           </div>
+                       `).join('')}
+                   </div>`;
+
+            // —— voters panel
+            if (!votersErr) {
+                vPanel.innerHTML = voters.length === 0
+                    ? emptyState('users-slash', 'لا يوجد مصوّتون مؤهَّلون')
+                    : `<div class="director__list">
+                           ${voters.map(v => `
+                               <div class="director__row ${v.has_voted ? 'is-voted' : 'is-pending'}">
+                                   <span class="director__row-status">
+                                       <i class="fa-solid fa-${v.has_voted ? 'circle-check' : 'hourglass-half'}"></i>
+                                   </span>
+                                   <div class="director__row-main">
+                                       <div class="director__row-name">${esc(v.full_name || '—')}</div>
+                                       <div class="director__row-sub">
+                                           <span class="director__chip">${esc(ROLE_LABELS[v.role_name] || v.role_name || 'عضو')}</span>
+                                           ${v.has_voted && v.voted_at ? `<span class="director__row-meta"><i class="fa-regular fa-clock"></i> ${esc(fmtDate(v.voted_at))}</span>` : ''}
+                                           ${v.has_voted && v.vote_weight ? `<span class="director__row-meta"><i class="fa-solid fa-scale-balanced"></i> وزن ${Number(v.vote_weight).toFixed(1)}</span>` : ''}
+                                       </div>
+                                   </div>
+                               </div>
+                           `).join('')}
+                       </div>`;
+            }
+
+            // —— results panel (only if revealed)
+            if (live) {
+                const maxWeight = Math.max(1, ...live.map(r => Number(r.total_weight) || 0));
+                rPanel.innerHTML = live.length === 0
+                    ? emptyState('chart-simple', 'لا توجد أصوات بعد')
+                    : `<div class="director__results-list">
+                           ${live.sort((a,b) => (b.total_weight||0) - (a.total_weight||0)).map(r => {
+                               const w = Number(r.total_weight) || 0;
+                               const pctR = Math.round((w / maxWeight) * 100);
+                               return `
+                                   <div class="director__bar-row">
+                                       <div class="director__bar-head">
+                                           <span class="director__row-num">${r.candidate_number}</span>
+                                           <span class="director__bar-name">${esc(r.full_name || '—')}</span>
+                                           <span class="director__bar-vals">
+                                               <strong>${w.toFixed(1)}</strong>
+                                               <span class="director__bar-votes">(${r.total_votes || 0} صوت)</span>
+                                           </span>
+                                       </div>
+                                       <div class="director__bar"><span class="director__bar-fill" style="width:${pctR}%"></span></div>
+                                   </div>
+                               `;
+                           }).join('')}
+                       </div>
+                       <p class="director__results-note">
+                           <i class="fa-solid fa-circle-info"></i>
+                           نتائج غير نهائية — تتغيّر مع كل صوت جديد.
+                       </p>`;
+            }
         }
 
         _startBallotCountdown(stage) {

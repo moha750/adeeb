@@ -568,8 +568,11 @@
                 });
             }
 
-            // عضو: التصويت
-            if ((counts.can_vote | 0) > 0) {
+            // التصويت — يظهر للعضو عند وجود اقتراع مؤهَّل،
+            //         ويظهر دائماً للأدمن/المراجع لمتابعة "لوحة المدير"
+            const isElectionsAdmin  = hasPermission('manage_elections');
+            const isElectionsViewer = (counts.can_view | 0) > 0;
+            if ((counts.can_vote | 0) > 0 || isElectionsAdmin || isElectionsViewer) {
                 electionsSubItems.push({
                     id: 'elections-vote',
                     icon: 'fa-check-to-slot',
