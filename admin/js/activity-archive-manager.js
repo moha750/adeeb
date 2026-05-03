@@ -826,13 +826,15 @@ class ActivityArchiveManager {
             this.notifyError('لا توجد شهادات للتصدير');
             return;
         }
-        const headers = ['رقم الشهادة', 'الاسم', 'الجوال', 'تاريخ الإصدار', 'رابط التحقق'];
+        const headers = ['رقم الشهادة', 'الاسم', 'الجوال', 'تاريخ الإصدار', 'تاريخ الإرسال', 'رابط التحقق', 'رابط التحميل'];
         const lines = certs.map(c => [
             c.certificate_serial,
             c.full_name || '',
             c.phone || '',
             c.attended_at ? new Date(c.attended_at).toLocaleDateString('ar-SA') : '',
+            c.certificate_sent_at ? new Date(c.certificate_sent_at).toLocaleDateString('ar-SA') : '',
             this.buildVerifyUrl(c.certificate_serial),
+            this.buildDownloadUrl(c.certificate_serial),
         ]);
         this.downloadCsv(`certificates_${this.activityId}.csv`, headers, lines);
     }
@@ -906,10 +908,12 @@ class ActivityArchiveManager {
 
     humanizeError(code) {
         const map = {
-            NOT_AUTHENTICATED:    'يجب تسجيل الدخول أولًا.',
-            NOT_AUTHORIZED:       'لا تملك صلاحية عرض تفاصيل النشاط.',
-            ACTIVITY_NOT_FOUND:   'النشاط غير موجود.',
-            CLIENT_NOT_READY:     'لم يتم تهيئة الاتصال بقاعدة البيانات.',
+            NOT_AUTHENTICATED:        'يجب تسجيل الدخول أولًا.',
+            NOT_AUTHORIZED:           'لا تملك صلاحية تنفيذ هذا الإجراء.',
+            ACTIVITY_NOT_FOUND:       'النشاط غير موجود.',
+            RESERVATION_NOT_FOUND:    'الحجز غير موجود.',
+            CERTIFICATE_NOT_ISSUED:   'لم تُصدَر الشهادة بعد — سجّل الحضور أولًا.',
+            CLIENT_NOT_READY:         'لم يتم تهيئة الاتصال بقاعدة البيانات.',
         };
         for (const k in map) {
             if (code && String(code).includes(k)) return map[k];

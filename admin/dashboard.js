@@ -609,6 +609,7 @@
                     { id: 'activities-reservations', icon: 'fa-calendar-check', label: 'إدارة الحجوزات', section: 'activities-reservations-section' },
                     { id: 'activities-visitors',     icon: 'fa-users',          label: 'بيانات الزوار',  section: 'activities-visitors-section' },
                     { id: 'activities-attendance',   icon: 'fa-clipboard-check',label: 'تسجيل الحضور',  section: 'activities-attendance-section' },
+                    { id: 'activities-send-certs',   icon: 'fa-paper-plane',    label: 'إرسال الشهادات', section: 'activities-send-certs-section' },
                 ],
             });
         } else if (isActivityCoordinator) {
@@ -921,6 +922,7 @@
         'activities-reservations-section':      'manage_activities',
         'activities-visitors-section':          'manage_activities',
         'activities-archive-section':           'manage_activities',
+        'activities-send-certs-section':        'manage_activities',
         // activities-attendance-section: محمي على مستوى DB عبر mark_attendance/RPC
         // (يقبل admin أو activity_coordinator)؛ لا نضع قيدًا أمامياً هنا حتى يتمكّن
         // المنسّق من فتحه دون امتلاك صلاحية manage_activities.
@@ -1317,6 +1319,15 @@
                 // الذي يُستدعى من زر "عرض التفاصيل" في بطاقة النشاط.
                 if (window.ActivityArchiveManager && !window.activityArchiveManagerInstance) {
                     window.activityArchiveManagerInstance = new window.ActivityArchiveManager();
+                }
+                break;
+
+            case 'activities-send-certs-section':
+                if (window.CertificateSendManager && !window.certificateSendManagerInstance) {
+                    window.certificateSendManagerInstance = new window.CertificateSendManager();
+                }
+                if (window.certificateSendManagerInstance) {
+                    await window.certificateSendManagerInstance.load();
                 }
                 break;
 

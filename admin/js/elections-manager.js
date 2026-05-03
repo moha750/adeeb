@@ -1011,36 +1011,8 @@
         }
 
         _renderCandidatesItem(list) {
-            let body;
-            if (!Array.isArray(list)) {
-                body = '<div style="opacity:0.65>جارٍ التحميل…</div>';
-            } else if (list.length === 0) {
-                body = '<div style="opacity:0.65">لا يوجد مرشحون بعد</div>';
-            } else {
-                const rows = list.map(c => {
-                    const badgeColor = CANDIDATE_BADGE[c.status] || 'secondary';
-                    const statusLabel = CANDIDATE_STATUS_LABELS[c.status] || c.status;
-                    const name = esc(c.user?.full_name || '—');
-                    return `
-                        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;font-size:0.83rem;">
-                            <span style="font-weight:700;opacity:0.7;">#${c.candidate_number}</span>
-                            <span style="font-weight:600;color:#1e293b;">${name}</span>
-                            <span class="uc-badge uc-badge--${badgeColor}">${esc(statusLabel)}</span>
-                        </div>
-                    `;
-                }).join('');
-                body = `<div style="display:flex;flex-direction:column;gap:0.35rem;">${rows}</div>`;
-            }
-            const count = Array.isArray(list) && list.length ? ` (${list.length})` : '';
-            return `
-                <div class="uc-card__info-item uc-card__info-item--full uc-card__info-item--list">
-                    <div class="uc-card__info-icon"><i class="fa-solid fa-user-group"></i></div>
-                    <div class="uc-card__info-content">
-                        <span class="uc-card__info-label">المرشحون${count}</span>
-                        <span class="uc-card__info-value">${body}</span>
-                    </div>
-                </div>
-            `;
+            const value = Array.isArray(list) ? String(list.length) : '…';
+            return infoItem('user-group', 'عدد المرشحين', value);
         }
 
         _renderAdminFullCard(e, isArchive = false) {
@@ -2755,7 +2727,7 @@
             const editable    = this._canSelfEdit(candidacy);
             const isNeedsEdit = candidacy.candidate_status === 'needs_edit';
             const showEditBtn = editable || isNeedsEdit;
-            const disabled    = isNeedsEdit ? 'disabled aria-disabled="true"' : '';
+            const disabled    = (!editable) ? 'disabled aria-disabled="true"' : '';
             host.innerHTML = `
                 <div class="card card--primary" style="margin-bottom:1.25rem;">
                     <div class="card-header">
@@ -2800,7 +2772,7 @@
                 const editableNoFile = this._canSelfEdit(candidacy);
                 const isNeedsEditNoFile = candidacy.candidate_status === 'needs_edit';
                 const showEditNoFile = editableNoFile || isNeedsEditNoFile;
-                const disabledNoFile = isNeedsEditNoFile ? 'disabled aria-disabled="true"' : '';
+                const disabledNoFile = (!editableNoFile) ? 'disabled aria-disabled="true"' : '';
                 host.innerHTML = shell(
                     emptyState('file-circle-xmark', 'لم يُرفع ملف انتخابي', 'إرفاق الملف اختياري', 'primary'),
                     showEditNoFile ? `
@@ -2825,7 +2797,7 @@
             const editable    = this._canSelfEdit(candidacy);
             const isNeedsEdit = candidacy.candidate_status === 'needs_edit';
             const showEditBtn = editable || isNeedsEdit;
-            const disabled    = isNeedsEdit ? 'disabled aria-disabled="true"' : '';
+            const disabled    = (!editable) ? 'disabled aria-disabled="true"' : '';
             const editBtn = showEditBtn
                 ? `<button class="btn btn-primary btn-block" data-action="edit-from-file" ${disabled}>
                        <i class="fa-solid fa-pen"></i> تعديل الملف
