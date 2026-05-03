@@ -318,6 +318,7 @@ class CertificateSendManager {
                 const sentTd = tr.children[5];
                 if (sendTd) sendTd.innerHTML = this.renderSendButton(r);
                 if (sentTd) sentTd.innerHTML = this.renderSentCell(r);
+                this.attachRowListeners();
             }
             this.updateCounts();
         } catch (err) {
