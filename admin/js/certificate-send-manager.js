@@ -318,7 +318,6 @@ class CertificateSendManager {
                 const sentTd = tr.children[5];
                 if (sendTd) sendTd.innerHTML = this.renderSendButton(r);
                 if (sentTd) sentTd.innerHTML = this.renderSentCell(r);
-                this.attachRowListeners();
             }
             this.updateCounts();
         } catch (err) {
@@ -487,16 +486,8 @@ class CertificateSendManager {
     }
 
     notifySuccess(msg) {
-        // أغلق توست النجاح السابق الصادر من هذه الصفحة لمنع تكدّس الإشعارات
-        // عند الإرسال السريع المتتالي
-        if (this._lastToastId && window.Toast?.close) {
-            window.Toast.close(this._lastToastId);
-        }
-        if (window.toastSuccess) {
-            this._lastToastId = window.toastSuccess(msg);
-        } else {
-            console.log('[ok]', msg);
-        }
+        if (window.toastSuccess) window.toastSuccess(msg);
+        else console.log('[ok]', msg);
     }
 
     notifyError(msg) {
