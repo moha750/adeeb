@@ -487,8 +487,16 @@ class CertificateSendManager {
     }
 
     notifySuccess(msg) {
-        if (window.toastSuccess) window.toastSuccess(msg);
-        else console.log('[ok]', msg);
+        // أغلق توست النجاح السابق الصادر من هذه الصفحة لمنع تكدّس الإشعارات
+        // عند الإرسال السريع المتتالي
+        if (this._lastToastId && window.Toast?.close) {
+            window.Toast.close(this._lastToastId);
+        }
+        if (window.toastSuccess) {
+            this._lastToastId = window.toastSuccess(msg);
+        } else {
+            console.log('[ok]', msg);
+        }
     }
 
     notifyError(msg) {
