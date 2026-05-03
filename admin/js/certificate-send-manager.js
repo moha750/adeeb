@@ -299,6 +299,7 @@ class CertificateSendManager {
     async markSent(reservationId, btn) {
         if (!reservationId) return;
         const original = btn?.innerHTML;
+        const tr = btn?.closest('tr');
         try {
             if (btn) {
                 btn.disabled = true;
@@ -310,7 +311,16 @@ class CertificateSendManager {
             this.notifySuccess('تم تسجيل إرسال الشهادة');
             const r = this.rows.find(x => x.id === reservationId);
             if (r) r.certificate_sent_at = new Date().toISOString();
-            this.render();
+            // تحديث في المكان: يبقى الصف ظاهرًا مع فلتر "لم تُرسل بعد"
+            // حتى يرى المستخدم تحوّل الزر إلى شارة "تم الإرسال" (مطابق لزر تأكيد التواصل في تبويب الحجوزات)
+            if (tr && r) {
+                const sendTd = tr.children[4];
+                const sentTd = tr.children[5];
+                if (sendTd) sendTd.innerHTML = this.renderSendButton(r);
+                if (sentTd) sentTd.innerHTML = this.renderSentCell(r);
+                this.attachRowListeners();
+            }
+            this.updateCounts();
         } catch (err) {
             console.error('CertificateSendManager: markSent error', err);
             this.notifyError(this.humanizeError(err.message || String(err)));
@@ -318,6 +328,28 @@ class CertificateSendManager {
                 btn.disabled = false;
                 btn.innerHTML = original;
             }
+        }
+    }
+
+    updateCounts() {
+        const root = document.getElementById('sendCertsContent');
+        if (!root) return;
+        const sentCount    = this.rows.filter(c => c.certificate_sent_at).length;
+        const pendingCount = this.rows.length - sentCount;
+
+        const values = root.querySelectorAll('.stats-grid .stat-value');
+        if (values[1]) values[1].textContent = String(sentCount);
+        if (values[2]) values[2].textContent = String(pendingCount);
+
+        const sel = document.getElementById('csmStatusFilter');
+        if (sel) {
+            const setOpt = (id, label, count) => {
+                const o = sel.querySelector(`option[value="${id}"]`);
+                if (o) o.textContent = `${label} (${count})`;
+            };
+            setOpt('pending', 'لم تُرسل بعد', pendingCount);
+            setOpt('sent',    'تم الإرسال',  sentCount);
+            setOpt('all',     'الكل',         this.rows.length);
         }
     }
 
@@ -369,7 +401,7 @@ class CertificateSendManager {
         const lines = [
             'السلام عليكم ' + (c.full_name || '') + '،',
             '',
-            'تهنّئك إدارة نادي أدِيب على حضورك جلسة "' + (c.activity_name || '') + '".',
+            'نُهنئك على حضورك جلسة "' + (c.activity_name || '') + '".',
             '',
             'شهادتك جاهزة للتحميل عبر الرابط التالي:',
             downloadUrl,
