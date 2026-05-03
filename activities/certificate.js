@@ -13,8 +13,8 @@
     const LAYOUT = {
         holderName:   { x: 50, y: 42.5, size: 56,  color: '#334fa3', weight: 700 },
         activityName: { x: 50, y: 60.6, size: 45,  color: '#334fa3', weight: 600 },
-        serial:       { x: 50, y: 92.9, size: 22,  color: '#8c92bf', weight: 400 },
-        qr:           { x: 50, y: 83.5, size: 150, color: '#334fa3' },
+        serial:       { x: 80.3, y: 92.9, size: 22,  color: '#8c92bf', weight: 400 },
+        qr:           { x: 80.3, y: 83.5, size: 150, color: '#334fa3' },
     };
 
     const CDN = {
