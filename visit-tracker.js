@@ -1,445 +1,178 @@
 /**
- * نظام تتبع زيارات موقع نادي أديب
- * يقوم بتسجيل الزيارات بشكل مجهول مع احترام خصوصية المستخدم
+ * نظام تتبع زيارات نادي أديب
+ * يُرسل البيانات إلى Edge Function track-pageview التي تتولى:
+ *   - parse للـ User-Agent
+ *   - استخراج IP و country من الخادم (لا يصل العميل لها)
+ *   - فلترة Bots
+ *   - hashing للـ IP قبل الحفظ
+ *
+ * آلية تتبع المدة: heartbeat كل 15 ثانية + sendBeacon عند مغادرة الصفحة.
+ * لا يعتمد على supabase-js (مستقل تماماً).
  */
-
-(function() {
+(function () {
     'use strict';
 
-    const TRACKER_CONFIG = {
-        enabled: true,
-        storageKey: 'adeeb_visitor_id',
-        sessionKey: 'adeeb_session_id',
-        lastVisitKey: 'adeeb_last_visit',
-        visitDurationKey: 'adeeb_visit_start',
-        minDuration: 3, // الحد الأدنى لمدة الزيارة بالثواني
-        trackInterval: 10000, // تحديث مدة الزيارة كل 10 ثوانٍ
-    };
+    var TRACKER_URL =
+        (typeof window.SUPABASE_URL === 'string' && window.SUPABASE_URL)
+            ? window.SUPABASE_URL + '/functions/v1/track-pageview'
+            : 'https://nnlhkfeybyhvlinbqqfa.supabase.co/functions/v1/track-pageview';
 
-    class VisitTracker {
-        constructor() {
-            this.visitorId = null;
-            this.sessionId = null;
-            this.visitStartTime = null;
-            this.isTracking = false;
-            this.trackingInterval = null;
-            this.supabaseClient = null;
-            this.currentVisitId = null;
+    var STORAGE_VISITOR = 'adeeb_visitor_id';
+    var STORAGE_SESSION = 'adeeb_session_id';
+    var HEARTBEAT_MS    = 15000;
+    var MAX_DURATION    = 14400; // 4 ساعات
+
+    function uuid() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            try { return window.crypto.randomUUID(); } catch (e) {}
         }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+    }
 
-        async init() {
-            if (!TRACKER_CONFIG.enabled) {
-                console.log('[VisitTracker] Tracking is disabled');
-                return;
+    function getOrCreateVisitorId() {
+        try {
+            var v = localStorage.getItem(STORAGE_VISITOR);
+            if (!v) { v = uuid(); localStorage.setItem(STORAGE_VISITOR, v); }
+            return v;
+        } catch (e) { return uuid(); }
+    }
+
+    function getOrCreateSessionId() {
+        try {
+            var s = sessionStorage.getItem(STORAGE_SESSION);
+            if (!s) { s = uuid(); sessionStorage.setItem(STORAGE_SESSION, s); }
+            return s;
+        } catch (e) { return uuid(); }
+    }
+
+    function currentUserId() {
+        // إن أمكن، نأخذ user_id من sb client (لو كان متاحاً)
+        try {
+            if (window.sbClient && window.sbClient.auth) {
+                var session = window.sbClient.auth.currentSession || null;
+                if (session && session.user && session.user.id) return session.user.id;
             }
+        } catch (e) {}
+        return null;
+    }
 
+    function postJSON(url, body) {
+        return fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            keepalive: true,
+            credentials: 'omit',
+            mode: 'cors',
+        });
+    }
+
+    function sendBeacon(url, body) {
+        try {
+            if (navigator.sendBeacon) {
+                // text/plain لتجنّب CORS preflight — sendBeacon لا يُكمل POST بعد إغلاق التبويب لو احتاج preflight
+                var blob = new Blob([JSON.stringify(body)], { type: 'text/plain;charset=UTF-8' });
+                return navigator.sendBeacon(url, blob);
+            }
+        } catch (e) {}
+        // fallback — fetch keepalive
+        try { postJSON(url, body); } catch (e) {}
+        return false;
+    }
+
+    var Tracker = {
+        visitorId: null,
+        sessionId: null,
+        startedAt: 0,
+        pageviewId: null,
+        heartbeatTimer: null,
+        ended: false,
+
+        init: function () {
             try {
-                // التحقق من توفر Supabase
-                if (!window.sbClient) {
-                    console.warn('[VisitTracker] Supabase client not available');
-                    return;
-                }
-
-                this.supabaseClient = window.sbClient;
-
-                // الحصول على أو إنشاء معرف الزائر
-                this.visitorId = this.getOrCreateVisitorId();
-                
-                // الحصول على أو إنشاء معرف الجلسة
-                this.sessionId = this.getOrCreateSessionId();
-
-                // تسجيل الزيارة
-                await this.trackVisit();
-
-                // بدء تتبع مدة الزيارة
-                this.startDurationTracking();
-
-                // تسجيل نهاية الزيارة عند مغادرة الصفحة
-                this.setupUnloadHandler();
-
-                console.log('[VisitTracker] Initialized successfully');
-            } catch (error) {
-                console.error('[VisitTracker] Initialization error:', error);
+                this.visitorId = getOrCreateVisitorId();
+                this.sessionId = getOrCreateSessionId();
+                this.startedAt = Date.now();
+                this.start();
+                this.bindUnload();
+            } catch (e) {
+                console.warn('[VisitTracker] init failed:', e && e.message);
             }
-        }
+        },
 
-        getOrCreateVisitorId() {
-            let visitorId = localStorage.getItem(TRACKER_CONFIG.storageKey);
-            
-            if (!visitorId) {
-                // إنشاء معرف فريد للزائر
-                visitorId = this.generateUUID();
-                localStorage.setItem(TRACKER_CONFIG.storageKey, visitorId);
-            }
-
-            return visitorId;
-        }
-
-        getOrCreateSessionId() {
-            let sessionId = sessionStorage.getItem(TRACKER_CONFIG.sessionKey);
-            
-            if (!sessionId) {
-                // إنشاء معرف فريد للجلسة
-                sessionId = this.generateUUID();
-                sessionStorage.setItem(TRACKER_CONFIG.sessionKey, sessionId);
-            }
-
-            return sessionId;
-        }
-
-        generateUUID() {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                const r = Math.random() * 16 | 0;
-                const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-        }
-
-        async trackVisit() {
-            try {
-                this.visitStartTime = Date.now();
-                sessionStorage.setItem(TRACKER_CONFIG.visitDurationKey, this.visitStartTime.toString());
-
-                const visitData = this.collectVisitData();
-
-                // إرسال البيانات فوراً دون انتظار الجيو
-                const { data, error } = await this.supabaseClient
-                    .from('site_visits')
-                    .insert([visitData])
-                    .select();
-
-                if (error) {
-                    console.error('[VisitTracker] Error tracking visit:', error);
-                    return;
-                }
-
-                this.isTracking = true;
-                this.currentVisitId = data[0]?.id;
-                console.log('[VisitTracker] Visit tracked successfully, ID:', this.currentVisitId);
-
-                // حفظ وقت آخر زيارة
-                localStorage.setItem(TRACKER_CONFIG.lastVisitKey, new Date().toISOString());
-
-                // جلب الIP والجيو بشكل مستقل وتحديث السجل (لا يعطل تسجيل الزيارة)
-                this.enrichWithGeoData(this.currentVisitId);
-
-            } catch (error) {
-                console.error('[VisitTracker] Error in trackVisit:', error);
-            }
-        }
-
-        async enrichWithGeoData(visitId) {
-            if (!visitId) return;
-            try {
-                const geoData = await this.getGeolocation();
-                if (!geoData) return;
-
-                await this.supabaseClient
-                    .from('site_visits')
-                    .update({
-                        ip_address: geoData.ip,
-                        country: geoData.country,
-                        city: geoData.city
-                    })
-                    .eq('id', visitId);
-
-                console.log('[VisitTracker] Geo data updated:', geoData);
-            } catch (error) {
-                console.warn('[VisitTracker] Geo enrichment failed (non-critical):', error.message);
-            }
-        }
-
-        fetchWithTimeout(url, timeout = 4000) {
-            return Promise.race([
-                fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout))
-            ]);
-        }
-
-        async getGeolocation() {
-            // ip-api.com - مجاني ولا يحتاج token
-            try {
-                const response = await this.fetchWithTimeout(
-                    'https://ip-api.com/json/?fields=status,country,countryCode,city,query',
-                    4000
-                );
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
-
-                if (data.status === 'success') {
-                    return {
-                        ip: data.query || null,
-                        country: data.countryCode || null,
-                        city: data.city || null
-                    };
-                }
-            } catch (error) {
-                console.warn('[VisitTracker] ip-api.com failed:', error.message);
-            }
-
-            // Fallback: ipapi.co
-            try {
-                const response = await this.fetchWithTimeout('https://ipapi.co/json/', 4000);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
-
-                if (data.ip) {
-                    return {
-                        ip: data.ip || null,
-                        country: data.country_code || null,
-                        city: data.city || null
-                    };
-                }
-            } catch (error) {
-                console.warn('[VisitTracker] ipapi.co failed:', error.message);
-            }
-
-            return null;
-        }
-
-        collectVisitData() {
-            const parser = new UAParser();
-            const uaResult = parser.getResult();
-
-            return {
-                // معلومات الصفحة
-                page_url: window.location.href,
-                page_title: document.title,
-                page_path: window.location.pathname,
-                referrer: document.referrer || null,
-
-                // معلومات الزائر
+        start: function () {
+            var self = this;
+            var payload = {
                 visitor_id: this.visitorId,
                 session_id: this.sessionId,
-
-                // معلومات تقنية
-                user_agent: navigator.userAgent,
-                browser_name: uaResult.browser.name || 'Unknown',
-                browser_version: uaResult.browser.version || 'Unknown',
-                os_name: uaResult.os.name || 'Unknown',
-                os_version: uaResult.os.version || 'Unknown',
-                device_type: this.getDeviceType(uaResult),
-                device_vendor: uaResult.device.vendor || null,
-
-                // معلومات الشاشة
-                screen_width: window.screen.width,
-                screen_height: window.screen.height,
-
-                // الطابع الزمني
-                visited_at: new Date().toISOString()
+                page_path:  window.location.pathname || '/',
+                page_url:   window.location.href,
+                page_title: document.title || null,
+                referrer:   document.referrer || null,
+                screen_width:  window.screen ? window.screen.width  : null,
+                screen_height: window.screen ? window.screen.height : null,
+                language:   (navigator.language || '').slice(0, 20) || null,
+                user_id:    currentUserId(),
             };
-        }
 
-        getDeviceType(uaResult) {
-            if (uaResult.device.type === 'mobile') return 'mobile';
-            if (uaResult.device.type === 'tablet') return 'tablet';
-            if (uaResult.device.type === 'desktop' || !uaResult.device.type) return 'desktop';
-            return 'unknown';
-        }
-
-        startDurationTracking() {
-            // تحديث مدة الزيارة بشكل دوري
-            this.trackingInterval = setInterval(() => {
-                this.updateVisitDuration();
-            }, TRACKER_CONFIG.trackInterval);
-        }
-
-        async updateVisitDuration() {
-            if (!this.isTracking || !this.visitStartTime) return;
-
-            try {
-                const duration = Math.floor((Date.now() - this.visitStartTime) / 1000);
-
-                if (duration >= TRACKER_CONFIG.minDuration) {
-                    console.log(`[VisitTracker] Updating duration to ${duration}s`);
-                    
-                    // تحديث مدة الزيارة في قاعدة البيانات
-                    const { data, error } = await this.supabaseClient
-                        .from('site_visits')
-                        .update({ 
-                            visit_duration: duration,
-                            is_bounce: duration < 10
-                        })
-                        .eq('session_id', this.sessionId)
-                        .eq('page_path', window.location.pathname)
-                        .order('visited_at', { ascending: false })
-                        .limit(1)
-                        .select();
-
-                    if (error) {
-                        console.error('[VisitTracker] Error updating duration:', error);
-                    } else {
-                        console.log('[VisitTracker] Duration updated successfully:', data);
+            postJSON(TRACKER_URL, payload)
+                .then(function (res) { return res.ok ? res.json() : null; })
+                .then(function (data) {
+                    if (data && data.pageview_id) {
+                        self.pageviewId = data.pageview_id;
+                        self.startHeartbeat();
                     }
-                }
-            } catch (error) {
-                console.error('[VisitTracker] Error in updateVisitDuration:', error);
-            }
-        }
+                })
+                .catch(function (err) {
+                    console.warn('[VisitTracker] start failed:', err && err.message);
+                });
+        },
 
-        setupUnloadHandler() {
-            // حفظ مدة الزيارة عند مغادرة الصفحة
-            window.addEventListener('beforeunload', () => {
-                this.handleUnload();
+        startHeartbeat: function () {
+            var self = this;
+            if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+            this.heartbeatTimer = setInterval(function () {
+                if (!self.pageviewId || self.ended) return;
+                if (document.visibilityState === 'hidden') return; // لا نحتسب الوقت في الخلفية
+                var seconds = Math.min(MAX_DURATION, Math.floor((Date.now() - self.startedAt) / 1000));
+                postJSON(TRACKER_URL + '/heartbeat', {
+                    pageview_id: self.pageviewId,
+                    total_seconds: seconds,
+                }).catch(function () {});
+            }, HEARTBEAT_MS);
+        },
+
+        sendEnd: function () {
+            if (!this.pageviewId || this.ended) return;
+            this.ended = true;
+            if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = null; }
+            var seconds = Math.min(MAX_DURATION, Math.floor((Date.now() - this.startedAt) / 1000));
+            sendBeacon(TRACKER_URL + '/end', {
+                pageview_id: this.pageviewId,
+                total_seconds: seconds,
             });
+        },
 
-            // للمتصفحات الحديثة
-            window.addEventListener('pagehide', () => {
-                this.handleUnload();
+        bindUnload: function () {
+            var self = this;
+            // pagehide موثوق على الموبايل والديسكتوب
+            window.addEventListener('pagehide', function () { self.sendEnd(); });
+            // visibilitychange: عند الإخفاء نُرسل الـ end (الـ tab قد لا تعود)
+            // إذا عاد المستخدم نُعيد البدء — لذا نمنع الإرسال المتكرر بـ ended flag
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'hidden') self.sendEnd();
             });
+        },
+    };
 
-            // تتبع الخروج من الصفحة (visibility API)
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'hidden') {
-                    this.handleUnload();
-                }
-            });
-        }
-
-        async handleUnload() {
-            if (!this.isTracking || !this.visitStartTime) return;
-
-            const duration = Math.floor((Date.now() - this.visitStartTime) / 1000);
-
-            if (duration >= TRACKER_CONFIG.minDuration) {
-                try {
-                    // تحديث مدة الزيارة مباشرة في Supabase
-                    await this.supabaseClient
-                        .from('site_visits')
-                        .update({ 
-                            visit_duration: duration,
-                            is_bounce: duration < 10
-                        })
-                        .eq('session_id', this.sessionId)
-                        .eq('page_path', window.location.pathname)
-                        .order('visited_at', { ascending: false })
-                        .limit(1);
-                } catch (error) {
-                    console.error('[VisitTracker] Error in handleUnload:', error);
-                }
-            }
-
-            // إيقاف التتبع
-            if (this.trackingInterval) {
-                clearInterval(this.trackingInterval);
-            }
-        }
-
-        destroy() {
-            if (this.trackingInterval) {
-                clearInterval(this.trackingInterval);
-            }
-            this.isTracking = false;
-        }
-    }
-
-    // مكتبة UAParser لتحليل User Agent
-    // نسخة مصغرة من ua-parser-js
-    class UAParser {
-        constructor() {
-            this.ua = navigator.userAgent;
-        }
-
-        getResult() {
-            return {
-                browser: this.getBrowser(),
-                os: this.getOS(),
-                device: this.getDevice()
-            };
-        }
-
-        getBrowser() {
-            const ua = this.ua;
-            let name = 'Unknown', version = 'Unknown';
-
-            if (/Edge\/(\d+)/.test(ua)) {
-                name = 'Edge';
-                version = RegExp.$1;
-            } else if (/Edg\/(\d+)/.test(ua)) {
-                name = 'Edge';
-                version = RegExp.$1;
-            } else if (/Chrome\/(\d+)/.test(ua) && !/Edge/.test(ua)) {
-                name = 'Chrome';
-                version = RegExp.$1;
-            } else if (/Safari\/(\d+)/.test(ua) && !/Chrome/.test(ua)) {
-                name = 'Safari';
-                version = RegExp.$1;
-            } else if (/Firefox\/(\d+)/.test(ua)) {
-                name = 'Firefox';
-                version = RegExp.$1;
-            } else if (/MSIE (\d+)/.test(ua) || /Trident.*rv:(\d+)/.test(ua)) {
-                name = 'IE';
-                version = RegExp.$1;
-            } else if (/Opera\/(\d+)/.test(ua) || /OPR\/(\d+)/.test(ua)) {
-                name = 'Opera';
-                version = RegExp.$1;
-            }
-
-            return { name, version };
-        }
-
-        getOS() {
-            const ua = this.ua;
-            let name = 'Unknown', version = 'Unknown';
-
-            if (/Windows NT (\d+\.\d+)/.test(ua)) {
-                name = 'Windows';
-                version = RegExp.$1;
-            } else if (/Mac OS X (\d+[._]\d+)/.test(ua)) {
-                name = 'macOS';
-                version = RegExp.$1.replace('_', '.');
-            } else if (/Android (\d+\.\d+)/.test(ua)) {
-                name = 'Android';
-                version = RegExp.$1;
-            } else if (/iPhone OS (\d+[._]\d+)/.test(ua)) {
-                name = 'iOS';
-                version = RegExp.$1.replace('_', '.');
-            } else if (/iPad.*OS (\d+[._]\d+)/.test(ua)) {
-                name = 'iPadOS';
-                version = RegExp.$1.replace('_', '.');
-            } else if (/Linux/.test(ua)) {
-                name = 'Linux';
-            }
-
-            return { name, version };
-        }
-
-        getDevice() {
-            const ua = this.ua;
-            let type = null, vendor = null;
-
-            if (/iPad/.test(ua)) {
-                type = 'tablet';
-                vendor = 'Apple';
-            } else if (/iPhone/.test(ua)) {
-                type = 'mobile';
-                vendor = 'Apple';
-            } else if (/Android/.test(ua)) {
-                if (/Mobile/.test(ua)) {
-                    type = 'mobile';
-                } else {
-                    type = 'tablet';
-                }
-            } else if (/Windows Phone/.test(ua)) {
-                type = 'mobile';
-                vendor = 'Microsoft';
-            }
-
-            return { type, vendor };
-        }
-    }
-
-    // تهيئة التتبع عند تحميل الصفحة
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            const tracker = new VisitTracker();
-            tracker.init();
-            window.visitTracker = tracker;
-        });
+        document.addEventListener('DOMContentLoaded', function () { Tracker.init(); });
     } else {
-        const tracker = new VisitTracker();
-        tracker.init();
-        window.visitTracker = tracker;
+        Tracker.init();
     }
 
+    window.adeebVisitTracker = Tracker;
 })();

@@ -7470,6 +7470,9 @@
                 return;
             }
 
+            // تمرير الفترة الحالية للـ manager (لاستخدامها في renderStatsCards)
+            siteVisitsManager.currentPeriod = currentVisitsPeriod;
+
             // تحميل البيانات
             await Promise.all([
                 siteVisitsManager.renderStatsCards('visitsStatsGrid'),
@@ -7477,7 +7480,11 @@
                 siteVisitsManager.renderDeviceChart('devicesChart', currentVisitsPeriod),
                 siteVisitsManager.renderCountriesChart('countriesChart', currentVisitsPeriod),
                 siteVisitsManager.renderCitiesChart('citiesChart', currentVisitsPeriod),
-                siteVisitsManager.renderTopPages('topPagesContainer', currentVisitsPeriod)
+                siteVisitsManager.renderNewVsReturningChart('newVsReturningChart', currentVisitsPeriod),
+                siteVisitsManager.renderReferrersList('topReferrersContainer', currentVisitsPeriod),
+                siteVisitsManager.renderHeatmap('peakHoursHeatmap', currentVisitsPeriod),
+                siteVisitsManager.renderTopPages('topPagesContainer', currentVisitsPeriod),
+                siteVisitsManager.renderExitPagesList('exitPagesContainer', currentVisitsPeriod)
             ]);
 
             // إعداد المستمعات
