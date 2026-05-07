@@ -203,7 +203,13 @@
       "Bash(curl -s -X POST \"https://api.supabase.com/v1/projects/nnlhkfeybyhvlinbqqfa/database/query\" -H \"Authorization: Bearer sbp_833e7976768f8fb3bcf10856ffda745311e11002\" -H \"Content-Type: application/json\" --data-binary @c:/tmp/migration_payload.json)",
       "Bash(curl -s -X POST \"https://api.supabase.com/v1/projects/nnlhkfeybyhvlinbqqfa/database/query\" -H \"Authorization: Bearer sbp_833e7976768f8fb3bcf10856ffda745311e11002\" -H \"Content-Type: application/json\" -d '{\"query\":\"SELECT 1 AS ok\"}')",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\moham\\\\adeeb\" -Directory)",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "Bash(node -e \"const c=require\\('c:/Users/moham/.claude/.credentials.json'\\); const m=c.mcpOAuth; for\\(const k of Object.keys\\(m\\)\\){ const v=m[k]; console.log\\('---', k\\); console.log\\('  fields:', Object.keys\\(v\\)\\); if\\(v.expiresAt\\) console.log\\('  expiresAt:', new Date\\(v.expiresAt\\).toISOString\\(\\)\\); if\\(v.serverUrl\\) console.log\\('  serverUrl:', v.serverUrl\\); if\\(v.url\\) console.log\\('  url:', v.url\\); if\\(v.resource\\) console.log\\('  resource:', v.resource\\); }\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); const p='c:/Users/moham/.claude/.credentials.json'; const raw=fs.readFileSync\\(p,'utf8'\\); fs.writeFileSync\\(p+'.backup-'+Date.now\\(\\), raw\\); const c=JSON.parse\\(raw\\); console.log\\('Before — mcpOAuth keys:', Object.keys\\(c.mcpOAuth||{}\\)\\); delete c.mcpOAuth; fs.writeFileSync\\(p, JSON.stringify\\(c,null,2\\)\\); const after=JSON.parse\\(fs.readFileSync\\(p,'utf8'\\)\\); console.log\\('After  — top-level keys:', Object.keys\\(after\\)\\); console.log\\('claudeAiOauth preserved:', !!after.claudeAiOauth\\);\")",
+      "Bash(node -e \"const c=require\\('c:/Users/moham/.claude/.credentials.json'\\); console.log\\('mcpOAuth:', c.mcpOAuth ? Object.keys\\(c.mcpOAuth\\) : '\\(absent\\)'\\);\")",
+      "Bash(node -e \"const c=require\\('c:/Users/moham/.claude/.credentials.json'\\); const m=c.mcpOAuth; if\\(!m\\){console.log\\('mcpOAuth: absent'\\);process.exit\\(\\);} for\\(const k of Object.keys\\(m\\)\\){const v=m[k];console.log\\(k,'expires:',new Date\\(v.expiresAt\\).toISOString\\(\\),'now:',new Date\\(\\).toISOString\\(\\)\\);}\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); const p='c:/Users/moham/.claude/.credentials.json'; const c=JSON.parse\\(fs.readFileSync\\(p,'utf8'\\)\\); delete c.mcpOAuth; fs.writeFileSync\\(p, JSON.stringify\\(c,null,2\\)\\); console.log\\('mcpOAuth cleared. Top-level keys:', Object.keys\\(c\\)\\);\")",
+      "Bash(git mv *)"
     ]
   },
   "enableAllProjectMcpServers": true,
