@@ -373,6 +373,10 @@
         const parts = v.split(' ').filter(p => p.length > 0);
         if (parts.length < 3) return 'الاسم يجب أن يكون ثلاثياً على الأقل';
         if (parts.length > 4) return 'الاسم يجب ألّا يزيد عن 4 كلمات';
+        const placeholderWords = ['أسم', 'اسم', 'الأسم', 'الإسم', 'الأب', 'الأم', 'العائلة', 'الأول', 'الثلاثي', 'الرباعي'];
+        if (parts.some(p => placeholderWords.includes(p))) {
+            return 'الاسم يحتوي على نص نائب مثل "أسم الأب" أو "العائلة" — اكتب الاسم الفعلي';
+        }
         return null;
     }
 
