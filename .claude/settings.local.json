@@ -214,7 +214,9 @@
       "Bash(node -e \"const fs=require\\('fs'\\);const s=fs.readFileSync\\('c:/Users/moham/adeeb/admin/css/vote-now.css','utf8'\\);let o=0,c=0;for\\(const ch of s\\){if\\(ch==='{'\\)o++;if\\(ch==='}'\\)c++}console.log\\('open',o,'close',c,'diff',o-c\\)\")",
       "mcp__supabase__list_storage_buckets",
       "Bash(node -c \"c:\\\\Users\\\\moham\\\\adeeb\\\\cursor.js\")",
-      "Bash(node -c \"c:\\\\Users\\\\moham\\\\adeeb\\\\admin\\\\js\\\\elections-manager.js\")"
+      "Bash(node -c \"c:\\\\Users\\\\moham\\\\adeeb\\\\admin\\\\js\\\\elections-manager.js\")",
+      "Bash(curl -sI \"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2\")",
+      "Bash(curl -s \"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2\")"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -3523,13 +3523,11 @@
                 if (error || !Array.isArray(data)) {
                     console.warn('[ElectionsManager] resolve signed urls failed', error);
                 } else {
-                    const byPath = new Map();
-                    for (const d of data) {
-                        if (d.path && d.signedUrl) byPath.set(d.path, d.signedUrl);
-                    }
-                    for (const row of toSign) {
-                        row.file_signed_url = byPath.get(row.file_url) || null;
-                    }
+                    data.forEach((d, i) => {
+                        const row = toSign[i];
+                        if (!row) return;
+                        row.file_signed_url = d?.signedUrl || null;
+                    });
                 }
             }
             for (const row of items) {
