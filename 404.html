@@ -1,0 +1,443 @@
+<!--
+  صفحة الخطأ 404 — نادي أدِيب
+  تظهر تلقائيًا عند الدخول إلى رابط غير موجود ضمن adeeb.club
+  مبنية بهوية النادي: ألوان #274060 / #3d8fd6 وخطوط Lyon Arabic Display
+-->
+<!doctype html>
+<html dir="rtl" lang="ar">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>الصفحة غير موجودة — نادي أدِيب</title>
+  <meta name="description" content="يبدو أن الصفحة التي تبحث عنها قد تاهت بين سطور أدِيب." />
+  <meta name="robots" content="noindex, follow" />
+  <meta name="theme-color" content="#274060" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-icon-180x180.png" />
+
+  <!-- Font Awesome للأيقونات -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet" />
+
+  <style>
+    /* خطوط نادي أدِيب — مسارات مطلقة لتعمل من أي عمق رابط */
+    @font-face {
+      font-family: fl;
+      src: url("/fonts/COMM%20-%20Lyon%20Arabic%20Display%20Light.otf");
+    }
+    @font-face {
+      font-family: fr;
+      src: url("/fonts/COMM%20-%20Lyon%20Arabic%20Display%20Regular.otf");
+    }
+    @font-face {
+      font-family: fm;
+      src: url("/fonts/COMM%20-%20Lyon%20Arabic%20Display%20Medium.otf");
+    }
+    @font-face {
+      font-family: fb;
+      src: url("/fonts/COMM%20-%20Lyon%20Arabic%20Display%20Bold.otf");
+    }
+    @font-face {
+      font-family: fbb;
+      src: url("/fonts/COMM%20-%20Lyon%20Arabic%20Display%20Black.otf");
+    }
+    @font-face {
+      font-family: a;
+      src: url("/fonts/ERASLGHT.TTF") format("truetype");
+    }
+    @font-face {
+      font-family: d;
+      src: url("/fonts/ERASBD.TTF") format("truetype");
+    }
+    /* أرقام لاتينية وعربية بخط ERAS لتطابق الموقع */
+    @font-face {
+      font-family: fbb;
+      src: url("/fonts/ERASBD.TTF") format("truetype");
+      unicode-range: U+0030-0039, U+0660-0669;
+    }
+    @font-face {
+      font-family: fr;
+      src: url("/fonts/ERASMD.TTF") format("truetype");
+      unicode-range: U+0030-0039, U+0660-0669;
+    }
+
+    :root {
+      --main-blue: #274060;
+      --accent-blue: #3d8fd6;
+      --light-blue: #6ba8e2;
+      --dark-blue: #1a2a3a;
+      --soft: #f4f7fb;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: fr;
+    }
+
+    html, body {
+      min-height: 100vh;
+    }
+
+    body {
+      background: radial-gradient(ellipse at top, #2f4d72 0%, var(--main-blue) 45%, var(--dark-blue) 100%);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* خلفية ناعمة من سطور كتاب */
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      top: -120px;
+      left: -120px;
+      width: 380px;
+      height: 380px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(61, 143, 214, 0.35) 0%, rgba(61, 143, 214, 0) 70%);
+      filter: blur(8px);
+    }
+    body::after {
+      bottom: -150px;
+      right: -150px;
+      width: 460px;
+      height: 460px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(107, 168, 226, 0.25) 0%, rgba(107, 168, 226, 0) 70%);
+      filter: blur(10px);
+    }
+
+    /* نقاط/نجوم خفيفة */
+    .stars {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image:
+        radial-gradient(1.5px 1.5px at 20% 30%, rgba(255, 255, 255, 0.6), transparent),
+        radial-gradient(1px 1px at 70% 20%, rgba(255, 255, 255, 0.5), transparent),
+        radial-gradient(1.5px 1.5px at 80% 70%, rgba(255, 255, 255, 0.4), transparent),
+        radial-gradient(1px 1px at 30% 80%, rgba(255, 255, 255, 0.5), transparent),
+        radial-gradient(1px 1px at 50% 50%, rgba(255, 255, 255, 0.35), transparent),
+        radial-gradient(1.5px 1.5px at 10% 60%, rgba(255, 255, 255, 0.5), transparent);
+      animation: twinkle 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes twinkle {
+      from { opacity: 0.5; }
+      to   { opacity: 1; }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+      width: 100%;
+      text-align: center;
+      animation: fadeUp 0.9s ease-out both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+      padding: 10px 22px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 100px;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .logo-wrap img {
+      width: 5rem;
+      object-fit: contain;
+      filter: brightness(0) invert(1)
+    }
+
+    .number {
+      font-family: fbb;
+      font-size: clamp(120px, 22vw, 220px);
+      font-weight: 900;
+      line-height: 1;
+      background: linear-gradient(180deg, #ffffff 0%, var(--accent-blue) 60%, var(--light-blue) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -4px;
+      text-shadow: 0 6px 30px rgba(61, 143, 214, 0.25);
+      margin-bottom: 8px;
+      animation: float 5s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-10px); }
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin: 6px auto 22px;
+      max-width: 320px;
+    }
+    .divider .line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    }
+    .divider i {
+      color: var(--light-blue);
+      font-size: 18px;
+    }
+
+    h1 {
+      font-family: fb;
+      font-size: clamp(24px, 4vw, 34px);
+      margin-bottom: 16px;
+      color: #fff;
+    }
+
+    .quote {
+      font-family: fl;
+      font-size: clamp(15px, 2vw, 18px);
+      line-height: 1.9;
+      color: rgba(255, 255, 255, 0.85);
+      max-width: 560px;
+      margin: 0 auto 8px;
+      font-style: italic;
+      position: relative;
+      padding: 0 28px;
+    }
+    .quote::before,
+    .quote::after {
+      font-family: fbb;
+      font-size: 38px;
+      color: var(--accent-blue);
+      opacity: 0.5;
+      position: absolute;
+      top: -8px;
+      line-height: 1;
+    }
+    .quote::before { content: "”"; right: 0; }
+    .quote::after  { content: "“"; left: 0; }
+
+    .quote-author {
+      display: block;
+      font-family: fm;
+      font-size: 14px;
+      color: var(--light-blue);
+      margin-top: 14px;
+      letter-spacing: 0.5px;
+    }
+
+    .actions {
+      margin-top: 36px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 28px;
+      border-radius: 100px;
+      font-family: fb;
+      font-size: 15px;
+      text-decoration: none;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary {
+      background: var(--accent-blue);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(61, 143, 214, 0.45);
+    }
+    .btn-primary:hover {
+      background: var(--light-blue);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(61, 143, 214, 0.6);
+    }
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.16);
+      transform: translateY(-3px);
+    }
+
+    /* روابط الأقسام */
+    .sections {
+      margin-top: 56px;
+      width: 100%;
+    }
+    .sections-title {
+      font-family: fm;
+      font-size: 14px;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 18px;
+      text-transform: uppercase;
+    }
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 12px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .section-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 18px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      color: #fff;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .section-card i {
+      font-size: 22px;
+      color: var(--light-blue);
+      transition: transform 0.25s ease, color 0.25s ease;
+    }
+    .section-card span {
+      font-family: fm;
+      font-size: 14px;
+    }
+    .section-card:hover {
+      background: rgba(61, 143, 214, 0.18);
+      border-color: rgba(61, 143, 214, 0.5);
+      transform: translateY(-4px);
+    }
+    .section-card:hover i {
+      color: #fff;
+      transform: scale(1.15);
+    }
+
+    .footer-note {
+      margin-top: 44px;
+      font-family: fl;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    .footer-note a {
+      color: var(--light-blue);
+      text-decoration: none;
+    }
+    .footer-note a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+      .actions { flex-direction: column; }
+      .btn { width: 100%; justify-content: center; }
+      .quote { padding: 0 18px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="stars"></div>
+
+  <main class="container">
+    <div class="logo-wrap">
+      <img src="https://lh3.googleusercontent.com/d/195w-tUBF_VKwFOm3Sh06fmwnlYzIyw0e" alt="شعار نادي أدِيب" />
+    </div>
+
+    <div class="number">404</div>
+
+    <div class="divider">
+      <span class="line"></span>
+      <i class="fa-solid fa-feather"></i>
+      <span class="line"></span>
+    </div>
+
+    <h1>ضاعت الصفحة بين السطور</h1>
+
+    <p class="quote">
+      ربما طُويت هذه الصفحة في كتابٍ لم يُفتح بعد، أو ضلّت طريقها بين رفوف مكتبتنا. لا بأس… كل قارئٍ يتيه مرّةً ليجد ما لم يكن يبحث عنه.
+      <span class="quote-author">مع تحيات فريق أدِيب الإنقاذي</span>
+    </p>
+
+    <div class="actions">
+      <a href="/" class="btn btn-primary">
+        <i class="fa-solid fa-house"></i>
+        العودة للصفحة الرئيسية
+      </a>
+      <button onclick="history.back()" class="btn btn-ghost">
+        <i class="fa-solid fa-arrow-right"></i>
+        الرجوع للخلف
+      </button>
+    </div>
+
+    <section class="sections">
+      <div class="sections-title">أو تابِع رحلتك من هنا</div>
+      <div class="section-grid">
+        <a href="/activities.html" class="section-card">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span>الأنشطة</span>
+        </a>
+        <a href="/news/news.html" class="section-card">
+          <i class="fa-solid fa-newspaper"></i>
+          <span>الأخبار</span>
+        </a>
+        <a href="/membership.html" class="section-card">
+          <i class="fa-solid fa-id-card"></i>
+          <span>العضوية</span>
+        </a>
+        <a href="/#contact" class="section-card">
+          <i class="fa-solid fa-envelope"></i>
+          <span>تواصل معنا</span>
+        </a>
+        <a href="/constitution/constitution.html" class="section-card">
+          <i class="fa-solid fa-book"></i>
+          <span>دستور أدِيب</span>
+        </a>
+      </div>
+    </section>
+
+    <p class="footer-note">
+      إن كنتَ تظنّ أن هذا خطأٌ من جانبنا،
+      <a href="mailto:adeab.kfu@gmail.com">أخبرنا</a>
+      ولك جزيل الشكر.
+    </p>
+  </main>
+</body>
+
+</html>
