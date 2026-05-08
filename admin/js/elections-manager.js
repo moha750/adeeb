@@ -3845,7 +3845,7 @@
                         infoItem('users-line', 'المشاركة',       participationValue),
                         infoItem('clock',      'نهاية التصويت',  endValue),
                     ],
-                    footer: `${voteBtn}<button class="btn btn-primary" data-action="open-director"><i class="fa-solid fa-clapperboard"></i> فتح لوحة المدير</button>`
+                    footer: `${voteBtn}<button class="btn btn-primary" data-action="open-director"><i class="fa-solid fa-magnifying-glass-chart"></i> تفاصيل التصويت</button>`
                 });
             }).join('');
 
@@ -4097,23 +4097,20 @@
                    ${renderContender(candidates[1])}`
                 : candidates.map(renderContender).join('');
 
-            const others = (list || []).filter(e => e.election_id !== electionId);
-            const switcherHtml = others.length > 0
-                ? `<div class="arena__switcher">
-                       <span class="arena__switcher-label"><i class="fa-solid fa-layer-group"></i> اقتراعات أخرى:</span>
-                       ${others.map(o => {
-                           const lbl = targetLabelOf(
-                               { target_role_name: o.target_role_name },
-                               o.target_committee_ar,
-                               o.target_department_ar
-                           );
-                           return `<button class="btn btn-sm ${o.has_voted ? 'btn-success' : 'btn-slate'} btn-outline btn-pill" data-switch-id="${esc(o.election_id)}">
-                               <i class="fa-solid fa-${o.has_voted ? 'check' : 'check-to-slot'}"></i>
-                               ${esc(lbl)}
-                           </button>`;
-                       }).join('')}
-                   </div>`
-                : '';
+            const switcherHtml = `<nav class="page-breadcrumb" aria-label="مسار التنقل">
+                <ol>
+                    <li>
+                        <button type="button" class="breadcrumb-link" data-ballot-back>
+                            <i class="fa-solid fa-square-poll-vertical"></i>
+                            إدارة التصويت
+                        </button>
+                    </li>
+                    <li class="breadcrumb-sep" aria-hidden="true">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </li>
+                    <li class="breadcrumb-current" aria-current="page">${esc(target)}</li>
+                </ol>
+            </nav>`;
 
             stage.innerHTML = `
                 <div class="arena" data-election-id="${esc(electionId)}">
@@ -4153,10 +4150,8 @@
                 </div>
             `;
 
-            stage.querySelectorAll('[data-switch-id]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    this.openBallot(btn.dataset.switchId);
-                });
+            stage.querySelector('[data-ballot-back]')?.addEventListener('click', () => {
+                this.renderMemberVote();
             });
 
             const submitBtn   = stage.querySelector('#ballotSubmitBtn');

@@ -130,27 +130,6 @@
 
 .arena > * { position: relative; z-index: 2; }
 
-/* —— شريط التنقّل بين الاقتراعات (يظهر فقط عند تعدّد الاقتراعات) —— */
-.arena__switcher {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    flex-wrap: wrap;
-    margin-bottom: 1.25rem;
-    padding: 0.65rem 0.85rem;
-    background: var(--card-bg);
-    border: 1px solid rgba(var(--color-primary-rgb), 0.1);
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(var(--color-primary-rgb), 0.05);
-}
-.arena__switcher-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    color: var(--color-info-500);
-    font-size: 0.8rem;
-    font-weight: 600;
-}
 /* —— حالات أرضيّة (فارغ / منتهٍ) —— */
 .arena--state {
     display: flex;
