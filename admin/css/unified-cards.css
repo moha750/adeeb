@@ -3328,17 +3328,6 @@
     flex: 1 1 180px;
 }
 
-/* تلميح تحت حقل النموذج */
-.candidacy-field-hint {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    margin-top: 0.55rem;
-    font-size: 0.85rem;
-    color: var(--color-danger-600, #dc2626);
-    font-weight: 600;
-}
-
 .candidacy-field-optional {
     font-weight: 400;
     color: var(--text-muted, #64748b);

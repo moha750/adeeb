@@ -100,8 +100,6 @@ body::before {
     min-width: 0;
     padding: var(--content-padding);
     transition: margin-right var(--transition-speed) var(--transition-ease);
-    /* Min-height = Full Height - Header - Layout Gap */
-    min-height: calc(100vh - var(--header-height) - var(--layout-gap));
     position: relative;
     z-index: var(--z-content);
 }

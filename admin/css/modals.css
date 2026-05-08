@@ -1078,7 +1078,8 @@
 
 /* --- Small / Helper Text — نص مساعد --- */
 
-.modal-body small {
+.modal-body small,
+.candidacy-flow small {
     position: relative;
     display: flex;
     align-items: flex-start;
@@ -1095,7 +1096,8 @@
     overflow: hidden;
 }
 
-.modal-body small::before {
+.modal-body small::before,
+.candidacy-flow small::before {
     content: '';
     position: absolute;
     top: 0;
@@ -1106,7 +1108,8 @@
     border-radius: 0 12px 12px 0;
 }
 
-.modal-body small i {
+.modal-body small i,
+.candidacy-flow small i {
     display: flex;
     align-items: center;
     justify-content: center;

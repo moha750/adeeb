@@ -519,6 +519,12 @@
                     section: 'elections-review-section'
                 });
                 electionsSubItems.push({
+                    id: 'elections-vote',
+                    icon: 'fa-check-to-slot',
+                    label: 'إدارة التصويت',
+                    section: 'elections-vote-section'
+                });
+                electionsSubItems.push({
                     id: 'elections-archive',
                     icon: 'fa-box-archive',
                     label: 'الانتخابات المؤرشفة',
@@ -572,11 +578,12 @@
             //         ويظهر دائماً للأدمن/المراجع لمتابعة "لوحة المدير"
             const isElectionsAdmin  = hasPermission('manage_elections');
             const isElectionsViewer = (counts.can_view | 0) > 0;
-            if ((counts.can_vote | 0) > 0 || isElectionsAdmin || isElectionsViewer) {
+            const canVote = (counts.can_vote | 0) > 0;
+            if (!isElectionsAdmin && (canVote || isElectionsViewer)) {
                 electionsSubItems.push({
                     id: 'elections-vote',
                     icon: 'fa-check-to-slot',
-                    label: 'التصويت',
+                    label: isElectionsViewer ? 'إدارة التصويت' : 'صوّت الآن',
                     section: 'elections-vote-section'
                 });
             }

@@ -209,7 +209,11 @@
       "Bash(node -e \"const c=require\\('c:/Users/moham/.claude/.credentials.json'\\); console.log\\('mcpOAuth:', c.mcpOAuth ? Object.keys\\(c.mcpOAuth\\) : '\\(absent\\)'\\);\")",
       "Bash(node -e \"const c=require\\('c:/Users/moham/.claude/.credentials.json'\\); const m=c.mcpOAuth; if\\(!m\\){console.log\\('mcpOAuth: absent'\\);process.exit\\(\\);} for\\(const k of Object.keys\\(m\\)\\){const v=m[k];console.log\\(k,'expires:',new Date\\(v.expiresAt\\).toISOString\\(\\),'now:',new Date\\(\\).toISOString\\(\\)\\);}\")",
       "Bash(node -e \"const fs=require\\('fs'\\); const p='c:/Users/moham/.claude/.credentials.json'; const c=JSON.parse\\(fs.readFileSync\\(p,'utf8'\\)\\); delete c.mcpOAuth; fs.writeFileSync\\(p, JSON.stringify\\(c,null,2\\)\\); console.log\\('mcpOAuth cleared. Top-level keys:', Object.keys\\(c\\)\\);\")",
-      "Bash(git mv *)"
+      "Bash(git mv *)",
+      "Bash(awk 'BEGIN{open=0; close=0} {for\\(i=1;i<=length\\($0\\);i++\\){c=substr\\($0,i,1\\); if\\(c==\"{\"\\)open++; if\\(c==\"}\"\\)close++}} END{print \"open:\", open, \"close:\", close, \"diff:\", open-close}' c:/Users/moham/adeeb/admin/css/vote-now.css)",
+      "Bash(node -e \"const fs=require\\('fs'\\);const s=fs.readFileSync\\('c:/Users/moham/adeeb/admin/css/vote-now.css','utf8'\\);let o=0,c=0;for\\(const ch of s\\){if\\(ch==='{'\\)o++;if\\(ch==='}'\\)c++}console.log\\('open',o,'close',c,'diff',o-c\\)\")",
+      "mcp__supabase__list_storage_buckets",
+      "Bash(node -c \"c:\\\\Users\\\\moham\\\\adeeb\\\\cursor.js\")"
     ]
   },
   "enableAllProjectMcpServers": true,
