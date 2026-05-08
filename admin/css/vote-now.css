@@ -19,47 +19,6 @@
 }
 
 /* ============================================================================
-   § 0.1 · صفحة "إدارة التصويت" للأدمن — تخطيط لائح بحشو عادي
-   ============================================================================ */
-.admin-vote-page {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-}
-
-.director.director--page {
-    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
-    color: rgba(255, 255, 255, 0.92);
-    overflow: hidden;
-}
-
-.director__page-head {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    padding: 1rem 1.25rem;
-    border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
-}
-
-.director__deadline {
-    margin-inline-start: auto;
-    padding: 0.4rem 0.75rem;
-    border-radius: 10px;
-    background: rgba(245, 158, 11, 0.16);
-    color: var(--color-warning-light);
-    font-size: 0.85rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-}
-
-.director__body--page {
-    padding: 0.5rem 1.25rem 1.25rem;
-}
-
-/* ============================================================================
    § 1 · Animations المشتركة
    ============================================================================ */
 @keyframes vote-pulse {
@@ -528,147 +487,8 @@
 }
 
 /* ============================================================================
-   § 2.5 · لوحة المدير — Director's Panel
+   § 2.5 · صفوف وقوائم مشتركة — تُستخدم داخل تبويبات أرشيف الانتخاب
    ============================================================================ */
-.director {
-    margin-bottom: 1.5rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
-    backdrop-filter: blur(8px);
-    overflow: hidden;
-    color: rgba(255, 255, 255, 0.92);
-}
-.director[open] {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.director__summary {
-    list-style: none;
-    cursor: pointer;
-    padding: 0.85rem 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    user-select: none;
-}
-.director__summary::-webkit-details-marker { display: none; }
-
-.director__summary-left {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-}
-.director__badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-weight: 800;
-    font-size: 0.92rem;
-    color: var(--color-warning-light);
-}
-.director__hint {
-    font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.55);
-}
-
-.director__stats {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    flex: 1;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-}
-.director__stat {
-    font-weight: 800;
-    font-size: 0.92rem;
-    font-variant-numeric: tabular-nums;
-}
-.director__stat strong { color: var(--color-success-light, #34d399); }
-.director__progress {
-    display: inline-block;
-    width: 110px;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 99px;
-    overflow: hidden;
-}
-.director__progress-fill {
-    display: block;
-    height: 100%;
-    background: linear-gradient(90deg, #34d399, #10b981);
-    transition: width 0.6s ease;
-}
-.director__pct {
-    font-size: 0.78rem;
-    color: rgba(255, 255, 255, 0.7);
-    font-variant-numeric: tabular-nums;
-}
-
-.director__caret {
-    transition: transform 0.2s ease;
-    color: rgba(255, 255, 255, 0.6);
-}
-.director[open] .director__caret { transform: rotate(180deg); }
-
-.director__body {
-    padding: 0.5rem 1.1rem 1.1rem;
-    border-top: 1px dashed rgba(255, 255, 255, 0.1);
-}
-
-.director__tabs {
-    display: flex;
-    gap: 0.4rem;
-    flex-wrap: wrap;
-    align-items: center;
-    margin: 0.85rem 0 1rem;
-    padding-bottom: 0.65rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-.director__tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.5rem 0.95rem;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    color: rgba(255, 255, 255, 0.65);
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-.director__tab:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: #fff;
-}
-.director__tab.is-active {
-    background: rgba(245, 158, 11, 0.18);
-    border-color: rgba(245, 158, 11, 0.4);
-    color: var(--color-warning-light);
-}
-.director__refresh {
-    margin-inline-start: auto;
-    padding: 0.5rem 0.7rem;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 10px;
-    color: rgba(255, 255, 255, 0.85);
-    cursor: pointer;
-    transition: all 0.15s;
-}
-.director__refresh:hover {
-    background: rgba(255, 255, 255, 0.12);
-    transform: rotate(180deg);
-}
-
-.director__panel { display: none; }
-.director__panel.is-active { display: block; }
-
 .director__list {
     display: flex;
     flex-direction: column;
@@ -778,38 +598,6 @@
 }
 .director__row-file:hover { background: rgba(61, 143, 214, 0.32); }
 
-/* —— بوّابة كشف النتائج —— */
-.director__results-gate {
-    text-align: center;
-    padding: 2rem 1rem;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px dashed rgba(255, 255, 255, 0.15);
-    border-radius: 14px;
-}
-.director__results-gate i.fa-eye-slash {
-    font-size: 1.8rem;
-    color: rgba(255, 255, 255, 0.45);
-    margin-bottom: 0.65rem;
-}
-.director__results-gate p {
-    margin: 0 0 1rem;
-    color: rgba(255, 255, 255, 0.78);
-    font-size: 0.9rem;
-}
-.director__reveal-btn {
-    padding: 0.6rem 1.2rem;
-    background: linear-gradient(135deg, var(--color-warning-500) 0%, var(--color-warning-600) 100%);
-    color: #1a2a3a;
-    border: none;
-    border-radius: 10px;
-    font-weight: 800;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    box-shadow: 0 6px 16px -6px rgba(245, 158, 11, 0.55);
-}
-
 .director__results-list {
     display: flex;
     flex-direction: column;
@@ -860,26 +648,6 @@
     height: 100%;
     background: linear-gradient(90deg, #fbbf24, #f59e0b);
     transition: width 0.7s ease;
-}
-
-.director__results-note {
-    margin: 1rem 0 0;
-    padding: 0.65rem 0.9rem;
-    background: rgba(245, 158, 11, 0.08);
-    border: 1px dashed rgba(245, 158, 11, 0.3);
-    border-radius: 10px;
-    color: var(--color-warning-light);
-    font-size: 0.82rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-@media (max-width: 540px) {
-    .director__summary { padding: 0.75rem 0.85rem; }
-    .director__progress { width: 80px; }
-    .director__tabs { gap: 0.3rem; }
-    .director__tab { padding: 0.4rem 0.7rem; font-size: 0.78rem; }
 }
 
 /* —— البطاقة الذاتية مقفولة: لا تحديد، لا تأثير hover للتصويت —— */

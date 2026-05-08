@@ -15,10 +15,27 @@
 (function() {
     const sb = window.sbClient;
 
+    /* مُختصر — يُستخدم بادئةً مع اسم القسم/اللجنة في عنوان الانتخاب */
     const ROLE_LABELS = {
         department_head:          'رئيس',
         committee_leader:         'قائد',
         deputy_committee_leader:  'نائب'
+    };
+
+    /* كامل — للعرض المستقل (جدول المصوّتين، تفصيل الأصوات…) */
+    const ROLE_FULL_LABELS = {
+        club_president:              'رئيس نادي أدِيب',
+        president_advisor:           'مستشار رئيس النادي',
+        executive_council_president: 'رئيس المجلس التنفيذي',
+        hr_committee_leader:         'قائد إدارة الموارد البشرية',
+        qa_committee_leader:         'قائد إدارة الضمان والجودة',
+        department_head:             'رئيس قسم',
+        qa_admin_member:             'عضو ضمان وجودة',
+        hr_admin_member:             'عضو موارد بشرية',
+        activity_coordinator:        'منسّق نشاط',
+        committee_leader:            'قائد',
+        deputy_committee_leader:     'نائب',
+        committee_member:            'عضو'
     };
 
     const STATUS_LABELS = {
@@ -918,7 +935,7 @@
                                 <div class="director__row-main">
                                     <div class="director__row-name">${esc(v.full_name || '—')}</div>
                                     <div class="director__row-sub">
-                                        <span class="director__chip">${esc(ROLE_LABELS[v.role_name] || v.role_name || 'عضو')}</span>
+                                        <span class="director__chip">${esc(ROLE_FULL_LABELS[v.role_name] || v.role_name || 'عضو')}</span>
                                         ${v.has_voted && v.voted_at ? `<span class="director__row-meta"><i class="fa-regular fa-clock"></i> ${esc(fmtDate(v.voted_at))}</span>` : ''}
                                         ${v.has_voted && v.vote_weight ? `<span class="director__row-meta"><i class="fa-solid fa-scale-balanced"></i> وزن ${Number(v.vote_weight).toFixed(1)}</span>` : ''}
                                     </div>
@@ -959,7 +976,7 @@
                                         <i class="fa-regular fa-user"></i> ${esc(r.voter_name || '—')}
                                     </div>
                                     <div class="archive-vote-cell">
-                                        <span class="director__chip">${esc(ROLE_LABELS[r.voter_role] || r.voter_role || '—')}</span>
+                                        <span class="director__chip">${esc(ROLE_FULL_LABELS[r.voter_role] || r.voter_role || '—')}</span>
                                     </div>
                                     <div class="archive-vote-cell archive-vote-cell--target">
                                         <span class="director__row-num">${r.candidate_number}</span>
@@ -3768,7 +3785,7 @@
 
             this._stopVoteCountdown();
             container.innerHTML = `
-                <div class="admin-vote-page">
+                <div style="display:flex;flex-direction:column;gap:1.25rem;">
                     <div class="elections-impersonation-slot"></div>
                     <div id="adminVoteStage">${loadingState()}</div>
                 </div>
@@ -3884,7 +3901,7 @@
 
             this._stopVoteCountdown();
             container.innerHTML = `
-                <div class="admin-vote-page">
+                <div style="display:flex;flex-direction:column;gap:1.25rem;">
                     <div class="elections-impersonation-slot"></div>
                     <div id="adminVoteDetailsStage">${loadingState()}</div>
                 </div>
@@ -3922,70 +3939,85 @@
                     </ol>
                 </nav>
 
-                <div class="director director--page" data-election-id="${esc(electionId)}">
-                    <div class="director__page-head">
-                        <div class="director__summary-left">
-                            <span class="director__badge"><i class="fa-solid fa-clapperboard"></i> لوحة المدير</span>
-                            <span class="director__hint">المرشّحون · المصوّتون · النتائج</span>
-                        </div>
-                        <div class="director__stats" id="directorStats">
-                            <span class="director__stat-loading"><i class="fa-solid fa-spinner fa-spin"></i></span>
-                        </div>
-                        ${deadlineHtml ? `<div class="director__deadline">⏱ ${deadlineHtml}</div>` : ''}
-                    </div>
+                <div class="settings-segmented-nav" role="tablist">
+                    <button type="button" class="settings-seg-btn active" data-dtab="candidates" role="tab">
+                        <span class="settings-seg-btn__icon"><i class="fa-solid fa-id-badge"></i></span>
+                        <span class="settings-seg-btn__label">المرشّحون</span>
+                    </button>
+                    <button type="button" class="settings-seg-btn" data-dtab="voters" role="tab">
+                        <span class="settings-seg-btn__icon"><i class="fa-solid fa-users-line"></i></span>
+                        <span class="settings-seg-btn__label">المصوّتون</span>
+                    </button>
+                    <button type="button" class="settings-seg-btn" data-dtab="results" role="tab">
+                        <span class="settings-seg-btn__icon"><i class="fa-solid fa-chart-column"></i></span>
+                        <span class="settings-seg-btn__label">النتائج اللحظية</span>
+                    </button>
+                </div>
 
-                    <div class="director__body director__body--page">
-                        <nav class="director__tabs" role="tablist">
-                            <button class="director__tab is-active" data-dtab="candidates" role="tab">
-                                <i class="fa-solid fa-id-badge"></i> المرشّحون
-                            </button>
-                            <button class="director__tab" data-dtab="voters" role="tab">
-                                <i class="fa-solid fa-users-line"></i> المصوّتون
-                            </button>
-                            <button class="director__tab" data-dtab="results" role="tab">
-                                <i class="fa-solid fa-chart-column"></i> النتائج اللحظية
-                            </button>
-                            <button class="director__refresh" type="button" title="تحديث">
-                                <i class="fa-solid fa-arrows-rotate"></i>
-                            </button>
-                        </nav>
+                ${deadlineHtml ? `
+                    <div class="modal-info-box box-warning">
+                        <i class="fa-solid fa-clock"></i>
+                        <span>ينتهي التصويت خلال ${deadlineHtml}</span>
+                    </div>` : ''}
 
-                        <div class="director__panel is-active" data-dpanel="candidates">${loadingState()}</div>
-                        <div class="director__panel" data-dpanel="voters">${loadingState()}</div>
-                        <div class="director__panel" data-dpanel="results">
-                            <div class="director__results-gate">
-                                <i class="fa-solid fa-eye-slash"></i>
-                                <p>النتائج المرحلية مخفيّة لتفادي تأثير القطيع. اضغط للكشف.</p>
-                                <button class="director__reveal-btn" type="button">
-                                    <i class="fa-solid fa-eye"></i> كشف النتائج المرحلية
-                                </button>
-                            </div>
-                        </div>
+                <div class="card" data-dpanel="candidates" data-election-id="${esc(electionId)}">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-id-badge"></i>
+                            تفاصيل المرشّحون لانتخاب ${esc(target)}
+                        </h3>
+                        <button type="button" class="btn btn-primary btn-outline btn-icon" data-director-refresh title="تحديث">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
                     </div>
+                    <div class="card-body">${loadingState()}</div>
+                </div>
+
+                <div class="card" data-dpanel="voters" hidden>
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-users-line"></i>
+                            تفاصيل المصوّتون لانتخاب ${esc(target)}
+                        </h3>
+                        <button type="button" class="btn btn-primary btn-outline btn-icon" data-director-refresh title="تحديث">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">${loadingState()}</div>
+                </div>
+
+                <div class="card" data-dpanel="results" hidden>
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-chart-column"></i>
+                            تفاصيل النتائج اللحظية لانتخاب ${esc(target)}
+                        </h3>
+                        <button type="button" class="btn btn-primary btn-outline btn-icon" data-director-refresh title="تحديث">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">${loadingState()}</div>
                 </div>
             `;
 
             stage.querySelector('[data-vote-back]').addEventListener('click', () => this.renderAdminVote());
 
-            const root = stage.querySelector('.director');
-            const tabs   = root.querySelectorAll('.director__tab');
-            const panels = root.querySelectorAll('.director__panel');
+            const tabs  = stage.querySelectorAll('.settings-seg-btn[data-dtab]');
+            const cards = stage.querySelectorAll('.card[data-dpanel]');
             tabs.forEach(t => t.addEventListener('click', () => {
-                tabs.forEach(x => x.classList.toggle('is-active', x === t));
-                panels.forEach(p => p.classList.toggle('is-active', p.dataset.dpanel === t.dataset.dtab));
+                tabs.forEach(x => x.classList.toggle('active', x === t));
+                cards.forEach(c => { c.hidden = (c.dataset.dpanel !== t.dataset.dtab); });
             }));
 
-            root.querySelector('.director__refresh').addEventListener('click', () => {
-                this._loadDirectorData(root, electionId, root.dataset.resultsShown === '1');
-            });
-            root.querySelector('.director__reveal-btn').addEventListener('click', () => {
-                root.dataset.resultsShown = '1';
-                this._loadDirectorData(root, electionId, true);
+            stage.querySelectorAll('[data-director-refresh]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this._loadDirectorData(stage, electionId);
+                });
             });
 
-            this._loadDirectorData(root, electionId, false);
+            this._loadDirectorData(stage, electionId);
             this._directorAutoRefresh = setInterval(() => {
-                this._loadDirectorData(root, electionId, root.dataset.resultsShown === '1');
+                this._loadDirectorData(stage, electionId);
             }, 30000);
 
             if (deadlineMs && e.status === 'voting_open') {
@@ -4216,112 +4248,139 @@
             this._startBallotCountdown(stage);
         }
 
-        async _loadDirectorData(root, electionId, includeResults) {
-            const cPanel = root.querySelector('[data-dpanel="candidates"]');
-            const vPanel = root.querySelector('[data-dpanel="voters"]');
-            const rPanel = root.querySelector('[data-dpanel="results"]');
-            const statsEl = root.querySelector('#directorStats');
+        async _loadDirectorData(stage, electionId) {
+            const cBody = stage.querySelector('.card[data-dpanel="candidates"] .card-body');
+            const vBody = stage.querySelector('.card[data-dpanel="voters"] .card-body');
+            const rBody = stage.querySelector('.card[data-dpanel="results"] .card-body');
+            if (!cBody || !vBody || !rBody) return;
 
-            const tasks = [
+            const results = await Promise.all([
                 sb.rpc('get_candidates_with_identity', { p_election: electionId }),
-                sb.rpc('get_election_voters_participation', { p_election: electionId })
-            ];
-            if (includeResults) {
-                tasks.push(sb.rpc('get_election_results', { p_election: electionId }));
-            }
-
-            const results = await Promise.all(tasks);
+                sb.rpc('get_election_voters_participation', { p_election: electionId }),
+                sb.rpc('get_election_results', { p_election: electionId })
+            ]);
             const cands  = results[0]?.data || [];
             const voters = results[1]?.data || [];
-            const live   = includeResults ? (results[2]?.data || []) : null;
+            const live   = results[2]?.data || [];
 
             await this._resolveCandidateFileUrls(cands);
 
-            const votersErr = results[1]?.error?.message;
-            if (votersErr && /غير مصرح|permission/i.test(votersErr)) {
-                vPanel.innerHTML = errorState(votersErr);
-            }
-
-            // —— stats
-            const total  = voters.length;
-            const voted  = voters.filter(v => v.has_voted).length;
-            const pct    = total ? Math.round((voted / total) * 100) : 0;
-            statsEl.innerHTML = `
-                <span class="director__stat"><strong>${voted}</strong>/${total}</span>
-                <span class="director__progress"><span class="director__progress-fill" style="width:${pct}%"></span></span>
-                <span class="director__pct">${pct}%</span>
-            `;
-
-            // —— candidates panel
-            cPanel.innerHTML = cands.length === 0
+            // —— candidates card
+            cBody.innerHTML = cands.length === 0
                 ? emptyState('users', 'لا يوجد مرشّحون')
-                : `<div class="director__list">
-                       ${cands.map(c => `
-                           <div class="director__row">
-                               <span class="director__row-num">${c.candidate_number}</span>
-                               <div class="director__row-main">
-                                   <div class="director__row-name">${esc(c.full_name || '—')}</div>
-                                   <div class="director__row-sub">
-                                       <span class="director__chip director__chip--${esc(c.status || 'pending')}">${esc(CANDIDATE_STATUS_LABELS[c.status] || c.status)}</span>
-                                       ${c.submitted_at ? `<span class="director__row-meta"><i class="fa-regular fa-clock"></i> ${esc(fmtDate(c.submitted_at))}</span>` : ''}
-                                   </div>
-                               </div>
-                               ${c.file_url ? `<a class="director__row-file" href="${esc(c.file_signed_url || c.file_url)}" target="_blank" rel="noopener" title="ملف المرشح"><i class="fa-solid fa-paperclip"></i></a>` : ''}
-                           </div>
-                       `).join('')}
+                : `<div class="data-table-wrap">
+                       <div class="data-table-scroll">
+                           <table class="data-table data-table--striped data-table--with-index">
+                               <thead>
+                                   <tr>
+                                       <th>#</th>
+                                       <th>المرشّح</th>
+                                       <th>الحالة</th>
+                                       <th>تاريخ التقديم</th>
+                                       <th>الملف</th>
+                                   </tr>
+                               </thead>
+                               <tbody>
+                                   ${cands.map(c => `
+                                       <tr>
+                                           <td>${c.candidate_number}</td>
+                                           <td>${esc(c.full_name || '—')}</td>
+                                           <td>${candidateBadge(c.status)}</td>
+                                           <td>${c.submitted_at ? esc(fmtDate(c.submitted_at)) : '—'}</td>
+                                           <td>${c.file_url
+                                               ? `<a class="btn btn-info btn-icon btn-sm btn-outline" href="${esc(c.file_signed_url || c.file_url)}" target="_blank" rel="noopener" title="ملف المرشح"><i class="fa-solid fa-paperclip"></i></a>`
+                                               : '—'}</td>
+                                       </tr>
+                                   `).join('')}
+                               </tbody>
+                           </table>
+                       </div>
                    </div>`;
 
-            // —— voters panel
-            if (!votersErr) {
-                vPanel.innerHTML = voters.length === 0
+            // —— voters card
+            const votersErr = results[1]?.error?.message;
+            if (votersErr && /غير مصرح|permission/i.test(votersErr)) {
+                vBody.innerHTML = errorState(votersErr);
+            } else {
+                vBody.innerHTML = voters.length === 0
                     ? emptyState('users-slash', 'لا يوجد مصوّتون مؤهَّلون')
-                    : `<div class="director__list">
-                           ${voters.map(v => `
-                               <div class="director__row ${v.has_voted ? 'is-voted' : 'is-pending'}">
-                                   <span class="director__row-status">
-                                       <i class="fa-solid fa-${v.has_voted ? 'circle-check' : 'hourglass-half'}"></i>
-                                   </span>
-                                   <div class="director__row-main">
-                                       <div class="director__row-name">${esc(v.full_name || '—')}</div>
-                                       <div class="director__row-sub">
-                                           <span class="director__chip">${esc(ROLE_LABELS[v.role_name] || v.role_name || 'عضو')}</span>
-                                           ${v.has_voted && v.voted_at ? `<span class="director__row-meta"><i class="fa-regular fa-clock"></i> ${esc(fmtDate(v.voted_at))}</span>` : ''}
-                                           ${v.has_voted && v.vote_weight ? `<span class="director__row-meta"><i class="fa-solid fa-scale-balanced"></i> وزن ${Number(v.vote_weight).toFixed(1)}</span>` : ''}
-                                       </div>
-                                   </div>
-                               </div>
-                           `).join('')}
+                    : `<div class="data-table-wrap">
+                           <div class="data-table-scroll">
+                               <table class="data-table data-table--striped data-table--with-index">
+                                   <thead>
+                                       <tr>
+                                           <th>#</th>
+                                           <th>الحالة</th>
+                                           <th>المصوّت</th>
+                                           <th>الدور</th>
+                                           <th>وقت التصويت</th>
+                                           <th>الوزن</th>
+                                       </tr>
+                                   </thead>
+                                   <tbody>
+                                       ${voters.map((v, i) => `
+                                           <tr>
+                                               <td>${i + 1}</td>
+                                               <td>${v.has_voted
+                                                   ? `<span class="uc-badge uc-badge--success"><i class="fa-solid fa-circle-check"></i> صوّت</span>`
+                                                   : `<span class="uc-badge uc-badge--warning"><i class="fa-solid fa-hourglass-half"></i> بانتظار</span>`}</td>
+                                               <td>${esc(v.full_name || '—')}</td>
+                                               <td><span class="uc-badge uc-badge--secondary">${esc(ROLE_FULL_LABELS[v.role_name] || v.role_name || 'عضو')}</span></td>
+                                               <td>${v.has_voted && v.voted_at ? esc(fmtDate(v.voted_at)) : '—'}</td>
+                                               <td>${v.has_voted && v.vote_weight ? Number(v.vote_weight).toFixed(1) : '—'}</td>
+                                           </tr>
+                                       `).join('')}
+                                   </tbody>
+                               </table>
+                           </div>
                        </div>`;
             }
 
-            // —— results panel (only if revealed)
-            if (live) {
+            // —— results card
+            {
                 const maxWeight = Math.max(1, ...live.map(r => Number(r.total_weight) || 0));
-                rPanel.innerHTML = live.length === 0
+                rBody.innerHTML = live.length === 0
                     ? emptyState('chart-simple', 'لا توجد أصوات بعد')
-                    : `<div class="director__results-list">
-                           ${live.sort((a,b) => (b.total_weight||0) - (a.total_weight||0)).map(r => {
-                               const w = Number(r.total_weight) || 0;
-                               const pctR = Math.round((w / maxWeight) * 100);
-                               return `
-                                   <div class="director__bar-row">
-                                       <div class="director__bar-head">
-                                           <span class="director__row-num">${r.candidate_number}</span>
-                                           <span class="director__bar-name">${esc(r.full_name || '—')}</span>
-                                           <span class="director__bar-vals">
-                                               <strong>${w.toFixed(1)}</strong>
-                                               <span class="director__bar-votes">(${r.total_votes || 0} صوت)</span>
-                                           </span>
-                                       </div>
-                                       <div class="director__bar"><span class="director__bar-fill" style="width:${pctR}%"></span></div>
-                                   </div>
-                               `;
-                           }).join('')}
-                       </div>
-                       <p class="director__results-note">
-                           <i class="fa-solid fa-circle-info"></i>
-                           نتائج غير نهائية — تتغيّر مع كل صوت جديد.
-                       </p>`;
+                    : `<div class="data-table-wrap">
+                           <div class="data-table-scroll">
+                               <table class="data-table data-table--striped data-table--with-index">
+                                   <thead>
+                                       <tr>
+                                           <th>#</th>
+                                           <th>المرشّح</th>
+                                           <th>الأصوات</th>
+                                           <th>الوزن</th>
+                                           <th>التقدّم</th>
+                                       </tr>
+                                   </thead>
+                                   <tbody>
+                                       ${live.sort((a,b) => (b.total_weight||0) - (a.total_weight||0)).map(r => {
+                                           const w = Number(r.total_weight) || 0;
+                                           const pctR = Math.round((w / maxWeight) * 100);
+                                           return `
+                                               <tr>
+                                                   <td>${r.candidate_number}</td>
+                                                   <td>${esc(r.full_name || '—')}</td>
+                                                   <td>${r.total_votes || 0}</td>
+                                                   <td><strong style="color:var(--color-warning-700);">${w.toFixed(1)}</strong></td>
+                                                   <td>
+                                                       <span style="display:inline-flex;align-items:center;gap:0.5rem;">
+                                                           <span style="display:inline-block;width:120px;height:8px;background:rgba(15,23,42,0.08);border-radius:99px;overflow:hidden;">
+                                                               <span style="display:block;height:100%;width:${pctR}%;background:linear-gradient(90deg,#fbbf24,#f59e0b);transition:width 0.7s ease;"></span>
+                                                           </span>
+                                                           <small style="opacity:0.75;font-variant-numeric:tabular-nums;">${pctR}%</small>
+                                                       </span>
+                                                   </td>
+                                               </tr>
+                                           `;
+                                       }).join('')}
+                                   </tbody>
+                               </table>
+                           </div>
+                           <div class="data-table-footer">
+                               <span><i class="fa-solid fa-circle-info"></i> نتائج غير نهائية — تتغيّر مع كل صوت جديد.</span>
+                           </div>
+                       </div>`;
             }
         }
 
