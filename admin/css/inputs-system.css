@@ -1458,23 +1458,26 @@
     width:       100%;
 }
 
+/* المتغيّرات تُقرأ بصيغة var(--name, fallback)
+   حتى يبقى الافتراضي أزرق، ولكن أي حاوية أب تستطيع تجاوزها
+   (مثل .collapse-panel--success تضع --_range-rgb على نفسها فيلتقطها الـ slider بالوراثة). */
 input[type="range"].form-range {
     -webkit-appearance: none;
     appearance:         none;
     width:              100%;
     height:             var(--fi-range-track-h);
-    background:         var(--fi-range-track);
+    background:         rgba(var(--_range-rgb, var(--fi-blue-rgb)), 0.12);
     border-radius:      var(--fi-r-full);
     border:             none;
     outline:            none;
     cursor:             pointer;
     margin:             0;
     padding:            0;
-    transition:         box-shadow var(--fi-dur) var(--fi-ease);
+    transition:         box-shadow var(--fi-dur) var(--fi-ease), background var(--fi-dur) var(--fi-ease);
 }
 
 input[type="range"].form-range:focus-visible {
-    box-shadow:    0 0 0 3px var(--fi-ring-focus);
+    box-shadow:    0 0 0 3px rgba(var(--_range-rgb, var(--fi-blue-rgb)), 0.18);
     border-radius: 3px;
 }
 
@@ -1484,11 +1487,14 @@ input[type="range"].form-range::-webkit-slider-thumb {
     width:              var(--fi-range-thumb);
     height:             var(--fi-range-thumb);
     border-radius:      50%;
-    background-image:   linear-gradient(135deg, #80aace 0%, #3d77bc 55%, #0b4fa7 100%);
+    background-image:   linear-gradient(135deg,
+                            var(--_range-thumb-from, #80aace) 0%,
+                            var(--_range-thumb-mid,  #3d77bc) 55%,
+                            var(--_range-thumb-to,   #0b4fa7) 100%);
     border:             2.5px solid #ffffff;
     box-shadow:
-        0 2px 8px rgba(var(--fi-blue-rgb), 0.35),
-        0 0 0 1px rgba(var(--fi-blue-rgb), 0.18);
+        0 2px 8px rgba(var(--_range-rgb, var(--fi-blue-rgb)), 0.35),
+        0 0 0 1px rgba(var(--_range-rgb, var(--fi-blue-rgb)), 0.18);
     cursor:             pointer;
     transition:
         transform  var(--fi-dur) var(--fi-ease-spring),
@@ -1498,8 +1504,8 @@ input[type="range"].form-range::-webkit-slider-thumb {
 input[type="range"].form-range::-webkit-slider-thumb:hover {
     transform:  scale(1.18);
     box-shadow:
-        0 4px 14px rgba(var(--fi-blue-rgb), 0.50),
-        0 0 0 1px rgba(var(--fi-blue-rgb), 0.22);
+        0 4px 14px rgba(var(--_range-rgb, var(--fi-blue-rgb)), 0.50),
+        0 0 0 1px rgba(var(--_range-rgb, var(--fi-blue-rgb)), 0.22);
 }
 
 input[type="range"].form-range:active::-webkit-slider-thumb {
@@ -1510,9 +1516,12 @@ input[type="range"].form-range::-moz-range-thumb {
     width:         var(--fi-range-thumb);
     height:        var(--fi-range-thumb);
     border-radius: 50%;
-    background:    linear-gradient(135deg, #80aace 0%, #3d77bc 55%, #0b4fa7 100%);
+    background:    linear-gradient(135deg,
+                       var(--_range-thumb-from, #80aace) 0%,
+                       var(--_range-thumb-mid,  #3d77bc) 55%,
+                       var(--_range-thumb-to,   #0b4fa7) 100%);
     border:        2.5px solid #ffffff;
-    box-shadow:    0 2px 8px rgba(var(--fi-blue-rgb), 0.35);
+    box-shadow:    0 2px 8px rgba(var(--_range-rgb, var(--fi-blue-rgb)), 0.35);
     cursor:        pointer;
 }
 
@@ -1530,9 +1539,9 @@ input[type="range"].form-range::-moz-range-thumb {
     justify-content:  center;
     padding:          0.18rem 0.6rem;
     background-image: linear-gradient(135deg,
-                          rgba(var(--fi-blue-rgb), 0.14) 0%,
-                          rgba(var(--fi-blue-rgb), 0.06) 100%);
-    border:           1px solid rgba(var(--fi-blue-rgb), 0.20);
+                          rgba(var(--_range-rgb, var(--fi-blue-rgb)), 0.14) 0%,
+                          rgba(var(--_range-rgb, var(--fi-blue-rgb)), 0.06) 100%);
+    border:           1px solid rgba(var(--_range-rgb, var(--fi-blue-rgb)), 0.20);
     color:            #274060;
     border-radius:    var(--fi-r-sm);
     font-size:        0.78rem;

@@ -58,10 +58,14 @@
     <!-- نظام الكروت الموحد — الملف الوحيد لجميع الكروت -->
     <link rel="stylesheet" href="css/unified-cards.css?v=20260424a" />
     <link rel="stylesheet" href="css/activity-archive.css?v=20260430a" />
+    <!-- لعبة خمّن الكلمة -->
+    <link rel="stylesheet" href="css/guess-word.css?v=20260510a" />
     <!-- تجربة التصويت الحية -->
     <link rel="stylesheet" href="css/vote-now.css?v=20260508b" />
     <!-- شريط دخول الرئيس كمستخدم -->
     <link rel="stylesheet" href="css/master-access.css?v=20260423e" />
+    <!-- مكونات التحليلات والإحصائيات (رسوم · قوائم مرتّبة · خرائط حرارية) -->
+    <link rel="stylesheet" href="css/analytics.css?v=20260509a" />
 </head>
 
 <body>
@@ -354,18 +358,18 @@
             <!-- قسم إحصائيات الزيارات -->
             <section id="site-visits-section" class="admin-section d-none">
 
-                <div class="section-actions">
+                <div class="filters-bar filters-bar--stretch">
                     <select id="visitsPeriodFilter" class="filter-select">
                         <option value="7">آخر 7 أيام</option>
                         <option value="30" selected>آخر 30 يوم</option>
                         <option value="90">آخر 90 يوم</option>
                         <option value="365">آخر سنة</option>
                     </select>
-                    <button class="btn btn-secondary" id="exportVisitsBtn">
+                    <button class="btn btn-success" id="exportVisitsBtn">
                         <i class="fa-solid fa-download"></i>
                         تصدير البيانات
                     </button>
-                    <button class="btn btn-outline" id="refreshVisitsBtn">
+                    <button class="btn btn-info" id="refreshVisitsBtn">
                         <i class="fa-solid fa-rotate"></i>
                         تحديث
                     </button>
@@ -382,7 +386,7 @@
                         <div class="card-header">
                             <h3><i class="fa-solid fa-chart-area"></i> المشاهدات اليومية</h3>
                         </div>
-                        <div class="card-body" class="chart-container">
+                        <div class="card-body chart-container">
                             <canvas id="visitsTimelineChart"></canvas>
                         </div>
                     </div>
@@ -390,7 +394,7 @@
                         <div class="card-header">
                             <h3><i class="fa-solid fa-mobile-screen"></i> توزيع الأجهزة</h3>
                         </div>
-                        <div class="card-body" class="chart-container">
+                        <div class="card-body chart-container">
                             <canvas id="devicesChart"></canvas>
                         </div>
                     </div>
@@ -402,7 +406,7 @@
                         <div class="card-header">
                             <h3><i class="fa-solid fa-globe"></i> توزيع الدول</h3>
                         </div>
-                        <div class="card-body" class="chart-container">
+                        <div class="card-body chart-container">
                             <canvas id="countriesChart"></canvas>
                         </div>
                     </div>
@@ -410,7 +414,7 @@
                         <div class="card-header">
                             <h3><i class="fa-solid fa-location-dot"></i> توزيع المدن</h3>
                         </div>
-                        <div class="card-body" class="chart-container">
+                        <div class="card-body chart-container">
                             <canvas id="citiesChart"></canvas>
                         </div>
                     </div>
@@ -422,10 +426,23 @@
                         <div class="card-header">
                             <h3><i class="fa-solid fa-user-plus"></i> زوار جدد مقابل عائدون</h3>
                         </div>
-                        <div class="card-body" class="chart-container">
+                        <div class="card-body chart-container">
                             <canvas id="newVsReturningChart"></canvas>
                         </div>
                     </div>
+
+                                    <!-- ساعات الذروة (heatmap) -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-fire-flame-curved"></i> ساعات الذروة (يوم × ساعة)</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="peakHoursHeatmap">
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+                
                     <div class="card">
                         <div class="card-header">
                             <h3><i class="fa-solid fa-link"></i> أعلى مصادر الإحالة</h3>
@@ -434,18 +451,6 @@
                             <div id="topReferrersContainer">
                                 <!-- سيتم ملؤها ديناميكياً -->
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ساعات الذروة (heatmap) -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-fire-flame-curved"></i> ساعات الذروة (يوم × ساعة)</h3>
-                    </div>
-                    <div class="card-body">
-                        <div id="peakHoursHeatmap">
-                            <!-- سيتم ملؤها ديناميكياً -->
                         </div>
                     </div>
                 </div>
@@ -1398,17 +1403,6 @@
                  قسم أعياد الميلاد
                  ===================================================== -->
             <section id="birthdays-section" class="admin-section d-none">
-
-                <div class="birthdays-toolbar">
-                    <input type="search" id="birthdaySearchInput"
-                           placeholder="🔍 بحث بالاسم..." class="form-input" />
-                    <select id="birthdayPrintMonth" class="form-input" aria-label="اختر الشهر للطباعة">
-                        <!-- يُملأ ديناميكياً بـ 12 شهراً -->
-                    </select>
-                    <button id="birthdayPrintBtn" class="btn btn-secondary" type="button">
-                        <i class="fa-solid fa-print"></i> طباعة القائمة
-                    </button>
-                </div>
 
                 <div id="birthdaysContainer">
                     <!-- يُملأ ديناميكياً -->
@@ -4261,6 +4255,153 @@
                 </div>
             </section>
 
+            <!-- ============================================ -->
+            <!-- لعبة "خمّن الكلمة" - 3 أقسام                 -->
+            <!-- ============================================ -->
+
+            <!-- قسم: قائمة جلسات اللعبة -->
+            <section id="guess-word-list-section" class="admin-section d-none">
+                <div class="page-header">
+                    <h2><i class="fa-solid fa-comments-question"></i> خمّن الكلمة</h2>
+                    <p class="page-header__subtitle">إدارة جلسات لعبة "خمّن الكلمة" التفاعلية. أنشئ جلسة، اعرض QR للمتسابقين، وتحكّم بالجولات.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-list"></i> الجلسات</h3>
+                        <button class="btn btn-primary btn-icon btn-outline" id="gwRefreshListBtn" type="button" title="تحديث">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="guessWordListContainer">
+                            <!-- يُملأ ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions-sticky">
+                    <div class="form-actions-bar">
+                        <button class="btn btn-primary" id="gwNewSessionBtn" type="button">
+                            <i class="fa-solid fa-plus"></i> جلسة جديدة
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم: إنشاء جلسة لعبة -->
+            <section id="guess-word-create-section" class="admin-section d-none">
+                <div class="page-header">
+                    <h2><i class="fa-solid fa-circle-plus"></i> إنشاء جلسة جديدة</h2>
+                    <p class="page-header__subtitle">أدخل عنواناً للجلسة، حدّد مدة كل جولة، وأضف الكلمات (كلمة في كل سطر).</p>
+                </div>
+
+                <form id="gwCreateForm" class="gw-create-form">
+                    <div class="form-group">
+                        <label class="form-label" for="gwCreateTitle">
+                            <span class="label-icon"><i class="fa-solid fa-heading"></i></span>
+                            عنوان الجلسة (اختياري)
+                        </label>
+                        <input type="text" class="form-input" id="gwCreateTitle" maxlength="100" placeholder="مثال: ليلة شعرية" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="gwCreateTime">
+                            <span class="label-icon"><i class="fa-regular fa-clock"></i></span>
+                            مدة الجولة (بالثواني)
+                            <span class="required-dot">*</span>
+                        </label>
+                        <input type="number" class="form-input" id="gwCreateTime" min="10" max="600" value="60" required />
+                        <span class="form-hint">من 10 إلى 600 ثانية. القيمة الافتراضية: 60 ثانية.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="gwCreateWords">
+                            <span class="label-icon"><i class="fa-solid fa-list"></i></span>
+                            الكلمات
+                            <span class="required-dot">*</span>
+                        </label>
+                        <textarea class="form-input" id="gwCreateWords" rows="10" required
+                            placeholder="اكتب كل كلمة في سطر مستقل&#10;مثال:&#10;شعر&#10;نثر&#10;بلاغة"></textarea>
+                        <div class="gw-words-counter" id="gwWordsCounter"><strong>0</strong> كلمة</div>
+                    </div>
+
+                    <div class="form-actions-bar">
+                        <button class="btn btn-success" id="gwCreateSubmitBtn" type="submit">
+                            <i class="fa-solid fa-check"></i> إنشاء الجلسة
+                        </button>
+                        <button class="btn btn-slate btn-outline" id="gwCancelCreateBtn" type="button">
+                            <i class="fa-regular fa-circle-xmark"></i> إلغاء
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- قسم: شاشة التحكم المباشرة -->
+            <section id="guess-word-live-section" class="admin-section d-none">
+                <div class="page-header">
+                    <h2 id="gwLiveTitle"><i class="fa-solid fa-tower-broadcast"></i> الجلسة المباشرة</h2>
+                    <button class="btn btn-slate btn-outline" id="gwBackToListBtn" type="button">
+                        <i class="fa-solid fa-arrow-right"></i> العودة للجلسات
+                    </button>
+                </div>
+
+                <div class="gw-live-grid">
+                    <!-- بطاقة QR والكود -->
+                    <div class="gw-live-card gw-live-qr-card">
+                        <h3><i class="fa-solid fa-qrcode"></i> رمز الانضمام</h3>
+                        <div class="gw-qr-wrapper" id="gwQRWrapper"></div>
+                        <div class="gw-code-display" id="gwLiveCode">······</div>
+                        <div class="gw-link-row">
+                            <input type="text" id="gwJoinLink" readonly />
+                            <button class="btn btn-primary btn-outline btn-sm" id="gwCopyLinkBtn" type="button" title="نسخ الرابط">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- بطاقة الكلمة الحالية والتحكم -->
+                    <div class="gw-live-card gw-live-control-card">
+                        <h3><i class="fa-solid fa-circle-play"></i> التحكم بالجولة</h3>
+                        <div class="gw-current-round" id="gwLiveRoundLabel">—</div>
+                        <div class="gw-current-word empty" id="gwLiveCurrentWord">لم تبدأ جولة بعد</div>
+                        <div class="gw-live-timer" id="gwLiveTimer">
+                            <i class="fa-regular fa-clock"></i>
+                            <span id="gwLiveTimerValue">—</span>
+                        </div>
+                        <div class="gw-control-buttons">
+                            <button class="btn btn-success" id="gwStartRoundBtn" type="button">
+                                <i class="fa-solid fa-play"></i> بدء الجولة الأولى
+                            </button>
+                            <button class="btn btn-danger btn-outline" id="gwCloseSessionBtn" type="button">
+                                <i class="fa-solid fa-flag-checkered"></i> إنهاء الجلسة
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- بطاقة الإجابات -->
+                    <div class="gw-live-card gw-live-answers-card">
+                        <h3><i class="fa-solid fa-comment-dots"></i> الإجابات (الأسرع أولاً)</h3>
+                        <div class="gw-answers-list" id="gwLiveAnswersList">
+                            <!-- يُملأ ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- المتسابقون -->
+                <div class="gw-live-card gw-players-card">
+                    <h3>
+                        <i class="fa-solid fa-users"></i> المتسابقون
+                        <span class="gw-session-status active" style="margin-right:auto;">
+                            <span id="gwLivePlayersCount">0</span>
+                        </span>
+                    </h3>
+                    <div class="gw-players-grid" id="gwLivePlayersList">
+                        <!-- يُملأ ديناميكياً -->
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
@@ -5011,6 +5152,7 @@
     <script src="version.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script type="module">
         import QRCode from 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm';
         window.QRCode = QRCode;
@@ -5062,9 +5204,14 @@
     <script src="js/attendance-manager.js"></script>
     <script src="js/activity-archive-manager.js"></script>
     <script src="js/certificate-send-manager.js"></script>
+    <!-- مكتبة QR Code للعبة خمّن الكلمة -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="js/guess-word-manager.js?v=20260510a"></script>
     <!-- SweetAlert2 Shim - يحوّل Swal.fire إلى ModalHelper -->
     <script src="js/swal-shim.js"></script>
     <script src="js/settings.js"></script>
+    <script src="js/collapse-panel.js?v=20260509a"></script>
+    <script src="js/birthday-card-generator.js?v=20260509a"></script>
     <script src="dashboard.js"></script>
     <!-- <link rel="stylesheet" href="css/archives.css"> -->
 

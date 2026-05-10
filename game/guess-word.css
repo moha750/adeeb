@@ -1,0 +1,590 @@
+/* =============================================
+   لعبة "خمّن الكلمة" — صفحة المتسابق
+   ============================================= */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --gw-primary: #3d8fd6;
+    --gw-primary-dark: #274060;
+    --gw-primary-light: #62a9e8;
+    --gw-success: #10b981;
+    --gw-success-dark: #059669;
+    --gw-warning: #f59e0b;
+    --gw-danger: #ef4444;
+    --gw-bg: linear-gradient(160deg, #1e3a5f 0%, #274060 60%, #1a2f4a 100%);
+    --gw-card: #ffffff;
+    --gw-card-rgb: 255, 255, 255;
+    --gw-text: #1f2937;
+    --gw-text-light: #ffffff;
+    --gw-muted: #6b7280;
+    --gw-muted-light: rgba(255, 255, 255, 0.75);
+    --gw-border: #e5e7eb;
+    --gw-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    --gw-radius: 18px;
+    --gw-radius-sm: 12px;
+}
+
+html, body {
+    height: 100%;
+    overscroll-behavior: contain;
+}
+
+body {
+    font-family: 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
+    background: var(--gw-bg);
+    color: var(--gw-text);
+    line-height: 1.55;
+    min-height: 100dvh;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.gw-app {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* الشاشات */
+.gw-screen {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    animation: gw-fade-in 0.3s ease-out;
+}
+
+.gw-screen[hidden] { display: none !important; }
+
+@keyframes gw-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* البطاقة الموحدة */
+.gw-card {
+    width: 100%;
+    max-width: 460px;
+    background: var(--gw-card);
+    border-radius: var(--gw-radius);
+    padding: 2rem 1.5rem;
+    box-shadow: var(--gw-shadow);
+    text-align: center;
+}
+
+.gw-card--join { padding: 2.25rem 1.5rem 2rem; }
+
+/* الشعار */
+.gw-logo {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, var(--gw-primary) 0%, var(--gw-primary-dark) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    box-shadow: 0 8px 24px rgba(61, 143, 214, 0.35);
+}
+
+.gw-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--gw-primary-dark);
+    margin-bottom: 0.5rem;
+}
+
+.gw-h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--gw-primary-dark);
+    margin: 0.75rem 0;
+}
+
+.gw-muted {
+    color: var(--gw-muted);
+    font-size: 0.95rem;
+}
+
+/* كود الجلسة */
+.gw-session-code-label {
+    color: var(--gw-muted);
+    font-size: 0.85rem;
+    margin-top: 1rem;
+}
+
+.gw-session-code {
+    font-family: 'Courier New', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.5rem;
+    color: var(--gw-primary-dark);
+    background: linear-gradient(135deg, #f0f7ff 0%, #e0eefe 100%);
+    padding: 0.85rem 1rem;
+    border-radius: var(--gw-radius-sm);
+    margin: 0.5rem 0 1.5rem;
+    border: 2px dashed var(--gw-primary);
+}
+
+/* النموذج */
+.gw-form,
+.gw-answer-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    text-align: right;
+}
+
+.gw-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--gw-text);
+    font-size: 0.95rem;
+}
+
+.gw-label i { color: var(--gw-primary); }
+
+.gw-input,
+.gw-textarea {
+    width: 100%;
+    padding: 0.95rem 1rem;
+    font-family: inherit;
+    font-size: 1.05rem;
+    border: 2px solid var(--gw-border);
+    border-radius: var(--gw-radius-sm);
+    background: #fafbfd;
+    color: var(--gw-text);
+    transition: border-color 0.2s, background 0.2s;
+    -webkit-appearance: none;
+}
+
+.gw-input:focus,
+.gw-textarea:focus {
+    outline: none;
+    border-color: var(--gw-primary);
+    background: #fff;
+}
+
+.gw-textarea {
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.6;
+}
+
+/* الأزرار */
+.gw-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.95rem 1.5rem;
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--gw-radius-sm);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+    text-decoration: none;
+}
+
+.gw-btn:active { transform: scale(0.98); }
+
+.gw-btn--primary {
+    background: linear-gradient(135deg, var(--gw-primary) 0%, var(--gw-primary-dark) 100%);
+    color: white;
+    box-shadow: 0 6px 16px rgba(61, 143, 214, 0.35);
+}
+
+.gw-btn--primary:hover {
+    box-shadow: 0 8px 22px rgba(61, 143, 214, 0.45);
+}
+
+.gw-btn--primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.gw-btn--secondary {
+    background: #f3f4f6;
+    color: var(--gw-text);
+}
+
+.gw-btn--secondary:hover { background: #e5e7eb; }
+
+.gw-btn--large {
+    padding: 1.1rem 1.5rem;
+    font-size: 1.1rem;
+}
+
+/* الأخطاء */
+.gw-error {
+    background: #fef2f2;
+    color: var(--gw-danger);
+    padding: 0.75rem 1rem;
+    border-radius: var(--gw-radius-sm);
+    font-size: 0.9rem;
+    border-right: 4px solid var(--gw-danger);
+}
+
+/* تأثير النبض */
+.gw-pulse {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, var(--gw-warning) 0%, #d97706 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.2rem;
+    animation: gw-pulse 1.6s ease-in-out infinite;
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.35);
+}
+
+@keyframes gw-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+/* بطاقة المتسابق */
+.gw-player-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e0eefe 100%);
+    padding: 0.6rem 1rem;
+    border-radius: 999px;
+    margin: 1.25rem auto 0;
+    font-weight: 600;
+    color: var(--gw-primary-dark);
+    border: 1px solid #d4e7fc;
+}
+
+.gw-player-pill--secondary {
+    margin-top: 1rem;
+}
+
+.gw-score-badge {
+    background: var(--gw-primary-dark);
+    color: white;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    min-width: 28px;
+    text-align: center;
+}
+
+/* قائمة المتسابقين */
+.gw-players-list-wrap {
+    margin-top: 1.5rem;
+    text-align: right;
+}
+
+.gw-players-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 0.5rem 0.5rem;
+    font-weight: 600;
+    color: var(--gw-muted);
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--gw-border);
+}
+
+.gw-players-header i { margin-left: 0.4rem; color: var(--gw-primary); }
+
+.gw-players-count {
+    background: var(--gw-primary);
+    color: white;
+    padding: 0.1rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+}
+
+.gw-players-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.75rem 0.25rem 0;
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+.gw-player-chip {
+    background: #f3f4f6;
+    color: var(--gw-text);
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+}
+
+.gw-player-chip--me {
+    background: linear-gradient(135deg, var(--gw-primary) 0%, var(--gw-primary-dark) 100%);
+    color: white;
+}
+
+/* الفائز السابق */
+.gw-last-winner {
+    margin-top: 1.5rem;
+    padding: 0.85rem 1rem;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: var(--gw-radius-sm);
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    text-align: right;
+}
+
+.gw-last-winner > i {
+    font-size: 1.5rem;
+    color: #d97706;
+}
+
+.gw-last-winner-label {
+    font-size: 0.8rem;
+    color: #92400e;
+}
+
+.gw-last-winner-name {
+    font-weight: 700;
+    color: var(--gw-text);
+}
+
+/* شاشة اللعب */
+.gw-screen--play {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 0;
+}
+
+.gw-play-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: rgba(0, 0, 0, 0.2);
+    color: white;
+    backdrop-filter: blur(8px);
+}
+
+.gw-player-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
+.gw-timer {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--gw-primary-dark);
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    min-width: 90px;
+    justify-content: center;
+}
+
+.gw-timer.warn {
+    background: var(--gw-warning);
+    color: white;
+}
+
+.gw-timer.danger {
+    background: var(--gw-danger);
+    color: white;
+    animation: gw-pulse 0.6s ease-in-out infinite;
+}
+
+.gw-timer--secondary {
+    margin: 1.25rem auto 0;
+    background: #f3f4f6;
+    color: var(--gw-muted);
+}
+
+.gw-play-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.5rem 1.25rem 2rem;
+}
+
+.gw-play-prompt {
+    color: var(--gw-muted-light);
+    font-size: 1rem;
+    text-align: center;
+}
+
+.gw-word-box {
+    background: var(--gw-card);
+    border-radius: var(--gw-radius);
+    padding: 2rem 1rem;
+    box-shadow: var(--gw-shadow);
+    text-align: center;
+}
+
+.gw-word {
+    font-size: clamp(2rem, 7vw, 3.2rem);
+    font-weight: 800;
+    color: var(--gw-primary-dark);
+    word-break: break-word;
+    line-height: 1.2;
+}
+
+.gw-answer-form {
+    background: var(--gw-card);
+    border-radius: var(--gw-radius);
+    padding: 1.25rem;
+    box-shadow: var(--gw-shadow);
+}
+
+/* تم الإرسال */
+.gw-check-circle {
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, var(--gw-success) 0%, var(--gw-success-dark) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.6rem;
+    animation: gw-pop 0.4s ease-out;
+    box-shadow: 0 10px 28px rgba(16, 185, 129, 0.4);
+}
+
+@keyframes gw-pop {
+    0% { transform: scale(0); }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+/* لوحة المتصدّرين */
+.gw-end-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.2rem;
+}
+
+.gw-leaderboard {
+    margin: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    text-align: right;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.gw-leader-row {
+    display: grid;
+    grid-template-columns: 38px 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.85rem;
+    background: #f8fafc;
+    border-radius: var(--gw-radius-sm);
+    border: 1px solid var(--gw-border);
+}
+
+.gw-leader-row--mine {
+    background: linear-gradient(135deg, #f0f7ff 0%, #e0eefe 100%);
+    border-color: var(--gw-primary-light);
+}
+
+.gw-leader-rank {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--gw-muted);
+    text-align: center;
+}
+
+.gw-leader-row--top1 .gw-leader-rank { color: #d97706; font-size: 1.3rem; }
+.gw-leader-row--top2 .gw-leader-rank { color: #6b7280; font-size: 1.2rem; }
+.gw-leader-row--top3 .gw-leader-rank { color: #b45309; font-size: 1.15rem; }
+
+.gw-leader-name {
+    font-weight: 600;
+    color: var(--gw-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gw-leader-score {
+    background: var(--gw-primary-dark);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    min-width: 36px;
+    text-align: center;
+}
+
+.gw-end-actions {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+}
+
+/* شاشة الخطأ */
+.gw-error-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, var(--gw-danger) 0%, #b91c1c 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.2rem;
+}
+
+/* التحميل */
+.gw-screen--loading {
+    flex-direction: column;
+    gap: 1rem;
+    color: var(--gw-muted-light);
+}
+
+.gw-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: gw-spin 0.8s linear infinite;
+}
+
+@keyframes gw-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* استجابة الأجهزة الصغيرة */
+@media (max-width: 380px) {
+    .gw-card { padding: 1.5rem 1.15rem; }
+    .gw-title { font-size: 1.5rem; }
+    .gw-session-code { font-size: 1.6rem; letter-spacing: 0.35rem; }
+}

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>خمّن الكلمة — أديب</title>
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="apple-touch-icon" sizes="152x152" href="/favicon/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/favicon/manifest.json">
+    <meta name="theme-color" content="#3d8fd6">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="guess-word.css?v=20260510a">
+</head>
+<body>
+
+<div class="gw-app" id="gwApp">
+
+    <!-- شاشة الانضمام -->
+    <section class="gw-screen gw-screen--join" id="screenJoin" hidden>
+        <div class="gw-card gw-card--join">
+            <div class="gw-logo">
+                <i class="fa-solid fa-comments-question-dollar"></i>
+            </div>
+            <h1 class="gw-title">خمّن الكلمة</h1>
+            <p class="gw-session-code-label">كود الجلسة</p>
+            <div class="gw-session-code" id="joinSessionCode">······</div>
+
+            <form class="gw-form" id="joinForm">
+                <label class="gw-label" for="joinNameInput">
+                    <i class="fa-regular fa-user"></i>
+                    اكتب اسمك
+                </label>
+                <input
+                    class="gw-input"
+                    id="joinNameInput"
+                    type="text"
+                    maxlength="50"
+                    placeholder="اسمك الذي سيظهر للجميع"
+                    autocomplete="off"
+                    required
+                >
+                <button class="gw-btn gw-btn--primary" type="submit" id="joinSubmitBtn">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    انضمام
+                </button>
+                <div class="gw-error" id="joinError" hidden></div>
+            </form>
+        </div>
+    </section>
+
+    <!-- شاشة الانتظار -->
+    <section class="gw-screen gw-screen--waiting" id="screenWaiting" hidden>
+        <div class="gw-card">
+            <div class="gw-pulse">
+                <i class="fa-solid fa-hourglass-half"></i>
+            </div>
+            <h2 class="gw-h2" id="waitingTitle">في انتظار بدء الجولة</h2>
+            <p class="gw-muted" id="waitingSubtitle">سيبدأ الأدمن اللعبة قريباً</p>
+
+            <div class="gw-player-pill">
+                <i class="fa-solid fa-user"></i>
+                <span id="waitingPlayerName">—</span>
+                <span class="gw-score-badge" id="waitingScore">0</span>
+            </div>
+
+            <div class="gw-players-list-wrap">
+                <div class="gw-players-header">
+                    <span><i class="fa-solid fa-users"></i> المتسابقون</span>
+                    <span class="gw-players-count" id="waitingPlayersCount">0</span>
+                </div>
+                <div class="gw-players-list" id="waitingPlayersList"></div>
+            </div>
+
+            <!-- نتيجة الجولة السابقة -->
+            <div class="gw-last-winner" id="lastWinnerBox" hidden>
+                <i class="fa-solid fa-trophy"></i>
+                <div>
+                    <div class="gw-last-winner-label">فائز الجولة السابقة</div>
+                    <div class="gw-last-winner-name" id="lastWinnerName">—</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- شاشة اللعب -->
+    <section class="gw-screen gw-screen--play" id="screenPlay" hidden>
+        <div class="gw-play-header">
+            <div class="gw-player-info">
+                <i class="fa-solid fa-user"></i>
+                <span id="playPlayerName">—</span>
+            </div>
+            <div class="gw-timer" id="playTimer">
+                <i class="fa-regular fa-clock"></i>
+                <span id="playTimerValue">60</span>
+            </div>
+        </div>
+
+        <div class="gw-play-main">
+            <div class="gw-play-prompt">خمّن معنى:</div>
+            <div class="gw-word-box">
+                <div class="gw-word" id="playWord">—</div>
+            </div>
+
+            <form class="gw-answer-form" id="answerForm">
+                <textarea
+                    class="gw-textarea"
+                    id="answerInput"
+                    placeholder="اكتب معنى الكلمة هنا..."
+                    maxlength="500"
+                    rows="3"
+                    required
+                ></textarea>
+                <button class="gw-btn gw-btn--primary gw-btn--large" type="submit" id="answerSubmitBtn">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    إرسال الإجابة
+                </button>
+                <div class="gw-error" id="answerError" hidden></div>
+            </form>
+        </div>
+    </section>
+
+    <!-- شاشة "تم الإرسال" -->
+    <section class="gw-screen gw-screen--submitted" id="screenSubmitted" hidden>
+        <div class="gw-card">
+            <div class="gw-check-circle">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h2 class="gw-h2">تم إرسال إجابتك!</h2>
+            <p class="gw-muted">في انتظار باقي المتسابقين والأدمن لتحديد الفائز...</p>
+
+            <div class="gw-timer gw-timer--secondary" id="submittedTimer">
+                <i class="fa-regular fa-clock"></i>
+                <span id="submittedTimerValue">60</span>
+            </div>
+
+            <div class="gw-player-pill gw-player-pill--secondary">
+                <i class="fa-solid fa-user"></i>
+                <span id="submittedPlayerName">—</span>
+                <span class="gw-score-badge" id="submittedScore">0</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- شاشة النهاية -->
+    <section class="gw-screen gw-screen--end" id="screenEnd" hidden>
+        <div class="gw-card">
+            <div class="gw-end-icon">
+                <i class="fa-solid fa-flag-checkered"></i>
+            </div>
+            <h2 class="gw-h2">انتهت الجلسة</h2>
+            <p class="gw-muted">شكراً لمشاركتك! إليك النتائج النهائية:</p>
+
+            <div class="gw-leaderboard" id="leaderboardList"></div>
+
+            <div class="gw-end-actions">
+                <button class="gw-btn gw-btn--secondary" id="endHomeBtn" type="button">
+                    <i class="fa-solid fa-house"></i>
+                    الصفحة الرئيسية
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- شاشة الخطأ / المطرود -->
+    <section class="gw-screen gw-screen--error" id="screenError" hidden>
+        <div class="gw-card">
+            <div class="gw-error-icon">
+                <i class="fa-solid fa-circle-exclamation"></i>
+            </div>
+            <h2 class="gw-h2" id="errorTitle">حدث خطأ</h2>
+            <p class="gw-muted" id="errorMessage">—</p>
+            <button class="gw-btn gw-btn--secondary" id="errorRetryBtn" type="button">
+                <i class="fa-solid fa-rotate"></i>
+                المحاولة مرة أخرى
+            </button>
+        </div>
+    </section>
+
+    <!-- شاشة التحميل -->
+    <section class="gw-screen gw-screen--loading" id="screenLoading">
+        <div class="gw-spinner"></div>
+        <p class="gw-muted">جارٍ التحميل...</p>
+    </section>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../supabase-config.js"></script>
+<script src="guess-word.js?v=20260510a"></script>
+</body>
+</html>

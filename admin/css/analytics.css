@@ -1,0 +1,461 @@
+/* ============================================================================
+   admin/css/analytics.css
+   مكوّنات التحليلات والإحصائيات — Generic Analytics Components
+   يحتوي على مكوّنات قابلة لإعادة الاستخدام عبر أي تبويب يعرض بيانات تحليلية:
+     · شبكة/حاوية الرسوم البيانية (Chart.js)
+     · القوائم المرتّبة (Top-N) مع شريط تقدّم وشارة رتبة
+     · الخرائط الحرارية (Heatmap)
+     · حالات التحميل/الفراغ/الخطأ المشتركة
+   يعتمد على: design-tokens.css · unified-cards.css (.card / .card-header / .card-body)
+   ============================================================================ */
+
+
+/* ============================================================
+   § 1 · مجموعة الرسوم البيانية — Charts Group
+   تخطيط رأسي بسيط: كرت واحد في كل صفّ بعرض كامل (مثل باقي التبويبات).
+   ============================================================ */
+.charts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+
+/* ============================================================
+   § 2 · حاوية الـCanvas — Chart Container
+   يجب تحديد ارتفاع لأن Chart.js يستخدم
+   maintainAspectRatio: false ويعتمد على ارتفاع الأب.
+   ============================================================ */
+.chart-container {
+    position: relative;
+    width: 100%;
+    min-height: 320px;
+}
+
+.chart-container > canvas {
+    max-width: 100%;
+    height: 100% !important;
+}
+
+
+/* ============================================================
+   § 3 · قائمة العناصر المرتّبة — Top-Pages List
+   تُستخدم في: أكثر الصفحات مشاهدةً · صفحات الخروج · مصادر الإحالة.
+   البنية: .top-pages-list > .top-page-item × N
+   ============================================================ */
+.top-pages-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.top-page-item {
+    /* متغيرات اللون — يمكن تجاوزها لكل مركز (ذهب/فضة/برونز) */
+    --_tp-color-rgb: var(--color-accent-rgb);
+    --_tp-color: var(--color-primary-light);
+    --_tp-color-dark: var(--color-primary);
+
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background-color: #ffffff;
+    background-image: linear-gradient(
+        145deg,
+        rgba(var(--_tp-color-rgb), 0.07) 0%,
+        rgba(var(--_tp-color-rgb), 0.025) 45%,
+        transparent 100%
+    );
+    border: 1px solid rgba(var(--_tp-color-rgb), 0.16);
+    border-radius: var(--radius-lg);
+    box-shadow:
+        0 1px 4px  rgba(0, 0, 0, 0.04),
+        0 6px 18px rgba(var(--_tp-color-rgb), 0.08);
+    transition:
+        transform    0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow   0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.35s ease;
+}
+
+/* شريط جانبي عمودي (يمين — بداية القراءة RTL) */
+.top-page-item::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    right: 0;
+    width: 4px;
+    height: calc(100% - 28px);
+    background: linear-gradient(180deg, var(--_tp-color), var(--_tp-color-dark));
+    border-radius: 4px 0 0 4px;
+    opacity: 0.65;
+    transition: opacity 0.3s ease, height 0.3s ease, top 0.3s ease;
+}
+
+/* دائرة زخرفية ناعمة في الزاوية */
+.top-page-item::after {
+    content: '';
+    position: absolute;
+    bottom: -55px;
+    left: -55px;
+    width: 160px;
+    height: 160px;
+    background: radial-gradient(
+        circle,
+        rgba(var(--_tp-color-rgb), 0.09) 0%,
+        transparent 68%
+    );
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.7;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+.top-page-item:hover {
+    transform: translateY(-4px);
+    border-color: rgba(var(--_tp-color-rgb), 0.30);
+    box-shadow:
+        0 2px 8px   rgba(0, 0, 0, 0.06),
+        0 16px 38px rgba(var(--_tp-color-rgb), 0.15);
+}
+
+.top-page-item:hover::before {
+    opacity: 1;
+    top: 10px;
+    height: calc(100% - 20px);
+}
+
+.top-page-item:hover::after {
+    transform: scale(1.25);
+    opacity: 1;
+}
+
+/* — § 3.1 الترتيب (شارة الرقم) — */
+.top-page-rank {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--_tp-color) 0%, var(--_tp-color-dark) 100%);
+    color: #fff;
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    border-radius: var(--radius-full);
+    box-shadow: 0 4px 12px rgba(var(--_tp-color-rgb), 0.30);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-base);
+    font-family: var(--font-family-base);
+    line-height: 1;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.top-page-item:hover .top-page-rank {
+    transform: scale(1.08) rotate(-4deg);
+}
+
+/* تمييز أول 3 مراكز — تغيير لون الشارة فقط (البطاقة تبقى بلون الهوية) */
+.top-page-item:nth-child(1) .top-page-rank {
+    background: linear-gradient(135deg, #f5c542 0%, #d4a017 100%);
+    box-shadow: 0 4px 12px rgba(212, 160, 23, 0.35);
+}
+.top-page-item:nth-child(2) .top-page-rank {
+    background: linear-gradient(135deg, #d8d8d8 0%, #909090 100%);
+    box-shadow: 0 4px 12px rgba(144, 144, 144, 0.35);
+}
+.top-page-item:nth-child(3) .top-page-rank {
+    background: linear-gradient(135deg, #cd7f32 0%, #8b5a2b 100%);
+    box-shadow: 0 4px 12px rgba(139, 90, 43, 0.35);
+}
+
+/* مُعدِّل: يُلغي ترتيب ذهب/فضة/برونز — مفيد للقوائم غير المرتَّبة (إحصائيات متوازية) */
+.top-pages-list--unranked .top-page-item:nth-child(1) .top-page-rank,
+.top-pages-list--unranked .top-page-item:nth-child(2) .top-page-rank,
+.top-pages-list--unranked .top-page-item:nth-child(3) .top-page-rank {
+    background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary) 100%);
+    box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.30);
+}
+
+/* — § 3.2 معلومات الصفحة — */
+.top-page-info {
+    position: relative;
+    z-index: 1;
+    min-width: 0; /* يسمح بقصّ النصوص الطويلة */
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.top-page-title {
+    margin: 0;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.top-page-path {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    direction: rtl;
+    text-align: start;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-family-base);
+}
+
+/* — § 3.3 شريط التقدّم — */
+.top-page-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-top: var(--spacing-xs);
+}
+
+.top-page-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg,
+                                var(--color-primary-light) 0%,
+                                var(--color-primary) 100%);
+    border-radius: var(--radius-full);
+    transition: width var(--transition-slow);
+}
+
+/* — § 3.4 الإحصائيات الرقمية على الجانب — */
+.top-page-stats {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--spacing-xs);
+    text-align: end;
+    line-height: 1.2;
+}
+
+.top-page-visits {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.top-page-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    font-weight: var(--font-weight-medium);
+}
+
+.top-page-unique {
+    font-size: var(--font-size-xs);
+    color: var(--color-success-600);
+    font-weight: var(--font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ============================================================
+   § 4 · الخريطة الحرارية لساعات الذروة — Peak-Hours Heatmap
+   البنية: .heatmap-wrap > .heatmap-table > thead/tbody
+           cells: .heatmap-cell  (مع style="--intensity:0..1")
+   ============================================================ */
+.heatmap-wrap {
+    overflow-x: auto;
+    margin: 0;
+    padding-bottom: var(--spacing-xs);
+}
+
+.heatmap-table {
+    border-collapse: separate;
+    border-spacing: 2px;
+    width: 100%;
+    min-width: 720px;
+    font-family: var(--font-family-base);
+}
+
+/* — § 4.1 رؤوس الأعمدة (الساعات) ورؤوس الصفوف (الأيام) — */
+.heatmap-table thead th {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-muted);
+    padding: var(--spacing-xs) 0;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.heatmap-day {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    white-space: nowrap;
+    text-align: end;
+}
+
+/* — § 4.2 الخلية الديناميكية — */
+.heatmap-cell {
+    background: rgba(var(--color-accent-rgb),
+                     calc(0.06 + var(--intensity, 0) * 0.85));
+    color: var(--text-primary);
+    padding: var(--spacing-sm) var(--spacing-xs);
+    border-radius: var(--radius-xs);
+    text-align: center;
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+    min-width: 28px;
+    transition: transform var(--transition-fast);
+    cursor: default;
+}
+
+.heatmap-cell:hover {
+    transform: scale(1.15);
+    outline: 2px solid var(--color-primary-light);
+    position: relative;
+    z-index: 1;
+}
+
+/* خلية عالية الشدّة → نص أبيض لضمان التباين (يحدّدها JS عند intensity > 0.5) */
+.heatmap-cell--dark {
+    color: #fff;
+    font-weight: var(--font-weight-semibold);
+}
+
+/* — § 4.3 الشرح أسفل الخريطة — */
+.heatmap-legend {
+    margin-top: var(--spacing-md);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    align-items: center;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+}
+
+.heatmap-legend__scale {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.heatmap-legend__swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--border-light);
+}
+
+.heatmap-legend__swatch--low  { background: rgba(var(--color-accent-rgb), 0.10); }
+.heatmap-legend__swatch--mid  { background: rgba(var(--color-accent-rgb), 0.45); }
+.heatmap-legend__swatch--high { background: rgba(var(--color-accent-rgb), 0.91); }
+
+
+/* ============================================================
+   § 5 · حالات مساعدة — Loading / Empty / Error
+   مشتركة عبر كل قسم إحصائيات الزيارات.
+   ============================================================ */
+.loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xl);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+.loading-spinner::before {
+    content: '';
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-light);
+    border-top-color: var(--color-primary-light);
+    border-radius: var(--radius-full);
+    animation: visits-spin 0.7s linear infinite;
+}
+
+@keyframes visits-spin {
+    to { transform: rotate(360deg); }
+}
+
+.no-data {
+    text-align: center;
+    padding: var(--spacing-xl) var(--spacing-md);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    margin: 0;
+}
+
+.error-message {
+    text-align: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    color: var(--color-danger-700);
+    background: var(--color-danger-50);
+    border: 1px solid var(--color-danger-100);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+
+/* ============================================================
+   § 6 · الاستجابة — Responsive (RTL-aware)
+   ============================================================ */
+@media (max-width: 768px) {
+    .charts-grid {
+        gap: var(--spacing-md);
+    }
+
+    .chart-container {
+        min-height: 260px;
+    }
+
+    .top-page-item {
+        grid-template-columns: auto 1fr;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+    }
+
+    /* عمود الإحصائيات ينتقل إلى سطر جديد بعرض كامل */
+    .top-page-stats {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--spacing-sm);
+    }
+
+    .heatmap-cell {
+        min-width: 22px;
+        padding: var(--spacing-xs) 2px;
+    }
+}
+
+@media (max-width: 480px) {
+    .top-page-rank {
+        width: 2rem;
+        height: 2rem;
+        font-size: var(--font-size-sm);
+    }
+
+    .top-page-title { font-size: var(--font-size-sm); }
+    .top-page-visits { font-size: var(--font-size-base); }
+
+    .heatmap-table { min-width: 640px; }
+}

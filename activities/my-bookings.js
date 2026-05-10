@@ -331,11 +331,16 @@
                 </button>
             </div>`;
         }
-        if (b.attendance_status === 'no_show') {
+        // الغياب يُحسب من الزمن: نشاط منتهٍ + غير ملغى + لم يُسجَّل حضوره يدوياً
+        if (
+            b.attendance_status === 'registered'
+            && !a.is_cancelled
+            && bookingState(b) === 'past'
+        ) {
             return `
             <div class="booking__cert" style="margin-top:0.75rem;padding:0.6rem 0.85rem;background:#f1f5f9;border-radius:8px;color:#64748b;font-size:0.9rem;">
                 <i class="fa-solid fa-circle-info"></i>
-                لم يُسجَّل حضورك في هذا النشاط، لذا لا تتوفر شهادة.
+                لم يُحتسب حضورك في هذا النشاط، لذا لا تتوفر شهادة.
             </div>`;
         }
         return '';

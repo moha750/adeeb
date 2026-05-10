@@ -1,0 +1,468 @@
+/* =============================================
+   لعبة "خمّن الكلمة" — لوحة تحكم الأدمن
+   ============================================= */
+
+/* قائمة الجلسات */
+.gw-admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.gw-admin-stat-card {
+    background: var(--card-bg, #fff);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--border-color, #e5e7eb);
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.gw-admin-stat-card i {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #3d8fd6 0%, #274060 100%);
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.gw-admin-stat-card .label {
+    font-size: 0.85rem;
+    color: var(--muted, #6b7280);
+}
+
+.gw-admin-stat-card .value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-color, #1f2937);
+}
+
+/* لوحة الإنشاء */
+.gw-create-form {
+    background: var(--card-bg, #fff);
+    border-radius: 14px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color, #e5e7eb);
+    max-width: 720px;
+}
+
+.gw-words-counter {
+    margin-top: 0.5rem;
+    color: var(--muted, #6b7280);
+    font-size: 0.9rem;
+}
+
+.gw-words-counter strong {
+    color: var(--color-brand-700, #0b4fa7);
+}
+
+/* الشاشة المباشرة - هيكل ثلاثي الأعمدة */
+.gw-live-grid {
+    display: grid;
+    grid-template-columns: 360px 1fr 380px;
+    gap: 1.25rem;
+    align-items: stretch;
+}
+
+@media (max-width: 1280px) {
+    .gw-live-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .gw-live-qr-card { grid-column: 1 / -1; }
+}
+
+@media (max-width: 760px) {
+    .gw-live-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.gw-live-card {
+    background: var(--card-bg, #fff);
+    border-radius: 14px;
+    padding: 1.25rem;
+    border: 1px solid var(--border-color, #e5e7eb);
+    display: flex;
+    flex-direction: column;
+}
+
+.gw-live-card h3 {
+    font-size: 1.05rem;
+    margin: 0 0 0.85rem;
+    color: var(--text-color, #1f2937);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.gw-live-card h3 i { color: #3d8fd6; }
+
+/* بطاقة QR */
+.gw-live-qr-card {
+    text-align: center;
+}
+
+.gw-qr-wrapper {
+    display: flex;
+    justify-content: center;
+    margin: 0.5rem 0 1rem;
+    padding: 1rem;
+    background: #fff;
+    border-radius: 12px;
+    border: 2px dashed #d4e7fc;
+}
+
+.gw-qr-wrapper > div, .gw-qr-wrapper canvas, .gw-qr-wrapper img {
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+.gw-code-display {
+    font-family: 'Courier New', monospace;
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 0.5rem;
+    color: #274060;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e0eefe 100%);
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+}
+
+.gw-link-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+    margin-bottom: 0.5rem;
+}
+
+.gw-link-row input {
+    flex: 1;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--muted, #6b7280);
+    background: #fafbfd;
+}
+
+/* بطاقة الكلمة الحالية + التحكم */
+.gw-live-control-card {
+    text-align: center;
+}
+
+.gw-current-round {
+    color: var(--muted, #6b7280);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.gw-current-word {
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    font-weight: 800;
+    color: #274060;
+    padding: 1.5rem 1rem;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e0eefe 100%);
+    border-radius: 12px;
+    margin: 1rem 0;
+    word-break: break-word;
+}
+
+.gw-current-word.empty {
+    color: var(--muted, #6b7280);
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding: 2rem 1rem;
+    background: #f9fafb;
+    border: 2px dashed var(--border-color, #e5e7eb);
+}
+
+.gw-live-timer {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #274060;
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 999px;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.gw-live-timer.warn { background: #f59e0b; }
+.gw-live-timer.danger { background: #ef4444; animation: gw-pulse 0.6s ease-in-out infinite; }
+.gw-live-timer.ended {
+    background: #6b7280;
+}
+
+@keyframes gw-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.gw-control-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: auto;
+    padding-top: 1rem;
+}
+
+/* بطاقة الإجابات */
+.gw-live-answers-card {
+    max-height: 75vh;
+}
+
+.gw-answers-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0 -0.5rem;
+    padding: 0 0.5rem;
+}
+
+.gw-answer-row {
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    align-items: start;
+    gap: 0.6rem;
+    padding: 0.65rem 0.75rem;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid var(--border-color, #e5e7eb);
+    transition: all 0.2s;
+}
+
+.gw-answer-row:hover {
+    border-color: #3d8fd6;
+}
+
+.gw-answer-row.winner {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-color: #f59e0b;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+}
+
+.gw-answer-rank {
+    font-weight: 800;
+    color: var(--muted, #6b7280);
+    font-size: 1.05rem;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.gw-answer-row.rank-1 .gw-answer-rank { color: #d97706; font-size: 1.15rem; }
+.gw-answer-row.rank-2 .gw-answer-rank { color: #6b7280; }
+.gw-answer-row.rank-3 .gw-answer-rank { color: #b45309; }
+
+.gw-answer-body { min-width: 0; }
+.gw-answer-name {
+    font-weight: 700;
+    color: #274060;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.gw-answer-time {
+    font-size: 0.75rem;
+    color: var(--muted, #6b7280);
+    font-family: monospace;
+}
+
+.gw-answer-text {
+    color: #1f2937;
+    font-size: 0.95rem;
+    margin-top: 0.2rem;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.gw-pick-btn {
+    align-self: center;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+.gw-pick-btn:hover { background: #059669; }
+.gw-pick-btn.is-winner { background: #f59e0b; }
+.gw-pick-btn.is-winner:hover { background: #d97706; }
+
+.gw-no-answers {
+    text-align: center;
+    color: var(--muted, #6b7280);
+    padding: 2rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* قائمة المتسابقين الجانبية */
+.gw-players-card {
+    margin-top: 1.25rem;
+}
+
+.gw-players-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.gw-player-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #f3f4f6;
+    color: #1f2937;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    border: 1px solid var(--border-color, #e5e7eb);
+}
+
+.gw-player-tag .score {
+    background: #274060;
+    color: white;
+    padding: 0.05rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.gw-player-tag .kick-btn {
+    background: transparent;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0;
+}
+
+.gw-player-tag .kick-btn:hover { color: #b91c1c; }
+
+/* قائمة الجلسات السابقة */
+.gw-sessions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.gw-session-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.gw-session-card:hover {
+    border-color: #3d8fd6;
+    box-shadow: 0 4px 12px rgba(61, 143, 214, 0.1);
+}
+
+.gw-session-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.gw-session-card-title {
+    font-weight: 700;
+    color: #274060;
+    font-size: 1rem;
+    word-break: break-word;
+}
+
+.gw-session-status {
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.gw-session-status.waiting { background: #fef3c7; color: #92400e; }
+.gw-session-status.active { background: #d1fae5; color: #065f46; }
+.gw-session-status.finished { background: #e5e7eb; color: #374151; }
+
+.gw-session-card-meta {
+    display: flex;
+    gap: 1rem;
+    color: var(--muted, #6b7280);
+    font-size: 0.85rem;
+    flex-wrap: wrap;
+}
+
+.gw-session-card-meta i { margin-left: 0.3rem; color: #3d8fd6; }
+
+.gw-session-card-code {
+    font-family: monospace;
+    background: #f3f4f6;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-weight: 700;
+    letter-spacing: 0.1rem;
+    color: #274060;
+}
+
+.gw-session-card-actions {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.gw-session-card-actions .btn {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.65rem;
+}
+
+/* فارغ */
+.gw-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted, #6b7280);
+}
+
+.gw-empty i {
+    font-size: 3rem;
+    color: #d1d5db;
+    margin-bottom: 1rem;
+}
+
+.gw-empty h3 {
+    color: var(--text-color, #1f2937);
+    margin-bottom: 0.5rem;
+}

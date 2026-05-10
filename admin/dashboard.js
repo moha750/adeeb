@@ -292,7 +292,25 @@
                 section: 'birthdays-section'
             });
         }
-        
+
+        // ألعاب — للإدارة العليا فقط (role_level >= 8)
+        if ((currentUserRole.role_level ?? 0) >= 8) {
+            menuItems.push({
+                id: 'games',
+                icon: 'fa-gamepad',
+                label: 'ألعاب',
+                isDropdown: true,
+                subItems: [
+                    {
+                        id: 'guess-word',
+                        icon: 'fa-comments-question',
+                        label: 'خمّن الكلمة',
+                        section: 'guess-word-list-section'
+                    }
+                ]
+            });
+        }
+
         // إدارة العضوية — لمن يملك أي صلاحية عضوية
         let showMembershipMenu = hasAnyPermission(['manage_registration', 'approve_applications', 'view_applications', 'manage_interviews', 'view_membership_archives']);
         // للمناصب المقيّدة بلجنة/قسم — أخفِ التبويب إن لم توجد طلبات ضمن نطاقهم
@@ -1147,6 +1165,23 @@
                 break;
             case 'birthdays-section':
                 await loadBirthdaysSection();
+                break;
+            case 'guess-word-list-section':
+                if (window.GuessWordManager && !window.guessWordManager) {
+                    window.guessWordManager = new window.GuessWordManager();
+                }
+                if (window.guessWordManager) {
+                    await window.guessWordManager.init(currentUser);
+                }
+                break;
+            case 'guess-word-create-section':
+                if (window.guessWordManager) {
+                    window.guessWordManager.attachCreateListeners();
+                    window.guessWordManager.onShowCreate();
+                }
+                break;
+            case 'guess-word-live-section':
+                // الشاشة المباشرة تُفتح من خلال openLiveSession() مباشرة من المدير
                 break;
             case 'positions-section':
                 await initPositionsSection();
@@ -2680,6 +2715,20 @@
         return { year: y, month: m - 1, day: d };
     }
 
+    function getContrastColor(hex) {
+        // يُرجع لونًا داكنًا أو أبيض حسب سطوع الخلفية (YIQ luminance)
+        let h = String(hex || '').replace('#', '');
+        if (h.length === 3) h = h.split('').map(c => c + c).join('');
+        if (h.length === 4) h = h.slice(0, 3).split('').map(c => c + c).join('');
+        if (h.length === 8) h = h.slice(0, 6);
+        if (h.length !== 6) return '#ffffff';
+        const r = parseInt(h.slice(0, 2), 16);
+        const g = parseInt(h.slice(2, 4), 16);
+        const b = parseInt(h.slice(4, 6), 16);
+        const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+        return yiq >= 160 ? '#1e293b' : '#ffffff';
+    }
+
     function computeNextBirthday(bd, today) {
         // يعالج 29 فبراير: في السنوات غير الكبيسة يُحتفل به 28 فبراير
         const year = today.getFullYear();
@@ -2747,9 +2796,6 @@
                 .sort((a, b) => a.daysUntil - b.daysUntil);
 
             renderBirthdaysUI(enriched, today);
-            populatePrintMonthSelect(today);
-            bindBirthdaySearch();
-            bindBirthdayPrint();
 
         } catch (err) {
             console.error('Error loading birthdays:', err);
@@ -2763,25 +2809,24 @@
 
         if (members.length === 0) {
             container.innerHTML = `
-                <div class="birthdays-empty">
-                    <i class="fa-regular fa-calendar-xmark"></i>
+                <div class="text-center text-muted" style="padding:60px 20px;">
+                    <i class="fa-regular fa-calendar-xmark" style="font-size:3rem; opacity:0.4; display:block; margin-bottom:12px;"></i>
                     <p>لا يوجد أعضاء نشطون لديهم تاريخ ميلاد مسجَّل</p>
                 </div>`;
             return;
         }
 
         const todays   = members.filter(m => m.daysUntil === 0);
-        const urgents  = members.filter(m => m.daysUntil >= 0 && m.daysUntil <= 7);
+        const urgents  = members.filter(m => m.daysUntil >= 1 && m.daysUntil <= 7);
         const currentMonth = today.getMonth();
         const currentYear  = today.getFullYear();
-        // "باقي هذا الشهر" = ميلاد خلال الشهر الحالي من هذه السنة (وليس السنة القادمة)
         const thisMonth = members.filter(m =>
             m.daysUntil > 7
             && m.monthIndex === currentMonth
             && m.nextDate.getFullYear() === currentYear
         );
+        const thisMonthAll = members.filter(m => m.monthIndex === currentMonth).length;
 
-        // بقية الأشهر مجمَّعة
         const byMonth = {};
         members.forEach(m => {
             if (m.daysUntil >= 0 && m.daysUntil <= 7) return;
@@ -2790,88 +2835,152 @@
             byMonth[m.monthIndex].push(m);
         });
 
-        let html = '';
+        let html = `
+            <div class="stats-grid mb-3">
+                <div class="stat-card" style="--stat-color: #10b981; --stat-color-rgb: var(--color-success-rgb); --stat-color-dark: var(--color-success-600);">
+                    <div class="stat-card-wrapper">
+                        <div class="stat-icon"><i class="fa-solid fa-cake-candles"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value">${todays.length}</div>
+                            <div class="stat-label">ميلاد اليوم</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card" style="--stat-color: #f59e0b; --stat-color-rgb: var(--color-warning-rgb); --stat-color-dark: var(--color-warning-600);">
+                    <div class="stat-card-wrapper">
+                        <div class="stat-icon"><i class="fa-solid fa-bolt"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value">${urgents.length}</div>
+                            <div class="stat-label">مواليد خلال 7 أيام القادمة</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card" style="--stat-color: #3d8fd6; --stat-color-rgb: var(--color-accent-rgb); --stat-color-dark: var(--color-primary);">
+                    <div class="stat-card-wrapper">
+                        <div class="stat-icon"><i class="fa-solid fa-calendar-day"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value">${thisMonthAll}</div>
+                            <div class="stat-label">مواليد شهر ${BIRTHDAY_MONTHS_AR[currentMonth]}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
 
-        // Hero: ميلاد اليوم
         if (todays.length > 0) {
-            const names = todays.map(m => escapeHtml(m.full_name)).join('، ');
-            const verb  = todays.length === 1 ? 'يحتفل' : 'يحتفلون';
             html += `
-                <div class="birthday-today-hero">
-                    <i class="fa-solid fa-cake-candles"></i>
-                    <span>اليوم: ${names} ${verb} بميلاده${todays.length > 1 ? 'م' : ''}! 🎉</span>
+                <div class="card card--success mb-3">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-cake-candles"></i> ميلاد اليوم🎉</h3>
+                        <span class="uc-badge uc-badge--success">${todays.length} عضو</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="uc-grid uc-grid--narrow">
+                            ${todays.map(renderBirthdayCard).join('')}
+                        </div>
+                    </div>
                 </div>`;
         }
 
-        // خلال 7 أيام (يشمل اليوم)
         if (urgents.length > 0) {
-            html += renderBirthdayGroup(
-                `<i class="fa-solid fa-bolt"></i> خلال 7 أيام (${urgents.length})`,
-                urgents
-            );
+            html += `
+                <div class="card card--warning mb-3">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-bolt"></i> مواليد خلال 7 أيام القادمة</h3>
+                        <span class="uc-badge uc-badge--warning">${urgents.length} عضو</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="uc-grid uc-grid--narrow">
+                            ${urgents.map(renderBirthdayCard).join('')}
+                        </div>
+                    </div>
+                </div>`;
         }
 
-        // هذا الشهر
         if (thisMonth.length > 0) {
-            html += renderBirthdayGroup(
-                `<i class="fa-solid fa-calendar-day"></i> باقي هذا الشهر — ${BIRTHDAY_MONTHS_AR[currentMonth]} (${thisMonth.length})`,
-                thisMonth
-            );
+            html += `
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-calendar-day"></i> مواليد شهر ${BIRTHDAY_MONTHS_AR[currentMonth]}</h3>
+                        <span class="uc-badge uc-badge--secondary">${thisMonth.length} عضو</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="uc-grid uc-grid--narrow">
+                            ${thisMonth.map(renderBirthdayCard).join('')}
+                        </div>
+                    </div>
+                </div>`;
         }
 
-        // الأشهر القادمة — مطويّة
         const upcomingMonths = Object.keys(byMonth)
             .map(Number)
             .sort((a, b) => {
-                // الشهر الحالي (نفس شهر الميلاد، لكن ميلاد هذه السنة مضى) يُعامَل كالأبعد
                 const diffA = ((a - currentMonth + 12) % 12) || 12;
                 const diffB = ((b - currentMonth + 12) % 12) || 12;
                 return diffA - diffB;
             });
 
         if (upcomingMonths.length > 0) {
-            html += `<h3 class="birthday-group-title"><i class="fa-solid fa-calendar-days"></i> الأشهر القادمة</h3>`;
-            upcomingMonths.forEach(mIdx => {
+            const monthsHtml = upcomingMonths.map(mIdx => {
                 const list = byMonth[mIdx];
-                html += `
-                    <div class="birthday-month-accordion" data-month="${mIdx}">
-                        <div class="birthday-month-accordion__header">
-                            <span><i class="fa-solid fa-chevron-left"></i> ${BIRTHDAY_MONTHS_AR[mIdx]}</span>
-                            <span class="birthday-month-accordion__count">${list.length} عضو</span>
-                        </div>
-                        <div class="birthday-month-accordion__body">
-                            <div class="birthday-cards-grid">
+                return `
+                    <details class="collapse-panel" data-month-accordion="${mIdx}" data-collapse-group="upcoming-months">
+                        <summary class="collapse-panel__head">
+                            <div class="collapse-panel__head-content">
+                                <i class="fa-solid fa-calendar"></i>
+                                <span>شهر ${BIRTHDAY_MONTHS_AR[mIdx]}</span>
+                                <span class="uc-badge uc-badge--secondary">${list.length} عضو</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down collapse-panel__chevron"></i>
+                        </summary>
+                        <div class="collapse-panel__body">
+                            <div class="uc-grid uc-grid--narrow">
                                 ${list.map(renderBirthdayCard).join('')}
                             </div>
                         </div>
-                    </div>`;
-            });
+                    </details>`;
+            }).join('');
+
+            const totalUpcoming = upcomingMonths.reduce((sum, mIdx) => sum + byMonth[mIdx].length, 0);
+
+            html += `
+                <div class="mt-4" data-collapse-scope>
+                    <div class="card-header card-header--standalone">
+                        <h3><i class="fa-solid fa-calendar-days"></i> الأشهر القادمة</h3>
+                        <span class="uc-badge uc-badge--secondary">${totalUpcoming} عضو في ${upcomingMonths.length} ${upcomingMonths.length === 1 ? 'شهر' : 'أشهر'}</span>
+                    </div>
+                    ${monthsHtml}
+                </div>`;
         }
 
         container.innerHTML = html;
 
-        // Accordion toggle
-        container.querySelectorAll('.birthday-month-accordion__header').forEach(h => {
-            h.addEventListener('click', () => {
-                h.parentElement.classList.toggle('is-open');
+        if (window.BirthdayCardGenerator && !container._bcgWired) {
+            container.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-bcg-action="open"]');
+                if (!btn) return;
+                window.BirthdayCardGenerator.openModal({
+                    full_name: btn.dataset.name || '',
+                    favorite_color: btn.dataset.color || '',
+                    avatar_url: btn.dataset.avatar || '',
+                    variant: btn.dataset.variant || '',
+                });
             });
-        });
+            container._bcgWired = true;
+        }
+
+        if (window.CollapsePanel) window.CollapsePanel.init(container);
     }
 
-    function renderBirthdayGroup(title, members) {
-        return `
-            <h3 class="birthday-group-title">${title}</h3>
-            <div class="birthday-cards-grid">
-                ${members.map(renderBirthdayCard).join('')}
-            </div>`;
-    }
 
     function renderBirthdayCard(m) {
-        const stripClass = m.daysUntil <= 3
-            ? 'birthday-card__strip--urgent'
+        const variantSuffix = m.daysUntil === 0
+            ? 'success'
             : m.daysUntil <= 7
-                ? 'birthday-card__strip--soon'
-                : 'birthday-card__strip--later';
+                ? 'warning'
+                : 'primary';
+        const variant = `uc-card--${variantSuffix}`;
+        const btnVariant = `btn-${variantSuffix}`;
 
         const dayLabel = `${m.dayOfMonth} ${BIRTHDAY_MONTHS_AR[m.monthIndex]}`;
 
@@ -2882,115 +2991,66 @@
                 : `باقي ${m.daysUntil} يوماً`;
 
         const favColor = /^#[0-9a-fA-F]{3,8}$/.test(m.favorite_color || '') ? m.favorite_color : null;
-        const avatarRingStyle = favColor
-            ? ` style="box-shadow: 0 0 0 3px ${favColor}, 0 2px 6px rgba(0,0,0,0.08);"`
-            : '';
 
-        const avatar = m.avatar_url
-            ? `<img class="birthday-card__avatar" src="${escapeHtml(m.avatar_url)}" alt="${escapeHtml(m.full_name)}"${avatarRingStyle} />`
-            : `<div class="birthday-card__avatar birthday-card__avatar--placeholder"${avatarRingStyle}><i class="fa-solid fa-user"></i></div>`;
+        const avatarInner = m.avatar_url
+            ? `<img src="${escapeHtml(m.avatar_url)}" alt="${escapeHtml(m.full_name)}" />`
+            : `<i class="fa-solid fa-user"></i>`;
 
-        const favColorChip = favColor
-            ? `<button type="button" class="birthday-card__fav-color" title="نسخ اللون المفضل: ${favColor}"
+        const favColorRow = favColor
+            ? `<div class="uc-card__info-item" title="انقر لنسخ ${favColor}"
+                    style="cursor:pointer;"
                     onclick="navigator.clipboard.writeText('${favColor}').then(() => { if (window.Toast) Toast.success('تم نسخ اللون ' + '${favColor}', 'نسخ'); });">
-                    <span class="birthday-card__fav-color-swatch" style="background:${favColor};"></span>
-                    <span class="birthday-card__fav-color-value">${favColor}</span>
-                    <i class="fa-regular fa-copy"></i>
-               </button>`
-            : '';
+                    <div class="uc-card__info-icon" style="background:${favColor}; color:${getContrastColor(favColor)}; box-shadow:0 3px 8px ${favColor}40; border:1px solid rgba(0,0,0,0.08);">
+                        <i class="fa-solid fa-palette"></i>
+                    </div>
+                    <div class="uc-card__info-content">
+                        <span class="uc-card__info-label">اللون المفضل</span>
+                        <span class="uc-card__info-value" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; text-transform:uppercase;">${favColor}</span>
+                    </div>
+               </div>`
+            : `<div class="uc-card__info-item">
+                    <div class="uc-card__info-icon" style="background:#cbd5e1; box-shadow:none;">
+                        <i class="fa-solid fa-palette"></i>
+                    </div>
+                    <div class="uc-card__info-content">
+                        <span class="uc-card__info-label">اللون المفضل</span>
+                        <span class="uc-card__info-value uc-card__info-value--empty">لم يُحدِّد لونًا مفضّلًا</span>
+                    </div>
+               </div>`;
 
         return `
-            <div class="birthday-card" data-month="${m.monthIndex}" data-name="${escapeHtml(m.full_name).toLowerCase()}">
-                <div class="birthday-card__strip ${stripClass}">
-                    <i class="fa-solid fa-cake-candles"></i> ${dayLabel}
+            <div class="uc-card ${variant}" data-month="${m.monthIndex}" data-user-id="${escapeHtml(m.user_id)}" data-name="${escapeHtml(m.full_name).toLowerCase()}">
+                <div class="uc-card__header">
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__icon">
+                            ${avatarInner}
+                        </div>
+                        <div class="uc-card__header-info">
+                            <h3 class="uc-card__title uc-card__title--wrap">${escapeHtml(m.full_name)}</h3>
+                            <span class="uc-card__badge"><i class="fa-solid fa-cake-candles"></i> ${countdown}</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="birthday-card__body">
-                    ${avatar}
-                    <div class="birthday-card__name">${escapeHtml(m.full_name)}</div>
-                    <div class="birthday-card__countdown">${countdown}</div>
-                    ${favColorChip}
+                <div class="uc-card__body">
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-calendar-day"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">تاريخ الميلاد</span>
+                            <span class="uc-card__info-value">${dayLabel}</span>
+                        </div>
+                    </div>
+                    ${favColorRow}
+                    <button type="button" class="btn ${btnVariant} mt-2"
+                            style="width:100%;"
+                            data-bcg-action="open"
+                            data-name="${escapeHtml(m.full_name)}"
+                            data-color="${favColor || ''}"
+                            data-avatar="${escapeHtml(m.avatar_url || '')}"
+                            data-variant="${variantSuffix}">
+                        <i class="fa-solid fa-image"></i> توليد بطاقة الميلاد
+                    </button>
                 </div>
             </div>`;
-    }
-
-    function populatePrintMonthSelect(today) {
-        const sel = document.getElementById('birthdayPrintMonth');
-        if (!sel) return;
-        const currentMonth = today.getMonth();
-        sel.innerHTML = BIRTHDAY_MONTHS_AR
-            .map((n, i) => `<option value="${i}" ${i === currentMonth ? 'selected' : ''}>${n}</option>`)
-            .join('');
-    }
-
-    function bindBirthdaySearch() {
-        const input = document.getElementById('birthdaySearchInput');
-        const container = document.getElementById('birthdaysContainer');
-        if (!input || !container || input._bound) return;
-        input._bound = true;
-
-        input.addEventListener('input', () => {
-            const q = input.value.trim().toLowerCase();
-            const cards = container.querySelectorAll('.birthday-card');
-            cards.forEach(card => {
-                const name = card.getAttribute('data-name') || '';
-                card.style.display = (!q || name.includes(q)) ? '' : 'none';
-            });
-
-            // افتح accordions التي تحوي نتائج مطابقة
-            container.querySelectorAll('.birthday-month-accordion').forEach(acc => {
-                if (!q) {
-                    acc.classList.remove('is-open');
-                    return;
-                }
-                const hasMatch = Array.from(acc.querySelectorAll('.birthday-card'))
-                    .some(c => c.style.display !== 'none');
-                acc.classList.toggle('is-open', hasMatch);
-            });
-        });
-    }
-
-    function bindBirthdayPrint() {
-        const btn = document.getElementById('birthdayPrintBtn');
-        const sel = document.getElementById('birthdayPrintMonth');
-        if (!btn || !sel || btn._bound) return;
-        btn._bound = true;
-
-        btn.addEventListener('click', () => {
-            const monthIdx = Number(sel.value);
-            const monthName = BIRTHDAY_MONTHS_AR[monthIdx];
-
-            const matching = Array.from(document.querySelectorAll('#birthdaysContainer .birthday-card'))
-                .filter(c => c.getAttribute('data-month') === String(monthIdx));
-
-            if (matching.length === 0) {
-                alert(`لا توجد أعياد ميلاد مسجَّلة في شهر ${monthName}`);
-                return;
-            }
-
-            const printView = document.createElement('div');
-            printView.id = 'birthdayPrintView';
-            printView.innerHTML = `
-                <div class="birthday-print-header">
-                    <h2>قائمة أعياد الميلاد — ${escapeHtml(monthName)}</h2>
-                    <p>${matching.length} عضو</p>
-                </div>
-                <div class="birthday-cards-grid"></div>
-            `;
-            const grid = printView.querySelector('.birthday-cards-grid');
-            matching.forEach(c => grid.appendChild(c.cloneNode(true)));
-            document.body.appendChild(printView);
-
-            document.body.classList.add('printing-birthdays');
-
-            const cleanup = () => {
-                document.body.classList.remove('printing-birthdays');
-                printView.remove();
-                window.removeEventListener('afterprint', cleanup);
-            };
-            window.addEventListener('afterprint', cleanup);
-
-            window.print();
-        });
     }
 
     function escapeHtml(str) {

@@ -729,21 +729,21 @@ class SiteVisitsManager {
 
             const cellHtml = (count) => {
                 const intensity = count / max;
-                const alpha = count === 0 ? 0.04 : (0.15 + intensity * 0.85);
-                return `<td title="${count} مشاهدة" style="background: rgba(61, 143, 214, ${alpha.toFixed(2)}); padding: 6px; border: 1px solid rgba(0,0,0,0.05); text-align:center; font-size:0.75rem; color:${intensity > 0.5 ? '#fff' : '#333'};">${count || ''}</td>`;
+                const darkClass = intensity > 0.5 ? ' heatmap-cell--dark' : '';
+                return `<td class="heatmap-cell${darkClass}" style="--intensity:${intensity.toFixed(3)}" title="${count} مشاهدة">${count || ''}</td>`;
             };
 
-            const headers = Array.from({ length: 24 }, (_, h) => `<th style="font-size:0.7rem; padding:4px; font-weight:600;">${h}</th>`).join('');
+            const headers = Array.from({ length: 24 }, (_, h) => `<th>${h}</th>`).join('');
             const rows = matrix.map((row, d) => `
                 <tr>
-                    <td style="font-size:0.75rem; padding:4px 8px; font-weight:600; white-space:nowrap;">${dayNames[d]}</td>
+                    <td class="heatmap-day">${dayNames[d]}</td>
                     ${row.map(cellHtml).join('')}
                 </tr>
             `).join('');
 
             container.innerHTML = `
-                <div style="overflow-x:auto;">
-                    <table style="border-collapse: collapse; width: 100%; min-width: 700px;">
+                <div class="heatmap-wrap">
+                    <table class="heatmap-table">
                         <thead>
                             <tr>
                                 <th></th>
@@ -752,7 +752,16 @@ class SiteVisitsManager {
                         </thead>
                         <tbody>${rows}</tbody>
                     </table>
-                    <div style="font-size:0.75rem; color:#6c757d; margin-top:8px;">الساعات بتوقيت UTC. كلما زاد لون الخلية كانت الساعة أكثر ازدحاماً.</div>
+                    <div class="heatmap-legend">
+                        <span>الساعات بتوقيت UTC. كلما زاد لون الخلية كانت الساعة أكثر ازدحاماً.</span>
+                        <span class="heatmap-legend__scale">
+                            <span>منخفض</span>
+                            <span class="heatmap-legend__swatch heatmap-legend__swatch--low"></span>
+                            <span class="heatmap-legend__swatch heatmap-legend__swatch--mid"></span>
+                            <span class="heatmap-legend__swatch heatmap-legend__swatch--high"></span>
+                            <span>مرتفع</span>
+                        </span>
+                    </div>
                 </div>
             `;
         } catch (error) {
