@@ -233,16 +233,50 @@ class GuessWordManager {
             shuffleBtn.addEventListener('click', () => this._shuffleWords());
         }
 
-        const uploadBtn = document.getElementById('gwUploadExcelBtn');
         const fileInput = document.getElementById('gwExcelFileInput');
-        if (uploadBtn && fileInput && !uploadBtn._gwAttached) {
-            uploadBtn._gwAttached = true;
-            uploadBtn.addEventListener('click', () => fileInput.click());
+        const dropzone = document.getElementById('gwExcelDropzone');
+        if (fileInput && dropzone && !fileInput._gwAttached) {
+            fileInput._gwAttached = true;
+
             fileInput.addEventListener('change', async (e) => {
                 const file = e.target.files?.[0];
                 if (file) await this._importWordsFromExcel(file);
-                fileInput.value = ''; // reset لإتاحة رفع نفس الملف لاحقاً
+                fileInput.value = '';
             });
+
+            // drag & drop — النظام يستخدم class "drag-over" (المعتمد في inputs-system.css)
+            const isExcelFile = (file) => /\.xlsx?$/i.test(file?.name || '');
+
+            const onDragEnter = (e) => {
+                e.preventDefault();
+                if (e.dataTransfer?.types?.includes('Files')) {
+                    dropzone.classList.add('drag-over');
+                }
+            };
+            const onDragOver = (e) => {
+                e.preventDefault();
+                if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+            };
+            const onDragLeave = (e) => {
+                if (e.relatedTarget && dropzone.contains(e.relatedTarget)) return;
+                dropzone.classList.remove('drag-over');
+            };
+            const onDrop = async (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('drag-over');
+                const file = e.dataTransfer?.files?.[0];
+                if (!file) return;
+                if (!isExcelFile(file)) {
+                    this.notifyError('الملف يجب أن يكون Excel (.xlsx أو .xls)');
+                    return;
+                }
+                await this._importWordsFromExcel(file);
+            };
+
+            dropzone.addEventListener('dragenter', onDragEnter);
+            dropzone.addEventListener('dragover', onDragOver);
+            dropzone.addEventListener('dragleave', onDragLeave);
+            dropzone.addEventListener('drop', onDrop);
         }
 
         const cancelBtn = document.getElementById('gwCancelCreateBtn');

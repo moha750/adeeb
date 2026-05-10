@@ -4372,13 +4372,9 @@
                                         <span class="required-dot">*</span>
                                     </label>
                                     <div class="gw-words-actions">
-                                        <button type="button" class="btn btn-success btn-outline btn-sm" id="gwUploadExcelBtn" title="استيراد كلمات من ملف Excel">
-                                            <i class="fa-solid fa-file-excel"></i> رفع Excel
-                                        </button>
                                         <button type="button" class="btn btn-slate btn-outline btn-sm" id="gwShuffleWordsBtn" title="خلط ترتيب الكلمات">
                                             <i class="fa-solid fa-shuffle"></i> خلط الترتيب
                                         </button>
-                                        <input type="file" id="gwExcelFileInput" accept=".xlsx,.xls" hidden />
                                     </div>
                                 </div>
                                 <textarea class="form-input" id="gwCreateWords" rows="10" required
@@ -4388,6 +4384,20 @@
                                     <span id="gwWordsCounterText">أضف كلمات لمعرفة الإحصائية</span>
                                 </span>
                                 <div class="chip-list" id="gwWordsPreview" hidden></div>
+
+                                <!-- استيراد من Excel: نظام .form-file + .form-dropzone المعتمد -->
+                                <label class="form-file" id="gwExcelDropzoneWrap" style="margin-top:0.85rem;">
+                                    <input type="file" id="gwExcelFileInput" accept=".xlsx,.xls">
+                                    <div class="form-dropzone form-dropzone-compact" id="gwExcelDropzone">
+                                        <div class="form-dropzone-icon">
+                                            <i class="fa-solid fa-file-excel"></i>
+                                        </div>
+                                        <div>
+                                            <div class="form-dropzone-title">استيراد من ملف Excel</div>
+                                            <div class="form-dropzone-hint">انقر للاختيار أو اسحب الملف هنا</div>
+                                        </div>
+                                    </div>
+                                </label>
                             </div>
                         </div>
                     </div>
