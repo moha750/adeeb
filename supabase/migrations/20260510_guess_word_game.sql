@@ -607,21 +607,24 @@ CREATE POLICY "gw_sessions_select" ON guess_word_sessions
 -- ---------- guess_word_words ----------
 -- المتسابق anon يرى فقط الكلمة الحالية للجلسة (لمنع رؤية الكلمات القادمة)
 -- الإدارة ترى كل شيء
+-- ملاحظة: نستخدم EXISTS inline بدلاً من gw_is_admin() لأن الأخيرة محظورة على
+-- authenticated، وفشلها داخل سياسة يُسقط السياسة بأكملها للمستخدم الإداري
 CREATE POLICY "gw_words_select" ON guess_word_words
     FOR SELECT TO anon, authenticated
     USING (
-        -- الإدارة
-        gw_is_admin(auth.uid())
-        OR
-        -- المتسابق: فقط الكلمة الحالية للجلسة
         EXISTS (
+            SELECT 1 FROM user_roles ur
+            JOIN roles r ON ur.role_id = r.id
+            WHERE ur.user_id = auth.uid()
+              AND ur.is_active = true
+              AND r.role_level >= 8
+        )
+        OR EXISTS (
             SELECT 1 FROM guess_word_sessions s
             WHERE s.id = guess_word_words.session_id
               AND s.current_word_id = guess_word_words.id
         )
-        OR
-        -- بعد انتهاء الجلسة: الجميع يرى الكل (للأرشيف)
-        EXISTS (
+        OR EXISTS (
             SELECT 1 FROM guess_word_sessions s
             WHERE s.id = guess_word_words.session_id
               AND s.status = 'finished'
@@ -629,17 +632,30 @@ CREATE POLICY "gw_words_select" ON guess_word_words
     );
 
 -- ---------- guess_word_players ----------
--- الجميع يرى المتسابقين في جلستهم (لشاشة الانتظار / لوحة المتصدّرين)
 CREATE POLICY "gw_players_select" ON guess_word_players
     FOR SELECT TO anon, authenticated
-    USING (is_kicked = false OR gw_is_admin(auth.uid()));
+    USING (
+        is_kicked = false
+        OR EXISTS (
+            SELECT 1 FROM user_roles ur
+            JOIN roles r ON ur.role_id = r.id
+            WHERE ur.user_id = auth.uid()
+              AND ur.is_active = true
+              AND r.role_level >= 8
+        )
+    );
 
 -- ---------- guess_word_answers ----------
--- الإدارة فقط ترى الإجابات حية (للترتيب). بعد انتهاء الجلسة الكل يقرؤها (أرشيف)
 CREATE POLICY "gw_answers_select" ON guess_word_answers
     FOR SELECT TO anon, authenticated
     USING (
-        gw_is_admin(auth.uid())
+        EXISTS (
+            SELECT 1 FROM user_roles ur
+            JOIN roles r ON ur.role_id = r.id
+            WHERE ur.user_id = auth.uid()
+              AND ur.is_active = true
+              AND r.role_level >= 8
+        )
         OR EXISTS (
             SELECT 1 FROM guess_word_words w
             JOIN guess_word_sessions s ON s.id = w.session_id

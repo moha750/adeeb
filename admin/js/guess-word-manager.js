@@ -34,40 +34,14 @@ class GuessWordManager {
     // ==========================================
     async loadList() {
         try {
-            const { data, error } = await this.sb
-                .from('guess_word_sessions')
-                .select('id, code, title, status, time_per_word, created_at, started_at, finished_at')
-                .order('created_at', { ascending: false })
-                .limit(100);
+            const { data, error } = await this.sb.rpc('gw_list_admin_sessions');
             if (error) throw error;
             this.sessions = data || [];
-            await this.enrichSessionsWithCounts();
             this.renderList();
         } catch (err) {
             console.error('[gw] loadList error:', err);
             this.notifyError('تعذّر تحميل الجلسات');
         }
-    }
-
-    async enrichSessionsWithCounts() {
-        if (this.sessions.length === 0) return;
-        const ids = this.sessions.map(s => s.id);
-        const [playersRes, wordsRes] = await Promise.all([
-            this.sb.from('guess_word_players').select('session_id').in('session_id', ids).eq('is_kicked', false),
-            this.sb.from('guess_word_words').select('session_id').in('session_id', ids)
-        ]);
-        const playersBySession = {};
-        const wordsBySession = {};
-        (playersRes.data || []).forEach(r => {
-            playersBySession[r.session_id] = (playersBySession[r.session_id] || 0) + 1;
-        });
-        (wordsRes.data || []).forEach(r => {
-            wordsBySession[r.session_id] = (wordsBySession[r.session_id] || 0) + 1;
-        });
-        this.sessions.forEach(s => {
-            s.players_count = playersBySession[s.id] || 0;
-            s.words_count = wordsBySession[s.id] || 0;
-        });
     }
 
     renderList() {
@@ -318,41 +292,27 @@ class GuessWordManager {
     async loadLiveData() {
         if (!this.activeSessionId) return;
         try {
-            const [sessionRes, wordsRes, playersRes] = await Promise.all([
-                this.sb.from('guess_word_sessions').select('*').eq('id', this.activeSessionId).single(),
-                this.sb.from('guess_word_words').select('*').eq('session_id', this.activeSessionId).order('position'),
-                this.sb.from('guess_word_players').select('*').eq('session_id', this.activeSessionId).order('joined_at')
-            ]);
-
-            if (sessionRes.error) throw sessionRes.error;
-            this.activeSession = sessionRes.data;
-            this.activeWords = wordsRes.data || [];
-            this.activePlayers = playersRes.data || [];
-
-            await this._loadAnswersForCurrentWord();
+            const { data, error } = await this.sb.rpc('gw_get_admin_session_data', {
+                p_session_id: this.activeSessionId
+            });
+            if (error) throw error;
+            if (!data) {
+                this.notifyError('الجلسة غير موجودة');
+                return;
+            }
+            this.activeSession = data.session;
+            this.activeWords = data.words || [];
+            this.activePlayers = data.players || [];
+            this.activeAnswers = data.answers || [];
         } catch (err) {
             console.error('[gw] loadLiveData error:', err);
-            this.notifyError('تعذّر تحميل بيانات الجلسة');
+            this.notifyError(this._parseError(err) || 'تعذّر تحميل بيانات الجلسة');
         }
     }
 
     async _loadAnswersForCurrentWord() {
-        const currentWordId = this.activeSession?.current_word_id;
-        if (!currentWordId) {
-            this.activeAnswers = [];
-            return;
-        }
-        const { data, error } = await this.sb
-            .from('guess_word_answers')
-            .select('*')
-            .eq('word_id', currentWordId)
-            .order('response_ms', { ascending: true });
-        if (error) {
-            console.error('[gw] loadAnswers error:', error);
-            this.activeAnswers = [];
-            return;
-        }
-        this.activeAnswers = data || [];
+        // الآن جزء من loadLiveData؛ نحتفظ بالاسم لاستدعاءات Realtime
+        await this.loadLiveData();
     }
 
     _attachLiveListeners() {
@@ -561,18 +521,30 @@ class GuessWordManager {
         const url = this._getJoinUrl();
 
         wrapper.innerHTML = '';
-        if (typeof QRCode === 'undefined') {
-            wrapper.innerHTML = '<div class="gw-no-answers">QR library not loaded</div>';
+
+        // window.QRCode محمّلة من qrcode@1.5.4 (API: toCanvas / toDataURL)
+        if (window.QRCode && typeof window.QRCode.toCanvas === 'function') {
+            const canvas = document.createElement('canvas');
+            wrapper.appendChild(canvas);
+            window.QRCode.toCanvas(canvas, url, {
+                width: 240,
+                margin: 1,
+                color: { dark: '#274060', light: '#ffffff' }
+            }, (err) => {
+                if (err) {
+                    console.error('[gw] QR render error:', err);
+                    this._renderQRFallback(wrapper, url);
+                }
+            });
             return;
         }
-        this.qrInstance = new QRCode(wrapper, {
-            text: url,
-            width: 240,
-            height: 240,
-            colorDark: '#274060',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.M
-        });
+
+        // fallback إن لم تُحمَّل المكتبة
+        this._renderQRFallback(wrapper, url);
+    }
+
+    _renderQRFallback(wrapper, url) {
+        wrapper.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(url)}" alt="QR" width="240" height="240">`;
     }
 
     _getJoinUrl() {
