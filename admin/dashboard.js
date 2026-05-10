@@ -293,17 +293,17 @@
             });
         }
 
-        // ألعاب — للإدارة العليا فقط (role_level >= 8)
+        // ألعاب أدِيب — للإدارة العليا فقط (role_level >= 8)
         if ((currentUserRole.role_level ?? 0) >= 8) {
             menuItems.push({
                 id: 'games',
                 icon: 'fa-gamepad',
-                label: 'ألعاب',
+                label: 'ألعاب أدِيب',
                 isDropdown: true,
                 subItems: [
                     {
                         id: 'guess-word',
-                        icon: 'fa-comments-question',
+                        icon: 'fa-spell-check',
                         label: 'خمّن الكلمة',
                         section: 'guess-word-list-section'
                     }

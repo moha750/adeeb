@@ -282,13 +282,52 @@
     transform:    scale(1.08);
 }
 
-/* — Hint */
+/* — Hint (نفس تنسيق .modal-body small) */
 .form-hint {
-    font-size:    var(--fi-fs-xs);
-    font-weight:  500;
-    color:        var(--fi-hint);
-    line-height:  1.4;
-    padding-inline-start: 0.1rem;
+    --_hint-color-rgb:  var(--modal-color-rgb, var(--color-accent-rgb));
+    --_hint-color:      var(--modal-color, var(--color-primary-light));
+    --_hint-color-dark: var(--modal-color-dark, var(--color-primary));
+
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    margin-top: 0.625rem;
+    padding: 0.6rem 0.95rem 0.6rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--_hint-color-dark);
+    line-height: 1.55;
+    background: linear-gradient(135deg, rgba(var(--_hint-color-rgb), 0.09) 0%, rgba(var(--_hint-color-rgb), 0.04) 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(var(--_hint-color-rgb), 0.18);
+    box-shadow: 0 1px 4px rgba(var(--_hint-color-rgb), 0.08);
+    overflow: hidden;
+}
+
+.form-hint::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--_hint-color) 0%, rgba(var(--_hint-color-rgb), 0.3) 100%);
+    border-radius: 0 12px 12px 0;
+}
+
+.form-hint i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    background: rgba(var(--_hint-color-rgb), 0.15);
+    color: var(--_hint-color);
+    border-radius: 6px;
+    font-size: 0.75em;
+    margin-top: 0.05rem;
 }
 
 /* — Error */

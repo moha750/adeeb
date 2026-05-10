@@ -44,6 +44,7 @@
     <!-- ④ نظام المكونات المشتركة -->
     <link rel="stylesheet" href="css/buttons-system.css?v=20260423e" />
     <link rel="stylesheet" href="css/inputs-system.css?v=20260423e" />
+    <link rel="stylesheet" href="css/chips.css?v=20260510c" />
     <link rel="stylesheet" href="css/modals.css?v=20260423e" />
 
     <!-- ⑤ مكونات الصفحات المتخصصة -->
@@ -4261,9 +4262,42 @@
 
             <!-- قسم: قائمة جلسات اللعبة -->
             <section id="guess-word-list-section" class="admin-section d-none">
-                <div class="page-header">
-                    <h2><i class="fa-solid fa-comments-question"></i> خمّن الكلمة</h2>
-                    <p class="page-header__subtitle">إدارة جلسات لعبة "خمّن الكلمة" التفاعلية. أنشئ جلسة، اعرض QR للمتسابقين، وتحكّم بالجولات.</p>
+
+                <!-- إحصائيات اللعبة -->
+                <div class="stats-grid stats-grid--manual-span">
+                    <div class="stat-card stat-card--span-2" style="--stat-color: #3d8fd6">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-list-check"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="gwTotalSessionsCount">0</div>
+                                <div class="stat-label">إجمالي الجلسات</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #10b981">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-play"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="gwActiveSessionsCount">0</div>
+                                <div class="stat-label">جلسات نشطة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="--stat-color: #6b7280">
+                        <div class="stat-card-wrapper">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-flag-checkered"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="gwFinishedSessionsCount">0</div>
+                                <div class="stat-label">جلسات منتهية</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="card">
@@ -4291,60 +4325,102 @@
 
             <!-- قسم: إنشاء جلسة لعبة -->
             <section id="guess-word-create-section" class="admin-section d-none">
-                <div class="page-header">
-                    <h2><i class="fa-solid fa-circle-plus"></i> إنشاء جلسة جديدة</h2>
-                    <p class="page-header__subtitle">أدخل عنواناً للجلسة، حدّد مدة كل جولة، وأضف الكلمات (كلمة في كل سطر).</p>
-                </div>
+                <nav class="page-breadcrumb" aria-label="مسار التنقل">
+                    <ol>
+                        <li>
+                            <button type="button" class="breadcrumb-link" onclick="navigateToSection('guess-word-list-section')">
+                                <i class="fa-solid fa-spell-check"></i>
+                                خمّن الكلمة
+                            </button>
+                        </li>
+                        <li class="breadcrumb-sep" aria-hidden="true">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </li>
+                        <li class="breadcrumb-current" aria-current="page">إنشاء جلسة جديدة</li>
+                    </ol>
+                </nav>
 
-                <form id="gwCreateForm" class="gw-create-form">
-                    <div class="form-group">
-                        <label class="form-label" for="gwCreateTitle">
-                            <span class="label-icon"><i class="fa-solid fa-heading"></i></span>
-                            عنوان الجلسة (اختياري)
-                        </label>
-                        <input type="text" class="form-input" id="gwCreateTitle" maxlength="100" placeholder="مثال: ليلة شعرية" />
+                <form id="gwCreateForm">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-circle-plus"></i> بيانات الجلسة</h3>
+                        </div>
+                        <div class="card-body card-body--form">
+                            <div class="form-group">
+                                <label class="form-label" for="gwCreateTitle">
+                                    <span class="label-icon"><i class="fa-solid fa-heading"></i></span>
+                                    عنوان الجلسة
+                                    <span class="required-dot">*</span>
+                                </label>
+                                <input type="text" class="form-input" id="gwCreateTitle" maxlength="100" placeholder="مثال: ليلة شعرية" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="gwCreateTime">
+                                    <span class="label-icon"><i class="fa-regular fa-clock"></i></span>
+                                    مدة الجولة (بالثواني)
+                                    <span class="required-dot">*</span>
+                                </label>
+                                <input type="number" class="form-input" id="gwCreateTime" min="10" max="600" value="60" required dir="ltr" lang="en" style="text-align:right;" />
+                            </div>
+
+                            <div class="form-group">
+                                <div class="gw-words-label-row">
+                                    <label class="form-label" for="gwCreateWords">
+                                        <span class="label-icon"><i class="fa-solid fa-list"></i></span>
+                                        الكلمات
+                                        <span class="required-dot">*</span>
+                                    </label>
+                                    <div class="gw-words-actions">
+                                        <button type="button" class="btn btn-success btn-outline btn-sm" id="gwUploadExcelBtn" title="استيراد كلمات من ملف Excel">
+                                            <i class="fa-solid fa-file-excel"></i> رفع Excel
+                                        </button>
+                                        <button type="button" class="btn btn-slate btn-outline btn-sm" id="gwShuffleWordsBtn" title="خلط ترتيب الكلمات">
+                                            <i class="fa-solid fa-shuffle"></i> خلط الترتيب
+                                        </button>
+                                        <input type="file" id="gwExcelFileInput" accept=".xlsx,.xls" hidden />
+                                    </div>
+                                </div>
+                                <textarea class="form-input" id="gwCreateWords" rows="10" required
+                                    placeholder="اكتب كل كلمة في سطر مستقل&#10;مثال:&#10;شعر&#10;نثر&#10;بلاغة"></textarea>
+                                <span class="form-hint" id="gwWordsCounter">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    <span id="gwWordsCounterText">أضف كلمات لمعرفة الإحصائية</span>
+                                </span>
+                                <div class="chip-list" id="gwWordsPreview" hidden></div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="gwCreateTime">
-                            <span class="label-icon"><i class="fa-regular fa-clock"></i></span>
-                            مدة الجولة (بالثواني)
-                            <span class="required-dot">*</span>
-                        </label>
-                        <input type="number" class="form-input" id="gwCreateTime" min="10" max="600" value="60" required />
-                        <span class="form-hint">من 10 إلى 600 ثانية. القيمة الافتراضية: 60 ثانية.</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="gwCreateWords">
-                            <span class="label-icon"><i class="fa-solid fa-list"></i></span>
-                            الكلمات
-                            <span class="required-dot">*</span>
-                        </label>
-                        <textarea class="form-input" id="gwCreateWords" rows="10" required
-                            placeholder="اكتب كل كلمة في سطر مستقل&#10;مثال:&#10;شعر&#10;نثر&#10;بلاغة"></textarea>
-                        <div class="gw-words-counter" id="gwWordsCounter"><strong>0</strong> كلمة</div>
-                    </div>
-
-                    <div class="form-actions-bar">
-                        <button class="btn btn-success" id="gwCreateSubmitBtn" type="submit">
-                            <i class="fa-solid fa-check"></i> إنشاء الجلسة
-                        </button>
-                        <button class="btn btn-slate btn-outline" id="gwCancelCreateBtn" type="button">
-                            <i class="fa-regular fa-circle-xmark"></i> إلغاء
-                        </button>
+                    <div class="form-actions-sticky">
+                        <div class="form-actions-bar">
+                            <button class="btn btn-success" id="gwCreateSubmitBtn" type="submit">
+                                <i class="fa-solid fa-check"></i> إنشاء الجلسة
+                            </button>
+                            <button class="btn btn-danger btn-outline" id="gwCancelCreateBtn" type="button">
+                                <i class="fa-regular fa-circle-xmark"></i> إلغاء
+                            </button>
+                        </div>
                     </div>
                 </form>
             </section>
 
             <!-- قسم: شاشة التحكم المباشرة -->
             <section id="guess-word-live-section" class="admin-section d-none">
-                <div class="page-header">
-                    <h2 id="gwLiveTitle"><i class="fa-solid fa-tower-broadcast"></i> الجلسة المباشرة</h2>
-                    <button class="btn btn-slate btn-outline" id="gwBackToListBtn" type="button">
-                        <i class="fa-solid fa-arrow-right"></i> العودة للجلسات
-                    </button>
-                </div>
+                <nav class="page-breadcrumb" aria-label="مسار التنقل">
+                    <ol>
+                        <li>
+                            <button type="button" class="breadcrumb-link" id="gwBackToListBtn">
+                                <i class="fa-solid fa-spell-check"></i>
+                                خمّن الكلمة
+                            </button>
+                        </li>
+                        <li class="breadcrumb-sep" aria-hidden="true">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </li>
+                        <li class="breadcrumb-current" id="gwLiveTitle" aria-current="page">الجلسة المباشرة</li>
+                    </ol>
+                </nav>
 
                 <div class="gw-live-grid">
                     <!-- بطاقة QR والكود -->
@@ -4392,9 +4468,7 @@
                 <div class="gw-live-card gw-players-card">
                     <h3>
                         <i class="fa-solid fa-users"></i> المتسابقون
-                        <span class="gw-session-status active" style="margin-right:auto;">
-                            <span id="gwLivePlayersCount">0</span>
-                        </span>
+                        <span class="gw-players-count" style="margin-right:auto;" id="gwLivePlayersCount">0</span>
                     </h3>
                     <div class="gw-players-grid" id="gwLivePlayersList">
                         <!-- يُملأ ديناميكياً -->

@@ -52,47 +52,27 @@ class GuessWordManager {
         const active = this.sessions.filter(s => s.status === 'active' || s.status === 'waiting').length;
         const finished = this.sessions.filter(s => s.status === 'finished').length;
 
-        const statsHtml = `
-            <div class="gw-admin-stats">
-                <div class="gw-admin-stat-card">
-                    <i class="fa-solid fa-list-check"></i>
-                    <div>
-                        <div class="label">إجمالي الجلسات</div>
-                        <div class="value">${total}</div>
-                    </div>
-                </div>
-                <div class="gw-admin-stat-card">
-                    <i class="fa-solid fa-play"></i>
-                    <div>
-                        <div class="label">جلسات نشطة</div>
-                        <div class="value">${active}</div>
-                    </div>
-                </div>
-                <div class="gw-admin-stat-card">
-                    <i class="fa-solid fa-flag-checkered"></i>
-                    <div>
-                        <div class="label">جلسات منتهية</div>
-                        <div class="value">${finished}</div>
-                    </div>
-                </div>
-            </div>
-        `;
+        // تحديث بطاقات الإحصائيات في الـ DOM
+        const totalEl = document.getElementById('gwTotalSessionsCount');
+        const activeEl = document.getElementById('gwActiveSessionsCount');
+        const finishedEl = document.getElementById('gwFinishedSessionsCount');
+        if (totalEl) totalEl.textContent = total;
+        if (activeEl) activeEl.textContent = active;
+        if (finishedEl) finishedEl.textContent = finished;
 
-        let listHtml;
         if (total === 0) {
-            listHtml = `
+            container.innerHTML = `
                 <div class="gw-empty">
-                    <i class="fa-solid fa-comments-question"></i>
+                    <i class="fa-solid fa-spell-check"></i>
                     <h3>لا توجد جلسات بعد</h3>
                     <p>ابدأ بإنشاء جلسة جديدة لبدء اللعب</p>
                 </div>
             `;
         } else {
             const cards = this.sessions.map(s => this._renderSessionCard(s)).join('');
-            listHtml = `<div class="gw-sessions-grid">${cards}</div>`;
+            container.innerHTML = `<div class="uc-grid">${cards}</div>`;
         }
 
-        container.innerHTML = statsHtml + listHtml;
         this._attachListCardListeners();
     }
 
@@ -100,6 +80,12 @@ class GuessWordManager {
         const statusLabel = s.status === 'waiting' ? 'في الانتظار'
             : s.status === 'active' ? 'جارية'
             : 'منتهية';
+        const variant = s.status === 'waiting' ? 'uc-card--warning'
+            : s.status === 'active' ? 'uc-card--success'
+            : 'uc-card--neutral';
+        const statusIcon = s.status === 'waiting' ? 'fa-hourglass-half'
+            : s.status === 'active' ? 'fa-circle-play'
+            : 'fa-flag-checkered';
         const created = this._formatDate(s.created_at);
         const title = s.title || 'جلسة بلا عنوان';
 
@@ -108,23 +94,55 @@ class GuessWordManager {
             : `<button class="btn btn-slate btn-outline" data-action="open" data-id="${s.id}"><i class="fa-solid fa-eye"></i> عرض</button>`;
 
         return `
-            <article class="gw-session-card">
-                <div class="gw-session-card-header">
-                    <div class="gw-session-card-title">${this._esc(title)}</div>
-                    <span class="gw-session-status ${s.status}">${statusLabel}</span>
+            <article class="uc-card ${variant}">
+                <header class="uc-card__header">
+                    <div class="uc-card__header-inner">
+                        <div class="uc-card__icon">
+                            <i class="fa-solid fa-spell-check"></i>
+                        </div>
+                        <div class="uc-card__header-info">
+                            <h3 class="uc-card__title uc-card__title--wrap">${this._esc(title)}</h3>
+                            <span class="uc-card__badge">
+                                <i class="fa-solid ${statusIcon}"></i>
+                                ${statusLabel}
+                            </span>
+                        </div>
+                    </div>
+                </header>
+                <div class="uc-card__body">
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-key"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">الكود</span>
+                            <span class="uc-card__info-value">${this._esc(s.code)}</span>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-list"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">عدد الكلمات</span>
+                            <span class="uc-card__info-value">${s.words_count} كلمة</span>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-solid fa-users"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">المتسابقون</span>
+                            <span class="uc-card__info-value">${s.players_count} متسابق</span>
+                        </div>
+                    </div>
+                    <div class="uc-card__info-item">
+                        <div class="uc-card__info-icon"><i class="fa-regular fa-calendar"></i></div>
+                        <div class="uc-card__info-content">
+                            <span class="uc-card__info-label">تاريخ الإنشاء</span>
+                            <span class="uc-card__info-value">${created}</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="gw-session-card-meta">
-                    <span><i class="fa-regular fa-calendar"></i>${created}</span>
-                    <span><i class="fa-solid fa-list"></i>${s.words_count} كلمة</span>
-                    <span><i class="fa-solid fa-users"></i>${s.players_count} متسابق</span>
-                </div>
-                <div class="gw-session-card-meta">
-                    <span class="gw-session-card-code">${s.code}</span>
-                </div>
-                <div class="gw-session-card-actions">
+                <div class="uc-card__footer">
                     ${continueBtn}
-                    <button class="btn btn-danger btn-outline" data-action="delete" data-id="${s.id}" title="حذف">
-                        <i class="fa-solid fa-trash"></i>
+                    <button class="btn btn-danger btn-outline" data-action="delete" data-id="${s.id}">
+                        <i class="fa-solid fa-trash"></i> حذف
                     </button>
                 </div>
             </article>
@@ -203,6 +221,30 @@ class GuessWordManager {
             wordsTa.addEventListener('input', () => this._updateWordsCounter());
         }
 
+        const timeInput = document.getElementById('gwCreateTime');
+        if (timeInput && !timeInput._gwAttached) {
+            timeInput._gwAttached = true;
+            timeInput.addEventListener('input', () => this._updateWordsCounter());
+        }
+
+        const shuffleBtn = document.getElementById('gwShuffleWordsBtn');
+        if (shuffleBtn && !shuffleBtn._gwAttached) {
+            shuffleBtn._gwAttached = true;
+            shuffleBtn.addEventListener('click', () => this._shuffleWords());
+        }
+
+        const uploadBtn = document.getElementById('gwUploadExcelBtn');
+        const fileInput = document.getElementById('gwExcelFileInput');
+        if (uploadBtn && fileInput && !uploadBtn._gwAttached) {
+            uploadBtn._gwAttached = true;
+            uploadBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files?.[0];
+                if (file) await this._importWordsFromExcel(file);
+                fileInput.value = ''; // reset لإتاحة رفع نفس الملف لاحقاً
+            });
+        }
+
         const cancelBtn = document.getElementById('gwCancelCreateBtn');
         if (cancelBtn && !cancelBtn._gwAttached) {
             cancelBtn._gwAttached = true;
@@ -223,10 +265,187 @@ class GuessWordManager {
 
     _updateWordsCounter() {
         const ta = document.getElementById('gwCreateWords');
-        const counter = document.getElementById('gwWordsCounter');
-        if (!ta || !counter) return;
+        const textEl = document.getElementById('gwWordsCounterText');
+        const timeInput = document.getElementById('gwCreateTime');
+        if (!ta || !textEl) return;
+
         const lines = ta.value.split('\n').map(l => l.trim()).filter(Boolean);
-        counter.innerHTML = `<strong>${lines.length}</strong> كلمة`;
+        const count = lines.length;
+        const timePerWord = parseInt(timeInput?.value || '60', 10);
+
+        if (count === 0) {
+            textEl.textContent = 'أضف كلمات لمعرفة الإحصائية';
+        } else {
+            const totalSeconds = count * timePerWord;
+            textEl.innerHTML = `<strong>${count}</strong> كلمة · مدة الجلسة المتوقعة <strong>${this._formatDuration(totalSeconds)}</strong>`;
+        }
+
+        this._renderWordsPreview(lines);
+    }
+
+    _renderWordsPreview(words) {
+        const wrap = document.getElementById('gwWordsPreview');
+        if (!wrap) return;
+
+        if (!words || words.length === 0) {
+            wrap.hidden = true;
+            wrap.innerHTML = '';
+            return;
+        }
+
+        wrap.hidden = false;
+
+        // تحديث ذكي in-place لتجنّب إعادة تشغيل animation الـ chips الثابتة
+        // (innerHTML الكامل يجعل كل chip يومض عند كل ضغطة مفتاح)
+        const existing = Array.from(wrap.children);
+
+        // 1) حدّث/أضف
+        words.forEach((word, idx) => {
+            const chip = existing[idx];
+            if (chip) {
+                // العنصر موجود — حدّث النص فقط إن تغيّر (لا re-create)
+                const textEl = chip.querySelector('.chip__text');
+                if (textEl && textEl.textContent !== word) {
+                    textEl.textContent = word;
+                }
+                chip.dataset.index = idx;
+                const btn = chip.querySelector('.chip__remove');
+                if (btn) btn.setAttribute('aria-label', `حذف الكلمة ${word}`);
+            } else {
+                // عنصر جديد فقط — يأخذ animation الدخول
+                wrap.appendChild(this._buildWordChip(word, idx));
+            }
+        });
+
+        // 2) احذف الزائد
+        while (wrap.children.length > words.length) {
+            wrap.removeChild(wrap.lastElementChild);
+        }
+    }
+
+    _buildWordChip(word, idx) {
+        const chip = document.createElement('span');
+        chip.className = 'chip chip--lg';
+        chip.dataset.index = idx;
+        chip.innerHTML = `
+            <span class="chip__text">${this._esc(word)}</span>
+            <button type="button" class="chip__remove" aria-label="حذف الكلمة ${this._esc(word)}">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        `;
+        chip.querySelector('.chip__remove').addEventListener('click', () => {
+            // اقرأ index من dataset (يتغيّر بعد كل حذف)
+            this._removeWordAt(parseInt(chip.dataset.index, 10));
+        });
+        return chip;
+    }
+
+    _removeWordAt(index) {
+        const ta = document.getElementById('gwCreateWords');
+        if (!ta) return;
+        const lines = ta.value.split('\n').map(l => l.trim()).filter(Boolean);
+        if (index < 0 || index >= lines.length) return;
+        lines.splice(index, 1);
+        ta.value = lines.join('\n');
+        this._updateWordsCounter();
+    }
+
+    _formatDuration(totalSeconds) {
+        if (totalSeconds < 60) return `${totalSeconds} ثانية`;
+        const m = Math.floor(totalSeconds / 60);
+        const s = totalSeconds % 60;
+        if (s === 0) return `${m} دقيقة`;
+        return `${m} دقيقة و${s} ثانية`;
+    }
+
+    async _importWordsFromExcel(file) {
+        if (typeof ExcelJS === 'undefined') {
+            this.notifyError('مكتبة Excel غير محمّلة');
+            return;
+        }
+
+        try {
+            const buffer = await file.arrayBuffer();
+            const workbook = new ExcelJS.Workbook();
+            await workbook.xlsx.load(buffer);
+
+            // اجمع كل الخلايا غير الفارغة من كل الأوراق
+            const collected = [];
+            workbook.worksheets.forEach(ws => {
+                ws.eachRow({ includeEmpty: false }, (row) => {
+                    row.eachCell({ includeEmpty: false }, (cell) => {
+                        const v = cell.value;
+                        if (v == null) return;
+                        // الـ value قد يكون object (formula/richText/hyperlink)
+                        let text = '';
+                        if (typeof v === 'string' || typeof v === 'number') {
+                            text = String(v);
+                        } else if (v.text) {
+                            text = String(v.text);
+                        } else if (v.result != null) {
+                            text = String(v.result);
+                        } else if (Array.isArray(v.richText)) {
+                            text = v.richText.map(p => p.text).join('');
+                        }
+                        text = text.trim();
+                        if (text) collected.push(text);
+                    });
+                });
+            });
+
+            if (collected.length === 0) {
+                this.notifyError('لم يتم العثور على كلمات في الملف');
+                return;
+            }
+
+            // ادمج مع الكلمات الموجودة، تجاهل التكرار case-insensitive
+            const ta = document.getElementById('gwCreateWords');
+            const existing = (ta?.value || '').split('\n').map(l => l.trim()).filter(Boolean);
+            const seen = new Set(existing.map(w => w.toLowerCase()));
+
+            let added = 0;
+            let duplicates = 0;
+            const final = [...existing];
+            for (const w of collected) {
+                const key = w.toLowerCase();
+                if (seen.has(key)) {
+                    duplicates++;
+                } else {
+                    seen.add(key);
+                    final.push(w);
+                    added++;
+                }
+            }
+
+            if (ta) {
+                ta.value = final.join('\n');
+                this._updateWordsCounter();
+            }
+
+            const dupNote = duplicates > 0 ? ` · تجاهل ${duplicates} تكرار` : '';
+            this.notifySuccess(`تم استيراد ${added} كلمة${dupNote}`);
+        } catch (err) {
+            console.error('[gw] Excel import error:', err);
+            this.notifyError('تعذّر قراءة ملف Excel — تأكد من صحة الملف');
+        }
+    }
+
+    _shuffleWords() {
+        const ta = document.getElementById('gwCreateWords');
+        if (!ta) return;
+        const lines = ta.value.split('\n').map(l => l.trim()).filter(Boolean);
+        if (lines.length < 2) {
+            this.notifyError('أضف كلمتين على الأقل قبل الخلط');
+            return;
+        }
+        // Fisher-Yates shuffle
+        for (let i = lines.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [lines[i], lines[j]] = [lines[j], lines[i]];
+        }
+        ta.value = lines.join('\n');
+        this._updateWordsCounter();
+        this.notifySuccess('تم خلط ترتيب الكلمات');
     }
 
     async handleCreateSubmit() {
@@ -242,6 +461,10 @@ class GuessWordManager {
             .map(l => l.trim())
             .filter(l => l.length > 0);
 
+        if (!title) {
+            this.notifyError('عنوان الجلسة مطلوب');
+            return;
+        }
         if (words.length === 0) {
             this.notifyError('أضف كلمة واحدة على الأقل');
             return;
@@ -257,7 +480,7 @@ class GuessWordManager {
 
         try {
             const { data, error } = await this.sb.rpc('gw_create_session', {
-                p_title: title || null,
+                p_title: title,
                 p_words: words,
                 p_time_per_word: timePerWord
             });
@@ -757,6 +980,10 @@ class GuessWordManager {
         const msg = err?.message || '';
         const map = {
             'GW_FORBIDDEN': 'لا تملك الصلاحيات اللازمة',
+            'GW_TITLE_REQUIRED': 'عنوان الجلسة مطلوب',
+            'GW_TITLE_TOO_LONG': 'العنوان طويل جداً (الحد 100 حرف)',
+            'GW_TITLE_DUPLICATE': 'يوجد جلسة بنفس العنوان — اختر عنواناً مختلفاً',
+            'idx_gw_sessions_title_unique': 'يوجد جلسة بنفس العنوان — اختر عنواناً مختلفاً',
             'GW_NO_WORDS': 'يجب إضافة كلمة واحدة على الأقل',
             'GW_TOO_MANY_WORDS': 'الحد الأقصى 200 كلمة',
             'GW_SESSION_NOT_FOUND': 'الجلسة غير موجودة',
