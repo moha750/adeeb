@@ -43,7 +43,7 @@
 
     <!-- ④ نظام المكونات المشتركة -->
     <link rel="stylesheet" href="css/buttons-system.css?v=20260423e" />
-    <link rel="stylesheet" href="css/inputs-system.css?v=20260423e" />
+    <link rel="stylesheet" href="css/inputs-system.css?v=20260510b" />
     <link rel="stylesheet" href="css/chips.css?v=20260510c" />
     <link rel="stylesheet" href="css/modals.css?v=20260423e" />
 
@@ -4379,25 +4379,29 @@
                                 </div>
                                 <textarea class="form-input" id="gwCreateWords" rows="10" required
                                     placeholder="اكتب كل كلمة في سطر مستقل&#10;مثال:&#10;شعر&#10;نثر&#10;بلاغة"></textarea>
+
+                                                                    <!-- استيراد من Excel: zone موحّد من inputs-system.css -->
+                                <button type="button"
+                                        class="form-dropzone form-dropzone-compact form-dropzone--success"
+                                        id="gwUploadExcelBtn"
+                                        title="استيراد كلمات من ملف Excel"
+                                        style="margin-top: 0.85rem;">
+                                    <span class="form-dropzone-icon">
+                                        <i class="fa-solid fa-file-excel"></i>
+                                    </span>
+                                    <span class="form-dropzone-text-wrap">
+                                        <span class="form-dropzone-title" data-drag="أفلت الملف هنا">استيراد من ملف Excel</span>
+                                        <span class="form-dropzone-hint" data-drag="سيتم استخراج الكلمات تلقائياً">انقر للاختيار أو اسحب الملف هنا</span>
+                                    </span>
+                                </button>
+                                <input type="file" id="gwExcelFileInput" accept=".xlsx,.xls" hidden />
+
                                 <span class="form-hint" id="gwWordsCounter">
                                     <i class="fa-solid fa-circle-info"></i>
                                     <span id="gwWordsCounterText">أضف كلمات لمعرفة الإحصائية</span>
                                 </span>
                                 <div class="chip-list" id="gwWordsPreview" hidden></div>
 
-                                <!-- استيراد من Excel: نظام .form-file + .form-dropzone المعتمد -->
-                                <label class="form-file" id="gwExcelDropzoneWrap" style="margin-top:0.85rem;">
-                                    <input type="file" id="gwExcelFileInput" accept=".xlsx,.xls">
-                                    <div class="form-dropzone form-dropzone-compact" id="gwExcelDropzone">
-                                        <div class="form-dropzone-icon">
-                                            <i class="fa-solid fa-file-excel"></i>
-                                        </div>
-                                        <div>
-                                            <div class="form-dropzone-title">استيراد من ملف Excel</div>
-                                            <div class="form-dropzone-hint">انقر للاختيار أو اسحب الملف هنا</div>
-                                        </div>
-                                    </div>
-                                </label>
                             </div>
                         </div>
                     </div>

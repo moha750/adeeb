@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="design-tokens.css">
     <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="buttons-system.css">
-    <link rel="stylesheet" href="inputs-system.css">
+    <link rel="stylesheet" href="inputs-system.css?v=20260510b">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -825,9 +825,9 @@
                 <input type="file" multiple>
                 <div class="form-dropzone form-dropzone-compact">
                     <div class="form-dropzone-icon"><i class="fa-solid fa-paperclip"></i></div>
-                    <div>
-                        <div class="form-dropzone-title">انقر لرفع الملفات</div>
-                        <div class="form-dropzone-hint">PDF, DOC, DOCX حتى 10MB</div>
+                    <div class="form-dropzone-text-wrap">
+                        <div class="form-dropzone-title" data-drag="أفلت الملفات هنا">انقر لرفع الملفات</div>
+                        <div class="form-dropzone-hint" data-drag="سيتم رفعها فوراً">PDF, DOC, DOCX حتى 10MB</div>
                     </div>
                 </div>
             </div>
@@ -846,6 +846,44 @@
                 </div>
             </div>
         </div>
+
+    </div>
+
+    <!-- Variants للون: success / danger / warning -->
+    <h4 style="margin: 1.5rem 0 0.75rem; font-size: 0.95rem; color: #475569;">Variants ألوان (compact + data-drag)</h4>
+    <div class="demo-grid cols-2">
+
+        <button type="button" class="form-dropzone form-dropzone-compact form-dropzone--success" style="width:100%;">
+            <span class="form-dropzone-icon"><i class="fa-solid fa-file-excel"></i></span>
+            <span class="form-dropzone-text-wrap">
+                <span class="form-dropzone-title" data-drag="أفلت الملف هنا">استيراد من Excel</span>
+                <span class="form-dropzone-hint" data-drag="سيتم استخراج البيانات">انقر للاختيار أو اسحب الملف هنا</span>
+            </span>
+        </button>
+
+        <button type="button" class="form-dropzone form-dropzone-compact form-dropzone--warning" style="width:100%;">
+            <span class="form-dropzone-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+            <span class="form-dropzone-text-wrap">
+                <span class="form-dropzone-title" data-drag="أفلت الملف هنا">رفع ملف تحذيري</span>
+                <span class="form-dropzone-hint" data-drag="سيتم تحليله">حد أقصى 5MB</span>
+            </span>
+        </button>
+
+        <button type="button" class="form-dropzone form-dropzone-compact form-dropzone--danger" style="width:100%;">
+            <span class="form-dropzone-icon"><i class="fa-solid fa-file-shield"></i></span>
+            <span class="form-dropzone-text-wrap">
+                <span class="form-dropzone-title" data-drag="أفلت بحذر">رفع ملف حسّاس</span>
+                <span class="form-dropzone-hint" data-drag="تأكّد من المحتوى">يخضع لمراجعة الأمان</span>
+            </span>
+        </button>
+
+        <button type="button" class="form-dropzone form-dropzone-compact" style="width:100%;">
+            <span class="form-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+            <span class="form-dropzone-text-wrap">
+                <span class="form-dropzone-title" data-drag="أفلت هنا">رفع عام (افتراضي)</span>
+                <span class="form-dropzone-hint" data-drag="جاهز للاستقبال">أي نوع من الملفات</span>
+            </span>
+        </button>
 
     </div>
 </div>
@@ -1472,6 +1510,26 @@
             if (btn?.dataset.color) applyAccent(btn.dataset.color);
         });
     })();
+
+    /* ── تفعيل drag-over على كل .form-dropzone في preview ── */
+    document.querySelectorAll('.form-dropzone').forEach((zone) => {
+        zone.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer?.types?.includes('Files')) zone.classList.add('drag-over');
+        });
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+        });
+        zone.addEventListener('dragleave', (e) => {
+            if (e.relatedTarget && zone.contains(e.relatedTarget)) return;
+            zone.classList.remove('drag-over');
+        });
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+        });
+    });
 </script>
 </body>
 </html>
