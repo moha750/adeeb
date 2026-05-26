@@ -4,10 +4,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بطاقة تهنئة بالعيد — نادي أدِيب</title>
+    <title>بطاقة تهنئة عيد الأضحى المبارك — نادي أديب</title>
+    <meta name="description" content="صمّم بطاقتك واحتفل بعيد الأضحى المبارك مع نادي أديب — تصاميم تستلهم الحج والكعبة والأضحية" />
     <link rel="stylesheet" href="style.css">
-    <meta property="og:title" content="بطاقة تهنئة بالعيد — نادي أدِيب" />
-    <meta property="og:description" content="صمّم بطاقتك واحتفل بالعيد مع نادي أدِيب" />
+
+    <!-- Open Graph (واتساب، فيسبوك، لينكد إن، تيليجرام) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="بطاقة تهنئة عيد الأضحى المبارك — نادي أديب" />
+    <meta property="og:description" content="صمّم بطاقتك واحتفل بعيد الأضحى المبارك مع نادي أديب — تصاميم تستلهم الحج والكعبة والأضحية" />
+    <meta property="og:image" content="bgbg.png" />
+    <meta property="og:image:secure_url" content="bgbg.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="بطاقة تهنئة عيد الأضحى المبارك — نادي أديب" />
+    <meta property="og:locale" content="ar_SA" />
+    <meta property="og:site_name" content="نادي أديب" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="بطاقة تهنئة عيد الأضحى المبارك — نادي أديب" />
+    <meta name="twitter:description" content="صمّم بطاقتك واحتفل بعيد الأضحى المبارك مع نادي أديب" />
+    <meta name="twitter:image" content="bgbg.png" />
+    <meta name="twitter:image:alt" content="بطاقة تهنئة عيد الأضحى المبارك — نادي أديب" />
+    <meta name="twitter:site" content="@AB_KFU" />
     <!-- favicon.io -->
     <link rel="apple-touch-icon" sizes="152x152" href="/favicon/apple-icon-152x152.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-icon-180x180.png" />
@@ -16,299 +36,516 @@
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
     <link rel="manifest" href="/favicon/manifest.json" />
-    <meta name="msapplication-TileColor" content="#ffffff" />
+    <meta name="msapplication-TileColor" content="#FAF4E8" />
     <meta name="msapplication-TileImage" content="/favicon/ms-icon-144x144.png" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#C9A24B" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
 </head>
 
 <body>
 
-<!-- قسم الهيرو -->
+<!-- ============== HERO ============== -->
 <section class="hero-section">
-    <div class="hero-particles">
-        <span></span><span></span><span></span><span></span><span></span>
-        <span></span><span></span><span></span><span></span><span></span>
+
+    <!-- طبقة السماء: نجوم + هلال -->
+    <div class="hero-sky">
+        <!-- النجوم -->
+        <span class="star"      style="top: 8%;  left: 22%;"></span>
+        <span class="star lg"   style="top: 14%; left: 38%;"></span>
+        <span class="star"      style="top: 6%;  left: 55%;"></span>
+        <span class="star gold" style="top: 18%; left: 70%; animation-delay: 0.6s;"></span>
+        <span class="star"      style="top: 24%; left: 85%; animation-delay: 1.2s;"></span>
+        <span class="star lg gold" style="top: 10%; left: 88%; animation-delay: 0.3s;"></span>
+        <span class="star"      style="top: 30%; left: 30%; animation-delay: 1.8s;"></span>
+        <span class="star"      style="top: 28%; left: 60%; animation-delay: 0.9s;"></span>
+        <span class="star gold" style="top: 36%; left: 45%; animation-delay: 1.5s;"></span>
+        <span class="star"      style="top: 20%; left: 8%;  animation-delay: 2.1s;"></span>
+        <span class="star lg"   style="top: 4%;  left: 75%; animation-delay: 0.4s;"></span>
+        <span class="star"      style="top: 42%; left: 18%; animation-delay: 1.0s;"></span>
+        <span class="star gold" style="top: 38%; left: 78%; animation-delay: 1.7s;"></span>
+        <span class="star"      style="top: 12%; left: 12%; animation-delay: 2.4s;"></span>
+        <span class="star"      style="top: 46%; left: 92%; animation-delay: 0.8s;"></span>
+
+        <!-- الهلال -->
+        <svg class="hero-crescent" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <radialGradient id="moonGlow" cx="0.4" cy="0.4" r="0.6">
+                    <stop offset="0%"  stop-color="#FAF4E8"/>
+                    <stop offset="60%" stop-color="#E0BC6E"/>
+                    <stop offset="100%" stop-color="#C9A24B"/>
+                </radialGradient>
+            </defs>
+            <path d="M 40 6 A 34 34 0 1 0 40 74 A 26 26 0 1 1 40 6 Z"
+                  fill="url(#moonGlow)"/>
+        </svg>
     </div>
-    <div class="hero-overlay"></div>
+
+    <!-- الجبال silhouette -->
+    <div class="hero-mountains">
+        <svg viewBox="0 0 1440 220" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- جبال خلفية بعيدة -->
+            <path d="M0,180 L120,90 L220,140 L340,60 L460,130 L580,80 L700,150 L820,70 L940,120 L1080,50 L1200,130 L1320,90 L1440,150 L1440,220 L0,220 Z"
+                  fill="#2C1810" opacity="0.55"/>
+            <!-- جبال أمامية -->
+            <path d="M0,200 L100,140 L200,180 L320,110 L440,170 L560,130 L680,180 L800,120 L920,160 L1040,100 L1160,160 L1280,130 L1400,180 L1440,160 L1440,220 L0,220 Z"
+                  fill="#1F140C" opacity="0.85"/>
+        </svg>
+    </div>
+
+    <!-- النخيل -->
+    <svg class="palm palm-left" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+        <rect x="46" y="115" width="8" height="85" fill="#3D2818" rx="2"/>
+        <ellipse cx="50" cy="200" rx="14" ry="3" fill="rgba(0,0,0,0.4)"/>
+        <!-- سعفات -->
+        <path d="M50 115 Q 20 90 5 65"  stroke="#3a5a2a" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 28 80 8 50"  stroke="#4a6a3a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 35 75 25 40" stroke="#3a5a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 50 70 50 30" stroke="#4a6a3a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 65 75 75 40" stroke="#3a5a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 72 80 92 50" stroke="#4a6a3a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 80 90 95 65" stroke="#3a5a2a" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <!-- تمر -->
+        <circle cx="48" cy="118" r="2" fill="#8B5E34"/>
+        <circle cx="52" cy="120" r="2" fill="#8B5E34"/>
+        <circle cx="50" cy="122" r="2" fill="#A67F2E"/>
+    </svg>
+
+    <svg class="palm palm-right" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+        <rect x="46" y="115" width="8" height="85" fill="#3D2818" rx="2"/>
+        <ellipse cx="50" cy="200" rx="14" ry="3" fill="rgba(0,0,0,0.4)"/>
+        <path d="M50 115 Q 20 90 5 65"  stroke="#3a5a2a" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 28 80 8 50"  stroke="#4a6a3a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 35 75 25 40" stroke="#3a5a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 50 70 50 30" stroke="#4a6a3a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 65 75 75 40" stroke="#3a5a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 72 80 92 50" stroke="#4a6a3a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 80 90 95 65" stroke="#3a5a2a" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <circle cx="48" cy="118" r="2" fill="#8B5E34"/>
+        <circle cx="52" cy="120" r="2" fill="#8B5E34"/>
+        <circle cx="50" cy="122" r="2" fill="#A67F2E"/>
+    </svg>
+
+    <svg class="palm palm-left-2" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+        <rect x="46" y="115" width="7" height="85" fill="#3D2818" rx="2"/>
+        <path d="M50 115 Q 25 88 8 60"  stroke="#3a5a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 35 72 28 38" stroke="#4a6a3a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 50 68 52 28" stroke="#3a5a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 68 72 78 38" stroke="#4a6a3a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 75 88 92 60" stroke="#3a5a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </svg>
+
+    <svg class="palm palm-right-2" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+        <rect x="46" y="115" width="7" height="85" fill="#3D2818" rx="2"/>
+        <path d="M50 115 Q 25 88 8 60"  stroke="#3a5a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 35 72 28 38" stroke="#4a6a3a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 50 68 52 28" stroke="#3a5a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 68 72 78 38" stroke="#4a6a3a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 115 Q 75 88 92 60" stroke="#3a5a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </svg>
+
+    <!-- مشهد الكعبة + الطواف -->
+    <div class="hero-kaaba-scene">
+        <div class="kaaba-tawaf"></div>
+        <svg class="hero-kaaba" viewBox="0 0 300 380" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="goldKiswa" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%"  stop-color="#A67F2E"/>
+                    <stop offset="50%" stop-color="#E0BC6E"/>
+                    <stop offset="100%" stop-color="#A67F2E"/>
+                </linearGradient>
+                <linearGradient id="kaabaBody" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"  stop-color="#2a2a2a"/>
+                    <stop offset="100%" stop-color="#050505"/>
+                </linearGradient>
+                <radialGradient id="kaabaGlowGrad" cx="0.5" cy="0.5" r="0.5">
+                    <stop offset="0%"  stop-color="rgba(224,188,110,0.6)"/>
+                    <stop offset="100%" stop-color="rgba(224,188,110,0)"/>
+                </radialGradient>
+            </defs>
+
+            <!-- توهج خلفي -->
+            <ellipse class="kaaba-glow" cx="150" cy="200" rx="180" ry="220" fill="url(#kaabaGlowGrad)"/>
+
+            <!-- المنصة (شاذروان) -->
+            <rect x="44" y="338" width="212" height="14" fill="#5A3C20" rx="2"/>
+            <rect x="54" y="328" width="192" height="12" fill="#8B5E34"/>
+
+            <!-- جسم الكعبة -->
+            <rect x="60" y="58" width="180" height="282" fill="url(#kaabaBody)" rx="3"/>
+
+            <!-- شريط الكسوة الذهبي -->
+            <rect class="kaaba-kiswa-band" x="60" y="118" width="180" height="42" fill="url(#goldKiswa)"/>
+
+            <!-- زخارف على الحزام -->
+            <g opacity="0.55">
+                <circle cx="88" cy="139" r="4" fill="#5A3C20"/>
+                <circle cx="118" cy="139" r="4" fill="#5A3C20"/>
+                <circle cx="150" cy="139" r="4" fill="#5A3C20"/>
+                <circle cx="182" cy="139" r="4" fill="#5A3C20"/>
+                <circle cx="212" cy="139" r="4" fill="#5A3C20"/>
+            </g>
+
+            <!-- خط ذهبي علوي وسفلي -->
+            <rect x="60" y="115" width="180" height="3" fill="#E0BC6E"/>
+            <rect x="60" y="160" width="180" height="3" fill="#A67F2E"/>
+
+            <!-- الباب الذهبي -->
+            <rect x="152" y="218" width="38" height="84" fill="url(#goldKiswa)" rx="2"/>
+            <rect x="157" y="223" width="28" height="74" fill="#A67F2E" rx="1"/>
+            <rect x="160" y="226" width="22" height="68" fill="#8B5E34" rx="1"/>
+            <!-- زخرفة على الباب -->
+            <line x1="171" y1="230" x2="171" y2="290" stroke="#E0BC6E" stroke-width="1"/>
+            <circle cx="171" cy="260" r="3" fill="#E0BC6E"/>
+
+            <!-- الحجر الأسود -->
+            <circle cx="238" cy="282" r="9" fill="#1a1a1a" stroke="#C9A24B" stroke-width="2.5"/>
+            <circle cx="238" cy="282" r="4" fill="#3a3a3a"/>
+
+            <!-- زاوية ذهبية صغيرة -->
+            <polygon points="60,58 80,58 80,68 70,68" fill="#C9A24B" opacity="0.7"/>
+            <polygon points="240,58 220,58 220,68 230,68" fill="#C9A24B" opacity="0.7"/>
+        </svg>
+    </div>
+
+    <!-- مرج الخراف -->
+    <div class="hero-sheep-meadow">
+        <!-- الخروف 1 -->
+        <svg class="sheep sheep-1" viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="60" cy="82" rx="36" ry="4" fill="rgba(0,0,0,0.22)"/>
+            <g class="sheep-body-group">
+                <circle cx="38" cy="50" r="20" fill="#FAF4E8"/>
+                <circle cx="52" cy="42" r="18" fill="#FAF4E8"/>
+                <circle cx="68" cy="44" r="20" fill="#FAF4E8"/>
+                <circle cx="82" cy="50" r="18" fill="#FAF4E8"/>
+                <ellipse cx="60" cy="58" rx="34" ry="20" fill="#F5E9D0"/>
+                <ellipse class="sheep-head" cx="92" cy="55" rx="12" ry="11" fill="#5A3C20"/>
+                <ellipse cx="88" cy="46" rx="3" ry="5" fill="#3D2818"/>
+                <ellipse cx="96" cy="46" rx="3" ry="5" fill="#3D2818"/>
+                <circle cx="89" cy="55" r="1.5" fill="white"/>
+                <circle cx="96" cy="55" r="1.5" fill="white"/>
+                <circle cx="89" cy="55.5" r="0.6" fill="#000"/>
+                <circle cx="96" cy="55.5" r="0.6" fill="#000"/>
+                <ellipse cx="100" cy="60" rx="2.5" ry="1.5" fill="#3D2818"/>
+            </g>
+            <g class="sheep-legs">
+                <rect class="leg leg-front-1" x="46" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+                <rect class="leg leg-front-2" x="56" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+                <rect class="leg leg-back-1"  x="70" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+                <rect class="leg leg-back-2"  x="80" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+            </g>
+        </svg>
+
+        <!-- الخروف 2 -->
+        <svg class="sheep sheep-2" viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="60" cy="82" rx="36" ry="4" fill="rgba(0,0,0,0.22)"/>
+            <g class="sheep-body-group">
+                <circle cx="38" cy="50" r="20" fill="#FAF4E8"/>
+                <circle cx="52" cy="42" r="18" fill="#FAF4E8"/>
+                <circle cx="68" cy="44" r="20" fill="#FAF4E8"/>
+                <circle cx="82" cy="50" r="18" fill="#FAF4E8"/>
+                <ellipse cx="60" cy="58" rx="34" ry="20" fill="#F5E9D0"/>
+                <ellipse cx="92" cy="55" rx="12" ry="11" fill="#5A3C20"/>
+                <ellipse cx="88" cy="46" rx="3" ry="5" fill="#3D2818"/>
+                <ellipse cx="96" cy="46" rx="3" ry="5" fill="#3D2818"/>
+                <circle cx="89" cy="55" r="1.5" fill="white"/>
+                <circle cx="96" cy="55" r="1.5" fill="white"/>
+                <circle cx="89" cy="55.5" r="0.6" fill="#000"/>
+                <circle cx="96" cy="55.5" r="0.6" fill="#000"/>
+            </g>
+            <g class="sheep-legs">
+                <rect class="leg leg-front-1" x="46" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+                <rect class="leg leg-front-2" x="56" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+                <rect class="leg leg-back-1"  x="70" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+                <rect class="leg leg-back-2"  x="80" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+            </g>
+        </svg>
+
+        <!-- الخروف 3 -->
+        <svg class="sheep sheep-3" viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="60" cy="82" rx="36" ry="4" fill="rgba(0,0,0,0.22)"/>
+            <g class="sheep-body-group">
+                <circle cx="38" cy="50" r="20" fill="#FAF4E8"/>
+                <circle cx="52" cy="42" r="18" fill="#FAF4E8"/>
+                <circle cx="68" cy="44" r="20" fill="#FAF4E8"/>
+                <circle cx="82" cy="50" r="18" fill="#FAF4E8"/>
+                <ellipse cx="60" cy="58" rx="34" ry="20" fill="#F5E9D0"/>
+                <ellipse cx="92" cy="55" rx="12" ry="11" fill="#5A3C20"/>
+                <ellipse cx="88" cy="46" rx="3" ry="5" fill="#3D2818"/>
+                <ellipse cx="96" cy="46" rx="3" ry="5" fill="#3D2818"/>
+                <circle cx="89" cy="55" r="1.5" fill="white"/>
+                <circle cx="96" cy="55" r="1.5" fill="white"/>
+                <circle cx="89" cy="55.5" r="0.6" fill="#000"/>
+                <circle cx="96" cy="55.5" r="0.6" fill="#000"/>
+            </g>
+            <g class="sheep-legs">
+                <rect class="leg leg-front-1" x="46" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+                <rect class="leg leg-front-2" x="56" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+                <rect class="leg leg-back-1"  x="70" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+                <rect class="leg leg-back-2"  x="80" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+            </g>
+        </svg>
+
+        <!-- الخروف 4 -->
+        <svg class="sheep sheep-4" viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="60" cy="82" rx="36" ry="4" fill="rgba(0,0,0,0.22)"/>
+            <g class="sheep-body-group">
+                <circle cx="38" cy="50" r="20" fill="#FAF4E8"/>
+                <circle cx="52" cy="42" r="18" fill="#FAF4E8"/>
+                <circle cx="68" cy="44" r="20" fill="#FAF4E8"/>
+                <circle cx="82" cy="50" r="18" fill="#FAF4E8"/>
+                <ellipse cx="60" cy="58" rx="34" ry="20" fill="#F5E9D0"/>
+                <ellipse cx="92" cy="55" rx="12" ry="11" fill="#5A3C20"/>
+                <ellipse cx="88" cy="46" rx="3" ry="5" fill="#3D2818"/>
+                <ellipse cx="96" cy="46" rx="3" ry="5" fill="#3D2818"/>
+                <circle cx="89" cy="55" r="1.5" fill="white"/>
+                <circle cx="96" cy="55" r="1.5" fill="white"/>
+            </g>
+            <g class="sheep-legs">
+                <rect class="leg leg-front-1" x="46" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+                <rect class="leg leg-front-2" x="56" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+                <rect class="leg leg-back-1"  x="70" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+                <rect class="leg leg-back-2"  x="80" y="68" width="5" height="18" fill="#3D2818" rx="2"/>
+            </g>
+        </svg>
+    </div>
+
+    <!-- جسيمات ذهبية -->
+    <div class="hero-golden-particles">
+        <span class="gold-particle"></span><span class="gold-particle"></span>
+        <span class="gold-particle"></span><span class="gold-particle"></span>
+        <span class="gold-particle"></span><span class="gold-particle"></span>
+        <span class="gold-particle"></span><span class="gold-particle"></span>
+        <span class="gold-particle"></span><span class="gold-particle"></span>
+        <span class="gold-particle"></span><span class="gold-particle"></span>
+        <span class="gold-particle"></span><span class="gold-particle"></span>
+    </div>
+
+    <!-- المحتوى النصي -->
     <div class="hero-content">
-        <div class="hero-logo-ring">
-            <img src="../../adeeb-logo.png" alt="شعار نادي أدِيب" class="hero-logo">
+        <div class="hero-logo-wrap">
+            <img src="../../adeeb-logo.png" alt="شعار نادي أديب" class="hero-logo">
         </div>
         <div class="hero-badge">
-            <i class="fas fa-star"></i> عائلة أدِيب <i class="fas fa-star"></i>
+         عائلة أديب
         </div>
-        <h1 class="hero-title">هنّئ أحبابك <span class="highlight">ببطاقات أدِيبية</span></h1>
-        <p class="hero-subtitle">تصميمات احترافية من لجنة التصميم تنقل مشاعركم بأرقى صورة وتُعبّر عن لحظات الفرح بأجمل تصاميم عيد الفطر المبارك</p>
+        <h1 class="hero-title">عيد <span class="highlight">أضحى</span> مبارك</h1>
+        <p class="hero-subtitle">في موسم الحج المبارك، نُهديكم أرقى تصاميم لتنقلوا تهانيكم لأحبابكم</p>
         <div class="hero-cta">
             <a href="#design" class="cta-btn primary-btn">
-                <i class="fas fa-wand-magic-sparkles"></i> ابدأ التصميم الآن
+                <i class="fas fa-wand-magic-sparkles"></i> صمّم بطاقتك الآن
             </a>
         </div>
     </div>
+
     <a href="#design" class="hero-scroll-indicator">
         <span>اكتشف المزيد</span>
         <i class="fas fa-chevron-down"></i>
     </a>
 </section>
 
-<!-- قسم الإحصائيات -->
-<!-- <section class="stats-section">
-    <div class="stats-container">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-users"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number" id="visitorsCount">
-                    <span class="counter">0</span>
+<!-- ============== CARD BUILDER ============== -->
+<section class="card-section" id="design">
+
+    <div class="section-head">
+        <div class="section-badge"><i class="fas fa-mosque"></i></div>
+        <h2>منشئ بطاقات عيد الأضحى</h2>
+        <p class="section-subtitle">١٣ بطاقة من نخبة مصممي نادي أديب، اختر تصميمك وخصّص الإهداء باسم المُهنّأ، وحمّل بطاقتك بجودة عالية</p>
+        <div class="section-divider"><span></span><i class="fas fa-star-and-crescent"></i><span></span></div>
+    </div>
+
+    <!-- Filter Pills (تصفية حسب المصمم) -->
+    <div class="filter-bar" id="filterBar">
+        <button class="filter-pill active" data-filter="all">
+            <i class="fas fa-th"></i>
+            <span>الكل</span>
+            <em class="filter-count">١٣</em>
+        </button>
+        <button class="filter-pill" data-filter="محمد إسماعيل المطر">
+            <span>محمد إسماعيل المطر</span>
+            <em class="filter-count">٣</em>
+        </button>
+        <button class="filter-pill" data-filter="رغد حسين الخليفه">
+            <span>رغد حسين الخليفه</span>
+            <em class="filter-count">١</em>
+        </button>
+        <button class="filter-pill" data-filter="زينب عبدالله العبيدان">
+            <span>زينب عبدالله العبيدان</span>
+            <em class="filter-count">١</em>
+        </button>
+        <button class="filter-pill" data-filter="قاسم عبدلله العيثان">
+            <span>قاسم عبدلله العيثان</span>
+            <em class="filter-count">٤</em>
+        </button>
+        <button class="filter-pill" data-filter="مي عبدالعزيز الجهني">
+            <span>مي عبدالعزيز الجهني</span>
+            <em class="filter-count">٤</em>
+        </button>
+    </div>
+
+    <!-- Stage (Preview + Controls) -->
+    <div class="builder-stage">
+
+        <!-- Left: Preview -->
+        <div class="stage-preview">
+            <div class="stage-nav">
+                <button class="nav-btn" id="prevBtn" title="السابق" aria-label="البطاقة السابقة">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <div class="card-counter">
+                    <span id="currentIdx">١</span>
+                    <em>من</em>
+                    <span id="totalIdx">١٣</span>
                 </div>
-                <div class="stat-label">زائر للموقع</div>
+                <button class="nav-btn" id="nextBtn" title="التالي" aria-label="البطاقة التالية">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+
+            <div class="card-stage" id="cardStage">
+                <div class="card-stage-glow"></div>
+                <canvas id="cardCanvas" width="1080" height="1920"></canvas>
+                <div class="card-loading" id="cardLoading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
             </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-download"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number" id="downloadsCount">
-                    <span class="counter">0</span>
+
+        <!-- Right: Controls -->
+        <div class="stage-controls">
+
+            <!-- Designer Info -->
+            <div class="ctrl-card designer-card">
+                <div class="ctrl-card-icon"><i class="fas fa-pen-fancy"></i></div>
+                <div class="ctrl-card-body">
+                    <div class="ctrl-card-label">تصميم بريشة</div>
+                    <div class="ctrl-card-value" id="designerName">—</div>
                 </div>
-                <div class="stat-label">بطاقة تم تحميلها</div>
+            </div>
+
+            <!-- Name Input -->
+            <div class="ctrl-card name-card">
+                <div class="ctrl-card-head">
+                    <i class="fas fa-feather"></i>
+                    <span>خصّص الإهداء</span>
+                </div>
+                <div class="ctrl-card-body">
+                    <label class="name-label" for="recipientName">اسم المُهنّأ يظهر مطبوعاً على البطاقة بأنسب موضع وفقاً للتصميم</label>
+                    <div class="name-input-wrap">
+                        <input type="text" id="recipientName" placeholder="مثلاً: قاسم ..." autocomplete="off" maxlength="50">
+                        <button class="clear-name-btn" id="clearName" title="مسح الاسم" aria-label="مسح الاسم">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <p class="name-hint" id="nameHint">
+                        <i class="fas fa-info-circle"></i>
+                        اتركه فارغاً لتحميل البطاقة كما صمّمها المصمم
+                    </p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="ctrl-actions">
+                <button class="action-btn primary-action" id="downloadBtn">
+                    <i class="fas fa-download"></i>
+                    <span>تحميل البطاقة</span>
+                </button>
+                <button class="action-btn secondary-action" id="shareBtn">
+                    <i class="fab fa-whatsapp"></i>
+                    <span>مشاركة في واتساب</span>
+                </button>
             </div>
         </div>
     </div>
-</section> -->
 
-<!-- قسم منشئ البطاقات -->
-<section class="card-section" id="design">
-    <div class="section-badge"><i class="fas fa-gift"></i></div>
-    <h1>منشئ بطاقات التهنئة</h1>
-    <p class="section-subtitle">اختر تصميمك المفضل من بين 12 قالباً، أدخل الاسم وحمّل بطاقتك بجودة عالية فوراً</p>
-    <div class="section-divider"><span></span><i class="fas fa-star"></i><span></span></div>
-
-    <div class="card-builder">
-
-        <!-- عمود المعاينة -->
-        <div class="builder-preview-col">
-            <div class="preview-label"><i class="fas fa-eye"></i> معاينة البطاقة</div>
-            <div class="card-frame" id="cardFrame">
-                <canvas id="myCanvas" width="1080" height="1920"></canvas>
-            </div>
-            <div class="card-shadow"></div>
-
-            <!-- حقل الاسم -->
-            <div class="name-section">
-                <div class="picker-section-title">
-                    <i class="fas fa-user-edit"></i> اكتب الاسم
-                </div>
-                <div class="name-input-wrap">
-                    <input type="text" id="textInput" placeholder="اكتب اسم المهنأ هنا..." autocomplete="off">
-                    <button class="clear-name-btn" id="clearName" title="مسح الاسم">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- زر التحميل -->
-            <button class="btn download-btn" id="downloadBtn">
-                <i class="fas fa-download"></i>
-                تحميل البطاقة
-            </button>
-            <p class="controls-hint">
-                <i class="fas fa-info-circle"></i> البطاقة تُحمَّل بجودة كاملة PNG
-            </p>
+    <!-- Gallery Strip (كل البطاقات في صف أفقي) -->
+    <div class="gallery-wrap">
+        <div class="gallery-head">
+            <i class="fas fa-images"></i>
+            <h3>معرض البطاقات</h3>
+            <span class="gallery-count" id="galleryCount">١٣ بطاقة</span>
         </div>
-
-        <!-- عمود التحكم -->
-        <div class="builder-controls-col">
-
-            <!-- اختيار القالب بصرياً -->
-            <div class="picker-section">
-                <div class="picker-section-title">
-                    <i class="fas fa-palette"></i> اختر التصميم (12 قالب)
-                </div>
-
-                <!-- شبكة البطاقات البصرية -->
-                <div class="visual-picker" id="visualPicker">
-                    <button class="vpick-item selected-vpick" data-template="1.jpg" data-name="تصميم 1">
-                        <div class="vpick-thumb">
-                            <img src="1.jpg" alt="تصميم 1" loading="lazy">
-                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
-                        </div>
-                        <span class="vpick-name">1</span>
-                    </button>
-                    <button class="vpick-item" data-template="2.jpg" data-name="تصميم 2">
-                        <div class="vpick-thumb">
-                            <img src="2.jpg" alt="تصميم 2" loading="lazy">
-                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
-                        </div>
-                        <span class="vpick-name">2</span>
-                    </button>
-                    <button class="vpick-item" data-template="3.jpg" data-name="تصميم 3">
-                        <div class="vpick-thumb">
-                            <img src="3.jpg" alt="تصميم 3" loading="lazy">
-                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
-                        </div>
-                        <span class="vpick-name">3</span>
-                    </button>
-                    <button class="vpick-item" data-template="4.jpg" data-name="تصميم 4">
-                        <div class="vpick-thumb">
-                            <img src="4.jpg" alt="تصميم 4" loading="lazy">
-                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
-                        </div>
-                        <span class="vpick-name">4</span>
-                    </button>
-                    <button class="vpick-item" data-template="5.jpg" data-name="تصميم 5">
-                        <div class="vpick-thumb">
-                            <img src="5.jpg" alt="تصميم 5" loading="lazy">
-                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
-                        </div>
-                        <span class="vpick-name">5</span>
-                    </button>
-                    <button class="vpick-item" data-template="6.jpg" data-name="تصميم 6">
-                        <div class="vpick-thumb">
-                            <img src="6.jpg" alt="تصميم 6" loading="lazy">
-                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
-                        </div>
-                        <span class="vpick-name">6</span>
-                    </button>
-                    <button class="vpick-item" data-template="7.png" data-name="تصميم 7">
-                        <div class="vpick-thumb">
-                            <img src="7.png" alt="تصميم 7" loading="lazy">
-                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
-                        </div>
-                        <span class="vpick-name">7</span>
-                    </button>
-                    <button class="vpick-item" data-template="8.png" data-name="تصميم 8">
-                        <div class="vpick-thumb">
-                            <img src="8.png" alt="تصميم 8" loading="lazy">
-                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
-                        </div>
-                        <span class="vpick-name">8</span>
-                    </button>
-                    <button class="vpick-item" data-template="9.png" data-name="تصميم 9">
-                        <div class="vpick-thumb">
-                            <img src="9.png" alt="تصميم 9" loading="lazy">
-                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
-                        </div>
-                        <span class="vpick-name">9</span>
-                    </button>
-                    <button class="vpick-item" data-template="10.jpg" data-name="تصميم 10">
-                        <div class="vpick-thumb">
-                            <img src="10.jpg" alt="تصميم 10" loading="lazy">
-                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
-                        </div>
-                        <span class="vpick-name">10</span>
-                    </button>
-                    <button class="vpick-item" data-template="11.jpg" data-name="تصميم 11">
-                        <div class="vpick-thumb">
-                            <img src="11.jpg" alt="تصميم 11" loading="lazy">
-                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
-                        </div>
-                        <span class="vpick-name">11</span>
-                    </button>
-                    <button class="vpick-item" data-template="12.png" data-name="تصميم 12">
-                        <div class="vpick-thumb">
-                            <img src="12.png" alt="تصميم 12" loading="lazy">
-                            <div class="vpick-check"><i class="fas fa-check-circle"></i></div>
-                        </div>
-                        <span class="vpick-name">12</span>
-                    </button>
-                </div>
+        <div class="gallery-strip-wrap">
+            <button class="strip-nav strip-nav-right" id="stripRight" aria-label="تمرير لليمين">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            <div class="gallery-strip" id="galleryStrip">
+                <button class="gallery-item selected" data-template="t1" data-designer="محمد إسماعيل المطر">
+                    <div class="gallery-thumb"><img src="templates/محمد إسماعيل المطر 1.png" alt="تصميم محمد إسماعيل المطر" loading="lazy" /></div>
+                    <span class="gallery-designer">محمد إسماعيل المطر</span>
+                </button>
+                <button class="gallery-item" data-template="t2" data-designer="محمد إسماعيل المطر">
+                    <div class="gallery-thumb"><img src="templates/محمد إسماعيل المطر 2.png" alt="تصميم محمد إسماعيل المطر" loading="lazy" /></div>
+                    <span class="gallery-designer">محمد إسماعيل المطر</span>
+                </button>
+                <button class="gallery-item" data-template="t3" data-designer="محمد إسماعيل المطر">
+                    <div class="gallery-thumb"><img src="templates/محمد إسماعيل المطر 3.png" alt="تصميم محمد إسماعيل المطر" loading="lazy" /></div>
+                    <span class="gallery-designer">محمد إسماعيل المطر</span>
+                </button>
+                <button class="gallery-item" data-template="t4" data-designer="رغد حسين الخليفه">
+                    <div class="gallery-thumb"><img src="templates/رغد حسين الخليفه.jpg" alt="تصميم رغد حسين الخليفه" loading="lazy" /></div>
+                    <span class="gallery-designer">رغد حسين الخليفه</span>
+                </button>
+                <button class="gallery-item" data-template="t5" data-designer="زينب عبدالله العبيدان">
+                    <div class="gallery-thumb"><img src="templates/زينب عبدالله العبيدان.png" alt="تصميم زينب عبدالله العبيدان" loading="lazy" /></div>
+                    <span class="gallery-designer">زينب عبدالله العبيدان</span>
+                </button>
+                <button class="gallery-item" data-template="t6" data-designer="قاسم عبدلله العيثان">
+                    <div class="gallery-thumb"><img src="templates/قاسم عبدلله العيثان 1.png" alt="تصميم قاسم عبدلله العيثان" loading="lazy" /></div>
+                    <span class="gallery-designer">قاسم عبدلله العيثان</span>
+                </button>
+                <button class="gallery-item" data-template="t7" data-designer="قاسم عبدلله العيثان">
+                    <div class="gallery-thumb"><img src="templates/قاسم عبدلله العيثان 2.png" alt="تصميم قاسم عبدلله العيثان" loading="lazy" /></div>
+                    <span class="gallery-designer">قاسم عبدلله العيثان</span>
+                </button>
+                <button class="gallery-item" data-template="t8" data-designer="قاسم عبدلله العيثان">
+                    <div class="gallery-thumb"><img src="templates/قاسم عبدلله العيثان 3.png" alt="تصميم قاسم عبدلله العيثان" loading="lazy" /></div>
+                    <span class="gallery-designer">قاسم عبدلله العيثان</span>
+                </button>
+                <button class="gallery-item" data-template="t9" data-designer="قاسم عبدلله العيثان">
+                    <div class="gallery-thumb"><img src="templates/قاسم عبدلله العيثان 4.png" alt="تصميم قاسم عبدلله العيثان" loading="lazy" /></div>
+                    <span class="gallery-designer">قاسم عبدلله العيثان</span>
+                </button>
+                <button class="gallery-item" data-template="t10" data-designer="مي عبدالعزيز الجهني">
+                    <div class="gallery-thumb"><img src="templates/مي عبدالعزيز الجهني 1.jpg" alt="تصميم مي عبدالعزيز الجهني" loading="lazy" /></div>
+                    <span class="gallery-designer">مي عبدالعزيز الجهني</span>
+                </button>
+                <button class="gallery-item" data-template="t11" data-designer="مي عبدالعزيز الجهني">
+                    <div class="gallery-thumb"><img src="templates/مي عبدالعزيز الجهني 2.jpg" alt="تصميم مي عبدالعزيز الجهني" loading="lazy" /></div>
+                    <span class="gallery-designer">مي عبدالعزيز الجهني</span>
+                </button>
+                <button class="gallery-item" data-template="t12" data-designer="مي عبدالعزيز الجهني">
+                    <div class="gallery-thumb"><img src="templates/مي عبدالعزيز الجهني 3.jpg" alt="تصميم مي عبدالعزيز الجهني" loading="lazy" /></div>
+                    <span class="gallery-designer">مي عبدالعزيز الجهني</span>
+                </button>
+                <button class="gallery-item" data-template="t13" data-designer="مي عبدالعزيز الجهني">
+                    <div class="gallery-thumb"><img src="templates/مي عبدالعزيز الجهني 4.jpg" alt="تصميم مي عبدالعزيز الجهني" loading="lazy" /></div>
+                    <span class="gallery-designer">مي عبدالعزيز الجهني</span>
+                </button>
             </div>
-
+            <button class="strip-nav strip-nav-left" id="stripLeft" aria-label="تمرير لليسار">
+                <i class="fas fa-chevron-left"></i>
+            </button>
         </div>
     </div>
 </section>
 
-<!-- قسم التواصل الاجتماعي -->
-<!-- <section class="contact-section" id="contact-section">
-    <div class="contact-bg-shapes">
-        <div class="bg-shape s1"></div>
-        <div class="bg-shape s2"></div>
-        <div class="bg-shape s3"></div>
-    </div>
-    <div class="contact-inner">
-        <div class="section-badge"><i class="fas fa-headset"></i></div>
-        <h2>تواصل مع نادي أدِيب</h2>
-        <p class="section-subtitle">نسعد بتواصلكم معنا عبر أي من القنوات التالية</p>
-        <div class="section-divider"><span></span><i class="fas fa-star"></i><span></span></div>
-
-        <div class="contact-cards-grid">
-            <a href="tel:+966543837775" class="contact-card phone-card">
-                <div class="contact-card-icon"><i class="fas fa-phone-alt"></i></div>
-                <div class="contact-card-body">
-                    <span class="contact-card-label">اتصل بنا</span>
-                    <span class="contact-card-value" dir="ltr">+966 54 383 7775</span>
-                </div>
-                <div class="contact-card-arrow"><i class="fas fa-arrow-left"></i></div>
-            </a>
-            <a href="mailto:adeab.kfu@gmail.com" class="contact-card email-card">
-                <div class="contact-card-icon"><i class="fas fa-envelope"></i></div>
-                <div class="contact-card-body">
-                    <span class="contact-card-label">البريد الإلكتروني</span>
-                    <span class="contact-card-value">adeab.kfu@gmail.com</span>
-                </div>
-                <div class="contact-card-arrow"><i class="fas fa-arrow-left"></i></div>
-            </a>
-            <a href="https://x.com/AB_KFU" target="_blank" class="contact-card x-card">
-                <div class="contact-card-icon"><i class="fab fa-x-twitter"></i></div>
-                <div class="contact-card-body">
-                    <span class="contact-card-label">منصة X</span>
-                    <span class="contact-card-value">@AB_KFU</span>
-                </div>
-                <div class="contact-card-arrow"><i class="fas fa-arrow-left"></i></div>
-            </a>
-            <a href="https://www.instagram.com/ab_kfu/" target="_blank" class="contact-card insta-card">
-                <div class="contact-card-icon"><i class="fab fa-instagram"></i></div>
-                <div class="contact-card-body">
-                    <span class="contact-card-label">انستقرام</span>
-                    <span class="contact-card-value">ab_kfu</span>
-                </div>
-                <div class="contact-card-arrow"><i class="fas fa-arrow-left"></i></div>
-            </a>
-            <a href="https://www.tiktok.com/@ab_kfu" target="_blank" class="contact-card tiktok-card">
-                <div class="contact-card-icon"><i class="fab fa-tiktok"></i></div>
-                <div class="contact-card-body">
-                    <span class="contact-card-label">تيك توك</span>
-                    <span class="contact-card-value">@ab_kfu</span>
-                </div>
-                <div class="contact-card-arrow"><i class="fas fa-arrow-left"></i></div>
-            </a>
-            <a href="https://www.youtube.com/@ab_kfu" target="_blank" class="contact-card youtube-card">
-                <div class="contact-card-icon"><i class="fab fa-youtube"></i></div>
-                <div class="contact-card-body">
-                    <span class="contact-card-label">يوتيوب</span>
-                    <span class="contact-card-value">@ab_kfu</span>
-                </div>
-                <div class="contact-card-arrow"><i class="fas fa-arrow-left"></i></div>
-            </a>
-        </div>
-    </div>
-</section> -->
-
 <!-- Supabase Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<!-- ============== FOOTER ============== -->
 <footer>
     <div class="footer-inner">
         <div class="footer-logo-area">
-            <img src="../../adeeb-logo.png" alt="نادي أدِيب" class="footer-logo">
-            <p class="footer-name">نادي أدِيب</p>
-            <p class="footer-sub">جامعة الملك فيصل — الأحساء</p>
+            <img src="../../adeeb-logo.png" alt="نادي أديب" class="footer-logo">
+            <p class="footer-name">نادي أديب</p>
         </div>
-        <!-- <div class="footer-links">
-            <a href="#design"><i class="fas fa-gift"></i> منشئ البطاقات</a>
-            <a href="#contact-section"><i class="fas fa-phone-alt"></i> تواصل معنا</a>
-        </div> -->
         <div class="footer-social">
             <a href="https://x.com/AB_KFU" target="_blank" title="X"><i class="fab fa-x-twitter"></i></a>
             <a href="https://www.instagram.com/ab_kfu/" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
             <a href="https://www.tiktok.com/@ab_kfu" target="_blank" title="TikTok"><i class="fab fa-tiktok"></i></a>
             <a href="https://www.youtube.com/@ab_kfu" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
         </div>
-        <p class="footer-copy">جميع الحقوق محفوظة &copy; 2026 &mdash; نادي أدِيب</p>
+        <p class="footer-copy">جميع الحقوق محفوظة لنادي أدِيب &copy;</p>
     </div>
 </footer>
 
