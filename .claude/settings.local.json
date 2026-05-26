@@ -240,7 +240,16 @@
       "PowerShell(Resolve-DnsName adeeb.club -Server 8.8.8.8 -Type NS 2>&1)",
       "PowerShell(Resolve-DnsName club -Server 8.8.8.8 -Type NS 2>&1)",
       "PowerShell(Resolve-DnsName \"google.com\" -Server 8.8.8.8 -Type A 2>&1)",
-      "PowerShell(Resolve-DnsName \"moha750.github.io\" -Server 8.8.8.8 -Type A 2>&1)"
+      "PowerShell(Resolve-DnsName \"moha750.github.io\" -Server 8.8.8.8 -Type A 2>&1)",
+      "Bash(xxd)",
+      "Bash(git config *)",
+      "Bash(git -c core.precomposeunicode=false ls-files -z greetings/Eid/templates/)",
+      "Bash(git add *)",
+      "Bash(git -c core.precomposeunicode=false ls-files greetings/Eid/templates/)",
+      "Bash(git -c core.precomposeunicode=false -c core.quotepath=false ls-files greetings/Eid/templates/)",
+      "Bash(git -c core.quotepath=false ls-files greetings/Eid/templates/)",
+      "Bash(git -c core.quotepath=false status greetings/Eid/templates/)",
+      "Bash(git -c core.quotepath=false -c core.precomposeunicode=false ls-files greetings/Eid/templates/)"
     ]
   },
   "enableAllProjectMcpServers": true,
