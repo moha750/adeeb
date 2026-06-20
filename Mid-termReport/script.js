@@ -534,13 +534,13 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 			// أسماء الصفحات
 			var pageNames = {
 1: 'الغلاف الأمامي',
-117: 'الغلاف الخلفي'
+118: 'الغلاف الخلفي'
 			};
 			
 			for (var i = 1; i <= totalPages; i++) {
 			var pageNum = i;
-			var imageSrc = 'Mid-termReportPages/page (' + i + ').webp'; // استخدام WebP مباشرة
-			var pageName = pageNames[i] || 'صفحة ' + i;
+			var imageSrc = 'Mid-termReportPages/page-' + (i < 10 ? '0' + i : i) + '.webp'; // استخدام WebP مباشرة (اسم مبطّن: page-01..page-118)
+			var pageName = pageNames[i] || 'صفحة <span class="num">' + i + '</span>';
 			
 			var $pageItem = $('<div>', {
 				'class': 'page-item' + (i === 1 ? ' active' : ''),
@@ -552,7 +552,7 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 			
 			var $pageInfo = $('<div>', {'class': 'page-info'});
 			$pageInfo.append($('<div>', {'class': 'page-number', text: pageNum}));
-			$pageInfo.append($('<div>', {'class': 'page-label', text: pageName}));
+			$pageInfo.append($('<div>', {'class': 'page-label', html: pageName}));
 			
 			$pageItem.append($thumbnail).append($pageInfo);
 		
@@ -643,8 +643,8 @@ img.onerror = function() {
 };
 
 // تحميل الصورة الأولى (WebP)
-console.log('🔄 Loading initial image: Mid-termReportPages/page (1).webp');
-img.src = "Mid-termReportPages/page (1).webp";
+console.log('🔄 Loading initial image: Mid-termReportPages/page-01.webp');
+img.src = "Mid-termReportPages/page-01.webp";
 
 // Fallback إضافي: إذا لم يتم التحميل خلال 8 ثواني، أخفِ شاشة التحميل
 setTimeout(function() {
@@ -653,3 +653,11 @@ setTimeout(function() {
 		hideLoadingScreen();
 	}
 }, 8000);
+
+// عرض السنة الحالية تلقائياً في حقوق النشر
+(function () {
+	var yearEl = document.querySelector('.footer-copyright .year');
+	if (yearEl) {
+		yearEl.textContent = new Date().getFullYear();
+	}
+})();
