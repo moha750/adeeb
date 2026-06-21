@@ -67,6 +67,64 @@ b&&"prevented"!=s("released",this,[a.point||b])&&i.hideFoldedPage.call(this,!0);
 this.data();b.effect&&b.effect.stop();if(a){a.to.length||(a.to=[a.to]);a.from.length||(a.from=[a.from]);for(var c=[],d=a.to.length,e=!0,g=this,i=(new Date).getTime(),j=function(){if(b.effect&&e){for(var f=[],k=Math.min(a.duration,(new Date).getTime()-i),l=0;l<d;l++)f.push(b.effect.easing(1,k,a.from[l],c[l],a.duration));a.frame(d==1?f[0]:f);if(k==a.duration){delete b.effect;g.data(b);a.complete&&a.complete()}else window.requestAnim(j)}},l=0;l<d;l++)c.push(a.to[l]-a.from[l]);b.effect=f.extend({stop:function(){e=
 false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.data(b);j()}else delete b.effect}});f.isTouch=t;f.mouseEvents=q;f.cssPrefix=S;f.cssTransitionEnd=function(){var a,b=document.createElement("fakeelement"),c={transition:"transitionend",OTransition:"oTransitionEnd",MSTransition:"transitionend",MozTransition:"transitionend",WebkitTransition:"webkitTransitionEnd"};for(a in c)if(void 0!==b.style[a])return c[a]};f.findPos=C})(jQuery);
 
+	// ===== بيانات التقرير الحالي (تُجلب من reports.json) =====
+	var REPORT = null;
+	function pad(n, w) { n = '' + n; while (n.length < w) n = '0' + n; return n; }
+	function pagePath(n) {
+		return REPORT.pagesDir + '/' + REPORT.pagePrefix + pad(n, REPORT.pagePad || 2) + '.' + (REPORT.ext || 'webp');
+	}
+
+	// بناء صفحات الكتيب وعنوانه ديناميكياً من بيانات التقرير
+	function buildReport(report) {
+		REPORT = report;
+		var total = report.pageCount;
+
+		// العنوان في الهيدر و<title>
+		var titleEl = document.querySelector('.report-title');
+		if (titleEl) {
+			titleEl.innerHTML = '<span class="report-name">' + report.name + '</span>' +
+				'<span class="report-meta">' + report.type +
+				' · <span class="num">' + report.yearHijri + '</span>هـ - <span class="num">' + report.yearGregorian + '</span>م</span>';
+		}
+		document.title = report.name + ' — ' + report.type + ' ' + report.yearHijri + 'هـ';
+
+		// بناء عناصر الصفحات داخل #flipbook
+		var fb = document.getElementById('flipbook');
+		var html = '';
+		for (var i = 1; i <= total; i++) {
+			var cls = (i === 1) ? 'hard cover-front' : (i === total) ? 'hard cover-back' : 'pages';
+			var alt = (i === 1) ? 'الغلاف الأمامي' : (i === total) ? 'الغلاف الخلفي' : ('صفحة ' + i);
+			html += '<div class="' + cls + '" data-page="' + i + '"><img src="' + pagePath(i) + '" alt="' + alt + '" /></div>';
+		}
+		fb.innerHTML = html;
+
+		// عدّاد إجمالي الصفحات
+		var totalEl = document.querySelector('.nav-page-counter .total');
+		if (totalEl) totalEl.textContent = total;
+	}
+
+	// توسيط الكتاب على الشاشة عند عرض الغلاف الأمامي أو الخلفي (صفحة مفردة)
+	var bookTx = 0;
+	function centerBook(page) {
+		var $fb = $("#flipbook");
+		var total;
+		try { total = $fb.turn("pages"); } catch (e) { return; }
+		var isCover = (page <= 1 || page >= total);
+		if (!isCover) {
+			// فرد مزدوج: لا إزاحة (الحاوية توسّطه)
+			if (bookTx !== 0) { bookTx = 0; $fb.css('transform', 'translate3d(0,0,0)'); }
+			return;
+		}
+		// قياس مركز الغلاف الظاهر فعلياً وإزاحته بالفرق الدقيق
+		var el = $fb.find(page <= 1 ? '.cover-front' : '.cover-back')[0];
+		if (!el) return;
+		var r = el.getBoundingClientRect();
+		if (!r.width) return;
+		var dx = (window.innerWidth / 2) - (r.left + r.width / 2);
+		bookTx += dx;
+		$fb.css('transform', 'translate3d(' + bookTx + 'px, 0, 0)');
+	}
+
 	// إخفاء شاشة التحميل عند اكتمال التحميل
 	function hideLoadingScreen() {
 		setTimeout(function() {
@@ -86,7 +144,7 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 		// قائمة بمصادر صوتية متعددة للتقليب (من الأفضل للأسوأ)
 		var audioSources = [
 			// ملف صوتي محلي (الأولوية الأولى)
-			'page-flip.mp3',
+			'assets/page-flip.mp3',
 			
 			// مصادر احتياطية في حال فشل تحميل الملف المحلي
 			'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c6c4c8c8e1.mp3',
@@ -418,7 +476,7 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 		if (n < 1 || (total && n > total) || _preloaded[n]) return;
 		_preloaded[n] = true;
 		var im = new Image();
-		im.src = 'Mid-termReportPages/page-' + _padPage(n) + '.webp';
+		im.src = pagePath(n);
 	}
 	// تحميل الصفحات المجاورة للصفحة الحالية بأولوية فورية عند التقليب
 	function preloadAround(page, total) {
@@ -438,23 +496,16 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 				active++;
 				var im = new Image();
 				im.onload = im.onerror = function() { active--; pump(); };
-				im.src = 'Mid-termReportPages/page-' + _padPage(n) + '.webp';
+				im.src = pagePath(n);
 			}
 		}
 		pump();
 	}
 
-	// تحميل الصورة الأولى للحصول على الأبعاد
+	// تحميل الصورة الأولى للحصول على الأبعاد (يبدأ بعد جلب بيانات التقرير)
 	var img = new Image();
 	var imageLoaded = false;
-	
-	// Timeout للتأكد من إخفاء شاشة التحميل (iOS fallback)
-	var loadTimeout = setTimeout(function() {
-		if (!imageLoaded) {
-			console.warn('⚠️ Image loading timeout - using default dimensions');
-			initFlipbook(1000, 1414); // أبعاد افتراضية
-		}
-	}, 5000);
+	var loadTimeout;
 	
 	// دالة تهيئة الكتيب
 	function initFlipbook(pageWidth, pageHeight) {
@@ -482,7 +533,7 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 			$("#flipbook").turn({
 				width: flipbookWidth,
 				height: flipbookHeight,
-				autoCenter: true,
+				autoCenter: false,
 				gradients: !isIOS(), // تعطيل gradients على iOS لتحسين الأداء
 				acceleration: !isIOS(), // تعطيل acceleration على iOS
 				elevation: 50,
@@ -495,17 +546,30 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 						playPageFlipSound();
 						updatePageCounter(page);
 						updateNavigationButtons(page);
+						// عند مغادرة الغلاف نحو فرد مزدوج، أزِل الإزاحة أثناء التقليب
+						if (page > 1 && page < totalPages && bookTx !== 0) {
+							bookTx = 0;
+							$("#flipbook").css('transform', 'translate3d(0,0,0)');
+						}
 						// تحميل الصفحات القادمة فوراً بأولوية عالية
 						preloadAround(page, totalPages);
 					},
 					turned: function(event, page, view) {
 						updatePageCounter(page);
 						updateNavigationButtons(page);
+						centerBook(page);
 					}
 				}
 			});
 			
 			console.log('✅ Flipbook initialized successfully');
+			// توسيط الغلاف الأمامي عند البدء — لحظي (بلا انتقال) ومحاولات متكررة حتى يستقرّ التخطيط
+			$("#flipbook").css('transition', 'none');
+			[100, 300, 600, 1000, 1600].forEach(function (d) {
+				setTimeout(function () { centerBook($("#flipbook").turn("page") || 1); }, d);
+			});
+			// إعادة تفعيل الانتقال السلس بعد استقرار التوسيط الأولي
+			setTimeout(function () { $("#flipbook").css('transition', ''); }, 1700);
 		} catch (error) {
 			console.error('❌ Error initializing flipbook:', error);
 			// حتى لو فشل turn.js، أخفِ شاشة التحميل
@@ -566,25 +630,14 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 			var $pagesGrid = $('#pagesGrid');
 			$pagesGrid.empty();
 			
-			// أسماء الصفحات
-			var pageNames = {
-1: 'الغلاف الأمامي',
-2: 'البسملة',
-3: 'المقدمة',
-4: 'الفهرس',
-5: 'الفهرس',
-6: 'الفهرس',
-7: 'الفهرس',
-8: 'الفهرس',
-9: 'الفهرس',
-116: 'الخاتمة',
-117: 'الخاتمة',
-118: 'الغلاف الخلفي'
-			};
-			
+			// أسماء الصفحات (من بيانات التقرير، مع أغلفة افتراضية)
+			var pageNames = REPORT.pageNames || {};
+			if (!pageNames[1]) pageNames[1] = 'الغلاف الأمامي';
+			if (!pageNames[totalPages]) pageNames[totalPages] = 'الغلاف الخلفي';
+
 			for (var i = 1; i <= totalPages; i++) {
 			var pageNum = i;
-			var imageSrc = 'Mid-termReportPages/page-' + (i < 10 ? '0' + i : i) + '.webp'; // استخدام WebP مباشرة (اسم مبطّن: page-01..page-118)
+			var imageSrc = pagePath(i);
 			var pageName = pageNames[i] || 'صفحة <span class="num">' + i + '</span>';
 			
 			var $pageItem = $('<div>', {
@@ -673,6 +726,7 @@ $(window).resize(function() {
 	var newHeight = pageHeight * newScale;
 	
 	$("#flipbook").turn("size", newWidth, newHeight);
+	centerBook($("#flipbook").turn("page"));
 });
 
 // إخفاء شاشة التحميل
@@ -691,9 +745,38 @@ img.onerror = function() {
 	initFlipbook(1000, 1414);
 };
 
-// تحميل الصورة الأولى (WebP)
-console.log('🔄 Loading initial image: Mid-termReportPages/page-01.webp');
-img.src = "Mid-termReportPages/page-01.webp";
+// ===== الإقلاع: جلب بيانات التقرير من reports.json ثم بناء الكتيب وتشغيله =====
+(function bootViewer() {
+	var id = (new URLSearchParams(window.location.search)).get('id');
+	fetch('reports.json', { cache: 'no-cache' })
+		.then(function (r) { return r.json(); })
+		.then(function (data) {
+			var list = (data && data.reports) || [];
+			var report = null;
+			for (var k = 0; k < list.length; k++) { if (list[k].id === id) { report = list[k]; break; } }
+			if (!report) report = list[0];
+			if (!report) throw new Error('لا توجد تقارير في reports.json');
+
+			// بناء صفحات الكتيب والعنوان والعدّاد
+			buildReport(report);
+
+			// مهلة احتياطية للأبعاد (iOS fallback)
+			loadTimeout = setTimeout(function () {
+				if (!imageLoaded) {
+					console.warn('⚠️ Image loading timeout - using default dimensions');
+					initFlipbook(1000, 1414);
+				}
+			}, 5000);
+
+			// تحميل الصورة الأولى للحصول على الأبعاد
+			console.log('🔄 Loading initial image:', pagePath(1));
+			img.src = pagePath(1);
+		})
+		.catch(function (err) {
+			console.error('❌ تعذّر تحميل بيانات التقرير:', err);
+			hideLoadingScreen();
+		});
+})();
 
 // Fallback إضافي: إذا لم يتم التحميل خلال 8 ثواني، أخفِ شاشة التحميل
 setTimeout(function() {
