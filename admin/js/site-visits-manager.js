@@ -401,7 +401,7 @@ class SiteVisitsManager {
             if (!container) return;
             container.innerHTML = '<div class="loading-spinner">جاري التحميل...</div>';
 
-            const pages = await this.getTopPages(days, 10);
+            const pages = await this.getTopPages(days, 50);
             if (pages.length === 0) {
                 container.innerHTML = '<p class="no-data">لا توجد بيانات متاحة</p>';
                 return;
