@@ -410,7 +410,40 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 	
 	var isiOS = isIOS();
 	console.log('📱 الجهاز:', isiOS ? 'iOS 🍎' : 'Android/Desktop 🤖');
-	
+
+	// ===== تحميل مسبق ذكي لصور الصفحات (يمنع ظهور الصفحات بيضاء عند التقليب) =====
+	var _preloaded = {};
+	function _padPage(n) { return n < 10 ? '0' + n : '' + n; }
+	function preloadPage(n, total) {
+		if (n < 1 || (total && n > total) || _preloaded[n]) return;
+		_preloaded[n] = true;
+		var im = new Image();
+		im.src = 'Mid-termReportPages/page-' + _padPage(n) + '.webp';
+	}
+	// تحميل الصفحات المجاورة للصفحة الحالية بأولوية فورية عند التقليب
+	function preloadAround(page, total) {
+		for (var d = 0; d <= 5; d++) {
+			preloadPage(page + d, total);
+			preloadPage(page - d, total);
+		}
+	}
+	// تحميل كل الصور تدريجياً في الخلفية بعدد متزامن محدود (بترتيب القراءة)
+	function preloadAllPages(total, startAt) {
+		var i = startAt || 1, active = 0, CONCURRENCY = 5;
+		function pump() {
+			while (active < CONCURRENCY && i <= total) {
+				var n = i++;
+				if (_preloaded[n]) continue;
+				_preloaded[n] = true;
+				active++;
+				var im = new Image();
+				im.onload = im.onerror = function() { active--; pump(); };
+				im.src = 'Mid-termReportPages/page-' + _padPage(n) + '.webp';
+			}
+		}
+		pump();
+	}
+
 	// تحميل الصورة الأولى للحصول على الأبعاد
 	var img = new Image();
 	var imageLoaded = false;
@@ -462,6 +495,8 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 						playPageFlipSound();
 						updatePageCounter(page);
 						updateNavigationButtons(page);
+						// تحميل الصفحات القادمة فوراً بأولوية عالية
+						preloadAround(page, totalPages);
 					},
 					turned: function(event, page, view) {
 						updatePageCounter(page);
@@ -534,6 +569,16 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 			// أسماء الصفحات
 			var pageNames = {
 1: 'الغلاف الأمامي',
+2: 'البسملة',
+3: 'المقدمة',
+4: 'الفهرس',
+5: 'الفهرس',
+6: 'الفهرس',
+7: 'الفهرس',
+8: 'الفهرس',
+9: 'الفهرس',
+116: 'الخاتمة',
+117: 'الخاتمة',
 118: 'الغلاف الخلفي'
 			};
 			
@@ -548,7 +593,7 @@ false},easing:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c}},a);this.
 			});
 			
 			var $thumbnail = $('<div>', {'class': 'page-thumbnail'});
-			$thumbnail.append($('<img>', {src: imageSrc, alt: 'صفحة ' + pageNum}));
+			$thumbnail.append($('<img>', {src: imageSrc, alt: 'صفحة ' + pageNum, loading: 'lazy'}));
 			
 			var $pageInfo = $('<div>', {'class': 'page-info'});
 			$pageInfo.append($('<div>', {'class': 'page-number', text: pageNum}));
@@ -592,6 +637,10 @@ $('#sidebarOverlay').on('click', closeSidebar);
 
 // إنشاء القائمة الجانبية
 createPagesSidebar();
+
+// تحميل مسبق لكل صور الصفحات في الخلفية (بترتيب القراءة) لمنع الصفحات البيضاء
+preloadAround(1, totalPages);
+preloadAllPages(totalPages, 1);
 
 // إخفاء شاشة التحميل
 hideLoadingScreen();
