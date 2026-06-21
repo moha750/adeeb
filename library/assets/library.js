@@ -13,7 +13,7 @@
     // سماكة الكتاب حسب عدد الصفحات (إحساس واقعي)
     var thickness = Math.max(16, Math.min(42, Math.round((r.pageCount || 60) / 5.5)));
     return '' +
-      '<a class="book-card' + (r.featured ? ' featured' : '') + '" href="viewer.html?id=' + encodeURIComponent(r.id) + '" title="' + esc(r.name) + '">' +
+      '<a class="book-card' + (r.featured ? ' featured' : '') + '" href="book.html?id=' + encodeURIComponent(r.id) + '" title="' + esc(r.name) + '">' +
         '<div class="book" style="--thickness:' + thickness + 'px">' +
           '<div class="book__3d">' +
             '<span class="book__edge"></span>' +
