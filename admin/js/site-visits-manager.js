@@ -292,6 +292,14 @@ class SiteVisitsManager {
             '/auth/update-password.html': 'تحديث كلمة المرور',
             '/auth/confirm.html': 'تأكيد البريد',
             '/links/adeeb.html': 'روابط أديب',
+            '/library/': 'مكتبة أدِيب',
+            '/library/index.html': 'مكتبة أدِيب',
+            '/library/book.html': 'عارض التقارير — مكتبة أدِيب',
+            '/reports/': 'مكتبة أدِيب',
+            '/reports/index.html': 'مكتبة أدِيب',
+            '/reports/book.html': 'عارض التقارير — مكتبة أدِيب',
+            '/Mid-termReport/': 'التقرير السنوي (قديم)',
+            '/Mid-termReport/index.html': 'التقرير السنوي (قديم)',
         };
         return pageNames[path] || path;
     }
