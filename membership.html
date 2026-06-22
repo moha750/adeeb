@@ -889,20 +889,15 @@
             let applicationId = null;
             if(sb){
               try{
-                const { data, error } = await sb.from('membership_applications').insert(payload);
+                const { data: newAppId, error } = await sb.rpc('submit_membership_application', {
+                  p: payload,
+                  p_invitation_id: invitationData ? invitationData.id : null
+                });
                 if(error) throw error;
                 saved = true;
-                applicationId = null; // لا يمكن الحصول على ID لأن anon لا يملك صلاحية SELECT
+                applicationId = newAppId || null; // الدالة الآمنة (SECURITY DEFINER) تُعيد المعرّف وتسجّل استخدام الدعوة داخليًا
                 
-                // تسجيل استخدام الدعوة إذا كانت موجودة
-                if (invitationData && applicationId) {
-                  await recordInvitationUsage(
-                    invitationData.id,
-                    applicationId,
-                    payload.full_name,
-                    payload.email
-                  );
-                }
+                // ملاحظة: تسجيل استخدام الدعوة يتم الآن داخل الدالة submit_membership_application
               } catch(e){ remoteFailed = true; saved = false; }
             }
             if(!saved){
@@ -960,7 +955,7 @@
                   retryBtn.disabled = true; retryBtn.style.opacity = .7;
                   try{
                     if(!sb) throw new Error('الخدمة غير متاحة الآن');
-                    const { error } = await sb.from('membership_applications').insert(payload);
+                    const { error } = await sb.rpc('submit_membership_application', { p: payload, p_invitation_id: invitationData ? invitationData.id : null });
                     if(error) throw error;
                     wrap.innerHTML = `
                       <div class="success-wrap">
