@@ -442,7 +442,7 @@
             },
             {
                 id: 'session-link',
-                label: 'رابط الاجتماع (للمقابلات الأونلاين)',
+                label: 'رابط الاجتماع (اختياري - للمقابلات الأونلاين)',
                 type: 'url',
                 icon: 'fa-link',
                 placeholder: 'https://meet.google.com/xxx',
@@ -517,13 +517,7 @@
                 return;
             }
 
-            // التحقق من رابط الاجتماع للمقابلات الأونلاين
-            if (type === 'online' && !link) {
-                showNotification('رابط الاجتماع إلزامي للمقابلات الأونلاين', 'error');
-                return;
-            }
-
-            // التحقق من صحة رابط الاجتماع
+            // رابط الاجتماع اختياري؛ نتحقق من صحته فقط إذا تم إدخاله
             if (type === 'online' && link) {
                 try {
                     new URL(link);
@@ -920,7 +914,7 @@
                     </select>
                 </div>
                 <div class="form-group full-width" id="meeting-link-group" style="display:${showLink ? '' : 'none'}">
-                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-link"></i></span> رابط الاجتماع</label>
+                    <label class="form-label"><span class="label-icon"><i class="fa-solid fa-link"></i></span> رابط الاجتماع (اختياري)</label>
                     <input type="url" id="session-link" class="form-input" value="${session.meeting_link || ''}">
                 </div>
                 <div class="form-group full-width" id="location-group" style="display:${showLocation ? '' : 'none'}">
@@ -1001,13 +995,7 @@
                 return;
             }
 
-            // التحقق من رابط الاجتماع للمقابلات الأونلاين
-            if (type === 'online' && !link) {
-                showNotification('رابط الاجتماع إلزامي للمقابلات الأونلاين', 'error');
-                return;
-            }
-
-            // التحقق من صحة رابط الاجتماع
+            // رابط الاجتماع اختياري؛ نتحقق من صحته فقط إذا تم إدخاله
             if (type === 'online' && link) {
                 try {
                     new URL(link);

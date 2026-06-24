@@ -3641,7 +3641,7 @@
                 },
                 {
                     id: 'new-interview-link',
-                    label: 'رابط الاجتماع (للمقابلات الأونلاين)',
+                    label: 'رابط الاجتماع (اختياري - للمقابلات الأونلاين)',
                     type: 'url',
                     icon: 'fa-link',
                     placeholder: 'https://meet.google.com/xxx',
@@ -3707,12 +3707,8 @@
                 return;
             }
 
-            // التحقق من رابط الاجتماع للمقابلات الأونلاين
-            if (type === 'online') {
-                if (!link) {
-                    showNotification('رابط الاجتماع إلزامي للمقابلات الأونلاين', 'error');
-                    return;
-                }
+            // رابط الاجتماع اختياري؛ نتحقق من صحته فقط إذا تم إدخاله
+            if (type === 'online' && link) {
                 try {
                     new URL(link);
                 } catch (e) {
