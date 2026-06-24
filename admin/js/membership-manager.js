@@ -3100,6 +3100,12 @@
                 <div class="empty-state">
                     <div class="empty-state__icon"><i class="fa-solid fa-inbox"></i></div>
                     <p class="empty-state__title">لا توجد مقابلات</p>
+                    <div class="empty-state__action">
+                        <button class="btn btn-primary" onclick="window.membershipManager.scheduleNewInterview()">
+                            <i class="fa-solid fa-plus"></i>
+                            جدولة مقابلة جديدة
+                        </button>
+                    </div>
                 </div>
             `;
             return;
@@ -3601,70 +3607,128 @@
                 return;
             }
 
-            const applicationsOptions = availableApps.map(app => 
-                `<option value="${app.id}">${app.full_name} - ${app.preferred_committee}</option>`
-            ).join('');
-
-            const result = await showCustomConfirm({
-                title: 'جدولة مقابلة جديدة',
-                html: `
-                    <div>
-                        <div class="form-group">
-                            <label>المتقدم</label>
-                            <select id="swal-application">
-                                ${applicationsOptions}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>تاريخ ووقت المقابلة</label>
-                            <input type="datetime-local" id="swal-date">
-                        </div>
-                        <div class="form-group">
-                            <label>نوع المقابلة</label>
-                            <select id="swal-type">
-                                <option value="in_person">حضوري</option>
-                                <option value="online">أونلاين</option>
-                                <option value="phone">هاتفي</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>الموقع/الرابط</label>
-                            <input type="text" id="swal-location" placeholder="الموقع أو رابط الاجتماع">
-                        </div>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'جدولة',
-                cancelButtonText: 'إلغاء',
-                preConfirm: () => {
-                    const applicationId = document.getElementById('swal-application').value;
-                    const date = document.getElementById('swal-date').value;
-
-                    if (!applicationId || !date) {
-                        showNotification('يرجى ملء جميع الحقول المطلوبة', 'error');
-                        return false;
-                    }
-                    return true;
+            const fields = [
+                {
+                    id: 'new-interview-application',
+                    label: 'المتقدم',
+                    type: 'select',
+                    icon: 'fa-user',
+                    options: availableApps.map(app => ({
+                        value: app.id,
+                        label: `${app.full_name} - ${app.preferred_committee}`
+                    })),
+                    required: true,
+                    fullWidth: true
+                },
+                {
+                    id: 'new-interview-date',
+                    label: 'تاريخ ووقت المقابلة',
+                    type: 'datetime-local',
+                    icon: 'fa-calendar',
+                    required: true
+                },
+                {
+                    id: 'new-interview-type',
+                    label: 'نوع المقابلة',
+                    type: 'select',
+                    icon: 'fa-list-check',
+                    options: [
+                        { value: 'in_person', label: 'حضوري' },
+                        { value: 'online', label: 'أونلاين' },
+                        { value: 'phone', label: 'هاتفي' }
+                    ],
+                    required: true
+                },
+                {
+                    id: 'new-interview-link',
+                    label: 'رابط الاجتماع (للمقابلات الأونلاين)',
+                    type: 'url',
+                    icon: 'fa-link',
+                    placeholder: 'https://meet.google.com/xxx',
+                    fullWidth: true
+                },
+                {
+                    id: 'new-interview-location',
+                    label: 'الموقع (للمقابلات الحضورية)',
+                    type: 'text',
+                    icon: 'fa-location-dot',
+                    placeholder: 'مثال: مبنى النادي، الطابق الثاني',
+                    fullWidth: true
                 }
+            ];
+
+            window.openFormModal('جدولة مقابلة جديدة', fields, submitNewInterview, {
+                icon: 'fa-plus-circle',
+                submitText: 'جدولة'
             });
 
-            if (!result.isConfirmed) return;
+            // إظهار/إخفاء حقلي الرابط والموقع حسب نوع المقابلة
+            setTimeout(() => {
+                const typeSelect = document.getElementById('new-interview-type');
+                const linkGroup = document.getElementById('new-interview-link')?.closest('.form-group');
+                const locationGroup = document.getElementById('new-interview-location')?.closest('.form-group');
 
-            const applicationId = document.getElementById('swal-application').value;
-            const date = document.getElementById('swal-date').value;
-            const type = document.getElementById('swal-type').value;
-            const location = document.getElementById('swal-location').value;
-            
-            const formValues = { applicationId, date, type, location };
+                if (!typeSelect || !linkGroup || !locationGroup) return;
+
+                function toggleFields() {
+                    const val = typeSelect.value;
+                    linkGroup.style.display = val === 'online' ? '' : 'none';
+                    locationGroup.style.display = val === 'in_person' ? '' : 'none';
+                }
+
+                toggleFields();
+                typeSelect.addEventListener('change', toggleFields);
+            }, 100);
+        } catch (error) {
+            console.error('خطأ في تحضير نافذة جدولة المقابلة:', error);
+            showNotification('خطأ في جدولة المقابلة', 'error');
+        }
+    }
+
+    /**
+     * إرسال بيانات المقابلة الفردية الجديدة
+     */
+    async function submitNewInterview(formData) {
+        try {
+            const applicationId = formData['new-interview-application'];
+            const date = formData['new-interview-date'];
+            const type = formData['new-interview-type'];
+            const link = (formData['new-interview-link'] || '').trim();
+            const location = (formData['new-interview-location'] || '').trim();
+
+            if (!applicationId || !date) {
+                showNotification('يرجى ملء جميع الحقول المطلوبة', 'error');
+                return;
+            }
+
+            // التحقق من أن الموعد ليس في الماضي
+            if (new Date(date) < new Date()) {
+                showNotification('لا يمكن جدولة مقابلة في وقت سابق للوقت الحالي', 'error');
+                return;
+            }
+
+            // التحقق من رابط الاجتماع للمقابلات الأونلاين
+            if (type === 'online') {
+                if (!link) {
+                    showNotification('رابط الاجتماع إلزامي للمقابلات الأونلاين', 'error');
+                    return;
+                }
+                try {
+                    new URL(link);
+                } catch (e) {
+                    showNotification('يرجى إدخال رابط صحيح للاجتماع', 'error');
+                    return;
+                }
+            }
 
             const { error: insertError } = await window.sbClient
                 .from('membership_interviews')
                 .insert({
-                    application_id: formValues.applicationId,
-                    interview_date: new Date(formValues.date).toISOString(),
-                    interview_type: formValues.type,
-                    interview_location: formValues.location || null,
-                    meeting_link: formValues.type === 'online' ? formValues.location : null,
+                    application_id: applicationId,
+                    interview_date: new Date(date).toISOString(),
+                    interview_type: type,
+                    interview_location: type === 'in_person' ? (location || null) : null,
+                    meeting_link: type === 'online' ? link : null,
                     created_by: currentUser.id,
                     status: 'scheduled',
                     result: 'pending'
@@ -4565,6 +4629,7 @@
         viewArchive: viewArchive,
         downloadArchive: downloadArchive,
         loadInterviews: loadInterviews,
+        scheduleNewInterview: scheduleNewInterview,
         loadBarzakh: loadBarzakh,
         viewInterview: viewInterview,
         acceptInterview: acceptInterview,
