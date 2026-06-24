@@ -202,10 +202,6 @@
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
     color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 180px;
 }
 
 
@@ -218,10 +214,6 @@
     .admin-header__container {
         padding: 0 var(--spacing-lg);
     }
-
-    .user-name {
-        max-width: 140px;
-    }
 }
 
 /* هواتف / أقراص */
@@ -233,10 +225,6 @@
     .user-info {
         gap: 0.6rem;
         padding: 4px 10px 4px 4px;
-    }
-
-    .user-name {
-        max-width: 110px;
     }
 
     .user-avatar {
@@ -270,7 +258,6 @@
 
     .user-name {
         font-size: 0.8rem;
-        max-width: 90px;
     }
 }
 
