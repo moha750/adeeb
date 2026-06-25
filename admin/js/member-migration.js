@@ -295,7 +295,7 @@
             html: `
                 <p>هل أنت متأكد من ترحيل العضو:</p>
                 <p>${escapeHtml(member.application.full_name)}</p>
-                <p>سيتم إنشاء حساب جديد وإرسال بريد إلكتروني بكلمة المرور المؤقتة</p>
+                <p>سيتم إنشاء حساب جديد وإرسال بريد إلكتروني يحتوي رابط إكمال التسجيل (ينشئ العضو كلمة المرور بنفسه)</p>
             `,
             icon: 'question',
             showCancelButton: true,
@@ -419,7 +419,8 @@
                     results.push({
                         name: member.application.full_name,
                         email: data.email,
-                        password: data.temporary_password,
+                        emailSent: data.email_sent,
+                        emailError: data.email_error,
                         success: true
                     });
                 } else {
@@ -435,9 +436,11 @@
 
         const resultsHtml = results.map(r => `
             <div>
-                <p>${r.name}</p>
-                <p>Email: ${r.email}</p>
-                <p>Password: <code>${r.password}</code></p>
+                <p>${escapeHtml(r.name)}</p>
+                <p>Email: ${escapeHtml(r.email || '')}</p>
+                <p>${r.emailSent
+                    ? '<i class="fa-solid fa-check-circle"></i> تم إرسال رابط إكمال التسجيل'
+                    : `<i class="fa-solid fa-triangle-exclamation"></i> لم يُرسَل الإيميل${r.emailError ? ` (${escapeHtml(r.emailError)})` : ''}`}</p>
             </div>
         `).join('');
 
@@ -449,7 +452,7 @@
                 <div>
                     ${resultsHtml}
                 </div>
-                <p>يرجى حفظ كلمات المرور وإرسالها للأعضاء</p>
+                <p>تم إرسال رابط إكمال التسجيل إلى بريد كل عضو، ويقوم العضو بإنشاء كلمة المرور بنفسه عبر الرابط</p>
             `,
             icon: successCount > 0 ? 'success' : 'error',
             confirmButtonText: 'حسناً',
