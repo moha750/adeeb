@@ -923,7 +923,14 @@
 
         const answer = getCurrentAnswer(question);
 
-        if (!answer || (Array.isArray(answer) && answer.length === 0) || answer === '') {
+        // ملاحظة: false (إجابة "لا" في yes_no) و 0 (رقم/شريط/مقياس) إجابات صحيحة.
+        // لذا نتحقق من "عدم الإجابة" صراحةً بدل !answer الذي يرفض القيم الزائفة خطأً.
+        const isEmpty = answer === null
+            || answer === undefined
+            || answer === ''
+            || (Array.isArray(answer) && answer.length === 0);
+
+        if (isEmpty) {
             errorContainer.innerHTML = `
                 <div class="error-message">
                     <i class="fa-solid fa-exclamation-circle"></i>
