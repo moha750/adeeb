@@ -3046,13 +3046,17 @@
                     </div>
 
                     <div class="uc-card__footer">
-                        <button class="btn ${getStatusBtnClass(app.status)}" onclick="window.membershipManager.viewApplication('${app.id}')">
+                        <button class="btn btn-warning" onclick="window.membershipManager.viewApplication('${app.id}')">
                             <i class="fa-solid fa-eye"></i>
                             عرض التفاصيل
                         </button>
-                        <button class="btn btn-success" onclick="window.membershipManager.scheduleInterviewFromBarzakh('${app.id}')">
+                        <button class="btn btn-primary" onclick="window.membershipManager.scheduleInterviewFromBarzakh('${app.id}')">
                             <i class="fa-solid fa-calendar-plus"></i>
                             جدولة مقابلة
+                        </button>
+                        <button class="btn btn-success" onclick="window.membershipManager.acceptFromBarzakh('${app.id}', '${escapeHtml(app.full_name || '')}')">
+                            <i class="fa-solid fa-user-check"></i>
+                            قبول مباشر
                         </button>
                         <button class="btn btn-danger" onclick="window.membershipManager.rejectFromBarzakh('${app.id}', '${escapeHtml(app.full_name || '')}')">
                             <i class="fa-solid fa-user-xmark"></i>
@@ -3378,7 +3382,11 @@
                         ${data.result_notes ? `
                             <div class="modal-info-box ${data.result === 'accepted' ? 'box-success' : data.result === 'rejected' ? 'box-danger' : 'box-warning'}">
                                 <i class="fa-solid fa-${data.result === 'accepted' ? 'circle-check' : data.result === 'rejected' ? 'circle-xmark' : 'note-sticky'}"></i>
-                                <div><strong>${data.result === 'accepted' ? 'ملاحظات قبول المقابلة' : data.result === 'rejected' ? 'سبب رفض المقابلة' : 'ملاحظات النتيجة'}</strong><br>${escapeHtml(data.result_notes)}</div>
+                                <div>
+                                    <strong>${data.result === 'accepted' ? 'ملاحظات قبول المقابلة' : data.result === 'rejected' ? 'سبب رفض المقابلة' : 'ملاحظات النتيجة'}</strong>${data.result === 'accepted' && !data.interview_date ? ' (قبول مباشر بدون مقابلة)' : ''}
+                                    <br>${escapeHtml(data.result_notes)}
+                                    ${data.result === 'accepted' && !data.interview_date && data.decided_by_user ? `<br><strong>تم القبول بواسطة:</strong> ${escapeHtml(data.decided_by_user.full_name)}${data.decided_at ? ` — ${new Date(data.decided_at).toLocaleDateString('ar-SA')}` : ''}` : ''}
+                                </div>
                             </div>
                         ` : ''}
                         ${data.notes ? `
@@ -4411,6 +4419,87 @@
     }
 
     /**
+     * قبول متقدم مباشرة من البرزخ (بدون جدولة مقابلة)
+     */
+    async function acceptFromBarzakh(applicationId, applicantName) {
+        if (!(await ensureApplicationInScope(applicationId))) return;
+
+        const { value: notes } = await showCustomInput({
+            title: 'قبول المتقدم مباشرة',
+            input: 'textarea',
+            inputLabel: 'ملاحظات القبول (اختياري)',
+            inputPlaceholder: `سيتم قبول ${applicantName} ونقله إلى قائمة المقبولين بدون مقابلة...`,
+            showCancelButton: true,
+            confirmButtonText: 'قبول مباشر',
+            cancelButtonText: 'إلغاء'
+        });
+
+        if (notes === null) return;
+
+        try {
+            // الحصول على معرف المستخدم الحالي
+            const { data: { user } } = await window.sbClient.auth.getUser();
+            const userId = user?.id || currentUser?.id;
+            if (!userId) {
+                showNotification('يجب تسجيل الدخول أولاً', 'error');
+                return;
+            }
+
+            // الحصول على بيانات الطلب
+            const { data: application, error: appError } = await window.sbClient
+                .from('membership_applications')
+                .select('*')
+                .eq('id', applicationId)
+                .single();
+
+            if (appError) throw appError;
+
+            // إنشاء سجل مقابلة بقبول مباشر (بدون جدولة)
+            const { data: interviewData, error: interviewError } = await window.sbClient
+                .from('membership_interviews')
+                .insert({
+                    application_id: applicationId,
+                    status: 'completed',
+                    result: 'accepted',
+                    result_notes: notes || null,
+                    decided_at: new Date().toISOString(),
+                    decided_by: userId
+                })
+                .select()
+                .single();
+
+            if (interviewError) throw interviewError;
+
+            // إضافة إلى جدول المقبولين
+            const { error: acceptedError } = await window.sbClient
+                .from('membership_accepted_members')
+                .insert({
+                    application_id: application.id,
+                    interview_id: interviewData.id,
+                    full_name: application.full_name,
+                    email: application.email,
+                    phone: application.phone,
+                    assigned_committee: application.preferred_committee,
+                    added_by: userId
+                });
+
+            if (acceptedError) {
+                const isConflict = acceptedError.code === '23505' || acceptedError.status === 409;
+                if (!isConflict) throw acceptedError;
+            }
+
+            showNotification('تم قبول المتقدم مباشرة ونقله إلى قائمة المقبولين', 'success');
+
+            // إعادة تحميل البرزخ
+            await loadBarzakh();
+
+        } catch (error) {
+            console.error('خطأ في قبول المتقدم مباشرة:', error);
+            showNotification('حدث خطأ أثناء قبول المتقدم', 'error');
+        }
+    }
+
+    /**
      * رفض متقدم من البرزخ
      */
     async function rejectFromBarzakh(applicationId, applicantName) {
@@ -4634,6 +4723,7 @@
         confirmCancelInterview: confirmCancelInterview,
         cancelIndividualInterview: cancelIndividualInterview,
         confirmCancelIndividualInterview: confirmCancelIndividualInterview,
+        acceptFromBarzakh: acceptFromBarzakh,
         rejectFromBarzakh: rejectFromBarzakh,
         confirmRejectFromBarzakh: confirmRejectFromBarzakh,
         loadAcceptedMembers: loadAcceptedMembers,
