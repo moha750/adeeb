@@ -94,9 +94,13 @@
         init: function () {
             // لا نتتبّع أثناء التطوير المحلي حتى لا تتلوّث تحليلات الإنتاج
             var host = window.location.hostname;
-            if (host === 'localhost' || host === '127.0.0.1' || host === '' ||
-                host === '::1' || /^192\.168\./.test(host) || /^10\./.test(host) ||
-                host.endsWith('.local')) {
+            if (host === '' || host === '::1' || host === '0.0.0.0' ||
+                host === 'localhost' || host.endsWith('.localhost') ||
+                /^127\./.test(host) ||                              // كامل 127.0.0.0/8
+                /^10\./.test(host) ||                               // 10.0.0.0/8
+                /^192\.168\./.test(host) ||                         // 192.168.0.0/16
+                /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||          // 172.16.0.0/12
+                host.endsWith('.local') || host.endsWith('.test')) {
                 return;
             }
             try {
