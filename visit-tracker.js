@@ -92,6 +92,13 @@
         ended: false,
 
         init: function () {
+            // لا نتتبّع أثناء التطوير المحلي حتى لا تتلوّث تحليلات الإنتاج
+            var host = window.location.hostname;
+            if (host === 'localhost' || host === '127.0.0.1' || host === '' ||
+                host === '::1' || /^192\.168\./.test(host) || /^10\./.test(host) ||
+                host.endsWith('.local')) {
+                return;
+            }
             try {
                 this.visitorId = getOrCreateVisitorId();
                 this.sessionId = getOrCreateSessionId();
