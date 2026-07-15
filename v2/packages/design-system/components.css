@@ -201,7 +201,7 @@
   flex: 0 0 calc((100% - 44px) / 3);
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--color-surface);
   border: var(--card-stroke-w) solid var(--card-stroke);
   border-radius: var(--radius);
   overflow: hidden;
@@ -244,7 +244,7 @@
   top: 14px;
   inset-inline-start: 14px;
   z-index: 2;
-  background: #fff;
+  background: var(--color-surface);
   border-radius: var(--radius);
   padding: 8px 12px;
   text-align: center;
@@ -310,7 +310,7 @@
   height: 46px;
   border-radius: 50%;
   border: 1px solid #cfd7e0;
-  background: #fff;
+  background: var(--color-surface);
   color: var(--navy-700);
   font-size: 20px;
   cursor: pointer;
@@ -458,12 +458,14 @@
   font: inherit;
   color: inherit;
 }
+/* بند التنقّل عنصر تحكّم لا سطح مؤطَّر، فيحتفظ بحدّه الخاصّ (استثناء القاعدة ٤)
+   — لكن بالرموز: كان #fff و#dde3ea محفورَين. */
 .ns-li:hover {
-  background: #fff;
+  background: var(--color-surface);
 }
 .ns-li.ns-on {
-  background: #fff;
-  border-color: #dde3ea;
+  background: var(--color-surface);
+  border-color: var(--steel-100);
   box-shadow: var(--shadow-sm);
 }
 .ns-th {
@@ -658,7 +660,7 @@
   flex: 0 0 auto;
 }
 .bc-socs a:hover {
-  background: #fff;
+  background: var(--color-surface);
   color: var(--navy-700);
 }
 .bc-arrows {
@@ -672,7 +674,7 @@
   height: 44px;
   border-radius: 50%;
   border: 1px solid #cfd7e0;
-  background: #fff;
+  background: var(--color-surface);
   color: var(--navy-700);
   font-size: 20px;
   cursor: pointer;
@@ -796,6 +798,8 @@
 .abtn-ghost-warning:hover:not(:disabled) { background: color-mix(in oklab, var(--warning-500) 14%, transparent); border-color: var(--warning-500); }
 /* الشبحيّ: حدّ أسمك (stroke) */
 .abtn-ghost, .abtn-ghost-danger, .abtn-ghost-success, .abtn-ghost-warning, .abtn-inverse-ghost { border-width: 2px; }
+/* أبيضٌ مقصود لا سطح: الزرّ المعكوس يجلس على خلفيّة داكنة — لو صار var(--color-surface)
+   لانقلب داكنًا على داكن يوم يأتي الوضع الداكن. لا تُرمّزه بالسطح. */
 .abtn-inverse { background: #fff; color: var(--navy-700); }
 .abtn-inverse:hover:not(:disabled) { background: var(--navy-50); }
 .abtn-inverse::after { display: none; }
@@ -1014,7 +1018,7 @@
 .ach input { position: absolute; opacity: 0; width: 0; height: 0; }
 .ach-box, .ach-radio {
   width: 22px; height: 22px; flex: 0 0 auto;
-  border: 2px solid var(--navy-200); background: #fff;
+  border: 2px solid var(--navy-200); background: var(--color-surface);
   display: grid; place-items: center;
   transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -1029,6 +1033,8 @@
 .ach-chk path { stroke-dasharray: 26; stroke-dashoffset: 26; transition: stroke-dashoffset 0.32s ease; }
 .ach:has(input:checked) .ach-chk { opacity: 1; transform: scale(1); }
 .ach:has(input:checked) .ach-chk path { stroke-dashoffset: 0; }
+/* أبيضٌ مقصود لا سطح: النقطة والمقبض والشرطة يجلسون فوق لونٍ مملوء
+   (راديو مختار · مفتاح بـ--grad-primary · مربّع غير محدَّد) — لا تُرمّزهم بالسطح. */
 .ach-dot { width: 9px; height: 9px; border-radius: 50%; background: #fff; transform: scale(0); transition: transform 0.4s cubic-bezier(0.2, 1.9, 0.35, 1); }
 .ach:has(input:checked) .ach-dot { transform: scale(1); }
 /* المفتاح */
@@ -1743,6 +1749,12 @@
 .dt-c.center { justify-content: center; }
 .dt-c.end { justify-content: flex-end; }
 .dt-c .txt { white-space: nowrap; }
+/* عمود قاصّ (‏`clip` في Column‏) — استثناء مقصود من قانون «تُقاس بالمحتوى فلا اقتطاع»:
+   سطر واحد يُقصّ بـ«…» بدل توسيع الجدول، لحقل قد يكون جملة (سبب الإنهاء).
+   النصّ كاملًا يبقى في نافذة عرض العضو. لا يعمل وحده: يلزمه `clip` على العمود
+   ليُحترم الحدّ الأدنى للمسار — بـ`max-content` لا يجد المتصفّح ما يقصّه. */
+.dt-c-clip { overflow: hidden; }
+.dt-c-clip .txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .dt-c .num { font-family: var(--font-latin); }
 /* حدّ الصفّ وتناوبه ومروره — على الخلايا (الصفّ بلا صندوق) */
 .dt-body .dt-row .dt-c { border-bottom: 1px solid var(--color-border); }
@@ -2070,9 +2082,14 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
   background: color-mix(in oklab, var(--steel-500) 3%, var(--color-surface));
   border-radius: 0 0 var(--radius) var(--radius);
 }
-.mdl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media (max-width: 520px) { .mdl-grid { grid-template-columns: 1fr; } }
-.mdl-full { grid-column: 1 / -1; }
+/* شبكة حقول النافذة — flex لا grid، بدواء القاعدة ٦ نفسه: الحقل اليتيم في صفّه يمتدّ عليه كلّه.
+   الأساس ½ (ناقص نصف الفجوة) فيقترن حقلان في صفّ؛ والنموّ (grow:1) يمدّ اليتيم إلى 100% تلقائيًّا.
+   وهذا يعمل داخل كلّ «شوط» على حدة: بنود mdl-full (العناوين والحقول الكاملة) تقطع الصفّ بأساسها 100%،
+   فيُحسب يتيم كلّ شوط وحده — بلا عدٍّ في JSX ولا حيَل nth-child (تُفسدها بنود mdl-full المتخلّلة). */
+.mdl-grid { display: flex; flex-wrap: wrap; gap: 14px; }
+.mdl-grid > * { flex: 1 1 calc(50% - 7px); min-width: 0; }
+.mdl-full { flex-basis: 100%; }   /* بعد القاعدة أعلاه: تساوت الخصوصيّة فالمتأخّرة تفوز */
+@media (max-width: 520px) { .mdl-grid > * { flex-basis: 100%; } }
 .mdl-fieldlabel { display: block; font-size: 12.5px; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px; }
 .mdl-seg { display: inline-flex; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 3px; gap: 2px; width: max-content; }
 .mdl-seg button { font-family: inherit; font-size: 13px; font-weight: 700; color: var(--color-text-muted); background: 0; border: 0; border-radius: var(--radius-nested); padding: 7px 15px; cursor: pointer; transition: color var(--dur-fast); }
@@ -2649,11 +2666,6 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .mc-info-label { font-size: 11px; font-weight: 600; color: var(--color-text-muted); }
 /* وزن demi (600): أثقل من medium؛ وعنده الأرقام (مباشرة أو عبر التحويل) كلّها eras-demi متطابقة */
 .mc-info-val { min-width: 0; font-size: 13px; font-weight: 600; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; unicode-bidi: plaintext; }
-/* سبب إنهاء العضوية قد يكون جملة — يلتفّ على أسطر (الأيقونة أعلى الصفّ) */
-.mc-info-row-top { align-items: flex-start; }
-.mc-info-reason { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.5; }
-/* خليّة السبب في الجدول تلتفّ بدل سطر واحد طويل */
-.dt-c .txt-wrap { white-space: normal; line-height: 1.45; }
 /* تذييل الكرت: قسم مستقلّ للأزرار (الزرّ الرئيسيّ بعرض كامل) */
 .mc-foot { width: 100%; margin-top: 16px; padding: 14px 16px; border-top: 1px solid color-mix(in oklab, var(--steel-600) 12%, var(--color-border)); background: color-mix(in oklab, var(--steel-600) 4%, var(--color-surface)); display: flex; flex-direction: column; gap: 8px; }
 .mc-foot .abtn { width: 100%; }
