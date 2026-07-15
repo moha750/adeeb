@@ -182,13 +182,9 @@ export function StructureView({ model }: { model: StructureModel }) {
         }
       />
 
-      {model.president && match(model.president.name) ? (
-        <section className="org-sec">
-          <h3 className="org-sec-h">قيادة النادي</h3>
-          <div className="org-people"><Person h={model.president} role tone="gold" /></div>
-        </section>
-      ) : null}
-
+      {/* «قيادة النادي» كانت قسمًا محفورًا يطفو فوق الشجرة، ويعرض رئيس النادي
+          مرّةً ثانية — فهو أصلًا عضوٌ في المجلس الإداريّ ورئيسُه، والقاعدة تقولها
+          (council_type + membership_kind + head_role_name). حُذف: مصدرٌ واحد لا اثنان. */}
       <section className="org-council">
         <div className="org-council-h org-council-admin">
           <div className="org-council-t"><h3>{model.administrative.name}</h3>{edit ? <MetaBtn light onClick={() => openMeta({ kind: "council", id: model.administrative.id, name: model.administrative.name, desc: model.administrative.desc, link: model.administrative.link })} /> : null}</div>

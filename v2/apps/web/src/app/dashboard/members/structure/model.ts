@@ -79,8 +79,10 @@ export type CouncilBody = CouncilInfo & {
   subordinateCount: number; // من يقع تحت فرعه
 };
 
+// لا حقل `president` هنا: رئيس النادي عضوٌ في المجلس الإداريّ ورئيسُه، تقوله
+// القاعدة (council_type + membership_kind + head_role_name) — فيظهر في مقاعده
+// لا في قسمٍ محفورٍ فوق الشجرة. مصدرٌ واحد لا اثنان.
 export type StructureModel = {
-  president: Holder | null;
   administrative: CouncilBody & { committees: CommitteeNode[] };
   executive: CouncilBody & { departments: DepartmentNode[] };
   // الإدارة ليست لجنة — وإن سكنت جدولها. تُعدّ على حدة أو نكذب بالرقم.
@@ -88,16 +90,16 @@ export type StructureModel = {
   anomalies: string[];
 };
 
+// ما بقي من الأسماء المحفورة. ذاب سبعةٌ منها حين صارت القاعدة تقول ما كانت
+// تقوله: الرئاسة في head_role_name، والقيادة في leader_role_name، والعضويّة في
+// member_role_name، والمجلس في council_type + membership_kind.
+// والباقيان دورٌ لا تُصرّح به وحدةٌ بعد:
+//   deptHead — القسم لا يحمل عمود «دور منسّقه» (يُشتقّ من department_id في التعيين)
+//   deputy   — نائب اللجنة لا عمود له في committees
+// لو أضيف departments.head_role_name وcommittees.deputy_role_name، ذابا أيضًا.
 const R = {
-  president: "club_president",
-  advisor: "president_advisor",
-  execPresident: "executive_council_president",
-  hrLeader: "hr_committee_leader",
-  qaLeader: "qa_committee_leader",
   deptHead: "department_head",
-  leader: "committee_leader",
   deputy: "deputy_committee_leader",
-  member: "committee_member",
 } as const;
 
 // عضو الإدارة يشرف على عدّة لجان، فله صفّ لكلّ لجنة — ويُعرض مرّة واحدة في إدارته.
@@ -247,7 +249,6 @@ export function buildStructure(
   if (noQa > 0) anomalies.push(`${noQa} لجنة بلا مشرف من إدارة الضمان والجودة`);
 
   return {
-    president: firstOf(R.president),
     administrative: { ...administrative, committees: adminCommittees },
     executive: { ...executive, departments: departmentNodes },
     stats: {
