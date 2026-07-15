@@ -3,7 +3,7 @@
 
 export type RawCouncil = { id: string; name_ar: string | null; description: string | null; group_link: string | null };
 export type RawDept = { id: number; name_ar: string | null; display_order: number | null; description: string | null; group_link: string | null };
-export type RawCommittee = { id: number; committee_name_ar: string | null; department_id: number | null; description: string | null; group_link: string | null };
+export type RawCommittee = { id: number; committee_name_ar: string | null; department_id: number | null; council_id: string; leader_role_name: string; description: string | null; group_link: string | null };
 export type RawRole = { id: number; role_name: string; role_name_ar: string | null; role_level: number; council_type: string | null; is_elected: boolean | null };
 export type RawUserRole = { user_id: string; role_id: number; committee_id: number | null; department_id: number | null };
 export type RawProfile = { id: string; full_name: string | null; avatar_url: string | null };
@@ -113,11 +113,13 @@ export function buildStructure(
 
   const committeeNode = (c: RawCommittee, kind: "operational" | "admin"): CommitteeNode => {
     const inside = inCommittee(c.id);
-    const leader = inside.find((h) => h.roleName === R.leader) ?? null;
+    // القائد = من يشغل الدور الذي تُصرّح الوحدة بأنه يقودها (committees.leader_role_name).
+    // يعمل للإدارتين واللجان سواءً — لا حالة خاصّة ولا مطابقة اسم.
+    const leader = inside.find((h) => h.roleName === c.leader_role_name) ?? null;
     const deputy = inside.find((h) => h.roleName === R.deputy) ?? null;
     // المشرف الإداريّ (عضو إداريّ من إحدى الإدارتين) — دور إشراف منفصل عن أعضاء اللجنة
     const overseer = inside.find((h) => h.roleName === "hr_admin_member" || h.roleName === "qa_admin_member") ?? null;
-    const skip = new Set<string>([R.leader, R.deputy, "hr_admin_member", "qa_admin_member"]);
+    const skip = new Set<string>([c.leader_role_name, R.deputy, "hr_admin_member", "qa_admin_member"]);
     const exclude = new Set([leader?.userId, deputy?.userId, overseer?.userId].filter(Boolean) as string[]);
     const members = inside.filter((h) => !skip.has(h.roleName) && !exclude.has(h.userId));
     return {
@@ -134,20 +136,10 @@ export function buildStructure(
     };
   };
 
-  const adminLeaderFor = (name: string): Holder | null => {
-    if (name.includes("موارد")) return firstOf(R.hrLeader);
-    if (name.includes("ضمان") || name.includes("جودة")) return firstOf(R.qaLeader);
-    return null;
-  };
-
-  const operational = committees.filter((c) => c.department_id != null);
+  const operational = committees.filter((c) => c.council_id !== "administrative");
   const adminCommittees = committees
-    .filter((c) => c.department_id == null)
-    .map((c) => {
-      const node = committeeNode(c, "admin");
-      if (!node.leader) node.leader = adminLeaderFor(node.name);
-      return node;
-    });
+    .filter((c) => c.council_id === "administrative")
+    .map((c) => committeeNode(c, "admin"));
 
   const sortedDepts = [...departments].sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));
   const departmentNodes: DepartmentNode[] = sortedDepts.map((d) => {
@@ -247,7 +239,7 @@ export function buildPositions(
     out.push({ key: `head-${d.id}`, roleId: id("department_head"), roleName: "department_head", roleAr: ar("department_head"), level: lvl("department_head"), scope: name, council: "executive", committeeId: null, departmentId: d.id, holder: findHolder("department_head", { departmentId: d.id }), singleton: true, elected: el("department_head") });
   }
 
-  const operational = committees.filter((c) => c.department_id != null).sort((a, b) => a.id - b.id);
+  const operational = committees.filter((c) => c.council_id !== "administrative").sort((a, b) => a.id - b.id);
   for (const c of operational) {
     const name = c.committee_name_ar ?? `لجنة #${c.id}`;
     out.push({ key: `lead-${c.id}`, roleId: id("committee_leader"), roleName: "committee_leader", roleAr: ar("committee_leader"), level: lvl("committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holder: findHolder("committee_leader", { committeeId: c.id }), singleton: true, elected: el("committee_leader") });
