@@ -26,6 +26,16 @@ const MEMBER: MemberRow = {
 // ٦ = صفّان تامّان · ٧ = يبقى واحد فيمتدّ · ٨ = يبقى اثنان فيقتسمان
 const GRID_CASES = [6, 7, 8] as const;
 
+// نغمة كرت العضو تُشتقّ من حالته (TONE_CLASS في MemberCard)، فالمعروض هنا هو
+// المسلك الحقيقيّ لا أصنافًا تُفرَض. أربع حالات ← ثلاث نغمات + خامل:
+//   .mc-tone-success معرَّف في الهوية ولا تستدعيه حالةٌ — صنفٌ يتيم.
+const MC_STATES: Array<{ status: MemberRow["status"]; label: string }> = [
+  { status: "active",    label: "نشط — mc-tone-brand" },
+  { status: "pending",   label: "بانتظار الإكمال — mc-tone-warning" },
+  { status: "suspended", label: "موقوف — mc-tone-danger" },
+  { status: "inactive",  label: "غير نشط — بلا نغمة (الأساس الخامل)" },
+];
+
 function Label({ children }: { children: React.ReactNode }) {
   return (
     <p className="mb-4 font-latin text-xs font-bold uppercase tracking-[0.18em] text-content-muted">{children}</p>
@@ -99,13 +109,24 @@ export default function CardsPage() {
           </section>
 
           <section>
-            <Label>كرت العضو (المستخدَم في لوحة إدارة الأعضاء)</Label>
-            <div className="max-w-xs">
-              <MemberCard
-                member={MEMBER}
-                onOpen={() => {}}
-                actions={[{ items: [{ label: "تعديل" }, { label: "حذف نهائيّ", danger: true }] }]}
-              />
+            <Label>كرت العضو — النغمات (النغمة تُشتقّ من الحالة)</Label>
+            <p className="mb-6 max-w-2xl text-content-muted">
+              السطح والحدّ والظلّ يتنغّمون معًا من رمزٍ واحد
+              (<code className="font-latin">--surface-aurora</code> ·
+              <code className="font-latin"> --border-aurora</code> ·
+              <code className="font-latin"> --shadow-tone</code>) — القاعدتان ٤ و٥.
+            </p>
+            <div className="mc-grid">
+              {MC_STATES.map((s) => (
+                <div key={s.status}>
+                  <p className="mb-3 font-latin text-xs font-bold text-content-muted">{s.label}</p>
+                  <MemberCard
+                    member={{ ...MEMBER, id: s.status, status: s.status }}
+                    onOpen={() => {}}
+                    actions={[{ items: [{ label: "تعديل" }, { label: "حذف نهائيّ", danger: true }] }]}
+                  />
+                </div>
+              ))}
             </div>
           </section>
 

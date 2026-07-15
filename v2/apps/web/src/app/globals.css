@@ -65,6 +65,11 @@
   --font-display: "Lyon Arabic", serif;
   --font-body: "Lyon Arabic", sans-serif;
   --font-latin: "Eras", sans-serif;
+  /* خطّ الحقول — ترتيبٌ لا تخصيص: المتصفّح يختار لكلّ محرفٍ أوّلَ خطٍّ يملك رسمه. فالإنجليزيّة
+     والأرقام والرموز تأخذ Eras، والعربيّة تسقط إلى Lyon Arabic (فـEras بلا حروف عربيّة).
+     يسري على كلّ حقل مهما كان محتواه — القيمةُ والتلميحُ والمختلطُ منهما في السطر الواحد.
+     لا يُركَّب من --font-latin و --font-body: احتياط sans-serif داخل الأوّل يلتقط العربيّة قبل الثاني. */
+  --font-field: "Eras", "Lyon Arabic", sans-serif;
 }
 
 /* ============================================================
@@ -154,12 +159,12 @@
   }
 
   /* عناصر النماذج لا تضمن وراثة خصائص الخط عبر اختصار `font`؛ نُثبّت الخطّ والمدّ صراحةً
-     كي يظهر نصّ المستخدم داخل الحقول ممدودًا هو الآخر. var(--font-body) = "Lyon Arabic", sans-serif. */
+     كي يظهر نصّ المستخدم داخل الحقول ممدودًا هو الآخر. var(--font-field) = "Eras", "Lyon Arabic". */
   input,
   textarea,
   select,
   button {
-    font-family: var(--font-body);
+    font-family: var(--font-field);
     font-feature-settings: "ss06" 1, "ss07" 1, "salt" 1;
   }
 
@@ -1288,11 +1293,13 @@
 .abtn-warning, .abtn-ghost-warning, .tt-warning, .aalert-tone-warning{ --shadow-tone: var(--shadow-tone-warning); }
 .abtn-danger, .abtn-ghost-danger, .tt-error, .aalert-tone-danger{ --shadow-tone: var(--shadow-tone-danger); }
 
-/* (د) كرت العضو منغَّم بلون الحالة الدلاليّة (Aurora + ترويسة + أفاتار + نصوص 600). مُحسَّن للفاتح؛ الداكن متابعة. */
-.mc-tone-brand  { --surface-aurora:linear-gradient(135deg, #e7ebf0, var(--color-surface) 62%); }
-.mc-tone-success{ --surface-aurora:linear-gradient(135deg, #e4f3ec, var(--color-surface) 62%); --border-aurora:color-mix(in oklab,#1a8452 30%,var(--color-border)); --shadow-tone: var(--shadow-tone-success); }
-.mc-tone-warning{ --surface-aurora:linear-gradient(135deg, #faf2e2, var(--color-surface) 62%); --border-aurora:color-mix(in oklab,#b87a0c 32%,var(--color-border)); --shadow-tone: var(--shadow-tone-warning); }
-.mc-tone-danger { --surface-aurora:linear-gradient(135deg, #fae7e6, var(--color-surface) 62%); --border-aurora:color-mix(in oklab,#b52f22 32%,var(--color-border)); --shadow-tone: var(--shadow-tone-danger); }
+/* (د) كرت العضو منغَّم بلون الحالة الدلاليّة (Aurora + ترويسة + أفاتار + نصوص 600). مُحسَّن للفاتح؛ الداكن متابعة.
+   القاعدة ٤: الحدّ من الرمز النغميّ — لا color-mix بـ#hex ولا شدّة شاردة (كانت 30/32/32 متضاربة).
+   والقاعدة: الحدّ النغميّ يلازم الظلّ النغميّ — كانت .mc-tone-brand تُلوّن سطحها وحده. */
+.mc-tone-brand  { --surface-aurora:linear-gradient(135deg, #e7ebf0, var(--color-surface) 62%); --border-aurora:var(--card-stroke-brand);   --shadow-tone: var(--shadow-tone-brand); }
+.mc-tone-success{ --surface-aurora:linear-gradient(135deg, #e4f3ec, var(--color-surface) 62%); --border-aurora:var(--card-stroke-success); --shadow-tone: var(--shadow-tone-success); }
+.mc-tone-warning{ --surface-aurora:linear-gradient(135deg, #faf2e2, var(--color-surface) 62%); --border-aurora:var(--card-stroke-warning); --shadow-tone: var(--shadow-tone-warning); }
+.mc-tone-danger { --surface-aurora:linear-gradient(135deg, #fae7e6, var(--color-surface) 62%); --border-aurora:var(--card-stroke-danger);  --shadow-tone: var(--shadow-tone-danger); }
 .mc-tone-success .mc-head{ background:var(--grad-success); }
 .mc-tone-warning .mc-head{ background:var(--grad-warning); }
 .mc-tone-danger  .mc-head{ background:var(--grad-danger); }
@@ -1552,3 +1559,4 @@
 @supports (-moz-osx-font-smoothing: grayscale) {   /* فايرفوكس فقط — كروميوم يتجاهله فلا يُخطَف شريط الجذر */
   html { scrollbar-width: thin; scrollbar-color: var(--color-secondary) transparent; }
 }
+
