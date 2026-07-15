@@ -10,15 +10,6 @@
     const errorScreen = document.getElementById('errorScreen');
     const profileContainer = document.getElementById('profileContainer');
 
-    const degreeMap = {
-        'high_school': 'ثانوية عامة',
-        'diploma': 'دبلوم',
-        'bachelor': 'بكالوريوس',
-        'master': 'ماجستير',
-        'phd': 'دكتوراه',
-        'other': 'أخرى'
-    };
-
     async function loadPublicProfile() {
         try {
             const urlParams = new URLSearchParams(window.location.search);
@@ -167,7 +158,7 @@
         if (memberData.academic_degree) {
             document.getElementById('degreeRow').classList.remove('d-none');
             document.getElementById('profileDegree').textContent =
-                degreeMap[memberData.academic_degree] || memberData.academic_degree;
+                window.formatDegree(memberData.academic_degree);
             hasAcademicInfo = true;
         }
 

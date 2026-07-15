@@ -215,15 +215,6 @@
             return;
         }
 
-        const degreeMap = {
-            'high_school': 'ثانوية عامة',
-            'diploma': 'دبلوم',
-            'bachelor': 'بكالوريوس',
-            'master': 'ماجستير',
-            'phd': 'دكتوراه',
-            'other': 'أخرى'
-        };
-
         const nationalId = document.getElementById('profileNationalId');
         if (nationalId) {
             nationalId.innerHTML = `<span class="info-value">${details.national_id || 'غير محدد'}</span>`;
@@ -245,7 +236,7 @@
 
         const academicDegree = document.getElementById('profileAcademicDegree');
         if (academicDegree) {
-            academicDegree.innerHTML = `<span class="info-value">${degreeMap[details.academic_degree] || details.academic_degree || 'غير محدد'}</span>`;
+            academicDegree.innerHTML = `<span class="info-value">${window.formatDegree(details.academic_degree) || 'غير محدد'}</span>`;
         }
 
         const college = document.getElementById('profileCollege');
@@ -906,6 +897,13 @@
     }
 
     async function saveModalEdit(cardName) {
+        // فحص صلاحية المدخلات (pattern/required) قبل أيّ شيء — النافذة ليست <form> فلا checkValidity تلقائيّ،
+        // ولولاه لذهب رقم جوّال مخالف إلى القاعدة فيردّه قيد phone_check برسالة عجماء بدل تنبيه لطيف هنا.
+        for (const inputId of Object.values(MODAL_FIELDS[cardName] || {})) {
+            const input = document.getElementById(inputId);
+            if (input && !input.checkValidity()) { input.reportValidity(); return; }
+        }
+
         const cap     = cardName.charAt(0).toUpperCase() + cardName.slice(1);
         const saveBtn = document.getElementById(`saveEdit${cap}Btn`);
         const originalHTML = saveBtn.innerHTML;

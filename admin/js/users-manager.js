@@ -582,13 +582,7 @@ class UsersManager {
             roleLabel = 'عضو';
         }
 
-        const academicDegreeLabels = {
-            'bachelor': 'بكالوريوس', 'Bachelor': 'بكالوريوس', "Bachelor's": 'بكالوريوس',
-            'master':   'ماجستير',   'Master':   'ماجستير',   "Master's":   'ماجستير',
-            'phd':      'دكتوراه',   'PhD':      'دكتوراه',   'doctorate':  'دكتوراه',
-            'diploma':  'دبلوم',     'Diploma':  'دبلوم'
-        };
-        const formatDegree = (v) => academicDegreeLabels[v] || v;
+        const formatDegree = window.formatDegree;
 
         const hasAcademic = memberDetails && (
             memberDetails.national_id || memberDetails.full_name_triple ||
@@ -787,13 +781,8 @@ class UsersManager {
             if (data) md = data;
         } catch (e) {}
 
-        const academicDegrees = [
-            { value: '', label: '-- اختر الدرجة --' },
-            { value: 'بكالوريوس', label: 'بكالوريوس' },
-            { value: 'ماجستير', label: 'ماجستير' },
-            { value: 'دكتوراه', label: 'دكتوراه' },
-            { value: 'دبلوم', label: 'دبلوم' }
-        ];
+        // القيمة رمزٌ إنجليزيّ يطابق ما في القاعدة — لا التسمية العربيّة، وإلّا لم يطابق الاختيار المسبق ورفض القيد الحفظ
+        const academicDegrees = [{ value: '', label: '-- اختر الدرجة --' }, ...window.ADEEB_DEGREES];
 
         const content = `
         <form id="editUserForm" style="display:grid; gap:1.25rem;">
@@ -809,7 +798,8 @@ class UsersManager {
                 </div>
                 <div class="form-group">
                     <label class="form-label"><span class="label-icon"><i class="fa-solid fa-phone"></i></span> رقم الجوال</label>
-                    <input type="tel" id="ef-phone" class="form-input" value="${user.phone || md.phone || ''}" />
+                    <input type="tel" id="ef-phone" class="form-input" value="${user.phone || md.phone || ''}"
+                           pattern="^05[0-9]{8}$" maxlength="10" placeholder="05XXXXXXXX" title="10 أرقام تبدأ بـ 05 (مثال: 0512345678)" />
                 </div>
                 <div class="form-group">
                     <label class="form-label"><span class="label-icon"><i class="fa-solid fa-id-card"></i></span> رقم الهوية الوطنية</label>
@@ -831,7 +821,7 @@ class UsersManager {
             <div class="modal-form-grid">
                 <div class="form-group">
                     <label class="form-label"><span class="label-icon"><i class="fa-solid fa-graduation-cap"></i></span> الدرجة الأكاديمية</label>
-                    <select id="ef-academic_degree" class="form-input">
+                    <select id="ef-academic_degree" class="form-input" required>
                         ${academicDegrees.map(d => `<option value="${d.value}" ${md.academic_degree === d.value ? 'selected' : ''}>${d.label}</option>`).join('')}
                     </select>
                 </div>
@@ -941,7 +931,8 @@ class UsersManager {
                 console.error('Error updating user:', err);
                 closeModal();
                 setTimeout(() => {
-                    window.showErrorModal('خطأ', 'حدث خطأ أثناء تحديث البيانات');
+                    // سبب القاعدة نصًّا — الرسالة العامّة وحدها أخفت عطلًا كاملًا في هذا النموذج طويلًا
+                    window.showErrorModal('خطأ', `تعذّر تحديث البيانات: ${err?.message || err}`);
                 }, 300);
             }
         };
