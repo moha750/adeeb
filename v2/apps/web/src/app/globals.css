@@ -1296,35 +1296,45 @@
 /* (د) كرت العضو منغَّم بلون الحالة الدلاليّة (Aurora + ترويسة + أفاتار + نصوص 600). مُحسَّن للفاتح؛ الداكن متابعة.
    القاعدة ٤: الحدّ من الرمز النغميّ — لا color-mix بـ#hex ولا شدّة شاردة (كانت 30/32/32 متضاربة).
    والقاعدة: الحدّ النغميّ يلازم الظلّ النغميّ — كانت .mc-tone-brand تُلوّن سطحها وحده. */
-.mc-tone-brand  { --surface-aurora:linear-gradient(135deg, #e7ebf0, var(--color-surface) 62%); --border-aurora:var(--card-stroke-brand);   --shadow-tone: var(--shadow-tone-brand); }
-.mc-tone-success{ --surface-aurora:linear-gradient(135deg, #e4f3ec, var(--color-surface) 62%); --border-aurora:var(--card-stroke-success); --shadow-tone: var(--shadow-tone-success); }
-.mc-tone-warning{ --surface-aurora:linear-gradient(135deg, #faf2e2, var(--color-surface) 62%); --border-aurora:var(--card-stroke-warning); --shadow-tone: var(--shadow-tone-warning); }
-.mc-tone-danger { --surface-aurora:linear-gradient(135deg, #fae7e6, var(--color-surface) 62%); --border-aurora:var(--card-stroke-danger);  --shadow-tone: var(--shadow-tone-danger); }
-.mc-tone-success .mc-head{ background:var(--grad-success); }
-.mc-tone-warning .mc-head{ background:var(--grad-warning); }
-.mc-tone-danger  .mc-head{ background:var(--grad-danger); }
-.mc-tone-success .mc-head::before,
-.mc-tone-warning .mc-head::before,
-.mc-tone-danger  .mc-head::before{ background:radial-gradient(150px 100px at 20% -10%, rgba(255,255,255,.4), transparent 70%); }
-.mc-tone-success .mc-av{ background:var(--grad-success); }
-.mc-tone-warning .mc-av{ background:var(--grad-warning); }
-.mc-tone-danger  .mc-av{ background:var(--grad-danger);  }
-.mc-tone-success .mc-name{ color:#166a43; } .mc-tone-warning .mc-name{ color:#7a4f08; } .mc-tone-danger .mc-name{ color:#93261b; }
-.mc-tone-success .mc-info-val{ color:#166a43; } .mc-tone-warning .mc-info-val{ color:#7a4f08; } .mc-tone-danger .mc-info-val{ color:#93261b; }
-.mc-tone-success .mc-info-label{ color:color-mix(in oklab,#1a8452 55%,var(--color-text-muted)); } .mc-tone-warning .mc-info-label{ color:color-mix(in oklab,#b87a0c 55%,var(--color-text-muted)); } .mc-tone-danger .mc-info-label{ color:color-mix(in oklab,#b52f22 55%,var(--color-text-muted)); }
-.mc-tone-success .mc-info-row{ border-bottom-color:color-mix(in oklab,#1a8452 14%,transparent); } .mc-tone-warning .mc-info-row{ border-bottom-color:color-mix(in oklab,#b87a0c 14%,transparent); } .mc-tone-danger .mc-info-row{ border-bottom-color:color-mix(in oklab,#b52f22 14%,transparent); }
-.mc-tone-success .mc-role{ color:#166a43; background:color-mix(in oklab,#1a8452 14%,var(--color-surface)); border-color:color-mix(in oklab,#1a8452 30%,transparent); }
-.mc-tone-warning .mc-role{ color:#7a4f08; background:color-mix(in oklab,#b87a0c 15%,var(--color-surface)); border-color:color-mix(in oklab,#b87a0c 32%,transparent); }
-.mc-tone-danger  .mc-role{ color:#93261b; background:color-mix(in oklab,#b52f22 14%,var(--color-surface)); border-color:color-mix(in oklab,#b52f22 30%,transparent); }
-.mc-tone-success .mc-ic{ color:#166a43; background:linear-gradient(135deg,color-mix(in oklab,#1a8452 22%,var(--color-surface)),color-mix(in oklab,#1a8452 8%,var(--color-surface))); }
-.mc-tone-warning .mc-ic{ color:#7a4f08; background:linear-gradient(135deg,color-mix(in oklab,#b87a0c 22%,var(--color-surface)),color-mix(in oklab,#b87a0c 8%,var(--color-surface))); }
-.mc-tone-danger  .mc-ic{ color:#93261b; background:linear-gradient(135deg,color-mix(in oklab,#b52f22 22%,var(--color-surface)),color-mix(in oklab,#b52f22 8%,var(--color-surface))); }
-.mc-tone-success .mc-foot{ background:color-mix(in oklab,#1a8452 6%,var(--color-surface)); border-top-color:color-mix(in oklab,#1a8452 15%,var(--color-border)); }
-.mc-tone-warning .mc-foot{ background:color-mix(in oklab,#b87a0c 6%,var(--color-surface)); border-top-color:color-mix(in oklab,#b87a0c 15%,var(--color-border)); }
-.mc-tone-danger  .mc-foot{ background:color-mix(in oklab,#b52f22 6%,var(--color-surface)); border-top-color:color-mix(in oklab,#b52f22 15%,var(--color-border)); }
-.mc-tone-success:hover{ border-color:#1a8452; }
-.mc-tone-warning:hover{ border-color:#b87a0c; }
-.mc-tone-danger:hover { border-color:#b52f22; }
+.mc-tone-brand  { --surface-aurora:linear-gradient(135deg, var(--aurora-brand), var(--color-surface) 62%); --border-aurora:var(--card-stroke-brand);   --shadow-tone: var(--shadow-tone-brand); }
+.mc-tone-success{ --surface-aurora:linear-gradient(135deg, var(--aurora-success), var(--color-surface) 62%); --border-aurora:var(--card-stroke-success); --shadow-tone: var(--shadow-tone-success); }
+.mc-tone-warning{ --surface-aurora:linear-gradient(135deg, var(--aurora-warning), var(--color-surface) 62%); --border-aurora:var(--card-stroke-warning); --shadow-tone: var(--shadow-tone-warning); }
+.mc-tone-danger { --surface-aurora:linear-gradient(135deg, var(--aurora-danger), var(--color-surface) 62%); --border-aurora:var(--card-stroke-danger);  --shadow-tone: var(--shadow-tone-danger); }
+/* النغمات الدلاليّة الثلاث: كلٌّ تُعلن لونها مرّةً واحدة، والأنماط أدناه تقرؤها.
+   (كانت ٦ أنماط × ٣ نغمات = ١٨ سطرًا فيها ٣٩ لونًا محفورًا. غيّر الرمز → يتبع الكلّ.)
+     --mc-t  = لون النغمة (600) — الأسطح والحدود والخلفيّات
+     --mc-tx = لون نصّها المقروء فوق سطح Aurora الفاتح
+   والأصفر يحتاج عمقًا أكثر لتباينٍ مقروء، فنصّه من 800 لا 700 — سببٌ وصوليّ
+   لا سهو. (كان #7a4f08، لونًا دخيلًا لا وجود له في السلّم.) */
+.mc-tone-success{ --mc-t: var(--success-600); --mc-tx: var(--success-700); --mc-grad: var(--grad-success); }
+.mc-tone-warning{ --mc-t: var(--warning-600); --mc-tx: var(--warning-800); --mc-grad: var(--grad-warning); }
+.mc-tone-danger { --mc-t: var(--danger-600);  --mc-tx: var(--danger-700);  --mc-grad: var(--grad-danger); }
+
+/* .mc-tone-brand خارج هذه الأنماط عمدًا: «نشط» هو العُرف، فيبقى محايد الترويسة
+   والنصّ — نغمته في سطحه وحدّه وظلّه فقط. */
+:is(.mc-tone-success, .mc-tone-warning, .mc-tone-danger) {
+  & .mc-head, & .mc-av { background: var(--mc-grad); }
+  & .mc-head::before { background: radial-gradient(150px 100px at 20% -10%, rgba(255,255,255,.4), transparent 70%); }
+  & .mc-name, & .mc-info-val { color: var(--mc-tx); }
+  & .mc-info-label { color: color-mix(in oklab, var(--mc-t) 55%, var(--color-text-muted)); }
+  & .mc-info-row { border-bottom-color: color-mix(in oklab, var(--mc-t) 14%, transparent); }
+  /* شدّة موحّدة: كانت الخلفيّة 14/15% والحدّ 30/32% متضاربة بين النغمات */
+  & .mc-role {
+    color: var(--mc-tx);
+    background: color-mix(in oklab, var(--mc-t) 14%, var(--color-surface));
+    border-color: color-mix(in oklab, var(--mc-t) 30%, transparent);
+  }
+  & .mc-ic {
+    color: var(--mc-tx);
+    background: linear-gradient(135deg, color-mix(in oklab, var(--mc-t) 22%, var(--color-surface)), color-mix(in oklab, var(--mc-t) 8%, var(--color-surface)));
+  }
+  & .mc-foot {
+    background: color-mix(in oklab, var(--mc-t) 6%, var(--color-surface));
+    border-top-color: color-mix(in oklab, var(--mc-t) 15%, var(--color-border));
+  }
+  /* المنغَّم يشتدّ بنغمته لا بالفولاذيّ — الحدّ يبلغ لونه الكامل */
+  &:hover { border-color: var(--mc-t); }
+}
 
 /* ============================================================
    بيانات الدخول — صفحة تغيير البريد وكلمة المرور (تحت أعضاء أديب)

@@ -770,13 +770,13 @@
 /* الأنماط */
 .abtn-primary { background: var(--grad-primary); color: #fff; }
 .abtn-primary:hover:not(:disabled) { background: var(--grad-primary-hover); }
-.abtn-danger { background: var(--grad-danger); color: #fff; }
+.abtn-danger { --shadow-tone: var(--shadow-tone-danger); background: var(--grad-danger); color: #fff; }
 .abtn-danger:hover:not(:disabled) { filter: brightness(0.95); }
-.abtn-success { background: var(--grad-success); color: #fff; }
+.abtn-success { --shadow-tone: var(--shadow-tone-success); background: var(--grad-success); color: #fff; }
 .abtn-success:hover:not(:disabled) { filter: brightness(0.96); }
-.abtn-warning { background: var(--grad-warning); color: #fff; }
+.abtn-warning { --shadow-tone: var(--shadow-tone-warning); background: var(--grad-warning); color: #fff; }
 .abtn-warning:hover:not(:disabled) { filter: brightness(0.96); }
-.abtn-neutral { background: var(--grad-neutral); color: #fff; }
+.abtn-neutral { --shadow-tone: var(--shadow-tone-neutral); background: var(--grad-neutral); color: #fff; }
 .abtn-neutral:hover:not(:disabled) { filter: brightness(0.96); }
 /* الظلّ الموحّد للأزرار المصمتة (قاعدة الظلال): sm طبيعيّ · md عند hover · اللون من نغمة كل زرّ (--shadow-tone) */
 .abtn-primary, .abtn-danger, .abtn-success, .abtn-warning, .abtn-neutral, .abtn-inverse { box-shadow: var(--shadow-sm); }
@@ -1193,10 +1193,10 @@
 
 /* بطاقة عامّة منغّمة — سطح Aurora + حدّ + ظلّ + قرص الرأس بلون الحالة (كطبقة نغمة الجدول وكرت العضو).
    يكفي ضبط الرموز؛ يقرؤها أساسُ ‎.acard‎ فيتلوّن السطح والحدّ والظلّ. والنصّ يبقى محايدًا لمقروئيّة المحتوى. */
-.acard-tone-brand   { --shadow-tone: var(--shadow-tone-brand);  --surface-aurora: linear-gradient(135deg, #e7ebf0, var(--color-surface) 62%); --border-aurora: var(--card-stroke-brand); background: var(--surface-aurora); border-color: var(--border-aurora); }
-.acard-tone-success { --shadow-tone: var(--shadow-tone-success);  --surface-aurora: linear-gradient(135deg, #e4f3ec, var(--color-surface) 62%); --border-aurora: var(--card-stroke-success); background: var(--surface-aurora); border-color: var(--border-aurora); }
-.acard-tone-warning { --shadow-tone: var(--shadow-tone-warning); --surface-aurora: linear-gradient(135deg, #faf2e2, var(--color-surface) 62%); --border-aurora: var(--card-stroke-warning); background: var(--surface-aurora); border-color: var(--border-aurora); }
-.acard-tone-danger  { --shadow-tone: var(--shadow-tone-danger);  --surface-aurora: linear-gradient(135deg, #fae7e6, var(--color-surface) 62%); --border-aurora: var(--card-stroke-danger); background: var(--surface-aurora); border-color: var(--border-aurora); }
+.acard-tone-brand   { --shadow-tone: var(--shadow-tone-brand);  --surface-aurora: linear-gradient(135deg, var(--aurora-brand), var(--color-surface) 62%); --border-aurora: var(--card-stroke-brand); background: var(--surface-aurora); border-color: var(--border-aurora); }
+.acard-tone-success { --shadow-tone: var(--shadow-tone-success);  --surface-aurora: linear-gradient(135deg, var(--aurora-success), var(--color-surface) 62%); --border-aurora: var(--card-stroke-success); background: var(--surface-aurora); border-color: var(--border-aurora); }
+.acard-tone-warning { --shadow-tone: var(--shadow-tone-warning); --surface-aurora: linear-gradient(135deg, var(--aurora-warning), var(--color-surface) 62%); --border-aurora: var(--card-stroke-warning); background: var(--surface-aurora); border-color: var(--border-aurora); }
+.acard-tone-danger  { --shadow-tone: var(--shadow-tone-danger);  --surface-aurora: linear-gradient(135deg, var(--aurora-danger), var(--color-surface) 62%); --border-aurora: var(--card-stroke-danger); background: var(--surface-aurora); border-color: var(--border-aurora); }
 .acard-tone-success .acard-chip { background: var(--grad-success); }
 .acard-tone-warning .acard-chip { background: var(--grad-warning); }
 .acard-tone-danger  .acard-chip { background: var(--grad-danger); }
@@ -1994,9 +1994,9 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .dm-tone-success { --shadow-tone: var(--shadow-tone-success); }
 .dm-tone-warning { --shadow-tone: var(--shadow-tone-warning); }
 .dm-tone-danger  { --shadow-tone: var(--shadow-tone-danger); }
-.dm-menu.dm-tone-success { background: linear-gradient(135deg, #e4f3ec, var(--color-surface) 60%); border-color: var(--card-stroke-success); --shadow-tone: var(--shadow-tone-success); }
-.dm-menu.dm-tone-warning { background: linear-gradient(135deg, #faf2e2, var(--color-surface) 60%); border-color: var(--card-stroke-warning); --shadow-tone: var(--shadow-tone-warning); }
-.dm-menu.dm-tone-danger  { background: linear-gradient(135deg, #fae7e6, var(--color-surface) 60%); border-color: var(--card-stroke-danger); --shadow-tone: var(--shadow-tone-danger); }
+.dm-menu.dm-tone-success { background: linear-gradient(135deg, var(--aurora-success), var(--color-surface) 60%); border-color: var(--card-stroke-success); --shadow-tone: var(--shadow-tone-success); }
+.dm-menu.dm-tone-warning { background: linear-gradient(135deg, var(--aurora-warning), var(--color-surface) 60%); border-color: var(--card-stroke-warning); --shadow-tone: var(--shadow-tone-warning); }
+.dm-menu.dm-tone-danger  { background: linear-gradient(135deg, var(--aurora-danger), var(--color-surface) 60%); border-color: var(--card-stroke-danger); --shadow-tone: var(--shadow-tone-danger); }
 
 /* ============================================================
    النافذة (Modal) · حواريّة مركزيّة · بادئة .mdl
@@ -2345,9 +2345,9 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 @keyframes copy-pop { 0% { transform: scale(.3); } 55% { transform: scale(1.18); } 100% { transform: scale(1); } }
 
 /* ===== النافذة الاستثنائيّة (تنبيه/تأكيد) — نغمة الحالة + أيقونة متحرّكة بمعناها + أزرار ممتدّة ===== */
-.mdl-tone-danger  { --surface-aurora: linear-gradient(135deg, #fae7e6, var(--color-surface) 62%); border-color: var(--card-stroke-danger); --shadow-tone: var(--shadow-tone-danger); }
-.mdl-tone-warning { --surface-aurora: linear-gradient(135deg, #faf2e2, var(--color-surface) 62%); border-color: var(--card-stroke-warning); --shadow-tone: var(--shadow-tone-warning); }
-.mdl-tone-success { --surface-aurora: linear-gradient(135deg, #e4f3ec, var(--color-surface) 62%); border-color: var(--card-stroke-success); --shadow-tone: var(--shadow-tone-success); }
+.mdl-tone-danger  { --surface-aurora: linear-gradient(135deg, var(--aurora-danger), var(--color-surface) 62%); border-color: var(--card-stroke-danger); --shadow-tone: var(--shadow-tone-danger); }
+.mdl-tone-warning { --surface-aurora: linear-gradient(135deg, var(--aurora-warning), var(--color-surface) 62%); border-color: var(--card-stroke-warning); --shadow-tone: var(--shadow-tone-warning); }
+.mdl-tone-success { --surface-aurora: linear-gradient(135deg, var(--aurora-success), var(--color-surface) 62%); border-color: var(--card-stroke-success); --shadow-tone: var(--shadow-tone-success); }
 /* نافذة التأكيد المنغَّمة تعرض Aurora نغمتها (يفوز على الفولاذيّ الأساسيّ بترتيب المصدر) */
 .mdl-tone-danger, .mdl-tone-warning, .mdl-tone-success { background: var(--surface-aurora); }
 .mdl-tic { width: 54px; height: 54px; border-radius: var(--radius); display: grid; place-items: center; flex: 0 0 auto; color: #fff; box-shadow: var(--shadow-md); position: relative; }
@@ -2766,13 +2766,19 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
    كروت الإحصائيات (KPI) — سطح Aurora · أيقونة بتدرّج النغمة · رقم Eras · مؤشّر اتّجاه.
    النغمة تُبدَّل بـ‎.stat-brand/-success/-warning/-danger‎ (تدرّج الأيقونة + لون الظلّ).
    ============================================================ */
-/* شبكة الإحصائيات — flex بأساس ⅓ ونموّ يحقّق ثلاث قواعد تلقائيًّا:
+/* شبكة الإحصائيات — flex بأساس ⅓ ونموّ يحقّق تلقائيًّا:
    (1) الكرت الوحيد يملأ الصف · (2) ثلاثة كحدّ أقصى وتقلّ حسب العرض (min-width) · (3) اليتيم في الصف الأخير يمتدّ على كامله.
-   الأساس ⅓ يضمن ألّا يزيد الصف عن ثلاثة (ثلاثة تملأ 100% فلا يبقى مكان لرابع)، والنموّ يملأ أيّ صفّ ناقص. */
+   الأساس ⅓ يضمن ألّا يزيد الصف عن ثلاثة (ثلاثة تملأ 100% فلا يبقى مكان لرابع)، والنموّ يملأ أيّ صفّ ناقص.
+   ويشذّ عن (3) عددٌ واحد: **أربعة** — تصير 2+2 لا 3+1 (انظر الاستثناء تحت). */
 .stat-grid { display: flex; flex-wrap: wrap; gap: 16px; }
 /* أساس ⅓ بلا انكماش (shrink:0) — ثلاثة تملأ الصفّ تمامًا فيُجبَر الرابع على النزول (سقف 3)؛
    والنموّ (grow:1) يملأ أيّ صفّ ناقص؛ وmin-width يُنقص العدد على الشاشات الضيّقة. */
 .stat-grid > * { flex: 1 0 calc((100% - 32px) / 3); min-width: 220px; }
+/* استثناء الأربعة (مُقَرّ من المالك) — التِبْلة لا تنساب كالكرت: محتواها ثابت المقاس، فتمديد الرابع
+   اليتيم على 100% لا يقتل الفراغ بل ينقله إلى داخل الكرت (نحو ثلاثة أرباعه خواء). فأربعةٌ بالضبط
+   تصير صفّين متساويين (2+2) — لا كرت يتجاوز النصف والفراغ يبقى بنسبته.
+   الشرط يعرف «أربعة بالضبط» بلا حساب أعمدة: رابعٌ وهو الأخير. وما عداه يبقى على الأساس ⅓. */
+.stat-grid:has(> :nth-child(4):last-child) > * { flex-basis: calc((100% - 16px) / 2); }
 .stat {
   --stat-grad: var(--grad-primary);
   --shadow-tone: var(--shadow-tone-brand);   /* فولاذيّ 600 افتراضًا — يتبدّل مع النغمة */
@@ -2799,10 +2805,10 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .stat-label { font-size: 13px; font-weight: 600; color: var(--color-text-muted); margin-top: 4px; }
 /* النغمة: تدرّج الأيقونة + سطح Aurora ملوّن + حدّ + ظلّ — بلون الحالة (كالكروت المنغّمة).
    نُعيد إعلان background/border-color على النغمة كي يُعاد حلّ var() لكلّ عنصر (لا يُخبَز). */
-.stat-brand   { --stat-grad: var(--grad-primary); --shadow-tone: var(--shadow-tone-brand); --surface-aurora: linear-gradient(135deg, #e7ebf0, var(--color-surface) 62%); --border-aurora: var(--card-stroke-brand); background: var(--surface-aurora); border-color: var(--border-aurora); }
-.stat-success { --stat-grad: var(--grad-success); --shadow-tone: var(--shadow-tone-success);  --surface-aurora: linear-gradient(135deg, #e4f3ec, var(--color-surface) 62%); --border-aurora: var(--card-stroke-success); background: var(--surface-aurora); border-color: var(--border-aurora); }
-.stat-warning { --stat-grad: var(--grad-warning); --shadow-tone: var(--shadow-tone-warning); --surface-aurora: linear-gradient(135deg, #faf2e2, var(--color-surface) 62%); --border-aurora: var(--card-stroke-warning); background: var(--surface-aurora); border-color: var(--border-aurora); }
-.stat-danger  { --stat-grad: var(--grad-danger);  --shadow-tone: var(--shadow-tone-danger);  --surface-aurora: linear-gradient(135deg, #fae7e6, var(--color-surface) 62%); --border-aurora: var(--card-stroke-danger); background: var(--surface-aurora); border-color: var(--border-aurora); }
+.stat-brand   { --stat-grad: var(--grad-primary); --shadow-tone: var(--shadow-tone-brand); --surface-aurora: linear-gradient(135deg, var(--aurora-brand), var(--color-surface) 62%); --border-aurora: var(--card-stroke-brand); background: var(--surface-aurora); border-color: var(--border-aurora); }
+.stat-success { --stat-grad: var(--grad-success); --shadow-tone: var(--shadow-tone-success);  --surface-aurora: linear-gradient(135deg, var(--aurora-success), var(--color-surface) 62%); --border-aurora: var(--card-stroke-success); background: var(--surface-aurora); border-color: var(--border-aurora); }
+.stat-warning { --stat-grad: var(--grad-warning); --shadow-tone: var(--shadow-tone-warning); --surface-aurora: linear-gradient(135deg, var(--aurora-warning), var(--color-surface) 62%); --border-aurora: var(--card-stroke-warning); background: var(--surface-aurora); border-color: var(--border-aurora); }
+.stat-danger  { --stat-grad: var(--grad-danger);  --shadow-tone: var(--shadow-tone-danger);  --surface-aurora: linear-gradient(135deg, var(--aurora-danger), var(--color-surface) 62%); --border-aurora: var(--card-stroke-danger); background: var(--surface-aurora); border-color: var(--border-aurora); }
 /* المرور: كِبَرٌ خفيف (scale 1.02) + تشديد الحدّ للنغمة — تمامًا كـ‎.mc:hover‎ في كرت العضو */
 .stat:hover { transform: scale(var(--hover-scale)); }
 .stat:hover .stat-ic { transform: scale(1.12) rotate(-6deg); }   /* نبضة زنبركيّة للأيقونة عند المرور */

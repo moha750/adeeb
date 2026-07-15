@@ -56,6 +56,9 @@
   --grad-success:linear-gradient(135deg, var(--success-300), var(--success-600));
   --grad-warning:linear-gradient(135deg, var(--warning-300), var(--warning-600));
   --grad-danger:linear-gradient(135deg, var(--danger-300), var(--danger-600));
+  /* المحايد رماديّ لا ملوّن. الدرجتان بقرار المالك (400 ← 700) بعد تجربة 500←700 و400←600 و500←600.
+     النصّ الأبيض على 400 تباينه 2.6 — دون عتبة AA (4.5)، اختيارٌ مقصود لا سهو. */
+  --grad-neutral:linear-gradient(135deg, var(--neutral-400), var(--neutral-700));
 
   /* ---------- (2) رموز دلالية (Semantic) — تنقلب مع الثيم ---------- */
   --color-bg:#f5f7fa;
@@ -120,6 +123,7 @@
   --shadow-tone-success: 26,132,82;
   --shadow-tone-warning: 184,122,12;
   --shadow-tone-danger:  181,47,34;
+  --shadow-tone-neutral:  84,92,109;  /* neutral-600 — كسابقة --card-stroke-neutral */
   /* السلّم والحلقات (المركّبة من --shadow-tone) مُعرّفة على * لا هنا — انظر الكتلة تحت :root.
      السبب: تعريفها في :root يُجمّد النغمة عند الجذر (فولاذيّ) ولا يستجيب لتجاوزها على العنصر (فخّ CSS مثبَت تجريبيًّا). */
 
@@ -134,6 +138,14 @@
   --card-stroke-success: color-mix(in oklab, var(--success-600) 30%, var(--color-border));
   --card-stroke-warning: color-mix(in oklab, var(--warning-600) 30%, var(--color-border));
   --card-stroke-danger:  color-mix(in oklab, var(--danger-600) 30%, var(--color-border));
+
+  /* تينت سطح Aurora — بداية التدرّج المائل الذي يتلاشى إلى السطح عند 62%.
+     مختارة يدويًّا **أعمق من سلّم -50** (مقصود: -50 باهت لا يُرى فوق السطح)، فلا تُشتقّ منه.
+     كانت محفورةً ١٨ مرّة عبر .acard-tone-* و.stat-* و.mc-tone-* — والآن مصدرٌ واحد. */
+  --aurora-brand:   #e7ebf0;
+  --aurora-success: #e4f3ec;
+  --aurora-warning: #faf2e2;
+  --aurora-danger:  #fae7e6;
   --scrim: rgba(20, 31, 48, .42);                                                   /* حُجُب النوافذ الحواريّة — كحليّ عميق شفّاف */
 
   --z-base:0; --z-dropdown:1000; --z-sticky:1100; --z-modal:1300; --z-toast:1500;
