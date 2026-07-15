@@ -6,3 +6,6 @@ node_modules/
 # أسرار بيئيّة محلّيّة
 .env
 .env*.local
+
+# Vercel
+.vercel
