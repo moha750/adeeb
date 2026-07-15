@@ -23,6 +23,9 @@ const MEMBER: MemberRow = {
   endReason: null, endDate: "", endAgo: "",
 };
 
+// ٦ = صفّان تامّان · ٧ = يبقى واحد فيمتدّ · ٨ = يبقى اثنان فيقتسمان
+const GRID_CASES = [6, 7, 8] as const;
+
 function Label({ children }: { children: React.ReactNode }) {
   return (
     <p className="mb-4 font-latin text-xs font-bold uppercase tracking-[0.18em] text-content-muted">{children}</p>
@@ -44,7 +47,7 @@ export default function CardsPage() {
         <div className="mt-12 space-y-12">
           <section>
             <Label>التركيب (Media · Header · Body · Footer · أفقية)</Label>
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="mc-grid">
               <Card interactive>
                 <CardMedia />
                 <CardBody>
@@ -89,7 +92,7 @@ export default function CardsPage() {
 
           <section>
             <Label>الأنماط (variant)</Label>
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="mc-grid">
               <Card><CardBody><h3 className="font-display font-bold text-content">افتراضية</h3><p className="mt-1 text-sm text-content-muted">حدّ + ظلّ ناعم.</p></CardBody></Card>
               <Card variant="elevated"><CardBody><h3 className="font-display font-bold text-content">بارزة</h3><p className="mt-1 text-sm text-content-muted">ظلّ أعمق.</p></CardBody></Card>
             </div>
@@ -104,6 +107,37 @@ export default function CardsPage() {
                 actions={[{ items: [{ label: "تعديل" }, { label: "حذف نهائيّ", danger: true }] }]}
               />
             </div>
+          </section>
+
+          {/* القاعدة ٦ — سلوكٌ لا يظهر إلّا عند حالة حافّة (صفّ ناقص)، فيُعرض هنا
+              عمدًا بالحالات الثلاث. بـ.mc-grid نفسها لا بشبكة مقلّدة: المعرض
+              مرجعٌ يُقلَّد، فإن قلّد Tailwind علّم الخطأ. */}
+          <section>
+            <Label>القاعدة ٦ — الصفّ الأخير لا يترك فراغًا</Label>
+            <p className="mb-6 max-w-2xl text-content-muted">
+              أيّ صفّ ناقص يمتلئ بما فيه: كرتٌ واحد يأخذ العرض كلّه، وكرتان يقتسمانه.
+              ضيّق النافذة — يتغيّر عدد الأعمدة والقاعدة تصمد، بلا استعلام وسائط:
+              <code className="font-latin"> display:flex</code> +
+              <code className="font-latin"> flex:1 1 252px</code>.
+              (Grid لا يستطيعها: <code className="font-latin">auto-fill</code> يجعل عدد الأعمدة
+              متغيّرًا، وحيَل <code className="font-latin">nth-child(3n+1)</code> تفترض عددًا ثابتًا لا وجود له.)
+            </p>
+
+            {GRID_CASES.map((n) => (
+              <div key={n} className="mb-8">
+                <p className="mb-3 font-latin text-xs font-bold text-content-muted">{n} cards</p>
+                <div className="mc-grid">
+                  {Array.from({ length: n }, (_, i) => (
+                    <MemberCard
+                      key={i}
+                      member={{ ...MEMBER, id: `m${i}`, name: `عضو ${i + 1}` }}
+                      onOpen={() => {}}
+                      actions={[]}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
           </section>
         </div>
       </Container>
