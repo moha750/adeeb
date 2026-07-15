@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Alert, Badge, Button, Field, Stat, Textarea } from "@adeeb/design-system";
-import { Bank, Buildings, CaretDown, PencilSimple, UserCircle, Users, UsersThree, Warning, ArrowRight, NoteBlank, LinkSimple, Globe } from "@phosphor-icons/react";
+import { Bank, Buildings, CaretDown, PencilSimple, Users, UsersThree, Warning, ArrowRight, NoteBlank, LinkSimple, Globe } from "@phosphor-icons/react";
 import { Avatar } from "../../_components/Avatar";
 import { Modal } from "../../_components/Modal";
 import { Toolbar } from "../../_components/Toolbar";
@@ -146,12 +146,15 @@ export function StructureView({ model }: { model: StructureModel }) {
   const comVisible = (c: CommitteeNode) => q === "" || (c.leader && match(c.leader.name)) || (c.deputy && match(c.deputy.name)) || c.members.some((m) => match(m.name));
   const deptVisible = (d: DepartmentNode) => q === "" || (d.head && match(d.head.name)) || d.committees.some(comVisible);
 
+  // طبقات الهيكلة الأربع بترتيبها: مجالس ← إدارات/أقسام ← لجان.
+  // «عضو نشط» لا مكان له هنا — هذا تبويب الهيكلة لا تبويب الأعضاء،
+  // والإدارة تُعدّ على حدة وإن سكنت جدول اللجان.
   const s = model.stats;
   const stats = [
     { n: s.councils, l: "مجالس", icon: <Bank weight="fill" /> },
+    { n: s.administrations, l: "إدارات", icon: <Bank weight="fill" /> },
     { n: s.departments, l: "أقسام", icon: <Buildings weight="fill" /> },
     { n: s.committees, l: "لجان", icon: <UsersThree weight="fill" /> },
-    { n: s.people, l: "عضوًا نشطًا", icon: <UserCircle weight="fill" /> },
   ];
 
   return (

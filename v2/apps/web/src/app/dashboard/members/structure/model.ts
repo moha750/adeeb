@@ -83,7 +83,8 @@ export type StructureModel = {
   president: Holder | null;
   administrative: CouncilBody & { committees: CommitteeNode[] };
   executive: CouncilBody & { departments: DepartmentNode[] };
-  stats: { councils: number; departments: number; committees: number; assignments: number; people: number };
+  // الإدارة ليست لجنة — وإن سكنت جدولها. تُعدّ على حدة أو نكذب بالرقم.
+  stats: { councils: number; administrations: number; departments: number; committees: number; assignments: number; people: number };
   anomalies: string[];
 };
 
@@ -251,8 +252,9 @@ export function buildStructure(
     executive: { ...executive, departments: departmentNodes },
     stats: {
       councils: councils.length,
+      administrations: adminCommittees.length,
       departments: departments.length,
-      committees: committees.length,
+      committees: operational.length,
       assignments: holders.length,
       people: new Set(holders.map((h) => h.userId)).size,
     },
