@@ -68,10 +68,16 @@ function Committee({ c, q, open, onToggle, edit, onFill, onMeta }: {
         <div className="org-com-body">
           {c.deputy ? <div className="org-subrow"><span className="org-sublbl">النائب</span><Person h={c.deputy} /></div> : null}
           {isOp ? (
-            <div className="org-subrow">
-              <span className="org-sublbl">عضو إداري</span>
-              {c.overseer ? <Person h={c.overseer} role /> : <span className="org-ov-vac">— يُسنَد من «تعيين المناصب»</span>}
-            </div>
+            <>
+              <div className="org-subrow">
+                <span className="org-sublbl">مشرف الموارد</span>
+                {c.hrOverseer ? <Person h={c.hrOverseer} role /> : <span className="org-ov-vac">— يُسنَد من «تعيين المناصب»</span>}
+              </div>
+              <div className="org-subrow">
+                <span className="org-sublbl">مشرف الضمان</span>
+                {c.qaOverseer ? <Person h={c.qaOverseer} role /> : <span className="org-ov-vac">— يُسنَد من «تعيين المناصب»</span>}
+              </div>
+            </>
           ) : null}
           {members.length ? (
             <div className="org-people">{members.map((m, i) => <Person key={m.userId + i} h={m} role={m.roleName !== "committee_member"} />)}</div>

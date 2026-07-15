@@ -32,7 +32,10 @@ export type CommitteeNode = {
   link: string | null;
   leader: Holder | null;
   deputy: Holder | null;
-  overseer: Holder | null; // العضو الإداريّ المشرف على اللجنة (من إحدى الإدارتين)
+  // لكلّ لجنة مشرفان مستقلّان — واحد من كلّ إدارة. تفرضه assign_position
+  // (التفرّد لكلّ دور+لجنة)، وليس مشرفًا واحدًا من أيّهما.
+  hrOverseer: Holder | null;
+  qaOverseer: Holder | null;
   members: Holder[];
   total: number;
 };
@@ -117,10 +120,11 @@ export function buildStructure(
     // يعمل للإدارتين واللجان سواءً — لا حالة خاصّة ولا مطابقة اسم.
     const leader = inside.find((h) => h.roleName === c.leader_role_name) ?? null;
     const deputy = inside.find((h) => h.roleName === R.deputy) ?? null;
-    // المشرف الإداريّ (عضو إداريّ من إحدى الإدارتين) — دور إشراف منفصل عن أعضاء اللجنة
-    const overseer = inside.find((h) => h.roleName === "hr_admin_member" || h.roleName === "qa_admin_member") ?? null;
+    // مشرفان مستقلّان: الموارد والضمان — لكلّ إدارة مشرفها على هذه اللجنة
+    const hrOverseer = inside.find((h) => h.roleName === "hr_admin_member") ?? null;
+    const qaOverseer = inside.find((h) => h.roleName === "qa_admin_member") ?? null;
     const skip = new Set<string>([c.leader_role_name, R.deputy, "hr_admin_member", "qa_admin_member"]);
-    const exclude = new Set([leader?.userId, deputy?.userId, overseer?.userId].filter(Boolean) as string[]);
+    const exclude = new Set([leader?.userId, deputy?.userId, hrOverseer?.userId, qaOverseer?.userId].filter(Boolean) as string[]);
     const members = inside.filter((h) => !skip.has(h.roleName) && !exclude.has(h.userId));
     return {
       id: c.id,
@@ -130,7 +134,8 @@ export function buildStructure(
       link: c.group_link ?? null,
       leader,
       deputy,
-      overseer,
+      hrOverseer,
+      qaOverseer,
       members,
       total: (leader ? 1 : 0) + (deputy ? 1 : 0) + members.length,
     };
@@ -160,8 +165,12 @@ export function buildStructure(
   for (const d of departmentNodes) if (!d.head) anomalies.push(`قسم «${d.name}» بلا منسّق قسم`);
   for (const d of departmentNodes) for (const c of d.committees) if (!c.leader) anomalies.push(`لجنة «${c.name}» بلا قائد`);
   if (byRole(R.advisor).length === 0) anomalies.push("منصب «مستشار رئيس النادي» شاغر تمامًا");
-  const uncovered = departmentNodes.flatMap((d) => d.committees).filter((c) => !c.overseer).length;
-  if (uncovered > 0) anomalies.push(`${uncovered} لجنة بلا عضو إداري`);
+  // كلّ إدارة تغطّي اللجان بمشرفيها — فالنقص يُحسب لكلٍّ منهما على حدة
+  const allCommittees = departmentNodes.flatMap((d) => d.committees);
+  const noHr = allCommittees.filter((c) => !c.hrOverseer).length;
+  const noQa = allCommittees.filter((c) => !c.qaOverseer).length;
+  if (noHr > 0) anomalies.push(`${noHr} لجنة بلا مشرف من إدارة الموارد البشرية`);
+  if (noQa > 0) anomalies.push(`${noQa} لجنة بلا مشرف من إدارة الضمان والجودة`);
 
   return {
     president: firstOf(R.president),
@@ -244,9 +253,10 @@ export function buildPositions(
     const name = c.committee_name_ar ?? `لجنة #${c.id}`;
     out.push({ key: `lead-${c.id}`, roleId: id("committee_leader"), roleName: "committee_leader", roleAr: ar("committee_leader"), level: lvl("committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holder: findHolder("committee_leader", { committeeId: c.id }), singleton: true, elected: el("committee_leader") });
     out.push({ key: `dep-${c.id}`, roleId: id("deputy_committee_leader"), roleName: "deputy_committee_leader", roleAr: ar("deputy_committee_leader"), level: lvl("deputy_committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holder: findHolder("deputy_committee_leader", { committeeId: c.id }), singleton: true, elected: el("deputy_committee_leader") });
-    // مشرف إداريّ (عضو إداري) — واحد لكلّ لجنة، من إحدى الإدارتين (تُختار عند الإسناد)
-    const overseer = holders.find((h) => (h.roleName === "hr_admin_member" || h.roleName === "qa_admin_member") && h.committeeId === c.id) ?? null;
-    out.push({ key: `adm-${c.id}`, roleId: overseer?.roleId ?? id("hr_admin_member"), roleName: overseer?.roleName ?? "hr_admin_member", roleAr: "عضو إداري", level: lvl("hr_admin_member"), scope: name, council: "administrative", committeeId: c.id, departmentId: null, holder: overseer, singleton: true, elected: false, adminSlot: true });
+    // مقعدان مستقلّان: لكلّ إدارة مشرفها على هذه اللجنة. assign_position تفرض
+    // التفرّد لكلّ (دور + لجنة)، فمقعد الموارد لا يزاحم مقعد الضمان.
+    out.push({ key: `hr-${c.id}`, roleId: id("hr_admin_member"), roleName: "hr_admin_member", roleAr: ar("hr_admin_member"), level: lvl("hr_admin_member"), scope: name, council: "administrative", committeeId: c.id, departmentId: null, holder: findHolder("hr_admin_member", { committeeId: c.id }), singleton: true, elected: false, adminSlot: true });
+    out.push({ key: `qa-${c.id}`, roleId: id("qa_admin_member"), roleName: "qa_admin_member", roleAr: ar("qa_admin_member"), level: lvl("qa_admin_member"), scope: name, council: "administrative", committeeId: c.id, departmentId: null, holder: findHolder("qa_admin_member", { committeeId: c.id }), singleton: true, elected: false, adminSlot: true });
   }
 
   return out;
