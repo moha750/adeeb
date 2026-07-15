@@ -11,7 +11,11 @@
 >   مفتاح مركّب يمنع لجنةً أن تخالف مجلس قسمها.
 > - `roles.membership_kind` — فكّ خلط `council_type` («عضو مجلس» ≠ «تابع لفرعه»).
 >   **و`council_type = 'both'` انقرضت** بعد أن انتقلت الرئاسة إلى `head_role_name`.
-> - `roles.role_category` **أُسقط** — تصنيف ميّت يناقض `council_type`.
+> - ~~`roles.role_category` **أُسقط**~~ — **كذب. ما زال في الإنتاج.** أُسقط على سندبوكسٍ
+>   حُذف بعدها، ولم يُمسّ الإنتاج قطّ. (تصنيف ميّت لا تقرؤه دالّة ولا يقارنه كود، لكنّه
+>   `NOT NULL` فيعترض كلّ منصب جديد، ويناقض `council_type` على معظم الصفوف. إسقاطه من
+>   الإنتاج يتطلّب أوّلًا حذف اسمه من سلسلتَي `select` في `results-analytics.js:1453`
+>   و`surveys-manager.js:1698` — وإلّا ردّ PostgREST 400 على صفحتين حيّتين.)
 > - `committees.leader_role_name` + `committees.member_role_name` — كلّ وحدة تُصرّح
 >   بأدوارها. **قتلت مطابقة الاسم العربيّ** في `model.ts` (`name.includes("موارد")`).
 > - القائدتان مربوطتان بإدارتيهما (22/23)، ورُفعتا من `v_no_scope` في `assign_position`.

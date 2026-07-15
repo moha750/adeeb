@@ -14,7 +14,15 @@ interface CreateMemberRequest {
   password: string;
   full_name: string;
   committee_id: number;
+  force?: boolean; // تجاوز حارس تطابق الاسم عند التأكّد أنه شخص مختلف
 }
+
+const STATUS_LABEL: Record<string, string> = {
+  active: 'عضو فعّال',
+  pending_onboarding: 'بانتظار إكمال البيانات',
+  suspended: 'موقوف',
+  inactive: 'غير نشط',
+};
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -68,7 +76,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { email, password, full_name, committee_id }: CreateMemberRequest = await req.json();
+    const { email, password, full_name, committee_id, force = false }: CreateMemberRequest = await req.json();
 
     if (!email || !password || !full_name || !committee_id) {
       throw new Error('Missing required fields');
@@ -101,6 +109,33 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: 'هذا البريد مستخدم مسبقاً لعضو موجود', success: false }),
         { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // حارس تكرار الشخص بالاسم (الجذر: بريد مختلف لنفس الشخص ⇒ حساب شبح معلّق).
+    // نطابق الاسم المعياري مع الأعضاء غير المنتهين. الإدمن يتجاوز بـ force عند التأكّد.
+    // ─────────────────────────────────────────────────────────────
+    const normalizedName = String(full_name).trim().replace(/\s+/g, ' ');
+    if (!force && normalizedName) {
+      const { data: nameMatches } = await supabaseClient
+        .from('profiles')
+        .select('id, full_name, email, account_status')
+        .in('account_status', ['active', 'pending_onboarding', 'suspended', 'inactive'])
+        .ilike('full_name', normalizedName);
+
+      if (nameMatches && nameMatches.length > 0) {
+        const m = nameMatches[0];
+        const label = STATUS_LABEL[m.account_status] || m.account_status;
+        return new Response(
+          JSON.stringify({
+            success: false,
+            code: 'DUPLICATE_NAME',
+            error: `يوجد عضو مسجّل بنفس الاسم «${normalizedName}» (${label}). إن كان شخصاً مختلفاً فعلاً فأعد المحاولة مع تأكيد التجاوز.`,
+            existing: { id: m.id, full_name: m.full_name, email: m.email, account_status: m.account_status },
+          }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // إنشاء المستخدم باستخدام admin.createUser مع email_confirm: true
@@ -145,19 +180,14 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Failed to create profile: ${profileError.message}`);
     }
 
-    // تعيين دور العضو (role_level = 3 لعضو لجنة)
-    const { data: memberRole } = await supabaseClient
-      .from('roles')
-      .select('id')
-      .eq('role_level', 3)
-      .single();
-
-    if (memberRole) {
+    // تعيين دور العضو بالاسم مباشرةً — لا رحلة إلى roles لترجمته إلى رقم.
+    // تريغر sync_role_key يملأ role_id، ودورٌ لا وجود له يُردّ بـ23503.
+    {
       const { error: roleError } = await supabaseClient
         .from('user_roles')
         .insert({
           user_id: newUserId,
-          role_id: memberRole.id,
+          role_name: 'committee_member',
           committee_id: committee_id,
           is_active: false,
           assigned_by: adminUser.id,

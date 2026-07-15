@@ -98,23 +98,67 @@ Deno.serve(async (req: Request) => {
       throw new Error('Application data not found');
     }
 
+    // تنظيف البريد من المحارف غير المرئية (علامات الاتجاه RTL/LTR والمسافات)
+    // التي قد تُلصق مع البريد وترفضها مصادقة Supabase كـ "invalid format"
+    const cleanEmail = String(application.email || '')
+      .replace(/[^\x20-\x7E]/g, '')
+      .trim();
+    if (!cleanEmail) {
+      throw new Error('Application email is missing or invalid');
+    }
+    application.email = cleanEmail;
+
     // إنشاء مستخدم بدون كلمة مرور - سيقوم بإنشائها في صفحة member-onboarding
+    const userMetadata = {
+      full_name: application.full_name,
+      phone: application.phone,
+      source: 'membership_migration',
+      migrated_from_interview_id: interview_id
+    };
+
     const { data: authData, error: createUserError } = await supabaseClient.auth.admin.createUser({
       email: application.email,
       email_confirm: true,
-      user_metadata: {
-        full_name: application.full_name,
-        phone: application.phone,
-        source: 'membership_migration',
-        migrated_from_interview_id: interview_id
-      }
+      user_metadata: userMetadata
     });
 
-    if (createUserError || !authData.user) {
-      throw new Error(`Failed to create auth user: ${createUserError?.message}`);
-    }
+    // هل أعدنا استخدام حساب موجود مسبقًا؟ (لتفادي حذفه عند التراجع)
+    let reusedExistingUser = false;
+    let newUserId: string;
 
-    const newUserId = authData.user.id;
+    if (createUserError || !authData?.user) {
+      const msg = createUserError?.message || '';
+      const alreadyRegistered = /already.*regist|email.*exist|been registered/i.test(msg);
+
+      if (!alreadyRegistered) {
+        throw new Error(`Failed to create auth user: ${msg}`);
+      }
+
+      // البريد مسجّل مسبقًا: المتقدّم أنشأ حسابًا بنفسه قبل الترحيل.
+      // نعيد استخدام الحساب فقط إذا كان "يتيمًا" (بلا profile)، وإلا نرفض
+      // حمايةً من الكتابة فوق حساب عضو فعّال.
+      const { data: lookup, error: lookupError } = await supabaseClient
+        .rpc('lookup_auth_user_by_email', { p_email: application.email });
+
+      if (lookupError || !lookup?.user_id) {
+        throw new Error(`Email already registered but account lookup failed: ${lookupError?.message || msg}`);
+      }
+
+      if (lookup.has_profile) {
+        throw new Error('هذا البريد مرتبط بحساب عضو فعّال بالفعل، لا يمكن الترحيل إليه');
+      }
+
+      newUserId = lookup.user_id;
+      reusedExistingUser = true;
+
+      // مزامنة البيانات الوصفية وتأكيد البريد على الحساب الموجود
+      await supabaseClient.auth.admin.updateUserById(newUserId, {
+        email_confirm: true,
+        user_metadata: userMetadata
+      });
+    } else {
+      newUserId = authData.user.id;
+    }
 
     // تأكيد البريد الإلكتروني بشكل صريح
     const { error: confirmError } = await supabaseClient
@@ -145,7 +189,7 @@ Deno.serve(async (req: Request) => {
       });
 
     if (profileError) {
-      await supabaseClient.auth.admin.deleteUser(newUserId);
+      if (!reusedExistingUser) await supabaseClient.auth.admin.deleteUser(newUserId);
       throw new Error(`Failed to create profile: ${profileError.message}`);
     }
 
@@ -158,7 +202,7 @@ Deno.serve(async (req: Request) => {
       .from('user_roles')
       .insert({
         user_id: newUserId,
-        role_id: 9, // عضو لجنة
+        role_name: 'committee_member', // كان role_id: 9 — رقمٌ محفور يعني «عضو لجنة» بالصدفة
         committee_id: finalCommitteeId,
         is_active: true,
         assigned_by: adminUser.id,
@@ -166,8 +210,8 @@ Deno.serve(async (req: Request) => {
       });
 
     if (roleError) {
-      await supabaseClient.auth.admin.deleteUser(newUserId);
       await supabaseClient.from('profiles').delete().eq('id', newUserId);
+      if (!reusedExistingUser) await supabaseClient.auth.admin.deleteUser(newUserId);
       throw new Error(`Failed to assign role: ${roleError.message}`);
     }
 
