@@ -1398,7 +1398,9 @@
 .org-council-h .org-person-tx span { color: rgba(255,255,255,.85); }
 .org-council-h .org-vacant { color: var(--danger-100); }
 
-.org-depts { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; padding: 16px; }
+/* القاعدة ٦ — الصفّ الأخير لا يترك فراغًا */
+.org-depts { display: flex; flex-wrap: wrap; gap: 14px; padding: 16px; }
+.org-depts > * { flex: 1 1 300px; }
 .org-dept { border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface-2); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .org-dept-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .org-dept-name { font-size: 14.5px; font-weight: 800; color: var(--color-primary); }
