@@ -1,0 +1,63 @@
+import { Container } from "@adeeb/design-system";
+
+// فهرس معرض المكوّنات — منزل التصميم الواحد. كل مكوّن في صفحته الحيّة (المكوّن الحقيقيّ).
+const GROUPS: { title: string; pages: [string, string][] }[] = [
+  {
+    title: "الأسس",
+    pages: [["tokens", "الرموز والألوان"]],
+  },
+  {
+    title: "الإدخال",
+    pages: [["buttons", "الأزرار"], ["inputs", "الحقول"], ["selects", "القوائم المنسدلة"], ["choice", "الاختيار"]],
+  },
+  {
+    title: "العرض",
+    pages: [
+      ["badges", "الشارات"], ["cards", "البطاقات"], ["avatar", "الصورة الرمزيّة"], ["accordion", "الأكورديون"],
+      ["carousel", "الكاروسيل"], ["skeleton", "هياكل التحميل"], ["empty", "الحالة الفارغة"],
+      ["section-heading", "عنوان القسم"], ["stat", "كرت الإحصاء"],
+    ],
+  },
+  {
+    title: "التفاعل والتنبيه",
+    pages: [["modal", "النوافذ الحواريّة"], ["dropdown", "قوائم الإجراءات"], ["tabs", "التبويبات"], ["toast", "الإشعارات"], ["alerts", "التنبيهات"]],
+  },
+  {
+    title: "البيانات",
+    pages: [["table", "جدول البيانات"], ["toolbar", "شريط الأدوات"], ["pagination", "الترقيم"]],
+  },
+];
+
+export default function UIKitPage() {
+  return (
+    <main className="py-16">
+      <Container className="max-w-4xl">
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System</p>
+        <h1 className="mt-1 font-display text-4xl font-black text-content">نظام تصميم أديب — المكوّنات</h1>
+        <p className="mt-2 max-w-xl text-content-muted">
+          منزل التصميم الواحد: كل مكوّن في صفحته الحيّة — المكوّن الحقيقيّ نفسه، تفاعليّ، وما تراه هو ما يُشحَن. اختر مكوّنًا:
+        </p>
+
+        <div className="mt-12 space-y-12">
+          {GROUPS.map((g) => (
+            <section key={g.title}>
+              <p className="mb-4 font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">{g.title}</p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                {g.pages.map(([slug, label]) => (
+                  <a
+                    key={slug}
+                    href={`/ui/${slug}`}
+                    className="group  border border-line bg-surface p-4 transition hover:border-primary hover:shadow-md"
+                  >
+                    <span className="block font-display text-lg font-bold text-content transition group-hover:text-primary">{label}</span>
+                    <span className="mt-1 block font-latin text-xs text-content-muted" dir="ltr">/ui/{slug}</span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </Container>
+    </main>
+  );
+}

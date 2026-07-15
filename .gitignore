@@ -1,1 +1,8 @@
 .mcp.json
+
+# تبعيّات — لا تُرفع
+node_modules/
+
+# أسرار بيئيّة محلّيّة
+.env
+.env*.local

@@ -1,0 +1,1552 @@
+/* Tailwind بدون Preflight (كي لا تدخل خطوط نظام في إعادة الضبط) */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* مسح أصناف Tailwind داخل مكوّنات حزمة نظام التصميم أيضًا */
+@source "../../../../packages/design-system/src";
+
+/* ============================================================
+   ربط Tailwind برموز نظام تصميم أديب (tokens.css هو المصدر).
+   @theme inline تجعل أدوات Tailwind تشير لمتغيّراتنا مباشرةً.
+   ============================================================ */
+@theme inline {
+  /* الكحلي (أساسي) */
+  --color-navy-50: var(--navy-50);
+  --color-navy-100: var(--navy-100);
+  --color-navy-200: var(--navy-200);
+  --color-navy-300: var(--navy-300);
+  --color-navy-400: var(--navy-400);
+  --color-navy-500: var(--navy-500);
+  --color-navy-600: var(--navy-600);
+  --color-navy-700: var(--navy-700);
+  --color-navy-800: var(--navy-800);
+  --color-navy-900: var(--navy-900);
+  --color-navy-950: var(--navy-950);
+  /* الفولاذي (ثانوي) */
+  --color-steel-50: var(--steel-50);
+  --color-steel-100: var(--steel-100);
+  --color-steel-200: var(--steel-200);
+  --color-steel-300: var(--steel-300);
+  --color-steel-400: var(--steel-400);
+  --color-steel-500: var(--steel-500);
+  --color-steel-600: var(--steel-600);
+  --color-steel-700: var(--steel-700);
+  --color-steel-800: var(--steel-800);
+  --color-steel-900: var(--steel-900);
+  /* دلالية + أسطح (تنقلب مع الثيم) */
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-2: var(--color-surface-2);
+  --color-line: var(--color-border);
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-secondary: var(--color-secondary);
+  --color-content: var(--color-text);
+  --color-content-muted: var(--color-text-muted);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  /* الزوايا (نظام متراكز — الأساس والمشتقّات) + الظلال */
+  --radius: var(--radius);
+  --radius-sm: var(--radius-sm);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+}
+
+/* إحلال خطوط الهوية محلّ افتراضيات Tailwind (بلا Segoe UI/system-ui) */
+@theme {
+  --font-sans: "Lyon Arabic", sans-serif;
+  --font-serif: "Lyon Arabic", serif;
+  --font-mono: monospace;
+  /* خطوط الهوية كقيم صريحة (لا مراجع ذاتية) — تُولّد أدوات font-display/body/latin وتُطبَّق فعلًا */
+  --font-display: "Lyon Arabic", serif;
+  --font-body: "Lyon Arabic", sans-serif;
+  --font-latin: "Eras", sans-serif;
+}
+
+/* ============================================================
+   إعادة ضبط أساسية (بديل Preflight) — بخطوط الهوية فقط، لا خطوط نظام.
+   مبنية على أساسيات Preflight مع استبدال مكدّس الخطوط.
+   ============================================================ */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    box-sizing: border-box;
+    border: 0 solid;
+    margin: 0;
+    padding: 0;
+  }
+
+  html,
+  :host {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    tab-size: 4;
+    font-family: var(--font-body);
+    /* الحروف المرسلة في Lyon Arabic: ss06 = Arabic Swashes (مدّ النهايات) · ss07 = Arabic Elongated Kaf
+       (مدّ الكاف المفردة مثل «شكر»؛ لا تتأثّر الكاف المندمجة في ليجاتور كـ«هياكل» — سلوك متوقّع) · salt = نفس المجسّمات.
+       الخاصية وراثيّة فتُطبَّق على كل النصوص تلقائيًّا (بما فيها المُولّد ديناميكيًّا).
+       لا نمسّ calt/liga/kern/rlig ولا الوصل init/medi/fina/isol — كلها مفعّلة افتراضيًّا وضروريّة. */
+    font-feature-settings: "ss06" 1, "ss07" 1, "salt" 1;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    line-height: inherit;
+    background: var(--color-bg);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  b, strong {
+    font-weight: bolder;
+  }
+
+  code, kbd, samp, pre {
+    font-family: var(--font-mono);
+  }
+
+  img, svg, video, canvas, audio, iframe, embed, object {
+    display: block;
+    vertical-align: middle;
+  }
+
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  button,
+  input,
+  optgroup,
+  select,
+  textarea,
+  ::file-selector-button {
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    background: transparent;
+  }
+
+  button,
+  [type="button"],
+  [type="reset"],
+  [type="submit"],
+  ::file-selector-button {
+    cursor: pointer;
+  }
+
+  /* عناصر النماذج لا تضمن وراثة خصائص الخط عبر اختصار `font`؛ نُثبّت الخطّ والمدّ صراحةً
+     كي يظهر نصّ المستخدم داخل الحقول ممدودًا هو الآخر. var(--font-body) = "Lyon Arabic", sans-serif. */
+  input,
+  textarea,
+  select,
+  button {
+    font-family: var(--font-body);
+    font-feature-settings: "ss06" 1, "ss07" 1, "salt" 1;
+  }
+
+  ::placeholder {
+    opacity: 1;
+    color: color-mix(in oklab, currentColor 50%, transparent);
+  }
+
+  :focus-visible {
+    outline-offset: 2px;
+  }
+}
+
+/* ظهور الأقسام عند التمرير — بلا JS يبقى المحتوى ظاهرًا (تُفعّل فقط عند وجود .js) */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: opacity, transform;
+}
+.js [data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .js [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ============================================================
+   معرض «إبداعاتنا» — جدار حيّ بأعمدة متعاكسة الاتجاه.
+   العناصر مضاعفة مرّتين؛ الإزاحة -50% تعطي حلقة لا نهائية سلسة.
+   ============================================================ */
+@keyframes works-scroll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+.works-track {
+  animation: works-scroll var(--dur, 36s) linear infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+.works-col:hover .works-track {
+  animation-play-state: paused;
+}
+.works-wall-mask {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .works-track {
+    animation: none;
+  }
+  .works-col {
+    overflow-y: auto;
+  }
+}
+
+/* ============================================================
+   ملخص المسيرة — كروت بحجم الرقم (Treemap): مساحة الكرت ∝ قيمته،
+   تملأ المستطيل بلا فراغ. تُبنى إحداثياتها بالـ JS (StatsTreemap).
+   ============================================================ */
+.tm-tile {
+  position: absolute;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+.tm-in .tm-tile {
+  opacity: 1;
+  transform: none;
+}
+.tm-card {
+  position: absolute;
+  inset: 6px;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+.tm-card.tm-hero {
+  background: linear-gradient(150deg, #335c81, #1d3049);
+  border: 0;
+  box-shadow: var(--shadow-lg);
+}
+.tm-card.tm-hero::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: -40px;
+  top: -40px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15), transparent 70%);
+}
+.tm-ic {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  color: #8fb2d6;
+}
+.tm-card.tm-hero .tm-ic {
+  color: #cfe0f2;
+  width: 42px;
+  height: 42px;
+}
+.tm-ic svg {
+  width: 100%;
+  height: 100%;
+}
+.tm-badge {
+  position: relative;
+  align-self: flex-start;
+  font-family: "Eras", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #dcebf9;
+  background: rgba(255, 255, 255, 0.18);
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  margin-bottom: 6px;
+}
+.tm-body {
+  position: relative;
+}
+.tm-n {
+  font-family: "Eras", sans-serif;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+.tm-l {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #bcc9d9;
+  font-weight: 700;
+}
+.tm-card.tm-hero .tm-l {
+  font-size: 21px;
+  color: #dbe6f2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-tile {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ============================================================
+   أهل الدفّة (المجلس) — كاروسيل «تركيز المركز» ببطاقات كاملة الصورة
+   وشريط زجاجيّ سفليّ. المقاييس تُحسب بالـ JS (BoardCarousel).
+   ============================================================ */
+.bc-stage {
+  position: relative;
+  height: 410px;
+  overflow: hidden;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  /* تلاشٍ ناعم يمينًا ويسارًا بدل القصّ الحادّ */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 10%, #000 90%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 10%, #000 90%, transparent 100%);
+}
+.bc-track {
+  position: absolute;
+  inset: 0;
+}
+/* أثناء السحب: أُعطّل الانتقال لتتبع البطاقات الإصبع فورًا (التحديث يدويّ) */
+.bc-track.bc-dragging .bc-slide {
+  transition: none;
+}
+
+/* ============================================================
+   برامجنا وأنشطتنا — إطلالة جانبية (Peek) ببطاقات تسجيل (CTA).
+   ============================================================ */
+.act-peek {
+  display: flex;
+  gap: 22px;
+  overflow-x: auto;
+  padding: 6px 2px 22px;
+  scrollbar-width: none;
+  cursor: grab;
+}
+.act-peek::-webkit-scrollbar {
+  display: none;
+}
+.act-peek:active {
+  cursor: grabbing;
+}
+.act-card {
+  /* ٣ بطاقات على الحاسب (فاصلان ×22px) */
+  flex: 0 0 calc((100% - 44px) / 3);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #dde3ea;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.3s, box-shadow 0.3s;
+  text-decoration: none;
+  color: inherit;
+}
+@media (max-width: 1023px) {
+  /* بطاقتان */
+  .act-card {
+    flex-basis: calc((100% - 22px) / 2);
+  }
+}
+@media (max-width: 639px) {
+  /* بطاقة واحدة */
+  .act-card {
+    flex-basis: 100%;
+  }
+}
+.act-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+.act-cov {
+  position: relative;
+  height: 176px;
+  background: linear-gradient(150deg, #3a6595, #1d3049);
+  background-size: cover;
+  background-position: center;
+}
+.act-cov::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(15, 22, 33, 0.28), transparent 45%);
+}
+.act-date {
+  position: absolute;
+  top: 14px;
+  inset-inline-start: 14px;
+  z-index: 2;
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  text-align: center;
+  line-height: 1;
+  box-shadow: var(--shadow-sm);
+}
+.act-d {
+  font-family: "Eras", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #274060;
+}
+.act-m {
+  font-size: 12px;
+  color: #335c81;
+  font-weight: 700;
+  margin-top: 3px;
+}
+.act-bd {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.act-title {
+  font-weight: 800;
+  color: #274060;
+  font-size: 18px;
+  line-height: 1.35;
+  margin: 10px 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* سطر واحد ثابت لتوحيد ارتفاع البطاقات (الطويل يُقتطع بـ …) */
+  min-height: 1.35em;
+}
+.act-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: #5a6675;
+  font-size: 13px;
+  margin-top: 10px;
+}
+.act-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.act-meta svg {
+  width: 14px;
+  height: 14px;
+  color: #335c81;
+}
+.act-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.act-ctrl button {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid #cfd7e0;
+  background: #fff;
+  color: #274060;
+  font-size: 20px;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: var(--shadow-sm);
+}
+.act-ctrl button:hover {
+  background: var(--grad-primary);
+  color: #fff;
+}
+@media (prefers-reduced-motion: reduce) {
+  .act-card {
+    transition: none;
+  }
+}
+
+/* ============================================================
+   آخر الأخبار — عرض تحريريّ متحرّك (مقال مميّز يتبدّل + قائمة/شريط).
+   الطبقتان تُدارَان بالـ opacity عبر JS (لا className) لتفادي تصادم React.
+   ============================================================ */
+.ns-show {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 26px;
+  align-items: stretch;
+}
+.ns-feat {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  /* حدٌّ أدنى فقط؛ الارتفاع الفعليّ يتمدّد ليطابق ارتفاع القائمة (grid stretch) */
+  min-height: 300px;
+  background-color: #1d3049;
+  background-image: var(--grad-primary-strong);
+  box-shadow: var(--shadow-lg);
+}
+.ns-layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+@keyframes ns-kb {
+  from { transform: scale(1.02); }
+  to { transform: scale(1.12); }
+}
+.ns-grad {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(to top, rgba(15, 22, 33, 0.94), rgba(15, 22, 33, 0.35) 55%, transparent 80%);
+}
+.ns-cap {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: 30px;
+  color: #fff;
+  z-index: 2;
+  animation: ns-fade 0.6s ease;
+}
+.ns-cap h3 {
+  font-size: 25px;
+  font-weight: 900;
+  line-height: 1.4;
+  margin: 4px 0 10px;
+}
+.ns-cap p {
+  color: #d6e2f0;
+  font-size: 14.5px;
+}
+@keyframes ns-fade {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.ns-prog {
+  position: absolute;
+  top: 0;
+  inset-inline: 0;
+  height: 4px;
+  z-index: 3;
+  background: rgba(255, 255, 255, 0.22);
+}
+.ns-prog > i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #fff;
+}
+.ns-prog > i.ns-run {
+  animation: ns-fill 5s linear forwards;
+}
+@keyframes ns-fill {
+  from { width: 0; }
+  to { width: 100%; }
+}
+.ns-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: #cfe0f2;
+  font-size: 12.5px;
+  align-items: center;
+}
+.ns-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.ns-meta svg {
+  width: 13px;
+  height: 13px;
+}
+.ns-clamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ns-clamp3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ns-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* الارتفاع الطبيعيّ للقائمة هو من يحدّد ارتفاع الصفّ (والبطل يطابقه) — بلا تمرير ولا فجوات */
+}
+.ns-li {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 12px;
+  padding: 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: 0.25s;
+  border: 1px solid transparent;
+  background: transparent;
+  text-align: start;
+  font: inherit;
+  color: inherit;
+}
+.ns-li:hover {
+  background: #fff;
+}
+.ns-li.ns-on {
+  background: #fff;
+  border-color: #dde3ea;
+  box-shadow: var(--shadow-sm);
+}
+.ns-th {
+  height: 64px;
+  border-radius: var(--radius);
+  background-size: cover;
+  background-position: center;
+  background-color: #1d3049;
+  background-image: var(--grad-primary-strong);
+}
+.ns-st {
+  align-self: center;
+  min-width: 0;
+}
+.ns-h4 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 800;
+  color: #5a6675;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+.ns-li.ns-on .ns-h4 {
+  color: #274060;
+}
+.ns-lidate {
+  font-size: 12px;
+  color: #7a8594;
+}
+.ns-rail {
+  display: none;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 14px 2px 4px;
+  scrollbar-width: none;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ns-rail:active {
+  cursor: grabbing;
+}
+.ns-rail::-webkit-scrollbar {
+  display: none;
+}
+/* تلاشي الحافّتين — يُفعّل بالـJS فقط حين يفيض الشريط (وجود مزيد للسحب) */
+.ns-rail.ns-rail-fade {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%);
+}
+.ns-rt {
+  /* تتمدّد لتملأ العرض بالتساوي (لا فراغ)؛ وتتمرّر أفقيًّا فقط على الشاشات الضيّقة جدًّا */
+  flex: 1 0 108px;
+  min-width: 0;
+  height: 78px;
+  border-radius: var(--radius);
+  background-size: cover;
+  background-position: center;
+  background-color: #1d3049;
+  background-image: var(--grad-primary-strong);
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  outline: 3px solid transparent;
+  outline-offset: -3px;
+  transition: 0.25s;
+  border: 0;
+  padding: 0;
+}
+.ns-rt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 22, 33, 0.45);
+  transition: 0.25s;
+}
+.ns-rt.ns-on {
+  outline-color: #274060;
+}
+.ns-rt.ns-on::after {
+  background: rgba(15, 22, 33, 0.05);
+}
+@media (max-width: 860px) {
+  .ns-show {
+    grid-template-columns: 1fr;
+  }
+  .ns-list {
+    display: none;
+  }
+  .ns-rail {
+    display: flex;
+  }
+  .ns-feat {
+    min-height: 360px;
+  }
+  .ns-cap h3 {
+    font-size: 21px;
+  }
+}
+/* طبقة عمق تُبعد البطاقات الجانبية بلون الخلفية (بلا شفافية تُظهر ما خلفها) */
+.bc-dim {
+  position: absolute;
+  inset: 0;
+  background: #eef2f7;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+.bc-slide {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.55s ease;
+  will-change: transform, opacity;
+  cursor: pointer;
+}
+.bc-card {
+  position: relative;
+  width: 290px;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  background: linear-gradient(150deg, #3a6595, #1d3049);
+}
+.bc-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+.bc-mono {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Lyon Arabic", serif;
+  font-weight: 700;
+  font-size: 104px;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: 0.04em;
+}
+.bc-grad {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(15, 22, 33, 0.55), transparent 55%);
+}
+.bc-info {
+  position: absolute;
+  inset-inline: 12px;
+  bottom: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: rgba(18, 30, 46, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.bc-nm {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+}
+.bc-rl {
+  font-size: 12px;
+  color: #cfe0f2;
+  font-weight: 700;
+}
+.bc-socs {
+  display: flex;
+  gap: 8px;
+}
+.bc-socs a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  transition: 0.2s;
+  flex: 0 0 auto;
+}
+.bc-socs a:hover {
+  background: #fff;
+  color: #274060;
+}
+.bc-arrows {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+.bc-arrows button {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid #cfd7e0;
+  background: #fff;
+  color: #274060;
+  font-size: 20px;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: var(--shadow-sm);
+}
+.bc-arrows button:hover {
+  background: var(--grad-primary);
+  color: #fff;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bc-slide {
+    transition: none;
+  }
+}
+
+/* ============================================================
+   لوحة التحكم — الهيكل (Shell) · اتجاه «العائم الزجاجيّ Aurora»
+   الشريط الجانبيّ كحليّ دائمًا؛ المحتوى يتبع رموز الثيم.
+   ============================================================ */
+.ash {
+  display: flex;
+  min-height: 100vh;
+  gap: 14px;
+  padding: 14px;
+  background: radial-gradient(1200px 440px at 100% -10%,
+    color-mix(in oklab, var(--steel-500) 15%, var(--color-bg)), var(--color-bg));
+}
+
+/* ---- الشريط الجانبيّ العائم ---- */
+.ash-side {
+  width: 252px;
+  flex: 0 0 auto;
+  position: sticky;
+  top: 14px;
+  align-self: flex-start;
+  height: calc(100vh - 28px);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 0;
+  overflow: visible; /* ليبرز مقبض التماس خارج الحافّة */
+  border-radius: var(--radius);
+  color: #c7d3e2;
+  /* التوهّج كطبقة خلفية (يُقصّ بالزوايا تلقائيًّا، فلا حاجة لإخفاء الفيض) */
+  /* سطح الشريط: الفولاذي والكحلي معًا (لا كحلي منفرد) + توهّج فولاذيّ */
+  background:
+    radial-gradient(230px 210px at 6% 1%, rgba(111, 151, 192, .38), transparent 60%),
+    linear-gradient(160deg, var(--steel-700), var(--navy-900));
+  box-shadow: var(--shadow-lg);
+  transition: width var(--dur) var(--ease-standard);
+}
+/* مقبض التماس — زرّ دائريّ على حدّ الشريط والمحتوى، يتبع الحافّة عند الطيّ */
+.ash-handle {
+  position: absolute;
+  top: 50%;
+  left: -13px;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  z-index: 6;
+  transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast), border-color var(--dur-fast);
+}
+.ash-handle:hover { color: var(--color-primary); border-color: var(--steel-400); transform: translateY(-50%) scale(1.12); }
+.ash-handle svg { width: 15px; height: 15px; transition: transform var(--dur); }
+.ash.rail .ash-handle svg { transform: rotate(180deg); }
+
+.ash-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 18px 14px;
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #fff;
+  position: relative;
+}
+.ash-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius);
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #fff;
+  background: var(--grad-primary);
+}
+/* المظهر من مكوّن Button (variant=primary)؛ هنا تخطيط الشريط فقط */
+.ash-cta { margin: 0 14px 12px; padding: 10px; border-radius: var(--radius); font-size: 14px; font-weight: 800; }
+.ash-cta svg { width: 18px; height: 18px; flex: 0 0 auto; }
+
+.ash-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 6px;
+}
+.ash-nav-head {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  padding: 12px 20px 5px;
+  color: #8fa1b8;
+}
+.ash-i {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  margin: 1px 12px;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #c1cede;
+  background: transparent;
+  border: 0;
+  width: calc(100% - 24px);
+  overflow: hidden;
+  cursor: pointer;
+  text-align: start;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.ash-i svg { width: 19px; height: 19px; flex: 0 0 auto; }
+.ash-i .lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: opacity var(--dur-fast); }
+.ash-i:hover { background: rgba(255, 255, 255, .07); }
+.ash-i.on {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(111, 151, 192, .34), rgba(39, 64, 96, .22));
+  box-shadow: var(--shadow-sm);
+}
+.ash-caret {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  opacity: .6;
+  transition: transform var(--dur);
+}
+.ash-i.open .ash-caret { transform: rotate(90deg); }
+.ash-b {
+  font-style: normal;
+  font-family: var(--font-latin);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, rgba(111, 151, 192, .30), rgba(39, 64, 96, .24));
+  color: #e3ecf5;
+}
+.ash-i .ash-b { margin-inline-start: auto; }
+
+/* أبناء المجموعة (طيّ سلس عبر grid-template-rows) */
+.ash-sub {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin: 0 12px;
+  padding-inline-start: 30px;
+  position: relative;
+  transition: grid-template-rows var(--dur) var(--ease-standard);
+}
+.ash-i.open + .ash-sub { grid-template-rows: 1fr; }
+.ash-sub-in { overflow: hidden; }
+.ash-sub::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 20px;
+  top: 4px;
+  bottom: 10px;
+  width: 1.5px;
+  background: currentColor;
+  opacity: .14;
+}
+.ash-s {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  margin: 1px 0;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #93a4ba;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  cursor: pointer;
+  text-align: start;
+  position: relative;
+  transition: color var(--dur-fast);
+}
+.ash-s::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -11px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--dur-fast);
+}
+.ash-s .lbl { flex: 1; }
+.ash-s:hover { color: #eaf0f6; }
+.ash-s.on { color: var(--steel-300); }
+.ash-s.on::before { opacity: 1; }
+.ash-s .ash-b { margin-inline-start: auto; }
+
+.ash-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 14px 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  color: #dbe4ee;
+  background: rgba(255, 255, 255, .06);
+  cursor: pointer;
+  transition: background var(--dur-fast);
+}
+.ash-foot:hover { background: rgba(255, 255, 255, .1); }
+.ash-fic {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: #dbe6f2;
+  background: linear-gradient(135deg, rgba(111, 151, 192, .28), rgba(39, 64, 96, .20));
+}
+.ash-fic svg { width: 18px; height: 18px; }
+.ash-ftx { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+.ash-ftx b { font-size: 13px; font-weight: 800; }
+.ash-ftx span { font-size: 11.5px; opacity: .7; }
+
+/* ---- المنطقة الرئيسية ---- */
+.ash-main {
+  flex: 1;
+  min-width: 0;
+  height: calc(100vh - 28px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+}
+.ash-top {
+  height: 66px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.ash-ham {
+  display: none;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 4px;
+}
+.ash-ham svg { width: 24px; height: 24px; }
+/* الشريط الجانبيّ ثابت على سطح المكتب (بلا طيّ) — طابع SaaS احترافيّ نظيف.
+   الهوية في العلويّ (منطقة لا تنطوي أبدًا) تحقيقًا لقاعدة: الهوية لا تختفي مهما كان. */
+.ash-greet { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.ash-top > .ash-greet { margin-inline-end: auto; }
+/* المظهر من مكوّن Avatar؛ هنا مقاس الشريط فقط (42px بدل 44px الافتراضيّ) — تخصيص أعلى ليغلب .av */
+.ash-top .ash-av { width: 42px; height: 42px; }
+.ash-gtx { display: flex; flex-direction: column; line-height: 1.35; min-width: 0; }
+.ash-gtx b { font-size: 15.5px; font-weight: 800; color: var(--color-primary); }
+.ash-gdate { font-size: 12px; color: var(--color-text-muted); }
+.ash-tools { display: flex; align-items: center; gap: 12px; }
+.ash-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-muted);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 13.5px;
+  min-width: 160px;
+  cursor: text;
+}
+.ash-search svg { width: 16px; height: 16px; }
+.ash-bell {
+  position: relative;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 4px;
+}
+.ash-bell svg { width: 20px; height: 20px; }
+.ash-bell i {
+  position: absolute;
+  top: 2px;
+  inset-inline-end: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+.ash-content { flex: 1; overflow: auto; padding: 22px; }
+
+/* ---- الطيّ إلى ريّل أيقونات (زرّه أسفل الشريط) ----
+   العرض 71px مضبوط ليبقى مركز كلّ أيقونة في مكانه نفسه (هامش 12 + حشو 14 + نصف 9.5 = 35.5).
+   لا نغيّر المحاذاة؛ النصوص وحدها تتلاشى فلا تقفز الأيقونات أفقيًّا. */
+.ash.rail .ash-side { width: 71px; }
+.ash.rail .ash-i .lbl,
+.ash.rail .ash-b,
+.ash.rail .ash-caret,
+.ash.rail .ash-brand b { opacity: 0; pointer-events: none; }
+.ash.rail .ash-nav-head { height: 0; padding-block: 0; margin: 0; opacity: 0; overflow: hidden; }
+.ash.rail .ash-sub { grid-template-rows: 0fr; }
+.ash.rail .ash-cta { gap: 0; }
+.ash.rail .ash-cta span { display: none; }
+.ash.rail .ash-foot { gap: 0; }
+.ash.rail .ash-ftx { display: none; }
+
+/* ---- الجوّال: دُرج منزلق ---- */
+.ash-scrim { display: none; }
+@media (max-width: 860px) {
+  .ash { padding: 0; gap: 0; }
+  .ash-main { height: 100vh; border-radius: 0; border: 0; box-shadow: none; }
+  .ash-ham { display: block; }
+  /* الشريط يصير دُرجًا منزلقًا (الطيّ على الجوّال فقط) */
+  .ash-side {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: auto;
+    height: 100vh;
+    width: 264px;
+    border-radius: 0;
+    z-index: var(--z-modal);
+    /* موجب X = خارج الشاشة يمينًا (لا يتأثّر بالاتجاه) */
+    transform: translateX(100%);
+    transition: transform var(--dur) var(--ease-standard);
+  }
+  .ash.mob-open .ash-side { transform: translateX(0); }
+  .ash.mob-open .ash-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-modal) - 1);
+    background: rgba(20, 31, 48, .45);
+    backdrop-filter: blur(1px);
+  }
+  /* ⛔ قاعدة مقدّسة: الاسم + الترحيب + الصورة تبقى ظاهرة دائمًا.
+     البحث وحده يتقلّص لأيقونة لتوفير المساحة — لا نُخفي الهوية أبدًا. */
+  .ash-search span { display: none; }
+  .ash-search { min-width: 0; padding: 8px; }
+  .ash-greet { flex: 1; min-width: 0; }
+  .ash-gtx b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* على الجوّال الطيّ يكون بإغلاق الدُرج لا بالريّل — نُلغي أثر الريّل ونُخفي المقبض */
+  .ash-handle { display: none; }
+  .ash.rail .ash-side { width: 264px; }
+  .ash.rail .ash-i .lbl,
+  .ash.rail .ash-b,
+  .ash.rail .ash-caret,
+  .ash.rail .ash-brand b { opacity: 1; pointer-events: auto; }
+  .ash.rail .ash-nav-head { height: auto; padding: 12px 20px 5px; opacity: 1; }
+  .ash.rail .ash-cta { gap: 8px; }
+  .ash.rail .ash-cta span,
+  .ash.rail .ash-ftx { display: revert; }
+  .ash.rail .ash-foot { gap: 10px; }
+}
+/* في الشاشات الضيّقة جدًّا: التاريخ وحده (غير مقدّس) ينزوي — الاسم والترحيب والصورة تبقى */
+@media (max-width: 460px) {
+  .ash-gdate { display: none; }
+  .ash-gtx b { font-size: 14.5px; }
+}
+
+/* ---- رأس الصفحة داخل المحتوى ---- */
+.ash-phead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.ash-crumb { font-size: 12px; color: var(--color-text-muted); }
+.ash-crumb b { color: var(--color-primary); }
+.ash-phead h1 { font-size: 22px; font-weight: 900; color: var(--color-primary); margin-top: 2px; }
+
+.tabs-seg { display: inline-flex; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 4px; gap: 2px; }
+.tabs-seg .tab { font-size: 13.5px; border-radius: var(--radius); padding: 8px 15px; }
+.tabs-seg .tab:hover { color: var(--color-primary); }
+.tabs-seg .tab.on { background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-sm); }
+.tabs-seg .tab.on .tab-b { background: color-mix(in oklab, var(--steel-500) 16%, var(--color-surface)); }
+/* حركة دخول متدرّجة للكروت (بديل Framer Motion) — التأخير لكلّ كرت عبر inline animation-delay حسب فهرسه.
+   تعاد الحركة عند تغيّر الصفحة/الفرز لأنّ مفتاح .mc-grid-anim يتغيّر فيُعاد تركيب الأبناء. */
+.mc-grid-anim > .mc-card-anim { opacity: 0; animation: mc-card-in .32s var(--ease-standard) both; }
+@keyframes mc-card-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .mc-grid-anim > .mc-card-anim { opacity: 1; animation: none; }
+}
+
+/* ============================================================
+   طبقة توحيد الهوية — الأساسات المستقرّة (منقولة من لوح الهوية)
+   استدارة موحّدة 16 · سطح Aurora مسطّح · ظلّ واحد منغَّم بلون العنصر.
+   المكوّنات الخاصّة (الحقول/المودال/الكروت المنغّمة…) تُنقل لاحقًا عند استقرارها.
+   ============================================================ */
+
+/* (أ) الاستدارة: نُقلت كلّها إلى المصدر الوحيد `components.css` — 16 للأغلب · 8 للصغير (سلّم الزوايا)،
+   بلا `!important` (components.css يُحمَّل أخيرًا فيفوز). ممنوع تعريف أي زاوية هنا. */
+
+/* (ب) سطح Aurora المسطّح على أسطح البطاقات (النافذة .mdl تُدار من components: فولاذيّ للعاديّة · نغمة للتأكيد) */
+.acard, .mc, .gal-sec{
+  background: var(--surface-aurora);
+  border-color: var(--border-aurora);
+}
+
+/* (ج) ظلّ واحد موحّد بلون موسوم (فولاذيّ افتراضًا من الرمز، ويتغيّر للدلاليّ حسب العنصر) */
+.abtn-primary, .abtn-danger, .abtn-success, .abtn-warning, .abtn-inverse,
+.abtn:hover:not(:disabled), .acard-interactive:hover, .acard-elevated, .acard, .mc,
+.tb, .dm-menu, .tb-fs-panel, .mdl, .pag-num.on, .toast, .tic, .aalert, .gal-num, .empty-aurora .empty-ic, .mc:hover{
+  box-shadow: var(--shadow-sm);
+}
+.av{ box-shadow: var(--shadow-md), inset 0 0 0 1px rgba(255,255,255,.2); }
+.mc-av{ box-shadow: var(--shadow-md), 0 0 0 4px var(--color-surface), inset 0 0 0 1px rgba(255,255,255,.25); }
+.abtn{ --shadow-tone: var(--shadow-tone-brand); }
+.abtn-success, .abtn-ghost-success, .tt-success, .aalert-tone-success{ --shadow-tone: var(--shadow-tone-success); }
+.abtn-warning, .abtn-ghost-warning, .tt-warning, .aalert-tone-warning{ --shadow-tone: var(--shadow-tone-warning); }
+.abtn-danger, .abtn-ghost-danger, .tt-error, .aalert-tone-danger{ --shadow-tone: var(--shadow-tone-danger); }
+
+/* (د) كرت العضو منغَّم بلون الحالة الدلاليّة (Aurora + ترويسة + أفاتار + نصوص 600). مُحسَّن للفاتح؛ الداكن متابعة. */
+.mc-tone-brand  { --surface-aurora:linear-gradient(135deg, #e7ebf0, var(--color-surface) 62%); }
+.mc-tone-success{ --surface-aurora:linear-gradient(135deg, #e4f3ec, var(--color-surface) 62%); --border-aurora:color-mix(in oklab,#1a8452 30%,var(--color-border)); --shadow-tone: var(--shadow-tone-success); }
+.mc-tone-warning{ --surface-aurora:linear-gradient(135deg, #faf2e2, var(--color-surface) 62%); --border-aurora:color-mix(in oklab,#b87a0c 32%,var(--color-border)); --shadow-tone: var(--shadow-tone-warning); }
+.mc-tone-danger { --surface-aurora:linear-gradient(135deg, #fae7e6, var(--color-surface) 62%); --border-aurora:color-mix(in oklab,#b52f22 32%,var(--color-border)); --shadow-tone: var(--shadow-tone-danger); }
+.mc-tone-success .mc-head{ background:var(--grad-success); }
+.mc-tone-warning .mc-head{ background:var(--grad-warning); }
+.mc-tone-danger  .mc-head{ background:var(--grad-danger); }
+.mc-tone-success .mc-head::before,
+.mc-tone-warning .mc-head::before,
+.mc-tone-danger  .mc-head::before{ background:radial-gradient(150px 100px at 20% -10%, rgba(255,255,255,.4), transparent 70%); }
+.mc-tone-success .mc-av{ background:var(--grad-success); }
+.mc-tone-warning .mc-av{ background:var(--grad-warning); }
+.mc-tone-danger  .mc-av{ background:var(--grad-danger);  }
+.mc-tone-success .mc-name{ color:#166a43; } .mc-tone-warning .mc-name{ color:#7a4f08; } .mc-tone-danger .mc-name{ color:#93261b; }
+.mc-tone-success .mc-info-val{ color:#166a43; } .mc-tone-warning .mc-info-val{ color:#7a4f08; } .mc-tone-danger .mc-info-val{ color:#93261b; }
+.mc-tone-success .mc-info-label{ color:color-mix(in oklab,#1a8452 55%,var(--color-text-muted)); } .mc-tone-warning .mc-info-label{ color:color-mix(in oklab,#b87a0c 55%,var(--color-text-muted)); } .mc-tone-danger .mc-info-label{ color:color-mix(in oklab,#b52f22 55%,var(--color-text-muted)); }
+.mc-tone-success .mc-info-row{ border-bottom-color:color-mix(in oklab,#1a8452 14%,transparent); } .mc-tone-warning .mc-info-row{ border-bottom-color:color-mix(in oklab,#b87a0c 14%,transparent); } .mc-tone-danger .mc-info-row{ border-bottom-color:color-mix(in oklab,#b52f22 14%,transparent); }
+.mc-tone-success .mc-role{ color:#166a43; background:color-mix(in oklab,#1a8452 14%,var(--color-surface)); border-color:color-mix(in oklab,#1a8452 30%,transparent); }
+.mc-tone-warning .mc-role{ color:#7a4f08; background:color-mix(in oklab,#b87a0c 15%,var(--color-surface)); border-color:color-mix(in oklab,#b87a0c 32%,transparent); }
+.mc-tone-danger  .mc-role{ color:#93261b; background:color-mix(in oklab,#b52f22 14%,var(--color-surface)); border-color:color-mix(in oklab,#b52f22 30%,transparent); }
+.mc-tone-success .mc-ic{ color:#166a43; background:linear-gradient(135deg,color-mix(in oklab,#1a8452 22%,var(--color-surface)),color-mix(in oklab,#1a8452 8%,var(--color-surface))); }
+.mc-tone-warning .mc-ic{ color:#7a4f08; background:linear-gradient(135deg,color-mix(in oklab,#b87a0c 22%,var(--color-surface)),color-mix(in oklab,#b87a0c 8%,var(--color-surface))); }
+.mc-tone-danger  .mc-ic{ color:#93261b; background:linear-gradient(135deg,color-mix(in oklab,#b52f22 22%,var(--color-surface)),color-mix(in oklab,#b52f22 8%,var(--color-surface))); }
+.mc-tone-success .mc-foot{ background:color-mix(in oklab,#1a8452 6%,var(--color-surface)); border-top-color:color-mix(in oklab,#1a8452 15%,var(--color-border)); }
+.mc-tone-warning .mc-foot{ background:color-mix(in oklab,#b87a0c 6%,var(--color-surface)); border-top-color:color-mix(in oklab,#b87a0c 15%,var(--color-border)); }
+.mc-tone-danger  .mc-foot{ background:color-mix(in oklab,#b52f22 6%,var(--color-surface)); border-top-color:color-mix(in oklab,#b52f22 15%,var(--color-border)); }
+.mc-tone-success:hover{ border-color:#1a8452; }
+.mc-tone-warning:hover{ border-color:#b87a0c; }
+.mc-tone-danger:hover { border-color:#b52f22; }
+
+/* ============================================================
+   بيانات الدخول — صفحة تغيير البريد وكلمة المرور (تحت أعضاء أديب)
+   ============================================================ */
+.cred-wrap { max-width: 620px; display: flex; flex-direction: column; gap: 16px; }
+.cred-card { padding: 22px; display: flex; flex-direction: column; gap: 22px; background: var(--color-surface); border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); box-shadow: var(--shadow-md); }
+.cred-sec { display: flex; flex-direction: column; gap: 12px; }
+.cred-h { font-size: 13px; font-weight: 800; color: var(--color-text-muted); }
+.cred-hint { font-size: 13px; color: var(--color-text-muted); }
+.cred-cur { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius); }
+.cred-cur-tx { display: flex; flex-direction: column; min-width: 0; line-height: 1.4; }
+.cred-cur-tx b { font-size: 14px; font-weight: 800; color: var(--color-primary); }
+.cred-cur-tx span { font-size: 12.5px; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cred-badge { margin-inline-start: auto; font-size: 11.5px; font-weight: 700; color: var(--color-text-muted); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 3px 10px; white-space: nowrap; }
+.cred-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .cred-grid { grid-template-columns: 1fr; } }
+.cred-pw-tools { display: flex; flex-wrap: wrap; gap: 18px; }
+.cred-link { background: none; border: 0; padding: 0; font-size: 12.5px; font-weight: 700; color: var(--steel-600); cursor: pointer; transition: color var(--dur-fast); }
+.cred-link:hover { text-decoration: underline; }
+.cred-actions { display: flex; justify-content: flex-end; }
+
+/* زرّ تسجيل الخروج في الشريط العلويّ */
+.ash-logout { color: var(--color-text-muted); background: transparent; border: 0; cursor: pointer; padding: 4px; display: grid; place-items: center; border-radius: var(--radius); transition: color var(--dur-fast), background var(--dur-fast); }
+.ash-logout svg { width: 20px; height: 20px; }
+.ash-logout:hover { color: #b52f22; background: color-mix(in oklab, #b52f22 10%, transparent); }
+.ash-logout:disabled { opacity: .55; cursor: default; }
+
+/* ============================================================
+   المصادقة — صفحة الدخول / شاشة لا صلاحية
+   ============================================================ */
+.auth-wrap { min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: var(--color-bg); }
+.auth-card { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 18px; padding: 30px; background: var(--color-surface); border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); box-shadow: var(--shadow-lg, 0 24px 60px -24px rgba(39,64,96,.35)); }
+.auth-brand { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 800; color: var(--color-primary); }
+.auth-logo { width: 34px; height: 34px; border-radius: var(--radius); display: grid; place-items: center; font-weight: 800; color: #fff; background: var(--grad-primary); }
+.auth-head { display: flex; flex-direction: column; gap: 5px; }
+.auth-title { font-size: 21px; font-weight: 800; color: var(--color-primary); }
+.auth-sub { font-size: 13px; line-height: 1.6; color: var(--color-text-muted); }
+.auth-form { display: flex; flex-direction: column; gap: 14px; }
+.auth-submit { width: 100%; margin-top: 4px; }
+
+/* ============================================================
+   هيكلة أديب — العارض الحيّ (مجالس ← أقسام/لجان ← أشخاص)
+   ============================================================ */
+.org { display: flex; flex-direction: column; gap: 18px; }
+
+/* (حُذف .org-stat المؤقّت — كرت الإحصاء صار مكوّن Stat في المكتبة، مصدرًا واحدًا لكلّ الشاشات.
+   كان يحمل حدًّا 1px صريحًا يخالف القاعدة ٤، وترميزًا يدويًّا مكرّرًا في أربع شاشات.) */
+
+.org-anoms { margin: 8px 0 0; padding-inline-start: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+.org-anoms li { list-style: disc; }
+
+.org-btn { padding: 9px 14px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); font-size: 13px; font-weight: 700; color: var(--color-primary); cursor: pointer; white-space: nowrap; transition: background var(--dur-fast); }
+.org-btn:hover { background: var(--color-surface-2); }
+
+.org-person { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px 5px 6px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-full); }
+.org-person-tx { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.org-person-tx b { font-size: 13px; font-weight: 700; color: var(--color-primary); white-space: nowrap; }
+.org-person-tx span { font-size: 11px; color: var(--color-text-muted); white-space: nowrap; }
+/* المرتبة العليا للقيادة بلون العلامة (كحليّ) — استبدل الذهبيّ الشارد بالهوية؛ يتمايز عن الفولاذيّ (المرتبة التالية) */
+.org-person-gold { background: color-mix(in oklab, var(--navy-700) 12%, var(--color-surface)); border-color: color-mix(in oklab, var(--navy-700) 32%, transparent); }
+.org-person-steel { background: color-mix(in oklab, var(--steel-500) 12%, var(--color-surface)); border-color: color-mix(in oklab, var(--steel-500) 26%, transparent); }
+
+.org-vacant { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--danger); }
+.org-vacant svg { width: 14px; height: 14px; flex: 0 0 auto; }
+
+.org-people { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.org-sec { background: var(--color-surface); border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-md); }
+.org-sec-h { font-size: 13px; font-weight: 800; color: var(--color-text-muted); margin-bottom: 12px; }
+
+.org-council { border: 1px solid var(--color-border); border-radius: var(--radius); overflow: hidden; background: var(--color-surface); box-shadow: var(--shadow-md); }
+.org-council-h { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 15px 18px; color: #fff; }
+.org-council-h h3 { font-size: 17px; font-weight: 800; }
+.org-council-exec { background: var(--grad-primary); }
+.org-council-admin { background: var(--grad-primary); }
+.org-council-h .org-person { background: var(--glass-bg); border-color: var(--glass-border); }
+.org-council-h .org-person-tx b { color: #fff; }
+.org-council-h .org-person-tx span { color: rgba(255,255,255,.85); }
+.org-council-h .org-vacant { color: var(--danger-100); }
+
+.org-depts { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; padding: 16px; }
+.org-dept { border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface-2); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.org-dept-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.org-dept-name { font-size: 14.5px; font-weight: 800; color: var(--color-primary); }
+.org-coms { display: flex; flex-direction: column; gap: 8px; }
+.org-coms-admin { padding: 16px; }
+
+.org-com { border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); overflow: hidden; }
+.org-com-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.org-com-toggle { display: inline-flex; align-items: center; gap: 8px; min-width: 0; background: none; border: 0; cursor: pointer; padding: 0; text-align: start; }
+.org-caret { width: 15px; height: 15px; flex: 0 0 auto; color: var(--color-text-muted); transition: transform var(--dur-fast); }
+.org-caret.on { transform: rotate(180deg); }
+.org-com-name { font-size: 13.5px; font-weight: 700; color: var(--color-primary); }
+.org-com-leader { display: inline-flex; align-items: center; gap: 6px; margin-inline-start: auto; font-size: 12px; color: var(--color-text-muted); }
+.org-com-leader > span { white-space: nowrap; }
+.org-com-leaderless { color: var(--danger); font-weight: 700; }
+.org-com-leaderless svg { width: 13px; height: 13px; }
+.org-com-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--color-border); }
+.org-subrow { display: flex; align-items: center; gap: 8px; }
+.org-sublbl { font-size: 11.5px; font-weight: 700; color: var(--color-text-muted); }
+.org-empty { font-size: 12.5px; color: var(--color-text-muted); }
+.org-coord { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+
+/* وضع الإدارة — إيماءات التحرير */
+.org-editbtn { display: inline-flex; align-items: center; gap: 6px; }
+.org-editbtn svg { width: 15px; height: 15px; }
+.org-editbtn.on { background: var(--grad-primary); color: #fff; border-color: transparent; }
+.org-slot { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.org-slot-actions { display: inline-flex; gap: 4px; }
+.org-slot-actions button { width: 26px; height: 26px; display: grid; place-items: center; border: 1px solid var(--color-border); background: var(--color-surface); border-radius: var(--radius); cursor: pointer; color: var(--color-text-muted); transition: background var(--dur-fast), color var(--dur-fast); }
+.org-slot-actions button svg { width: 14px; height: 14px; }
+.org-slot-actions button:hover { background: var(--color-surface-2); color: var(--color-primary); }
+.org-slot-actions button.dg:hover { background: color-mix(in oklab, var(--danger) 12%, var(--color-surface)); color: var(--danger); border-color: color-mix(in oklab, var(--danger) 30%, transparent); }
+.org-council-h .org-slot-actions button { background: var(--glass-bg); border-color: var(--glass-border); color: #fff; }
+.org-assign { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 12.5px; font-weight: 700; color: var(--steel-600); background: none; border: 1px dashed color-mix(in oklab, var(--steel-500) 45%, var(--color-border)); border-radius: var(--radius-full); cursor: pointer; transition: background var(--dur-fast); }
+.org-assign svg { width: 14px; height: 14px; }
+.org-assign:hover { background: color-mix(in oklab, var(--steel-500) 10%, var(--color-surface)); }
+.org-council-h .org-assign { color: #fff; border-color: rgba(255,255,255,.5); }
+.org-person-x { width: 20px; height: 20px; flex: 0 0 auto; display: grid; place-items: center; border: 0; border-radius: 50%; background: color-mix(in oklab, var(--danger) 12%, transparent); color: var(--danger); cursor: pointer; }
+.org-person-x svg { width: 12px; height: 12px; }
+.org-person-x:hover { background: var(--danger); color: #fff; }
+.org-modal { display: flex; flex-direction: column; gap: 14px; }
+.org-modal-cur { display: flex; flex-direction: column; gap: 6px; }
+.org-modal-warn { font-size: 12.5px; line-height: 1.6; color: var(--color-text-muted); }
+
+/* ترويسة عنوان + زرّ تعديل بيانات وصفيّة، ورابط تبويب التعيينات */
+.org-council-t { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.org-meta { width: 26px; height: 26px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid var(--color-border); background: var(--color-surface); border-radius: var(--radius); cursor: pointer; color: var(--color-text-muted); transition: background var(--dur-fast), color var(--dur-fast); }
+.org-meta svg { width: 14px; height: 14px; }
+.org-meta:hover { color: var(--color-primary); background: var(--color-surface-2); }
+.org-meta.lt { background: var(--glass-bg); border-color: var(--glass-border); color: #fff; }
+.org-meta.lt:hover { background: var(--glass-bg-strong); }
+.org-link { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.org-link svg { width: 15px; height: 15px; }
+
+/* ============================================================
+   تعيين المناصب — الورشة الغنيّة
+   ============================================================ */
+.asg { display: flex; flex-direction: column; gap: 16px; }
+/* صفّ التعيينات = شبكة الكروت (.stat-grid تملأ العرض) + رابط «عرض الهيكلة» ينزل تحتها محاذًى للطرف */
+.asg-stats { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.asg-stats > .stat-grid { flex: 1 1 100%; }
+/* (حُذف .asg-stat-ok/-vac — النغمة صارت خاصّية tone على مكوّن Stat لا صنفًا شاردًا) */
+.asg-tostruct { margin-inline-start: auto; align-self: center; }
+.asg-pos { display: flex; flex-direction: column; line-height: 1.3; }
+.asg-pos b { font-size: 13.5px; font-weight: 700; color: var(--color-primary); }
+.asg-pos span { font-size: 12px; color: var(--color-text-muted); }
+.asg-holder { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.asg-holder span { font-size: 13px; color: var(--color-primary); white-space: nowrap; }
+.org-ov-vac { font-size: 12px; color: var(--color-text-muted); }
+
+/* ============================================================
+   إحصائيّات الزوّار — لوحة التحليلات (.st-*)
+   ============================================================ */
+.st { display: flex; flex-direction: column; gap: 16px; }
+.st-tools { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.st-range { display: inline-flex; gap: 4px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 3px; }
+.st-range-b { padding: 7px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 700; color: var(--color-text-muted); text-decoration: none; transition: color var(--dur-fast), background var(--dur-fast); }
+.st-range-b:hover { color: var(--color-primary); }
+.st-range-b.on { background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-md); }
+.st-note { font-size: 12px; color: var(--color-text-muted); }
+
+/* شبكة تحليلات KPI = .stat-grid الموحّدة (في الترميز) — حُذف .st-kpis الخاصّ */
+/* كروت KPI للتحليلات = مكوّن ‎.stat‎ الموحّد (في الترميز)؛ حُذف ‎.st-kpi*‎ الميّت بعد التوحيد */
+
+.st-card { background: var(--color-surface); border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-md); }
+.st-h { font-size: 14px; font-weight: 800; color: var(--color-primary); margin-bottom: 14px; display: flex; align-items: center; gap: 7px; }
+.st-h svg { width: 17px; height: 17px; }
+.st-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 720px) { .st-grid2 { grid-template-columns: 1fr; } }
+
+.st-area { position: relative; }
+.st-area svg { width: 100%; height: 240px; display: block; }
+.st-grid { stroke: var(--color-border); stroke-width: 1; opacity: .55; }
+.st-cross { stroke: var(--color-text-muted); stroke-width: 1; stroke-dasharray: 3 3; opacity: .6; }
+.st-xaxis { position: relative; height: 16px; margin-top: 3px; }
+.st-xaxis span { position: absolute; transform: translateX(50%); font-size: 10.5px; color: var(--color-text-muted); white-space: nowrap; }
+.st-tip { position: absolute; top: 4px; transform: translateX(50%); background: var(--color-primary); color: #fff; border-radius: var(--radius); padding: 7px 11px; font-size: 11.5px; display: flex; flex-direction: column; gap: 2px; pointer-events: none; box-shadow: var(--shadow-md); white-space: nowrap; z-index: 2; }
+.st-tip b { font-size: 12px; margin-bottom: 2px; }
+.st-tip span { display: flex; align-items: center; gap: 5px; }
+.st-tip i, .st-legend i { width: 9px; height: 9px; border-radius: var(--radius); display: inline-block; flex: 0 0 auto; }
+.st-legend { display: flex; gap: 18px; margin-top: 10px; justify-content: center; }
+.st-legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-muted); }
+
+.st-bars { display: flex; flex-direction: column; gap: 9px; }
+.st-bar { display: grid; grid-template-columns: minmax(80px, 1.4fr) 2fr auto; align-items: center; gap: 10px; }
+.st-bar-label { font-size: 12.5px; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; unicode-bidi: plaintext; text-align: start; }
+.st-bar-track { height: 9px; background: var(--color-surface-2); border-radius: var(--radius-full); overflow: hidden; }
+.st-bar-fill { display: block; height: 100%; border-radius: var(--radius-full); min-width: 3px; transform-origin: inline-start; animation: stgrow .6s ease both; }
+.st-bar-val { font-size: 12px; font-weight: 700; color: var(--color-text-muted); min-width: 34px; text-align: start; }
+@keyframes stgrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+.st-donut { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: center; }
+.st-donut svg { width: 140px; height: 140px; flex: 0 0 auto; }
+.st-donut-n { font-size: 22px; font-weight: 800; fill: var(--color-primary); }
+.st-donut-l { font-size: 10px; fill: var(--color-text-muted); }
+.st-donut-leg { display: flex; flex-direction: column; gap: 8px; }
+.st-donut-leg div { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.st-donut-leg i { width: 11px; height: 11px; border-radius: var(--radius); flex: 0 0 auto; }
+.st-donut-leg span { color: var(--color-primary); min-width: 58px; }
+.st-donut-leg b { color: var(--color-text-muted); font-weight: 700; }
+
+.st-hours { display: flex; align-items: flex-end; gap: 3px; height: 120px; margin-bottom: 18px; }
+.st-hour { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; }
+.st-hour-bar { width: 100%; max-width: 16px; background: linear-gradient(var(--steel-400), var(--steel-600)); border-radius: var(--radius) var(--radius) 0 0; min-height: 2px; transition: opacity var(--dur-fast); }
+.st-hour:hover .st-hour-bar { opacity: .7; }
+.st-hour-lbl { position: absolute; bottom: -16px; font-size: 10px; color: var(--color-text-muted); }
+
+.st-rv { display: flex; flex-direction: column; }
+.st-rv-row { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 12px; padding: 9px 4px; border-bottom: 1px solid var(--color-border); }
+.st-rv-row:last-child { border-bottom: 0; }
+.st-rv-c { font-size: 13px; font-weight: 700; color: var(--color-primary); min-width: 34px; }
+.st-rv-stat { font-size: 12.5px; color: var(--color-text-muted); text-align: start; }
+.st-empty { font-size: 13px; color: var(--color-text-muted); }
+
+/* ============================================================
+   شريط التمرير — هوية «نحيل فولاذيّ»: إبهام صلب رفيع (6px) بلا مجرى ظاهر،
+   حبّة الاستدارة الكاملة. يتكيّف مع الثيم عبر --color-secondary (فولاذيّ 600
+   في الفاتح، 500 أفتح في الداكن لتباينٍ أفضل). المكوّنات التي تُخفي شريطها
+   عمدًا (‎.ns-rail/.act-peek‎) أعلى تحديدًا فتبقى كما هي.
+   ⚠️ خصائص scrollbar-width/color القياسيّة على html «تخطف» شريط الصفحة (root) في كروميوم
+   وتُلغي ::-webkit عليه، فنعزلها لفايرفوكس وحده عبر @supports يتجاهله كروميوم (في الأسفل).
+   ============================================================ */
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-button { display: none; width: 0; height: 0; }   /* إزالة مثلّثات الأسهم أعلى/أسفل الشريط */
+::-webkit-scrollbar-track { background: transparent; }
+/* الإبهام يطفو بفراغ 3px عن الحافّة: حدّ شفّاف + background-clip (لا يلتصق بالجدار). background-color لا shorthand كي لا يُلغي الـclip عند hover. */
+::-webkit-scrollbar-thumb { background-color: var(--color-secondary); border-radius: var(--radius-full); border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background-color: var(--color-secondary-hover); }
+@supports (-moz-osx-font-smoothing: grayscale) {   /* فايرفوكس فقط — كروميوم يتجاهله فلا يُخطَف شريط الجذر */
+  html { scrollbar-width: thin; scrollbar-color: var(--color-secondary) transparent; }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@adeeb/design-system",
+  "version": "0.0.0",
+  "private": true,
+  "description": "نظام تصميم نادي أديب: رموز + خطوط + أصول العلامة + مكوّنات React",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tokens.css": "./tokens.css",
+    "./fonts.css": "./fonts.css",
+    "./components.css": "./components.css",
+    "./tailwind.preset": "./tailwind.preset.js",
+    "./tokens": "./tokens.ts",
+    "./brand/*": "./brand/*",
+    "./fonts/*": "./fonts/*"
+  },
+  "dependencies": {
+    "embla-carousel-autoplay": "^8.5.2",
+    "embla-carousel-react": "^8.5.2"
+  },
+  "peerDependencies": {
+    "react": ">=19"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "typescript": "^5"
+  }
+}

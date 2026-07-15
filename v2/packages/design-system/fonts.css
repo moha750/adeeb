@@ -1,0 +1,24 @@
+/* ============================================================
+   خطوط علامة أديب — تعريف واحد بأسماء واضحة
+   ============================================================ */
+
+/* ===== Lyon Arabic Display (عربي — العناوين والنص) — woff2 أخفّ ~76% ومجسّمات المد محفوظة ===== */
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/lyon-arabic-light.woff2") format("woff2");   font-weight:300; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/lyon-arabic-regular.woff2") format("woff2"); font-weight:400; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/lyon-arabic-medium.woff2") format("woff2");  font-weight:500; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/lyon-arabic-bold.woff2") format("woff2");    font-weight:700; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/lyon-arabic-black.woff2") format("woff2");   font-weight:900; font-style:normal; font-display:swap; }
+
+/* ===== ITC Eras (لاتيني) ===== */
+@font-face{ font-family:"Eras"; src:url("./fonts/eras-light.ttf") format("truetype");  font-weight:300; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Eras"; src:url("./fonts/eras-medium.ttf") format("truetype"); font-weight:500; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Eras"; src:url("./fonts/eras-demi.ttf") format("truetype");   font-weight:600; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Eras"; src:url("./fonts/eras-bold.ttf") format("truetype");   font-weight:700; font-style:normal; font-display:swap; }
+
+/* ===== الأرقام اللاتينية بخط Eras — أوزان مطابقة تمامًا لأوزان Lyon (لا نطاقات، تفاديًا لكسر تحميل Lyon) =====
+   مُعلَنة بعد وجوه Lyon فتفوز على الأرقام فقط (U+0030-0039)، ويبقى بقية النص Lyon. */
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-light.ttf") format("truetype");  unicode-range:U+0030-0039; font-weight:300; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-medium.ttf") format("truetype"); unicode-range:U+0030-0039; font-weight:400; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-medium.ttf") format("truetype"); unicode-range:U+0030-0039; font-weight:500; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-demi.ttf") format("truetype");   unicode-range:U+0030-0039; font-weight:700; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-bold.ttf") format("truetype");   unicode-range:U+0030-0039; font-weight:900; font-style:normal; font-display:swap; }
