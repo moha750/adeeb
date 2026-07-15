@@ -3,7 +3,7 @@
 
 export type RawCouncil = { id: string; name_ar: string | null; description: string | null; group_link: string | null };
 export type RawDept = { id: number; name_ar: string | null; display_order: number | null; description: string | null; group_link: string | null };
-export type RawCommittee = { id: number; committee_name_ar: string | null; department_id: number | null; description: string | null; group_link: string | null };
+export type RawCommittee = { id: number; committee_name_ar: string | null; department_id: number | null; council_type: string; description: string | null; group_link: string | null };
 export type RawRole = { id: number; role_name: string; role_name_ar: string | null; role_level: number; council_type: string | null; is_elected: boolean | null };
 export type RawUserRole = { user_id: string; role_id: number; committee_id: number | null; department_id: number | null };
 export type RawProfile = { id: string; full_name: string | null; avatar_url: string | null };
@@ -140,9 +140,9 @@ export function buildStructure(
     return null;
   };
 
-  const operational = committees.filter((c) => c.department_id != null);
+  const operational = committees.filter((c) => c.council_type !== "administrative");
   const adminCommittees = committees
-    .filter((c) => c.department_id == null)
+    .filter((c) => c.council_type === "administrative")
     .map((c) => {
       const node = committeeNode(c, "admin");
       if (!node.leader) node.leader = adminLeaderFor(node.name);
@@ -247,7 +247,7 @@ export function buildPositions(
     out.push({ key: `head-${d.id}`, roleId: id("department_head"), roleName: "department_head", roleAr: ar("department_head"), level: lvl("department_head"), scope: name, council: "executive", committeeId: null, departmentId: d.id, holder: findHolder("department_head", { departmentId: d.id }), singleton: true, elected: el("department_head") });
   }
 
-  const operational = committees.filter((c) => c.department_id != null).sort((a, b) => a.id - b.id);
+  const operational = committees.filter((c) => c.council_type !== "administrative").sort((a, b) => a.id - b.id);
   for (const c of operational) {
     const name = c.committee_name_ar ?? `لجنة #${c.id}`;
     out.push({ key: `lead-${c.id}`, roleId: id("committee_leader"), roleName: "committee_leader", roleAr: ar("committee_leader"), level: lvl("committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holder: findHolder("committee_leader", { committeeId: c.id }), singleton: true, elected: el("committee_leader") });
