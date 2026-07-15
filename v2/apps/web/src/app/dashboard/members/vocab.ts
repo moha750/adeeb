@@ -8,14 +8,25 @@
  */
 export const DEGREES: { value: string; label: string }[] = [
   { value: "high_school", label: "ثانوية عامة" },
+  { value: "employee", label: "موظف" },
   { value: "diploma", label: "دبلوم" },
   { value: "bachelor", label: "بكالوريوس" },
   { value: "master", label: "ماجستير" },
   { value: "phd", label: "دكتوراه" },
-  { value: "other", label: "أخرى" },
 ];
 
 export const DEGREE_VALUES: string[] = DEGREES.map((d) => d.value);
+
+/**
+ * هل تصحب الدرجةَ كلّيةٌ وتخصّصٌ ورقمٌ أكاديميّ؟ — مصدر واحد للطبقات الثلاث:
+ * النموذج (يُظهر الحقول ويُلزمها) · الفعل الخادميّ (يكتب أو يمحو) · القيد member_details_academic_fields_check.
+ *
+ * القاعدة ثنائيّة لا ثلاثيّة: من له درجة جامعيّة تلزمه الثلاثة، ومن لا (ثانوية عامة · موظف) يُمنع منها.
+ * لا منزلة بين المنزلتين — القيد يرفض الفارغ في الأولى، ويرفض الممتلئ في الثانية.
+ */
+const ACADEMIC_DEGREES = new Set(["diploma", "bachelor", "master", "phd"]);
+export const hasAcademicFields = (degree: string | null | undefined): boolean =>
+  !!degree && ACADEMIC_DEGREES.has(degree);
 
 /**
  * صيغة الجوّال السعوديّ — مصدر واحد للطبقات الثلاث: مخطّط النموذج · الفعل الخادميّ · قيد القاعدة

@@ -24,10 +24,10 @@ export async function getOrgData(): Promise<OrgData> {
   const sb = createAdeebServiceClient(url, key);
 
   const [c, d, com, r, ur, p] = await Promise.all([
-    sb.from("councils").select("id, name_ar, description, group_link"),
+    sb.from("councils").select("id, name_ar, head_role_name, description, group_link"),
     sb.from("departments").select("id, name_ar, display_order, description, group_link").eq("is_active", true),
     sb.from("committees").select("id, committee_name_ar, department_id, council_id, leader_role_name, member_role_name, description, group_link").eq("is_active", true),
-    sb.from("roles").select("id, role_name, role_name_ar, role_level, council_type, is_elected"),
+    sb.from("roles").select("id, role_name, role_name_ar, role_level, council_type, is_elected, membership_kind, vote_weight"),
     sb.from("user_roles").select("user_id, role_name, committee_id, department_id").eq("is_active", true),
     sb.from("profiles").select("id, full_name, avatar_url"),
   ]);

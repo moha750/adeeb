@@ -30,7 +30,7 @@ export default async function StructurePage() {
       <Head />
       {/* حارس الهوية: تنسيقات `.org-*` مؤقّتة — موسومة للإعادة تصميمها بمكوّنات الهوية */}
       <div data-needs="مكوّنات هيكلة أديب (شجرة المجالس/الأقسام/اللجان)">
-        <StructureView model={model} members={org.members} />
+        <StructureView model={model} />
       </div>
     </>
   );

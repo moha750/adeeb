@@ -1,27 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Button, Field, Select, Stat, Textarea } from "@adeeb/design-system";
-import { Bank, Buildings, CaretDown, PencilSimple, UserCircle, UserPlus, Users, UsersThree, Warning, ArrowRight, NoteBlank, LinkSimple, Globe } from "@phosphor-icons/react";
+import { Alert, Badge, Button, Field, Stat, Textarea } from "@adeeb/design-system";
+import { Bank, Buildings, CaretDown, PencilSimple, UserCircle, Users, UsersThree, Warning, ArrowRight, NoteBlank, LinkSimple, Globe } from "@phosphor-icons/react";
 import { Avatar } from "../../_components/Avatar";
 import { Modal } from "../../_components/Modal";
 import { Toolbar } from "../../_components/Toolbar";
 import { useToast } from "../../_components/ToastProvider";
-import { assignPosition, updateOrgUnit } from "./actions";
-import type { StructureModel, Holder, CommitteeNode, DepartmentNode, UnitMeta } from "./model";
+import { updateOrgUnit } from "./actions";
+import type { StructureModel, Holder, CommitteeNode, CouncilBody, DepartmentNode, UnitMeta } from "./model";
 
-const ROLE_AR: Record<string, string> = {
-  department_head: "منسّق قسم",
-  committee_leader: "قائد لجنة",
-  executive_council_president: "رئيس المجلس التنفيذي",
-};
-
-type ModalState =
-  | { kind: "assign"; roleName: string; roleAr: string; scope: string; committeeId: number | null; departmentId: number | null }
-  | { kind: "meta"; unit: UnitMeta }
-  | null;
+// تبويب الهيكلة يعرض ولا يُسنِد — الإسناد كلّه في «تعيين المناصب»، مسارُ كتابةٍ واحد.
+// فلا يبقى هنا إلّا تحرير البيانات الوصفيّة (الوصف ورابط القروب).
+type ModalState = { kind: "meta"; unit: UnitMeta } | null;
 
 function Person({ h, role, tone }: { h: Holder; role?: boolean; tone?: "gold" | "steel" }) {
   return (
@@ -32,16 +25,39 @@ function Person({ h, role, tone }: { h: Holder; role?: boolean; tone?: "gold" | 
   );
 }
 const Vacant = ({ label }: { label: string }) => <span className="org-vacant"><Warning weight="fill" /> {label}</span>;
-const Fill = ({ label, onClick }: { label: string; onClick: () => void }) => (
-  <button type="button" className="org-assign" onClick={onClick}><UserPlus weight="bold" /> {label}</button>
-);
+
+// المجلس هيئةٌ لا حاوية: مقاعده تُقرأ من القاعدة (roles.membership_kind='member')،
+// ورئيسه من councils.head_role_name. أضِف دورًا عضوًا في القاعدة فيظهر هنا بلا شيفرة.
+function Seats({ body, q }: { body: CouncilBody; q: string }) {
+  const match = (n: string) => q === "" || n.includes(q);
+  return (
+    <div className="org-seats">
+      {body.seats.map((s) => {
+        const shown = s.holders.filter((h) => match(h.name));
+        if (q !== "" && shown.length === 0) return null;
+        return (
+          <div key={s.roleName} className="org-seat">
+            <span className="org-seat-lbl">
+              {s.roleAr}
+              {s.isHead ? <Badge tone="warning" variant="soft">يرأس المجلس</Badge> : null}
+            </span>
+            {shown.length ? (
+              <div className="org-people">
+                {shown.map((h, i) => <Person key={h.userId + i} h={h} tone={s.isHead ? "gold" : "steel"} />)}
+              </div>
+            ) : <Vacant label="شاغر" />}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 const MetaBtn = ({ onClick, light }: { onClick: () => void; light?: boolean }) => (
   <button type="button" className={"org-meta" + (light ? " lt" : "")} onClick={onClick} aria-label="تعديل البيانات" title="تعديل الوصف والرابط"><PencilSimple weight="bold" /></button>
 );
 
-function Committee({ c, q, open, onToggle, edit, onFill, onMeta }: {
-  c: CommitteeNode; q: string; open: boolean; onToggle: () => void; edit: boolean;
-  onFill: () => void; onMeta: () => void;
+function Committee({ c, q, open, onToggle, edit, onMeta }: {
+  c: CommitteeNode; q: string; open: boolean; onToggle: () => void; edit: boolean; onMeta: () => void;
 }) {
   const match = (n: string) => q === "" || n.includes(q);
   const members = q === "" ? c.members : c.members.filter((m) => match(m.name));
@@ -56,8 +72,6 @@ function Committee({ c, q, open, onToggle, edit, onFill, onMeta }: {
         </button>
         {c.leader ? (
           <span className="org-com-leader"><Avatar name={c.leader.name} src={c.leader.avatar ?? undefined} size="xs" /><span>{c.leader.name}</span></span>
-        ) : edit && isOp ? (
-          <Fill label="إسناد قائد" onClick={onFill} />
         ) : (
           <span className="org-com-leader org-com-leaderless"><Warning weight="fill" /> بلا قائد</span>
         )}
@@ -88,7 +102,7 @@ function Committee({ c, q, open, onToggle, edit, onFill, onMeta }: {
   );
 }
 
-export function StructureView({ model, members }: { model: StructureModel; members: { id: string; name: string }[] }) {
+export function StructureView({ model }: { model: StructureModel }) {
   const router = useRouter();
   const toast = useToast();
   const [query, setQuery] = useState("");
@@ -96,19 +110,13 @@ export function StructureView({ model, members }: { model: StructureModel; membe
   const [showAnoms, setShowAnoms] = useState(false);
   const [edit, setEdit] = useState(false);
   const [modal, setModal] = useState<ModalState>(null);
-  const [pick, setPick] = useState("");
   const [desc, setDesc] = useState("");
   const [link, setLink] = useState("");
   const [busy, start] = useTransition();
 
   const q = query.trim();
   const match = (n: string) => q === "" || n.includes(q);
-  const memberOptions = useMemo(() => members.map((m) => ({ value: m.id, label: m.name })), [members]);
 
-  useEffect(() => {
-    setPick("");
-    if (modal?.kind === "meta") { setDesc(modal.unit.desc ?? ""); setLink(modal.unit.link ?? ""); }
-  }, [modal]);
 
   const allComIds = useMemo(() => {
     const ids: number[] = [];
@@ -120,20 +128,13 @@ export function StructureView({ model, members }: { model: StructureModel; membe
   const toggleAll = () => setExpanded(allOpen ? new Set() : new Set(allComIds));
   const toggle = (id: number) => setExpanded((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
-  const openFill = (roleName: string, scopeLabel: string, scope: { committeeId?: number; departmentId?: number }) => {
-    // الاسم هو المفتاح — لا ترجمة إلى رقم، فلا فشلَ ترجمةٍ يُحرَس منه هنا.
-    // ومنصبٌ لا وجود له تردّه assign_position بـ NO_ROLE.
-    setModal({ kind: "assign", roleName, roleAr: ROLE_AR[roleName] ?? roleName, scope: scopeLabel, committeeId: scope.committeeId ?? null, departmentId: scope.departmentId ?? null });
+  // تُملأ الحقول عند الفتح لا في أثرٍ لاحق — فلا رسمَ متتالٍ (cascading render).
+  const openMeta = (unit: UnitMeta) => {
+    setDesc(unit.desc ?? "");
+    setLink(unit.link ?? "");
+    setModal({ kind: "meta", unit });
   };
-  const openMeta = (unit: UnitMeta) => setModal({ kind: "meta", unit });
 
-  const submitAssign = () => {
-    if (modal?.kind !== "assign" || !pick) return;
-    start(async () => {
-      const r = await assignPosition({ userId: pick, roleName: modal.roleName, committeeId: modal.committeeId, departmentId: modal.departmentId });
-      if (r.ok) { toast.success(r.message); setModal(null); router.refresh(); } else toast.error(r.message);
-    });
-  };
   const submitMeta = () => {
     if (modal?.kind !== "meta") return;
     start(async () => {
@@ -178,33 +179,42 @@ export function StructureView({ model, members }: { model: StructureModel; membe
         }
       />
 
-      {(model.president || model.advisors.length) ? (
+      {model.president && match(model.president.name) ? (
         <section className="org-sec">
           <h3 className="org-sec-h">قيادة النادي</h3>
-          <div className="org-people">
-            {model.president && match(model.president.name) ? <Person h={model.president} role tone="gold" /> : null}
-            {model.advisors.filter((a) => match(a.name)).map((a, i) => <Person key={i} h={a} role tone="steel" />)}
-          </div>
+          <div className="org-people"><Person h={model.president} role tone="gold" /></div>
         </section>
       ) : null}
 
       <section className="org-council">
+        <div className="org-council-h org-council-admin">
+          <div className="org-council-t"><h3>{model.administrative.name}</h3>{edit ? <MetaBtn light onClick={() => openMeta({ kind: "council", id: model.administrative.id, name: model.administrative.name, desc: model.administrative.desc, link: model.administrative.link })} /> : null}</div>
+          <Seats body={model.administrative} q={q} />
+        </div>
+        <div className="org-coms org-coms-admin">
+          {model.administrative.committees.filter(comVisible).map((c) => (
+            <Committee key={c.id} c={c} q={q} open={expanded.has(c.id)} onToggle={() => toggle(c.id)}
+              edit={edit} onMeta={() => openMeta({ kind: "committee", id: c.id, name: c.name, desc: c.desc, link: c.link })} />
+          ))}
+        </div>
+      </section>
+
+      <section className="org-council">
         <div className="org-council-h org-council-exec">
           <div className="org-council-t"><h3>{model.executive.name}</h3>{edit ? <MetaBtn light onClick={() => openMeta({ kind: "council", id: model.executive.id, name: model.executive.name, desc: model.executive.desc, link: model.executive.link })} /> : null}</div>
-          {model.executive.president ? <Person h={model.executive.president} tone="gold" /> : edit ? <Fill label="إسناد رئيس المجلس" onClick={() => openFill("executive_council_president", "المجلس التنفيذي", {})} /> : <Vacant label="بلا رئيس مجلس" />}
+          <Seats body={model.executive} q={q} />
         </div>
         <div className="org-depts">
           {model.executive.departments.filter(deptVisible).map((d) => (
             <div key={d.id} className="org-dept">
               <div className="org-dept-h">
                 <div className="org-council-t"><span className="org-dept-name">{d.name}</span>{edit ? <MetaBtn onClick={() => openMeta({ kind: "department", id: d.id, name: d.name, desc: d.desc, link: d.link })} /> : null}</div>
-                {d.head ? <Person h={d.head} /> : edit ? <Fill label="إسناد منسّق قسم" onClick={() => openFill("department_head", d.name, { departmentId: d.id })} /> : <Vacant label="بلا منسّق قسم" />}
+                {d.head ? <Person h={d.head} /> : <Vacant label="بلا منسّق قسم" />}
               </div>
               <div className="org-coms">
                 {d.committees.filter(comVisible).map((c) => (
-                  <Committee key={c.id} c={c} q={q} open={expanded.has(c.id)} onToggle={() => toggle(c.id)} edit={edit}
-                    onFill={() => openFill("committee_leader", c.name, { committeeId: c.id })}
-                    onMeta={() => openMeta({ kind: "committee", id: c.id, name: c.name, desc: c.desc, link: c.link })} />
+                  <Committee key={c.id} c={c} q={q} open={expanded.has(c.id)} onToggle={() => toggle(c.id)}
+                    edit={edit} onMeta={() => openMeta({ kind: "committee", id: c.id, name: c.name, desc: c.desc, link: c.link })} />
                 ))}
               </div>
             </div>
@@ -212,36 +222,19 @@ export function StructureView({ model, members }: { model: StructureModel; membe
         </div>
       </section>
 
-      <section className="org-council">
-        <div className="org-council-h org-council-admin">
-          <div className="org-council-t"><h3>{model.administrative.name}</h3>{edit ? <MetaBtn light onClick={() => openMeta({ kind: "council", id: model.administrative.id, name: model.administrative.name, desc: model.administrative.desc, link: model.administrative.link })} /> : null}</div>
-          <div className="org-people">{model.administrative.leaders.filter((l) => match(l.name)).map((l, i) => <Person key={i} h={l} role tone="steel" />)}</div>
-        </div>
-        <div className="org-coms org-coms-admin">
-          {model.administrative.committees.filter(comVisible).map((c) => (
-            <Committee key={c.id} c={c} q={q} open={expanded.has(c.id)} onToggle={() => toggle(c.id)} edit={edit}
-              onFill={() => {}} onMeta={() => openMeta({ kind: "committee", id: c.id, name: c.name, desc: c.desc, link: c.link })} />
-          ))}
-        </div>
-      </section>
-
       <Modal
         open={modal !== null}
         onClose={() => setModal(null)}
-        title={modal?.kind === "assign" ? `إسناد ${modal.roleAr}` : modal?.kind === "meta" ? `تعديل «${modal.unit.name}»` : ""}
-        description={modal?.kind === "assign" ? `اختر من يشغل هذا المنصب في «${modal.scope}».` : modal?.kind === "meta" ? "الوصف ورابط قروب الواتساب (الاسم غير قابل للتعديل)." : undefined}
+        title={modal?.kind === "meta" ? `تعديل «${modal.unit.name}»` : ""}
+        description={modal?.kind === "meta" ? "الوصف ورابط قروب الواتساب (الاسم غير قابل للتعديل)." : undefined}
         size="sm"
         footer={
-          modal?.kind === "assign" ? (
-            <><Button variant="ghost" size="md" onClick={() => setModal(null)}>إلغاء</Button><Button variant="primary" size="md" loading={busy} disabled={!pick} onClick={submitAssign}>إسناد</Button></>
-          ) : modal?.kind === "meta" ? (
+          modal?.kind === "meta" ? (
             <><Button variant="ghost" size="md" onClick={() => setModal(null)}>إلغاء</Button><Button variant="primary" size="md" loading={busy} onClick={submitMeta}>حفظ</Button></>
           ) : null
         }
       >
-        {modal?.kind === "assign" ? (
-          <div className="org-modal"><Select label="العضو" options={memberOptions} value={pick} onValueChange={setPick} searchable /></div>
-        ) : modal?.kind === "meta" ? (
+        {modal?.kind === "meta" ? (
           <div className="org-modal">
             <Textarea label="الوصف" icon={<NoteBlank />} innerIcon={<PencilSimple />} placeholder="اكتب هنا…" rows={3} value={desc} onChange={(e) => setDesc(e.target.value)} />
             <Field label="رابط قروب الواتساب" icon={<LinkSimple />} innerIcon={<Globe />} placeholder="https://chat.whatsapp.com/…" type="url" dir="ltr" value={link} onChange={(e) => setLink(e.target.value)} helper="اتركه فارغًا إن لا يوجد." />

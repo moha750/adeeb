@@ -3,7 +3,7 @@
 import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
 import { getCurrentAdmin } from "@/lib/auth";
-import { DEGREE_VALUES, PHONE_HINT, PHONE_RE } from "./vocab";
+import { DEGREE_VALUES, PHONE_HINT, PHONE_RE, hasAcademicFields } from "./vocab";
 
 export type MemberResult = { ok: boolean; message: string };
 
@@ -42,8 +42,9 @@ export type MemberInput = {
  * والبريد **ليس هنا** — يملكه `credentials/` لأنّه هويّة مصادقة تُزامَن مع auth.users، فكتابته منفردًا تفكّ المزامنة.
  *
  * الأعمدة: profiles.full_name/phone · member_details (أكاديميّ + تواصل اجتماعيّ).
- * قيود القاعدة المرعيّة هنا: academic_degree محصور بستّة و NOT NULL؛ و national_id/birth_date عمودان
- * NOT NULL ليسا في النموذج — لذا نُحدِّث member_details ولا نُنشئه (٢٨ عضوًا بلا سجلّ يُبلَّغ عنهم صراحةً).
+ * قيود القاعدة المرعيّة هنا: academic_degree محصور بستّة و NOT NULL؛ والحقول الأكاديميّة تتبع الدرجة
+ * (member_details_academic_fields_check)؛ و national_id/birth_date عمودان NOT NULL ليسا في النموذج
+ * — لذا نُحدِّث member_details ولا نُنشئه (٢٨ عضوًا بلا سجلّ يُبلَّغ عنهم صراحةً).
  *
  * أمن: بوّابة الأدمن (role_level ≥ 8) قبل أيّ كتابة — دفاعٌ في العمق فوق حراسة اللوحة.
  */
@@ -70,6 +71,20 @@ export async function updateMember(input: MemberInput): Promise<MemberResult> {
   const phone = clean(input.phone);
   if (phone && !PHONE_RE.test(phone)) return { ok: false, message: `${PHONE_HINT}.` };
 
+  // الحقول الأكاديميّة تتبع الدرجة — قاعدة member_details_academic_fields_check نفسها، مفروضةً هنا كذلك:
+  // فالقيد يحمي القاعدة، وهذا يحمي المستخدم برسالة عربيّة بدل خطأ 23514 خام. والمحو لا يُترك للعميل.
+  const college = clean(input.college);
+  const major = clean(input.major);
+  const recordNo = clean(input.recordNo);
+  const academic = !degree
+    ? {} // لا درجة ⇒ لا سجلّ تفاصيل (العمود NOT NULL) ⇒ لا نمسّ الحقول الأكاديميّة أصلًا
+    : hasAcademicFields(degree)
+      ? { academic_degree: degree, college, major, academic_record_number: recordNo }
+      : { academic_degree: degree, college: null, major: null, academic_record_number: null }; // ثانوية عامة · موظف
+  if (hasAcademicFields(degree) && (!college || !major || !recordNo)) {
+    return { ok: false, message: "الكلّية والتخصّص والرقم الأكاديميّ مطلوبة لهذه الدرجة العلمية." };
+  }
+
   // ١) الملفّ الشخصيّ — يُحدَّث للجميع (لا يعتمد على وجود سجلّ تفاصيل)
   const { error: pErr } = await sb
     .from("profiles")
@@ -81,10 +96,7 @@ export async function updateMember(input: MemberInput): Promise<MemberResult> {
   const { data: touched, error: dErr } = await sb
     .from("member_details")
     .update({
-      college: clean(input.college),
-      major: clean(input.major),
-      ...(degree ? { academic_degree: degree } : {}), // NOT NULL: لا نمرّره فارغًا فنمحوه
-      ...(clean(input.recordNo) ? { academic_record_number: clean(input.recordNo) } : {}), // NOT NULL كذلك
+      ...academic,
       twitter_account: clean(input.twitter),
       instagram_account: clean(input.instagram),
       tiktok_account: clean(input.tiktok),

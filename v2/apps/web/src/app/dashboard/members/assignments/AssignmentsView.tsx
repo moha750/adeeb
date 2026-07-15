@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition, useEffect } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge, Button, Select, Stat } from "@adeeb/design-system";
@@ -37,10 +37,6 @@ export function AssignmentsView({ positions, members }: { positions: Position[];
   const [busy, start] = useTransition();
 
   const memberOptions = useMemo(() => members.map((m) => ({ value: m.id, label: m.name })), [members]);
-  useEffect(() => {
-    setPick("");
-    if (modal?.kind === "assign" && modal.pos.adminSlot) setAdmin(modal.pos.holder?.roleName === "qa_admin_member" ? "qa" : "hr");
-  }, [modal]);
 
   const rows = useMemo(() => {
     const q = search.trim();
@@ -64,8 +60,16 @@ export function AssignmentsView({ positions, members }: { positions: Position[];
     filled: positions.filter((p) => p.holder).length,
   }), [positions]);
 
-  const openAssign = (pos: Position, replace: boolean) => setModal({ kind: "assign", pos, replace });
-  const openRemove = (pos: Position) => setModal({ kind: "remove", pos });
+  // تُهيَّأ الحالة عند الفتح لا في أثرٍ بعده — فلا رسمَ متتالٍ (cascading render).
+  const openAssign = (pos: Position, replace: boolean) => {
+    setPick("");
+    if (pos.adminSlot) setAdmin(pos.holder?.roleName === "qa_admin_member" ? "qa" : "hr");
+    setModal({ kind: "assign", pos, replace });
+  };
+  const openRemove = (pos: Position) => {
+    setPick("");
+    setModal({ kind: "remove", pos });
+  };
 
   const submitAssign = () => {
     if (modal?.kind !== "assign" || !pick) return;
@@ -92,8 +96,24 @@ export function AssignmentsView({ positions, members }: { positions: Position[];
       key: "position", header: "المنصب", width: "minmax(200px, 1.7fr)", sortable: false,
       render: (p) => <span className="asg-pos"><b>{p.roleAr}</b><span>{p.scope}</span></span>,
     },
-    { key: "council", header: "المجلس", width: "1fr", render: (p) => <span className="txt">{COUNCIL_AR[p.council]}</span> },
+    {
+      key: "council", header: "المجلس", width: "1.2fr",
+      // «عضو» = يجلس في المجلس ويقرّر · «تابع» = يقع تحت فرعه (roles.membership_kind)
+      render: (p) => (
+        <span className="asg-council">
+          <span className="txt">{COUNCIL_AR[p.council]}</span>
+          {p.council !== "leadership"
+            ? <Badge tone={p.councilMember ? "success" : "neutral"} variant="soft">{p.councilMember ? "عضو" : "تابع"}</Badge>
+            : null}
+        </span>
+      ),
+    },
     { key: "how", header: "الاختيار", width: "0.8fr", render: (p) => p.elected ? <Badge tone="info" variant="soft">منتخَب</Badge> : <Badge tone="neutral" variant="soft">تعيين</Badge> },
+    {
+      key: "weight", header: "وزن الصوت", width: "0.7fr",
+      // يُرى وأنت تُسنِد لا يُكتشف في انتخاب: قائدة الموارد 3.0 ونظيرتها في الضمان 1.0.
+      render: (p) => <Badge tone={p.voteWeight >= 3 ? "warning" : p.voteWeight > 1 ? "info" : "neutral"} variant="soft">{p.voteWeight}×</Badge>,
+    },
     {
       key: "holder", header: "الشاغل", width: "minmax(180px, 1.5fr)",
       render: (p) => p.holder

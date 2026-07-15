@@ -1,10 +1,17 @@
 // نموذج هيكلة أديب — بناء الشجرة من صفوف القاعدة (نقيّ، بلا استيراد خادميّ، قابل للاختبار).
-// الحقيقة كما في القاعدة: كتالوج أدوار + تعيينات. تبعيّة المجلس مُشتقّة من council_type لا FK.
+//
+// كلّ رابطٍ هنا مقروءٌ من عمودٍ مُصرَّح، لا مستنتَج ولا محفور:
+//   councils.head_role_name     -> من يرأس المجلس
+//   committees.leader_role_name -> من يقود الوحدة   · member_role_name -> من يمثّل عضويّتها
+//   committees.council_id       -> أيّ مجلس تتبع     · departments.council_id
+//   roles.membership_kind       -> عضوٌ في المجلس (يجلس ويقرّر) أم تابعٌ لفرعه (تحته لا فيه)
+//
+// الفرق الأخير هو ما يجعل «من في المجلس التنفيذيّ؟» يعطي ٨ لا ١٥١.
 
-export type RawCouncil = { id: string; name_ar: string | null; description: string | null; group_link: string | null };
+export type RawCouncil = { id: string; name_ar: string | null; head_role_name: string; description: string | null; group_link: string | null };
 export type RawDept = { id: number; name_ar: string | null; display_order: number | null; description: string | null; group_link: string | null };
 export type RawCommittee = { id: number; committee_name_ar: string | null; department_id: number | null; council_id: string; leader_role_name: string; member_role_name: string; description: string | null; group_link: string | null };
-export type RawRole = { id: number; role_name: string; role_name_ar: string | null; role_level: number; council_type: string | null; is_elected: boolean | null };
+export type RawRole = { id: number; role_name: string; role_name_ar: string | null; role_level: number; council_type: string | null; is_elected: boolean | null; membership_kind: string; vote_weight: number };
 export type RawUserRole = { user_id: string; role_name: string; committee_id: number | null; department_id: number | null };
 export type RawProfile = { id: string; full_name: string | null; avatar_url: string | null };
 
@@ -51,11 +58,31 @@ export type DepartmentNode = {
 
 export type CouncilInfo = { id: string; name: string; desc: string | null; link: string | null };
 
+// مقعدٌ في هيئة المجلس: دورٌ عضويّته member — شاغرًا كان أو مشغولًا.
+// (الشاغر يُعرض أيضًا: «المستشار» منصبٌ قائم لا شاغل له، وإخفاؤه يكذب.)
+export type CouncilSeat = {
+  roleName: string;
+  roleAr: string;
+  level: number;
+  isHead: boolean;
+  voteWeight: number;
+  holders: Holder[];
+};
+
+// المجلس هيئةٌ لا حاوية: له رئيسٌ وأعضاءٌ يجلسون، وفرعٌ يقع تحته.
+export type CouncilBody = CouncilInfo & {
+  headRoleName: string;
+  headRoleAr: string;
+  head: Holder | null;
+  seats: CouncilSeat[];
+  memberCount: number;      // من يجلس في المجلس
+  subordinateCount: number; // من يقع تحت فرعه
+};
+
 export type StructureModel = {
   president: Holder | null;
-  advisors: Holder[];
-  executive: CouncilInfo & { president: Holder | null; departments: DepartmentNode[] };
-  administrative: CouncilInfo & { leaders: Holder[]; committees: CommitteeNode[] };
+  administrative: CouncilBody & { committees: CommitteeNode[] };
+  executive: CouncilBody & { departments: DepartmentNode[] };
   stats: { councils: number; departments: number; committees: number; assignments: number; people: number };
   anomalies: string[];
 };
@@ -112,9 +139,40 @@ export function buildStructure(
   const byRole = (name: string) => holders.filter((h) => h.roleName === name);
   const firstOf = (name: string) => byRole(name)[0] ?? null;
   const inCommittee = (cid: number) => holders.filter((h) => h.committeeId === cid);
-  const councilOf = (id: string, fallback: string): CouncilInfo => {
+  const roleByName = new Map(roles.map((r) => [r.role_name, r]));
+
+  // هيئة المجلس تُبنى من القاعدة: رئيسه من head_role_name، وأعضاؤه كلّ دورٍ
+  // عضويّته member في هذا المجلس. لا قائمة محفورة — أضِف دورًا عضوًا غدًا فيظهر.
+  const councilBody = (id: string, fallback: string): CouncilBody => {
     const c = councils.find((x) => x.id === id);
-    return { id, name: c?.name_ar ?? fallback, desc: c?.description ?? null, link: c?.group_link ?? null };
+    const headRole = c ? roleByName.get(c.head_role_name) : undefined;
+    const seats: CouncilSeat[] = roles
+      .filter((r) => r.council_type === id && r.membership_kind === "member")
+      .sort((a, b) => b.role_level - a.role_level)
+      .map((r) => ({
+        roleName: r.role_name,
+        roleAr: r.role_name_ar ?? r.role_name,
+        level: r.role_level,
+        isHead: r.role_name === c?.head_role_name,
+        voteWeight: r.vote_weight,
+        holders: byRole(r.role_name),
+      }));
+    return {
+      id,
+      name: c?.name_ar ?? fallback,
+      desc: c?.description ?? null,
+      link: c?.group_link ?? null,
+      headRoleName: c?.head_role_name ?? "",
+      headRoleAr: headRole?.role_name_ar ?? c?.head_role_name ?? "—",
+      head: c ? firstOf(c.head_role_name) : null,
+      seats,
+      memberCount: new Set(seats.flatMap((s) => s.holders.map((h) => h.userId))).size,
+      subordinateCount: new Set(
+        roles
+          .filter((r) => r.council_type === id && r.membership_kind === "subordinate")
+          .flatMap((r) => byRole(r.role_name).map((h) => h.userId)),
+      ).size,
+    };
   };
 
   const committeeNode = (c: RawCommittee, kind: "operational" | "admin"): CommitteeNode => {
@@ -170,10 +228,16 @@ export function buildStructure(
     };
   });
 
+  const administrative = councilBody("administrative", "المجلس الإداري");
+  const executive = councilBody("executive", "المجلس التنفيذي");
+
   const anomalies: string[] = [];
   for (const d of departmentNodes) if (!d.head) anomalies.push(`قسم «${d.name}» بلا منسّق قسم`);
   for (const d of departmentNodes) for (const c of d.committees) if (!c.leader) anomalies.push(`لجنة «${c.name}» بلا قائد`);
-  if (byRole(R.advisor).length === 0) anomalies.push("منصب «مستشار رئيس النادي» شاغر تمامًا");
+  // المقاعد الشاغرة تُقرأ من الهيئة لا من قائمة محفورة
+  for (const body of [administrative, executive])
+    for (const s of body.seats)
+      if (s.holders.length === 0) anomalies.push(`مقعد «${s.roleAr}» في ${body.name} شاغر`);
   // كلّ إدارة تغطّي اللجان بمشرفيها — فالنقص يُحسب لكلٍّ منهما على حدة
   const allCommittees = departmentNodes.flatMap((d) => d.committees);
   const noHr = allCommittees.filter((c) => !c.hrOverseer).length;
@@ -183,9 +247,8 @@ export function buildStructure(
 
   return {
     president: firstOf(R.president),
-    advisors: byRole(R.advisor),
-    executive: { ...councilOf("executive", "المجلس التنفيذي"), president: firstOf(R.execPresident), departments: departmentNodes },
-    administrative: { ...councilOf("administrative", "المجلس الإداري"), leaders: [firstOf(R.hrLeader), firstOf(R.qaLeader)].filter((h): h is Holder => h != null), committees: adminCommittees },
+    administrative: { ...administrative, committees: adminCommittees },
+    executive: { ...executive, departments: departmentNodes },
     stats: {
       councils: councils.length,
       departments: departments.length,
@@ -213,6 +276,10 @@ export type Position = {
   singleton: boolean; // منصب مفرد (يُستبدَل لا يُضاف)
   elected: boolean; // منتخَب (منسّق قسم/قائد/نائب) مقابل معيَّن
   adminSlot?: boolean; // مشرف إداريّ (عضو إداري) — يُختار عند الإسناد من إحدى الإدارتين (HR/QA)
+  // وزن صوت شاغل المنصب في الانتخابات (roles.vote_weight). قرارٌ يُرى وأنت تُسنِد،
+  // لا يُكتشف في انتخاب: قائدة الموارد تزن 3.0 ونظيرتها في الضمان 1.0 — سياسةٌ مقصودة.
+  voteWeight: number;
+  councilMember: boolean; // يجلس في المجلس ويقرّر (membership_kind='member') لا تابعٌ لفرعه
 };
 
 export function buildPositions(
@@ -228,6 +295,11 @@ export function buildPositions(
   const ar = (rn: string) => roleByName.get(rn)?.role_name_ar ?? rn;
   const lvl = (rn: string) => roleByName.get(rn)?.role_level ?? 0;
   const el = (rn: string) => !!roleByName.get(rn)?.is_elected;
+  // صفات الدور تُقرأ من الكتالوج لا تُحفر في كلّ موضع إنشاء
+  const traits = (rn: string) => ({
+    voteWeight: roleByName.get(rn)?.vote_weight ?? 1,
+    councilMember: roleByName.get(rn)?.membership_kind === "member",
+  });
 
   const findHolder = (rn: string, opts?: { committeeId?: number; departmentId?: number }) =>
     holders.find((h) =>
@@ -245,24 +317,24 @@ export function buildPositions(
     ["qa_committee_leader", "administrative", "المجلس الإداري"],
   ];
   for (const [rn, council, scope] of top) {
-    out.push({ key: rn, roleName: rn, roleAr: ar(rn), level: lvl(rn), scope, council, committeeId: null, departmentId: null, holder: findHolder(rn), singleton: true, elected: el(rn) });
+    out.push({ key: rn, roleName: rn, roleAr: ar(rn), level: lvl(rn), scope, council, committeeId: null, departmentId: null, holder: findHolder(rn), singleton: true, elected: el(rn), ...traits(rn) });
   }
 
   const sortedDepts = [...departments].sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));
   for (const d of sortedDepts) {
     const name = d.name_ar ?? `قسم #${d.id}`;
-    out.push({ key: `head-${d.id}`, roleName: "department_head", roleAr: ar("department_head"), level: lvl("department_head"), scope: name, council: "executive", committeeId: null, departmentId: d.id, holder: findHolder("department_head", { departmentId: d.id }), singleton: true, elected: el("department_head") });
+    out.push({ key: `head-${d.id}`, roleName: "department_head", roleAr: ar("department_head"), level: lvl("department_head"), scope: name, council: "executive", committeeId: null, departmentId: d.id, holder: findHolder("department_head", { departmentId: d.id }), singleton: true, elected: el("department_head"), ...traits("department_head") });
   }
 
   const operational = committees.filter((c) => c.council_id !== "administrative").sort((a, b) => a.id - b.id);
   for (const c of operational) {
     const name = c.committee_name_ar ?? `لجنة #${c.id}`;
-    out.push({ key: `lead-${c.id}`, roleName: "committee_leader", roleAr: ar("committee_leader"), level: lvl("committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holder: findHolder("committee_leader", { committeeId: c.id }), singleton: true, elected: el("committee_leader") });
-    out.push({ key: `dep-${c.id}`, roleName: "deputy_committee_leader", roleAr: ar("deputy_committee_leader"), level: lvl("deputy_committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holder: findHolder("deputy_committee_leader", { committeeId: c.id }), singleton: true, elected: el("deputy_committee_leader") });
+    out.push({ key: `lead-${c.id}`, roleName: "committee_leader", roleAr: ar("committee_leader"), level: lvl("committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holder: findHolder("committee_leader", { committeeId: c.id }), singleton: true, elected: el("committee_leader"), ...traits("committee_leader") });
+    out.push({ key: `dep-${c.id}`, roleName: "deputy_committee_leader", roleAr: ar("deputy_committee_leader"), level: lvl("deputy_committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holder: findHolder("deputy_committee_leader", { committeeId: c.id }), singleton: true, elected: el("deputy_committee_leader"), ...traits("deputy_committee_leader") });
     // مقعدان مستقلّان: لكلّ إدارة مشرفها على هذه اللجنة. assign_position تفرض
     // التفرّد لكلّ (دور + لجنة)، فمقعد الموارد لا يزاحم مقعد الضمان.
-    out.push({ key: `hr-${c.id}`, roleName: "hr_admin_member", roleAr: ar("hr_admin_member"), level: lvl("hr_admin_member"), scope: name, council: "administrative", committeeId: c.id, departmentId: null, holder: findHolder("hr_admin_member", { committeeId: c.id }), singleton: true, elected: false, adminSlot: true });
-    out.push({ key: `qa-${c.id}`, roleName: "qa_admin_member", roleAr: ar("qa_admin_member"), level: lvl("qa_admin_member"), scope: name, council: "administrative", committeeId: c.id, departmentId: null, holder: findHolder("qa_admin_member", { committeeId: c.id }), singleton: true, elected: false, adminSlot: true });
+    out.push({ key: `hr-${c.id}`, roleName: "hr_admin_member", roleAr: ar("hr_admin_member"), level: lvl("hr_admin_member"), scope: name, council: "administrative", committeeId: c.id, departmentId: null, holder: findHolder("hr_admin_member", { committeeId: c.id }), singleton: true, elected: el("hr_admin_member"), adminSlot: true, ...traits("hr_admin_member") });
+    out.push({ key: `qa-${c.id}`, roleName: "qa_admin_member", roleAr: ar("qa_admin_member"), level: lvl("qa_admin_member"), scope: name, council: "administrative", committeeId: c.id, departmentId: null, holder: findHolder("qa_admin_member", { committeeId: c.id }), singleton: true, elected: el("qa_admin_member"), adminSlot: true, ...traits("qa_admin_member") });
   }
 
   return out;

@@ -20,8 +20,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, type ColumnDef } from "@tanstack/react-table";
 import type { MemberRow, MemberStatus } from "./data";
-import { DEGREES, DEGREE_VALUES, PHONE_RE, PHONE_HINT } from "./vocab";
+import { DEGREES, DEGREE_VALUES, PHONE_RE, PHONE_HINT, hasAcademicFields } from "./vocab";
 import { updateMember } from "./actions";
+
+// الحقول الثلاثة التي تلزم صاحب الدرجة الجامعيّة وحده — ويُمنع منها صاحب «ثانوية عامة» و«موظف».
+const ACADEMIC_REQUIRED = [
+  { key: "college", message: "الكلّية مطلوبة لهذه الدرجة" },
+  { key: "major", message: "التخصّص مطلوب لهذه الدرجة" },
+  { key: "recordNo", message: "الرقم الأكاديميّ مطلوب لهذه الدرجة" },
+] as const;
 
 // مخطّط التحقّق من نموذج العضو (Zod) — مصدر واحد للقواعد ولنوع النموذج.
 // النطاق مقصود: القسم والدور يملكهما `assignments/`، والبريد يملكه `credentials/` (هويّة مصادقة) — فلا يُحرَّران هنا.
@@ -44,6 +51,13 @@ const memberSchema = z.object({
   // وإلّا لتعذّر على مدير أن يصحّح اسم أحد الـ٢٨ الذين لا سجلّ لهم.
   if (v.hasDetails && !DEGREE_VALUES.includes(v.degree ?? "")) {
     ctx.addIssue({ code: "custom", path: ["degree"], message: "الدرجة العلمية مطلوبة" });
+  }
+  // من له درجة جامعيّة تلزمه الثلاثة — نفس قاعدة القيد member_details_academic_fields_check.
+  // ولا نمنع الممتلئ لغير الجامعيّ هنا: النموذج يُخفي حقوله، والفعل الخادميّ يمحوها مهما أُرسل.
+  if (v.hasDetails && hasAcademicFields(v.degree)) {
+    for (const f of ACADEMIC_REQUIRED) {
+      if (!v[f.key]?.trim()) ctx.addIssue({ code: "custom", path: [f.key], message: f.message });
+    }
   }
 });
 type MemberForm = z.infer<typeof memberSchema>;
@@ -188,9 +202,9 @@ function Section({ icon, title, end, children }: { icon: React.ReactNode; title:
 
 // جسم عرض الملفّ: رأس (اسم/دور/شارة) + أقسام معنونة بحقول العضو الحقيقيّة.
 // تُخفى الأقسام الخالية (أكاديميّ بلا بيانات · لا تواصل اجتماعيّ · غير منتهٍ)؛ والحقول الفارغة تظهر «غير متوفّر».
-// استثناء: اللجنة والقسم والكلّية والتخصّص تُخفى إن خلَت — لأنّ خلوّها يعني أنّ الدور/الدرجة لا يحملها أصلًا لا أنّ البيانات ناقصة:
-// الإدارة العليا بلا لجنة ولا قسم، وحملة الثانويّة بلا كلّية ولا تخصّص (صفحة الالتحاق تُخفي الحقلين وتُسقط required عن high_school).
-// والرقم الأكاديميّ يُخفى لحملة الثانويّة بالدرجة لا بالخلوّ: العمود NOT NULL ومطلوب للجميع، فكتبوا فيه «لايوجد»/«.» — فلا خلوّ يُفحَص.
+// استثناء: اللجنة والقسم والكلّية والتخصّص والرقم الأكاديميّ تُخفى إن خلَت — لأنّ خلوّها يعني أنّ الدور/الدرجة
+// لا يحملها أصلًا لا أنّ البيانات ناقصة: الإدارة العليا بلا لجنة ولا قسم، و«ثانوية عامة»/«موظف» بلا كلّية ولا
+// تخصّص ولا رقم أكاديميّ — يفرض خلوّها قيدُ member_details_academic_fields_check، فالخلوّ فحصٌ كافٍ هنا.
 function ProfileBody({ member }: { member: MemberRow }) {
   // المنصّات المملوءة فقط — وثلاثٌ منها تترك الأخيرة نصفَ صفّ في شبكة العمودين، فتُمدّ لصفّ كامل
   const filledSocials = SOCIALS.filter((s) => member[s.key]);
@@ -222,7 +236,7 @@ function ProfileBody({ member }: { member: MemberRow }) {
             {member.college ? <Cell full label="الكلّية" icon={<GraduationCap />} value={member.college} /> : null}
             <Cell full={!member.major} label="الدرجة العلمية" icon={<Certificate />} value={member.degree} />
             {member.major ? <Cell label="التخصّص" icon={<BookOpen />} value={member.major} /> : null}
-            {member.degreeRaw !== "high_school" ? <Cell full lat label="الرقم الأكاديميّ" icon={<IdentificationCard />} value={member.recordNo} /> : null}
+            {member.recordNo ? <Cell full lat label="الرقم الأكاديميّ" icon={<IdentificationCard />} value={member.recordNo} /> : null}
           </Section>
         ) : null}
         {socialCells.length > 0 ? (
@@ -539,9 +553,15 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
                 <Select className="mdl-full" label="الدرجة العلمية" icon={<Certificate />} options={DEGREES} value={field.value ?? ""} onValueChange={field.onChange} error={editForm.formState.errors.degree?.message} />
               )}
             />
-            <Field label="الكلّية" icon={<GraduationCap />} innerIcon={<Buildings />} placeholder="مثال: كلّية الآداب" error={editForm.formState.errors.college?.message} {...editForm.register("college")} />
-            <Field label="التخصّص" icon={<BookOpen />} innerIcon={<Books />} placeholder="مثال: اللغة العربيّة" error={editForm.formState.errors.major?.message} {...editForm.register("major")} />
-            <Field className="mdl-full" label="الرقم الأكاديميّ" dir="ltr" icon={<IdentificationCard />} innerIcon={<Hash />} placeholder="مثال: 443001234" error={editForm.formState.errors.recordNo?.message} {...editForm.register("recordNo")} />
+            {/* الحقول الثلاثة تتبع الدرجة: تظهر لصاحب الدرجة الجامعيّة وحده. «ثانوية عامة» و«موظف» لا كلّية
+                لهما ولا تخصّص ولا رقم أكاديميّ — تُخفى هنا، ويمحوها الفعل الخادميّ، ويردّ الممتلئ قيدُ القاعدة. */}
+            {hasAcademicFields(editForm.watch("degree")) ? (
+              <>
+                <Field label="الكلّية" icon={<GraduationCap />} innerIcon={<Buildings />} placeholder="مثال: كلّية الآداب" error={editForm.formState.errors.college?.message} {...editForm.register("college")} />
+                <Field label="التخصّص" icon={<BookOpen />} innerIcon={<Books />} placeholder="مثال: اللغة العربيّة" error={editForm.formState.errors.major?.message} {...editForm.register("major")} />
+                <Field className="mdl-full" label="الرقم الأكاديميّ" dir="ltr" icon={<IdentificationCard />} innerIcon={<Hash />} placeholder="مثال: 443001234" error={editForm.formState.errors.recordNo?.message} {...editForm.register("recordNo")} />
+              </>
+            ) : null}
 
             <ModalSectionHeading className="mdl-full" icon={<ShareNetwork weight="fill" />} title="التواصل الاجتماعيّ" />
             <Field label="تويتر (X)" dir="ltr" icon={<XLogo />} innerIcon={<At />} placeholder="المعرّف بلا @" error={editForm.formState.errors.twitter?.message} {...editForm.register("twitter")} />
