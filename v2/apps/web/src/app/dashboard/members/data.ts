@@ -91,12 +91,15 @@ export async function getMembers(): Promise<{ members: MemberRow[]; error: strin
   const committeeName = new Map((cRes.data ?? []).map((c) => [c.id, c.committee_name_ar as string]));
   const detailsByUser = new Map((mdRes.data ?? []).map((d) => [d.user_id, d]));
 
-  // أفضل دور نشط لكل عضو (الأعلى رتبةً = أقلّ role_level)
+  // أفضل دور نشط لكلّ عضو = الأعلى رتبةً. والرتبة تعلو بارتفاع role_level
+  // لا بانخفاضه: club_president=10 · department_head=7 · committee_member=3.
+  // (وهو ما تقرؤه القاعدة نفسها: assign_position تأخذ max(role_level) وتشترط ≥8.)
+  // والدور المجهول — لا صفَّ له في roles — يخسر أمام أيّ دور معروف، فافتراضه 0.
   const bestRole = new Map<string, { role_name: string; department_id: number | null; committee_id: number | null; level: number }>();
   for (const ur of urRes.data ?? []) {
-    const level = roleByName.get(ur.role_name)?.role_level ?? 999;
+    const level = roleByName.get(ur.role_name)?.role_level ?? 0;
     const cur = bestRole.get(ur.user_id);
-    if (!cur || level < cur.level) {
+    if (!cur || level > cur.level) {
       bestRole.set(ur.user_id, { role_name: ur.role_name, department_id: ur.department_id, committee_id: ur.committee_id, level });
     }
   }
