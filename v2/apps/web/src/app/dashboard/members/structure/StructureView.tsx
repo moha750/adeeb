@@ -236,7 +236,7 @@ export function StructureView({ model }: { model: StructureModel }) {
         {modal?.kind === "meta" ? (
           <div className="org-modal">
             <Textarea label="الوصف" icon={<NoteBlank />} innerIcon={<PencilSimple />} placeholder="اكتب هنا…" rows={3} value={desc} onChange={(e) => setDesc(e.target.value)} />
-            <Field label="رابط قروب الواتساب" icon={<LinkSimple />} innerIcon={<Globe />} placeholder="https://chat.whatsapp.com/…" type="url" dir="ltr" value={link} onChange={(e) => setLink(e.target.value)} helper="اتركه فارغًا إن لا يوجد." />
+            <Field label="رابط قروب الواتساب" icon={<LinkSimple />} innerIcon={<Globe />} placeholder="https://chat.whatsapp.com/…" type="url" charset="latin" value={link} onChange={(e) => setLink(e.target.value)} helper="اتركه فارغًا إن لا يوجد." />
           </div>
         ) : null}
       </Modal>

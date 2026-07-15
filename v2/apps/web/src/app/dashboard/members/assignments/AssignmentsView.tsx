@@ -16,7 +16,6 @@ import { assignPosition, removePosition } from "../structure/actions";
 import type { Position } from "../structure/model";
 
 const COUNCIL_AR: Record<Position["council"], string> = {
-  leadership: "قيادة النادي",
   executive: "المجلس التنفيذي",
   administrative: "المجلس الإداري",
 };
@@ -50,7 +49,7 @@ export function AssignmentsView({ positions, members }: { positions: Position[];
   }, [positions, search, fv]);
 
   const filters: FilterDef[] = [
-    { key: "council", label: "المجلس", options: [{ value: "leadership", label: "قيادة النادي" }, { value: "executive", label: "المجلس التنفيذي" }, { value: "administrative", label: "المجلس الإداري" }] },
+    { key: "council", label: "المجلس", options: [{ value: "administrative", label: "المجلس الإداري" }, { value: "executive", label: "المجلس التنفيذي" }] },
     { key: "status", label: "الحالة", options: [{ value: "vacant", label: "الشاغرة" }, { value: "filled", label: "المشغولة" }] },
   ];
 
@@ -102,9 +101,7 @@ export function AssignmentsView({ positions, members }: { positions: Position[];
       render: (p) => (
         <span className="asg-council">
           <span className="txt">{COUNCIL_AR[p.council]}</span>
-          {p.council !== "leadership"
-            ? <Badge tone={p.councilMember ? "success" : "neutral"} variant="soft">{p.councilMember ? "عضو" : "تابع"}</Badge>
-            : null}
+          <Badge tone={p.councilMember ? "success" : "neutral"} variant="soft">{p.councilMember ? "عضو" : "تابع"}</Badge>
         </span>
       ),
     },

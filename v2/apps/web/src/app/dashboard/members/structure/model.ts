@@ -272,7 +272,10 @@ export type Position = {
   roleAr: string;
   level: number;
   scope: string; // نصّ النطاق: «قيادة النادي» / «قسم …» / «لجنة …»
-  council: "leadership" | "executive" | "administrative";
+  // المجلس كما تقوله القاعدة (roles.council_type). لا «قيادة النادي» — كانت
+  // تصنيفًا محفورًا لا وجود له في القاعدة، ورئيسُ النادي والمستشار كلاهما
+  // عضوٌ في المجلس الإداريّ.
+  council: "executive" | "administrative";
   committeeId: number | null;
   departmentId: number | null;
   holder: Holder | null;
@@ -312,15 +315,21 @@ export function buildPositions(
     ) ?? null;
 
   const out: Position[] = [];
-  const top: Array<[string, Position["council"], string]> = [
-    ["club_president", "leadership", "قيادة النادي"],
-    ["president_advisor", "leadership", "قيادة النادي"],
-    ["executive_council_president", "executive", "المجلس التنفيذي"],
-    ["hr_committee_leader", "administrative", "المجلس الإداري"],
-    ["qa_committee_leader", "administrative", "المجلس الإداري"],
-  ];
-  for (const [rn, council, scope] of top) {
-    out.push({ key: rn, roleName: rn, roleAr: ar(rn), level: lvl(rn), scope, council, committeeId: null, departmentId: null, holder: findHolder(rn), singleton: true, elected: el(rn), ...traits(rn) });
+
+  // مقاعد المجالس تُقرأ من القاعدة لا من جدولٍ محفور. الجدول القديم كان يكذب
+  // في ثلاثة صفوف من خمسة: يضع الرئيس والمستشار في «قيادة النادي» (تصنيفٌ لا
+  // وجود له)، ورئيسَ التنفيذيّ في المجلس التنفيذيّ — وهو عضوٌ في الإداريّ
+  // ويرأس التنفيذيّ (head_role_name). فالعضويّة والمجلس يقولهما العمودان.
+  const councilName = (id: string) => councils.find((c) => c.id === id)?.name_ar ?? id;
+  for (const r of roles.filter((x) => x.membership_kind === "member" && x.council_type).sort((a, b) => b.role_level - a.role_level)) {
+    // المقاعد ذات النطاق (منسّق قسم/قائد/نائب) تُبنى أدناه بنطاقها، لا هنا
+    if (["department_head", "committee_leader", "deputy_committee_leader"].includes(r.role_name)) continue;
+    const council = r.council_type as Position["council"];
+    out.push({
+      key: r.role_name, roleName: r.role_name, roleAr: ar(r.role_name), level: lvl(r.role_name),
+      scope: councilName(council), council, committeeId: null, departmentId: null,
+      holder: findHolder(r.role_name), singleton: true, elected: el(r.role_name), ...traits(r.role_name),
+    });
   }
 
   const sortedDepts = [...departments].sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));

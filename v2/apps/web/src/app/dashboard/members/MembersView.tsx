@@ -536,8 +536,8 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
 
             <ModalSectionHeading className="mdl-full" icon={<AddressBook weight="fill" />} title="بيانات التواصل" />
             {/* البريد هويّة مصادقة لا بيان تواصل: يُغيَّر من «بيانات الدخول» حيث يُزامَن مع auth.users — كتابته هنا وحده تفكّ المزامنة */}
-            <Field className="mdl-full" label="رقم الجوّال" type="tel" dir="ltr" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" error={editForm.formState.errors.phone?.message} {...editForm.register("phone")} />
-            <Field className="mdl-full" label="البريد الإلكترونيّ" type="email" dir="ltr" disabled readOnly value={member?.email ?? ""} icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" helper="يُغيَّر من «بيانات الدخول»." />
+            <Field className="mdl-full" label="رقم الجوّال" type="tel" charset="digits" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" error={editForm.formState.errors.phone?.message} {...editForm.register("phone")} />
+            <Field className="mdl-full" label="البريد الإلكترونيّ" type="email" charset="latin" disabled readOnly value={member?.email ?? ""} icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" helper="يُغيَّر من «بيانات الدخول»." />
 
             {member && member.degreeRaw == null ? (
               <Alert className="mdl-full" tone="warning" title="لا سجلّ تفاصيل لهذا العضو">
@@ -559,15 +559,15 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
               <>
                 <Field label="الكلّية" icon={<GraduationCap />} innerIcon={<Buildings />} placeholder="مثال: كلّية الآداب" error={editForm.formState.errors.college?.message} {...editForm.register("college")} />
                 <Field label="التخصّص" icon={<BookOpen />} innerIcon={<Books />} placeholder="مثال: اللغة العربيّة" error={editForm.formState.errors.major?.message} {...editForm.register("major")} />
-                <Field className="mdl-full" label="الرقم الأكاديميّ" dir="ltr" icon={<IdentificationCard />} innerIcon={<Hash />} placeholder="مثال: 443001234" error={editForm.formState.errors.recordNo?.message} {...editForm.register("recordNo")} />
+                <Field className="mdl-full" label="الرقم الأكاديميّ" charset="digits" icon={<IdentificationCard />} innerIcon={<Hash />} placeholder="مثال: 443001234" error={editForm.formState.errors.recordNo?.message} {...editForm.register("recordNo")} />
               </>
             ) : null}
 
             <ModalSectionHeading className="mdl-full" icon={<ShareNetwork weight="fill" />} title="التواصل الاجتماعيّ" />
-            <Field label="تويتر (X)" dir="ltr" icon={<XLogo />} innerIcon={<At />} placeholder="المعرّف بلا @" error={editForm.formState.errors.twitter?.message} {...editForm.register("twitter")} />
-            <Field label="إنستغرام" dir="ltr" icon={<InstagramLogo />} innerIcon={<At />} placeholder="المعرّف بلا @" error={editForm.formState.errors.instagram?.message} {...editForm.register("instagram")} />
-            <Field label="تيك توك" dir="ltr" icon={<TiktokLogo />} innerIcon={<At />} placeholder="المعرّف بلا @" error={editForm.formState.errors.tiktok?.message} {...editForm.register("tiktok")} />
-            <Field label="لينكدإن" dir="ltr" icon={<LinkedinLogo />} innerIcon={<At />} placeholder="المعرّف بلا @" error={editForm.formState.errors.linkedin?.message} {...editForm.register("linkedin")} />
+            <Field label="تويتر (X)" charset="latin" icon={<XLogo />} innerIcon={<At />} placeholder="المعرّف بلا @" error={editForm.formState.errors.twitter?.message} {...editForm.register("twitter")} />
+            <Field label="إنستغرام" charset="latin" icon={<InstagramLogo />} innerIcon={<At />} placeholder="المعرّف بلا @" error={editForm.formState.errors.instagram?.message} {...editForm.register("instagram")} />
+            <Field label="تيك توك" charset="latin" icon={<TiktokLogo />} innerIcon={<At />} placeholder="المعرّف بلا @" error={editForm.formState.errors.tiktok?.message} {...editForm.register("tiktok")} />
+            <Field label="لينكدإن" charset="latin" icon={<LinkedinLogo />} innerIcon={<At />} placeholder="المعرّف بلا @" error={editForm.formState.errors.linkedin?.message} {...editForm.register("linkedin")} />
           </form>
         )}
       </Modal>

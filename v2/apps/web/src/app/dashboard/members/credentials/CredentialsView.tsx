@@ -107,7 +107,7 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
                 innerIcon={<At />}
                 placeholder="you@adeeb.club"
                 type="email"
-                dir="ltr"
+                charset="latin"
                 autoComplete="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
