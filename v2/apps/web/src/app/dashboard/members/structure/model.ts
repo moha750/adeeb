@@ -3,7 +3,7 @@
 
 export type RawCouncil = { id: string; name_ar: string | null; description: string | null; group_link: string | null };
 export type RawDept = { id: number; name_ar: string | null; display_order: number | null; description: string | null; group_link: string | null };
-export type RawCommittee = { id: number; committee_name_ar: string | null; department_id: number | null; council_id: string; leader_role_name: string; description: string | null; group_link: string | null };
+export type RawCommittee = { id: number; committee_name_ar: string | null; department_id: number | null; council_id: string; leader_role_name: string; member_role_name: string; description: string | null; group_link: string | null };
 export type RawRole = { id: number; role_name: string; role_name_ar: string | null; role_level: number; council_type: string | null; is_elected: boolean | null };
 export type RawUserRole = { user_id: string; role_id: number; committee_id: number | null; department_id: number | null };
 export type RawProfile = { id: string; full_name: string | null; avatar_url: string | null };
@@ -74,6 +74,12 @@ const R = {
   member: "committee_member",
 } as const;
 
+// عضو الإدارة يشرف على عدّة لجان، فله صفّ لكلّ لجنة — ويُعرض مرّة واحدة في إدارته.
+function dedupeByUser(hs: Holder[]): Holder[] {
+  const seen = new Set<string>();
+  return hs.filter((h) => (seen.has(h.userId) ? false : (seen.add(h.userId), true)));
+}
+
 function buildHolders(roles: RawRole[], userRoles: RawUserRole[], profiles: RawProfile[]): Holder[] {
   const roleById = new Map(roles.map((r) => [r.id, r]));
   const profileById = new Map(profiles.map((p) => [p.id, p]));
@@ -125,7 +131,13 @@ export function buildStructure(
     const qaOverseer = inside.find((h) => h.roleName === "qa_admin_member") ?? null;
     const skip = new Set<string>([c.leader_role_name, R.deputy, "hr_admin_member", "qa_admin_member"]);
     const exclude = new Set([leader?.userId, deputy?.userId, hrOverseer?.userId, qaOverseer?.userId].filter(Boolean) as string[]);
-    const members = inside.filter((h) => !skip.has(h.roleName) && !exclude.has(h.userId));
+    // أعضاء الإدارة يشرفون على لجان أخرى، فـ committee_id عندهم يشير إلى
+    // اللجنة المُشرَف عليها لا إلى إدارتهم — انتماؤهم يقوله الدور وحده.
+    // أمّا أعضاء اللجنة فيشيرون إليها بـ committee_id.
+    const members =
+      c.council_id === "administrative"
+        ? dedupeByUser(holders.filter((h) => h.roleName === c.member_role_name))
+        : inside.filter((h) => !skip.has(h.roleName) && !exclude.has(h.userId));
     return {
       id: c.id,
       name: c.committee_name_ar ?? `لجنة #${c.id}`,
