@@ -5,7 +5,7 @@ export type RawCouncil = { id: string; name_ar: string | null; description: stri
 export type RawDept = { id: number; name_ar: string | null; display_order: number | null; description: string | null; group_link: string | null };
 export type RawCommittee = { id: number; committee_name_ar: string | null; department_id: number | null; council_id: string; leader_role_name: string; member_role_name: string; description: string | null; group_link: string | null };
 export type RawRole = { id: number; role_name: string; role_name_ar: string | null; role_level: number; council_type: string | null; is_elected: boolean | null };
-export type RawUserRole = { user_id: string; role_id: number; committee_id: number | null; department_id: number | null };
+export type RawUserRole = { user_id: string; role_name: string; committee_id: number | null; department_id: number | null };
 export type RawProfile = { id: string; full_name: string | null; avatar_url: string | null };
 
 // وحدة تنظيميّة قابلة لتحرير بياناتها الوصفيّة (وصف + رابط قروب)
@@ -16,7 +16,6 @@ export type Holder = {
   userId: string;
   name: string;
   avatar: string | null;
-  roleId: number;
   roleName: string;
   roleAr: string;
   level: number;
@@ -59,7 +58,6 @@ export type StructureModel = {
   administrative: CouncilInfo & { leaders: Holder[]; committees: CommitteeNode[] };
   stats: { councils: number; departments: number; committees: number; assignments: number; people: number };
   anomalies: string[];
-  roleIds: Record<string, number>;
 };
 
 const R = {
@@ -81,18 +79,17 @@ function dedupeByUser(hs: Holder[]): Holder[] {
 }
 
 function buildHolders(roles: RawRole[], userRoles: RawUserRole[], profiles: RawProfile[]): Holder[] {
-  const roleById = new Map(roles.map((r) => [r.id, r]));
+  const roleByName = new Map(roles.map((r) => [r.role_name, r]));
   const profileById = new Map(profiles.map((p) => [p.id, p]));
   const holders: Holder[] = [];
   for (const ur of userRoles) {
-    const role = roleById.get(ur.role_id);
+    const role = roleByName.get(ur.role_name);
     if (!role) continue;
     const prof = profileById.get(ur.user_id);
     holders.push({
       userId: ur.user_id,
       name: prof?.full_name ?? "—",
       avatar: prof?.avatar_url ?? null,
-      roleId: role.id,
       roleName: role.role_name,
       roleAr: role.role_name_ar ?? role.role_name,
       level: role.role_level,
@@ -197,7 +194,6 @@ export function buildStructure(
       people: new Set(holders.map((h) => h.userId)).size,
     },
     anomalies,
-    roleIds: Object.fromEntries(roles.map((r) => [r.role_name, r.id])),
   };
 }
 
@@ -206,7 +202,6 @@ export function buildStructure(
 // ============================================================
 export type Position = {
   key: string;
-  roleId: number;
   roleName: string;
   roleAr: string;
   level: number;
@@ -231,7 +226,6 @@ export function buildPositions(
   const holders = buildHolders(roles, userRoles, profiles);
   const roleByName = new Map(roles.map((r) => [r.role_name, r]));
   const ar = (rn: string) => roleByName.get(rn)?.role_name_ar ?? rn;
-  const id = (rn: string) => roleByName.get(rn)?.id ?? -1;
   const lvl = (rn: string) => roleByName.get(rn)?.role_level ?? 0;
   const el = (rn: string) => !!roleByName.get(rn)?.is_elected;
 
@@ -251,24 +245,24 @@ export function buildPositions(
     ["qa_committee_leader", "administrative", "المجلس الإداري"],
   ];
   for (const [rn, council, scope] of top) {
-    out.push({ key: rn, roleId: id(rn), roleName: rn, roleAr: ar(rn), level: lvl(rn), scope, council, committeeId: null, departmentId: null, holder: findHolder(rn), singleton: true, elected: el(rn) });
+    out.push({ key: rn, roleName: rn, roleAr: ar(rn), level: lvl(rn), scope, council, committeeId: null, departmentId: null, holder: findHolder(rn), singleton: true, elected: el(rn) });
   }
 
   const sortedDepts = [...departments].sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));
   for (const d of sortedDepts) {
     const name = d.name_ar ?? `قسم #${d.id}`;
-    out.push({ key: `head-${d.id}`, roleId: id("department_head"), roleName: "department_head", roleAr: ar("department_head"), level: lvl("department_head"), scope: name, council: "executive", committeeId: null, departmentId: d.id, holder: findHolder("department_head", { departmentId: d.id }), singleton: true, elected: el("department_head") });
+    out.push({ key: `head-${d.id}`, roleName: "department_head", roleAr: ar("department_head"), level: lvl("department_head"), scope: name, council: "executive", committeeId: null, departmentId: d.id, holder: findHolder("department_head", { departmentId: d.id }), singleton: true, elected: el("department_head") });
   }
 
   const operational = committees.filter((c) => c.council_id !== "administrative").sort((a, b) => a.id - b.id);
   for (const c of operational) {
     const name = c.committee_name_ar ?? `لجنة #${c.id}`;
-    out.push({ key: `lead-${c.id}`, roleId: id("committee_leader"), roleName: "committee_leader", roleAr: ar("committee_leader"), level: lvl("committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holder: findHolder("committee_leader", { committeeId: c.id }), singleton: true, elected: el("committee_leader") });
-    out.push({ key: `dep-${c.id}`, roleId: id("deputy_committee_leader"), roleName: "deputy_committee_leader", roleAr: ar("deputy_committee_leader"), level: lvl("deputy_committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holder: findHolder("deputy_committee_leader", { committeeId: c.id }), singleton: true, elected: el("deputy_committee_leader") });
+    out.push({ key: `lead-${c.id}`, roleName: "committee_leader", roleAr: ar("committee_leader"), level: lvl("committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holder: findHolder("committee_leader", { committeeId: c.id }), singleton: true, elected: el("committee_leader") });
+    out.push({ key: `dep-${c.id}`, roleName: "deputy_committee_leader", roleAr: ar("deputy_committee_leader"), level: lvl("deputy_committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holder: findHolder("deputy_committee_leader", { committeeId: c.id }), singleton: true, elected: el("deputy_committee_leader") });
     // مقعدان مستقلّان: لكلّ إدارة مشرفها على هذه اللجنة. assign_position تفرض
     // التفرّد لكلّ (دور + لجنة)، فمقعد الموارد لا يزاحم مقعد الضمان.
-    out.push({ key: `hr-${c.id}`, roleId: id("hr_admin_member"), roleName: "hr_admin_member", roleAr: ar("hr_admin_member"), level: lvl("hr_admin_member"), scope: name, council: "administrative", committeeId: c.id, departmentId: null, holder: findHolder("hr_admin_member", { committeeId: c.id }), singleton: true, elected: false, adminSlot: true });
-    out.push({ key: `qa-${c.id}`, roleId: id("qa_admin_member"), roleName: "qa_admin_member", roleAr: ar("qa_admin_member"), level: lvl("qa_admin_member"), scope: name, council: "administrative", committeeId: c.id, departmentId: null, holder: findHolder("qa_admin_member", { committeeId: c.id }), singleton: true, elected: false, adminSlot: true });
+    out.push({ key: `hr-${c.id}`, roleName: "hr_admin_member", roleAr: ar("hr_admin_member"), level: lvl("hr_admin_member"), scope: name, council: "administrative", committeeId: c.id, departmentId: null, holder: findHolder("hr_admin_member", { committeeId: c.id }), singleton: true, elected: false, adminSlot: true });
+    out.push({ key: `qa-${c.id}`, roleName: "qa_admin_member", roleAr: ar("qa_admin_member"), level: lvl("qa_admin_member"), scope: name, council: "administrative", committeeId: c.id, departmentId: null, holder: findHolder("qa_admin_member", { committeeId: c.id }), singleton: true, elected: false, adminSlot: true });
   }
 
   return out;

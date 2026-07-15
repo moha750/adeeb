@@ -24,14 +24,13 @@ export default async function AssignmentsPage() {
   }
 
   const positions = buildPositions(org.councils, org.departments, org.committees, org.roles, org.userRoles, org.profiles);
-  const roleIds = Object.fromEntries(org.roles.map((r) => [r.role_name, r.id])) as Record<string, number>;
 
   return (
     <>
       <Head />
       {/* حارس الهوية: تنسيقات `.asg-*` مؤقّتة — موسومة للإعادة تصميمها بمكوّنات الهوية */}
       <div data-needs="مكوّنات تعيين المناصب (بطاقات المناصب/المحرّر)">
-        <AssignmentsView positions={positions} members={org.members} roleIds={roleIds} />
+        <AssignmentsView positions={positions} members={org.members} />
       </div>
     </>
   );

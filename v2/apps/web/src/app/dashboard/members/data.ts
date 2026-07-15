@@ -75,8 +75,8 @@ export async function getMembers(): Promise<{ members: MemberRow[]; error: strin
 
   const [pRes, urRes, rRes, dRes, cRes, mdRes] = await Promise.all([
     sb.from("profiles").select("id, full_name, email, phone, avatar_url, account_status, joined_date, termination_reason, terminated_at").order("joined_date", { ascending: false }),
-    sb.from("user_roles").select("user_id, role_id, department_id, committee_id, assigned_at").eq("is_active", true),
-    sb.from("roles").select("id, role_name_ar, role_level"),
+    sb.from("user_roles").select("user_id, role_name, department_id, committee_id, assigned_at").eq("is_active", true),
+    sb.from("roles").select("role_name, role_name_ar, role_level"),
     sb.from("departments").select("id, name_ar"),
     sb.from("committees").select("id, department_id, committee_name_ar"),
     sb.from("member_details").select("user_id, academic_record_number, academic_degree, college, major, twitter_account, instagram_account, tiktok_account, linkedin_account"),
@@ -85,19 +85,19 @@ export async function getMembers(): Promise<{ members: MemberRow[]; error: strin
   const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || mdRes.error;
   if (firstErr) return { members: [], error: firstErr.message };
 
-  const roleById = new Map((rRes.data ?? []).map((r) => [r.id, r]));
+  const roleByName = new Map((rRes.data ?? []).map((r) => [r.role_name, r]));
   const deptById = new Map((dRes.data ?? []).map((d) => [d.id, d.name_ar as string]));
   const committeeDept = new Map((cRes.data ?? []).map((c) => [c.id, c.department_id as number | null]));
   const committeeName = new Map((cRes.data ?? []).map((c) => [c.id, c.committee_name_ar as string]));
   const detailsByUser = new Map((mdRes.data ?? []).map((d) => [d.user_id, d]));
 
   // أفضل دور نشط لكل عضو (الأعلى رتبةً = أقلّ role_level)
-  const bestRole = new Map<string, { role_id: number; department_id: number | null; committee_id: number | null; level: number }>();
+  const bestRole = new Map<string, { role_name: string; department_id: number | null; committee_id: number | null; level: number }>();
   for (const ur of urRes.data ?? []) {
-    const level = roleById.get(ur.role_id)?.role_level ?? 999;
+    const level = roleByName.get(ur.role_name)?.role_level ?? 999;
     const cur = bestRole.get(ur.user_id);
     if (!cur || level < cur.level) {
-      bestRole.set(ur.user_id, { role_id: ur.role_id, department_id: ur.department_id, committee_id: ur.committee_id, level });
+      bestRole.set(ur.user_id, { role_name: ur.role_name, department_id: ur.department_id, committee_id: ur.committee_id, level });
     }
   }
 
@@ -113,7 +113,7 @@ export async function getMembers(): Promise<{ members: MemberRow[]; error: strin
       avatar: p.avatar_url ?? null,
       dept: deptId != null ? deptById.get(deptId) ?? null : null,
       committee: br?.committee_id != null ? committeeName.get(br.committee_id) ?? null : null,
-      role: br ? roleById.get(br.role_id)?.role_name_ar ?? null : null,
+      role: br ? roleByName.get(br.role_name)?.role_name_ar ?? null : null,
       status: STATUS_MAP[p.account_status] ?? "inactive",
       joined: fmtDate(p.joined_date),
       joinedRaw: p.joined_date ?? "",

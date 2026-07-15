@@ -19,7 +19,7 @@ function service() {
  */
 export async function assignPosition(input: {
   userId: string;
-  roleId: number;
+  roleName: string;
   committeeId?: number | null;
   departmentId?: number | null;
   replace?: boolean;
@@ -32,7 +32,7 @@ export async function assignPosition(input: {
   const { data, error } = await sb.rpc("assign_position", {
     p_actor: admin.id,
     p_user: input.userId,
-    p_role: input.roleId,
+    p_role_name: input.roleName,
     p_committee: input.committeeId ?? null,
     p_department: input.departmentId ?? null,
     p_replace: input.replace ?? false,
@@ -50,7 +50,7 @@ export async function assignPosition(input: {
  */
 export async function removePosition(input: {
   userId: string;
-  roleId: number;
+  roleName: string;
   committeeId?: number | null;
 }): Promise<ActionResult> {
   const admin = await getCurrentAdmin();
@@ -58,14 +58,14 @@ export async function removePosition(input: {
   const sb = service();
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
-  const { data: role } = await sb.from("roles").select("role_name").eq("id", input.roleId).maybeSingle();
-  if (role?.role_name === "club_president") return { ok: false, message: "لا يمكن إزالة رئيس النادي من هنا." };
+  // الاسم بيدنا أصلًا — فلا رحلة إلى roles لترجمة الرقم إلى اسم.
+  if (input.roleName === "club_president") return { ok: false, message: "لا يمكن إزالة رئيس النادي من هنا." };
 
   let q = sb
     .from("user_roles")
     .update({ is_active: false })
     .eq("user_id", input.userId)
-    .eq("role_id", input.roleId)
+    .eq("role_name", input.roleName)
     .eq("is_active", true);
   q = input.committeeId == null ? q.is("committee_id", null) : q.eq("committee_id", input.committeeId);
 

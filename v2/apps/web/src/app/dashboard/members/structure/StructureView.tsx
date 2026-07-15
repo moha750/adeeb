@@ -19,7 +19,7 @@ const ROLE_AR: Record<string, string> = {
 };
 
 type ModalState =
-  | { kind: "assign"; roleId: number; roleAr: string; scope: string; committeeId: number | null; departmentId: number | null }
+  | { kind: "assign"; roleName: string; roleAr: string; scope: string; committeeId: number | null; departmentId: number | null }
   | { kind: "meta"; unit: UnitMeta }
   | null;
 
@@ -121,16 +121,16 @@ export function StructureView({ model, members }: { model: StructureModel; membe
   const toggle = (id: number) => setExpanded((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const openFill = (roleName: string, scopeLabel: string, scope: { committeeId?: number; departmentId?: number }) => {
-    const roleId = model.roleIds[roleName];
-    if (!roleId) { toast.error("منصب غير معروف."); return; }
-    setModal({ kind: "assign", roleId, roleAr: ROLE_AR[roleName] ?? roleName, scope: scopeLabel, committeeId: scope.committeeId ?? null, departmentId: scope.departmentId ?? null });
+    // الاسم هو المفتاح — لا ترجمة إلى رقم، فلا فشلَ ترجمةٍ يُحرَس منه هنا.
+    // ومنصبٌ لا وجود له تردّه assign_position بـ NO_ROLE.
+    setModal({ kind: "assign", roleName, roleAr: ROLE_AR[roleName] ?? roleName, scope: scopeLabel, committeeId: scope.committeeId ?? null, departmentId: scope.departmentId ?? null });
   };
   const openMeta = (unit: UnitMeta) => setModal({ kind: "meta", unit });
 
   const submitAssign = () => {
     if (modal?.kind !== "assign" || !pick) return;
     start(async () => {
-      const r = await assignPosition({ userId: pick, roleId: modal.roleId, committeeId: modal.committeeId, departmentId: modal.departmentId });
+      const r = await assignPosition({ userId: pick, roleName: modal.roleName, committeeId: modal.committeeId, departmentId: modal.departmentId });
       if (r.ok) { toast.success(r.message); setModal(null); router.refresh(); } else toast.error(r.message);
     });
   };

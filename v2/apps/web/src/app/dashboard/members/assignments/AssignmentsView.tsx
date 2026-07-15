@@ -26,7 +26,7 @@ type ModalState =
   | { kind: "remove"; pos: Position }
   | null;
 
-export function AssignmentsView({ positions, members, roleIds }: { positions: Position[]; members: { id: string; name: string }[]; roleIds: Record<string, number> }) {
+export function AssignmentsView({ positions, members }: { positions: Position[]; members: { id: string; name: string }[] }) {
   const router = useRouter();
   const toast = useToast();
   const [search, setSearch] = useState("");
@@ -72,9 +72,9 @@ export function AssignmentsView({ positions, members, roleIds }: { positions: Po
     const pos = modal.pos;
     const replace = modal.replace;
     // منصب المشرف الإداريّ: الدور يُحدَّد باختيار الإدارة (HR/QA)
-    const roleId = pos.adminSlot ? (admin === "qa" ? roleIds.qa_admin_member : roleIds.hr_admin_member) : pos.roleId;
+    const roleName = pos.adminSlot ? (admin === "qa" ? "qa_admin_member" : "hr_admin_member") : pos.roleName;
     start(async () => {
-      const r = await assignPosition({ userId: pick, roleId, committeeId: pos.committeeId, departmentId: pos.departmentId, replace });
+      const r = await assignPosition({ userId: pick, roleName, committeeId: pos.committeeId, departmentId: pos.departmentId, replace });
       if (r.ok) { toast.success(r.message); setModal(null); router.refresh(); } else toast.error(r.message);
     });
   };
@@ -82,7 +82,7 @@ export function AssignmentsView({ positions, members, roleIds }: { positions: Po
     if (modal?.kind !== "remove" || !modal.pos.holder) return;
     const h = modal.pos.holder;
     start(async () => {
-      const r = await removePosition({ userId: h.userId, roleId: h.roleId, committeeId: h.committeeId });
+      const r = await removePosition({ userId: h.userId, roleName: h.roleName, committeeId: h.committeeId });
       if (r.ok) { toast.success(r.message); setModal(null); router.refresh(); } else toast.error(r.message);
     });
   };
