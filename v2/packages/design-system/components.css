@@ -1140,8 +1140,11 @@
    ============================================================ */
 .acard {
   /* Aurora / Soft-Gradient: سطح متدرّج ناعم + ظلّ فولاذيّ */
-  background: linear-gradient(135deg, color-mix(in oklab, var(--steel-600) 12%, var(--color-surface)), var(--color-surface) 62%);
-  border: var(--card-stroke-w) solid var(--card-stroke);
+  /* النغمة تُقرأ هنا بارتدادٍ إلى الأساس: المنغَّم يضبط --surface-aurora/--border-aurora،
+     وغير المنغَّم يسقط إلى الفولاذيّ. (كان الأساس يكتب اللون صراحةً فيظلّل النغمة —
+     والاختصار `border:` يمسح border-color من أيّ قاعدةٍ قبله.) */
+  background: var(--surface-aurora, linear-gradient(135deg, color-mix(in oklab, var(--steel-600) 12%, var(--color-surface)), var(--color-surface) 62%));
+  border: var(--card-stroke-w) solid var(--border-aurora, var(--card-stroke));
   border-radius: var(--radius);
   box-shadow: var(--shadow-md);
   overflow: hidden;
@@ -1749,12 +1752,6 @@
 .dt-c.center { justify-content: center; }
 .dt-c.end { justify-content: flex-end; }
 .dt-c .txt { white-space: nowrap; }
-/* عمود قاصّ (‏`clip` في Column‏) — استثناء مقصود من قانون «تُقاس بالمحتوى فلا اقتطاع»:
-   سطر واحد يُقصّ بـ«…» بدل توسيع الجدول، لحقل قد يكون جملة (سبب الإنهاء).
-   النصّ كاملًا يبقى في نافذة عرض العضو. لا يعمل وحده: يلزمه `clip` على العمود
-   ليُحترم الحدّ الأدنى للمسار — بـ`max-content` لا يجد المتصفّح ما يقصّه. */
-.dt-c-clip { overflow: hidden; }
-.dt-c-clip .txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .dt-c .num { font-family: var(--font-latin); }
 /* حدّ الصفّ وتناوبه ومروره — على الخلايا (الصفّ بلا صندوق) */
 .dt-body .dt-row .dt-c { border-bottom: 1px solid var(--color-border); }
@@ -2336,9 +2333,13 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .msh--danger h3 { color: var(--danger-700); }
 .msh--danger::after { background: linear-gradient(to left, var(--danger-200), transparent); }
 /* الشبكة + الخليّة (الحدّ الموحّد من الرمز، الزاوية radius-sm) */
-.pva-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+/* flex لا grid — الخليّة اليتيمة في صفّها تمتدّ عليه كلّه (كـ.mdl-grid، ودواء القاعدة ٦ نفسه).
+   يلزم هنا خاصّةً: التواصل الاجتماعيّ يُصفّى إلى المملوء وحده (filledSocials)، فعددُه ١ أو ٣ يتيمٌ حقيقيّ
+   يراه المستخدم — لا احتمال نظريّ. والأساس ½ يُبقي الشكل كما كان حين يكون العدد زوجيًّا. */
+.pva-grid { display: flex; flex-wrap: wrap; gap: 9px; }
+.pva-grid > * { flex: 1 1 calc(50% - 4.5px); min-width: 0; }
 .pva-cell { position: relative; background: var(--surface-aurora); border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius-sm); padding: 11px 13px; min-width: 0; }
-.pva-cell.full { grid-column: 1 / -1; }
+.pva-cell.full { flex-basis: 100%; }
 /* قسم «إنهاء العضويّة» الشرطيّ — النغمة على الكروم فقط، القيمة تبقى محايدة عالية التباين */
 .pva-sec--end .pva-cell { --surface-aurora: linear-gradient(135deg, var(--danger-50), var(--color-surface) 62%); }
 .pva-sec--end .pva-lic { color: var(--danger-600); }
@@ -2349,10 +2350,13 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .pva-lic svg { width: 100%; height: 100%; }
 .pva-val { font-size: 14px; font-weight: 700; margin-top: 4px; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pva-val.na { color: var(--color-text-muted); font-weight: 600; }
-.pva-copy { position: absolute; top: 8px; inset-inline-end: 8px; width: 26px; height: 26px; border-radius: var(--radius-sm); display: grid; place-items: center; color: var(--color-text-muted); background: transparent; border: 0; cursor: pointer; opacity: .5; transition: opacity var(--dur-fast), background var(--dur-fast), color var(--dur-fast); }
-.pva-copy:hover { opacity: 1; background: color-mix(in oklab, var(--steel-500) 14%, transparent); color: var(--color-primary); }
+/* خانة رُكن الخليّة — فعلٌ واحد لكلّ خليّة يتبع طبيعتها: `.pva-copy` تنسخ القيمة الساكنة،
+   و`.pva-open` تفتح قيمةً هي رابطٌ أصلًا (التواصل الاجتماعيّ). خانة واحدة ومقاس واحد وحالة واحدة،
+   فلا تفترقان يومًا — والاسمان للصدق الدلاليّ لا لتنسيقين. */
+.pva-copy, .pva-open { position: absolute; top: 8px; inset-inline-end: 8px; width: 26px; height: 26px; border-radius: var(--radius-sm); display: grid; place-items: center; color: var(--color-text-muted); background: transparent; border: 0; cursor: pointer; opacity: .5; transition: opacity var(--dur-fast), background var(--dur-fast), color var(--dur-fast); }
+.pva-copy:hover, .pva-open:hover { opacity: 1; background: color-mix(in oklab, var(--steel-500) 14%, transparent); color: var(--color-primary); }
 .pva-copy.done { opacity: 1; color: var(--success-600); background: color-mix(in oklab, var(--success-600) 16%, transparent); }
-.pva-copy svg { width: 15px; height: 15px; }
+.pva-copy svg, .pva-open svg { width: 15px; height: 15px; }
 .pva-copy .ic-check { display: none; }
 .pva-copy .ic-check svg path { stroke-dasharray: 24; stroke-dashoffset: 24; }
 .pva-copy.done .ic-copy { display: none; }
@@ -2585,8 +2589,9 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
   overflow: hidden;
   border-radius: var(--radius);
   /* نفس وصفة Aurora المعتمدة في .acard حرفيًّا */
-  border: var(--card-stroke-w) solid var(--card-stroke);   /* موحّد على حدّ البطاقات (كان 10% فولاذيّ — شذوذ) */
-  background: linear-gradient(135deg, color-mix(in oklab, var(--steel-600) 12%, var(--color-surface)), var(--color-surface) 62%);
+  /* كـ.acard: النغمة تُقرأ بارتدادٍ إلى الأساس الفولاذيّ */
+  border: var(--card-stroke-w) solid var(--border-aurora, var(--card-stroke));
+  background: var(--surface-aurora, linear-gradient(135deg, color-mix(in oklab, var(--steel-600) 12%, var(--color-surface)), var(--color-surface) 62%));
   box-shadow: var(--shadow-md);
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
@@ -2666,6 +2671,11 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .mc-info-label { font-size: 11px; font-weight: 600; color: var(--color-text-muted); }
 /* وزن demi (600): أثقل من medium؛ وعنده الأرقام (مباشرة أو عبر التحويل) كلّها eras-demi متطابقة */
 .mc-info-val { min-width: 0; font-size: 13px; font-weight: 600; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; unicode-bidi: plaintext; }
+/* سبب إنهاء العضوية قد يكون جملة — يلتفّ على أسطر (الأيقونة أعلى الصفّ) */
+.mc-info-row-top { align-items: flex-start; }
+.mc-info-reason { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.5; }
+/* خليّة السبب في الجدول تلتفّ بدل سطر واحد طويل */
+.dt-c .txt-wrap { white-space: normal; line-height: 1.45; }
 /* تذييل الكرت: قسم مستقلّ للأزرار (الزرّ الرئيسيّ بعرض كامل) */
 .mc-foot { width: 100%; margin-top: 16px; padding: 14px 16px; border-top: 1px solid color-mix(in oklab, var(--steel-600) 12%, var(--color-border)); background: color-mix(in oklab, var(--steel-600) 4%, var(--color-surface)); display: flex; flex-direction: column; gap: 8px; }
 .mc-foot .abtn { width: 100%; }
@@ -2744,8 +2754,8 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .gal-sec {
   scroll-margin-top: 88px;
   border-radius: var(--radius); padding: 24px;
-  background: linear-gradient(135deg, color-mix(in oklab, var(--steel-600) 10%, var(--color-surface)), var(--color-surface) 64%);
-  border: var(--card-stroke-w) solid var(--card-stroke);
+  background: var(--surface-aurora, linear-gradient(135deg, color-mix(in oklab, var(--steel-600) 10%, var(--color-surface)), var(--color-surface) 64%));
+  border: var(--card-stroke-w) solid var(--border-aurora, var(--card-stroke));
   box-shadow: var(--shadow-md);
 }
 .gal-sec-hd { display: flex; align-items: center; gap: 13px; margin-bottom: 20px; }
@@ -2868,7 +2878,7 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
    المصدر الوحيد هنا (components.css يُحمَّل أخيرًا) — بلا !important.
    ============================================================ */
 /* الصغير القائم بذاته (28–38px) → --radius-sm (10): عشان ما ينقلب دائرة */
-.av-xs, .av-sm, .pva-copy, .tx, .tic,
+.av-xs, .av-sm, .pva-copy, .pva-open, .tx, .tic,
 .dm-trigger, .mdl-x, .pag-arr, .pag-num, .mc-dots {
   border-radius: var(--radius-sm);
 }

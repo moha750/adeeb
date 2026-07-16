@@ -1272,10 +1272,10 @@
    بلا `!important` (components.css يُحمَّل أخيرًا فيفوز). ممنوع تعريف أي زاوية هنا. */
 
 /* (ب) سطح Aurora المسطّح على أسطح البطاقات (النافذة .mdl تُدار من components: فولاذيّ للعاديّة · نغمة للتأكيد) */
-.acard, .mc, .gal-sec{
-  background: var(--surface-aurora);
-  border-color: var(--border-aurora);
-}
+/* حُذفت: كانت تقرأ --surface-aurora/--border-aurora، ويظلّلها components.css
+   (يُحمَّل بعدها ويكتب background وborder صراحةً على .acard/.mc/.gal-sec).
+   فكانت النغمة تُضبط ولا يقرؤها أحد — والحدّ فولاذيًّا في كلّ النغمات.
+   القراءة صارت في الأساس نفسه بارتداد: var(--border-aurora, var(--card-stroke)). */
 
 /* (ج) ظلّ واحد موحّد بلون موسوم (فولاذيّ افتراضًا من الرمز، ويتغيّر للدلاليّ حسب العنصر) */
 .abtn-primary, .abtn-danger, .abtn-success, .abtn-warning, .abtn-inverse,
