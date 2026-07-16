@@ -1329,8 +1329,8 @@
     background: color-mix(in oklab, var(--mc-t) 6%, var(--color-surface));
     border-top-color: color-mix(in oklab, var(--mc-t) 15%, var(--color-border));
   }
-  /* المنغَّم يشتدّ بنغمته لا بالفولاذيّ — الحدّ يبلغ لونه الكامل */
-  &:hover { border-color: var(--mc-t); }
+  /* حدّ التمرير المنغَّم يُقرأ في .mc:hover نفسه (var(--mc-t, var(--navy-700)))؛
+     قاعدةٌ هنا يظلّلها components.css فلا تُكتب مرّتين. */
 }
 
 /* ============================================================

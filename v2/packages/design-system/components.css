@@ -2320,6 +2320,11 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 /* ═══ نافذة الملفّ: أقسام معنونة بفواصل خفيفة (eyebrow: أيقونة هوية + عنوان كحليّ + خطّ يتلاشى) فوق شبكة خلايا ═══
    token-pure: لا px/hex صريح لحدّ أو زاوية أو ظلّ. صُحّحت مخالفتا .pva-cell (الحدّ→card-stroke، الزاوية→radius-sm). */
 .pva-sections { margin-top: 20px; display: flex; flex-direction: column; gap: 20px; }
+/* متن السبب (نافذة السبب) — النصّ هنا **هو** المحتوى لا قيمةَ حقل، فيُعرض متنًا يُقرأ لا خليّةً تُقصّ:
+   حجمٌ أكبر من `.pva-val` ومدى سطرٍ أوسع. و`pre-wrap` يحفظ أسطر المدير كما كتبها — السبب جملة حرّة
+   قد تُكتب فقراتٍ، وطيّها إلى سطر واحد يُفقدها معناها (وهذا نقيض `.txt-clip` في الجدول والكرت:
+   هناك يُطوى للاختصار، وهنا يُكشف بتمامه — ولذلك وُجدت هذه النافذة). */
+.rsn-text { font-size: 15px; font-weight: 600; line-height: 1.75; color: var(--color-text); white-space: pre-wrap; overflow-wrap: anywhere; }
 /* عنوان القسم = فاصل خفيف: أيقونة هوية (fill) + عنوان كحليّ + خطّ يتلاشى (عرضه ولونه من الرمز) */
 /* عنوان القسم = المكوّن ModalSectionHeading (بادئة .msh) — مصدر واحد لثلاثة مواضع:
    أقسام عرض الملفّ · مجموعات حقول نموذج تعديل العضو · معرض /ui/section-heading.
@@ -2595,7 +2600,9 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
   box-shadow: var(--shadow-md);
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
-.mc:hover { transform: scale(var(--hover-scale)); border-color: var(--navy-700); box-shadow: var(--shadow-lg); }
+/* المنغَّم يشتدّ بنغمته، وغير المنغَّم يسقط إلى الأزرق (كـ.stat-*:hover).
+   كان --navy-700 مكتوبًا صراحةً فيُظلّل النغمة: أزرق على كلّ الألوان عند التمرير. */
+.mc:hover { transform: scale(var(--hover-scale)); border-color: var(--mc-t, var(--navy-700)); box-shadow: var(--shadow-lg); }
 /* الشريط العلويّ: تدرّج لوني الهوية من الزاوية + بلوم Aurora + باترن الهوية */
 .mc-head {
   position: relative;
@@ -2620,9 +2627,13 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
   pointer-events: none;
 }
 .mc-head .mc-dots, .mc-head > span { position: absolute; top: 8px; inset-inline-end: 8px; z-index: 1; }
-.mc-dots { width: 30px; height: 30px; border-radius: var(--radius); border: 0; background: rgba(255, 255, 255, .12); color: rgba(255, 255, 255, .95); cursor: pointer; display: grid; place-items: center; transition: background var(--dur-fast); }
+/* استثناء مسمّى عن قاعدة «المُطلِق المنغّم أيقونته بلون نغمته»: مُطلِق الكرت لا يجلس على سطح محايد
+   كـ.dt-dots، بل على شريط ترويسة مصمت بلون النغمة نفسها — فلونها عليه يذوب فيها (أحمر على أحمر).
+   يبقى أبيض، والنغمة تتكلّم في لوحة القائمة وفي الشريط تحته. والنطاق بـ.mc-head يكسب على
+   button[class*="dm-tone-"] بالخصوصيّة (0,2,0 > 0,1,1) — و.mc-dots لا تعيش خارج الترويسة أصلًا. */
+.mc-head .mc-dots { width: 30px; height: 30px; border: 0; background: rgba(255, 255, 255, .12); color: rgba(255, 255, 255, .95); cursor: pointer; display: grid; place-items: center; transition: background var(--dur-fast); }
 .mc-dots svg { width: 18px; height: 18px; }
-.mc-dots:hover, .mc-dots[aria-expanded="true"] { background: rgba(255, 255, 255, .28); color: #fff; }
+.mc-head .mc-dots:hover, .mc-head .mc-dots[aria-expanded="true"] { background: rgba(255, 255, 255, .28); color: #fff; }
 .mc .mc-av { margin-top: -37px; box-shadow: var(--shadow-md), 0 0 0 4px var(--color-surface), inset 0 0 0 1px rgba(255, 255, 255, .22); }
 .mc-name { margin-top: 11px; font-size: 16.5px; font-weight: 800; color: var(--color-primary); padding: 0 14px; }
 /* الدور واللجنة — شارة ناعمة */
@@ -2671,11 +2682,17 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .mc-info-label { font-size: 11px; font-weight: 600; color: var(--color-text-muted); }
 /* وزن demi (600): أثقل من medium؛ وعنده الأرقام (مباشرة أو عبر التحويل) كلّها eras-demi متطابقة */
 .mc-info-val { min-width: 0; font-size: 13px; font-weight: 600; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; unicode-bidi: plaintext; }
-/* سبب إنهاء العضوية قد يكون جملة — يلتفّ على أسطر (الأيقونة أعلى الصفّ) */
-.mc-info-row-top { align-items: flex-start; }
-.mc-info-reason { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.5; }
-/* خليّة السبب في الجدول تلتفّ بدل سطر واحد طويل */
-.dt-c .txt-wrap { white-space: normal; line-height: 1.45; }
+/* سبب إنهاء العضوية جملةٌ حرّة — سطرٌ واحد و«…» كسائر القيم (`.mc-info-val` يقصّ أصلًا، فلا استثناء
+   له هنا). كان يلتفّ على أسطر فيمطّ ارتفاع الكرت ويُفاوت بين كروت الصفّ؛ والتلميح (`title`)
+   يكشف كامله. حُذف معه `.mc-info-row-top` — كان يرفع الأيقونة لأعلى الصفّ لأجل الالتفاف وحده. */
+/* نصٌّ يُقصّ بـ«…» في سطر واحد — استثناءٌ مقصود عن سلوك الجدول (`.dt-c`: المحتوى كامل بلا اختصار،
+   يتّسع العمود ويظهر التمرير). موضعه اليوم: سبب إنهاء العضوية — جملةٌ حرّة تطول بلا حدّ، فاتّساع
+   عمودها يزيح بقيّة الأعمدة، والالتفاف يمطّ ارتفاع الصفّ. و«…» تدلّ على بقيّةٍ مطويّة يكشفها
+   التلميح (`title`) أو نافذة عرض الملفّ — فلا يضيع النصّ، إنّما يُطوى.
+   و`min-width: 0` على الخليّة **ضرورة لا زينة**: عنصر الشبكة `min-width` الافتراضيّ عنده `auto`
+   فلا يصغر دون محتواه — ولولاه لاتّسعت الخليّة ولم يُقصّ النصّ مهما وُضع عليه `text-overflow`. */
+.dt-c:has(> .txt-clip) { min-width: 0; }
+.dt-c .txt-clip { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 /* تذييل الكرت: قسم مستقلّ للأزرار (الزرّ الرئيسيّ بعرض كامل) */
 .mc-foot { width: 100%; margin-top: 16px; padding: 14px 16px; border-top: 1px solid color-mix(in oklab, var(--steel-600) 12%, var(--color-border)); background: color-mix(in oklab, var(--steel-600) 4%, var(--color-surface)); display: flex; flex-direction: column; gap: 8px; }
 .mc-foot .abtn { width: 100%; }
