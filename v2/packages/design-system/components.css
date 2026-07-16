@@ -2306,7 +2306,12 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 /* ===== نافذة عرض بيانات العضو (للقراءة) — غلاف منقوش + أفتار مربّع + شبكة خلايا بنسخ ===== */
 .pvb-modal { overflow: hidden; }
 .pvb-modal .mdl-body { padding-top: 52px; }
-.pvb-cover { height: 94px; background: var(--grad-primary); position: relative; overflow: hidden; flex: 0 0 auto; }
+/* الغلاف يقرأ نغمته بارتدادٍ إلى تدرّج العلامة — كما تفعل `.acard`/`.mc` مع `--surface-aurora`:
+   النغمة يضبطها صنفٌ على النافذة (`.pvb-tone-*`)، والغلاف يقرؤها ولا يعرفها. فنافذة السبب تلبس
+   الخطر بلا نسخةٍ ثانية من الغلاف. زيادة نغمةٍ لاحقًا = سطرٌ واحد أدناه، لا تعديل هنا. */
+.pvb-cover { height: 94px; background: var(--pvb-cover-grad, var(--grad-primary)); position: relative; overflow: hidden; flex: 0 0 auto; }
+/* نغمة الخطر وحدها اليوم (نافذة سبب الإنهاء) — تُزاد الأخرى عند الحاجة لا استباقًا. */
+.pvb-tone-danger { --pvb-cover-grad: var(--grad-danger); }
 .pvb-cover::after { content: ""; position: absolute; inset: 0; background: url("/brand/pattern-white.svg") no-repeat center / 135%; opacity: .13; pointer-events: none; }
 .pvb-cover .mdl-x { position: absolute; top: 12px; inset-inline-end: 12px; color: #fff; background: rgba(255,255,255,.18); }
 .pvb-cover .mdl-x:hover { background: rgba(255,255,255,.32); color: #fff; }
@@ -2894,9 +2899,12 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
    نظام الزوايا المتراكز — استثناءات الأساس (--radius = 16).
    المصدر الوحيد هنا (components.css يُحمَّل أخيرًا) — بلا !important.
    ============================================================ */
-/* الصغير القائم بذاته (28–38px) → --radius-sm (10): عشان ما ينقلب دائرة */
+/* الصغير القائم بذاته (28–38px) → --radius-sm (10): عشان ما ينقلب دائرة.
+   الخمسة الأخيرة كانت منسيّة فبقيت على الأساس (16): و16 ≥ نصف الـ30/32،
+   فيقصّه المتصفّح إلى النصف — أيقونة حقل كرت العضو كانت **دائرة كاملة**. */
 .av-xs, .av-sm, .pva-copy, .pva-open, .tx, .tic,
-.dm-trigger, .mdl-x, .pag-arr, .pag-num, .mc-dots {
+.dm-trigger, .mdl-x, .pag-arr, .pag-num, .mc-dots,
+.mc-ic, .ash-fic, .dt-dots, .ash-logo, .gal-num {
   border-radius: var(--radius-sm);
 }
 /* الصغير جدًّا (checkbox ~22px) → --radius-xs (6) */
