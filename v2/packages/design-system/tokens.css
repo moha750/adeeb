@@ -133,11 +133,15 @@
   --card-stroke-w: 1.75px;                                                          /* عرض الحدّ الموحّد لكل الأسطح — خامل ونشط (لا تشتّت 1/1.5px) */
   --card-stroke-w-active: 1.75px;                                                   /* موحّد: التفاعل يغيّر اللون لا العرض */
   /* بُعد نغميّ للحدّ (كـ --shadow-tone للظلّ): شدّة واحدة موحّدة 30%، تُبدّل اللون لا العرض. brand=steel-500 (هويّة) */
-  --card-stroke-brand:   color-mix(in oklab, var(--steel-500) 30%, var(--color-border));
-  --card-stroke-neutral: color-mix(in oklab, var(--neutral-600) 30%, var(--color-border));
-  --card-stroke-success: color-mix(in oklab, var(--success-600) 30%, var(--color-border));
-  --card-stroke-warning: color-mix(in oklab, var(--warning-600) 30%, var(--color-border));
-  --card-stroke-danger:  color-mix(in oklab, var(--danger-600) 30%, var(--color-border));
+  /* تُمزَج بـ--card-stroke (الأساس الصُّلب) لا بـ--color-border: الأخير شفّاف (12%)،
+     فكان الناتج بشفافيّة 0.3×1 + 0.7×0.12 = 0.384 — أيْ **الحدّ المنغَّم أبهت من
+     غير المنغَّم** (1.000)، وتذوب النغمات الثلاث في بهتانٍ واحد لا يُميَّز.
+     والمزج بالأساس يُبقيها صُلبةً بوزنه، فتتمايز. */
+  --card-stroke-brand:   color-mix(in oklab, var(--steel-500) 30%, var(--card-stroke));
+  --card-stroke-neutral: color-mix(in oklab, var(--neutral-600) 30%, var(--card-stroke));
+  --card-stroke-success: color-mix(in oklab, var(--success-600) 30%, var(--card-stroke));
+  --card-stroke-warning: color-mix(in oklab, var(--warning-600) 30%, var(--card-stroke));
+  --card-stroke-danger:  color-mix(in oklab, var(--danger-600) 30%, var(--card-stroke));
 
   /* تينت سطح Aurora — بداية التدرّج المائل الذي يتلاشى إلى السطح عند 62%.
      مختارة يدويًّا **أعمق من سلّم -50** (مقصود: -50 باهت لا يُرى فوق السطح)، فلا تُشتقّ منه.
