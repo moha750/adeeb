@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Badge, Button, Field, ModalSectionHeading, Select, Stat } from "@adeeb/design-system";
-import { AddressBook, At, BookOpen, Books, Buildings, CalendarBlank, CalendarX, Certificate, Copy, Envelope, Eye, GraduationCap, Hash, IdentificationBadge, IdentificationCard, InstagramLogo, LinkedinLogo, MagnifyingGlass, PencilSimple, Phone, Plus, Prohibit, ShareNetwork, Star, TiktokLogo, Trash, User, UsersThree, WarningCircle, XLogo } from "@phosphor-icons/react";
+import { AddressBook, ArrowSquareOut, At, BookOpen, Books, Buildings, CalendarBlank, CalendarX, Certificate, Copy, Envelope, Eye, GraduationCap, Hash, IdentificationBadge, IdentificationCard, InstagramLogo, LinkedinLogo, MagnifyingGlass, PencilSimple, Phone, Plus, Prohibit, ShareNetwork, Star, TiktokLogo, Trash, User, UsersThree, WarningCircle, XLogo } from "@phosphor-icons/react";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef, type ViewMode } from "../_components/Toolbar";
 import { Modal } from "../_components/Modal";
@@ -20,7 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, type ColumnDef } from "@tanstack/react-table";
 import type { MemberRow, MemberStatus } from "./data";
-import { DEGREES, DEGREE_VALUES, PHONE_RE, PHONE_HINT, hasAcademicFields } from "./vocab";
+import { DEGREES, DEGREE_VALUES, PHONE_RE, PHONE_HINT, SOCIAL_KEYS, type SocialKey, hasAcademicFields, socialHandle, socialLabel, socialLabelOf, socialUrl } from "./vocab";
 import { updateMember } from "./actions";
 
 // الحقول الثلاثة التي تلزم صاحب الدرجة الجامعيّة وحده — ويُمنع منها صاحب «ثانوية عامة» و«موظف».
@@ -58,6 +58,11 @@ const memberSchema = z.object({
     for (const f of ACADEMIC_REQUIRED) {
       if (!v[f.key]?.trim()) ctx.addIssue({ code: "custom", path: [f.key], message: f.message });
     }
+  }
+  // معرّفات التواصل — نفس مُطبِّع الفعل الخادميّ وقيد القاعدة. الفارغ مقبول، وما ليس معرّفًا يُردّ بسببه.
+  for (const k of SOCIAL_KEYS) {
+    const res = socialHandle(k, v[k]);
+    if (!res.ok) ctx.addIssue({ code: "custom", path: [k], message: res.reason });
   }
 });
 type MemberForm = z.infer<typeof memberSchema>;
@@ -135,28 +140,18 @@ type ModalState =
   | { mode: "view"; member: MemberRow }
   | null;
 
-// منصّات التواصل — المفتاح حقلٌ في MemberRow، وبانٍ للرابط من المُعرّف
-const SOCIALS = [
-  { key: "twitter", label: "منصّة X", url: (h: string) => `https://x.com/${h}` },
-  { key: "instagram", label: "إنستغرام", url: (h: string) => `https://instagram.com/${h}` },
-  { key: "tiktok", label: "تيك توك", url: (h: string) => `https://tiktok.com/@${h}` },
-  { key: "linkedin", label: "لينكدإن", url: (h: string) => `https://linkedin.com/in/${h}` },
-] as const;
-
-// أيقونة كل منصّة (شعارها) — تُستعمل في قسم التواصل الاجتماعيّ بعرض الملفّ
-const SOCIAL_ICON: Record<string, React.ReactNode> = {
+// منصّات التواصل — التسمية وبانـي الرابط في vocab.ts (مصدر واحد يخدم النموذج والعرض والفعل الخادميّ).
+// هنا الأيقونة وحدها: ملفّ .ts لا يحمل JSX.
+const SOCIAL_ICON: Record<SocialKey, React.ReactNode> = {
   twitter: <XLogo />, instagram: <InstagramLogo />, tiktok: <TiktokLogo />, linkedin: <LinkedinLogo />,
 };
 
-// يقبل رابطًا كاملًا أو مُعرّفًا (مع/بلا @) فيبني الرابط الصحيح
-const socialHref = (key: string, raw: string) => {
-  const t = raw.trim();
-  if (/^https?:\/\//i.test(t)) return t;
-  const h = t.replace(/^@/, "");
-  return SOCIALS.find((s) => s.key === key)?.url(h) ?? t;
-};
-
 // خليّة بيانات في شبكة عرض الملفّ: أيقونة + تسمية، ثمّ القيمة، وزرّ نسخ (أو رابط للتواصل)
+//
+// القيمة اللاتينيّة (`lat`) تُعزَل في <bdi dir="ltr"> — والعزل ضرورة لا زينة: `@` محرفٌ **محايد**،
+// فإن تصدّر النصّ في فقرة عربيّة أخذ اتّجاهها وانتقل يمينًا، فيُقرأ `mohammad_1@` — أي شكل الخطأ
+// الذي طبّعناه من القاعدة. والعزل وحده لا المحاذاة: <bdi> يلفّ القيمة inline فتبقى الخليّة RTL
+// محاذيةً يمينًا كما هي؛ ولو وُضع dir="ltr" على الخليّة نفسها لانقلبت محاذاة البريد والجوّال والرقم يسارًا.
 function Cell({ label, value, icon, lat, full, href }: { label: string; value: string | null; icon: React.ReactNode; lat?: boolean; full?: boolean; href?: string }) {
   const toast = useToast();
   const [done, setDone] = useState(false);
@@ -176,16 +171,22 @@ function Cell({ label, value, icon, lat, full, href }: { label: string; value: s
       {empty ? (
         <div className="pva-val na">غير متوفّر</div>
       ) : href ? (
-        <a className={"pva-val" + (lat ? " lat" : "")} href={href} target="_blank" rel="noreferrer">{value}</a>
+        <a className={"pva-val" + (lat ? " lat" : "")} href={href} target="_blank" rel="noreferrer">{lat ? <bdi dir="ltr">{value}</bdi> : value}</a>
       ) : (
-        <div className={"pva-val" + (lat ? " lat" : "")}>{value}</div>
+        <div className={"pva-val" + (lat ? " lat" : "")}>{lat ? <bdi dir="ltr">{value}</bdi> : value}</div>
       )}
-      {!empty && !href ? (
+      {empty ? null : href ? (
+        // القيمة رابطٌ، فرُكن الخليّة يقول ذلك: أيقونة «فتح خارجيّ» تُعلن أنّ الضغط يُحوّل للمنصّة.
+        // وهي رابطٌ لا زينة — هدفٌ ثانٍ أوسع للنقر، وتسميتها تصف الوجهة فلا تكرّر «رابط» على قارئ الشاشة.
+        <a className="pva-open" href={href} target="_blank" rel="noreferrer" aria-label={`فتح ${label}`} title={`فتح ${label}`}>
+          <ArrowSquareOut aria-hidden />
+        </a>
+      ) : (
         <button type="button" className={"pva-copy" + (done ? " done" : "")} onClick={copy} aria-label={`نسخ ${label}`} title="نسخ">
           <span className="ic-copy"><Copy aria-hidden /></span>
           <span className="ic-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M4 12l5 5L20 6" /></svg></span>
         </button>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -207,10 +208,12 @@ function Section({ icon, title, end, children }: { icon: React.ReactNode; title:
 // تخصّص ولا رقم أكاديميّ — يفرض خلوّها قيدُ member_details_academic_fields_check، فالخلوّ فحصٌ كافٍ هنا.
 function ProfileBody({ member }: { member: MemberRow }) {
   // المنصّات المملوءة فقط — وثلاثٌ منها تترك الأخيرة نصفَ صفّ في شبكة العمودين، فتُمدّ لصفّ كامل
-  const filledSocials = SOCIALS.filter((s) => member[s.key]);
-  const socialCells = filledSocials.map((s, i) => {
-    const val = member[s.key] as string;
-    return <Cell key={s.key} label={s.label} icon={SOCIAL_ICON[s.key]} value={val.replace(/^@/, "")} lat href={socialHref(s.key, val)} full={filledSocials.length === 3 && i === 2} />;
+  // التخزين معياريّ (معرّف مجرّد يحرسه member_details_social_handle_check)، فالعرض يزيّن ولا يرقّع:
+  // socialLabel يضيف @ للثلاث ويترك لينكدإن، و socialUrl يبني الرابط بلا فحص صيغ.
+  const filledSocials = SOCIAL_KEYS.filter((k) => member[k]);
+  const socialCells = filledSocials.map((k, i) => {
+    const handle = member[k] as string;
+    return <Cell key={k} label={socialLabelOf(k)} icon={SOCIAL_ICON[k]} value={socialLabel(k, handle)} lat href={socialUrl(k, handle)} full={filledSocials.length === 3 && i === 2} />;
   });
   const hasAcademic = [member.college, member.major, member.degree, member.recordNo].some((v) => v != null && v !== "");
   // قسم الإنهاء للموقوفين فقط — لا يظهر لعضو أُعيد تفعيله وبقيت لديه بيانات إنهاء قديمة (terminated_at مختوم بتريغر)
@@ -234,7 +237,8 @@ function ProfileBody({ member }: { member: MemberRow }) {
         {hasAcademic ? (
           <Section icon={<Books weight="fill" />} title="البيانات الأكاديميّة">
             {member.college ? <Cell full label="الكلّية" icon={<GraduationCap />} value={member.college} /> : null}
-            <Cell full={!member.major} label="الدرجة العلمية" icon={<Certificate />} value={member.degree} />
+            {/* لا full={!major} بعد اليوم: .pva-grid تمدّ اليتيم في صفّه وحدها — القاعدة تُغني عن الترقيع */}
+            <Cell label="الدرجة العلمية" icon={<Certificate />} value={member.degree} />
             {member.major ? <Cell label="التخصّص" icon={<BookOpen />} value={member.major} /> : null}
             {member.recordNo ? <Cell full lat label="الرقم الأكاديميّ" icon={<IdentificationCard />} value={member.recordNo} /> : null}
           </Section>
@@ -472,17 +476,19 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
         <div className="mc-empty">{emptyState}</div>
       ) : (
         <>
-          <div className="mc-grid mc-grid-anim" key={`${safePage}-${sort?.id ?? ""}-${sort?.desc ?? ""}`}>
-            {pageRows.map((m, i) => (
-              <div key={m.id} className="mc-card-anim" style={{ animationDelay: `${i * 0.045}s` }}>
-                <MemberCard
-                  member={m}
-                  onOpen={() => openView(m)}
-                  actions={cardActionsFor(m)}
-                  onRestore={() => toast.success(`أُعيدت عضوية «${m.name}».`)}
-                  onDelete={() => setConfirmDel(m)}
-                />
-              </div>
+          {/* الكرت ابنٌ مباشر للشبكة: الغلاف كان للحركة وحدها (تأخير سطريّ حسب الفهرس)،
+              وسقط معها. والمفتاح على الشبكة كان يُجبر إعادة التركيب لإعادة الحركة —
+              فلا لزوم له، وإسقاطه يُبقي عُقَد DOM بين الصفحات بدل هدمها وبنائها. */}
+          <div className="mc-grid">
+            {pageRows.map((m) => (
+              <MemberCard
+                key={m.id}
+                member={m}
+                onOpen={() => openView(m)}
+                actions={cardActionsFor(m)}
+                onRestore={() => toast.success(`أُعيدت عضوية «${m.name}».`)}
+                onDelete={() => setConfirmDel(m)}
+              />
             ))}
           </div>
           <div className="mc-pager">{pager}</div>
@@ -492,6 +498,7 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
       <Modal
         open={modal !== null}
         onClose={close}
+        busy={saving}
         title={modal?.mode === "view" ? (member?.name ?? "الملفّ الشخصيّ") : modal?.mode === "add" ? "إضافة عضو" : "تعديل العضو"}
         description={
           modal?.mode === "view" ? undefined
@@ -515,8 +522,8 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", gap: 10 }}>
               <Button variant="ghost-danger" size="md" onClick={() => { if (member) { close(); setConfirmDel(member); } }}>حذف العضو</Button>
               <div style={{ display: "flex", gap: 10 }}>
-                <Button variant="ghost" size="md" onClick={close}>إلغاء</Button>
-                <Button type="submit" form="member-form" variant="primary" size="md" disabled={saving}>{saving ? "جارٍ الحفظ…" : "حفظ التغييرات"}</Button>
+                <Button variant="ghost" size="md" onClick={close} disabled={saving}>إلغاء</Button>
+                <Button type="submit" form="member-form" variant="primary" size="md" loading={saving}>حفظ التغييرات</Button>
               </div>
             </div>
           ) : (
@@ -553,6 +560,16 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
                 <Select className="mdl-full" label="الدرجة العلمية" icon={<Certificate />} options={DEGREES} value={field.value ?? ""} onValueChange={field.onChange} error={editForm.formState.errors.degree?.message} />
               )}
             />
+            {/* إنقاصُ الدرجة عن جامعيّة محوٌ لا رجعة فيه: الفعل الخادميّ يكتب null في الثلاثة، ولا نسخة
+                تحفظها (لا مؤقّت تدقيق على member_details ولا لقطات). فيُحذَّر قبل الحفظ لا بعده.
+                الشرط يقارن درجة القاعدة بالمختارة: يظهر حين كانت جامعيّة فصارت غير جامعيّة — لا عند فتح
+                النافذة على عضوٍ غير جامعيّ أصلًا (لا شيء عنده ليُمحى). */}
+            {member && hasAcademicFields(member.degreeRaw) && !hasAcademicFields(editForm.watch("degree")) ? (
+              <Alert className="mdl-full" tone="danger" title="ستُمحى بياناته الأكاديميّة عند الحفظ">
+                كلّيته وتخصّصه ورقمه الأكاديميّ تُحذف نهائيًّا — لا نسخة منها ولا استرجاع. وإن أعدت درجته جامعيّةً لاحقًا، فأدخِلها من جديد.
+              </Alert>
+            ) : null}
+
             {/* الحقول الثلاثة تتبع الدرجة: تظهر لصاحب الدرجة الجامعيّة وحده. «ثانوية عامة» و«موظف» لا كلّية
                 لهما ولا تخصّص ولا رقم أكاديميّ — تُخفى هنا، ويمحوها الفعل الخادميّ، ويردّ الممتلئ قيدُ القاعدة. */}
             {hasAcademicFields(editForm.watch("degree")) ? (
@@ -564,10 +581,26 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
             ) : null}
 
             <ModalSectionHeading className="mdl-full" icon={<ShareNetwork weight="fill" />} title="التواصل الاجتماعيّ" />
-            <Field label="تويتر (X)" charset="latin" icon={<XLogo />} innerIcon={<At />} placeholder="المعرّف بلا @" error={editForm.formState.errors.twitter?.message} {...editForm.register("twitter")} />
-            <Field label="إنستغرام" charset="latin" icon={<InstagramLogo />} innerIcon={<At />} placeholder="المعرّف بلا @" error={editForm.formState.errors.instagram?.message} {...editForm.register("instagram")} />
-            <Field label="تيك توك" charset="latin" icon={<TiktokLogo />} innerIcon={<At />} placeholder="المعرّف بلا @" error={editForm.formState.errors.tiktok?.message} {...editForm.register("tiktok")} />
-            <Field label="لينكدإن" charset="latin" icon={<LinkedinLogo />} innerIcon={<At />} placeholder="المعرّف بلا @" error={editForm.formState.errors.linkedin?.message} {...editForm.register("linkedin")} />
+            {/* الأربعة على نسق واحد فتُبنى من SOCIAL_KEYS — لا أربع نسخ تفترق يومًا.
+                onBlur يُطبّع ما لُصق فورًا (رابط ⇐ معرّف · @معرّف ⇐ معرّف)، فيرى المدير الصيغة المخزَّنة
+                لا ما كتبه. وما ليس معرّفًا لا يُطبَّع صامتًا: يبقى كما هو ويقول Zod سببه. */}
+            {SOCIAL_KEYS.map((k) => (
+              <Field
+                key={k}
+                label={socialLabelOf(k)}
+                charset="latin"
+                icon={SOCIAL_ICON[k]}
+                innerIcon={<At />}
+                placeholder="المعرّف أو رابط الحساب"
+                error={editForm.formState.errors[k]?.message}
+                {...editForm.register(k, {
+                  onBlur: (e) => {
+                    const res = socialHandle(k, (e.target as HTMLInputElement).value);
+                    if (res.ok) editForm.setValue(k, res.handle ?? "", { shouldValidate: true });
+                  },
+                })}
+              />
+            ))}
           </form>
         )}
       </Modal>

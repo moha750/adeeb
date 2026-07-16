@@ -1257,13 +1257,10 @@
 .tabs-seg .tab:hover { color: var(--color-primary); }
 .tabs-seg .tab.on { background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-sm); }
 .tabs-seg .tab.on .tab-b { background: color-mix(in oklab, var(--steel-500) 16%, var(--color-surface)); }
-/* حركة دخول متدرّجة للكروت (بديل Framer Motion) — التأخير لكلّ كرت عبر inline animation-delay حسب فهرسه.
-   تعاد الحركة عند تغيّر الصفحة/الفرز لأنّ مفتاح .mc-grid-anim يتغيّر فيُعاد تركيب الأبناء. */
-.mc-grid-anim > .mc-card-anim { opacity: 0; animation: mc-card-in .32s var(--ease-standard) both; }
-@keyframes mc-card-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) {
-  .mc-grid-anim > .mc-card-anim { opacity: 1; animation: none; }
-}
+/* أُزيلت حركة دخول الكروت المتدرّجة (mc-grid-anim/mc-card-anim/@keyframes mc-card-in
+   + animation-delay سطريّ حسب الفهرس): تنسيقٌ شارد مكتوب يدويًّا خارج المكتبة —
+   تمنعه القاعدة ١ («الممنوع المطلق»). وتُعاد قاعدةَ حركةٍ مُقرّة في الهوية.
+   وكانت هشّة: opacity:0 تنتظر @keyframes، فإفراغها يُخفي الكروت كلّها صامتًا. */
 
 /* ============================================================
    طبقة توحيد الهوية — الأساسات المستقرّة (منقولة من لوح الهوية)
