@@ -1,0 +1,619 @@
+/* ============================================================
+   قصة أديب الافتتاحية — أنماط معزولة بالكامل تحت #adeeb-story
+   لا ترث من نظام تصميم الموقع ولا تسرّب إليه: كل الألوان من
+   متغيرات --st-* المحلية (تُحرَّك بالسكرول من story.ts).
+   الاستثناء المقصود الوحيد: الفصل الرابع يتدرّج نحو ألوان الهوية
+   الحالية — تُقرأ قيمها مرة واحدة في JS من رموز الموقع (لحظة التسليم).
+   ============================================================ */
+
+/* بوابة التخطي قبل الرسم: يضبطها سكربت inline (باراميتر/رابط عميق/جلسة) */
+html[data-adeeb-story="skip"] #adeeb-story { display: none; }
+
+#adeeb-story {
+  /* اللوحة المحلية — قيم الافتتاح؛ تتدرّج بين الفصول عبر GSAP */
+  --st-bg: #0b0b0d;
+  --st-ink: #efeade;
+  --st-accent: #c49a3c;
+  /* مشتقّان يتبعان اللوحة المتحركة تلقائيًّا — لا يُحرَّكان من JS */
+  --st-dim: color-mix(in oklab, var(--st-ink) 62%, transparent);
+  --st-accent-soft: color-mix(in oklab, var(--st-accent) 26%, transparent);
+  /* مقاس الشعار: في المسار الحيّ يضبط story.ts المتغيّر --st-logo-w من دالّةٍ
+     واحدة (centerLogoW) فيتساوى القديم في الفصلين والجديد في المركز؛ وحيث لا
+     JS (النسخة الساكنة) يسقط الجميع إلى هذا المقاس الساكن — لا رقم مكرّر */
+  --st-logo-static-w: clamp(220px, 30vw, 360px);
+
+  position: relative;
+  z-index: 60; /* فوق هيدر الموقع (z-40) — القصة طبقة تسبقه */
+  direction: rtl;
+  background: var(--st-bg);
+  color: var(--st-ink);
+  font-family: "Lyon Arabic", serif;
+  /* نفس ميزات OpenType المعتمدة في الموقع (globals.css): مدّ النهايات + الكاف الممدودة.
+     تُعلَن هنا صراحةً لأن القصة معزولة ولا تتكئ على وراثة قد تنكسر */
+  font-feature-settings: "ss06" 1, "ss07" 1, "salt" 1;
+  line-height: 1.5;
+  pointer-events: none; /* القصة مشهد لا واجهة — يُستثنى زر التخطي وحده */
+}
+
+#adeeb-story *,
+#adeeb-story *::before,
+#adeeb-story *::after { box-sizing: border-box; }
+#adeeb-story :is(h1, h2, h3, p, figure) { margin: 0; }
+
+/* عند تفعيل القصة (st-live): الخلفية للطبقة الثابتة، والمحتوى الحقيقي
+   يتراكب تحت المشهد الأخير (لحظة التسليم تكشفه فعليًا لا مجازًا) */
+#adeeb-story.st-live { background: transparent; margin-bottom: -100vh; }
+
+/* ---------- الطبقات الثابتة (تظهر مع st-live فقط) ---------- */
+.st-bg, .st-grain, .st-hud, .st-logo-layer, .st-flash, .st-time { display: none; }
+#adeeb-story.st-live :is(.st-bg, .st-grain, .st-hud, .st-logo-layer, .st-flash) { display: block; }
+#adeeb-story.st-live .st-time { display: grid; }
+
+.st-bg {
+  position: fixed; inset: 0; z-index: 0;
+  background: var(--st-bg);
+}
+.st-bg::after {
+  /* vignette سينمائي خفيف */
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(120% 90% at 50% 42%, transparent 55%, rgba(0, 0, 0, 0.4) 100%);
+}
+
+.st-grain {
+  position: fixed; inset: 0; z-index: 35; pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='280' height='280'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 280px 280px;
+}
+
+.st-flash {
+  position: fixed; inset: 0; z-index: 34; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at 50% 45%, #fff3c4 0%, rgba(255, 233, 168, 0.85) 38%, transparent 75%);
+}
+
+/* ---------- المشاهد ---------- */
+.st-scene {
+  position: relative; z-index: 10;
+  height: 100vh; height: 100svh;
+  overflow: hidden;
+  display: grid; place-items: center;
+}
+
+/* ============================================================
+   المشهد 0 — الافتتاح
+   ============================================================ */
+.st-intro { text-align: center; padding: 0 6vw; }
+.st-intro-stack { display: grid; place-items: center; }
+.st-intro-stack > * { grid-area: 1 / 1; }
+
+.st-line { font-weight: 500; font-size: clamp(2.5rem, 7.5vw, 6rem); line-height: 1.35; }
+.st-line .st-w { display: inline-block; white-space: pre; will-change: transform, opacity; }
+.st-intro-l2 { font-weight: 900; font-size: clamp(2.6rem, 9vw, 7rem); }
+.st-intro-l2 em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--st-accent), #e8cf8a);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+
+.st-cue {
+  position: absolute; bottom: 4.5vh; inset-inline: 0;
+  display: grid; justify-items: center; gap: 6px;
+  color: var(--st-dim); font-size: 0.95rem;
+}
+.st-cue svg { width: 22px; height: 22px; animation: st-breathe 2.2s ease-in-out infinite; }
+@keyframes st-breathe {
+  0%, 100% { transform: translateY(0); opacity: 0.55; }
+  50% { transform: translateY(7px); opacity: 1; }
+}
+
+/* ============================================================
+   الفصل الأول — البذرة (ورق وحبر عتيق)
+   ============================================================ */
+.st-ch1 { padding: 0 6vw; }
+.st-ch1-inner { display: grid; place-items: center; text-align: center; }
+
+.st-letters { position: absolute; inset: 0; z-index: 1; }
+.st-ltr {
+  position: absolute;
+  left: var(--lx); top: var(--ly);
+  transform: rotate(var(--lr)) scale(var(--ls, 1));
+  font-size: clamp(1.8rem, 5.5vw, 4.2rem);
+  font-weight: 700;
+  color: var(--st-ink);
+  opacity: 0.85;
+  filter: sepia(0.35);
+  will-change: transform, opacity;
+}
+.st-ltr[data-tone="accent"] { color: var(--st-accent); }
+
+/* الشعار القديم في الفصل الأول: المقاس نفسه الذي يعود به في الفصل الرابع
+   ويتحوّل عنده إلى الجديد — فالعين تعرفه شيئًا واحدًا عبر القصة */
+.st-oldlogo {
+  width: var(--st-logo-w, var(--st-logo-static-w));
+}
+/* fallback نقطي: كشف بقناع دائري متسع (--st-or تُحرَّك من JS) */
+.st-oldlogo-raster img {
+  width: 100%; height: auto; display: block;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 var(--st-or, 0%), transparent calc(var(--st-or, 0%) + 14%));
+  mask-image: radial-gradient(circle at 50% 50%, #000 var(--st-or, 0%), transparent calc(var(--st-or, 0%) + 14%));
+}
+.st-oldlogo svg { width: 100%; height: auto; display: block; }
+/* مسارات الرسم (نسخة stroke تُبنى في JS فوق الأصل) */
+.st-oldlogo .st-draw-layer :is(path, circle, rect, ellipse, polygon, polyline, line) {
+  fill: none !important; /* يغلب أصناف fill المضمّنة داخل ملف الشعار نفسه */
+  stroke: var(--st-accent); stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.st-ch1-copy { margin-top: 4.5vh; }
+.st-kicker { color: var(--st-accent); font-size: clamp(1rem, 1.8vw, 1.25rem); font-weight: 500; }
+.st-ch-text {
+  margin-top: 1.2vh;
+  font-size: clamp(1.4rem, 3.2vw, 2.3rem);
+  font-weight: 700; line-height: 1.7;
+  max-width: 26ch; margin-inline: auto;
+}
+
+/* ============================================================
+   الفصل الثاني — الأثر (مسار أفقي)
+   ============================================================ */
+.st-ch2 { display: block; }
+.st-ch2-head {
+  position: absolute; top: 7vh; inset-inline: 0; z-index: 3;
+  text-align: center; padding: 0 6vw;
+}
+.st-ch2-head .st-ch-text { font-size: clamp(1.2rem, 2.4vw, 1.8rem); max-width: none; }
+
+.st-trackwrap {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; align-items: center;
+  overflow: hidden;
+}
+.st-track {
+  display: flex; align-items: center;
+  gap: clamp(16px, 2.4vw, 34px);
+  padding-inline: 10vw;
+  /* الرصيف كلّه يُكشف حركةً واحدة (شفافيّته من هنا)، والبطاقات لا تظهر فرادى */
+  will-change: transform, opacity;
+}
+.st-card {
+  flex: 0 0 auto;
+  width: clamp(230px, 25vw, 350px);
+  aspect-ratio: 3 / 4;
+  border-radius: 22px;
+  background: linear-gradient(165deg, var(--cg1, #1d3a54), var(--cg2, #0f1d2b));
+  border: 1px solid rgba(214, 230, 244, 0.14);
+  padding: clamp(18px, 2vw, 28px);
+  display: flex; flex-direction: column; justify-content: space-between;
+  overflow: hidden; position: relative;
+  will-change: transform, opacity;
+}
+.st-card::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(90% 60% at 20% 0%, rgba(226, 238, 252, 0.1), transparent 60%);
+  pointer-events: none;
+}
+.st-card-hero { width: clamp(290px, 33vw, 450px); }
+.st-card-hero .st-card-title { font-size: clamp(1.35rem, 2.3vw, 1.9rem); }
+
+/* صورة البطاقة (إن وصلت): تملأها، وما قبلها أيقونةٌ على تدرّج placeholder */
+.st-card-img {
+  position: absolute; inset: 0; z-index: 0;
+  display: block; width: 100%; height: 100%;
+  object-fit: cover;
+}
+/* حاجب قراءة يصعد من الأسفل — العنوان يبقى مقروءًا فوق أي صورة */
+.st-card[data-loaded]::before {
+  content: ""; position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(
+    to top,
+    rgba(6, 12, 20, 0.88) 0%,
+    rgba(6, 12, 20, 0.46) 38%,
+    rgba(6, 12, 20, 0.06) 68%
+  );
+}
+/* الرقم وحده يزول بوصول الصورة (انتهت وظيفته)، والأيقونة تبقى فوقها
+   بظلٍّ ناعم يضمن قراءتها على الصور الفاتحة كما الداكنة */
+.st-card[data-loaded] .st-card-num { display: none; }
+.st-card[data-loaded] .st-card-icon { filter: drop-shadow(0 2px 7px rgba(4, 9, 16, 0.8)); }
+
+.st-card-icon { color: var(--st-accent); position: relative; z-index: 2; }
+.st-card-icon svg { width: clamp(34px, 4vw, 52px); height: auto; }
+.st-card-num {
+  position: absolute; top: 12px; inset-inline-end: 14px; z-index: 2;
+  font-family: "Eras", "Lyon Arabic", sans-serif;
+  font-size: 0.8rem; font-weight: 700;
+  color: color-mix(in oklab, var(--st-ink) 40%, transparent);
+}
+/* margin-top: auto يُثبّت التذييل أسفلَ البطاقة وإن غابت الأيقونة */
+.st-card-foot { display: grid; gap: 8px; position: relative; z-index: 2; margin-top: auto; }
+.st-card-badge {
+  justify-self: start;
+  font-size: 0.85rem; font-weight: 500;
+  color: var(--st-accent);
+  border: 1px solid var(--st-accent-soft);
+  border-radius: 999px; padding: 3px 12px;
+}
+.st-card-title { font-size: clamp(1.1rem, 1.8vw, 1.4rem); font-weight: 700; line-height: 1.55; }
+
+/* ============================================================
+   الفصل الثالث — التتويج
+   ============================================================ */
+.st-ch3 { display: block; }
+.st-rays {
+  position: absolute; inset: -22%; z-index: 1;
+  background: conic-gradient(
+    from 8deg at 50% 46%,
+    transparent 0deg 22deg, rgba(226, 188, 85, 0.055) 30deg, transparent 38deg 82deg,
+    rgba(226, 188, 85, 0.045) 90deg, transparent 98deg 142deg,
+    rgba(226, 188, 85, 0.06) 150deg, transparent 158deg 202deg,
+    rgba(226, 188, 85, 0.045) 210deg, transparent 218deg 262deg,
+    rgba(226, 188, 85, 0.055) 270deg, transparent 278deg 322deg,
+    rgba(226, 188, 85, 0.045) 330deg, transparent 338deg 360deg
+  );
+  will-change: transform;
+}
+.st-canvas { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; }
+
+.st-ch3-inner {
+  position: absolute; inset: 0; z-index: 3;
+  display: grid; place-items: center;
+  grid-template-rows: 1fr auto; padding-bottom: 7vh;
+}
+.st-shield-wrap {
+  position: relative; display: grid; place-items: center;
+  filter: drop-shadow(0 24px 60px rgba(0, 0, 0, 0.55));
+}
+.st-shield {
+  height: min(62vh, 560px); width: auto;
+  /* حرزٌ لصورة الدرع الحقيقية إن جاءت عريضة النسبة: تُحتوى ولا تفيض،
+     والقناع (contain كذلك) يظلّ منطبقًا على صندوقها نفسه */
+  max-width: 86vw; object-fit: contain;
+  will-change: transform, filter;
+}
+/* الحاضنة: قناعُ الدرع وحده — ثابتةٌ أبدًا، فلو تحرّكت سافر القناع معها
+   وظهرت شريحةٌ من شكل الدرع خارج حدوده (ذاك كان العيب) */
+.st-sweep {
+  position: absolute; inset: 0; pointer-events: none;
+  overflow: hidden;
+  -webkit-mask-image: var(--st-shield-mask); mask-image: var(--st-shield-mask);
+  -webkit-mask-size: contain; mask-size: contain;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+}
+/* الشريط: هو المتحرّك وحده (transform مُركَّب) ويُقصّ بقناع حاضنته.
+   نطاقٌ عريض (≈48% من الصندوق) بقلبٍ ساطع وكتفين ناعمين — العريض الساطع
+   يُقرأ بريقًا، والضيّق الخفيف كان يبدو خيطًا باهتًا على زجاج الدرع. */
+.st-sweep-band {
+  position: absolute; inset: 0; display: block;
+  background: linear-gradient(
+    115deg,
+    transparent 26%,
+    rgba(255, 246, 208, 0.22) 38%,
+    rgba(255, 253, 240, 0.7) 50%,
+    rgba(255, 246, 208, 0.22) 62%,
+    transparent 74%
+  );
+  will-change: transform;
+}
+
+.st-crown-copy { text-align: center; padding: 0 6vw; display: grid; gap: 1.2vh; }
+.st-crown-title {
+  font-size: clamp(3rem, 10vw, 7rem); font-weight: 900; line-height: 1.25;
+  background: linear-gradient(135deg, #f2d783, var(--st-accent) 55%, #96721f);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.st-crown-sub { font-size: clamp(1.2rem, 2.6vw, 1.9rem); font-weight: 500; color: var(--st-ink); }
+.st-crown-sub .st-count { font-family: "Eras", "Lyon Arabic", sans-serif; font-variant-numeric: tabular-nums; color: var(--st-accent); font-weight: 700; }
+.st-crown-tail { font-size: clamp(1.3rem, 2.8vw, 2.1rem); font-weight: 700; color: var(--st-accent); }
+
+/* ============================================================
+   الفصل الرابع — التجدّد
+   ============================================================ */
+.st-ch4 { padding: 0 6vw; }
+.st-ch4-inner { display: grid; place-items: center; text-align: center; }
+.st-ch4-logos { position: relative; display: grid; place-items: center; }
+.st-ch4-logos > * { grid-area: 1 / 1; }
+.st-oldlogo2 {
+  width: var(--st-logo-w, var(--st-logo-static-w));
+  will-change: transform, opacity, filter;
+  /* قناع التحلّل: ثقب يتّسع من المركز عبر --st-mr (تُحرَّك من JS: 0% مرئي كاملًا → 150% متلاشٍ) */
+  --st-mr: 0%;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent calc(var(--st-mr) - 18%), #000 var(--st-mr));
+  mask-image: radial-gradient(circle at 50% 50%, transparent calc(var(--st-mr) - 18%), #000 var(--st-mr));
+}
+.st-newlogo-static { display: none; width: var(--st-logo-static-w); }
+.st-ch4-copy { margin-top: 5vh; display: grid; gap: 1vh; }
+.st-renew-l1 { font-size: clamp(1.6rem, 3.6vw, 2.6rem); font-weight: 700; }
+
+/* طبقة الشعار الطائر (الفصل الرابع ← موضع شعار الهيدر في الخاتمة)
+   الطبقة نفسها تُحرَّك في مشهد الكواليس (ترتفع وتنكمش ثم تعود) كي يبقى
+   تحويل الشعار الداخلي حكرًا على تسليم الخاتمة — كاتبان لا يتصارعان */
+.st-logo-layer { position: fixed; inset: 0; z-index: 40; pointer-events: none; }
+.st-newlogo { position: absolute; opacity: 0; will-change: transform, opacity; }
+
+/* ============================================================
+   كواليس الحكاية — الصور الثمان (بين الفصل الرابع ومحطة اليوم)
+   الشعار يجلس أعلى الشاشة (طبقته z=40) فتعبر الصور (z=10) من خلفه
+   دون أن تمسّه، والمجال العلوي متروك له.
+   ============================================================ */
+.st-bts { display: block; }
+
+.st-bts-kicker {
+  position: absolute; top: 8.5vh; inset-inline: 0; z-index: 4;
+  text-align: center;
+}
+/* خشبة التكوين: عرضها مشتقٌّ من عرض الصورة نفسها لا من الشاشة — فحين تقف
+   الصورة عند سقفها (300px) على الشاشات العريضة يقف التكوين معها ولا يتمدّد
+   فيتفكّك التراكب. المواضع الأفقية (--cx) نِسَبٌ من هذه الخشبة، والرأسية
+   (--cy) نِسَبٌ من الشاشة لأن مجالها العموديّ محكومٌ بها. */
+.st-bts-stage {
+  position: absolute;
+  top: 0; bottom: 0; left: 0; right: 0;
+  margin-inline: auto;
+  /* المقاس مقيَّدٌ بالارتفاع أيضًا لا بالعرض وحده: ارتفاع الإطار ≈ 1.13× عرضه،
+     فلولا حدّ الـvh لابتلعت ثماني صورٍ الشاشةَ على النوافذ القصيرة */
+  --pw: clamp(150px, min(15vw, 24vh), 340px);
+  width: min(100vw, calc(var(--pw) * 7.4));
+  z-index: 2;
+}
+
+.st-pola {
+  position: absolute;
+  left: var(--cx); top: var(--cy);
+  width: var(--pw);
+  /* التمركز والدوران والقياس كلها بيد GSAP (xPercent/yPercent) — لا transform في CSS */
+  --pb: 0px; /* ضبابية العبور */
+  --pbr: 1; /* إضاءة الفاصل النصي */
+}
+.st-pola-in {
+  display: block;
+  background: #fbf9f3;
+  padding: 4%;
+  box-shadow: 0 14px 34px rgba(12, 18, 28, 0.22), 0 2px 6px rgba(12, 18, 28, 0.12);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.st-pola-img { position: relative; aspect-ratio: 1 / 1; overflow: hidden; background: #ece8de; }
+.st-pola-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.st-pola-ph {
+  position: absolute; inset: 0;
+  display: grid; place-content: center; justify-items: center; gap: 7%;
+  background: linear-gradient(
+    160deg,
+    color-mix(in oklab, var(--st-accent) 18%, var(--st-bg)),
+    color-mix(in oklab, var(--st-ink) 12%, var(--st-bg))
+  );
+  color: color-mix(in oklab, var(--st-ink) 42%, transparent);
+}
+.st-pola-ph svg { width: 24%; height: auto; }
+.st-pola-ph b { font-family: "Eras", "Lyon Arabic", sans-serif; font-size: 1.05rem; font-weight: 700; }
+.st-pola[data-loaded] .st-pola-ph { display: none; }
+/* البند الأبيض السفلي أسمك (نسبة من العرض) — يبقى نظيفًا إن لم يكن ثمّة تعليق */
+.st-pola-cap {
+  display: grid; place-items: center; padding-block: 6% 8%;
+  color: #5a5951; font-size: clamp(0.62rem, 0.85vw, 0.8rem); font-weight: 500;
+  text-align: center; line-height: 1.4;
+}
+
+/* أثناء المشهد وحده: مرشّح العبور وwill-change — لا شيء منهما دائم
+   (المشهد كله scrubbed، فالرجوع يعيد الحركة في أي لحظة داخله) */
+.st-bts-active .st-pola { will-change: transform, opacity; }
+.st-bts-active .st-pola-in {
+  filter: blur(var(--pb)) brightness(var(--pbr));
+  will-change: filter;
+}
+
+/* لمسة سطح المكتب: رفعة خفيفة عند المرور — على الإطار الداخلي كي لا تمسّ تحويل GSAP */
+@media (hover: hover) and (pointer: fine) {
+  .st-pola { pointer-events: auto; }
+  .st-pola:hover .st-pola-in {
+    transform: scale(1.03);
+    box-shadow: 0 22px 48px rgba(12, 18, 28, 0.3), 0 3px 8px rgba(12, 18, 28, 0.16);
+  }
+}
+
+.st-bts-tribute {
+  position: absolute; top: 50%; inset-inline: 0; z-index: 4;
+  transform: translateY(-50%);
+  text-align: center; padding: 0 8vw;
+  font-size: clamp(1.5rem, 3.4vw, 2.5rem); font-weight: 700;
+}
+.st-bts-tail {
+  position: absolute; top: 63%; inset-inline: 0; z-index: 4;
+  text-align: center; padding: 0 8vw;
+  color: var(--st-dim);
+  font-size: clamp(1.15rem, 2.3vw, 1.7rem); font-weight: 500;
+}
+
+/* ============================================================
+   الخاتمة — التسليم (منطقة سكرول للتسليم فقط)
+   ============================================================ */
+.st-final { background: transparent; }
+
+/* ============================================================
+   محطات الزمن + بطل الوقت (#time-hero)
+   عنصر تاريخ واحد دائم: hero في منتصف المحطات، وghost سنةٍ عملاقة
+   خلف محتوى الفصول (z بين خلفية المشهد 0 والمشاهد 10).
+   GSAP يملك الـtransform كاملًا (التمركز عبر xPercent/yPercent) —
+   لا translate في CSS كي لا يتصارع الكاتبان.
+   ============================================================ */
+.st-station { background: transparent; }
+.st-station-static { display: none; }
+
+.st-time {
+  position: fixed; left: 50%; top: 50%; z-index: 5;
+  justify-items: center; gap: clamp(8px, 1.6vh, 18px);
+  text-align: center;
+  opacity: 0;
+  will-change: transform; /* العنصر الوحيد المتحرك في هذا النظام */
+  font-variant-numeric: tabular-nums;
+}
+.st-time-kicker {
+  color: var(--st-accent);
+  font-size: clamp(1rem, 1.9vw, 1.3rem);
+  font-weight: 500;
+  opacity: 0;
+}
+.st-time-date {
+  direction: rtl; /* ترتيب القراءة العربية: اليوم فالشهر فالسنة */
+  display: flex; align-items: center; gap: 0.3em;
+  font-size: clamp(2.3rem, 6.5vw, 4.7rem);
+  font-weight: 700;
+  line-height: 1;
+  --th-row: 1.26em; /* ارتفاع صف البكرة = نافذة القصّ */
+}
+.st-reel {
+  display: block; overflow: hidden;
+  height: var(--th-row);
+  /* ريش أعلى/أسفل النافذة — ثابت، لا يُحرَّك */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 20%, #000 80%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 20%, #000 80%, transparent);
+}
+.st-strip { display: flex; flex-direction: column; }
+.st-strip > span { display: block; height: var(--th-row); line-height: var(--th-row); text-align: center; }
+/* أرقام لاتينية بإيراس كسائر أرقام القصة؛ الهندية تسقط تلقائيًّا إلى ليون */
+.st-reel-day, .st-reel-year { font-family: "Eras", "Lyon Arabic", sans-serif; }
+
+/* ============================================================
+   HUD — مؤشر الفصول · زر التخطي
+   ============================================================ */
+.st-hud { position: fixed; inset: 0; z-index: 45; pointer-events: none; }
+
+.st-chap {
+  position: absolute; top: 50%; right: 24px; transform: translateY(-50%);
+  display: grid; gap: 12px;
+}
+.st-chap-dash {
+  width: 3px; height: 36px; border-radius: 2px;
+  background: color-mix(in oklab, var(--st-ink) 20%, transparent);
+  position: relative; overflow: hidden;
+}
+.st-chap-dash i {
+  position: absolute; inset: 0; display: block;
+  background: var(--st-accent);
+  transform: scaleY(0); transform-origin: top;
+  will-change: transform;
+}
+
+.st-skip {
+  position: absolute; bottom: 24px; left: 26px;
+  pointer-events: auto;
+  appearance: none; cursor: pointer;
+  font: inherit; font-size: 0.95rem; font-weight: 500;
+  color: color-mix(in oklab, var(--st-ink) 72%, transparent);
+  background: color-mix(in oklab, var(--st-bg) 55%, transparent);
+  border: 1px solid color-mix(in oklab, var(--st-ink) 28%, transparent);
+  border-radius: 999px;
+  padding: 8px 18px;
+  opacity: 0; visibility: hidden;
+  transition: color 0.2s, border-color 0.2s;
+}
+.st-skip:hover, .st-skip:focus-visible { color: var(--st-ink); border-color: var(--st-accent); outline: none; }
+
+/* ============================================================
+   الحالات الأولية للعناصر المتحركة — فقط حين تعمل القصة الحركية
+   (html.js موجودة قبل الرسم؛ النسخة الساكنة st-static تُستثنى)
+   ============================================================ */
+/* لا تسري حالات الإخفاء على مفضّلي تقليل الحركة — نسختهم الساكنة مقروءة من أول paint */
+@media (prefers-reduced-motion: no-preference) {
+  html.js #adeeb-story:not(.st-static) :is(
+    .st-line,
+    .st-oldlogo, .st-ch1-copy,
+    .st-ch2-head, .st-track,
+    .st-shield, .st-crown-title, .st-crown-sub, .st-crown-tail,
+    .st-oldlogo2, .st-ch4-copy,
+    .st-bts-kicker, .st-pola, .st-bts-tribute, .st-bts-tail
+  ) { opacity: 0; }
+  html.js #adeeb-story:not(.st-static) .st-ltr { opacity: 0; }
+}
+
+/* ============================================================
+   النسخة الساكنة — prefers-reduced-motion أو بلا JS:
+   فصول متتالية عادية مقروءة، بلا تثبيت ولا جسيمات ولا HUD
+   ============================================================ */
+#adeeb-story.st-static { pointer-events: auto; }
+#adeeb-story.st-static .st-scene,
+html:not(.js) #adeeb-story .st-scene {
+  height: auto; min-height: 0;
+  overflow: visible;
+  padding: 14vh 6vw;
+}
+#adeeb-story.st-static :is(.st-letters, .st-rays, .st-canvas, .st-sweep, .st-cue, .st-hud, .st-logo-layer, .st-flash, .st-grain, .st-bg),
+html:not(.js) #adeeb-story :is(.st-letters, .st-rays, .st-canvas, .st-sweep, .st-cue, .st-hud, .st-logo-layer, .st-flash) { display: none; }
+#adeeb-story.st-static .st-newlogo-static { display: block; margin-inline: auto; }
+/* الشعاران في النسخة الساكنة يقرأان معًا (قديمٌ فوق جديد) لا متراكبين في
+   خليّةٍ واحدة كما في المسار الحيّ حيث يتحوّل أحدهما إلى الآخر */
+#adeeb-story.st-static .st-ch4-logos > *,
+html:not(.js) #adeeb-story .st-ch4-logos > * { grid-area: auto; }
+#adeeb-story.st-static .st-ch4-logos,
+html:not(.js) #adeeb-story .st-ch4-logos { gap: 4vh; }
+/* محطات الزمن ساكنةً: kicker + تاريخ ثابتان، بتلاشٍ لطيف عند بلوغهما (IO في story.ts) — بلا دوران */
+#adeeb-story.st-static .st-station-static,
+html:not(.js) #adeeb-story .st-station-static { display: grid; gap: 1.4vh; justify-items: center; }
+#adeeb-story.st-static .st-station { padding: 9vh 6vw; }
+#adeeb-story.st-static .st-station-static { opacity: 0; transition: opacity 0.9s ease; }
+#adeeb-story.st-static .st-station-static.st-in { opacity: 1; }
+.st-station-date {
+  font-size: clamp(1.9rem, 5vw, 3.2rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+#adeeb-story.st-static .st-intro-stack { display: grid; gap: 3vh; }
+#adeeb-story.st-static .st-intro-stack > * { grid-area: auto; }
+#adeeb-story.st-static .st-trackwrap { position: static; overflow: visible; }
+#adeeb-story.st-static .st-track { flex-wrap: wrap; justify-content: center; padding: 4vh 0 0; }
+#adeeb-story.st-static .st-card { width: clamp(220px, 40vw, 300px); }
+#adeeb-story.st-static .st-ch3-inner { position: static; padding: 0; gap: 4vh; }
+#adeeb-story.st-static .st-shield { height: min(40vh, 380px); }
+#adeeb-story.st-static .st-ch2-head { position: static; margin-bottom: 3vh; }
+/* كواليس الحكاية ساكنةً: شبكة هادئة ٢×٤ بتلاشٍ متتابع (IO في story.ts) — بلا قذف ولا عبور */
+#adeeb-story.st-static :is(.st-bts-kicker, .st-bts-tribute, .st-bts-tail),
+html:not(.js) #adeeb-story :is(.st-bts-kicker, .st-bts-tribute, .st-bts-tail) {
+  position: static; transform: none; padding: 0; text-align: center;
+}
+#adeeb-story.st-static .st-bts,
+html:not(.js) #adeeb-story .st-bts { display: grid; justify-items: center; gap: 3vh; }
+#adeeb-story.st-static .st-bts-stage,
+html:not(.js) #adeeb-story .st-bts-stage {
+  position: static;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(14px, 2.5vw, 28px);
+  width: 100%; max-width: 760px;
+  margin-block: 2vh;
+}
+#adeeb-story.st-static .st-pola,
+html:not(.js) #adeeb-story .st-pola { position: static; width: 100%; }
+#adeeb-story.st-static .st-pola {
+  opacity: 0; transition: opacity 0.9s ease;
+  transition-delay: calc(var(--i) * 90ms);
+}
+#adeeb-story.st-static .st-pola.st-in { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .st-cue svg { animation: none; }
+}
+
+/* ============================================================
+   الجوال
+   ============================================================ */
+@media (max-width: 767px) {
+  .st-time-date { font-size: clamp(2rem, 8.5vw, 3rem); }
+  .st-time-kicker { font-size: 1rem; }
+  .st-chap { right: 14px; }
+  .st-chap-dash { height: 28px; }
+  .st-skip { bottom: 16px; left: 16px; padding: 7px 14px; }
+  .st-card { width: clamp(190px, 62vw, 250px); }
+  .st-card-hero { width: clamp(230px, 74vw, 300px); }
+  .st-shield { height: min(48vh, 420px); }
+  .st-track { padding-inline: 7vw; }
+  /* كواليس الحكاية على الجوال: جدول مواضع مستقلّ (mx/my) ومقاسٌ يحدّه الارتفاع
+     (الخشبة تبلغ عرض الشاشة دومًا هنا لأن 7.4 × 36vw يتجاوزها) */
+  .st-bts-stage { --pw: min(36vw, 20vh); }
+  .st-pola { left: var(--mx); top: var(--my); }
+  .st-pola-ph b { font-size: 0.9rem; }
+  .st-bts-kicker { top: 6vh; font-size: 1rem; }
+  .st-bts-tribute { font-size: 1.45rem; padding: 0 6vw; }
+  .st-bts-tail { top: 66%; font-size: 1.05rem; padding: 0 6vw; }
+}
