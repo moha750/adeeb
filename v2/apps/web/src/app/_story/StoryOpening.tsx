@@ -3,24 +3,25 @@
 import { useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import {
+  Aperture,
   BookOpenText,
   Books,
   Camera,
-  ChatsCircle,
   Clover,
   CoffeeBean,
   Feather,
+  FilmReel,
   FilmSlate,
+  FilmStrip,
+  ImagesSquare,
   MegaphoneSimple,
   MicrophoneStage,
   Newspaper,
-  NewspaperClipping,
-  Notebook,
   PenNib,
   Sparkle,
-  UsersThree,
+  VideoCamera,
 } from "@phosphor-icons/react";
-import { BTS_SHOTS, fmtDigits, SESSION_KEY, STORY_ASSETS, STORY_CONFIG, TIME_MONTHS } from "./config";
+import { fmtDigits, SESSION_KEY, STORY_ASSETS, STORY_CONFIG, TIME_MONTHS, WALL_SHOTS } from "./config";
 import "./story.css";
 
 /* بوابة ما قبل الرسم: تُقرَّر قبل أي paint (سكربت inline) فلا وميض للقصة عند التخطي.
@@ -68,6 +69,19 @@ const CARDS: Array<{
   { type: "ملتقى", title: "ملتقى أدِيب للشباب الجامعي", Icon: Sparkle, g: ["#16324a", "#0c1926"] },
   { type: "معرض", title: "المعطاء كفو", Icon: Clover, g: ["#20415c", "#101f2e"] },
   { type: "معرض", title: "يوم التأسيس", Icon: Feather, g: ["#1a3750", "#0e1c29"] },
+];
+
+/* أيقونات البطاقات البديلة — واحدة لكل لقطة بترتيب WALL_SHOTS، تظهر حتى تصل
+   صورتها الحقيقية ثم تختفي من نفسها (اتساقًا مع بطاقات الفصل الثاني) */
+const SHOT_ICONS: Array<typeof PenNib> = [
+  FilmSlate,
+  Camera,
+  FilmReel,
+  Aperture,
+  VideoCamera,
+  FilmStrip,
+  ImagesSquare,
+  Sparkle,
 ];
 
 /* التاريخ الساكن لنسخة تقليل الحركة/بلا JS — ميلاديّ العرض دومًا
@@ -259,51 +273,59 @@ export function StoryOpening() {
           </div>
         </section>
 
-        {/* ---------- كواليس الحكاية — الصور الثمان (نبضتا التناثر والعبور) ----------
-            مواضع الصور وميلاناتها من BTS_SHOTS (حتميّة بالكامل)، والحركة في story.ts.
-            سطر «وما زالت الحكاية تُكتب…» يختم هذا المشهد (نُقل من بطل الوقت). */}
-        <section className="st-scene st-bts" aria-label="كواليس الحكاية">
-          <p className="st-kicker st-bts-kicker">من كـواليس الحكـاية…</p>
-          <div className="st-bts-stage">
-            {BTS_SHOTS.map((s, i) => (
-              <div
-                key={i}
-                className="st-pola"
-                /* موضعان: مكتبيّ (cx/cy) وجوّاليّ (mx/my) يختار بينهما استعلام
-                   الوسائط وحده · z: مجموعة العمق ثم ترتيب القذف */
-                style={
-                  {
-                    "--cx": `${s.cx}%`,
-                    "--cy": `${s.cy}%`,
-                    "--mx": `${s.mx}%`,
-                    "--my": `${s.my}%`,
-                    "--i": i,
-                    zIndex: (2 - s.depth) * 10 + i,
-                  } as CSSProperties
-                }
-              >
-                <figure className="st-pola-in">
-                  <div className="st-pola-img">
-                    {/* placeholder حتى وصول الصورة — الإطار نفسه فلا يبدو المشهد ناقصًا */}
-                    <span className="st-pola-ph" aria-hidden="true">
-                      <Camera weight="duotone" />
-                      {/* الرقم يطابق اسم الملفّ المنتظَر (01..08) */}
-                      <b>{fmtDigits(String(i + 1).padStart(2, "0"))}</b>
+        {/* ---------- جدار الذكريات — لحظاتُ الكواليس تُعلَّق واحدةً تلو الأخرى ----------
+            العمود (.st-wall) جسمٌ واحد يعلو بتقدّم التمرير، وفي نقطة تعليقٍ ثابتة
+            أخفضَ قليلًا من وسط الشاشة تستقرّ كلُّ صورةٍ بحجمها الكامل غير مقصوصة.
+            الجهات والميلان من WALL_SHOTS، والحركة في story.ts. والمشهد كلّه على
+            لوحة الهوية الفاتحة نفسها التي سلّمها الفصل الرابع — لا لوحة له.
+            سطر «وما زالت الحكاية تُكتب…» يختم المشهد (نُقل من بطل الوقت). */}
+        <section className="st-scene st-wall-scene" aria-label="جدار الذكريات">
+          {/* حجابُ الشعار: تدرّجٌ من لون الخلفية أعلى المسرح — يمرّ العمود تحته
+              وتذوب فيه الصور الصاعدة، فلا يتصادم شيءٌ مع الشعار ولا مع الـkicker */}
+          <div className="st-wall-veil" aria-hidden="true" />
+          {/* وحجابٌ يقابله أسفل المسرح: البطاقة تبدأ دخولها قبل بلوغها نقطة
+              التعليق، فتقضي أوّلَه في خانةٍ تحت الشاشة — يسترها هذا حتى تصعد،
+              فتخرج منه مؤتلفةً لا فجأةً، ولا يعلو العدّادَ شيءٌ من الصور */}
+          <div className="st-wall-veil-b" aria-hidden="true" />
+
+          <p className="st-kicker st-wall-kicker">من كـواليس الحكـاية…</p>
+
+          <div className="st-wall" aria-hidden="true">
+            {WALL_SHOTS.map((s, i) => {
+              const Icon = SHOT_ICONS[i];
+              return (
+                <div key={i} className="st-shot" data-side={s.side} style={{ "--i": i } as CSSProperties}>
+                  <figure className="st-frame">
+                    <span className="st-shot-img">
+                      {/* بطاقةٌ بديلة حتى وصول الصورة — بالإطار نفسه فلا يبدو الجدار ناقصًا.
+                          بلا رقم: لا ترقيمَ للصور في هذا المشهد البتّة */}
+                      <span className="st-shot-ph">
+                        <Icon weight="duotone" />
+                      </span>
                     </span>
-                  </div>
-                  <figcaption className="st-pola-cap">{s.cap}</figcaption>
-                </figure>
-              </div>
-            ))}
+                  </figure>
+                  {/* تعليق النسخة الساكنة وحده (تحت الصورة) — المسار الحيّ يستعمل
+                      .st-wall-cap الواحد المتموضع في الفراغ المقابل */}
+                  <p className="st-shot-cap">{s.cap}</p>
+                </div>
+              );
+            })}
           </div>
-          <p className="st-bts-tribute">خلف كل إنجازٍ… أيادٍ تصنعه.</p>
-          <p className="st-bts-tail">وما زالت الحكـاية تُكتب…</p>
+
+          {/* التعليق الحيّ: عنصرٌ واحد يستقرّ في محاذاة نقطة التعليق ارتفاعًا،
+              وينتقل إلى الجهة المقابلة للصورة الحاضرة (data-side يكتبه story.ts) */}
+          <p className="st-wall-cap" data-side="-1" aria-hidden="true" />
+
+          <p className="st-wall-tribute">خلف كـل إنجازٍ أُدباء صنعوه</p>
+          <p className="st-wall-tail">وما زالت الحكـاية تُكتب…</p>
         </section>
 
         {/* ---------- الخاتمة — منطقة التسليم ---------- */}
         <section className="st-scene st-final" aria-hidden="true" />
 
-        {/* الشعار الطائر: من مركز الشاشة إلى موضع شعار الهيدر */}
+        {/* الشعار الطائر: من مركز الشاشة إلى موضع شعار الهيدر. شعارٌ واحد بلا
+            توأم: المشهد الأخير لا يُظلم، فالشعار الملوّن مقروءٌ على لوحة الهوية
+            من الفصل الرابع حتى التسليم بلا انقطاع. */}
         <div className="st-logo-layer" aria-hidden="true">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="st-newlogo" src={STORY_ASSETS.newLogo} alt="" />

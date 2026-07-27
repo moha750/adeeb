@@ -9,7 +9,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import Lenis from "lenis";
-import { BTS_SHOTS, fmtDigits, SESSION_KEY, STORY_ASSETS, STORY_CONFIG, TIME_MONTHS } from "./config";
+import { fmtDigits, SESSION_KEY, STORY_ASSETS, STORY_CONFIG, TIME_MONTHS, WALL_SHOTS } from "./config";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -23,11 +23,13 @@ const PALETTES = {
   /* مدخل الفصل الرابع: يعود الأزرق الفولاذيّ فيجلس عليه الشعار القديم قبل
      تحوّله — ثم تتدرّج اللوحة إلى هوية الموقع داخل الفصل نفسه */
   ch4: { bg: "#24455e", ink: "#f2ecd9", accent: "#ffc60a" },
+  /* لا لوحة لجدار الذكريات: المشهد يجري كلّه على لوحة الهوية التي سلّمها
+     الفصل الرابع، فلا تبديل ولا انقطاع لونيّ حتى تسليم الموقع نفسه. */
 };
 
 /* مسافات التثبيت (نسبة من ارتفاع الشاشة) — الجوال ×0.7، وتُعاد القراءة عند كل refresh.
    st1..st4 محطات الزمن بين الفصول، والخاتمة تسليمٌ وحده (بلا محطة تاريخ) فقَصُرت */
-const PIN = { intro: 1.5, st1: 1.5, ch1: 3, st2: 1.2, ch2: 4, st3: 1.2, ch3: 3.5, st4: 1.2, ch4: 3.9, bts: 4.3, final: 1.7 };
+const PIN = { intro: 1.5, st1: 1.5, ch1: 3, st2: 1.2, ch2: 4, st3: 1.2, ch3: 3.5, st4: 1.2, ch4: 3.9, wall: 4.2, final: 1.7 };
 const isMobile = () => window.matchMedia("(max-width: 767px)").matches;
 const pinEnd = (factor: number) => () =>
   "+=" + Math.round(window.innerHeight * factor * (isMobile() ? 0.7 : 1));
@@ -36,6 +38,9 @@ const pinEnd = (factor: number) => () =>
    محسوبٌ من هدف الطيران) والقديم قبله (يقرؤه عبر --st-logo-w). فيقع التحوّل
    بين مقاسين متساويين لا بين كبيرٍ وصغير. */
 const centerLogoW = () => Math.min(window.innerWidth * (isMobile() ? 0.72 : 0.55), 430);
+
+/* حصرٌ في [٠،١] — يستعمله جدار الذكريات وبطل الوقت معًا (مصدرٌ واحد) */
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
 /* ---------- جسيمات ذهبية (canvas واحد — الفصل الثالث) ---------- */
 type P = { x: number; y: number; r: number; vx: number; vy: number; a: number; tw: number; life: number };
@@ -188,7 +193,7 @@ async function mountOldLogo(fig: HTMLElement): Promise<OldLogo> {
   return { mode: "raster", draws: [], fills: [] };
 }
 
-/* ---------- صور مرقّمة (بطاقات الفصل الثاني · كواليس الحكاية) ----------
+/* ---------- صور مرقّمة (بطاقات الفصل الثاني · صور جدار الذكريات) ----------
    الرقم من ترتيب العنصر (01, 02, …) والامتداد يُجرَّب لا يُفترَض. الغياب ليس
    عطلًا: الصورة الغائبة تُبقي الـplaceholder المرسوم فيبدو المشهد مكتملًا.
    تُستدعى في وقت خامل قبل مشهدها بمسافة فلا pop-in ولا فكّ ترميز متأخر. */
@@ -243,13 +248,13 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
     }
     /* الصور المرقّمة تُعرض كما هي في النسخة الساكنة (والغائبة تبقى placeholder) */
     void mountNumbered($$(".st-card"), STORY_ASSETS.cardsDir, null, "st-card-img");
-    void mountNumbered($$(".st-pola"), STORY_ASSETS.btsDir, ".st-pola-img");
-    /* محطات الزمن وصور الكواليس: تظهر بتلاشٍ لطيف عند بلوغها — بلا دوران ولا قذف */
+    void mountNumbered($$(".st-shot"), STORY_ASSETS.shotsDir, ".st-shot-img");
+    /* محطات الزمن وصور الجدار: تظهر بتلاشٍ لطيف عند بلوغها — بلا تأرجح ولا تراجع كاميرا */
     const io = new IntersectionObserver(
       (es) => es.forEach((e) => e.isIntersecting && e.target.classList.add("st-in")),
       { threshold: 0.35 }
     );
-    $$(".st-station-static, .st-pola").forEach((b) => io.observe(b));
+    $$(".st-station-static, .st-shot").forEach((b) => io.observe(b));
     return () => {
       io.disconnect();
       root.classList.remove("st-static");
@@ -605,9 +610,13 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
     const particles = new GoldParticles(canvas, isMobile() ? 24 : 48);
     let flashFired = false;
 
-    /* صور الكواليس تُحمَّل وتُفكّ ترميزًا في وقت خامل أثناء هذا الفصل — مرة واحدة،
-       فلا pop-in عند دخول مشهدها (والمشهد نفسه يستدعيها احتياطًا لدخولٍ عميق) */
-    const queueShots = idleOnce(() => void mountNumbered($$(".st-pola"), STORY_ASSETS.btsDir, ".st-pola-img"));
+    /* صور الجدار تُحمَّل وتُفكّ ترميزًا في وقت خامل أثناء هذا الفصل — مرة واحدة،
+       فلا pop-in عند دخول مشهدها (والمشهد نفسه يستدعيها احتياطًا لدخولٍ عميق).
+       ووصولُ الصور يغيّر مقاسات الأطر، فتُعاد هندسةُ الجدار بعده لا قبله. */
+    let remeasureWall = () => {};
+    const queueShots = idleOnce(() => {
+      void mountNumbered($$(".st-shot"), STORY_ASSETS.shotsDir, ".st-shot-img").then(() => remeasureWall());
+    });
 
     gsap.set(rays, { autoAlpha: 0 });
     gsap.set(sweepBand, { xPercent: -140 });
@@ -750,179 +759,421 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
       .to(ch4copy, { y: -34, autoAlpha: 0, duration: 1.1, ease: "power2.in" }, 9.3);
 
     /* ============================================================
-       كواليس الحكاية — الصور الثمان (pin +350%)
-       نبضتان: تناثرٌ كأنّ يدًا ترمي صورًا على طاولة، ثم عبورُ عدسةٍ
-       تخترق سحابة الصور. المواضع والميلانات والجهات والأعماق كلها من
-       BTS_SHOTS — قيمٌ مكتوبة يدويًّا لا عشوائية، فالتجربة واحدة في كل
-       زيارة وفي كل اتجاه تمرير.
-       الشعار الجديد حاضر بلا انقطاع: تُحرَّك طبقته (لا تحويله) فيرتفع
-       وينكمش أعلى الشاشة طوال النبضتين ثم يعود إلى المركز — وبذلك يبقى
-       تحويل الشعار نفسه حكرًا على تسليم الخاتمة بدقّته.
-       ============================================================ */
-    const btsScene = $(".st-bts")!;
-    const logoLayer = $(".st-logo-layer")!;
-    const polas = $$(".st-pola");
-    const btsKick = $(".st-bts-kicker")!;
-    const btsTrib = $(".st-bts-tribute")!;
-    const btsTail = $(".st-bts-tail")!;
-    const tribW = words(".st-bts-tribute");
-    const tailW = words(".st-bts-tail");
+       جدار الذكريات (pin +420%) — الكواليس تُعلَّق لحظةً لحظة على حائط
+       عمودٌ واحد (.st-wall) يعلو بتقدّم التمرير، وفي نقطة تعليقٍ ثابتة أخفضَ
+       قليلًا من وسط الشاشة تستقرّ كلُّ صورةٍ بحجمها الكامل: تدخل منزلقةً
+       بميلانٍ من جهةٍ تعاكس سابقتها، ثم تتأرجح حول مسمارها بتخميدٍ سريع
+       وتسكن. وحين تُعلَّق الثامنة تتراجع الكاميرا فتنكشف الثمان لوحةً واحدة.
 
-    /* مجموعات العمق في نبضة العبور: قياس × ضبابية × مسافة انجراف.
-       الجوال: مجموعتان فقط وضبابية أخفّ (الثالثة تندمج في الوسطى) */
-    const DEPTH_D = [
-      { s: 3.2, b: 8, d: 85 },
-      { s: 2.2, b: 4, d: 65 },
-      { s: 1.6, b: 2, d: 48 },
-    ];
-    const DEPTH_M = [
-      { s: 2.8, b: 5, d: 80 },
-      { s: 1.8, b: 3, d: 58 },
-    ];
-    const depthOf = (i: number) =>
-      isMobile() ? DEPTH_M[Math.min(BTS_SHOTS[i].depth, 1)] : DEPTH_D[BTS_SHOTS[i].depth];
-    /* المركز المستقرّ الفعليّ على الشاشة (٪) — هو نفسه ما يضعه CSS، فمنه تُحسب
-       إزاحة القذف ومتجه العبور معًا. النِّسبة الأفقية تُقاس من عرض الخشبة لا
-       الشاشة (قد تكون أضيق منها على الشاشات العريضة) — تُقرأ لا تُفترَض. */
-    const btsStage = $(".st-bts-stage")!;
-    const stageRatio = () => btsStage.getBoundingClientRect().width / window.innerWidth || 1;
-    const center = (i: number) => {
-      const s = BTS_SHOTS[i];
-      if (isMobile()) return { cx: s.mx, cy: s.my };
-      return { cx: 50 + (s.cx - 50) * stageRatio(), cy: s.cy };
+       المشهد كلّه على لوحة الهوية الفاتحة التي سلّمها الفصل الرابع — لا
+       setPalette هنا ولا تعتيم: القصة تبقى داخل الهوية حتى تسليم الموقع،
+       فيصير التسليم امتدادًا لا قفزة. ولذلك سقط توأم الشعار الأبيض كلَّه.
+
+       زمن التايملاين ١٠ وحدات = ١٠٠٪ من المقطع، فتُقرأ النبضات بالنسبة رأسًا:
+         ٠–٠٫٦ الافتتاح · ٠٫٦–٦٫٢ التعليق (ثمان شرائح متساوية) ·
+         ٦٫٢–٧٫٨ التراجع · ٧٫٨–٩ لحظة النصّ · ٩–١٠ الختام والتسليم.
+
+       تقسيمُ الكتابة صارم فلا كاتبان على خاصيّةٍ واحدة:
+         render()   يملك تحويلات ‎.st-wall‎ و‎.st-shot‎ كلَّها، وشفافيّةَ التعليق
+                    — كلُّها دوالُّ صرفة في موضع التمرير، فالرجوع يعكس المشهد
+                    حرفيًّا بلا حالةٍ داخلية.
+         التايملاين يملك دخولَ كلّ صورة على ‎.st-frame‎ (عنصرٌ آخر)، وشفافيّةَ
+                    الجدار وضبابيّته، والنصوص والشعار.
+       ============================================================ */
+    const wallScene = $(".st-wall-scene")!;
+    const logoLayer = $(".st-logo-layer")!;
+    const wall = $(".st-wall")!;
+    const shots = $$(".st-shot");
+    const frames = $$(".st-frame");
+    const wallVeil = $(".st-wall-veil")!;
+    const wallVeilB = $(".st-wall-veil-b")!;
+    const wallKick = $(".st-wall-kicker")!;
+    const wallCap = $(".st-wall-cap")!;
+    const wallTrib = $(".st-wall-tribute")!;
+    const wallTail = $(".st-wall-tail")!;
+    const tribW = words(".st-wall-tribute");
+    const tailW = words(".st-wall-tail");
+    const N = WALL_SHOTS.length;
+
+    /* --- هندسة الجدار: تُقاس ولا تُفترَض ---
+       نقطة التعليق نفسها تُقرأ من CSS (‎--anchor‎ عبر offsetTop) فلا يتكرّر
+       الرقم في ملفّين، والمقاسات من offsetWidth/Height (قيم تخطيطٍ لا تتأثر
+       بالتحويلات الجارية) فتصحّ والصور مختلطة النِّسب. */
+    /* قاع الشعار الراسي — مصدرٌ واحد يقرؤه رسوُّ الشعار وسقفُ اللوحة معًا:
+       فوق الـkicker بـ١٫٥vh، ولا يعلو سقفَ الشاشة على النوافذ القصيرة */
+    const logoCeil = () => Math.max(window.innerHeight * 0.06, wallKick.offsetTop - window.innerHeight * 0.015);
+
+    /* حدود النبضات — نسبةً من المقطع (التايملاين يقرأ الأرقام نفسها ×١٠) */
+    const HANG_A = 0.06;
+    const HANG_B = 0.62;
+    const BOARD_B = 0.78;
+    const TEXT_B = 0.9;
+    /* ركوبُ الصورة الحاضرة على حافّة سابقتها: رأسيًّا من ارتفاع الإطار،
+       وأفقيًّا من عرضه — ولولا الثاني لما رُئي الأول، لأن الزجزاج يفصل
+       الصورتين فتتقاطع صناديقُهما رأسيًّا ولا تتلامسان على الشاشة. */
+    const OVERLAP = 0.075;
+    const HOVERLAP = 0.22;
+    const out2 = (v: number) => 1 - Math.pow(1 - v, 2); /* power2.out بلا تويـن */
+    /* منظورٌ بسيط: ما علا في العمود صغر — ولم يخفت. الصورة تبقى بلونها
+       وحدّتها كاملةً حتى آخر بكسل، والاختفاء كلُّه على الحدّ لا في الكرت
+       (فلا شفافيةَ صاعدةٍ ولا ضبابية على أي بطاقة في أي إطار). */
+    const depth = (d: number) => ({ s: 1 - 0.055 * Math.min(Math.max(d, 0), 3.2) });
+
+    const G = {
+      step: 0,
+      anchor: 0,
+      comp: 0, /* معامل انضغاط المنظور فوق نقطة التعليق (منه يقع التراكب) */
+      col: [] as Array<{ x: number; y: number }>,
+      end: [] as number[], /* إزاحةُ كلّ صورةٍ لحظةَ انتهاء التعليق — مبدأ التراجع */
+      board: [] as Array<{ x: number; y: number; s: number }>,
+      zoom: 0.4, /* مقاس اللوحة الوسطيّ — إليه تتراجع الكاميرا قبل انسياب الخانات */
     };
-    /* العبور: انجرافٌ على امتداد متجه موضع الصورة من مركز الشاشة */
-    const crossXY = (i: number) => {
+
+    /* --- منظورُ العمود: ما نزل عن نقطة التعليق تباعدَ كاملًا (فتبقى القادمة
+           تحت الشاشة يسترها الحجاب السفليّ)، وما علاها انضغط تدريجيًّا فركبت
+           الصورةُ الحاضرة حافّةَ سابقتها بالنسبة المطلوبة — كجدارٍ حقيقيّ
+           تُعلَّق فيه الصورة على طرف التي قبلها.
+             m(d) = d                       عند d ≤ 0  (أسفل النقطة: تباعدٌ كامل)
+             m(d) = d(1−r) + r(1−e^−d)      عند d > 0  (أعلاها: انضغاط)
+           والدالّة C¹ عند الصفر (المشتقّة ١ من الطرفين) فلا انكسارَ سرعةٍ حين
+           تعبر صورةٌ النقطة، ومشتقّتها موجبةٌ دومًا فلا انعكاسَ ترتيب. */
+    const mOf = (d: number) => (d <= 0 ? d : d * (1 - G.comp) + G.comp * (1 - Math.exp(-d)));
+    /* تصحيحُ الانضغاط عن الموضع الخطّيّ — صفرٌ لكل ما لم يعلُ النقطة بعد،
+       فتبقى الحركة الكبرى على ‎.st-wall‎ وحده (عنصرٌ واحد) */
+    const compOf = (d: number) => (d <= 0 ? 0 : -G.step * (mOf(d) - d));
+
+    const measureWall = () => {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const c = center(i);
-      const vx = ((c.cx - 50) / 100) * vw;
-      const vy = ((c.cy - 50) / 100) * vh;
-      const len = Math.hypot(vx, vy) || 1;
-      const dist = (depthOf(i).d / 100) * Math.max(vw, vh);
-      return { x: (vx / len) * dist, y: (vy / len) * dist };
+      const m = isMobile();
+      G.anchor = wall.offsetTop;
+      /* المسافة الأصليّة بين خانتين — تُقاس أسفلَ نقطة التعليق حيث لا انضغاط:
+         أكبرُ من ارتفاع الصورة لزامًا، فتبقى القادمةُ كلُّها تحت الشاشة
+         يسترها الحجاب السفليّ ولا تنازع الحاضرةَ لحظتَها. */
+      G.step = vh * (m ? 0.42 : 0.54);
+      const fhMax = Math.max(...frames.map((f) => f.offsetHeight), 1);
+      const fwMax = Math.max(...frames.map((f) => f.offsetWidth), 1);
+      /* الإزاحة الجانبيّة: قدرُها ما يترك بين الصورتين تراكبًا أفقيًّا بـ
+         HOVERLAP من العرض — ومحدودةٌ بهامشٍ يكفي شرطاتِ الفصول على الحافّة
+         (٢٦px مطلقة) فلا تلامسها الصورة على الشاشات الضيّقة */
+      const offset = Math.min(
+        (fwMax * (1 - HOVERLAP)) / 2,
+        Math.max(0, (vw - fwMax) / 2 - Math.max(vw * 0.03, 26))
+      );
+      G.col = WALL_SHOTS.map((s, i) => ({ x: s.side * offset, y: i * G.step }));
+
+      /* معامل الانضغاط يُشتقّ من نسبة التراكب المطلوبة، فتصحّ على كل مقاسٍ
+         ومع أيّ ارتفاعِ صورة: تركب الحاضرةُ حافّةَ سابقتها بـOVERLAP من
+         ارتفاع الإطار. (والسابقة أصغرُ بمقدار depth(1) فيدخل في الحساب) */
+      const m1 = (fhMax * ((1 + depth(1).s) / 2 - OVERLAP)) / G.step;
+      G.comp = Math.min(0.9, Math.max(0, (1 - m1) * Math.E));
+      G.end = WALL_SHOTS.map((_, i) => -G.step * mOf(N - 1 - i));
+
+      /* مدى الذوبان على الحدّين — واحدٌ لهما فيُقرآن أثرًا واحدًا لا أثرين.
+         سقفُه الفراغُ الحقيقيّ أسفل الصورة الحاضرة قبل سقف الخانة القادمة
+         (G.step − ارتفاع الإطار)، وهو أضيق الفراغين؛ فلو تجاوزه لظهر من
+         القادمة خيطٌ فوق الحدّ. يكتبه JS لأن هندسة العمود ملكه، وCSS يقرأ. */
+      wallScene.style.setProperty("--edge-fade", Math.round(Math.max(28, G.step - fhMax - 20)) + "px");
+
+      /* اللوحة: أربعة أعمدة × صفّين (الجوال عمودان × أربعة صفوف).
+         سقفُها حدّان لا واحد: أسفلَ قاع الشعار بصندوق أمانٍ ٥vh، وأسفلَ آخر
+         التدرّج (وإلّا غسل الحجابُ صفَّها العلويّ وهو مستقرّ). ومقاسُ كلّ
+         صورةٍ يُشتقّ من مقاسها التخطيطيّ الفعليّ فتملأ خانتها بلا قصّ. */
+      const cols = m ? 2 : 4;
+      const rows = Math.ceil(N / cols);
+      const padX = vw * (m ? 0.07 : 0.12);
+      const gapX = vw * (m ? 0.045 : 0.024);
+      const gapY = vh * (m ? 0.022 : 0.04);
+      const ceil = logoCeil(); /* قاع الشعار الراسي — المصدر نفسه الذي يقرؤه logoGeom */
+      const top = Math.max(ceil + vh * 0.05, wallVeil.offsetHeight + vh * 0.01);
+      /* ٩٠٪ لا ٩٦٪: تحت اللوحة يبقى مقدارُ نزولها في لحظة النصّ (٦vh)، فلا
+         يخرج صفُّها الأخير عن الشاشة وهي تهدأ وتنسحب */
+      const bottom = vh * 0.9;
+      const cellW = (vw - padX * 2 - gapX * (cols - 1)) / cols;
+      const cellH = (bottom - top - gapY * (rows - 1)) / rows;
+      const size = WALL_SHOTS.map((_, i) => {
+        const fw = frames[i].offsetWidth || 1;
+        const fh = frames[i].offsetHeight || 1;
+        const s = Math.min(cellW / fw, cellH / fh);
+        return { s, h: fh * s };
+      });
+      /* ارتفاع كل صفٍّ بأطول صورةٍ فيه، ثم تُمركز اللوحة في الفراغ الفعليّ
+         (بين قاع الشعار وقاع الشاشة) لا في إطارها — فيتساوى الفراغ فوقها
+         وتحتها بدل أن تجلس ثقيلةً في نصفٍ ويخلو النصف الآخر. */
+      const rowH: number[] = [];
+      for (let r = 0; r < rows; r++)
+        rowH.push(Math.max(...size.slice(r * cols, (r + 1) * cols).map((z) => z.h)));
+      const boardH = rowH.reduce((a, b) => a + b, 0) + gapY * (rows - 1);
+      const cTop = Math.max(top, Math.min((ceil + vh) / 2 - boardH / 2, bottom - boardH));
+      const rowY: number[] = [];
+      for (let r = 0, acc = cTop; r < rows; r++) {
+        rowY.push(acc + rowH[r] / 2 - G.anchor);
+        acc += rowH[r] + gapY;
+      }
+      G.board = WALL_SHOTS.map((_, i) => ({
+        /* الخانة الأولى يمينًا: اللوحة تُقرأ كما تُقرأ الصفحة */
+        x: ((cols - 1) / 2 - (i % cols)) * (cellW + gapX),
+        y: rowY[Math.floor(i / cols)],
+        s: size[i].s,
+      }));
+      G.zoom = G.board.reduce((a, b) => a + b.s, 0) / N;
     };
 
     /* التمركز بيد GSAP وحده (كبطل الوقت) — لا translate في CSS كي لا يتصارع الكاتبان */
-    gsap.set(polas, { xPercent: -50, yPercent: -50, force3D: true });
+    gsap.set(wall, { force3D: true });
+    gsap.set(shots, { xPercent: -50, yPercent: -50, force3D: true });
+    measureWall();
+    remeasureWall = () => {
+      measureWall();
+      render(tlWall.scrollTrigger?.progress ?? 0);
+    };
 
-    const tlBts = gsap.timeline({
+    const setWallY = gsap.quickSetter(wall, "y", "px");
+    const setCapA = gsap.quickSetter(wallCap, "opacity");
+    const sX = shots.map((el) => gsap.quickSetter(el, "x", "px"));
+    const sY = shots.map((el) => gsap.quickSetter(el, "y", "px"));
+    /* scaleX/scaleY لا «scale»: المختصر يتوسّع في CSSPlugin ولا يمرّ بمسار
+       quickSetter السريع، فيخرج نداؤه بلا أثر (كتابةٌ صامتة لا تُرى) */
+    const sS = shots.map((el) => {
+      const x = gsap.quickSetter(el, "scaleX");
+      const y = gsap.quickSetter(el, "scaleY");
+      return (v: number) => {
+        x(v);
+        y(v);
+      };
+    });
+
+    /* --- إيقاع العمود: يتمهّل عند كلّ صورة ولا يتجمّد أبدًا ---
+       الحركة المتقطّعة (وقفةٌ تامّة ثم قفزة) تُقرأ تحت التمرير المربوط
+       «قفزة» لا إيقاعًا: التمريرُ داخل الوقفة لا يحرّك شيئًا ثم يقفز الجدارُ
+       خطوةً كاملة. فبديلُها موجةٌ ناعمة مشتقّتها موجبةٌ دومًا — أبطأُ ما تكون
+       عند الصورة (فتُقرأ مُهلةً) وأسرعُ ما تكون بين صورتين، بلا صفرٍ ولا
+       انكسار. LINGER يضبط عمق المُهلة: ٠ إيقاعٌ خطّيّ · ١ وقفةٌ تامّة. */
+    const LINGER = 0.72;
+    const glide = (f: number) => f - (LINGER / (2 * Math.PI)) * Math.sin(2 * Math.PI * f);
+    const shown = { idx: -1 };
+
+    /* --- نبضة التعليق: العمود يسير متمهّلًا عند كلّ صورة، ويقود الصورَ
+           فوقه منظورٌ ينضغط فتركب الحاضرةُ حافّةَ سابقتها --- */
+    const renderHang = (p: number) => {
+      /* سبعُ نقلاتٍ لا ثمانٍ: من الخانة ٠ إلى الخانة ٧ */
+      const t = clamp01((p - HANG_A) / (HANG_B - HANG_A)) * (N - 1);
+      const i = Math.min(N - 2, Math.floor(t));
+      const u = i + glide(Math.min(1, t - i)); /* فهرسٌ متّصل يقود العمود */
+      const wy = -u * G.step;
+      setWallY(wy);
+      for (let k = 0; k < N; k++) {
+        sX[k](G.col[k].x);
+        sY[k](G.col[k].y + compOf(u - k));
+        sS[k](depth(u - k).s);
+      }
+      /* الحاضرة هي أقربُ خانةٍ إلى نقطة التعليق، والتعليق يظهر كلّما اقتربت
+         منها ويخفت بين الاثنتين — فالتبديل لا يقع إلا وشفافيّته صفر */
+      const near = Math.round(u);
+      const off = Math.abs(u - near);
+      if (near !== shown.idx) {
+        shown.idx = near;
+        wallCap.textContent = WALL_SHOTS[near].cap;
+        wallCap.dataset.side = String(WALL_SHOTS[near].side);
+      }
+      setCapA(clamp01((0.34 - off) / 0.16));
+    };
+
+    /* --- نبضة التراجع: كاميرا تنكمش حقًّا حول نقطة التعليق، ثم ينساب العمود
+           المنكمش إلى خاناته لوحةً. عمودٌ من ثمانٍ لا يصير لوحةً متوازنة
+           بانكماشٍ وحده مهما صغر (شريطٌ رفيع لا لوحة)، فالانكماش يحمل إحساس
+           التراجع والانسياب يحمل معناه — والمرحلتان متداخلتان فلا تُقرآن اثنتين.
+           والجدار عند هذه النبضة في ‎y = 0‎ وإزاحةُ العمود مطويّةٌ في مواضع
+           الصور، فالانتقال من نبضة التعليق متّصلٌ إطارًا بإطار. --- */
+    const renderBoard = (p: number) => {
+      const q = clamp01((p - HANG_B) / (BOARD_B - HANG_B));
+      const z = 1 - (1 - G.zoom) * out2(Math.min(1, q / 0.62));
+      const w = out2(clamp01((q - 0.3) / 0.7));
+      /* لحظة النصّ: اللوحة تنزل قليلًا وتنسحب أثرًا بعيدًا (الضبابية والشفافية
+         على التايملاين — هذه إزاحةٌ لا غير) */
+      setWallY(window.innerHeight * 0.06 * out2(clamp01((p - BOARD_B) / (TEXT_B - BOARD_B))));
+      for (let k = 0; k < N; k++) {
+        const c = G.col[k];
+        const b = G.board[k];
+        const d = depth(N - 1 - k);
+        /* المبدأ هو حالُ العمود المنضغط لحظةَ انتهاء التعليق (G.end) — فيلتحم
+           الطرفان إطارًا بإطار مهما تغيّر المنظور */
+        sX[k](c.x * z * (1 - w) + b.x * w);
+        sY[k](G.end[k] * z * (1 - w) + b.y * w);
+        sS[k](d.s * z * (1 - w) + b.s * w);
+      }
+      setCapA(0);
+    };
+
+    const render = (p: number) => {
+      if (!G.col.length) return;
+      if (p < HANG_B) renderHang(p);
+      else renderBoard(p);
+    };
+
+    const tlWall = gsap.timeline({
       defaults: { ease: "none" },
       scrollTrigger: {
-        trigger: btsScene,
+        trigger: wallScene,
         start: "top top",
-        end: pinEnd(PIN.bts),
+        end: pinEnd(PIN.wall),
         pin: true,
         scrub: 1,
         anticipatePin: 1,
         invalidateOnRefresh: true,
-        /* مرشّح العبور وwill-change لا يعيشان إلا داخل المشهد */
+        /* will-change لا يعيش إلا داخل المشهد */
         onToggle(self) {
-          btsScene.classList.toggle("st-bts-active", self.isActive);
+          wallScene.classList.toggle("st-wall-active", self.isActive);
           if (self.isActive) queueShots(); /* دخولٌ عميق لم يمرّ بالفصل الثالث */
         },
         onRefresh(self) {
-          btsScene.classList.toggle("st-bts-active", self.isActive);
+          /* الهندسة تُقاس بعد كل تغيّر مقاس، ثم يُعاد الرسم على الموضع الحالي
+             فورًا — فلا إطارٌ واحد بقياسٍ قديم */
+          measureWall();
+          render(self.progress);
+          wallScene.classList.toggle("st-wall-active", self.isActive);
+        },
+        onUpdate(self) {
+          render(self.progress);
         },
       },
     });
 
-    /* الشعار يرتفع وينكمش: علامةٌ حاضرة فوق الذكريات طوال النبضتين */
-    tlBts.fromTo(
-      logoLayer,
-      { y: 0, scale: 1 },
-      {
-        y: () => -window.innerHeight * 0.22,
-        scale: 0.55,
-        duration: 1.4,
-        ease: "power2.inOut",
-        immediateRender: false,
-      },
-      0
-    );
+    /* --- ٠) الافتتاح (٠→٦٪): يرسو الشعار أعلى الشاشة على حجابه، ويظهر
+           الـkicker تحته خارج مسار العمود --- */
+    /* رفعة الشعار ومقاسه يُحسبان ولا يُقدَّران، من موضع الـkicker الفعليّ
+       (offsetTop — قيمة تخطيطٍ لا تتأثر بتحويلات الدخول): قاعُ الشعار يقف
+       فوقه، والـkicker نفسه داخل المنطقة الصمّاء من الحجاب — فلا يمرّ خلف
+       أيّهما شيءٌ من العمود، ولا يتقاطع الاثنان على نافذةٍ قصيرة (landscape
+       الجوال) لأن المقاس ينكمش بدل أن يفيض عن الشاشة.
+       ومنشأ تحويل الطبقة عند ٤٢٪ (CSS) — وهو ارتفاع مركز الشعار نفسه — فلا
+       يزحف الانكماشُ بالمركز ويكذّب الحساب. */
+    const logoGeom = () => {
+      const vh = window.innerHeight;
+      const ratio = fly.naturalWidth ? fly.naturalHeight / fly.naturalWidth : 0.35;
+      const natural = centerLogoW() * ratio; /* ارتفاعه بحجمه المركزيّ */
+      const ceil = logoCeil();
+      const s = Math.max(0.12, Math.min(0.5, (ceil - vh * 0.02) / natural));
+      /* مركزه قبل الرفع عند ٤٢٪ من الشاشة (من هندسة الطيران) */
+      return { s, y: Math.min(0, ceil - (natural * s) / 2 - vh * 0.42) };
+    };
 
-    /* --- النبضة الأولى — التناثر (0→55%): الصورة i تشغل الشريحة
-           [i×6.5% , i×6.5%+14%] من النبضة — مداخل متداخلة لا إيقاع آلي --- */
-    const B1 = 5.5;
-    polas.forEach((el, i) => {
-      const s = BTS_SHOTS[i];
-      const at = i * 0.065 * B1;
-      const dur = 0.14 * B1;
-      tlBts
-        .fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: dur * 0.35, ease: "power2.out" }, at)
-        /* تُقذف من خارج الشاشة بدوران أكبر، وتهبط بتجاوز طفيف (back.out) إلى ميلانها النهائي */
+    /* تثبيتُ اللوحة على الهوية: في التصفّح الطبيعيّ تويـنٌ من الهوية إلى
+       الهوية — لا أثر له البتّة. وفي الدخول العميق (إعادة تحميلٍ في منتصف
+       القصة، أو استرجاع المتصفّح لموضع التمرير) قد يكون آخرُ من كتب اللوحة
+       محطةَ التجدّد لا الفصل الرابع، فيستردّها المشهد في أول ٤٪ بدل أن يجري
+       على لوحةٍ لا يملكها. */
+    setPalette(tlWall, identity, 0, 0.4);
+    tlWall
+      .fromTo(
+        logoLayer,
+        { y: 0, scale: 1 },
+        {
+          y: () => logoGeom().y,
+          scale: () => logoGeom().s,
+          duration: 0.7,
+          ease: "power2.inOut",
+          immediateRender: false,
+        },
+        0
+      )
+      .fromTo(wallVeil, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5, immediateRender: false }, 0)
+      .fromTo(wallVeilB, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5, immediateRender: false }, 0)
+      .fromTo(
+        wallKick,
+        { autoAlpha: 0, y: -12 },
+        { autoAlpha: 1, y: 0, duration: 0.5, ease: "power3.out", immediateRender: false },
+        0.15
+      );
+
+    /* --- ١) التعليق (٦→٦٢٪): سبعُ نقلاتٍ متساوية (٨٪ من المقطع لكلٍّ) —
+           صعودُ العمود يقوده render أعلاه، وهذه حركةُ دخولٍ واحدة على
+           ‎.st-frame‎ وحده، **أحاديّة الاتجاه لا تعكس نفسها في أي إطار**:
+           ميلانٌ يقلّ، وإزاحةٌ تقصر، ومقاسٌ يكبر، وضبابيةٌ تزول — كلُّها
+           power3.out. لا back ولا elastic ولا bounce ولا تجاوزَ البتّة:
+           تحت التمرير المربوط يملك الزائرُ الزمن، فكلُّ ارتدادٍ يُقرأ
+           ارتجاجًا لا نعومة.
+
+           والنافذة قدرُها نقلةٌ كاملة تنتهي قُبيل بلوغ الصورةِ نقطةَ التعليق:
+           فتصل مستقرّةً تمامًا ثم تتمهّل عندها، ولا تبدأ التالية دخولها إلا
+           بعد استقرار سابقتها. وهذا سقفُ ما تحتمله سبعُ نقلات: أيّ نافذةٍ
+           أوسع من النقلة تجعل بطاقتين داخلتين معًا — والشرطان لا يجتمعان. --- */
+    const STRIDE = ((HANG_B - HANG_A) * 10) / (N - 1);
+    shots.forEach((_, i) => {
+      const s = WALL_SHOTS[i];
+      const fr = frames[i];
+      /* لحظةُ بلوغ الصورة i نقطةَ التعليق، والدخول ينتهي قبلها بهامشٍ صغير */
+      const arrive = HANG_A * 10 + i * STRIDE - 0.05;
+      const at = Math.max(0, arrive - STRIDE);
+      const dur = Math.max(0.2, arrive - at);
+      tlWall
         .fromTo(
-          el,
+          fr,
           {
-            x: () => ((s.ex - center(i).cx) / 100) * window.innerWidth,
-            y: () => ((s.ey - center(i).cy) / 100) * window.innerHeight,
-            rotate: s.rIn,
-            scale: 1.16,
+            x: () => s.side * window.innerWidth * 0.4,
+            rotation: s.rotIn,
+            scale: 0.96,
+            filter: "blur(5px)",
           },
-          { x: 0, y: 0, rotate: s.rot, scale: 1, duration: dur, ease: "back.out(1.4)" },
-          at
-        );
-    });
-    /* الـkicker يظهر مع هبوط الصورة الأولى */
-    tlBts.fromTo(btsKick, { autoAlpha: 0, y: -12 }, { autoAlpha: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.5);
-
-    /* --- فاصل نصي (55→68%): الصور المستقرة تخفت ليصعد فوقها سطر التكريم --- */
-    tlBts
-      .fromTo(polas, { scale: 1 }, { scale: 0.96, duration: 0.7, ease: "power2.out", immediateRender: false }, B1)
-      .fromTo(polas, { "--pbr": 1 }, { "--pbr": 0.86, duration: 0.7, immediateRender: false }, B1)
-      .fromTo(btsTrib, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }, 5.6)
-      .fromTo(tribW, { y: 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1.1, stagger: 0.08, ease: "power3.out" }, 5.7);
-
-    /* --- النبضة الثانية — العبور (68→100%): القريبة تتضخم وتعبر الحواف
-           أولًا، ثم الوسطى، ثم البعيدة — عمق × ضبابية × اتساع --- */
-    /* النص التكريمي يتلاشى مع بدء العبور، والـkicker معه — لا يبقى إلا الصور
-       ثم خشبةٌ خالية للسطر الخاتم */
-    tlBts
-      .fromTo(btsTrib, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.7, immediateRender: false }, 6.8)
-      .fromTo(btsKick, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.9, immediateRender: false }, 6.8);
-    polas.forEach((el, i) => {
-      const at = 6.8 + BTS_SHOTS[i].depth * 0.15;
-      const dur = 1.9 - BTS_SHOTS[i].depth * 0.05;
-      tlBts
-        .fromTo(
-          el,
-          { x: 0, y: 0, scale: 0.96 },
           {
-            x: () => crossXY(i).x,
-            y: () => crossXY(i).y,
-            scale: () => depthOf(i).s,
+            x: 0,
+            rotation: s.rot,
+            scale: 1,
+            filter: "blur(0px)",
             duration: dur,
-            ease: "power2.in",
+            ease: "power3.out",
             immediateRender: false,
           },
           at
         )
+        /* الظهور تدريجيّ على أول ٦٠٪ من النافذة — لا قفزةَ شفافية */
         .fromTo(
-          el,
-          { "--pb": "0px" },
-          { "--pb": () => depthOf(i).b + "px", duration: dur, ease: "power2.in", immediateRender: false },
+          fr,
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: dur * 0.6, ease: "power2.out", immediateRender: false },
           at
-        )
-        .fromTo(el, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.5, ease: "power1.in", immediateRender: false }, at + dur - 0.5);
+        );
     });
 
-    /* --- خشبةٌ نظيفة: سطر الخاتمة يدخل (كلمةً-كلمةً كسائر نصوص القصة)
-           ثم يعود الشعار إلى المركز بحجمه ليتسلّم بقيّة الخاتمة --- */
-    tlBts
-      /* آخر صورة تُتمّ عبورها عند 8.9 — فالسطر يدخل على خشبة خالية فعلًا */
-      .fromTo(btsTail, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.35 }, 8.95)
-      .fromTo(tailW, { y: 20, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1, stagger: 0.09, ease: "power3.out" }, 9)
+    /* --- ٢) التراجع (٦٢→٧٨٪): الهندسة كلّها في render — وهنا انسحابُ ما
+           لا يخدم اللوحة: الـkicker وحدُّ الأسفل (والتعليق شفافيّته في render).
+           وحدُّ الأعلى يبقى: اللوحة تنحدر من فوقه فتخرج منه ذوبانًا. --- */
+    tlWall
+      .fromTo(wallKick, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.4, immediateRender: false }, 6.25)
+      .fromTo(wallVeilB, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.4, immediateRender: false }, 6.25);
+
+    /* --- ٣) لحظة النصّ (٧٨→٩٠٪): اللوحة تهدأ وتنسحب أثرًا بعيدًا، وعلى خلفيةٍ
+           فاتحةٍ خالية يُقرأ السطر التكريميّ كلمةً-كلمةً. التباين هنا مضمونٌ
+           بطبيعته (حبرٌ داكن على خلفية الهوية) — فلا طبقة تعتيم البتّة. --- */
+    tlWall
+      .fromTo(
+        wall,
+        { opacity: 1, filter: "blur(0px)" },
+        { opacity: 0.1, filter: "blur(6px)", duration: 0.55, ease: "power2.out", immediateRender: false },
+        7.8
+      )
+      .fromTo(wallTrib, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.25, immediateRender: false }, 8.05)
+      .fromTo(tribW, { y: 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.8, stagger: 0.07, ease: "power3.out" }, 8.15);
+
+    /* --- ٤) الختام (٩٠→١٠٠٪): يخلو المسرح تمامًا، فيدخل السطر الخاتم ويعود
+           الشعار إلى المركز ليتسلّم بقيّة الخاتمة. لا معالجة انتقالٍ لونيّ:
+           الخلفية أصلًا لون الموقع، فتسليم Flip يجد اللون ذاته. --- */
+    tlWall
+      .fromTo(wallTrib, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.2, immediateRender: false }, 8.95)
+      .to(wall, { opacity: 0, duration: 0.25 }, 8.95)
+      .fromTo(wallVeil, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.25, immediateRender: false }, 8.95)
+      .fromTo(wallTail, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.2, immediateRender: false }, 9.2)
+      .fromTo(tailW, { y: 20, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.5, stagger: 0.06, ease: "power3.out" }, 9.23)
       .fromTo(
         logoLayer,
-        { y: () => -window.innerHeight * 0.22, scale: 0.55 },
-        { y: 0, scale: 1, duration: 0.9, ease: "power2.inOut", immediateRender: false },
-        9.3
+        { y: () => logoGeom().y, scale: () => logoGeom().s },
+        { y: 0, scale: 1, duration: 0.55, ease: "power2.inOut", immediateRender: false },
+        9.25
       )
-      /* ختام المشهد كختام الفصل الرابع: مُهلةُ قراءةٍ ثم يصعد السطر ويخفت داخل
-         التثبيت. طبقة الشعار ثابتة (fixed) لا تسير مع المشهد؛ فلو بقي السطر
-         ظاهرًا حين يُفلت التثبيت لعبر من خلف الشعار وهو يصعد إلى الخاتمة.
-         وامتدّ التثبيت (٣٫٥ → ٤٫٣) كي تبقى سرعة كلّ نبضةٍ كما كانت. */
-      .to(btsTail, { y: -34, autoAlpha: 0, duration: 1.1, ease: "power2.in" }, 11.5);
+      /* ختام المشهد كختام الفصل الرابع: مُهلةُ قراءةٍ ثم يصعد السطر ويخفت
+         داخل التثبيت. طبقة الشعار ثابتة (fixed) لا تسير مع المشهد؛ فلو بقي
+         السطر ظاهرًا حين يُفلت التثبيت لعبر من خلف الشعار وهو يصعد. */
+      .to(wallTail, { y: -34, autoAlpha: 0, duration: 0.18, ease: "power2.in" }, 9.82);
 
     /* ============================================================
        الخاتمة — التسليم وحده (pin +170%): نفَسٌ قصير ثم يطير الشعار إلى
@@ -1156,7 +1407,6 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
 
     /* --- مخرجات المنسق (تُملأ كل تحديث ثم تُطبَّق دفعة) --- */
     const out = { day: todayIdx, gate: 0, kick: 0, kickA: 0, preS: 1, preY: 0, st: 0 };
-    const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
     type TimeSeg = { a: number; b: number; run: (q: number) => void };
     let segs: TimeSeg[] = [];
@@ -1338,7 +1588,8 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
     extraCleanup = () => {
       skipBtn.removeEventListener("click", onSkip);
       tiltOff?.();
-      btsScene.classList.remove("st-bts-active"); /* الصنف يدويّ فلا يرفعه ctx.revert */
+      /* الأصناف يدويّة فلا يرفعها ctx.revert */
+      wallScene.classList.remove("st-wall-active");
       particles.stop();
       splits.forEach((s) => s.revert());
       ScrollTrigger.removeEventListener("refreshInit", computeFly);

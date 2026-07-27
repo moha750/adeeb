@@ -329,99 +329,195 @@ html[data-adeeb-story="skip"] #adeeb-story { display: none; }
 .st-renew-l1 { font-size: clamp(1.6rem, 3.6vw, 2.6rem); font-weight: 700; }
 
 /* طبقة الشعار الطائر (الفصل الرابع ← موضع شعار الهيدر في الخاتمة)
-   الطبقة نفسها تُحرَّك في مشهد الكواليس (ترتفع وتنكمش ثم تعود) كي يبقى
-   تحويل الشعار الداخلي حكرًا على تسليم الخاتمة — كاتبان لا يتصارعان */
-.st-logo-layer { position: fixed; inset: 0; z-index: 40; pointer-events: none; }
+   الطبقة نفسها تُحرَّك في مشهد جدار الذكريات (ترسو أعلى الشاشة ثم تعود) كي
+   يبقى تحويل الشعار الداخلي حكرًا على تسليم الخاتمة — كاتبان لا يتصارعان */
+/* منشأ التحويل عند مركز الشعار نفسه لا مركز الشاشة: طبقةٌ ملء الشاشة تنكمش
+   حول مركزها فتزحف بالشعار لأسفل، فتكذب حسابات الرسوّ. و‎٤٢٪‎ هي الارتفاع
+   الذي يضع فيه computeFly مركزَ الشعار — رقمٌ واحد في الملفّين. */
+.st-logo-layer { position: fixed; inset: 0; z-index: 40; pointer-events: none; transform-origin: 50% 42%; }
 .st-newlogo { position: absolute; opacity: 0; will-change: transform, opacity; }
 
 /* ============================================================
-   كواليس الحكاية — الصور الثمان (بين الفصل الرابع ومحطة اليوم)
-   الشعار يجلس أعلى الشاشة (طبقته z=40) فتعبر الصور (z=10) من خلفه
-   دون أن تمسّه، والمجال العلوي متروك له.
-   ============================================================ */
-.st-bts { display: block; }
+   جدار الذكريات — لحظاتُ الكواليس تُعلَّق واحدةً تلو الأخرى على حائط
+   (بين الفصل الرابع والخاتمة)
 
-.st-bts-kicker {
-  position: absolute; top: 8.5vh; inset-inline: 0; z-index: 4;
+   المشهد كلّه على لوحة الهوية الفاتحة التي سلّمها الفصل الرابع: لا لون
+   خاصًّا به ولا تعتيم — فلا انقطاع بينه وبين الفصل قبله ولا الموقع بعده،
+   ولا يبقى للتسليم ما يعالجه.
+
+   ثلاث قواعد لا تُكسر:
+     ١) لكل صورة لحظتها: تُعرض كاملةً غير مقصوصة عند نقطة التعليق، وتبقى
+        هناك وقفةً محسوسة (٤٣٪ من شريحتها) قبل أن تعلوها التالية.
+     ٢) لا نصّ فوق صورة أبدًا — الـkicker والعدّاد في مناطق صمّاء، والتعليق
+        في الفراغ المقابل للصورة (وتحتها على الجوال)، والسطر التكريميّ
+        والخاتم على خشبةٍ خالية.
+     ٣) لا تراكب كحالة عرض: المسافة بين صورةٍ وتاليتها أكبر من ارتفاع
+        الصورة لزامًا (يفرضها ‎G.step‎ في story.ts من ‎--shot-h‎ نفسه).
+
+   الطبقات (z داخل المشهد): العمود ٢ · حجاب الشعار ٤ · النصوص والعدّاد ٦.
+   والشعار في طبقته العليا (z=40) راسيًا أعلى المسرح فوق الحجاب.
+   ============================================================ */
+.st-wall-scene {
+  display: block;
+  /* مصدرٌ واحد لهندسة المشهد — يقرؤه CSS وstory.ts معًا (offsetTop للنقطة،
+     والمقاسات الفعليّة للأطر). الحدّ الثاني في ‎--shot-h‎ يحرس النوافذ
+     القصيرة (landscape الجوال): يترك للشعار والـkicker مجالًا مطلقًا لا
+     نسبيًّا، فلا ينضغطان على الصورة حين يقصر الارتفاع. */
+  /* نقطة التعليق أخفضُ قليلًا من الوسط، والصورة أقصرُ من ملء الفراغ —
+     والفارق بينهما هو ما يترك للصورة السابقة نافذةً تنحسر فيها مرئيّةً بين
+     الـkicker والصورة الحاضرة. لو ارتفعت النقطة أو كبرت الصورة لابتلع
+     الحجابُ السابقةَ كلَّها فسقط المنظور. */
+  --anchor: 62%;
+  --shot-h: min(38vh, calc(100vh - 250px));
+  --shot-max-w: 40vw;
+  /* الشريط العلويّ ثلاثةُ حدودٍ مشتقّة بعضها من بعض، فيتماسك على كل ارتفاع:
+       --kick-top    موضع الـkicker (والشعار يرسو فوقه بحسابٍ في story.ts)
+       --veil-solid  آخر الصمّاء — أسفلَ نصّ الـkicker بهامشٍ مطلقٍ لا نسبيّ
+       --veil-h      آخر التدرّج، وهو أيضًا سقفُ اللوحة في التراجع
+     والحدّ الأخير محروسٌ ألّا ينزل على الصورة الحاضرة: على النوافذ القصيرة
+     يُقصّ عند سقفها بـ١٫٥vh بدل أن يغسل رأسها. */
+  --kick-top: max(16vh, 120px);
+  --veil-solid: calc(var(--kick-top) + max(4.5vh, 34px));
+  /* مدى الذوبان (‎--edge-fade‎) يكتبه story.ts من هندسة العمود — واحدٌ للحدّين
+     فيُقرآن أثرًا واحدًا لا أثرين. وقيمةٌ ساكنة هنا للنسخة بلا JS.
+     وحدُّ الأعلى محروسٌ ألّا ينزل على الصورة الحاضرة. */
+  --edge-fade: 12vh;
+  --veil-h: min(
+    calc(var(--veil-solid) + var(--edge-fade)),
+    calc(var(--anchor) - var(--shot-h) / 2 - 1.5vh)
+  );
+  /* حدّ الأسفل: من قاع الشاشة إلى ما تحت الصورة الحاضرة بـ١٫٥vh */
+  --veilb-h: calc(100% - var(--anchor) - var(--shot-h) / 2 - 1.5vh);
+}
+
+/* ---------- حدّ الاختفاء: تدرّجٌ من لون الخلفية نفسه ----------
+   الصورة لا تخفت في نفسها البتّة — تبقى بلونها وحدّتها حتى آخر بكسل، وإنما
+   تدخل في هذا الحدّ فتذوب فيه. صمّاؤه أعلاه تحمي الشعار والـkicker، وذوبانه
+   دونها هو الاختفاء نفسه.
+   والمحطّات الخمس تقارب منحنى smoothstep: التدرّج الخطّيّ ينكسر عند طرفيه
+   (قفزةُ مشتقّة) فيُقرأ خطًّا فاصلًا — وهذا ما كان يبدو حادًّا. */
+.st-wall-veil {
+  position: absolute; inset-inline: 0; top: 0; z-index: 4;
+  height: var(--veil-h);
+  pointer-events: none; opacity: 0;
+  /* المحطّات الخمس تقارب منحنى smoothstep — والتدرّج ذو الطرفين الحادّين
+     ينكسر عند طرفيه (قفزةُ مشتقّة) فيُقرأ خطًّا فاصلًا لا ذوبانًا.
+     ومحطّاته بالبكسل وحده لا بنسبةٍ مئويّة: النسبةُ داخل التدرّج تُقاس على
+     طول خطّه (ارتفاع العنصر) لا على الأب، فلو دخلت ‎--veil-h‎ هنا (وفيها ‎%‎
+     من ‎--anchor‎) لانهار الحدّ كلُّه. ولذلك تُبنى المحطّات صعودًا من
+     ‎--veil-solid‎، وارتفاعُ العنصر وحده يحملُ الحدَّ الأقصى. */
+  background: linear-gradient(
+    to bottom,
+    var(--st-bg) 0,
+    var(--st-bg) var(--veil-solid),
+    color-mix(in srgb, var(--st-bg) 90%, transparent) calc(var(--veil-solid) + var(--edge-fade) * 0.25),
+    color-mix(in srgb, var(--st-bg) 62%, transparent) calc(var(--veil-solid) + var(--edge-fade) * 0.5),
+    color-mix(in srgb, var(--st-bg) 22%, transparent) calc(var(--veil-solid) + var(--edge-fade) * 0.75),
+    transparent calc(var(--veil-solid) + var(--edge-fade))
+  );
+}
+
+/* ويقابله من أسفل بالأثر نفسه حرفًا: المحطّات نفسها والمدى نفسه
+   (‎--edge-fade‎)، مقلوبةً — فالصورة تخرج من الحدّ الأسفل ذوبانًا كما تدخل
+   في الأعلى ذوبانًا، ويُقرأ الحدّان واحدًا.
+   ينسحب مع بدء التراجع — لا صورة تأتي من تحتُ بعده، واللوحة تحتاج قاعها. */
+.st-wall-veil-b {
+  position: absolute; inset-inline: 0; bottom: 0; z-index: 4;
+  height: var(--veilb-h);
+  pointer-events: none; opacity: 0;
+  /* يُبنى من أعلاه إلى أسفل (لا ‎to top‎) لأن محطّاته تُقاس من مبدأ الخطّ:
+     شفافيةٌ عند سقفه، ثم المحطّات نفسها معكوسةً، ثم صمّاءُ إلى قاع الشاشة */
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    color-mix(in srgb, var(--st-bg) 22%, transparent) calc(var(--edge-fade) * 0.25),
+    color-mix(in srgb, var(--st-bg) 62%, transparent) calc(var(--edge-fade) * 0.5),
+    color-mix(in srgb, var(--st-bg) 90%, transparent) calc(var(--edge-fade) * 0.75),
+    var(--st-bg) var(--edge-fade)
+  );
+}
+
+.st-wall-kicker {
+  position: absolute; z-index: 6;
+  top: var(--kick-top);
+  inset-inline: 0;
   text-align: center;
 }
-/* خشبة التكوين: عرضها مشتقٌّ من عرض الصورة نفسها لا من الشاشة — فحين تقف
-   الصورة عند سقفها (300px) على الشاشات العريضة يقف التكوين معها ولا يتمدّد
-   فيتفكّك التراكب. المواضع الأفقية (--cx) نِسَبٌ من هذه الخشبة، والرأسية
-   (--cy) نِسَبٌ من الشاشة لأن مجالها العموديّ محكومٌ بها. */
-.st-bts-stage {
-  position: absolute;
-  top: 0; bottom: 0; left: 0; right: 0;
-  margin-inline: auto;
-  /* المقاس مقيَّدٌ بالارتفاع أيضًا لا بالعرض وحده: ارتفاع الإطار ≈ 1.13× عرضه،
-     فلولا حدّ الـvh لابتلعت ثماني صورٍ الشاشةَ على النوافذ القصيرة */
-  --pw: clamp(150px, min(15vw, 24vh), 340px);
-  width: min(100vw, calc(var(--pw) * 7.4));
-  z-index: 2;
-}
 
-.st-pola {
-  position: absolute;
-  left: var(--cx); top: var(--cy);
-  width: var(--pw);
-  /* التمركز والدوران والقياس كلها بيد GSAP (xPercent/yPercent) — لا transform في CSS */
-  --pb: 0px; /* ضبابية العبور */
-  --pbr: 1; /* إضاءة الفاصل النصي */
-}
-.st-pola-in {
+/* ---------- العمود: جسمٌ واحد يتحرّك بـtranslate على المحور الرأسي ----------
+   نقطةٌ بلا مقاس: صورُه مطلقةٌ حوله، والتمركز بيد GSAP (xPercent/yPercent)
+   كبقيّة متحرّكات القصة — لا translate في CSS كي لا يتصارع الكاتبان. */
+.st-wall { position: absolute; left: 50%; top: var(--anchor); z-index: 2; }
+.st-shot { position: absolute; left: 0; top: 0; }
+
+/* الإطار: صورةٌ مطبوعة معلّقة — حافّة بيضاء رفيعة وظلٌّ ناعم واقعيّ يفصلها
+   عن الحائط الفاتح. يتأرجح حول مسماره أعلاه، فمنشأ التحويل رأسُه لا مركزه. */
+.st-frame {
   display: block;
-  background: #fbf9f3;
-  padding: 4%;
-  box-shadow: 0 14px 34px rgba(12, 18, 28, 0.22), 0 2px 6px rgba(12, 18, 28, 0.12);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transform-origin: 50% 0;
+  background: #fff;
+  padding: clamp(6px, 0.62vw, 11px);
+  border: 1px solid rgba(24, 32, 49, 0.07);
+  box-shadow: 0 12px 28px rgba(24, 32, 49, 0.14), 0 2px 6px rgba(24, 32, 49, 0.1);
 }
-.st-pola-img { position: relative; aspect-ratio: 1 / 1; overflow: hidden; background: #ece8de; }
-.st-pola-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.st-pola-ph {
-  position: absolute; inset: 0;
+/* احتواء بلا قصّ ولا صندوقٍ مفروض: الصورة بنسبتها الطبيعية داخل حدَّي
+   الارتفاع والعرض — فالنِّسب المختلطة تستوعبها الحدود من نفسها */
+.st-shot-img { display: block; font-size: 0; }
+.st-shot-img img {
+  display: block;
+  width: auto; height: auto;
+  max-height: var(--shot-h); max-width: var(--shot-max-w);
+}
+/* البطاقة البديلة: الإطار نفسه بنسبة 4:3 — الجدار يبدو مكتملًا فنيًّا قبل
+   وصول الصور (اتساقًا مع بطاقات الفصل الثاني) */
+.st-shot-ph {
   display: grid; place-content: center; justify-items: center; gap: 7%;
+  height: var(--shot-h); aspect-ratio: 4 / 3; max-width: var(--shot-max-w);
   background: linear-gradient(
     160deg,
-    color-mix(in oklab, var(--st-accent) 18%, var(--st-bg)),
-    color-mix(in oklab, var(--st-ink) 12%, var(--st-bg))
+    color-mix(in oklab, var(--st-accent) 14%, var(--st-bg)),
+    color-mix(in oklab, var(--st-ink) 7%, var(--st-bg))
   );
-  color: color-mix(in oklab, var(--st-ink) 42%, transparent);
+  color: color-mix(in oklab, var(--st-accent) 62%, transparent);
+  font-size: 1rem;
 }
-.st-pola-ph svg { width: 24%; height: auto; }
-.st-pola-ph b { font-family: "Eras", "Lyon Arabic", sans-serif; font-size: 1.05rem; font-weight: 700; }
-.st-pola[data-loaded] .st-pola-ph { display: none; }
-/* البند الأبيض السفلي أسمك (نسبة من العرض) — يبقى نظيفًا إن لم يكن ثمّة تعليق */
-.st-pola-cap {
-  display: grid; place-items: center; padding-block: 6% 8%;
-  color: #5a5951; font-size: clamp(0.62rem, 0.85vw, 0.8rem); font-weight: 500;
-  text-align: center; line-height: 1.4;
-}
+.st-shot-ph svg { width: 18%; height: auto; }
+.st-shot[data-loaded] .st-shot-ph { display: none; }
+/* تعليق النسخة الساكنة — لا وجود له في المسار الحيّ */
+.st-shot-cap { display: none; }
 
-/* أثناء المشهد وحده: مرشّح العبور وwill-change — لا شيء منهما دائم
-   (المشهد كله scrubbed، فالرجوع يعيد الحركة في أي لحظة داخله) */
-.st-bts-active .st-pola { will-change: transform, opacity; }
-.st-bts-active .st-pola-in {
-  filter: blur(var(--pb)) brightness(var(--pbr));
-  will-change: filter;
+/* ---------- التعليق الحيّ: في الفراغ المقابل للصورة، محاذيًا منتصفها ----------
+   الصورة تستقرّ على ‎±١٣vw‎ من المركز وعرضها الأقصى ‎٤٠vw‎، فحافّتها الداخلية
+   عند ‎±٨vw‎ والخارجية عند ‎±٣٣vw‎ — والنطاق أدناه (‎٥vw..٣٨vw‎) خارجها لزامًا
+   على كل مقاس. جهتُه يكتبها story.ts من side الصورة الحاضرة. */
+.st-wall-cap {
+  position: absolute; z-index: 6;
+  top: var(--anchor); transform: translateY(-50%);
+  width: 33vw;
+  text-align: center; line-height: 1.7;
+  color: var(--st-dim);
+  font-size: clamp(0.9rem, 1.5vw, 1.1rem); font-weight: 500;
+  opacity: 0;
 }
+.st-wall-cap[data-side="1"] { left: 5vw; right: auto; }
+.st-wall-cap[data-side="-1"] { right: 5vw; left: auto; }
 
-/* لمسة سطح المكتب: رفعة خفيفة عند المرور — على الإطار الداخلي كي لا تمسّ تحويل GSAP */
-@media (hover: hover) and (pointer: fine) {
-  .st-pola { pointer-events: auto; }
-  .st-pola:hover .st-pola-in {
-    transform: scale(1.03);
-    box-shadow: 0 22px 48px rgba(12, 18, 28, 0.3), 0 3px 8px rgba(12, 18, 28, 0.16);
-  }
-}
+/* أثناء المشهد وحده: will-change — لا شيء منه دائم على الصفحة
+   (المشهد كلّه scrubbed، فالرجوع يعيد الحركة في أي لحظة داخله) */
+.st-wall-active .st-wall { will-change: transform, opacity, filter; }
+.st-wall-active .st-shot { will-change: transform; }
+.st-wall-active .st-frame { will-change: transform, opacity, filter; }
 
-.st-bts-tribute {
-  position: absolute; top: 50%; inset-inline: 0; z-index: 4;
+/* السطر التكريميّ: حبرٌ داكن على خلفيةٍ فاتحةٍ خالية — التباين مضمونٌ
+   بطبيعته، فلا طبقة تعتيم ولا خفقان */
+.st-wall-tribute {
+  position: absolute; top: 50%; inset-inline: 0; z-index: 6;
   transform: translateY(-50%);
   text-align: center; padding: 0 8vw;
   font-size: clamp(1.5rem, 3.4vw, 2.5rem); font-weight: 700;
 }
-.st-bts-tail {
-  position: absolute; top: 63%; inset-inline: 0; z-index: 4;
+.st-wall-tail {
+  position: absolute; top: 63%; inset-inline: 0; z-index: 6;
   text-align: center; padding: 0 8vw;
   color: var(--st-dim);
   font-size: clamp(1.15rem, 2.3vw, 1.7rem); font-weight: 500;
@@ -524,7 +620,7 @@ html[data-adeeb-story="skip"] #adeeb-story { display: none; }
     .st-ch2-head, .st-track,
     .st-shield, .st-crown-title, .st-crown-sub, .st-crown-tail,
     .st-oldlogo2, .st-ch4-copy,
-    .st-bts-kicker, .st-pola, .st-bts-tribute, .st-bts-tail
+    .st-wall-kicker, .st-frame, .st-wall-tribute, .st-wall-tail
   ) { opacity: 0; }
   html.js #adeeb-story:not(.st-static) .st-ltr { opacity: 0; }
 }
@@ -542,6 +638,9 @@ html:not(.js) #adeeb-story .st-scene {
 }
 #adeeb-story.st-static :is(.st-letters, .st-rays, .st-canvas, .st-sweep, .st-cue, .st-hud, .st-logo-layer, .st-flash, .st-grain, .st-bg),
 html:not(.js) #adeeb-story :is(.st-letters, .st-rays, .st-canvas, .st-sweep, .st-cue, .st-hud, .st-logo-layer, .st-flash) { display: none; }
+/* جدار الذكريات ساكنًا: لا حجاب ولا عدّاد ولا تعليقٌ طائر — الصور شبكةٌ هادئة */
+#adeeb-story.st-static :is(.st-wall-veil, .st-wall-veil-b, .st-wall-cap),
+html:not(.js) #adeeb-story :is(.st-wall-veil, .st-wall-veil-b, .st-wall-cap) { display: none; }
 #adeeb-story.st-static .st-newlogo-static { display: block; margin-inline: auto; }
 /* الشعاران في النسخة الساكنة يقرأان معًا (قديمٌ فوق جديد) لا متراكبين في
    خليّةٍ واحدة كما في المسار الحيّ حيث يتحوّل أحدهما إلى الآخر */
@@ -568,28 +667,48 @@ html:not(.js) #adeeb-story .st-station-static { display: grid; gap: 1.4vh; justi
 #adeeb-story.st-static .st-ch3-inner { position: static; padding: 0; gap: 4vh; }
 #adeeb-story.st-static .st-shield { height: min(40vh, 380px); }
 #adeeb-story.st-static .st-ch2-head { position: static; margin-bottom: 3vh; }
-/* كواليس الحكاية ساكنةً: شبكة هادئة ٢×٤ بتلاشٍ متتابع (IO في story.ts) — بلا قذف ولا عبور */
-#adeeb-story.st-static :is(.st-bts-kicker, .st-bts-tribute, .st-bts-tail),
-html:not(.js) #adeeb-story :is(.st-bts-kicker, .st-bts-tribute, .st-bts-tail) {
+/* جدار الذكريات ساكنًا: الصور الثمان في شبكةٍ هادئة غير متراكبة بتلاشٍ
+   متتابع (IO في story.ts)، وتعليقُ كلٍّ تحتها، والنصّان تحت الشبكة لا فوقها
+   — بلا تأرجحٍ ولا تراجع كاميرا */
+#adeeb-story.st-static :is(.st-wall-kicker, .st-wall-tribute, .st-wall-tail),
+html:not(.js) #adeeb-story :is(.st-wall-kicker, .st-wall-tribute, .st-wall-tail) {
   position: static; transform: none; padding: 0; text-align: center;
+  width: auto; height: auto; opacity: 1;
 }
-#adeeb-story.st-static .st-bts,
-html:not(.js) #adeeb-story .st-bts { display: grid; justify-items: center; gap: 3vh; }
-#adeeb-story.st-static .st-bts-stage,
-html:not(.js) #adeeb-story .st-bts-stage {
+#adeeb-story.st-static .st-wall-scene,
+html:not(.js) #adeeb-story .st-wall-scene { display: grid; justify-items: center; gap: 3vh; }
+#adeeb-story.st-static .st-wall,
+html:not(.js) #adeeb-story .st-wall {
   position: static;
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: clamp(14px, 2.5vw, 28px);
   width: 100%; max-width: 760px;
   margin-block: 2vh;
+  opacity: 1;
 }
-#adeeb-story.st-static .st-pola,
-html:not(.js) #adeeb-story .st-pola { position: static; width: 100%; }
-#adeeb-story.st-static .st-pola {
+#adeeb-story.st-static .st-shot,
+html:not(.js) #adeeb-story .st-shot {
+  position: static;
+  display: grid; justify-items: center; gap: 1.2vh;
+}
+#adeeb-story.st-static .st-frame,
+html:not(.js) #adeeb-story .st-frame { transform: none; opacity: 1; width: 100%; }
+/* بلا حدَّي المسار الحيّ: الصورة تملأ عرض خانتها بنسبتها */
+#adeeb-story.st-static .st-shot-img img,
+html:not(.js) #adeeb-story .st-shot-img img { width: 100%; max-width: none; max-height: none; }
+#adeeb-story.st-static .st-shot-ph,
+html:not(.js) #adeeb-story .st-shot-ph { width: 100%; height: auto; max-width: none; }
+#adeeb-story.st-static .st-shot-cap,
+html:not(.js) #adeeb-story .st-shot-cap {
+  display: block; text-align: center;
+  color: var(--st-dim);
+  font-size: 0.95rem; font-weight: 500;
+}
+#adeeb-story.st-static .st-shot {
   opacity: 0; transition: opacity 0.9s ease;
   transition-delay: calc(var(--i) * 90ms);
 }
-#adeeb-story.st-static .st-pola.st-in { opacity: 1; }
+#adeeb-story.st-static .st-shot.st-in { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {
   .st-cue svg { animation: none; }
@@ -608,12 +727,22 @@ html:not(.js) #adeeb-story .st-pola { position: static; width: 100%; }
   .st-card-hero { width: clamp(230px, 74vw, 300px); }
   .st-shield { height: min(48vh, 420px); }
   .st-track { padding-inline: 7vw; }
-  /* كواليس الحكاية على الجوال: جدول مواضع مستقلّ (mx/my) ومقاسٌ يحدّه الارتفاع
-     (الخشبة تبلغ عرض الشاشة دومًا هنا لأن 7.4 × 36vw يتجاوزها) */
-  .st-bts-stage { --pw: min(36vw, 20vh); }
-  .st-pola { left: var(--mx); top: var(--my); }
-  .st-pola-ph b { font-size: 0.9rem; }
-  .st-bts-kicker { top: 6vh; font-size: 1rem; }
-  .st-bts-tribute { font-size: 1.45rem; padding: 0 6vw; }
-  .st-bts-tail { top: 66%; font-size: 1.05rem; padding: 0 6vw; }
+  /* جدار الذكريات على الجوال: صورةٌ أقصر يحدّ عرضَها عرضُ الشاشة، والتناوب
+     يمين/يسار محفوظٌ بإزاحةٍ أصغر (يقرؤها story.ts) — والتأرجح نفسه محفوظ
+     (هو روح المشهد). ونقطة التعليق أعلى قليلًا لأن التعليق يجلس تحت الصورة
+     لا بجانبها (ضيق العرض)، وخارجها دائمًا. */
+  /* الحدود الثلاثة تُشتقّ من هذين وحدهما، فتتبعهما بلا إعادة كتابة */
+  .st-wall-scene { --anchor: 60%; --shot-h: min(30vh, calc(100vh - 210px)); --shot-max-w: 74vw; }
+  .st-shot-ph svg { width: 22%; }
+  .st-wall-kicker { font-size: 1rem; }
+  .st-wall-cap {
+    top: calc(var(--anchor) + var(--shot-h) / 2 + 2.2vh);
+    transform: none;
+    left: 6vw; right: 6vw; width: auto;
+    font-size: 0.95rem;
+  }
+  /* الجهة لا تُغيّر شيئًا على الجوال: التعليق تحت الصورة في الحالتين */
+  .st-wall-cap[data-side="1"], .st-wall-cap[data-side="-1"] { left: 6vw; right: 6vw; }
+  .st-wall-tribute { font-size: 1.45rem; padding: 0 6vw; }
+  .st-wall-tail { top: 66%; font-size: 1.05rem; padding: 0 6vw; }
 }
