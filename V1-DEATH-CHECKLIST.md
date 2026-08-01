@@ -36,41 +36,36 @@
 
 | البند | الحال بعد الجرد |
 |---|---|
-| ١ · ٢ (`role_id` وتريغراه) | ✅ **فُكّ الحظر 2026-08-01** — رُحّل تبويب الصلاحيات ومقعد المعاينة إلى الاسم |
+| ١ · ٢ (`role_id` وتريغراه) | ✅ **نُفِّذ 2026-08-01** |
 | ٣ (`assign_position(p_role)`) | 🔶 لا قارئ في V2، لكنّه يحتاج إعادةَ إنشاء الدالّة بسبعة معاملات |
 | ٥ (`department_id = NULL`) | ✅ **سُدّد بلا DDL** — لا مستنتِج بقي |
 | ٦ (`activity_coordinator`) | 🔶 يذكره V2 في `lib/roleOrder.ts`، ويلزم نزعُه مع دوالّه معًا |
-| ٧ · ٨ (ازدواج الأخبار والمهجور) | ✅ **صفر قارئ** — الترحيل مكتوبٌ ينتظر التنفيذ |
+| ٧ · ٨ (ازدواج الأخبار والمهجور) | ✅ **نُفِّذ 2026-08-01** |
+
+> **والجرد نفسه كان ناقصًا.** فحصَ المستودعَ وصدق فيما فحص — لكنّ القاعدة تحمل
+> قرّاءً لا يعيشون في المستودع. اقرأ «قاعدة دائمة» في ذيل الملفّ قبل أيّ إسقاطٍ قادم.
 
 ---
 
 ## البنود المؤجَّلة
 
-### ١) `user_roles.role_id` + `role_permissions.role_id` — ✅ **جاهزٌ للإسقاط**
+### ١ · ٢) `role_id` وتريغرا `sync_role_key` — ✅ **نُفِّذا 2026-08-01** → «سُدّد بالفعل»
 
-**الشكل:** مفتاح مزدوج (رقم + اسم) يزامنه تريغر `sync_role_key`.
-**كان يمنعه:** `admin/dashboard.js` في ٨٢ موضعًا — **مات**. ثمّ تبيّن أنّ **V2 ورث الرقم عنه**: تبويب الصلاحيات ومقعد المعاينة يقرآنه ويكتبانه.
-**رُحّل 2026-08-01:** صار الاسم هو هويّة المنصب في كلّ طبقات التبويب — `data.ts` و`actions.ts` و`preview-seat.ts` والمِقوَد والعارضان ومنتقي المقعد الشاغر. **لم يبقَ في كود V2 ذِكرٌ لـ`role_id` إلّا في تعليقاتٍ تشرح غيابه.**
-**مُتحقَّق على القاعدة الحيّة:** الإدراج على `on_conflict=role_name,permission_id` يردّ 201 والعدد لا يتغيّر — وهو يُثبت التريغر أيضًا (لو لم يملأ `role_id` لفشل على `NOT NULL` قبل حلّ التعارض).
+`role_id` لم يعد له وجود في `user_roles` ولا `role_permissions`، ولا تريغر يزامنه، ولا دالّة `sync_role_key`. والاسم صار هويّة المنصب في القاعدة كما صار في الكود.
 
-> **الترتيب:** أسقِط العمودين، ثمّ تريغرَي البند ٢ معهما — فلا معنى لمزامنة عمودٍ مفقود.
+<details><summary>ما لزم قبله — ولم يكن في الحسبان</summary>
 
-```sql
-alter table user_roles       drop column role_id;
-alter table role_permissions drop column role_id;
-```
+الملفّ ٠٢ لم يكن قابلًا للتنفيذ كما كُتب. جردُ **الكود** كان صادقًا (صفر قارئ في V2)، لكنّ القاعدة كانت تحمل:
 
-### ٢) تريغرا `sync_role_key` — ✅ **جاهزٌ، في ترحيل البند ١ نفسه**
+- **تسع سياسات RLS** تصل إلى `roles` بالرقم (`join roles r on r.id = ur.role_id`) — كانت ستُوقف الإسقاط صارخةً، وهذا مأمون.
+- **٢٤ دالّة** تقرأ الرقم في شرط ربط — **لا يتتبّعها بوستجرس**، فالإسقاط يمرّ عليها صامتًا وتنكسر وقت النداء. وعلى رأسها `check_user_permission` التي يمرّ بها كلّ فحص صلاحيّة في النادي.
+- **المفتاح الأوّليّ** لـ`role_permissions` راكبًا على `(role_id, permission_id)` — و`drop column` يُسقط القيود الراكبة **بلا `cascade` وبلا صوت**، فكان الجدول سيخرج بلا مفتاحٍ أوّليّ.
 
-**الشكل:** تريغران يزامنان المفتاحين — لا لزوم لهما بعد إسقاط `role_id`.
-**يمنعه:** لا شيء — البند ١ فُكّ حظره.
-**الترحيل:** [`20260801_v1_death_02_drop_role_id.sql`](supabase/migrations/20260801_v1_death_02_drop_role_id.sql) — البندان معًا وبهذا الترتيب: **العمودان أوّلًا ثمّ التريغران**. مزامنةُ عمودٍ مفقودٍ خطأٌ لا فائدة فيه، ولو أُسقط التريغر أوّلًا لقبل العمودان قيمًا متناقضة في النافذة بينهما.
+فكُتب ونُفِّذ قبله [`20260801_v1_death_00_rewrite_dependents.sql`](supabase/migrations/20260801_v1_death_00_rewrite_dependents.sql): نقل السياسات والدوالّ إلى الاسم، ورفع الحارس الفريد على الاسم إلى مفتاحٍ أوّليّ. وهو أوّل ملفٍّ يملك فيه المستودع نصّ هذه الدوالّ بدل أن يستجوب القاعدة عنه.
 
-```sql
-drop trigger if exists user_roles_sync_role_key on user_roles;
-drop trigger if exists role_permissions_sync_role_key on role_permissions;
-drop function if exists public.sync_role_key();
-```
+**البصمة التي أثبتت أنّه تحويل هويّة لا تغيير:** مصفوفة (عضو، قدرة) كاملة — ٣٤٠ زوجًا ببصمة `94599c6c56ff77445185218e527a18e0` — متطابقة قبل التمهيد وبعد الترحيلَين معًا.
+
+</details>
 
 ### ٣) `assign_position(p_role integer)` — 🔶 جاهزٌ لكنّه ليس سطرًا واحدًا
 
@@ -116,48 +111,24 @@ alter table roles drop column role_category;
 **يبقى (جرد 2026-08-01):** ٣ دوالّ حيّة (`list`/`assign`/`revoke`) + دوالّ الحضور في القاعدة، و**ذِكرٌ واحد في V2**: `lib/roleOrder.ts` يدرجه في ترتيب الأدوار.
 **الترتيب الملزم:** احذف سطر V2 ← أسقِط الدوالّ ← ثمّ الصفّ. وعكسُه يترك دوالَّ تشير إلى دورٍ غير موجود.
 
-### ٧) ازدواج الأخبار — `news.status` و`author_name` — ✅ الترحيل مكتوب، ينتظر التنفيذ
+### ٧ · ٨) ازدواج الأخبار والمهجور — ✅ **نُفِّذا 2026-08-01** → «سُدّد بالفعل»
 
-**الشكل:** عمودان يكرّران غيرهما، ويزامنهما تريغران بعد ترحيل منصّة الأخبار V2:
+الأعمدة الستّة (`status` · `author_name` · `available_fields` · `assigned_writers` · `assigned_by` · `assigned_at`) والجدولان (`news_field_permissions` · `news_comments`) والتريغران ودالّتاهما — كلّها أُسقطت. و«أيّ الحقول يملك الكاتب؟» صار له مصدرٌ واحد: `news_writer_assignments.assigned_fields`.
 
-- `news.status` (ثلاثيّ) مرآةُ `news.workflow_status` (سداسيّ) — `news_sync_status` يزامنهما **في اتّجاهين**، فأيّهما كُتب اشتُقّ منه الآخر.
-- `news.author_name` مرآةُ `news.authors[1]` — `news_sync_author_name`.
+<details><summary>ما لزم قبله — وهو الفشل الذي علّمنا القاعدة الدائمة</summary>
 
-**كان يمنعه:** `news/news-detail.html` و`admin/dashboard.js` — **ماتا**؛ وقسم «آخر الأخبار» في هبوط V2 كان يقرأ `status` ويربط إلى صفحة V1 — **نُقل في 2026-08-01** إلى `workflow_status` و`authors`، وصار يربط إلى `/news` الداخليّة.
-**مُتحقَّق:** جرد المستودع كلّه (V2 + دوالّ الحافّة) يردّ **صفر مطابقة** لـ`author_name`، وصفر قراءةٍ لـ`news.status`.
-**الترحيل:** [`supabase/migrations/20260801_v1_death_01_news_duplicates_and_abandoned.sql`](supabase/migrations/20260801_v1_death_01_news_duplicates_and_abandoned.sql).
+نُفِّذ الملفّ ٠١ أوّل مرّة فاعترض صارخًا:
 
-```sql
-drop trigger if exists news_sync_status on news;
-drop trigger if exists news_sync_author_name on news;
-drop function if exists public.news_sync_status();
-drop function if exists public.news_sync_author_name();
-alter table news drop column status, drop column author_name;
+```
+ERROR 2BP01: cannot drop column status of table news because other objects depend on it
+DETAIL: policy news_select … news_likes_insert … news_public_comments_insert
 ```
 
-### ٨) جداول وأعمدة الأخبار المهجورة — ✅ الترحيل مكتوب، ينتظر التنفيذ
+ثلاث سياسات RLS تقرأ `news.status` نصًّا — لم يرَها جردُ المستودع لأنّها لا تعيش فيه. ونُقلت في ملفّ ٠٠ إلى `workflow_status` (وهي القراءة الصحيحة أصلًا؛ و`status` لم يكن يعمل إلّا لأنّ تريغرًا ثنائيّ الاتّجاه يزامنهما). **التحقّق قبل النقل:** العمودان متطابقان صفًّا صفًّا — ١٤ `published↔published` و١ `archived↔archived`.
 
-**الشكل:** ثلاثة مصادر لمعنًى واحد («أيّ الحقول يملك الكاتب؟»)، وجدولُ تعليقاتٍ كرّره غيره.
-منصّة V2 قصرت المعنى على **مصدرٍ واحد**: `news_writer_assignments.assigned_fields`.
+ومعها ماتت `can_writer_edit_field`: كانت تقرأ `news_field_permissions` الذي يُعدمه ٠١، وبوستجرس لا يمنع إسقاط الجدول من تحتها — فتبقى مكسورةً بصمت. أُعدمت مع جدولها.
 
-| المهجور | صفوفه | من حلّ محلّه |
-|---|---|---|
-| `news_field_permissions` (جدول) | ٠ | `news_writer_assignments.assigned_fields` |
-| `news.available_fields` | ٠ (كلّها `{}`) | ↑ نفسه |
-| `news.assigned_writers` | مصفوفةٌ فارغة | جدول `news_writer_assignments` |
-| `news.assigned_by` · `news.assigned_at` | — | ↑ نفسه (على صفّ التكليف) |
-| `news_comments` (جدول) | ٠ | `news_public_comments` (٤ صفوف) |
-
-**يمنعه:** لا شيء — V2 لا يقرؤها ولا يكتبها (جرد 2026-08-01: صفر مطابقة، عدا تعليقٍ توثيقيّ في `dashboard/news/vocab.ts` يسمّيها مهجورة). وكان التحفّظ الوحيد أنّ مصدر V1 لم يعد في الفرع فتعذّر إثبات أنّه لا يقرؤها — **وقد سقط التحفّظ بموت V1 نفسه**.
-**الترحيل:** نفس الملفّ أعلاه — البندان في ترحيلٍ واحد لأنّهما يمسّان جدول `news` معًا.
-
-```sql
-drop table if exists public.news_field_permissions;
-drop table if exists public.news_comments;
-alter table news
-  drop column available_fields, drop column assigned_writers,
-  drop column assigned_by,      drop column assigned_at;
-```
+</details>
 
 ---
 
@@ -170,6 +141,8 @@ alter table news
 | مفتاحا `committees → roles` | 2026-07-15 | أُسقطا واستُبدلا بتريغر — قنبلة PostgREST نائمة. |
 | `role_id` في دوالّ الحافّة | 2026-07-15 | `create-member-directly` و`migrate-accepted-member` صارا بالاسم (مصدرًا). |
 | RLS الرتبيّة على جداول الأخبار | 2026-07-31 | آخر جزيرةٍ تفحص `role_name IN ('club_president','committee_leader','committee_deputy')` — أُسقطت سياساتها الـ٢٨ وأُعيد تأسيسها على حَكَمٍ واحد `news_role(actor, news)`. كسرُ V1 مقبول هنا: واجهة أخبار V1 الإداريّة تُستبدَل بغرفة تحرير V2. |
+| **٧ · ٨** — ازدواج الأخبار والمهجور | **2026-08-01** | [`…_v1_death_01_…`](supabase/migrations/20260801_v1_death_01_news_duplicates_and_abandoned.sql) — ستّة أعمدة وجدولان وتريغران ودالّتاهما. اعترض في المحاولة الأولى بثلاث سياسات RLS تقرأ `news.status`، فنُقلت في ٠٠ إلى `workflow_status`. البصمة قبل/بعد متطابقة (١٤ خبرًا منشورًا). |
+| **١ · ٢** — `role_id` وتريغراه | **2026-08-01** | [`…_v1_death_02_…`](supabase/migrations/20260801_v1_death_02_drop_role_id.sql) — العمودان أوّلًا ثمّ التريغران. سبقه [`…_v1_death_00_…`](supabase/migrations/20260801_v1_death_00_rewrite_dependents.sql): ٩ سياسات و٢٤ دالّة نُقلت إلى الاسم، والمفتاح الأوّليّ رُفع إلى `(role_name, permission_id)`. مصفوفة القدرات كاملةً متطابقة قبل/بعد (٣٤٠ زوجًا، `94599c6c…`). |
 
 ---
 
@@ -180,3 +153,39 @@ alter table news
 > كسر هذا `dashboard.js:3583` ساعاتٍ في 2026-07-15، من مفتاحٍ ظننتُه أنيقًا.
 
 **قبل أيّ FK ثانٍ إلى جدولٍ مُضمَّن:** `grep "select('\*, X("` في كلّ قارئ حيّ. وإن وُجد — استعمل تريغرًا لا مفتاحًا.
+
+---
+
+**جردُ المستودع لا يُثبت أنّ العمود بلا قارئ.** القاعدة تحمل قرّاءً لا يعيشون في المستودع — سياسات RLS وأجساد الدوالّ. وبينهما فرقٌ يقرّر مصير الترحيل:
+
+| التابع | هل يوقف `drop column` بلا `cascade`؟ |
+|---|---|
+| سياسة RLS · عرض · فهرس على العمود | **نعم** — يصرخ `2BP01`، والصراخ نعمة |
+| **جسد دالّة** (`plpgsql`/`sql`) | **لا** — يمرّ صامتًا وينكسر وقت النداء |
+| قيدٌ راكبٌ على العمود (PK · UNIQUE · FK) | **لا** — يُسقَط صامتًا بلا `cascade` |
+
+> في 2026-08-01 كان إسقاط `role_id` سيمرّ فوق `check_user_permission` صامتًا — أي فشلُ كلّ فحص صلاحيّة في النادي بلا خطأٍ واحد عند الترحيل. ولم يظهر إلّا بجرد `pg_proc` نفسه.
+
+**فقبل أيّ إسقاط، استجوب القاعدة لا المستودع وحده:**
+
+```sql
+-- التوابع التي ستصرخ
+select 'policy', policyname from pg_policies where coalesce(qual,'')||coalesce(with_check,'') ~ '\mالعمود\M'
+union all select 'view', viewname from pg_views where schemaname='public' and definition ~ '\mالعمود\M';
+
+-- التوابع التي ستصمت (وهي الأخطر) — لاحظ prokind: pg_get_functiondef يفشل على التجميعات
+select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+ where n.nspname='public' and p.prokind in ('f','p') and pg_get_functiondef(p.oid) ~ '\mالعمود\M';
+
+-- القيود التي ستسقط بلا صوت
+select conname, pg_get_constraintdef(oid) from pg_constraint
+ where conrelid='public.الجدول'::regclass and pg_get_constraintdef(oid) ~ '\mالعمود\M';
+```
+
+**وبصمةٌ سلوكيّة لا عدديّة.** عدُّ الصفوف يثبت أنّ الإسقاط لم يحذف، ولا يثبت أنّه لم يغيّر المعنى. الذي أثبته في 2026-08-01 هو مصفوفة (عضو، قدرة) كاملةً مُلخَّصةً بـ`md5` — تُؤخذ قبل وتُقارن بعد:
+
+```sql
+select md5(string_agg(x,'|' order by x)) from (
+  select p.id::text||':'||g.permission_key as x
+  from profiles p, lateral get_user_permissions(p.id) g) s;
+```
