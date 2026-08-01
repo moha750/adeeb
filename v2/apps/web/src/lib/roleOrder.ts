@@ -12,7 +12,6 @@ export const ROLE_ORDER: readonly string[] = [
   "hr_admin_member",
   "qa_admin_member",
   "committee_leader",
-  "activity_coordinator",
   "deputy_committee_leader",
   "committee_member",
 ];
