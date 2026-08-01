@@ -9,6 +9,7 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "check": "node scripts/css-single-source.mjs",
+    "auth:config": "node scripts/auth-config.mjs",
     "web": "pnpm --filter web dev"
   },
   "devDependencies": {
