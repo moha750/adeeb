@@ -34,7 +34,7 @@
   --color-steel-700: var(--steel-700);
   --color-steel-800: var(--steel-800);
   --color-steel-900: var(--steel-900);
-  /* دلالية + أسطح (تنقلب مع الثيم) */
+  /* دلالية + أسطح */
   --color-bg: var(--color-bg);
   --color-surface: var(--color-surface);
   --color-surface-2: var(--color-surface-2);
@@ -237,18 +237,9 @@
 .cred-link:hover { text-decoration: underline; }
 .cred-actions { display: flex; justify-content: flex-end; }
 
-/* ============================================================
-   المصادقة — صفحة الدخول / شاشة لا صلاحية
-   ============================================================ */
-.auth-wrap { min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: var(--color-bg); }
-.auth-card { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 18px; padding: 30px; background: var(--color-surface); border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); box-shadow: var(--shadow-lg, 0 24px 60px -24px rgba(39,64,96,.35)); }
-.auth-brand { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 800; color: var(--color-primary); }
-.auth-logo { width: 34px; height: 34px; border-radius: var(--radius); display: grid; place-items: center; font-weight: 800; color: #fff; background: var(--grad-primary); }
-.auth-head { display: flex; flex-direction: column; gap: 5px; }
-.auth-title { font-size: 21px; font-weight: 800; color: var(--color-primary); }
-.auth-sub { font-size: 13px; line-height: 1.6; color: var(--color-text-muted); }
-.auth-form { display: flex; flex-direction: column; gap: 14px; }
-.auth-submit { width: 100%; margin-top: 4px; }
+/* (المصادقة: صارت مكوّن هوية — `AuthShell` وأنماطه `.aauth-*` بالمكتبة، تخدم شاشة
+   الدخول وشاشة «لا صلاحية» معًا. أُزيلت الأصناف التسعة `.auth-*` الشاردة معها،
+   وفيها شعارٌ مزيّف (حرف «أ» في مربّع) و`#fff` صريحٌ وسطحٌ يعيد كتابة `Card`.) */
 
 /* (تبويب تعيين المناصب: صار مكوّنات هوية — كرت المنصب `.pcard-*` ونافذة الإسناد + جذر `.asg`،
    كلّها في المكتبة. أُزيلت الخلايا الشاردة `.asg-pos`/`.asg-holder` مع الجدول القديم.) */
@@ -333,6 +324,7 @@
 @supports (-moz-osx-font-smoothing: grayscale) {   /* فايرفوكس فقط — كروميوم يتجاهله فلا يُخطَف شريط الجذر */
   html { scrollbar-width: thin; scrollbar-color: var(--color-secondary) transparent; }
 }
+
 
 
 

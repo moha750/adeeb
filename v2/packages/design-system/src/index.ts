@@ -34,6 +34,8 @@ export { HeatGrid, type HeatGridProps } from "./components/HeatGrid";
 export { Checkbox, Radio, Switch } from "./components/Choice";
 export { Alert, type AlertProps } from "./components/Alert";
 export { BookReader, type BookReaderProps, type BookReaderPage } from "./components/BookReader";
+export { AuthShell, type AuthShellProps } from "./components/AuthShell";
+export { LogoLoader, type LogoLoaderProps } from "./components/LogoLoader";
 export { Reveal } from "./components/Reveal";
 export { Ambient } from "./components/Ambient";
 export { Header } from "./components/Header";

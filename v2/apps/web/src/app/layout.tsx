@@ -5,6 +5,7 @@ import "@adeeb/design-system/fonts.css";
 import "@adeeb/design-system/tokens.css";
 import "./globals.css";
 import "@adeeb/design-system/components.css";
+import { BootSplash } from "./_components/BootSplash";
 
 // `metadataBase` أصلُ كلّ رابطٍ نسبيّ في الوسوم (OG وcanonical وrobots) — بدونه تُبنى
 // روابط OG نسبيّةً فلا تُقرأ خارج الموقع. والنطاق من البيئة ليبقى صحيحًا في المعاينات.
@@ -29,6 +30,10 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }}
         />
+        {/* شاشةُ البدء **قبل** المحتوى: تُرسَم خادميًّا فتظهر مع أوّل بايت، وتنزاح حين
+            يجهز الموقع. وهي غير `loading.tsx` — تلك للتنقّل داخل الموقع لا للدخول إليه.
+            وموضعُها بعد سكربت `js` مباشرةً: الصنفُ شرطُ ظهورها (حارسُ «بلا جافاسكربت»). */}
+        <BootSplash />
         {children}
       </body>
     </html>

@@ -1,19 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Alert, Button, Field } from "@adeeb/design-system";
 import { At, Envelope, Key, Lock } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
-
-// ترجمة أخطاء المصادقة الشائعة إلى العربية
-function toArabicError(msg: string): string {
-  const m = msg.toLowerCase();
-  if (m.includes("invalid login credentials")) return "البريد الإلكترونيّ أو كلمة المرور غير صحيحة.";
-  if (m.includes("email not confirmed")) return "لم يُؤكَّد هذا البريد بعد.";
-  if (m.includes("too many requests") || m.includes("rate limit")) return "محاولات كثيرة. انتظر قليلًا ثمّ أعِد المحاولة.";
-  return "تعذّر تسجيل الدخول. تحقّق من البيانات وحاول مجدّدًا.";
-}
+import { toArabicAuthError } from "@/lib/authErrors";
 
 // منع إعادة التوجيه المفتوح: نقبل المسارات الداخلية فقط
 function safeNext(raw: string | null): string {
@@ -37,7 +30,7 @@ export function LoginForm() {
     start(async () => {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
-      if (error) { setErr(toArabicError(error.message)); return; }
+      if (error) { setErr(toArabicAuthError(error.message)); return; }
       router.replace(next);
       router.refresh();
     });
@@ -46,7 +39,7 @@ export function LoginForm() {
   const canSubmit = email.trim() !== "" && pw !== "";
 
   return (
-    <form className="auth-form" onSubmit={submit} noValidate>
+    <form className="aauth-form" onSubmit={submit} noValidate>
       {err ? <Alert tone="danger" onClose={() => setErr(null)}>{err}</Alert> : null}
 
       <Field
@@ -74,7 +67,9 @@ export function LoginForm() {
         required
       />
 
-      <Button type="submit" variant="primary" size="lg" loading={pending} disabled={!canSubmit} className="auth-submit">
+      <Link href="/forgot-password" className="aauth-link">نسيت كلمة المرور؟</Link>
+
+      <Button type="submit" variant="primary" size="lg" loading={pending} disabled={!canSubmit} className="aauth-submit">
         تسجيل الدخول
       </Button>
     </form>
