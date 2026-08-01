@@ -15,12 +15,12 @@ export function GridView({ ctl }: { ctl: PermCtl }) {
     () => new Map(ctl.groups.flatMap((g) => g.caps).map((c) => [c.id, c])),
     [ctl.groups],
   );
-  const roleById = useMemo(() => new Map(ctl.roles.map((r) => [r.id, r])), [ctl.roles]);
+  const roleByName = useMemo(() => new Map(ctl.roles.map((r) => [r.roleName, r])), [ctl.roles]);
 
   const columns = ctl.roles.map((r) => ({
-    key: String(r.id),
+    key: r.roleName,
     label: r.roleAr,
-    hint: `${ctl.countFor(r.id)}/${ctl.capCount}`,
+    hint: `${ctl.countFor(r.roleName)}/${ctl.capCount}`,
     title: r.roleAr,
   }));
 
@@ -39,15 +39,15 @@ export function GridView({ ctl }: { ctl: PermCtl }) {
       maxHeight="min(calc(100dvh - 250px), 760px)"
       cell={(row, col) => {
         const capId = Number(row.key);
-        const roleId = Number(col.key);
+        const roleName = col.key;
         const cap = capById.get(capId);
-        const role = roleById.get(roleId);
+        const role = roleByName.get(roleName);
         if (!cap || !role) return null;
         return (
           <Checkbox
-            checked={ctl.has(roleId, capId)}
-            disabled={ctl.busy === `${roleId}:${capId}`}
-            onChange={(e) => ctl.toggle(roleId, cap, e.currentTarget.checked)}
+            checked={ctl.has(roleName, capId)}
+            disabled={ctl.busy === `${roleName}:${capId}`}
+            onChange={(e) => ctl.toggle(roleName, cap, e.currentTarget.checked)}
             aria-label={`${cap.nameAr} — ${role.roleAr}`}
           />
         );

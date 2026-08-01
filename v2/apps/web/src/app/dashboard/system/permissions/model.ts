@@ -12,9 +12,9 @@ export type PermCtl = {
   groups: CapGroup[];
   /** عدد القدرات المعروضة كلّها — مقام النسبة في العدّادات. */
   capCount: number;
-  has: (roleId: number, capId: number) => boolean;
-  countFor: (roleId: number) => number;
-  toggle: (roleId: number, cap: Capability, on: boolean) => void;
-  /** المفتاح `roleId:capId` الذي تُكتَب حالته الآن (أو `null`). */
+  has: (roleName: string, capId: number) => boolean;
+  countFor: (roleName: string) => number;
+  toggle: (roleName: string, cap: Capability, on: boolean) => void;
+  /** المفتاح `roleName:capId` الذي تُكتَب حالته الآن (أو `null`). */
   busy: string | null;
 };

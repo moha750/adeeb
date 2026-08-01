@@ -45,12 +45,12 @@ export function PermissionsMatrix({
     return [...m.entries()].map(([key, caps]) => ({ key, label: CATEGORY_LABEL[key] ?? key, caps }));
   }, [capabilities]);
 
-  async function toggle(roleId: number, cap: Capability, on: boolean) {
-    const key = `${roleId}:${cap.id}`;
+  async function toggle(roleName: string, cap: Capability, on: boolean) {
+    const key = `${roleName}:${cap.id}`;
     // تفاؤليّ: بدّل فورًا ثمّ اكتب؛ ارتدّ عند الفشل مع رسالة
     setGrants((g) => { const n = new Set(g); if (on) n.add(key); else n.delete(key); return n; });
     setBusy(key);
-    const res = await setCapability({ roleId, permissionId: cap.id, granted: on });
+    const res = await setCapability({ roleName, permissionId: cap.id, granted: on });
     setBusy(null);
     if (!res.ok) {
       setGrants((g) => { const n = new Set(g); if (on) n.delete(key); else n.add(key); return n; });
@@ -62,8 +62,8 @@ export function PermissionsMatrix({
     roles,
     groups,
     capCount: capabilities.length,
-    has: (roleId, capId) => grants.has(`${roleId}:${capId}`),
-    countFor: (roleId) => capabilities.reduce((n, c) => (grants.has(`${roleId}:${c.id}`) ? n + 1 : n), 0),
+    has: (roleName, capId) => grants.has(`${roleName}:${capId}`),
+    countFor: (roleName) => capabilities.reduce((n, c) => (grants.has(`${roleName}:${c.id}`) ? n + 1 : n), 0),
     toggle,
     busy,
   };

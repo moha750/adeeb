@@ -22,27 +22,27 @@ const CATEGORY_ICON: Record<string, ReactNode> = {
  * يُجيب «ماذا يملك هذا المنصب؟» بأقصر طريق، ولا يُجيب «مَن يملك هذه القدرة؟».
  */
 export function PanelView({ ctl }: { ctl: PermCtl }) {
-  const [selId, setSelId] = useState<number | null>(ctl.roles[0]?.id ?? null);
-  const role = ctl.roles.find((r) => r.id === selId) ?? null;
+  const [selName, setSelName] = useState<string | null>(ctl.roles[0]?.roleName ?? null);
+  const role = ctl.roles.find((r) => r.roleName === selName) ?? null;
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[262px_minmax(0,1fr)]">
       <OptionList
         heading="المناصب"
         aria-label="المناصب"
-        value={selId != null ? String(selId) : null}
-        onValueChange={(v) => setSelId(Number(v))}
+        value={selName}
+        onValueChange={(v) => setSelName(v)}
         items={ctl.roles.map((r) => ({
-          value: String(r.id),
+          value: r.roleName,
           label: r.roleAr,
-          count: `${ctl.countFor(r.id)}`,
+          count: `${ctl.countFor(r.roleName)}`,
         }))}
       />
 
       {role ? (
         <div className="flex flex-col gap-4">
           {ctl.groups.map((g) => {
-            const on = g.caps.reduce((n, c) => (ctl.has(role.id, c.id) ? n + 1 : n), 0);
+            const on = g.caps.reduce((n, c) => (ctl.has(role.roleName, c.id) ? n + 1 : n), 0);
             return (
               <Card key={g.key}>
                 <CardHeader
@@ -59,9 +59,9 @@ export function PanelView({ ctl }: { ctl: PermCtl }) {
                         row
                         label={c.nameAr}
                         description={c.key}
-                        checked={ctl.has(role.id, c.id)}
-                        disabled={ctl.busy === `${role.id}:${c.id}`}
-                        onChange={(e) => ctl.toggle(role.id, c, e.currentTarget.checked)}
+                        checked={ctl.has(role.roleName, c.id)}
+                        disabled={ctl.busy === `${role.roleName}:${c.id}`}
+                        onChange={(e) => ctl.toggle(role.roleName, c, e.currentTarget.checked)}
                       />
                     ))}
                   </div>

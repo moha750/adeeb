@@ -26,7 +26,7 @@ function service() {
  * فوريّ على V2 (قدراتيّ أصلًا)، وعلى القاعدة (RLS) حين يكتمل قلب الفرض إلى القدرات.
  */
 export async function setCapability(input: {
-  roleId: number;
+  roleName: string;
   permissionId: number;
   granted: boolean;
 }): Promise<PermResult> {
@@ -38,8 +38,8 @@ export async function setCapability(input: {
   const sb = service();
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
-  const { roleId, permissionId, granted } = input;
-  if (!roleId || !permissionId) return { ok: false, message: "لم يُحدَّد المنصب أو القدرة." };
+  const { roleName, permissionId, granted } = input;
+  if (!roleName || !permissionId) return { ok: false, message: "لم يُحدَّد المنصب أو القدرة." };
 
   // القدرة المقصودة — ولا تُبدَّل إلّا إن كانت من قدرات اللوحة (ما تعرضه data.ts نفسه)
   const { data: perm, error: pErr } = await sb.from("permissions").select("permission_key").eq("id", permissionId).maybeSingle();
@@ -51,10 +51,12 @@ export async function setCapability(input: {
   }
 
   if (granted) {
-    // منح — إدراجٌ آمنٌ للتكرار (المفتاح الأساسيّ role_id+permission_id يمنع الازدواج)
+    // منح — إدراجٌ آمنٌ للتكرار على القيد الفريد `role_permissions_role_name_permission_key`.
+    // ولا يُكتب `role_id`: تريغر `sync_role_key` يشتقّه من الاسم، ويرفض اسمًا لا دورَ له
+    // (`لا دور باسم %`) — فالاسم المُلفَّق في الطلب يُردّ في القاعدة لا في الواجهة.
     const { error } = await sb
       .from("role_permissions")
-      .upsert({ role_id: roleId, permission_id: permissionId }, { onConflict: "role_id,permission_id", ignoreDuplicates: true });
+      .upsert({ role_name: roleName, permission_id: permissionId }, { onConflict: "role_name,permission_id", ignoreDuplicates: true });
     if (error) return { ok: false, message: `تعذّر المنح: ${error.message}` };
     revalidatePath("/dashboard/system/permissions");
     return { ok: true, message: "مُنحت القدرة." };
@@ -72,7 +74,7 @@ export async function setCapability(input: {
     }
   }
 
-  const { error } = await sb.from("role_permissions").delete().eq("role_id", roleId).eq("permission_id", permissionId);
+  const { error } = await sb.from("role_permissions").delete().eq("role_name", roleName).eq("permission_id", permissionId);
   if (error) return { ok: false, message: `تعذّر السحب: ${error.message}` };
   revalidatePath("/dashboard/system/permissions");
   return { ok: true, message: "سُحبت القدرة." };

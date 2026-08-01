@@ -56,10 +56,10 @@ export async function startViewAs(userId: string): Promise<ViewAsResult> {
 /**
  * معاينة **منصبٍ شاغر** — تُجلِس الدُّمية عليه ثمّ تلبس هويّتها.
  *
- * النطاق يُقرأ من القاعدة لا من الطلب: الدور يُجلَب بمعرّفه، ونطاقُه من `seatScope`،
+ * النطاق يُقرأ من القاعدة لا من الطلب: الدور يُجلَب باسمه، ونطاقُه من `seatScope`،
  * فوحدةٌ زائدة تُطرَح ووحدةٌ ناقصة تُردّ — لا يُدرَج صفٌّ بنطاقٍ لا يخصّه.
  */
-export async function previewVacantPosition(input: { roleId: number; unitId: number | null }): Promise<ViewAsResult> {
+export async function previewVacantPosition(input: { roleName: string; unitId: number | null }): Promise<ViewAsResult> {
   const me = await getSessionAdmin();
   if (!me || !me.caps.includes(VIEW_AS_CAP)) {
     return { ok: false, message: "لا تملك صلاحية المعاينة." };
@@ -69,7 +69,7 @@ export async function previewVacantPosition(input: { roleId: number; unitId: num
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
   const { data: role, error: rErr } = await sb
-    .from("roles").select("id, role_name, role_name_ar").eq("id", input.roleId).maybeSingle();
+    .from("roles").select("role_name, role_name_ar").eq("role_name", input.roleName).maybeSingle();
   if (rErr) return { ok: false, message: `تعذّر التحقّق: ${rErr.message}` };
   if (!role) return { ok: false, message: "المنصب غير موجود." };
 
@@ -82,7 +82,6 @@ export async function previewVacantPosition(input: { roleId: number; unitId: num
   if ("error" in puppet) return { ok: false, message: `تعذّر تهيئة الشاغل المؤقّت: ${puppet.error}` };
 
   const seatErr = await seatPreview(sb, puppet.id, {
-    roleId: role.id as number,
     roleName: role.role_name as string,
     roleAr: (role.role_name_ar as string) ?? (role.role_name as string),
     committeeId: scope === "committee" ? input.unitId : null,

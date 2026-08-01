@@ -21,7 +21,7 @@ function titler(committees: { id: number; committee_name_ar: string }[]) {
 export type PermMatrix = {
   roles: PermRole[];
   capabilities: Capability[];
-  granted: string[]; // "roleId:permId" لكلّ منحٍ قائم — مصدر حقيقة العرض
+  granted: string[]; // "roleName:permId" لكلّ منحٍ قائم — مصدر حقيقة العرض
   error: string | null;
 };
 
@@ -43,9 +43,9 @@ export async function getPermissionMatrix(): Promise<PermMatrix> {
   const sb = createAdeebServiceClient(url, key);
 
   const [rRes, pRes, rpRes, cRes] = await Promise.all([
-    sb.from("roles").select("id, role_name, role_name_ar, home_committee_id"),
+    sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
     sb.from("permissions").select("id, permission_key, permission_name_ar, category").in("permission_key", [...DASHBOARD_CAPS]),
-    sb.from("role_permissions").select("role_id, permission_id"),
+    sb.from("role_permissions").select("role_name, permission_id"),
     sb.from("committees").select("id, committee_name_ar"),
   ]);
   const err = rRes.error || pRes.error || rpRes.error || cRes.error;
@@ -55,14 +55,14 @@ export async function getPermissionMatrix(): Promise<PermMatrix> {
   // المناصب مرتّبةٌ بالترتيب القياسيّ (بالاسم، لا برقم — أُعدم role_level).
   const rank = (name: string) => { const i = ROLE_ORDER.indexOf(name); return i === -1 ? ROLE_ORDER.length : i; };
   const roles: PermRole[] = (rRes.data ?? [])
-    .map((r) => ({ id: r.id as number, roleName: r.role_name as string, roleAr: title(r) }))
+    .map((r) => ({ roleName: r.role_name as string, roleAr: title(r) }))
     .sort((a, b) => rank(a.roleName) - rank(b.roleName));
 
   const capabilities: Capability[] = (pRes.data ?? [])
     .map((p) => ({ id: p.id as number, key: p.permission_key as string, nameAr: (p.permission_name_ar as string) ?? (p.permission_key as string), category: (p.category as string) ?? "" }))
     .sort((a, b) => a.category.localeCompare(b.category) || a.nameAr.localeCompare(b.nameAr, "ar"));
 
-  const granted = (rpRes.data ?? []).map((x) => `${x.role_id}:${x.permission_id}`);
+  const granted = (rpRes.data ?? []).map((x) => `${x.role_name}:${x.permission_id}`);
 
   return { roles, capabilities, granted, error: null };
 }
@@ -84,37 +84,37 @@ export async function getViewAsTargets(): Promise<ViewAsTarget[]> {
   const sb = createAdeebServiceClient(url, key);
 
   const [rRes, urRes, pRes, cRes] = await Promise.all([
-    sb.from("roles").select("id, role_name, role_name_ar, home_committee_id"),
-    sb.from("user_roles").select("user_id, role_id").eq("is_active", true),
+    sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
+    sb.from("user_roles").select("user_id, role_name").eq("is_active", true),
     sb.from("profiles").select("id, full_name").eq("account_status", "active"),
     sb.from("committees").select("id, committee_name_ar"),
   ]);
   if (rRes.error || urRes.error || pRes.error || cRes.error) return [];
 
   const title = titler(cRes.data ?? []);
-  const roleAr = new Map((rRes.data ?? []).map((r) => [r.id as number, title(r)]));
-  const roleName = new Map((rRes.data ?? []).map((r) => [r.id as number, r.role_name as string]));
+  // خريطةٌ واحدة بالاسم — كانت خريطتين بالرقم (رقم←عربيّ ورقم←اسم) لأنّ الصفّ يحمل الرقم.
+  const roleAr = new Map((rRes.data ?? []).map((r) => [r.role_name as string, title(r)]));
   const name = new Map((pRes.data ?? []).map((p) => [p.id as string, (p.full_name as string) ?? "عضو"]));
 
   // العضو الواحد قد يحمل صفوفًا كثيرة (المشرف الإداريّ صفٌّ لكلّ لجنة) — يُعرَض مرّةً بأعلى مناصبه
   const rank = (n: string | undefined) => { const i = ROLE_ORDER.indexOf(n ?? ""); return i === -1 ? ROLE_ORDER.length : i; };
-  const best = new Map<string, number>();
+  const best = new Map<string, string>();
   for (const ur of urRes.data ?? []) {
     const uid = ur.user_id as string;
-    const rid = ur.role_id as number;
+    const rn = ur.role_name as string;
     if (!name.has(uid)) continue; // غير نشطٍ — لا يُعايَن
     const cur = best.get(uid);
-    if (cur === undefined || rank(roleName.get(rid)) < rank(roleName.get(cur))) best.set(uid, rid);
+    if (cur === undefined || rank(rn) < rank(cur)) best.set(uid, rn);
   }
 
   return [...best.entries()]
-    .map(([id, rid]) => ({ id, name: name.get(id)!, roleAr: roleAr.get(rid) ?? "بلا منصب", rank: rank(roleName.get(rid)) }))
+    .map(([id, rn]) => ({ id, name: name.get(id)!, roleAr: roleAr.get(rn) ?? "بلا منصب", rank: rank(rn) }))
     .sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name, "ar"))
     .map(({ id, name: n, roleAr: r }) => ({ id, name: n, roleAr: r }));
 }
 
 /** منصبٌ بلا شاغل — يُعايَن بإجلاس الشاغل المؤقّت عليه (`lib/preview-seat.ts`). */
-export type VacantSeat = { roleId: number; roleAr: string; scope: SeatScope; units: { id: number; name: string }[] };
+export type VacantSeat = { roleName: string; roleAr: string; scope: SeatScope; units: { id: number; name: string }[] };
 
 /**
  * المناصب الشاغرة — كلّ دورٍ لا يشغله عضوٌ نشط، ومعه **الوحدات التي يصحّ فيها**.
@@ -131,8 +131,8 @@ export async function getVacantPositions(): Promise<VacantSeat[]> {
   const sb = createAdeebServiceClient(url, key);
 
   const [rRes, urRes, pRes, cRes, dRes] = await Promise.all([
-    sb.from("roles").select("id, role_name, role_name_ar, home_committee_id"),
-    sb.from("user_roles").select("user_id, role_id").eq("is_active", true),
+    sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
+    sb.from("user_roles").select("user_id, role_name").eq("is_active", true),
     sb.from("profiles").select("id").eq("account_status", "active"),
     sb.from("committees").select("id, committee_name_ar, council_id, leader_role_name, member_role_name").eq("is_active", true),
     sb.from("departments").select("id, name_ar").eq("is_active", true),
@@ -141,7 +141,7 @@ export async function getVacantPositions(): Promise<VacantSeat[]> {
 
   const title = titler(cRes.data ?? []);
   const active = new Set((pRes.data ?? []).map((p) => p.id as string));
-  const occupied = new Set((urRes.data ?? []).filter((ur) => active.has(ur.user_id as string)).map((ur) => ur.role_id as number));
+  const occupied = new Set((urRes.data ?? []).filter((ur) => active.has(ur.user_id as string)).map((ur) => ur.role_name as string));
 
   const committees = (cRes.data ?? []).map((c) => ({
     id: c.id as number,
@@ -163,12 +163,12 @@ export async function getVacantPositions(): Promise<VacantSeat[]> {
 
   const rank = (name: string) => { const i = ROLE_ORDER.indexOf(name); return i === -1 ? ROLE_ORDER.length : i; };
   return (rRes.data ?? [])
-    .filter((r) => !occupied.has(r.id as number))
+    .filter((r) => !occupied.has(r.role_name as string))
     .map((r) => {
       const roleName = r.role_name as string;
       const scope = seatScope(roleName);
       return {
-        roleId: r.id as number,
+        roleName,
         roleAr: title(r),
         scope,
         units: scope === "committee" ? unitsFor(roleName) : scope === "department" ? departments : [],
@@ -176,5 +176,5 @@ export async function getVacantPositions(): Promise<VacantSeat[]> {
       };
     })
     .sort((a, b) => a.rank - b.rank)
-    .map(({ roleId, roleAr, scope, units }) => ({ roleId, roleAr, scope, units }));
+    .map(({ roleName, roleAr, scope, units }) => ({ roleName, roleAr, scope, units }));
 }

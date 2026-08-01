@@ -15,18 +15,18 @@ import type { VacantSeat } from "./data";
 export function VacantSeatPicker({ seats }: { seats: VacantSeat[] }) {
   const router = useRouter();
   const toast = useToast();
-  const [roleId, setRoleId] = useState("");
+  const [roleName, setRoleName] = useState("");
   const [unitId, setUnitId] = useState("");
   const [pending, start] = useTransition();
 
-  const seat = seats.find((s) => String(s.roleId) === roleId) ?? null;
+  const seat = seats.find((s) => s.roleName === roleName) ?? null;
   const needsUnit = seat != null && seat.scope !== "none";
   const ready = seat != null && (!needsUnit || unitId !== "");
 
   const go = () =>
     start(async () => {
       if (!seat) return;
-      const res = await previewVacantPosition({ roleId: seat.roleId, unitId: needsUnit ? Number(unitId) : null });
+      const res = await previewVacantPosition({ roleName: seat.roleName, unitId: needsUnit ? Number(unitId) : null });
       toast[res.ok ? "success" : "error"](res.message);
       if (!res.ok) return;
       router.push("/dashboard");
@@ -53,9 +53,9 @@ export function VacantSeatPicker({ seats }: { seats: VacantSeat[] }) {
         label="المنصب الشاغر"
         icon={<TreeStructure aria-hidden />}
         required
-        options={seats.map((s) => ({ value: String(s.roleId), label: s.roleAr }))}
-        value={roleId}
-        onValueChange={(v) => { setRoleId(v); setUnitId(""); }}
+        options={seats.map((s) => ({ value: s.roleName, label: s.roleAr }))}
+        value={roleName}
+        onValueChange={(v) => { setRoleName(v); setUnitId(""); }}
         className="mb-3"
       />
       {needsUnit ? (

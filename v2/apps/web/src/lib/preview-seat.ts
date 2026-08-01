@@ -90,14 +90,14 @@ export async function vacatePreviewSeats(sb: Service, userId?: string | null): P
 export async function seatPreview(
   sb: Service,
   userId: string,
-  seat: { roleId: number; roleName: string; roleAr: string; committeeId: number | null; departmentId: number | null },
+  seat: { roleName: string; roleAr: string; committeeId: number | null; departmentId: number | null },
 ): Promise<string | null> {
   await vacatePreviewSeats(sb, userId);
   // اسم الدُّمية يحمل منصبها — فيقول شريطُ المعاينة «بأيّ منصبٍ تنظر» بلا استعلامٍ إضافيّ
   await sb.from("profiles").update({ full_name: `${PREVIEW_NAME} — ${seat.roleAr}` }).eq("id", userId);
+  // `role_id` لا يُكتب: تريغر `sync_role_key` يشتقّه من الاسم — والعمود مصيره الحذف (البند ١).
   const { error } = await sb.from("user_roles").insert({
     user_id: userId,
-    role_id: seat.roleId,
     role_name: seat.roleName,
     committee_id: seat.committeeId,
     department_id: seat.departmentId,
