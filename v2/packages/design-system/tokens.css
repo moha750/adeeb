@@ -6,7 +6,7 @@
    ============================================================ */
 
 :root{
-  color-scheme: light dark;
+  color-scheme: light;   /* الموقع فاتحٌ وحدَه — لا وضع داكن ولا انقلاب مع تفضيل النظام */
 
   /* ---------- (1) ألوان أولية: مقاييس العلامة ---------- */
   /* الكحلي (أساسي) — 700 هو لون العلامة الرسمي */
@@ -61,7 +61,7 @@
      النصّ الأبيض على 400 تباينه 2.6 — دون عتبة AA (4.5)، اختيارٌ مقصود لا سهو. */
   --grad-neutral:linear-gradient(135deg, var(--neutral-400), var(--neutral-700));
 
-  /* ---------- (2) رموز دلالية (Semantic) — تنقلب مع الثيم ---------- */
+  /* ---------- (2) رموز دلالية (Semantic) — قيمةٌ واحدة، لا ثيم ينقلب ---------- */
   --color-bg:#f5f7fa;
   --color-surface:#ffffff;
   --color-surface-2:#eef1f6;
@@ -75,7 +75,7 @@
   --color-secondary-hover:var(--steel-700);
   --color-on-secondary:#ffffff;
   --color-ring:var(--steel-500);
-  /* الزرّ الشبحيّ المحايد — فولاذيّ في الفاتح، أبيض في الداكن (رمز ينقلب مع الثيم) */
+  /* الزرّ الشبحيّ المحايد — فولاذيّ */
   --btn-ghost-fg:var(--steel-600);
   --btn-ghost-border:color-mix(in oklab, var(--steel-600) 32%, transparent);
 
@@ -171,7 +171,8 @@
   --aurora-danger:  #fae7e6;
   --scrim: rgba(20, 31, 48, .42);                                                   /* حُجُب النوافذ الحواريّة — كحليّ عميق شفّاف */
 
-  --z-base:0; --z-dropdown:1000; --z-sticky:1100; --z-modal:1300; --z-toast:1500;
+  /* شاشةُ البدء فوق الجميع — حتى الإشعار: ما دام الموقعُ لم يُرطَّب فلا شيء يعلوها */
+  --z-base:0; --z-dropdown:1000; --z-sticky:1100; --z-modal:1300; --z-toast:1500; --z-boot:1600;
 
   /* ---------- (6) الحركة ---------- */
   --ease-standard:cubic-bezier(.2,.6,.2,1);
@@ -189,41 +190,5 @@
   --ring-strong: 0 0 0 3px rgba(var(--shadow-tone), .28);       /* حلقة أبرز — عناصر الاختيار */
 }
 
-/* ============ الوضع الداكن (تفضيل النظام) ============ */
-@media (prefers-color-scheme:dark){
-  :root{
-    --color-bg:#0f141c; --color-surface:#161d29; --color-surface-2:#1d2634;
-    --color-text:#e9edf3; --color-text-muted:#9aa5b6; --color-border:rgba(233,237,243,.13);
-    --color-primary:var(--navy-600); --color-primary-hover:var(--navy-500);
-    --color-secondary:var(--steel-500); --color-secondary-hover:var(--steel-400);
-    --color-ring:var(--steel-400);
-    --btn-ghost-fg:#ffffff; --btn-ghost-border:rgba(255,255,255,.5);
-    --success-soft:rgba(46,139,107,.14); --warning-soft:rgba(197,138,44,.16);
-    --danger-soft:rgba(192,71,60,.16);  --info-soft:rgba(51,92,129,.18);
-  }
-  /* ظلال الداكن أيضًا على * (لتغلب على * الفاتح في كل عنصر لا الجذر فقط) — أسود، خارج نطاق الاهتمام الحاليّ */
-  *, ::before, ::after{
-    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
-    --shadow-md:0 6px 16px -8px rgba(0,0,0,.55);
-    --shadow-lg:0 24px 50px -30px rgba(0,0,0,.7);
-  }
-}
-
-/* ============ تجاوز يدوي للثيم (زر التبديل يضع data-theme على :root) ============ */
-:root[data-theme="light"]{
-  --color-bg:#f5f7fa; --color-surface:#ffffff; --color-surface-2:#eef1f6;
-  --color-text:#182031; --color-text-muted:#5c6678; --color-border:rgba(24,32,49,.12);
-  --color-primary:var(--navy-700); --color-primary-hover:var(--navy-800);
-  --color-secondary:var(--steel-600); --color-secondary-hover:var(--steel-700); --color-ring:var(--steel-500);
-  --btn-ghost-fg:var(--steel-600); --btn-ghost-border:color-mix(in oklab, var(--steel-600) 32%, transparent);
-  --success-soft:var(--success-50); --warning-soft:var(--warning-50); --danger-soft:var(--danger-50); --info-soft:#e4ebf2;
-}
-:root[data-theme="dark"]{
-  --color-bg:#0f141c; --color-surface:#161d29; --color-surface-2:#1d2634;
-  --color-text:#e9edf3; --color-text-muted:#9aa5b6; --color-border:rgba(233,237,243,.13);
-  --color-primary:var(--navy-600); --color-primary-hover:var(--navy-500);
-  --color-secondary:var(--steel-500); --color-secondary-hover:var(--steel-400); --color-ring:var(--steel-400);
-  --btn-ghost-fg:#ffffff; --btn-ghost-border:rgba(255,255,255,.5);
-  --success-soft:rgba(46,139,107,.14); --warning-soft:rgba(197,138,44,.16);
-  --danger-soft:rgba(192,71,60,.16);  --info-soft:rgba(51,92,129,.18);
-}
+/* الوضع الداكن أُزيل جذريًّا (2026-08-01 · بقرار المالك): لا كتلة `prefers-color-scheme`
+   ولا تجاوز `data-theme`. الرموز الدلاليّة أعلاه هي القيم النهائيّة الوحيدة. */
