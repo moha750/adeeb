@@ -6,17 +6,26 @@ import "@adeeb/design-system/tokens.css";
 import "./globals.css";
 import "@adeeb/design-system/components.css";
 
+// `metadataBase` أصلُ كلّ رابطٍ نسبيّ في الوسوم (OG وcanonical وrobots) — بدونه تُبنى
+// روابط OG نسبيّةً فلا تُقرأ خارج الموقع. والنطاق من البيئة ليبقى صحيحًا في المعاينات.
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://adeeb.club";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE),
+  // بلا `template`: الصفحات تكتب لاحقتها بنفسها («… — أديب») فلا تتكرّر اللاحقة مرّتين.
   title: "نادي أَدِيب",
-  description: "نادٍ ثقافي إبداعي بجامعة الملك فيصل — النسخة الثانية",
+  description: "نادٍ ثقافيّ إبداعيّ بجامعة الملك فيصل — أنشطةٌ وورشٌ وإصداراتٌ ومجتمعٌ من المبدعين.",
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
       <body>
+        {/* suppressHydrationWarning على <html> أعلاه: هذا السكربت يضيف class="js" قبل ترطيب React
+            (لتفعيل حركات .js [data-reveal])، فتختلف سمة <html> بين الخادم والعميل. الخاصّية تُسكِت
+            تحذير سمات <html> وحدها لا شجرتها — فلا تُخفى تعارضاتٌ حقيقيّة أخرى. */}
         <script
           dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }}
         />
