@@ -1,14 +1,18 @@
 import Link from "next/link";
-import { Header, Footer, Container, LandingHeading, Ambient } from "@adeeb/design-system";
+import { Header, Container, LandingHeading, Ambient } from "@adeeb/design-system";
 
 /**
  * صفحة «غير موجود» بهوية أديب — تحلّ محلّ صفحة Next/Vercel الافتراضيّة.
  * حدُّها **الجذر**: تلتقط كلّ رابطٍ لا يطابق مسارًا، وكلّ `notFound()` تُرمى من صفحةٍ
- * لا حدَّ أقرب لها. بنيتُها بنيةُ الصفحات العامّة نفسها (Header · main.amb-host + Ambient
- * · Footer) فلا يشعر الزائر أنّه خرج من الموقع.
+ * لا حدَّ أقرب لها.
  *
- * بلا أرقام (قاعدة عناوين الهبوط): «404» لا تُعرض — الحالة تُقال بالكلمة،
- * ورمز الحالة يبقى في الترويسة حيث تقرؤه المتصفّحات ومحرّكات البحث.
+ * الشكل معتمَدٌ من المالك بعد معاينة ستّة بدائل حيّة (٢٠٢٦-٠٨-٠١): رأس الهبوط
+ * بالرقم ٤٠٤ عينًا، ونصٌّ مباشر، وزرٌّ واحد، **بلا تذييل** — والصفحة كلّها تُعرض
+ * في منتصف الشاشة رأسيًّا.
+ *
+ * التوسيط بلا رقمٍ سحريّ: الغلاف بطول النافذة (`min-h-svh`) عمودًا، والهيدر يأخذ
+ * ارتفاعه الطبيعيّ، و`<main>` يبتلع الباقي (`flex-1`) فيتوسّط محتواه فيه — فلا
+ * يُطرح ارتفاع الهيدر يدويًّا، ويبقى التوسيط سليمًا إن تغيّر.
  */
 
 export const metadata = {
@@ -18,26 +22,22 @@ export const metadata = {
 
 export default function NotFound() {
   return (
-    <>
+    <div className="flex min-h-svh flex-col">
       <Header />
-      <main className="amb-host">
+      <main className="amb-host flex flex-1 items-center py-12">
         <Ambient />
-        <section className="py-20 md:py-28">
-          <Container className="max-w-2xl text-center">
-            <LandingHeading
-              eyebrow="تِيه"
-              title="صفحةٌ ضائعة"
-              deck="الرابط الذي جئت منه لا يقود إلى شيء — لعلّه تغيّر أو حُذِف أو كُتب على غير وجهه."
-              align="center"
-            />
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href="/" className="abtn abtn-primary abtn-lg">العودة للرئيسية</Link>
-              <Link href="/works" className="abtn abtn-ghost abtn-lg">تصفّح الأعمال</Link>
-            </div>
-          </Container>
-        </section>
+        <Container className="max-w-2xl text-center">
+          <LandingHeading
+            eyebrow="404"
+            title="الصفحة غير موجودة"
+            deck="الرابط الذي جئت منه لعلّه تغيّر أو حُذِف أو أنّ الصفحة غير موجودة."
+            align="center"
+          />
+          <div className="mt-8 flex justify-center">
+            <Link href="/" className="abtn abtn-primary abtn-lg">العودة إلى الصفحة الرئيسية</Link>
+          </div>
+        </Container>
       </main>
-      <Footer />
-    </>
+    </div>
   );
 }
