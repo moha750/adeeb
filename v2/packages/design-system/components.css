@@ -4061,6 +4061,115 @@ html:not(.js) .ldr-boot { display: none; }
 }
 
 /* ============================================================
+   رأسُ الموقع (Header) — **الجزيرة**: كرتٌ عائمٌ لا شريطٌ ملتصق.
+
+   كان «تصميمًا عامًّا» (شريطٌ أبيضُ بشعرةٍ سفليّة) لا يقول شيئًا عن الهويّة،
+   فعُرِضت خمسُ هيئاتٍ ثمّ ستُّ خلفيّات، واعتُمِد ٢٠٢٦-٠٨-٠١: **الجزيرةُ** هيئةً
+   و**الخطّيّةُ المتكيّفة** خلفيّةً. وأُعدم المرفوضُ كلُّه — ومعه `.shdr-plain`
+   (الشريطُ القديم) يوم صار الاعتماد — فلا يبقى اتّجاهٌ ميّت ولا خاصّيةُ جلدٍ
+   بلا جلدٍ ثانٍ (كما فُعل في `AuthShell`).
+
+   **الرأسُ كرتٌ من عائلة الكروت:** الحدُّ 1.75px (ق٤) والظلُّ من السلّم (ق٥)
+   والزاويةُ من الأساس (ق٢) — عائمٌ عن الحافّة يقرب منها بالنزول. فهو سطحٌ من
+   أسرة أسطح الموقع لا شريطٌ غريبٌ فوقها.
+
+   **وخلفيّتُه خطّيّةٌ متكيّفة:** عند القمّة **حدٌّ وحدَه على زجاجٍ رقيق** فالرأسُ
+   حاضرٌ بلا سطحٍ يزاحم البطلَ ويمرّ الشفقُ من تحته؛ فإذا نزل القارئُ اكتسب سطحَه
+   الزجاجيّ كاملًا فيُقرأ فوق أيّ محتوًى. الحالةُ تُقال **بالسطح** لا بحركةٍ تُلفت.
+
+   **كلُّ متبدّلٍ رمزٌ لا نسخةٌ ثانية:** `--shdr-h` (ارتفاع الصفّ) · `--shdr-logo`
+   (مقاس الشعار) · `--shdr-surface` و`--shdr-blur` (الخلفيّة) — تُضبط عند
+   `[data-stuck]` مرّةً واحدة، والكبسولةُ ولوحُ الجوّال يقرآنها.
+   ============================================================ */
+.shdr {
+  position: sticky; top: 0; z-index: var(--z-sticky);
+  padding-block: 12px;
+  --shdr-h: 64px;
+  --shdr-logo: 44px;
+  transition: padding var(--dur) var(--ease-standard);
+  /* عند القمّة: حدٌّ على زجاجٍ رقيق */
+  --shdr-surface: color-mix(in oklab, var(--color-surface) 30%, transparent);
+  --shdr-blur: 6px;
+}
+/* السطحُ الكامل يشتعل بالنزول **أو** بفتح قائمة الجوّال — شرطان لحالةٍ واحدة لا نسختان:
+   زجاجُ الـ30% يكفي فوق فراغ الرأس، ولا يكفي والقائمةُ مفتوحةٌ فوق متن الصفحة. */
+.shdr[data-stuck="true"], .shdr[data-open="true"] {
+  --shdr-surface: color-mix(in oklab, var(--color-surface) 86%, transparent);
+  --shdr-blur: 16px;
+}
+.shdr[data-stuck="true"] { padding-block: 8px; }
+/* الكبسولةُ ولوحُ الجوّال سطحٌ واحدٌ بجوابٍ واحد — واللوحُ كبسولةٌ ثانية لا امتدادَ شريط */
+.shdr-bar, .shdr-sheet-in {
+  border-radius: var(--radius);
+  border: var(--card-stroke-w) solid var(--card-stroke);
+  background: var(--shdr-surface);
+  backdrop-filter: blur(var(--shdr-blur));
+  box-shadow: var(--shadow-md);
+  transition: background-color var(--dur) var(--ease-standard), backdrop-filter var(--dur) var(--ease-standard);
+}
+.shdr-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  height: var(--shdr-h); padding-inline: 10px;
+  transition: height var(--dur) var(--ease-standard);
+}
+.shdr-mark { display: inline-flex; align-items: center; flex: none; }
+.shdr-mark img { display: block; width: auto; height: var(--shdr-logo); transition: height var(--dur) var(--ease-standard); }
+
+.shdr-nav { display: flex; align-items: center; gap: 2px; }
+.shdr-link {
+  position: relative;
+  display: inline-flex; align-items: center;
+  height: 38px; padding-inline: 12px;
+  font-weight: 600; color: var(--color-text-muted);
+  transition: color var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
+}
+.shdr-link:hover { color: var(--color-primary); background: color-mix(in oklab, var(--steel-500) 9%, transparent); }
+/* مؤشّرُ الصفحة الحاليّة: شعرةٌ من تدرّج العلامة — الحالةُ تُقال بعلامةٍ لا باللون وحده */
+.shdr-link[aria-current="page"] { color: var(--color-primary); }
+.shdr-link[aria-current="page"]::after {
+  content: ""; position: absolute; inset-inline: 12px; bottom: 3px; height: 2px;
+  border-radius: var(--radius-full); background: var(--grad-primary);
+}
+
+.shdr-actions { display: flex; align-items: center; gap: 10px; flex: none; }
+.shdr-login { font-weight: 600; color: var(--color-text-muted); padding-inline: 6px; transition: color var(--dur-fast) var(--ease-standard); }
+.shdr-login:hover { color: var(--color-primary); }
+
+/* زرّ قائمة الجوّال — لا يظهر فوق 900px */
+.shdr-burger {
+  display: none; align-items: center; justify-content: center;
+  width: 40px; height: 40px; flex: none;
+  border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text);
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+.shdr-burger:hover { background: color-mix(in oklab, var(--steel-500) 9%, var(--color-surface)); }
+
+/* اللوحُ المنسدل: `grid-template-rows: 0fr→1fr` — انزلاقٌ بلا ارتفاعٍ محسوبٍ بجافاسكربت */
+.shdr-sheet { display: none; grid-template-rows: 0fr; transition: grid-template-rows var(--dur) var(--ease-standard); }
+.shdr-sheet > div { overflow: hidden; }
+.shdr-sheet[data-open="true"] { grid-template-rows: 1fr; }
+.shdr-sheet-in { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; padding: 10px; }
+.shdr-sheet .shdr-link { height: 44px; }
+.shdr-sheet .shdr-link[aria-current="page"]::after { inset-inline: 12px auto; width: 3px; top: 10px; bottom: 10px; height: auto; }
+.shdr-sheet .shdr-login { padding-block: 10px; }
+
+@media (max-width: 900px) {
+  .shdr-bar > .shdr-nav, .shdr-actions .shdr-login { display: none; }
+  .shdr-burger { display: inline-flex; }
+  .shdr-sheet { display: grid; }
+}
+
+/* إطارُ المعرض وحده: `contain: paint` يحبس الشفقَ `fixed` في الإطار، والتمريرُ
+   داخله هو ما يُشعل `[data-stuck]` — فتُرى الحالتان بلا مغادرة الصفحة. */
+.shdr-demo {
+  position: relative; contain: paint; overflow: hidden auto;
+  height: var(--shdr-demo-h, 420px);
+  border: var(--card-stroke-w) solid var(--card-stroke);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+/* ============================================================
    نظام الزوايا المتراكز — استثناءات الأساس (--radius = 16).
    المصدر الوحيد هنا (components.css يُحمَّل أخيرًا) — بلا !important.
    ============================================================ */
@@ -4069,7 +4178,8 @@ html:not(.js) .ldr-boot { display: none; }
    فيقصّه المتصفّح إلى النصف — أيقونة حقل كرت العضو كانت **دائرة كاملة**. */
 .av-xs, .av-sm, .pva-copy, .pva-open, .tx, .tic,
 .dm-trigger, .mdl-x, .pag-arr, .pag-num, .acard-dots,
-.acard-ic, .ash-fic, .dt-dots, .ash-logo, .gal-num {
+.acard-ic, .ash-fic, .dt-dots, .ash-logo, .gal-num,
+.shdr-link, .shdr-burger {
   border-radius: var(--radius-sm);
 }
 /* الصغير جدًّا (checkbox ~22px) → --radius-xs (6) */

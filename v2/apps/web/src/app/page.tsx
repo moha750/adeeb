@@ -35,7 +35,7 @@ export default function Home() {
               نادٍ ثقافي إبداعي بجامعة الملك فيصل، يدعم المواهب الشابة عبر ورشٍ وبرامج ومحتوى متميّز.
             </p>
             <div className="mt-8 flex justify-center gap-3">
-              <Link href="/join" className="abtn abtn-primary abtn-lg">انضمّ إلينا</Link>
+              <Link href="/login" className="abtn abtn-primary abtn-lg">تسجيل الدخول</Link>
               <a href="#works" className="abtn abtn-ghost abtn-lg">تصفّح الأعمال</a>
             </div>
           </Container>
