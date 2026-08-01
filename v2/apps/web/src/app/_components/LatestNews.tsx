@@ -1,4 +1,6 @@
 import { createAdeebServerClient, toLatinDigits } from "@adeeb/core";
+import { fmtDate } from "@/lib/date";
+import { newsHref } from "@/lib/news/link";
 import { NewsShowcase, type NewsCard } from "./NewsShowcase";
 
 type NewsItem = {
@@ -7,24 +9,11 @@ type NewsItem = {
   summary: string | null;
   image_url: string | null;
   published_at: string | null;
-  author_name: string | null;
+  authors: string[] | null;
   views: number | null;
   is_featured: boolean | null;
   slug: string | null;
 };
-
-function fmtDate(d: string | null): string {
-  if (!d) return "";
-  try {
-    return new Intl.DateTimeFormat("ar-u-nu-latn", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(new Date(d));
-  } catch {
-    return d;
-  }
-}
 
 /** قسم حيّ: آخر أخبار أديب — عرض تحريريّ متحرّك من منصّة أديب الإخبارية. */
 export async function LatestNews() {
@@ -35,8 +24,8 @@ export async function LatestNews() {
 
   const { data, error } = await sb
     .from("news")
-    .select("id,title,summary,image_url,published_at,author_name,views,is_featured,slug")
-    .eq("status", "published")
+    .select("id,title,summary,image_url,published_at,authors,views,is_featured,slug")
+    .eq("workflow_status", "published")
     .order("published_at", { ascending: false })
     .limit(5)
     .returns<NewsItem[]>();
@@ -52,12 +41,10 @@ export async function LatestNews() {
     summary: n.summary ? toLatinDigits(n.summary) : null,
     cover: n.image_url,
     dateStr: fmtDate(n.published_at),
-    author: n.author_name,
+    author: n.authors?.[0] ?? null,
     views: n.views,
     featured: !!n.is_featured,
-    href: n.slug
-      ? `https://www.adeeb.club/news/news-detail.html?slug=${encodeURIComponent(n.slug)}`
-      : `https://www.adeeb.club/news/news-detail.html?id=${n.id}`,
+    href: newsHref(n),
   }));
 
   return <NewsShowcase items={items} />;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Badge } from "@adeeb/design-system";
 import { CalendarBlank, Eye, User, ArrowLeft } from "@phosphor-icons/react";
 
@@ -171,9 +172,9 @@ export function NewsShowcase({ items }: { items: NewsCard[] }) {
             <Meta n={it} />
             <h3 className="ns-clamp3">{it.title}</h3>
             {it.summary ? <p className="ns-clamp2">{it.summary}</p> : null}
-            <a className="abtn abtn-inverse abtn-sm mt-3" href={it.href} target="_blank" rel="noopener noreferrer">
+            <Link className="abtn abtn-inverse abtn-sm mt-3" href={it.href}>
               اقرأ المزيد<ArrowLeft aria-hidden />
-            </a>
+            </Link>
           </div>
         </div>
         <div className="ns-list">
