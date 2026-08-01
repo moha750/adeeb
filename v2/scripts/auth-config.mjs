@@ -73,7 +73,7 @@ if (resendKey) {
     smtp_port: "465",
     smtp_user: "resend",          // اسمُ المستخدم في Resend ثابتٌ لكلّ الحسابات
     smtp_pass: resendKey,
-    smtp_admin_email: "no-reply@adeeb.club",
+    smtp_admin_email: "noreply@adeeb.club",   // العنوانُ الحيّ منذ الإعداد الأوّل — بلا شرطة
     smtp_sender_name: "نادي أديب",
   });
 }
@@ -81,7 +81,8 @@ if (resendKey) {
 /** لا يُطبع سرٌّ ولا قالبٌ كامل — المفتاح يُقنَّع، والقالب يُقاس بطولِه. */
 const show = (k, v) => {
   if (v == null) return "—";
-  if (k === "smtp_pass") return `${String(v).slice(0, 6)}…(${String(v).length} محرفًا)`;
+  // بصمةُ المفتاح (64) تأتي من القراءة، والمفتاحُ نفسُه (36) منّا — فيبدوان مختلفَين أبدًا.
+  if (k === "smtp_pass") return `${String(v).slice(0, 6)}…(${String(v).length} محرفًا${String(v).length === 64 ? " — بصمة" : ""})`;
   if (typeof v === "string" && v.length > 90) return `«${v.length} محرفًا»`;
   return String(v);
 };
@@ -115,8 +116,14 @@ if (dry) {
 await call("PATCH", desired);
 
 // **التحقّق بالقراءة لا بالردّ:** رمزُ ٢٠٠ يقول «قُبل الطلب» لا «حُفظت القيمة».
+//
+// و`smtp_pass` وحده يخرج من الفحص: القراءةُ تُرجع **بصمةً** له (‏64 محرفًا) لا قيمتَه —
+// فمقارنتُه بما أرسلناه تفشل دائمًا ولو حُفظ. (وهذا هو الصواب: مفتاحٌ يُقرأ نصًّا مفتاحٌ
+// مسروق.) وصحّتُه تُقاس بأثرها: رسالةٌ تصل.
 const after = await call("GET");
-const stuck = Object.keys(desired).filter((k) => String(after[k] ?? "") !== String(desired[k]));
+const stuck = Object.keys(desired).filter(
+  (k) => k !== "smtp_pass" && String(after[k] ?? "") !== String(desired[k]),
+);
 if (stuck.length) {
   console.error(`\n✗ لم تُحفظ: ${stuck.join(", ")}`);
   process.exit(1);
