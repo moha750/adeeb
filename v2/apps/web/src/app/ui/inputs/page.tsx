@@ -1,7 +1,7 @@
 "use client";
 
 import { Field, Textarea, Container } from "@adeeb/design-system";
-import { Asterisk, At, ChatText, Envelope, Hash, IdentificationBadge, MagnifyingGlass, PencilSimple, Phone, Prohibit, User } from "@phosphor-icons/react";
+import { Asterisk, At, ChatText, Envelope, Hash, IdentificationBadge, Key, Lock, LockKey, MagnifyingGlass, PencilSimple, Phone, Prohibit, User } from "@phosphor-icons/react";
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
@@ -44,6 +44,14 @@ export default function InputsPage() {
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="الاسم الكامل" icon={<User />} innerIcon={<PencilSimple />} placeholder="اكتب اسمك الكامل" required />
               <Field label="اسم الشهرة" icon={<User />} innerIcon={<PencilSimple />} placeholder="إن رغبت" optional />
+            </div>
+          </section>
+
+          <section>
+            <Label>كلمة المرور (عين الكشف — تظهر تلقائيًّا مع type=&quot;password&quot;)</Label>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="كلمة المرور" type="password" dir="ltr" icon={<Lock />} innerIcon={<Key />} placeholder="••••••••" defaultValue="adeeb-2026" autoComplete="new-password" required helper="اضغط العين لعرضها ثمّ لإغلاقها." />
+              <Field label="تأكيد كلمة المرور" type="password" dir="ltr" icon={<LockKey />} innerIcon={<Key />} placeholder="••••••••" defaultValue="adeeb-202" autoComplete="new-password" required error="الكلمتان غير متطابقتين." />
             </div>
           </section>
 

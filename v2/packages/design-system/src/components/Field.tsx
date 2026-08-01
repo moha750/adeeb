@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
 import { cn } from "../lib/cn";
 import { charsetGuard, type FieldCharset } from "../lib/charset";
 import { FieldMark } from "./FieldMark";
@@ -17,7 +17,7 @@ export interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   /**
    * طقم المحارف المقبول — يمنع الممنوع عند الكتابة واللصق، ويستلزم `dir="ltr"` تلقائيًّا (يُنقَض بتمرير `dir`).
    * `latin` = لا حروف عربيّة (بريد · معرّف · رابط) · `digits` = أرقام فقط (جوّال · رقم أكاديميّ).
-   * يُترك فارغًا للحقول العربيّة (اسم · كلّية) ولكلمة المرور — فهي تقبل كلّ محرف.
+   * يُترك فارغًا للحقول العربيّة (اسم · كلّية). و`type="password"` يستلزم `latin` تلقائيًّا (يُنقَض بتمرير طقم آخر).
    */
   charset?: FieldCharset;
   /** رسالة خطأ — تُفعّل حالة الخطأ (لون الدلالة 600 + حلقة). */
@@ -30,6 +30,21 @@ export interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   optional?: boolean;
 }
 
+/* عين الكشف — بخطّ أيقونات النظام نفسه (stroke 1.7، لا تعبئة) */
+const Eye = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M2.5 12S6.6 5.8 12 5.8 21.5 12 21.5 12 17.4 18.2 12 18.2 2.5 12 2.5 12Z" />
+    <circle cx="12" cy="12" r="2.9" />
+  </svg>
+);
+const EyeOff = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M2.5 12S6.6 5.8 12 5.8c1.6 0 3 .35 4.2.9M21.5 12s-1.6 2.4-4.3 4.1M4.7 16.4A15.6 15.6 0 0 1 2.5 12" />
+    <path d="M9.9 9.9a2.9 2.9 0 0 0 4.2 4.2" />
+    <path d="M4 20 20 4" />
+  </svg>
+);
+
 /**
  * حقل إدخال العلامة — نظام الحقل المعتمَد على لوح الهوية: تسمية ثابتة أعلى + أيقونة هويّة بجانبها ·
  * سطح مسطّح · تركيز فولاذيّ · استدارة 16 · حالات الخطأ/النجاح بلون الدلالة 600.
@@ -37,11 +52,16 @@ export interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
  * المكوّن عميليّ (`use client`) لأنّ حارس `charset` يعترض الإدخال — وكلّ مستهلكيه عميليّون أصلًا.
  */
 export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
-  { label, icon, innerIcon, placeholder, charset, error, success, helper, optional, required, className, dir, onBeforeInput, onChange, ...props },
+  { label, icon, innerIcon, placeholder, charset, error, success, helper, optional, required, className, dir, type, onBeforeInput, onChange, ...props },
   ref,
 ) {
   const msg = error ?? helper;
-  const guard = charsetGuard<HTMLInputElement>(charset, onBeforeInput, onChange);
+  const [shown, setShown] = useState(false);
+  /** عين الكشف لكلّ حقل كلمة مرور **بلا استثناء** — تُشتقّ من النوع وحده، فلا خاصّية تُطفئها ولا كشفَ خارج الحقل. */
+  const hasEye = type === "password";
+  /** كلمة المرور **لا تقبل العربيّة** (قرار المالك): الطقم يُشتقّ من النوع كما تُشتقّ العين، فلا يُكتب في كلّ نموذج — ويستلزم `dir="ltr"` معه. */
+  const cs = charset ?? (hasEye ? "latin" : undefined);
+  const guard = charsetGuard<HTMLInputElement>(cs, onBeforeInput, onChange);
   return (
     <label className={cn("fld", error ? "err" : undefined, success && !error ? "ok" : undefined, className)}>
       <span className="fld-lbl">
@@ -54,13 +74,26 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
         <input
           ref={ref}
           className="fld-in"
+          type={hasEye && shown ? "text" : type}
           placeholder={placeholder}
-          dir={dir ?? (charset ? "ltr" : undefined)}
+          dir={dir ?? (cs ? "ltr" : undefined)}
           required={required}
           aria-invalid={error ? true : undefined}
           {...props}
           {...guard}
         />
+        {hasEye ? (
+          <button
+            type="button"
+            className="fld-eye"
+            disabled={props.disabled}
+            onClick={() => setShown((s) => !s)}
+            aria-label={shown ? "إخفاء كلمة المرور" : "عرض كلمة المرور"}
+            aria-pressed={shown}
+          >
+            {shown ? <EyeOff /> : <Eye />}
+          </button>
+        ) : null}
       </div>
       {msg ? <span className="fld-help">{msg}</span> : null}
     </label>

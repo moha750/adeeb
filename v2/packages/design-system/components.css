@@ -922,6 +922,38 @@
 .fld-in:focus { outline: 0; border-color: var(--fld-accent, var(--steel-600)); box-shadow: var(--ring); }
 .fld-in:disabled { background: var(--color-surface-2); color: var(--color-text-muted); cursor: not-allowed; }
 .fld-area { height: auto; min-height: 96px; padding: 12px 16px; line-height: 1.6; resize: vertical; }
+
+/* عين الكشف (كلمة المرور) — نظير زرّ السهم `.asel-chev` في آخر البئر، إلّا أنّها **خاملةً بلا خلفيّة**
+   (أيقونة عارية هادئة كالأيقونة الأماميّة)، ويظهر المربّع المنغَّم عند اللمس/التركيز وعند الكشف. مقاسه من `--chev-sz`. */
+.fld-eye {
+  position: absolute;
+  inset-inline-end: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--chev-sz, 26px);
+  height: var(--chev-sz, 26px);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fld-accent, var(--steel-600));
+  display: grid;
+  place-items: center;
+  z-index: 1;
+  transition: background var(--dur), color var(--dur);
+}
+.fld-eye svg { width: 15px; height: 15px; }
+.fld-eye:hover,
+.fld-eye:focus-visible,
+.fld-eye[aria-pressed="true"] { background: var(--fld-tint-2, var(--steel-100)); color: var(--fld-accent, var(--steel-600)); }
+.fld-eye:focus-visible { outline: 0; box-shadow: var(--ring); }
+.fld-eye:disabled { color: var(--color-text-muted); cursor: not-allowed; }
+.fld-eye:disabled:hover { background: transparent; color: var(--color-text-muted); }
+.fld.err .fld-eye { color: var(--danger-600); }
+.fld.err .fld-eye:hover, .fld.err .fld-eye:focus-visible, .fld.err .fld-eye[aria-pressed="true"] { background: var(--danger-100); color: var(--danger-600); }
+.fld.ok .fld-eye { color: var(--success-600); }
+.fld.ok .fld-eye:hover, .fld.ok .fld-eye:focus-visible, .fld.ok .fld-eye[aria-pressed="true"] { background: var(--success-100); color: var(--success-600); }
+/* حجزُ مكانِ العين في البئر — كحجز الأيقونة الأماميّة: فيزيائيّ على .fld-wrap لا منطقيّ، إذ يحمل الحقل dir=ltr */
+.fld-wrap:dir(rtl):has(.fld-eye) .fld-in { padding-left: 44px; }
+.fld-wrap:dir(ltr):has(.fld-eye) .fld-in { padding-right: 44px; }
 .fld-help { font-size: 12px; color: var(--color-text-muted); padding-inline-start: 3px; }
 .fld.err .fld-lbl, .fld.err .fld-lic, .fld.err .fld-help { color: var(--danger-600); }
 .fld.err .fld-in { background: linear-gradient(135deg, var(--danger-50), transparent 33%), var(--color-surface); border-color: var(--danger-600); --shadow-tone: var(--shadow-tone-danger); box-shadow: var(--ring); }
@@ -3855,6 +3887,177 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   background-size: 240px 240px;
   opacity: .05;
+}
+
+/* ============================================================
+   شاشة المصادقة (AuthShell) — الغلاف لا المتن.
+   المتن (حقول · زرّ · تنبيه) مكوّناتُ الهوية أصلًا؛ الناقص كان الغلافَ:
+   شاشةٌ مركزيّة + سطحٌ + شعارٌ حقيقيّ. فالسطح `.acard` نفسُه (حدّ · ظلّ ·
+   زاوية · Aurora من مصدرها) ولا يُعاد تعريفه هنا — تُضاف الهيئةُ فقط.
+   الهيئةُ المعتمَدة (المالك ٢٠٢٦-٠٨-٠١): **اللوح المنقسم** — لوحٌ مذهّبٌ
+   بالنقش يقاسم النموذجَ السطحَ نفسَه. (عُرِض معه اتّجاها «الشعار فوق بطاقةٍ
+   هادئة» و«الغلاف المذهّب» فلم يُعتمَدا، وأُزيلا فلا يبقى اتّجاهٌ ميّت.)
+   ============================================================ */
+.aauth {
+  position: relative;
+  /* `--aauth-h` ليعرضها المعرضُ في إطارٍ محدود — والافتراض ملءُ الشاشة */
+  min-height: var(--aauth-h, 100dvh);
+  display: grid;
+  /* `safe` لا `center` المجرّدة: لو طال السطحُ عن الشاشة (خطأٌ يُضاف · شاشةٌ قصيرة ·
+     تكبيرُ الخطّ) فالتوسيطُ يدفع طرفَه العلويّ خارجَ المجال **بلا تمرير** فيتعذّر
+     بلوغُه؛ و`safe` تتخلّى عن التوسيط عند الفيض فتُحاذي البداية ويعود قابلًا للتمرير. */
+  align-items: center; /* ارتدادٌ لمن لا يعرف `safe` — وإلّا سقط السطران معًا فتمدّد السطح */
+  align-items: safe center;
+  justify-items: center;
+  padding: 24px;
+  background: var(--color-bg);
+}
+.aauth-stack { position: relative; z-index: 1; width: 100%; max-width: var(--aauth-w, 780px); }
+.aauth-panel { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; }
+.aauth-panel .acard-body { display: flex; flex-direction: column; gap: 18px; padding: 28px; }
+.aauth-head { display: flex; flex-direction: column; gap: 6px; }
+.aauth-title { font-size: 21px; font-weight: 800; color: var(--color-primary); }
+.aauth-sub { font-size: 13px; line-height: 1.7; color: var(--color-text-muted); }
+.aauth-form { display: flex; flex-direction: column; gap: 14px; }
+.aauth-submit { width: 100%; margin-top: 4px; }
+/* مخرجُ الشاشة (العودة إلى الموقع) — لا يمتدّ عرضَ الجسم كزرّ الإرسال: فعلٌ ثانويّ لا يُنافسه */
+.aauth-back { align-self: center; }
+/* رابطٌ ثانويّ داخل النموذج (نسيت كلمة المرور) — يحاذي طرفَ الصفّ ويقرب من حقله */
+.aauth-link { align-self: flex-end; margin-top: -6px; font-size: 12.5px; font-weight: 700; color: var(--steel-600); transition: color var(--dur-fast); }
+.aauth-link:hover { color: var(--color-primary); text-decoration: underline; text-underline-offset: 3px; }
+
+/* اللوحُ المذهّب — نصفُ السطح للهويّة ونصفُه للنموذج */
+.aauth-side {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; padding: 32px 24px; overflow: hidden; text-align: center;
+  background: var(--grad-primary); color: var(--color-on-primary);
+}
+.aauth-side img { position: relative; width: min(150px, 62%); height: auto; }
+.aauth-slogan { position: relative; font-size: 13px; line-height: 1.8; color: rgba(255, 255, 255, .82); }
+
+/* النقشُ — رأسُ اللوح متضخّمًا (المالك ٢٠٢٦-٠٨-٠١): يفيض عن اللوح فتُقصّ أطرافُه
+   ويعلو رسمُه (نسبةُ الفريز ثابتة 1:6.69، فالعرضُ وحده يرفع الارتفاع — نحو ١٩٨px،
+   أيْ ثلثُ اللوح حتى يكاد يلامس الشعار). ووسطُ اللوح مرفوضٌ صراحةً: الفريزُ أفقيٌّ
+   (1920×287) فوسطُ لوحٍ رأسيّ يتركه شريطًا معلّقًا في الفراغ.
+
+   **والمقاسُ بالبكسل لا بالنسبة (قرار المالك):** كان `340%` — والنسبةُ من عرض اللوح،
+   فكلّما ضاق اللوحُ (عمودٌ واحد دون 640px · شاشةٌ أضيق) انكمش الرسمُ معه فعاد إلى
+   المقاسات الصغيرة المرفوضة. و`1326px` = ٣٤٠٪ من لوحٍ ٣٩٠px: المنظرُ نفسُه عند
+   المقاس المعتاد، **ولا ينكمش** عند الضيق — بل يزداد قصُّ أطرافه وحدَه.
+
+   (عُرِضت معه أربعةُ مواضعَ أخرى — قاعٌ · طوقٌ · ختمُ ركنٍ دائريّ · نسيجٌ مكرّر —
+   فلم تُعتمَد وأُزيلت، ولم يُستعمل `pattern-circular-white.svg` هنا.) */
+.aauth-side::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: url("/brand/pattern-white.svg") no-repeat center top / 1326px auto; opacity: .16;
+}
+
+@media (max-width: 640px) {
+  .aauth-panel { grid-template-columns: 1fr; }
+  .aauth-side { padding: 24px; }
+  .aauth-side img { width: 108px; }
+}
+
+/* إطارُ المعرض وحده: `contain: paint` يجعل الشفقَ `fixed` ينحصر في الإطار لا النافذة */
+.aauth-demo { position: relative; contain: paint; overflow: hidden; border-radius: var(--radius); border: var(--card-stroke-w) solid var(--card-stroke); }
+
+/* ============================================================
+   شاشة التحميل (LogoLoader) — **الحبرُ الصاعد**: الشعارُ هو المؤشّر لا دائرةٌ تدور.
+
+   الشكلُ المعتمَد (المالك ٢٠٢٦-٠٨-٠١) — وهو **أوّلُ ما بُني**، عاد إليه القرارُ بعد
+   جولاتٍ رُفضت كلُّها: خمسُ حركاتٍ «مبهرة» على الشعار، ثمّ ثلاثةُ أنفاسٍ لسطر النقش،
+   ثمّ لوحٌ مذهّبٌ بملء الشاشة، ثمّ حذفُ الشاشة كلِّها إلى خيطِ تقدّم. الحكمُ الأخير:
+   «الحلُّ بسيطٌ جدًّا — أوّلُ خيار». فأُعيد بنصّه، وأُعدم ما سواه فلا يبقى اتّجاهٌ ميّت.
+
+   طبقتان بمقاسٍ واحد: **شبحٌ** باهت (صورةُ الشعار الحقيقيّة من `public/brand`، فالهويّة
+   حاضرةٌ ولو سكن كلُّ شيء)، و**وهجٌ** يصعد فيه من أسفله إلى أعلاه — **مقنَّعٌ بشكل
+   الشعار نفسِه** (`mask-image` بملفّ الـSVG) فلا يفيض عن حدوده حرفًا، ولذلك لا تُلمَس
+   مساراتُ الـSVG ولا يُعاد رسمُها.
+
+   **قناعان متداخلان:** الأب يقنّع بالشعار، وابنُه `::before` يقنّع بشريطٍ رأسيٍّ ناعم
+   الحافّتين ثمّ يتحرّك — فالوهجُ يأخذ لونَه من `--grad-primary` لا من قيمةٍ محفورة.
+
+   **بلا جافاسكربت:** الحركةُ CSS خالصة، فتعمل في `loading.tsx` الخادميّة وفي شاشة
+   البدء **قبل الترطيب** معًا.
+   ============================================================ */
+.ldr {
+  display: grid;
+  place-items: center;
+  min-height: var(--ldr-min, 62vh);
+  padding: 24px;
+}
+.ldr-mark {
+  position: relative;
+  width: var(--ldr-sz, 132px);
+  animation: ldr-breathe 3.2s var(--ease-standard) infinite;
+}
+/* النسبةُ من `viewBox` الأصل — فالعرضُ وحده يُمرَّر والارتفاعُ يتبع.
+   ومقاسُ الأفقيّ يُضبَط على **الجذر** لا على العلامة: `--ldr-sz` يُورَّث، وخاصّيةُ
+   `size` تُكتب سطريًّا على الجذر فتغلبه؛ ولو كُتب على `.ldr-mark` لغلبَ هو السطريَّ. */
+.ldr-v .ldr-mark { aspect-ratio: 674 / 1080; }
+.ldr-h { --ldr-sz: 220px; }
+.ldr-h .ldr-mark { aspect-ratio: 1841.8 / 1080; }
+
+.ldr-ghost { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .24; }
+
+.ldr-ink { position: absolute; inset: 0; overflow: hidden; }
+.ldr-v .ldr-ink { -webkit-mask-image: url("/brand/logo-vertical.svg"); mask-image: url("/brand/logo-vertical.svg"); }
+.ldr-h .ldr-ink { -webkit-mask-image: url("/brand/logo-horizontal.svg"); mask-image: url("/brand/logo-horizontal.svg"); }
+.ldr-ink {
+  -webkit-mask-size: contain; mask-size: contain;
+  -webkit-mask-position: center; mask-position: center;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+}
+/* الشريطُ الصاعد: حافّتاه ذائبتان فلا حدَّ قاطعًا يمرّ، ولون قناعِه من رمزٍ
+   (`--color-text`) لا `#000` — القناعُ يقرأ الشفافيّة لا اللون، والمهمّ أنّه
+   مصمتٌ في وسطه شفّافٌ في طرفيه.
+
+   **وارتفاعُه ارتفاعُ الشعار تمامًا لا ضِعفَه** — وهذا تصحيحُ عطبٍ مُعايَن: كان
+   `200%` والرحلةُ `±100%` من ارتفاعِه هو، أيْ أربعةُ أضعاف الشعار. فالشريطُ يقضي
+   أكثرَ من ثلاثة أرباع الدورة **خارج** الشعار (لُقِطت ثلاثُ لقطاتٍ متتابعة فلم
+   يظهر فيها شيء)، ويعبره في ربعها الأسرع. وبالمساواة يصير العبورُ متّصلًا:
+   يدخل من أسفله ويخرج من أعلاه بلا موتٍ بينهما. */
+.ldr-ink::before {
+  content: "";
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 100%;
+  background: var(--grad-primary);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, var(--color-text) 32%, var(--color-text) 68%, transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0%, var(--color-text) 32%, var(--color-text) 68%, transparent 100%);
+  animation: ldr-rise 2.6s ease-in-out infinite;
+}
+@keyframes ldr-rise {
+  0%, 8%   { transform: translateY(100%); }   /* الوهجُ كلُّه تحت الشعار — نبضةُ سكونٍ تُوقّع الدورة */
+  100%     { transform: translateY(-100%); }  /* وقد خرج من أعلاه */
+}
+@keyframes ldr-breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.035); }
+}
+
+/* الطبقةُ الثابتة — شاشةُ بدء الموقع تغطّي النافذة فوق كلّ شيء (حتى الإشعارات) */
+.ldr-fixed {
+  position: fixed; inset: 0; z-index: var(--z-boot);
+  min-height: 100dvh; padding: 0;
+  background: var(--color-bg);
+  transition: opacity .36s var(--ease-standard), visibility .36s var(--ease-standard);
+}
+.ldr-fixed[data-hidden="true"] { opacity: 0; visibility: hidden; pointer-events: none; }
+
+/* حارسان لشاشة البدء — كي لا تحجب الموقعَ إن تعطّل الترطيب:
+   ١) بلا جافاسكربت لا تُعرض أصلًا (`html.js` يضيفها سكربتُ التخطيط قبل الرسم).
+   ٢) وإن طال الترطيبُ فوق ٦ ثوانٍ، تنزاح بنفسها — والصفحةُ مرسومةٌ من الخادم أصلًا. */
+html:not(.js) .ldr-boot { display: none; }
+.ldr-boot { animation: ldr-failsafe 0s 6s forwards; }
+@keyframes ldr-failsafe { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+
+/* تقليلُ الحركة: لا صعودَ ولا تنفّس — نبضةُ ظهورٍ هادئة تكفي للإخبار بالانشغال */
+@media (prefers-reduced-motion: reduce) {
+  .ldr-mark { animation: none; }
+  .ldr-ink { display: none; }
+  .ldr-ghost { animation: ldr-dim 2s ease-in-out infinite; }
+  @keyframes ldr-dim { 0%, 100% { opacity: .85; } 50% { opacity: .3; } }
 }
 
 /* ============================================================

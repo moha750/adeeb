@@ -16,7 +16,6 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
-  const [show, setShow] = useState(false);
   const [res, setRes] = useState<CredResult | null>(null);
   const [pending, start] = useTransition();
 
@@ -24,7 +23,7 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
   const options = useMemo(() => members.map((m) => ({ value: m.id, label: `${m.name} — ${m.email}` })), [members]);
 
   // إعادة ضبط الحقول والنتيجة عند تبديل العضو
-  useEffect(() => { setEmail(""); setPw(""); setPw2(""); setShow(false); setRes(null); }, [uid]);
+  useEffect(() => { setEmail(""); setPw(""); setPw2(""); setRes(null); }, [uid]);
 
   const emailTrim = email.trim();
   const emailErr = emailTrim && !EMAIL_RE.test(emailTrim) ? "بريد إلكترونيّ غير صالح" : undefined;
@@ -46,7 +45,6 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
     const s = Array.from(arr, (n) => chars[n % chars.length]).join("");
     setPw(s);
     setPw2(s);
-    setShow(true);
   };
 
   const submit = () => {
@@ -59,7 +57,7 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
         password: pw || undefined,
       });
       setRes(r);
-      if (r.ok) { setPw(""); setPw2(""); setEmail(""); setShow(false); }
+      if (r.ok) { setPw(""); setPw2(""); setEmail(""); }
     });
   };
 
@@ -114,7 +112,7 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
                   icon={<Lock />}
                   innerIcon={<Key />}
                   placeholder="••••••••"
-                  type={show ? "text" : "password"}
+                  type="password"
                   dir="ltr"
                   autoComplete="new-password"
                   value={pw}
@@ -128,7 +126,7 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
                   icon={<Lock />}
                   innerIcon={<Key />}
                   placeholder="••••••••"
-                  type={show ? "text" : "password"}
+                  type="password"
                   dir="ltr"
                   autoComplete="new-password"
                   value={pw2}
@@ -138,9 +136,7 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
                 />
               </div>
               <div className="cred-pw-tools">
-                <button type="button" className="cred-link" onClick={() => setShow((s) => !s)}>
-                  {show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
-                </button>
+                {/* الكشف صار عين الحقل نفسه (مصدر واحد) — فلا رابط إظهارٍ هنا */}
                 <button type="button" className="cred-link" onClick={genPassword}>
                   توليد كلمة مرور قوية
                 </button>
