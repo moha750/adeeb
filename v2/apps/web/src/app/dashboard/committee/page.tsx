@@ -1,0 +1,70 @@
+import { Alert } from "@adeeb/design-system";
+import { getCurrentAdmin } from "@/lib/auth";
+import { getMyScope } from "@/lib/myScope";
+import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { getOrgData } from "../members/structure/orgData";
+import { committeeNodes } from "../members/structure/model";
+import { CommitteeView } from "./CommitteeView";
+
+const Head = ({ name }: { name?: string }) => (
+  <div className="ash-phead">
+    <div>
+      <div className="ash-crumb">أديب › <b>{name ?? "لجنتي"}</b></div>
+      <h1>{name ?? "لجنتي"}</h1>
+    </div>
+  </div>
+);
+
+/**
+ * «لجنتي» — غرفةُ قائد اللجنة التنفيذيّة ونائبها، **عرضًا محضًا**.
+ *
+ * النطاق مقعدُ قيادةٍ حيّ (`lib/myScope.ts`)، ولا فعلَ في الصفحة أصلًا — فلا حاجة لطبقة
+ * سلطةٍ فوق العرض: ما لا يُعرض زرُّه لا يُطلَب إذنُه.
+ */
+export default async function MyCommitteePage() {
+  const denied = await denyUnless("/dashboard/committee");
+  if (denied) return denied;
+
+  const admin = await getCurrentAdmin();
+  if (!admin) return denied;
+
+  const scope = await getMyScope(admin.id);
+  if (!scope.committee) {
+    return (
+      <>
+        <Head />
+        <Alert tone="warning" title="لا لجنة تقودها">
+          هذه الشاشة لقادة اللجان التنفيذيّة ونوّابهم — كشفُ اللجنة عرضًا. ولا يظهر لك كشفٌ
+          لأنّك لا تشغل مقعد قيادةٍ في لجنة.
+        </Alert>
+      </>
+    );
+  }
+
+  const org = await getOrgData();
+  if (org.error) {
+    return (
+      <>
+        <Head name={scope.committee.name} />
+        <Alert tone="warning" title="تعذّر جلب الهيكلة">{org.error}</Alert>
+      </>
+    );
+  }
+
+  const node = committeeNodes(org.committees, org.roles, org.userRoles, org.profiles, org.supervision).get(scope.committee.id);
+  if (!node) {
+    return (
+      <>
+        <Head name={scope.committee.name} />
+        <Alert tone="warning" title="لجنةٌ غير مفعّلة">
+          {scope.committee.name} لا تظهر في الهيكلة الحيّة — راجِع حالتها في «هيكلة أديب».
+        </Alert>
+      </>
+    );
+  }
+
+  const dept = org.committees.find((c) => c.id === node.id)?.department_id ?? null;
+  const deptName = dept != null ? org.departments.find((d) => d.id === dept)?.name_ar ?? null : null;
+
+  return <CommitteeView committee={node} dept={deptName} />;
+}

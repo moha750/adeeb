@@ -14,7 +14,7 @@ const COMMITTEES: Target[] = [
   T(4, "لجنة السُفراء"), T(5, "لجنة التصوير"), T(6, "لجنة التصميم"),
 ];
 
-const UNIT: Unit = { id: 22, name: "إدارة الموارد البشرية", kind: "admin", desc: null, link: null, memberRoleName: "hr_admin_member", memberRoleAr: "عضو موارد بشرية" };
+const UNIT: Unit = { id: 22, name: "إدارة الموارد البشرية", desc: null, link: null, memberRoleName: "hr_admin_member", memberRoleAr: "عضو موارد بشرية" };
 
 const S = (name: string, coms: Target[]): UnitMember => ({ userId: name, name, avatar: null, gender: null, committees: coms });
 
@@ -58,30 +58,21 @@ export default function SupervisorsPage() {
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System · Unit Member Card</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">كرت عضو الوحدة</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
-          نظيرُ كرت المنصب بالعين المقلوبة، في تبويب «وحدتي»: هناك اللجنةُ هي البطل ومقعدُها
+          نظيرُ كرت المنصب بالعين المقلوبة، في تبويب «إدارتي»: هناك اللجنةُ هي البطل ومقعدُها
           شاغرٌ أو مشغول، وهنا <b>الشخصُ</b> هو البطل وشرائحُ لجانه هي المحتوى — لأنّ العضو الإداريّ
           يشرف على عدّة لجان، فسؤال «كم يحمل فلان؟» لا تجيبه شبكةُ المقاعد. النغمةُ تقول الحِمل:
-          <b> brand</b> = يشرف على لجان · <b>warning</b> = عضوٌ لم يُوزَّع بعد. وفي اللجان التنفيذيّة
-          لا إشرافَ يُوزَّع، فيسقط النداءُ والشرائح ويبقى الشخصُ وبابُ إخراجه — الكرت نفسه بمعطًى فارغ.
+          <b> brand</b> = يشرف على لجان · <b>warning</b> = عضوٌ لم يُوزَّع بعد. ومن ضُمّ ولم يُوزَّع
+          يظهر بلا شرائح — الكرت نفسه بمعطًى فارغ لا نسخةٌ ثانية.
           يبني على أساس <code className="font-latin">.acard</code> ونظام النغمة (ق٤/٥)، أنماطُه{" "}
           <code className="font-latin">.ovcard-*</code> بالمكتبة.
         </p>
 
         <div className="mt-12 space-y-12">
           <section>
-            <Label>وحدةٌ توزّع إشرافًا (حِملٌ ثقيل · مثنّى · مفرد · بلا لجنة)</Label>
+            <Label>إدارةٌ توزّع إشرافًا (حِملٌ ثقيل · مثنّى · مفرد · بلا لجنة)</Label>
             <div className="card-grid">
               {SAMPLE.map((s) => (
                 <UnitMemberCard key={s.userId} member={s} subtitle={committeesLabel(s.committees.length)} onAdd={noop} onRemove={noop} onExpel={noop} />
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <Label>لجنةٌ تنفيذيّة (بلا توزيع — لا نداءَ ولا شرائح)</Label>
-            <div className="card-grid">
-              {SAMPLE.slice(0, 3).map((s) => (
-                <UnitMemberCard key={s.userId} member={{ ...s, committees: [] }} subtitle="عضو لجنة التصميم" onRemove={noop} onExpel={noop} />
               ))}
             </div>
           </section>

@@ -150,21 +150,22 @@ function buildHolders(roles: RawRole[], committees: RawCommittee[], userRoles: R
   return holders;
 }
 
-export function buildStructure(
-  councils: RawCouncil[],
-  departments: RawDept[],
+/**
+ * عقدةُ كلّ لجنةٍ (وإدارة) بمعرّفها — **مصدرٌ واحد لشكل اللجنة** تقرؤه الشجرةُ الكاملة
+ * وتبويبا «لجنتي» و«قسمي». يُستخرَج من `buildStructure` لا يُنسَخ عنه: من أراد لجنةً
+ * واحدة لا يبني الهرم كلَّه ثمّ يفتّش فيه — ولا تسقط منه لجنةٌ بلا قسم (تلك تسقط من
+ * التعشيش لا من هذه الخريطة).
+ */
+export function committeeNodes(
   committees: RawCommittee[],
   roles: RawRole[],
   userRoles: RawUserRole[],
   profiles: RawProfile[],
   supervision: RawSupervision[],
-): StructureModel {
+): Map<number, CommitteeNode> {
   const holders = buildHolders(roles, committees, userRoles, profiles);
-  const byRole = (name: string) => holders.filter((h) => h.roleName === name);
-  const firstOf = (name: string) => byRole(name)[0] ?? null;
-  const inCommittee = (cid: number) => holders.filter((h) => h.committeeId === cid);
-  const roleByName = new Map(roles.map((r) => [r.role_name, r]));
   const titleOf = roleTitler(roles, committees);
+  const inCommittee = (cid: number) => holders.filter((h) => h.committeeId === cid);
 
   // مقاعد الإشراف: (اللجنة + دورُ عضو الإدارة المُشرِفة) ← مشرفُها. الدور يُقرأ من
   // `member_role_name` لإدارته، فلا اسمَ محفورًا هنا.
@@ -188,6 +189,55 @@ export function buildStructure(
   }
   const overseerOf = (committeeId: number, memberRoleName: string): Holder | null =>
     overseers.get(`${committeeId}|${memberRoleName}`) ?? null;
+
+  const node = (c: RawCommittee): CommitteeNode => {
+    const inside = inCommittee(c.id);
+    // القائد = من يشغل الدور الذي تُصرّح الوحدة بأنه يقودها (committees.leader_role_name).
+    // يعمل للإدارتين واللجان سواءً — لا حالة خاصّة ولا مطابقة اسم.
+    const leader = inside.find((h) => h.roleName === c.leader_role_name) ?? null;
+    const deputy = inside.find((h) => h.roleName === R.deputy) ?? null;
+    // مشرفان مستقلّان: الموارد والضمان — لكلّ إدارة مشرفها على هذه اللجنة. يُقرآن من
+    // جدول الإشراف: المشرف عضوٌ في إدارته لا في هذه اللجنة، فلا يُعدّ في أعضائها.
+    const hrOverseer = overseerOf(c.id, "hr_admin_member");
+    const qaOverseer = overseerOf(c.id, "qa_admin_member");
+    const skip = new Set<string>([c.leader_role_name, R.deputy]);
+    const exclude = new Set([leader?.userId, deputy?.userId].filter(Boolean) as string[]);
+    // `committee_id` واحدٌ في معناه لكلّ صفّ: الوحدة التي هذا المقعد فيها. فأعضاء الإدارة
+    // مُسنَدون إليها كأعضاء اللجنة إلى لجنتهم — لا فرعَ ولا إزالةَ تكرار.
+    const members = inside.filter((h) => !skip.has(h.roleName) && !exclude.has(h.userId));
+    return {
+      id: c.id,
+      name: c.committee_name_ar ?? `لجنة #${c.id}`,
+      kind: c.council_id === "administrative" ? "admin" : "operational",
+      desc: c.description ?? null,
+      link: c.group_link ?? null,
+      leader,
+      deputy,
+      hrOverseer,
+      qaOverseer,
+      members,
+      total: (leader ? 1 : 0) + (deputy ? 1 : 0) + members.length,
+    };
+  };
+
+  return new Map(committees.map((c) => [c.id, node(c)]));
+}
+
+export function buildStructure(
+  councils: RawCouncil[],
+  departments: RawDept[],
+  committees: RawCommittee[],
+  roles: RawRole[],
+  userRoles: RawUserRole[],
+  profiles: RawProfile[],
+  supervision: RawSupervision[],
+): StructureModel {
+  const holders = buildHolders(roles, committees, userRoles, profiles);
+  const byRole = (name: string) => holders.filter((h) => h.roleName === name);
+  const firstOf = (name: string) => byRole(name)[0] ?? null;
+  const roleByName = new Map(roles.map((r) => [r.role_name, r]));
+  const titleOf = roleTitler(roles, committees);
+  const nodes = committeeNodes(committees, roles, userRoles, profiles, supervision);
 
   // هيئة المجلس تُبنى من القاعدة: رئيسه من head_role_name، وأعضاؤه كلّ دورٍ
   // عضويّته member في هذا المجلس. لا قائمة محفورة — أضِف دورًا عضوًا غدًا فيظهر.
@@ -222,45 +272,17 @@ export function buildStructure(
     };
   };
 
-  const committeeNode = (c: RawCommittee, kind: "operational" | "admin"): CommitteeNode => {
-    const inside = inCommittee(c.id);
-    // القائد = من يشغل الدور الذي تُصرّح الوحدة بأنه يقودها (committees.leader_role_name).
-    // يعمل للإدارتين واللجان سواءً — لا حالة خاصّة ولا مطابقة اسم.
-    const leader = inside.find((h) => h.roleName === c.leader_role_name) ?? null;
-    const deputy = inside.find((h) => h.roleName === R.deputy) ?? null;
-    // مشرفان مستقلّان: الموارد والضمان — لكلّ إدارة مشرفها على هذه اللجنة. يُقرآن من
-    // جدول الإشراف: المشرف عضوٌ في إدارته لا في هذه اللجنة، فلا يُعدّ في أعضائها.
-    const hrOverseer = overseerOf(c.id, "hr_admin_member");
-    const qaOverseer = overseerOf(c.id, "qa_admin_member");
-    const skip = new Set<string>([c.leader_role_name, R.deputy]);
-    const exclude = new Set([leader?.userId, deputy?.userId].filter(Boolean) as string[]);
-    // `committee_id` واحدٌ في معناه لكلّ صفّ: الوحدة التي هذا المقعد فيها. فأعضاء الإدارة
-    // مُسنَدون إليها كأعضاء اللجنة إلى لجنتهم — لا فرعَ ولا إزالةَ تكرار.
-    const members = inside.filter((h) => !skip.has(h.roleName) && !exclude.has(h.userId));
-    return {
-      id: c.id,
-      name: c.committee_name_ar ?? `لجنة #${c.id}`,
-      kind,
-      desc: c.description ?? null,
-      link: c.group_link ?? null,
-      leader,
-      deputy,
-      hrOverseer,
-      qaOverseer,
-      members,
-      total: (leader ? 1 : 0) + (deputy ? 1 : 0) + members.length,
-    };
-  };
+  const nodeOf = (c: RawCommittee): CommitteeNode => nodes.get(c.id) as CommitteeNode;
 
   const operational = committees.filter((c) => c.council_id !== "administrative");
   const adminCommittees = committees
     .filter((c) => c.council_id === "administrative")
-    .map((c) => committeeNode(c, "admin"));
+    .map(nodeOf);
 
   const sortedDepts = [...departments].sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));
   const departmentNodes: DepartmentNode[] = sortedDepts.map((d) => {
     const head = holders.find((h) => h.roleName === R.deptHead && h.departmentId === d.id) ?? null;
-    const comNodes = operational.filter((c) => c.department_id === d.id).map((c) => committeeNode(c, "operational"));
+    const comNodes = operational.filter((c) => c.department_id === d.id).map(nodeOf);
     return {
       id: d.id,
       name: d.name_ar ?? `قسم #${d.id}`,

@@ -20,9 +20,16 @@ export const SECTION_CAP = {
   "/dashboard/members/birthdays": "view_birthdays",
   "/dashboard/members/structure": "view_org_structure",
   "/dashboard/members/assignments": "manage_positions",
-  // شاشة قائد الوحدة (إدارةً كانت أو لجنة) — القفل يفتح البابَ، و`can_assign_role` في
-  // القاعدة تقرّر الغرفة: كلُّ قائدٍ في وحدته وحدها.
+  // تبويبات الهويّة الثلاثة — لكلٍّ قفلُه القائم، ومعه **شرطٌ ثانٍ** لا يُقرأ من هنا: صفٌّ حيٌّ
+  // في `user_roles` يقول إن كانت وراء الباب غرفة (`lib/myScope.ts`). فالقدرة تفتح، والصفّ
+  // يسمّي — وقد يملك المرء القفل ولا غرفةَ له، فيراه البند مخفيًّا والصفحةُ تقول لماذا.
+  //
+  // «إدارتي» — قائد الإدارة الإداريّة: يضمّ أعضاءها ويوزّع إشرافهم (و`can_assign_role` تحرس).
   "/dashboard/unit": "assign_unit_members",
+  // «قسمي» — منسّق القسم: لجانُه وقيادتُها وأعضاؤها **عرضًا محضًا**، لا إنهاءَ ولا تعديل.
+  "/dashboard/department": "manage_department",
+  // «لجنتي» — قائد اللجنة ونائبها: كشفُها **عرضًا محضًا** (نُزع الضمّ والإخراج، 20260801).
+  "/dashboard/committee": "manage_committee_members",
   "/dashboard/members/credentials": "manage_member_data",
   "/dashboard/events": "manage_activities",
   "/dashboard/surveys": "manage_surveys",

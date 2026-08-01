@@ -15,8 +15,17 @@ export type BirthdayRow = {
   favoriteColor: string | null; // hex مثل #3d8fd6، أو null (يرتدّ لتدرّج العلامة)
 };
 
-/** جلب مواليد الأعضاء النشطين (خادميّ، عبر مفتاح الخدمة). النطاق: نشط ⟺ سجّل — ومن لا سجلّ تفاصيل له لا ميلاد له. */
-export async function getBirthdays(): Promise<{ rows: BirthdayRow[]; error: string | null }> {
+/**
+ * جلب مواليد الأعضاء النشطين (خادميّ، عبر مفتاح الخدمة). النطاق: نشط ⟺ سجّل — ومن لا سجلّ
+ * تفاصيل له لا ميلاد له.
+ *
+ * و`only` **قسمةُ أشخاصٍ لا قسمة قدرة**: `null` تعني السجلّ كلّه (لمن يملك `view_members`)،
+ * ومجموعةُ معرّفاتٍ تعني هؤلاء وحدهم (نطاق `lib/mySupervision.ts`). فالصفحة تقرّر النطاق،
+ * وهذه تطبّقه — وليس في هذا الملفّ اسمُ دورٍ ولا قدرة.
+ */
+export async function getBirthdays(
+  only: ReadonlySet<string> | null = null,
+): Promise<{ rows: BirthdayRow[]; error: string | null }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   // تنقية المفتاح من أيّ محرف دخيل من اللصق (مسافات/اقتباس/محارف خفيّة) — JWT لا يحوي إلا هذه المحارف
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
@@ -37,6 +46,7 @@ export async function getBirthdays(): Promise<{ rows: BirthdayRow[]; error: stri
 
   const rows: BirthdayRow[] = [];
   for (const p of pRes.data ?? []) {
+    if (only && !only.has(p.id)) continue; // خارج نطاق الرائي
     const md = detailsByUser.get(p.id);
     if (!md?.birth_date) continue; // نشط بلا سجلّ تفاصيل ⇐ لا ميلاد يُحتفَل به
     rows.push({

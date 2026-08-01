@@ -16,8 +16,12 @@ export type ActionResult = { ok: boolean; message: string; code?: string; curren
 const MAY_ASSIGN = ["manage_positions", "assign_unit_members"];
 const mayAssign = (caps: readonly string[]) => caps.some((c) => MAY_ASSIGN.includes(c));
 
-/** المسارات التي تعرض التعيينات — تُبطَل معًا بعد كلّ إسنادٍ أو إزالة. */
-const TOUCHED = ["/dashboard/members/structure", "/dashboard/members/assignments", "/dashboard/unit"];
+/** المسارات التي تعرض التعيينات — تُبطَل معًا بعد كلّ إسنادٍ أو إزالة (ومنها تبويبات
+ *  الهويّة الثلاثة: تعرض ما يُسنَد ولو لم تُسنِده هي). */
+const TOUCHED = [
+  "/dashboard/members/structure", "/dashboard/members/assignments",
+  "/dashboard/unit", "/dashboard/department", "/dashboard/committee",
+];
 const revalidateAll = () => TOUCHED.forEach((p) => revalidatePath(p));
 
 function service() {

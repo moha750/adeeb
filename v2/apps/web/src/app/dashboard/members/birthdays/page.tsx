@@ -2,6 +2,8 @@ import { Alert } from "@adeeb/design-system";
 import { getBirthdays } from "./data";
 import { BirthdaysView } from "./BirthdaysView";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { getCurrentAdmin } from "@/lib/auth";
+import { getSupervisedUserIds } from "@/lib/mySupervision";
 
 const Head = () => (
   <div className="ash-phead">
@@ -12,11 +14,26 @@ const Head = () => (
   </div>
 );
 
+/**
+ * **القفل يفتح، والسجلّ يقسم.** `view_birthdays` تفتح الباب لأربعة، ووراءه نطاقان لا واحد:
+ * من يملك `view_members` يرى السجلّ كلّه — فمواليدُه كلُّها؛ ومن لا يملكه (عضو إدارة الموارد)
+ * يرى **من يشرف عليهم** وحدهم، كغرفته الأخرى «من أشرف عليهم».
+ *
+ * والقسمة بقدرةٍ لا باسم دور: التبويب لا يوسّع رؤية الأعيان وراء ما يعطيه سجلّ الأعضاء نفسه،
+ * فأيّ دورٍ يُمنح `view_birthdays` غدًا يقع في نطاقه الصحيح بلا سطرٍ يُضاف هنا.
+ */
 export default async function BirthdaysPage() {
   const denied = await denyUnless("/dashboard/members/birthdays");
   if (denied) return denied;
 
-  const { rows, error } = await getBirthdays();
+  const me = await getCurrentAdmin();
+  if (!me) return denied;
+
+  // مَن يرى السجلّ كلّه لا يُقسَم عليه شيء؛ ومن لا يراه فنطاقه إشرافُه (وقد يكون فارغًا).
+  const seesAll = me.caps.includes("view_members");
+  const reach = seesAll ? null : await getSupervisedUserIds(me.id);
+
+  const { rows, error } = reach?.error ? { rows: [], error: reach.error } : await getBirthdays(reach?.ids ?? null);
   if (error) {
     return (
       <>
@@ -31,5 +48,5 @@ export default async function BirthdaysPage() {
   const todayIso = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Riyadh", year: "numeric", month: "2-digit", day: "2-digit",
   }).format(new Date());
-  return <BirthdaysView members={rows} todayIso={todayIso} />;
+  return <BirthdaysView members={rows} todayIso={todayIso} scope={seesAll ? "all" : "supervised"} />;
 }

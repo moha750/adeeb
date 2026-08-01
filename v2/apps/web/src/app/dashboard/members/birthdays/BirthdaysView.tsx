@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Accordion, Badge, Button, Stat, matchesSearch } from "@adeeb/design-system";
-import { Cake, CalendarDots, Confetti, DownloadSimple, MagnifyingGlass } from "@phosphor-icons/react";
+import { Cake, CalendarDots, Confetti, DownloadSimple, MagnifyingGlass, UsersFour } from "@phosphor-icons/react";
 import { DataTable, type Column } from "../../_components/DataTable";
 import { Toolbar } from "../../_components/Toolbar";
 import { Pagination } from "../../_components/Pagination";
@@ -63,7 +63,18 @@ function birthdaysText(n: number): string {
   return `${n} يوم ميلاد`;
 }
 
-export function BirthdaysView({ members, todayIso }: { members: BirthdayRow[]; todayIso: string }) {
+/** نطاق الرائي — تقرّره الصفحة بالقدرة، وتقوله الشاشة بلا أن تحسبه. */
+export type BirthdayScope = "all" | "supervised";
+
+export function BirthdaysView({
+  members,
+  todayIso,
+  scope = "all",
+}: {
+  members: BirthdayRow[];
+  todayIso: string;
+  scope?: BirthdayScope;
+}) {
   const toast = useToast();
   const [search, setSearch] = useState("");
   const [view, setView] = useState<ViewMode>("soon");
@@ -164,8 +175,12 @@ export function BirthdaysView({ members, todayIso }: { members: BirthdayRow[]; t
     <EmptyState
       variant="aurora"
       icon={<Cake weight="duotone" />}
-      title="لا مواليد مسجّلة بعد"
-      description="لا يوجد أعضاء نشطون بتاريخ ميلاد مسجّل حاليًّا."
+      title={scope === "supervised" ? "لا مواليد في نطاق إشرافك" : "لا مواليد مسجّلة بعد"}
+      description={
+        scope === "supervised"
+          ? "لا يظهر هنا إلّا مواليد من تشرف عليهم — فإن لم تُسنَد إليك لجانٌ بعد، أو لم يسجّل أعضاؤها تواريخهم، بقيت الشاشة فارغة."
+          : "لا يوجد أعضاء نشطون بتاريخ ميلاد مسجّل حاليًّا."
+      }
     />
   ) : (
     <EmptyState
@@ -184,6 +199,10 @@ export function BirthdaysView({ members, todayIso }: { members: BirthdayRow[]; t
           <div className="ash-crumb">أديب › أعضاء أديب › <b>أعياد الميلاد</b></div>
           <h1>أعياد الميلاد</h1>
         </div>
+        {/* النطاق يُقال حيث يُرى — فلا يُحسب الجزءُ كلًّا */}
+        {scope === "supervised" && (
+          <Badge tone="info" variant="soft" icon={<UsersFour weight="fill" />}>مواليد من تشرف عليهم</Badge>
+        )}
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>

@@ -16,15 +16,17 @@ import { UnitMemberCard, committeesLabel } from "./UnitMemberCard";
 import type { UnitMember, Target, Unit } from "./model";
 
 /**
- * «وحدتي» — شاشة **كلّ قائد وحدة**، وفيها **فعلان لا فعلٌ واحد**:
- *   ضمُّ عضوٍ إلى الوحدة (انتماءٌ في `user_roles`) ثمّ — في الإدارات وحدها — توزيعُه على
- *   لجان التنفيذيّ (إشرافٌ في `committee_supervision`). كانا مدمجين فكان التوزيع تعيينًا خفيًّا.
+ * «إدارتي» — شاشة **قائد الإدارة الإداريّة**، وفيها **فعلان لا فعلٌ واحد**:
+ *   ضمُّ عضوٍ إلى الإدارة (انتماءٌ في `user_roles`) ثمّ توزيعُه على لجان التنفيذيّ (إشرافٌ في
+ *   `committee_supervision`). كانا مدمجين فكان التوزيع تعيينًا خفيًّا.
  *
- * **الافتراق بُعدٌ لا شاشة:** قائد اللجنة يرى كشفه وضمَّه وإخراجَه؛ وقائد الإدارة يرى معها
- * مقاعد الإشراف (عينان: «حسب اللجنة» شبكةُ مقاعد فيُرى ما لم يُغطَّ · «حسب المشرف» كرتٌ لكلّ
- * عضوٍ بلجانه فيُرى مَن حُمِّل فوق طاقته). فما زاد في الإدارة زيادةٌ في المعروض لا نسخةٌ ثانية.
+ * **وعينان على نطاقٍ واحد:** «حسب اللجنة» شبكةُ مقاعد فيُرى ما لم يُغطَّ · «حسب المشرف» كرتٌ
+ * لكلّ عضوٍ بلجانه فيُرى مَن حُمِّل فوق طاقته.
  *
- * ولا تُعرض وحدةٌ أخرى: الشاشة وحدةُ صاحبها — و`can_assign_role` في القاعدة تردّ ما وراءها،
+ * وكانت تخدم قائد اللجنة التنفيذيّة معه فتُقرضه ضمًّا وإخراجًا (20260801): صار للجنة تبويبُها
+ * «لجنتي» عرضًا محضًا، وبقي هنا مَن يضمّ ويوزّع — فلا فرعَ يسأل «أإدارةٌ هذه أم لجنة».
+ *
+ * ولا تُعرض إدارةٌ أخرى: الشاشة إدارةُ صاحبها — و`can_assign_role` في القاعدة تردّ ما وراءها،
  * فالإخفاءُ عرضٌ لا حراسة.
  */
 export function UnitView({
@@ -34,15 +36,14 @@ export function UnitView({
   members,
 }: {
   unit: Unit;
-  /** مقاعد الإشراف — فارغةٌ في اللجان التنفيذيّة (لا إشرافَ توزّعه لجنة). */
+  /** مقاعد الإشراف — مقعدُ إدارتك في كلّ لجنةٍ تنفيذيّة، مشغولًا كان أو شاغرًا. */
   seats: Position[];
   roster: UnitMember[];
   members: MemberOption[];
 }) {
   const router = useRouter();
   const toast = useToast();
-  const supervises = unit.kind === "admin";
-  const [view, setView] = useState<"seat" | "person">(supervises ? "seat" : "person");
+  const [view, setView] = useState<"seat" | "person">("seat");
   const [modal, setModal] = useState<SupState | null>(null);
   const [pick, setPick] = useState("");
   const [busy, start] = useTransition();
@@ -150,27 +151,20 @@ export function UnitView({
 
   return (
     <div className="asg">
-      {/* الإحصاءات تقول ما للوحدة من أمر: الإدارةُ تُقاس بتغطيتها، واللجنةُ بعددها ونصيبها من الحِمل. */}
+      {/* الإحصاءات تقول ما للإدارة من أمر: تُقاس بتغطيتها للجان، وبعدد من فيها. */}
       <div className="stat-grid">
-        {supervises ? (
-          <>
-            <Stat icon={<Buildings weight="fill" />} value={stats.covered} label="لجنة مُغطّاة" tone="success" />
-            <Stat icon={<UserMinus weight="fill" />} value={stats.vacant} label="لجنة بلا مشرف" tone="danger" />
-          </>
-        ) : null}
-        <Stat icon={<UsersFour weight="fill" />} value={stats.people} label="عضوًا في وحدتك" tone="brand" />
+        <Stat icon={<Buildings weight="fill" />} value={stats.covered} label="لجنة مُغطّاة" tone="success" />
+        <Stat icon={<UserMinus weight="fill" />} value={stats.vacant} label="لجنة بلا مشرف" tone="danger" />
+        <Stat icon={<UsersFour weight="fill" />} value={stats.people} label="عضوًا في إدارتك" tone="brand" />
       </div>
 
       <div className="viewbar">
-        {/* عينٌ واحدة لا تحتاج مبدّلًا: لا مقاعد إشرافٍ في لجنة، فالمبدّل يعرض خيارًا لا وجود له. */}
-        {supervises ? (
-          <Segmented
-            aria-label="طريقة العرض"
-            value={view}
-            onValueChange={(v) => setView(v as "seat" | "person")}
-            items={[{ value: "seat", label: "حسب اللجنة" }, { value: "person", label: "حسب المشرف" }]}
-          />
-        ) : <span />}
+        <Segmented
+          aria-label="طريقة العرض"
+          value={view}
+          onValueChange={(v) => setView(v as "seat" | "person")}
+          items={[{ value: "seat", label: "حسب اللجنة" }, { value: "person", label: "حسب المشرف" }]}
+        />
         <Button variant="primary" size="md" onClick={() => open({ kind: "recruit" })}>
           <UserPlus weight="bold" aria-hidden /> ضمّ عضو
         </Button>
@@ -188,12 +182,8 @@ export function UnitView({
         <EmptyState
           variant="soft"
           icon={<UsersFour weight="duotone" />}
-          title="لا عضو في وحدتك بعد"
-          description={
-            supervises
-              ? "ابدأ بضمّ عضوٍ إلى الإدارة — ثمّ وزّعه على ما تشاء من لجان المجلس التنفيذيّ."
-              : "ابدأ بضمّ عضوٍ إلى لجنتك — وهو ضمٌّ لا نقل، فمن كان في لجنةٍ أخرى يبقى فيها."
-          }
+          title="لا عضو في إدارتك بعد"
+          description="ابدأ بضمّ عضوٍ إلى الإدارة — ثمّ وزّعه على ما تشاء من لجان المجلس التنفيذيّ."
           action={<Button variant="primary" size="md" onClick={() => open({ kind: "recruit" })}>ضمّ عضو</Button>}
         />
       ) : (
@@ -202,8 +192,8 @@ export function UnitView({
             <UnitMemberCard
               key={s.userId}
               member={s}
-              subtitle={supervises ? committeesLabel(s.committees.length) : unit.memberRoleAr}
-              onAdd={supervises ? () => openJoin(s) : undefined}
+              subtitle={committeesLabel(s.committees.length)}
+              onAdd={() => openJoin(s)}
               onRemove={(c) => openChipRemove(s, c)}
               onExpel={() => openExpel(s)}
             />

@@ -33,6 +33,7 @@ import {
   TreeStructure,
   UserGear,
   UsersFour,
+  SquaresFour,
   Key,
 } from "@phosphor-icons/react";
 
@@ -74,8 +75,10 @@ export const IconTree = (p: P) => <TreeStructure aria-hidden {...p} />;
 export const IconAssign = (p: P) => <UserGear aria-hidden {...p} />;
 // من أشرف عليهم — فريقٌ تُتابعه (لا شخصٌ واحد كأيقونة التعيين)
 export const IconSupervise = (p: P) => <UsersFour aria-hidden {...p} />;
-// وحدتي — الوحدة نفسها لا ساكنوها: بندُ القائد عن **مكانه** في الهيكل، فيفترق عن «من أشرف عليهم»
+// إدارتي — الوحدة نفسها لا ساكنوها: بندُ القائد عن **مكانه** في الهيكل، فيفترق عن «من أشرف عليهم»
 export const IconUnit = (p: P) => <Buildings aria-hidden {...p} />;
+// قسمي — عنقودُ لجانٍ لا فريقٌ واحد: القسم يُرى شبكةَ وحداتٍ تحته، فيفترق عن «لجنتي» (فريق)
+export const IconDept = (p: P) => <SquaresFour aria-hidden {...p} />;
 export const IconKey = (p: P) => <Key aria-hidden {...p} />;
 // الإذاعة — المايكروفون: إذاعةٌ مسموعة لا مرئيّة، فالأيقونة من عالم الصوت لا البثّ
 export const IconMic = (p: P) => <MicrophoneStage aria-hidden {...p} />;
@@ -88,7 +91,7 @@ export const ICONS = {
   vote: IconVote, book: IconBook, images: IconImages,
   stats: IconStats, handshake: IconHandshake, faq: IconFaq,
   active: IconActive, pending: IconPending, suspended: IconSuspended,
-  cake: IconCake, tree: IconTree, assign: IconAssign, supervise: IconSupervise, unit: IconUnit, key: IconKey,
+  cake: IconCake, tree: IconTree, assign: IconAssign, supervise: IconSupervise, unit: IconUnit, dept: IconDept, key: IconKey,
   mic: IconMic, news: IconNews,
 } as const;
 export type IconKey = keyof typeof ICONS;

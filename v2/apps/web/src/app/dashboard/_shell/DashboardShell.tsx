@@ -7,6 +7,7 @@ import { Button } from "@adeeb/design-system";
 import { Avatar } from "../_components/Avatar";
 import { createClient } from "@/lib/supabase/client";
 import { navFor, type NavItem } from "./nav";
+import type { MyScope } from "@/lib/myScope";
 import { ICONS, IconBell, IconCaret, IconCaretDown, IconLogout, IconMe, IconMenu, IconPlus } from "./icons";
 import { DropdownMenu } from "../_components/DropdownMenu";
 import { HelpCenter } from "./HelpCenter";
@@ -23,11 +24,12 @@ function groupHasActive(pathname: string, item: NavItem) {
   return item.children?.some((c) => isActive(pathname, c.href)) ?? false;
 }
 
-export function DashboardShell({ children, user, caps }: { children: React.ReactNode; user: ShellUser; caps: string[] }) {
+export function DashboardShell({ children, user, caps, scope }: { children: React.ReactNode; user: ShellUser; caps: string[]; scope: MyScope }) {
   const pathname = usePathname();
   const router = useRouter();
-  // الخريطة كما يراها صاحب هذه القدرات — بندٌ لا مفتاح له لا يُعرَض (والحراسة في الصفحة نفسها)
-  const nav = useMemo(() => navFor(caps), [caps]);
+  // الخريطة كما يراها صاحب هذه القدرات في موقعه — بندٌ لا مفتاح له لا يُعرَض، وبندُ الهويّة
+  // لا يُعرَض بلا غرفة (والحراسة في الصفحة نفسها)
+  const nav = useMemo(() => navFor(caps, scope), [caps, scope]);
   const [signingOut, startSignOut] = useTransition();
   const signOut = () =>
     startSignOut(async () => {

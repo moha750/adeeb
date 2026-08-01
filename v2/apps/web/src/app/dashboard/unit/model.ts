@@ -1,26 +1,25 @@
-// نموذج «وحدتي» — نقيّ، بلا استيراد خادميّ.
+// نموذج «إدارتي» — نقيّ، بلا استيراد خادميّ.
 //
 // كلّ رابطٍ هنا مقروءٌ من عمودٍ مُصرَّح كسائر نموذج الهيكلة، لا مستنتَجٍ من فراغ:
-//   committees.leader_role_name -> من يقود الوحدة (فمَن يقودها يعرفها من صفّه الحيّ)
+//   committees.leader_role_name -> من يقود الإدارة (فمَن يقودها يعرفها من صفّه الحيّ)
 //   committees.member_role_name -> أيّ دورٍ يضمّه قائدُها ويوزّعه
 //   committees.council_id       -> إدارةٌ إداريّة أم لجنةٌ تنفيذيّة
 //
-// **حقيقتان لا واحدة** (20260731): الانتماءُ إلى الوحدة صفٌّ في `user_roles` عليها هي،
+// **حقيقتان لا واحدة** (20260731): الانتماءُ إلى الإدارة صفٌّ في `user_roles` عليها هي،
 // والإشرافُ على لجنةٍ تنفيذيّة صفٌّ في `committee_supervision`. فالعضو يوجد قبل أن يُوزَّع،
 // وسحبُ آخر لجنةٍ لا يُخرجه من إدارته. (كانا صفًّا واحدًا، فكان أحدُهما يُخفي الآخر.)
 //
-// والشاشة تخدم **كلّ قائد وحدة** (20260731): قائدُ اللجنة يضمّ أعضاءه ويُخرجهم، وقائدُ
-// الإدارة يزيد على ذلك توزيعَ الإشراف — بُعدُ الإدارات وحدها. لا شرطَ محفورًا يفرّقهما
-// سوى `council_id`، وهو التفريق الذي تفعله القاعدة نفسها.
+// **والشاشة للإدارات الإداريّة وحدها** (20260801): كانت «وحدتي» تخدم قائد اللجنة معها
+// فتُقرضه ضمًّا وإخراجًا؛ فصار للجنة تبويبُها «لجنتي» عرضًا محضًا، وبقي هنا مَن يضمّ
+// **ويوزّع** — الفعلان اللذان لا وجود لهما خارج الإدارة. فلا فرعَ في الشاشة يسأل «أإدارةٌ
+// هذه أم لجنة».
 import type { Holder, Position, RawCommittee, RawProfile, RawRole, RawSupervision, RawUserRole } from "../members/structure/model";
 import { roleTitle } from "@/lib/positionLabel";
 
-/** الوحدة التي يقودها صاحبُ الجلسة — إدارةً كانت أو لجنة، ما دامت تُصرّح بدور عضوها. */
+/** الإدارة التي يقودها صاحبُ الجلسة — بدور عضوها الذي تُصرّح به هي. */
 export type Unit = {
   id: number;
   name: string;
-  /** إدارةٌ إداريّة (لها إشرافٌ توزّعه) أم لجنةٌ تنفيذيّة (أعضاؤها فيها). */
-  kind: "admin" | "operational";
   desc: string | null;
   link: string | null;
   memberRoleName: string;
@@ -44,52 +43,41 @@ const asGender = (g: string | null | undefined): "male" | "female" | null =>
   g === "male" ? "male" : g === "female" ? "female" : null;
 
 /**
- * الوحدة التي يقودها هذا المستخدم — يُطابَق صفُّه الحيّ بدور الوحدة القياديّ وعليها هي
- * (`role_name = leader_role_name` و`committee_id = id`)، وهو **الشرط نفسه** الذي تفحصه
- * `can_assign_role` في القاعدة. فما تعرضه الشاشة هو ما تسمح به القاعدة، لا أوسع.
+ * الإدارة بمعرّفها — **مَن يقودها لا يُسأل هنا**: النطاق يُحسم في `lib/myScope.ts` (مصدرٌ
+ * واحد تقرؤه القائمة والصفحة)، وهذه تُلبس المعرّفَ اسمَه ودورَ عضوه.
  *
- * ولا يُشترط مجلسٌ بعينه: قائد اللجنة يقودها كما يقود قائد الإدارة إدارته، والفرقُ في
- * **ما يفعله بأعضائه** لا في حقّه بهم. يقوله `kind` أدناه.
+ * وشرطُ النطاق هناك هو **الشرط نفسه** الذي تفحصه `can_assign_role` في القاعدة (صفٌّ حيّ
+ * بـ`role_name = leader_role_name` على الوحدة) — فما تعرضه الشاشة هو ما تسمح به، لا أوسع.
  */
-export function ledUnit(
-  userId: string,
+export function adminUnit(
+  committeeId: number,
   committees: RawCommittee[],
-  userRoles: RawUserRole[],
   roles: RawRole[],
 ): Unit | null {
   const byId = new Map(committees.map((c) => [c.id, c]));
-  for (const ur of userRoles) {
-    if (ur.user_id !== userId || ur.committee_id == null) continue;
-    const c = byId.get(ur.committee_id);
-    if (!c) continue;
-    if (c.leader_role_name !== ur.role_name || !c.member_role_name) continue;
-    return {
-      id: c.id,
-      name: c.committee_name_ar ?? `وحدة #${c.id}`,
-      kind: c.council_id === "administrative" ? "admin" : "operational",
-      desc: c.description ?? null,
-      link: c.group_link ?? null,
-      memberRoleName: c.member_role_name,
-      // «عضو» + وحدته الأمّ = «عضو إدارة الضمان والجودة» — الرتبة وحدها لا تقول من أيّ إدارة
-      memberRoleAr: (() => {
-        const r = roles.find((x) => x.role_name === c.member_role_name);
-        if (!r) return c.member_role_name;
-        const home = r.home_committee_id != null ? byId.get(r.home_committee_id)?.committee_name_ar ?? null : null;
-        return roleTitle({ roleAr: r.role_name_ar ?? r.role_name, homeCommitteeId: r.home_committee_id, homeName: home });
-      })(),
-    };
-  }
-  return null;
+  const c = byId.get(committeeId);
+  if (!c || !c.member_role_name) return null;
+  return {
+    id: c.id,
+    name: c.committee_name_ar ?? `إدارة #${c.id}`,
+    desc: c.description ?? null,
+    link: c.group_link ?? null,
+    memberRoleName: c.member_role_name,
+    // «عضو» + وحدته الأمّ = «عضو إدارة الضمان والجودة» — الرتبة وحدها لا تقول من أيّ إدارة
+    memberRoleAr: (() => {
+      const r = roles.find((x) => x.role_name === c.member_role_name);
+      if (!r) return c.member_role_name;
+      const home = r.home_committee_id != null ? byId.get(r.home_committee_id)?.committee_name_ar ?? null : null;
+      return roleTitle({ roleAr: r.role_name_ar ?? r.role_name, homeCommitteeId: r.home_committee_id, homeName: home });
+    })(),
+  };
 }
 
 /**
- * كشفُ الوحدة — **أعضاؤها** أوّلًا، ولكلٍّ لجانُ إشرافه إن كانت إدارة.
+ * كشفُ الإدارة — **أعضاؤها** أوّلًا، ولكلٍّ لجانُ إشرافه.
  *
  * يُبنى من الانتماء لا من الإشراف: من ضُمّ ولم يُوزَّع بعدُ يظهر بلا لجان (يطلب توزيعًا)،
  * ومن سُحبت لجانُه يبقى في إدارته. حالتان لم تكونا تُمثَّلان أصلًا.
- *
- * وهو نفسه كشفُ اللجنة بلا حرفٍ زائد: `member_role_name` يقول أيّ دورٍ يُعدّ عضوًا،
- * ولا صفَّ إشرافٍ على لجنةٍ فتخرج القائمة بلا شرائح. وحدةٌ واحدة تخدم الحالتين.
  */
 export function buildRoster(
   unit: Unit,

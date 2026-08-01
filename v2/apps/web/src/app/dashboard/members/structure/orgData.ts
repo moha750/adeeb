@@ -10,7 +10,7 @@ export type OrgData = {
   userRoles: RawUserRole[];
   profiles: RawProfile[];
   supervision: RawSupervision[];
-  members: { id: string; name: string; avatar: string | null; gender: "male" | "female" | null }[]; // لمنتقي الإسناد (بأفتار)
+  members: { id: string; name: string; avatar: string | null; gender: "male" | "female" | null }[]; // لمنتقي الإسناد (بأفتار) — النشطون بلا منصب
   error: string | null;
 };
 
@@ -42,6 +42,9 @@ export async function getOrgData(): Promise<OrgData> {
   // بِركةُ الإسناد **النشطون وحدهم** — القاعدة تردّ ما سواهم (تريغر `enforce_assignment_status`:
   // المعلَّق يُضمّ إلى لجنةٍ عضوًا ولا يُسنَد منصبًا، والموقوف لا شيء). وكانت تعرض ١٨١ اسمًا
   // فيها ٢٠ قيد الإكمال و٢٨ موقوفًا — فيَعِد المنتقي بما تردّه القاعدة، وذاك أسوأ من ألّا يعرض.
+  //
+  // ولا تُطرح منها شاغلو المناصب: عضويّة اللجنة نفسها منصب (١٣٢ من ١٥٣ صفًّا نشطًا)، فطرحُهم
+  // يُبقي اسمين من ١٣٣ ويُخفي كلّ من يُرقَّى. النقل يُقال في المنتقي لا يُحذف منه.
   //
   // ومن أراد **ضمّ** معلَّقٍ إلى لجنته فبِركتُه أوسع من هذه بحكم القاعدة — تُبنى في شاشتها
   // من `profiles` مباشرةً بحالتها، لا تُوسَّع هذه فتصير بِركةً واحدةً لقاعدتين.
