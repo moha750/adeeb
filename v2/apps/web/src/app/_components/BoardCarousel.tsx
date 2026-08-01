@@ -2,15 +2,24 @@
 
 import { useEffect, useRef, useState } from "react";
 import { XLogo, LinkedinLogo } from "@phosphor-icons/react";
+import { CarouselNav } from "@adeeb/design-system";
 import { toLatinDigits } from "@adeeb/core";
 
 export type Member = {
   id: string;
   full_name: string;
   avatar_url: string | null;
+  gender: "male" | "female" | string | null;
   role_name: string | null;
+  /** وحدةُ صاحب المنصب العامّ (لجنة/قسم) — تُدمج في سطر المنصب. فارغة لمن يُعرّف منصبه نفسه. */
+  unit_name: string | null;
   twitter_account: string | null;
   linkedin_account: string | null;
+};
+
+const FIG: Record<string, string> = {
+  male: "/brand/avatar/avatar-male.svg",
+  female: "/brand/avatar/avatar-female.svg",
 };
 
 function initials(name: string): string {
@@ -24,13 +33,18 @@ function socialUrl(v: string | null, kind: "tw" | "in"): string | null {
   return kind === "tw" ? `https://x.com/${h}` : `https://www.linkedin.com/in/${h}`;
 }
 
+// محور الشريط. `translateX` لا يعرف `dir`: الموجب يمينٌ مهما كانت لغة الصفحة.
+// والصفحة عربيّة (`dir="rtl"`)، فالتالي إلى اليسار والسابق إلى اليمين — أي سالب.
+// موضعٌ واحد يحكم الاتّجاه كلّه: التموضع هنا، والسحب في onMove.
+const AXIS = -1;
+
 // نمط بطاقة حسب بعدها الدائريّ عن المركز (كسريّ أثناء السحب، صحيح عند الاستقرار)
 function slideStyle(rel: number, spacing: number, visible: number) {
   const a = Math.abs(rel);
   const scale = Math.max(0.5, 1.06 - a * 0.16);
   const opacity = Math.max(0, Math.min(1, visible + 1 - a));
   return {
-    transform: `translateX(calc(-50% + ${rel * spacing}px)) scale(${scale.toFixed(3)})`,
+    transform: `translateX(calc(-50% + ${AXIS * rel * spacing}px)) scale(${scale.toFixed(3)})`,
     opacity,
     zIndex: 100 - Math.round(a),
     dim: Number(Math.min(0.42, a * 0.2).toFixed(2)),
@@ -113,7 +127,9 @@ export function BoardCarousel({ members }: { members: Member[] }) {
       if (!dragRef.current) return;
       const dx = e.clientX - startX.current;
       if (Math.abs(dx) > 5) moved.current = true;
-      lastCur.current = startCur.current - dx / spRef.current;
+      // السحب يقسَم على المحور نفسه، وإلا سارت البطاقات عكس الإصبع.
+      // ولأن المحور معرَّب (التالي يسارًا)، فالسحب يمينًا يتقدّم — لازمُ التتبّع لا خيارٌ فيه.
+      lastCur.current = startCur.current - (AXIS * dx) / spRef.current;
       paint(lastCur.current);
     };
     const onUp = () => {
@@ -191,6 +207,8 @@ export function BoardCarousel({ members }: { members: Member[] }) {
                 <div className="bc-card" style={{ width: CARD }}>
                   {m.avatar_url ? (
                     <div className="bc-bg" style={{ backgroundImage: `url(${m.avatar_url})` }} />
+                  ) : m.gender && FIG[m.gender] ? (
+                    <div className="bc-fig" style={{ backgroundImage: `url(${FIG[m.gender]})` }} />
                   ) : (
                     <div className="bc-mono" style={{ fontSize: monoSize }}>{initials(m.full_name)}</div>
                   )}
@@ -198,7 +216,11 @@ export function BoardCarousel({ members }: { members: Member[] }) {
                   <div className="bc-info">
                     <div>
                       <div className="bc-nm">{toLatinDigits(m.full_name)}</div>
-                      {m.role_name ? <div className="bc-rl">{m.role_name}</div> : null}
+                      {m.role_name ? (
+                        <div className="bc-rl">
+                          {m.unit_name ? `${m.role_name} ${m.unit_name}` : m.role_name}
+                        </div>
+                      ) : null}
                     </div>
                     {(tw || li) && (
                       <div className="bc-socs" style={{ pointerEvents: a === 0 ? "auto" : "none" }}>
@@ -222,10 +244,7 @@ export function BoardCarousel({ members }: { members: Member[] }) {
           })}
         </div>
       </div>
-      <div className="bc-arrows">
-        <button type="button" onClick={() => go(-1)} aria-label="السابق">‹</button>
-        <button type="button" onClick={() => go(1)} aria-label="التالي">›</button>
-      </div>
+      <CarouselNav className="mt-2" onPrev={() => go(-1)} onNext={() => go(1)} />
     </div>
   );
 }

@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { cn } from "../lib/cn";
+import { matchesSearch } from "../lib/search";
+import { AnchoredPopover } from "./AnchoredPopover";
+import { FieldMark } from "./FieldMark";
 
 export type SelectOption = { value: string; label: string; icon?: ReactNode; group?: string };
 
@@ -16,11 +19,17 @@ export interface SelectProps {
   onValueChange?: (value: string) => void;
   /** يُظهر حقل بحث لتصفية الخيارات. */
   searchable?: boolean;
+  /** نغمة تُوضَع على اللوحة المنبثقة (portaled) لتتبع نغمة نافذةٍ منغّمة يعيش داخلها — البحث والخيار المختار والحلقة. */
+  tone?: "warning" | "danger" | "success";
   error?: string;
   helper?: string;
   disabled?: boolean;
   /** اسم حقل مخفيّ لإرساله ضمن النماذج. */
   name?: string;
+  /** وسم «(اختياريّ)» بعد التسمية. يُلغي وسم الإلزام. */
+  optional?: boolean;
+  /** وسم الإلزام (نجمة حمراء) بعد التسمية. */
+  required?: boolean;
   className?: string;
 }
 
@@ -52,10 +61,13 @@ export function Select({
   defaultValue,
   onValueChange,
   searchable = false,
+  tone,
   error,
   helper,
   disabled = false,
   name,
+  optional,
+  required,
   className,
 }: SelectProps) {
   const [open, setOpen] = useState(false);
@@ -64,15 +76,15 @@ export function Select({
   const [query, setQuery] = useState("");
   const [hl, setHl] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const selected = options.find((o) => o.value === val);
 
   const filtered = useMemo(() => {
-    const q = query.trim();
-    if (!searchable || !q) return options;
-    return options.filter((o) => o.label.includes(q));
+    if (!searchable || !query.trim()) return options;
+    return options.filter((o) => matchesSearch(query, o.label));
   }, [options, query, searchable]);
 
   // تسلسل العرض: عناوين المجموعات + الخيارات (مع فهرس للتنقّل)
@@ -100,15 +112,6 @@ export function Select({
 
   useEffect(() => {
     if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
     const cur = filtered.findIndex((o) => o.value === val);
     setHl(cur >= 0 ? cur : 0);
     if (searchable) setTimeout(() => searchRef.current?.focus(), 0);
@@ -128,8 +131,11 @@ export function Select({
       }
       return;
     }
-    if (e.key === "Escape") {
+    if (e.key === "Tab") {
+      // اللوحة خارج فخّ تركيز النافذة (Portal) — نُغلق ونُعيد التركيز للمُطلِق داخل الفخّ
+      e.preventDefault();
       setOpen(false);
+      triggerRef.current?.focus();
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       setHl((h) => Math.min(filtered.length - 1, h + 1));
@@ -149,6 +155,7 @@ export function Select({
         <span className="fld-lbl">
           {icon ? <span className="fld-lic" aria-hidden="true">{icon}</span> : null}
           {label}
+          <FieldMark optional={optional} required={required} />
         </span>
       ) : null}
       <div
@@ -162,6 +169,7 @@ export function Select({
         )}
       >
       <button
+        ref={triggerRef}
         type="button"
         className="asel-trigger"
         disabled={disabled}
@@ -175,8 +183,21 @@ export function Select({
       </button>
       {name ? <input type="hidden" name={name} value={val} readOnly /> : null}
 
-      {open && !disabled ? (
-        <div ref={panelRef} className="asel-panel" role="listbox">
+      <AnchoredPopover
+        open={open && !disabled}
+        anchorRef={rootRef}
+        onDismiss={(reason) => {
+          setOpen(false);
+          if (reason === "escape") triggerRef.current?.focus();
+        }}
+        matchWidth
+        className={cn("asel-panel", tone && `asel-tone-${tone}`)}
+        role="listbox"
+        reflowKey={seq.length}
+        panelRef={(el) => {
+          panelRef.current = el;
+        }}
+      >
           {searchable ? (
             <div className="asel-search">
               <span className="asel-si"><SearchIcon /></span>
@@ -217,8 +238,7 @@ export function Select({
             ),
           )}
           </div>
-        </div>
-      ) : null}
+      </AnchoredPopover>
 
       </div>
       {(error ?? helper) ? <span className="fld-help">{error ?? helper}</span> : null}

@@ -19,9 +19,11 @@ import {
   Newspaper,
   PenNib,
   Sparkle,
+  SpeakerHigh,
+  SpeakerSlash,
   VideoCamera,
 } from "@phosphor-icons/react";
-import { fmtDigits, SESSION_KEY, STORY_ASSETS, STORY_CONFIG, TIME_MONTHS, WALL_SHOTS } from "./config";
+import { fmtDigits, SESSION_KEY, STORY_ASSETS, STORY_CONFIG, storySeen, TIME_MONTHS, WALL_SHOTS } from "./config";
 import "./story.css";
 
 /* بوابة ما قبل الرسم: تُقرَّر قبل أي paint (سكربت inline) فلا وميض للقصة عند التخطي.
@@ -107,13 +109,26 @@ function StationBreak({ i }: { i: number }) {
   );
 }
 
-export function StoryOpening() {
+/* force: صفحة المعاينة وحدها — القصة هناك موضوعُ الصفحة لا افتتاحيّةُ زيارة،
+   فتُعرض في كل مرة ولو رُئيت في هذه الجلسة. */
+export function StoryOpening({ force = false }: { force?: boolean }) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    if (document.documentElement.getAttribute("data-adeeb-story") === "skip") return;
+    const html = document.documentElement;
+
+    /* للهبوط مدخلان، والبوابة تُقرأ في كليهما: التحميل الكامل يقرّره سكربت ما
+       قبل الرسم أعلاه، والتنقّل داخل الموقع (رجوعٌ إلى الهبوط من صفحةٍ أخرى)
+       يقرّره هذا الموضع — فالقصة تُعرض مرّة واحدة لكل دخولٍ للموقع لا لكل مرور
+       على الصفحة. والشرط هنا صدى شرطِ السكربت (رُئيت · رابطٌ عميق)، وباراميتر
+       ?story= يُترك لصاحبه: لا يصل إلا في تحميلٍ كامل قد قرّره السكربت. */
+    if (force) html.removeAttribute("data-adeeb-story");
+    else if (!new URLSearchParams(location.search).get("story") && (storySeen() || location.hash.length > 1))
+      html.setAttribute("data-adeeb-story", "skip");
+
+    if (html.getAttribute("data-adeeb-story") === "skip") return;
 
     let destroyed = false;
     let destroy: (() => void) | undefined;
@@ -135,11 +150,11 @@ export function StoryOpening() {
       window.removeEventListener("load", boot);
       destroy?.();
     };
-  }, []);
+  }, [force]);
 
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: GATE_SCRIPT }} />
+      {!force && <script dangerouslySetInnerHTML={{ __html: GATE_SCRIPT }} />}
       <div id="adeeb-story" ref={rootRef}>
         {/* الطبقات الثابتة */}
         <div className="st-bg" aria-hidden="true" />
@@ -155,7 +170,13 @@ export function StoryOpening() {
             </p>
           </div>
           <div className="st-cue" aria-hidden="true">
-            <span>مرِّر</span>
+            {/* تعريفٌ بالخلفية الصوتية قبل بدء القصة — يخرج مع المؤشّر نفسه،
+                ويزول قبل ذلك متى صارت مسموعة (st-sound-live) */}
+            <p className="st-cue-sound">
+              <SpeakerHigh weight="duotone" />
+              للحكـاية خلفيةٌ صوتيّة شغلها لتجربة أفضل
+            </p>
+            <span>مرِّر للأسفل</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 9l6 6 6-6" />
             </svg>
@@ -350,6 +371,16 @@ export function StoryOpening() {
               </span>
             ))}
           </div>
+          {/* مفتاح الصوت — في الزاوية التي أخلاها زرّ التخطّي حين تمركز، فلا
+              يزاحمه ولا يزاحم شرطات الفصول. حالتُه في data-on يكتبها story.ts */}
+          <button type="button" className="st-sound" data-on="0" aria-pressed="false" aria-label="الخلفية الصوتية">
+            <SpeakerHigh weight="duotone" className="st-sound-on" aria-hidden="true" />
+            <SpeakerSlash weight="duotone" className="st-sound-off" aria-hidden="true" />
+            {/* الدعوة: حلقةٌ تنبض وتلميحةٌ تعرّف بالخلفية — تظهران بـdata-hint
+                الذي يكتبه story.ts عند أوّل تمرير، ولا تعودان بعد هدوئهما */}
+            <span className="st-sound-ring" aria-hidden="true" />
+            <span className="st-sound-tip" aria-hidden="true">أضغط لسماع الخلفية</span>
+          </button>
           <button type="button" className="st-skip">
             تخطّي القصة
           </button>

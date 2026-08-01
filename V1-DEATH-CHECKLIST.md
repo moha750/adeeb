@@ -51,7 +51,11 @@ drop function if exists public.sync_role_key();
 **يمنعه:** لا شيء تقنيًّا — V2 يمرّر الاسم. لكن أسقِطه مع البند ١ لتبقى الدالّة متّسقة.
 **تحذير:** الإسقاط **صريح** ثمّ إعادة إنشاء — لا `create or replace`، وإلّا صار حِملًا زائدًا يلتبس فيه النداء بسبعة معاملات.
 
-### ٤) `roles.role_category`
+### ٤) `roles.role_category` — ✅ **سُدّد 2026-07-16**
+
+**نُفّذ في** `20260716_drop_roles_role_category.sql` ضمن هجرات نظام الاستبيانات V2، بقرار المالك أنّ كسر V1 مقبول. **الأثر على adeeb.club:** نافذتا مشاركة الاستبيانات (الموضعان أدناه) تردّان 400 عند الفتح — والميزة نفسها تقاعدت مع إسقاط `survey_sharing`. بقيّة V1 لا تتأثّر (`auth-manager.js` يقرأ عبر `roles(*)` فتسقط القيمة `undefined` بلا مستهلك).
+
+<details><summary>النصّ الأصليّ قبل التسديد</summary>
 
 **الشكل:** عمود `NOT NULL` **ميّت** — صفر دالّة تقرؤه، صفر مقارنة بقيمته في أيّ كود. ومع ذلك يعترض كلّ منصب جديد، ويناقض `council_type` (رئيس التنفيذيّ مصنَّف `administrative_council`؛ منسّق القسم مصنَّف `committee`).
 **يمنعه:** موضعان في V1 **يطلبانه صراحةً ثمّ يهملان قيمته**:
@@ -65,6 +69,12 @@ drop function if exists public.sync_role_key();
 alter table roles drop column role_category;
 ```
 
+</details>
+
+### ٤-مكرّر) نظام الاستبيانات — قُطع عن V1 عمدًا (2026-07-16)
+
+**ليس دَينًا مؤجَّلًا بل قرار نافذ:** هجرات `20260716_survey_v2_*` أعادت بناء قاعدة الاستبيانات لخدمة V2 (سياسات جديدة، امتيازات مقلَّصة، إرسال عبر `submit_survey_response` بمفتاح الخدمة وحده). **الأثر على adeeb.club منذ اليوم:** تعبئة الاستبيانات في V1 معطّلة (كان الإدخال يعتمد على سياسات anon المفتوحة — وكانت ثغرة P0: قراءة وتعديل استجابات الغير بلا هويّة)، وقائمة استبيانات مشرفي V1 فقدت المشاركة والعدّادات المخزّنة. **يعود العمل بنشر صفحة الاستجابة في V2.**
+
 ### ٥) `committees.department_id = NULL` للإدارتين (22، 23)
 
 **الشكل:** فراغٌ متروك عمدًا. لم يعد يحمل معنى — `council_id` يقول التبعيّة صراحةً.
@@ -77,6 +87,48 @@ alter table roles drop column role_category;
 **يمنعه:** ٣ دوالّ حيّة (`list`/`assign`/`revoke`) + دوالّ الحضور + ٥ ملفّات في V1.
 **بعد موته:** أزِل واجهته ودوالّه **معًا**، ثمّ الصفّ.
 
+### ٧) ازدواج الأخبار — `news.status` و`author_name` (2026-07-31)
+
+**الشكل:** عمودان يكرّران غيرهما، ويزامنهما تريغران بعد ترحيل منصّة الأخبار V2:
+
+- `news.status` (ثلاثيّ) مرآةُ `news.workflow_status` (سداسيّ) — `news_sync_status` يزامنهما **في اتّجاهين**، فأيّهما كُتب اشتُقّ منه الآخر.
+- `news.author_name` مرآةُ `news.authors[1]` — `news_sync_author_name`.
+
+**يمنعه:** `news/news-detail.html` و`admin/dashboard.js` الحيّان على adeeb.club يقرآن `status` و`author_name`؛ وقسم «آخر الأخبار» في هبوط V2 يقرأ `status` ويربط إلى صفحة V1.
+**بعد موته:** أسقِط العمودين والتريغرين، واقصر V2 على `workflow_status` و`authors` (يكتبهما وحدهما اليوم أصلًا).
+
+```sql
+drop trigger if exists news_sync_status on news;
+drop trigger if exists news_sync_author_name on news;
+drop function if exists public.news_sync_status();
+drop function if exists public.news_sync_author_name();
+alter table news drop column status, drop column author_name;
+```
+
+### ٨) جداول وأعمدة الأخبار المهجورة — **صفر صفوف، لم تُستعمل قطّ** (2026-07-31)
+
+**الشكل:** ثلاثة مصادر لمعنًى واحد («أيّ الحقول يملك الكاتب؟»)، وجدولُ تعليقاتٍ كرّره غيره.
+منصّة V2 قصرت المعنى على **مصدرٍ واحد**: `news_writer_assignments.assigned_fields`.
+
+| المهجور | صفوفه | من حلّ محلّه |
+|---|---|---|
+| `news_field_permissions` (جدول) | ٠ | `news_writer_assignments.assigned_fields` |
+| `news.available_fields` | ٠ (كلّها `{}`) | ↑ نفسه |
+| `news.assigned_writers` | مصفوفةٌ فارغة | جدول `news_writer_assignments` |
+| `news.assigned_by` · `news.assigned_at` | — | ↑ نفسه (على صفّ التكليف) |
+| `news_comments` (جدول) | ٠ | `news_public_comments` (٤ صفوف) |
+
+**يمنعه:** لا شيء تقنيًّا — V2 لا يقرؤها ولا يكتبها. أُبقيت وفاءً لقاعدة «أضِف ولا تحذف» لأنّ مصدر V1 لم يعد في الفرع فتعذّر إثبات أنّه لا يقرؤها.
+**بعد موته:** أسقِطها دفعةً واحدة.
+
+```sql
+drop table if exists public.news_field_permissions;
+drop table if exists public.news_comments;
+alter table news
+  drop column available_fields, drop column assigned_writers,
+  drop column assigned_by,      drop column assigned_at;
+```
+
 ---
 
 ## سُدّد بالفعل
@@ -87,6 +139,7 @@ alter table roles drop column role_category;
 | المفتاح المركّب `committees_department_council_fkey` | 2026-07-15 | أُسقط واستُبدل بتريغر — كان يكسر `dashboard.js:3583` حيًّا (PGRST201). |
 | مفتاحا `committees → roles` | 2026-07-15 | أُسقطا واستُبدلا بتريغر — قنبلة PostgREST نائمة. |
 | `role_id` في دوالّ الحافّة | 2026-07-15 | `create-member-directly` و`migrate-accepted-member` صارا بالاسم (مصدرًا). |
+| RLS الرتبيّة على جداول الأخبار | 2026-07-31 | آخر جزيرةٍ تفحص `role_name IN ('club_president','committee_leader','committee_deputy')` — أُسقطت سياساتها الـ٢٨ وأُعيد تأسيسها على حَكَمٍ واحد `news_role(actor, news)`. كسرُ V1 مقبول هنا: واجهة أخبار V1 الإداريّة تُستبدَل بغرفة تحرير V2. |
 
 ---
 

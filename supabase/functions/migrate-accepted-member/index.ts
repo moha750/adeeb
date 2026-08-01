@@ -175,6 +175,12 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // القبول ليس إكمالًا: العضو هنا قُبل ولم يسجّل بعد — الرابط لم يُرسَل إليه أصلًا حتّى الآن.
+    // كان يُكتب 'active' فيقفز من الطلب إلى النشاط رأسًا، ويتخطّى الحالة المصنوعة له.
+    // وأخوه create-member-directly يكتب 'pending_onboarding' — بابان للقبول اختلف حكمهما،
+    // فامتلأت الحالة من أحدهما وفرغت من الآخر. والتبويب «قيد الإكمال» مبنيٌّ في اللوحة
+    // ينتظر سكّانه، وهم يمرّون من تحته إلى 'active' بلا وقوف.
+    // ومن أكمل تسجيله ترفعه complete-member-onboarding إلى 'active' — فهي وحدها بابُ النشاط.
     const { error: profileError } = await supabaseClient
       .from('profiles')
       .insert({
@@ -182,7 +188,7 @@ Deno.serve(async (req: Request) => {
         full_name: application.full_name,
         email: application.email,
         phone: application.phone,
-        account_status: 'active',
+        account_status: 'pending_onboarding',
         source_application_id: application.id,
         source_interview_id: interview_id,
         joined_date: new Date().toISOString().split('T')[0]

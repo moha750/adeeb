@@ -6,7 +6,8 @@
    الحالية — تُقرأ قيمها مرة واحدة في JS من رموز الموقع (لحظة التسليم).
    ============================================================ */
 
-/* بوابة التخطي قبل الرسم: يضبطها سكربت inline (باراميتر/رابط عميق/جلسة) */
+/* بوابة التخطي قبل الرسم: يضبطها سكربت inline (باراميتر/رابط عميق/جلسة)،
+   ويعيد StoryOpening قراءتها عند التنقّل داخل الموقع (رجوعٌ إلى الهبوط) */
 html[data-adeeb-story="skip"] #adeeb-story { display: none; }
 
 #adeeb-story {
@@ -43,6 +44,9 @@ html[data-adeeb-story="skip"] #adeeb-story { display: none; }
 /* عند تفعيل القصة (st-live): الخلفية للطبقة الثابتة، والمحتوى الحقيقي
    يتراكب تحت المشهد الأخير (لحظة التسليم تكشفه فعليًا لا مجازًا) */
 #adeeb-story.st-live { background: transparent; margin-bottom: -100vh; }
+
+/* مشغّلا الخلفية الصوتية — لا يرسمان شيئًا ولا يشغلان مقاسًا */
+.st-audio { display: none; }
 
 /* ---------- الطبقات الثابتة (تظهر مع st-live فقط) ---------- */
 .st-bg, .st-grain, .st-hud, .st-logo-layer, .st-flash, .st-time { display: none; }
@@ -96,8 +100,11 @@ html[data-adeeb-story="skip"] #adeeb-story { display: none; }
   -webkit-text-fill-color: transparent; color: transparent;
 }
 
+/* مؤشّر التمرير فوق زرّ التخطّي لا تحته: الزرّ صار وسط الأسفل، وهو يظهر
+   بعد ثانيتين بينما المؤشّر ما زال قائمًا عند تقدّمٍ صفر — فلولا هذا
+   الارتفاع لجلس أحدهما على الآخر. القيمة قاعُ الزرّ + قامته + فرجة. */
 .st-cue {
-  position: absolute; bottom: 4.5vh; inset-inline: 0;
+  position: absolute; bottom: max(9vh, 88px); inset-inline: 0;
   display: grid; justify-items: center; gap: 6px;
   color: var(--st-dim); font-size: 0.95rem;
 }
@@ -106,6 +113,19 @@ html[data-adeeb-story="skip"] #adeeb-story { display: none; }
   0%, 100% { transform: translateY(0); opacity: 0.55; }
   50% { transform: translateY(7px); opacity: 1; }
 }
+/* سطر التعريف بالخلفية الصوتية: أهدأ من المؤشّر وفوقه، ويزول متى صارت
+   الخلفية مسموعة. أيقونته تُستثنى من مقاس سهم المؤشّر وتنفّسه (المُخصِّصان
+   متساويان، فالترتيب هو الحَكَم — وهذا بعده). */
+.st-cue-sound {
+  display: flex; align-items: center; gap: 7px;
+  /* حَشوٌ لا هامش: تصفير الهوامش أعلى الملفّ يسري على ‎p‎ بمُخصِّصٍ أعلى */
+  padding-bottom: 9px;
+  font-size: 0.82rem;
+  color: color-mix(in oklab, var(--st-dim) 85%, transparent);
+  transition: opacity 0.5s ease;
+}
+.st-cue-sound svg { width: 15px; height: 15px; animation: none; }
+#adeeb-story.st-sound-live .st-cue-sound { opacity: 0; }
 
 /* ============================================================
    الفصل الأول — البذرة (ورق وحبر عتيق)
@@ -593,8 +613,11 @@ html[data-adeeb-story="skip"] #adeeb-story { display: none; }
   will-change: transform;
 }
 
+/* وسط الأسفل — بلا transform: ‎inset-inline: 0‎ مع ‎margin-inline: auto‎
+   يمركزه على عرضه هو، فلا يزاحم GSAP على تحويلٍ ولا ينقلب باتّجاه الكتابة */
 .st-skip {
-  position: absolute; bottom: 24px; left: 26px;
+  position: absolute; bottom: 24px;
+  inset-inline: 0; margin-inline: auto; width: max-content;
   pointer-events: auto;
   appearance: none; cursor: pointer;
   font: inherit; font-size: 0.95rem; font-weight: 500;
@@ -607,6 +630,60 @@ html[data-adeeb-story="skip"] #adeeb-story { display: none; }
   transition: color 0.2s, border-color 0.2s;
 }
 .st-skip:hover, .st-skip:focus-visible { color: var(--st-ink); border-color: var(--st-accent); outline: none; }
+
+/* مفتاح الصوت: دائرةٌ بلغة زرّ التخطّي نفسها، في مبتدأ القراءة أسفلَ المسرح
+   (يمينًا في RTL). وشرطاتُ الفصول على الحافّة نفسها لكنّها في منتصف الارتفاع،
+   فلا يلتقيان؛ والزاوية اليسرى تُركت خالية لأن شارة أدوات التطوير تجلس فيها. */
+.st-sound {
+  position: absolute; bottom: 24px; inset-inline-start: 26px;
+  pointer-events: auto;
+  appearance: none; cursor: pointer;
+  display: grid; place-items: center;
+  width: 38px; height: 38px;
+  color: color-mix(in oklab, var(--st-ink) 72%, transparent);
+  background: color-mix(in oklab, var(--st-bg) 55%, transparent);
+  border: 1px solid color-mix(in oklab, var(--st-ink) 28%, transparent);
+  border-radius: 999px;
+  opacity: 0; visibility: hidden;
+  transition: color 0.2s, border-color 0.2s;
+}
+.st-sound:hover, .st-sound:focus-visible { color: var(--st-ink); border-color: var(--st-accent); outline: none; }
+.st-sound svg { width: 19px; height: 19px; }
+/* الأيقونتان متراكبتان في خليّةٍ واحدة، وواحدةٌ تظهر بحسب الحالة — لا قفزةَ
+   تخطيطٍ عند التبديل ولا إعادةَ بناءٍ للعنصر */
+.st-sound > * { grid-area: 1 / 1; }
+.st-sound[data-on="1"] { color: var(--st-accent); border-color: var(--st-accent-soft); }
+.st-sound[data-on="1"] .st-sound-off,
+.st-sound[data-on="0"] .st-sound-on { display: none; }
+
+/* دعوةُ الصوت (data-hint يكتبه story.ts عند أوّل تمرير): حلقةٌ تنبض نبضتين
+   وتلميحةٌ تعلو المفتاح. كلتاهما مطلقةٌ لا في تدفّق الشبكة — خليّة المفتاح
+   واحدة، فلو شاركتا فيها لأزاحتا الأيقونة. والتلميحة فوقه لا بجانبه: جوارُه
+   في الجوّال يصطدم بزرّ التخطّي المتمركز أسفل المسرح. */
+.st-sound-ring {
+  position: absolute; inset: -3px;
+  border: 1px solid var(--st-accent);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+}
+.st-sound-tip {
+  position: absolute;
+  bottom: calc(100% + 10px); inset-inline-start: -1px;
+  white-space: nowrap;
+  font-size: 0.82rem; font-weight: 500;
+  color: color-mix(in oklab, var(--st-ink) 62%, transparent);
+  opacity: 0; transform: translateY(5px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  pointer-events: none;
+}
+.st-sound[data-hint="1"] { color: var(--st-ink); border-color: var(--st-accent-soft); }
+.st-sound[data-hint="1"] .st-sound-tip { opacity: 1; transform: translateY(0); }
+.st-sound[data-hint="1"] .st-sound-ring { animation: st-sound-ping 1.9s ease-out 2; }
+@keyframes st-sound-ping {
+  0% { transform: scale(1); opacity: 0.7; }
+  65%, 100% { transform: scale(1.9); opacity: 0; }
+}
 
 /* ============================================================
    الحالات الأولية للعناصر المتحركة — فقط حين تعمل القصة الحركية
@@ -722,7 +799,11 @@ html:not(.js) #adeeb-story .st-shot-cap {
   .st-time-kicker { font-size: 1rem; }
   .st-chap { right: 14px; }
   .st-chap-dash { height: 28px; }
-  .st-skip { bottom: 16px; left: 16px; padding: 7px 14px; }
+  .st-skip { bottom: 16px; padding: 7px 14px; }
+  .st-sound { bottom: 16px; inset-inline-start: 16px; width: 34px; height: 34px; }
+  .st-sound svg { width: 17px; height: 17px; }
+  .st-sound-tip { font-size: 0.76rem; }
+  .st-cue-sound { font-size: 0.76rem; }
   .st-card { width: clamp(190px, 62vw, 250px); }
   .st-card-hero { width: clamp(230px, 74vw, 300px); }
   .st-shield { height: min(48vh, 420px); }

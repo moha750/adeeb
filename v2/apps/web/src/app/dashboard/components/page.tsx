@@ -36,12 +36,12 @@ const Ic = {
 };
 
 /* ── بيانات عيّنة للجدول والكرت ── */
-const noDetails = { joinedRaw: "", college: null, major: null, degree: null, degreeRaw: null, recordNo: null, twitter: null, instagram: null, tiktok: null, linkedin: null, endReason: null, endDate: "", endAgo: "" };
+const noDetails = { joinedRaw: "", college: null, major: null, degree: null, degreeRaw: null, recordNo: null, twitter: null, instagram: null, tiktok: null, linkedin: null, endReason: null, endDate: "", endAgo: "", canEnd: true, canEdit: true };
 const sampleMembers: MemberRow[] = [
-  { id: "s1", name: "سارة الفيصل", email: "sara.f@adeeb.club", phone: "0551234567", avatar: null, dept: "الإعلام", committee: "لجنة التصميم", role: "عضو", status: "active", joined: "12 يناير 2026", ...noDetails },
-  { id: "s2", name: "عبدالله القحطاني", email: "a.qahtani@adeeb.club", phone: "0509876543", avatar: null, dept: "التقنية", committee: "لجنة التطوير", role: "قائد فريق", status: "active", joined: "3 مارس 2026", ...noDetails },
-  { id: "s3", name: "ليان العمري", email: "layan@adeeb.club", phone: null, avatar: null, dept: "الموارد", committee: null, role: "عضو", status: "pending", joined: "27 يونيو 2026", ...noDetails },
-  { id: "s4", name: "محمد الزهراني", email: "m.zahrani@adeeb.club", phone: "0533334444", avatar: null, dept: "الجودة", committee: "لجنة القياس", role: "منسّق", status: "suspended", joined: "9 فبراير 2026", ...noDetails, endReason: "خروج العضو من مجتمع أدِيب دون إبلاغ إدارة الموارد البشرية", endDate: "2 مايو 2026", endAgo: "منذ 3 أشهر" },
+  { id: "s1", name: "سارة الفيصل", email: "sara.f@adeeb.club", phone: "0551234567", avatar: null, gender: "female", dept: "الإعلام", committee: "لجنة التصميم", role: "عضو", status: "active", joined: "12 يناير 2026", ...noDetails },
+  { id: "s2", name: "عبدالله القحطاني", email: "a.qahtani@adeeb.club", phone: "0509876543", avatar: null, gender: "male", dept: "التقنية", committee: "لجنة التطوير", role: "قائد فريق", status: "active", joined: "3 مارس 2026", ...noDetails },
+  { id: "s3", name: "ليان العمري", email: "layan@adeeb.club", phone: null, avatar: null, gender: "female", dept: "الموارد", committee: null, role: "عضو", status: "pending", joined: "27 يونيو 2026", ...noDetails },
+  { id: "s4", name: "محمد الزهراني", email: "m.zahrani@adeeb.club", phone: "0533334444", avatar: null, gender: "male", dept: "الجودة", committee: "لجنة القياس", role: "منسّق", status: "suspended", joined: "9 فبراير 2026", ...noDetails, endReason: "خروج العضو من مجتمع أدِيب دون إبلاغ إدارة الموارد البشرية", endDate: "2 مايو 2026", endAgo: "منذ 3 أشهر" },
 ];
 
 const TONE: Record<string, "success" | "warning" | "danger" | "neutral"> = {
@@ -96,7 +96,7 @@ export default function ComponentsGallery() {
   const [radio, setRadio] = useState("m");
   const [modal, setModal] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(50);
 
   const tabItems = [
     { value: "all", label: "الكل", badge: "٢١٤" },
@@ -410,7 +410,7 @@ export default function ComponentsGallery() {
         {/* 15 · شريط الأدوات */}
         <Sec id="toolbar" n={15} title="شريط الأدوات" subtitle="بحث + مرشّحات + مبدّل عرض؛ يتحوّل لإجراءات جماعية عند التحديد.">
           <Toolbar
-            searchPlaceholder="ابحث بالاسم أو البريد…"
+            searchPlaceholder="ابحث بالاسم أو رقم الجوّال…"
             search={search} onSearch={setSearch}
             filters={[
               { key: "dept", label: "القسم", options: [{ value: "media", label: "الإعلام" }, { value: "tech", label: "التقنية" }] },
@@ -456,10 +456,9 @@ export default function ComponentsGallery() {
                 key={m.id} member={m}
                 onOpen={() => toast.info(`تفاصيل ${m.name}`)}
                 onRestore={() => toast.success("أُعيدت العضوية")}
-                onDelete={() => toast.error("حُذف نهائيًّا")}
                 actions={[
                   { header: "إجراءات", items: [{ label: "عرض الملف", icon: Ic.eye, onSelect: () => toast.info("عرض") }, { label: "تعديل", icon: Ic.edit, onSelect: () => toast.info("تعديل") }] },
-                  { header: "منطقة الخطر", danger: true, items: [{ label: "حذف", icon: Ic.trash, danger: true, onSelect: () => toast.error("حُذف") }] },
+                  { header: "منطقة الخطر", danger: true, items: [{ label: "إنهاء العضوية", icon: Ic.trash, danger: true, onSelect: () => toast.error("أُنهيت العضوية") }] },
                 ]}
               />
             ))}

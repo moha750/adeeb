@@ -40,6 +40,11 @@ type DialogProps = {
   describedBy?: string;
   /** إغلاق عند نقر الخلفية (افتراضي: لا — مطابقة للسلوك السابق: نقر الخارج لا يُغلق) */
   closeOnScrimClick?: boolean;
+  /**
+   * إجراء يعمل الآن — يُبطِل مخارج الإغلاق التي تملكها البدائيّة (ESC) ويعلنها بـ`aria-busy`.
+   * الطلب يكون قد انطلق إلى الخادم، فالإغلاق لا يُلغيه — يُخفي نتيجته فحسب.
+   */
+  busy?: boolean;
   children: ReactNode;
 };
 
@@ -51,6 +56,7 @@ export function Dialog({
   labelledBy,
   describedBy,
   closeOnScrimClick = false,
+  busy = false,
   children,
 }: DialogProps) {
   const [mounted, setMounted] = useState(open);
@@ -115,8 +121,9 @@ export function Dialog({
     if (!mounted) return;
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
+        // نبتلعه في الحالين — حتى في الانشغال — كي لا يلتقطه حوارٌ أعلى فيُغلق بدلًا منّا
         e.stopPropagation();
-        onClose();
+        if (!busy) onClose();
         return;
       }
       if (e.key !== "Tab") return;
@@ -143,7 +150,7 @@ export function Dialog({
     }
     document.addEventListener("keydown", onKeyDown, true);
     return () => document.removeEventListener("keydown", onKeyDown, true);
-  }, [mounted, onClose]);
+  }, [mounted, onClose, busy]);
 
   const onScrimDown = useCallback(() => {
     if (closeOnScrimClick) onClose();
@@ -162,6 +169,7 @@ export function Dialog({
         aria-modal="true"
         aria-labelledby={labelledBy}
         aria-describedby={describedBy}
+        aria-busy={busy || undefined}
         tabIndex={-1}
       >
         {children}

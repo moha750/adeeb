@@ -80,6 +80,20 @@ export default function AvatarPage() {
             </div>
           </Sec>
 
+          <Sec title="أيقونة الجنس — رجوعٌ قبل الأحرف">
+            <Lab>بلا src وبجنسٍ معلوم ← أيقونة الذكر/الأنثى (فوق تدرّج الهوية) · المجهول يبقى بالأحرف</Lab>
+            <div className="flex flex-wrap items-end gap-6">
+              {SIZES.map((s) => (
+                <Avatar key={s} name="عبدالله القحطاني" gender="male" size={s} />
+              ))}
+            </div>
+            <div className="mt-6 flex flex-wrap items-end gap-6">
+              {SIZES.map((s) => (
+                <Avatar key={s} name="سارة الفيصل" gender="female" size={s} />
+              ))}
+            </div>
+          </Sec>
+
           <Sec title="مؤشّر الحالة">
             <Lab>online · away · busy · offline</Lab>
             <div className="flex flex-wrap items-end gap-8">

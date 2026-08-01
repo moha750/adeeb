@@ -37,6 +37,7 @@ export function ConfirmDialog({
     <Dialog
       open={open}
       onClose={onClose}
+      busy={loading}
       contentClassName={"mdl mdl-sm mdl-alert mdl-tone-" + tone}
       labelledBy={titleId}
       describedBy={hasText ? descId : undefined}
@@ -48,7 +49,7 @@ export function ConfirmDialog({
       </div>
       <div className="mdl-foot">
         <Button variant={tone} size="md" loading={loading} onClick={onConfirm}>{confirmLabel}</Button>
-        {single ? null : <Button variant={`ghost-${tone}`} size="md" onClick={onClose}>{cancelLabel}</Button>}
+        {single ? null : <Button variant={`ghost-${tone}`} size="md" onClick={onClose} disabled={loading}>{cancelLabel}</Button>}
       </div>
     </Dialog>
   );

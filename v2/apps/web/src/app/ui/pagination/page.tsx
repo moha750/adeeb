@@ -20,16 +20,16 @@ function Lab({ children }: { children: React.ReactNode }) {
 export default function PaginationPage() {
   // كلّ قسم يحفظ صفحته وحجم صفحته؛ عند تغيير الحجم نعود إلى الصفحة الأولى
   const [fewPage, setFewPage] = useState(1);
-  const [fewSize, setFewSize] = useState(10);
+  const [fewSize, setFewSize] = useState(50);
 
   const [manyPage, setManyPage] = useState(4);
-  const [manySize, setManySize] = useState(10);
+  const [manySize, setManySize] = useState(50);
 
   const [membersPage, setMembersPage] = useState(1);
   const [membersSize, setMembersSize] = useState(12);
 
   const [emptyPage, setEmptyPage] = useState(1);
-  const [emptySize, setEmptySize] = useState(10);
+  const [emptySize, setEmptySize] = useState(50);
 
   return (
     <main className="py-16">
@@ -42,11 +42,11 @@ export default function PaginationPage() {
 
         <div className="mt-12 space-y-14">
           <Sec title="صفحات قليلة">
-            <Lab>total = 42 · بلا «…» ما دام عدد الصفحات ≤ 7</Lab>
+            <Lab>total = 300 · بلا «…» ما دام عدد الصفحات ≤ 7</Lab>
             <Pagination
               page={fewPage}
               pageSize={fewSize}
-              total={42}
+              total={300}
               onPageChange={setFewPage}
               onPageSizeChange={(size) => { setFewSize(size); setFewPage(1); }}
             />

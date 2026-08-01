@@ -1,0 +1,21 @@
+-- إغلاق بابٍ حيٍّ بلا نموذج يستعمله (بقرار المالك ٢٠٢٦-٠٧-١٥).
+--
+-- نموذجا V1 (membership.html و member-onboarding.html) حُذفا مع V1، وبقيت نقاطهما الخلفيّة منشورة:
+-- تكتبان بلا تحقّق، ولا مستدعي لواحدة منهما في المستودع كلّه.
+--
+-- submit_membership_application: SECURITY DEFINER ومُتاحة لـ anon — والمفتاح العلنيّ علنيّ بتعريفه،
+-- فأيّ أحد على الشبكة يحشو membership_applications بلا حدّ ولا تحقّق (الدالّة تُدرج p->>'degree'
+-- و p->>'college' و p->>'major' خامًّا كما وردت). لا حارس اليوم إلا أنّ أحدًا لا يعرف بها.
+--
+-- تُردّ الإتاحة يوم تُبنى صفحة الالتحاق في V2 — وفي الالتزام نفسه يأخذ degree القيدَ المرمَّز
+-- الذي أخذه academic_degree هنا (20260715_academic_degree_employee_and_conditional_fields.sql)،
+-- فتتوحّد المفردتان بدل أن تتصادفا كما فعلتا في V1.
+--
+-- authenticated تبقى: أعضاء القاعدة الحاليّون وحدهم، وسطحهم أصغر بكثير من الشبكة المفتوحة.
+-- والدالّة ستُعاد كتابتها مع الصفحة أصلًا، فلا معنى لتشديد ما سيُستبدل.
+--
+-- الشقّ الثاني من الإغلاق ليس هنا: حذف نشر دالّة الحافّة complete-member-onboarding
+-- (كانت verify_jwt=false، أي مفتوحة بلا توكن، وتكتب جسم العميل في member_details حرفيًّا
+-- بلا قائمة سماح). مصدرها باقٍ في supabase/functions/ مرجعًا للعقد؛ النقطة الحيّة وحدها أُغلقت.
+
+revoke execute on function public.submit_membership_application(jsonb, uuid) from anon;

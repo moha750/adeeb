@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { MagnifyingGlass, CaretDown, Check, X, Table, SquaresFour, ArrowCounterClockwise } from "@phosphor-icons/react";
+import { AnchoredPopover } from "@adeeb/design-system";
 
 export type FilterOption = { value: string; label: string };
 export type FilterDef = { key: string; label: string; options: FilterOption[] };
@@ -10,44 +11,35 @@ export type ViewMode = "table" | "cards";
 
 function FilterSelect({ def, value, onChange }: { def: FilterDef; value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    const k = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("mousedown", h);
-    document.addEventListener("keydown", k);
-    return () => { document.removeEventListener("mousedown", h); document.removeEventListener("keydown", k); };
-  }, [open]);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const selected = def.options.find((o) => o.value === value);
   return (
-    <div className={"tb-fs" + (open ? " open" : "")} ref={ref}>
-      <button type="button" className={"tb-fs-btn" + (value ? " on" : "")} onClick={() => setOpen((o) => !o)}>
+    <div className={"tb-fs" + (open ? " open" : "")}>
+      <button ref={btnRef} type="button" className={"tb-fs-btn" + (value ? " on" : "")} onClick={() => setOpen((o) => !o)}>
         <span>{def.label}{selected ? <>: <span className="val">{selected.label}</span></> : null}</span>
         <span className="asel-chev"><CaretDown /></span>
       </button>
-      {open && (
-        <div className="tb-fs-panel" role="listbox">
-          <button type="button" className={"tb-fs-opt" + (!value ? " sel" : "")} onClick={() => { onChange(""); setOpen(false); }}>
-            <span className="tb-fs-txt">الكل</span>
+      <AnchoredPopover open={open} anchorRef={btnRef} onDismiss={() => setOpen(false)} align="start" className="tb-fs-panel" role="listbox">
+        <button type="button" className={"tb-fs-opt" + (!value ? " sel" : "")} onClick={() => { onChange(""); setOpen(false); }}>
+          <span className="tb-fs-txt">الكل</span>
+          <Check className="tb-fs-ck" weight="bold" aria-hidden />
+        </button>
+        {def.options.map((o) => (
+          <button key={o.value} type="button" className={"tb-fs-opt" + (o.value === value ? " sel" : "")} onClick={() => { onChange(o.value); setOpen(false); }}>
+            <span className="tb-fs-txt">{o.label}</span>
             <Check className="tb-fs-ck" weight="bold" aria-hidden />
           </button>
-          {def.options.map((o) => (
-            <button key={o.value} type="button" className={"tb-fs-opt" + (o.value === value ? " sel" : "")} onClick={() => { onChange(o.value); setOpen(false); }}>
-              <span className="tb-fs-txt">{o.label}</span>
-              <Check className="tb-fs-ck" weight="bold" aria-hidden />
-            </button>
-          ))}
-        </div>
-      )}
+        ))}
+      </AnchoredPopover>
     </div>
   );
 }
 
 type ToolbarProps = {
   searchPlaceholder?: string;
-  search: string;
-  onSearch: (v: string) => void;
+  /** البحث اختياريّ: إن غاب `onSearch` لم يُرسَم حقل البحث — شريطٌ لا يحمل إلّا مبدّل العرض مثلًا. */
+  search?: string;
+  onSearch?: (v: string) => void;
   filters?: FilterDef[];
   filterValues?: Record<string, string>;
   onFilter?: (key: string, value: string) => void;
@@ -82,10 +74,12 @@ export function Toolbar({
   const anyFilter = Object.values(filterValues).some(Boolean);
   return (
     <div className="tb">
-      <div className="tb-search fld-wrap">
-        <span className="fld-iic" aria-hidden="true"><MagnifyingGlass /></span>
-        <input className="fld-in" value={search} onChange={(e) => onSearch(e.target.value)} placeholder={searchPlaceholder} />
-      </div>
+      {onSearch && (
+        <div className="tb-search fld-wrap">
+          <span className="fld-iic" aria-hidden="true"><MagnifyingGlass /></span>
+          <input className="fld-in" value={search ?? ""} onChange={(e) => onSearch(e.target.value)} placeholder={searchPlaceholder} />
+        </div>
+      )}
       {filters?.map((f) => (
         <FilterSelect key={f.key} def={f} value={filterValues[f.key] ?? ""} onChange={(v) => onFilter?.(f.key, v)} />
       ))}

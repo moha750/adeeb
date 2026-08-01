@@ -5,22 +5,10 @@ import { Alert, Badge, Button, Field, Select } from "@adeeb/design-system";
 import { At, Envelope, Key, Lock, User } from "@phosphor-icons/react";
 import { Avatar } from "../../_components/Avatar";
 import { updateCredentials, type CredResult } from "./actions";
-import type { MemberStatus } from "../data";
+import { MEMBER_STATUS, type MemberStatus } from "@/lib/memberStatus";
 
-export type CredMember = { id: string; name: string; email: string; avatar: string | null; status: MemberStatus };
+export type CredMember = { id: string; name: string; email: string; avatar: string | null; gender: "male" | "female" | null; status: MemberStatus };
 
-const STATUS_LABEL: Record<MemberStatus, string> = {
-  active: "نشط",
-  pending: "قيد الإكمال",
-  suspended: "موقوف",
-  inactive: "غير نشط",
-};
-const STATUS_TONE: Record<MemberStatus, "success" | "warning" | "danger" | "neutral"> = {
-  active: "success",
-  pending: "warning",
-  suspended: "danger",
-  inactive: "neutral",
-};
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function CredentialsView({ members }: { members: CredMember[] }) {
@@ -81,15 +69,15 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
         {/* اختيار العضو */}
         <div className="cred-sec">
           <h4 className="cred-h">العضو</h4>
-          <Select label="اختر عضوًا" icon={<User />} options={options} value={uid} onValueChange={setUid} searchable />
+          <Select label="اختر عضوًا" icon={<User />} options={options} value={uid} onValueChange={setUid} searchable required />
           {selected ? (
             <div className="cred-cur">
-              <Avatar name={selected.name} src={selected.avatar ?? undefined} size="md" />
+              <Avatar name={selected.name} src={selected.avatar ?? undefined} gender={selected.gender} size="md" />
               <div className="cred-cur-tx">
                 <b>{selected.name}</b>
                 <span className="lat">{selected.email}</span>
               </div>
-              <Badge tone={STATUS_TONE[selected.status]} variant="soft" dot>{STATUS_LABEL[selected.status]}</Badge>
+              <Badge tone={MEMBER_STATUS[selected.status].tone} variant="soft" dot>{MEMBER_STATUS[selected.status].label}</Badge>
             </div>
           ) : (
             <p className="cred-hint">اختر عضوًا لعرض بريده الحاليّ وتعديل بيانات دخوله.</p>
@@ -113,6 +101,7 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
                 onChange={(e) => setEmail(e.target.value)}
                 error={emailErr ?? emailSame}
                 helper="اتركه فارغًا إن لم ترغب بتغيير البريد."
+                optional
               />
             </div>
 
@@ -132,6 +121,7 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
                   onChange={(e) => setPw(e.target.value)}
                   error={pwErr}
                   helper="٨ محارف على الأقلّ. اتركها فارغة إن لم ترغب بتغييرها."
+                  optional
                 />
                 <Field
                   label="تأكيد كلمة المرور"
@@ -144,6 +134,7 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
                   value={pw2}
                   onChange={(e) => setPw2(e.target.value)}
                   error={pw2Err}
+                  optional
                 />
               </div>
               <div className="cred-pw-tools">

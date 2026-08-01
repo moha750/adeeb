@@ -1,6 +1,7 @@
 import { Alert } from "@adeeb/design-system";
 import { getAnalytics } from "./data";
 import { StatsView } from "./StatsView";
+import { denyUnless } from "@/app/dashboard/_shell/guard";
 
 const RANGES = [7, 30, 90, 3650];
 
@@ -14,6 +15,9 @@ const Head = () => (
 );
 
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
+  const denied = await denyUnless("/dashboard/analytics");
+  if (denied) return denied;
+
   const sp = await searchParams;
   const days = RANGES.includes(Number(sp.days)) ? Number(sp.days) : 30;
   const { data, recent, error } = await getAnalytics(days);
@@ -30,10 +34,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <Head />
-      {/* حارس الهوية: هذه الشاشة تستعمل تنسيقات `.st-*` مؤقّتة خارج المكتبة — موسومة للإعادة تصميمها بمكوّنات الهوية */}
-      <div data-needs="مكوّنات إحصائيّات الزوّار (رسوم بيانيّة/عدّادات هوية)">
-        <StatsView data={data} recent={recent} days={days} />
-      </div>
+      <StatsView data={data} recent={recent} days={days} />
     </>
   );
 }

@@ -6,6 +6,20 @@ import { getCurrentAdmin } from "@/lib/auth";
 
 export type ActionResult = { ok: boolean; message: string; code?: string; currentUserId?: string };
 
+/**
+ * بوّابة أوّليّة للإسناد والإزالة — **ترشيحٌ سريع لا حكم**. الحكم الدقيق (أيّ دور
+ * في أيّ نطاق) في القاعدة وحدها: `can_assign_role` تقرؤها `assign_position`
+ * و`revoke_position` معًا. فمن مرّ من هنا بلا سلطةٍ حقيقيّة ردّته القاعدة.
+ *
+ * البابان: `manage_positions` (الهيكلة كاملةً) · `assign_unit_members` (قائد وحدةٍ يوزّع دور عضوها).
+ */
+const MAY_ASSIGN = ["manage_positions", "assign_unit_members"];
+const mayAssign = (caps: readonly string[]) => caps.some((c) => MAY_ASSIGN.includes(c));
+
+/** المسارات التي تعرض التعيينات — تُبطَل معًا بعد كلّ إسنادٍ أو إزالة. */
+const TOUCHED = ["/dashboard/members/structure", "/dashboard/members/assignments", "/dashboard/unit"];
+const revalidateAll = () => TOUCHED.forEach((p) => revalidatePath(p));
+
 function service() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
@@ -25,7 +39,7 @@ export async function assignPosition(input: {
   replace?: boolean;
 }): Promise<ActionResult> {
   const admin = await getCurrentAdmin();
-  if (!admin || !admin.isAdmin) return { ok: false, message: "لا تملك صلاحية إدارة الهيكلة." };
+  if (!admin || !mayAssign(admin.caps)) return { ok: false, message: "لا تملك صلاحية إدارة الهيكلة." };
   const sb = service();
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
@@ -40,13 +54,16 @@ export async function assignPosition(input: {
   if (error) return { ok: false, message: `تعذّر الإسناد: ${error.message}` };
 
   const r = (data ?? {}) as { ok?: boolean; message?: string; code?: string; current_user_id?: string };
-  if (r.ok) { revalidatePath("/dashboard/members/structure"); revalidatePath("/dashboard/members/assignments"); }
+  if (r.ok) revalidateAll();
   return { ok: !!r.ok, message: r.message ?? (r.ok ? "تمّ." : "تعذّر الإسناد."), code: r.code, currentUserId: r.current_user_id };
 }
 
 /**
- * إزالة منصب — إلغاء تفعيل التعيين (لا حذف صلب). قد يسحب ترشّحًا انتخابيًّا نشطًا (تريغر قاعدة).
- * رئيس النادي محميّ من الإزالة من هنا.
+ * إزالة منصب — عبر `revoke_position`، نظيرة `assign_position`. إلغاء تفعيل لا حذف صلب،
+ * وقد يسحب ترشّحًا انتخابيًّا نشطًا (تريغر قاعدة). رئيس النادي محميّ.
+ *
+ * كانت تحديثًا مباشرًا على `user_roles` بمفتاح الخدمة — فضوابطُ الإزالة تُكتب هنا وضوابطُ
+ * الإسناد في القاعدة، وبابان لفعلين متناظرين يفترقان يومًا. الآن يقرأ الفعلان الحَكَم نفسه.
  */
 export async function removePosition(input: {
   userId: string;
@@ -54,27 +71,75 @@ export async function removePosition(input: {
   committeeId?: number | null;
 }): Promise<ActionResult> {
   const admin = await getCurrentAdmin();
-  if (!admin || !admin.isAdmin) return { ok: false, message: "لا تملك صلاحية إدارة الهيكلة." };
+  if (!admin || !mayAssign(admin.caps)) return { ok: false, message: "لا تملك صلاحية إدارة الهيكلة." };
   const sb = service();
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
-  // الاسم بيدنا أصلًا — فلا رحلة إلى roles لترجمة الرقم إلى اسم.
-  if (input.roleName === "club_president") return { ok: false, message: "لا يمكن إزالة رئيس النادي من هنا." };
-
-  let q = sb
-    .from("user_roles")
-    .update({ is_active: false })
-    .eq("user_id", input.userId)
-    .eq("role_name", input.roleName)
-    .eq("is_active", true);
-  q = input.committeeId == null ? q.is("committee_id", null) : q.eq("committee_id", input.committeeId);
-
-  const { error } = await q;
+  const { data, error } = await sb.rpc("revoke_position", {
+    p_actor: admin.id,
+    p_user: input.userId,
+    p_role_name: input.roleName,
+    p_committee: input.committeeId ?? null,
+  });
   if (error) return { ok: false, message: `تعذّرت الإزالة: ${error.message}` };
 
-  revalidatePath("/dashboard/members/structure");
-  revalidatePath("/dashboard/members/assignments");
-  return { ok: true, message: "تمّت الإزالة." };
+  const r = (data ?? {}) as { ok?: boolean; message?: string; code?: string };
+  if (r.ok) revalidateAll();
+  return { ok: !!r.ok, message: r.message ?? (r.ok ? "تمّت الإزالة." : "تعذّرت الإزالة."), code: r.code };
+}
+
+/**
+ * توزيع الإشراف — `assign_supervision`. **ليست إسنادَ منصب:** لا تكتب في `user_roles` بل
+ * في `committee_supervision`، وتشترط أن يكون العضو في الإدارة أصلًا (فالضمّ سابقٌ للتوزيع).
+ * والحَكَم واحد: الدالّة تقرأ `can_assign_role` نفسها التي يقرؤها الإسناد.
+ */
+export async function assignSupervision(input: {
+  userId: string;
+  committeeId: number;
+  unitId: number;
+  replace?: boolean;
+}): Promise<ActionResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin || !mayAssign(admin.caps)) return { ok: false, message: "لا تملك صلاحية توزيع الإشراف." };
+  const sb = service();
+  if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
+
+  const { data, error } = await sb.rpc("assign_supervision", {
+    p_actor: admin.id,
+    p_user: input.userId,
+    p_committee: input.committeeId,
+    p_unit: input.unitId,
+    p_replace: input.replace ?? false,
+  });
+  if (error) return { ok: false, message: `تعذّر التوزيع: ${error.message}` };
+
+  const r = (data ?? {}) as { ok?: boolean; message?: string; code?: string; current_user_id?: string };
+  if (r.ok) revalidateAll();
+  return { ok: !!r.ok, message: r.message ?? (r.ok ? "تمّ." : "تعذّر التوزيع."), code: r.code, currentUserId: r.current_user_id };
+}
+
+/** سحب الإشراف — نظيرة `assignSupervision`، وتقرأ الحَكَم نفسه. حذفٌ صلب: تكليفٌ لا منصب. */
+export async function revokeSupervision(input: {
+  userId: string;
+  committeeId: number;
+  unitId: number;
+}): Promise<ActionResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin || !mayAssign(admin.caps)) return { ok: false, message: "لا تملك صلاحية توزيع الإشراف." };
+  const sb = service();
+  if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
+
+  const { data, error } = await sb.rpc("revoke_supervision", {
+    p_actor: admin.id,
+    p_user: input.userId,
+    p_committee: input.committeeId,
+    p_unit: input.unitId,
+  });
+  if (error) return { ok: false, message: `تعذّر السحب: ${error.message}` };
+
+  const r = (data ?? {}) as { ok?: boolean; message?: string; code?: string };
+  if (r.ok) revalidateAll();
+  return { ok: !!r.ok, message: r.message ?? (r.ok ? "سُحب الإشراف." : "تعذّر السحب."), code: r.code };
 }
 
 /**
@@ -88,7 +153,7 @@ export async function updateOrgUnit(input: {
   groupLink?: string | null;
 }): Promise<ActionResult> {
   const admin = await getCurrentAdmin();
-  if (!admin || !admin.isAdmin) return { ok: false, message: "لا تملك صلاحية تعديل الهيكلة." };
+  if (!admin || !admin.caps.includes("manage_positions")) return { ok: false, message: "لا تملك صلاحية تعديل الهيكلة." };
   const sb = service();
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 

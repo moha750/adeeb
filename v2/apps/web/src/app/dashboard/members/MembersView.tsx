@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Button, Field, ModalSectionHeading, Select, Stat } from "@adeeb/design-system";
-import { AddressBook, ArrowSquareOut, At, BookOpen, Books, Buildings, CalendarBlank, CalendarX, Certificate, Copy, Envelope, Eye, GraduationCap, Hash, IdentificationBadge, IdentificationCard, InstagramLogo, LinkedinLogo, MagnifyingGlass, PencilSimple, Phone, Plus, Prohibit, ShareNetwork, Star, TiktokLogo, Trash, User, UsersThree, WarningCircle, XLogo } from "@phosphor-icons/react";
+import { Alert, Badge, Button, Field, ModalSectionHeading, Select, Stat, Textarea, matchesSearch } from "@adeeb/design-system";
+import { AddressBook, ArrowCounterClockwise, At, BookOpen, Books, Buildings, CalendarBlank, CalendarX, Certificate, Envelope, Eye, GraduationCap, Hash, IdentificationBadge, IdentificationCard, MagnifyingGlass, NotePencil, PencilSimple, Phone, Plus, Prohibit, ShareNetwork, Star, Trash, User, UsersThree, WarningCircle } from "@phosphor-icons/react";
 import { DataTable, type Column } from "../_components/DataTable";
-import { Toolbar, type FilterDef, type ViewMode } from "../_components/Toolbar";
+import { Toolbar, type FilterDef } from "../_components/Toolbar";
+import { usePersistentView } from "../_components/usePersistentView";
 import { Modal } from "../_components/Modal";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
 import { MemberCard } from "./MemberCard";
@@ -15,13 +16,17 @@ import { Avatar } from "../_components/Avatar";
 import { EmptyState } from "../_components/EmptyState";
 import { Skeleton } from "../_components/Skeleton";
 import { useToast } from "../_components/ToastProvider";
+import { Cell } from "../_components/Cell";
+import { Section } from "../_components/Section";
+import { SOCIAL_ICON } from "../_components/socialIcons";
+import { MEMBER_STATUS } from "@/lib/memberStatus";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, type ColumnDef } from "@tanstack/react-table";
 import type { MemberRow, MemberStatus } from "./data";
-import { DEGREES, DEGREE_VALUES, PHONE_RE, PHONE_HINT, SOCIAL_KEYS, type SocialKey, hasAcademicFields, socialHandle, socialLabel, socialLabelOf, socialUrl } from "./vocab";
-import { updateMember } from "./actions";
+import { DEGREES, DEGREE_VALUES, PHONE_RE, PHONE_HINT, SOCIAL_KEYS, hasAcademicFields, socialHandle, socialLabel, socialLabelOf, socialUrl } from "./vocab";
+import { endMembership, restoreMembership, updateMember } from "./actions";
 
 // الحقول الثلاثة التي تلزم صاحب الدرجة الجامعيّة وحده — ويُمنع منها صاحب «ثانوية عامة» و«موظف».
 const ACADEMIC_REQUIRED = [
@@ -67,29 +72,17 @@ const memberSchema = z.object({
 });
 type MemberForm = z.infer<typeof memberSchema>;
 
-const STATUS: Record<MemberStatus, { label: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
-  active: { label: "نشط", tone: "success" },
-  pending: { label: "قيد الإكمال", tone: "warning" },
-  suspended: { label: "موقوف", tone: "danger" },
-  inactive: { label: "غير نشط", tone: "neutral" },
-};
 // نغمة سطح الجدول/الكرت بالحالة — النشط بهوية العلامة (فولاذيّ) لا أخضر (الأغلبيّة الافتراضيّة)؛
 // الأخضر يبقى لشارة «نشط» عبر STATUS.tone فقط. قيد الإكمال/موقوف يحملان دلالتهما.
 const SURFACE_TONE: Record<MemberStatus, "success" | "warning" | "danger" | undefined> = {
   active: undefined, pending: "warning", suspended: "danger", inactive: undefined,
 };
-// أوّل حرفين من الاسم لأفتار النافذة، ولون نقطة الحالة في الأفتار المربّع
-// حالة العضو → نقطة الأفتار الموحّدة (نظام .av-dot)
-const AV_STATUS: Record<MemberStatus, "online" | "away" | "busy" | "offline"> = {
-  active: "online", pending: "away", suspended: "busy", inactive: "offline",
-};
-
 // عنوان كل قسم حسب الحالة المثبّتة
 const SECTION: Record<"all" | MemberStatus, { title: string; noun: string }> = {
   all: { title: "كل الأعضاء", noun: "عضو" },
-  active: { title: "الأعضاء النشطون", noun: "عضو نشط" },
-  pending: { title: "قيد إكمال البيانات", noun: "عضو" },
-  suspended: { title: "الأعضاء الموقوفون", noun: "عضو موقوف" },
+  active: { title: "أعضاء أديب", noun: "عضو" },
+  pending: { title: "أعضاء قيد الإكمال", noun: "عضو" },
+  suspended: { title: "أعضاء سابقون", noun: "عضو سابق" },
   inactive: { title: "غير النشطين", noun: "عضو" },
 };
 
@@ -98,8 +91,12 @@ const uniq = (arr: string[]) => [...new Set(arr)];
 const Ico = {
   eye: <Eye />,
   edit: <PencilSimple />,
-  trash: <Trash />,
+  end: <Prohibit />,
+  restore: <ArrowCounterClockwise />,
 };
+
+/** أدنى طول لسبب الإنهاء — نفس عتبة `terminate_membership` في القاعدة (خمسة أحرف). */
+const REASON_MIN = 5;
 
 const columns: Column<MemberRow>[] = [
   {
@@ -108,7 +105,7 @@ const columns: Column<MemberRow>[] = [
       const rc = [m.role, m.committee].filter(Boolean).join(" ") || "غير متوفّر";
       return (
         <div className="dt-mem">
-          <Avatar name={m.name} src={m.avatar ?? undefined} size="sm" />
+          <Avatar name={m.name} src={m.avatar ?? undefined} gender={m.gender} size="sm" />
           <span className="dt-mm"><b>{m.name}</b><span>{rc}</span></span>
         </div>
       );
@@ -127,11 +124,18 @@ const columns: Column<MemberRow>[] = [
   { key: "joined", header: "تاريخ الانضمام", width: "1.1fr", sortable: true, render: (m) => <span className="txt">{m.joined}</span> },
 ];
 
-// تبويب الموقوفين: العضو + تاريخ إنهاء العضوية + سببه (بدل الجوّال/البريد/الانضمام)
-const suspendedColumns: Column<MemberRow>[] = [
+// تبويب الموقوفين: العضو + تاريخ إنهاء العضوية + سببه (بدل الجوّال/البريد/الانضمام).
+// دالّة لا ثابت: عمود السبب يحمل مستدعيًا يفتح نافذته، فيُبنى بمعرفته.
+const makeSuspendedColumns = (onReason: (m: MemberRow) => void): Column<MemberRow>[] => [
   columns[0],
   { key: "endDate", header: "تاريخ إنهاء العضوية", width: "1.2fr", render: (m) => (m.endDate ? <span className="txt">{m.endDate}</span> : <span className="txt na">غير مسجّل</span>) },
-  { key: "endReason", header: "سبب إنهاء العضوية", width: "minmax(240px, 2.6fr)", render: (m) => (m.endReason ? <span className="txt txt-wrap">{m.endReason}</span> : <span className="txt na">غير مذكور</span>) },
+  // السبب جملة حرّة: سطرٌ واحد و«…»، والتلميح يكشف كاملها، والنقر يفتحها في نافذتها.
+  {
+    key: "endReason", header: "سبب إنهاء العضوية", width: "minmax(240px, 2.6fr)",
+    render: (m) => (m.endReason
+      ? <button type="button" className="txt txt-clip txt-more" title={m.endReason} onClick={() => onReason(m)}>{m.endReason}</button>
+      : <span className="txt na">غير مذكور</span>),
+  },
 ];
 
 type ModalState =
@@ -140,66 +144,16 @@ type ModalState =
   | { mode: "view"; member: MemberRow }
   | null;
 
-// منصّات التواصل — التسمية وبانـي الرابط في vocab.ts (مصدر واحد يخدم النموذج والعرض والفعل الخادميّ).
-// هنا الأيقونة وحدها: ملفّ .ts لا يحمل JSX.
-const SOCIAL_ICON: Record<SocialKey, React.ReactNode> = {
-  twitter: <XLogo />, instagram: <InstagramLogo />, tiktok: <TiktokLogo />, linkedin: <LinkedinLogo />,
-};
+// منصّات التواصل — التسمية وبانـي الرابط في vocab.ts، والأيقونة في `_components/socialIcons`
+// (رُقّيت إلى مصدرٍ واحد يشاركه عرضُ الملفّ هنا وصفحةُ «عضويتي»).
 
 // خليّة بيانات في شبكة عرض الملفّ: أيقونة + تسمية، ثمّ القيمة، وزرّ نسخ (أو رابط للتواصل)
 //
-// القيمة اللاتينيّة (`lat`) تُعزَل في <bdi dir="ltr"> — والعزل ضرورة لا زينة: `@` محرفٌ **محايد**،
-// فإن تصدّر النصّ في فقرة عربيّة أخذ اتّجاهها وانتقل يمينًا، فيُقرأ `mohammad_1@` — أي شكل الخطأ
-// الذي طبّعناه من القاعدة. والعزل وحده لا المحاذاة: <bdi> يلفّ القيمة inline فتبقى الخليّة RTL
-// محاذيةً يمينًا كما هي؛ ولو وُضع dir="ltr" على الخليّة نفسها لانقلبت محاذاة البريد والجوّال والرقم يسارًا.
-function Cell({ label, value, icon, lat, full, href }: { label: string; value: string | null; icon: React.ReactNode; lat?: boolean; full?: boolean; href?: string }) {
-  const toast = useToast();
-  const [done, setDone] = useState(false);
-  const empty = value == null || value === "";
-  const copy = async () => {
-    if (empty || !value) return;
-    try {
-      await navigator.clipboard.writeText(value);
-      setDone(true);
-      window.setTimeout(() => setDone(false), 1400);
-      toast.success(`نُسِخ: ${label}`);
-    } catch { toast.error("تعذّر النسخ"); }
-  };
-  return (
-    <div className={"pva-cell" + (full ? " full" : "")}>
-      <div className="pva-lbl"><span className="pva-lic">{icon}</span>{label}</div>
-      {empty ? (
-        <div className="pva-val na">غير متوفّر</div>
-      ) : href ? (
-        <a className={"pva-val" + (lat ? " lat" : "")} href={href} target="_blank" rel="noreferrer">{lat ? <bdi dir="ltr">{value}</bdi> : value}</a>
-      ) : (
-        <div className={"pva-val" + (lat ? " lat" : "")}>{lat ? <bdi dir="ltr">{value}</bdi> : value}</div>
-      )}
-      {empty ? null : href ? (
-        // القيمة رابطٌ، فرُكن الخليّة يقول ذلك: أيقونة «فتح خارجيّ» تُعلن أنّ الضغط يُحوّل للمنصّة.
-        // وهي رابطٌ لا زينة — هدفٌ ثانٍ أوسع للنقر، وتسميتها تصف الوجهة فلا تكرّر «رابط» على قارئ الشاشة.
-        <a className="pva-open" href={href} target="_blank" rel="noreferrer" aria-label={`فتح ${label}`} title={`فتح ${label}`}>
-          <ArrowSquareOut aria-hidden />
-        </a>
-      ) : (
-        <button type="button" className={"pva-copy" + (done ? " done" : "")} onClick={copy} aria-label={`نسخ ${label}`} title="نسخ">
-          <span className="ic-copy"><Copy aria-hidden /></span>
-          <span className="ic-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M4 12l5 5L20 6" /></svg></span>
-        </button>
-      )}
-    </div>
-  );
-}
+// **رُقّيت الخليّة إلى `_components/Cell` مصدرًا واحدًا** يخدم عرضَ الملفّ هنا وجسمَ كرت الاستبيان
+// معًا — فلا يصير للسؤال الواحد جوابان (ق٨). تفاصيل العزل بـ<bdi> وقواعد الرُّكن موثّقةٌ هناك.
 
-// قسم في عرض الملفّ: فاصل خفيف (أيقونة هوية + عنوان) ثمّ شبكة خلاياه؛ end=نغمة خطر (إنهاء العضويّة)
-function Section({ icon, title, end, children }: { icon: React.ReactNode; title: string; end?: boolean; children: React.ReactNode }) {
-  return (
-    <section className={"pva-sec" + (end ? " pva-sec--end" : "")}>
-      <ModalSectionHeading icon={icon} title={title} tone={end ? "danger" : "default"} />
-      <div className="pva-grid">{children}</div>
-    </section>
-  );
-}
+// قسم عرض الملفّ (فاصل خفيف + شبكة خلاياه) **رُقّي إلى `_components/Section`** مصدرًا واحدًا —
+// يخدم نافذة الملفّ هنا وصفحة «عضويتي» معًا، كما رُقّيت `Cell` قبله (ق٨).
 
 // جسم عرض الملفّ: رأس (اسم/دور/شارة) + أقسام معنونة بحقول العضو الحقيقيّة.
 // تُخفى الأقسام الخالية (أكاديميّ بلا بيانات · لا تواصل اجتماعيّ · غير منتهٍ)؛ والحقول الفارغة تظهر «غير متوفّر».
@@ -222,7 +176,7 @@ function ProfileBody({ member }: { member: MemberRow }) {
     <>
       <div className="pvb-name">{member.name}</div>
       <div className="pvb-role">{[member.role, member.committee].filter(Boolean).join(" · ") || "غير متوفّر"}</div>
-      <div className="pvb-badges"><Badge tone={STATUS[member.status].tone} variant="soft" dot live={member.status === "active"}>{STATUS[member.status].label}</Badge></div>
+      <div className="pvb-badges"><Badge tone={MEMBER_STATUS[member.status].tone} variant="soft" dot live={member.status === "active"}>{MEMBER_STATUS[member.status].label}</Badge></div>
       <div className="pva-sections">
         <Section icon={<IdentificationCard weight="fill" />} title="بيانات العضويّة">
           <Cell label="الدور" icon={<Star />} value={member.role} />
@@ -259,7 +213,18 @@ function ProfileBody({ member }: { member: MemberRow }) {
   );
 }
 
-export function MembersView({ members, lockedStatus }: { members: MemberRow[]; lockedStatus?: MemberStatus }) {
+type ViewProps = {
+  members: MemberRow[];
+  lockedStatus?: MemberStatus;
+  /** شاشة «من أشرف عليهم» — عنوانٌ مختلف، والإضافة تسقط عنها (ليست سجلَّ الأعضاء). */
+  mode?: "reach";
+  /** يملك `manage_member_data`؟ عليه يتوقّف «تعديل البيانات» و«إضافة عضو». */
+  mayManageData?: boolean;
+  /** الرأس يملكه المستدعي — حيث تسبق الجدولَ إحصاءاتٌ ومبدّلٌ لا يجوز أن يقعا تحت عنوانه. */
+  headless?: boolean;
+};
+
+export function MembersView({ members, lockedStatus, mode, mayManageData = false, headless = false }: ViewProps) {
   const toast = useToast();
   const router = useRouter();
   const [saving, startSave] = useTransition();
@@ -267,21 +232,27 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
   const [fv, setFv] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [modal, setModal] = useState<ModalState>(null);
-  const [confirmDel, setConfirmDel] = useState<MemberRow | null>(null);
+  // نافذة السبب — نافذةٌ ثانية مستقلّة لا وضعٌ في الأولى: نغمتها ومحتواها وتذييلها مختلفة،
+  // وحشرها في ModalState لأثقلت ثلاثة أوضاع بشرطٍ رابع لا يشبهها.
+  const [reason, setReason] = useState<MemberRow | null>(null);
+  const suspendedColumns = useMemo(() => makeSuspendedColumns(setReason), []);
+  // إنهاء العضوية وإعادتها — نافذتان مستقلّتان: الأولى تطلب سببًا (نصٌّ يُحفظ ويُعرَض بعدها)،
+  // والثانية تأكيدٌ مجرّد. والقاعدة هي الحَكَم في الحالين؛ هذه أوراقُها لا حكمُها.
+  const [ending, setEnding] = useState<MemberRow | null>(null);
+  const [endReason, setEndReason] = useState("");
+  const [endErr, setEndErr] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState<MemberRow | null>(null);
+  const [acting, startAct] = useTransition();
   // نموذج الإضافة/التعديل عبر React Hook Form + Zod
   const editForm = useForm<MemberForm>({
     resolver: zodResolver(memberSchema),
     defaultValues: { name: "", phone: "", college: "", degree: "", major: "", recordNo: "", twitter: "", instagram: "", tiktok: "", linkedin: "", hasDetails: false },
   });
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [view, setView] = useState<ViewMode>("table");
+  const [pageSize, setPageSize] = useState(50);
+  const [view, changeView] = usePersistentView("members-view");
 
-  // نمط العرض محفوظ بين الجلسات
-  useEffect(() => { setView(localStorage.getItem("members-view") === "cards" ? "cards" : "table"); }, []);
-  const changeView = (v: ViewMode) => { setView(v); localStorage.setItem("members-view", v); };
-
-  const section = SECTION[lockedStatus ?? "all"];
+  const section = mode === "reach" ? { title: "من أشرف عليهم", noun: "عضو" } : SECTION[lockedStatus ?? "all"];
   // نغمة الطبقة البصريّة: شاشة أحاديّة الحالة → الطاولة كلّها بنغمة الحالة؛ العرض المختلط → نغمة كلّ صفّ حسب حالته
   const tableTone = lockedStatus ? SURFACE_TONE[lockedStatus] : undefined;
   const rowToneFn = lockedStatus
@@ -340,9 +311,10 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
   ], [roleOpts, deptOpts, committeeOpts]);
 
   const rows = useMemo(() => {
-    const q = search.trim().toLowerCase();
     return scope.filter((m) => {
-      if (q && !(m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q))) return false;
+      // ما يعرضه الجدول والكرت يُبحَث فيه — الجوّال والدور واللجنة والقسم كالاسم والبريد،
+      // فلا يقف الباحث أمام عمودٍ يراه ولا يبلغه.
+      if (!matchesSearch(search, m.name, m.email, m.phone, m.role, m.committee, m.dept)) return false;
       if (fv.role && m.role !== fv.role) return false;
       if (fv.dept && m.dept !== fv.dept) return false;
       if (fv.committee && m.committee !== fv.committee) return false;
@@ -382,8 +354,8 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
       variant="aurora"
       icon={<UsersThree weight="duotone" />}
       title={`لا ${section.noun} بعد`}
-      description="لا أعضاء في هذا القسم حاليًّا."
-      action={<Button variant="primary" size="md" onClick={openAdd}><Plus size={18} />إضافة عضو</Button>}
+      description={mode === "reach" ? "لا أعضاء تحت إشرافك حاليًّا." : "لا أعضاء في هذا القسم حاليًّا."}
+      action={mayManageData ? <Button variant="primary" size="md" onClick={openAdd}><Plus size={18} />إضافة عضو</Button> : undefined}
     />
   ) : (
     <EmptyState
@@ -395,26 +367,64 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
     />
   );
 
-  const actionsFor = (m: MemberRow): MenuGroup[] => [
-    {
-      header: "إجراءات",
-      items: [
-        { label: "عرض الملف", icon: Ico.eye, onSelect: () => openView(m) },
-        { label: "تعديل البيانات", icon: Ico.edit, onSelect: () => openEdit(m) },
-      ],
-    },
-    {
-      header: "منطقة الخطر",
-      danger: true,
-      items: [{ label: "حذف العضو", icon: Ico.trash, danger: true, onSelect: () => setConfirmDel(m) }],
-    },
-  ];
+  const openEnd = (m: MemberRow) => { setEndReason(""); setEndErr(null); setEnding(m); };
+  const submitEnd = () => {
+    const reason = ending ? endReason.trim() : "";
+    if (reason.length < REASON_MIN) { setEndErr(`اذكر سبب إنهاء العضوية (${REASON_MIN} أحرف فأكثر).`); return; }
+    const target = ending;
+    if (!target) return;
+    startAct(async () => {
+      const r = await endMembership({ userId: target.id, reason });
+      if (r.ok) { toast.success(`أُنهيت عضوية «${target.name}».`); setEnding(null); router.refresh(); } else toast.error(r.message);
+    });
+  };
+  const submitRestore = () => {
+    const target = restoring;
+    if (!target) return;
+    startAct(async () => {
+      const r = await restoreMembership({ userId: target.id });
+      if (r.ok) { toast.success(`أُعيدت عضوية «${target.name}».`); setRestoring(null); router.refresh(); } else toast.error(r.message);
+    });
+  };
 
-  // الكرت فيه زرّ «عرض الملف الشخصي» صريح، فنزيل بند «عرض الملف» من قائمة نقاطه (يبقى في الجدول)
-  const cardActionsFor = (m: MemberRow): MenuGroup[] =>
-    actionsFor(m)
-      .map((g) => ({ ...g, items: g.items.filter((it) => it.label !== "عرض الملف") }))
+  // الموقوف عضويّته منتهية فلا تُحرَّر بياناته — يسقط «تعديل البيانات» عنه. والحكم بحالته لا بالتبويب:
+  // يسري في شاشة الموقوفين وفي العرض المختلط معًا، فلا يصير الصفّ نفسه قابلًا للتحرير بتبديل الشاشة.
+  //
+  // و«إنهاء العضوية»/«إعادتها» يظهران لمن تبلغه سلطتُه وحده (`canEnd` — جوابُ القاعدة نفسِها):
+  // فلا يرى المدير بندًا يُردّ عنه، ولا يُخفي الإخفاءُ بابًا مفتوحًا (الباب مقفولٌ في القاعدة أوّلًا).
+  //
+  // ولا حذفَ هنا: **إنهاء العضوية هو الفعل**، والحذف الصلب أُزيل من اللوحة (قرار المالك 2026-07-31).
+  // الإنهاء يُبقي السجلّ والسبب والتاريخ ويُرجَع عنه؛ والحذف كان يمحو الحساب ومناصبه وحجوزاته،
+  // وأكثرُه يردّه القيد أصلًا (٣٤ رابطًا يمنعان حذف من صوّت أو قُوبل أو كتب).
+  const actionsFor = (m: MemberRow): MenuGroup[] => {
+    const danger = m.canEnd && m.status !== "suspended"
+      ? [{ label: "إنهاء العضوية", icon: Ico.end, danger: true, onSelect: () => openEnd(m) }]
+      : [];
+    const groups: MenuGroup[] = [
+      {
+        header: "إجراءات",
+        items: [
+          { label: "عرض الملف", icon: Ico.eye, onSelect: () => openView(m) },
+          ...(m.status === "suspended"
+            ? (m.canEnd ? [{ label: "إعادة العضوية", icon: Ico.restore, onSelect: () => setRestoring(m) }] : [])
+            : (m.canEdit ? [{ label: "تعديل البيانات", icon: Ico.edit, onSelect: () => openEdit(m) }] : [])),
+        ],
+      },
+    ];
+    // منطقة الخطر تسقط كلّها إن خلت — لا رأسَ لمجموعةٍ بلا بنود
+    if (danger.length) groups.push({ header: "منطقة الخطر", danger: true, items: danger });
+    return groups;
+  };
+
+  // الكرت يقول إجراءاته أزرارًا صريحة، فيسقط عن قائمة نقاطه ما نطقت به أزراره (وتبقى القائمة كاملة في الجدول).
+  // النشط: زرّه «عرض الملف الشخصي». والموقوف: زرّاه «إعادة العضوية» و«عرض التفاصيل» (نافذة السبب) —
+  // فـ«عرض الملف» **يعود** إلى نقاطه، إذ لم يعد زرٌّ يقوله.
+  const cardActionsFor = (m: MemberRow): MenuGroup[] => {
+    const saidByButtons = m.status === "suspended" ? ["إعادة العضوية"] : ["عرض الملف"];
+    return actionsFor(m)
+      .map((g) => ({ ...g, items: g.items.filter((it) => !saidByButtons.includes(it.label)) }))
       .filter((g) => g.items.length > 0);
+  };
 
   const pager = rows.length ? (
     <Pagination page={safePage} pageSize={pageSize} total={rows.length} onPageChange={setPage} onPageSizeChange={setPageSize} noun={section.noun} />
@@ -422,12 +432,15 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <div className="ash-crumb">أديب › أعضاء أديب › <b>{section.title}</b></div>
-          <h1>{section.title}</h1>
+      {headless ? null : (
+        <div className="ash-phead">
+          <div>
+            {/* «أعضاء أديب» صدارة القسم وهي سِجلّ النشطين، فتقف ورقةً وحدها بلا تكرارٍ تحت نفسها؛ سواها ورقةٌ تحتها */}
+            <div className="ash-crumb">أديب › {lockedStatus === "active" ? <b>أعضاء أديب</b> : <>أعضاء أديب › <b>{section.title}</b></>}</div>
+            <h1>{section.title}</h1>
+          </div>
         </div>
-      </div>
+      )}
 
       {lockedStatus === "active" ? (
         <div className="stat-grid" style={{ marginBottom: 18 }}>
@@ -436,7 +449,7 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
       ) : null}
 
       <Toolbar
-        searchPlaceholder="ابحث بالاسم أو البريد…"
+        searchPlaceholder="ابحث بالاسم أو رقم الجوّال…"
         search={search}
         onSearch={setSearch}
         filters={filters}
@@ -451,7 +464,6 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
           <>
             <button type="button" className="tb-ba" onClick={() => toast.info(`جارٍ تغيير حالة ${selected.size} عضو…`)}>تغيير الحالة</button>
             <button type="button" className="tb-ba" onClick={() => toast.info(`جارٍ تجهيز ملف ${selected.size} عضو…`)}>تصدير</button>
-            <button type="button" className="tb-ba dg" onClick={() => { toast.success(`حُذف ${selected.size} عضو.`); setSelected(new Set()); }}>حذف</button>
           </>
         }
       />
@@ -473,25 +485,26 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
           rowTone={rowToneFn}
         />
       ) : rows.length === 0 ? (
-        <div className="mc-empty">{emptyState}</div>
+        <div className="card-empty">{emptyState}</div>
       ) : (
         <>
           {/* الكرت ابنٌ مباشر للشبكة: الغلاف كان للحركة وحدها (تأخير سطريّ حسب الفهرس)،
               وسقط معها. والمفتاح على الشبكة كان يُجبر إعادة التركيب لإعادة الحركة —
               فلا لزوم له، وإسقاطه يُبقي عُقَد DOM بين الصفحات بدل هدمها وبنائها. */}
-          <div className="mc-grid">
+          <div className="card-grid">
             {pageRows.map((m) => (
               <MemberCard
                 key={m.id}
                 member={m}
                 onOpen={() => openView(m)}
                 actions={cardActionsFor(m)}
-                onRestore={() => toast.success(`أُعيدت عضوية «${m.name}».`)}
-                onDelete={() => setConfirmDel(m)}
+                // بلا سلطةٍ لا زرّ: الكرت لا يَعِد بما تردّه القاعدة (كما تسقط نقاطُه حين تخلو)
+                onRestore={m.canEnd ? () => setRestoring(m) : undefined}
+                onReason={() => setReason(m)}
               />
             ))}
           </div>
-          <div className="mc-pager">{pager}</div>
+          <div className="card-pager">{pager}</div>
         </>
       )}
 
@@ -508,19 +521,24 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
         className={modal?.mode === "view" ? "pvb-modal" : undefined}
         hero={
           modal?.mode === "view" && member ? (
-            <Avatar name={member.name} src={member.avatar ?? undefined} size="2xl" status={AV_STATUS[member.status]} className="pvb-av" />
+            <Avatar name={member.name} src={member.avatar ?? undefined} gender={member.gender} size="2xl" status={MEMBER_STATUS[member.status].dot} className="pvb-av" />
           ) : undefined
         }
         footer={
           modal?.mode === "view" ? (
             <>
               <Button variant="ghost" size="md" onClick={close}>إغلاق</Button>
-              {member ? <Button variant="primary" size="md" onClick={() => openEdit(member)}>تعديل</Button> : null}
+              {/* «تعديل» يتبع سلطتك على هذا العضو بعينه — والمنتهية عضويّته لا تُحرَّر بياناته */}
+              {member?.canEdit && member.status !== "suspended"
+                ? <Button variant="primary" size="md" onClick={() => openEdit(member)}>تعديل</Button>
+                : null}
             </>
           ) : modal?.mode === "edit" ? (
-            // تذييل هدّام: إجراء الحذف يسارًا، والحفظ/الإلغاء يمينًا
+            // تذييل هدّام: الإجراء الهدّام يسارًا (وهو الإنهاء بعد إزالة الحذف)، والحفظ/الإلغاء يمينًا
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", gap: 10 }}>
-              <Button variant="ghost-danger" size="md" onClick={() => { if (member) { close(); setConfirmDel(member); } }}>حذف العضو</Button>
+              {member?.canEnd && member.status !== "suspended"
+                ? <Button variant="ghost-danger" size="md" onClick={() => { close(); openEnd(member); }}>إنهاء العضوية</Button>
+                : <span />}
               <div style={{ display: "flex", gap: 10 }}>
                 <Button variant="ghost" size="md" onClick={close} disabled={saving}>إلغاء</Button>
                 <Button type="submit" form="member-form" variant="primary" size="md" loading={saving}>حفظ التغييرات</Button>
@@ -539,11 +557,11 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
         ) : (
           <form id="member-form" className="mdl-grid" onSubmit={onSubmitMember} noValidate>
             <ModalSectionHeading className="mdl-full" icon={<IdentificationBadge weight="fill" />} title="البيانات الأساسيّة" />
-            <Field className="mdl-full" label="الاسم" icon={<User />} innerIcon={<PencilSimple />} placeholder="اكتب الاسم" error={editForm.formState.errors.name?.message} {...editForm.register("name")} />
+            <Field className="mdl-full" label="الاسم" icon={<User />} innerIcon={<PencilSimple />} placeholder="اكتب الاسم" error={editForm.formState.errors.name?.message} required {...editForm.register("name")} />
 
             <ModalSectionHeading className="mdl-full" icon={<AddressBook weight="fill" />} title="بيانات التواصل" />
             {/* البريد هويّة مصادقة لا بيان تواصل: يُغيَّر من «بيانات الدخول» حيث يُزامَن مع auth.users — كتابته هنا وحده تفكّ المزامنة */}
-            <Field className="mdl-full" label="رقم الجوّال" type="tel" charset="digits" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" error={editForm.formState.errors.phone?.message} {...editForm.register("phone")} />
+            <Field className="mdl-full" label="رقم الجوّال" type="tel" charset="digits" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" error={editForm.formState.errors.phone?.message} optional {...editForm.register("phone")} />
             <Field className="mdl-full" label="البريد الإلكترونيّ" type="email" charset="latin" disabled readOnly value={member?.email ?? ""} icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" helper="يُغيَّر من «بيانات الدخول»." />
 
             {member && member.degreeRaw == null ? (
@@ -557,7 +575,7 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
               control={editForm.control}
               name="degree"
               render={({ field }) => (
-                <Select className="mdl-full" label="الدرجة العلمية" icon={<Certificate />} options={DEGREES} value={field.value ?? ""} onValueChange={field.onChange} error={editForm.formState.errors.degree?.message} />
+                <Select className="mdl-full" label="الدرجة العلمية" icon={<Certificate />} options={DEGREES} value={field.value ?? ""} onValueChange={field.onChange} error={editForm.formState.errors.degree?.message} required />
               )}
             />
             {/* إنقاصُ الدرجة عن جامعيّة محوٌ لا رجعة فيه: الفعل الخادميّ يكتب null في الثلاثة، ولا نسخة
@@ -574,9 +592,9 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
                 لهما ولا تخصّص ولا رقم أكاديميّ — تُخفى هنا، ويمحوها الفعل الخادميّ، ويردّ الممتلئ قيدُ القاعدة. */}
             {hasAcademicFields(editForm.watch("degree")) ? (
               <>
-                <Field label="الكلّية" icon={<GraduationCap />} innerIcon={<Buildings />} placeholder="مثال: كلّية الآداب" error={editForm.formState.errors.college?.message} {...editForm.register("college")} />
-                <Field label="التخصّص" icon={<BookOpen />} innerIcon={<Books />} placeholder="مثال: اللغة العربيّة" error={editForm.formState.errors.major?.message} {...editForm.register("major")} />
-                <Field className="mdl-full" label="الرقم الأكاديميّ" charset="digits" icon={<IdentificationCard />} innerIcon={<Hash />} placeholder="مثال: 443001234" error={editForm.formState.errors.recordNo?.message} {...editForm.register("recordNo")} />
+                <Field label="الكلّية" icon={<GraduationCap />} innerIcon={<Buildings />} placeholder="مثال: كلّية الآداب" error={editForm.formState.errors.college?.message} required {...editForm.register("college")} />
+                <Field label="التخصّص" icon={<BookOpen />} innerIcon={<Books />} placeholder="مثال: اللغة العربيّة" error={editForm.formState.errors.major?.message} required {...editForm.register("major")} />
+                <Field className="mdl-full" label="الرقم الأكاديميّ" charset="digits" icon={<IdentificationCard />} innerIcon={<Hash />} placeholder="مثال: 443001234" error={editForm.formState.errors.recordNo?.message} required {...editForm.register("recordNo")} />
               </>
             ) : null}
 
@@ -592,6 +610,7 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
                 icon={SOCIAL_ICON[k]}
                 innerIcon={<At />}
                 placeholder="المعرّف أو رابط الحساب"
+                optional
                 error={editForm.formState.errors[k]?.message}
                 {...editForm.register(k, {
                   onBlur: (e) => {
@@ -605,16 +624,78 @@ export function MembersView({ members, lockedStatus }: { members: MemberRow[]; l
         )}
       </Modal>
 
+      {/* نافذة السبب — تكشف ما طُوي بـ«…» في الجدول والكرت. القاعدة ٩: النغمة تُعلَن مرّةً على
+          النافذة (`mdl-tone-danger`) فيتبعها الغلاف والأفتار والاسم؛ ولا تصميم خاصّ لمتنها —
+          قسم الإنهاء يجعل القيمة تلتفّ كاملةً، فالسبب خليّةٌ عاديّة كما في المعرض. */}
+      <Modal
+        open={reason !== null}
+        onClose={() => setReason(null)}
+        title={reason ? `سبب إنهاء العضوية — ${reason.name}` : "سبب إنهاء العضوية"}
+        size="sm"
+        className="pvb-modal mdl-tone-danger"
+        hero={reason ? <Avatar name={reason.name} src={reason.avatar ?? undefined} gender={reason.gender} size="2xl" status="busy" className="pvb-av" /> : undefined}
+        // «إغلاق» يتبع نغمة النافذة (ghost-danger) — الزرّ الوحيد في تذييلٍ منغَّم يلبس نغمته
+        footer={<Button variant="ghost-danger" size="md" onClick={() => setReason(null)}>إغلاق</Button>}
+      >
+        {reason ? (
+          <>
+            <div className="pvb-name">{reason.name}</div>
+            <div className="pvb-role">{reason.endAgo ? `عضوية منتهية ${reason.endAgo}` : "عضوية منتهية"}</div>
+            <div className="pva-sections">
+              <Section end icon={<Prohibit weight="fill" />} title="سبب إنهاء العضوية">
+                <Cell full noCopy label="سبب الإنهاء" icon={<WarningCircle />} value={reason.endReason} />
+                <Cell full noCopy label="تاريخ الإنهاء" icon={<CalendarX />} value={reason.endDate} />
+              </Section>
+            </div>
+          </>
+        ) : null}
+      </Modal>
+
+      {/* إنهاء العضوية — نافذة السبب. السبب يُحفظ في `termination_reason` ويُقرأ بعدها في الجدول
+          والكرت ونافذة السبب، فلا يُطلب زينةً: القاعدة ترفض ما دون خمسة أحرف، وهذا يقولها قبل الرحلة. */}
+      <Modal
+        open={ending !== null}
+        onClose={() => setEnding(null)}
+        busy={acting}
+        title={ending ? `إنهاء عضوية «${ending.name}»؟` : "إنهاء العضوية"}
+        description="تُنقَل العضويّة إلى «الأعضاء السابقين»، ولا تُحرَّر بياناتها بعدها حتّى تُعاد."
+        size="sm"
+        className="mdl-tone-danger"
+        footer={
+          <>
+            <Button variant="ghost-danger" size="md" onClick={() => setEnding(null)} disabled={acting}>إلغاء</Button>
+            <Button variant="danger" size="md" loading={acting} onClick={submitEnd}>إنهاء العضوية</Button>
+          </>
+        }
+      >
+        <div className="mdl-grid">
+          <Textarea
+            className="mdl-full"
+            label="سبب إنهاء العضوية"
+            icon={<Prohibit weight="fill" />}
+            innerIcon={<NotePencil />}
+            placeholder="مثال: انقطاع عن الحضور شهرين بلا عذر"
+            rows={4}
+            required
+            value={endReason}
+            error={endErr ?? undefined}
+            onChange={(e) => { setEndReason(e.target.value); if (endErr) setEndErr(null); }}
+          />
+        </div>
+      </Modal>
+
       <ConfirmDialog
-        open={confirmDel !== null}
-        onClose={() => setConfirmDel(null)}
-        tone="danger"
-        icon={<Trash weight="bold" />}
-        title="حذف العضو؟"
-        text={confirmDel ? `سيُحذف «${confirmDel.name}» نهائيًّا. لا يمكن استرجاعه.` : undefined}
-        confirmLabel="حذف نهائيّ"
-        onConfirm={() => { if (confirmDel) { toast.success(`حُذف «${confirmDel.name}».`); setConfirmDel(null); } }}
+        open={restoring !== null}
+        onClose={() => setRestoring(null)}
+        tone="success"
+        icon={<ArrowCounterClockwise weight="bold" />}
+        title="إعادة العضوية؟"
+        text={restoring ? `يعود «${restoring.name}» عضوًا نشطًا، ويُمحى سبب الإنهاء وتاريخه.` : undefined}
+        confirmLabel="إعادة العضوية"
+        loading={acting}
+        onConfirm={submitRestore}
       />
+
     </>
   );
 }

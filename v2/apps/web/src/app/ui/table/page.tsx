@@ -144,7 +144,7 @@ export default function TablePage() {
           نغمات للطاولة وللصفّ، تذييل ترقيم، حالة فارغة، وحالة تحميل بلبنات هيكل.
         </p>
 
-        <div className="mt-10 flex items-center gap-3  border border-line bg-surface px-5 py-3">
+        <div className="mt-10 flex items-center gap-3 rounded border border-line bg-surface px-5 py-3">
           <span className="font-latin text-xs font-bold uppercase tracking-[0.14em] text-content-muted">آخر تفاعل</span>
           <span className="text-sm font-bold text-content">{event ?? "لم يقع تفاعل بعد"}</span>
           {event ? (

@@ -1,0 +1,35 @@
+import { Alert } from "@adeeb/design-system";
+import { getCommitteeOptions, getMemberOptions, getShows } from "./data";
+import { RadioView } from "./RadioView";
+import { getRadioManager } from "@/lib/radio/authz";
+import { RadioDenied } from "./_guard";
+import { denyUnless } from "@/app/dashboard/_shell/guard";
+
+export default async function RadioPage() {
+  const denied = await denyUnless("/dashboard/radio");
+  if (denied) return denied;
+
+  if (!(await getRadioManager())) return <RadioDenied />;
+
+  const [{ shows, error }, members, committees] = await Promise.all([
+    getShows(),
+    getMemberOptions(),
+    getCommitteeOptions(),
+  ]);
+
+  if (error) {
+    return (
+      <>
+        <div className="ash-phead">
+          <div>
+            <div className="ash-crumb">أديب › المحتوى › <b>الإذاعة</b></div>
+            <h1>إذاعة أدِيب</h1>
+          </div>
+        </div>
+        <Alert tone="warning" title="تعذّر جلب البرامج">{error}</Alert>
+      </>
+    );
+  }
+
+  return <RadioView shows={shows} members={members} committees={committees} />;
+}

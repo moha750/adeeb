@@ -1,63 +1,90 @@
 import "server-only";
+import { cache } from "react";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { createClient } from "@/lib/supabase/server";
-
-/** الحدّ الأدنى لمستوى الدور لدخول لوحة الإدارة والإجراءات الحسّاسة.
- *  مطابق لدوال الخلفية الطرفية: role_level ≥ 8 = صفّ الإدارة العليا
- *  (رئيس النادي 10، مستشار 9، رئيس المجلس التنفيذي/قادة الإدارات 8). */
-export const ADMIN_MIN = 8;
+import { DASHBOARD_CAPS } from "./capabilities";
+import { VIEW_AS_CAP, readViewAsTarget } from "./view-as";
 
 export type CurrentAdmin = {
   id: string;
   email: string | null;
   fullName: string | null;
   avatarUrl: string | null;
-  roleLevel: number; // أعلى مستوى دور نشط (الأكبر = الأعلى صلاحيةً)
-  roleName: string | null;
-  isAdmin: boolean; // roleLevel ≥ ADMIN_MIN
+  gender: "male" | "female" | null; // لأيقونة الأفتار حين لا صورة
+  caps: string[]; // القدرات الفعليّة (من get_user_permissions) — مصدر كلّ تفويض
+  isAdmin: boolean; // يملك مفتاح غرفةٍ واحدة على الأقلّ (DASHBOARD_CAPS)
+  /** حاضرٌ حين تكون الهويّة **مستعارة** — واسمُ صاحب الجلسة الحقيقيّ معه. انظر `lib/view-as.ts`. */
+  viewAs?: { realId: string; realName: string | null } | null;
 };
 
+function service() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
+  return url && key ? createAdeebServiceClient(url, key) : null;
+}
+
 /**
- * المستخدم الحاليّ من الجلسة + أعلى دور نشط له. `null` إن لم تكن هناك جلسة.
- * نستخدم عميل الجلسة لتحديد الهويّة، ومفتاح الخدمة لقراءة الدور (يتجاوز RLS بأمان خادميّ).
+ * هويّةٌ واحدة بقدراتها — بمفتاح الخدمة (يتجاوز RLS بأمان خادميّ). `null` بلا مفتاح خدمة.
+ * لا دورَ هنا ولا رتبة: التفويض قدراتيٌّ بحتٌ، ومن أراد اسم دورٍ للعرض قرأه في موضعه.
  */
-export async function getCurrentAdmin(): Promise<CurrentAdmin | null> {
+const loadIdentity = cache(async function loadIdentity(userId: string): Promise<CurrentAdmin | null> {
+  const svc = service();
+  if (!svc) return null;
+
+  const [profileRes, permsRes] = await Promise.all([
+    svc.from("profiles").select("full_name, email, avatar_url, gender").eq("id", userId).maybeSingle(),
+    svc.rpc("get_user_permissions", { p_user_id: userId }),
+  ]);
+
+  const caps = ((permsRes.data ?? []) as Array<{ permission_key: string }>).map((p) => p.permission_key);
+  const gender = profileRes.data?.gender;
+
+  return {
+    id: userId,
+    email: profileRes.data?.email ?? null,
+    fullName: profileRes.data?.full_name ?? null,
+    avatarUrl: profileRes.data?.avatar_url ?? null,
+    gender: gender === "male" || gender === "female" ? gender : null,
+    caps,
+    // البوّابة: مفتاحُ غرفةٍ واحدة يكفي للدخول. من لا يملك أيّ مفتاحٍ لا شيء له في الداخل.
+    isAdmin: caps.some((c) => DASHBOARD_CAPS.includes(c)),
+  };
+});
+
+/**
+ * صاحبُ الجلسة نفسه — **لا يُعار ولا يُستعار**. يقرؤه من يحرس المعاينة نفسها (بدؤها)،
+ * وإلّا لَحرَسَ الباب بمفتاح من في الداخل.
+ *
+ * مُغلَّفةٌ بـ`cache` — تُنفَّذ مرّةً واحدة في الطلب مهما تعدّد مستدعوها.
+ */
+export const getSessionAdmin = cache(async function getSessionAdmin(): Promise<CurrentAdmin | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
-  if (!url || !key) {
-    // بلا مفتاح خدمة لا نستطيع قراءة الدور — نعامله كغير أدمن (آمن افتراضًا).
-    return { id: user.id, email: user.email ?? null, fullName: null, avatarUrl: null, roleLevel: -1, roleName: null, isAdmin: false };
+  const me = await loadIdentity(user.id);
+  // بلا مفتاح خدمة لا نستطيع قراءة القدرات — نعامله كغير مخوّل (آمن افتراضًا).
+  if (!me) {
+    return { id: user.id, email: user.email ?? null, fullName: null, avatarUrl: null, gender: null, caps: [], isAdmin: false };
   }
-  const svc = createAdeebServiceClient(url, key);
+  return { ...me, email: me.email ?? user.email ?? null };
+});
 
-  const [profileRes, rolesRes] = await Promise.all([
-    svc.from("profiles").select("full_name, email, avatar_url").eq("id", user.id).maybeSingle(),
-    svc.from("user_roles").select("role:roles(role_level, role_name_ar)").eq("user_id", user.id).eq("is_active", true),
-  ]);
+/**
+ * المستخدم الحاليّ **الفعليّ** — صاحبُ الجلسة، أو المُعايَنُ إن كانت المعاينة قائمة.
+ * هي التي تقرؤها اللوحةُ كلُّها: التخطيط والتنقّل وحارس الصفحة و`p_actor` في كلّ كتابة.
+ * فاستعارةُ الهويّة هنا تسري على الرؤية والتنفيذ معًا بلا تعديل في أيّ إجراء.
+ *
+ * والحارس **قدرةُ صاحب الجلسة** تُفحَص في كلّ طلب — لا الكوكي؛ فتزويرُه بلا قدرةٍ لا يفعل شيئًا.
+ */
+export const getCurrentAdmin = cache(async function getCurrentAdmin(): Promise<CurrentAdmin | null> {
+  const me = await getSessionAdmin();
+  if (!me || !me.caps.includes(VIEW_AS_CAP)) return me;
 
-  // أعلى دور = أكبر role_level بين الأدوار النشطة.
-  // الربط المضمّن يُستنتَج مصفوفةً نوعيًّا لكنّه كائن وقت التشغيل (علاقة إلى-واحد) — نتعامل مع الحالتين.
-  type Role = { role_level: number; role_name_ar: string };
-  const rows = (rolesRes.data ?? []) as unknown as Array<{ role: Role | Role[] | null }>;
-  let roleLevel = -1;
-  let roleName: string | null = null;
-  for (const ur of rows) {
-    const role = Array.isArray(ur.role) ? ur.role[0] : ur.role;
-    const lvl = role?.role_level ?? -1;
-    if (lvl > roleLevel) { roleLevel = lvl; roleName = role?.role_name_ar ?? null; }
-  }
+  const target = await readViewAsTarget();
+  if (!target || target === me.id) return me;
 
-  return {
-    id: user.id,
-    email: profileRes.data?.email ?? user.email ?? null,
-    fullName: profileRes.data?.full_name ?? null,
-    avatarUrl: profileRes.data?.avatar_url ?? null,
-    roleLevel,
-    roleName,
-    isAdmin: roleLevel >= ADMIN_MIN,
-  };
-}
+  const viewed = await loadIdentity(target);
+  if (!viewed) return me;
+  return { ...viewed, viewAs: { realId: me.id, realName: me.fullName } };
+});

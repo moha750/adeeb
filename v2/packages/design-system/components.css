@@ -19,11 +19,19 @@
   opacity: 1;
   transform: none;
 }
+/* بعد انتهاء الحركة (يضيفه Reveal عند transitionend): تُطفأ طبقةُ التركيب المحجوزة.
+   `will-change` الدائمة تُبقي لكلّ قسمٍ طبقةً لا تُحرَّر، فتُثقل كلّ إعادة تخطيطٍ
+   لاحقة — ومنها فتحُ الأكورديون. القاعدة: قبل الحركة تُوضع، وبعدها تُرفع. */
+.js [data-reveal].is-settled {
+  will-change: auto;
+}
 @media (prefers-reduced-motion: reduce) {
   .js [data-reveal] {
     opacity: 1;
     transform: none;
     transition: none;
+    /* بلا حركةٍ لا transitionend، فلا صنف `is-settled` — تُرفع هنا مباشرةً */
+    will-change: auto;
   }
 }
 
@@ -119,10 +127,9 @@
 .tm-badge {
   position: relative;
   align-self: flex-start;
-  font-family: "Eras", sans-serif;
+  font-family: var(--font-latin);
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.1em;
   color: #dcebf9;
   background: rgba(255, 255, 255, 0.18);
   padding: 3px 9px;
@@ -133,7 +140,7 @@
   position: relative;
 }
 .tm-n {
-  font-family: "Eras", sans-serif;
+  font-family: var(--font-latin);
   font-weight: 700;
   color: #fff;
   line-height: 1;
@@ -182,19 +189,20 @@
 /* ============================================================
    برامجنا وأنشطتنا — إطلالة جانبية (Peek) ببطاقات تسجيل (CTA).
    ============================================================ */
+/* لا سحب: التنقّل بالأزرار وحدها. فلا مقبض يَعِد بما لا يقع، ولا تحديدَ نصّ
+   يجرّ الحاوية تمريرًا حين يُسحب خارجها (الحاوية تبقى قابلة للتمرير لأن الأزرار
+   تحرّكها بـscrollBy). */
 .act-peek {
   display: flex;
   gap: 22px;
   overflow-x: auto;
   padding: 6px 2px 22px;
   scrollbar-width: none;
-  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .act-peek::-webkit-scrollbar {
   display: none;
-}
-.act-peek:active {
-  cursor: grabbing;
 }
 .act-card {
   /* ٣ بطاقات على الحاسب (فاصلان ×22px) */
@@ -252,7 +260,7 @@
   box-shadow: var(--shadow-sm);
 }
 .act-d {
-  font-family: "Eras", sans-serif;
+  font-family: var(--font-latin);
   font-size: 24px;
   font-weight: 700;
   color: var(--navy-700);
@@ -300,27 +308,7 @@
   height: 14px;
   color: var(--steel-600);
 }
-.act-ctrl {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.act-ctrl button {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  border: 1px solid #cfd7e0;
-  background: var(--color-surface);
-  color: var(--navy-700);
-  font-size: 20px;
-  cursor: pointer;
-  transition: 0.2s;
-  box-shadow: var(--shadow-sm);
-}
-.act-ctrl button:hover {
-  background: var(--grad-primary);
-  color: #fff;
-}
+/* (أسهم الكاروسيل هنا كانت نسخةً خاصّة — حلّ محلّها `.anav` المعتمد.) */
 @media (prefers-reduced-motion: reduce) {
   .act-card {
     transition: none;
@@ -600,6 +588,15 @@
   background-size: cover;
   background-position: center;
 }
+/* أيقونة الجنس بديلةً للأحرف في بطاقة أهل الدفّة — جسمٌ كامل أبيض (fill:#fff) فوق تدرّج البطاقة.
+   المقاس بالارتفاع (auto عرضًا) فلا نسبةَ ارتفاعٍ معلّقة، مثبَّتٌ للأسفل فـ«يقف» فوق شريط الاسم. */
+.bc-fig {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: auto 88%;
+}
 .bc-mono {
   position: absolute;
   inset: 0;
@@ -663,28 +660,7 @@
   background: var(--color-surface);
   color: var(--navy-700);
 }
-.bc-arrows {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 8px;
-}
-.bc-arrows button {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid #cfd7e0;
-  background: var(--color-surface);
-  color: var(--navy-700);
-  font-size: 20px;
-  cursor: pointer;
-  transition: 0.2s;
-  box-shadow: var(--shadow-sm);
-}
-.bc-arrows button:hover {
-  background: var(--grad-primary);
-  color: #fff;
-}
+/* (أسهم الكاروسيل هنا كانت نسخةً خاصّة — حلّ محلّها `.anav` المعتمد.) */
 @media (prefers-reduced-motion: reduce) {
   .bc-slide {
     transition: none;
@@ -696,6 +672,8 @@
    ظلّ ناعم · (تكبير خفيف + كنس ضوئيّ عند المرور) · أيقونة قبل النصّ.
    ============================================================ */
 .abtn {
+  /* نغمة الظلّ الأساس (تعلوها نغمةُ كلّ نمطٍ أدناه) — كانت في globals.css قبل هذا الملفّ */
+  --shadow-tone: var(--shadow-tone-brand);
   position: relative;
   overflow: hidden;
   display: inline-flex;
@@ -728,6 +706,8 @@
 }
 .abtn:hover:not(:disabled) {
   transform: scale(1.045);
+  /* ظلّ المرور لكلّ زرّ (المصمت يعلوه بـmd أدناه) — كان في globals.css */
+  box-shadow: var(--shadow-sm);
 }
 .abtn:hover:not(:disabled)::after {
   inset-inline-start: 200%;
@@ -790,11 +770,11 @@
 /* شبحيّ دلاليّ — مفرّغ بلون النغمة (حدّ ناعم + نصّ)، لملء ثانويّ يطابق النغمة */
 .abtn-ghost-danger, .abtn-ghost-success, .abtn-ghost-warning { background: transparent; }
 .abtn-ghost-danger::after, .abtn-ghost-success::after, .abtn-ghost-warning::after { display: none; }
-.abtn-ghost-danger { border-color: color-mix(in oklab, var(--danger-500) 42%, transparent); color: var(--danger-500); }
+.abtn-ghost-danger { --shadow-tone: var(--shadow-tone-danger); border-color: color-mix(in oklab, var(--danger-500) 42%, transparent); color: var(--danger-500); }
 .abtn-ghost-danger:hover:not(:disabled) { background: color-mix(in oklab, var(--danger-500) 10%, transparent); border-color: var(--danger-500); }
-.abtn-ghost-success { border-color: color-mix(in oklab, var(--success-500) 42%, transparent); color: color-mix(in oklab, var(--success-500), #000 12%); }
+.abtn-ghost-success { --shadow-tone: var(--shadow-tone-success); border-color: color-mix(in oklab, var(--success-500) 42%, transparent); color: color-mix(in oklab, var(--success-500), #000 12%); }
 .abtn-ghost-success:hover:not(:disabled) { background: color-mix(in oklab, var(--success-500) 10%, transparent); border-color: var(--success-500); }
-.abtn-ghost-warning { border-color: color-mix(in oklab, var(--warning-500) 46%, transparent); color: color-mix(in oklab, var(--warning-500), #000 20%); }
+.abtn-ghost-warning { --shadow-tone: var(--shadow-tone-warning); border-color: color-mix(in oklab, var(--warning-500) 46%, transparent); color: color-mix(in oklab, var(--warning-500), #000 20%); }
 .abtn-ghost-warning:hover:not(:disabled) { background: color-mix(in oklab, var(--warning-500) 14%, transparent); border-color: var(--warning-500); }
 /* الشبحيّ: حدّ أسمك (stroke) */
 .abtn-ghost, .abtn-ghost-danger, .abtn-ghost-success, .abtn-ghost-warning, .abtn-inverse-ghost { border-width: 2px; }
@@ -815,19 +795,99 @@
 }
 
 /* ============================================================
+   الزرّ الأيقونيّ المعتمد (IconButton): مربّعٌ مضغوط للأدوات الكثيفة
+   (أشرطة الأدوات · بطاقات · صفوف الخيارات). ساكنٌ محايد على السطح،
+   يتلوّن بالأساس عند المرور (أو بالأحمر للنغمة danger). استدارة sm.
+   ============================================================ */
+.aibtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: var(--radius-sm);
+  border: var(--card-stroke-w) solid var(--card-stroke);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--dur-fast), border-color var(--dur-fast), background var(--dur-fast);
+}
+.aibtn:hover:not(:disabled) { color: var(--color-primary); border-color: var(--card-stroke-active); }
+.aibtn:focus-visible { outline: 2px solid var(--steel-500); outline-offset: 2px; }
+.aibtn:disabled { opacity: 0.45; cursor: default; }
+.aibtn-danger:hover:not(:disabled) { color: var(--danger-600); border-color: var(--danger-600); }
+/* الأحجام — مربّعٌ ثابت والأيقونة نصفه تقريبًا */
+.aibtn-sm { width: 26px; height: 26px; }
+.aibtn-sm svg { width: 13px; height: 13px; }
+.aibtn-md { width: 30px; height: 30px; }
+.aibtn-md svg { width: 15px; height: 15px; }
+.aibtn-lg { width: 36px; height: 36px; }
+.aibtn-lg svg { width: 18px; height: 18px; }
+
+/* ============================================================
+   أسهم تنقّل الكاروسيل (CarouselNav): زوجُ سهمَين يقودان عارضًا —
+   سطحٌ محايد بحدّ الأسطح (ق٤) وزاويةُ الأساس (ق٢: 44px ≥ 40 فمن
+   --radius لا دائرة)، يلبس تدرّج العلامة عند المرور، وظلُّه من
+   السلّم (ق٥). أكبر من .aibtn لأنّه هدفُ لمسٍ في صفحةٍ عامّة.
+   ============================================================ */
+/* المنتصف وحده (ق١١) — لا محاذاة بديلة تُعرَض ولا صنفَ يزيحها. */
+.anav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.anav-btn {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius);
+  border: var(--card-stroke-w) solid var(--card-stroke);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast),
+    box-shadow var(--dur-fast);
+}
+.anav-btn svg { width: 20px; height: 20px; }
+.anav-btn:hover:not(:disabled) {
+  background: var(--grad-primary);
+  border-color: transparent;
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-md);
+}
+.anav-btn:focus-visible {
+  outline: 2px solid var(--steel-500);
+  outline-offset: 2px;
+}
+.anav-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  box-shadow: none;
+}
+
+/* ============================================================
    نظام الحقل المعتمَد (منقول حرفيًّا من لوح الهوية): تسمية ثابتة أعلى + أيقونة الهوية بجانبها ·
    سطح مسطّح · تركيز فولاذيّ · استدارة 16 · حالات الخطأ/النجاح بلون الدلالة 600.
    ============================================================ */
 .fld { display: flex; flex-direction: column; gap: 8px; }
 .fld-lbl { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; padding-inline-start: 2px; transition: color var(--dur); }
+/* وسم الإلزام/الاختيار — بعد اسم الحقل مباشرةً.
+   الإلزاميّ = نجمة Phosphor **حمراء** في **حبّة مربّعة بخلفية Aurora** كمربّع أيقونة الهويّة (تدرّج 135° من التينت للشفّاف، زاوية squircle) · الاختياريّ = «(اختياريّ)» رماديّ محايد. */
+.fld-req { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-inline-start: -5px; border-radius: var(--radius-xs); color: var(--danger-600); background: linear-gradient(135deg, var(--danger-50), transparent); }
+.fld-req svg { width: 11px; height: 11px; }
+.fld-opt { margin-inline-start: -5px; font-size: 12px; font-weight: 500; color: var(--color-text-muted); }
+.fld.ok .fld-req { color: var(--success-600); background: linear-gradient(135deg, var(--success-50), transparent); }   /* في النجاح تتبع الحبّة نغمة الصفّ؛ الخطأ أحمر أصلًا */
 /* أيقونة الـlabel — Aurora (توقيع الهوية): مربّع متراكز (--radius-sm) بخلفية تدرّج مائل.
    خامل = خفيف (50→شفّاف) · عند الاستخدام (تركيز/ممتلئ) = يقوى (100→شفّاف بتلاشٍ ناعم). النغمة تتبع الحالة. */
 .fld-lic {
-  --lg:  linear-gradient(135deg, var(--steel-50), transparent);
-  --lg2: linear-gradient(135deg, var(--steel-100), transparent);
+  --lg:  linear-gradient(135deg, var(--fld-tint, var(--steel-50)), transparent);
+  --lg2: linear-gradient(135deg, var(--fld-tint-2, var(--steel-100)), transparent);
   position: relative; overflow: hidden; flex: 0 0 auto;
   width: 28px; height: 28px; display: grid; place-items: center; border-radius: var(--radius-sm);
-  color: var(--steel-600); background: var(--lg); transition: color var(--dur);
+  color: var(--fld-accent, var(--steel-600)); background: var(--lg); transition: color var(--dur);
 }
 .fld-lic::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--lg2); opacity: 0; transition: opacity var(--dur); }
 .fld-lic svg { position: relative; z-index: 1; width: 16px; height: 16px; }
@@ -849,7 +909,7 @@
 /* تفاعل: عند استخدام الحقل (تركيز أو ممتلئ) → لون النغمة (600) + كِبَر بسيط */
 /* مُعمَّمة على .fld-wrap (لا .fld) كي يتفاعل البئر أينما استُعمل — منها بحث الشريط بلا تسمية */
 .fld-wrap:focus-within .fld-iic,
-.fld-wrap:has(.fld-in:not(:placeholder-shown)) .fld-iic { color: var(--steel-600); }
+.fld-wrap:has(.fld-in:not(:placeholder-shown)) .fld-iic { color: var(--fld-accent, var(--steel-600)); }
 .fld-wrap:focus-within .fld-iic svg,
 .fld-wrap:has(.fld-in:not(:placeholder-shown)) .fld-iic svg { transform: scale(1.12); }
 .fld.err:focus-within .fld-iic,
@@ -857,9 +917,9 @@
 .fld.ok:focus-within .fld-iic,
 .fld.ok:has(.fld-in:not(:placeholder-shown)) .fld-iic { color: var(--success-600); }
 /* خلفية Aurora ناعمة لثلث الحقل: تينت 50→شفّاف في أوّل ثلث فوق قاعدة السطح (نمط الهوية). النغمة تتبع الحالة. */
-.fld-in { width: 100%; height: var(--fld-h, 48px); padding: 0 16px; border-radius: var(--radius); background: linear-gradient(135deg, var(--steel-50), transparent 33%), var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text); transition: border-color var(--dur), box-shadow var(--dur); }
+.fld-in { width: 100%; height: var(--fld-h, 48px); padding: 0 16px; border-radius: var(--radius); background: linear-gradient(135deg, var(--fld-tint, var(--steel-50)), transparent 33%), var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text); transition: border-color var(--dur), box-shadow var(--dur); }
 .fld-in::placeholder { color: var(--color-text-muted); }
-.fld-in:focus { outline: 0; border-color: var(--steel-600); box-shadow: var(--ring); }
+.fld-in:focus { outline: 0; border-color: var(--fld-accent, var(--steel-600)); box-shadow: var(--ring); }
 .fld-in:disabled { background: var(--color-surface-2); color: var(--color-text-muted); cursor: not-allowed; }
 .fld-area { height: auto; min-height: 96px; padding: 12px 16px; line-height: 1.6; resize: vertical; }
 .fld-help { font-size: 12px; color: var(--color-text-muted); padding-inline-start: 3px; }
@@ -867,13 +927,13 @@
 .fld.err .fld-in { background: linear-gradient(135deg, var(--danger-50), transparent 33%), var(--color-surface); border-color: var(--danger-600); --shadow-tone: var(--shadow-tone-danger); box-shadow: var(--ring); }
 .fld.ok .fld-lbl, .fld.ok .fld-lic { color: var(--success-600); }
 /* تينت عند التركيز: تسمية الحقول العاديّة تميل للفولاذيّ عند الاستخدام (الخطأ/النجاح يبقيان بلونهما) */
-.fld:not(.err):not(.ok):focus-within .fld-lbl { color: var(--steel-600); }
+.fld:not(.err):not(.ok):focus-within .fld-lbl { color: var(--fld-accent, var(--steel-600)); }
 .fld.ok .fld-in { background: linear-gradient(135deg, var(--success-50), transparent 33%), var(--color-surface); border-color: var(--success-600); --shadow-tone: var(--shadow-tone-success); box-shadow: var(--ring); }
 
 /* القائمة المنسدلة (Select) تتبع نظام الحقل: تسمية ثابتة أعلى · مسطّح · حلقة تركيز */
 .fld .asel-label { display: none; }
-.fld .asel-trigger { height: var(--fld-h, 48px); padding-block: 0; padding-inline: 16px 44px; display: flex; align-items: center; border-radius: var(--radius); background: linear-gradient(135deg, var(--steel-50), transparent 33%), var(--color-surface); border: 1px solid var(--color-border); box-shadow: none; }
-.fld .asel-trigger:focus-visible, .fld .asel-open .asel-trigger { border-color: var(--steel-600); box-shadow: var(--ring); }
+.fld .asel-trigger { height: var(--fld-h, 48px); padding-block: 0; padding-inline: 16px 44px; display: flex; align-items: center; border-radius: var(--radius); background: linear-gradient(135deg, var(--fld-tint, var(--steel-50)), transparent 33%), var(--color-surface); border: 1px solid var(--color-border); box-shadow: none; }
+.fld .asel-trigger:focus-visible, .fld .asel-open .asel-trigger { border-color: var(--fld-accent, var(--steel-600)); box-shadow: var(--ring); }
 .fld.err .asel-trigger { background: linear-gradient(135deg, var(--danger-50), transparent 33%), var(--color-surface); }
 
 /* ============================================================
@@ -921,28 +981,33 @@
   width: var(--chev-sz, 26px);
   height: var(--chev-sz, 26px);
   border-radius: var(--radius-sm);
-  background: var(--steel-50);
+  background: var(--fld-tint, var(--steel-50));
   color: var(--color-text-muted);
   display: grid;
   place-items: center;
   transition: background 0.2s ease, color 0.2s ease;
 }
 .asel-chev svg { width: 16px; height: 16px; transition: transform 0.2s ease; }
-.asel-open .asel-chev { background: var(--steel-100); color: var(--steel-600); }
+.asel-open .asel-chev { background: var(--fld-tint-2, var(--steel-100)); color: var(--fld-accent, var(--steel-600)); }
 .asel-open .asel-chev svg { transform: rotate(180deg); }
 /* الخطأ: السهم يتبع النغمة الحمراء كبقيّة عناصر الحقل (خامل وعند الفتح) */
 .asel-error .asel-chev { background: var(--danger-50); color: var(--danger-600); }
 .asel-error.asel-open .asel-chev { background: var(--danger-100); color: var(--danger-600); }
+/* ============================================================
+   منبثقة مثبّتة بحافّة (AnchoredPopover) — طبقة التموضع الموحّدة لكلّ منسدلات النظام
+   (asel-panel · dm-menu · tb-fs-panel). تُنقَل عبر Portal إلى body وتُموضَع بـ top/left/width
+   محسوبة في البدائيّة، فتهرب من قصّ حاويات overflow، وتعلو النافذة (تُنقَل هي أيضًا إلى body).
+   ============================================================ */
+.apop { position: fixed; z-index: calc(var(--z-modal) + 1); }
+
 .asel-panel {
-  position: absolute;
-  z-index: 40;
-  top: calc(100% + 6px);
-  inset-inline: 0;
+  /* الجلد البصريّ فقط — التموضع والطبقة من بدائيّة .apop */
   padding: 6px;
-  background: linear-gradient(135deg, var(--steel-50), var(--color-surface) 55%);   /* Aurora ناعم على سطح القائمة */
-  border: var(--card-stroke-w) solid var(--card-stroke);
+  background: linear-gradient(135deg, var(--fld-tint, var(--steel-50)), var(--color-surface) 55%);   /* Aurora ناعم على سطح القائمة — يتبع نغمة اللوحة إن وُجدت */
+  border: var(--card-stroke-w) solid var(--fld-stroke, var(--card-stroke));
   border-radius: var(--radius);
   overflow: hidden;   /* اللوحة تقصّ لزواياها المدوّرة؛ التمرير داخل .asel-list وحده */
+  box-shadow: var(--shadow-lg);
   animation: asel-in 0.14s ease;
 }
 /* الخيارات وحدها تُمرَّر (البحث يبقى ثابتًا فوقها)، فالشريط ينحصر داخلها بعيدًا عن حافّة اللوحة وزواياها. */
@@ -955,16 +1020,16 @@
   padding-inline-start: 34px;
   border-radius: var(--radius);
   border: 1px solid var(--color-border);
-  background: linear-gradient(135deg, var(--steel-50), transparent 33%), var(--color-surface);   /* هويّة حقل المعرض: Aurora */
+  background: linear-gradient(135deg, var(--fld-tint, var(--steel-50)), transparent 33%), var(--color-surface);   /* هويّة حقل المعرض: Aurora */
   font: inherit;
   color: var(--color-text);
   outline: none;
   transition: border-color var(--dur), box-shadow var(--dur);
 }
-.asel-search input:focus { border-color: var(--steel-600); box-shadow: var(--ring); }
+.asel-search input:focus { border-color: var(--fld-accent, var(--steel-600)); box-shadow: var(--ring); }
 .asel-search .asel-si { position: absolute; inset-inline-start: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--color-text-muted); transition: color var(--dur), transform var(--dur) var(--ease-standard); }
 /* تفاعل أيقونة البحث (كالأيقونة الداخليّة للحقل): عند الاستخدام تتلوّن بالنغمة وتكبر قليلًا */
-.asel-search:focus-within .asel-si { color: var(--steel-600); transform: translateY(-50%) scale(1.12); }
+.asel-search:focus-within .asel-si { color: var(--fld-accent, var(--steel-600)); transform: translateY(-50%) scale(1.12); }
 .asel-gh { padding: 8px 12px 4px; font-size: 11.5px; font-weight: 700; color: var(--color-text-muted); }
 .asel-opt {
   display: flex;
@@ -978,16 +1043,24 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 .asel-opt + .asel-opt { margin-top: 6px; }
-.asel-opt.asel-hl { background: #f4f6f9; }
+.asel-opt.asel-hl { background: var(--fld-hl, #f4f6f9); }
 .asel-opt .asel-txt { flex: 1; }
-.asel-opt .asel-oic { width: 17px; height: 17px; color: var(--color-text-muted); flex: 0 0 auto; }
-.asel-opt .asel-oic svg,
+/* خانة أيقونة الخيار تُقاس بمحتواها لا بمقاسٍ ثابت: أيقونةٌ صغيرة (svg 17px) أو أفتارُ شخصٍ (28px) —
+   فتُحترم الفجوة (gap) في الحالين ولا يلتصق الأفتار بالاسم (كان 17px ثابتًا يفيض عليه الأفتار الأكبر). */
+.asel-opt .asel-oic { display: inline-flex; align-items: center; color: var(--color-text-muted); flex: 0 0 auto; }
+.asel-opt .asel-oic svg { width: 17px; height: 17px; }
 .asel-opt .asel-ck svg { width: 100%; height: 100%; }
-.asel-opt .asel-ck { width: 16px; height: 16px; color: var(--navy-700); flex: 0 0 auto; visibility: hidden; }
-.asel-opt.asel-sel { background: #eef2f7; }
-.asel-opt.asel-sel .asel-txt { font-weight: 700; color: var(--navy-700); }
-.asel-opt.asel-sel .asel-oic { color: var(--navy-700); }
+.asel-opt .asel-ck { width: 16px; height: 16px; color: var(--fld-accent, var(--navy-700)); flex: 0 0 auto; visibility: hidden; }
+.asel-opt.asel-sel { background: var(--fld-sel, #eef2f7); }
+.asel-opt.asel-sel .asel-txt { font-weight: 700; color: var(--fld-accent, var(--navy-700)); }
+.asel-opt.asel-sel .asel-oic { color: var(--fld-accent, var(--navy-700)); }
 .asel-opt.asel-sel .asel-ck { visibility: visible; }
+
+/* نغمة اللوحة المنبثقة (يمرّرها Select حين يعيش في نافذةٍ منغّمة — اللوحة portaled خارجها فلا ترث):
+   تضع متغيّرات الحقل على اللوحة نفسها فيتبعها البحث والمُبرَز والمختار والحلقة. الافتراض (بلا صنف) فولاذيّ. */
+.asel-tone-danger  { --fld-tint: var(--danger-50);  --fld-tint-2: var(--danger-100);  --fld-accent: var(--danger-600);  --fld-stroke: var(--card-stroke-danger);  --shadow-tone: var(--shadow-tone-danger);  --fld-hl: color-mix(in oklab, var(--danger-500) 11%, var(--color-surface));  --fld-sel: color-mix(in oklab, var(--danger-500) 17%, var(--color-surface)); }
+.asel-tone-warning { --fld-tint: var(--warning-50); --fld-tint-2: var(--warning-100); --fld-accent: var(--warning-600); --fld-stroke: var(--card-stroke-warning); --shadow-tone: var(--shadow-tone-warning); --fld-hl: color-mix(in oklab, var(--warning-500) 11%, var(--color-surface)); --fld-sel: color-mix(in oklab, var(--warning-500) 17%, var(--color-surface)); }
+.asel-tone-success { --fld-tint: var(--success-50); --fld-tint-2: var(--success-100); --fld-accent: var(--success-600); --fld-stroke: var(--card-stroke-success); --shadow-tone: var(--shadow-tone-success); --fld-hl: color-mix(in oklab, var(--success-500) 11%, var(--color-surface)); --fld-sel: color-mix(in oklab, var(--success-500) 17%, var(--color-surface)); }
 .asel-empty { padding: 12px; text-align: center; color: var(--color-text-muted); font-size: 13.5px; }
 .asel-help { display: block; margin-top: 6px; font-size: 12.5px; color: var(--color-text-muted); }
 /* حالة الخطأ */
@@ -1118,7 +1191,7 @@
   height: 22px;
   padding: 0 6px;
   border-radius: var(--radius-full);
-  font-family: "Eras", sans-serif;
+  font-family: var(--font-latin);
   font-feature-settings: "tnum";
   font-size: 12px;
   font-weight: 700;
@@ -1182,6 +1255,10 @@
   background: var(--color-surface-2);
 }
 .acard-header { display: flex; align-items: center; gap: 12px; padding: 20px 20px 0; }
+/* تذييلٌ يلي رأسًا مباشرةً (بلا جسمٍ بينهما، كالكرت الأفقيّ المقتضب) — الرأس بلا مسافةٍ أسفله
+   (يتّكئ على جسمٍ يليه)، فتنوب هذه الفجوةُ عن الجسم الغائب. المُحدِّد المجاور يقصُرها على هذه
+   التركيبة وحدها: كلُّ كرتٍ رأسيّ تذييلُه يلي جسمًا لا رأسًا، فلا يُطال. */
+.acard-header + .acard-footer { margin-top: 20px; }
 .acard-chip {
   width: 44px;
   height: 44px;
@@ -1195,17 +1272,40 @@
 .acard-chip svg { width: 22px; height: 22px; }
 .acard-htitle { font-size: 17px; font-weight: 800; color: var(--color-text); margin: 0; }
 .acard-hsub { color: var(--color-text-muted); font-size: 12.5px; }
+.acard-htexts { display: flex; flex-direction: column; line-height: 1.35; min-width: 0; }
+.acard-hactions { margin-inline-start: auto; }
+/* مُعدِّل: عنوان الرأس سطرٌ واحد يُقصّ بـ«…» عند الطول — للكروت التي يطول عنوانها (الاستبيانات)،
+   فلا يلتفّ لسطرٍ ثانٍ. يأخذ النصّ حيّزه (flex) ثمّ يقصّ ما فاض. */
+.acard-header-clip .acard-htexts { flex: 1 1 0; }
+.acard-header-clip .acard-htitle { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* رأسٌ منسّم (variant="soft") — شريطٌ بتدرّجٍ قطريّ من **درجات سلّم الفولاذيّ المصمَّمة** (steel-200 ← steel-100،
+   لا مزجٌ بالأبيض فيبهت «مائيًّا») + شعرةٌ سفليّة، ونصٌّ كحليّ داكن. لونٌ حقيقيّ هادئ؛ وسطٌ بين chip وsolid. */
+.acard-header-soft { padding: 14px 20px; border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(135deg, var(--steel-100), var(--steel-50)); }
+.acard-header-soft .acard-htitle { color: var(--color-primary); }
+
+/* رأسٌ صلب (variant="solid") — شريطٌ ممتلئٌ بتدرّج الهوية يتصدّر الكرت (تقصّه زواياه المستديرة)،
+   نصٌّ أبيض وقرصٌ زجاجيّ. لكرت الإبراز/البطل — يفصل الرأس عن الجسم بلونٍ صلب. */
+.acard-header-solid { padding: 15px 20px; background: var(--grad-primary); color: var(--color-on-primary); }
+.acard-header-solid .acard-htitle { color: var(--color-on-primary); }
+.acard-header-solid .acard-hsub { color: rgba(255, 255, 255, .82); }
+.acard-header-solid .acard-chip { background: var(--glass-bg); border: 1px solid var(--glass-border); }
 @media (prefers-reduced-motion: reduce) {
   .acard { transition: none; }
   .acard-interactive:hover { transform: none; }
 }
 
-/* بطاقة عامّة منغّمة — سطح Aurora + حدّ + ظلّ + قرص الرأس بلون الحالة (كطبقة نغمة الجدول وكرت العضو).
-   يكفي ضبط الرموز؛ يقرؤها أساسُ ‎.acard‎ فيتلوّن السطح والحدّ والظلّ. والنصّ يبقى محايدًا لمقروئيّة المحتوى. */
+/* بطاقة عامّة منغّمة — سطح Aurora + حدّ + ظلّ + قرص الرأس بلون الحالة (كطبقة نغمة الجدول وكرت الشخص).
+   يكفي ضبط الرموز؛ يقرؤها أساسُ ‎.acard‎ فيتلوّن السطح والحدّ والظلّ. والنصّ يبقى محايدًا لمقروئيّة المحتوى.
+   ورموز نمط الشخص (‎--card-t‎ لون النغمة 600 · ‎--card-tx‎ نصّها المقروء · ‎--card-grad‎ تدرّجها المصمت)
+   تُعلَن هنا مرّةً ويقرؤها تلوينُ أجزاء الشخص (الشريط/الأفتار/الاسم/الصفوف/التذييل) في قسم ‎.acard-profile‎.
+   كرت المحتوى بلا تلك الأجزاء فلا يقرؤها — العمق تقرّره الأجزاء الحاضرة. البراند خارجها عمدًا (شريط محايد). */
 .acard-tone-brand   { --shadow-tone: var(--shadow-tone-brand);  --surface-aurora: linear-gradient(135deg, var(--aurora-brand), var(--color-surface) 62%); --border-aurora: var(--card-stroke-brand); background: var(--surface-aurora); border-color: var(--border-aurora); }
-.acard-tone-success { --shadow-tone: var(--shadow-tone-success);  --surface-aurora: linear-gradient(135deg, var(--aurora-success), var(--color-surface) 62%); --border-aurora: var(--card-stroke-success); background: var(--surface-aurora); border-color: var(--border-aurora); }
-.acard-tone-warning { --shadow-tone: var(--shadow-tone-warning); --surface-aurora: linear-gradient(135deg, var(--aurora-warning), var(--color-surface) 62%); --border-aurora: var(--card-stroke-warning); background: var(--surface-aurora); border-color: var(--border-aurora); }
-.acard-tone-danger  { --shadow-tone: var(--shadow-tone-danger);  --surface-aurora: linear-gradient(135deg, var(--aurora-danger), var(--color-surface) 62%); --border-aurora: var(--card-stroke-danger); background: var(--surface-aurora); border-color: var(--border-aurora); }
+.acard-tone-neutral { --shadow-tone: var(--shadow-tone-neutral); --surface-aurora: linear-gradient(135deg, var(--aurora-neutral), var(--color-surface) 62%); --border-aurora: var(--card-stroke-neutral); background: var(--surface-aurora); border-color: var(--border-aurora); --card-t: var(--neutral-600); --card-tx: var(--neutral-700); --card-grad: var(--grad-neutral); }
+.acard-tone-success { --shadow-tone: var(--shadow-tone-success);  --surface-aurora: linear-gradient(135deg, var(--aurora-success), var(--color-surface) 62%); --border-aurora: var(--card-stroke-success); background: var(--surface-aurora); border-color: var(--border-aurora); --card-t: var(--success-600); --card-tx: var(--success-700); --card-grad: var(--grad-success); }
+.acard-tone-warning { --shadow-tone: var(--shadow-tone-warning); --surface-aurora: linear-gradient(135deg, var(--aurora-warning), var(--color-surface) 62%); --border-aurora: var(--card-stroke-warning); background: var(--surface-aurora); border-color: var(--border-aurora); --card-t: var(--warning-600); --card-tx: var(--warning-800); --card-grad: var(--grad-warning); }
+.acard-tone-danger  { --shadow-tone: var(--shadow-tone-danger);  --surface-aurora: linear-gradient(135deg, var(--aurora-danger), var(--color-surface) 62%); --border-aurora: var(--card-stroke-danger); background: var(--surface-aurora); border-color: var(--border-aurora); --card-t: var(--danger-600); --card-tx: var(--danger-700); --card-grad: var(--grad-danger); }
+.acard-tone-neutral .acard-chip { background: var(--grad-neutral); }
 .acard-tone-success .acard-chip { background: var(--grad-success); }
 .acard-tone-warning .acard-chip { background: var(--grad-warning); }
 .acard-tone-danger  .acard-chip { background: var(--grad-danger); }
@@ -1213,7 +1313,7 @@
 /* ============================================================
    التنبيه (Alert) — بطاقة هوية هادئة، أخٌ مباشر للكروت المنغّمة والنافذة:
    سطح Aurora ناعم + حدّ النغمة الموحّد (ق٤) + ظلّ موسوم بالنغمة (ق٥)
-   + أيقونة في مربّع Aurora برمز ملوّن بالنغمة (كـ‎.msh-ic/.mc-ic‎، لا مصمت أبيض صاخب)
+   + أيقونة في مربّع Aurora برمز ملوّن بالنغمة (كـ‎.msh-ic/.acard-ic‎، لا مصمت أبيض صاخب)
    + عنوان كحليّ محايد + رسالة محايدة (ق٣) + أزرار من مكوّن الزرّ (.abtn).
    النغمة تُقال بالكروم (حدّ/سطح/أيقونة/إغلاق) لا بالنصّ (وصوليّة).
    ============================================================ */
@@ -1241,7 +1341,7 @@
 .aalert-tone-warning { --agrad: linear-gradient(135deg, var(--warning-50), var(--warning-100)); --ic-grad: var(--grad-warning); --ac: var(--warning-600); border-color: var(--card-stroke-warning); --shadow-tone: var(--shadow-tone-warning); }
 .aalert-tone-danger  { --agrad: linear-gradient(135deg, var(--danger-50), var(--danger-100)); --ic-grad: var(--grad-danger); --ac: var(--danger-600); border-color: var(--card-stroke-danger); --shadow-tone: var(--shadow-tone-danger); }
 
-/* الأيقونة — مربّع متراكز (radius-sm) بخلفية Aurora ورمز ملوّن بالنغمة (كـ‎.msh-ic/.mc-ic‎): لا مصمت أبيض ولا توهّج */
+/* الأيقونة — مربّع متراكز (radius-sm) بخلفية Aurora ورمز ملوّن بالنغمة (كـ‎.msh-ic/.acard-ic‎): لا مصمت أبيض ولا توهّج */
 .aalert-ic {
   flex: 0 0 auto;
   width: 38px;
@@ -1524,13 +1624,18 @@
 .ash-s.on::before { opacity: 1; }
 .ash-s .ash-b { margin-inline-start: auto; }
 
+/* زناد مركز المساعدة — <button> يمتدّ عرض الشريط بالتمدّد (كـ.ash-cta)؛
+   تُحيَّد كروم الزرّ (حدّ · خطّ · محاذاة) كما في .ash-i / .ash-s المزدوجَين زرًّا ورابطًا. */
 .ash-foot {
   display: flex;
   align-items: center;
   gap: 10px;
   margin: 8px 14px 0;
   padding: 10px 12px;
+  border: 0;
   border-radius: var(--radius);
+  font-family: inherit;
+  text-align: start;
   color: #dbe4ee;
   background: rgba(255, 255, 255, .06);
   cursor: pointer;
@@ -1587,28 +1692,45 @@
 .ash-ham svg { width: 24px; height: 24px; }
 /* الشريط الجانبيّ ثابت على سطح المكتب (بلا طيّ) — طابع SaaS احترافيّ نظيف.
    الهوية في العلويّ (منطقة لا تنطوي أبدًا) تحقيقًا لقاعدة: الهوية لا تختفي مهما كان. */
-.ash-greet { display: flex; align-items: center; gap: 11px; min-width: 0; }
+/* الهويّة **مُطلِقُ قائمة الحساب** لا نصًّا ساكنًا: فتُعامَل معاملة الزرّ — سطحٌ يستجيب للمرور،
+   وحلقةُ تركيزٍ مرئيّة، ومؤشّرُ يد. حشوٌ سالبُ الطرف (`-8px`) يُبقي الصورة على حافّة الشريط
+   كما كانت، فلا يزيح المظهرَ تحويلُها إلى زرّ. */
+.ash-greet {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  padding: 6px 8px;
+  margin-inline-start: -8px;
+  border-radius: var(--radius);
+  transition: background var(--dur-fast);
+}
+.ash-greet:hover, .ash-greet[aria-expanded="true"] { background: var(--color-surface-2); }
+.ash-greet:focus-visible { outline: 2px solid var(--steel-500); outline-offset: 2px; }
 .ash-top > .ash-greet { margin-inline-end: auto; }
+/* الشيفرون: يدور عند الفتح فيتعلّم المستخدم أنّ العلاقة سببيّة — هو مفتاح القائمة لا زخرفة */
+.ash-gcaret { width: 14px; height: 14px; flex: 0 0 auto; opacity: .55; transition: transform var(--dur); }
+.ash-greet[aria-expanded="true"] .ash-gcaret { transform: rotate(180deg); }
 /* المظهر من مكوّن Avatar؛ هنا مقاس الشريط فقط (42px بدل 44px الافتراضيّ) — تخصيص أعلى ليغلب .av */
 .ash-top .ash-av { width: 42px; height: 42px; }
 .ash-gtx { display: flex; flex-direction: column; line-height: 1.35; min-width: 0; }
-.ash-gtx b { font-size: 15.5px; font-weight: 800; color: var(--color-primary); }
-.ash-gdate { font-size: 12px; color: var(--color-text-muted); }
-.ash-tools { display: flex; align-items: center; gap: 12px; }
-.ash-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-text-muted);
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 8px 12px;
-  font-size: 13.5px;
-  min-width: 160px;
-  cursor: text;
+/* الترحيب سطرٌ خافت فوق، والاسم الكامل هو الثقل البصريّ تحته — والاسم يُقصّ بنقاطٍ دائمًا لا على الجوّال وحده */
+.ash-ghi { font-size: 12px; color: var(--color-text-muted); }
+.ash-gtx b {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.ash-search svg { width: 16px; height: 16px; }
+.ash-tools { display: flex; align-items: center; gap: 12px; }
 .ash-bell {
   position: relative;
   color: var(--color-text-muted);
@@ -1674,12 +1796,8 @@
     background: rgba(20, 31, 48, .45);
     backdrop-filter: blur(1px);
   }
-  /* ⛔ قاعدة مقدّسة: الاسم + الترحيب + الصورة تبقى ظاهرة دائمًا.
-     البحث وحده يتقلّص لأيقونة لتوفير المساحة — لا نُخفي الهوية أبدًا. */
-  .ash-search span { display: none; }
-  .ash-search { min-width: 0; padding: 8px; }
+  /* ⛔ قاعدة مقدّسة: الاسم + الترحيب + الصورة تبقى ظاهرة دائمًا — لا نُخفي الهوية أبدًا. */
   .ash-greet { flex: 1; min-width: 0; }
-  .ash-gtx b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* على الجوّال الطيّ يكون بإغلاق الدُرج لا بالريّل — نُلغي أثر الريّل ونُخفي المقبض */
   .ash-handle { display: none; }
   .ash.rail .ash-side { width: 264px; }
@@ -1693,9 +1811,8 @@
   .ash.rail .ash-ftx { display: revert; }
   .ash.rail .ash-foot { gap: 10px; }
 }
-/* في الشاشات الضيّقة جدًّا: التاريخ وحده (غير مقدّس) ينزوي — الاسم والترحيب والصورة تبقى */
+/* في الشاشات الضيّقة جدًّا: الهوية كلّها تبقى (اسمٌ وترحيبٌ وصورة) — الاسم وحده يصغر قياسه */
 @media (max-width: 460px) {
-  .ash-gdate { display: none; }
   .ash-gtx b { font-size: 14.5px; }
 }
 
@@ -1753,6 +1870,11 @@
 .dt-c.end { justify-content: flex-end; }
 .dt-c .txt { white-space: nowrap; }
 .dt-c .num { font-family: var(--font-latin); }
+/* عمودٌ حرّ الالتفاف: نقيضُ الافتراض (سطر واحد يتّسع) — يلتفّ محتواه على أسطر ليُقرأ كاملًا بلا قصّ ولا تمرير،
+   للإجابات/النصوص الحرّة الطويلة (يُفعَّل بـ`wrap` على العمود). عرض العمود ثابتٌ (px) فيلتفّ داخله؛
+   و`overflow-wrap: anywhere` يكسر الكلمة الطويلة (رابط) فلا تفيض. ويغلب سطرَ `.txt` الواحد بخصوصيّته. */
+.dt-c.dt-wrap { min-width: 0; }
+.dt-c.dt-wrap, .dt-c.dt-wrap .txt { white-space: normal; overflow-wrap: anywhere; }
 /* حدّ الصفّ وتناوبه ومروره — على الخلايا (الصفّ بلا صندوق) */
 .dt-body .dt-row .dt-c { border-bottom: 1px solid var(--color-border); }
 .dt-body .dt-row:last-child .dt-c { border-bottom: 0; }
@@ -1772,6 +1894,7 @@
 .dt.dt-tone-success { --dt-accent: 26, 132, 82;  --shadow-tone: var(--shadow-tone-success);  border-color: var(--card-stroke-success); }
 .dt.dt-tone-warning { --dt-accent: 184, 122, 12; --shadow-tone: var(--shadow-tone-warning); border-color: var(--card-stroke-warning); }
 .dt.dt-tone-danger  { --dt-accent: 181, 47, 34;  --shadow-tone: var(--shadow-tone-danger);  border-color: var(--card-stroke-danger); }
+.dt.dt-tone-neutral { --dt-accent: 84, 92, 109;  --shadow-tone: var(--shadow-tone-neutral); border-color: var(--card-stroke-neutral); }
 /* ترويسة الطاولة المنغّمة بلون نغمتها */
 .dt[class*="dt-tone-"] .dt-head .dt-c {
   background: rgba(var(--dt-accent), .14);
@@ -1783,6 +1906,7 @@
 .dt.dt-tone-success .av, .dt-body .dt-row.dt-tone-success .av { background: var(--grad-success); --shadow-tone: var(--shadow-tone-success); }
 .dt.dt-tone-warning .av, .dt-body .dt-row.dt-tone-warning .av { background: var(--grad-warning); --shadow-tone: var(--shadow-tone-warning); }
 .dt.dt-tone-danger  .av, .dt-body .dt-row.dt-tone-danger  .av { background: var(--grad-danger);  --shadow-tone: var(--shadow-tone-danger); }
+.dt.dt-tone-neutral .av { background: var(--grad-neutral); --shadow-tone: var(--shadow-tone-neutral); }
 /* في اللوح (تُقصّ طبقة التوحيد) يظلّ ظلّ الأفتار فولاذيًّا؛ وفي التطبيق يلتقط الظلّ لون النغمة عبر --shadow-tone */
 /* خلية العضو (صورة + اسم + دور) */
 .dt-mem { display: flex; align-items: center; gap: 11px; }
@@ -1869,10 +1993,7 @@
 .tb-fs.open .asel-chev { background: var(--steel-100); color: var(--steel-600); }
 .tb-fs.open .asel-chev svg { transform: rotate(180deg); }
 .tb-fs-panel {
-  position: absolute;
-  top: calc(100% + 6px);
-  inset-inline-start: 0;
-  z-index: var(--z-dropdown);
+  /* الجلد البصريّ فقط — التموضع والطبقة من بدائيّة .apop */
   min-width: 190px;
   padding: 6px;
   /* Aurora — مطابقة لنافذة القائمة */
@@ -1952,9 +2073,9 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .dm-trigger svg { width: 18px; height: 18px; }
 
 .dm-menu {
-  /* التموضع من Radix (تحويل داخليّ)؛ هنا المظهر فقط */
+  /* الجلد البصريّ فقط — التموضع والطبقة من بدائيّة .apop */
   min-width: 210px;
-  max-height: min(80vh, var(--radix-dropdown-menu-content-available-height, 80vh));
+  max-height: 80vh;
   overflow: auto;
   outline: none; /* التركيز على الحاوية عند الفتح بالفأرة برمجيّ (لالتقاط المفاتيح) — بلا مخطّط مرئيّ */
   padding: 6px;
@@ -1963,9 +2084,7 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
   border: var(--card-stroke-w) solid var(--card-stroke);   /* موحّد على card-stroke (ق٤)؛ نغمات dm-tone-* تُبدّل اللون وترث العرض */
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
-  z-index: var(--z-dropdown);
   --shadow-tone: var(--shadow-tone-brand);   /* فولاذيّ 600 — لون التحويم الافتراضيّ (يُبدَّل بالنغمة) */
-  transform-origin: var(--radix-dropdown-menu-content-transform-origin);
   animation: dm-in var(--dur-fast) var(--ease-standard);
 }
 /* شفافية فقط (لا transform) كي لا يزاحم تموضع Radix */
@@ -2000,16 +2119,18 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 /* خلفية القائمة بلون الحالة (سطح Aurora منغَّم + حدّ + ظلّ) — الافتراضيّ فولاذيّ.
    الظلّ يتلوّن تلقائيًّا لأن طبقة التوحيد تقرأ --shadow-tone من العنصر. */
 /* النغمة تضبط --shadow-tone على أيّ عنصر منسدل (مُطلِق أو قائمة) — أساس تتبّع المُطلِق لنغمته */
+.dm-tone-neutral { --shadow-tone: var(--shadow-tone-neutral); }
 .dm-tone-success { --shadow-tone: var(--shadow-tone-success); }
 .dm-tone-warning { --shadow-tone: var(--shadow-tone-warning); }
 .dm-tone-danger  { --shadow-tone: var(--shadow-tone-danger); }
+.dm-menu.dm-tone-neutral { background: linear-gradient(135deg, var(--aurora-neutral), var(--color-surface) 60%); border-color: var(--card-stroke-neutral); --shadow-tone: var(--shadow-tone-neutral); }
 .dm-menu.dm-tone-success { background: linear-gradient(135deg, var(--aurora-success), var(--color-surface) 60%); border-color: var(--card-stroke-success); --shadow-tone: var(--shadow-tone-success); }
 .dm-menu.dm-tone-warning { background: linear-gradient(135deg, var(--aurora-warning), var(--color-surface) 60%); border-color: var(--card-stroke-warning); --shadow-tone: var(--shadow-tone-warning); }
 .dm-menu.dm-tone-danger  { background: linear-gradient(135deg, var(--aurora-danger), var(--color-surface) 60%); border-color: var(--card-stroke-danger); --shadow-tone: var(--shadow-tone-danger); }
 
 /* ============================================================
    النافذة (Modal) · حواريّة مركزيّة · بادئة .mdl
-   overflow مرئيّ ليظهر منسدل Select كاملًا؛ الزوايا مُدوّرة بالرأس/التذييل.
+   منسدل Select يُنقَل عبر Portal إلى body فلا يقصّه جسم النافذة؛ الزوايا مُدوّرة بالرأس/التذييل.
    ============================================================ */
 /* الطبقة (Radix Overlay) — خلفيّة فقط؛ التوسيط على اللوح نفسه */
 .mdl-scrim {
@@ -2049,6 +2170,27 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .mdl[data-state="open"] { animation: mdl-pop var(--dur) var(--ease-standard) both; }
 .mdl[data-state="closed"] { animation: mdl-pop-out var(--dur-fast) var(--ease-standard) both; }
 @media (prefers-reduced-motion: reduce) { .mdl[data-state], .mdl-scrim[data-state] { animation: none; } }
+
+/* عارض الأعمال (Lightbox) — يجلس على بدائيّة Dialog: يعيد استعمال ستارة النافذة (.mdl-scrim)
+   وحركتها (mdl-pop) ومركزتها، ويلبس مظهره الخاصّ «صورة أولًا». */
+.wlb {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  width: min(48rem, calc(100vw - 3rem));
+  max-height: 85vh;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+.wlb[data-state="open"] { animation: mdl-pop var(--dur) var(--ease-standard) both; }
+.wlb[data-state="closed"] { animation: mdl-pop-out var(--dur-fast) var(--ease-standard) both; }
+@media (prefers-reduced-motion: reduce) { .wlb[data-state] { animation: none; } }
 .mdl-head {
   display: flex;
   align-items: flex-start;
@@ -2059,7 +2201,8 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
   border-radius: var(--radius) var(--radius) 0 0;
   flex: 0 0 auto; /* ثابتة أعلى النافذة */
 }
-.mdl-title { font-size: 18px; font-weight: 900; color: var(--color-primary); }
+/* العنوان يقرأ نصّ النغمة بارتدادٍ إلى الكحليّ — النافذة العاديّة بلا نغمة فتبقى عليه */
+.mdl-title { font-size: 18px; font-weight: 900; color: var(--mdl-tx, var(--color-primary)); }
 .mdl-desc { font-size: 13px; color: var(--color-text-muted); margin-top: 2px; }
 /* مخفيّ بصريًّا لكنه متاح لقارئ الشاشة (عنوان Radix الإلزاميّ عند غيابه) */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
@@ -2071,12 +2214,15 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .mdl-x svg { width: 17px; height: 17px; }
 .mdl-x:hover { background: color-mix(in oklab, var(--steel-500) 12%, var(--color-surface)); color: var(--color-primary); }
 .mdl-body { padding: 18px 20px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+/* التذييل يقرأ النغمة بارتداد (ق٩): صيغةٌ واحدة والنغمة تغيّر اللون وحده — خلفيّته وحدُّه
+   يُمزجان من --fld-accent (تضبطه .mdl-tone-*)، وبلا نغمةٍ يرتدّان إلى الفولاذيّ/الحبر الحاليَّين
+   بايت‑ببايت (حدّ الحبر 12% فوق شفّاف = --color-border نفسه). */
 .mdl-foot {
   display: flex; justify-content: flex-end; gap: 10px;
   padding: 14px 20px;
   flex: 0 0 auto; /* ثابت أسفل النافذة */
-  border-top: 1px solid var(--color-border);
-  background: color-mix(in oklab, var(--steel-500) 3%, var(--color-surface));
+  border-top: 1px solid color-mix(in oklab, var(--fld-accent, var(--color-text)) 12%, transparent);
+  background: color-mix(in oklab, var(--fld-accent, var(--steel-500)) 3%, var(--color-surface));
   border-radius: 0 0 var(--radius) var(--radius);
 }
 /* شبكة حقول النافذة — flex لا grid، بدواء القاعدة ٦ نفسه: الحقل اليتيم في صفّه يمتدّ عليه كلّه.
@@ -2088,9 +2234,21 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .mdl-full { flex-basis: 100%; }   /* بعد القاعدة أعلاه: تساوت الخصوصيّة فالمتأخّرة تفوز */
 @media (max-width: 520px) { .mdl-grid > * { flex-basis: 100%; } }
 .mdl-fieldlabel { display: block; font-size: 12.5px; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px; }
-.mdl-seg { display: inline-flex; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 3px; gap: 2px; width: max-content; }
-.mdl-seg button { font-family: inherit; font-size: 13px; font-weight: 700; color: var(--color-text-muted); background: 0; border: 0; border-radius: var(--radius-nested); padding: 7px 15px; cursor: pointer; transition: color var(--dur-fast); }
-.mdl-seg button.on { background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-sm); }
+/* شريط مقطعيّ (Segmented) — تحكّمٌ لا سطح: يحفظ حدّه الخاصّ (ق٤). العنصر متداخلٌ بفراغٍ يسير
+   فزاويته متراكزة (--radius-nested)، والفعّال يرتفع بسطحٍ أبيض وظلٍّ صغير (ق٥). مصدرٌ واحد لكلّ
+   مظهرٍ مقطعيّ: تبويبات النافذة · مبدّل مدى التحليلات · ونمط التبويبات .tabs-segmented — يشاركه
+   القضيبَ الغائرَ والرقاقةَ الفعّالة، وينفرد وحده بمقاس عنصره وشارته (في قسم التبويبات أدناه). */
+.seg, .tabs-segmented { display: inline-flex; gap: 2px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius); }
+.seg { width: max-content; padding: 3px; }
+.tabs-segmented { padding: 4px; }
+.seg-item { font-family: inherit; font-size: 13px; font-weight: 700; color: var(--color-text-muted); background: 0; border: 0; border-radius: var(--radius-nested); padding: 7px 15px; cursor: pointer; text-decoration: none; transition: color var(--dur-fast); }
+.seg-item:hover, .tabs-segmented .tab:hover { color: var(--color-primary); }
+.seg-item.on, .tabs-segmented .tab.on { background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-sm); }
+/* تسمية عنصرٍ مقطعيّ بأيقونةٍ قبلها · وشريط المبدّل الذي يحمله (مبدّل تصميم الشجرة نموذجًا).
+   كانا `.org-*` محبوسين في تبويب الهيكلة، وليس فيهما ما يخصّها — فعادا إلى بيتهما مع `.seg`. */
+.seg-lbl { display: inline-flex; align-items: center; gap: 6px; }
+.seg-lbl svg { width: 15px; height: 15px; }
+.viewbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
 /* ============================================================
    الترقيم (Pagination) — تذييل الجدول · بادئة .pag
@@ -2169,7 +2327,12 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .av-xl { width: 70px; height: 70px; border-radius: var(--radius); font-size: 23px; }
 .av-2xl { width: 90px; height: 90px; border-radius: var(--radius); font-size: 29px; }
 .av-2xl .av-dot { width: 18px; height: 18px; border-width: 3px; }
-.av-img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
+/* الارتفاع بنسبةٍ مئويّة لا يُحلّ على عنصر داخل شبكة .av (يرتدّ auto فتفيض الصورة لطولها الطبيعيّ).
+   الجذر: aspect-ratio — العرض نسبةٌ من عرضٍ محدَّد، والارتفاع يُشتقّ منه، بلا نسبةٍ معلّقة. */
+.av-img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; border-radius: inherit; }
+/* أيقونة الجنس — جسمٌ كامل أبيض (fill:#fff) فوق تدرّج الهوية، كعلامة الحمّام: مربّعٌ بـ64%
+   من الأفتار تُوسّطه شبكة .av، وobject-fit: contain يحتوي الجسم الطويل داخله بلا فيضان. */
+.av-fig { width: 85%; aspect-ratio: 1; object-fit: contain; display: block; }
 .av-ini { line-height: 1; }
 /* أداة: نصّ لاتينيّ صريح بخط Eras (للبريد/الأرقام خارج الجدول) */
 .lat { font-family: var(--font-latin); }
@@ -2292,11 +2455,9 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .tabs-pill .tab:hover { background: var(--color-surface-2); color: var(--color-primary); }
 .tabs-pill .tab.on { color: #fff; background: var(--grad-primary); box-shadow: var(--shadow-sm); }
 .tabs-pill .tab.on .tab-b { background: rgba(255, 255, 255, .22); color: #fff; }
-.tabs-segmented { display: inline-flex; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 4px; gap: 2px; }
+/* المظهر المقطعيّ (القضيب + الرقاقة الفعّالة + التمرير) مصدرُه .seg أعلاه — يُشارَك بالتجميع.
+   هنا مقاسُ عنصر التبويب وحده (أكبر قليلًا ليجاور underline/pill)؛ والشارة من .tab-b الأساس. */
 .tabs-segmented .tab { font-size: 13.5px; border-radius: var(--radius); padding: 8px 15px; }
-.tabs-segmented .tab:hover { color: var(--color-primary); }
-.tabs-segmented .tab.on { background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-sm); }
-.tabs-segmented .tab.on .tab-b { background: color-mix(in oklab, var(--steel-500) 16%, var(--color-surface)); }
 
 /* لوحة تبويب داخل النافذة + قائمة معلومات (لعرض الملف) */
 .mdl-tabpanel { padding-top: 16px; }
@@ -2306,30 +2467,25 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 /* ===== نافذة عرض بيانات العضو (للقراءة) — غلاف منقوش + أفتار مربّع + شبكة خلايا بنسخ ===== */
 .pvb-modal { overflow: hidden; }
 .pvb-modal .mdl-body { padding-top: 52px; }
-/* الغلاف يقرأ نغمته بارتدادٍ إلى تدرّج العلامة — كما تفعل `.acard`/`.mc` مع `--surface-aurora`:
-   النغمة يضبطها صنفٌ على النافذة (`.pvb-tone-*`)، والغلاف يقرؤها ولا يعرفها. فنافذة السبب تلبس
-   الخطر بلا نسخةٍ ثانية من الغلاف. زيادة نغمةٍ لاحقًا = سطرٌ واحد أدناه، لا تعديل هنا. */
-.pvb-cover { height: 94px; background: var(--pvb-cover-grad, var(--grad-primary)); position: relative; overflow: hidden; flex: 0 0 auto; }
-/* نغمة الخطر وحدها اليوم (نافذة سبب الإنهاء) — تُزاد الأخرى عند الحاجة لا استباقًا. */
-.pvb-tone-danger { --pvb-cover-grad: var(--grad-danger); }
+/* الغلاف والأفتار يقرآن نغمة النافذة بارتدادٍ إلى تدرّج العلامة: النغمة يضبطها `.mdl-tone-*`
+   على النافذة (المصدر الواحد، تشاركه نافذة التأكيد)، وهما يقرآنها ولا يعرفانها. فنافذة الملفّ
+   تبقى على العلامة (لا نغمة ⇒ الارتداد)، ونافذة السبب تلبس الخطر بلا نسخةٍ ثانية من الغلاف. */
+.pvb-cover { height: 94px; background: var(--mdl-grad, var(--grad-primary)); position: relative; overflow: hidden; flex: 0 0 auto; }
 .pvb-cover::after { content: ""; position: absolute; inset: 0; background: url("/brand/pattern-white.svg") no-repeat center / 135%; opacity: .13; pointer-events: none; }
 .pvb-cover .mdl-x { position: absolute; top: 12px; inset-inline-end: 12px; color: #fff; background: rgba(255,255,255,.18); }
 .pvb-cover .mdl-x:hover { background: rgba(255,255,255,.32); color: #fff; }
 /* أفتار الملف = مكوّن Avatar (av av-2xl) + هذا المُعدِّل للموضع فوق الغلاف والحلقة البيضاء فقط */
-.pvb-av { position: absolute; top: 49px; left: 50%; transform: translateX(-50%); border: 4px solid var(--color-surface); z-index: 3; }
+/* الأفتار يتبع نغمة النافذة كالغلاف (يظلّل `--grad-primary` الذي في `.av` — يُعلن بعده) */
+.pvb-av { position: absolute; top: 49px; left: 50%; transform: translateX(-50%); border: 4px solid var(--color-surface); z-index: 3; background: var(--mdl-grad, var(--grad-primary)); }
 /* النقطة تفيض على الركن الخارجيّ للحلقة (4px) بنفس مقدار المعرض (1px) — لتطابق موضع نقطة المعرض تمامًا */
 .pvb-av .av-dot { bottom: -5px; inset-inline-start: -5px; }
-.pvb-name { text-align: center; font-size: 20px; font-weight: 800; color: var(--color-primary); }
+/* الاسم يتبع نصّ النغمة كالعنوان (نافذة الملفّ بلا نغمة ⇒ كحليّ بالارتداد) */
+.pvb-name { text-align: center; font-size: 20px; font-weight: 800; color: var(--mdl-tx, var(--color-primary)); }
 .pvb-role { text-align: center; font-size: 13px; color: var(--color-text-muted); margin-top: 3px; }
 .pvb-badges { display: flex; justify-content: center; margin: 11px 0 4px; }
 /* ═══ نافذة الملفّ: أقسام معنونة بفواصل خفيفة (eyebrow: أيقونة هوية + عنوان كحليّ + خطّ يتلاشى) فوق شبكة خلايا ═══
    token-pure: لا px/hex صريح لحدّ أو زاوية أو ظلّ. صُحّحت مخالفتا .pva-cell (الحدّ→card-stroke، الزاوية→radius-sm). */
 .pva-sections { margin-top: 20px; display: flex; flex-direction: column; gap: 20px; }
-/* متن السبب (نافذة السبب) — النصّ هنا **هو** المحتوى لا قيمةَ حقل، فيُعرض متنًا يُقرأ لا خليّةً تُقصّ:
-   حجمٌ أكبر من `.pva-val` ومدى سطرٍ أوسع. و`pre-wrap` يحفظ أسطر المدير كما كتبها — السبب جملة حرّة
-   قد تُكتب فقراتٍ، وطيّها إلى سطر واحد يُفقدها معناها (وهذا نقيض `.txt-clip` في الجدول والكرت:
-   هناك يُطوى للاختصار، وهنا يُكشف بتمامه — ولذلك وُجدت هذه النافذة). */
-.rsn-text { font-size: 15px; font-weight: 600; line-height: 1.75; color: var(--color-text); white-space: pre-wrap; overflow-wrap: anywhere; }
 /* عنوان القسم = فاصل خفيف: أيقونة هوية (fill) + عنوان كحليّ + خطّ يتلاشى (عرضه ولونه من الرمز) */
 /* عنوان القسم = المكوّن ModalSectionHeading (بادئة .msh) — مصدر واحد لثلاثة مواضع:
    أقسام عرض الملفّ · مجموعات حقول نموذج تعديل العضو · معرض /ui/section-heading.
@@ -2350,11 +2506,22 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .pva-grid > * { flex: 1 1 calc(50% - 4.5px); min-width: 0; }
 .pva-cell { position: relative; background: var(--surface-aurora); border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius-sm); padding: 11px 13px; min-width: 0; }
 .pva-cell.full { flex-basis: 100%; }
-/* قسم «إنهاء العضويّة» الشرطيّ — النغمة على الكروم فقط، القيمة تبقى محايدة عالية التباين */
-.pva-sec--end .pva-cell { --surface-aurora: linear-gradient(135deg, var(--danger-50), var(--color-surface) 62%); }
+/* قسم «إنهاء العضويّة» الشرطيّ — النغمة تعمّ الخليّة: سطحها وحدّها وأيقونتها **وقيمتها**.
+   والقيمة كانت تُستثنى («تبقى محايدة») بحجّة وصوليّة — سقطت بالقياس: `danger-700` على سطح القسم
+   نسبته 7.24 (يجتاز AAA، حدّه ٧)، والكحليّ 10.04. كلاهما آمن، فالاستثناء بلا سند.
+   وكرت الشخص يُنغّم قيمه (`--card-tx`) منذ زمن — فالمكوّنان يجيبان الآن جوابًا واحدًا (بقرار المالك ٢٠٢٦-٠٧-١٦).
+   والحدّ يلازم السطح: القاعدة ٤ تقول الحدّ من الرمز النغميّ. */
+.pva-sec--end .pva-cell { --surface-aurora: linear-gradient(135deg, var(--danger-50), var(--color-surface) 62%); border-color: var(--card-stroke-danger); }
 .pva-sec--end .pva-lic { color: var(--danger-600); }
+/* التسمية تُمزج بالنغمة ولا تُصبغ بها: مزيجٌ 55% مع الرماديّ — فتتبع القسم وتبقى **دون** القيمة
+   في القوّة، فلا تنافسها. نفس مزيج كرت الشخص حرفًا بحرف (`--card-t` 55%) — مكوّنان بجواب واحد.
+   وقياسًا: 5.81 على سطح القسم (يجتاز AA للنصّ الصغير، وأعلى من الرماديّ الذي كان 5.06). */
+.pva-sec--end .pva-lbl { color: color-mix(in oklab, var(--danger-600) 55%, var(--color-text-muted)); }
 /* سبب الإنهاء نصّ حرّ قد يطول → يلفّ في قسم الإنهاء بدل البتر لسطر (بقيّة الأقسام تبقى بسطر واحد) */
-.pva-sec--end .pva-val { white-space: normal; overflow: visible; text-overflow: clip; }
+/* قيمة قسم الإنهاء: بلون النغمة على درجة الأساس نفسها (700 ← 700، فلا يخفت النصّ إنّما يتلوّن)،
+   وتلتفّ كاملةً (السبب جملة حرّة قد تطول). و`pre-wrap` لا `normal`: يحفظ أسطر المدير كما كتبها،
+   فقد يكتب السبب فقراتٍ و`normal` يطويها سطرًا واحدًا فيُفقدها معناها. */
+.pva-sec--end .pva-val { color: var(--danger-700); white-space: pre-wrap; overflow: visible; text-overflow: clip; }
 .pva-lbl { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--color-text-muted); }
 .pva-lic { width: 15px; height: 15px; color: var(--steel-600); flex: 0 0 auto; display: inline-flex; }
 .pva-lic svg { width: 100%; height: 100%; }
@@ -2375,28 +2542,37 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 @keyframes copy-draw { to { stroke-dashoffset: 0; } }
 @keyframes copy-pop { 0% { transform: scale(.3); } 55% { transform: scale(1.18); } 100% { transform: scale(1); } }
 
-/* ===== النافذة الاستثنائيّة (تنبيه/تأكيد) — نغمة الحالة + أيقونة متحرّكة بمعناها + أزرار ممتدّة ===== */
-.mdl-tone-danger  { --surface-aurora: linear-gradient(135deg, var(--aurora-danger), var(--color-surface) 62%); border-color: var(--card-stroke-danger); --shadow-tone: var(--shadow-tone-danger); }
-.mdl-tone-warning { --surface-aurora: linear-gradient(135deg, var(--aurora-warning), var(--color-surface) 62%); border-color: var(--card-stroke-warning); --shadow-tone: var(--shadow-tone-warning); }
-.mdl-tone-success { --surface-aurora: linear-gradient(135deg, var(--aurora-success), var(--color-surface) 62%); border-color: var(--card-stroke-success); --shadow-tone: var(--shadow-tone-success); }
+/* ===== النافذة المنغَّمة — نغمة الحالة على سطحها وحدّها وظلّها، وأسطحها المتدرّجة =====
+   تخدم النافذة الاستثنائيّة (تنبيه/تأكيد: أيقونة متحرّكة + أزرار ممتدّة) ونافذة السبب (غلاف + أفتار) معًا.
+   كلّ نغمة تُعلن لونها **مرّةً واحدة**، والأسطح أدناه تقرؤه — كما في نغمة كرت الشخص (`--card-grad`).
+   `--mdl-grad` = التدرّج المصمت لأسطح النغمة (الأيقونة · الغلاف · الأفتار).
+   `--mdl-tx`   = لون نصّها المقروء فوق سطح Aurora الفاتح (العنوان · اسم الملفّ).
+   كانا يُكتبان ثلاث مرّات لكلّ عنصر (٣ نغمات × كلّ عنصر)؛ صارا سطرين في كلّ نغمة يقرؤهما الجميع. */
+.mdl-tone-danger  { --surface-aurora: linear-gradient(135deg, var(--aurora-danger), var(--color-surface) 62%); border-color: var(--card-stroke-danger); --shadow-tone: var(--shadow-tone-danger); --mdl-grad: var(--grad-danger); --mdl-tx: var(--danger-700); }
+.mdl-tone-warning { --surface-aurora: linear-gradient(135deg, var(--aurora-warning), var(--color-surface) 62%); border-color: var(--card-stroke-warning); --shadow-tone: var(--shadow-tone-warning); --mdl-grad: var(--grad-warning); --mdl-tx: var(--warning-700); }
+.mdl-tone-success { --surface-aurora: linear-gradient(135deg, var(--aurora-success), var(--color-surface) 62%); border-color: var(--card-stroke-success); --shadow-tone: var(--shadow-tone-success); --mdl-grad: var(--grad-success); --mdl-tx: var(--success-700); }
+/* الحقول داخل النافذة المنغّمة تتبع نغمتها: تينت Aurora + حدّ التركيز + التمييز (الحلقة تتبع
+   --shadow-tone المضبوط أعلاه؛ وحالة الحقل err/ok تفوز صراحةً إن طرأت لأنّها أخصّ). */
+.mdl-tone-danger  { --fld-tint: var(--danger-50);  --fld-tint-2: var(--danger-100);  --fld-accent: var(--danger-600); }
+.mdl-tone-warning { --fld-tint: var(--warning-50); --fld-tint-2: var(--warning-100); --fld-accent: var(--warning-600); }
+.mdl-tone-success { --fld-tint: var(--success-50); --fld-tint-2: var(--success-100); --fld-accent: var(--success-600); }
 /* نافذة التأكيد المنغَّمة تعرض Aurora نغمتها (يفوز على الفولاذيّ الأساسيّ بترتيب المصدر) */
 .mdl-tone-danger, .mdl-tone-warning, .mdl-tone-success { background: var(--surface-aurora); }
-.mdl-tic { width: 54px; height: 54px; border-radius: var(--radius); display: grid; place-items: center; flex: 0 0 auto; color: #fff; box-shadow: var(--shadow-md); position: relative; }
+.mdl-tic { width: 54px; height: 54px; border-radius: var(--radius); display: grid; place-items: center; flex: 0 0 auto; color: #fff; box-shadow: var(--shadow-md); position: relative; background: var(--mdl-grad); }
 .mdl-tic svg { width: 26px; height: 26px; }
-.mdl-tone-danger .mdl-tic  { background: var(--grad-danger); }
-.mdl-tone-warning .mdl-tic { background: var(--grad-warning); }
-.mdl-tone-success .mdl-tic { background: var(--grad-success); }
-.mdl-tone-danger .mdl-title  { color: var(--danger-700); }
-.mdl-tone-warning .mdl-title { color: var(--warning-700); }
-.mdl-tone-success .mdl-title { color: var(--success-700); }
 /* زرّ الإكس يتبع نغمة النافذة (كقاعدة إغلاق التوست): بلون النغمة · بلا خلفيّة خاملة · خلفيّة نغمة 6% عند المرور.
-   خاملة حاليًّا (نوافذ التأكيد بلا أكس)، تنشط تلقائيًّا لأيّ نافذة Modal تحمل mdl-tone-* وتعرض .mdl-x. */
+   يصلح حين يعيش الإكس على **سطح النافذة الفاتح** (نافذة التأكيد). أمّا في الغلاف الملوّن فيُستثنى أدناه:
+   لونُ النغمة على سطح النغمة يبتلع نفسه — الأحمر على الأحمر لا يُرى. */
 .mdl-tone-danger .mdl-x { color: var(--danger-500); background: transparent; }
 .mdl-tone-danger .mdl-x:hover { background: color-mix(in oklab, var(--danger-500) 6%, transparent); color: var(--danger-500); }
 .mdl-tone-warning .mdl-x { color: var(--warning-500); background: transparent; }
 .mdl-tone-warning .mdl-x:hover { background: color-mix(in oklab, var(--warning-500) 6%, transparent); color: var(--warning-500); }
 .mdl-tone-success .mdl-x { color: var(--success-500); background: transparent; }
 .mdl-tone-success .mdl-x:hover { background: color-mix(in oklab, var(--success-500) 6%, transparent); color: var(--success-500); }
+/* الإكس في الغلاف يبقى أبيض مهما كانت النغمة — يعيش على سطحٍ ملوّن لا على سطح النافذة، فلونُ النغمة
+   يبتلعه. خصوصيّةٌ أعلى (نغمة + غلاف) لتفوز على قاعدة النغمة أعلاه أيًّا كان ترتيب المصدر. */
+.mdl[class*="mdl-tone-"] .pvb-cover .mdl-x { color: #fff; background: rgba(255,255,255,.18); }
+.mdl[class*="mdl-tone-"] .pvb-cover .mdl-x:hover { background: rgba(255,255,255,.32); color: #fff; }
 .mdl-alert .mdl-body { text-align: center; padding: 30px 26px 12px; }
 .mdl-alert .mdl-tic { margin: 0 auto 15px; }
 .mdl-alert .mdl-title { font-size: 19px; }
@@ -2499,7 +2675,7 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
   animation: toast-in var(--dur) var(--ease-standard);
 }
 @keyframes toast-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-.tic { width: 34px; height: 34px; flex: 0 0 auto; border-radius: var(--radius); display: grid; place-items: center; color: #fff; }
+.tic { width: 34px; height: 34px; flex: 0 0 auto; border-radius: var(--radius); display: grid; place-items: center; color: #fff; box-shadow: var(--shadow-sm); }
 .tic svg { width: 19px; height: 19px; }
 .tmsg { flex: 1; font-size: 14px; font-weight: 600; color: var(--color-text); }
 .tx { width: 28px; height: 28px; flex: 0 0 auto; border: 0; background: 0; color: var(--color-text-muted); cursor: pointer; border-radius: var(--radius); display: grid; place-items: center; transition: background var(--dur-fast); }
@@ -2514,17 +2690,17 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
 
 /* النبرات */
-.tt-success { background: linear-gradient(120deg, color-mix(in oklab, var(--success) 10%, var(--color-surface)), var(--color-surface)); border-color: var(--card-stroke-success); }
+.tt-success { --shadow-tone: var(--shadow-tone-success); background: linear-gradient(120deg, color-mix(in oklab, var(--success) 10%, var(--color-surface)), var(--color-surface)); border-color: var(--card-stroke-success); }
 .tt-success .tic { background: var(--grad-success); box-shadow: var(--shadow-md); }
 .tt-success .tprog { background: var(--grad-success); }
-.tt-error { background: linear-gradient(120deg, color-mix(in oklab, var(--danger) 10%, var(--color-surface)), var(--color-surface)); border-color: var(--card-stroke-danger); }
+.tt-error { --shadow-tone: var(--shadow-tone-danger); background: linear-gradient(120deg, color-mix(in oklab, var(--danger) 10%, var(--color-surface)), var(--color-surface)); border-color: var(--card-stroke-danger); }
 .tt-error .tic { background: var(--grad-danger); box-shadow: var(--shadow-md); }
 /* توست الخطأ دائم: بلا شريط تقدّم — يبقى حتى يُغلقه المستخدم بالأكس (وعلى دالّة التوست ألّا تضبط له مؤقّتًا) */
 .tt-error .tprog { display: none; }
 .tt-info { background: linear-gradient(120deg, color-mix(in oklab, var(--steel-500) 12%, var(--color-surface)), var(--color-surface)); border-color: var(--card-stroke-brand); }
 .tt-info .tic { background: var(--grad-primary); box-shadow: var(--shadow-md); }
 .tt-info .tprog { background: var(--grad-primary); }
-.tt-warning { background: linear-gradient(120deg, color-mix(in oklab, var(--warning) 12%, var(--color-surface)), var(--color-surface)); border-color: var(--card-stroke-warning); }
+.tt-warning { --shadow-tone: var(--shadow-tone-warning); background: linear-gradient(120deg, color-mix(in oklab, var(--warning) 12%, var(--color-surface)), var(--color-surface)); border-color: var(--card-stroke-warning); }
 .tt-warning .tic { background: var(--grad-warning); box-shadow: var(--shadow-md); }
 .tt-warning .tprog { background: var(--grad-warning); }
 /* زرّ الإغلاق يتبع النغمة: الأكس بلون النغمة فقط (بلا خلفيّة خاملة)، وخلفيّة نغمة 6% عند المرور */
@@ -2582,48 +2758,51 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .tb-view button.on { background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-sm); }
 
 /* ============================================================
-   عرض الكروت — كرت العضو «بترويسة Aurora» · .mc
+   عرض الكروت — كرت الشخص (نمط بطاقة الهوية · .acard-profile)
    ============================================================ */
 /* القاعدة ٦ — الصفّ الأخير لا يترك فراغًا. flex لا grid: عدد الأعمدة متغيّر
    (كان auto-fill)، وflex-grow يمدّ الصفّ الأخير مهما كان عدده أو عرض الشاشة. */
-.mc-grid { display: flex; flex-wrap: wrap; gap: 18px; }
-.mc-grid > * { flex: 1 1 252px; }
-/* سطح Aurora: تدرّج ناعم + توهّج فولاذيّ ملوّن */
-.mc {
+.card-grid { display: flex; flex-wrap: wrap; gap: 18px; }
+.card-grid > * { flex: 1 1 252px; }
+/* استثناء مُقَرّ من المالك (القاعدة ٦): عمودان كحدّ أقصى — يُطبَّق حيث يحتاج المحتوى عرضًا (تبويب
+   الاستبيانات: العنوان يحتاج مساحة، فانسياب الشبكة لثلاثة/أربعة يضيّقه). عتبةُ الانتقال معبَّرةٌ
+   بوحدة الحرف **بلا استعلام وسائط**: `max` تختار الأكبر — عمودان ما دام نصفُ عرض الحاوية ≥ 34ch،
+   وإلّا فالأساس 34ch فلا يتّسع لعمودين → عمودٌ واحد (والفردُ الأخير يمتدّ كامل العرض، القاعدة ٦).
+   والنسبة من حاوية الكرت لا الشاشة، فتستجيب لمساحة الكروت الفعليّة (اللوحة ذات شريط جانبيّ).
+   تحفّظ: 1ch = عرض «0» في خطّ الكرت — تقريبٌ (أخشن للعربيّة)، لا عدٌّ حقيقيّ للحروف الظاهرة. */
+.card-grid-2col > * { flex-basis: max(50ch, calc(50% - 9px)); }
+/* عمودٌ واحد — كلّ كرتٍ بعرض الصفّ كاملًا (basis 100% فلا يتّسع لثانٍ بجواره)، فيُقرأ الترتيب
+   تسلسلًا رأسيًّا نظيفًا (١،٢،٣…) بلا تعرّجٍ بين الأعمدة. للقوائم المرتّبة يدويًّا (محتوى الرئيسيّة). */
+.card-grid-1col > * { flex-basis: 100%; }
+/* نمط الشخص = بطاقة `.acard` (السطح/الحدّ/الظلّ/الزاوية/الفيض من الأساس) + توسيطٌ عموديّ.
+   لا يُعيد إعلان وصفة Aurora — يقرؤها الأساس بارتداد إلى الفولاذيّ، فمصدرٌ واحد للكرتين. */
+.acard-profile {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   padding-bottom: 0;
-  overflow: hidden;
-  border-radius: var(--radius);
-  /* نفس وصفة Aurora المعتمدة في .acard حرفيًّا */
-  /* كـ.acard: النغمة تُقرأ بارتدادٍ إلى الأساس الفولاذيّ */
-  border: var(--card-stroke-w) solid var(--border-aurora, var(--card-stroke));
-  background: var(--surface-aurora, linear-gradient(135deg, color-mix(in oklab, var(--steel-600) 12%, var(--color-surface)), var(--color-surface) 62%));
-  box-shadow: var(--shadow-md);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 /* المنغَّم يشتدّ بنغمته، وغير المنغَّم يسقط إلى الأزرق (كـ.stat-*:hover).
    كان --navy-700 مكتوبًا صراحةً فيُظلّل النغمة: أزرق على كلّ الألوان عند التمرير. */
-.mc:hover { transform: scale(var(--hover-scale)); border-color: var(--mc-t, var(--navy-700)); box-shadow: var(--shadow-lg); }
+.acard-profile:hover { transform: scale(var(--hover-scale)); border-color: var(--card-t, var(--navy-700)); box-shadow: var(--shadow-lg); }
 /* الشريط العلويّ: تدرّج لوني الهوية من الزاوية + بلوم Aurora + باترن الهوية */
-.mc-head {
+.acard-banner {
   position: relative;
   width: 100%;
   height: 72px;
   overflow: hidden;
   background: var(--grad-primary-strong);
 }
-.mc-head::before {
+.acard-banner::before {
   content: "";
   position: absolute;
   inset: 0;
   background: radial-gradient(150px 100px at 20% -10%, rgba(111, 151, 192, .6), transparent 70%);
   pointer-events: none;
 }
-.mc-head::after {
+.acard-banner::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -2631,18 +2810,18 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
   opacity: .18;
   pointer-events: none;
 }
-.mc-head .mc-dots, .mc-head > span { position: absolute; top: 8px; inset-inline-end: 8px; z-index: 1; }
+.acard-banner .acard-dots, .acard-banner > span { position: absolute; top: 8px; inset-inline-end: 8px; z-index: 1; }
 /* استثناء مسمّى عن قاعدة «المُطلِق المنغّم أيقونته بلون نغمته»: مُطلِق الكرت لا يجلس على سطح محايد
    كـ.dt-dots، بل على شريط ترويسة مصمت بلون النغمة نفسها — فلونها عليه يذوب فيها (أحمر على أحمر).
-   يبقى أبيض، والنغمة تتكلّم في لوحة القائمة وفي الشريط تحته. والنطاق بـ.mc-head يكسب على
-   button[class*="dm-tone-"] بالخصوصيّة (0,2,0 > 0,1,1) — و.mc-dots لا تعيش خارج الترويسة أصلًا. */
-.mc-head .mc-dots { width: 30px; height: 30px; border: 0; background: rgba(255, 255, 255, .12); color: rgba(255, 255, 255, .95); cursor: pointer; display: grid; place-items: center; transition: background var(--dur-fast); }
-.mc-dots svg { width: 18px; height: 18px; }
-.mc-head .mc-dots:hover, .mc-head .mc-dots[aria-expanded="true"] { background: rgba(255, 255, 255, .28); color: #fff; }
-.mc .mc-av { margin-top: -37px; box-shadow: var(--shadow-md), 0 0 0 4px var(--color-surface), inset 0 0 0 1px rgba(255, 255, 255, .22); }
-.mc-name { margin-top: 11px; font-size: 16.5px; font-weight: 800; color: var(--color-primary); padding: 0 14px; }
+   يبقى أبيض، والنغمة تتكلّم في لوحة القائمة وفي الشريط تحته. والنطاق بـ.acard-banner يكسب على
+   button[class*="dm-tone-"] بالخصوصيّة (0,2,0 > 0,1,1) — و.acard-dots لا تعيش خارج الشريط أصلًا. */
+.acard-banner .acard-dots { width: 30px; height: 30px; border: 0; background: rgba(255, 255, 255, .12); color: rgba(255, 255, 255, .95); cursor: pointer; display: grid; place-items: center; transition: background var(--dur-fast); }
+.acard-dots svg { width: 18px; height: 18px; }
+.acard-banner .acard-dots:hover, .acard-banner .acard-dots[aria-expanded="true"] { background: rgba(255, 255, 255, .28); color: #fff; }
+.acard-profile .acard-av { margin-top: -37px; box-shadow: var(--shadow-md), 0 0 0 4px var(--color-surface), inset 0 0 0 1px rgba(255, 255, 255, .22); }
+.acard-pname { margin-top: 11px; font-size: 16.5px; font-weight: 800; color: var(--color-primary); padding: 0 14px; }
 /* الدور واللجنة — شارة ناعمة */
-.mc-role {
+.acard-role {
   display: inline-block;
   margin-top: 8px;
   padding: 4px 13px;
@@ -2654,20 +2833,20 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
   border: 1px solid color-mix(in oklab, var(--steel-500) 20%, transparent);
 }
 /* حساب موقوف — حبّة حمراء (درجة الشارات) */
-.mc-role-danger {
+.acard-role-danger {
   color: color-mix(in oklab, var(--danger-500), #000 6%);
   background: color-mix(in oklab, var(--danger-500) 12%, var(--color-surface));
   border-color: color-mix(in oklab, var(--danger-500) 26%, transparent);
 }
 /* البيانات الأساسية — صفوف نظيفة بأيقونات مؤطّرة (بلا شريط محيط) */
-.mc-info {
+.acard-info {
   width: calc(100% - 34px);
   margin: 14px 17px 0;
   padding: 0;
   display: flex;
   flex-direction: column;
 }
-.mc-info-row {
+.acard-info-row {
   display: flex;
   align-items: center;
   gap: 11px;
@@ -2675,21 +2854,21 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
   border-bottom: 1px solid color-mix(in oklab, var(--steel-500) 11%, transparent);
   text-align: start;
 }
-.mc-info-row:last-child { border-bottom: 0; }
-.mc-ic {
+.acard-info-row:last-child { border-bottom: 0; }
+.acard-ic {
   width: 30px; height: 30px; flex: 0 0 auto;
   border-radius: var(--radius); display: grid; place-items: center;
   color: var(--steel-600);
   background: linear-gradient(135deg, color-mix(in oklab, var(--steel-500) 20%, var(--color-surface)), color-mix(in oklab, var(--steel-500) 8%, var(--color-surface)));
 }
-.mc-ic svg { width: 16px; height: 16px; }
-.mc-info-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
-.mc-info-label { font-size: 11px; font-weight: 600; color: var(--color-text-muted); }
+.acard-ic svg { width: 16px; height: 16px; }
+.acard-info-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
+.acard-info-label { font-size: 11px; font-weight: 600; color: var(--color-text-muted); }
 /* وزن demi (600): أثقل من medium؛ وعنده الأرقام (مباشرة أو عبر التحويل) كلّها eras-demi متطابقة */
-.mc-info-val { min-width: 0; font-size: 13px; font-weight: 600; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; unicode-bidi: plaintext; }
-/* سبب إنهاء العضوية جملةٌ حرّة — سطرٌ واحد و«…» كسائر القيم (`.mc-info-val` يقصّ أصلًا، فلا استثناء
+.acard-info-val { min-width: 0; font-size: 13px; font-weight: 600; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; unicode-bidi: plaintext; }
+/* سبب إنهاء العضوية جملةٌ حرّة — سطرٌ واحد و«…» كسائر القيم (`.acard-info-val` يقصّ أصلًا، فلا استثناء
    له هنا). كان يلتفّ على أسطر فيمطّ ارتفاع الكرت ويُفاوت بين كروت الصفّ؛ والتلميح (`title`)
-   يكشف كامله. حُذف معه `.mc-info-row-top` — كان يرفع الأيقونة لأعلى الصفّ لأجل الالتفاف وحده. */
+   يكشف كامله. حُذف معه `.acard-info-row-top` — كان يرفع الأيقونة لأعلى الصفّ لأجل الالتفاف وحده. */
 /* نصٌّ يُقصّ بـ«…» في سطر واحد — استثناءٌ مقصود عن سلوك الجدول (`.dt-c`: المحتوى كامل بلا اختصار،
    يتّسع العمود ويظهر التمرير). موضعه اليوم: سبب إنهاء العضوية — جملةٌ حرّة تطول بلا حدّ، فاتّساع
    عمودها يزيح بقيّة الأعمدة، والالتفاف يمطّ ارتفاع الصفّ. و«…» تدلّ على بقيّةٍ مطويّة يكشفها
@@ -2698,20 +2877,185 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
    فلا يصغر دون محتواه — ولولاه لاتّسعت الخليّة ولم يُقصّ النصّ مهما وُضع عليه `text-overflow`. */
 .dt-c:has(> .txt-clip) { min-width: 0; }
 .dt-c .txt-clip { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-/* تذييل الكرت: قسم مستقلّ للأزرار (الزرّ الرئيسيّ بعرض كامل) */
-.mc-foot { width: 100%; margin-top: 16px; padding: 14px 16px; border-top: 1px solid color-mix(in oklab, var(--steel-600) 12%, var(--color-border)); background: color-mix(in oklab, var(--steel-600) 4%, var(--color-surface)); display: flex; flex-direction: column; gap: 8px; }
-.mc-foot .abtn { width: 100%; }
+
+/* نصٌّ مطويّ يفتح تفصيله — زرٌّ **بهيئة القيمة** لا زرٌّ بجوارها: لا يزيد صفًّا ولا يزاحم الشبكة.
+   يُركَّب فوق صنف القيمة (`.txt-clip` · `.acard-info-val`) فيبقى القصّ والخطّ واللون لها وحدها،
+   ولا يُعلن هو خطًّا ولا لونًا: إعادة الضبط في globals تُورّثهما للأزرار أصلًا، ولو أعلنهما
+   لدهس لون النغمة (تساوي الخصوصيّة ⇒ المتأخّر يفوز). يقتصر على نزع كروم الزرّ.
+   ويُعلن نفسه **بالمرور** لا بلونٍ دائم — فالقيمة تبقى قيمةً لا رابطًا. */
+.txt-more { border: 0; padding: 0; margin: 0; background: 0; cursor: pointer; text-align: inherit; }
+.txt-more:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* تذييل كرت الشخص: قسم مستقلّ للأزرار (الزرّ الرئيسيّ بعرض كامل) — يخالف `.acard-footer` (المحتوى) عمدًا */
+.acard-foot { width: 100%; margin-top: 16px; padding: 14px 16px; border-top: 1px solid color-mix(in oklab, var(--steel-600) 12%, var(--color-border)); background: color-mix(in oklab, var(--steel-600) 4%, var(--color-surface)); display: flex; flex-direction: column; gap: 8px; }
+.acard-foot .abtn { width: 100%; }
 /* صفّ زرّين كحدّ أقصى (عرض · حذف نهائي)؛ على الجوال يُكدّسان كامليْ العرض */
-.mc-foot-row { display: flex; gap: 8px; }
-.mc-foot-row .abtn { width: auto; flex: 1; min-width: 0; }
+.acard-foot-row { display: flex; gap: 8px; }
+.acard-foot-row .abtn { width: auto; flex: 1; min-width: 0; }
 @media (max-width: 640px) {
-  .mc-foot-row { flex-direction: column; }
-  .mc-foot-row .abtn { flex: none; width: 100%; }
+  .acard-foot-row { flex-direction: column; }
+  .acard-foot-row .abtn { flex: none; width: 100%; }
 }
 
 /* تذييل الترقيم في عرض الكروت (منفصل) + الحالة الفارغة */
-.mc-pager { margin-top: 14px; border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); overflow: hidden; background: var(--color-surface); box-shadow: var(--shadow-md); }
-.mc-empty { border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-md); }
+.card-pager { margin-top: 14px; border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); overflow: hidden; background: var(--color-surface); box-shadow: var(--shadow-md); }
+.card-empty { border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-md); }
+
+/* ── كرت الشخص منغَّمًا بحالته الدلاليّة ─────────────────────────────────────────
+   نظام النغمة موحَّد: `.acard-tone-*` (أعلى الملفّ) يُعلن رموزه (--card-t/--card-tx/--card-grad)
+   مرّةً، والتلوين هنا يُطبَّق على **الأجزاء الحاضرة** (الشريط/الأفتار/الاسم/الشارة/الصفوف/التذييل).
+   أكثرها خاصٌّ بنمط الشخص فلا يمسّ كرت المحتوى؛ والمشترك بينهما **التذييل** فيتبع النغمة في كليهما
+   (انظر قاعدة التذييل أدناه) — العمق تقرّره الأجزاء الموجودة، لا نوع الكرت (ق٤ §٩٠).
+
+   موضعه **بعد** قواعد `.acard-profile` الأساس عمدًا: النغمة تعلو الأساس — كتلة `:is` خصوصيّتها
+   (0,2,0) تغلب قواعد الأبناء (0,1,0) بالخصوصيّة لا بالترتيب، والرموز يقرؤها الأساس بارتداد.
+   .acard-tone-brand خارج التلوين عمدًا: «نشط» هو العُرف، فيبقى محايد الشريط والنصّ — نغمته في
+   سطحه وحدّه وظلّه فقط (ق٤). */
+:is(.acard-tone-success, .acard-tone-warning, .acard-tone-danger) {
+  & .acard-banner, & .acard-av { background: var(--card-grad); }
+  & .acard-banner::before { background: radial-gradient(150px 100px at 20% -10%, rgba(255,255,255,.4), transparent 70%); }
+  & .acard-pname, & .acard-info-val { color: var(--card-tx); }
+  & .acard-info-label { color: color-mix(in oklab, var(--card-t) 55%, var(--color-text-muted)); }
+  & .acard-info-row { border-bottom-color: color-mix(in oklab, var(--card-t) 14%, transparent); }
+  /* شدّة موحّدة: كانت الخلفيّة 14/15% والحدّ 30/32% متضاربة بين النغمات */
+  & .acard-role {
+    color: var(--card-tx);
+    background: color-mix(in oklab, var(--card-t) 14%, var(--color-surface));
+    border-color: color-mix(in oklab, var(--card-t) 30%, transparent);
+  }
+  & .acard-ic {
+    color: var(--card-tx);
+    background: linear-gradient(135deg, color-mix(in oklab, var(--card-t) 22%, var(--color-surface)), color-mix(in oklab, var(--card-t) 8%, var(--color-surface)));
+  }
+  /* تذييل السطح المنغَّم — نظيرٌ واحد لتذييلَيْن: تذييل كرت الشخص (`.acard-foot`) وتذييل كرت
+     المحتوى (`.acard-footer`، تستعمله كروت الاستبيانات). كلاهما قاعدتُه فولاذيّةٌ محايدة
+     (surface-2/color-border) تُقرأ سليمةً على البراند، وتبدو دخيلةً رماديّةً فوق سطحٍ منغَّم؛
+     فيتبعان النغمة بتينتٍ واحد لا يُكتب مرّتين (ق٤ §٩٠: النغمة تُعلَن مرّةً والأجزاء تقرؤها). */
+  & .acard-foot, & .acard-footer {
+    background: color-mix(in oklab, var(--card-t) 6%, var(--color-surface));
+    border-top-color: color-mix(in oklab, var(--card-t) 15%, var(--color-border));
+  }
+  /* حدّ التمرير المنغَّم يُقرأ في `.acard-profile:hover` نفسه (var(--card-t, var(--navy-700)))، فلا يُكتب مرّتين. */
+}
+
+/* ============================================================
+   كرت المنصب (.pcard) — منصبٌ قياديّ في تبويب «تعيين المناصب».
+   المنصب هو البطل (اسمٌ + نطاق)، تحته شارةُ المجلس والعضويّة مدموجةً،
+   ثمّ شريطُ شاغلٍ (أفتار + اسم + قائمة ⋯) أو نداءُ «شاغر» متقطّع يفتح الإسناد.
+   يبني على أساس `.acard` (السطح/الحدّ/الظلّ/الزاوية/النغمة — مصدرٌ واحد لا يُعاد حفره)،
+   والنغمةُ تقول الحالة: brand = مشغول (هادئ فولاذيّ) · danger = شاغر (يطلب الإسناد).
+   أجزاؤه تقرأ رموز النغمة (--card-t/--card-tx) كأجزاء كرت الشخص، لا تحفر لونًا لكلّ حالة (ق٤ §٩١). */
+.pcard { padding: 16px 18px; display: flex; flex-direction: column; gap: 11px; }
+.pcard-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pcard-role { margin: 0; font-size: 15.5px; font-weight: 800; color: var(--color-primary); line-height: 1.3; }
+.pcard-scope { font-size: 12.5px; font-weight: 600; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pcard-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+/* غلافُ الشاغلين يُدفَع لقاع الكرت (margin-top:auto) فتتراصّ الأشرطة عبر الصفّ رغم تفاوت الشارات.
+   والدفعُ عليه لا على الشريط: منصبٌ متعدّدُ الشاغلين له أشرطةٌ عدّة، ولو حمل كلٌّ منها
+   `margin-top:auto` لاقتسمت الفراغَ بينها وتباعدت. */
+.pcard-holders { margin-top: auto; display: flex; flex-direction: column; }
+.pcard-holder { padding-top: 11px; border-top: 1px solid color-mix(in oklab, var(--steel-500) 12%, transparent); display: flex; align-items: center; gap: 9px; }
+.pcard-holder-name { min-width: 0; font-size: 13.5px; font-weight: 700; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pcard-holder .dm-trigger { margin-inline-start: auto; }
+/* في الكرت المنغَّم (danger=شاغر) الفاصل يتبع النغمة كأجزاء كرت الشخص */
+:is(.acard-tone-success, .acard-tone-warning, .acard-tone-danger) .pcard-holder { border-top-color: color-mix(in oklab, var(--card-t) 15%, transparent); }
+/* نداء الشاغر — هدفٌ متقطّع بعرض الكرت بلون نغمة danger (سطحٌ خفيف + حدٌّ متقطّع + نصٌّ مقروء) */
+.pcard-vacant {
+  margin-top: auto;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 11px 14px;
+  border-radius: var(--radius);
+  border: 1.5px dashed color-mix(in oklab, var(--card-t, var(--steel-500)) 40%, transparent);
+  background: color-mix(in oklab, var(--card-t, var(--steel-500)) 8%, transparent);
+  color: var(--card-tx, var(--steel-600));
+  font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+.pcard-vacant:hover { background: color-mix(in oklab, var(--card-t, var(--steel-500)) 15%, transparent); border-color: color-mix(in oklab, var(--card-t, var(--steel-500)) 60%, transparent); }
+.pcard-vacant svg { width: 16px; height: 16px; flex: 0 0 auto; }
+/* نداءُ الزيادة في المنصب المتعدّد: النداءُ نفسه بعد الشاغلين — والدفعُ لقاع الكرت
+   صار على غلافهم، فلا يقتسمه الاثنان (لولا هذا لانفرج الشريطُ عن النداء). */
+.pcard-holders + .pcard-vacant { margin-top: 0; }
+
+/* ============================================================
+   كرت المشرف (.ovcard) — شخصٌ وحِمله في تبويب «توزيع الإشراف».
+   (الاسم من `overseer` كما في `hrOverseer`/`qaOverseer` بالنموذج — و`.scard-*` أدناه
+   مساحةُ كرت الاستبيان، لا تُزاحَم.)
+   نظيرُ `.pcard` بالعين المقلوبة: هناك اللجنة هي البطل ومقعدُها شاغرٌ أو مشغول،
+   وهنا **الشخصُ** هو البطل وشرائحُ لجانه هي المحتوى — لأنّ العضو الإداريّ يشرف على
+   عدّة لجان، فسؤال «كم يحمل فلان؟» لا تجيبه شبكةُ المقاعد.
+   يبني على أساس `.acard` كأخيه، ويقرأ رمزَي النغمة (--card-t/--card-tx) فلا يحفر لونًا (ق٤ §٩١).
+   الشرائح كبسولات (ق٢: الشارات pill) و«×» دائرةٌ وظيفيّة (ق٢: 50% لا زاوية). */
+.ovcard { padding: 16px 18px; display: flex; flex-direction: column; gap: 11px; }
+.ovcard-id { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.ovcard-who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ovcard-name { margin: 0; font-size: 15.5px; font-weight: 800; color: var(--color-primary); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovcard-count { font-size: 12.5px; font-weight: 600; color: var(--color-text-muted); }
+/* بابُ الإخراج من الإدارة — يُدفَع إلى طرف الرأس فلا يزاحم الاسم */
+.ovcard-out { margin-inline-start: auto; flex: 0 0 auto; }
+/* الشرائح تُدفَع لتملأ ما بين الهويّة والنداء، فتتراصّ النداءات عبر الصفّ رغم تفاوت العدد */
+.ovcard-coms { margin-bottom: auto; display: flex; flex-wrap: wrap; gap: 6px; }
+.ovcard-com {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding-block: 5px; padding-inline: 10px 5px;
+  border-radius: var(--radius-full);
+  border: 1px solid color-mix(in oklab, var(--card-t, var(--steel-500)) 28%, transparent);
+  background: color-mix(in oklab, var(--card-t, var(--steel-500)) 9%, transparent);
+  color: var(--card-tx, var(--steel-600));
+  font-size: 12.5px; font-weight: 700; line-height: 1.2;
+}
+.ovcard-com-x {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; flex: 0 0 auto;
+  border: 0; border-radius: 50%;
+  background: color-mix(in oklab, var(--card-t, var(--steel-500)) 14%, transparent);
+  color: inherit; cursor: pointer; padding: 0;
+  transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.ovcard-com-x:hover { background: var(--danger-600); color: var(--color-on-primary); }
+.ovcard-com-x svg { width: 11px; height: 11px; }
+/* نداءُ الزيادة — هدفٌ متقطّع بعرض الكرت، أخو `.pcard-vacant` شكلًا ونغمةً */
+.ovcard-add {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1.5px dashed color-mix(in oklab, var(--card-t, var(--steel-500)) 40%, transparent);
+  background: color-mix(in oklab, var(--card-t, var(--steel-500)) 8%, transparent);
+  color: var(--card-tx, var(--steel-600));
+  font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+.ovcard-add:hover { background: color-mix(in oklab, var(--card-t, var(--steel-500)) 15%, transparent); border-color: color-mix(in oklab, var(--card-t, var(--steel-500)) 60%, transparent); }
+.ovcard-add svg { width: 16px; height: 16px; flex: 0 0 auto; }
+
+/* ============================================================
+   كرت الاستبيان — **المنقسم** (اختاره المالك، معروضٌ في /ui/survey-card). يبني على `.acard`
+   (السطح/الحدّ/الظلّ/الزاوية) ويقرأ رمزَي النغمة (--card-t/--card-tx) فيلبس نغمة الحالة ولا يحفر لونًا (ق٤ §٩١).
+   بنيته عمودٌ: صفُّ (رصيفٌ منغَّم يحمل الحالة وعدد المشاركات | متنٌ فيه العنوان والوصول وسطر الحالة)
+   ثمّ ذيلٌ يعمّ عرضه (المنشئ والتاريخ + الفعل الأساسيّ). */
+.scard-split { padding: 0; overflow: hidden; }
+.scard-row { display: flex; align-items: stretch; }
+.scard-rail {
+  flex: 0 0 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+  padding: 14px 10px; text-align: center;
+  background: color-mix(in oklab, var(--card-t, var(--steel-500)) 12%, transparent);
+  border-inline-end: var(--card-stroke-w) solid color-mix(in oklab, var(--card-t, var(--steel-500)) 22%, transparent);
+}
+.scard-rail-num { font-family: var(--font-latin); font-size: 23px; font-weight: 800; line-height: 1; color: var(--card-tx, var(--steel-600)); }
+.scard-rail-lbl { font-size: 11px; font-weight: 700; color: var(--color-text-muted); }
+.scard-main { flex: 1 1 auto; min-width: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 7px; }
+.scard-title { margin: 0; font-size: 15.5px; font-weight: 800; line-height: 1.35; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scard-meta { font-size: 12.5px; font-weight: 600; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* رقاقة أيقونةٍ منغَّمة (.tico) — نظيرٌ **مصغّر** لأيقونة الحقل (.fld-lic، ق٣): أيقونةٌ في مربّعٍ متراكز
+   (--radius-xs، ق٢) بخلفيّة **Aurora** خفيفة بلون النغمة (ق٤ — أعمق من سلّم الـ50 عمدًا فتُرى)، وأيقونةٌ
+   بلون tone-600 — لإبراز أيقونةٍ في سطرٍ صغير لا تذوب. النغمة تُعلَن مرّةً (--tico-fg/--tico-bg). مُعمَّمٌ لا محفور. */
+.tico { flex: 0 0 auto; display: grid; place-items: center; width: 22px; height: 22px; border-radius: var(--radius-xs); color: var(--tico-fg, var(--color-text-muted)); background: var(--tico-bg, transparent); }
+.tico svg { width: 14px; height: 14px; }
+.tico-steel   { --tico-fg: var(--steel-600);   --tico-bg: linear-gradient(135deg, var(--aurora-brand),   transparent 62%); }
+.tico-success { --tico-fg: var(--success-600); --tico-bg: linear-gradient(135deg, var(--aurora-success), transparent 62%); }
+.tico-warning { --tico-fg: var(--warning-600); --tico-bg: linear-gradient(135deg, var(--aurora-warning), transparent 62%); }
+.tico-neutral { --tico-fg: var(--neutral-600); --tico-bg: linear-gradient(135deg, var(--aurora-neutral), transparent 62%); }
+.tico-danger  { --tico-fg: var(--danger-600);  --tico-bg: linear-gradient(135deg, var(--aurora-danger),  transparent 62%); }
 
 /* card checkbox removed */
 
@@ -2853,7 +3197,7 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .stat-success { --stat-grad: var(--grad-success); --shadow-tone: var(--shadow-tone-success);  --surface-aurora: linear-gradient(135deg, var(--aurora-success), var(--color-surface) 62%); --border-aurora: var(--card-stroke-success); background: var(--surface-aurora); border-color: var(--border-aurora); }
 .stat-warning { --stat-grad: var(--grad-warning); --shadow-tone: var(--shadow-tone-warning); --surface-aurora: linear-gradient(135deg, var(--aurora-warning), var(--color-surface) 62%); --border-aurora: var(--card-stroke-warning); background: var(--surface-aurora); border-color: var(--border-aurora); }
 .stat-danger  { --stat-grad: var(--grad-danger);  --shadow-tone: var(--shadow-tone-danger);  --surface-aurora: linear-gradient(135deg, var(--aurora-danger), var(--color-surface) 62%); --border-aurora: var(--card-stroke-danger); background: var(--surface-aurora); border-color: var(--border-aurora); }
-/* المرور: كِبَرٌ خفيف (scale 1.02) + تشديد الحدّ للنغمة — تمامًا كـ‎.mc:hover‎ في كرت العضو */
+/* المرور: كِبَرٌ خفيف (scale 1.02) + تشديد الحدّ للنغمة — تمامًا كـ‎.acard-profile:hover‎ في كرت الشخص */
 .stat:hover { transform: scale(var(--hover-scale)); }
 .stat:hover .stat-ic { transform: scale(1.12) rotate(-6deg); }   /* نبضة زنبركيّة للأيقونة عند المرور */
 .stat-brand:hover   { border-color: var(--navy-700); }
@@ -2862,6 +3206,291 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .stat-danger:hover  { border-color: var(--danger-600); }
 @media (prefers-reduced-motion: reduce) { .stat:hover, .stat:hover .stat-ic { transform: none; } }
 
+
+/* ============================================================
+   عائلة المخطّطات (Charts) — بدائيّات عرض البيانات
+   ألوان الفئات من --chart-1..6 (ترتيب ثابت لا تدوير)؛ الأسطح من رموز الحدّ/الظلّ؛
+   النصّ محايد والعلامة اللونيّة بجانبه (لا لونًا للنصّ). لوحة المخطّط تلفّ كلّ رسم.
+   ============================================================ */
+
+/* لوحة مخطّط = قاعدة الكروت كاملةً: Card + CardHeader + CardBody — لا صنفَ خاصّ ولا اجتهاد. */
+
+/* نصّ «لا بيانات» داخل لوحة — محايدٌ هادئ (سطرٌ لا حالةٌ فارغة كاملة). */
+.chart-empty { font-size: 13px; color: var(--color-text-muted); }
+
+/* قائمة أشرطة أفقيّة — النصّ محايد (تسمية بالأساس · قيمة رماديّة)، واللون في الشريط وحده. */
+.chart-bars { display: flex; flex-direction: column; gap: 9px; }
+.chart-bar { display: grid; grid-template-columns: minmax(80px, 1.4fr) 2fr auto; align-items: center; gap: 10px; }
+.chart-bar-label { font-size: 12.5px; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; unicode-bidi: plaintext; text-align: start; }
+.chart-bar-track { height: 9px; background: var(--color-surface-2); border-radius: var(--radius-full); overflow: hidden; }
+.chart-bar-fill { display: block; height: 100%; border-radius: var(--radius-full); min-width: 3px; transform-origin: inline-start; animation: chart-bar-grow .6s ease both; }
+.chart-bar-val { font-family: var(--font-latin); font-size: 12px; font-weight: 700; color: var(--color-text-muted); min-width: 34px; text-align: start; }
+@keyframes chart-bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .chart-bar-fill { animation: none; } }
+
+/* حلقة (دونات) — قطاعاتٌ بفجوة سطح، ورقمٌ مركزيّ. شارة الأسطورة دائرةٌ وظيفيّة (ق٢: 50% لا --radius). */
+.chart-donut { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: center; }
+.chart-donut svg { width: 140px; height: 140px; flex: 0 0 auto; }
+/* حركةٌ سلسة عند إخفاء/إظهار قطاع (الأسطورة التفاعليّة) — القطاع ينكمش/ينمو والباقي يعيد توزيعه انسيابيًّا. */
+.chart-donut-arc { transition: stroke-dasharray 0.7s var(--ease-standard), stroke-dashoffset 0.7s var(--ease-standard); }
+@media (prefers-reduced-motion: reduce) { .chart-donut-arc { transition: none; } }
+.chart-donut-n { font-family: var(--font-latin); font-size: 22px; font-weight: 800; fill: var(--color-primary); }
+.chart-donut-l { font-size: 10px; fill: var(--color-text-muted); }
+.chart-donut-leg { display: flex; flex-direction: column; gap: 4px; }
+/* عنصر الأسطورة زرٌّ تفاعليّ — الضغط يُخفي القطاع ويشطب التسمية. */
+.chart-donut-legitem { display: flex; align-items: center; gap: 8px; width: 100%; font-family: inherit; font-size: 12.5px; text-align: start; background: 0; border: 0; padding: 3px 4px; border-radius: var(--radius-sm); cursor: pointer; transition: opacity var(--dur-fast), background var(--dur-fast); }
+.chart-donut-legitem:hover { background: var(--color-surface-2); }
+.chart-donut-legitem.off { opacity: .5; }
+.chart-donut-legitem.off span { text-decoration: line-through; }
+.chart-donut-leg i { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto; }
+.chart-donut-leg span { color: var(--color-primary); min-width: 58px; }
+.chart-donut-leg b { font-family: var(--font-latin); color: var(--color-text-muted); font-weight: 700; margin-inline-start: auto; }
+
+/* مخطّط زمنيّ (مساحة + خطّ) — شبكةٌ خافتة، شعرةٌ عند التمرير، وتلميحٌ عائم. الرسم LTR (الزمن يسير يمينًا). */
+.chart-area { position: relative; }
+.chart-area svg { width: 100%; height: 240px; display: block; }
+.chart-area-grid { stroke: var(--color-border); stroke-width: 1; opacity: .55; }
+.chart-area-cross { stroke: var(--color-text-muted); stroke-width: 1; stroke-dasharray: 3 3; opacity: .6; }
+.chart-area-xaxis { position: relative; height: 16px; margin-top: 3px; }
+.chart-area-xaxis span { position: absolute; font-family: var(--font-latin); font-size: 10.5px; color: var(--color-text-muted); white-space: nowrap; }
+
+/* تلميح عائم — سطحٌ داكن (الأساس) بنصٍّ عليه (on-primary، لا #fff صريح). */
+.chart-tip { position: absolute; top: 4px; background: var(--color-primary); color: var(--color-on-primary); border-radius: var(--radius); padding: 7px 11px; font-size: 11.5px; display: flex; flex-direction: column; gap: 2px; pointer-events: none; box-shadow: var(--shadow-md); white-space: nowrap; z-index: 2; }
+.chart-tip b { font-size: 12px; margin-bottom: 2px; }
+.chart-tip span { display: flex; align-items: center; gap: 5px; }
+
+/* أسطورة أفقيّة — شارة اللون دائرةٌ وظيفيّة (ق٢)، والنصّ محايد. تخدم التلميحَ أيضًا. */
+.chart-legend { display: flex; gap: 18px; margin-top: 10px; justify-content: center; }
+.chart-legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-muted); }
+.chart-tip i, .chart-legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: 0 0 auto; }
+
+/* مدرّج أعمدة — لونٌ صلب من اللوحة (لا تدرّج شارد)، وأطرافٌ مستديرة خفيفة (ق٢: --radius-xs لا --radius على عمودٍ نحيل). */
+.chart-cols { display: flex; align-items: flex-end; gap: 3px; height: var(--chart-cols-h, 120px); margin-bottom: 18px; }
+.chart-col { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; }
+.chart-col-bar { width: 100%; max-width: var(--chart-col-max, 16px); border-radius: var(--radius-xs) var(--radius-xs) 0 0; min-height: 2px; transition: opacity var(--dur-fast); }
+.chart-col:hover .chart-col-bar { opacity: .7; }
+.chart-col-tick { position: absolute; bottom: -16px; font-family: var(--font-latin); font-size: 10px; color: var(--color-text-muted); }
+
+/* شريط حراريّ — خلايا لونٍ واحد تتدرّج كثافته بالقيمة (متتابع، لا فئات). */
+.chart-heat { display: flex; gap: 3px; margin-bottom: 18px; }
+.chart-heat-cell { position: relative; flex: 1; min-width: 0; height: 30px; border-radius: var(--radius-xs); }
+.chart-heat-tick { position: absolute; bottom: -16px; inset-inline-start: 50%; transform: translateX(-50%); font-family: var(--font-latin); font-size: 10px; color: var(--color-text-muted); }
+
+/* ساعة قطبيّة — أشعّةٌ حول قرصٍ كوجه ساعة (الطبيعة الدوريّة للزمن). */
+.chart-radial { display: flex; justify-content: center; }
+.chart-radial svg { width: 200px; height: 200px; }
+.chart-radial-hub { fill: none; stroke: var(--color-border); stroke-width: 1; }
+.chart-radial-tick { font-family: var(--font-latin); font-size: 9px; fill: var(--color-text-muted); }
+
+
+/* خريطة حراريّة ثنائيّة (صفوف × أعمدة) — كثافةُ لونٍ واحد تُشفّر القيمة، والرقم في الخليّة.
+   عمودُ التسميات أوّلًا (RTL: يمينًا)، ثمّ الأعمدة. تمريرٌ أفقيّ عند ضيق الحاوية. */
+.chart-heatgrid-wrap { overflow-x: auto; }
+.chart-heatgrid { display: grid; grid-template-columns: auto repeat(var(--hg-cols), minmax(24px, 1fr)); gap: 3px; min-width: max-content; }
+.chart-heatgrid-colh { display: flex; align-items: center; justify-content: center; font-family: var(--font-latin); font-size: 11px; color: var(--color-text-muted); padding-bottom: 2px; }
+.chart-heatgrid-rowh { display: flex; align-items: center; justify-content: flex-start; white-space: nowrap; padding-inline: 10px; font-size: 12px; color: var(--color-primary); }
+.chart-heatgrid-cell { position: relative; display: flex; align-items: center; justify-content: center; height: 30px; border-radius: var(--radius-xs); font-family: var(--font-latin); font-size: 11px; color: var(--color-text); cursor: default; transition: transform var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast); }
+.chart-heatgrid-cell:hover { transform: scale(1.18); z-index: 2; box-shadow: 0 0 0 2px var(--color-surface), var(--shadow-md); }
+.chart-heatgrid-cell.hot { color: var(--color-on-primary); font-weight: 700; }
+/* خليّة الذروة — حلقةٌ بنيويّة (حدّ inset، لا عمق) تُبرز أزحم لحظة (استثناء ق٥ للحلقات البنيويّة). */
+.chart-heatgrid-cell.peak { box-shadow: inset 0 0 0 2px var(--color-on-primary); }
+
+/* أسطورة مقياس اللون — درجاتٌ فاتح→غامق بين طرفَي «أقل/أكثر» وقيمتيهما (لا لونَ بلا مفتاح). */
+.chart-heatgrid-legend { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; font-size: 11px; color: var(--color-text-muted); }
+.chart-heatgrid-grades { display: inline-flex; gap: 2px; }
+.chart-heatgrid-grades span { width: 20px; height: 12px; border-radius: var(--radius-xs); }
+
+
+/* ============================================================
+   هيكلة أديب — شجرة المجالس/الأقسام/اللجان (مرفوعة إلى الهوية)
+   مجلسٌ منغَّم بالعلامة (ترويسة متدرّجة صلبة + مقاعد زجاجيّة على سطح Aurora)،
+   أقسامٌ ولجانٌ كروتٌ متراكزة الزوايا بحدّ وظلّ من السلّم، وشرائح أشخاص كبسوليّة.
+   كلّ حدّ/سطح/ظلّ/زاوية من الرموز — لا #hex ولا قيمة شاردة (ق١·٢·٤·٥).
+   الشرائح الزجاجيّة فوق الترويسة تتبع نمط .acard-header-solid (حدّ زجاجيّ 1px، نصّ on-primary).
+   ============================================================ */
+.org { display: flex; flex-direction: column; gap: 18px; }
+
+/* ملاحظات الهيكلة داخل التنبيه (قائمة نقاط) */
+.org-anoms { margin: 8px 0 0; padding-inline-start: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+.org-anoms li { list-style: disc; }
+
+/* أزرار إجراءات الشريط — مشتركة مع «تعيين المناصب» (رابطٌ بهيئة زرّ)؛ .org-editbtn/.org-link هوكان */
+.org-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; background: var(--color-surface); border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); font-size: 13px; font-weight: 700; color: var(--color-primary); cursor: pointer; white-space: nowrap; text-decoration: none; transition: border-color var(--dur-fast), background var(--dur-fast), color var(--dur-fast); }
+.org-btn:hover { border-color: var(--card-stroke-active); background: var(--color-surface-2); }
+.org-btn svg { width: 15px; height: 15px; flex: 0 0 auto; }
+.org-editbtn.on { background: var(--grad-primary); color: var(--color-on-primary); border-color: transparent; --shadow-tone: var(--shadow-tone-brand); box-shadow: var(--shadow-sm); }
+
+/* شريحة الشخص — كبسولة أفتار + اسم + دور؛ نغمتا رتبة (قيادة تشعّ بالعلامة · عضويّة فولاذيّة) */
+.org-person { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px 5px 6px; background: var(--color-surface); border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius-full); }
+.org-person-tx { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.org-person-tx b { font-size: 13px; font-weight: 700; color: var(--color-primary); white-space: nowrap; }
+.org-person-tx span { font-size: 11px; color: var(--color-text-muted); white-space: nowrap; }
+.org-person-gold { background: linear-gradient(135deg, var(--aurora-brand), var(--color-surface) 62%); border-color: var(--card-stroke-brand); }
+.org-person-steel { background: var(--color-surface-2); }
+
+/* منصبٌ شاغر — إشارة danger صريحة */
+.org-vacant { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--danger-600); }
+.org-vacant svg { width: 14px; height: 14px; flex: 0 0 auto; }
+
+.org-people { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* المجلس — سطح مؤطَّر منغَّم بالعلامة: حدّ وظلّ العلامة (ق٤: الحدّ يلازم الظلّ)،
+   سطح Aurora للفرع، وترويسة متدرّجة صلبة فوقه */
+.org-council {
+  --shadow-tone: var(--shadow-tone-brand);
+  border: var(--card-stroke-w) solid var(--card-stroke-brand);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--aurora-brand), var(--color-surface) 62%);
+  box-shadow: var(--shadow-md);
+}
+.org-council-h { display: flex; flex-direction: column; gap: 14px; padding: 15px 18px; background: var(--grad-primary); color: var(--color-on-primary); }
+.org-council-h h3 { font-size: 17px; font-weight: 800; }
+.org-council-t { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+/* شرائح الأشخاص فوق الترويسة المتدرّجة — زجاجيّة (كنمط acard-header-solid) */
+.org-council-h .org-person { background: var(--glass-bg); border-color: var(--glass-border); }
+.org-council-h .org-person-tx b { color: var(--color-on-primary); }
+.org-council-h .org-person-tx span { color: rgba(255, 255, 255, .85); }
+.org-council-h .org-vacant { color: var(--danger-100); }
+
+/* مقاعد المجلس — شبكة كروت زجاجيّة على الترويسة؛ كلّ مقعد: تسمية + شاغله (أو شاغر) */
+.org-seats { display: flex; flex-wrap: wrap; gap: 8px; }
+.org-seat { flex: 1 1 220px; display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--radius-nested); }
+.org-seat-lbl { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11.5px; font-weight: 700; color: rgba(255, 255, 255, .9); }
+
+/* فرع المجلس: أقسام (تنفيذيّ) أو لجان مباشرة (إداريّ) */
+.org-coms { display: flex; flex-direction: column; gap: 8px; }
+.org-coms-admin { padding: 16px; }
+/* القاعدة ٦ — الصفّ الأخير لا يترك فراغًا (شبكة متدفّقة، البذرة = 300px) */
+.org-depts { display: flex; flex-wrap: wrap; gap: 14px; padding: 16px; }
+.org-depts > * { flex: 1 1 300px; }
+
+/* القسم — كرتٌ متداخل في المجلس (زاوية متراكزة sm، كسابقة .svy-q) */
+.org-dept { border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius-sm); background: var(--color-surface); padding: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow-sm); }
+.org-dept-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.org-dept-name { font-size: 14.5px; font-weight: 800; color: var(--color-primary); }
+
+/* اللجنة — كرتٌ مطويّ؛ حدّ نشط عند المرور، جسمٌ يفصله شعرةٌ من الحدّ الداخليّ */
+.org-com { border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius-sm); background: var(--color-surface); box-shadow: var(--shadow-sm); overflow: hidden; transition: border-color var(--dur-fast); }
+.org-com:hover { border-color: var(--card-stroke-active); }
+.org-com-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.org-com-toggle { display: inline-flex; align-items: center; gap: 8px; min-width: 0; background: none; border: 0; cursor: pointer; padding: 0; text-align: start; }
+.org-caret { width: 15px; height: 15px; flex: 0 0 auto; color: var(--color-text-muted); transition: transform var(--dur-fast); }
+.org-caret.on { transform: rotate(180deg); }
+.org-com-name { font-size: 13.5px; font-weight: 700; color: var(--color-primary); }
+.org-com-leader { display: inline-flex; align-items: center; gap: 6px; margin-inline-start: auto; font-size: 12px; color: var(--color-text-muted); }
+.org-com-leader > span { white-space: nowrap; }
+.org-com-leaderless { color: var(--danger-600); font-weight: 700; }
+.org-com-leaderless svg { width: 13px; height: 13px; }
+.org-com-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--color-border); }
+
+/* صفوف فرعيّة داخل اللجنة (النائب/المشرفون) ونصوص الخلوّ */
+.org-subrow { display: flex; align-items: center; gap: 8px; }
+.org-sublbl { font-size: 11.5px; font-weight: 700; color: var(--color-text-muted); }
+.org-empty { font-size: 12.5px; color: var(--color-text-muted); }
+.org-ov-vac { font-size: 12px; color: var(--color-text-muted); }
+
+/* زرّ تعديل البيانات الوصفيّة (أيقونة صغيرة sm) — والنسخة الزجاجيّة .lt فوق الترويسة */
+.org-meta { width: 26px; height: 26px; flex: 0 0 auto; display: grid; place-items: center; border: var(--card-stroke-w) solid var(--card-stroke); background: var(--color-surface); border-radius: var(--radius-sm); cursor: pointer; color: var(--color-text-muted); transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
+.org-meta svg { width: 14px; height: 14px; }
+.org-meta:hover { color: var(--color-primary); background: var(--color-surface-2); border-color: var(--card-stroke-active); }
+.org-meta.lt { background: var(--glass-bg); border-color: var(--glass-border); color: var(--color-on-primary); }
+.org-meta.lt:hover { background: var(--glass-bg-strong); }
+
+/* نافذة تعديل البيانات الوصفيّة (وصف + رابط)، ونافذة تعيين المنصب (الشاغل الحاليّ + تحذير) */
+.org-modal { display: flex; flex-direction: column; gap: 14px; }
+.org-modal-cur { display: flex; flex-direction: column; gap: 6px; }
+.org-modal-warn { font-size: 12.5px; line-height: 1.6; color: var(--color-text-muted); }
+/* شريط شاغلٍ داخل نافذة الإسناد (أفتار + اسم) — نظيرُ `.asg-holder` الشارد، مُعاد في المكتبة */
+.asgm-holder { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.asgm-holder > span { min-width: 0; font-size: 13.5px; font-weight: 700; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* جذر تبويب تعيين المناصب — تكديس رأسيّ (مُرحَّل من globals إلى المكتبة كجذر `.org` للهيكلة) */
+.asg { display: flex; flex-direction: column; gap: 16px; }
+
+/* (شريط المبدّل وتسميته المأيقَنة صارا `.viewbar`/`.seg-lbl` مع `.seg` — لا يخصّان الهيكلة.) */
+
+/* ============================================================
+   الأنساب — شجرةٌ موصولة (تصميم شجرة): وصلاتٌ منحنية + نسبٌ يُضيء عند التمرير.
+   إحداثيّات العقد تُمرَّر بيانًا (--x/--y)؛ التنسيق كلّه هنا (ق١).
+   ============================================================ */
+.lin-wrap { border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-md); overflow: hidden; }
+.lin { overflow-x: auto; padding: 10px; }
+.lin-canvas { position: relative; margin: 0 auto; }
+.lin-wires { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.lin-wires path { fill: none; stroke: color-mix(in oklab, var(--steel-500) 40%, transparent); stroke-width: 1.6; transition: stroke var(--dur-fast), stroke-width var(--dur-fast); }
+.lin-wires path.hot { stroke: var(--steel-600); stroke-width: 2.6; }
+.lin-node { position: absolute; transform: translate(-50%, 0); }
+.lin-card { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); background: var(--color-surface); border: var(--card-stroke-w) solid var(--card-stroke); box-shadow: var(--shadow-md); width: 174px; cursor: pointer; transition: transform var(--dur-fast), box-shadow var(--dur-fast), border-color var(--dur-fast); }
+.lin-node:hover .lin-card { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--card-stroke-active); }
+.lin-tx { display: flex; flex-direction: column; line-height: 1.28; min-width: 0; }
+.lin-tx b { font-size: 13.5px; font-weight: 800; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lin-tx span { font-size: 11px; color: var(--color-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lin-cnt { margin-inline-start: auto; font-family: var(--font-latin); font-size: 11px; font-weight: 500; color: var(--color-text-muted); background: var(--color-surface-2); border-radius: var(--radius-sm); padding: 2px 7px; white-space: nowrap; }
+.lin-node-root .lin-card, .lin-node-council .lin-card { background: var(--grad-primary); border-color: transparent; width: 192px; }
+.lin-node-root .lin-tx b, .lin-node-council .lin-tx b, .lin-node-root .lin-tx span, .lin-node-council .lin-tx span { color: var(--color-on-primary); }
+.lin-node-root .lin-tx span, .lin-node-council .lin-tx span { opacity: .82; }
+.lin-node-root .av, .lin-node-council .av { background: var(--glass-bg); box-shadow: inset 0 0 0 1px var(--glass-border); }
+.lin-node-root .lin-cnt, .lin-node-council .lin-cnt { background: var(--glass-bg); color: var(--color-on-primary); }
+.lin-node-dept .lin-card { background: linear-gradient(135deg, var(--aurora-brand), var(--color-surface) 62%); border-color: var(--card-stroke-brand); }
+.lin-node-vac .lin-card { background: linear-gradient(135deg, color-mix(in oklab, var(--warning-500) 13%, var(--color-surface)), var(--color-surface) 62%); border-color: color-mix(in oklab, var(--warning-500) 42%, var(--card-stroke)); border-style: dashed; }
+.lin-node-vac .lin-tx span { color: var(--warning-600); font-weight: 700; }
+.lin-node.hot .lin-card { box-shadow: var(--shadow-md), 0 0 0 4px color-mix(in oklab, var(--steel-500) 22%, transparent); }
+.lin-tip { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-top: 1px solid var(--color-border); font-size: 12.5px; color: var(--color-text-muted); }
+.lin-tip b { color: var(--steel-600); font-weight: 700; }
+
+/* ============================================================
+   المِحوَر — شجرةٌ مُزاحة (outline): محورٌ بأدلّة عمقٍ رفيعة، أسهم طيّ، صفوفٌ أنيقة.
+   ============================================================ */
+.spn { border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-md); overflow: hidden; }
+.spn-group + .spn-group { border-top: 1px solid var(--color-border); }
+.spn-head { display: flex; align-items: center; gap: 11px; padding: 14px 18px; background: linear-gradient(135deg, var(--aurora-brand), var(--color-surface) 62%); }
+.spn-title { font-weight: 900; font-size: 16px; color: var(--color-text); }
+.spn-sub { font-size: 12.5px; color: var(--color-text-muted); white-space: nowrap; }
+.spn-cnt { margin-inline-start: auto; font-family: var(--font-latin); font-size: 11.5px; font-weight: 500; color: var(--color-text-muted); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 2px 10px; white-space: nowrap; }
+.spn-children { margin-inline-start: 28px; border-inline-start: 1.5px solid var(--color-border); }
+.spn-row { position: relative; display: flex; align-items: center; gap: 9px; padding: 8px 18px 8px 12px; transition: background var(--dur-fast); cursor: default; }
+.spn-row::before { content: ""; position: absolute; inset-inline-start: -1.5px; top: calc(50% - .75px); width: 15px; height: 1.5px; background: var(--color-border); }
+.spn-row:hover { background: var(--color-surface-2); }
+.spn-row.has-kids { cursor: pointer; }
+.spn-caret { width: 15px; height: 15px; flex: 0 0 auto; color: var(--color-text-muted); transition: transform var(--dur-fast); }
+.spn-caret.on { transform: rotate(-90deg); }
+.spn-spacer { width: 15px; flex: 0 0 auto; }
+.spn-name { font-weight: 700; font-size: 14px; color: var(--color-text); white-space: nowrap; }
+.spn-row-dept .spn-name { font-weight: 800; }
+.spn-role { font-size: 12px; color: var(--color-text-muted); white-space: nowrap; }
+.spn-row-vac .spn-role { color: var(--warning-600); font-weight: 700; }
+.spn-trail { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 8px; }
+.spn-count { font-family: var(--font-latin); font-size: 11px; font-weight: 500; color: var(--color-text-muted); background: var(--color-surface-2); border-radius: var(--radius-sm); padding: 2px 7px; }
+.spn-vac { font-size: 11px; font-weight: 700; color: var(--warning-600); background: linear-gradient(135deg, color-mix(in oklab, var(--warning-500) 13%, var(--color-surface)), var(--color-surface) 62%); border: 1px dashed color-mix(in oklab, var(--warning-500) 40%, var(--card-stroke)); border-radius: var(--radius-full); padding: 2px 9px; }
+
+/* ============================================================
+   الأعمدة — تنقّلٌ متتالٍ (Miller): عمودٌ لكلّ طبقة، مسارٌ مُضاء، عمود أعضاءٍ ختاميّ.
+   ============================================================ */
+.csc-wrap { border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-md); overflow: hidden; }
+.csc-bread { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; padding: 12px 18px; font-size: 13px; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); }
+.csc-bread b { color: var(--color-text); font-weight: 800; }
+.csc-bread .sep { opacity: .5; }
+.csc { display: flex; overflow-x: auto; min-height: 320px; }
+.csc-col { flex: 1 0 226px; border-inline-start: 1px solid var(--color-border); }
+.csc-col:first-child { border-inline-start: 0; }
+/* عربيّ صرف («المجلس/القسم/اللجنة») — لا letter-spacing/uppercase: يقطعان وصل الحروف العربيّة */
+.csc-colh { padding: 10px 16px; font-family: var(--font-latin); font-size: 10.5px; color: var(--color-text-muted); background: var(--color-surface-2); border-bottom: 1px solid var(--color-border); }
+.csc-item { position: relative; display: flex; align-items: center; gap: 9px; padding: 10px 16px; cursor: pointer; transition: background var(--dur-fast); }
+.csc-item + .csc-item { border-top: 1px solid var(--color-border); }
+.csc-item:hover { background: var(--color-surface-2); }
+.csc-item .nm { font-weight: 700; font-size: 13.5px; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.csc-item .rl { font-size: 11px; color: var(--color-text-muted); white-space: nowrap; }
+.csc-chev { margin-inline-start: auto; color: var(--color-text-muted); flex: 0 0 auto; }
+.csc-item.sel { background: linear-gradient(135deg, var(--aurora-brand), var(--color-surface) 62%); }
+.csc-item.sel::before { content: ""; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 3px; background: var(--grad-primary); }
+.csc-item.sel .nm { color: var(--color-primary); }
+.csc-item-vac .nm { color: var(--warning-600); }
+.csc-leaf { padding: 6px; }
+.csc-leafrow { display: flex; align-items: center; gap: 9px; padding: 8px 12px; border-radius: var(--radius-sm); }
+.csc-leafrow:hover { background: var(--color-surface-2); }
+.csc-leafrow .nm { font-size: 13px; font-weight: 700; color: var(--color-text); white-space: nowrap; }
+.csc-leafrow .rl { font-size: 11px; color: var(--color-text-muted); margin-inline-start: auto; white-space: nowrap; }
+.csc-empty { padding: 24px 16px; font-size: 13px; color: var(--color-text-muted); text-align: center; }
 
 /* ============================================================
    حارس الهوية (Identity Guardrail)
@@ -2896,6 +3525,339 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 }
 
 /* ============================================================
+   قارئ الكتاب (Book Reader) — يلفّ محرّك page-flip بإطار الهوية.
+   الحركة وظلال التقليب من المحرّك؛ الإطار والشريط من الرموز (لا CSS شارد).
+   RTL: مرآةٌ على الغلاف وعكسٌ مضادّ على الصفحات (المحرّك بلا RTL أصليّ).
+   ============================================================ */
+.book-reader{ display:flex; flex-direction:column; align-items:center; gap:16px; width:100%; }
+/* عرضٌ كامل حتى يجد المحرّك مساحةً لصفحتين (spread)؛ inline-block كان يتقلّص فيسقط لصفحةٍ مفردة */
+.book-reader-stage-wrap{ position:relative; width:100%; display:flex; justify-content:center; min-height:360px; }
+.book-flip-frame{ width:100%; max-width:1600px; }
+.book-reader-stage{ width:100%; }
+.book-page{ background:var(--color-surface-2); overflow:hidden; }
+.book-page img{ display:block; width:100%; height:100%; object-fit:contain; user-select:none; -webkit-user-drag:none; }
+.book-reader-loading{ position:absolute; inset:0; display:grid; place-items:center; color:var(--color-text-muted); font-family:var(--font-latin); }
+.book-toolbar{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px;
+  border:var(--card-stroke-w) solid var(--card-stroke); border-radius:var(--radius-full);
+  background:var(--color-surface); box-shadow:var(--shadow-md); }
+.book-counter{ min-width:66px; text-align:center; color:var(--color-text-muted); font-family:var(--font-latin); font-size:14px; }
+.book-reader:fullscreen{ background:var(--color-bg); padding:24px; justify-content:center; }
+/* فهرس الصفحات — لوح مصغّرات + قفز (كلّه بالرموز) */
+.book-index{ width:100%; max-width:1600px; display:flex; flex-direction:column; gap:10px; }
+.book-goto{ display:inline-flex; align-items:center; justify-content:center; gap:8px; color:var(--color-text-muted); font-size:14px; }
+.book-goto-inp{ width:64px; text-align:center; font-family:var(--font-latin); color:var(--color-text); background:var(--color-surface); border:var(--card-stroke-w) solid var(--card-stroke); border-radius:var(--radius-sm); padding:5px 6px; }
+.book-goto-inp:focus{ outline:none; border-color:var(--card-stroke-active); box-shadow:var(--ring); }
+.book-goto-total{ font-family:var(--font-latin); }
+.book-thumbs{ display:flex; gap:8px; overflow-x:auto; padding:8px; background:var(--color-surface); border:var(--card-stroke-w) solid var(--card-stroke); border-radius:var(--radius); }
+.book-thumb{ position:relative; flex:0 0 auto; width:60px; padding:0; overflow:hidden; cursor:pointer; background:var(--color-surface-2); border:var(--card-stroke-w) solid var(--card-stroke); border-radius:var(--radius-sm); }
+.book-thumb img{ display:block; width:100%; height:80px; object-fit:cover; }
+.book-thumb.on{ border-color:var(--color-primary); box-shadow:var(--ring); }
+.book-thumb-n{ position:absolute; inset-inline-end:2px; inset-block-end:2px; padding:1px 4px; font-family:var(--font-latin); font-size:11px; line-height:1.4; color:var(--color-text-muted); background:var(--color-surface); border-radius:var(--radius-xs); }
+.book-toolbar .aibtn.book-tb-on{ color:var(--color-primary); background:var(--color-surface-2); }
+
+/* ============================================================
+   عضويّتي: البطاقة والمسيرة (My Membership) — بادئتا .mcard و .mjr
+   ------------------------------------------------------------
+   البطاقة **بطاقةُ هويّةٍ لا لوحةُ بيانات**، فقُسمت نصفين:
+   · نصفٌ غامقٌ للهويّة (تدرّج العلامة + نقشها) يحمل الشعار والصورة والاسم والموضع،
+   · ونصفٌ فاتحٌ للحقائق (سطح الكرت) يحمل: منذ متى · كم صارت · وحالتها.
+   والقسمة ليست زينة: الشارة الناعمة (`Badge`) تُقرأ فوق الفاتح ولو وُضعت فوق التدرّج
+   لصارت مُلصَقًا؛ والشرائح الزجاجيّة (`--glass-*`) تبقى للغامق كما في ترويسات المجالس
+   ونمط `.acard-header-solid` — كلٌّ في السطح الذي صُمّم له.
+   ============================================================ */
+
+/* عمود الصفحة — الفراغ الموحّد بين البطاقة وكرت المسيرة (بدل هامشٍ شاردٍ في الشاشة) */
+.mpage { display: flex; flex-direction: column; gap: 18px; }
+/* صفُّ شاراتٍ يلتفّ — متنُ كرتٍ محتواه شاراتٌ متجاورة (لجانُ الإشراف مثلًا). عامٌّ لا يخصّ
+   العضويّة، فاسمُه بالمحتوى لا بالشاشة، ولا مقاسَ فيه سوى الفراغ (الشارة تحمل شكلها). */
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+/* صفُّ شاراتٍ في متن كرت (لجانُ الإشراف) — تراصٌّ ولفٌّ لا غير، والشارة تحمل شكلَها */
+.mpage-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* السطح المؤطَّر: الحدّ والزاوية والظلّ من الرموز (ق٢ · ق٤ · ق٥). و`overflow` يقصّ التدرّج على الزاوية. */
+.mcard { overflow: hidden; background: var(--color-surface); border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); box-shadow: var(--shadow-md); }
+
+/* ═══ النصف العلويّ — الهويّة ═══ */
+.mcard-hero { position: relative; padding: 18px 20px 22px; overflow: hidden; background: var(--grad-primary); color: var(--color-on-primary); }
+/* نقش الهوية فوق التدرّج — بشدّة غلاف نافذة الملفّ (`.pvb-cover`) فلا يفترق سطحان متشابهان.
+   لكنّ **المقاس يختلف بعرض السطح**: النقش شريطٌ عريض (1920×287) صُمّم ليمتدّ على العرض كلّه؛
+   فـ`135%` تصلح لغلافٍ ضيّق كنافذة الملفّ، وتنفخه على بطاقةٍ بعرض اللوحة حتى يصير زخرفةً واحدة
+   مقصوصة. فيُمدّ هنا على العرض كاملًا (`100% auto`) مرتكزًا في الأسفل — شريطًا كما رُسم.
+   والشدّة تخفّ معه: زخرفةٌ بهذا الاتّساع تُثقل السطح عند شدّة الغلاف الضيّق. وخفّت مرّةً ثانية
+   (‏.09 ← .06): ارتكازُه أسفلَ السطح يجعل أثقلَ ما فيه **تحت** الأفتار والسلسلة بالضبط، فثلاثُ
+   طبقاتٍ تحت نصّ 12px. النقش يبقى محسوسًا، ولا يزاحم ما فوقه. */
+.mcard-hero::before { content: ""; position: absolute; inset: 0; background: url("/brand/pattern-white.svg") no-repeat center bottom / 100% auto; opacity: .06; pointer-events: none; }
+/* تلألؤ البطاقة: شريطٌ زجاجيّ مائل يسكن **خارج** الإطار فلا يُرى، ويعبر السطح مرّةً عند المرور —
+   إيماءةُ «بطاقةٍ تُقلَّب في الضوء». يقع بعد المحتوى في ترتيب الرسم فيمرّ فوقه لا تحته.
+
+   ومُعلَّقٌ بصنفٍ (`.is-sheen`) لا بـ`:hover`: المرور يُشعله والبطاقة تُطفئه عند `animationend`.
+   فلو خرج المؤشّر في منتصف العبور أتمّ الشريط طريقه بدل أن يُبتر فيختفي فجأةً وسط السطح. */
+.mcard-hero::after { content: ""; position: absolute; inset-block: -60%; inline-size: 42%; inset-inline-start: -60%; transform: rotate(18deg); pointer-events: none; background: linear-gradient(90deg, transparent, var(--glass-bg-strong), transparent); }
+.mcard.is-sheen .mcard-hero::after { animation: mcard-sheen 2.2s var(--ease-standard); }
+@keyframes mcard-sheen { from { inset-inline-start: -60%; } to { inset-inline-start: 130%; } }
+@media (prefers-reduced-motion: reduce) { .mcard.is-sheen .mcard-hero::after { animation: none; } }
+
+.mcard-top { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.mcard-logo { display: block; height: 26px; width: auto; }
+
+/* «من أنت» في طرفٍ و«أين تجلس» في الآخر — فيتوازن السطح العريض بمحتوًى حقيقيّ لا بحشو.
+   و`wrap` يُنزل السلسلة تحت الهويّة حين يضيق السطح، فلا تنضغط الشرائح على الاسم. */
+.mcard-id { position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: 12px 16px; margin-top: 16px; }
+/* أفتار البطاقة = مكوّن Avatar (av av-2xl) + حلقةٌ بيضاء ومِلءُ تدرّج — كـ`.pvb-av` فوق غلاف الملفّ.
+   **بحلقةٍ أرقّ وبلا ظلّ**، وفرقُه عن نظيره فرقُ موضعٍ لا ذوق: أفتار الملفّ **يمتطي حافّة الغلاف**
+   (نصفُه على السطح الفاتح) فهو معلَّقٌ فوق سطحين ويستحقّ ارتفاعَه؛ وهذا يجلس **داخل** لوحةٍ
+   مسطّحة، فالظلّ يَعِد بعمقٍ لا وجود له. وكان حول صورةٍ واحدة أربعُ حوافّ متتابعة (ظلّ · حلقة
+   بيضاء 4px · شعرة `inset` · حدّ الصورة) — أقواها بياضًا يفوق الاسم نفسَه في جذب العين. */
+.mcard-av { flex: 0 0 auto; border: 3px solid var(--color-surface); background: var(--grad-primary); box-shadow: none; }
+/* والحلقة تجرّ النقطة معها: الإزاحة المطلقة تُقاس من حافّة الحشو (داخل الحدّ)، فالـ(1px-) الافتراضيّة
+   تصير داخل الركن فتنزلق النقطة إلى صدر الحلقة. تُزاح بمقدار الحلقة + 1 — فتتبع رقّتَها. */
+.mcard-av .av-dot { bottom: -4px; inset-inline-start: -4px; }
+.mcard-who { min-width: 0; margin-inline-end: auto; }
+.mcard-name { font-size: 22px; font-weight: 800; line-height: 1.25; color: var(--color-on-primary); }
+/* النصّ الثانويّ فوق التدرّج = 82% من لون النصّ عليه — نظير `.acard-header-solid .acard-hsub` بلا رقمٍ محفور */
+.mcard-role { margin-top: 3px; font-size: 14px; font-weight: 600; color: color-mix(in oklab, var(--color-on-primary) 82%, transparent); }
+/* سلسلة الانتماء (مجلس ← قسم ← لجنة) — شرائح زجاجيّة متجاورة، ترتيبها وتجاورها يقولان السلسلة.
+   **بلا حدٍّ زجاجيّ**: الحدّ هو ما يجعل الثلاث تُقرأ «علبًا» متطابقة تزاحم الهويّة في الطرف الآخر،
+   فبقيت التعبئة وحدها — تينتٌ يحمل النصّ لا صندوقٌ يعلن نفسه. والحشو يُعوّض بكسل الحدّ الذاهب
+   فلا تنكمش الشريحة عن مقاسها. (استثناءٌ عن نظيرتها المؤطَّرة في `.acard-header-solid`: تلك
+   شريحةٌ واحدةٌ وسمًا، وهذه ثلاثٌ متجاورةٌ بيانًا — والتكرار يضاعف وزن الحدّ.) */
+.mcard-chain { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; list-style: none; }
+.mcard-chain li { padding: 6px 12px; border-radius: var(--radius-xs); background: var(--glass-bg); font-size: 12px; font-weight: 600; }
+
+/* ═══ النصف السفليّ — الحقائق على سطح الكرت الفاتح ═══ */
+.mcard-facts { display: flex; flex-wrap: wrap; background: var(--color-surface); }
+.mcard-fact { flex: 1 1 175px; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 14px 20px; }
+/* فاصلٌ بين الحقائق — من رمزَي الحدّ (لونًا وعرضًا)، وبخاصّيّةٍ منطقيّة فينقلب مع الاتّجاه وحده */
+.mcard-fact + .mcard-fact { border-inline-start: var(--card-stroke-w) solid var(--card-stroke); }
+/* التسمية والقيمة على نسق خليّة العرض (ق٨) — مكوّنان بجواب واحد */
+.mcard-fact dt { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--color-text-muted); }
+.mcard-fact dt svg { flex: 0 0 auto; width: 15px; height: 15px; color: var(--steel-600); }
+.mcard-fact dd { font-size: 14px; font-weight: 700; color: var(--color-primary); }
+
+/* ═══ المسيرة — خطٌّ زمنيّ رأسيّ: نقطةٌ لكلّ محطّة وخيطٌ يصلها بالتالية ═══ */
+.mjr { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.mjr-i { position: relative; display: flex; gap: 13px; padding-bottom: 18px; }
+.mjr-i:last-child { padding-bottom: 0; }
+/* الخيط ينزل من أسفل النقطة إلى نقطة المحطّة التالية — ولا خيط تحت الأخيرة (المسيرة تنتهي ولا تُعلَّق) */
+.mjr-i::before { content: ""; position: absolute; inset-block: 34px 0; inset-inline-start: calc(17px - var(--card-stroke-w) / 2); width: var(--card-stroke-w); background: var(--card-stroke); }
+.mjr-i:last-child::before { display: none; }
+.mjr-dot { position: relative; flex: 0 0 auto; width: 34px; height: 34px; display: grid; place-items: center; border-radius: var(--radius-sm); color: var(--steel-600); background: var(--surface-aurora); border: var(--card-stroke-w) solid var(--card-stroke); }
+.mjr-dot svg { width: 17px; height: 17px; }
+/* المحطّة القائمة الآن تلبس نغمة النجاح كاملةً — سطحها وحدّها وأيقونتها معًا (ق٤) */
+.mjr-i.on .mjr-dot { color: var(--success-600); background: linear-gradient(135deg, var(--aurora-success), var(--color-surface) 62%); border-color: var(--card-stroke-success); }
+.mjr-c { min-width: 0; padding-top: 3px; display: flex; flex-direction: column; gap: 3px; }
+.mjr-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mjr-t { font-size: 14.5px; font-weight: 700; color: var(--color-primary); }
+.mjr-s { font-size: 12.5px; color: var(--color-text-muted); }
+.mjr-d { font-size: 12px; color: var(--color-text-muted); }
+
+/* ============================================================
+   قائمة الاختيار العموديّة (Option List) — بادئة .olist
+   عمودُ بنودٍ يُنتقى منها واحد: المختار يلبس Aurora العلامة وحدَّها النغميّ (ق٤) وشريطَ
+   نغمةٍ في صدره، وشارةُ عددٍ في طرفه. البنود متداخلةٌ بفراغ 3px فزاويتها متراكزة (ق٢).
+   نظيرُ الشريط المقطعيّ حين تكثر الخيارات: `.seg` صفٌّ يضيق باثني عشر، وهذه عمودٌ يتّسع.
+   ============================================================ */
+.olist { display: flex; flex-direction: column; gap: 3px; padding: 3px; background: var(--color-surface); border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); box-shadow: var(--shadow-md); }
+.olist-head { padding: 11px 12px 7px; font-size: 12px; font-weight: 800; color: var(--color-text-muted); }
+.olist-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 9px 11px; font: inherit; font-size: 13.5px; font-weight: 700; color: var(--color-text); text-align: start;
+  background: 0; border: var(--card-stroke-w) solid transparent; border-radius: var(--radius-nested); cursor: pointer;
+  transition: background-color var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+/* شريط الصدر حاضرٌ دائمًا (شفّافًا) فلا يقفز النصّ عند الاختيار */
+.olist-item::before { content: ""; flex: 0 0 3px; align-self: stretch; border-radius: var(--radius-full); background: transparent; }
+.olist-item:hover { background: var(--color-surface-2); color: var(--color-primary); }
+.olist-item.on { background: linear-gradient(135deg, var(--aurora-brand), var(--color-surface) 62%); border-color: var(--card-stroke-brand); color: var(--color-primary); }
+.olist-item.on::before { background: var(--grad-primary); }
+.olist-tx { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
+.olist-tx small { font-family: var(--font-latin); font-size: 11px; font-weight: 600; color: var(--color-text-muted); }
+.olist-item .acount { margin-inline-start: auto; }
+
+/* ============================================================
+   المصفوفة (Matrix) — بادئة .mtx
+   شبكةُ علاقةٍ ثنائيّة (صفّ × عمود): رأسُ الأعمدة لاصقٌ أعلى، وعمودُ الصفوف لاصقٌ في
+   الصدر، والرُّكن فوقهما — فلا يضيع السؤال «أيّ صفٍّ في أيّ عمود؟» عند التمرير.
+   وصليبٌ مُضاء يتبع الخليّة المارّ عليها (صفُّها وعمودها معًا) — بلا هذا يضيع البصر في
+   اثني عشر عمودًا. شبكةٌ واحدة والصفوف `display: contents` (كسابقة `.dt`).
+   ============================================================ */
+.mtx { border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-md); overflow: hidden; }
+.mtx-scroll { overflow: auto; max-height: var(--mtx-h, none); }
+.mtx-grid { display: grid; grid-template-columns: var(--mtx-cols); min-width: 100%; }
+.mtx-row { display: contents; }
+/* الرُّكن والرأس لاصقان أعلى · عمود الصفوف لاصقٌ في الصدر · والرُّكن فوقهما جميعًا */
+.mtx-corner, .mtx-ch { position: sticky; top: 0; z-index: 2; background: var(--color-surface-2); border: 0; border-bottom: 2px solid var(--color-border); }
+.mtx-corner, .mtx-rh { position: sticky; inset-inline-start: 0; }
+.mtx-corner { z-index: 3; display: flex; align-items: flex-end; padding: 10px 14px; font-size: 11.5px; font-weight: 800; color: var(--color-text-muted); }
+.mtx-ch {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 5px;
+  padding: 10px 6px; font: inherit; font-size: 11.5px; font-weight: 800; line-height: 1.3; text-align: center;
+  color: var(--color-text-muted); border-inline-start: 1px solid var(--color-border);
+  transition: background-color var(--dur-fast), color var(--dur-fast);
+}
+.mtx-ch small { font-family: var(--font-latin); font-size: 10.5px; font-weight: 700; }
+/* عنوان فئةٍ يشقّ الشبكة عرضًا؛ ونصّه لاصقٌ في الصدر فيبقى مقروءًا مهما مُرِّرت الأعمدة */
+.mtx-group { grid-column: 1 / -1; padding: 8px 14px; font-size: 12px; font-weight: 800; color: var(--color-primary); background: linear-gradient(135deg, var(--aurora-brand), var(--color-surface) 62%); border-top: 1px solid var(--color-border); }
+.mtx-group span { position: sticky; inset-inline-start: 14px; }
+.mtx-rh { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; background: var(--color-surface); border-top: 1px solid var(--color-border); font-size: 13px; font-weight: 700; color: var(--color-text); transition: background-color var(--dur-fast); }
+.mtx-rh small { font-family: var(--font-latin); font-size: 11px; font-weight: 600; color: var(--color-text-muted); }
+.mtx-c { display: grid; place-items: center; padding: 7px; border-top: 1px solid var(--color-border); border-inline-start: 1px solid var(--color-border); transition: background-color var(--dur-fast); }
+/* الصليب: خليّةُ المرور تُضيء صفَّها وعمودها ورأسيهما */
+.mtx-c.is-cross, .mtx-rh.is-cross, .mtx-ch.is-cross { background: color-mix(in oklab, var(--steel-600) 7%, var(--color-surface)); }
+
+/* ============================================================
+   الشفق المحيط (Ambient) — بادئة .amb
+   خلفيّةُ الصفحة كلّها: طبقةٌ **واحدة** تُوضَع مرّةً فتخدم الصفحة بطولها — لا خلفيّةَ
+   قسمٍ ولا تناوبَ رماديّ. بلاطةُ ضوءٍ بمقاس النافذة (أربعُ بؤرٍ من الهوية) تتكرّر
+   نزولًا، **مسمَّرةً في مواضعها**: المستخدم يمرّ بها ولا تمرّ به.
+
+   **مرسومةٌ في المستند لا في النافذة — وهذا جوهرها.** جُرِّب قبلها شفقٌ ملازمٌ للنافذة
+   تتبدّل نغمتُه بحسب القسم الظاهر، فكان **يومض**: لونٌ يُطفأ وآخر يُشعل عند كلّ حدّ
+   قسمٍ يُعبَر، ويشتدّ الأذى كلّما أسرع التمرير. والعلاج ليس تهدئة التبديل بل **إلغاءه**:
+   بؤرٌ ثابتة لا تُشعَل ولا تُطفَأ، فلا وميضَ مهما بلغت السرعة.
+
+   **ولا تُحاكى بإزاحة.** بديلُ التثبيت أن تُزاح الطبقةُ بمقدار التمرير — وأيّ إزاحة
+   تلاحق الإصبع تتخلّف عنه كسرًا من الثانية، فيُرى الضوء **ينزلق** والمقصود ضدُّه.
+   فالطبقة `position: absolute` تملأ صندوق `body` (وهو بطول المستند) ويثبّتها المتصفّح
+   بطبعه: **صفرُ JS، وصفرُ عملٍ في كلّ إطار، وثباتٌ لا يقبل الانزلاق.**
+
+   **وتُعلَّق على حاوية المحتوى (`.amb-host`) لا على `body` — وهذا تصحيحُ عطبٍ وقع.**
+   كانت على `body`، فارتفاعُها ارتفاعُ المستند كلّه؛ والقصّة الافتتاحيّة تشغل آلاف
+   البكسلات حين تعمل وتُخفى بـ`display: none` عند التخطّي — فيتضاعف الارتفاع أضعافًا
+   بين الحالتين. ومواضعُ البؤر نسبةٌ منه، فتتباعد عند التخطّي حتى **تنفصل بقعًا**
+   وتتقارب مع القصّة. الحاوية ارتفاعُها المحتوى وحده، فالتركيبة واحدة في الحالين.
+
+   **ولماذا يعمل z-index السالب:** `html` بلا خلفيّة، فخلفيّةُ `body` تنتشر إلى لوح
+   الرسم (canvas) ويُرسَم صندوقُ body شفّافًا — فتظهر الطبقة السالبة فوق اللوح وتحت كلّ
+   المحتوى بلا لمس z-index أيّ عنصرٍ آخر. لو أُسنِدت خلفيّةٌ إلى `html` يومًا اختفت
+   الطبقة (فحصٌ قبل أيّ تغيير هناك).
+
+   **ولا `filter: blur()`** على مساحة الصفحة — تدرّجٌ شعاعيّ واسع يعطي النعومة نفسها
+   بكسرٍ من كلفة المرشّح.
+   ============================================================ */
+/* حاوية المحتوى تُعلَن موضَّعةً صراحةً — العنصر المطلق يحتاج جدًّا يقيس عليه، ولولاه
+   قاس على النافذة فعاد ارتفاعُه ارتفاعَها. صنفٌ صريح لا `:has` عامّ: يقول أين تسكن
+   الخلفيّة، ولا يفرض تكلفة محدِّدٍ يمسح الشجرة. */
+.amb-host { position: relative; }
+
+/* **بمقاس النافذة لا بمقاس المحتوى** — وهذا تصحيحُ عطبِ أداءٍ مقيسٍ لا تفضيلًا:
+   كانت `absolute; inset: 0` داخل `amb-host`، فارتفاعُها ارتفاعُ الصفحة كلّها. وكلُّ
+   تغييرِ تخطيطٍ في الصفحة يُبطل رسمَها، فتُعاد بلاطةُ الضوء (بمقاس النافذة ×٢)
+   والشبكةُ المقنَّعة من الصفر — ثلاثين مرّةً في الثانية طوال فتح أكورديون.
+   عُزل السبب بالتجربة (٢٠٢٦-٠٧-٣١): بلا خلفيّة ينساب · الحبيبات وحدها تنساب
+   (بلاطتُها ٢٤٠px) · الضوء أو الشبكة وحدهما يعلقان. ولم ينفع تثبيتُ الارتفاع، ولا
+   `will-change`/`translateZ`/`contain: paint`، ولا استبدالُ `color-mix` بألوانٍ
+   صريحة، ولا جعلُ البلاطة صورةً — لأن العلّة مساحةُ البلاطة لا نوعُها.
+   و`fixed` يحلّها من الجذر: طبقةٌ بمقاس النافذة لا تتحجّم، ولا يمسّها تخطيطُ الصفحة.
+   ⚖️ وثمنُها مقبولٌ بقرار المالك: الضوء صار مثبَّتًا في النافذة — يمشي مع القارئ
+   بدل أن يمرّ به. (أثرٌ تابع: البلاطة ٢٠٠vh والطبقة ١٠٠vh، فلا تكرارَ نزولًا ولا
+   حدَّ بين بلاطتين — وما دون ذلك في الوصف أدناه صار وصفَ ما كان.) */
+.amb {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--color-bg);
+  /* شدّةُ الشفق كلّه بمقبضٍ واحد — المعتمَد «هادئ» */
+  --amb-op: .5;
+  /* وحدةُ الشبكة — مربّعٌ واحد يُبلَّط، ومقاسُ البلاطة الضوئيّة التي تُكرَّر نزولًا */
+  --amb-unit: 64px;
+  --amb-tile: 200vh;
+
+  /* ═══ بلاطةُ الضوء — **معرَّفةٌ مرّةً واحدة هنا** ═══
+     **تركيبةٌ بمقاس النافذة تتكرّر نزولًا، لا تركيبةٌ واحدة تُمطّ على طول الصفحة.**
+     وهذا تصحيحُ عطبٍ في الجذر: حين تُقاس البؤر بنسبةٍ من الحاوية، يتبدّل شكلُها
+     وكثافتُها ونسبتُها إلى الشبكة من صفحةٍ إلى أخرى — فتُقرأ الخلفيّةُ خلفيّتين. أمّا
+     البلاطة فمقاسُها النافذةُ وحدها، فالشكل والكثافة ونسبةُ الشبكة إلى الضوء **واحدةٌ
+     في كلّ صفحة**، ولا يعود لطول الصفحة ولا لظهور القصّة أثرٌ في التركيبة أبدًا.
+
+     **الحدّ بين بلاطتين يُخاط ببؤرةٍ مكرّرة:** التبليط يقصّ التدرّج عند حافّة البلاطة،
+     فالبؤرة عند `0%` نصفُها العلويّ مقصوص. ونظيرتُها **المطابقة** عند `100%` تُكمله من
+     البلاطة التي فوقها، فتلتحم البؤرة عبر الحدّ ولا يظهر خطُّ وصل. (والباقيات مداهنّ
+     داخل البلاطة فلا تُقصّ.)
+
+     **والتبادل يكسر رتابة التكرار:** أربع بؤرٍ تتناوب يمينًا ويسارًا (٨٢٪ · ١٦٪ · ٧٤٪
+     · ٢٢٪) ولونًا بين الإضاءة والوسيط — وعددُها **زوجيّ** فيلتفّ التناوب عبر الحدّ
+     سليمًا (لو كنّ خمسًا لتجاورت بؤرتان من جهةٍ واحدة عند كلّ وصل).
+
+     التباعد ٥٠vh والقطرُ الظاهر ٧٣vh (‏٥٢vh × ٧٠٪ ‏× ٢) — تراكبٌ بنسبة ١٫٤٦، وهي
+     نسبةُ المعرض التي أقرّها المالك: بِرَكُ ضوءٍ متّصلة مُعدَّلة، لا جزرٌ ولا غسيل.
+
+     **ولماذا رمزٌ لا قيمةٌ مكتوبة في مكانها:** تقرؤها طبقتان — السطحُ يرسمها ضوءًا،
+     والشبكةُ الكامنة تتّخذها **قناعًا** فلا تظهر خطوطُها إلا حيث يقع الضوء. ولو كُتبت
+     مرّتين لانفصلتا يوم تُحرَّك بؤرةٌ واحدة، فظهرت الخطوط في غير موضع الضوء. */
+  --amb-blobs:
+    radial-gradient(66vw 52vh at 82% 0%,   color-mix(in oklab, var(--amb-light) 46%, transparent), transparent 70%),
+    radial-gradient(72vw 54vh at 16% 25%,  color-mix(in oklab, var(--amb-mid) 34%, transparent), transparent 72%),
+    radial-gradient(60vw 50vh at 74% 50%,  color-mix(in oklab, var(--amb-light) 40%, transparent), transparent 70%),
+    radial-gradient(70vw 52vh at 22% 75%,  color-mix(in oklab, var(--amb-mid) 38%, transparent), transparent 72%),
+    radial-gradient(66vw 52vh at 82% 100%, color-mix(in oklab, var(--amb-light) 46%, transparent), transparent 70%);
+}
+
+/* التجاوزُ الأفقيّ (‎-14%‎) يُخفي حافّة التدرّج خارج الإطار — و**الشبكةُ تشاركه إيّاه
+   حرفيًّا**: النِّسَب تُقاس من صندوق العنصر، فلو اختلف عرضُ الصندوقين لانزاح القناع عن
+   الضوء وظهرت الخطوط في غير موضعها. */
+.amb-rib {
+  position: absolute;
+  inset: 0 -14%;
+  opacity: var(--amb-op);
+  background-image: var(--amb-blobs);
+  background-size: 100% var(--amb-tile);
+  background-repeat: repeat;
+}
+
+/* ============================================================
+   الشبكة الكامنة (Mesh) — بنيةٌ لا تظهر إلا حيث يقع الضوء، بادئة .amb-mesh
+   الشفقُ منحنياتٌ ناعمة بلا خطّ؛ والشبكةُ تقابله ببنيةٍ هندسيّة، والتوتّرُ بينهما هو
+   ما يجعل الخلفيّة تُقرأ مصمَّمةً لا مُطفأة.
+
+   **والقناع هو قائمة البؤر نفسها** (`--amb-blobs`): شفافيّةُ كلّ بؤرةٍ تصير شفافيّةَ
+   الخطوط تحتها، فتنكشف التربيعاتُ في بِرَك الضوء وتذوب بينها. وهذا ما ينجو بها من
+   **فخّ ورق الجدران**: شبكةٌ منتظمة بشدّةٍ واحدة على الصفحة كلّها تُقرأ رخيصةً وتزاحم
+   خطوطُها الماضيةُ وصلَ الحرف العربيّ — أمّا هذه فتتنفّس مع الضوء.
+
+   **وحبرُها غليظٌ في القيمة شحيحٌ في الأثر** (٦٢٪): القناع يأكل أكثره — أقصى بؤرةٍ
+   ٤٦٪، أيْ أنّ الظاهر منه أقلّ من ثلثه. فلا يُقاس الرقم بمجرّده.
+
+   **وتشارك الرِّبَّ تجاوزه الأفقيّ حرفيًّا** (`inset: 0 -14%`): النِّسَب تُقاس من صندوق
+   العنصر، فاختلافُ عرض الصندوقين وحده يُزيح القناع عن الضوء فتظهر الخطوط في غير موضعها.
+   ============================================================ */
+.amb-mesh {
+  position: absolute;
+  inset: 0 -14%;
+  --amb-ink: color-mix(in oklab, var(--amb-mid) 62%, transparent);
+  /* **خليّةٌ واحدة تُكرَّر، لا تدرّجٌ مكرِّرٌ يمتدّ على الطبقة كلّها** — وهذا تصحيحُ
+     عطبٍ ثالث وقع: كانت `repeating-linear-gradient` تُحسَب على ارتفاع الطبقة كلّه،
+     فتتراكم أخطاءُ التقريب عبر آلاف البكسلات حتى **تصير بعضُ المربّعات مستطيلات**.
+     و`background-size` يجعل المتصفّح يرسم خليّةً واحدة `--amb-unit` مربّعةً ثمّ
+     يبلّطها — فكلّ خليّةٍ نسخةٌ طبق الأصل مهما طالت الصفحة، والتربيع مضمون. */
+  background-image:
+    linear-gradient(to bottom, var(--amb-ink) 0 1px, transparent 1px),
+    linear-gradient(to right,  var(--amb-ink) 0 1px, transparent 1px);
+  background-size: var(--amb-unit) var(--amb-unit);
+  /* القناع يطابق السطح في الصورة **والمقاس والتكرار** معًا — البلاطة الضوئيّة نفسها
+     بلاطةً للقناع. لو اختلف أحدُ الثلاثة انزاح القناع عن الضوء فظهرت الخطوط في العتمة. */
+  -webkit-mask-image: var(--amb-blobs);
+  mask-image: var(--amb-blobs);
+  -webkit-mask-size: 100% var(--amb-tile);
+  mask-size: 100% var(--amb-tile);
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+}
+
+
+/* حبيباتٌ فوق البؤر — تكسر تشريط (banding) التدرّجات الواسعة على الأسطح الفاتحة.
+   نفس مرشّح feTurbulence المستعمل في القصّة الافتتاحيّة، جوابٌ واحد للسؤال نفسه. */
+.amb-grain {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 240px 240px;
+  opacity: .05;
+}
+
+/* ============================================================
    نظام الزوايا المتراكز — استثناءات الأساس (--radius = 16).
    المصدر الوحيد هنا (components.css يُحمَّل أخيرًا) — بلا !important.
    ============================================================ */
@@ -2903,8 +3865,8 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
    الخمسة الأخيرة كانت منسيّة فبقيت على الأساس (16): و16 ≥ نصف الـ30/32،
    فيقصّه المتصفّح إلى النصف — أيقونة حقل كرت العضو كانت **دائرة كاملة**. */
 .av-xs, .av-sm, .pva-copy, .pva-open, .tx, .tic,
-.dm-trigger, .mdl-x, .pag-arr, .pag-num, .mc-dots,
-.mc-ic, .ash-fic, .dt-dots, .ash-logo, .gal-num {
+.dm-trigger, .mdl-x, .pag-arr, .pag-num, .acard-dots,
+.acard-ic, .ash-fic, .dt-dots, .ash-logo, .gal-num {
   border-radius: var(--radius-sm);
 }
 /* الصغير جدًّا (checkbox ~22px) → --radius-xs (6) */

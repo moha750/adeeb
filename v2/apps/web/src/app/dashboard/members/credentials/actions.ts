@@ -13,16 +13,16 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * profiles.id هو نفسه معرّف مستخدم المصادقة (auth.users.id)، فيُمرَّر مباشرةً.
  * عند تغيير البريد نُزامن profiles.email كي تبقى قائمة الأعضاء متّسقة (data.ts يقرأ منه).
  *
- * أمن: يتحقّق من صلاحية الأدمن (role_level ≥ 8) قبل أيّ تعديل — دفاعٌ في العمق فوق حراسة اللوحة.
+ * أمن: يتحقّق من قدرة `manage_member_data` قبل أيّ تعديل — دفاعٌ في العمق فوق حراسة اللوحة (صفر role_level).
  */
 export async function updateCredentials(input: {
   userId: string;
   email?: string;
   password?: string;
 }): Promise<CredResult> {
-  // بوّابة الصلاحية — مطابقة لعتبة دوال الخلفية الطرفية
+  // بوّابة القدرة — تغيير بيانات الدخول جزءٌ من إدارة بيانات العضو
   const admin = await getCurrentAdmin();
-  if (!admin || !admin.isAdmin) {
+  if (!admin || !admin.caps.includes("manage_member_data")) {
     return { ok: false, message: "لا تملك صلاحية تنفيذ هذا الإجراء." };
   }
 

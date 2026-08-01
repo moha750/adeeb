@@ -3,6 +3,9 @@
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { Select } from "@adeeb/design-system";
 
+/** حجم صفحة يعني «كلّ الصفوف في صفحة واحدة» — رقمٌ ضخم يجعل الحساب صفحةً واحدة بلا استثناء */
+export const ALL_ROWS = Number.MAX_SAFE_INTEGER;
+
 type PaginationProps = {
   page: number;
   pageSize: number;
@@ -28,7 +31,7 @@ function pageList(cur: number, total: number): (number | "…")[] {
 
 export function Pagination({
   page, pageSize, total, onPageChange, onPageSizeChange,
-  pageSizeOptions = [5, 10, 25, 50], noun = "عنصر",
+  pageSizeOptions = [50, 100, 250, 500, ALL_ROWS], noun = "عنصر",
 }: PaginationProps) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
@@ -41,7 +44,7 @@ export function Pagination({
           صفوف لكل صفحة
           <Select
             className="pag-sel"
-            options={pageSizeOptions.map((o) => ({ value: String(o), label: String(o) }))}
+            options={pageSizeOptions.map((o) => ({ value: String(o), label: o === ALL_ROWS ? "الكل" : String(o) }))}
             value={String(pageSize)}
             onValueChange={(v) => onPageSizeChange(Number(v))}
           />

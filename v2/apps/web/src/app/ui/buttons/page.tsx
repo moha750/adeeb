@@ -1,9 +1,9 @@
 "use client";
 
-import { Button, Container } from "@adeeb/design-system";
-import { PaperPlaneTilt, Plus } from "@phosphor-icons/react";
+import { Button, Container, IconButton } from "@adeeb/design-system";
+import { ArrowDown, ArrowUp, CopySimple, PaperPlaneTilt, PencilSimple, Plus, Trash } from "@phosphor-icons/react";
 
-const VARIANTS = ["primary", "ghost", "danger", "inverse"] as const;
+const VARIANTS = ["primary", "ghost", "danger", "neutral", "inverse"] as const;
 const SIZES = ["sm", "md", "lg"] as const;
 
 function Label({ children }: { children: React.ReactNode }) {
@@ -46,7 +46,7 @@ export default function ButtonsPage() {
             <div className="flex flex-wrap items-center gap-4">
               {VARIANTS.map((v) => (
                 <Button key={v} variant={v}>
-                  {{ primary: "أساسي", ghost: "شبحي", danger: "خطر", inverse: "معكوس" }[v]}
+                  {{ primary: "أساسي", ghost: "شبحي", danger: "خطر", neutral: "محايد", inverse: "معكوس" }[v]}
                 </Button>
               ))}
             </div>
@@ -71,7 +71,10 @@ export default function ButtonsPage() {
               <Button>
                 <PaperPlaneTilt aria-hidden /> عادي
               </Button>
-              <Button loading>جارٍ الحفظ…</Button>
+              {/* النصّ ثابت — الدائرة وحدها تقول «يعمل الآن» (القاعدة ٧) */}
+              <Button loading>
+                <PaperPlaneTilt aria-hidden /> يعمل الآن
+              </Button>
               <Button disabled>
                 <PaperPlaneTilt aria-hidden /> معطّل
               </Button>
@@ -94,10 +97,31 @@ export default function ButtonsPage() {
             </div>
           </section>
 
+          {/* الزرّ الأيقونيّ — مربّع مضغوط للأدوات */}
+          <section>
+            <Label>الزرّ الأيقونيّ (IconButton) · الأحجام والنغمات</Label>
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="flex items-center gap-3">
+                {SIZES.map((s) => (
+                  <IconButton key={s} size={s} aria-label={`تحرير ${s}`} title={s}><PencilSimple /></IconButton>
+                ))}
+              </div>
+              <IconButton tone="danger" aria-label="حذف" title="خطر"><Trash /></IconButton>
+              <IconButton disabled aria-label="معطّل" title="معطّل"><PencilSimple /></IconButton>
+              {/* عنقود أدوات واقعيّ كما في بنّاء الاستبيان */}
+              <div className="flex items-center gap-1 rounded border border-line p-2">
+                <IconButton aria-label="لأعلى" title="لأعلى"><ArrowUp /></IconButton>
+                <IconButton aria-label="لأسفل" title="لأسفل"><ArrowDown /></IconButton>
+                <IconButton aria-label="تكرار" title="تكرار"><CopySimple /></IconButton>
+                <IconButton tone="danger" aria-label="حذف" title="حذف"><Trash /></IconButton>
+              </div>
+            </div>
+          </section>
+
           {/* على خلفية كحلية */}
           <section>
             <Label>على خلفية الهوية</Label>
-            <div className="flex flex-wrap items-center gap-4  bg-brand-strong p-6">
+            <div className="flex flex-wrap items-center gap-4 rounded bg-brand-strong p-6">
               <Button variant="inverse">
                 <Plus aria-hidden /> معكوس
               </Button>

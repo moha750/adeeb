@@ -2,6 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 import { toLatinDigits } from "@adeeb/core";
+import { ArrowUpRight } from "@phosphor-icons/react";
 import { WorkLightbox, type Work } from "./WorkLightbox";
 
 const COLS = 3;
@@ -42,7 +43,7 @@ export function WorksWall({ works }: { works: Work[] }) {
         ))}
       </div>
 
-      {box ? <WorkLightbox w={box} onClose={() => setBox(null)} /> : null}
+      <WorkLightbox work={box} onClose={() => setBox(null)} />
     </>
   );
 }
@@ -71,8 +72,11 @@ function WorkTile({ w, onOpen }: { w: Work; onOpen: () => void }) {
         <div className="flex items-center justify-between gap-2 text-white">
           <h3 className="font-display text-base font-bold leading-snug">{toLatinDigits(w.title)}</h3>
           {w.link_url ? (
-            <span aria-hidden className="shrink-0 text-sm opacity-80">
-              ↗
+            <span
+              aria-hidden
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-navy-950/60 text-white"
+            >
+              <ArrowUpRight aria-hidden />
             </span>
           ) : null}
         </div>
@@ -82,7 +86,7 @@ function WorkTile({ w, onOpen }: { w: Work; onOpen: () => void }) {
 
   // hamish سفليّ ثابت (بدل gap) ليتطابق النصفان المكرّران ويصير التمرير سلسًا بلا قفزة
   const base =
-    "group relative block h-52 shrink-0 overflow-hidden  shadow-lg ring-1 ring-navy-950/5 mb-4";
+    "group relative block h-52 shrink-0 overflow-hidden rounded shadow-lg ring-1 ring-navy-950/5 mb-4";
 
   return w.link_url ? (
     <a

@@ -69,7 +69,7 @@ export default function ToolbarPage() {
           <Sec title="بحث فقط">
             <Lab>search · onSearch — أدنى شكل للشريط</Lab>
             <Toolbar
-              searchPlaceholder="ابحث بالاسم أو البريد…"
+              searchPlaceholder="ابحث بالاسم أو رقم الجوّال…"
               search={search1}
               onSearch={setSearch1}
             />
@@ -103,7 +103,7 @@ export default function ToolbarPage() {
           <Sec title="الشريط الكامل">
             <Lab>بحث + مرشّحات + مبدّل عرض — الشريط النحيل الكامل (تهذيب القائمة فقط: بحث/تصفية/عرض)</Lab>
             <Toolbar
-              searchPlaceholder="ابحث بالاسم أو البريد…"
+              searchPlaceholder="ابحث بالاسم أو رقم الجوّال…"
               search={search4}
               onSearch={setSearch4}
               filters={FILTERS}

@@ -29,7 +29,7 @@ export function WorksBrowser({ works }: { works: Work[] }) {
               type="button"
               onClick={() => setActive(c)}
               className={
-                " border px-4 py-1.5 text-sm font-bold transition " +
+                "rounded-full border px-4 py-1.5 text-sm font-bold transition " +
                 (on
                   ? "border-transparent bg-brand text-white"
                   : "border-line bg-surface text-content-muted hover:border-navy-300")
@@ -48,7 +48,7 @@ export function WorksBrowser({ works }: { works: Work[] }) {
         ))}
       </div>
 
-      {box ? <WorkLightbox w={box} onClose={() => setBox(null)} /> : null}
+      <WorkLightbox work={box} onClose={() => setBox(null)} />
     </>
   );
 }
@@ -71,7 +71,7 @@ function WorkGridCard({ w, onOpen }: { w: Work; onOpen: () => void }) {
         {w.link_url ? (
           <span
             aria-hidden
-            className="absolute left-3 top-3 flex h-8 w-8 items-center justify-center  bg-navy-950/50 text-sm text-white opacity-0 transition group-hover:opacity-100"
+            className="absolute left-3 top-3 flex h-8 w-8 items-center justify-center rounded-sm bg-navy-950/50 text-sm text-white opacity-0 transition group-hover:opacity-100"
           >
             ↗
           </span>
@@ -91,7 +91,7 @@ function WorkGridCard({ w, onOpen }: { w: Work; onOpen: () => void }) {
   );
 
   const base =
-    "group block overflow-hidden  border border-line bg-surface shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg";
+    "group block overflow-hidden rounded border border-line bg-surface shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg";
 
   return w.link_url ? (
     <a href={w.link_url} target="_blank" rel="noopener noreferrer" className={base} title={w.title}>

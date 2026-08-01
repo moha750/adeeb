@@ -14,7 +14,7 @@ function Lab({ children }: { children: React.ReactNode }) {
 function Swatch({ v, label }: { v: string; label: string }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="h-14  border border-line" style={{ background: `var(${v})` }} />
+      <div className="h-14 rounded border border-line" style={{ background: `var(${v})` }} />
       <span className="font-latin text-[11px] text-content-muted" dir="ltr">{label}</span>
     </div>
   );
@@ -70,7 +70,7 @@ export default function TokensPage() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {GRADS.map(([v, l]) => (
                 <div key={l} className="flex flex-col gap-1.5">
-                  <div className="h-20  border border-line" style={{ background: `var(${v})` }} />
+                  <div className="h-20 rounded border border-line" style={{ background: `var(${v})` }} />
                   <span className="font-latin text-[11px] text-content-muted" dir="ltr">{l}</span>
                 </div>
               ))}
@@ -78,7 +78,7 @@ export default function TokensPage() {
           </Sec>
 
           <Sec title="الطباعة">
-            <div className="space-y-4  border border-line bg-surface p-6">
+            <div className="space-y-4 rounded border border-line bg-surface p-6">
               <p className="font-display text-4xl font-black text-content">أدِيب — عنوان بخطّ Lyon Arabic</p>
               <p className="font-display text-xl text-content">
                 <span style={{ fontWeight: 300 }}>خفيف · </span>

@@ -8,11 +8,13 @@ import { Skeleton } from "./Skeleton";
 export type Column<T> = {
   key: string;
   header: string;
-  /** عرض الخلية؛ الافتراضي نصّ من المفتاح */
-  render?: (row: T) => React.ReactNode;
+  /** عرض الخلية؛ الافتراضي نصّ من المفتاح. `index` موضع الصفّ في القائمة المرتّبة (لعمود «#»/«الترتيب») */
+  render?: (row: T, index: number) => React.ReactNode;
   /** مسار عمود الشبكة، مثل "1.1fr" أو "140px" */
   width?: string;
   align?: "start" | "center" | "end";
+  /** يلتفّ محتوى العمود حرًّا (متعدّد الأسطر) بدل السطر الواحد المتّسع — للإجابات/النصوص الحرّة الطويلة */
+  wrap?: boolean;
   /** يُفعّل ترويسة قابلة للفرز (يُوصَل بحالة الفرز من المستهلك) */
   sortable?: boolean;
   /** لبنة التحميل لهذا العمود؛ الافتراضي قضيب */
@@ -41,9 +43,9 @@ type Props<T> = {
   loading?: boolean;
   skeletonRows?: number;
   /** نغمة الجدول كاملةً (طاولة تمثّل حالة واحدة: حدّ/ترويسة/تزيبير/ظلّ بلون النغمة) */
-  tone?: "success" | "warning" | "danger";
+  tone?: "success" | "warning" | "danger" | "neutral";
   /** نغمة كلّ صفّ حسب حالته (تِنت الخلايا + أفتار بلون الحالة) */
-  rowTone?: (row: T) => "success" | "warning" | "danger" | undefined;
+  rowTone?: (row: T) => "success" | "warning" | "danger" | "neutral" | undefined;
 };
 
 const alignClass = (a?: Column<unknown>["align"]) => (a === "center" ? " center" : a === "end" ? " end" : "");
@@ -107,7 +109,7 @@ export function DataTable<T>({ columns, rows, getRowId, selectable, selected, on
           {columns.map((c) => {
             const active = sort?.id === c.key;
             return (
-              <div key={c.key} className={"dt-c" + alignClass(c.align)}>
+              <div key={c.key} className={"dt-c" + alignClass(c.align) + (c.wrap ? " dt-wrap" : "")}>
                 {c.sortable && onToggleSort ? (
                   <button type="button" className={"dt-sort" + (active ? " on" : "")} onClick={() => onToggleSort(c.key)} aria-label={`فرز حسب ${c.header}`}>
                     <span>{c.header}</span>
@@ -141,7 +143,7 @@ export function DataTable<T>({ columns, rows, getRowId, selectable, selected, on
         <div className="dt-empty">{emptyState}</div>
       ) : (
       <div className="dt-body">
-        {rows.map((row) => {
+        {rows.map((row, i) => {
           const id = getRowId(row);
           const rt = rowTone?.(row);
           // نغمة قائمة الإجراءات = نغمة الصفّ، أو نغمة الطاولة إن كانت دلاليّة (لا العلامة)
@@ -158,8 +160,8 @@ export function DataTable<T>({ columns, rows, getRowId, selectable, selected, on
                 </div>
               )}
               {columns.map((c) => (
-                <div key={c.key} className={"dt-c" + alignClass(c.align)}>
-                  {c.render ? c.render(row) : <span className="txt">{String((row as Record<string, unknown>)[c.key] ?? "")}</span>}
+                <div key={c.key} className={"dt-c" + alignClass(c.align) + (c.wrap ? " dt-wrap" : "")}>
+                  {c.render ? c.render(row, i) : <span className="txt">{String((row as Record<string, unknown>)[c.key] ?? "")}</span>}
                 </div>
               ))}
               {rowActions && (

@@ -96,14 +96,26 @@ Deno.serve(async (req: Request) => {
     if (!profile) return json({ error: 'Profile not found' }, 404);
     if (!profile.email) return json({ ok: true, skipped: true, reason: 'no email' }, 200);
 
+    // الاسم = الرتبة + وحدة الدور الأمّ (roles.home_committee_id — 20260731_roles_home_committee)،
+    // ووحدةُ الإسناد تُسكت إن كانت الأمّ نفسها فلا يتكرّر «قائد إدارة الضمان» مع «إدارة الضمان».
     const { data: role } = await supabaseAdmin
       .from('roles')
-      .select('role_name_ar')
+      .select('role_name_ar, home_committee_id')
       .eq('id', roleId)
       .single();
 
+    let roleNameAr = role?.role_name_ar || 'المنصب';
+    if (role?.home_committee_id) {
+      const { data: home } = await supabaseAdmin
+        .from('committees')
+        .select('committee_name_ar')
+        .eq('id', role.home_committee_id)
+        .single();
+      if (home?.committee_name_ar) roleNameAr = `${roleNameAr} ${home.committee_name_ar}`;
+    }
+
     let committeeName: string | null = null;
-    if (committeeId) {
+    if (committeeId && String(committeeId) !== String(role?.home_committee_id ?? '')) {
       const { data: committee } = await supabaseAdmin
         .from('committees')
         .select('committee_name_ar')
@@ -130,7 +142,7 @@ Deno.serve(async (req: Request) => {
     const { subject, html } = buildEmail({
       action,
       fullName: profile.full_name || 'عضو النادي',
-      roleNameAr: role?.role_name_ar || 'المنصب',
+      roleNameAr,
       committeeName,
       departmentName,
     });

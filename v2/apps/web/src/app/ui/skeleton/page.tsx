@@ -150,7 +150,7 @@ export default function SkeletonPage() {
 
           <Sec title="تركيب واقعيّ — بطاقة عضو">
             <Lab>دائرة + أسطر تُحاكي بطاقة تحميل</Lab>
-            <div className="max-w-sm  border border-line bg-surface p-5">
+            <div className="max-w-sm rounded border border-line bg-surface p-5">
               <div className="flex items-center gap-4">
                 <Skeleton width={56} height={56} radius={999} />
                 <div className="flex-1 space-y-3">

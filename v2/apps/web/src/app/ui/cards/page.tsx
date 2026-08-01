@@ -16,23 +16,23 @@ import type { MemberRow } from "../../dashboard/members/data";
 
 const MEMBER: MemberRow = {
   id: "mock", name: "محمد بن إسماعيل", email: "mohammad@adeeb.club", phone: "٠٥٠١٢٣٤٥٦٧",
-  avatar: null, dept: "الإعلام", committee: "لجنة الإعلام", role: "عضو", status: "active",
+  avatar: null, gender: "male", dept: "الإعلام", committee: "لجنة الإعلام", role: "عضو", status: "active",
   joined: "١٢ يناير ٢٠٢٥", joinedRaw: "2025-01-12",
   college: null, major: null, degree: null, degreeRaw: null, recordNo: null,
   twitter: null, instagram: null, tiktok: null, linkedin: null,
-  endReason: null, endDate: "", endAgo: "",
+  endReason: null, endDate: "", endAgo: "", canEnd: true, canEdit: true,
 };
 
 // ٦ = صفّان تامّان · ٧ = يبقى واحد فيمتدّ · ٨ = يبقى اثنان فيقتسمان
 const GRID_CASES = [6, 7, 8] as const;
 
-// نغمة كرت العضو تُشتقّ من حالته (TONE_CLASS في MemberCard)، فالمعروض هنا هو
+// نغمة كرت العضو تُشتقّ من حالته (TONE في MemberCard)، فالمعروض هنا هو
 // المسلك الحقيقيّ لا أصنافًا تُفرَض. أربع حالات ← ثلاث نغمات + خامل:
-//   .mc-tone-success معرَّف في الهوية ولا تستدعيه حالةٌ — صنفٌ يتيم.
+//   .acard-tone-success معرَّف في الهوية ولا تستدعيه حالةٌ — صنفٌ يتيم.
 const MC_STATES: Array<{ status: MemberRow["status"]; label: string }> = [
-  { status: "active",    label: "نشط — mc-tone-brand" },
-  { status: "pending",   label: "بانتظار الإكمال — mc-tone-warning" },
-  { status: "suspended", label: "موقوف — mc-tone-danger" },
+  { status: "active",    label: "نشط — acard-tone-brand" },
+  { status: "pending",   label: "بانتظار الإكمال — acard-tone-warning" },
+  { status: "suspended", label: "موقوف — acard-tone-danger" },
   { status: "inactive",  label: "غير نشط — بلا نغمة (الأساس الخامل)" },
 ];
 
@@ -57,7 +57,7 @@ export default function CardsPage() {
         <div className="mt-12 space-y-12">
           <section>
             <Label>التركيب (Media · Header · Body · Footer · أفقية)</Label>
-            <div className="mc-grid">
+            <div className="card-grid">
               <Card interactive>
                 <CardMedia />
                 <CardBody>
@@ -101,22 +101,48 @@ export default function CardsPage() {
           </section>
 
           <section>
+            <Label>رأس البطاقة — سلّم الشدّة (CardHeader variant)</Label>
+            <p className="mb-6 max-w-2xl text-content-muted">
+              <code className="font-latin">chip</code> (قرص على سطح الكرت) ·
+              <code className="font-latin"> soft</code> (شريطٌ بتدرّجٍ خفيفٍ من الهوية بنصٍّ داكن — للبيانات/المخطّطات) ·
+              <code className="font-latin"> solid</code> (شريطٌ ممتلئٌ بنصٍّ أبيض — للإبراز).
+            </p>
+            <div className="card-grid">
+              <Card>
+                <CardHeader icon={<GraduationCap weight="duotone" aria-hidden />} title="chip — بقرص" subtitle="على سطح الكرت" />
+                <CardBody className="pt-3"><p className="text-sm text-content-muted">القرص المتدرّج على سطح الكرت الفاتح — هادئ.</p></CardBody>
+              </Card>
+              <Card>
+                <CardHeader variant="soft" icon={<GraduationCap weight="duotone" aria-hidden />} title="soft — منسّم" subtitle="تدرّج خفيف" />
+                <CardBody className="pt-3"><p className="text-sm text-content-muted">تدرّجٌ قطريّ خفيفٌ من زوج الهوية (فولاذيّ→كحليّ) + شعرةٌ سفليّة، نصٌّ داكن — مميّزٌ وهادئ.</p></CardBody>
+              </Card>
+              <Card>
+                <CardHeader variant="solid" icon={<GraduationCap weight="duotone" aria-hidden />} title="solid — صلب" subtitle="شريطٌ ممتلئ" />
+                <CardBody className="pt-3"><p className="text-sm text-content-muted">شريطٌ ممتلئٌ بتدرّج الهوية، نصٌّ أبيض وقرصٌ زجاجيّ — إبرازٌ قويّ.</p></CardBody>
+              </Card>
+            </div>
+          </section>
+
+          <section>
             <Label>الأنماط (variant)</Label>
-            <div className="mc-grid">
+            <div className="card-grid">
               <Card><CardBody><h3 className="font-display font-bold text-content">افتراضية</h3><p className="mt-1 text-sm text-content-muted">حدّ + ظلّ ناعم.</p></CardBody></Card>
               <Card variant="elevated"><CardBody><h3 className="font-display font-bold text-content">بارزة</h3><p className="mt-1 text-sm text-content-muted">ظلّ أعمق.</p></CardBody></Card>
             </div>
           </section>
 
           <section>
-            <Label>كرت العضو — النغمات (النغمة تُشتقّ من الحالة)</Label>
+            <Label>كرت الشخص (نمط acard-profile) — النغمات</Label>
             <p className="mb-6 max-w-2xl text-content-muted">
-              السطح والحدّ والظلّ يتنغّمون معًا من رمزٍ واحد
-              (<code className="font-latin">--surface-aurora</code> ·
-              <code className="font-latin"> --border-aurora</code> ·
-              <code className="font-latin"> --shadow-tone</code>) — القاعدتان ٤ و٥.
+              النظير الرأسيّ للبطاقة الموحّدة، يُركَّب من
+              <code className="font-latin"> Card</code> +
+              <code className="font-latin"> CardBanner</code> + أفتارٍ محتضَن
+              (<code className="font-latin">.acard-av</code>). النغمة تُعلَن مرّةً على الكرت
+              (<code className="font-latin">--card-t</code> ·
+              <code className="font-latin"> --card-tx</code> ·
+              <code className="font-latin"> --card-grad</code>) فتتلوّن أجزاء الشخص الحاضرة وحدها — القاعدتان ٤ و٥.
             </p>
-            <div className="mc-grid">
+            <div className="card-grid">
               {MC_STATES.map((s) => (
                 <div key={s.status}>
                   <p className="mb-3 font-latin text-xs font-bold text-content-muted">{s.label}</p>
@@ -131,7 +157,7 @@ export default function CardsPage() {
           </section>
 
           {/* القاعدة ٦ — سلوكٌ لا يظهر إلّا عند حالة حافّة (صفّ ناقص)، فيُعرض هنا
-              عمدًا بالحالات الثلاث. بـ.mc-grid نفسها لا بشبكة مقلّدة: المعرض
+              عمدًا بالحالات الثلاث. بـ.card-grid نفسها لا بشبكة مقلّدة: المعرض
               مرجعٌ يُقلَّد، فإن قلّد Tailwind علّم الخطأ. */}
           <section>
             <Label>القاعدة ٦ — الصفّ الأخير لا يترك فراغًا</Label>
@@ -147,7 +173,7 @@ export default function CardsPage() {
             {GRID_CASES.map((n) => (
               <div key={n} className="mb-8">
                 <p className="mb-3 font-latin text-xs font-bold text-content-muted">{n} cards</p>
-                <div className="mc-grid">
+                <div className="card-grid">
                   {Array.from({ length: n }, (_, i) => (
                     <MemberCard
                       key={i}

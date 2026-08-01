@@ -20,6 +20,18 @@ export function Reveal({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // بعد انتهاء الظهور تُرفع `will-change` بصنف `is-settled`. تركُها دائمةً يحجز
+    // للعنصر طبقةَ تركيبٍ لا تُطفأ أبدًا، فتتراكم طبقةٌ لكلّ قسم ويثقل كلّ إعادة
+    // تخطيطٍ بعدها (فتحُ أكورديون مثلًا). القاعدة: تُوضع قبل الحركة وتُرفع بعدها.
+    // `transitionend` يصعد من الأبناء (زرٌّ يُمرَّر عليه مثلًا)، فنتحقّق من الهدف —
+    // وإلا رُفعت `will-change` قبل أن تبدأ حركةُ القسم أصلًا.
+    const settle = (e: TransitionEvent) => {
+      if (e.target !== el) return;
+      el.classList.add("is-settled");
+      el.removeEventListener("transitionend", settle);
+    };
+    el.addEventListener("transitionend", settle);
+
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
@@ -33,7 +45,10 @@ export function Reveal({
       { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
     );
     io.observe(el);
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      el.removeEventListener("transitionend", settle);
+    };
   }, []);
 
   return (

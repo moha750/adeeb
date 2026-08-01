@@ -46,7 +46,7 @@ export default function ChoicePage() {
             <Label>مفتاح — إنلاين وصفّ إعدادات</Label>
             <div className="space-y-4">
               <Switch label="الوضع الليليّ" defaultChecked />
-              <div className="divide-y divide-line  border border-line bg-surface px-5 shadow-sm">
+              <div className="divide-y divide-line rounded border border-line bg-surface px-5 shadow-sm">
                 <Switch row label="الإشعارات" description="تنبيهات فورية للأنشطة." defaultChecked className="py-4" />
                 <Switch row label="النشرة البريدية" description="ملخّص أسبوعيّ." className="py-4" />
               </div>

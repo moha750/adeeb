@@ -1,14 +1,6 @@
 import { createAdeebServerClient, toLatinDigits } from "@adeeb/core";
+import { TYPE_META, type ActivityType } from "@/lib/activities";
 import { ActivitiesCarousel, type ActCard } from "./ActivitiesCarousel";
-
-const typeLabels: Record<string, string> = {
-  workshop: "ورشة",
-  dialogue: "حوار",
-  lecture: "محاضرة",
-  competition: "مسابقة",
-  exhibition: "معرض",
-  seminar: "ندوة",
-};
 
 // تنسيق التاريخ على الخادم (أرقام لاتينية) لتفادي اختلاف الترميز بين الخادم والعميل
 function dayNum(d: string): string {
@@ -71,13 +63,13 @@ export async function LatestActivities() {
   const items: ActCard[] = data.map((a) => ({
     id: a.id,
     name: toLatinDigits(a.name),
-    typeLabel: typeLabels[a.activity_type ?? ""] ?? "نشاط",
+    typeLabel: TYPE_META[a.activity_type as ActivityType]?.label ?? "نشاط",
     location: a.location ? toLatinDigits(a.location) : null,
     day: dayNum(a.activity_date),
     month: monthShort(a.activity_date),
     time: timeRange(a.start_time, a.end_time),
     cover: a.cover_image_url,
-    href: `https://www.adeeb.club/activities.html#${a.id}`,
+    href: `/activities/${a.id}`,
   }));
 
   return <ActivitiesCarousel items={items} />;

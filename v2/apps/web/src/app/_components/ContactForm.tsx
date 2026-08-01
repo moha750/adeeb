@@ -58,7 +58,7 @@ export function ContactForm() {
     return (
       <Card className="text-center">
         <CardBody className="p-8">
-          <div className="mx-auto grid h-12 w-12 place-items-center  bg-navy-50 text-2xl font-black text-success">
+          <div className="mx-auto grid h-12 w-12 place-items-center rounded bg-navy-50 text-2xl font-black text-success">
             ✓
           </div>
           <p className="mt-3 font-display text-xl font-bold text-content">شكرًا لك! وصلتْنا رسالتك</p>
@@ -74,27 +74,33 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="الاسم" icon={<User />} innerIcon={<PencilSimple />} placeholder="اكتب اسمك" value={form.name} onChange={set("name")} required />
-        <Field
-          label="البريد الإلكتروني"
-          icon={<Envelope />}
-          innerIcon={<At />}
-          placeholder="you@adeeb.club"
-          type="email"
-          dir="ltr"
-          value={form.email}
-          onChange={set("email")}
-          required
-        />
-      </div>
-      <Field label="الموضوع (اختياري)" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="اكتب هنا…" value={form.subject} onChange={set("subject")} />
-      <Textarea label="الرسالة" icon={<ChatText />} innerIcon={<PencilSimple />} placeholder="اكتب هنا…" rows={5} value={form.message} onChange={set("message")} required />
-      {state === "error" && <p className="text-sm font-bold text-danger">{errorMsg}</p>}
-      <Button type="submit" size="lg" loading={state === "submitting"}>
-        {state === "submitting" ? "جارٍ الإرسال…" : "إرسال الرسالة"}
-      </Button>
-    </form>
+    // سطح الكرت نفسه في الحالتين (النموذج والشكر) — فلا يقف النموذج عاريًا على
+    // الخلفيّة المحيطة (`amb-host`)، ولا يقفز السطح تحت المستخدم عند الإرسال.
+    <Card>
+      <CardBody className="p-8">
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="الاسم" icon={<User />} innerIcon={<PencilSimple />} placeholder="اكتب اسمك" value={form.name} onChange={set("name")} required />
+            <Field
+              label="البريد الإلكتروني"
+              icon={<Envelope />}
+              innerIcon={<At />}
+              placeholder="you@adeeb.club"
+              type="email"
+              charset="latin"
+              value={form.email}
+              onChange={set("email")}
+              required
+            />
+          </div>
+          <Field label="الموضوع" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="اكتب هنا…" value={form.subject} onChange={set("subject")} optional />
+          <Textarea label="الرسالة" icon={<ChatText />} innerIcon={<PencilSimple />} placeholder="اكتب هنا…" rows={5} value={form.message} onChange={set("message")} required />
+          {state === "error" && <p className="text-sm font-bold text-danger">{errorMsg}</p>}
+          <Button type="submit" size="lg" loading={state === "submitting"}>
+            إرسال الرسالة
+          </Button>
+        </form>
+      </CardBody>
+    </Card>
   );
 }

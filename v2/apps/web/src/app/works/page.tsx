@@ -1,4 +1,4 @@
-import { Header, Footer, Container, SectionHeading } from "@adeeb/design-system";
+import { Header, Footer, Container, LandingHeading, Ambient } from "@adeeb/design-system";
 import { createAdeebServerClient } from "@adeeb/core";
 import type { Work } from "../_components/WorkLightbox";
 import { WorksBrowser } from "./WorksBrowser";
@@ -25,10 +25,11 @@ export default async function WorksPage() {
   return (
     <>
       <Header />
-      <main>
+      <main className="amb-host">
+        <Ambient />
         <section className="py-16 md:py-24">
           <Container>
-            <SectionHeading eyebrow="أرشيف" title="كل الأعمال" align="center" />
+            <LandingHeading eyebrow="أرشيف" title="كـل الأعمال" deck="مختاراتٌ من إبداعات أعضائنا عبر المواسم." align="center" />
             {error ? (
               <p className="text-center text-danger">تعذّر جلب الأعمال: {error.message}</p>
             ) : !data || data.length === 0 ? (

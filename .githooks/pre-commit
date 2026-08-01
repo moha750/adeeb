@@ -1,0 +1,25 @@
+#!/bin/sh
+# خطّاف ما قبل الإيداع — حارس المصدر الواحد لأوراق V2.
+#
+# لا يعمل إلا إذا كانت إحدى الورقتين ضمن الإيداع، فلا يُثقل إيداعات V1.
+# ويفحص **المُدرَج في الفهرس** (git show :path) لا ما في القرص: ما تُودعه هو
+# ما يُحكَم عليه، ولو كان في محرّرك تعديلٌ لم تُدرِجه.
+#
+# التفعيل مرّةً واحدة على كلّ جهاز:  git config core.hooksPath .githooks
+# التخطّي عند الضرورة:               git commit --no-verify
+
+G='v2/apps/web/src/app/globals.css'
+C='v2/packages/design-system/components.css'
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+case "$staged" in
+  *"$G"*|*"$C"*) ;;
+  *) exit 0 ;;
+esac
+
+tmp=$(mktemp -d) || exit 1
+git show ":$G" > "$tmp/globals.css" && git show ":$C" > "$tmp/components.css"
+node v2/scripts/css-single-source.mjs "$tmp/globals.css" "$tmp/components.css"
+rc=$?
+rm -rf "$tmp"
+exit $rc

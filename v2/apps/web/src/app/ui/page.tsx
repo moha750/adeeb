@@ -4,7 +4,7 @@ import { Container } from "@adeeb/design-system";
 const GROUPS: { title: string; pages: [string, string][] }[] = [
   {
     title: "الأسس",
-    pages: [["tokens", "الرموز والألوان"]],
+    pages: [["tokens", "الرموز والألوان"], ["ambient", "خلفيّة الشفق"]],
   },
   {
     title: "الإدخال",
@@ -14,17 +14,18 @@ const GROUPS: { title: string; pages: [string, string][] }[] = [
     title: "العرض",
     pages: [
       ["badges", "الشارات"], ["cards", "البطاقات"], ["avatar", "الصورة الرمزيّة"], ["accordion", "الأكورديون"],
-      ["carousel", "الكاروسيل"], ["skeleton", "هياكل التحميل"], ["empty", "الحالة الفارغة"],
-      ["section-heading", "عنوان القسم"], ["stat", "كرت الإحصاء"],
+      ["carousel", "الكاروسيل"], ["carousel-nav", "أسهم التنقّل"], ["skeleton", "هياكل التحميل"], ["empty", "الحالة الفارغة"],
+      ["section-heading", "عنوان القسم"], ["stat", "كرت الإحصاء"], ["positions", "كرت المنصب"], ["supervisors", "كرت المشرف"],
+      ["membership", "بطاقة العضويّة"],
     ],
   },
   {
     title: "التفاعل والتنبيه",
-    pages: [["modal", "النوافذ الحواريّة"], ["dropdown", "قوائم الإجراءات"], ["tabs", "التبويبات"], ["toast", "الإشعارات"], ["alerts", "التنبيهات"]],
+    pages: [["modal", "النوافذ الحواريّة"], ["dropdown", "قوائم الإجراءات"], ["tabs", "التبويبات"], ["segmented", "الشريط المقطعيّ"], ["toast", "الإشعارات"], ["alerts", "التنبيهات"]],
   },
   {
     title: "البيانات",
-    pages: [["table", "جدول البيانات"], ["toolbar", "شريط الأدوات"], ["pagination", "الترقيم"]],
+    pages: [["table", "جدول البيانات"], ["matrix", "المصفوفة والقائمة"], ["toolbar", "شريط الأدوات"], ["pagination", "الترقيم"], ["charts", "المخطّطات"], ["structure", "شجرة الهيكلة"]],
   },
 ];
 
@@ -47,7 +48,7 @@ export default function UIKitPage() {
                   <a
                     key={slug}
                     href={`/ui/${slug}`}
-                    className="group  border border-line bg-surface p-4 transition hover:border-primary hover:shadow-md"
+                    className="group rounded border border-line bg-surface p-4 transition hover:border-primary hover:shadow-md"
                   >
                     <span className="block font-display text-lg font-bold text-content transition group-hover:text-primary">{label}</span>
                     <span className="mt-1 block font-latin text-xs text-content-muted" dir="ltr">/ui/{slug}</span>

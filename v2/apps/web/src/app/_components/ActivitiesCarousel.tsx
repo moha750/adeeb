@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Badge } from "@adeeb/design-system";
+import { Badge, CarouselNav } from "@adeeb/design-system";
 import { Clock, MapPin, ArrowLeft } from "@phosphor-icons/react";
 
 export type ActCard = {
@@ -16,14 +16,9 @@ export type ActCard = {
   href: string;
 };
 
-/** برامجنا وأنشطتنا — إطلالة جانبية بدوران لا نهائيّ. التحويل عبر الزرّ فقط. */
+/** برامجنا وأنشطتنا — إطلالة جانبية بدوران لا نهائيّ. التنقّل بالأزرار وحدها (لا سحب). */
 export function ActivitiesCarousel({ items }: { items: ActCard[] }) {
   const peekRef = useRef<HTMLDivElement>(null);
-  const down = useRef(false);
-  const sx = useRef(0);
-  const sl = useRef(0);
-  const moved = useRef(false);
-  const settling = useRef(false); // أثناء الاستقرار الناعم بعد السحب
   const cool = useRef(false); // توقّف مؤقّت للتلقائي بعد تفاعل يدويّ
   const coolT = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -51,34 +46,16 @@ export function ActivitiesCarousel({ items }: { items: ActCard[] }) {
     requestAnimationFrame(recenter);
 
     const seam = () => {
-      if (!loop || down.current || settling.current) return;
+      if (!loop) return;
       const sw = peek.scrollWidth / 3;
       if (peek.scrollLeft > -sw * 0.5) peek.scrollLeft -= sw;
       else if (peek.scrollLeft < -sw * 1.5) peek.scrollLeft += sw;
     };
 
-    const onMove = (e: PointerEvent) => {
-      if (!down.current) return;
-      const dx = e.clientX - sx.current;
-      if (Math.abs(dx) > 5) moved.current = true;
-      peek.scrollLeft = sl.current - dx;
-    };
-    const onUp = () => {
-      if (!down.current) return;
-      down.current = false;
-      // استقرار ناعم لأقرب بطاقة (بلا قفزة scroll-snap)
-      const step = stepOf();
-      const nearest = Math.round(peek.scrollLeft / step) * step;
-      settling.current = true;
-      peek.scrollTo({ left: nearest, behavior: "smooth" });
-      setTimeout(() => { settling.current = false; seam(); }, 380);
-    };
     const en = () => { hover = true; };
     const lv = () => { hover = false; };
 
     peek.addEventListener("scroll", seam, { passive: true });
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
     window.addEventListener("resize", recenter);
     peek.addEventListener("mouseenter", en);
     peek.addEventListener("mouseleave", lv);
@@ -86,15 +63,13 @@ export function ActivitiesCarousel({ items }: { items: ActCard[] }) {
     let id: ReturnType<typeof setInterval> | null = null;
     if (!reduce && loop) {
       id = setInterval(() => {
-        if (hover || down.current || cool.current) return;
+        if (hover || cool.current) return;
         peek.scrollBy({ left: -stepOf(), behavior: "smooth" });
       }, 4500);
     }
 
     return () => {
       peek.removeEventListener("scroll", seam);
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
       window.removeEventListener("resize", recenter);
       peek.removeEventListener("mouseenter", en);
       peek.removeEventListener("mouseleave", lv);
@@ -103,14 +78,6 @@ export function ActivitiesCarousel({ items }: { items: ActCard[] }) {
     };
   }, [items]);
 
-  const onDown = (e: React.PointerEvent) => {
-    const peek = peekRef.current;
-    if (!peek) return;
-    down.current = true;
-    moved.current = false;
-    sx.current = e.clientX;
-    sl.current = peek.scrollLeft;
-  };
   const nudge = (dir: "prev" | "next") => {
     const peek = peekRef.current;
     if (!peek) return;
@@ -122,7 +89,7 @@ export function ActivitiesCarousel({ items }: { items: ActCard[] }) {
 
   return (
     <div>
-      <div className="act-peek" ref={peekRef} onPointerDown={onDown}>
+      <div className="act-peek" ref={peekRef}>
         {copies.map((c) =>
           items.map((a) => (
             <article className="act-card" key={`${a.id}-${c}`} aria-hidden={c !== 1}>
@@ -145,9 +112,9 @@ export function ActivitiesCarousel({ items }: { items: ActCard[] }) {
                   href={a.href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  draggable={false}
                   tabIndex={c !== 1 ? -1 : undefined}
                   aria-label={`سجّل في ${a.name}`}
-                  onClick={(e) => { if (moved.current) e.preventDefault(); }}
                 >
                   سجّل الآن<ArrowLeft aria-hidden />
                 </a>
@@ -156,10 +123,7 @@ export function ActivitiesCarousel({ items }: { items: ActCard[] }) {
           )),
         )}
       </div>
-      <div className="act-ctrl">
-        <button type="button" onClick={() => nudge("prev")} aria-label="السابق">‹</button>
-        <button type="button" onClick={() => nudge("next")} aria-label="التالي">›</button>
-      </div>
+      <CarouselNav onPrev={() => nudge("prev")} onNext={() => nudge("next")} />
     </div>
   );
 }

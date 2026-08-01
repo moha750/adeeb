@@ -1,6 +1,7 @@
-import { Header, Footer, Container, Button, SectionHeading, Reveal } from "@adeeb/design-system";
+import Link from "next/link";
+import { Header, Footer, Container, LandingHeading, Reveal, Ambient } from "@adeeb/design-system";
+import { StoryOpening } from "./_story/StoryOpening";
 import { WorksGallery } from "./_components/WorksGallery";
-import { AchievementsTreemap } from "./_components/AchievementsTreemap";
 import { BoardMembers } from "./_components/BoardMembers";
 import { LatestActivities } from "./_components/LatestActivities";
 import { LatestNews } from "./_components/LatestNews";
@@ -13,8 +14,14 @@ export const revalidate = 60;
 export default function Home() {
   return (
     <>
+      {/* قصة أديب الافتتاحية — طبقة تسبق الموقع وتسلّم إليه، مرّةً واحدة لكل دخولٍ
+          للموقع (تخطٍّ: ?story=skip · فرض إعادتها: ?story=force) */}
+      <StoryOpening />
       <Header />
-      <main>
+      {/* الخلفيّة تُعلَّق على المحتوى لا على المستند: القصّة تشغل آلاف البكسلات حين تعمل
+          وتُخفى عند التخطّي، فتعليقُها على `body` يجعل تركيبتها تتبدّل بين الحالين. */}
+      <main className="amb-host">
+        <Ambient />
         {/* (1) قصة أديب — الافتتاحية (النسخة القصصية بالأنيميشن تُبنى لاحقًا) */}
         <section id="story" className="py-20 text-center md:py-28">
           <Container>
@@ -28,8 +35,8 @@ export default function Home() {
               نادٍ ثقافي إبداعي بجامعة الملك فيصل، يدعم المواهب الشابة عبر ورشٍ وبرامج ومحتوى متميّز.
             </p>
             <div className="mt-8 flex justify-center gap-3">
-              <Button size="lg">انضمّ إلينا</Button>
-              <Button size="lg" variant="ghost">تصفّح الأعمال</Button>
+              <Link href="/join" className="abtn abtn-primary abtn-lg">انضمّ إلينا</Link>
+              <a href="#works" className="abtn abtn-ghost abtn-lg">تصفّح الأعمال</a>
             </div>
           </Container>
         </section>
@@ -38,47 +45,27 @@ export default function Home() {
         <section id="works" className="py-20 md:py-28">
           <Container>
             <Reveal>
-              <SectionHeading eyebrow="معرض" title="إبداعاتنا" />
+              <LandingHeading eyebrow="معرض" title="أعمال وإبداعات" deck="نعرض ما تصنعه مواهبنا — من القصّة إلى اللوحة والتصميم." />
               <WorksGallery />
             </Reveal>
           </Container>
         </section>
 
-        {/* (3) ملخص المسيرة — بلاطة الهوية (تدرّج فولاذي↔كحلي) بالباترن على الحافتين */}
-        <section id="achievements" className="relative overflow-hidden bg-brand-strong py-20 text-white md:py-28">
-          <div
-            className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-repeat-x opacity-30"
-            style={{ backgroundImage: "url(/brand/pattern-white.svg)", backgroundSize: "auto 48px", backgroundPosition: "center top" }}
-            aria-hidden="true"
-          />
-          <Container>
-            <Reveal>
-              <SectionHeading eyebrow="أرقامنا" title="ملخص المسيرة" align="center" tone="onDark" />
-              <AchievementsTreemap />
-            </Reveal>
-          </Container>
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-repeat-x opacity-30"
-            style={{ backgroundImage: "url(/brand/pattern-white.svg)", backgroundSize: "auto 48px", backgroundPosition: "center bottom" }}
-            aria-hidden="true"
-          />
-        </section>
-
-        {/* (5) أهل الدفّة — المجلس (بيانات حيّة عبر RPC آمن) */}
+        {/* (3) أهل الدفّة — المجلس (بيانات حيّة عبر RPC آمن) */}
         <section id="board" className="py-20 md:py-28">
           <Container>
             <Reveal>
-              <SectionHeading eyebrow="فريقنا" title="أهل الدفّة" align="center" />
+              <LandingHeading eyebrow="فريق" title="أهل الدفّة" deck="المجلس الذي يقود النادي ويرعى مسيرته." align="center" />
               <BoardMembers />
             </Reveal>
           </Container>
         </section>
 
         {/* (6) برامجنا وأنشطتنا — حيّ */}
-        <section id="activities" className="bg-surface-2 py-20 md:py-28">
+        <section id="activities" className="py-20 md:py-28">
           <Container>
             <Reveal>
-              <SectionHeading title="برامجنا وأنشطتنا" />
+              <LandingHeading eyebrow="فعاليات" title="برامجنا وأنشطتنا" deck="ورشٌ وبرامجُ نوعيّة على مدار العام." />
               <LatestActivities />
             </Reveal>
           </Container>
@@ -88,17 +75,17 @@ export default function Home() {
         <section id="news" className="py-20 md:py-28">
           <Container>
             <Reveal>
-              <SectionHeading eyebrow="منصّة أديب الإخبارية" title="آخر الأخبار" />
+              <LandingHeading eyebrow="أخبار" title="آخر الأخبار" deck="مستجدّاتُ النادي أوّلًا بأوّل من منصّته الإعلاميّة." />
               <LatestNews />
             </Reveal>
           </Container>
         </section>
 
         {/* (8) الأسئلة الشائعة */}
-        <section id="faq" className="bg-surface-2 py-20 md:py-28">
+        <section id="faq" className="py-20 md:py-28">
           <Container className="max-w-3xl">
             <Reveal>
-              <SectionHeading eyebrow="مساعدة" title="الأسئلة الشائعة" align="center" />
+              <LandingHeading eyebrow="أسئلة" title="الأسئلة الشائعة" deck="إجاباتٌ عن أكثر ما يُسأل عن العضويّة والمشاركة." align="center" />
               <FaqSection />
             </Reveal>
           </Container>
@@ -108,7 +95,7 @@ export default function Home() {
         <section id="contact" className="py-20 md:py-28">
           <Container className="max-w-2xl">
             <Reveal>
-              <SectionHeading eyebrow="نحن هنا" title="تواصل معنا" align="center" />
+              <LandingHeading eyebrow="راسلنا" title="تواصل معنا" deck="نحن هنا للإجابة عن سؤالك واستقبال اقتراحك." align="center" />
               <ContactForm />
             </Reveal>
           </Container>
@@ -123,7 +110,7 @@ export default function Home() {
                 انضمّ إلى نادٍ يحتفي بالكلمة ويصنع المبدعين.
               </p>
               <div className="mt-6 flex justify-center">
-                <Button size="lg" variant="inverse">سجّل عضويتك</Button>
+                <Link href="/join" className="abtn abtn-inverse abtn-lg">سجّل عضويتك</Link>
               </div>
             </Reveal>
           </Container>

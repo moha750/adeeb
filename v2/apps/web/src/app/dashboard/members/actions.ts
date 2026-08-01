@@ -3,7 +3,7 @@
 import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
 import { getCurrentAdmin } from "@/lib/auth";
-import { DEGREE_VALUES, PHONE_HINT, PHONE_RE, hasAcademicFields } from "./vocab";
+import { DEGREE_VALUES, PHONE_HINT, PHONE_RE, SOCIAL_KEYS, hasAcademicFields, socialColumn, socialHandle, socialLabelOf } from "./vocab";
 
 export type MemberResult = { ok: boolean; message: string };
 
@@ -46,17 +46,39 @@ export type MemberInput = {
  * (member_details_academic_fields_check)؛ و national_id/birth_date عمودان NOT NULL ليسا في النموذج
  * — لذا نُحدِّث member_details ولا نُنشئه (٢٨ عضوًا بلا سجلّ يُبلَّغ عنهم صراحةً).
  *
- * أمن: بوّابة الأدمن (role_level ≥ 8) قبل أيّ كتابة — دفاعٌ في العمق فوق حراسة اللوحة.
+ * أمن: البوّابة على **المقصود** لا على المستدعي وحده — `can_edit_member_data` في القاعدة (نفس مدى
+ * الإنهاء من `membership_authority`، ويزيد: لكلٍّ بياناتُ نفسه). كانت قدرةً واحدة تفتح كلّ عضو،
+ * فصارت سلطةً منصبيّةً تُسأل عن هذا العضو بعينه. وبوّابةٌ ثانية: العضويّة المنتهية لا تُحرَّر (أدناه).
  */
 export async function updateMember(input: MemberInput): Promise<MemberResult> {
   const admin = await getCurrentAdmin();
-  if (!admin || !admin.isAdmin) return { ok: false, message: "لا تملك صلاحية تعديل بيانات الأعضاء." };
+  if (!admin) return { ok: false, message: "جلستك غير صالحة." };
 
   const sb = service();
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
   const userId = input.userId?.trim();
   if (!userId) return { ok: false, message: "لم يُحدَّد العضو." };
+
+  // الحَكَم في القاعدة — نسأله قبل الكتابة لأنّ مفتاح الخدمة يتجاوز RLS
+  const { data: mayEdit, error: aErr } = await sb.rpc("can_edit_member_data", { p_actor: admin.id, p_target: userId });
+  if (aErr) return { ok: false, message: `تعذّر التحقّق من الصلاحية: ${aErr.message}` };
+  if (!mayEdit) return { ok: false, message: "صلاحيتك لا تبلغ بيانات هذا العضو." };
+
+  // عضويّة منتهية (account_status = 'suspended' ومعها terminated_at) سجلٌّ مغلق لا مادّةٌ تُحرَّر.
+  // والحكم هنا لا في الواجهة وحدها: هذا المسار يكتب بمفتاح الخدمة فيتجاوز RLS، وحجب البند
+  // من قائمة النقاط يُخفي الباب ولا يُغلقه — فمن نادى الإجراء مباشرةً كتب كما يشاء.
+  // شرطه حالته لا تبويبه: يصمد في الشاشة المختلطة وفي أيّ مستدعٍ آخر يأتي لاحقًا.
+  const { data: target, error: tErr } = await sb
+    .from("profiles")
+    .select("account_status")
+    .eq("id", userId)
+    .maybeSingle();
+  if (tErr) return { ok: false, message: `تعذّر التحقّق من حالة العضو: ${tErr.message}` };
+  if (!target) return { ok: false, message: "لا وجود لهذا العضو." };
+  if (target.account_status === "suspended") {
+    return { ok: false, message: "عضويّة منتهية — لا تُعدَّل بياناتها. أعِد العضوية أوّلًا ثمّ عدّلها." };
+  }
 
   const name = clean(input.name);
   if (!name || name.length < 2) return { ok: false, message: "الاسم مطلوب (حرفان على الأقلّ)." };
@@ -85,6 +107,15 @@ export async function updateMember(input: MemberInput): Promise<MemberResult> {
     return { ok: false, message: "الكلّية والتخصّص والرقم الأكاديميّ مطلوبة لهذه الدرجة العلمية." };
   }
 
+  // معرّفات التواصل — تُطبَّع إلى الصيغة المعياريّة (المعرّف مجرّدًا) بنفس مُطبِّع النموذج وقيد القاعدة.
+  // ما ليس معرّفًا يُردّ برسالته لا يُمحى صامتًا: المدير كتب شيئًا، فيُقال له لمَ رُفض.
+  const socials: Record<string, string | null> = {};
+  for (const key of SOCIAL_KEYS) {
+    const res = socialHandle(key, input[key]);
+    if (!res.ok) return { ok: false, message: `${socialLabelOf(key)} — ${res.reason}` };
+    socials[socialColumn(key)] = res.handle;
+  }
+
   // ١) الملفّ الشخصيّ — يُحدَّث للجميع (لا يعتمد على وجود سجلّ تفاصيل)
   const { error: pErr } = await sb
     .from("profiles")
@@ -97,10 +128,7 @@ export async function updateMember(input: MemberInput): Promise<MemberResult> {
     .from("member_details")
     .update({
       ...academic,
-      twitter_account: clean(input.twitter),
-      instagram_account: clean(input.instagram),
-      tiktok_account: clean(input.tiktok),
-      linkedin_account: clean(input.linkedin),
+      ...socials,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId)
@@ -117,4 +145,48 @@ export async function updateMember(input: MemberInput): Promise<MemberResult> {
   }
 
   return { ok: true, message: "حُفظت بيانات العضو بنجاح." };
+}
+
+/**
+ * إنهاء العضوية وإعادتها — عبر `terminate_membership` / `restore_membership` (SECURITY DEFINER).
+ *
+ * **لا بوّابة قدرةٍ هنا، والحكم في القاعدة وحدها** — عن قصد: سلطة الإنهاء منصبيّةٌ مكتوبة في
+ * `membership_termination_authority` (لكلّ منصبٍ مداه ومن يُحجب عنه)، وقدرات اللوحة تفتح الغرف
+ * لا الأفعال. فحصُ قدرةٍ هنا كان سيردّ عضوَ إدارة الموارد وهو صاحب سلطةٍ حقيقيّة على من يشرف عليهم.
+ *
+ * والحَكَم `can_end_membership` تقرؤه الدالّتان ومرآةُ الواجهة (`members_i_may_end`) معًا، وكتابةُ
+ * `account_status` مباشرةً مقفولةٌ بتريغرٍ يسري على مفتاح الخدمة نفسه — فلم يبقَ للفعلين إلّا هذا الباب.
+ */
+export async function endMembership(input: { userId: string; reason: string }): Promise<MemberResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin) return { ok: false, message: "جلستك غير صالحة." };
+
+  const sb = service();
+  if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
+
+  const { data, error } = await sb.rpc("terminate_membership", {
+    p_actor: admin.id,
+    p_user: input.userId,
+    p_reason: input.reason,
+  });
+  if (error) return { ok: false, message: `تعذّر إنهاء العضوية: ${error.message}` };
+
+  const r = (data ?? {}) as { ok?: boolean; message?: string };
+  if (r.ok) revalidatePath("/dashboard/members", "layout");
+  return { ok: !!r.ok, message: r.message ?? (r.ok ? "أُنهيت العضوية." : "تعذّر إنهاء العضوية.") };
+}
+
+export async function restoreMembership(input: { userId: string }): Promise<MemberResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin) return { ok: false, message: "جلستك غير صالحة." };
+
+  const sb = service();
+  if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
+
+  const { data, error } = await sb.rpc("restore_membership", { p_actor: admin.id, p_user: input.userId });
+  if (error) return { ok: false, message: `تعذّرت إعادة العضوية: ${error.message}` };
+
+  const r = (data ?? {}) as { ok?: boolean; message?: string };
+  if (r.ok) revalidatePath("/dashboard/members", "layout");
+  return { ok: !!r.ok, message: r.message ?? (r.ok ? "أُعيدت العضوية." : "تعذّرت إعادة العضوية.") };
 }

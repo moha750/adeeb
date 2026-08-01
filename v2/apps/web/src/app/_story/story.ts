@@ -9,7 +9,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import Lenis from "lenis";
-import { fmtDigits, SESSION_KEY, STORY_ASSETS, STORY_CONFIG, TIME_MONTHS, WALL_SHOTS } from "./config";
+import { AUDIO, AUDIO_KEY, fmtDigits, markStorySeen, STORY_ASSETS, STORY_CONFIG, TIME_MONTHS, WALL_SHOTS } from "./config";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -1176,6 +1176,204 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
       .to(wallTail, { y: -34, autoAlpha: 0, duration: 0.18, ease: "power2.in" }, 9.82);
 
     /* ============================================================
+       الخلفية الصوتية
+       نسختان من الملفّ تتبادلان الدور: تصعد الثانية في آخر AUDIO.crossfade
+       ثانية من الأولى بمزجٍ متساوي القدرة (جذر الوزن) فلا تُسمَع وصلةُ
+       التكرار — والمقطوعة كاملةٌ تنتهي بتلاشٍ، فعودتُها من الصفر بلا مزجٍ
+       تُسمَع انقطاعًا. والمستويات تُحسب في تكّة GSAP نفسها (لا مؤقّت ثانٍ
+       ولا timeupdate الخشن) فتتبع تلاشي الخاتمة إطارًا بإطار.
+
+       التشغيل يبدأ من أوّل تفاعلٍ حقيقيّ لأن المتصفّح يمنع ما قبله، والزرّ
+       مخرجُ من رفَضه المتصفّحُ ومَخرجُ من أراد الصمت — واختيارُه يُحفظ للجلسة.
+       والملفّ يُجلَب في وقتٍ خامل مبكّر لا عند النقرة، فلا يبدأ متأخّرًا.
+       ============================================================ */
+    const soundBtn = $(".st-sound") as HTMLButtonElement;
+    /* المشغّلان في شجرة القصة لا معلَّقَين في الهواء: عنصر ‎audio‎ بلا ‎controls‎
+       لا يرسم شيئًا ولا يشغل مقاسًا، ووجوده في الشجرة يجعله يزول معها إن رُفعت
+       ويجعل حالته مقروءةً للفحص. */
+    const theme = [0, 1].map(() => {
+      const a = new Audio();
+      a.className = "st-audio"; /* display:none — وإلّا فتح عنصرٌ سطريٌّ صندوقَ
+                                   سطرٍ مجهولًا داخل الجذر فأزاح التخطيط */
+      a.src = STORY_ASSETS.theme;
+      a.preload = "none";
+      a.volume = 0;
+      root.appendChild(a);
+      return a;
+    });
+    /* حالة الصوت — عاملان مستقلّان لا يتصارعان على قيمةٍ واحدة:
+         inFade تلاشي الدخول (one-shot عند أوّل تشغيل)
+         exit   تلاشي الخروج (يقوده تمريرُ الخاتمة)
+       والمستوى حاصلُ ضربهما، فلو وقع أوّل تفاعلٍ أثناء الخاتمة لم يُلغِ
+       أحدُهما الآخر. on رغبة الزائر · started أُذن له فعلًا. */
+    const snd = { inFade: 1, exit: 1, gain: 0, on: false, started: false, cur: 0 };
+    try {
+      snd.on = sessionStorage.getItem(AUDIO_KEY) !== "off";
+    } catch {
+      snd.on = true; /* تخزين محظور — الافتراض التشغيل */
+    }
+    const paintSound = () => {
+      const live = snd.on && snd.started;
+      soundBtn.dataset.on = live ? "1" : "0";
+      soundBtn.setAttribute("aria-pressed", snd.on ? "true" : "false");
+      /* سطرُ الافتتاحية المعرّف بالخلفية يزول متى صارت مسموعة — لا يبقى يدعو
+         إلى ما وقع (مصدرٌ واحد للحالة: هذه الدالّة وحدها تكتبها) */
+      root.classList.toggle("st-sound-live", live);
+    };
+    paintSound();
+
+    /* الجلب المبكّر: بعد الكشف بوقتٍ خامل — لا ينافس المحتوى الحرج ولا ينتظر
+       النقرة، فيكون مخزَّنًا حين يُؤذَن بالتشغيل */
+    const loadTheme = idleOnce(() => {
+      theme[0].preload = "auto";
+      theme[0].load();
+    });
+    loadTheme();
+
+    const tickAudio = (_t: number, dt: number) => {
+      const a = theme[snd.cur];
+      const b = theme[1 - snd.cur];
+      /* الكسب المطلوب: تربيعُ العاملين لا حاصلُهما — الأذن لوغاريتميّة، فالهبوط
+         الخطّيّ يُبقي الصوت عاليًا ثم يهوي في آخره (يُسمَع قطعًا). التربيع يجعل
+         النزول متساويًا بالديسيبل تقريبًا: نصفُ الطريق = ‎−١٢dB‎ لا ‎−٦‎. */
+      const p = snd.on && snd.started ? snd.inFade * snd.exit : 0;
+      const want = AUDIO.volume * p * p;
+      /* مُنعِّم زمنيّ (مرشّح أُسّيّ): سقفٌ لسرعة تغيّر الكسب مهما قفز التمرير —
+         بلا هذا يصير تلاشي الخاتمة قطعًا لمن يمرّ بها بسرعة. */
+      snd.gain += (want - snd.gain) * (1 - Math.exp(-Math.min(dt, 100) / (AUDIO.smooth * 1000)));
+      if (want === 0 && snd.gain < 0.0004) snd.gain = 0;
+      const vol = snd.gain;
+      /* الصمت التامّ يُوقف المشغّلين، وعودةُ الكسب تُعيدهما — فالرجوع بالتمرير
+         يُرجع الصوت كما يُرجع الصورة */
+      if (vol === 0) {
+        theme.forEach((x) => !x.paused && x.pause());
+        a.volume = 0;
+        b.volume = 0;
+        return;
+      }
+      if (a.paused && snd.on && snd.started) void a.play().catch(() => {});
+      const d = a.duration;
+      let w = 1; /* وزن المقطوعة الحاضرة: ١ ما لم تدخل نافذة المزج */
+      if (Number.isFinite(d) && d > AUDIO.crossfade && d - a.currentTime <= AUDIO.crossfade) {
+        w = Math.max(0, (d - a.currentTime) / AUDIO.crossfade);
+        if (b.paused && vol > 0) {
+          b.preload = "auto";
+          b.currentTime = 0;
+          void b.play().catch(() => {});
+        }
+      }
+      /* مزجٌ متساوي القدرة: مجموع مربّعي الوزنين واحد، فلا هبوطَ مستوى وسطه */
+      a.volume = Math.min(1, vol * Math.sqrt(w));
+      b.volume = Math.min(1, b.paused ? 0 : vol * Math.sqrt(1 - w));
+      if (w <= 0 && !b.paused) {
+        a.pause();
+        a.currentTime = 0;
+        snd.cur = 1 - snd.cur;
+      }
+    };
+    gsap.ticker.add(tickAudio);
+
+    /* ============================================================
+       دعوةُ الصوت — دعوةٌ لا تشغيل
+       التمرير لا يفتح الصوت في أيّ متصفّح (ليس من الأحداث المانحة للإذن)، لكنّه
+       دليلُ زائرٍ حاضر: فعند أوّل تمريرٍ حقيقيّ ينبض المفتاح نبضتين ومعه تلميحةٌ
+       تعرّف بالخلفية، ثمّ يهدأ ولا يعود. ومن سمِع أو نقر لم يُدعَ أصلًا.
+       ============================================================ */
+    let hudShown = false; /* كُشف المفتاح (بعد ثانيتين) — لا تنبض على خفيّ */
+    let hintDue = false; /* جاء التمرير قبل الكشف — تنتظر الدعوةُ ظهورَه */
+    let hinted = false;
+    const endHint = () => {
+      hinted = true;
+      delete soundBtn.dataset.hint;
+    };
+    const showHint = () => {
+      if (hinted || snd.started || !snd.on) return;
+      hinted = true;
+      soundBtn.dataset.hint = "1";
+      gsap.delayedCall(6, endHint);
+    };
+    const onFirstScroll = () => {
+      if (window.scrollY < 60) return; /* استعادةُ موضعٍ أو ارتجاجة — ليست تمريرًا */
+      lenis.off("scroll", onFirstScroll);
+      if (hudShown) showHint();
+      else hintDue = true;
+    };
+    lenis.on("scroll", onFirstScroll);
+
+    /* الأحداث المانحة للإذن ليست كلَّ تفاعل: المواصفة تعدّ منها ضغطةَ المفتاح
+       ورفعَ الإصبع والنقرة — لا التمرير ولا مجرّدَ ملامسة الشاشة. ولذلك لا
+       ‎once‎ هنا: سحبةُ التمرير على الجوّال تلمس ولا تنقر، فلو نزعت المستمعَ
+       ضاعت الخلفية بقيّة الزيارة. النزع عند نجاح ‎play‎ وحده. */
+    const GESTURES = ["pointerup", "touchend", "keydown", "click"] as const;
+    let trying = false; /* وعدُ play معلّق */
+    let again = false; /* جاءت لفتةٌ أثناءه — أعِد المحاولة عند حسمه */
+    const startAudio = () => {
+      if (!snd.on) return;
+      if (snd.started) {
+        /* لفتةٌ أثناء محاولةٍ معلّقة: قد تكون هي المانحةَ للإذن والمعلّقةُ سبقته */
+        if (trying) again = true;
+        return;
+      }
+      trying = true;
+      /* رفعُ started قبل play متفائلًا: تكّة الصوت تُوقف كلّ مشغّلٍ ليس started
+         فتقطع التشغيل قبل أن يُحسم الوعد */
+      snd.started = true;
+      paintSound();
+      /* تلاشي الدخول: على inFade فيمرّ عبر tickAudio كسائر المستويات */
+      snd.inFade = 0;
+      gsap.to(snd, { inFade: 1, duration: AUDIO.fadeIn, ease: "none", overwrite: "auto" });
+      const a = theme[snd.cur];
+      a.preload = "auto";
+      void Promise.resolve(a.play()).then(
+        () => {
+          trying = false;
+          again = false;
+          disarm(); /* اشتغل فعلًا — لا حاجة إلى لفتةٍ بعده */
+          endHint();
+        },
+        () => {
+          /* رفض المتصفّح — الزرّ يبقى المخرج، والمستمعون يبقون مسلَّحين */
+          trying = false;
+          snd.started = false;
+          paintSound();
+          if (again) {
+            again = false;
+            startAudio();
+          }
+        }
+      );
+    };
+    /* capture كي يسبق أي مستهلكٍ يوقف الانتشار — ولأنّه يسبق، يُستثنى زرّان:
+       مفتاحُ الصوت (وإلّا شغّلَتْه اللفتةُ ثمّ أطفأه مستمعُ الزرّ في النقرة
+       نفسها) وزرُّ التخطّي (القصة تُطوى بعده، فلا معنى لخلفيةٍ تصعد لتصمت). */
+    const firstGesture = (e: Event) => {
+      if ((e.target as Element | null)?.closest?.(".st-sound, .st-skip")) return;
+      startAudio();
+    };
+    const disarm = () => GESTURES.forEach((e) => window.removeEventListener(e, firstGesture, { capture: true }));
+    GESTURES.forEach((e) => window.addEventListener(e, firstGesture, { capture: true, passive: true }));
+
+    const onSound = () => {
+      endHint(); /* وجد المفتاح بنفسه — لا دعوةَ بعد اليوم */
+      /* الزرّ يقلب ما يُرى لا ما يُنوى: قبل أوّل تشغيلٍ يبدو مكتومًا (data-on
+         يقرأ started لا on)، فنقرتُه طلبُ تشغيلٍ لا إسكات — ولولا هذا لأطفأ
+         أوّلُ نقرٍ عليه رغبةً هي أصلًا قائمة فبدا الزرّ معطّلًا. */
+      snd.on = !(snd.on && snd.started && !trying);
+      try {
+        sessionStorage.setItem(AUDIO_KEY, snd.on ? "on" : "off");
+      } catch {
+        /* تخزين محظور */
+      }
+      /* التشغيل من داخل معالج النقرة نفسها — هنا الإذن مضمون. والاستئنافُ بعد
+         إسكاتٍ يتكفّل به tickAudio (يعيد المشغّل متى عاد الكسب)، فلا يُصفَّر
+         started ولا تُستأنف المقطوعة من أوّلها. */
+      if (snd.on) startAudio();
+      /* الإيقاف يتركه للمُنعِّم في tickAudio: يهبط الكسب ثمّ يقف — لا قطعَ فجّ */
+      else paintSound();
+    };
+    soundBtn.addEventListener("click", onSound);
+
+    /* ============================================================
        الخاتمة — التسليم وحده (pin +170%): نفَسٌ قصير ثم يطير الشعار إلى
        موضعه في الهيدر. لا محطة تاريخ هنا: يوم الزيارة لا يقول شيئًا،
        فآخر ظهور للتاريخ هو شبح محطة التجدّد.
@@ -1227,13 +1425,7 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
         anticipatePin: 1,
         invalidateOnRefresh: true,
         onLeave() {
-          if (STORY_CONFIG.showOncePerSession) {
-            try {
-              sessionStorage.setItem(SESSION_KEY, "1");
-            } catch {
-              /* تخزين محظور — لا شيء يعتمد عليه */
-            }
-          }
+          markStorySeen(); /* بلغت الخاتمة — لا تُعاد في هذه الجلسة */
         },
       },
     });
@@ -1253,6 +1445,11 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
     if (header) tlFinal.to(header, { autoAlpha: 1, duration: 2.6 }, 2.8);
     /* عند اكتمال المطابقة (±2px) يحلّ شعار الهيدر الحقيقي محلّ الطائر بلا وميض */
     tlFinal.to(fly, { autoAlpha: 0, duration: 0.3 }, 5.3);
+    /* الخلفية الصوتية تخفت مع الخشبة نفسها وتصمت عند اكتمال التسليم — فالموقع
+       يُستلَم في سكون. مربوطٌ بالتمرير كسائر النبضات، فالرجوع يعيد الصوت.
+       والقائد خطّيّ: منحنى السمع مطبَّقٌ مرّةً واحدة على الكسب في tickAudio،
+       فلو أضيف هنا ease لتضاعف الانحناء وعاد الهبوط متأخّرًا فجًّا. */
+    tlFinal.to(snd, { exit: 0, duration: 3.4, ease: "none" }, 1.8);
 
     /* ============================================================
        بطل الوقت (#time-hero) — عنصر تاريخ واحد دائم يقوده منسّق واحد
@@ -1557,20 +1754,21 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
     };
     ScrollTrigger.addEventListener("refresh", rebuildTime);
 
+
     /* ---------- زر التخطي: يظهر بعد ثانيتين ويعمل من أي نقطة ---------- */
     const skipBtn = $(".st-skip") as HTMLButtonElement;
-    gsap.delayedCall(2, () => gsap.to(skipBtn, { autoAlpha: 1, duration: 0.6 }));
+    gsap.delayedCall(2, () => {
+      gsap.to([skipBtn, soundBtn], { autoAlpha: 1, duration: 0.6 });
+      hudShown = true;
+      if (hintDue) showHint(); /* مرّر قبل الكشف — تنبض الآن وقد صارت مرئيّة */
+    });
     let skipping = false;
     const onSkip = () => {
       if (skipping) return;
       skipping = true;
-      if (STORY_CONFIG.showOncePerSession) {
-        try {
-          sessionStorage.setItem(SESSION_KEY, "1");
-        } catch {
-          /* تخزين محظور */
-        }
-      }
+      /* التخطّي صمتٌ فوريّ: تلاشٍ قصيرٌ مع تلاشي القصة نفسها لا قطعٌ فجّ */
+      gsap.to(snd, { exit: 0, duration: 0.45, ease: "none", overwrite: "auto" });
+      markStorySeen(); /* التخطّي رؤيةٌ أيضًا — لا تُعاد في هذه الجلسة */
       gsap.to(root, {
         autoAlpha: 0,
         duration: 0.5,
@@ -1587,6 +1785,17 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
 
     extraCleanup = () => {
       skipBtn.removeEventListener("click", onSkip);
+      soundBtn.removeEventListener("click", onSound);
+      disarm();
+      lenis.off("scroll", onFirstScroll);
+      root.classList.remove("st-sound-live");
+      /* المشغّلان يدويّان فلا يرفعهما ctx.revert — يُوقفان ويُفرَّغان */
+      gsap.ticker.remove(tickAudio);
+      theme.forEach((a) => {
+        a.pause();
+        a.removeAttribute("src");
+        a.remove();
+      });
       tiltOff?.();
       /* الأصناف يدويّة فلا يرفعها ctx.revert */
       wallScene.classList.remove("st-wall-active");

@@ -34,18 +34,26 @@ export default function InputsPage() {
           <section>
             <Label>بأيقونة ومساعدة</Label>
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="البريد الإلكترونيّ" type="email" dir="ltr" icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" helper="لن نشاركه مع أحد." />
+              <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" helper="لن نشاركه مع أحد." />
               <Field label="بحث" icon={<MagnifyingGlass />} innerIcon={<PencilSimple />} placeholder="ابحث…" />
+            </div>
+          </section>
+
+          <section>
+            <Label>إلزاميّ / اختياريّ (وسمٌ هادئ في آخر صفّ التسمية)</Label>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="الاسم الكامل" icon={<User />} innerIcon={<PencilSimple />} placeholder="اكتب اسمك الكامل" required />
+              <Field label="اسم الشهرة" icon={<User />} innerIcon={<PencilSimple />} placeholder="إن رغبت" optional />
             </div>
           </section>
 
           <section>
             <Label>الحالات</Label>
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="رقم الجوال" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" defaultValue="05" error="الرقم غير مكتمل." />
+              <Field label="رقم الجوال" charset="digits" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" defaultValue="05" error="الرقم غير مكتمل." />
               <Field label="اسم المستخدم" icon={<At />} innerIcon={<IdentificationBadge />} placeholder="@username" defaultValue="adeeb" success helper="متاح ✓" />
               <Field label="حقل معطّل" icon={<Prohibit />} innerIcon={<PencilSimple />} placeholder="—" defaultValue="غير متاح" disabled />
-              <Field label="مطلوب" icon={<Asterisk />} innerIcon={<PencilSimple />} placeholder="حقل إلزاميّ" required helper="حقل إلزاميّ" />
+              <Field label="اسم وليّ الأمر" icon={<Asterisk />} innerIcon={<PencilSimple />} placeholder="الاسم الكامل" required helper="حقل إلزاميّ" />
             </div>
           </section>
 
@@ -56,10 +64,10 @@ export default function InputsPage() {
 
           <section>
             <Label>نموذج مصغّر</Label>
-            <div className=" border border-line bg-surface p-6 shadow-md">
+            <div className="rounded border border-line bg-surface p-6 shadow-md">
               <div className="grid gap-5 sm:grid-cols-2">
                 <Field label="الاسم" icon={<User />} innerIcon={<PencilSimple />} placeholder="الاسم" />
-                <Field label="البريد" type="email" dir="ltr" icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" />
+                <Field label="البريد" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" />
               </div>
               <div className="mt-5">
                 <Textarea label="رسالتك" icon={<ChatText />} innerIcon={<PencilSimple />} placeholder="رسالتك…" rows={4} />

@@ -1,4 +1,3 @@
-import { Button } from "./Button";
 import { Container } from "./Container";
 
 type NavItem = { label: string; href: string };
@@ -9,15 +8,17 @@ const defaultNav: NavItem[] = [
   { label: "العضوية", href: "#join" },
 ];
 
-/** هيدر الموقع: الشعار + التنقّل + زر الانضمام. */
+/** هيدر الموقع: الشعار + التنقّل + زر الانضمام (رابطٌ إلى صفحة التسجيل). */
 export function Header({
   logoSrc = "/brand/logo-horizontal.svg",
   nav = defaultNav,
   cta = "انضمّ إلينا",
+  ctaHref = "/join",
 }: {
   logoSrc?: string;
   nav?: NavItem[];
   cta?: string;
+  ctaHref?: string;
 }) {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur">
@@ -31,7 +32,7 @@ export function Header({
             </a>
           ))}
         </nav>
-        <Button size="sm">{cta}</Button>
+        <a href={ctaHref} className="abtn abtn-primary abtn-sm">{cta}</a>
       </Container>
     </header>
   );

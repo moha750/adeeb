@@ -52,13 +52,14 @@ export function LoginForm() {
       <Field
         label="البريد الإلكترونيّ"
         type="email"
-        dir="ltr"
+        charset="latin"
         icon={<Envelope />}
         innerIcon={<At />}
         placeholder="you@adeeb.club"
         autoComplete="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        required
       />
       <Field
         label="كلمة المرور"
@@ -70,6 +71,7 @@ export function LoginForm() {
         autoComplete="current-password"
         value={pw}
         onChange={(e) => setPw(e.target.value)}
+        required
       />
 
       <Button type="submit" variant="primary" size="lg" loading={pending} disabled={!canSubmit} className="auth-submit">

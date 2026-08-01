@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function StoryPreviewPage() {
   return (
     <>
-      <StoryOpening />
+      <StoryOpening force />
       <Header />
       <main>
         <section className="py-20 text-center md:py-28">

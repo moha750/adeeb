@@ -6,13 +6,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@adeeb/design-system";
 import { Avatar } from "../_components/Avatar";
 import { createClient } from "@/lib/supabase/client";
-import { NAV, type NavItem } from "./nav";
-import { ICONS, IconBell, IconCaret, IconLife, IconLogout, IconMenu, IconPlus, IconSearch } from "./icons";
-
-const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+import { navFor, type NavItem } from "./nav";
+import { ICONS, IconBell, IconCaret, IconCaretDown, IconLogout, IconMe, IconMenu, IconPlus } from "./icons";
+import { DropdownMenu } from "../_components/DropdownMenu";
+import { HelpCenter } from "./HelpCenter";
+import { stopViewAs } from "./view-as-actions";
 
 // المستخدم الحاليّ — يُمرَّر من تخطيط اللوحة الخادميّ (getCurrentAdmin)
-export type ShellUser = { fullName: string | null; avatar: string | null; roleName: string | null };
+export type ShellUser = { fullName: string | null; avatar: string | null; gender: "male" | "female" | null };
 
 function isActive(pathname: string, href?: string) {
   if (!href) return false;
@@ -22,13 +23,16 @@ function groupHasActive(pathname: string, item: NavItem) {
   return item.children?.some((c) => isActive(pathname, c.href)) ?? false;
 }
 
-export function DashboardShell({ children, user }: { children: React.ReactNode; user: ShellUser }) {
+export function DashboardShell({ children, user, caps }: { children: React.ReactNode; user: ShellUser; caps: string[] }) {
   const pathname = usePathname();
   const router = useRouter();
-  const shortName = user.fullName?.trim().split(/\s+/)[0] ?? "مستخدم";
+  // الخريطة كما يراها صاحب هذه القدرات — بندٌ لا مفتاح له لا يُعرَض (والحراسة في الصفحة نفسها)
+  const nav = useMemo(() => navFor(caps), [caps]);
   const [signingOut, startSignOut] = useTransition();
   const signOut = () =>
     startSignOut(async () => {
+      // الهويّة المستعارة تُترَك عند الباب — وإلّا استأنفتها الجلسةُ القادمة بلا أن يطلبها أحد
+      await stopViewAs();
       await createClient().auth.signOut();
       router.replace("/login");
       router.refresh();
@@ -43,11 +47,11 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
   // المجموعات المفتوحة — تُفتح تلقائيًا المجموعة الحاوية للمسار النشط
   const initialOpen = useMemo(() => {
     const s = new Set<string>();
-    NAV.forEach((g) => g.items.forEach((it) => {
+    nav.forEach((g) => g.items.forEach((it) => {
       if (it.children && groupHasActive(pathname, it)) s.add(it.label);
     }));
     return s;
-  }, [pathname]);
+  }, [pathname, nav]);
   const [open, setOpen] = useState<Set<string>>(initialOpen);
   const toggle = (label: string) =>
     setOpen((prev) => {
@@ -58,11 +62,9 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
 
   // ترحيب حسب الوقت (على العميل لتفادي عدم تطابق الترطيب)
   const [greet, setGreet] = useState<string | null>(null);
-  const [dateStr, setDateStr] = useState("");
   useEffect(() => {
     const d = new Date();
     setGreet(d.getHours() >= 4 && d.getHours() < 12 ? "صباحُ الخير" : "مساءُ الخير");
-    setDateStr(`${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`);
   }, []);
 
   // إغلاق الدُرج عند تغيّر المسار
@@ -86,7 +88,7 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
         <Button variant="primary" className="ash-cta"><IconPlus /><span>إجراء سريع</span></Button>
 
         <nav className="ash-nav">
-          {NAV.map((g, gi) => (
+          {nav.map((g, gi) => (
             <div key={g.head ?? gi}>
               {g.head ? <div className="ash-nav-head">{g.head}</div> : null}
               {g.items.map((it) => {
@@ -122,28 +124,35 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
           ))}
         </nav>
 
-        <div className="ash-foot">
-          <span className="ash-fic"><IconLife /></span>
-          <span className="ash-ftx"><b>مركز المساعدة</b><span>أدلّة وأسئلة شائعة</span></span>
-        </div>
+        <HelpCenter />
       </aside>
 
       <div className="ash-main">
         <header className="ash-top">
           <button type="button" className="ash-ham" onClick={() => setMobOpen(true)} aria-label="فتح القائمة"><IconMenu /></button>
-          <div className="ash-greet">
-            <Avatar name={user.fullName ?? undefined} src={user.avatar || undefined} className="ash-av" />
-            <span className="ash-gtx">
-              <b>{greet ?? "مرحبًا"}، {shortName} 👋</b>
-              <span className="ash-gdate">{user.roleName ?? dateStr}</span>
-            </span>
-          </div>
+          {/* الهويّة هي المُطلِق: تنقر «من أنت» فتجد «ما تفعله بحسابك». والشيفرون هو ما يحوّلها من
+              صورةٍ إلى أداة — بدونه لا شيء في الشريط يقول إنّ هنا قائمةً تُفتح.
+              السلوك كلّه (أسهم · ESC · نقر‑خارج · إرجاع التركيز · ARIA) من `DropdownMenu`. */}
+          <DropdownMenu
+            ariaLabel="حسابي"
+            triggerClassName="ash-greet"
+            trigger={
+              <>
+                <Avatar name={user.fullName ?? undefined} src={user.avatar || undefined} gender={user.gender} className="ash-av" />
+                <span className="ash-gtx">
+                  <span className="ash-ghi">{greet ?? "مرحبًا"} 👋</span>
+                  <b>{user.fullName?.trim() || "مستخدم"}</b>
+                </span>
+                <IconCaretDown className="ash-gcaret" />
+              </>
+            }
+            groups={[
+              { items: [{ label: "عضويّتي", icon: <IconMe />, onSelect: () => router.push("/dashboard") }] },
+              { items: [{ label: "تسجيل الخروج", icon: <IconLogout />, danger: true, disabled: signingOut, onSelect: signOut }] },
+            ]}
+          />
           <div className="ash-tools">
-            <div className="ash-search"><IconSearch /><span>بحث…</span></div>
             <button type="button" className="ash-bell" aria-label="الإشعارات"><IconBell /><i /></button>
-            <button type="button" className="ash-logout" aria-label="تسجيل الخروج" title="تسجيل الخروج" onClick={signOut} disabled={signingOut}>
-              <IconLogout />
-            </button>
           </div>
         </header>
 

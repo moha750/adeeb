@@ -44,8 +44,8 @@ export default function SectionHeadingPage() {
             <Panel>
               <div className="mdl-grid">
                 <ModalSectionHeading className="mdl-full" icon={<AddressBook weight="fill" />} title="بيانات التواصل" />
-                <Field label="البريد الإلكترونيّ" type="email" dir="ltr" icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" />
-                <Field label="رقم الجوّال" type="tel" dir="ltr" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" />
+                <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" />
+                <Field label="رقم الجوّال" type="tel" charset="digits" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" />
                 <ModalSectionHeading className="mdl-full" icon={<Books weight="fill" />} title="البيانات الأكاديميّة" />
                 <Field className="mdl-full" label="الكلّية" icon={<Books />} innerIcon={<At />} placeholder="مثال: كلّية الآداب" />
               </div>

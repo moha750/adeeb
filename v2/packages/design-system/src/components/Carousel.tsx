@@ -4,6 +4,7 @@ import { Children, useCallback, useRef, type ReactNode } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { cn } from "../lib/cn";
+import { CarouselNav } from "./CarouselNav";
 
 /**
  * Carousel أفقي موحّد: تشغيل تلقائي + دوران لانهائي + أزرار أسفل + عدد شرائح متجاوب، بلا scrollbar.
@@ -43,24 +44,7 @@ export function Carousel({
         </div>
       </div>
 
-      <div className="mt-7 flex items-center justify-center gap-3">
-        <button
-          type="button"
-          onClick={prev}
-          aria-label="السابق"
-          className="grid h-11 w-11 place-items-center  border border-line bg-surface text-2xl leading-none text-content shadow-sm transition hover:border-navy-300 hover:bg-navy-50"
-        >
-          ›
-        </button>
-        <button
-          type="button"
-          onClick={next}
-          aria-label="التالي"
-          className="grid h-11 w-11 place-items-center  border border-line bg-surface text-2xl leading-none text-content shadow-sm transition hover:border-navy-300 hover:bg-navy-50"
-        >
-          ‹
-        </button>
-      </div>
+      <CarouselNav className="mt-7" onPrev={prev} onNext={next} />
     </div>
   );
 }

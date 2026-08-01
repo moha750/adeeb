@@ -1,6 +1,9 @@
 // أيقونات الهيكل — Phosphor (currentColor؛ الأحجام عبر CSS الحاوي)
 import {
-  House,
+  Buildings,
+  IdentificationBadge,
+  MicrophoneStage,
+  Newspaper,
   UsersThree,
   ClipboardText,
   FileText,
@@ -8,7 +11,7 @@ import {
   Globe,
   Gear,
   Bell,
-  MagnifyingGlass,
+  CaretDown,
   CaretRight,
   CaretDoubleRight,
   Plus,
@@ -16,12 +19,27 @@ import {
   List,
   SidebarSimple,
   ChartLineUp,
+  Scales,
+  BookOpen,
   SignOut,
+  ImagesSquare,
+  ChartBar,
+  Handshake,
+  Question,
+  UserCheck,
+  HourglassMedium,
+  Prohibit,
+  Cake,
+  TreeStructure,
+  UserGear,
+  UsersFour,
+  Key,
 } from "@phosphor-icons/react";
 
 type P = { className?: string };
 
-export const IconHome = (p: P) => <House aria-hidden {...p} />;
+// عضويتي — بطاقة الهويّة: عضويّة صاحب الجلسة نفسه (حلّت محلّ بيت «نظرة عامة»)
+export const IconMe = (p: P) => <IdentificationBadge aria-hidden {...p} />;
 export const IconUsers = (p: P) => <UsersThree aria-hidden {...p} />;
 export const IconClip = (p: P) => <ClipboardText aria-hidden {...p} />;
 export const IconDoc = (p: P) => <FileText aria-hidden {...p} />;
@@ -29,18 +47,48 @@ export const IconCal = (p: P) => <CalendarBlank aria-hidden {...p} />;
 export const IconGlobe = (p: P) => <Globe aria-hidden {...p} />;
 export const IconGear = (p: P) => <Gear aria-hidden {...p} />;
 export const IconBell = (p: P) => <Bell aria-hidden {...p} />;
-export const IconSearch = (p: P) => <MagnifyingGlass aria-hidden {...p} />;
 export const IconCaret = (p: P) => <CaretRight aria-hidden {...p} />;
+// شيفرون «هنا قائمة» — لأسفل لا لجانب: هو الإشارة التي تحوّل الأفتار من صورةٍ إلى أداة
+export const IconCaretDown = (p: P) => <CaretDown aria-hidden {...p} />;
 export const IconChevrons = (p: P) => <CaretDoubleRight aria-hidden {...p} />;
 export const IconPlus = (p: P) => <Plus aria-hidden {...p} />;
 export const IconLife = (p: P) => <Lifebuoy aria-hidden {...p} />;
 export const IconMenu = (p: P) => <List aria-hidden {...p} />;
 export const IconPanel = (p: P) => <SidebarSimple aria-hidden {...p} />;
 export const IconChart = (p: P) => <ChartLineUp aria-hidden {...p} />;
+// الانتخابات — الميزان: نبض التصويت الموزون (صوتٌ أثقل من صوت)، لا مجرّد صندوق اقتراع
+export const IconVote = (p: P) => <Scales aria-hidden {...p} />;
+export const IconBook = (p: P) => <BookOpen aria-hidden {...p} />;
 export const IconLogout = (p: P) => <SignOut aria-hidden {...p} />;
+// محتوى الصفحة الرئيسية — معرض الأعمال، ملخص المسيرة، الرعاة، الأسئلة الشائعة
+export const IconImages = (p: P) => <ImagesSquare aria-hidden {...p} />;
+export const IconStats = (p: P) => <ChartBar aria-hidden {...p} />;
+export const IconHandshake = (p: P) => <Handshake aria-hidden {...p} />;
+export const IconFaq = (p: P) => <Question aria-hidden {...p} />;
+// أعضاء أديب — حالات العضويّة وأدواتها (بنودٌ مسطّحة تحت رأس «العضوية»)
+export const IconActive = (p: P) => <UserCheck aria-hidden {...p} />;
+export const IconPending = (p: P) => <HourglassMedium aria-hidden {...p} />;
+export const IconSuspended = (p: P) => <Prohibit aria-hidden {...p} />;
+export const IconCake = (p: P) => <Cake aria-hidden {...p} />;
+export const IconTree = (p: P) => <TreeStructure aria-hidden {...p} />;
+export const IconAssign = (p: P) => <UserGear aria-hidden {...p} />;
+// من أشرف عليهم — فريقٌ تُتابعه (لا شخصٌ واحد كأيقونة التعيين)
+export const IconSupervise = (p: P) => <UsersFour aria-hidden {...p} />;
+// وحدتي — الوحدة نفسها لا ساكنوها: بندُ القائد عن **مكانه** في الهيكل، فيفترق عن «من أشرف عليهم»
+export const IconUnit = (p: P) => <Buildings aria-hidden {...p} />;
+export const IconKey = (p: P) => <Key aria-hidden {...p} />;
+// الإذاعة — المايكروفون: إذاعةٌ مسموعة لا مرئيّة، فالأيقونة من عالم الصوت لا البثّ
+export const IconMic = (p: P) => <MicrophoneStage aria-hidden {...p} />;
+// الأخبار — الصحيفة: غرفة تحريرٍ تكتب وتنشر، لا بوقُ إعلانٍ يُذيع
+export const IconNews = (p: P) => <Newspaper aria-hidden {...p} />;
 
 export const ICONS = {
-  home: IconHome, users: IconUsers, clip: IconClip, doc: IconDoc,
+  me: IconMe, users: IconUsers, clip: IconClip, doc: IconDoc,
   cal: IconCal, globe: IconGlobe, gear: IconGear, chart: IconChart,
+  vote: IconVote, book: IconBook, images: IconImages,
+  stats: IconStats, handshake: IconHandshake, faq: IconFaq,
+  active: IconActive, pending: IconPending, suspended: IconSuspended,
+  cake: IconCake, tree: IconTree, assign: IconAssign, supervise: IconSupervise, unit: IconUnit, key: IconKey,
+  mic: IconMic, news: IconNews,
 } as const;
 export type IconKey = keyof typeof ICONS;

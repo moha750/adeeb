@@ -10,6 +10,15 @@ interface OnboardingRequest {
   token: string;
   password: string;
   gender: 'male' | 'female';
+  /**
+   * حمولة النموذج كما يرسلها العميل. ثلاثة منها **لا تُكتب في member_details** —
+   * لكلٍّ منها دفترٌ صادق في مكانٍ آخر، ونسخُها هنا هو ما جعل الدفترين يفترقان:
+   *   phone        → يُكتب في profiles.phone (حقلٌ مفتوح للتعديل، فتصحيح العضو يُصان)
+   *   email        → يُهمَل (حقلٌ معطَّل في النموذج، صدى لـ profiles.email — وهو بريد الدخول)
+   *   committee_id → يُهمَل (select معطَّل، صدى لإسنادٍ تكتبه assign_position في user_roles)
+   * الفرز هنا لا في العميل: هذه الدالّة هي البابُ الوحيد إلى member_details،
+   * فمن حرسها حرس الجدول مهما أرسل أيّ عميلٍ — قديمُه ومخبَّؤه وقادمُه.
+   */
   member_details: {
     full_name_triple: string;
     phone: string;
@@ -175,12 +184,15 @@ Deno.serve(async (req: Request) => {
       throw new Error('Failed to update password');
     }
 
+    // الأصداء الثلاثة تُقتلَع من الحمولة قبل الكتابة — لكلٍّ دفترٌ صادق في مكانٍ آخر
+    const { phone, email: _emailEcho, committee_id: _committeeEcho, ...details } = member_details;
+
     // حفظ بيانات العضو (استخدام upsert لتجنب أخطاء التكرار)
     const { error: insertError } = await supabaseClient
       .from('member_details')
       .upsert({
         user_id: tokenData.user_id,
-        ...member_details
+        ...details
       }, {
         onConflict: 'user_id'
       });
@@ -190,14 +202,20 @@ Deno.serve(async (req: Request) => {
       throw new Error('Failed to save member details');
     }
 
-    // تفعيل الحساب + تخزين الجنس (مطلوب لحجز الأنشطة)
+    // تفعيل الحساب + الجنس (مطلوب لحجز الأنشطة) + الجوّال في دفتره الصادق.
+    // الجوّال هنا لا في member_details: النموذج يملأ الحقل من الطلب ثمّ يفتحه للتعديل،
+    // فما يكتبه العضو تصحيحٌ متأخّرٌ مقصود. وكان يُكتب في عمودٍ لا يقرأه أحد فيُبتلَع —
+    // منار احمد المليفي صحّحت رقمها في ٢٨ يونيو وظلّ النادي يحمل رقمها الأوّل.
     const { error: activateProfileError } = await supabaseClient
       .from('profiles')
-      .update({ account_status: 'active', gender: gender })
+      .update({ account_status: 'active', gender: gender, phone: phone })
       .eq('id', tokenData.user_id);
 
+    // تُرفَع لا تُبلَع: هذه الكتابة تحمل الآن الجوّال، وقيدُ profiles_phone_check يردّ
+    // ما ليس على صيغته — فلو سقطت صامتةً لخرج العضو بلا تفعيلٍ وبلا جوّال، وهو يحسبه تمّ.
     if (activateProfileError) {
       console.error('Profile activation error:', activateProfileError);
+      throw new Error('Failed to activate profile');
     }
 
     // تفعيل الدور بعد إكمال البيانات

@@ -3,14 +3,22 @@ import { createAdeebServiceClient } from "@adeeb/core";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { formatDegree } from "./vocab";
+import { roleRank } from "@/lib/roleOrder";
+import { fmtDateOnly } from "@/lib/date";
+import { MEMBER_STATUS_OF, type MemberStatus } from "@/lib/memberStatus";
+import { assignmentScope, roleTitle } from "@/lib/positionLabel";
+import { getCurrentAdmin } from "@/lib/auth";
 
-export type MemberStatus = "active" | "pending" | "suspended" | "inactive";
+// الحالة ومفرداتها في `lib/memberStatus` (مصدرٌ واحد يشاركه العرض) — ويُعاد تصديرها من هنا
+// فلا يُكسَر مستوردٌ قائم (`MembersScreen` · `[status]/page` · `CredentialsView`).
+export type { MemberStatus };
 export type MemberRow = {
   id: string;
   name: string;
   email: string;
   phone: string | null;
   avatar: string | null;
+  gender: "male" | "female" | null; // لأيقونة الأفتار حين لا صورة
   dept: string | null;
   committee: string | null;
   role: string | null;
@@ -32,16 +40,16 @@ export type MemberRow = {
   endReason: string | null;
   endDate: string;
   endAgo: string; // مدّة نسبيّة منذ الإنهاء («منذ ٣ أشهر»)
+  /**
+   * هل تبلغ سلطةُ قارئ الشاشة هذا الصفّ؟ — جوابان من القاعدة لا من هنا: `members_in_my_reach`
+   * تقرأ الحَكَمين نفسَيهما اللذين تقرؤهما الأفعال (`can_end_membership` · `can_edit_member_data`).
+   * فالزرّ يغيب حيث يمنع الباب — إخفاءٌ **فوق** منعٍ لا بدلًا منه.
+   *
+   * ويفترقان في النفس: لا تُنهي عضويّتك، ولك أن تعدّل بياناتك.
+   */
+  canEnd: boolean;
+  canEdit: boolean;
 };
-
-const STATUS_MAP: Record<string, MemberStatus> = {
-  active: "active",
-  pending_onboarding: "pending",
-  suspended: "suspended",
-  inactive: "inactive",
-};
-
-const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 
 // مدّة نسبيّة عربيّة — date-fns بلغة ar (مصانة)، مع تلميع للإيجاز والنحو:
 // حذف «تقريبًا» و«واحد/واحدة»، وتصحيح «يومان»→«يومين».
@@ -56,13 +64,6 @@ const agoPhrase = (iso: string | null): string => {
     .replace(/يومان/g, "يومين")
     .trim();
 };
-const fmtDate = (iso: string | null): string => {
-  if (!iso) return "";
-  const [y, m, d] = iso.split("-").map(Number);
-  if (!y || !m || !d) return iso;
-  return `${d} ${MONTHS[m - 1]} ${y}`; // الشهر Lyon + الأرقام Eras تلقائيًّا (تكامل الخطّين)
-};
-
 /** جلب الأعضاء من قاعدة البيانات الحيّة (خادميّ، عبر مفتاح الخدمة). */
 export async function getMembers(): Promise<{ members: MemberRow[]; error: string | null }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -73,17 +74,26 @@ export async function getMembers(): Promise<{ members: MemberRow[]; error: strin
   }
   const sb = createAdeebServiceClient(url, key);
 
-  const [pRes, urRes, rRes, dRes, cRes, mdRes] = await Promise.all([
-    sb.from("profiles").select("id, full_name, email, phone, avatar_url, account_status, joined_date, termination_reason, terminated_at").order("joined_date", { ascending: false }),
+  // هويّة القارئ — لتُسأل القاعدةُ عمّن تبلغه سلطتُه. بلا هويّة لا مدّ (آمنٌ افتراضًا).
+  const me = await getCurrentAdmin();
+
+  const [pRes, urRes, rRes, dRes, cRes, mdRes, reachRes] = await Promise.all([
+    sb.from("profiles").select("id, full_name, email, phone, avatar_url, gender, account_status, joined_date, termination_reason, terminated_at").order("joined_date", { ascending: false }),
     sb.from("user_roles").select("user_id, role_name, department_id, committee_id, assigned_at").eq("is_active", true),
-    sb.from("roles").select("role_name, role_name_ar, role_level"),
+    sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
     sb.from("departments").select("id, name_ar"),
     sb.from("committees").select("id, department_id, committee_name_ar"),
     sb.from("member_details").select("user_id, academic_record_number, academic_degree, college, major, twitter_account, instagram_account, tiktok_account, linkedin_account"),
+    me ? sb.rpc("members_in_my_reach", { p_actor: me.id }) : Promise.resolve({ data: null, error: null }),
   ]);
 
-  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || mdRes.error;
+  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || mdRes.error || reachRes.error;
   if (firstErr) return { members: [], error: firstErr.message };
+
+  const reach = new Map(
+    ((reachRes.data ?? []) as Array<{ user_id: string; may_end: boolean; may_edit: boolean }>)
+      .map((r) => [r.user_id, r] as const),
+  );
 
   const roleByName = new Map((rRes.data ?? []).map((r) => [r.role_name, r]));
   const deptById = new Map((dRes.data ?? []).map((d) => [d.id, d.name_ar as string]));
@@ -91,21 +101,20 @@ export async function getMembers(): Promise<{ members: MemberRow[]; error: strin
   const committeeName = new Map((cRes.data ?? []).map((c) => [c.id, c.committee_name_ar as string]));
   const detailsByUser = new Map((mdRes.data ?? []).map((d) => [d.user_id, d]));
 
-  // أفضل دور نشط لكلّ عضو = الأعلى رتبةً. والرتبة تعلو بارتفاع role_level
-  // لا بانخفاضه: club_president=10 · department_head=7 · committee_member=3.
-  // (وهو ما تقرؤه القاعدة نفسها: assign_position تأخذ max(role_level) وتشترط ≥8.)
-  // والدور المجهول — لا صفَّ له في roles — يخسر أمام أيّ دور معروف، فافتراضه 0.
-  const bestRole = new Map<string, { role_name: string; department_id: number | null; committee_id: number | null; level: number }>();
+  // أفضل دور نشط لكلّ عضو = الأعلى في الترتيب القياسيّ (بالاسم، لا برقم — أُعدم role_level).
+  // الأصغر رتبةً = الأعلى؛ والمجهول (لا اسم له في الترتيب) يقع آخرًا فيخسر أمام أيّ دور معروف.
+  const bestRole = new Map<string, { role_name: string; department_id: number | null; committee_id: number | null; rank: number }>();
   for (const ur of urRes.data ?? []) {
-    const level = roleByName.get(ur.role_name)?.role_level ?? 0;
+    const rank = roleRank(ur.role_name);
     const cur = bestRole.get(ur.user_id);
-    if (!cur || level > cur.level) {
-      bestRole.set(ur.user_id, { role_name: ur.role_name, department_id: ur.department_id, committee_id: ur.committee_id, level });
+    if (!cur || rank < cur.rank) {
+      bestRole.set(ur.user_id, { role_name: ur.role_name, department_id: ur.department_id, committee_id: ur.committee_id, rank });
     }
   }
 
   const members: MemberRow[] = (pRes.data ?? []).map((p) => {
     const br = bestRole.get(p.id);
+    const role = br ? roleByName.get(br.role_name) : undefined;
     const deptId = br?.department_id ?? (br?.committee_id != null ? committeeDept.get(br.committee_id) ?? null : null);
     const md = detailsByUser.get(p.id);
     return {
@@ -114,11 +123,22 @@ export async function getMembers(): Promise<{ members: MemberRow[]; error: strin
       email: p.email,
       phone: p.phone ?? null,
       avatar: p.avatar_url ?? null,
+      gender: p.gender === "male" || p.gender === "female" ? p.gender : null,
       dept: deptId != null ? deptById.get(deptId) ?? null : null,
-      committee: br?.committee_id != null ? committeeName.get(br.committee_id) ?? null : null,
-      role: br ? roleByName.get(br.role_name)?.role_name_ar ?? null : null,
-      status: STATUS_MAP[p.account_status] ?? "inactive",
-      joined: fmtDate(p.joined_date),
+      // اسمٌ ووحدة: الاسم يحمل وحدة الدور الأمّ، وخانةُ اللجنة تسكت إن كانت هي إيّاها
+      committee: assignmentScope(role?.home_committee_id ?? null, {
+        committeeId: br?.committee_id,
+        unitName: br?.committee_id != null ? committeeName.get(br.committee_id) ?? null : null,
+      }),
+      role: role
+        ? roleTitle({
+            roleAr: role.role_name_ar ?? role.role_name,
+            homeCommitteeId: role.home_committee_id,
+            homeName: role.home_committee_id != null ? committeeName.get(role.home_committee_id) ?? null : null,
+          })
+        : null,
+      status: MEMBER_STATUS_OF[p.account_status] ?? "inactive",
+      joined: fmtDateOnly(p.joined_date),
       joinedRaw: p.joined_date ?? "",
       college: md?.college ?? null,
       major: md?.major ?? null,
@@ -130,8 +150,10 @@ export async function getMembers(): Promise<{ members: MemberRow[]; error: strin
       tiktok: md?.tiktok_account ?? null,
       linkedin: md?.linkedin_account ?? null,
       endReason: p.termination_reason ?? null,
-      endDate: fmtDate(p.terminated_at ? String(p.terminated_at).slice(0, 10) : null),
+      endDate: fmtDateOnly(p.terminated_at ? String(p.terminated_at).slice(0, 10) : null),
       endAgo: agoPhrase(p.terminated_at ?? null),
+      canEnd: reach.get(p.id)?.may_end ?? false,
+      canEdit: reach.get(p.id)?.may_edit ?? false,
     };
   });
 

@@ -1,7 +1,8 @@
 import { Alert } from "@adeeb/design-system";
 import { getOrgData } from "../structure/orgData";
-import { buildPositions } from "../structure/model";
+import { buildPositions, buildStructure } from "../structure/model";
 import { AssignmentsView } from "./AssignmentsView";
+import { denyUnless } from "@/app/dashboard/_shell/guard";
 
 const Head = () => (
   <div className="ash-phead">
@@ -13,6 +14,9 @@ const Head = () => (
 );
 
 export default async function AssignmentsPage() {
+  const denied = await denyUnless("/dashboard/members/assignments");
+  if (denied) return denied;
+
   const org = await getOrgData();
   if (org.error) {
     return (
@@ -24,14 +28,13 @@ export default async function AssignmentsPage() {
   }
 
   const positions = buildPositions(org.councils, org.departments, org.committees, org.roles, org.userRoles, org.profiles);
+  // الملاحظات (مقاعد شاغرة/لجان بلا قيادة) مصدرُها الوحيد `buildStructure` — تُعرَض هنا حيث تُعالَج، لا في شجرة الهيكلة.
+  const { anomalies } = buildStructure(org.councils, org.departments, org.committees, org.roles, org.userRoles, org.profiles, org.supervision);
 
   return (
     <>
       <Head />
-      {/* حارس الهوية: تنسيقات `.asg-*` مؤقّتة — موسومة للإعادة تصميمها بمكوّنات الهوية */}
-      <div data-needs="مكوّنات تعيين المناصب (بطاقات المناصب/المحرّر)">
-        <AssignmentsView positions={positions} members={org.members} />
-      </div>
+      <AssignmentsView positions={positions} members={org.members} anomalies={anomalies} />
     </>
   );
 }

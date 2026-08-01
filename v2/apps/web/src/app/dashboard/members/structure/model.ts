@@ -7,13 +7,20 @@
 //   roles.membership_kind       -> عضوٌ في المجلس (يجلس ويقرّر) أم تابعٌ لفرعه (تحته لا فيه)
 //
 // الفرق الأخير هو ما يجعل «من في المجلس التنفيذيّ؟» يعطي ٨ لا ١٥١.
+// الترتيب بالاسم عبر roleRank — أُعدم role_level، فالهُويّة لا العدد.
+import { roleRank } from "@/lib/roleOrder";
+// اسم المنصب = الرتبة + وحدته الأمّ. مصدرٌ واحد لا تُركَّب الجملة في كلّ موضع.
+import { roleTitle } from "@/lib/positionLabel";
 
 export type RawCouncil = { id: string; name_ar: string | null; head_role_name: string; description: string | null; group_link: string | null };
 export type RawDept = { id: number; name_ar: string | null; display_order: number | null; description: string | null; group_link: string | null };
 export type RawCommittee = { id: number; committee_name_ar: string | null; department_id: number | null; council_id: string; leader_role_name: string; member_role_name: string; description: string | null; group_link: string | null };
-export type RawRole = { id: number; role_name: string; role_name_ar: string | null; role_level: number; council_type: string | null; is_elected: boolean | null; membership_kind: string; vote_weight: number };
+export type RawRole = { id: number; role_name: string; role_name_ar: string | null; council_type: string | null; is_elected: boolean | null; membership_kind: string; vote_weight: number; holder_uniqueness: string; home_committee_id: number | null };
 export type RawUserRole = { user_id: string; role_name: string; committee_id: number | null; department_id: number | null };
-export type RawProfile = { id: string; full_name: string | null; avatar_url: string | null };
+export type RawProfile = { id: string; full_name: string | null; avatar_url: string | null; gender: string | null };
+// الإشراف: عضو إدارةٍ إداريّة (`unit_id`) يتابع لجنةً تنفيذيّة (`committee_id`) ليس **فيها**.
+// جدولٌ مستقلّ منذ 20260731 — كان صفَّ منصبٍ يكذب بأنّه عضوٌ في تلك اللجنة.
+export type RawSupervision = { committee_id: number; unit_id: number; supervisor_id: string };
 
 // وحدة تنظيميّة قابلة لتحرير بياناتها الوصفيّة (وصف + رابط قروب)
 export type UnitMeta = { kind: "council" | "department" | "committee"; id: string | number; name: string; desc: string | null; link: string | null };
@@ -23,9 +30,9 @@ export type Holder = {
   userId: string;
   name: string;
   avatar: string | null;
+  gender: "male" | "female" | null;
   roleName: string;
   roleAr: string;
-  level: number;
   committeeId: number | null;
   departmentId: number | null;
 };
@@ -38,8 +45,9 @@ export type CommitteeNode = {
   link: string | null;
   leader: Holder | null;
   deputy: Holder | null;
-  // لكلّ لجنة مشرفان مستقلّان — واحد من كلّ إدارة. تفرضه assign_position
-  // (التفرّد لكلّ دور+لجنة)، وليس مشرفًا واحدًا من أيّهما.
+  // لكلّ لجنة مشرفان مستقلّان — واحد من كلّ إدارة. يفرضه فهرس المقعد في
+  // `committee_supervision` (لجنة + إدارة)، لا تفرّدُ منصبٍ في `user_roles`.
+  // والمشرف ليس **في** اللجنة: `committeeId` عنده إدارتُه هو (حيث انتماؤه فعلًا).
   hrOverseer: Holder | null;
   qaOverseer: Holder | null;
   members: Holder[];
@@ -63,7 +71,6 @@ export type CouncilInfo = { id: string; name: string; desc: string | null; link:
 export type CouncilSeat = {
   roleName: string;
   roleAr: string;
-  level: number;
   isHead: boolean;
   voteWeight: number;
   holders: Holder[];
@@ -102,14 +109,27 @@ const R = {
   deputy: "deputy_committee_leader",
 } as const;
 
-// عضو الإدارة يشرف على عدّة لجان، فله صفّ لكلّ لجنة — ويُعرض مرّة واحدة في إدارته.
-function dedupeByUser(hs: Holder[]): Holder[] {
-  const seen = new Set<string>();
-  return hs.filter((h) => (seen.has(h.userId) ? false : (seen.add(h.userId), true)));
+/**
+ * اسم المنصب بالعربيّة: الرتبة + وحدته الأمّ إن كانت له (`roles.home_committee_id`).
+ * دالّةٌ واحدة يستعملها بناة الشجرة والمناصب والمقاعد — فلا تُركَّب الجملة في سبعة مواضع.
+ */
+function roleTitler(roles: RawRole[], committees: RawCommittee[]): (roleName: string) => string {
+  const roleByName = new Map(roles.map((r) => [r.role_name, r]));
+  const committeeName = new Map(committees.map((c) => [c.id, c.committee_name_ar]));
+  return (roleName: string) => {
+    const r = roleByName.get(roleName);
+    if (!r) return roleName;
+    return roleTitle({
+      roleAr: r.role_name_ar ?? r.role_name,
+      homeCommitteeId: r.home_committee_id,
+      homeName: r.home_committee_id != null ? committeeName.get(r.home_committee_id) ?? null : null,
+    });
+  };
 }
 
-function buildHolders(roles: RawRole[], userRoles: RawUserRole[], profiles: RawProfile[]): Holder[] {
+function buildHolders(roles: RawRole[], committees: RawCommittee[], userRoles: RawUserRole[], profiles: RawProfile[]): Holder[] {
   const roleByName = new Map(roles.map((r) => [r.role_name, r]));
+  const titleOf = roleTitler(roles, committees);
   const profileById = new Map(profiles.map((p) => [p.id, p]));
   const holders: Holder[] = [];
   for (const ur of userRoles) {
@@ -120,9 +140,9 @@ function buildHolders(roles: RawRole[], userRoles: RawUserRole[], profiles: RawP
       userId: ur.user_id,
       name: prof?.full_name ?? "—",
       avatar: prof?.avatar_url ?? null,
+      gender: prof?.gender === "male" || prof?.gender === "female" ? prof.gender : null,
       roleName: role.role_name,
-      roleAr: role.role_name_ar ?? role.role_name,
-      level: role.role_level,
+      roleAr: titleOf(role.role_name),
       committeeId: ur.committee_id,
       departmentId: ur.department_id,
     });
@@ -137,12 +157,37 @@ export function buildStructure(
   roles: RawRole[],
   userRoles: RawUserRole[],
   profiles: RawProfile[],
+  supervision: RawSupervision[],
 ): StructureModel {
-  const holders = buildHolders(roles, userRoles, profiles);
+  const holders = buildHolders(roles, committees, userRoles, profiles);
   const byRole = (name: string) => holders.filter((h) => h.roleName === name);
   const firstOf = (name: string) => byRole(name)[0] ?? null;
   const inCommittee = (cid: number) => holders.filter((h) => h.committeeId === cid);
   const roleByName = new Map(roles.map((r) => [r.role_name, r]));
+  const titleOf = roleTitler(roles, committees);
+
+  // مقاعد الإشراف: (اللجنة + دورُ عضو الإدارة المُشرِفة) ← مشرفُها. الدور يُقرأ من
+  // `member_role_name` لإدارته، فلا اسمَ محفورًا هنا.
+  const profileById = new Map(profiles.map((p) => [p.id, p]));
+  const committeeById = new Map(committees.map((c) => [c.id, c]));
+  const overseers = new Map<string, Holder>();
+  for (const s of supervision) {
+    const unit = committeeById.get(s.unit_id);
+    if (!unit) continue;
+    const prof = profileById.get(s.supervisor_id);
+    overseers.set(`${s.committee_id}|${unit.member_role_name}`, {
+      userId: s.supervisor_id,
+      name: prof?.full_name ?? "—",
+      avatar: prof?.avatar_url ?? null,
+      gender: prof?.gender === "male" || prof?.gender === "female" ? prof.gender : null,
+      roleName: unit.member_role_name,
+      roleAr: titleOf(unit.member_role_name),
+      committeeId: unit.id, // إدارتُه هو — لا اللجنة التي يشرف عليها
+      departmentId: null,
+    });
+  }
+  const overseerOf = (committeeId: number, memberRoleName: string): Holder | null =>
+    overseers.get(`${committeeId}|${memberRoleName}`) ?? null;
 
   // هيئة المجلس تُبنى من القاعدة: رئيسه من head_role_name، وأعضاؤه كلّ دورٍ
   // عضويّته member في هذا المجلس. لا قائمة محفورة — أضِف دورًا عضوًا غدًا فيظهر.
@@ -151,11 +196,10 @@ export function buildStructure(
     const headRole = c ? roleByName.get(c.head_role_name) : undefined;
     const seats: CouncilSeat[] = roles
       .filter((r) => r.council_type === id && r.membership_kind === "member")
-      .sort((a, b) => b.role_level - a.role_level)
+      .sort((a, b) => roleRank(a.role_name) - roleRank(b.role_name))
       .map((r) => ({
         roleName: r.role_name,
-        roleAr: r.role_name_ar ?? r.role_name,
-        level: r.role_level,
+        roleAr: titleOf(r.role_name),
         isHead: r.role_name === c?.head_role_name,
         voteWeight: r.vote_weight,
         holders: byRole(r.role_name),
@@ -166,7 +210,7 @@ export function buildStructure(
       desc: c?.description ?? null,
       link: c?.group_link ?? null,
       headRoleName: c?.head_role_name ?? "",
-      headRoleAr: headRole?.role_name_ar ?? c?.head_role_name ?? "—",
+      headRoleAr: headRole ? titleOf(headRole.role_name) : c?.head_role_name ?? "—",
       head: c ? firstOf(c.head_role_name) : null,
       seats,
       memberCount: new Set(seats.flatMap((s) => s.holders.map((h) => h.userId))).size,
@@ -184,18 +228,15 @@ export function buildStructure(
     // يعمل للإدارتين واللجان سواءً — لا حالة خاصّة ولا مطابقة اسم.
     const leader = inside.find((h) => h.roleName === c.leader_role_name) ?? null;
     const deputy = inside.find((h) => h.roleName === R.deputy) ?? null;
-    // مشرفان مستقلّان: الموارد والضمان — لكلّ إدارة مشرفها على هذه اللجنة
-    const hrOverseer = inside.find((h) => h.roleName === "hr_admin_member") ?? null;
-    const qaOverseer = inside.find((h) => h.roleName === "qa_admin_member") ?? null;
-    const skip = new Set<string>([c.leader_role_name, R.deputy, "hr_admin_member", "qa_admin_member"]);
-    const exclude = new Set([leader?.userId, deputy?.userId, hrOverseer?.userId, qaOverseer?.userId].filter(Boolean) as string[]);
-    // أعضاء الإدارة يشرفون على لجان أخرى، فـ committee_id عندهم يشير إلى
-    // اللجنة المُشرَف عليها لا إلى إدارتهم — انتماؤهم يقوله الدور وحده.
-    // أمّا أعضاء اللجنة فيشيرون إليها بـ committee_id.
-    const members =
-      c.council_id === "administrative"
-        ? dedupeByUser(holders.filter((h) => h.roleName === c.member_role_name))
-        : inside.filter((h) => !skip.has(h.roleName) && !exclude.has(h.userId));
+    // مشرفان مستقلّان: الموارد والضمان — لكلّ إدارة مشرفها على هذه اللجنة. يُقرآن من
+    // جدول الإشراف: المشرف عضوٌ في إدارته لا في هذه اللجنة، فلا يُعدّ في أعضائها.
+    const hrOverseer = overseerOf(c.id, "hr_admin_member");
+    const qaOverseer = overseerOf(c.id, "qa_admin_member");
+    const skip = new Set<string>([c.leader_role_name, R.deputy]);
+    const exclude = new Set([leader?.userId, deputy?.userId].filter(Boolean) as string[]);
+    // `committee_id` واحدٌ في معناه لكلّ صفّ: الوحدة التي هذا المقعد فيها. فأعضاء الإدارة
+    // مُسنَدون إليها كأعضاء اللجنة إلى لجنتهم — لا فرعَ ولا إزالةَ تكرار.
+    const members = inside.filter((h) => !skip.has(h.roleName) && !exclude.has(h.userId));
     return {
       id: c.id,
       name: c.committee_name_ar ?? `لجنة #${c.id}`,
@@ -270,7 +311,6 @@ export type Position = {
   key: string;
   roleName: string;
   roleAr: string;
-  level: number;
   scope: string; // نصّ النطاق: «قيادة النادي» / «قسم …» / «لجنة …»
   // المجلس كما تقوله القاعدة (roles.council_type). لا «قيادة النادي» — كانت
   // تصنيفًا محفورًا لا وجود له في القاعدة، ورئيسُ النادي والمستشار كلاهما
@@ -278,10 +318,13 @@ export type Position = {
   council: "executive" | "administrative";
   committeeId: number | null;
   departmentId: number | null;
-  holder: Holder | null;
-  singleton: boolean; // منصب مفرد (يُستبدَل لا يُضاف)
+  // الشاغلون — جمعٌ لا مفرد: منصبٌ كـ«مستشار رئيس النادي» يقبل أكثر من شاغل،
+  // ولو حُفظ مفردًا لاختفى الثاني بلا أثر (وهو ما كان يقع).
+  holders: Holder[];
+  // منصب مفرد (يُستبدَل لا يُضاف). لا يُحفر هنا: مصدره `roles.holder_uniqueness`
+  // في القاعدة — يقرؤه `assign_position` وحارسُ الجدول والواجهة من مكانٍ واحد.
+  singleton: boolean;
   elected: boolean; // منتخَب (منسّق قسم/قائد/نائب) مقابل معيَّن
-  adminSlot?: boolean; // مشرف إداريّ (عضو إداري) — يُختار عند الإسناد من إحدى الإدارتين (HR/QA)
   // وزن صوت شاغل المنصب في الانتخابات (roles.vote_weight). قرارٌ يُرى وأنت تُسنِد،
   // لا يُكتشف في انتخاب: قائدة الموارد تزن 3.0 ونظيرتها في الضمان 1.0 — سياسةٌ مقصودة.
   voteWeight: number;
@@ -296,10 +339,9 @@ export function buildPositions(
   userRoles: RawUserRole[],
   profiles: RawProfile[],
 ): Position[] {
-  const holders = buildHolders(roles, userRoles, profiles);
+  const holders = buildHolders(roles, committees, userRoles, profiles);
   const roleByName = new Map(roles.map((r) => [r.role_name, r]));
-  const ar = (rn: string) => roleByName.get(rn)?.role_name_ar ?? rn;
-  const lvl = (rn: string) => roleByName.get(rn)?.role_level ?? 0;
+  const ar = roleTitler(roles, committees);
   const el = (rn: string) => !!roleByName.get(rn)?.is_elected;
   // صفات الدور تُقرأ من الكتالوج لا تُحفر في كلّ موضع إنشاء
   const traits = (rn: string) => ({
@@ -307,12 +349,17 @@ export function buildPositions(
     councilMember: roleByName.get(rn)?.membership_kind === "member",
   });
 
-  const findHolder = (rn: string, opts?: { committeeId?: number; departmentId?: number }) =>
-    holders.find((h) =>
+  // كلّ من يشغل هذا الدور في هذا النطاق — لا أوّلُهم. المفرد يعطي واحدًا بطبعه
+  // (تحرسه القاعدة)، والمتعدّد يعطي ما عنده كاملًا.
+  const holdersOf = (rn: string, opts?: { committeeId?: number; departmentId?: number }) =>
+    holders.filter((h) =>
       h.roleName === rn &&
       (opts?.committeeId == null || h.committeeId === opts.committeeId) &&
       (opts?.departmentId == null || h.departmentId === opts.departmentId),
-    ) ?? null;
+    );
+
+  // التفرّد يقوله الكتالوج: 'multi' وحدها تقبل أكثر من شاغل.
+  const isSingle = (rn: string) => (roleByName.get(rn)?.holder_uniqueness ?? "multi") !== "multi";
 
   const out: Position[] = [];
 
@@ -321,32 +368,30 @@ export function buildPositions(
   // وجود له)، ورئيسَ التنفيذيّ في المجلس التنفيذيّ — وهو عضوٌ في الإداريّ
   // ويرأس التنفيذيّ (head_role_name). فالعضويّة والمجلس يقولهما العمودان.
   const councilName = (id: string) => councils.find((c) => c.id === id)?.name_ar ?? id;
-  for (const r of roles.filter((x) => x.membership_kind === "member" && x.council_type).sort((a, b) => b.role_level - a.role_level)) {
+  for (const r of roles.filter((x) => x.membership_kind === "member" && x.council_type).sort((a, b) => roleRank(a.role_name) - roleRank(b.role_name))) {
     // المقاعد ذات النطاق (منسّق قسم/قائد/نائب) تُبنى أدناه بنطاقها، لا هنا
     if (["department_head", "committee_leader", "deputy_committee_leader"].includes(r.role_name)) continue;
     const council = r.council_type as Position["council"];
     out.push({
-      key: r.role_name, roleName: r.role_name, roleAr: ar(r.role_name), level: lvl(r.role_name),
+      key: r.role_name, roleName: r.role_name, roleAr: ar(r.role_name),
       scope: councilName(council), council, committeeId: null, departmentId: null,
-      holder: findHolder(r.role_name), singleton: true, elected: el(r.role_name), ...traits(r.role_name),
+      holders: holdersOf(r.role_name), singleton: isSingle(r.role_name), elected: el(r.role_name), ...traits(r.role_name),
     });
   }
 
   const sortedDepts = [...departments].sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));
   for (const d of sortedDepts) {
     const name = d.name_ar ?? `قسم #${d.id}`;
-    out.push({ key: `head-${d.id}`, roleName: "department_head", roleAr: ar("department_head"), level: lvl("department_head"), scope: name, council: "executive", committeeId: null, departmentId: d.id, holder: findHolder("department_head", { departmentId: d.id }), singleton: true, elected: el("department_head"), ...traits("department_head") });
+    out.push({ key: `head-${d.id}`, roleName: "department_head", roleAr: ar("department_head"), scope: name, council: "executive", committeeId: null, departmentId: d.id, holders: holdersOf("department_head", { departmentId: d.id }), singleton: isSingle("department_head"), elected: el("department_head"), ...traits("department_head") });
   }
 
   const operational = committees.filter((c) => c.council_id !== "administrative").sort((a, b) => a.id - b.id);
   for (const c of operational) {
     const name = c.committee_name_ar ?? `لجنة #${c.id}`;
-    out.push({ key: `lead-${c.id}`, roleName: "committee_leader", roleAr: ar("committee_leader"), level: lvl("committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holder: findHolder("committee_leader", { committeeId: c.id }), singleton: true, elected: el("committee_leader"), ...traits("committee_leader") });
-    out.push({ key: `dep-${c.id}`, roleName: "deputy_committee_leader", roleAr: ar("deputy_committee_leader"), level: lvl("deputy_committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holder: findHolder("deputy_committee_leader", { committeeId: c.id }), singleton: true, elected: el("deputy_committee_leader"), ...traits("deputy_committee_leader") });
-    // مقعدان مستقلّان: لكلّ إدارة مشرفها على هذه اللجنة. assign_position تفرض
-    // التفرّد لكلّ (دور + لجنة)، فمقعد الموارد لا يزاحم مقعد الضمان.
-    out.push({ key: `hr-${c.id}`, roleName: "hr_admin_member", roleAr: ar("hr_admin_member"), level: lvl("hr_admin_member"), scope: name, council: "administrative", committeeId: c.id, departmentId: null, holder: findHolder("hr_admin_member", { committeeId: c.id }), singleton: true, elected: el("hr_admin_member"), adminSlot: true, ...traits("hr_admin_member") });
-    out.push({ key: `qa-${c.id}`, roleName: "qa_admin_member", roleAr: ar("qa_admin_member"), level: lvl("qa_admin_member"), scope: name, council: "administrative", committeeId: c.id, departmentId: null, holder: findHolder("qa_admin_member", { committeeId: c.id }), singleton: true, elected: el("qa_admin_member"), adminSlot: true, ...traits("qa_admin_member") });
+    out.push({ key: `lead-${c.id}`, roleName: "committee_leader", roleAr: ar("committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holders: holdersOf("committee_leader", { committeeId: c.id }), singleton: isSingle("committee_leader"), elected: el("committee_leader"), ...traits("committee_leader") });
+    out.push({ key: `dep-${c.id}`, roleName: "deputy_committee_leader", roleAr: ar("deputy_committee_leader"), scope: name, council: "executive", committeeId: c.id, departmentId: null, holders: holdersOf("deputy_committee_leader", { committeeId: c.id }), singleton: isSingle("deputy_committee_leader"), elected: el("deputy_committee_leader"), ...traits("deputy_committee_leader") });
+    // ولا مقعدَ إشرافٍ هنا: الإشراف ليس منصبًا يُسنَد في هذه اللجنة، بل تكليفٌ لعضو إدارةٍ
+    // أخرى — مقاعدُه في «توزيع الإشراف» ومصدرُها `committee_supervision` (20260731).
   }
 
   return out;

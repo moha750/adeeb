@@ -48,7 +48,7 @@ function Panel({ value }: { value: string }) {
   const c = CONTENT[value];
   if (!c) return null;
   return (
-    <div role="tabpanel" className="mt-4  border border-line bg-surface p-6">
+    <div role="tabpanel" className="mt-4 rounded border border-line bg-surface p-6">
       <h3 className="font-display text-lg font-black text-content">{c.h}</h3>
       <p className="mt-1 text-sm text-content-muted">{c.p}</p>
     </div>

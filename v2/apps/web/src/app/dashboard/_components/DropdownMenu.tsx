@@ -1,8 +1,8 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { Fragment, useCallback, useEffect, useId, useRef, useState } from "react";
 import { DotsThreeOutlineVertical } from "@phosphor-icons/react";
+import { AnchoredPopover } from "@adeeb/design-system";
 
 export type MenuItem = {
   label: string;
@@ -18,24 +18,29 @@ export type MenuGroup = {
 };
 
 /**
- * قائمة إجراءات (⋯) — سلوك يدويّ كامل (بديل Radix DropdownMenu): تموضع مُدرِك للحوافّ عبر Portal ·
- * تنقّل لوحة مفاتيح (أسهم/Home/End) · كتابة‑للقفز (typeahead) · Enter/Space للاختيار · ESC/Tab/نقر‑خارج للإغلاق ·
- * إرجاع التركيز للمُطلِق · ARIA (menu/menuitem + aria-expanded + data-highlighted) — بمظهر Aurora (بادئة .dm).
+ * قائمة إجراءات (⋯) — تنقّل لوحة مفاتيح (أسهم/Home/End) · كتابة‑للقفز (typeahead) · Enter/Space للاختيار ·
+ * ESC/Tab/نقر‑خارج للإغلاق · إرجاع التركيز للمُطلِق · ARIA (menu/menuitem). التموضع والـPortal والإغلاق
+ * تملكها بدائيّة {@link AnchoredPopover} (مصدر واحد لكلّ منسدلات النظام)؛ هنا سلوك القائمة ومظهرها (بادئة .dm).
  */
 export function DropdownMenu({
   groups,
   ariaLabel = "إجراءات",
   triggerClassName = "dm-trigger",
+  trigger,
   tone,
 }: {
   groups: MenuGroup[];
   ariaLabel?: string;
   triggerClassName?: string;
+  /**
+   * محتوى المُطلِق حين لا يكون النقاط الثلاث — كأفتار الحساب في الشريط العلويّ. سلوك القائمة
+   * (لوحة المفاتيح · ARIA · التموضع · الإغلاق) واحدٌ مهما تبدّل شكل المُطلِق، فلا تُبنى ثانيةً.
+   */
+  trigger?: React.ReactNode;
   /** نغمة القائمة كاملةً (سطح Aurora + حدّ بلون الحالة) — تُطابق حالة الصفّ/العنصر */
-  tone?: "success" | "warning" | "danger";
+  tone?: "neutral" | "success" | "warning" | "danger";
 }) {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [active, setActive] = useState(-1);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -73,7 +78,6 @@ export function DropdownMenu({
   const close = useCallback((focusTrigger: boolean) => {
     setOpen(false);
     setActive(-1);
-    setPos(null);
     if (focusTrigger) triggerRef.current?.focus();
   }, []);
 
@@ -95,53 +99,12 @@ export function DropdownMenu({
     [flat, close],
   );
 
-  // تموضع مُدرِك للحوافّ: أسفل المُطلِق، محاذاة الحافّة الخارجيّة، وينقلب لأعلى عند ضيق الأسفل
-  useLayoutEffect(() => {
-    if (!open) return;
-    function place() {
-      const t = triggerRef.current;
-      const m = menuRef.current;
-      if (!t || !m) return;
-      const tr = t.getBoundingClientRect();
-      const mr = m.getBoundingClientRect();
-      const PAD = 8;
-      const GAP = 6;
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      let top = tr.bottom + GAP;
-      if (top + mr.height > vh - PAD && tr.top - GAP - mr.height >= PAD) top = tr.top - GAP - mr.height;
-      top = Math.max(PAD, Math.min(top, vh - mr.height - PAD));
-      let left = tr.right - mr.width;
-      left = Math.max(PAD, Math.min(left, vw - mr.width - PAD));
-      setPos({ top, left });
-    }
-    place();
-    window.addEventListener("resize", place);
-    window.addEventListener("scroll", place, true);
-    return () => {
-      window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place, true);
-    };
-  }, [open]);
-
   // تحريك التركيز للعنصر النشط، أو لحاوية القائمة عند الفتح بلا إبراز (فأرة) — لالتقاط لوحة المفاتيح
   useEffect(() => {
     if (!open) return;
     if (active >= 0) itemRefs.current[active]?.focus();
     else menuRef.current?.focus({ preventScroll: true });
-  }, [open, active, pos]);
-
-  // إغلاق عند النقر خارج القائمة والمُطلِق
-  useEffect(() => {
-    if (!open) return;
-    function onDown(e: PointerEvent) {
-      const target = e.target as Node;
-      if (menuRef.current?.contains(target) || triggerRef.current?.contains(target)) return;
-      close(false);
-    }
-    document.addEventListener("pointerdown", onDown, true);
-    return () => document.removeEventListener("pointerdown", onDown, true);
-  }, [open, close]);
+  }, [open, active]);
 
   function onTriggerKeyDown(e: React.KeyboardEvent) {
     if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
@@ -193,10 +156,6 @@ export function DropdownMenu({
         e.preventDefault();
         if (active >= 0) selectAt(active);
         break;
-      case "Escape":
-        e.preventDefault();
-        close(true);
-        break;
       case "Tab":
         e.preventDefault();
         close(true);
@@ -205,8 +164,6 @@ export function DropdownMenu({
         if (e.key.length === 1 && !e.altKey && !e.ctrlKey && !e.metaKey) typeahead(e.key);
     }
   }
-
-  let flatIdx = -1; // فهرس مسطّح تصاعديّ أثناء العرض
 
   return (
     <>
@@ -222,63 +179,61 @@ export function DropdownMenu({
         onClick={() => (open ? close(false) : openMenu("none"))}
         onKeyDown={onTriggerKeyDown}
       >
-        <DotsThreeOutlineVertical weight="bold" aria-hidden />
+        {trigger ?? <DotsThreeOutlineVertical weight="bold" aria-hidden />}
       </button>
 
-      {open && typeof document !== "undefined"
-        ? createPortal(
-            <div
-              ref={menuRef}
-              id={menuId}
-              role="menu"
-              tabIndex={-1}
-              aria-labelledby={triggerId}
-              className={"dm-menu" + (tone ? ` dm-tone-${tone}` : "")}
-              style={{
-                position: "fixed",
-                top: pos?.top ?? 0,
-                left: pos?.left ?? 0,
-                visibility: pos ? "visible" : "hidden",
-              }}
-              onKeyDown={onMenuKeyDown}
-            >
-              {groups.map((g, gi) => (
-                <Fragment key={gi}>
-                  {gi > 0 ? <div className="dm-sep" role="separator" /> : null}
-                  {g.header ? (
-                    <div className={"dm-hd" + (g.danger ? " dg" : "")} role="presentation">{g.header}</div>
-                  ) : null}
-                  {g.items.map((it, ii) => {
-                    flatIdx += 1;
-                    const idx = flatIdx;
-                    return (
-                      <button
-                        key={ii}
-                        ref={(el) => {
-                          itemRefs.current[idx] = el;
-                        }}
-                        type="button"
-                        role="menuitem"
-                        tabIndex={-1}
-                        className={"dm-item" + (it.danger ? " dg" : "") + (it.disabled ? " disabled" : "")}
-                        aria-disabled={it.disabled || undefined}
-                        data-highlighted={active === idx ? "" : undefined}
-                        onClick={() => selectAt(idx)}
-                        onMouseEnter={() => {
-                          if (!it.disabled) setActive(idx);
-                        }}
-                      >
-                        {it.icon ? <span className="dm-ic">{it.icon}</span> : null}
-                        <span>{it.label}</span>
-                      </button>
-                    );
-                  })}
-                </Fragment>
-              ))}
-            </div>,
-            document.body,
-          )
-        : null}
+      <AnchoredPopover
+        open={open}
+        anchorRef={triggerRef}
+        onDismiss={(reason) => close(reason === "escape")}
+        align="start"
+        className={"dm-menu" + (tone ? ` dm-tone-${tone}` : "")}
+        role="menu"
+        id={menuId}
+        ariaLabelledby={triggerId}
+        tabIndex={-1}
+        onKeyDown={onMenuKeyDown}
+        panelRef={(el) => {
+          menuRef.current = el;
+        }}
+      >
+        {groups.map((g, gi) => {
+          // فهرس العنصر في القائمة المسطّحة = مجموع أطوال المجموعات السابقة + موضعه (بلا عدّاد متحوّل)
+          const base = groups.slice(0, gi).reduce((n, gg) => n + gg.items.length, 0);
+          return (
+          <Fragment key={gi}>
+            {gi > 0 ? <div className="dm-sep" role="separator" /> : null}
+            {g.header ? (
+              <div className={"dm-hd" + (g.danger ? " dg" : "")} role="presentation">{g.header}</div>
+            ) : null}
+            {g.items.map((it, ii) => {
+              const idx = base + ii;
+              return (
+                <button
+                  key={ii}
+                  ref={(el) => {
+                    itemRefs.current[idx] = el;
+                  }}
+                  type="button"
+                  role="menuitem"
+                  tabIndex={-1}
+                  className={"dm-item" + (it.danger ? " dg" : "") + (it.disabled ? " disabled" : "")}
+                  aria-disabled={it.disabled || undefined}
+                  data-highlighted={active === idx ? "" : undefined}
+                  onClick={() => selectAt(idx)}
+                  onMouseEnter={() => {
+                    if (!it.disabled) setActive(idx);
+                  }}
+                >
+                  {it.icon ? <span className="dm-ic">{it.icon}</span> : null}
+                  <span>{it.label}</span>
+                </button>
+              );
+            })}
+          </Fragment>
+          );
+        })}
+      </AnchoredPopover>
     </>
   );
 }

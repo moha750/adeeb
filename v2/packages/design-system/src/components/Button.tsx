@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "../lib/cn";
 
 type Variant =
-  | "primary" | "ghost" | "danger" | "success" | "warning"
+  | "primary" | "ghost" | "danger" | "success" | "warning" | "neutral"
   | "ghost-danger" | "ghost-success" | "ghost-warning"
   | "inverse" | "inverse-ghost";
 type Size = "sm" | "md" | "lg";
@@ -17,7 +17,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 /**
  * زر العلامة — بُني خطوة‑خطوة مع المستخدم:
  * تدرّج كحليّ · زوايا 16px · ظلّ ناعم · (تكبير خفيف + كنس ضوئيّ عند المرور) · أيقونة قبل النصّ.
- * الأنماط: primary · ghost · danger · success · warning · ghost-danger/success/warning · inverse · inverse-ghost. الأحجام: sm · md · lg.
+ * الأنماط: primary · ghost · danger · success · warning · neutral · ghost-danger/success/warning · inverse · inverse-ghost. الأحجام: sm · md · lg.
  * تُعرَّف الأنماط في globals.css تحت البادئة `.abtn`.
  */
 export function Button({

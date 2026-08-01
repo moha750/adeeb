@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * - يُنعِش الرمز ويعيد كتابة الكوكيز على الاستجابة.
  * - `/dashboard/*` بلا جلسة → تحويل إلى `/login?next=…`.
  * - `/login` مع جلسة → تحويل إلى `/dashboard`.
- * ملاحظة: هنا نتحقّق من **وجود جلسة** فقط (رخيص). التحقّق من صلاحية الأدمن (role_level ≥ 8)
+ * ملاحظة: هنا نتحقّق من **وجود جلسة** فقط (رخيص). التحقّق من الصلاحية (قدرة view_members)
  * يتمّ في تخطيط اللوحة عبر requireAdmin (تفويض لا مصادقة).
  */
 export async function updateSession(request: NextRequest) {

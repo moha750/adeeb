@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Container, Field, Select, Badge, ModalSectionHeading } from "@adeeb/design-system";
+import { Button, Container, Field, Select, Badge, ModalSectionHeading, Segmented } from "@adeeb/design-system";
 import { CheckCircle, Trash, Warning, User, PencilSimple, Envelope, At, Buildings, Star, Phone, CalendarBlank, UsersThree, Copy, Books, GraduationCap, BookOpen, Certificate, IdentificationCard, AddressBook, ShareNetwork, XLogo, InstagramLogo, TiktokLogo, LinkedinLogo, Prohibit, WarningCircle, CalendarX } from "@phosphor-icons/react";
 import { Modal } from "../../dashboard/_components/Modal";
 import { ConfirmDialog } from "../../dashboard/_components/ConfirmDialog";
@@ -10,6 +10,11 @@ import { Avatar } from "../../dashboard/_components/Avatar";
 const DEPT_OPTS = [{ value: "media", label: "الإعلام" }, { value: "events", label: "الفعاليّات" }, { value: "hr", label: "الموارد البشريّة" }];
 const ROLE_OPTS = [{ value: "member", label: "عضو" }, { value: "lead", label: "رئيس لجنة" }];
 const STATUSES = [{ k: "active", label: "نشط" }, { k: "pending", label: "معلّق" }, { k: "suspended", label: "موقوف" }];
+
+// سببٌ واقعيّ من القاعدة (فقرتان) — يكشف ما يخفيه سطرٌ قصير: الالتفاف وحفظ الأسطر ومدى القراءة.
+const DEMO_REASON = `خروج العضو من مجتمع أديب دون إبلاغ إدارة الموارد البشرية بالخروج.
+
+وبعد مراجعة اللجنة تقرّر إنهاء العضوية وفق المادّة الرابعة من لائحة العضويّة.`;
 
 function Sec({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -24,14 +29,15 @@ function Lab({ children }: { children: React.ReactNode }) {
   return <p className="mb-3 font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">{children}</p>;
 }
 
-// خليّة بيانات ملفّ (مبسّطة للعرض — بلا نسخ فعليّ)؛ الحقل الفارغ → شرطة محايدة بلا زرّ نسخ
-function PCell({ label, value, icon, full, lat }: { label: string; value?: string; icon: React.ReactNode; full?: boolean; lat?: boolean }) {
+// خليّة بيانات ملفّ (مبسّطة للعرض — بلا نسخ فعليّ)؛ الحقل الفارغ → شرطة محايدة بلا زرّ نسخ.
+// noCopy: قيمةٌ لا يُنسخ مثلها (تاريخ) — فالرُّكن يبقى خاليًا بدل زرٍّ لا أحد يضغطه.
+function PCell({ label, value, icon, full, lat, noCopy }: { label: string; value?: string; icon: React.ReactNode; full?: boolean; lat?: boolean; noCopy?: boolean }) {
   const empty = !value;
   return (
     <div className={"pva-cell" + (full ? " full" : "")}>
       <div className="pva-lbl"><span className="pva-lic">{icon}</span>{label}</div>
       <div className={"pva-val" + (lat && !empty ? " lat" : "") + (empty ? " na" : "")}>{empty ? "—" : value}</div>
-      {!empty && <button type="button" className="pva-copy" aria-label="نسخ"><Copy aria-hidden /></button>}
+      {!empty && !noCopy && <button type="button" className="pva-copy" aria-label="نسخ"><Copy aria-hidden /></button>}
     </div>
   );
 }
@@ -74,6 +80,9 @@ const CONFIRM: Record<Tone, { icon: React.ReactNode; title: string; text: string
 export default function ModalPage() {
   // نافذة واحدة مفتوحة في كلّ مرّة: نحفظ مفتاحها (الحجم/النوع) أو null
   const [basic, setBasic] = useState(false);
+  // معرض حالة الانشغال: الحفظ يعمل الآن — تُغلق المخارج الثلاثة
+  const [busyOpen, setBusyOpen] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
   const [sized, setSized] = useState<Size | null>(null);
   const [confirm, setConfirm] = useState<Tone | null>(null);
   const [notice, setNotice] = useState(false);
@@ -84,6 +93,7 @@ export default function ModalPage() {
   const [role, setRole] = useState("");
   const [tab, setTab] = useState<"info" | "activity">("info");
   const [profile, setProfile] = useState(false);
+  const [reasonB, setReasonB] = useState(false);
 
   return (
     <main className="py-16">
@@ -116,6 +126,41 @@ export default function ModalPage() {
               <p className="text-content-muted">
                 هذا هو جسم النافذة — يقبل أيّ محتوى React: نصوصًا أو نماذج أو جداول. يُمرَّر عبر <code className="font-latin">children</code>،
                 والعنوان والوصف والتذييل خصائص مستقلّة.
+              </p>
+            </Modal>
+          </Sec>
+
+          <Sec title="أثناء التنفيذ (busy)">
+            <Lab>القاعدة ٧: الطلب انطلق للخادم فالإغلاق لا يُلغيه — تُغلق المخارج الثلاثة (إلغاء · × · ESC)</Lab>
+            <div className="flex flex-wrap items-center gap-4">
+              <Button variant="primary" size="md" onClick={() => setBusyOpen(true)}>افتح ثمّ احفظ</Button>
+            </div>
+            <Modal
+              open={busyOpen}
+              onClose={() => setBusyOpen(false)}
+              busy={demoBusy}
+              title="نافذة أثناء الحفظ"
+              description="اضغط «حفظ التغييرات» ثمّ جرّب الإلغاء أو × أو ESC — لن يستجيب شيء حتى ينتهي."
+              size="md"
+              footer={
+                <>
+                  <Button variant="ghost" size="md" onClick={() => setBusyOpen(false)} disabled={demoBusy}>إلغاء</Button>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    loading={demoBusy}
+                    onClick={() => {
+                      setDemoBusy(true);
+                      window.setTimeout(() => { setDemoBusy(false); setBusyOpen(false); }, 3000);
+                    }}
+                  >
+                    حفظ التغييرات
+                  </Button>
+                </>
+              }
+            >
+              <p className="text-content-muted">
+                أثناء التنفيذ يبقى الزرّ بلون الهوية مع دائرته، وتُعطَّل المخارج الثلاثة — فلا يَعِد «إلغاء» بما لا يملك.
               </p>
             </Modal>
           </Sec>
@@ -181,7 +226,7 @@ export default function ModalPage() {
           </Sec>
 
           <Sec title="نافذة نموذج">
-            <Lab>mdl-grid · Field · Select · mdl-full · mdl-fieldlabel · mdl-seg</Lab>
+            <Lab>mdl-grid · Field · Select · mdl-full · mdl-fieldlabel · Segmented</Lab>
             <div className="flex flex-wrap items-center gap-4">
               <Button variant="primary" size="md" onClick={() => setForm(true)}>افتح النموذج</Button>
             </div>
@@ -200,23 +245,20 @@ export default function ModalPage() {
             >
               <div className="mdl-grid">
                 <Field label="الاسم" icon={<User />} innerIcon={<PencilSimple />} placeholder="اكتب الاسم" />
-                <Field label="البريد الإلكترونيّ" type="email" icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" />
+                <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" />
                 <Select label="القسم" icon={<Buildings />} options={DEPT_OPTS} value={dept} onValueChange={setDept} />
                 <Select label="الدور" icon={<Star />} options={ROLE_OPTS} value={role} onValueChange={setRole} />
                 <div className="mdl-full">
                   <span className="mdl-fieldlabel">الحالة</span>
-                  <div className="mdl-seg">
-                    {STATUSES.map((s) => (
-                      <button key={s.k} type="button" className={status === s.k ? "on" : ""} onClick={() => setStatus(s.k)}>{s.label}</button>
-                    ))}
-                  </div>
+                  <Segmented aria-label="الحالة" value={status} onValueChange={setStatus}
+                    items={STATUSES.map((s) => ({ value: s.k, label: s.label }))} />
                 </div>
               </div>
             </Modal>
           </Sec>
 
           <Sec title="نافذة مبوّبة">
-            <Lab>تبويبات (mdl-seg) · mdl-tabpanel · mdl-info · mdl-muted</Lab>
+            <Lab>تبويبات (Segmented) · mdl-tabpanel · mdl-info · mdl-muted</Lab>
             <div className="flex flex-wrap items-center gap-4">
               <Button variant="ghost" size="md" onClick={() => setTabbed(true)}>افتح المبوّبة</Button>
             </div>
@@ -228,10 +270,8 @@ export default function ModalPage() {
               footer={<Button variant="primary" size="md" onClick={() => setTabbed(false)}>إغلاق</Button>}
             >
               <div className="flex justify-center">
-                <div className="mdl-seg">
-                  <button type="button" className={tab === "info" ? "on" : ""} onClick={() => setTab("info")}>المعلومات</button>
-                  <button type="button" className={tab === "activity" ? "on" : ""} onClick={() => setTab("activity")}>النشاط</button>
-                </div>
+                <Segmented aria-label="أقسام الملفّ" value={tab} onValueChange={(v) => setTab(v as "info" | "activity")}
+                  items={[{ value: "info", label: "المعلومات" }, { value: "activity", label: "النشاط" }]} />
               </div>
               <div className="mdl-tabpanel">
                 {tab === "info" ? (
@@ -298,6 +338,35 @@ export default function ModalPage() {
                 <PSec end icon={<Prohibit weight="fill" />} title="إنهاء العضويّة">
                   <PCell full label="سبب الإنهاء" icon={<WarningCircle />} value="مخالفة لائحة العضويّة" />
                   <PCell full label="تاريخ الإنهاء" icon={<CalendarX />} value="٣ مارس ٢٠٢٦" />
+                </PSec>
+              </div>
+            </Modal>
+          </Sec>
+
+          {/* نافذة السبب — الحاجة: السبب يُقصّ بـ«…» في الجدول والكرت (`.txt-clip` · `.acard-info-val`)،
+              فيلزم كشفه كاملًا بلا فتح الملفّ كلّه. ترث هيئة الملفّ (غلاف + أفتار) وتلبس نغمتها. */}
+          <Sec title="نافذة السبب">
+            <Lab>pvb-modal · mdl-tone-danger (النغمة على السطح والحدّ والغلاف والأفتار) · pva-sec--end</Lab>
+            <div className="flex flex-wrap items-center gap-4">
+              <Button variant="danger" size="md" onClick={() => setReasonB(true)}>عرض السبب</Button>
+            </div>
+            <Modal
+              open={reasonB}
+              onClose={() => setReasonB(false)}
+              title="سبب إنهاء العضوية — ريم صلاح الشامي"
+              size="sm"
+              className="pvb-modal mdl-tone-danger"
+              hero={<Avatar name="ريم صلاح الشامي" size="2xl" status="busy" className="pvb-av" />}
+              footer={<Button variant="ghost-danger" size="md" onClick={() => setReasonB(false)}>إغلاق</Button>}
+            >
+              <div className="pvb-name">ريم صلاح الشامي</div>
+              <div className="pvb-role">عضوية منتهية منذ ١٣ يومًا</div>
+              <div className="pva-sections">
+                {/* خليّتان عاديّتان لا تصميم خاصّ: قسم الإنهاء يجعل القيمة تلتفّ كاملةً أصلًا
+                    (`.pva-sec--end .pva-val`)، فالسبب يُعرض كأيّ قيمة — بأيقونته وتسميته. */}
+                <PSec end icon={<Prohibit weight="fill" />} title="سبب إنهاء العضوية">
+                  <PCell full noCopy label="سبب الإنهاء" icon={<WarningCircle />} value={DEMO_REASON} />
+                  <PCell full noCopy label="تاريخ الإنهاء" icon={<CalendarX />} value="٢ يوليو ٢٠٢٦" />
                 </PSec>
               </div>
             </Modal>

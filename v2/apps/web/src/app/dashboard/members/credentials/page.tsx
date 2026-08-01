@@ -1,6 +1,7 @@
 import { Alert } from "@adeeb/design-system";
 import { getMembers } from "../data";
 import { CredentialsView, type CredMember } from "./CredentialsView";
+import { denyUnless } from "@/app/dashboard/_shell/guard";
 
 const Head = () => (
   <div className="ash-phead">
@@ -12,6 +13,9 @@ const Head = () => (
 );
 
 export default async function CredentialsPage() {
+  const denied = await denyUnless("/dashboard/members/credentials");
+  if (denied) return denied;
+
   const { members, error } = await getMembers();
 
   if (error) {
@@ -24,7 +28,7 @@ export default async function CredentialsPage() {
   }
 
   const lite: CredMember[] = members
-    .map((m) => ({ id: m.id, name: m.name, email: m.email, avatar: m.avatar, status: m.status }))
+    .map((m) => ({ id: m.id, name: m.name, email: m.email, avatar: m.avatar, gender: m.gender, status: m.status }))
     .sort((a, b) => a.name.localeCompare(b.name, "ar"));
 
   return (

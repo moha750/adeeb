@@ -2,6 +2,7 @@ import { Alert } from "@adeeb/design-system";
 import { getOrgData } from "./orgData";
 import { buildStructure } from "./model";
 import { StructureView } from "./StructureView";
+import { denyUnless } from "@/app/dashboard/_shell/guard";
 
 const Head = () => (
   <div className="ash-phead">
@@ -13,6 +14,9 @@ const Head = () => (
 );
 
 export default async function StructurePage() {
+  const denied = await denyUnless("/dashboard/members/structure");
+  if (denied) return denied;
+
   const org = await getOrgData();
   if (org.error) {
     return (
@@ -23,15 +27,12 @@ export default async function StructurePage() {
     );
   }
 
-  const model = buildStructure(org.councils, org.departments, org.committees, org.roles, org.userRoles, org.profiles);
+  const model = buildStructure(org.councils, org.departments, org.committees, org.roles, org.userRoles, org.profiles, org.supervision);
 
   return (
     <>
       <Head />
-      {/* حارس الهوية: تنسيقات `.org-*` مؤقّتة — موسومة للإعادة تصميمها بمكوّنات الهوية */}
-      <div data-needs="مكوّنات هيكلة أديب (شجرة المجالس/الأقسام/اللجان)">
-        <StructureView model={model} />
-      </div>
+      <StructureView model={model} />
     </>
   );
 }
