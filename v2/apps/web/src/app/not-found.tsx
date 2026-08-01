@@ -28,7 +28,7 @@ export default function NotFound() {
         <Ambient />
         <Container className="max-w-2xl text-center">
           <LandingHeading
-            eyebrow="404"
+            eyebrow="404 ERROR"
             title="الصفحة غير موجودة"
             deck="الرابط الذي جئت منه لعلّه تغيّر أو حُذِف أو أنّ الصفحة غير موجودة."
             align="center"
