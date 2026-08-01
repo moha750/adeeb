@@ -8,6 +8,12 @@ import { cn } from "../lib/cn";
  * بلا أرقام ولا باترن. tone="onDark" للأقسام الكحلية.
  * قاعدة النصّ (مُقَرّة): العين (eyebrow) = كلمةٌ واحدة، والعنوان (title) = كلمتان — اتّساقٌ وإيقاع.
  *
+ * **خطّ العين `--font-latin` لا `--font-display`** (قاعدة الخطّ اللاتينيّ): العين قد تحمل
+ * لاتينيًّا («404 ERROR» في صفحة «غير موجود»)، وكانت أرقامُه تُرسم بـEras (نطاق U+0030-0039
+ * محوَّلٌ إليه داخل عائلة Lyon في `fonts.css`) وحروفُه بـLyon Arabic — **خطّان في سطرٍ واحد**.
+ * والمكدّس اللاتينيّ آخرُه `Lyon Arabic`، وEras لا يملك عربيّة (مُتحقَّقٌ من جدول محارف الملفّ)،
+ * فالعين العربيّة تسقط إليه تلقائيًّا — رسمُها لا يتغيّر، واللاتينيّة تتوحّد على Eras.
+ *
  * المقاسات مائعة (clamp): يصغر النصّ بسلاسة مع عرض الشاشة فيبقى **سطرًا واحدًا** في كلّ المقاسات
  * (لا التفاف ولا خروج) — فتبقى المسطرة والتظليل شريطًا واحدًا نظيفًا بلا JS.
  */
@@ -62,7 +68,7 @@ export function LandingHeading({
     <div className={cn("mb-10", center && "text-center", className)}>
       {eyebrow ? (
         <span
-          className="block whitespace-nowrap font-display font-black leading-[1.4] text-[clamp(2.25rem,13vw,4.5rem)] -mb-[0.6em]"
+          className="block whitespace-nowrap font-latin font-black leading-[1.4] text-[clamp(2.25rem,13vw,4.5rem)] -mb-[0.6em]"
           style={categoryFill}
           aria-hidden
         >
