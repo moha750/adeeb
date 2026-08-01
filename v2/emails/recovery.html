@@ -1,117 +1,287 @@
 <!--
   قالبُ بريد استعادة كلمة المرور — **المصدر الواحد**.
 
-  يُرفع إلى Supabase (‏`mailer_templates_recovery_content`) بـ`pnpm auth:config`،
-  فما يصل صندوقَ العضو هو هذا الملفّ حرفًا بحرف. حرّره هنا ثمّ ارفعه؛ ولا تحرّره
-  في لوحة Supabase فتصير نسخةٌ ثانية لا يُظهرها diff.
+  يُرفع إلى Supabase (`mailer_templates_recovery_content`) بـ`pnpm auth:config`، فما
+  يصل صندوقَ العضو هو هذا الملفّ حرفًا بحرف. حرّره هنا ثمّ ارفعه؛ ولا تحرّره في لوحة
+  Supabase فتصير نسخةٌ ثانية لا يُظهرها diff.
 
-  **قواعدُ البريد ليست قواعدَ الويب:** جداولُ لا شبكات، وأنماطٌ داخل السمة لا في
-  ورقة، وألوانٌ مكتوبةٌ صريحةً لا رموزًا (‏`var()` لا يُدعم في أكثر العملاء).
-  والشعارُ PNG لا SVG — جيميل وأوتلوك لا يرسمان SVG أصلًا.
+  **وهذا هو التصميم الذي اختاره المالك** (٢٠٢٦-٠٨-٠١): عُرض عليه بديلٌ جدوليّ بهويّة
+  V2 فاختار هذا، فعاد كما كان — ولم يُمَسّ منه إلّا حدُّ الأحرف: كان يَعِد بستّة
+  والقاعدة تشترط ثمانية منذ ضبط اليوم، فصار السطرُ يقول ما تفعله القاعدة.
 
-  متغيّرُ Go الوحيد هنا: `{{ .ConfirmationURL }}` — رابطُ Supabase الذي يفتح
-  جلسةَ الاستعادة ثمّ يُحوّل إلى `/reset-password`.
+  متغيّرا Go فيه: `{{ .ConfirmationURL }}` رابطُ الاستعادة، و`{{ .Data.full_name }}`
+  اسمُ العضو من بيانات حسابه (وله بديلٌ حين يغيب).
 -->
-<!doctype html>
+<!DOCTYPE html>
 <html dir="rtl" lang="ar">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light" />
-    <meta name="supported-color-schemes" content="light" />
-    <title>تعيين كلمة مرور جديدة — نادي أديب</title>
-  </head>
-  <body dir="rtl" style="margin:0; padding:0; background-color:#f5f7fa;">
-    <!-- سطرُ المعاينة: يُقرأ في قائمة الرسائل ولا يُرى في المتن -->
-    <div style="display:none; max-height:0; overflow:hidden; opacity:0;">
-      رابطُ تعيين كلمة مرورٍ جديدة — صالحٌ عشر دقائق، ولمرّةٍ واحدة.
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إعادة تعيين كلمة المرور — نادي أدِيب</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e6f0f9 100%);
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .email-wrapper {
+      max-width: 650px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(39, 64, 96, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .email-header {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e6f0f9 100%);
+      padding: 40px 30px;
+      text-align: center;
+      border-bottom: 1px solid rgba(61, 143, 214, 0.15);
+      position: relative;
+    }
+    .email-header::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, #3d8fd6, #274060);
+    }
+    .logo-container {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, #3d8fd6, #274060);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 30px rgba(61, 143, 214, 0.3);
+    }
+    .logo-icon {
+      font-size: 50px;
+      color: white;
+    }
+    .email-header h1 {
+      color: #274060;
+      font-size: 32px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+    .email-header p {
+      color: #64748b;
+      font-size: 16px;
+    }
+    .email-content {
+      padding: 40px 35px;
+      background: white;
+    }
+    .greeting {
+      color: #274060;
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .email-content p {
+      color: #475569;
+      line-height: 1.8;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    .info-card {
+      background: linear-gradient(135deg, rgba(61, 143, 214, 0.05), rgba(61, 143, 214, 0.02));
+      border: 1px solid rgba(61, 143, 214, 0.15);
+      border-right: 4px solid #3d8fd6;
+      padding: 25px;
+      margin: 25px 0;
+      border-radius: 12px;
+    }
+    .info-card-title {
+      color: #274060;
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .info-card p {
+      margin: 0;
+      color: #64748b;
+      font-size: 15px;
+    }
+    .cta-container {
+      text-align: center;
+      margin: 35px 0;
+    }
+    .cta-button {
+      display: inline-block;
+      background: linear-gradient(135deg, #3d8fd6, #274060);
+      color: white !important;
+      padding: 18px 45px;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 18px;
+      box-shadow: 0 8px 20px rgba(61, 143, 214, 0.25);
+      transition: all 0.3s ease;
+    }
+    .fallback-link {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+      padding: 15px 18px;
+      margin: 20px 0;
+      word-break: break-all;
+      text-align: center;
+    }
+    .fallback-link-label {
+      display: block;
+      color: #64748b;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .fallback-link a {
+      color: #3d8fd6;
+      font-size: 13px;
+      text-decoration: underline;
+    }
+    .warning-card {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.05));
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      border-right: 4px solid #f59e0b;
+      padding: 20px;
+      margin: 25px 0;
+      border-radius: 12px;
+    }
+    .warning-card-title {
+      color: #92400e;
+      font-size: 17px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .warning-card ul {
+      margin: 12px 0 0 0;
+      padding-right: 25px;
+      color: #92400e;
+    }
+    .warning-card li {
+      margin-bottom: 8px;
+      line-height: 1.6;
+    }
+    .closing-message {
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 2px solid #e2e8f0;
+      color: #475569;
+      font-size: 16px;
+    }
+    .signature {
+      margin-top: 25px;
+      color: #274060;
+      font-weight: 600;
+    }
+    .email-footer {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e6f0f9 100%);
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid rgba(61, 143, 214, 0.15);
+    }
+    .email-footer p {
+      color: #64748b;
+      font-size: 14px;
+      margin: 8px 0;
+    }
+    .email-footer .copyright {
+      color: #274060;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .email-footer .disclaimer {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 15px;
+    }
+    @media only screen and (max-width: 600px) {
+      .email-wrapper { margin: 10px; border-radius: 16px; }
+      .email-header, .email-content, .email-footer { padding: 25px 20px; }
+      .email-header h1 { font-size: 26px; }
+      .cta-button { padding: 15px 35px; font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="email-header">
+      <div class="logo-container">
+        <div class="logo-icon">🔐</div>
+      </div>
+      <h1>إعادة تعيين كلمة المرور</h1>
+      <p>طلب تحديث كلمة المرور لحسابك</p>
     </div>
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-           style="background-color:#f5f7fa; padding:32px 16px;">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
-                 style="width:100%; max-width:600px; border-collapse:separate;">
+    <div class="email-content">
+      <div class="greeting">{{ if .Data.full_name }}أدِيبنا/أدِيبتنا {{ .Data.full_name }}،{{ else }}مرحبًا بك،{{ end }}</div>
 
-            <!-- الرأس: لوحٌ كحليّ يحمل الشعار — الهويّة قبل الكلمة -->
-            <tr>
-              <td align="center" style="background-color:#274060; border-radius:16px 16px 0 0; padding:28px 24px;">
-                <img src="https://adeeb.club/brand/logo-horizontal-white.png"
-                     alt="نادي أديب" width="170"
-                     style="display:block; width:170px; max-width:60%; height:auto; border:0;" />
-              </td>
-            </tr>
+      <p>تلقَّينا طلبًا لإعادة تعيين كلمة المرور لحسابك في <strong>نادي أدِيب</strong>. 🔑</p>
 
-            <!-- المتن -->
-            <tr>
-              <td style="background-color:#ffffff; border:1px solid #dfe3ea; border-top:0;
-                         border-radius:0 0 16px 16px; padding:32px 28px;
-                         font-family:'Segoe UI', Tahoma, Arial, sans-serif; color:#182031;">
+      <p>لإنشاء كلمة مرور جديدة، اضغط على الزر أدناه. ستنتقل إلى صفحة آمنة لإدخال كلمة المرور الجديدة.</p>
 
-                <h1 style="margin:0 0 14px; font-size:22px; line-height:1.5; font-weight:700; color:#274060;">
-                  تعيين كلمة مرور جديدة
-                </h1>
+      <div class="info-card">
+        <div class="info-card-title">
+          <span>🛡️</span>
+          <span>الخطوة التالية</span>
+        </div>
+        <p>اضغط الزر أدناه لفتح صفحة إعادة التعيين، ثم أدخل كلمة مرور جديدة (8 أحرف كحد أدنى) وأكّدها. بعد ذلك يمكنك تسجيل الدخول مباشرةً.</p>
+      </div>
 
-                <p style="margin:0 0 22px; font-size:15px; line-height:1.9; color:#5c6678;">
-                  وصلَنا طلبٌ لاستعادة كلمة مرور حسابك في لوحة نادي أديب.
-                  اضغط الزرّ أدناه لتعيين كلمةٍ جديدة.
-                </p>
+      <div class="cta-container">
+        <a href="{{ .ConfirmationURL }}" class="cta-button">
+          ✨ إعادة تعيين كلمة المرور
+        </a>
+      </div>
 
-                <!-- الزرّ: جدولٌ لا وسمُ رابطٍ وحده — أوتلوك لا يحترم الحشو على <a> -->
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 22px;">
-                  <tr>
-                    <td align="center" bgcolor="#274060" style="border-radius:12px;">
-                      <a href="{{ .ConfirmationURL }}"
-                         style="display:inline-block; padding:14px 34px; font-family:'Segoe UI', Tahoma, Arial, sans-serif;
-                                font-size:16px; font-weight:700; color:#ffffff; text-decoration:none; border-radius:12px;">
-                        تعيين كلمة المرور
-                      </a>
-                    </td>
-                  </tr>
-                </table>
+      <div class="fallback-link">
+        <span class="fallback-link-label">إذا لم يعمل الزر، انسخ الرابط التالي والصقه في المتصفح:</span>
+        <a href="{{ .ConfirmationURL }}">{{ .ConfirmationURL }}</a>
+      </div>
 
-                <p style="margin:0 0 22px; font-size:13px; line-height:1.9; color:#5c6678;">
-                  الرابطُ صالحٌ <strong style="color:#182031;">عشر دقائق</strong> ويعمل
-                  <strong style="color:#182031;">مرّةً واحدة</strong>. فإن انتهت المهلة فاطلب رابطًا جديدًا
-                  من صفحة الدخول.
-                </p>
+      <div class="warning-card">
+        <div class="warning-card-title">
+          <span>⚠️</span>
+          <span>معلومات مهمة</span>
+        </div>
+        <ul>
+          <li>الرابط صالح لفترة محدودة لأسباب أمنية</li>
+          <li>لا تُشارك هذا الرابط مع أحد</li>
+          <li>إن لم تطلب إعادة التعيين، يمكنك تجاهل هذه الرسالة بأمان — لن يتغيّر شيء في حسابك</li>
+          <li>في حال انتهاء صلاحية الرابط، يمكنك طلب رابط جديد من صفحة تسجيل الدخول</li>
+        </ul>
+      </div>
 
-                <!-- المخرجُ حين يُبتَر الزرّ: الرابط نصًّا، لاتينيًّا من اليسار -->
-                <p style="margin:0 0 8px; font-size:13px; line-height:1.9; color:#5c6678;">
-                  لم يعمل الزرّ؟ انسخ هذا الرابط والصقه في متصفّحك:
-                </p>
-                <p dir="ltr" style="margin:0 0 24px; padding:12px 14px; background-color:#eef1f6; border-radius:10px;
-                                    font-family:Consolas, 'Courier New', monospace; font-size:12px; line-height:1.7;
-                                    color:#294c6c; word-break:break-all; text-align:left;">
-                  {{ .ConfirmationURL }}
-                </p>
+      <div class="closing-message">
+        <p>نحرص في نادي أدِيب على أمان حسابك وخصوصية بياناتك. أي محاولات غير مصرَّح بها للوصول إلى حسابك تُرصد وتُتخذ بشأنها الإجراءات اللازمة.</p>
 
-                <!-- التطمين: من لم يطلب شيئًا لا يفعل شيئًا -->
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-                       style="border-top:1px solid #e6e9ef; padding-top:18px;">
-                  <tr>
-                    <td style="padding-top:18px; font-size:13px; line-height:1.9; color:#5c6678;">
-                      لم تطلب هذا؟ تجاهل الرسالة — كلمةُ مرورك لن تتغيّر ما لم تفتح الرابط بنفسك.
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
+        <div class="signature">
+          مع تحيات،<br>
+          <strong>لجنة البرمجة</strong>
+        </div>
+      </div>
+    </div>
 
-            <!-- التذييل -->
-            <tr>
-              <td align="center" style="padding:20px 16px; font-family:'Segoe UI', Tahoma, Arial, sans-serif;
-                                        font-size:12px; line-height:1.9; color:#8b95a6;">
-                نادي أديب — جامعة الملك فيصل<br />
-                <a href="https://adeeb.club" style="color:#335c81; text-decoration:none;">adeeb.club</a>
-                &nbsp;·&nbsp; رسالةٌ آليّة لا تُردّ.
-              </td>
-            </tr>
-
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
+    <div class="email-footer">
+      <p class="copyright">جميع الحقوق محفوظة لنادي أدِيب</p>
+      <p>نادي إبداعي ثقافي يهدف إلى نشر الثقافة والإبداع</p>
+      <p class="disclaimer">إذا لم تقم بالتقديم لنادي أدِيب، يرجى تجاهل هذا الإيميل.</p>
+    </div>
+  </div>
+</body>
 </html>
