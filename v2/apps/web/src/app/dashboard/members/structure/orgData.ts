@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
+import { getCurrentAdmin } from "@/lib/auth";
 import type { RawCouncil, RawDept, RawCommittee, RawRole, RawUserRole, RawProfile, RawSupervision } from "./model";
 
 export type OrgData = {
@@ -10,7 +11,7 @@ export type OrgData = {
   userRoles: RawUserRole[];
   profiles: RawProfile[];
   supervision: RawSupervision[];
-  members: { id: string; name: string; avatar: string | null; gender: "male" | "female" | null }[]; // لمنتقي الإسناد (بأفتار) — النشطون بلا منصب
+  members: { id: string; name: string; avatar: string | null; gender: "male" | "female" | null; held: string | null; heldRole: string | null }[]; // لمنتقي الإسناد (بأفتار وموضعٍ حاليّ)
   error: string | null;
 };
 
@@ -24,33 +25,62 @@ export async function getOrgData(): Promise<OrgData> {
   }
   const sb = createAdeebServiceClient(url, key);
 
-  const [c, d, com, r, ur, p, sup] = await Promise.all([
+  // بِركةُ المنتقي تُسأل عنها القاعدة لا تُحسَب هنا: `assignable_members` تردّ من يجوز لهذا
+  // المُنفّذ أن يُسنِد إليه — بحَكَمها هي (`can_assign_role`). ولو نُسخ الحكم إلى هنا لصار
+  // للنظام حَكَمان يفترقان أوّلَ تغييرٍ في السلطات. والهويّة من `getCurrentAdmin` فتسري معاينة
+  // «انظر بعين» على البِركة كما تسري على سائر الشاشة.
+  const me = await getCurrentAdmin();
+
+  const [c, d, com, r, ur, p, sup, pool] = await Promise.all([
     sb.from("councils").select("id, name_ar, head_role_name, description, group_link"),
     sb.from("departments").select("id, name_ar, display_order, description, group_link").eq("is_active", true),
     sb.from("committees").select("id, committee_name_ar, department_id, council_id, leader_role_name, member_role_name, description, group_link").eq("is_active", true),
-    sb.from("roles").select("id, role_name, role_name_ar, council_type, is_elected, membership_kind, vote_weight, holder_uniqueness, home_committee_id"),
+    sb.from("roles").select("id, role_name, role_name_ar, council_type, is_elected, membership_kind, vote_weight, holder_uniqueness, home_committee_id, prerequisite_role_name"),
     sb.from("user_roles").select("user_id, role_name, committee_id, department_id").eq("is_active", true),
     sb.from("profiles").select("id, full_name, avatar_url, gender, account_status"),
     // الإشراف جدولُه — لا صفوفُ المناصب. عضو الإدارة مُسنَدٌ إلى إدارته، وإشرافُه على
     // لجان التنفيذيّ علاقةٌ أخرى (20260731).
     sb.from("committee_supervision").select("committee_id, unit_id, supervisor_id"),
+    me ? sb.rpc("assignable_members", { p_actor: me.id }) : Promise.resolve({ data: [] as string[], error: null }),
   ]);
 
-  const error = c.error || d.error || com.error || r.error || ur.error || p.error || sup.error;
+  const error = c.error || d.error || com.error || r.error || ur.error || p.error || sup.error || pool.error;
   if (error) return { ...empty, error: error.message };
 
-  // بِركةُ الإسناد **النشطون وحدهم** — القاعدة تردّ ما سواهم (تريغر `enforce_assignment_status`:
-  // المعلَّق يُضمّ إلى لجنةٍ عضوًا ولا يُسنَد منصبًا، والموقوف لا شيء). وكانت تعرض ١٨١ اسمًا
-  // فيها ٢٠ قيد الإكمال و٢٨ موقوفًا — فيَعِد المنتقي بما تردّه القاعدة، وذاك أسوأ من ألّا يعرض.
+  // بِركةُ الإسناد = ما ردّته `assignable_members` للمُنفّذ: النشطون ممّن لا تحجبهم عنه
+  // `position_authority.blocked_roles`. فلا يظهر لقائد الإدارة رئيسُ النادي ولا رئيسُ
+  // المجلس التنفيذيّ — **والظهور نفسه خطأ**، لا يكفي أن تردّه القاعدة بعد الاختيار.
   //
-  // ولا تُطرح منها شاغلو المناصب: عضويّة اللجنة نفسها منصب (١٣٢ من ١٥٣ صفًّا نشطًا)، فطرحُهم
-  // يُبقي اسمين من ١٣٣ ويُخفي كلّ من يُرقَّى. النقل يُقال في المنتقي لا يُحذف منه.
+  // وهي تحمل بابَي الردّ معًا: الحالة (تريغر `enforce_assignment_status` — المعلَّق يُضمّ
+  // إلى لجنةٍ عضوًا ولا يُسنَد منصبًا، والموقوف لا شيء)، والسلطة (جدول `position_authority`).
+  //
+  // ولا يُطرَح شاغلو المناصب لمجرّد شغلهم: عضويّة اللجنة نفسها منصب، ومنها يُرقَّى القادة —
+  // فالسحبُ تابعٌ للإجلاس، ومن بلغ المقعدَ الجديد أخذ شاغلَه من حيث كان.
+  //
+  // أمّا **شرطُ المقعد** (العضو الإداريّ ← عضو لجنة) فيضيّق البِركة لمقعدٍ بعينه، وتطبّقه
+  // كلُّ شاشةٍ على مقعدها من `Position.prerequisite` — بيانٌ تقرؤه، لا حُكمٌ تستنسخه.
   //
   // ومن أراد **ضمّ** معلَّقٍ إلى لجنته فبِركتُه أوسع من هذه بحكم القاعدة — تُبنى في شاشتها
   // من `profiles` مباشرةً بحالتها، لا تُوسَّع هذه فتصير بِركةً واحدةً لقاعدتين.
+  const allowed = new Set((pool.data ?? []) as string[]);
+  //
+  // ويحمل كلٌّ منهم **موضعه الحاليّ**: اسمًا للعرض (`held`) واسمَ دورٍ للشرط (`heldRole`).
+  // يُبنى ممّا جُلب أصلًا (لا استعلامَ زائد)، وصفٌّ واحدٌ لكلّ عضوٍ بحكم ثابت «منصبٌ واحد».
+  const roleAr = new Map((r.data ?? []).map((x) => [x.role_name, x.role_name_ar || x.role_name]));
+  const comAr = new Map((com.data ?? []).map((x) => [x.id, x.committee_name_ar]));
+  const deptAr = new Map((d.data ?? []).map((x) => [x.id, x.name_ar]));
+  const held = new Map<string, string>();
+  const heldRole = new Map<string, string>();
+  for (const row of ur.data ?? []) {
+    if (held.has(row.user_id)) continue;
+    const scope = row.committee_id != null ? comAr.get(row.committee_id) : row.department_id != null ? deptAr.get(row.department_id) : null;
+    held.set(row.user_id, scope ? `${roleAr.get(row.role_name)} — ${scope}` : (roleAr.get(row.role_name) as string));
+    heldRole.set(row.user_id, row.role_name);
+  }
+
   const members = (p.data ?? [])
-    .filter((x) => x.full_name && x.account_status === "active")
-    .map((x) => ({ id: x.id, name: x.full_name as string, avatar: x.avatar_url ?? null, gender: x.gender === "male" || x.gender === "female" ? x.gender : null }))
+    .filter((x) => x.full_name && allowed.has(x.id))
+    .map((x) => ({ id: x.id, name: x.full_name as string, avatar: x.avatar_url ?? null, gender: x.gender === "male" || x.gender === "female" ? x.gender : null, held: held.get(x.id) ?? null, heldRole: heldRole.get(x.id) ?? null }))
     .sort((a, b) => a.name.localeCompare(b.name, "ar"));
 
   return {

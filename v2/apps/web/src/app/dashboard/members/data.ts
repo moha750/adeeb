@@ -49,6 +49,15 @@ export type MemberRow = {
    */
   canEnd: boolean;
   canEdit: boolean;
+  /**
+   * وجوابٌ ثالثٌ من القاعدة: هل يبلغ القارئُ **إنذارَ** هذا العضو (`can_issue_warning`)؟
+   * قدرةُ الفعل ومدى السلطة معًا — فبند «إصدار إنذار» يغيب حيث يمنع الباب.
+   */
+  canWarn: boolean;
+  /** عدد إنذاراته السارية — يُقال في نافذة الإصدار («عليه اثنان من ثلاثة»). */
+  warnCount: number;
+  /** لجنتُه بمعرّفها — لقطةٌ تُكتب في الإنذار (اسمُها وحده لا يكفي للكتابة). */
+  committeeId: number | null;
 };
 
 // مدّة نسبيّة عربيّة — date-fns بلغة ar (مصانة)، مع تلميع للإيجاز والنحو:
@@ -64,20 +73,24 @@ const agoPhrase = (iso: string | null): string => {
     .replace(/يومان/g, "يومين")
     .trim();
 };
-/** جلب الأعضاء من قاعدة البيانات الحيّة (خادميّ، عبر مفتاح الخدمة). */
-export async function getMembers(): Promise<{ members: MemberRow[]; error: string | null }> {
+/**
+ * جلب الأعضاء من قاعدة البيانات الحيّة (خادميّ، عبر مفتاح الخدمة).
+ * ويعود معهم **حدُّ الإنذارات** لأنّ بند «إصدار إنذار» يسكن قائمة العضو — والحدُّ من القاعدة
+ * (`warning_limit`) لا رقمٌ محفورٌ في شاشة.
+ */
+export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit: number; error: string | null }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   // تنقية المفتاح من أيّ محرف دخيل من اللصق (مسافات/اقتباس/محارف خفيّة) — JWT لا يحوي إلا هذه المحارف
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
   if (!url || !key) {
-    return { members: [], error: "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local ثمّ أعِد تشغيل الخادم." };
+    return { members: [], warningLimit: 3, error: "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local ثمّ أعِد تشغيل الخادم." };
   }
   const sb = createAdeebServiceClient(url, key);
 
   // هويّة القارئ — لتُسأل القاعدةُ عمّن تبلغه سلطتُه. بلا هويّة لا مدّ (آمنٌ افتراضًا).
   const me = await getCurrentAdmin();
 
-  const [pRes, urRes, rRes, dRes, cRes, mdRes, reachRes] = await Promise.all([
+  const [pRes, urRes, rRes, dRes, cRes, mdRes, reachRes, warnRes, limitRes] = await Promise.all([
     sb.from("profiles").select("id, full_name, email, phone, avatar_url, gender, account_status, joined_date, termination_reason, terminated_at").order("joined_date", { ascending: false }),
     sb.from("user_roles").select("user_id, role_name, department_id, committee_id, assigned_at").eq("is_active", true),
     sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
@@ -85,13 +98,20 @@ export async function getMembers(): Promise<{ members: MemberRow[]; error: strin
     sb.from("committees").select("id, department_id, committee_name_ar"),
     sb.from("member_details").select("user_id, academic_record_number, academic_degree, college, major, twitter_account, instagram_account, tiktok_account, linkedin_account"),
     me ? sb.rpc("members_in_my_reach", { p_actor: me.id }) : Promise.resolve({ data: null, error: null }),
+    // ومن يبلغهم إنذارُه — مرآةٌ ثانية للسؤال نفسه بفعلٍ آخر (`can_issue_warning`)
+    me ? sb.rpc("members_i_may_warn", { p_actor: me.id }) : Promise.resolve({ data: null, error: null }),
+    sb.rpc("warning_limit"),
   ]);
 
-  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || mdRes.error || reachRes.error;
-  if (firstErr) return { members: [], error: firstErr.message };
+  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || mdRes.error || reachRes.error || warnRes.error;
+  if (firstErr) return { members: [], warningLimit: 3, error: firstErr.message };
 
   const reach = new Map(
     ((reachRes.data ?? []) as Array<{ user_id: string; may_end: boolean; may_edit: boolean }>)
+      .map((r) => [r.user_id, r] as const),
+  );
+  const warnable = new Map(
+    ((warnRes.data ?? []) as Array<{ user_id: string; active_count: number }>)
       .map((r) => [r.user_id, r] as const),
   );
 
@@ -154,8 +174,11 @@ export async function getMembers(): Promise<{ members: MemberRow[]; error: strin
       endAgo: agoPhrase(p.terminated_at ?? null),
       canEnd: reach.get(p.id)?.may_end ?? false,
       canEdit: reach.get(p.id)?.may_edit ?? false,
+      canWarn: warnable.has(p.id),
+      warnCount: warnable.get(p.id)?.active_count ?? 0,
+      committeeId: br?.committee_id ?? null,
     };
   });
 
-  return { members, error: null };
+  return { members, warningLimit: typeof limitRes.data === "number" ? limitRes.data : 3, error: null };
 }

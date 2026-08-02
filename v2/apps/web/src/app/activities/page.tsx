@@ -14,7 +14,7 @@ export default async function ActivitiesPage() {
 
   return (
     <>
-      <Header />
+      <Header activeHref="/activities" />
       <main>
         <section className="py-16 md:py-24">
           <Container>

@@ -2,6 +2,7 @@ import { Alert } from "@adeeb/design-system";
 import { getCurrentAdmin } from "@/lib/auth";
 import { getMyScope } from "@/lib/myScope";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { getMembers } from "../members/data";
 import { getOrgData } from "../members/structure/orgData";
 import { committeeNodes } from "../members/structure/model";
 import { DepartmentView } from "./DepartmentView";
@@ -41,12 +42,13 @@ export default async function MyDepartmentPage() {
     );
   }
 
-  const org = await getOrgData();
-  if (org.error) {
+  const [org, { members, error }] = await Promise.all([getOrgData(), getMembers()]);
+  const failed = org.error ?? error;
+  if (failed) {
     return (
       <>
         <Head name={scope.department.name} />
-        <Alert tone="warning" title="تعذّر جلب الهيكلة">{org.error}</Alert>
+        <Alert tone="warning" title="تعذّر جلب البيانات">{failed}</Alert>
       </>
     );
   }
@@ -59,5 +61,18 @@ export default async function MyDepartmentPage() {
 
   const link = org.departments.find((d) => d.id === scope.department?.id)?.group_link ?? null;
 
-  return <DepartmentView name={scope.department.name} committees={committees} link={link} />;
+  // أهلُ القسم بأعينهم — من عُقَد لجانه لا بحكمٍ يُعاد حسابه (والقيادةُ معهم: تُرى بياناتُهم
+  // ولا تُملَك سلطتُهم، والقاعدة تحجبها أصلًا).
+  const mine = new Set(
+    committees.flatMap((c) => [c.leader?.userId, c.deputy?.userId, ...c.members.map((m) => m.userId)].filter(Boolean) as string[]),
+  );
+
+  return (
+    <DepartmentView
+      name={scope.department.name}
+      committees={committees}
+      link={link}
+      members={members.filter((m) => mine.has(m.id))}
+    />
+  );
 }

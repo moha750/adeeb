@@ -14,7 +14,7 @@ export default async function NewsPage() {
 
   return (
     <>
-      <Header />
+      <Header activeHref="/news" />
       <main>
         <section className="py-16 md:py-24">
           <Container>

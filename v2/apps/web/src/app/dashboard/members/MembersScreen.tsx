@@ -10,7 +10,7 @@ import { MembersView } from "./MembersView";
  * **الإشراف** (`committee_supervision`) لا على السلطة، فترشيحُها ليس ترشيحَ حالةٍ يُحشر في هذه.
  */
 export async function MembersScreen({ lockedStatus }: { lockedStatus?: MemberStatus }) {
-  const [{ members, error }, me] = await Promise.all([getMembers(), getCurrentAdmin()]);
+  const [{ members, warningLimit, error }, me] = await Promise.all([getMembers(), getCurrentAdmin()]);
 
   if (error) {
     return (
@@ -35,6 +35,7 @@ export async function MembersScreen({ lockedStatus }: { lockedStatus?: MemberSta
       // بنودُ القائمة تتبع مفاتيح صاحبها: من لا يملك `manage_member_data` لا يُعرَض له
       // «تعديل البيانات» — فالقاعدة تردّه، والوعدُ المردود لا يُعرَض.
       mayManageData={caps.includes("manage_member_data")}
+      warningLimit={warningLimit}
     />
   );
 }

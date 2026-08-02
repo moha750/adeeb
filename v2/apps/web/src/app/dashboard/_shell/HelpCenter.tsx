@@ -69,7 +69,7 @@ export function HelpCenter() {
         open={open}
         onClose={() => setOpen(false)}
         title="مركز المساعدة"
-        description="أدلّة سريعة وأسئلة شائعة حول استخدام لوحة أديب."
+        description="أدلّة سريعة وأسئلة شائعة حول استخدام بوّابة أديب."
         size="md"
         footer={<Button variant="ghost" onClick={() => setOpen(false)}>إغلاق</Button>}
       >

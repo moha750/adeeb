@@ -36,7 +36,7 @@ const Ic = {
 };
 
 /* ── بيانات عيّنة للجدول والكرت ── */
-const noDetails = { joinedRaw: "", college: null, major: null, degree: null, degreeRaw: null, recordNo: null, twitter: null, instagram: null, tiktok: null, linkedin: null, endReason: null, endDate: "", endAgo: "", canEnd: true, canEdit: true };
+const noDetails = { joinedRaw: "", college: null, major: null, degree: null, degreeRaw: null, recordNo: null, twitter: null, instagram: null, tiktok: null, linkedin: null, endReason: null, endDate: "", endAgo: "", canEnd: true, canEdit: true, canWarn: true, warnCount: 0, committeeId: null };
 const sampleMembers: MemberRow[] = [
   { id: "s1", name: "سارة الفيصل", email: "sara.f@adeeb.club", phone: "0551234567", avatar: null, gender: "female", dept: "الإعلام", committee: "لجنة التصميم", role: "عضو", status: "active", joined: "12 يناير 2026", ...noDetails },
   { id: "s2", name: "عبدالله القحطاني", email: "a.qahtani@adeeb.club", phone: "0509876543", avatar: null, gender: "male", dept: "التقنية", committee: "لجنة التطوير", role: "قائد فريق", status: "active", joined: "3 مارس 2026", ...noDetails },

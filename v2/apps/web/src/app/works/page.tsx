@@ -24,7 +24,7 @@ export default async function WorksPage() {
 
   return (
     <>
-      <Header />
+      <Header activeHref="/works" />
       <main className="amb-host">
         <Ambient />
         <section className="py-16 md:py-24">

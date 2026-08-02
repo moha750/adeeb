@@ -84,7 +84,7 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
         </button>
         <div className="ash-brand">
           <span className="ash-logo">أ</span>
-          <b>لوحة أديب</b>
+          <b>بوّابة أديب</b>
         </div>
 
         <Button variant="primary" className="ash-cta"><IconPlus /><span>إجراء سريع</span></Button>

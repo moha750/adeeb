@@ -3,7 +3,7 @@ import { AuthShell } from "@adeeb/design-system";
 import { ResetForm } from "./ResetForm";
 
 export const metadata: Metadata = {
-  title: "تعيين كلمة مرور جديدة — لوحة أديب",
+  title: "تعيين كلمة مرور جديدة — بوّابة أديب",
 };
 
 export default function ResetPasswordPage() {
@@ -11,8 +11,8 @@ export default function ResetPasswordPage() {
     <main>
       <AuthShell
         title="تعيين كلمة مرور جديدة"
-        subtitle="اختر كلمةً جديدة لحسابك، ثمّ ادخل بها إلى اللوحة."
-        slogan="لوحةُ نادي أديب — إدارةُ الأعضاء والفعاليّات والمحتوى في مكانٍ واحد."
+        subtitle="اختر كلمةً جديدة لحسابك، ثمّ ادخل بها إلى البوّابة."
+        slogan="اختر كلمةً تُشبهك، ويصعُب على غيرك"
       >
         <ResetForm />
       </AuthShell>

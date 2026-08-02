@@ -2,6 +2,7 @@ import { Alert } from "@adeeb/design-system";
 import { getCurrentAdmin } from "@/lib/auth";
 import { getMyScope } from "@/lib/myScope";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { getMembers } from "../members/data";
 import { getOrgData } from "../members/structure/orgData";
 import { committeeNodes } from "../members/structure/model";
 import { CommitteeView } from "./CommitteeView";
@@ -41,12 +42,13 @@ export default async function MyCommitteePage() {
     );
   }
 
-  const org = await getOrgData();
-  if (org.error) {
+  const [org, { members, error }] = await Promise.all([getOrgData(), getMembers()]);
+  const failed = org.error ?? error;
+  if (failed) {
     return (
       <>
         <Head name={scope.committee.name} />
-        <Alert tone="warning" title="تعذّر جلب الهيكلة">{org.error}</Alert>
+        <Alert tone="warning" title="تعذّر جلب البيانات">{failed}</Alert>
       </>
     );
   }
@@ -66,5 +68,10 @@ export default async function MyCommitteePage() {
   const dept = org.committees.find((c) => c.id === node.id)?.department_id ?? null;
   const deptName = dept != null ? org.departments.find((d) => d.id === dept)?.name_ar ?? null : null;
 
-  return <CommitteeView committee={node} dept={deptName} />;
+  // أهلُ اللجنة بأعينهم — من عقدتها نفسها لا بحكمٍ يُعاد حسابه (القيادةُ معهم: بياناتُهم
+  // تُرى كما تُرى بيانات العضو، والسلطة عليهم محجوبةٌ في القاعدة أصلًا). والمشرفان يبقيان
+  // خارج السجلّ: هما في إدارتهما لا في اللجنة.
+  const mine = new Set([node.leader?.userId, node.deputy?.userId, ...node.members.map((m) => m.userId)].filter(Boolean) as string[]);
+
+  return <CommitteeView committee={node} dept={deptName} members={members.filter((m) => mine.has(m.id))} />;
 }

@@ -1083,6 +1083,14 @@
 .asel-opt .asel-oic svg { width: 17px; height: 17px; }
 .asel-opt .asel-ck svg { width: 100%; height: 100%; }
 .asel-opt .asel-ck { width: 16px; height: 16px; color: var(--fld-accent, var(--navy-700)); flex: 0 0 auto; visibility: hidden; }
+/* تلميح الخيار (`hint`): واقعةٌ عن الخيار — سطرٌ باهتٌ تحت الاسم في اللوحة، وذيلٌ بعده في
+   الحقل المغلق (فيبقى مرئيًّا لحظةَ الإرسال). النصّ سطرٌ واحدٌ يُقصّ، فلا يطول الخيارُ بطول
+   وحدةٍ ولا يرتفع الحقل. والقصّ مشروطٌ بوجود التلميح (`:has`) — فلا يمسّ منسدلةً بلا تلميح. */
+.asel-opt .asel-txt { min-width: 0; }
+.asel-hint { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.asel-vhint { font-size: 12.5px; color: var(--color-text-muted); }
+.asel-vhint::before { content: "\00a0·\00a0"; }
+.asel-value:has(.asel-vhint) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .asel-opt.asel-sel { background: var(--fld-sel, #eef2f7); }
 .asel-opt.asel-sel .asel-txt { font-weight: 700; color: var(--fld-accent, var(--navy-700)); }
 .asel-opt.asel-sel .asel-oic { color: var(--fld-accent, var(--navy-700)); }
@@ -4073,9 +4081,10 @@ html:not(.js) .ldr-boot { display: none; }
    والزاويةُ من الأساس (ق٢) — عائمٌ عن الحافّة يقرب منها بالنزول. فهو سطحٌ من
    أسرة أسطح الموقع لا شريطٌ غريبٌ فوقها.
 
-   **وخلفيّتُه خطّيّةٌ متكيّفة:** عند القمّة **حدٌّ وحدَه على زجاجٍ رقيق** فالرأسُ
-   حاضرٌ بلا سطحٍ يزاحم البطلَ ويمرّ الشفقُ من تحته؛ فإذا نزل القارئُ اكتسب سطحَه
-   الزجاجيّ كاملًا فيُقرأ فوق أيّ محتوًى. الحالةُ تُقال **بالسطح** لا بحركةٍ تُلفت.
+   **وخلفيّتُه خطّيّةٌ متكيّفة بفرقٍ يسير:** عند القمّة **حدٌّ وحدَه على زجاجٍ رقيق**
+   فالرأسُ حاضرٌ بلا سطحٍ يزاحم البطلَ ويمرّ الشفقُ من تحته؛ وبالنزول يشتدّ الزجاجُ
+   قليلًا ويقرب من الحافّة — **قريبًا من حاله في القمّة** بقرار المالك. الحالةُ تُقال
+   **بالسطح** لا بحركةٍ تُلفت، والحدُّ والظلُّ ثابتان فالهيئةُ لا تتزحزح.
 
    **كلُّ متبدّلٍ رمزٌ لا نسخةٌ ثانية:** `--shdr-h` (ارتفاع الصفّ) · `--shdr-logo`
    (مقاس الشعار) · `--shdr-surface` و`--shdr-blur` (الخلفيّة) — تُضبط عند
@@ -4091,13 +4100,22 @@ html:not(.js) .ldr-boot { display: none; }
   --shdr-surface: color-mix(in oklab, var(--color-surface) 30%, transparent);
   --shdr-blur: 6px;
 }
-/* السطحُ الكامل يشتعل بالنزول **أو** بفتح قائمة الجوّال — شرطان لحالةٍ واحدة لا نسختان:
-   زجاجُ الـ30% يكفي فوق فراغ الرأس، ولا يكفي والقائمةُ مفتوحةٌ فوق متن الصفحة. */
-.shdr[data-stuck="true"], .shdr[data-open="true"] {
+/* بالنزول يشتدّ السطحُ **قليلًا** ويقرب من الحافّة — 45%/10px بقرار المالك ٢٠٢٦-٠٨-٠١:
+   «بعد التحريك يكون قريبًا من أعلى الصفحة». (كان 86%/16px، فالفرقُ نزل من ≈٢٫٩× إلى ≈١٫٥×.)
+   الرأسُ يبقى زجاجًا يمرّ منه ما تحته في الحالين، والنزولُ يزيده كثافةً لا يقلبه سطحًا. */
+.shdr[data-stuck="true"] {
+  --shdr-surface: color-mix(in oklab, var(--color-surface) 45%, transparent);
+  --shdr-blur: 10px;
+  padding-block: 8px;
+}
+/* **وقائمةُ الجوّال شأنٌ آخر لا تتبع هذا الاختيار:** اللوحُ يقع فوق متن الصفحة دائمًا
+   لا فوق فراغ الرأس، فيلزمه سطحٌ ممتلئٌ تُقرأ عليه الروابط مهما رقّ زجاجُ الشريط.
+   ومحدِّدُه **متأخّرٌ** عن `[data-stuck]` وخصوصيّتُهما واحدة — فيغلبه بالترتيب حين
+   يجتمعان (منزولٌ والقائمةُ مفتوحة). لا تُقدّمه عليه. */
+.shdr[data-open="true"] {
   --shdr-surface: color-mix(in oklab, var(--color-surface) 86%, transparent);
   --shdr-blur: 16px;
 }
-.shdr[data-stuck="true"] { padding-block: 8px; }
 /* الكبسولةُ ولوحُ الجوّال سطحٌ واحدٌ بجوابٍ واحد — واللوحُ كبسولةٌ ثانية لا امتدادَ شريط */
 .shdr-bar, .shdr-sheet-in {
   border-radius: var(--radius);
@@ -4108,31 +4126,118 @@ html:not(.js) .ldr-boot { display: none; }
   transition: background-color var(--dur) var(--ease-standard), backdrop-filter var(--dur) var(--ease-standard);
 }
 .shdr-bar {
+  position: relative;
   display: flex; align-items: center; justify-content: space-between; gap: 18px;
   height: var(--shdr-h); padding-inline: 10px;
   transition: height var(--dur) var(--ease-standard);
 }
+/* **طبقةُ القياس** — نسخةُ الروابط كاملةً، تُقاس ولا تُرى: `visibility` لا `display`
+   (المخفيُّ بـ`display` بلا مقاس)، ومطلقةٌ فلا تُزاحم الصفَّ، ولا تُنقر ولا تُقرأ.
+   ولأنّها **لا تُخفي شيئًا** فقياسُها ثابتٌ لا يتأثّر بما أخفاه الرأس — وهذا ما يمنع
+   حلقةَ «يُخفي فيتّسع فيُظهر فيضيق». */
+.shdr-measure {
+  position: absolute; top: 0; inset-inline-start: 0;
+  display: flex; align-items: center; gap: 2px;
+  visibility: hidden; pointer-events: none; white-space: nowrap;
+}
 .shdr-mark { display: inline-flex; align-items: center; flex: none; }
 .shdr-mark img { display: block; width: auto; height: var(--shdr-logo); transition: height var(--dur) var(--ease-standard); }
 
-.shdr-nav { display: flex; align-items: center; gap: 2px; }
+/* الرابطُ نفسُه — الهيكلُ المشترك: المقاسُ والحبرُ وحدهما، وكلُّ زينةٍ في توجّهها.
+   والنصُّ يشتدّ إلى `--color-primary` عند اللمس وفي الصفحة الحاليّة في التوجّهات كلِّها
+   (**الحالةُ لا تُقال باللون وحده** — لكلّ توجّهٍ علامتُه فوق اللون). */
+.shdr-nav { position: relative; display: flex; align-items: center; gap: 2px; }
 .shdr-link {
   position: relative;
   display: inline-flex; align-items: center;
   height: 38px; padding-inline: 12px;
   font-weight: 600; color: var(--color-text-muted);
-  transition: color var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
+  /* سطرٌ واحدٌ دائمًا: الرابطُ ارتفاعُه ثابت (38px)، فتسميةٌ من كلمتين تلتفّ سطرين
+     وتفيض على الكبسولة. والضيقُ يُعالَج بانسحاب الرابط إلى «المزيد» لا بكسر سطره. */
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard),
+              transform var(--dur-fast) var(--ease-standard);
 }
-.shdr-link:hover { color: var(--color-primary); background: color-mix(in oklab, var(--steel-500) 9%, transparent); }
-/* مؤشّرُ الصفحة الحاليّة: شعرةٌ من تدرّج العلامة — الحالةُ تُقال بعلامةٍ لا باللون وحده */
-.shdr-link[aria-current="page"] { color: var(--color-primary); }
-.shdr-link[aria-current="page"]::after {
-  content: ""; position: absolute; inset-inline: 12px; bottom: 3px; height: 2px;
+/* زرُّ «المزيد» رابطٌ في كلّ شيء إلّا أنّه زرّ — فيُنزع طابعُ الزرّ ويُزاد سهمُه */
+.shdr-more { gap: 4px; border: 0; background: none; font: inherit; cursor: pointer; }
+.shdr-more svg { opacity: .7; transition: transform var(--dur-fast) var(--ease-standard); }
+.shdr-more[aria-expanded="true"] svg { transform: rotate(180deg); }
+.shdr-menu { min-width: 170px; padding: 6px; }
+.shdr-link:hover, .shdr-link[aria-current="page"] { color: var(--color-primary); }
+
+/* **الضغطُ والتركيز — لغةٌ واحدةٌ فوق التوجّهات الأربعة**، لأنّهما حالتا تفاعلٍ لا
+   جلدَ زينة: أيًّا كان توجّهُ اللمس فالضغطُ واحدٌ والتركيزُ واحد.
+   كان الرابطُ **لا يقول شيئًا عند الضغط** (فيبدو ميّتًا حتى تنتقل الصفحةُ فعلًا،
+   ولا شيءَ يُرى في معاينةٍ لا تُبحر) ولا عند التنقّل بلوحة المفاتيح.
+   - الضغطُ: انكماشةٌ خاطفة (‏0.96) تقول «وصلَت يدُك» — إشارةٌ حسّيّة لا لونيّة، فلا
+     تُزاحم علامةَ النشط ولا تُلبس المُلمَسَ ثوبَ الصفحة الحاليّة.
+   - التركيزُ: حلقةُ الهوية `--ring` (ق٥-ب) بدل خطّ المتصفّح — والزاويةُ موروثةٌ من
+     نظام الزوايا فلا تُكتب هنا. */
+.shdr-link:active, .shdr-login:active, .shdr-burger:active { transform: scale(.96); }
+.shdr-link:focus-visible, .shdr-login:focus-visible, .shdr-burger:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+@media (prefers-reduced-motion: reduce) {
+  .shdr-link:active, .shdr-login:active, .shdr-burger:active { transform: none; }
+}
+
+/* ── **زينةُ الرابط — «تظليلُ القارئ»** (اعتمده المالك ٢٠٢٦-٠٨-٠٢).
+
+      عُرِضت ثمانيةُ توجّهات: أربعةٌ من صندوق الواجهات (تينت · حبّة · خطٌّ زاحف ·
+      مؤشّرٌ منزلق) وأربعةٌ من لغة الكتابة (قلمٌ يخطّ · علامتا اقتباس · تظليلُ قارئ ·
+      نقطةُ الحرف) — فاعتُمد التظليل وأُعدمت السبعة، ومعها خاصّيةُ الجلد كلُّها:
+      الرابطُ اليوم زينةٌ واحدةٌ لا خيارَ فيها (كما صارت الجزيرةُ للرأس).
+
+      **أثرُ قلمٍ مُظلِّل يمرّ على الكلمة من اليمين** كما يُقرأ العربيّ: مائلٌ 8° وأقصرُ
+      من السطر ويغطّي 42% من ارتفاع النصّ — يدُ قارئٍ لا مستطيلَ واجهة. واللمسُ
+      والنشطُ **علامةٌ واحدةٌ بشدّتين** لا لغتان: يمرّ القلمُ عند اللمس، ويبقى أثرُه
+      في الصفحة الحاليّة.
+
+      **واللونُ من الهوية وحدها** (`--steel-400`): سبق أن جُرّب بـ`--warning-300` فرُدّ —
+      دلالةُ ذلك النطاق «تحذير»، و`tokens.css` ينصّ أنّ «استعارةَ لونٍ من نطاقٍ آخر
+      تُفسد النطاقين». الصبغةُ تُعلَن مرّةً في `--hl` والشدّةُ في القواعد، فتبديلُ
+      الدرجة سطرٌ واحد. */
+.shdr-link { --hl: var(--steel-400); isolation: isolate; }
+.shdr-link::before {
+  content: ""; position: absolute; z-index: -1;
+  inset-inline: 8px; bottom: 7px; height: 42%;
+  border-radius: var(--radius-xs);
+  background: color-mix(in oklab, var(--hl) 28%, transparent);
+  transform: scaleX(0) skewX(-8deg); transform-origin: right;
+  transition: transform var(--dur) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
+}
+/* `isolation` ثمّ `z-index: -1`: الأثرُ تحت النصّ لا فوقه. والعزلُ ضروريّ — بدونه
+   يهبط الطبقُ السالبُ إلى أقرب سياقِ تكديسٍ فيختفي خلف سطح الكبسولة. */
+.shdr-link:hover::before, .shdr-link[aria-current="page"]::before { transform: scaleX(1) skewX(-8deg); }
+/* الشدّاتُ الثلاث هادئةٌ بقرار المالك ٢٠٢٦-٠٨-٠٢ (كانت 45%/75%): التظليلُ يُرى
+   ولا يُنادي، والفرقُ بين اللمس والنشط يبقى محسوسًا. */
+.shdr-link[aria-current="page"]::before { background: color-mix(in oklab, var(--hl) 46%, transparent); }
+.shdr-link:active::before { transform: scaleX(1) skewX(-8deg); background: color-mix(in oklab, var(--hl) 58%, transparent); }
+
+/* ── **لوحُ الجوّال لغةٌ أخرى**: عمودٌ لا صفّ، وأهدافُه كبيرة، فالتظليلُ المائلُ
+      القصير يُقرأ فيه غريبًا. فيُطفأ، ويُقال النشطُ بشعرةٍ رأسيّة في طرف الرابط
+      واللمسُ بتينت. ومسبوقةٌ بـ`.shdr` لترفع خصوصيّتَها فوق قواعد الزينة
+      (‏0,3,0 و0,4,0) — فتغلب بالقوّة لا بالترتيب وحده. */
+.shdr .shdr-sheet .shdr-link::before { content: none; }
+.shdr .shdr-sheet .shdr-link:hover { background: color-mix(in oklab, var(--steel-500) 9%, transparent); }
+.shdr .shdr-sheet .shdr-link[aria-current="page"]::after {
+  content: ""; position: absolute; inset-inline: 12px auto; top: 10px; bottom: 10px;
+  width: 3px; height: auto;
   border-radius: var(--radius-full); background: var(--grad-primary);
 }
 
+/* الحركةُ اختيارٌ لا فرض: من طلب تقليلَها يرى الأثرَ ولا يراه يُخطّ */
+@media (prefers-reduced-motion: reduce) {
+  .shdr-link::before { transition: none; }
+  .shdr-link:hover::before, .shdr-link[aria-current="page"]::before { transform: skewX(-8deg); }
+}
+
 .shdr-actions { display: flex; align-items: center; gap: 10px; flex: none; }
-.shdr-login { font-weight: 600; color: var(--color-text-muted); padding-inline: 6px; transition: color var(--dur-fast) var(--ease-standard); }
+.shdr-login {
+  font-weight: 600; color: var(--color-text-muted); padding-inline: 6px;
+  transition: color var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard);
+}
 .shdr-login:hover { color: var(--color-primary); }
 
 /* زرّ قائمة الجوّال — لا يظهر فوق 900px */
@@ -4140,7 +4245,7 @@ html:not(.js) .ldr-boot { display: none; }
   display: none; align-items: center; justify-content: center;
   width: 40px; height: 40px; flex: none;
   border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text);
-  transition: background-color var(--dur-fast) var(--ease-standard);
+  transition: background-color var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard);
 }
 .shdr-burger:hover { background: color-mix(in oklab, var(--steel-500) 9%, var(--color-surface)); }
 
@@ -4150,11 +4255,16 @@ html:not(.js) .ldr-boot { display: none; }
 .shdr-sheet[data-open="true"] { grid-template-rows: 1fr; }
 .shdr-sheet-in { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; padding: 10px; }
 .shdr-sheet .shdr-link { height: 44px; }
-.shdr-sheet .shdr-link[aria-current="page"]::after { inset-inline: 12px auto; width: 3px; top: 10px; bottom: 10px; height: auto; }
+/* مؤشّرُ النشط في اللوح يُكتب مع التوجّهات (لغةُ اللوح الواحدة) لا هنا — مصدرٌ واحد */
 .shdr-sheet .shdr-login { padding-block: 10px; }
 
+/* دعوةُ الانضمام في لوح الجوّال تمتدّ عرضَ اللوح — هي غايةُ القائمة لا عنصرٌ فيها */
+.shdr-sheet-cta { margin-top: 8px; justify-content: center; }
+
 @media (max-width: 900px) {
-  .shdr-bar > .shdr-nav, .shdr-actions .shdr-login { display: none; }
+  /* دون هذا العرض لا شريطَ روابطٍ أصلًا: اللوحُ يحمل الكلّ، فتُطفأ طبقةُ القياس معه
+     (لا معنى لقياس سعةٍ لا وجود لها) — والمكوّنُ يقرأ ذلك فيمتنع عن الحساب. */
+  .shdr-bar > .shdr-nav, .shdr-measure, .shdr-actions .shdr-login, .shdr-actions .abtn { display: none; }
   .shdr-burger { display: inline-flex; }
   .shdr-sheet { display: grid; }
 }
@@ -4179,7 +4289,7 @@ html:not(.js) .ldr-boot { display: none; }
 .av-xs, .av-sm, .pva-copy, .pva-open, .tx, .tic,
 .dm-trigger, .mdl-x, .pag-arr, .pag-num, .acard-dots,
 .acard-ic, .ash-fic, .dt-dots, .ash-logo, .gal-num,
-.shdr-link, .shdr-burger {
+.shdr-link, .shdr-burger, .shdr-login {
   border-radius: var(--radius-sm);
 }
 /* الصغير جدًّا (checkbox ~22px) → --radius-xs (6) */

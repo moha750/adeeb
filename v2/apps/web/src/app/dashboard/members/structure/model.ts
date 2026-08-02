@@ -15,7 +15,7 @@ import { roleTitle } from "@/lib/positionLabel";
 export type RawCouncil = { id: string; name_ar: string | null; head_role_name: string; description: string | null; group_link: string | null };
 export type RawDept = { id: number; name_ar: string | null; display_order: number | null; description: string | null; group_link: string | null };
 export type RawCommittee = { id: number; committee_name_ar: string | null; department_id: number | null; council_id: string; leader_role_name: string; member_role_name: string; description: string | null; group_link: string | null };
-export type RawRole = { id: number; role_name: string; role_name_ar: string | null; council_type: string | null; is_elected: boolean | null; membership_kind: string; vote_weight: number; holder_uniqueness: string; home_committee_id: number | null };
+export type RawRole = { id: number; role_name: string; role_name_ar: string | null; council_type: string | null; is_elected: boolean | null; membership_kind: string; vote_weight: number; holder_uniqueness: string; home_committee_id: number | null; prerequisite_role_name: string | null };
 export type RawUserRole = { user_id: string; role_name: string; committee_id: number | null; department_id: number | null };
 export type RawProfile = { id: string; full_name: string | null; avatar_url: string | null; gender: string | null };
 // الإشراف: عضو إدارةٍ إداريّة (`unit_id`) يتابع لجنةً تنفيذيّة (`committee_id`) ليس **فيها**.
@@ -351,6 +351,10 @@ export type Position = {
   // لا يُكتشف في انتخاب: قائدة الموارد تزن 3.0 ونظيرتها في الضمان 1.0 — سياسةٌ مقصودة.
   voteWeight: number;
   councilMember: boolean; // يجلس في المجلس ويقرّر (membership_kind='member') لا تابعٌ لفرعه
+  // شرطُ المقعد: منصبٌ يجب أن يشغله المرشّح قبله (العضو الإداريّ ← عضو لجنة).
+  // مصدره `roles.prerequisite_role_name`، تقرؤه القاعدة والمنتقي من مكانٍ واحد.
+  prerequisite: string | null;
+  prerequisiteAr: string | null;
 };
 
 export function buildPositions(
@@ -369,6 +373,8 @@ export function buildPositions(
   const traits = (rn: string) => ({
     voteWeight: roleByName.get(rn)?.vote_weight ?? 1,
     councilMember: roleByName.get(rn)?.membership_kind === "member",
+    prerequisite: roleByName.get(rn)?.prerequisite_role_name ?? null,
+    prerequisiteAr: roleByName.get(rn)?.prerequisite_role_name ? ar(roleByName.get(rn)!.prerequisite_role_name as string) : null,
   });
 
   // كلّ من يشغل هذا الدور في هذا النطاق — لا أوّلُهم. المفرد يعطي واحدًا بطبعه

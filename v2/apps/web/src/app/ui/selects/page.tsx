@@ -1,7 +1,7 @@
 "use client";
 
 import { Select, type SelectOption, Container } from "@adeeb/design-system";
-import { CalendarBlank, ChatCircle, GraduationCap, MapPin, Microphone, Sparkle, Trophy } from "@phosphor-icons/react";
+import { CalendarBlank, ChatCircle, GraduationCap, MapPin, Microphone, Sparkle, Trophy, UserPlus } from "@phosphor-icons/react";
 
 const TYPES: SelectOption[] = [
   { value: "workshop", label: "ورشة", icon: <GraduationCap aria-hidden />, group: "تفاعليّة" },
@@ -19,6 +19,15 @@ const CITIES: SelectOption[] = [
   { value: "madinah", label: "المدينة المنورة" },
   { value: "abha", label: "أبها" },
   { value: "tabuk", label: "تبوك" },
+];
+
+// خيارٌ بتلميح (`hint`): واقعةٌ عن الخيار تحت اسمه — كموضع العضو حين يُسنَد إليه منصب.
+// التلميح يدخل البحث مع الاسم، فيُطلب الخيار بموضعه («التصميم») كما يُطلب باسمه.
+const PEOPLE: SelectOption[] = [
+  { value: "p1", label: "عبدالله القحطاني", hint: "عضو — لجنة التصميم" },
+  { value: "p2", label: "سارة المطيري", hint: "نائب — لجنة الرواة" },
+  { value: "p3", label: "محمّد العتيبي", hint: "قائد — لجنة التسويق" },
+  { value: "p4", label: "نورة الدوسري" },
 ];
 
 // قائمة قصيرة جدًّا (٣) تنسدل كاملة حتى عند سقف 20vh
@@ -59,6 +68,18 @@ export default function SelectsPage() {
             <div className="grid gap-5 sm:grid-cols-2">
               <Select label="نوع النشاط" icon={<Sparkle />} options={TYPES} defaultValue="workshop" searchable />
               <Select label="المدينة" icon={<MapPin />} options={CITIES} searchable />
+            </div>
+          </section>
+
+          <section>
+            <Label>تلميحٌ تحت الخيار (سطرُ حالٍ لا وصف)</Label>
+            <p className="-mt-2 mb-4 text-sm text-content-muted">
+              سطرٌ باهتٌ يقول واقعةً عن الخيار — ومن لا واقعة له يبقى اسمًا مجرّدًا. يبقى التلميح
+              ظاهرًا بعد الاختيار في الحقل المغلق، ويُطابِقه البحث كما يُطابِق الاسم.
+            </p>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Select label="العضو" icon={<UserPlus />} options={PEOPLE} searchable />
+              <Select label="العضو (مُختار)" icon={<UserPlus />} options={PEOPLE} defaultValue="p2" searchable />
             </div>
           </section>
 

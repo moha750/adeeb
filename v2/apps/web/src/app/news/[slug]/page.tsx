@@ -32,7 +32,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
 
   return (
     <>
-      <Header />
+      <Header activeHref="/news" />
       <main>
         <section className="py-16 md:py-24">
           <Container>

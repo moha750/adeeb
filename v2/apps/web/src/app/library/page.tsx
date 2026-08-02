@@ -58,7 +58,7 @@ export default async function LibraryPage() {
 
   return (
     <>
-      <Header nav={[{ label: "المكتبة", href: "/library" }, { label: "الرئيسية", href: "/" }]} />
+      <Header activeHref="/library" />
       <main>
         <section className="py-16 md:py-24">
           <Container>

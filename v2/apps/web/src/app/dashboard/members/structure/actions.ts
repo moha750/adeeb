@@ -11,9 +11,10 @@ export type ActionResult = { ok: boolean; message: string; code?: string; curren
  * في أيّ نطاق) في القاعدة وحدها: `can_assign_role` تقرؤها `assign_position`
  * و`revoke_position` معًا. فمن مرّ من هنا بلا سلطةٍ حقيقيّة ردّته القاعدة.
  *
- * البابان: `manage_positions` (الهيكلة كاملةً) · `assign_unit_members` (قائد وحدةٍ يوزّع دور عضوها).
+ * البابان: `assign_positions` (تُشتقّ من `position_authority` — من له صفُّ سلطةٍ له المفتاح) ·
+ * `assign_unit_members` (قائد وحدةٍ يوزّع دور عضوها من شاشة «إدارتي»).
  */
-const MAY_ASSIGN = ["manage_positions", "assign_unit_members"];
+const MAY_ASSIGN = ["assign_positions", "assign_unit_members"];
 const mayAssign = (caps: readonly string[]) => caps.some((c) => MAY_ASSIGN.includes(c));
 
 /** المسارات التي تعرض التعيينات — تُبطَل معًا بعد كلّ إسنادٍ أو إزالة (ومنها تبويبات

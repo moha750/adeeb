@@ -4,9 +4,10 @@
 // تحميل الوحدة، وذلك ممنوعٌ في مكوّنٍ خادميّ. فالصفحة الخادميّة تجلب البيانات وحدها وتمرّرها،
 // كما تفعل `EventsView` و`MembersView` — لا أيقونةَ تُستورَد في `page.tsx`.
 
-import { Badge, Card, CardBody, CardHeader } from "@adeeb/design-system";
-import { Binoculars, Path, Signpost } from "@phosphor-icons/react";
+import { Alert, Badge, Card, CardBody, CardHeader } from "@adeeb/design-system";
+import { Binoculars, Path, ShieldWarning, Signpost } from "@phosphor-icons/react";
 import { EmptyState } from "../_components/EmptyState";
+import { categoryLabel, dots, remainingText, warningTitle } from "@/lib/warnings/vocab";
 import { Journey } from "./Journey";
 import { MembershipCard } from "./MembershipCard";
 import type { Membership } from "./data";
@@ -43,6 +44,30 @@ export function MembershipView({ membership: m }: { membership: Membership }) {
               {/* الفولاذيّ في الشارة اسمُه `info` — لا `brand` (تلك نغمة الكرت والإحصائيّة) */}
               {m.supervising.map((c) => <Badge key={c} tone="info" variant="soft">{c}</Badge>)}
             </div>
+          </CardBody>
+        </Card>
+      ) : null}
+
+      {/* إنذاراتي — لا تظهر إلّا لمن عليه إنذارٌ سارٍ. والشفافيّة قرارُ المالك: يرى السبب كما كُتب،
+          فلا يبقى يسأل «كم عليّ؟» — والعاقبةُ مقولةٌ صراحةً قبل أن تقع. */}
+      {m.warnings.length ? (
+        <Card>
+          <CardHeader
+            variant="soft"
+            icon={<ShieldWarning weight="fill" />}
+            title="إنذاراتي"
+            subtitle={`${dots(m.warnings.length, m.warningLimit)} · ${remainingText(m.warnings.length, m.warningLimit)}`}
+          />
+          <CardBody>
+            {m.warnings.map((w) => (
+              <Alert
+                key={w.id}
+                tone={w.ordinal >= m.warningLimit ? "danger" : "warning"}
+                title={`${warningTitle(w.ordinal)} · ${categoryLabel(w.category)} · ${w.date}`}
+              >
+                {w.reason}
+              </Alert>
+            ))}
           </CardBody>
         </Card>
       ) : null}

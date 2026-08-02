@@ -67,7 +67,7 @@ export default async function BookReaderPage({ params }: { params: Promise<{ slu
 
   return (
     <>
-      <Header nav={[{ label: "المكتبة", href: "/library" }, { label: "الرئيسية", href: "/" }]} />
+      <Header activeHref="/library" />
       <main>
         <section className="py-10 md:py-14">
           <Container>

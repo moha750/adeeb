@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Badge, Button, Field, ModalSectionHeading, Select, Stat, Textarea, matchesSearch } from "@adeeb/design-system";
-import { AddressBook, ArrowCounterClockwise, At, BookOpen, Books, Buildings, CalendarBlank, CalendarX, Certificate, Envelope, Eye, GraduationCap, Hash, IdentificationBadge, IdentificationCard, MagnifyingGlass, NotePencil, PencilSimple, Phone, Plus, Prohibit, ShareNetwork, Star, Trash, User, UsersThree, WarningCircle } from "@phosphor-icons/react";
+import { AddressBook, ArrowCounterClockwise, At, BookOpen, Books, Buildings, CalendarBlank, CalendarX, Certificate, Envelope, Eye, GraduationCap, Hash, IdentificationBadge, IdentificationCard, MagnifyingGlass, NotePencil, PencilSimple, Phone, Plus, Prohibit, ShareNetwork, ShieldWarning, Star, Trash, User, UsersThree, WarningCircle } from "@phosphor-icons/react";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { usePersistentView } from "../_components/usePersistentView";
 import { Modal } from "../_components/Modal";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
 import { MemberCard } from "./MemberCard";
+import { IssueWarningModal } from "./warnings/IssueWarningModal";
 import type { MenuGroup } from "../_components/DropdownMenu";
 import { Pagination } from "../_components/Pagination";
 import { Avatar } from "../_components/Avatar";
@@ -20,6 +21,7 @@ import { Cell } from "../_components/Cell";
 import { Section } from "../_components/Section";
 import { SOCIAL_ICON } from "../_components/socialIcons";
 import { MEMBER_STATUS } from "@/lib/memberStatus";
+import { waHref } from "@/lib/whatsapp";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -93,6 +95,7 @@ const Ico = {
   edit: <PencilSimple />,
   end: <Prohibit />,
   restore: <ArrowCounterClockwise />,
+  warn: <ShieldWarning />,
 };
 
 /** أدنى طول لسبب الإنهاء — نفس عتبة `terminate_membership` في القاعدة (خمسة أحرف). */
@@ -222,9 +225,31 @@ type ViewProps = {
   mayManageData?: boolean;
   /** الرأس يملكه المستدعي — حيث تسبق الجدولَ إحصاءاتٌ ومبدّلٌ لا يجوز أن يقعا تحت عنوانه. */
   headless?: boolean;
+  /**
+   * **عرضٌ محض** — شاشاتُ الهويّة («لجنتي» · «قسمي»): يرى صاحبُها بيانات من تحته ولا يتحكّم
+   * بها. ولا يُنفَّذ بإخفاء زرٍّ زرٍّ، بل **بتجفيف منابع الأفعال الثلاثة**: سلطةُ كلّ صفّ
+   * (`canEnd`/`canEdit`) تُقرأ صفرًا، و`mayManageData` تسقط، والتحديدُ الجماعيّ يسقط معه —
+   * فما بقي «عرض الملف» وحده. فمن أضاف فعلًا جديدًا غدًا وجده مقفولًا هنا بلا أن يتذكّرنا.
+   */
+  readOnly?: boolean;
+  /** سطرُ الخلوّ حين يعرف المستدعي نطاقَه أدقَّ من الجدول («لا أعضاء في لجنتك بعد»). */
+  emptyNote?: string;
+  /**
+   * زرُّ «التواصل» (واتساب) في الكروت — لشاشات من يقود أهلَه لا لسجلّ الأعضاء العامّ:
+   * القائد يكلّم عضوه. ومن لا جوّالَ له لا زرَّ له (لا وعدَ برابطٍ لا رقم فيه).
+   */
+  contact?: boolean;
+  /** حدُّ الإنذارات — يمرّ من القاعدة إلى نافذة الإصدار (لا رقمَ محفورًا هنا). */
+  warningLimit?: number;
 };
 
-export function MembersView({ members, lockedStatus, mode, mayManageData = false, headless = false }: ViewProps) {
+export function MembersView({ members: input, lockedStatus, mode, mayManageData: mayManage = false, headless = false, readOnly = false, emptyNote, contact = false, warningLimit = 3 }: ViewProps) {
+  // منبعٌ واحد للسلطة: في العرض المحض تُقرأ صفرًا فتغيب الأفعال كلُّها من الجدول والكرت والنافذة
+  const members = useMemo(
+    () => (readOnly ? input.map((m) => ({ ...m, canEnd: false, canEdit: false, canWarn: false })) : input),
+    [input, readOnly],
+  );
+  const mayManageData = mayManage && !readOnly;
   const toast = useToast();
   const router = useRouter();
   const [saving, startSave] = useTransition();
@@ -242,6 +267,8 @@ export function MembersView({ members, lockedStatus, mode, mayManageData = false
   const [endReason, setEndReason] = useState("");
   const [endErr, setEndErr] = useState<string | null>(null);
   const [restoring, setRestoring] = useState<MemberRow | null>(null);
+  // إصدار إنذار — نافذة الغرفة نفسها (مصدرٌ واحد)، مثبّتةً على صاحب الصفّ فلا يُختار غيره
+  const [warning, setWarning] = useState<MemberRow | null>(null);
   const [acting, startAct] = useTransition();
   // نموذج الإضافة/التعديل عبر React Hook Form + Zod
   const editForm = useForm<MemberForm>({
@@ -354,7 +381,7 @@ export function MembersView({ members, lockedStatus, mode, mayManageData = false
       variant="aurora"
       icon={<UsersThree weight="duotone" />}
       title={`لا ${section.noun} بعد`}
-      description={mode === "reach" ? "لا أعضاء تحت إشرافك حاليًّا." : "لا أعضاء في هذا القسم حاليًّا."}
+      description={emptyNote ?? (mode === "reach" ? "لا أعضاء تحت إشرافك حاليًّا." : "لا أعضاء في هذا القسم حاليًّا.")}
       action={mayManageData ? <Button variant="primary" size="md" onClick={openAdd}><Plus size={18} />إضافة عضو</Button> : undefined}
     />
   ) : (
@@ -408,6 +435,10 @@ export function MembersView({ members, lockedStatus, mode, mayManageData = false
           ...(m.status === "suspended"
             ? (m.canEnd ? [{ label: "إعادة العضوية", icon: Ico.restore, onSelect: () => setRestoring(m) }] : [])
             : (m.canEdit ? [{ label: "تعديل البيانات", icon: Ico.edit, onSelect: () => openEdit(m) }] : [])),
+          // الإنذار فعلٌ على العضو نفسه، فبندُه هنا لا في غرفةٍ أخرى — ويتبع الصفَّ لا صاحبَ الشاشة.
+          ...(m.canWarn && m.status === "active"
+            ? [{ label: "إصدار إنذار", icon: Ico.warn, onSelect: () => setWarning(m) }]
+            : []),
         ],
       },
     ];
@@ -460,11 +491,14 @@ export function MembersView({ members, lockedStatus, mode, mayManageData = false
         onViewChange={changeView}
         selectedCount={selected.size}
         onClearSelection={() => setSelected(new Set())}
+        // العرضُ المحض لا يُحدَّد فيه صفٌّ: أفعالُ الحزمة («تغيير الحالة») وعدٌ لا يملكه صاحبُ الشاشة
         bulkActions={
-          <>
-            <button type="button" className="tb-ba" onClick={() => toast.info(`جارٍ تغيير حالة ${selected.size} عضو…`)}>تغيير الحالة</button>
-            <button type="button" className="tb-ba" onClick={() => toast.info(`جارٍ تجهيز ملف ${selected.size} عضو…`)}>تصدير</button>
-          </>
+          readOnly ? undefined : (
+            <>
+              <button type="button" className="tb-ba" onClick={() => toast.info(`جارٍ تغيير حالة ${selected.size} عضو…`)}>تغيير الحالة</button>
+              <button type="button" className="tb-ba" onClick={() => toast.info(`جارٍ تجهيز ملف ${selected.size} عضو…`)}>تصدير</button>
+            </>
+          )
         }
       />
 
@@ -473,7 +507,7 @@ export function MembersView({ members, lockedStatus, mode, mayManageData = false
           columns={lockedStatus === "suspended" ? suspendedColumns : columns}
           rows={pageRows}
           getRowId={(m) => m.id}
-          selectable
+          selectable={!readOnly}
           selected={selected}
           onSelectedChange={setSelected}
           sort={sort}
@@ -501,6 +535,7 @@ export function MembersView({ members, lockedStatus, mode, mayManageData = false
                 // بلا سلطةٍ لا زرّ: الكرت لا يَعِد بما تردّه القاعدة (كما تسقط نقاطُه حين تخلو)
                 onRestore={m.canEnd ? () => setRestoring(m) : undefined}
                 onReason={() => setReason(m)}
+                contactHref={contact && m.phone ? waHref(m.phone) : null}
               />
             ))}
           </div>
@@ -696,6 +731,26 @@ export function MembersView({ members, lockedStatus, mode, mayManageData = false
         onConfirm={submitRestore}
       />
 
+      {warning ? (
+        <IssueWarningModal
+          open
+          limit={warningLimit}
+          preselect={warning.id}
+          targets={[{
+            id: warning.id,
+            name: warning.name,
+            phone: warning.phone,
+            avatar: warning.avatar,
+            gender: warning.gender,
+            committeeId: warning.committeeId,
+            committee: warning.committee,
+            roleAr: warning.role,
+            activeCount: warning.warnCount,
+            joinedDate: warning.joinedRaw || null,
+          }]}
+          onClose={() => { setWarning(null); router.refresh(); }}
+        />
+      ) : null}
     </>
   );
 }

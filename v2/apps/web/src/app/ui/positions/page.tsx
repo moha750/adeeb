@@ -14,7 +14,8 @@ const H = (name: string): Holder => ({ userId: name, name, avatar: null, gender:
 // منصبٌ وهميّ مُختصَر — القيم الافتراضيّة ثمّ ما يُهمّ العرض
 const P = (o: Partial<Position> & { key: string; roleAr: string; scope: string }): Position => ({
   roleName: o.key, council: "executive", committeeId: null, departmentId: null, holders: [],
-  singleton: true, elected: false, voteWeight: 1, councilMember: false, ...o,
+  singleton: true, elected: false, voteWeight: 1, councilMember: false,
+  prerequisite: null, prerequisiteAr: null, ...o,
 });
 
 const FILLED_ACTIONS: MenuGroup[] = [

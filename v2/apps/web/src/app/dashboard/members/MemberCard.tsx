@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Card, CardBanner } from "@adeeb/design-system";
-import { Phone, Envelope, CalendarBlank, FileText } from "@phosphor-icons/react";
+import { Phone, Envelope, CalendarBlank, FileText, WhatsappLogo } from "@phosphor-icons/react";
 import { Avatar } from "../_components/Avatar";
 import { DropdownMenu, type MenuGroup } from "../_components/DropdownMenu";
 import type { MemberRow } from "./data";
@@ -13,13 +13,18 @@ type Props = {
   onRestore?: () => void;
   /** يفتح نافذة السبب — السبب مقصوص بـ«…» هنا، فالنقر يكشفه بلا فتح الملفّ كلّه. */
   onReason?: () => void;
+  /**
+   * رابط محادثة واتساب — يُمرَّر حيث التواصلُ فعلُ الشاشة («لجنتي»: القائد يعرف أعضاءه
+   * ويكلّمهم ولا يتحكّم بهم). غائبٌ ⇒ لا زرّ: لا في سجلّ الأعضاء ولا لمن لا جوّالَ له.
+   */
+  contactHref?: string | null;
 };
 
 // نغمة الكرت بحالة العضو — مصدر واحد يقرأ منه السطح والحدّ والظلّ وقائمة النقاط معًا (لا خريطة لكلّ طبقة).
 // النشط بهوية العلامة (فولاذيّ) لا أخضر؛ الأخضر لشارة «نشط» فقط.
 const TONE: Record<string, "brand" | "warning" | "danger"> = { active: "brand", pending: "warning", suspended: "danger" };
 
-export function MemberCard({ member, onOpen, actions, onRestore, onReason }: Props) {
+export function MemberCard({ member, onOpen, actions, onRestore, onReason, contactHref }: Props) {
   const suspended = member.status === "suspended";
   const roleLine = [member.role, member.committee].filter(Boolean).join(" ") || "غير متوفّر";
   const tone = TONE[member.status];
@@ -93,6 +98,15 @@ export function MemberCard({ member, onOpen, actions, onRestore, onReason }: Pro
                 وكان بجانبه «حذف نهائي» فأُزيل: لا حذفَ في اللوحة، الإنهاء هو الفعل. */}
             <Button variant="neutral" size="sm" onClick={onReason}>عرض التفاصيل</Button>
           </>
+        ) : contactHref ? (
+          // زرّان في صفّ — `.acard-foot-row` عائلةُ الصفّ القائمة (تُكدَّس على الجوال).
+          // والتواصلُ وجهةٌ خارجيّة فهو `<a>` بثوب الزرّ لا زرًّا يَعِد بفعلٍ في الصفحة.
+          <div className="acard-foot-row">
+            <Button variant="primary" size="md" onClick={onOpen}>الملف الشخصي</Button>
+            <a className="abtn abtn-success abtn-md" href={contactHref} target="_blank" rel="noreferrer">
+              <WhatsappLogo weight="fill" aria-hidden /> التواصل
+            </a>
+          </div>
         ) : (
           <Button variant="primary" size="md" onClick={onOpen}>عرض الملف الشخصي</Button>
         )}

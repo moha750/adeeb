@@ -6,7 +6,11 @@ import { matchesSearch } from "../lib/search";
 import { AnchoredPopover } from "./AnchoredPopover";
 import { FieldMark } from "./FieldMark";
 
-export type SelectOption = { value: string; label: string; icon?: ReactNode; group?: string };
+/**
+ * `hint` — سطرُ حالٍ تحت التسمية: واقعةٌ عن الخيار لا وصفٌ له («عضو — لجنة التصميم»).
+ * يدخل البحث مع التسمية، فيُطلب الخيار بموضعه كما يُطلب باسمه.
+ */
+export type SelectOption = { value: string; label: string; hint?: string; icon?: ReactNode; group?: string };
 
 export interface SelectProps {
   /** تسمية أعلى القائمة — اختياريّة (تُحذف في السياقات المضغوطة كترقيم «صفوف لكل صفحة»). */
@@ -84,7 +88,7 @@ export function Select({
 
   const filtered = useMemo(() => {
     if (!searchable || !query.trim()) return options;
-    return options.filter((o) => matchesSearch(query, o.label));
+    return options.filter((o) => matchesSearch(query, o.label, o.hint));
   }, [options, query, searchable]);
 
   // تسلسل العرض: عناوين المجموعات + الخيارات (مع فهرس للتنقّل)
@@ -178,7 +182,11 @@ export function Select({
         onClick={() => !disabled && setOpen((o) => !o)}
         onKeyDown={onKey}
       >
-        <span className="asel-value">{selected?.label ?? ""}</span>
+        {/* التلميح يبقى بعد الاختيار: الحقلُ المغلق هو ما يراه المستخدم لحظةَ الإرسال. */}
+        <span className="asel-value">
+          {selected?.label ?? ""}
+          {selected?.hint ? <span className="asel-vhint">{selected.hint}</span> : null}
+        </span>
         <span className="asel-chev"><Chev /></span>
       </button>
       {name ? <input type="hidden" name={name} value={val} readOnly /> : null}
@@ -232,7 +240,10 @@ export function Select({
                 onClick={() => choose(row.opt.value)}
               >
                 {row.opt.icon ? <span className="asel-oic">{row.opt.icon}</span> : null}
-                <span className="asel-txt">{row.opt.label}</span>
+                <span className="asel-txt">
+                  {row.opt.label}
+                  {row.opt.hint ? <span className="asel-hint">{row.opt.hint}</span> : null}
+                </span>
                 <span className="asel-ck"><Check /></span>
               </div>
             ),

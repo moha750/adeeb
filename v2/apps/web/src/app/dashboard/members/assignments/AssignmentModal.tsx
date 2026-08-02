@@ -6,7 +6,7 @@ import { Avatar } from "../../_components/Avatar";
 import { Modal } from "../../_components/Modal";
 import type { Holder, Position } from "../structure/model";
 
-export type MemberOption = { id: string; name: string; avatar?: string | null; gender?: "male" | "female" | null };
+export type MemberOption = { id: string; name: string; avatar?: string | null; gender?: "male" | "female" | null; held?: string | null; heldRole?: string | null };
 
 // حالة المحرّر: إسنادٌ (لشاغرٍ أو زيادةٌ لمتعدّد أو استبدالٌ لمشغولٍ مفرد) أو إزالة.
 // تُملَك من المستدعي (مُتحكَّم به). والإزالة تحمل **شاغلَها**: المنصب المتعدّد فيه
@@ -52,9 +52,17 @@ export function AssignmentModal({
   // لا يزيد عن واحد). أمّا الزيادةُ فلا «شاغل حاليّ» لها — الكرت يعرض الجميع.
   const holder = state?.kind === "remove" ? state.holder : isReplace ? p?.holders[0] ?? null : null;
 
-  const memberOptions: SelectOption[] = members.map((m) => ({
+  // شرطُ المقعد يضيّق البِركة: «عضو إداريّ» لا يُسنَد إلّا لمن هو عضو لجنةٍ الآن. البِركة
+  // الواصلة مصفّاةٌ بالسلطة (`assignable_members`)، وهذا الشرطُ بيانٌ في `Position` تقرؤه
+  // الشاشة — لا حُكمَ مستنسخًا؛ والقاعدة تردّ ما فات (`NEEDS_PREREQUISITE`).
+  const eligible = p?.prerequisite ? members.filter((m) => m.heldRole === p.prerequisite) : members;
+
+  // الموضع الحاليّ تلميحًا: كلّ اختيارٍ ههنا نقلٌ من موضعٍ إلى موضع (عضويّة اللجنة نفسها
+  // منصب) — فالسطر يقول **من أين** يُسحب، لا يُحذّر من أنّه مشغول. والقاعدة تحكم بعدُ.
+  const memberOptions: SelectOption[] = eligible.map((m) => ({
     value: m.id,
     label: m.name,
+    hint: m.held ?? undefined,
     icon: <Avatar name={m.name} src={m.avatar ?? undefined} gender={m.gender} size="xs" />,
   }));
 
@@ -100,6 +108,7 @@ export function AssignmentModal({
               options={memberOptions}
               value={pick}
               onValueChange={onPick}
+              helper={p.prerequisite ? `المرشّحون: من يشغل «${p.prerequisiteAr}» الآن — فهذا المقعد انتقالٌ لا ضمٌّ من خارج.` : undefined}
               required
             />
           ) : (

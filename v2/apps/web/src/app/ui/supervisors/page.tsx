@@ -14,7 +14,7 @@ const COMMITTEES: Target[] = [
   T(4, "لجنة السُفراء"), T(5, "لجنة التصوير"), T(6, "لجنة التصميم"),
 ];
 
-const UNIT: Unit = { id: 22, name: "إدارة الموارد البشرية", desc: null, link: null, memberRoleName: "hr_admin_member", memberRoleAr: "عضو موارد بشرية" };
+const UNIT: Unit = { id: 22, name: "إدارة الموارد البشرية", desc: null, link: null, memberRoleName: "hr_admin_member", memberRoleAr: "عضو موارد بشرية", memberPrerequisite: "committee_member", memberPrerequisiteAr: "عضو" };
 
 const S = (name: string, coms: Target[]): UnitMember => ({ userId: name, name, avatar: null, gender: null, committees: coms });
 

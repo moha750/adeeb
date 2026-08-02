@@ -35,6 +35,10 @@ export type Membership = {
   joined: string;
   duration: string; // «٦ أشهر و١٠ أيام»
   journey: JourneyStop[];
+  /** إنذاراتُه السارية — يراها صاحبُها بأسبابها كما كُتبت (قرار المالك). */
+  warnings: { id: string; ordinal: number; category: string; reason: string; date: string }[];
+  /** حدُّ الإنذارات من القاعدة — لا رقمٌ محفور في الشاشة. */
+  warningLimit: number;
 };
 
 /** جمعُ العربيّة: مفرد · مثنّى · جمع قلّة (٣–١٠) · تمييزٌ مفردٌ منصوب (١١+). */
@@ -83,7 +87,7 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
   }
   const sb = createAdeebServiceClient(url, key);
 
-  const [pRes, urRes, rRes, dRes, cRes, coRes, supRes] = await Promise.all([
+  const [pRes, urRes, rRes, dRes, cRes, coRes, supRes, wRes, wlRes] = await Promise.all([
     sb.from("profiles").select("full_name, avatar_url, gender, account_status, joined_date").eq("id", me.id).maybeSingle(),
     // التعيينات كلّها لا النشطة وحدها — المسيرة تروي ما مضى كما تروي ما هو قائم
     sb.from("user_roles").select("role_name, department_id, committee_id, assigned_at, is_active").eq("user_id", me.id),
@@ -93,9 +97,13 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
     sb.from("councils").select("id, name_ar"),
     // الإشراف علاقةٌ لا منصب — يُقرأ من جدوله، ولا يدخل صفوف التعيينات
     sb.from("committee_supervision").select("committee_id").eq("supervisor_id", me.id),
+    // إنذاراتُ صاحب الجلسة **السارية** وحدها — الملغى خرج من العدّ فلا يُعاد ذكرُه عليه.
+    // ورتبتُها ترتيبُها الزمنيّ (كما تحسبها القاعدة)، فالفرزُ هنا هو نفسه هناك.
+    sb.from("member_warnings").select("id, category, reason, created_at").eq("user_id", me.id).eq("status", "active").order("created_at"),
+    sb.rpc("warning_limit"),
   ]);
 
-  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || coRes.error || supRes.error;
+  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || coRes.error || supRes.error || wRes.error || wlRes.error;
   if (firstErr) return { membership: null, error: firstErr.message };
   const p = pRes.data;
   if (!p) return { membership: null, error: "لا سجلّ لحسابك في «الأعضاء» — راجِع إدارة الموارد البشريّة." };
@@ -204,6 +212,9 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
       joined: fmtDateOnly(p.joined_date),
       duration: membershipDuration(p.joined_date, Date.now()),
       journey,
+      warnings: ((wRes.data ?? []) as { id: string; category: string; reason: string; created_at: string }[])
+        .map((w, i) => ({ id: w.id, ordinal: i + 1, category: w.category, reason: w.reason, date: fmtDate(w.created_at) })),
+      warningLimit: typeof wlRes.data === "number" ? wlRes.data : 3,
     },
     error: null,
   };

@@ -79,10 +79,14 @@ export function SupervisionModal({
               ? `استبدال المشرف على ${state.committee.name}`
               : `إسناد مشرف على ${state.committee.name}`;
 
+  // الموضع الحاليّ تلميحًا — لمرشّحي الضمّ وحدهم: ضمُّهم نقلٌ من لجانهم، فيُقال من أين.
+  // أمّا أعضاء الإدارة (بِركة التوزيع) فلا `held` لهم أصلًا — موضعهم هذه الإدارة، وقولُه
+  // على كلّ اسمٍ حشوٌ لا خبر. (والتوزيع ليس نقل منصبٍ بحال.)
   const optionsOf = (list: MemberOption[]): SelectOption[] =>
     list.map((m) => ({
       value: m.id,
       label: m.name,
+      hint: m.held ?? undefined,
       icon: <Avatar name={m.name} src={m.avatar ?? undefined} gender={m.gender} size="xs" />,
     }));
 

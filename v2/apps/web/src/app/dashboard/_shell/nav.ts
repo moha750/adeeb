@@ -41,6 +41,7 @@ export const NAV: NavGroup[] = [
       { label: "أعضاء قيد الإكمال", icon: "pending", href: "/dashboard/members/pending" },
       { label: "أعضاء سابقون", icon: "suspended", href: "/dashboard/members/suspended" },
       { label: "من أشرف عليهم", icon: "supervise", href: "/dashboard/members/supervised" },
+      { label: "الإنذارات", icon: "warn", href: "/dashboard/members/warnings" },
       { label: "أعياد الميلاد", icon: "cake", href: "/dashboard/members/birthdays" },
       { label: "هيكلة أديب", icon: "tree", href: "/dashboard/members/structure" },
       { label: "تعيين المناصب", icon: "assign", href: "/dashboard/members/assignments" },

@@ -21,7 +21,7 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
 
   return (
     <>
-      <Header />
+      <Header activeHref="/activities" />
       <main>
         <section className="py-16 md:py-24">
           <Container>

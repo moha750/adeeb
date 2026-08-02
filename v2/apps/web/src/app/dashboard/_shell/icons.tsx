@@ -35,6 +35,7 @@ import {
   UsersFour,
   SquaresFour,
   Key,
+  ShieldWarning,
 } from "@phosphor-icons/react";
 
 type P = { className?: string };
@@ -84,6 +85,8 @@ export const IconKey = (p: P) => <Key aria-hidden {...p} />;
 export const IconMic = (p: P) => <MicrophoneStage aria-hidden {...p} />;
 // الأخبار — الصحيفة: غرفة تحريرٍ تكتب وتنشر، لا بوقُ إعلانٍ يُذيع
 export const IconNews = (p: P) => <Newspaper aria-hidden {...p} />;
+// الإنذارات — الدرع المحذّر: ضبطٌ يحمي العمل، لا مثلّثُ خطرٍ يُنذر بعطب
+export const IconWarn = (p: P) => <ShieldWarning aria-hidden {...p} />;
 
 export const ICONS = {
   me: IconMe, users: IconUsers, clip: IconClip, doc: IconDoc,
@@ -92,6 +95,6 @@ export const ICONS = {
   stats: IconStats, handshake: IconHandshake, faq: IconFaq,
   active: IconActive, pending: IconPending, suspended: IconSuspended,
   cake: IconCake, tree: IconTree, assign: IconAssign, supervise: IconSupervise, unit: IconUnit, dept: IconDept, key: IconKey,
-  mic: IconMic, news: IconNews,
+  mic: IconMic, news: IconNews, warn: IconWarn,
 } as const;
 export type IconKey = keyof typeof ICONS;

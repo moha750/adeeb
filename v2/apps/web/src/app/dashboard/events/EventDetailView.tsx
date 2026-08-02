@@ -8,6 +8,7 @@ import {
   ArrowUUpLeft, CalendarBlank, Certificate, ChatText, CheckCircle, Clock, Copy,
   MapPin, PencilSimple, Prohibit, WhatsappLogo,
 } from "@phosphor-icons/react";
+import { waHref } from "@/lib/whatsapp";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar } from "../_components/Toolbar";
 import { Tabs } from "../_components/Tabs";
@@ -73,13 +74,6 @@ function buildWaMessage(r: ReservationRow, d: EventDetail): string {
     loc,
     "نسعد بحضورك.\nمع تحيات نادي أدِيب",
   ].filter(Boolean).join("\n\n");
-}
-
-/** رقم سعوديّ دوليّ + رسالة → رابط واتساب مباشر. */
-function waHref(phone: string, message: string): string {
-  const d = phone.replace(/\D/g, "");
-  const intl = d.startsWith("966") ? d : d.startsWith("0") ? `966${d.slice(1)}` : d.length === 9 && d.startsWith("5") ? `966${d}` : d;
-  return `https://wa.me/${intl}?text=${encodeURIComponent(message)}`;
 }
 
 const StageBadge = ({ r }: { r: ReservationRow }) => {

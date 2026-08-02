@@ -16,7 +16,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 /**
  * زر العلامة — بُني خطوة‑خطوة مع المستخدم:
- * تدرّج كحليّ · زوايا 16px · ظلّ ناعم · (تكبير خفيف + كنس ضوئيّ عند المرور) · أيقونة قبل النصّ.
+ * تدرّج كحليّ · زوايا 16px · ظلّ ناعم · (تكبير خفيف + كنس ضوئيّ عند المرور) · أيقونة قبل النصّ · دائرة التحميل بعده.
  * الأنماط: primary · ghost · danger · success · warning · neutral · ghost-danger/success/warning · inverse · inverse-ghost. الأحجام: sm · md · lg.
  * تُعرَّف الأنماط في globals.css تحت البادئة `.abtn`.
  */
@@ -36,8 +36,9 @@ export function Button({
       aria-busy={loading || undefined}
       {...props}
     >
-      {loading ? <span className="abtn-spin" aria-hidden="true" /> : null}
       {children}
+      {/* الدائرة تلي النصّ — عند نهايته (يساره في العربيّة) لا قبله */}
+      {loading ? <span className="abtn-spin" aria-hidden="true" /> : null}
     </button>
   );
 }

@@ -24,6 +24,9 @@ export type Unit = {
   link: string | null;
   memberRoleName: string;
   memberRoleAr: string;
+  /** شرطُ مقعد العضو: منصبٌ يجب أن يشغله المرشّح قبل الضمّ (عضو الإدارة ← عضو لجنة). */
+  memberPrerequisite: string | null;
+  memberPrerequisiteAr: string | null;
 };
 
 /** لجنةٌ تشغيليّة يجوز توزيع الإشراف عليها. */
@@ -69,6 +72,13 @@ export function adminUnit(
       if (!r) return c.member_role_name;
       const home = r.home_committee_id != null ? byId.get(r.home_committee_id)?.committee_name_ar ?? null : null;
       return roleTitle({ roleAr: r.role_name_ar ?? r.role_name, homeCommitteeId: r.home_committee_id, homeName: home });
+    })(),
+    memberPrerequisite: roles.find((x) => x.role_name === c.member_role_name)?.prerequisite_role_name ?? null,
+    memberPrerequisiteAr: (() => {
+      const req = roles.find((x) => x.role_name === c.member_role_name)?.prerequisite_role_name;
+      if (!req) return null;
+      const r = roles.find((x) => x.role_name === req);
+      return r?.role_name_ar ?? req;
     })(),
   };
 }
@@ -158,5 +168,8 @@ export function buildSeats(
       elected: false,
       voteWeight: 1,
       councilMember: false,
+      // مقعدُ إشرافٍ لا مقعدُ منصب — والشرط يخصّ الضمّ إلى الإدارة لا التوزيع عليها.
+      prerequisite: null,
+      prerequisiteAr: null,
     }));
 }

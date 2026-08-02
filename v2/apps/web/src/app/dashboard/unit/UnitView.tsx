@@ -58,10 +58,12 @@ export function UnitView({
     () => roster.map((s) => ({ id: s.userId, name: s.name, avatar: s.avatar, gender: s.gender })),
     [roster],
   );
+  // مرشّحو الضمّ = بقيّة النادي، مضيَّقةً بشرط المقعد: عضو الإدارة لا يُضمّ إلّا من هو
+  // عضو لجنةٍ الآن (انتقالٌ لا ضمٌّ من خارج). الشرط بيانٌ من القاعدة لا حُكمٌ مستنسخ.
   const candidates: MemberOption[] = useMemo(() => {
     const inUnit = new Set(roster.map((s) => s.userId));
-    return members.filter((m) => !inUnit.has(m.id));
-  }, [members, roster]);
+    return members.filter((m) => !inUnit.has(m.id) && (!unit.memberPrerequisite || m.heldRole === unit.memberPrerequisite));
+  }, [members, roster, unit.memberPrerequisite]);
 
   const loadOf = useMemo(
     () => new Map(roster.map((s) => [s.userId, s.committees.length])),

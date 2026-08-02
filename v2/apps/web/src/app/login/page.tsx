@@ -6,7 +6,7 @@ import { AuthShell } from "@adeeb/design-system";
 import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = {
-  title: "تسجيل الدخول — لوحة أديب",
+  title: "تسجيل الدخول — بوّابة أديب",
 };
 
 export default function LoginPage() {
@@ -15,7 +15,7 @@ export default function LoginPage() {
       <AuthShell
         title="تسجيل الدخول"
         subtitle="ادخل ببيانات حسابك الإداريّ للوصول إلى اللوحة."
-        slogan="لوحةُ نادي أديب — إدارةُ الأعضاء والفعاليّات والمحتوى في مكانٍ واحد."
+        slogan="بوابة أدِيب، من هُنا يُدار نادي أدِيب"
       >
         <Suspense fallback={<div className="aauth-form" aria-hidden />}>
           <LoginForm />

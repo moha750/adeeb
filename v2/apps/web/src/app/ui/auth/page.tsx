@@ -34,7 +34,7 @@ function DemoForm() {
   );
 }
 
-const SLOGAN = "لوحةُ نادي أديب — إدارةُ الأعضاء والفعاليّات والمحتوى في مكانٍ واحد.";
+const SLOGAN = "بوابة أدِيب، من هُنا يُدار نادي أدِيب";
 
 export default function AuthGalleryPage() {
   return (

@@ -30,13 +30,13 @@ export function AccessDenied({ name, scope = "gate" }: { name: string | null; sc
         subtitle={
           scope === "room"
             ? "حسابك لا يملك صلاحية هذه الصفحة. ما تملكه من أقسامٍ يظهر في القائمة الجانبيّة."
-            : `${name ? `مرحبًا ${name}، ` : ""}حسابك لا يملك صلاحية الوصول إلى لوحة الإدارة. إن كنت تظنّ أنّ هذا خطأ فتواصل مع رئاسة النادي.`
+            : `${name ? `مرحبًا ${name}، ` : ""}حسابك لا يملك صلاحية الوصول إلى بوّابة أديب. إن كنت تظنّ أنّ هذا خطأ فتواصل مع رئاسة النادي.`
         }
-        slogan="لوحةُ نادي أديب — إدارةُ الأعضاء والفعاليّات والمحتوى في مكانٍ واحد."
+        slogan="بوابة أدِيب، من هُنا يُدار نادي أدِيب"
       >
         {scope === "room" ? (
           <Button variant="ghost" size="md" onClick={() => router.push("/dashboard")}>
-            العودة إلى اللوحة
+            العودة إلى البوّابة
           </Button>
         ) : (
           <Button variant="ghost" size="md" loading={pending} onClick={signOut}>
