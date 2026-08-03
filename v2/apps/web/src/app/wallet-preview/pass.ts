@@ -13,8 +13,18 @@
 
 import { arNum, GOAL, isComplete, statusText, type DemoMember } from "./demo";
 
-/** حقلٌ واحدٌ كما يعرّفه PassKit: مفتاحٌ وتسميةٌ وقيمة. */
-export type PassField = { key: string; label?: string; value: string };
+/**
+ * حقلٌ واحدٌ كما يعرّفه PassKit: مفتاحٌ وتسميةٌ وقيمة.
+ *
+ * **و`changeMessage` هو ما يُظهر الإشعار** — لا الدفعة. دفعتُنا صامتةٌ بطبعها (حمولةٌ
+ * خاوية) ولا تُنبّه أحدًا؛ إنّما iOS هو الذي يقارن الحقلَ بنظيره في النسخة السابقة، فإن
+ * تغيّرت قيمتُه **وكان عليه `changeMessage`** عرض إشعارًا بنصّه. و`%@` تُستبدَل بالقيمة
+ * الجديدة.
+ *
+ * **وحقلٌ واحدٌ يحمله لا حقلان**: كلُّ حقلٍ يتغيّر ومعه رسالةٌ يُخرج إشعارًا مستقلًّا،
+ * فيصير الختمُ الواحد إشعارين.
+ */
+export type PassField = { key: string; label?: string; value: string; changeMessage?: string };
 
 /** وجهُ البطاقة وظهرُها — بلغة PassKit لا بلغتنا، فلا ترجمةَ بين الطبقتين. */
 export type CardFace = {
@@ -37,12 +47,32 @@ export const PASS_COLORS = {
   label: "rgb(188,207,224)", // --steel-200 #bccfe0
 } as const;
 
+/**
+ * نصُّ الإشعار الذي يصل الجوّال عند تغيّر العدّاد — **ثلاثُ لحظاتٍ لا واحدة**، لأنّ
+ * «مشاركاتك الآن ٠ / ١٠» بعد استلام المكافأة تُقرأ تراجعًا لا احتفاءً.
+ *
+ * (`%@` تُستبدَل بالقيمة الجديدة، ووجودُها شرطُ ظهور الإشعار.)
+ */
+function stampsMessage(stamps: number): string {
+  if (isComplete(stamps)) return "اكتملت بطاقتك %@ — مكافأتك في انتظارك";
+  if (stamps === 0) return "بدأت بطاقةٌ جديدة %@";
+  return "سُجّلت مشاركتك — %@";
+}
+
 /** يبني وجهَ البطاقة من عضو — انظر رأس الملفّ. */
 export function cardFace(m: DemoMember): CardFace {
   const done = isComplete(m.stamps);
 
   return {
-    headerFields: [{ key: "stamps", label: "المشاركات", value: `${arNum(m.stamps)} / ${arNum(GOAL)}` }],
+    headerFields: [
+      {
+        key: "stamps",
+        label: "المشاركات",
+        value: `${arNum(m.stamps)} / ${arNum(GOAL)}`,
+        // الحقلُ الوحيد الذي يحمل رسالةً — انظر `PassField`
+        changeMessage: stampsMessage(m.stamps),
+      },
+    ],
     // فارغةٌ عمدًا — أبل ترسمها فوق شريط الأختام فتحجبه (انظر رأس الملفّ).
     primaryFields: [],
     secondaryFields: [
