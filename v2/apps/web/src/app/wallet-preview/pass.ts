@@ -1,23 +1,23 @@
 /**
  * وصفُ البطاقة — **مصدرٌ واحدٌ للمعاينة وللملفّ الموقَّع معًا**.
  *
- * هذا هو حجرُ الزاوية في هذا المجلّد: `cardFace()` يبني حقولَ البطاقة مرّةً، فترسمها
- * الصفحةُ في المتصفّح ويكتبها `pkpass/route.ts` في `pass.json` — فما يراه المالك في
- * المعاينة **هو** ما يصل جهازَه، لا شيءٌ يشبهه. (نفسُ مبدأ `lib/qr.ts`: راسمٌ واحدٌ
- * لا راسمان يفترقان يومًا.)
+ * `cardFace()` يبني حقول البطاقة مرّةً، فترسمها الصفحةُ في المتصفّح ويكتبها
+ * `pkpass/route.ts` في `pass.json` — فما يراه المالك في المعاينة **هو** ما يصل جهازَه.
+ * (نفسُ مبدأ `lib/qr.ts`: راسمٌ واحدٌ لا راسمان يفترقان يومًا.)
  *
- * وترتيبُ الحقول ومواضعُها ليست ذوقًا: هي مواضعُ Apple Wallet لبطاقة المتجر
- * (`storeCard`) — ترويسةٌ في الأعلى، ثمّ حقلٌ رئيس، ثمّ صفّان، ثمّ الباركود.
+ * **والأختامُ العشرة صورةُ شريط (`strip.png`) لا حقل نصّ**: PassKit لا يرسم شبكاتٍ،
+ * يرسم حقولًا. فالعدّاد حقلٌ في الترويسة (`٧ / ١٠`)، والأختامُ **صورةٌ تُولَّد** بعدد
+ * ما خُتم (انظر `png.ts`) فتُقرأ البطاقة في المحفظة بطاقةَ أختامٍ حقًّا لا سطرَ رقم.
+ * ولذلك `primaryFields` **فارغة عمدًا**: أبل ترسمها **فوق** الشريط، فتحجب الأختام.
  */
 
-import { arDate, arNum, nextTier, TIERS, tierOf, type DemoMember } from "./demo";
+import { arNum, GOAL, isComplete, statusText, type DemoMember } from "./demo";
 
 /** حقلٌ واحدٌ كما يعرّفه PassKit: مفتاحٌ وتسميةٌ وقيمة. */
 export type PassField = { key: string; label?: string; value: string };
 
 /** وجهُ البطاقة وظهرُها — بلغة PassKit لا بلغتنا، فلا ترجمةَ بين الطبقتين. */
 export type CardFace = {
-  logoText: string;
   headerFields: PassField[];
   primaryFields: PassField[];
   secondaryFields: PassField[];
@@ -39,41 +39,34 @@ export const PASS_COLORS = {
 
 /** يبني وجهَ البطاقة من عضو — انظر رأس الملفّ. */
 export function cardFace(m: DemoMember): CardFace {
-  const tier = tierOf(m.points);
-  const next = nextTier(m.points);
+  const done = isComplete(m.stamps);
 
   return {
-    logoText: "أَدِيب",
-    headerFields: [{ key: "points", label: "الرصيد", value: arNum(m.points) }],
-    primaryFields: [{ key: "tier", label: "الرتبة", value: tier.name }],
+    headerFields: [{ key: "stamps", label: "المشاركات", value: `${arNum(m.stamps)} / ${arNum(GOAL)}` }],
+    // فارغةٌ عمدًا — أبل ترسمها فوق شريط الأختام فتحجبه (انظر رأس الملفّ).
+    primaryFields: [],
     secondaryFields: [
       { key: "holder", label: "العضو", value: m.name },
-      { key: "unit", label: "الوحدة", value: m.unit },
+      { key: "department", label: "القسم", value: m.department },
     ],
     auxiliaryFields: [
-      { key: "since", label: "عضوٌ منذ", value: arDate(m.joined) },
-      {
-        key: "next",
-        label: next ? `إلى «${next.tier.name}»` : "السلّم",
-        value: next ? `${arNum(next.remaining)} نقطة` : "بلغَ قمّتَه",
-      },
+      { key: "committee", label: "اللجنة", value: m.committee },
+      { key: "status", label: "الحالة", value: statusText(m.stamps) },
     ],
     backFields: [
-      { key: "position", label: "المسمّى", value: m.position },
       { key: "serial", label: "رقم البطاقة", value: m.serial },
-      { key: "perk", label: `ما تفتحه «${tier.name}»`, value: tier.perk },
-      {
-        key: "ladder",
-        label: "سلّم الرتب",
-        value: TIERS.map((t) => `${t.name} — ${arNum(t.from)} نقطة فأكثر`).join("\n"),
-      },
       {
         key: "how",
-        label: "كيف تُجمَع النقاط",
+        label: "كيف تعمل البطاقة",
         value:
-          "تُرصَد نقاطُك على ما تُنجزه في أديب — ورشةٌ تُقدّمها، أو خبرٌ تكتبه، أو أمسيةٌ تُديرها. " +
-          "يرصدها مسؤولُ وحدتك باسمه، فيبقى لكلّ نقطةٍ سببٌ مكتوب.",
+          `تُختَم بمشاركةٍ واحدة في كلّ فعاليّةٍ تحضرها مع أديب. ` +
+          `فإذا بلغت ${arNum(GOAL)} مشاركاتٍ استحققتَ مكافأة الراعي، ` +
+          `وبعد استلامها يعود العدّاد صفرًا وتبدأ بطاقةٌ جديدة.`,
       },
+      ...(done
+        ? [{ key: "ready", label: "مكافأتك جاهزة", value: "اعرض هذه البطاقة عند الراعي لتستلمها." }]
+        : []),
+      { key: "cycles", label: "بطاقاتٌ أكملتَها", value: arNum(m.cycles) },
       {
         key: "notice",
         label: "تنبيه",
@@ -86,12 +79,23 @@ export function cardFace(m: DemoMember): CardFace {
 
 /**
  * `pass.json` كاملًا — يُكتب في الحزمة كما هو.
- * المعرّفان (`passTypeIdentifier` و`teamIdentifier`) من البيئة لأنّهما يخصّان حساب
- * أبل لا الكود.
+ *
+ * `hasLogo` يقرّر شيئًا واحدًا: **`logoText`**. شعارُ أديب يحمل اسمَه مرسومًا، فكتابةُ
+ * الاسم بجانبه تكرارٌ — فلا تُكتب إلّا حين يتعذّر جلبُ الصورة، فتبقى البطاقة معنونةً.
+ *
+ * **والحقلان اللذان يجعلان التحديث لحظيًّا** هما `webServiceURL` و`authenticationToken`:
+ * الأوّل يقول للجهاز أين يسأل عن نسخةٍ جديدة، والثاني يُثبت أنّ السائل صاحبُ البطاقة.
+ * بدونهما تبقى البطاقة لقطةً ساكنةً مهما دفعنا إليها — فالجهاز لا يعرف بابًا يطرقه.
  */
 export function passJson(
   m: DemoMember,
-  ids: { passTypeIdentifier: string; teamIdentifier: string },
+  ids: {
+    passTypeIdentifier: string;
+    teamIdentifier: string;
+    hasLogo: boolean;
+    webServiceURL: string;
+    authenticationToken: string;
+  },
 ): Record<string, unknown> {
   const face = cardFace(m);
   return {
@@ -101,7 +105,9 @@ export function passJson(
     serialNumber: m.serial,
     organizationName: "نادي أَدِيب",
     description: "بطاقة ولاء نادي أديب",
-    logoText: face.logoText,
+    webServiceURL: ids.webServiceURL,
+    authenticationToken: ids.authenticationToken,
+    ...(ids.hasLogo ? {} : { logoText: "أَدِيب" }),
     backgroundColor: PASS_COLORS.background,
     foregroundColor: PASS_COLORS.foreground,
     labelColor: PASS_COLORS.label,

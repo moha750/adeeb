@@ -97,3 +97,79 @@ export function brandIcon(size: number): Buffer {
 
   return encodePng(size, size, rgba);
 }
+
+/* ── شريط الأختام ───────────────────────────────────────────────────────── */
+
+/**
+ * **الأختام العشرة صورةً** — لأنّ PassKit يرسم حقولًا لا شبكات، فلا سبيل إلى بطاقة
+ * أختامٍ حقيقيّةٍ في المحفظة إلّا بصورة `strip.png` تُولَّد بعدد ما خُتم.
+ *
+ * والرسم أبيضُ على شفّاف: الشريط يقع على سطح البطاقة الكحليّ، فالأبيض يُقرأ عليه بلا
+ * خلفيّةٍ نرسمها — ولو رسمناها لظهر مستطيلٌ دخيلٌ فوق لونها.
+ *
+ * **والمختوم قرصٌ مصمت، وغيرُ المختوم طوقٌ خافت** — فرقُ الامتلاء يُقرأ من بعيدٍ بلا
+ * لونٍ ثانٍ (وتُقرأ البطاقة كذلك بلا تمييزٍ للألوان).
+ *
+ * @param filled كم خُتم
+ * @param total  عدد الخانات (صفّان متساويان)
+ * @param w      عرض الشريط بالبكسل — أبل تشترط 375 (و750 للمضاعف)
+ */
+export function stampStrip(filled: number, total: number, w: number): Buffer {
+  const h = Math.round(w * (144 / 375)); // نسبةُ شريط بطاقة المتجر كما تحدّدها أبل
+  const rgba = Buffer.alloc(w * h * 4);
+
+  const cols = Math.ceil(total / 2);
+  const rows = 2;
+  const cw = w / cols;
+  const ch = h / rows;
+  const r = Math.min(cw, ch) * 0.3; // نصفُ قطر الختم — يترك فرجةً بين الأقراص
+  const ring = Math.max(1.5, r * 0.16); // سُمكُ الطوق للفارغ
+  const SS = 3; // معاينةٌ فائقة للحوافّ (٩ عيّنات للبكسل)
+
+  /** تغطيةُ البكسل: 1 داخل القرص/الطوق · 0 خارجه · وما بينهما على الحافّة. */
+  const coverage = (x: number, y: number, cx: number, cy: number, on: boolean): number => {
+    let hits = 0;
+    for (let sy = 0; sy < SS; sy += 1) {
+      for (let sx = 0; sx < SS; sx += 1) {
+        const dx = x + (sx + 0.5) / SS - cx;
+        const dy = y + (sy + 0.5) / SS - cy;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (on ? d <= r : d <= r && d >= r - ring) hits += 1;
+      }
+    }
+    return hits / (SS * SS);
+  };
+
+  for (let i = 0; i < total; i += 1) {
+    // **من اليمين إلى اليسار**: البطاقة عربيّة، وiOS يعكس تخطيط الحقول ولا يعكس
+    // الصور — فلو رسمنا من اليسار امتلأت أختامُ المحفظة في جهةٍ وأختامُ الصفحة في
+    // الجهة المقابلة، وهما شيءٌ واحد.
+    const col = cols - 1 - (i % cols);
+    const row = Math.floor(i / cols);
+    const cx = cw * (col + 0.5);
+    const cy = ch * (row + 0.5);
+    const on = i < filled;
+    // شفّافيّةُ الطوق أخفتُ من القرص، فيتقدّم المختومُ ويتأخّر الفارغ.
+    const alpha = on ? 255 : 110;
+
+    // نمسح مربّعَ الختم وحده لا الصورة كلّها — أرخصُ وأدقّ.
+    const x0 = Math.max(0, Math.floor(cx - r - 1));
+    const x1 = Math.min(w, Math.ceil(cx + r + 1));
+    const y0 = Math.max(0, Math.floor(cy - r - 1));
+    const y1 = Math.min(h, Math.ceil(cy + r + 1));
+
+    for (let y = y0; y < y1; y += 1) {
+      for (let x = x0; x < x1; x += 1) {
+        const c = coverage(x, y, cx, cy, on);
+        if (c === 0) continue;
+        const p = (y * w + x) * 4;
+        rgba[p] = 255;
+        rgba[p + 1] = 255;
+        rgba[p + 2] = 255;
+        rgba[p + 3] = Math.max(rgba[p + 3], Math.round(c * alpha));
+      }
+    }
+  }
+
+  return encodePng(w, h, rgba);
+}

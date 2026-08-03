@@ -1,30 +1,29 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Alert, Badge, Button, Card, CardBody, CardHeader, Container, SectionHeading, Segmented, Stat } from "@adeeb/design-system";
+import { Alert, Badge, Button, Card, CardBody, CardHeader, Container, SectionHeading, Segmented } from "@adeeb/design-system";
 import {
-  ArrowsClockwise,
-  ArrowUUpLeft,
-  CheckCircle,
+  ArrowCounterClockwise,
+  Check,
+  DeviceMobile,
+  Gift,
   Info,
-  Lock,
-  Medal,
+  Minus,
+  Plus,
   Sparkle,
   Storefront,
-  Ticket,
-  Trophy,
   Wallet,
 } from "@phosphor-icons/react";
 import { downloadBlob } from "@/lib/download";
 import { qrSvg } from "@/lib/qr";
-import { arDate, arNum, MEMBERS, memberById, nextTier, OFFERS, TIERS, tierOf, tierUnlocks, type Offer } from "./demo";
+import { arNum, GOAL, isComplete, MEMBERS, memberById, REWARD, statusText, type DemoMember } from "./demo";
 import { cardFace, type PassField } from "./pass";
 import "./card.css";
 
 /* ── أجزاء البطاقة ─────────────────────────────────────────────────────── */
 
 /** حقلٌ واحد — تسميةٌ فوق قيمة، كما ترسمه أبل. */
-function Fld({ f, kind }: { f: PassField; kind?: "head" | "primary" }) {
+function Fld({ f, kind }: { f: PassField; kind?: "head" }) {
   return (
     <div className={kind ? `wp-fld--${kind}` : undefined}>
       {f.label ? <span className="wp-lab">{f.label}</span> : null}
@@ -34,18 +33,36 @@ function Fld({ f, kind }: { f: PassField; kind?: "head" | "primary" }) {
 }
 
 /**
+ * الأختام العشرة — نظيرُ `strip.png` الذي يُولَّد للمحفظة، بالتخطيط نفسه (صفّان).
+ * قيمتُهما واحدة (`stamps`)، والفرق في الوسيط لا في البيانات.
+ */
+function Stamps({ filled }: { filled: number }) {
+  return (
+    <div className="wp-stamps" role="img" aria-label={`${arNum(filled)} من ${arNum(GOAL)} مشاركات`}>
+      {Array.from({ length: GOAL }, (_, i) => (
+        <span key={i} className="wp-stamp" data-on={i < filled} data-last={i === GOAL - 1} aria-hidden>
+          <Check size={14} weight="bold" />
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/**
  * البطاقة كما يعرضها Apple Wallet — **من `cardFace()` نفسِه** الذي يكتب `pass.json`.
  * فما يُرى هنا هو ما يصل الجهاز، لا محاكاةٌ تُشبهه (انظر رأس `pass.ts`).
  */
-function WalletCard({ face }: { face: ReturnType<typeof cardFace> }) {
+function WalletCard({ member }: { member: DemoMember }) {
   const [back, setBack] = useState(false);
+  const face = cardFace(member);
+  const done = isComplete(member.stamps);
 
-  // الرمز يُبنى مرّةً لكلّ حمولة — بناؤه ليس رخيصًا ويُعاد الرسم عند كلّ استبدال نقاط.
+  // الرمز يُبنى مرّةً لكلّ حمولة — بناؤه ليس رخيصًا ويُعاد الرسم عند كلّ ختم.
   const qr = useMemo(
     () =>
       qrSvg({
         text: face.barcode,
-        size: 116,
+        size: 108,
         dots: { shape: "fluid", paint: { kind: "solid", color: "var(--navy-800)" } },
         eye: { shape: "rounded", color: null },
         pupil: { shape: "rounded", color: null },
@@ -63,20 +80,27 @@ function WalletCard({ face }: { face: ReturnType<typeof cardFace> }) {
           onClick={() => setBack((b) => !b)}
           aria-label={back ? "عرض وجه البطاقة" : "عرض ظهر البطاقة"}
         >
-          {back ? <ArrowUUpLeft size={15} weight="bold" /> : <Info size={15} weight="bold" />}
+          {back ? <ArrowCounterClockwise size={15} weight="bold" /> : <Info size={15} weight="bold" />}
         </button>
 
         <div className="wp-side" aria-hidden={back}>
           <div className="wp-head">
-            <span className="wp-logo">{face.logoText}</span>
+            {/* الشعار الأبيض من أصول الموقع — هو نفسُه الذي يُحزَم في ملفّ المحفظة */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="wp-logo" src="/brand/logo-horizontal-white.png" alt="نادي أَدِيب" />
             {face.headerFields.map((f) => (
               <Fld key={f.key} f={f} kind="head" />
             ))}
           </div>
 
-          {face.primaryFields.map((f) => (
-            <Fld key={f.key} f={f} kind="primary" />
-          ))}
+          <Stamps filled={member.stamps} />
+
+          {done ? (
+            <div className="wp-ready">
+              <Gift size={16} weight="fill" />
+              مكافأتك جاهزة — {REWARD.title}
+            </div>
+          ) : null}
 
           <div className="wp-row">
             {face.secondaryFields.map((f) => (
@@ -92,7 +116,7 @@ function WalletCard({ face }: { face: ReturnType<typeof cardFace> }) {
 
           {/* الرمز يُحقَن نصًّا: الـSVG داخل المستند فتُحَلّ فيه `var(--…)` من الرموز */}
           <div className="wp-code" dangerouslySetInnerHTML={{ __html: qr }} />
-          <span className="wp-alt">{face.backFields.find((f) => f.key === "serial")?.value}</span>
+          <span className="wp-alt">{member.serial}</span>
         </div>
 
         <div className="wp-side wp-side--back" aria-hidden={!back}>
@@ -122,44 +146,79 @@ const isApple = (): boolean =>
   /iPad|iPhone|iPod/.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
-export function WalletPreview() {
+/** خلاصةُ آخر مزامنة — تُعرَض كما قالها الخادم، فالدفعةُ الصامتة لا تُصدَّق بلا خبر. */
+type SyncState = { devices: number; pushed: number; failures: { status: number; reason?: string }[]; error?: string };
+
+export function WalletPreview({ initial }: { initial: Record<string, { stamps: number; cycles: number }> }) {
   const [memberId, setMemberId] = useState(MEMBERS[0].id);
-  /** ما استُبدل في هذه الجلسة — بمعرّف العضو، فلا يتسرّب رصيدٌ بين الحسابات. */
-  const [redeemed, setRedeemed] = useState<Record<string, string[]>>({});
+  /**
+   * حالةُ التجربة لكلّ حساب — **مبدوءةٌ بما في القاعدة** لا بقيم `demo.ts`: البطاقة في
+   * الجوّال تقرأ من القاعدة، فلو بدأت الشاشةُ من البذرة لَاختلف الاثنان.
+   */
+  const [state, setState] = useState<Record<string, { stamps: number; cycles: number }>>(() =>
+    Object.fromEntries(MEMBERS.map((m) => [m.id, initial[m.serial] ?? { stamps: m.stamps, cycles: m.cycles }])),
+  );
   const [busy, setBusy] = useState(false);
+  const [claimed, setClaimed] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [sync, setSync] = useState<SyncState | null>(null);
   const [passError, setPassError] = useState<{ message: string; missing?: MissingEnv[] } | null>(null);
 
-  const member = memberById(memberId);
-  const mine = redeemed[memberId] ?? [];
-  const spent = OFFERS.filter((o) => mine.includes(o.id)).reduce((s, o) => s + o.cost, 0);
+  const member = { ...memberById(memberId), ...state[memberId] };
+  const done = isComplete(member.stamps);
 
-  // الرصيد الحيّ = المرصود ناقص المستبدَل. البطاقة تُبنى منه، فتتغيّر الرتبةُ أمام العين.
-  const live = { ...member, points: member.points - spent };
-  const face = cardFace(live);
-  const tier = tierOf(live.points);
-  const next = nextTier(live.points);
+  /**
+   * يكتب الحالة في القاعدة ثمّ يدفع نبضةً إلى الأجهزة المسجَّلة — **وهو ما يجعل البطاقة
+   * في الجيب تتغيّر**. يُنادى بعد كلّ تغييرٍ محلّيّ، والشاشةُ لا تنتظره فتبقى فوريّة.
+   */
+  async function syncNow(id: string, stamps: number, cycles: number) {
+    setSyncing(true);
+    try {
+      const res = await fetch("/wallet-preview/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ member: id, stamps, cycles }),
+      });
+      const body = (await res.json()) as SyncState & { error?: string };
+      setSync(
+        res.ok
+          ? { devices: body.devices, pushed: body.pushed, failures: body.failures ?? [] }
+          : { devices: 0, pushed: 0, failures: [], error: body.error ?? "تعذّرت المزامنة." },
+      );
+    } catch {
+      setSync({ devices: 0, pushed: 0, failures: [], error: "تعذّر الاتّصال بالخادم." });
+    } finally {
+      setSyncing(false);
+    }
+  }
 
-  /** نسبةُ التقدّم داخل الرتبة الحاليّة — ١٠٠٪ عند القمّة. */
-  const progress = next
-    ? Math.round(((live.points - tier.from) / (next.tier.from - tier.from)) * 100)
-    : 100;
+  /** يضبط الأختام في المدى — كلّ أزرار التجربة تمرّ به فلا تخرج قيمةٌ عن حدّها. */
+  function setStamps(next: number) {
+    const stamps = Math.min(GOAL, Math.max(0, next));
+    setClaimed(false);
+    setState((s) => ({ ...s, [memberId]: { ...s[memberId], stamps } }));
+    void syncNow(memberId, stamps, state[memberId].cycles);
+  }
 
-  function redeem(o: Offer) {
-    setRedeemed((r) => ({ ...r, [memberId]: [...(r[memberId] ?? []), o.id] }));
+  /** استلامُ المكافأة: **يصفّر العدّاد** ويزيد عدّاد البطاقات المكتملة. */
+  function claim() {
+    const cycles = state[memberId].cycles + 1;
+    setState((s) => ({ ...s, [memberId]: { stamps: 0, cycles } }));
+    setClaimed(true);
+    void syncNow(memberId, 0, cycles);
   }
 
   /**
-   * تنزيل الحزمة الموقَّعة. **والخطأ يُعرَض كما قاله الخادم** — إن نقصت شهادةٌ ظهر
-   * اسمُ المتغيّر الناقص بعينه، فلا يضيع الوقت في تخمين سبب صمت الجهاز.
+   * تنزيل الحزمة الموقَّعة **بحالة الأختام الظاهرة الآن** — فالبطاقة التي تصل الجهاز
+   * هي التي على الشاشة لا الحالة الأصليّة.
    *
-   * **ومساران لا مسار**: على iOS **تنقّلٌ** إلى الرابط، وعلى غيره تنزيلُ blob.
-   * السبب أنّ لوحة «Add to Apple Wallet» يفتحها سفاري حين يقرأ ترويسة
-   * `application/vnd.apple.pkpass` في **استجابة تنقّل**؛ أمّا عنوان blob فلا ترويسة
-   * له يقرؤها، فيهبط الملفّ في «الملفّات» ويُطلَب من المستخدم أن يجده بنفسه — وهذا
-   * يقتل العرض في اللحظة التي يُفترض أن يُبهر فيها.
+   * **ومساران لا مسار**: على iOS **تنقّلٌ** إلى الرابط، وعلى غيره تنزيلُ blob. السبب
+   * أنّ لوحة «Add to Apple Wallet» يفتحها سفاري حين يقرأ ترويسة
+   * `application/vnd.apple.pkpass` في **استجابة تنقّل**؛ أمّا عنوان blob فلا ترويسة له
+   * يقرؤها، فيهبط الملفّ في «الملفّات» ويُطلَب من المستخدم أن يجده بنفسه.
    */
   async function addToWallet() {
-    const url = `/wallet-preview/pkpass?member=${member.id}`;
+    const url = `/wallet-preview/pkpass?member=${memberId}&stamps=${member.stamps}`;
     if (isApple()) {
       window.location.href = url;
       return;
@@ -187,60 +246,127 @@ export function WalletPreview() {
       <Container>
         <SectionHeading eyebrow="معاينة" title="بطاقة ولاء أَدِيب" />
 
-        <Alert
-          tone="warning"
-          title="هذه معاينةٌ لا نظامٌ حيّ"
-          icon={<Sparkle weight="fill" />}
-          className="mb-8"
-        >
-          الحسابات والنقاط وعروض الرعاة في هذه الصفحة <b>وهميّةٌ كلُّها</b> — لا صفَّ منها في قاعدة
-          البيانات ولا اتّصال بها. غايتُها أن تُجرَّب البطاقة وتُعرَض الفكرة قبل بنائها، ثمّ تُحذف
-          الصفحةُ بمجلّدها.
+        <Alert tone="warning" title="هذه معاينةٌ لا نظامٌ حيّ" icon={<Sparkle weight="fill" />} className="mb-8">
+          الحسابات والمشاركات والراعي في هذه الصفحة <b>وهميّةٌ كلُّها</b> — لا تمسّ عضويّةً ولا
+          سجلًّا في النادي، وتعيش في جدولين مؤقّتين يُحذفان مع الصفحة. غايتُها أن تُجرَّب البطاقة
+          وتُعرَض الفكرة قبل بنائها.
         </Alert>
 
-        {/* ── الحساب الوهميّ ── */}
         <div className="mb-8">
           <Segmented
             aria-label="الحساب الوهميّ"
             value={memberId}
             onValueChange={(v) => {
               setMemberId(v);
+              setClaimed(false);
               setPassError(null);
+              // خلاصةُ الدفع تخصّ بطاقةً بعينها — لا تُترَك معلّقةً فوق بطاقةٍ أخرى.
+              setSync(null);
             }}
             items={MEMBERS.map((m) => ({ value: m.id, label: m.name.split(" ")[0] }))}
           />
         </div>
 
-        <div className="mb-10 flex flex-wrap items-start gap-8">
+        <div className="mb-8 flex flex-wrap items-start gap-8">
           {/* ── البطاقة ── */}
           <div className="flex-[1_1_320px]">
-            <WalletCard face={face} />
-            <p className="mt-3 text-center text-xs text-content-muted">اضغط الدائرة أعلى البطاقة لترى ظهرها</p>
+            <WalletCard member={member} />
+            <p className="mt-3 text-center text-xs text-content-muted">اضغط الدائرة أسفل البطاقة لترى ظهرها</p>
           </div>
 
-          {/* ── حالة الرصيد ── */}
+          {/* ── التحكّم ── */}
           <div className="flex-[2_1_420px]">
-            <div className="stat-grid mb-6">
-              <Stat icon={<Trophy weight="fill" />} value={arNum(live.points)} label="الرصيد الحاليّ" />
-              <Stat icon={<Medal weight="fill" />} value={tier.name} label="الرتبة" tone="warning" />
-              <Stat
-                icon={<Ticket weight="fill" />}
-                value={arNum(mine.length)}
-                label="عروضٌ استُبدلت"
-                tone="success"
-              />
-            </div>
-
             <Card className="mb-6">
+              <CardHeader
+                icon={<Plus weight="bold" />}
+                title="تحكّمٌ للتجربة"
+                subtitle="اختم مشاركاتٍ يدويًّا لترى البطاقة تمتلئ — في النظام الحقيقيّ يختمها حضورُ الفعاليّة"
+                actions={
+                  <Badge tone={done ? "success" : "info"}>
+                    <span className="font-latin">{arNum(member.stamps)}</span> / <span className="font-latin">{arNum(GOAL)}</span>
+                  </Badge>
+                }
+              />
               <CardBody>
-                <div className="mb-2 flex items-baseline justify-between gap-3">
-                  <b className="text-sm">{next ? `إلى رتبة «${next.tier.name}»` : "بلغَ قمّة السلّم"}</b>
-                  <span className="text-xs text-content-muted">
-                    {next ? `${arNum(next.remaining)} نقطة` : tier.perk}
-                  </span>
+                <div className="flex flex-wrap gap-3">
+                  <Button size="sm" onClick={() => setStamps(member.stamps + 1)} disabled={done}>
+                    <Plus weight="bold" />
+                    اختم مشاركة
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setStamps(member.stamps - 1)} disabled={member.stamps === 0}>
+                    <Minus weight="bold" />
+                    تراجَع
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setStamps(GOAL - 1)}>
+                    اقفز إلى <span className="font-latin">{arNum(GOAL - 1)}</span>
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setStamps(0)}>
+                    <ArrowCounterClockwise weight="bold" />
+                    صفّر
+                  </Button>
                 </div>
-                <div className="wp-meter">
-                  <i style={{ width: `${progress}%` }} />
+
+                <p className="mt-4 text-xs text-content-muted">
+                  {statusText(member.stamps)} · بطاقاتٌ أكملها:{" "}
+                  <span className="font-latin">{arNum(member.cycles)}</span>
+                </p>
+
+                {/* حالةُ الدفع — الدفعةُ الصامتة لا تُرى، فتُقال. */}
+                <p className="mt-2 flex items-center gap-2 text-xs">
+                  <DeviceMobile size={14} weight="fill" className="shrink-0 text-content-muted" />
+                  {syncing ? (
+                    <span className="text-content-muted">تُرسَل الآن…</span>
+                  ) : sync?.error ? (
+                    <span className="text-danger">{sync.error}</span>
+                  ) : sync ? (
+                    sync.devices === 0 ? (
+                      <span className="text-content-muted">
+                        حُفظت — ولا جهازَ سجّل هذه البطاقة بعد. أضِفها إلى محفظتك ثمّ اختم.
+                      </span>
+                    ) : sync.failures.length > 0 ? (
+                      <span className="text-danger">
+                        وصلت <span className="font-latin">{arNum(sync.pushed)}</span> من{" "}
+                        <span className="font-latin">{arNum(sync.devices)}</span> — أبل تقول:{" "}
+                        {sync.failures[0].reason ?? sync.failures[0].status}
+                      </span>
+                    ) : (
+                      <span className="text-success">
+                        دُفعت إلى <span className="font-latin">{arNum(sync.pushed)}</span>{" "}
+                        {sync.pushed === 1 ? "جهاز" : "أجهزة"} — تتحدّث البطاقة خلال ثوانٍ
+                      </span>
+                    )
+                  ) : (
+                    <span className="text-content-muted">
+                      كلُّ ختمٍ يُحفَظ ويُدفَع إلى الأجهزة التي أضافت هذه البطاقة
+                    </span>
+                  )}
+                </p>
+              </CardBody>
+            </Card>
+
+            {/* ── المكافأة ── */}
+            <Card tone={done ? "success" : undefined} className="mb-6">
+              <CardHeader
+                icon={<Storefront weight="fill" />}
+                title="مكافأة الراعي"
+                subtitle={REWARD.sponsor}
+                actions={<Badge tone="info" size="sm">راعٍ مُختلَقٌ للعرض</Badge>}
+              />
+              <CardBody>
+                <b className="block text-lg">{REWARD.title}</b>
+                <p className="mt-1 text-xs text-content-muted">{REWARD.terms}</p>
+
+                <div className="mt-4">
+                  {claimed ? (
+                    <Alert tone="success" title="استُلمت المكافأة" compact>
+                      صُفِّر العدّاد وبدأت بطاقةٌ جديدة — وهذه هي الدورة التي تجعل الولاء يتكرّر.
+                    </Alert>
+                  ) : (
+                    <Button variant={done ? "success" : "ghost"} disabled={!done} onClick={claim}>
+                      <Gift weight="fill" />
+                      {done ? "سلّم المكافأة وصفّر البطاقة" : `تُصرَف عند المشاركة ${arNum(GOAL)}`}
+                    </Button>
+                  )}
                 </div>
               </CardBody>
             </Card>
@@ -250,15 +376,6 @@ export function WalletPreview() {
                 <Wallet weight="fill" />
                 أضِف إلى Apple Wallet
               </Button>
-              {mine.length > 0 ? (
-                <Button
-                  variant="ghost"
-                  onClick={() => setRedeemed((r) => ({ ...r, [memberId]: [] }))}
-                >
-                  <ArrowsClockwise weight="bold" />
-                  أعِد الرصيد
-                </Button>
-              ) : null}
             </div>
 
             {passError ? (
@@ -277,138 +394,6 @@ export function WalletPreview() {
             ) : null}
           </div>
         </div>
-
-        {/* ── سلّم الرتب ── */}
-        <Card className="mb-8">
-          <CardHeader
-            icon={<Medal weight="fill" />}
-            title="سلّم الرتب"
-            subtitle="الرتبة تُشتقّ من الرصيد ولا تُمنَح — فلا يُسأل أحدٌ عن ترقيةِ أحد"
-          />
-          <CardBody>
-            <div className="card-grid">
-              {TIERS.map((t) => {
-                const at = t.key === tier.key;
-                return (
-                  <Card key={t.key} tone={at ? "warning" : undefined}>
-                    <CardBody>
-                      <div className="mb-1 flex items-center justify-between gap-2">
-                        <b className="font-display text-lg">{t.name}</b>
-                        {at ? <Badge tone="warning" variant="solid" size="sm">رتبتُه الآن</Badge> : null}
-                      </div>
-                      <p className="font-latin text-xs text-content-muted">{arNum(t.from)} نقطة فأكثر</p>
-                      <p className="mt-2 text-sm">{t.perk}</p>
-                    </CardBody>
-                  </Card>
-                );
-              })}
-            </div>
-          </CardBody>
-        </Card>
-
-        {/* ── عروض الرعاة ── */}
-        <Card className="mb-8">
-          <CardHeader
-            icon={<Storefront weight="fill" />}
-            title="عروض الرعاة"
-            subtitle="ما يُستبدَل بالنقاط — وهو ما يُعرَض على الراعي: جمهورٌ مُقاسٌ يصله عرضُه"
-            actions={<Badge tone="info" size="sm">رعاةٌ مُختلَقون للعرض</Badge>}
-          />
-          <CardBody>
-            <div className="card-grid">
-              {OFFERS.map((o) => {
-                const done = mine.includes(o.id);
-                const unlocked = tierUnlocks(live.points, o);
-                const affordable = live.points >= o.cost;
-                const need = TIERS.find((t) => t.key === o.minTier)!;
-
-                return (
-                  <Card key={o.id} tone={done ? "success" : undefined}>
-                    <CardBody>
-                      <p className="text-xs text-content-muted">{o.sponsor}</p>
-                      <b className="mt-1 block text-base">{o.title}</b>
-
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <Badge tone="info" size="sm">
-                          <span className="font-latin">{arNum(o.cost)}</span> نقطة
-                        </Badge>
-                        <Badge tone="neutral" variant="outline" size="sm">
-                          {need.name} فأعلى
-                        </Badge>
-                        <Badge tone="neutral" variant="outline" size="sm">
-                          بقي <span className="font-latin">{arNum(o.left)}</span>
-                        </Badge>
-                      </div>
-
-                      <div className="mt-4">
-                        {done ? (
-                          <Badge tone="success" variant="solid" icon={<CheckCircle weight="fill" />}>
-                            استُبدل
-                          </Badge>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant={unlocked && affordable ? "primary" : "ghost"}
-                            disabled={!unlocked || !affordable}
-                            onClick={() => redeem(o)}
-                          >
-                            {unlocked && affordable ? null : <Lock weight="fill" />}
-                            {!unlocked
-                              ? `يفتحه «${need.name}»`
-                              : !affordable
-                                ? `ينقصه ${arNum(o.cost - live.points)} نقطة`
-                                : "استبدِل"}
-                          </Button>
-                        )}
-                      </div>
-                    </CardBody>
-                  </Card>
-                );
-              })}
-            </div>
-          </CardBody>
-        </Card>
-
-        {/* ── الإنجازات ── */}
-        <Card className="mb-8">
-          <CardHeader
-            icon={<Sparkle weight="fill" />}
-            title="الإنجازات المرصودة"
-            subtitle="تُرصَد يدويًّا باسم من رصدها — فلكلّ نقطةٍ سببٌ مكتوبٌ ومسؤولٌ عنه"
-          />
-          <CardBody>
-            <ul className="space-y-3">
-              {member.achievements.map((a) => (
-                <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3 last:border-0 last:pb-0">
-                  <div className="min-w-0">
-                    <b className="block text-sm">{a.label}</b>
-                    <span className="text-xs text-content-muted">
-                      {arDate(a.date)} · رصدها {a.by}
-                    </span>
-                  </div>
-                  <Badge tone="success" size="sm">
-                    +<span className="font-latin">{arNum(a.points)}</span>
-                  </Badge>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 text-xs text-content-muted">
-              المجموع المرصود <span className="font-latin">{arNum(member.points)}</span> نقطة
-              {spent > 0 ? (
-                <>
-                  {" "}— استُبدل منها <span className="font-latin">{arNum(spent)}</span>
-                </>
-              ) : null}
-            </p>
-          </CardBody>
-        </Card>
-
-        <Alert tone="info" title="ما يلزم لتصير البطاقة حقيقيّةً على جهازك" icon={<Wallet weight="fill" />}>
-          الصفحة تولّد ملفّ <code className="font-latin">.pkpass</code> موقَّعًا فعلًا — ينقصها من حساب
-          مطوّر أبل <b>شهادةُ Pass Type ID</b> ومفتاحُها وشهادةُ أبل الوسيطة (WWDR). اضغط «أضِف إلى
-          Apple Wallet» فيقول لك الخادمُ أيّ متغيّرٍ ينقص بالاسم. وشهادةُ المطوّر التي بيدك <b>غيرُ</b>
-          شهادة نوع البطاقة — تُنشَأ الثانيةُ من الحساب نفسه بضغطات.
-        </Alert>
       </Container>
     </main>
   );
