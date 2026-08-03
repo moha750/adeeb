@@ -41,8 +41,10 @@ import {
   QrCode,
   EnvelopeSimpleOpen,
 } from "@phosphor-icons/react";
+import type { IconWeight } from "@phosphor-icons/react";
 
-type P = { className?: string };
+// الوزن يُمرَّر لمن يحتاج استثناءً من سياق الشريط (duotone) — انظر `.ash-caret` في الهيكل
+type P = { className?: string; weight?: IconWeight };
 
 // عضويتي — بطاقة الهويّة: عضويّة صاحب الجلسة نفسه (حلّت محلّ بيت «نظرة عامة»)
 export const IconMe = (p: P) => <IdentificationBadge aria-hidden {...p} />;
