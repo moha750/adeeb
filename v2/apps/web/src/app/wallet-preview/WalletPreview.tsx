@@ -54,6 +54,11 @@ function Stamps({ filled }: { filled: number }) {
  */
 function WalletCard({ member }: { member: DemoMember }) {
   const [back, setBack] = useState(false);
+  /**
+   * تلألؤُ السطح — **صنفٌ يُشعله المرور وتُطفئه النهاية**، لا `:hover` في الورقة: خروجُ
+   * المؤشّر وسطَ العبور يبتر الشريطَ فيختفي فجأةً في منتصف البطاقة (انظر `card.css`).
+   */
+  const [sheen, setSheen] = useState(false);
   const face = cardFace(member);
   const done = isComplete(member.stamps);
 
@@ -73,7 +78,16 @@ function WalletCard({ member }: { member: DemoMember }) {
 
   return (
     <div className="wp-stage">
-      <div className="wp-flip" data-face={back ? "back" : "front"}>
+      <div
+        className={sheen ? "wp-flip is-sheen" : "wp-flip"}
+        data-face={back ? "back" : "front"}
+        onMouseEnter={() => setSheen(true)}
+        onAnimationEnd={(e) => {
+          // القلبُ نفسُه لا يُحرَّك بـ`animation`، لكن نبضةَ الختم الأخير تصعد إلى هنا —
+          // فلا يُطفَأ التلألؤ إلّا بنهايته هو.
+          if (e.animationName.startsWith("wp-sheen")) setSheen(false);
+        }}
+      >
         <button
           type="button"
           className="wp-turn"

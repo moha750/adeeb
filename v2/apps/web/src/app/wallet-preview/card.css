@@ -32,19 +32,72 @@
 
 .wp-flip[data-face="back"] { transform: rotateY(180deg); }
 
-/* الوجهان يتراكبان: الأوّل يقود الارتفاع، والثاني مُطلَقٌ فوقه مقلوبًا سلفًا. */
+/* الوجهان يتراكبان: الأوّل يقود الارتفاع، والثاني مُطلَقٌ فوقه مقلوبًا سلفًا.
+
+   **والسطحُ سطحُ هويّةٍ لا لونٌ مصمت**: تدرّج `--grad-primary` نفسُه الذي يحمل هويّة
+   العضو في `.mcard-hero`، وفوقه بؤرةُ ضوءٍ في الزاوية العليا كشريط `.acard-banner`،
+   وخيطٌ داخليّ زجاجيّ يرسم حافّة البطاقة. ثلاثُ طبقاتٍ كلُّها من الرموز.
+
+   **وهنا يفترق المعروضُ عن المحمول**: `pass.json` لا يعرف إلّا `backgroundColor`
+   واحدًا مصمتًا (كحليّ‑700) — فأبل لا ترسم تدرّجًا ولا نقشًا على سطح البطاقة. فما
+   يفترق هو **سطحُ البطاقة** وحده؛ أمّا الحقول والأختام والباركود فمن `cardFace()`
+   نفسِه، ولا يفترق منها شيء. وكحليّ‑700 هو تقريبًا منتصفُ هذا التدرّج، فالبطاقةُ في
+   الجهاز أهدأُ لا مختلفة. */
 .wp-side {
+  position: relative;
   backface-visibility: hidden;
   border-radius: var(--radius);
-  background: var(--navy-700);          /* = backgroundColor في pass.json */
+  background:
+    radial-gradient(300px 190px at 86% -10%, color-mix(in oklab, var(--steel-300) 50%, transparent), transparent 70%),
+    var(--grad-primary);
   color: var(--color-on-primary);
-  box-shadow: var(--shadow-lg);
+  /* الظلُّ من السلّم، والخيطُ الداخليّ زجاجُ الهوية — حافّةٌ تُقرأ على الأسطح الفاتحة. */
+  box-shadow: var(--shadow-lg), inset 0 0 0 1px var(--glass-border);
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   overflow: hidden;
 }
+
+/* المحتوى يعلو الطبقات المزخرِفة: النقشُ والتلألؤ عنصران **مُطلَقان**، والمُطلَقُ يُرسَم
+   فوق المحتوى المتدفّق مهما تقدّمه في الشيفرة — فيُرفَع المحتوى بـ`position` لا بأكثر. */
+.wp-side > * { position: relative; }
+
+/* نقشُ الهوية فوق التدرّج — **قاعدةً مرصوفةً لا زخرفةً عائمة**، وهي معالجةُ قسم
+   «كُن جزءًا من مجتمع أديب» في الهبوط حرفيًّا: شريطٌ بارتفاعٍ مقطوع يُرصَف أفقيًّا
+   (`repeat-x`) فيمتدّ من حافّةٍ إلى حافّة. والفرقُ عن الزخرفة المتوسّطة فرقُ نيّة: تلك
+   تُقرأ صورةً مقصوصةً في الوسط، وهذه تُقرأ **قاعدةَ البطاقة**.
+
+   **والارتفاعُ بالبكسل لا بنسبةٍ من العرض** (درسُ `.aauth-side::after`): النقش شريطٌ
+   عريض (1920×287)، فقياسُه بالعرض على بطاقةٍ ٣٤٠px يسحقه إلى خيطٍ لا يُقرأ — ويزداد
+   سحقًا كلّما ضاقت الشاشة. و٨٤px تُبقيه شريطًا واضحًا ثابتًا تحت الباركود لا فوقه. */
+.wp-side::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: url("/brand/pattern-white.svg") repeat-x center bottom / auto 84px;
+  opacity: .16;
+}
+
+/* تلألؤ البطاقة — شريطٌ زجاجيّ مائل يسكن خارج الإطار فلا يُرى، ويعبر السطح مرّةً عند
+   المرور: إيماءةُ «بطاقةٍ تُقلَّب في الضوء» كما في `.mcard-hero::after`. **ومُعلَّقٌ بصنفٍ
+   لا بـ`:hover`**: خروجُ المؤشّر وسط العبور يبتر الشريط فيختفي فجأةً في منتصف السطح؛
+   فالمرور يُشعله والبطاقةُ تُطفئه عند `animationend`. */
+.wp-side::after {
+  content: "";
+  position: absolute;
+  inset-block: -60%;
+  inline-size: 42%;
+  inset-inline-start: -60%;
+  transform: rotate(18deg);
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--glass-bg-strong), transparent);
+}
+
+.wp-flip.is-sheen .wp-side::after { animation: wp-sheen 2.2s var(--ease-standard); }
+@keyframes wp-sheen { from { inset-inline-start: -60%; } to { inset-inline-start: 130%; } }
 
 .wp-side--back {
   position: absolute;
@@ -56,13 +109,23 @@
   padding-bottom: 48px;
 }
 
+/* **والظهرُ بلا نقشٍ ولا تلألؤ**: هو وحدَه سطحٌ يُمرَّر، والمُطلَقُ داخل حاويةٍ تُمرَّر
+   ينزلق مع محتواها — فيتحرّك النقشُ تحت النصّ بدل أن يثبت سطحًا. والتلألؤُ أسوأ: شريطُه
+   يسكن **خارج** الإطار، فيصير في حاويةٍ تُمرَّر فائضًا يُولّد شريطَ تمريرٍ أفقيًّا. يبقى
+   للظهر التدرّجُ وبؤرةُ الضوء — سطحُ الهويّة نفسُه بلا ما يخصّ وجهًا يُنظَر إليه. */
+.wp-side--back::before, .wp-side--back::after { content: none; }
+
 /* ── الترويسة ──────────────────────────────────────────────────────────── */
 
+/* خيطٌ زجاجيّ يفصل الترويسة عمّا تحتها — يُثبّت الشعارَ والعدّاد صفًّا واحدًا فوق سطحٍ
+   صار متدرّجًا، فلا يسبحان فيه. (وهو خيطُ `.wp-back-h` نفسُه، فوجها البطاقة متّسقان.) */
 .wp-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--glass-border);
 }
 
 /* الشعار الأبيض بارتفاعٍ ثابتٍ وعرضٍ يتبع نسبتَه — كما تعرضه أبل في خانة الشعار.
@@ -87,11 +150,14 @@
   max-width: 44px;
   justify-self: center;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, .42);
+  border: 2px solid color-mix(in oklab, var(--color-on-primary) 42%, transparent);
+  /* غِشاوةٌ زجاجيّةٌ في الخانة الفارغة: السطحُ صار متدرّجًا، فطوقٌ بلا ملءٍ يذوب في
+     أفتح أطرافه. وهي خافتةٌ جدًّا (‏٪٨) فلا تُنازع فرقَ الامتلاء الذي عليه المدار. */
+  background: color-mix(in oklab, var(--color-on-primary) 8%, transparent);
   display: grid;
   place-items: center;
   color: var(--navy-700);
-  transition: background var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast);
+  transition: background var(--dur-fast), border-color var(--dur-fast), box-shadow var(--dur-fast), transform var(--dur-fast);
 }
 
 .wp-stamp > svg { opacity: 0; transform: scale(.6); transition: opacity var(--dur-fast), transform var(--dur-fast); }
@@ -99,6 +165,9 @@
 .wp-stamp[data-on="true"] {
   background: var(--color-on-primary);
   border-color: var(--color-on-primary);
+  /* هالةُ حالةٍ لا ظلُّ عمق (ق٥‑ب): الظلُّ الموسوم فولاذيٌّ فيُبتلع على الكحليّ، والهالة
+     البيضاء تُبعد القرصَ المختوم عن السطح فيتقدّم صفُّ ما تمّ على ما بقي. */
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-on-primary) 14%, transparent);
 }
 
 .wp-stamp[data-on="true"] > svg { opacity: 1; transform: none; }
@@ -110,6 +179,7 @@
 @media (prefers-reduced-motion: reduce) {
   .wp-stamp, .wp-stamp > svg { transition: none; }
   .wp-stamp[data-last="true"][data-on="true"] { animation: none; }
+  .wp-flip.is-sheen .wp-side::after { animation: none; }
 }
 
 /* شريطُ «مكافأتك جاهزة» — يظهر مكان الحالة حين تكتمل. */
@@ -162,7 +232,8 @@
 
 /* ── الباركود ──────────────────────────────────────────────────────────── */
 
-/* أبيضُ صريحٌ تحت الرمز: الرمز يُقرأ بالتباين، والكحليّ يبتلعه. */
+/* أبيضُ صريحٌ تحت الرمز: الرمز يُقرأ بالتباين، والكحليّ يبتلعه.
+   وحلقةٌ زجاجيّةٌ حوله تجعله **لوحًا مركَّبًا** في السطح المتدرّج لا مستطيلًا ملقًى عليه. */
 .wp-code {
   margin-top: auto;
   align-self: center;
@@ -170,6 +241,7 @@
   border-radius: var(--radius-sm);
   padding: 8px;
   line-height: 0;
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--color-on-primary) 10%, transparent);
 }
 
 .wp-alt {
@@ -219,23 +291,6 @@
 
 .wp-turn:hover { background: var(--navy-900); }
 
-/* ── شريط الرصيد ───────────────────────────────────────────────────────── */
-
-.wp-meter {
-  height: 8px;
-  border-radius: var(--radius-full);
-  background: var(--color-surface-2);
-  overflow: hidden;
-}
-
-.wp-meter > i {
-  display: block;
-  height: 100%;
-  border-radius: var(--radius-full);
-  background: var(--grad-primary);
-  transition: width .5s ease;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .wp-flip, .wp-meter > i { transition: none; }
+  .wp-flip { transition: none; }
 }
