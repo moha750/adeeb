@@ -4785,15 +4785,15 @@ html:not(.js) .ldr-boot { display: none; }
 .tb-view button { border-radius: var(--radius-nested); }
 
 /* ============================================================
-   مؤشّرُ أديب — أسرتان على محرّكٍ واحد (عيّناتٌ تُقارَن · ٢٠٢٦-٠٨-٠٣)
-   المحرّك يكتب إحداثيّاتٍ لا غير: `--cx/--cy` (النقطة) و`--hx/--hy` (المتأخّرة)،
-   ويزيد بحسب التوجّه سرعةً متجهة أو مستطيلَ الهدف. والتوجّهاتُ تقرأ ولا تُعيد
-   كتابةَ المحرّك — يُعدَم غيرُ المختار بحذف كتلته وحدها.
+   مؤشّرُ أديب — هالةٌ لزجةٌ تحفّ ريشةً، ومنها أثرُ حبرٍ يجفّ
+   اختير من **ثلاثة عشر توجّهًا** جُرّبت في `/ui/cursor` (٢٠٢٦-٠٨-٠٣)، وأُعدم ما
+   سواه فلم يبقَ منه سطر. والباقي هو التوجّه الرابع («القطرة اللزجة») في هالته:
+   تلحق بتأخّر، وتتمطّط في اتّجاه الاندفاع وتنضغط عموديًّا عليه فيثبت حجمُها
+   كالسائل — واللزوجةُ **صفةُ الهالة** لا قطرةٌ تُضاف في مركزها (قرار المالك).
    **النغمةُ تُقرأ من العنصر** (`--shadow-tone`، ق٥) فالمؤشّرُ يحمرّ فوق «حذف»
    بلا أن يعرف أنّه حذف — ولا لونَ يُخترع هنا.
-   الأسرتان: **قارئ النغمة** (tone · morph · brackets · liquid) و**الريشة**
-   (quill · tilt · trail · blot). وأُعدمت ثلاثةٌ لم تُقرّ: السهم المعكوس ·
-   المؤشّر يتكلّم · كشّاف النقش.
+   **ولا ميلَ للريشة:** جُرّب فكان يهتزّ، ولم تُجدِ ثلاثُ معالجاتٍ للحساب حتى
+   أُطفئ الميلُ نفسُه فسكنت. لا يُعاد إلّا ببناءٍ مختلفٍ كلّيًّا.
    ============================================================ */
 
 /* مؤشّرُ النظام يُطفأ على المضيف وحده (الصفحةُ كلُّها أو مسرحُ المعرض) */
@@ -4806,7 +4806,7 @@ html:not(.js) .ldr-boot { display: none; }
 .cur {
   position: fixed; inset: 0; z-index: var(--z-cursor); pointer-events: none;
   opacity: 0; transition: opacity var(--dur);
-  --tilt: 0deg; --press: 1; --ang: 0deg; --stretch: 1; --squash: 1;
+  --ang: 0deg; --stretch: 1; --squash: 1;
 }
 .cur[data-on="true"] { opacity: 1; }
 /* وحيث يتولّى مؤشّرُ النظام (كتابةٌ أو منعٌ) تنسحب الطبقةُ — لا مؤشّران معًا */
@@ -4817,195 +4817,87 @@ html:not(.js) .ldr-boot { display: none; }
    تنقلب فيهرب المؤشّرُ إلى الطرف المقابل. والمركزةُ بالهوامش السالبة لا بـ
    `transform`، كي يبقى `transform` حرًّا للتحجيم بنقطةِ إصابةٍ ثابتة. */
 .cur > * { position: absolute; top: 0; left: 0; will-change: transform; }
-.cur-dot, .cur-nib { translate: var(--cx) var(--cy); }
+.cur-pen { translate: var(--cx) var(--cy); }
 .cur-halo { translate: var(--hx) var(--hy); }
 
-/* ── أ) قارئ النغمة (الأساس): نقطةٌ صلبة وهالةٌ تلحقها. فوق الهدف تصغر النقطةُ
-      وتتّسع الهالةُ وتشتدّ — والنغمةُ نغمةُ الهدف نفسِه. */
-.cur-dot {
-  width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%;
-  background: rgb(var(--shadow-tone));
-  transition: scale var(--dur) var(--ease-standard), background-color var(--dur), opacity var(--dur);
-}
-.cur[data-mode="hot"] .cur-dot { scale: .5; }
+/* ── الهالةُ اللزجة: تلحق المؤشّرَ (`--hx` المتأخّرة لا `--cx`)، وتتمطّط بمقدارٍ
+      تنضغط عموديًّا عليه فيثبت حجمُها — والزاويةُ والنسبتان من المحرّك. وعند
+      الهدف تتّسع وتشتدّ، وتلبس نغمتَه. */
 .cur-halo {
   width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%;
   border: var(--card-stroke-w) solid rgba(var(--shadow-tone), .5);
   background: rgba(var(--shadow-tone), .1);
-  transition: scale var(--dur) var(--ease-standard), border-color var(--dur), background-color var(--dur);
+  /* المقاسُ حاصلُ ضربِ اللزوجة في الضغط — بُعدان في خاصّيّةٍ واحدة، لا يُلغي أحدُهما الآخر */
+  rotate: var(--ang); scale: calc(var(--stretch) * var(--pk, 1)) calc(var(--squash) * var(--pk, 1));
+  /* **ولا انتقالَ للمقاس البتّة:** المحرّكُ يكتب التمطّطَ كلَّ إطار، فأيُّ انتقالٍ
+     يلاحق هدفًا يتبدّل كلَّ 16ms — ويبتلع الذروةَ إذ لا تدوم أطولَ منه، فتبدو
+     الهالةُ جامدةً وهي تتحرّك (0.25s ابتلعها كلَّها، و0.15s أبقى بعضَها).
+     والتنعيمُ ليس مكانُه هنا أصلًا: السرعةُ مُرشَّحةٌ في المحرّك (lerp 0.25) قبل
+     أن تصير مقاسًا — **يُنعَّم السبب لا الأثر**. واللونُ والحدُّ حالتان لا حركةٌ
+     مستمرّة، فيبقيان على مدّتهما. */
+  transition: border-color var(--dur), background-color var(--dur);
 }
-.cur[data-mode="hot"] .cur-halo { scale: 1.75; background: rgba(var(--shadow-tone), .16); }
-
-/* ── ب) الالتصاقُ بالهدف (morph) وأقواسُ الالتقاط (brackets): صندوقٌ واحدٌ
-      لهما — يتبع المؤشّر دائرةً صغيرة في السكون، فإذا وقع على هدفٍ **انتقل إليه
-      وأخذ مقاسَه وزاويتَه**. المصدرُ الوحيد للمقاس هو المحرّك (--mw/--mh/--mr)،
-      والانتقالُ يقع لأنّ `translate` نفسَه يتحوّل من `--hx` إلى `--mx`. */
-.cur-box {
-  width: var(--bw, 34px); height: var(--bh, 34px); border-radius: var(--br, 50%);
-  translate: var(--hx) var(--hy); transform: translate(-50%, -50%);
-  transition: translate var(--dur) var(--ease-standard), width var(--dur) var(--ease-standard),
-              height var(--dur) var(--ease-standard), border-radius var(--dur) var(--ease-standard),
-              background-color var(--dur), border-color var(--dur);
+.cur[data-mode="hot"] .cur-halo {
+  scale: calc(var(--stretch) * 1.75 * var(--pk, 1)) calc(var(--squash) * 1.75 * var(--pk, 1));
+  background: rgba(var(--shadow-tone), .16);
 }
-/* الالتصاقُ يقع على الحالة `hot` وحدها — الحقلُ والمعطَّل تنسحب الطبقةُ فيهما أصلًا */
-.cur[data-mode="hot"] .cur-box {
-  translate: var(--mx) var(--my);
-  --bw: calc(var(--mw) + 10px); --bh: calc(var(--mh) + 10px);
-  /* زاويةُ الهدف + نصفُ الفراغ المضاف = **متراكزة** مع زاويته (ق٢) لا موازيةً بالصدفة */
-  --br: calc(var(--mr) + 5px);
+
+/* ── الريشة: طرفُ السنّ هو نقطةُ الإصابة، والتحجيمُ حولَ الطرف نفسِه فلا يزحف.
+      **والمقاسُ رمزٌ واحد، والطرفُ يثبت بالبناء لا بالضبط اليدويّ:** طرفُ السنّ
+      عند (2,26) من مربّعٍ ضلعُه 28 في المرسم — أي عند 7.14% و92.86% من الضلع.
+      فمتى اشتُقّ الهامشُ ونقطةُ الدوران من **نسبتَي** الطرف لا من قيمتَيه، بقي
+      الطرفُ على نقطة الفأرة عند أيّ مقاس؛ ولو كُتبت القيمُ صريحةً لانفلت الطرفُ
+      مع أوّل تكبير. */
+.cur-pen {
+  --nib: 34px;
+  width: var(--nib); height: var(--nib);
+  margin: calc(var(--nib) * -0.9286) 0 0 calc(var(--nib) * -0.0714);
+  transform-origin: calc(var(--nib) * 0.0714) calc(var(--nib) * 0.9286);
+  /* **الميلُ بلا `transition`:** المحرّكُ يكتبه كلَّ إطارٍ مُرشَّحًا، وأيُّ انتقالٍ
+     هنا يلاحق هدفًا متبدّلًا فيزيده تأخّرًا لا نعومة — يُنعَّم السبب لا الأثر.
+     أمّا المقاسُ (مرورٌ وضغط) فحالتان لا حركةٌ مستمرّة، فله انتقالُه. */
+  rotate: var(--tilt, 0deg);
+  transition: scale var(--dur) var(--ease-standard);
+  /* **طبقةٌ مضمونة، لا مرجوّة:** `will-change` تلميحٌ يجوز للمتصفّح إهمالُه، فيُعاد
+     رسمُ الغلاف مع كلّ درجةِ دوران. و`translateZ(0)` يُلزمه بطبقةٍ ثلاثيّةِ الأبعاد
+     تُدار على المعالج الرسوميّ من نسيجٍ مرسومٍ مرّةً واحدة. */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
-/* السطحُ ممتلئٌ في `morph` (يلبس الهدفَ)، وخالٍ في `brackets` (أربعةُ أقواسٍ لا سطح) */
-.cur-morph .cur-box {
-  border: var(--card-stroke-w) solid rgba(var(--shadow-tone), .5);
-  background: rgba(var(--shadow-tone), .1);
+.cur-nib { display: block; width: 100%; height: 100%; }
+/* **الحدُّ أثخن والرِّبُّ أُزيل — علّةُ الاهتزاز كانت هنا** (٢٠٢٦-٠٨-٠٣): الخطوطُ
+   الرفيعةُ الفاتحةُ (شعرةٌ 1.4px ورِبٌّ 1.2px بشفافيّة 45%) تُرسَم على شبكة
+   البكسلات، فإذا دارت الريشةُ درجةً أو بعضَ درجةٍ **انزاح نصيبُ كلّ بكسلٍ من
+   الخطّ** فتزحف حوافُّه من إطارٍ إلى إطار — وذاك ما يُقرأ اهتزازًا، لا الحساب.
+   والخطُّ الأثخن يوزّع الانزياحَ على مساحةٍ أكبر فيختفي أثرُه؛ والرِّبُّ الشفّاف
+   لا علاجَ له فأُزيل (والسنُّ يبقى مقروءًا بتدرّجه وحدَه). */
+.cur-nib path { stroke: var(--color-surface); stroke-width: 2.4; stroke-linejoin: round; paint-order: stroke fill; }
+/* المرورُ والضغطُ **مقاسٌ فقط** على الغلاف — والزاويةُ تبقى لليد وحدها، فلا تُنتزع
+   منها لحظةَ المرور فتتجمّد الرقصةُ عند حافّة كلّ زرّ. */
+.cur[data-mode="hot"] .cur-pen { scale: 1.1; }
+
+/* ── النقر: السنُّ **يضغط** ما دام الزرُّ مضغوطًا — ينكمش قليلًا ويعتدل ميلُه، حول
+      طرفه فلا يزحف عن نقطة الإصابة. وترتيبُه بعد قاعدة الهدف مقصود: خصوصيّتُهما
+      واحدة (0,3,0) فالمتأخّرُ يفوز — أي أنّ الضغطَ يغلب المرور، وهو الصواب. */
+.cur[data-press="true"] .cur-pen { scale: .9; }
+
+/* والهالةُ تشتدّ حبرًا تحت الضغط — لونُها وحدَه هنا؛ أمّا انكماشُها فمقاسٌ يُضرَب
+   في مقاسها الجاري (`--pk` أعلاه)، فلا قاعدةَ ثانيةً تنازع اللزوجةَ على المقاس. */
+.cur[data-press="true"] .cur-halo {
+  background: rgba(var(--shadow-tone), .22);
+  border-color: rgba(var(--shadow-tone), .8);
 }
-.cur-morph[data-mode="hot"] .cur-box { background: rgba(var(--shadow-tone), .14); border-color: rgba(var(--shadow-tone), .7); }
 
-.cur-brk i {
-  position: absolute; width: 11px; height: 11px;
-  border: 2px solid rgb(var(--shadow-tone)); border-radius: 3px;
-  transition: opacity var(--dur);
-}
-/* كلُّ قوسٍ ضلعان من زاويته — لا إطارٌ كامل: الالتقاطُ يُقال بالأركان */
-.cur-brk i:nth-child(1) { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
-.cur-brk i:nth-child(2) { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
-.cur-brk i:nth-child(3) { bottom: -2px; left: -2px; border-right: 0; border-top: 0; }
-.cur-brk i:nth-child(4) { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
-/* في السكون تنطبق الأقواسُ على مربّعٍ صغير؛ ونقطةُ المركز تغيب عند الالتقاط فلا تزدحم */
-.cur-brackets[data-mode="hot"] .cur-dot { opacity: 0; }
-
-/* ── ج) القطرةُ اللزجة (liquid): حجمُ القطرة ثابتٌ كالسائل — تتمطّط في اتّجاه
-      الحركة بقدر ما تنضغط عموديًّا عليه. الزاويةُ والنسبتان من المحرّك، والانتقالُ
-      متروكٌ للإطار (لا `transition`) وإلّا تأخّر الشكلُ عن سببه. */
-.cur-liquid .cur-dot, .cur-liquid .cur-halo { rotate: var(--ang); scale: var(--stretch) var(--squash); }
-.cur-liquid[data-mode="hot"] .cur-dot { scale: calc(var(--stretch) * .5) calc(var(--squash) * .5); }
-.cur-liquid[data-mode="hot"] .cur-halo { scale: calc(var(--stretch) * 1.75) calc(var(--squash) * 1.75); }
-
-/* ── ج٢) الريشةُ في القطرة (nibdrop) — **القطرةُ كما هي، والريشةُ مكانَ نقطتها.
-      لا شيءَ سواها يتغيّر** (تصحيحٌ بأمر المالك ٢٠٢٦-٠٨-٠٣): الهالةُ تلحق بتأخّرها
-      وتتمطّط باندفاعها وتتّسع عند الهدف بنسبتها ومقاسها — وهذه هي مزايا التوجّه
-      التي اختِير لأجلها، فلا تُمسّ. ثمّ زِيد عليها بأمره: **الريشةُ تميل** (قواعدُ
-      «الميل باليد» ملحوقةً لا منسوخة) و**أثرُ الحبر** خلفها.
-      ولذلك ليس لهذا التوجّه كتلةُ أنماطٍ خاصّة، بل أسطرٌ **تُلحق أجزاءَه بقواعد
-      أصولها**؛ ولو نُسخت القواعدُ لافترقت التوجّهاتُ يومًا عند أوّل تعديل. */
-.cur-nibdrop .cur-halo { rotate: var(--ang); scale: var(--stretch) var(--squash); }
-.cur-nibdrop[data-mode="hot"] .cur-halo { scale: calc(var(--stretch) * 1.75) calc(var(--squash) * 1.75); }
-
-/* ── د) الريشة (الأساس): طرفُ السنّ هو نقطةُ الإصابة (هامشٌ سالبٌ بمقدارها)،
-      والتحجيمُ والميلُ حولَ الطرف نفسِه (`transform-origin`) فلا يزحف عند اللمس. */
-.cur-nib {
-  margin: -26px 0 0 -2px; transform-origin: 2px 26px;
-  transition: scale var(--dur) var(--ease-standard), rotate var(--dur) var(--ease-standard);
-}
-.cur-nib path:not(.cur-rib) { stroke: var(--color-surface); stroke-width: 1.4; stroke-linejoin: round; paint-order: stroke fill; }
-.cur-rib { fill: none; stroke: var(--color-surface); stroke-width: 1.2; stroke-linecap: round; opacity: .45; }
-.cur[data-mode="hot"] .cur-nib { scale: 1.1; rotate: -8deg; }
-/* نقطةُ حبرٍ عند الضغط — تُولَد بالضغط وتموت بانتهاء حركتها، فلا تتراكم في الطبقة */
-.cur-ink {
-  position: absolute; top: 0; left: 0; translate: var(--cx) var(--cy);
-  width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%;
-  background: rgb(var(--shadow-tone));
-  animation: cur-ink .6s var(--ease-standard) forwards;
-}
-@keyframes cur-ink { from { scale: .4; opacity: .5 } to { scale: 4.6; opacity: 0 } }
-
-/* ── هـ) القلمُ يميل باليد (tilt): الميلُ من السرعة الأفقيّة، والضغطُ من مقدارها —
-      حركةٌ **مستمرّة** لا حالتان، فلا `transition` لها (المحرّك يكتبها كلَّ إطار).
-      ويبقى انتقالُ الحالة (`hot`) على الأساس فوقها. */
-/* و`nibdrop` يلحق بهذه القواعد لا ينسخها (كهالته مع القطرة) — ميلٌ واحدٌ بتعريفٍ واحد */
-.cur-tilt .cur-nib, .cur-nibdrop .cur-nib { rotate: var(--tilt); scale: var(--press); transition: none; }
-/* **الميلُ يبقى فوق الهدف أيضًا:** قاعدةُ الأساس `[data-mode="hot"]` تسند
-   `rotate: -8deg` بخصوصيّةٍ أعلى، فلولا إعادتُه هنا لتجمّد القلمُ عند حافّةِ كلّ
-   زرٍّ — والميلُ سلوكُ يدٍ لا حالةُ عنصر، فلا يوقفه المرور. */
-.cur-tilt[data-mode="hot"] .cur-nib,
-.cur-nibdrop[data-mode="hot"] .cur-nib { rotate: var(--tilt); scale: calc(var(--press) * 1.1); }
-
-/* ── و) أثرُ الحبر يجفّ (trail): **مسارٌ مملوءٌ واحد** لا قطعٌ مرصوفة — كانت
-      القطعُ تُظهر نقاطًا وعقدًا (انظر `ribbon` في المكوّن: العلّةُ والعلاج).
-      فلا حدَّ له ولا نهايات: حافّتان تُحسبان في المحرّك ويُملأ الشكلُ مرّةً واحدة،
-      ولونُه نغمةُ ما تحته. والشفافيّةُ **ثابتة**: التلاشي في الشكل نفسِه — عرضٌ
-      يتناقص إلى الصفر عند الذيل — لا في اللون. */
+/* ── أثرُ الحبر: **مسارٌ مملوءٌ واحد** لا قطعٌ مرصوفة — كانت القطعُ تُظهر نقاطًا
+      وعقدًا (انظر `ribbon` في المكوّن: العلّةُ والعلاج). فلا حدَّ له ولا نهايات:
+      حافّتان تُحسبان في المحرّك ويُملأ الشكلُ مرّةً واحدة، ولونُه نغمةُ ما تحته.
+      والشفافيّةُ **ثابتة**: التلاشي في الشكل نفسِه — عرضٌ يتناقص إلى الصفر عند
+      الذيل — لا في اللون. */
 svg.cur-trail { width: 100%; height: 100%; overflow: visible; }
 .cur-trail path { fill: rgb(var(--shadow-tone)); fill-opacity: .62; stroke: none; }
 
-/* ── ز) بقعةُ النشّاف (blot): زوايا غير متساوية تُولَد عشوائيّةً لكلّ بقعة (فلا
-      تتكرّر صورةٌ واحدة)، ورشقاتٌ حولها بتأخّرٍ يسير — تتشرّب ثمّ تجفّ. */
-.cur-blot {
-  position: absolute; top: 0; left: 0; translate: var(--cx) var(--cy);
-  width: 26px; height: 26px; margin: -13px 0 0 -13px;
-  background: rgb(var(--shadow-tone));
-  animation: cur-blot .75s var(--ease-standard) forwards;
-}
-@keyframes cur-blot {
-  0%   { scale: calc(var(--k) * .2); opacity: .55 }
-  45%  { scale: calc(var(--k) * 1); opacity: .34 }
-  100% { scale: calc(var(--k) * 1.25); opacity: 0 }
-}
-
-/* ══ من خارج الأسرتين (٢٠٢٦-٠٨-٠٣) — خمسةٌ لا تُشتقّ من النقطة ولا من السنّ ══ */
-
-/* ── ح) نقطةُ الإعجام (dots): الحرفُ العربيّ يفترق عن أخيه بالنقط لا بالرسم —
-      فالمؤشّرُ نقطةٌ واحدة، فإذا وقع على هدفٍ صار ثلاثًا. لا شكلَ يتبدّل، بل
-      **عددٌ**: باءٌ تصير ثاءً. والانتقالُ في `translate` وحدها فلا تخطيطَ يُعاد. */
-.cur-nuqat { translate: var(--cx) var(--cy); }
-.cur-nuqat i {
-  position: absolute; top: 0; left: 0;
-  width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%;
-  background: rgb(var(--shadow-tone));
-  transition: translate var(--dur) var(--ease-standard), opacity var(--dur), background-color var(--dur);
-}
-/* الثانيةُ والثالثة مطويّتان تحت الأولى تمامًا — فالانفراجُ يُقرأ انقسامًا لا ظهورًا */
-.cur-nuqat i:nth-child(2), .cur-nuqat i:nth-child(3) { opacity: 0; }
-.cur-dots[data-mode="hot"] .cur-nuqat i:nth-child(1) { translate: 0 -8px; }
-.cur-dots[data-mode="hot"] .cur-nuqat i:nth-child(2) { translate: -8px 4px; opacity: 1; }
-.cur-dots[data-mode="hot"] .cur-nuqat i:nth-child(3) { translate: 8px 4px; opacity: 1; }
-
-/* ── ط) الكشيدة (kashida): مدُّ الحرف في الخطّ العربيّ — شعرةٌ أفقيّةٌ تنزلق مع
-      اليد، فإذا بلغت هدفًا **امتدّت بعرضه تحته** كأنّها تمدّ سطرَه. تسطيرٌ لا
-      إحاطة: لا تغطّي الهدف ولا تلوّنه، وتقول موضعَه بأدنى حبرٍ ممكن.
-      (المركزةُ هنا بـ`transform` لا بالهوامش — العرضُ متغيّرٌ فلا هامشَ ثابتٌ يركّزه.) */
-.cur-kash {
-  width: var(--kw, 20px); height: 3px; border-radius: var(--radius-full);
-  background: rgb(var(--shadow-tone));
-  translate: var(--hx) var(--hy); transform: translate(-50%, -50%);
-  transition: translate var(--dur) var(--ease-standard), width var(--dur) var(--ease-standard),
-              background-color var(--dur);
-}
-.cur-kashida[data-mode="hot"] .cur-kash {
-  --kw: var(--mw);
-  /* تحت الهدف بسبع نقاط: نصفُ ارتفاعه ثمّ فجوةٌ تفصل الخطَّ عن حرفه */
-  translate: var(--mx) calc(var(--my) + var(--mh) / 2 + 7px);
-}
-
-/* ── ي) القرصُ القالب (invert): **الوحيدُ الذي لا يقرأ النغمة** — لأنّه بلا لونٍ
-      أصلًا: يقلب ما تحته مزجًا (`difference`) فيكتسب لونَه من الصفحة لا من الرمز.
-      **والمزجُ على الجذر لا على القرص:** الطبقةُ تحمل `z-index` فهي سياقُ تراصٍّ،
-      وأيُّ مزجٍ داخلَها يقع على خلفيّتها الشفّافة فلا يُرى شيء. المزجُ على الجذر
-      نفسِه يقع على **الصفحة** — وهي المقصودة. */
-.cur-invert { mix-blend-mode: difference; }
-.cur-disc {
-  width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%;
-  translate: var(--cx) var(--cy);
-  background: var(--color-surface);
-  transition: scale var(--dur) var(--ease-standard);
-}
-.cur-invert[data-mode="hot"] .cur-disc { scale: 1.75; }
-
-/* ── ك) مسطرةُ القراءة (ruler): شريطٌ يعبر الصفحة على سطرك فيعزله عمّا فوقه وتحته
-      — أداةُ قارئٍ لا زينةُ مؤشّر (مكانُها المكتبةُ والأخبار). يلحق بتأخّرٍ فلا
-      يقفز مع كلّ رعشة، ويخفت فوق الأهداف فلا ينازع الزرَّ سطحَه.
-      والحوافُّ متلاشيةٌ في الطرفين: شريطٌ ينتهي بحدٍّ حادٍّ يُقرأ قصًّا للصفحة. */
-.cur-band {
-  width: 100%; height: 38px; margin-top: -19px; translate: 0 var(--hy);
-  background: linear-gradient(90deg, transparent, rgba(var(--shadow-tone), .1) 14%,
-              rgba(var(--shadow-tone), .1) 86%, transparent);
-  border-block: var(--card-stroke-w) solid rgba(var(--shadow-tone), .2);
-  transition: opacity var(--dur), border-color var(--dur);
-}
-.cur-ruler[data-mode="hot"] .cur-band { opacity: .4; }
-
-/* تقليلُ الحركة: التأخّرُ والسرعةُ والحبرُ تُطفأ في المحرّك (لا تُحسَب أصلًا) —
+/* تقليلُ الحركة: التأخّرُ والتمطّطُ والأثرُ تُطفأ في المحرّك (لا تُحسَب أصلًا) —
    ويبقى هنا إطفاءُ الانتقالات. الشكلُ يبقى، الحركةُ وحدها تذهب. */
 @media (prefers-reduced-motion: reduce) {
-  .cur, .cur > *, .cur-brk i { transition: none; }
+  .cur, .cur > * { transition: none; }
 }
