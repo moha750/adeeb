@@ -19,6 +19,7 @@ import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, t
 import type { MemberOption, ShowRow } from "./data";
 import { SHOW_STATUS_META, TONE_OPTIONS, slugify, type ShowTone } from "./vocab";
 import { createShow, updateShow, setShowStatus, toggleShowFeatured, deleteShow } from "./actions";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 type FormState = {
   title: string; slug: string; tagline: string; description: string;
@@ -210,7 +211,7 @@ export function RadioView({
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › <b>الإذاعة</b></div>
+          <Breadcrumb />
           <h1>إذاعة أدِيب</h1>
         </div>
         <Button variant="primary" size="md" onClick={openCreate}><Plus size={18} />برنامج جديد</Button>

@@ -7,6 +7,7 @@ import { ChatText, PencilSimple, Question, TextT } from "@phosphor-icons/react";
 import { useToast } from "../../_components/ToastProvider";
 import type { FaqEditData } from "./data";
 import { createFaq, updateFaq, type FaqInput } from "./actions";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 export function FaqForm({ faq }: { faq?: FaqEditData | null }) {
   const toast = useToast();
@@ -37,7 +38,7 @@ export function FaqForm({ faq }: { faq?: FaqEditData | null }) {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › الأسئلة الشائعة › <b>{crumbLeaf}</b></div>
+          <Breadcrumb leaf={crumbLeaf} />
           <h1>{editing ? "تحرير السؤال" : "سؤال جديد"}</h1>
         </div>
         <div className="form-head-actions">

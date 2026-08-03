@@ -5,6 +5,7 @@ import { AchievementForm } from "../../AchievementForm";
 import { getWebsiteManager } from "@/lib/website/authz";
 import { WebsiteDenied } from "../../../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../../../../_shell/Breadcrumb";
 
 export default async function EditAchievementPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/website/achievements");
@@ -20,7 +21,7 @@ export default async function EditAchievementPage({ params }: { params: Promise<
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › المحتوى › الإحصاءات › <b>تحرير</b></div>
+            <Breadcrumb leaf="تحرير" />
             <h1>تحرير الإحصائيّة</h1>
           </div>
         </div>

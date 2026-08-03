@@ -3,11 +3,12 @@ import { getOrgData } from "./orgData";
 import { buildStructure } from "./model";
 import { StructureView } from "./StructureView";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 const Head = () => (
   <div className="ash-phead">
     <div>
-      <div className="ash-crumb">أديب › أعضاء أديب › <b>هيكلة أديب</b></div>
+      <Breadcrumb />
       <h1>هيكلة أديب</h1>
     </div>
   </div>

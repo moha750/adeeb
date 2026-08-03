@@ -2,6 +2,7 @@ import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getWarnings } from "./data";
 import { WarningsView } from "./WarningsView";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 /**
  * **الإنذارات** — سجلّ إدارة الموارد البشريّة، يطّلع عليه رئيس النادي والرئيس التنفيذي.
@@ -23,7 +24,7 @@ export default async function WarningsPage() {
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › أعضاء أديب › <b>الإنذارات</b></div>
+            <Breadcrumb />
             <h1>الإنذارات</h1>
           </div>
         </div>

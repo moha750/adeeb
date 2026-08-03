@@ -15,6 +15,7 @@ import type { MenuGroup } from "../../_components/DropdownMenu";
 import type { WorkRow } from "./data";
 import { WorkCard } from "./WorkCard";
 import { deleteWork, moveWork } from "./actions";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 /** يستخرج نطاق الرابط للعرض المختصر (بلا بروتوكول)، أو يعيد الرابط كما هو إن تعذّر. */
 function linkLabel(url: string): string {
@@ -102,7 +103,7 @@ export function WorksView({ works }: { works: WorkRow[] }) {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › الصفحة الرئيسية › <b>الأعمال</b></div>
+          <Breadcrumb />
           <h1>معرض الأعمال</h1>
         </div>
         {createBtn}

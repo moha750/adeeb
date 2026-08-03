@@ -3,6 +3,7 @@ import { getElections, getElectionCreateOptions } from "./data";
 import { ElectionsView } from "./ElectionsView";
 import { Maintenance } from "../_components/Maintenance";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 // التبويب تحت الصيانة مؤقّتًا — يُعرَض إشعار الصيانة مكان المحتوى. أعِد التبويب بجعلها false.
 const UNDER_MAINTENANCE = true;
@@ -12,7 +13,7 @@ export default async function ElectionsPage() {
   if (denied) return denied;
 
   if (UNDER_MAINTENANCE)
-    return <Maintenance crumb={<>أديب › التفاعل › <b>الانتخابات</b></>} title="الانتخابات" />;
+    return <Maintenance title="الانتخابات" />;
 
   const [{ elections, error }, createOptions] = await Promise.all([getElections(), getElectionCreateOptions()]);
 
@@ -21,7 +22,7 @@ export default async function ElectionsPage() {
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › التفاعل › <b>الانتخابات</b></div>
+            <Breadcrumb />
             <h1>الانتخابات</h1>
           </div>
         </div>

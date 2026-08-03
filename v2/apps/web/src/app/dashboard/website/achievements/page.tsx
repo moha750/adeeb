@@ -4,6 +4,7 @@ import { AchievementsView } from "./AchievementsView";
 import { getWebsiteManager } from "@/lib/website/authz";
 import { WebsiteDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 export default async function AchievementsPage() {
   const denied = await denyUnless("/dashboard/website/achievements");
@@ -18,7 +19,7 @@ export default async function AchievementsPage() {
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › المحتوى › الصفحة الرئيسية › <b>الإحصاءات</b></div>
+            <Breadcrumb />
             <h1>ملخص المسيرة</h1>
           </div>
         </div>

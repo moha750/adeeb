@@ -34,8 +34,12 @@ import {
   UserGear,
   UsersFour,
   SquaresFour,
+  Layout,
   Key,
   ShieldWarning,
+  Certificate,
+  QrCode,
+  EnvelopeSimpleOpen,
 } from "@phosphor-icons/react";
 
 type P = { className?: string };
@@ -79,6 +83,11 @@ export const IconSupervise = (p: P) => <UsersFour aria-hidden {...p} />;
 // إدارتي — الوحدة نفسها لا ساكنوها: بندُ القائد عن **مكانه** في الهيكل، فيفترق عن «من أشرف عليهم»
 export const IconUnit = (p: P) => <Buildings aria-hidden {...p} />;
 // قسمي — عنقودُ لجانٍ لا فريقٌ واحد: القسم يُرى شبكةَ وحداتٍ تحته، فيفترق عن «لجنتي» (فريق)
+/* رمزُ ترويسة الشريط — يدلّ على اللوحة نفسِها.
+   جُرِّبت `Gauge` فسقطت: عدّادُ سيّارةٍ لا لوحةَ تحكّم (المالك).
+   و`SquaresFour` ممنوعة — مأخوذةٌ لـ`IconDept`، وأيقونةٌ بمعنيين في شريطٍ واحد تكذب.
+   `Layout` ترسم اللوحةَ ذاتَها: شريطٌ جانبيّ وألواحُ محتوى. */
+export const IconDashboard = (p: P) => <Layout aria-hidden {...p} />;
 export const IconDept = (p: P) => <SquaresFour aria-hidden {...p} />;
 export const IconKey = (p: P) => <Key aria-hidden {...p} />;
 // الإذاعة — المايكروفون: إذاعةٌ مسموعة لا مرئيّة، فالأيقونة من عالم الصوت لا البثّ
@@ -87,6 +96,12 @@ export const IconMic = (p: P) => <MicrophoneStage aria-hidden {...p} />;
 export const IconNews = (p: P) => <Newspaper aria-hidden {...p} />;
 // الإنذارات — الدرع المحذّر: ضبطٌ يحمي العمل، لا مثلّثُ خطرٍ يُنذر بعطب
 export const IconWarn = (p: P) => <ShieldWarning aria-hidden {...p} />;
+// شهادات الخبرة — الوثيقة المختومة: ورقةٌ تُقدَّم لجهةٍ خارج النادي، لا ميداليّةُ تكريم
+export const IconCertificate = (p: P) => <Certificate aria-hidden {...p} />;
+// مولّد الباركود — الرمز نفسه: أصدقُ أيقونةٍ لأداةٍ مُخرَجُها هذا الشكل بعينه
+export const IconQr = (p: P) => <QrCode aria-hidden {...p} />;
+// رسائل التواصل — الظرف الوارد: بريدٌ يصل من خارج النادي فيُقرأ ويُجاب، لا ظرفٌ يُرسَل
+export const IconInbox = (p: P) => <EnvelopeSimpleOpen aria-hidden {...p} />;
 
 export const ICONS = {
   me: IconMe, users: IconUsers, clip: IconClip, doc: IconDoc,
@@ -95,6 +110,7 @@ export const ICONS = {
   stats: IconStats, handshake: IconHandshake, faq: IconFaq,
   active: IconActive, pending: IconPending, suspended: IconSuspended,
   cake: IconCake, tree: IconTree, assign: IconAssign, supervise: IconSupervise, unit: IconUnit, dept: IconDept, key: IconKey,
-  mic: IconMic, news: IconNews, warn: IconWarn,
+  mic: IconMic, news: IconNews, warn: IconWarn, certificate: IconCertificate, qr: IconQr,
+  inbox: IconInbox,
 } as const;
 export type IconKey = keyof typeof ICONS;

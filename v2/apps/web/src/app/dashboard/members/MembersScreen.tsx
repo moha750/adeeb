@@ -2,6 +2,7 @@ import { Alert } from "@adeeb/design-system";
 import { getCurrentAdmin } from "@/lib/auth";
 import { getMembers, type MemberStatus } from "./data";
 import { MembersView } from "./MembersView";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 /**
  * شاشة الأعضاء الخادمية — تجلب البيانات وتمرّرها للعرض (اختياريًّا مثبّتة على حالة).
@@ -17,7 +18,7 @@ export async function MembersScreen({ lockedStatus }: { lockedStatus?: MemberSta
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › أعضاء أديب › <b>الأعضاء</b></div>
+            <Breadcrumb leaf="الأعضاء" />
             <h1>الأعضاء</h1>
           </div>
         </div>

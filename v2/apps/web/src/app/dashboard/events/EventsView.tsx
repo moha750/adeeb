@@ -23,6 +23,7 @@ import { STATUS_OPS, TYPE_OPTIONS, type EventStatus, type StatusOp } from "./voc
 import { deleteEvent, setEventStatus } from "./actions";
 import { TypeBadge } from "./TypeBadge";
 import { EventCard } from "./EventCard";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 /** أيقونات إجراءات دورة الحياة — بمفاتيح STATUS_OPS نفسها (المصدر الواحد للانتقالات). */
 const OP_ICON: Record<StatusOp, React.ReactNode> = {
@@ -224,7 +225,7 @@ export function EventsView({ events }: { events: EventRow[] }) {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › التفاعل › <b>الفعاليّات</b></div>
+          <Breadcrumb />
           <h1>الفعاليّات</h1>
         </div>
         <Link href="/dashboard/events/new" className="abtn abtn-primary abtn-md"><Plus size={18} />فعاليّة جديدة</Link>

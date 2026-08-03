@@ -2,11 +2,12 @@ import { Alert } from "@adeeb/design-system";
 import { getMembers } from "../data";
 import { CredentialsView, type CredMember } from "./CredentialsView";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 const Head = () => (
   <div className="ash-phead">
     <div>
-      <div className="ash-crumb">أديب › أعضاء أديب › <b>بيانات الدخول</b></div>
+      <Breadcrumb />
       <h1>تغيير بيانات الدخول</h1>
     </div>
   </div>

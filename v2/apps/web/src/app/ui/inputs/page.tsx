@@ -1,11 +1,24 @@
 "use client";
 
-import { Field, Textarea, Container } from "@adeeb/design-system";
-import { Asterisk, At, ChatText, Envelope, Hash, IdentificationBadge, Key, Lock, LockKey, MagnifyingGlass, PencilSimple, Phone, Prohibit, User } from "@phosphor-icons/react";
+import { useState } from "react";
+import { ColorField, Field, Textarea, Container } from "@adeeb/design-system";
+import { Asterisk, At, ChatText, Drop, Envelope, Hash, IdentificationBadge, Key, Lock, LockKey, MagnifyingGlass, PaintBucket, PencilSimple, Phone, Prohibit, User } from "@phosphor-icons/react";
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
     <p className="mb-4 font-latin text-xs font-bold uppercase tracking-[0.18em] text-content-muted">{children}</p>
+  );
+}
+
+/** عيّنةُ حقل اللون — حالتُها هنا لأنّ القيمة تُرى فورًا في المرسى والمراسي معًا. */
+function ColorSwatches() {
+  const [ink, setInk] = useState("#274060");
+  const [plate, setPlate] = useState("#ffffff");
+  return (
+    <div className="grid gap-5 sm:grid-cols-2">
+      <ColorField label="لون الحبر" icon={<Drop weight="fill" />} value={ink} onValueChange={setInk} required helper="اكتب الرقم، أو انقر مرساةً من الهوية." />
+      <ColorField label="لون الأرضيّة" icon={<PaintBucket weight="fill" />} value={plate} onValueChange={setPlate} presets={[]} optional helper="بلا مراسي — الصفّ يُخفى بتمرير presets فارغة." />
+    </div>
   );
 }
 
@@ -63,6 +76,11 @@ export default function InputsPage() {
               <Field label="حقل معطّل" icon={<Prohibit />} innerIcon={<PencilSimple />} placeholder="—" defaultValue="غير متاح" disabled />
               <Field label="اسم وليّ الأمر" icon={<Asterisk />} innerIcon={<PencilSimple />} placeholder="الاسم الكامل" required helper="حقل إلزاميّ" />
             </div>
+          </section>
+
+          <section>
+            <Label>حقل اللون (المرسى يحلّ محلّ الأيقونة الأماميّة — انقره تُفتَح لوحة النظام)</Label>
+            <ColorSwatches />
           </section>
 
           <section>

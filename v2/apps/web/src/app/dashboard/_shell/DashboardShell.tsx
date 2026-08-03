@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@adeeb/design-system";
 import { Avatar } from "../_components/Avatar";
 import { createClient } from "@/lib/supabase/client";
 import { navFor, type NavItem } from "./nav";
+import { NavProvider } from "./nav-context";
 import type { MyScope } from "@/lib/myScope";
-import { ICONS, IconBell, IconCaret, IconCaretDown, IconLogout, IconMe, IconMenu, IconPlus } from "./icons";
+import { ICONS, IconBell, IconCaret, IconCaretDown, IconDashboard, IconLogout, IconMe, IconMenu, IconPlus } from "./icons";
 import { DropdownMenu } from "../_components/DropdownMenu";
 import { HelpCenter } from "./HelpCenter";
 import { stopViewAs } from "./view-as-actions";
@@ -72,6 +73,27 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
   // إغلاق الدُرج عند تغيّر المسار
   useEffect(() => { setMobOpen(false); }, [pathname]);
 
+  // تلاشي طرفَي التنقّل — بديلُ شريط التمرير المخفيّ (الوصفُ في `.ash-nav` بالمكتبة).
+  // باتّجاهٍ: يتلاشى الطرفُ الذي **خلفه مزيد** وحده، فلا يبهت رأسُ القائمة بلا سبب.
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const sync = () => {
+      const more = el.scrollHeight - el.clientHeight - el.scrollTop;
+      el.style.setProperty("--ash-fade-top", el.scrollTop > 1 ? "18px" : "0px");
+      el.style.setProperty("--ash-fade-bot", more > 1 ? "18px" : "0px");
+    };
+    sync();
+    el.addEventListener("scroll", sync, { passive: true });
+    // المراقبُ يلتقط ما لا يلتقطه التمرير: فتحُ مطويّةٍ · طيُّ الشريط · تبدّلُ الخريطة
+    // بالقدرات. ويُراقَب الأبناءُ لا الحاويةُ وحدها — ارتفاعُها ثابتٌ بينما ينمو محتواها.
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    for (const child of Array.from(el.children)) ro.observe(child);
+    return () => { el.removeEventListener("scroll", sync); ro.disconnect(); };
+  }, [nav, rail]);
+
   const cls = ["ash", rail && "rail", mobOpen && "mob-open"].filter(Boolean).join(" ");
 
   return (
@@ -79,19 +101,31 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
       <div className="ash-scrim" onClick={() => setMobOpen(false)} />
 
       <aside className="ash-side">
+        {/* طبقاتُ اللوح المذهّب — شبكةٌ فنقشٌ فحجاب، كلُّها خلف المحتوى وخارج شجرة القراءة.
+            والشبكةُ صنفُ الهوية نفسُه (`.amb-mesh`) لا نسخةً منه — يتبدّل قناعُه وحده
+            (`--amb-mask` على `.ash-canvas`) فيتبع ضوءَ اللوح بدل بؤر الشفق. */}
+        <div className="ash-canvas" aria-hidden>
+          <div className="amb-mesh" />
+          <div className="ash-naqsh" />
+        </div>
+
         <button type="button" className="ash-handle" onClick={toggleRail} aria-label={rail ? "توسيع الشريط" : "طيّ الشريط"}>
           <IconCaret />
         </button>
+        {/* الاسمُ نصٌّ لا صورة (اللوحُ نفسُه علامة)، والرمزُ يدلّ على اللوحة لا ينوب عن الشعار */}
         <div className="ash-brand">
-          <span className="ash-logo">أ</span>
-          <b>بوّابة أديب</b>
+          <span className="ash-mark" aria-hidden><IconDashboard /></span>
+          <b className="ash-name">بوّابة أديب</b>
         </div>
+        <div className="ash-rule" aria-hidden />
 
-        <Button variant="primary" className="ash-cta"><IconPlus /><span>إجراء سريع</span></Button>
+        {/* `inverse` لا `primary`: الأساسيُّ تدرّجُ الهوية نفسُه، فيذوب في لوحٍ مذهّب —
+            والمعكوسُ مصنوعٌ لهذا («يُعكَس ما يختفي على الداكن»). */}
+        <Button variant="inverse" className="ash-cta"><IconPlus /><span>إجراء سريع</span></Button>
 
-        <nav className="ash-nav">
+        <nav className="ash-nav" ref={navRef}>
           {nav.map((g, gi) => (
-            <div key={g.head ?? gi}>
+            <div className="ash-group" key={g.head ?? gi}>
               {g.head ? <div className="ash-nav-head">{g.head}</div> : null}
               {g.items.map((it) => {
                 const Icon = ICONS[it.icon];
@@ -158,7 +192,9 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
           </div>
         </header>
 
-        <main className="ash-content">{children}</main>
+        {/* الخريطة المرشَّحة تُحسب هنا مرّةً، وتقرؤها فتاتُ المسار في كلّ صفحة — لا ترشيحَ ثانٍ
+            ولا قدراتٌ تُمرَّر عبر عشرات الشاشات */}
+        <main className="ash-content"><NavProvider value={nav}>{children}</NavProvider></main>
       </div>
     </div>
   );

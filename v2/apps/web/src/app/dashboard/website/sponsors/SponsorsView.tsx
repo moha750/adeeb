@@ -15,6 +15,7 @@ import type { MenuGroup } from "../../_components/DropdownMenu";
 import type { SponsorRow } from "./data";
 import { SponsorCard } from "./SponsorCard";
 import { deleteSponsor, moveSponsor } from "./actions";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 function linkLabel(url: string): string {
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; }
@@ -97,7 +98,7 @@ export function SponsorsView({ sponsors }: { sponsors: SponsorRow[] }) {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › الصفحة الرئيسية › <b>الرعاة</b></div>
+          <Breadcrumb />
           <h1>الرعاة والشركاء</h1>
         </div>
         {createBtn}

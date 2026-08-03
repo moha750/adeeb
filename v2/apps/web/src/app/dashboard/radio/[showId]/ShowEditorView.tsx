@@ -24,6 +24,7 @@ import {
   createAudioUploadUrl, createEpisode, createLogoUploadUrl, deleteEpisode, loadEpisode,
   saveShowPlatforms, setEpisodeAudio, setEpisodeStatus, setShowLogo, setShowStatus, updateEpisode,
 } from "../actions";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 type EpForm = {
   season: string; number: string; title: string; slug: string;
@@ -243,7 +244,7 @@ export function ShowEditorView({
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › الإذاعة › <b>{show.title}</b></div>
+          <Breadcrumb leaf={show.title} />
           <h1>{show.title}</h1>
         </div>
         <div className="form-head-actions">

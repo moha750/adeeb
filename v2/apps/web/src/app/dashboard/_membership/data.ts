@@ -39,6 +39,20 @@ export type Membership = {
   warnings: { id: string; ordinal: number; category: string; reason: string; date: string }[];
   /** حدُّ الإنذارات من القاعدة — لا رقمٌ محفور في الشاشة. */
   warningLimit: number;
+  /**
+   * شهاداتُ خبرته السارية — **يُنزّلها متى شاء بلا مراجعة أحد**، وهذا أكبرُ ما يكسبه العضو
+   * من نقل الشهادة إلى البوّابة. وكلُّ صفٍّ **لقطةٌ** كما رُسمت يومَها، فالورقةُ لا تتبدّل
+   * بتبدّل منصبه بعدها.
+   */
+  certificates: {
+    id: string;
+    serial: string;
+    holderName: string;
+    positionTitle: string;
+    periodFrom: string;
+    periodTo: string;
+    date: string;
+  }[];
 };
 
 /** جمعُ العربيّة: مفرد · مثنّى · جمع قلّة (٣–١٠) · تمييزٌ مفردٌ منصوب (١١+). */
@@ -87,7 +101,7 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
   }
   const sb = createAdeebServiceClient(url, key);
 
-  const [pRes, urRes, rRes, dRes, cRes, coRes, supRes, wRes, wlRes] = await Promise.all([
+  const [pRes, urRes, rRes, dRes, cRes, coRes, supRes, wRes, wlRes, certRes] = await Promise.all([
     sb.from("profiles").select("full_name, avatar_url, gender, account_status, joined_date").eq("id", me.id).maybeSingle(),
     // التعيينات كلّها لا النشطة وحدها — المسيرة تروي ما مضى كما تروي ما هو قائم
     sb.from("user_roles").select("role_name, department_id, committee_id, assigned_at, is_active").eq("user_id", me.id),
@@ -101,9 +115,13 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
     // ورتبتُها ترتيبُها الزمنيّ (كما تحسبها القاعدة)، فالفرزُ هنا هو نفسه هناك.
     sb.from("member_warnings").select("id, category, reason, created_at").eq("user_id", me.id).eq("status", "active").order("created_at"),
     sb.rpc("warning_limit"),
+    // شهاداتُ خبرته السارية — «لكلٍّ شهاداتُ نفسه» بندٌ في `can_view_certificate_of`
+    sb.from("experience_certificates")
+      .select("id, serial, holder_name, position_title, period_from, period_to, created_at")
+      .eq("user_id", me.id).eq("status", "valid").order("created_at", { ascending: false }),
   ]);
 
-  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || coRes.error || supRes.error || wRes.error || wlRes.error;
+  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || coRes.error || supRes.error || wRes.error || wlRes.error || certRes.error;
   if (firstErr) return { membership: null, error: firstErr.message };
   const p = pRes.data;
   if (!p) return { membership: null, error: "لا سجلّ لحسابك في «الأعضاء» — راجِع إدارة الموارد البشريّة." };
@@ -215,6 +233,18 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
       warnings: ((wRes.data ?? []) as { id: string; category: string; reason: string; created_at: string }[])
         .map((w, i) => ({ id: w.id, ordinal: i + 1, category: w.category, reason: w.reason, date: fmtDate(w.created_at) })),
       warningLimit: typeof wlRes.data === "number" ? wlRes.data : 3,
+      certificates: ((certRes.data ?? []) as {
+        id: string; serial: string; holder_name: string; position_title: string;
+        period_from: string; period_to: string; created_at: string;
+      }[]).map((c) => ({
+        id: c.id,
+        serial: c.serial,
+        holderName: c.holder_name,
+        positionTitle: c.position_title,
+        periodFrom: c.period_from,
+        periodTo: c.period_to,
+        date: fmtDate(c.created_at),
+      })),
     },
     error: null,
   };

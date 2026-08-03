@@ -3,6 +3,7 @@ import { Alert } from "@adeeb/design-system";
 import { getSurveyDetail } from "../../data";
 import { BuilderView } from "../../BuilderView";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../../../_shell/Breadcrumb";
 
 export default async function EditSurveyPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/surveys");
@@ -18,7 +19,7 @@ export default async function EditSurveyPage({ params }: { params: Promise<{ id:
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › التفاعل › الاستبيانات › <b>تحرير</b></div>
+            <Breadcrumb leaf="تحرير" />
             <h1>تحرير الاستبيان</h1>
           </div>
         </div>

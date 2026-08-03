@@ -4,6 +4,7 @@ import { SponsorsView } from "./SponsorsView";
 import { getWebsiteManager } from "@/lib/website/authz";
 import { WebsiteDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 export default async function SponsorsPage() {
   const denied = await denyUnless("/dashboard/website/sponsors");
@@ -18,7 +19,7 @@ export default async function SponsorsPage() {
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › المحتوى › الصفحة الرئيسية › <b>الرعاة</b></div>
+            <Breadcrumb />
             <h1>الرعاة والشركاء</h1>
           </div>
         </div>

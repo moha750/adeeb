@@ -7,15 +7,19 @@ import { cn } from "../lib/cn";
 
 /* أيقونات الرأس مرسومةٌ هنا كسائر أيقونات المكتبة (`CarouselNav` · `Select`):
    المكتبةُ بلا تبعيّة أيقونات، والرسمُ بـ`currentColor` فيتبع لونَ محيطه. */
-const IconList = (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-    <path d="M4 7h16M4 12h16M4 17h16" />
-  </svg>
-);
-const IconX = (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-    <path d="M6 6l12 12M18 6L6 18" />
-  </svg>
+
+/**
+ * أيقونةُ القائمة — **ثلاثةُ خطوطٍ باقية** لا أيقونتان تتبادلان: العلويّ والسفليّ
+ * ينطبقان على المنتصف ويستديران فيصيران ×، والأوسطُ يتلاشى. ولذلك هي **عناصرُ لا
+ * `svg`**: التحوّلُ يلزمه أن يبقى الشكلُ نفسُه في الشجرة فيتحرّك، وتبديلُ أيقونةٍ
+ * بأخرى يقطع الحركةَ من أصلها (React يُبدّل العقدةَ فلا شيءَ ينتقل).
+ */
+const IconBars = (
+  <span className="shdr-bic" aria-hidden>
+    <span />
+    <span />
+    <span />
+  </span>
 );
 const IconChevron = (
   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -94,6 +98,7 @@ export function Header({
   const actionsRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLButtonElement>(null);
+  const burgerRef = useRef<HTMLButtonElement>(null);
 
   const [stuck, setStuck] = useState(false);
   const [open, setOpen] = useState(false);
@@ -110,6 +115,34 @@ export function Header({
     host.addEventListener("scroll", read, { passive: true });
     return () => host.removeEventListener("scroll", read);
   }, []);
+
+  /**
+   * **مخارجُ اللوح — لأنّه صار يطفو فوق المحتوى.** ما دام يغطّي المتنَ فالمتوقَّعُ
+   * أن تُغلقه ضغطةٌ خارجه، لا زرُّه وحده. ثلاثةُ مخارجَ لا واحد:
+   * ١) **ضغطةٌ خارج الرأس** — في **مرحلة الالتقاط** كي تُغلق ولو ابتلع المستهلكُ
+   *    الحدثَ في طريقه (وحارسُ المعرض يفعل ذلك فعلًا).
+   * ٢) **Escape** — ومعه **إعادةُ التركيز إلى الزرّ**: من فتح بلوحة المفاتيح لا
+   *    يُترك تركيزُه في العدم.
+   * ٣) وثالثُها في القياس أدناه: إن عاد الشريطُ (اتّسع الرأس) أُغلق اللوحُ من نفسه.
+   * ولا يُربط شيءٌ ما دام مغلقًا — الشرطُ في أوّل الأثر لا في داخل المستمع.
+   */
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      burgerRef.current?.focus();
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown, true);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
   /**
    * **سعةُ الرأس تُقاس ولا تُقدَّر.** المطلوبُ ألّا يزدحم الصفُّ أبدًا: فإذا لم يبقَ
@@ -130,6 +163,9 @@ export function Header({
     if (!bar || !meas || !acts || !logo) return;
     /* دون 900px لا شريطَ أصلًا (لوحُ الجوّال يحمل الكلّ) فلا معنى للقياس */
     if (getComputedStyle(meas).display === "none") return;
+    /* وفوقها: الشريطُ عاد، فلوحُ الجوّال بلا معنًى — يُغلق من نفسه بدل أن يبقى
+       مفتوحًا خلف شريطٍ ظاهر، فيرجع القارئُ من التوسيع إلى قائمةٍ معلّقة. */
+    setOpen(false);
 
     const kids = Array.from(meas.children) as HTMLElement[];
     /* آخرُ عنصرٍ في طبقة القياس هو زرّ «المزيد» — يُقاس ليُحجَز له موضعُه عند اللزوم */
@@ -177,7 +213,9 @@ export function Header({
       aria-current={activeHref === n.href ? "page" : undefined}
       onClick={onClick}
     >
-      {n.label}
+      {/* التسميةُ في عنصرٍ سطريّ: بعضُ التوجّهات تُظلِّل **الكلمة** لا الصفّ، وخلفيّةُ
+          الرابط تملأ صندوقَه كاملًا — فيلزم جسمٌ بعرض النصّ يحمل الأثر. */}
+      <span className="shdr-lbl">{n.label}</span>
     </a>
   );
 
@@ -204,7 +242,7 @@ export function Header({
                   aria-haspopup="menu"
                   onClick={() => setMoreOpen((v) => !v)}
                 >
-                  {moreLabel}
+                  <span className="shdr-lbl">{moreLabel}</span>
                   {IconChevron}
                 </button>
               )}
@@ -214,30 +252,31 @@ export function Header({
             <div ref={measureRef} className="shdr-measure" aria-hidden>
               {nav.map((n) => (
                 <span key={n.href} className="shdr-link">
-                  {n.label}
+                  <span className="shdr-lbl">{n.label}</span>
                 </span>
               ))}
               <span className="shdr-link shdr-more">
-                {moreLabel}
+                <span className="shdr-lbl">{moreLabel}</span>
                 {IconChevron}
               </span>
             </div>
 
             <div ref={actionsRef} className="shdr-actions">
-              <a href={loginHref} className="shdr-login">
+              <a href={loginHref} className="abtn abtn-ghost abtn-sm">
                 {loginLabel}
               </a>
               <a href={ctaHref} className="abtn abtn-primary abtn-sm">
                 {cta}
               </a>
               <button
+                ref={burgerRef}
                 type="button"
                 className="shdr-burger"
                 aria-expanded={open}
                 aria-label={open ? "إغلاق القائمة" : "فتح القائمة"}
                 onClick={() => setOpen((v) => !v)}
               >
-                {open ? IconX : IconList}
+                {IconBars}
               </button>
             </div>
           </div>
@@ -248,10 +287,13 @@ export function Header({
             <Container>
               <nav className="shdr-sheet-in" aria-label="قائمة الجوّال">
                 {nav.map((n) => link(n, () => setOpen(false)))}
-                <a href={loginHref} className="shdr-login" onClick={() => setOpen(false)}>
+                <a href={loginHref} className="abtn abtn-ghost abtn-sm shdr-sheet-login" onClick={() => setOpen(false)}>
                   {loginLabel}
                 </a>
-                <a href={ctaHref} className="abtn abtn-primary shdr-sheet-cta" onClick={() => setOpen(false)}>
+                {/* **الزرُّ نفسُه الذي في الشريط حرفًا بحرف** (`abtn-primary abtn-sm`):
+                    لا مقاسَ خاصّ ولا زاويةَ خاصّة — الزرُّ في المكتبة واحدٌ يُستعمل
+                    كما هو، و`.shdr-sheet-cta` تخصّ **موضعَه في العمود** لا هيئتَه. */}
+                <a href={ctaHref} className="abtn abtn-primary abtn-sm shdr-sheet-cta" onClick={() => setOpen(false)}>
                   {cta}
                 </a>
               </nav>

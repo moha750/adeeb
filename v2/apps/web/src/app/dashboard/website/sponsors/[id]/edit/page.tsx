@@ -5,6 +5,7 @@ import { SponsorForm } from "../../SponsorForm";
 import { getWebsiteManager } from "@/lib/website/authz";
 import { WebsiteDenied } from "../../../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../../../../_shell/Breadcrumb";
 
 export default async function EditSponsorPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/website/sponsors");
@@ -20,7 +21,7 @@ export default async function EditSponsorPage({ params }: { params: Promise<{ id
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › المحتوى › الرعاة › <b>تحرير</b></div>
+            <Breadcrumb leaf="تحرير" />
             <h1>تحرير الراعي</h1>
           </div>
         </div>

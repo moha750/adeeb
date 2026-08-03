@@ -4,6 +4,7 @@ import { EventForm } from "../EventForm";
 import { getEventsManager } from "@/lib/events/authz";
 import { EventsDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 export default async function NewEventPage() {
   const denied = await denyUnless("/dashboard/events");
@@ -17,7 +18,7 @@ export default async function NewEventPage() {
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › التفاعل › الفعاليّات › <b>فعاليّة جديدة</b></div>
+            <Breadcrumb leaf="فعاليّة جديدة" />
             <h1>فعاليّة جديدة</h1>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "./_shell/guard";
 import { getMyMembership } from "./_membership/data";
 import { MembershipView } from "./_membership/MembershipView";
+import { Breadcrumb } from "./_shell/Breadcrumb";
 
 /**
  * **عضويتي** — صدر اللوحة وتبويبها الافتراضيّ: عضويّة صاحب الجلسة نفسه لا سجلّ غيره.
@@ -23,7 +24,7 @@ export default async function MyMembershipPage() {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › <b>عضويتي</b></div>
+          <Breadcrumb />
           <h1>عضويتي</h1>
         </div>
       </div>

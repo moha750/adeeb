@@ -1,4 +1,5 @@
 import { Alert } from "@adeeb/design-system";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 /**
  * تنبيه «لا صلاحية» لصفحات الإذاعة — يُعرض لمن لا يملك قدرة `manage_radio`
@@ -9,7 +10,7 @@ export function RadioDenied() {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › <b>الإذاعة</b></div>
+          <Breadcrumb />
           <h1>إذاعة أدِيب</h1>
         </div>
       </div>

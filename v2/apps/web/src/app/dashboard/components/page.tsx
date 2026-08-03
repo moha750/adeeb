@@ -18,6 +18,7 @@ import { Toolbar, type ViewMode } from "../_components/Toolbar";
 import { useToast } from "../_components/ToastProvider";
 import { MemberCard } from "../members/MemberCard";
 import type { MemberRow } from "../members/data";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 /* ── أيقونات صغيرة للعرض (Phosphor) ── */
 const Ic = {
@@ -36,7 +37,7 @@ const Ic = {
 };
 
 /* ── بيانات عيّنة للجدول والكرت ── */
-const noDetails = { joinedRaw: "", college: null, major: null, degree: null, degreeRaw: null, recordNo: null, twitter: null, instagram: null, tiktok: null, linkedin: null, endReason: null, endDate: "", endAgo: "", canEnd: true, canEdit: true, canWarn: true, warnCount: 0, committeeId: null };
+const noDetails = { joinedRaw: "", college: null, major: null, degree: null, degreeRaw: null, recordNo: null, twitter: null, instagram: null, tiktok: null, linkedin: null, endReason: null, endDate: "", endAgo: "", canEnd: true, canEdit: true, canWarn: true, warnCount: 0, canCertify: true, certName: null, certPosition: null, certCount: 0, committeeId: null };
 const sampleMembers: MemberRow[] = [
   { id: "s1", name: "سارة الفيصل", email: "sara.f@adeeb.club", phone: "0551234567", avatar: null, gender: "female", dept: "الإعلام", committee: "لجنة التصميم", role: "عضو", status: "active", joined: "12 يناير 2026", ...noDetails },
   { id: "s2", name: "عبدالله القحطاني", email: "a.qahtani@adeeb.club", phone: "0509876543", avatar: null, gender: "male", dept: "التقنية", committee: "لجنة التطوير", role: "قائد فريق", status: "active", joined: "3 مارس 2026", ...noDetails },
@@ -109,7 +110,7 @@ export default function ComponentsGallery() {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › النظام › <b>معرض المكوّنات</b></div>
+          <Breadcrumb leaf="معرض المكوّنات" />
           <h1>معرض المكوّنات</h1>
         </div>
       </div>

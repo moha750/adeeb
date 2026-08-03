@@ -11,6 +11,7 @@ import { Modal } from "../_components/Modal";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
 import { MemberCard } from "./MemberCard";
 import { IssueWarningModal } from "./warnings/IssueWarningModal";
+import { IssueCertificateModal } from "./certificates/IssueCertificateModal";
 import type { MenuGroup } from "../_components/DropdownMenu";
 import { Pagination } from "../_components/Pagination";
 import { Avatar } from "../_components/Avatar";
@@ -29,6 +30,7 @@ import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, t
 import type { MemberRow, MemberStatus } from "./data";
 import { DEGREES, DEGREE_VALUES, PHONE_RE, PHONE_HINT, SOCIAL_KEYS, hasAcademicFields, socialHandle, socialLabel, socialLabelOf, socialUrl } from "./vocab";
 import { endMembership, restoreMembership, updateMember } from "./actions";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 // الحقول الثلاثة التي تلزم صاحب الدرجة الجامعيّة وحده — ويُمنع منها صاحب «ثانوية عامة» و«موظف».
 const ACADEMIC_REQUIRED = [
@@ -96,6 +98,7 @@ const Ico = {
   end: <Prohibit />,
   restore: <ArrowCounterClockwise />,
   warn: <ShieldWarning />,
+  cert: <Certificate />,
 };
 
 /** أدنى طول لسبب الإنهاء — نفس عتبة `terminate_membership` في القاعدة (خمسة أحرف). */
@@ -246,7 +249,7 @@ type ViewProps = {
 export function MembersView({ members: input, lockedStatus, mode, mayManageData: mayManage = false, headless = false, readOnly = false, emptyNote, contact = false, warningLimit = 3 }: ViewProps) {
   // منبعٌ واحد للسلطة: في العرض المحض تُقرأ صفرًا فتغيب الأفعال كلُّها من الجدول والكرت والنافذة
   const members = useMemo(
-    () => (readOnly ? input.map((m) => ({ ...m, canEnd: false, canEdit: false, canWarn: false })) : input),
+    () => (readOnly ? input.map((m) => ({ ...m, canEnd: false, canEdit: false, canWarn: false, canCertify: false })) : input),
     [input, readOnly],
   );
   const mayManageData = mayManage && !readOnly;
@@ -269,6 +272,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
   const [restoring, setRestoring] = useState<MemberRow | null>(null);
   // إصدار إنذار — نافذة الغرفة نفسها (مصدرٌ واحد)، مثبّتةً على صاحب الصفّ فلا يُختار غيره
   const [warning, setWarning] = useState<MemberRow | null>(null);
+  const [certifying, setCertifying] = useState<MemberRow | null>(null);
   const [acting, startAct] = useTransition();
   // نموذج الإضافة/التعديل عبر React Hook Form + Zod
   const editForm = useForm<MemberForm>({
@@ -439,6 +443,11 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
           ...(m.canWarn && m.status === "active"
             ? [{ label: "إصدار إنذار", icon: Ico.warn, onSelect: () => setWarning(m) }]
             : []),
+          // شهادةُ الخبرة **لا تشترط عضويّةً سارية** (بخلاف الإنذار): أكثرُ من يطلبها من غادر،
+          // فالبند يظهر في «أعضاء أديب» و«أعضاء سابقون» سواء.
+          ...(m.canCertify
+            ? [{ label: "إصدار شهادة خبرة", icon: Ico.cert, onSelect: () => setCertifying(m) }]
+            : []),
         ],
       },
     ];
@@ -466,8 +475,9 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
       {headless ? null : (
         <div className="ash-phead">
           <div>
-            {/* «أعضاء أديب» صدارة القسم وهي سِجلّ النشطين، فتقف ورقةً وحدها بلا تكرارٍ تحت نفسها؛ سواها ورقةٌ تحتها */}
-            <div className="ash-crumb">أديب › {lockedStatus === "active" ? <b>أعضاء أديب</b> : <>أعضاء أديب › <b>{section.title}</b></>}</div>
+            {/* الأقسام الثلاثة **أخواتٌ** لا أبناءَ لـ«أعضاء أديب» — بندُ كلٍّ في الخريطة قائمٌ بنفسه.
+                وعنوانُ الورقة من `section` نفسه الذي يقوله العنوان، فلا يفترقان. */}
+            <Breadcrumb leaf={section.title} />
             <h1>{section.title}</h1>
           </div>
         </div>
@@ -749,6 +759,28 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
             joinedDate: warning.joinedRaw || null,
           }]}
           onClose={() => { setWarning(null); router.refresh(); }}
+        />
+      ) : null}
+
+      {certifying ? (
+        <IssueCertificateModal
+          open
+          preselect={certifying.id}
+          // اللقطة المقترَحة من القاعدة (`certificate_targets`) لا من صفّ الشاشة — فما يُراجَع
+          // هنا هو ما ستكتبه الدالّة نفسها إن تُرك على حاله.
+          targets={[{
+            id: certifying.id,
+            name: certifying.name,
+            suggestedName: certifying.certName ?? certifying.name,
+            avatar: certifying.avatar,
+            gender: certifying.gender,
+            phone: certifying.phone,
+            ended: certifying.status !== "active",
+            positionTitle: certifying.certPosition,
+            joinedDate: certifying.joinedRaw || null,
+            issuedCount: certifying.certCount,
+          }]}
+          onClose={() => { setCertifying(null); router.refresh(); }}
         />
       ) : null}
     </>

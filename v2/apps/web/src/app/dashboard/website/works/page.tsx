@@ -4,6 +4,7 @@ import { WorksView } from "./WorksView";
 import { getWebsiteManager } from "@/lib/website/authz";
 import { WebsiteDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 export default async function WorksPage() {
   const denied = await denyUnless("/dashboard/website/works");
@@ -18,7 +19,7 @@ export default async function WorksPage() {
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › المحتوى › الصفحة الرئيسية › <b>الأعمال</b></div>
+            <Breadcrumb />
             <h1>معرض الأعمال</h1>
           </div>
         </div>

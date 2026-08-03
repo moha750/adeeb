@@ -1,0 +1,187 @@
+/* ============================================================
+   سطح بطاقة Apple Wallet — **محاكاةٌ لسطحٍ ليس لنا**.
+
+   القاعدة ١ تقول: لا تنسيقَ خارج المكتبة. وهذا الملفّ استثناءٌ **مُعلَنٌ ومُبرَّر**،
+   لا ترقيعٌ صامت:
+
+   ١) ما يُرسَم هنا ليس مكوّنَ أديب بل **تخطيط PassKit** (ترويسة · حقلٌ رئيس · صفّان ·
+      باركود) — تفرضه أبل ولا نملك تغييره. فوضعُه في `components.css` يُدخل المكتبةَ
+      شكلًا لا يخصّها ولا يُعاد استعماله.
+   ٢) هذا المجلّد **يُحذف** بعد العرض، فما فيه يموت معه. وصنفٌ يُترك في المكتبة بعد
+      موت مستعمِله هو بالضبط ما يحرسه `pnpm check`.
+   ٣) وله سابقةٌ في المستودع: `_story/story.css` مجاورةٌ لمكوّنها للسبب نفسه.
+
+   **ولا لونَ من خارج الرموز**: كلّ قيمةٍ هنا `var(--…)` من `tokens.css` — الاستثناء
+   في **موضع** الورقة لا في **مصدر** اللون.
+   ============================================================ */
+
+/* ── اللوح ─────────────────────────────────────────────────────────────── */
+
+.wp-stage {
+  perspective: 1600px;   /* عمقُ الانقلاب — على الحاوية لا على البطاقة، وإلّا انفلت المحور */
+  width: 100%;
+  max-width: 340px;      /* عرضُ بطاقةٍ في أيفون تقريبًا؛ فوقه تُقرأ لوحةً لا بطاقة */
+  margin-inline: auto;
+}
+
+.wp-flip {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform .62s cubic-bezier(.22, .61, .36, 1);
+}
+
+.wp-flip[data-face="back"] { transform: rotateY(180deg); }
+
+/* الوجهان يتراكبان: الأوّل يقود الارتفاع، والثاني مُطلَقٌ فوقه مقلوبًا سلفًا. */
+.wp-side {
+  backface-visibility: hidden;
+  border-radius: var(--radius);
+  background: var(--navy-700);          /* = backgroundColor في pass.json */
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.wp-side--back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+  gap: 12px;
+  overflow-y: auto;
+  /* فراغٌ أسفلَ آخرِ سطرٍ بقدر مقبض القلب — وإلّا انزلق النصّ تحته عند التمرير. */
+  padding-bottom: 48px;
+}
+
+/* ── الترويسة ──────────────────────────────────────────────────────────── */
+
+.wp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wp-logo {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--fw-black);
+  letter-spacing: 0;                    /* العربيّة تُوصَل — لا تباعدَ بين حروفها */
+}
+
+/* ── الحقول ────────────────────────────────────────────────────────────── */
+
+/* التسمية فوق القيمة دائمًا — هكذا ترسمها أبل، صغيرةً باهتةً بحروفٍ متباعدةٍ للاتينيّ. */
+.wp-lab {
+  display: block;
+  font-size: 10.5px;
+  font-weight: var(--fw-bold);
+  color: var(--steel-200);              /* = labelColor في pass.json */
+  margin-bottom: 2px;
+}
+
+.wp-val {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-bold);
+  line-height: var(--leading-snug);
+}
+
+.wp-fld--head { text-align: end; }
+.wp-fld--head .wp-val { font-family: var(--font-latin); font-size: var(--text-2xl); font-weight: var(--fw-black); }
+
+.wp-fld--primary .wp-lab { font-size: 11px; }
+.wp-fld--primary .wp-val { font-family: var(--font-display); font-size: var(--text-3xl); font-weight: var(--fw-black); }
+
+/* صفّان متقابلان: الأوّل يبدأ والثاني ينتهي — وهي محاذاةُ Wallet نفسها. */
+.wp-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wp-row > * { min-width: 0; flex: 1 1 0; }
+.wp-row > *:last-child { text-align: end; }
+
+/* ── الباركود ──────────────────────────────────────────────────────────── */
+
+/* أبيضُ صريحٌ تحت الرمز: الرمز يُقرأ بالتباين، والكحليّ يبتلعه. */
+.wp-code {
+  margin-top: auto;
+  align-self: center;
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  line-height: 0;
+}
+
+.wp-alt {
+  align-self: center;
+  font-family: var(--font-latin);
+  font-size: 10px;
+  color: var(--steel-200);
+}
+
+/* ── الظهر ─────────────────────────────────────────────────────────────── */
+
+.wp-back-h {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: var(--fw-black);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.wp-back-f { padding-block: 6px; border-bottom: 1px solid var(--glass-border); }
+.wp-back-f:last-child { border-bottom: 0; }
+.wp-back-f .wp-val { font-size: 12.5px; font-weight: var(--fw-medium); white-space: pre-line; }
+
+/* ── مقبض القلب ────────────────────────────────────────────────────────── */
+
+/* دائرةٌ وظيفيّة (ق٢) في زاوية البطاقة — الزجاج نفسُه المستعمَل فوق الأسطح المتدرّجة.
+   **وموضعُها الزاوية السفلى لا العليا**: `inset-inline-start` في RTL هو **اليمين**، وهناك
+   يبدأ الشعار — فكانت الدائرةُ تقع فوق «أَدِيب». والأسفلُ خالٍ في الوجهين. */
+.wp-turn {
+  position: absolute;
+  inset-block-end: 10px;
+  inset-inline-start: 10px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  /* **مصمتٌ لا زجاجيّ**: الظهرُ يُمرَّر، والزجاجُ يُنفِذ السطرَ المارَّ تحته فيُقرأ
+     نصّان متراكبان. الزجاج يصلح فوق سطحٍ ساكن لا فوق محتوًى ينزلق. */
+  background: var(--navy-800);
+  color: var(--color-on-primary);
+  cursor: pointer;
+  transition: background var(--dur-fast);
+}
+
+.wp-turn:hover { background: var(--navy-900); }
+
+/* ── شريط الرصيد ───────────────────────────────────────────────────────── */
+
+.wp-meter {
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  overflow: hidden;
+}
+
+.wp-meter > i {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--grad-primary);
+  transition: width .5s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wp-flip, .wp-meter > i { transition: none; }
+}

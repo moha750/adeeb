@@ -4,6 +4,7 @@ import { FaqView } from "./FaqView";
 import { getWebsiteManager } from "@/lib/website/authz";
 import { WebsiteDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 export default async function FaqPage() {
   const denied = await denyUnless("/dashboard/website/faq");
@@ -18,7 +19,7 @@ export default async function FaqPage() {
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › المحتوى › الصفحة الرئيسية › <b>الأسئلة الشائعة</b></div>
+            <Breadcrumb />
             <h1>الأسئلة الشائعة</h1>
           </div>
         </div>

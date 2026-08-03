@@ -5,6 +5,7 @@ import { EventForm } from "../../EventForm";
 import { getEventsManager } from "@/lib/events/authz";
 import { EventsDenied } from "../../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../../../_shell/Breadcrumb";
 
 export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/events");
@@ -25,7 +26,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › التفاعل › الفعاليّات › <b>تحرير</b></div>
+            <Breadcrumb leaf="تحرير" />
             <h1>تحرير الفعاليّة</h1>
           </div>
         </div>

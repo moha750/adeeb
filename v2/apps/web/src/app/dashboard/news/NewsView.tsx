@@ -24,6 +24,7 @@ import {
   missingForPublish, type Category, type Workflow,
 } from "./vocab";
 import { createNews, deleteNews, setNewsStatus, toggleFeatured } from "./actions";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 /** مراحل اللوحة — تبويبٌ لكلّ محطّة في الطريق، لا قائمةٌ واحدة يضيع فيها ما يحتاجك الآن. */
 const STAGES: { value: string; label: string; match: (n: NewsRow) => boolean }[] = [
@@ -272,7 +273,7 @@ export function NewsView({
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › <b>الأخبار</b></div>
+          <Breadcrumb />
           <h1>غرفة تحرير أدِيب</h1>
         </div>
         {createBtn}

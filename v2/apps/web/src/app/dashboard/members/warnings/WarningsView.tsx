@@ -22,6 +22,7 @@ import { waHref } from "@/lib/whatsapp";
 import { cancelWarning } from "./actions";
 import { IssueWarningModal } from "./IssueWarningModal";
 import type { WarningRow, WarningsData } from "./data";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 type Mode = "members" | "all";
 
@@ -232,7 +233,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › أعضاء أديب › <b>الإنذارات</b></div>
+          <Breadcrumb />
           <h1>الإنذارات</h1>
         </div>
         {mayIssue ? null : <Badge tone="info" variant="soft" icon={<Eye weight="fill" />}>اطّلاعٌ لا إصدار</Badge>}

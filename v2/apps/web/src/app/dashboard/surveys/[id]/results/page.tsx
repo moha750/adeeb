@@ -4,6 +4,7 @@ import { getSurveyAggregates } from "@/lib/surveys/aggregate";
 import { getSurveyResponses } from "../../results-data";
 import { ResultsView } from "../../ResultsView";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../../../_shell/Breadcrumb";
 
 export default async function SurveyResultsPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/surveys");
@@ -24,7 +25,7 @@ export default async function SurveyResultsPage({ params }: { params: Promise<{ 
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › التفاعل › الاستبيانات › <b>النتائج</b></div>
+            <Breadcrumb leaf="النتائج" />
             <h1>نتائج الاستبيان</h1>
           </div>
         </div>

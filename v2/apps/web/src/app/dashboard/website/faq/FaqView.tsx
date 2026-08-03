@@ -15,6 +15,7 @@ import type { MenuGroup } from "../../_components/DropdownMenu";
 import type { FaqRow } from "./data";
 import { FaqCard } from "./FaqCard";
 import { deleteFaq, moveFaq } from "./actions";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 export function FaqView({ faqs }: { faqs: FaqRow[] }) {
   const toast = useToast();
@@ -80,7 +81,7 @@ export function FaqView({ faqs }: { faqs: FaqRow[] }) {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › الصفحة الرئيسية › <b>الأسئلة الشائعة</b></div>
+          <Breadcrumb />
           <h1>الأسئلة الشائعة</h1>
         </div>
         {createBtn}

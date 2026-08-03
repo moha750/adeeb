@@ -5,6 +5,7 @@ import { getMembers } from "../data";
 import { getOrgData } from "../structure/orgData";
 import { myCommittees } from "./model";
 import { SupervisedView } from "./SupervisedView";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 /**
  * «من أشرف عليهم» — غرفةُ من لا يملك سجلّ الأعضاء كلّه.
@@ -31,7 +32,7 @@ export default async function SupervisedMembersPage() {
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › أعضاء أديب › <b>من أشرف عليهم</b></div>
+            <Breadcrumb />
             <h1>من أشرف عليهم</h1>
           </div>
         </div>

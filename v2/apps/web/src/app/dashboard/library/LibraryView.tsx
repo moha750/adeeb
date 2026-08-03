@@ -19,6 +19,7 @@ import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, t
 import type { BookRow } from "./data";
 import { KIND_META, KIND_OPTIONS, STATUS_META, slugify, type BookKind } from "./vocab";
 import { createBook, updateBook, setBookStatus, toggleBookFeatured, deleteBook } from "./actions";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 type FormState = { title: string; slug: string; kind: BookKind; summary: string; yearHijri: string; yearGregorian: string };
 const EMPTY_FORM: FormState = { title: "", slug: "", kind: "annual_report", summary: "", yearHijri: "", yearGregorian: "" };
@@ -191,7 +192,7 @@ export function LibraryView({ books }: { books: BookRow[] }) {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › <b>المكتبة</b></div>
+          <Breadcrumb />
           <h1>مكتبة «إرثٌ يُروى»</h1>
         </div>
         <Button variant="primary" size="md" onClick={openCreate}><Plus size={18} />منشور جديد</Button>

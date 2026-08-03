@@ -27,6 +27,7 @@ import { ScheduleLine } from "./ScheduleLine";
 import { SurveyPreview } from "./SurveyPreview";
 import type { PublicSurvey, PublicQuestion } from "@/app/surveys/[id]/SurveyRespond";
 import { SurveyCard } from "./SurveyCard";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 // نغمة سطح الصفّ من الحالة المخزّنة — المتوقّف أصفر. النشط لا يُدرَج هنا لأنّ خضرته مشروطة
 // بكونه حيًّا الآن (لا مجدولًا ولا منتهيًا) لا بحالته المخزّنة وحدها — تُحسب في isLiveActive.
@@ -361,7 +362,7 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › التفاعل › <b>الاستبيانات</b></div>
+          <Breadcrumb />
           <h1>الاستبيانات</h1>
         </div>
         <Link href="/dashboard/surveys/new" className="abtn abtn-primary abtn-md"><Plus size={18} />استبيان جديد</Link>

@@ -9,6 +9,7 @@ import {
 import { useToast } from "../../_components/ToastProvider";
 import type { WorkEditData } from "./data";
 import { createWork, updateWork, uploadWorkImage, type WorkInput } from "./actions";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 export function WorkForm({ work }: { work?: WorkEditData | null }) {
   const toast = useToast();
@@ -66,7 +67,7 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › الأعمال › <b>{crumbLeaf}</b></div>
+          <Breadcrumb leaf={crumbLeaf} />
           <h1>{editing ? `تحرير: ${work.title}` : "عمل جديد"}</h1>
         </div>
         <div className="form-head-actions">

@@ -1,4 +1,5 @@
 import { Alert } from "@adeeb/design-system";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 /**
  * تنبيه «لا صلاحية» لصفحات المكتبة — يُعرض لمن لا يملك قدرة `manage_library`
@@ -9,7 +10,7 @@ export function LibraryDenied() {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › <b>المكتبة</b></div>
+          <Breadcrumb />
           <h1>المكتبة</h1>
         </div>
       </div>

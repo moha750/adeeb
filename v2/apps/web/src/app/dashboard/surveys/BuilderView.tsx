@@ -18,6 +18,7 @@ import {
 import { createSurvey, updateSurvey, type QuestionInput, type SurveyInput } from "./actions";
 import { SurveyPreview } from "./SurveyPreview";
 import type { PublicSurvey, PublicQuestion } from "@/app/surveys/[id]/SurveyRespond";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 /** سؤال قيد التحرير — مفتاح React ثابت مستقلّ عن id القاعدة (الجديد بلا id بعد). */
 type QuestionDraft = {
@@ -207,7 +208,7 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › التفاعل › الاستبيانات › <b>{crumbLeaf}</b></div>
+          <Breadcrumb leaf={crumbLeaf} />
           <h1>{editing ? `تحرير: ${survey.title}` : "استبيان جديد"}</h1>
         </div>
         <div className="form-head-actions">

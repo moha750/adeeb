@@ -6,6 +6,7 @@ import { ShieldWarning, Warning } from "@phosphor-icons/react";
 import { WARNING_CATEGORIES, warningTitle } from "@/lib/warnings/vocab";
 import { renderWarningLetter } from "@/lib/warnings/letter";
 import { warningWhatsappMessage, type WarningLetter } from "@/lib/warnings/message";
+import { Breadcrumb } from "../../../_shell/Breadcrumb";
 
 /**
  * عيّنةٌ ثابتة — **اسمٌ متخيَّل** لا عضوٌ حقيقيّ (كعيّنات معرض المكوّنات)، فالمعاينة تُقرأ
@@ -73,7 +74,7 @@ export function PreviewView() {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › الإنذارات › <b>معاينة الخطاب</b></div>
+          <Breadcrumb leaf="معاينة الخطاب" />
           <h1>معاينة الخطاب</h1>
         </div>
         <Badge tone="info" variant="soft" icon={<ShieldWarning weight="fill" />}>عيّنةٌ لا سجلّ</Badge>

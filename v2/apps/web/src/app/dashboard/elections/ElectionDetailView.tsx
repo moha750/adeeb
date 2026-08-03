@@ -17,6 +17,7 @@ import type { CandidateRow, ElectionDetail } from "./data";
 import type { ElectionResult } from "./actions";
 import { cancelElection, declareWinner, openVoting, reviewCandidate, transitionElection } from "./actions";
 import { CANDIDATE_STATUS_META, STATUS_META } from "./vocab";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 // مدّة التصويت مقاديرُ جاهزة (Select منسَّق) بدل منتقي وقتٍ خام — voting_end = الآن + المدّة
 const DURATIONS = [
@@ -108,7 +109,7 @@ export function ElectionDetailView({ election }: { election: ElectionDetail }) {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › التفاعل › <Link href="/dashboard/elections">الانتخابات</Link> › <b>{election.roleLabel}</b></div>
+          <Breadcrumb leaf={election.roleLabel} />
           <h1>{election.positionLabel}</h1>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

@@ -4,11 +4,12 @@ import { BirthdaysView } from "./BirthdaysView";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getCurrentAdmin } from "@/lib/auth";
 import { getSupervisedUserIds } from "@/lib/mySupervision";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 const Head = () => (
   <div className="ash-phead">
     <div>
-      <div className="ash-crumb">أديب › أعضاء أديب › <b>أعياد الميلاد</b></div>
+      <Breadcrumb />
       <h1>أعياد الميلاد</h1>
     </div>
   </div>

@@ -8,6 +8,7 @@ import { Committee } from "../members/structure/tree";
 import { MembersView } from "../members/MembersView";
 import type { MemberRow } from "../members/data";
 import type { CommitteeNode } from "../members/structure/model";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 /**
  * «لجنتي» — شاشة **قائد اللجنة التنفيذيّة ونائبها**، وهي **عرضٌ محض** (20260801): لا ضمَّ ولا
@@ -43,7 +44,7 @@ export function CommitteeView({
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › {dept ? `${dept} › ` : ""}<b>{c.name}</b></div>
+          <Breadcrumb leaf={c.name} />
           <h1>{c.name}</h1>
         </div>
       </div>

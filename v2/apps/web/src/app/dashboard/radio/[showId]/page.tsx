@@ -5,6 +5,7 @@ import { ShowEditorView } from "./ShowEditorView";
 import { getRadioManager } from "@/lib/radio/authz";
 import { RadioDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 export default async function ShowEditorPage({ params }: { params: Promise<{ showId: string }> }) {
   const denied = await denyUnless("/dashboard/radio");
@@ -20,7 +21,7 @@ export default async function ShowEditorPage({ params }: { params: Promise<{ sho
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › المحتوى › الإذاعة</div>
+            <Breadcrumb leaf="البرنامج" />
             <h1>البرنامج</h1>
           </div>
         </div>

@@ -13,6 +13,7 @@ import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, t
 import type { ElectionRow, ElectionCreateOptions } from "./data";
 import { NewElectionDialog } from "./NewElectionDialog";
 import { STATUS_META } from "./vocab";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 /** شارة الحالة — من STATUS_META (المصدر الواحد)؛ الطورا المفتوحان ينبضان live. */
 function statusBadge(e: ElectionRow) {
@@ -156,7 +157,7 @@ export function ElectionsView({ elections, createOptions }: { elections: Electio
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › التفاعل › <b>الانتخابات</b></div>
+          <Breadcrumb />
           <h1>الانتخابات</h1>
         </div>
         {createCta}

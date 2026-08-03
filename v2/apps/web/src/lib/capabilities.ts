@@ -27,6 +27,10 @@ export const SECTION_CAP = {
   // سجلّ الإنذارات: بابُه `view_warnings` — يحمله قائد الموارد وعضوها **والرئيسان** (اطّلاعًا).
   // والإصدارُ والإلغاء قدرةٌ ثانية (`manage_warnings`) تُسأل داخل الغرفة وفي القاعدة، لا هنا.
   "/dashboard/members/warnings": "view_warnings",
+  // شهادات الخبرة: قدرةٌ **واحدة** لا بابٌ وفعل — الرائي هنا هو المُصدِر نفسه (رئيس النادي ·
+  // رئيس التنفيذيّ · قائد الموارد)، فلا فرقَ يُصنَع بلا أثر. ومدى الإصدار يقوله
+  // `membership_authority` في القاعدة لا هذا القفل.
+  "/dashboard/members/certificates": "manage_certificates",
   "/dashboard/members/birthdays": "view_birthdays",
   "/dashboard/members/structure": "view_org_structure",
   // تبويب التعيينات: مفتاحُه `assign_positions` — قدرةٌ **تُشتقّ** من جدول `position_authority`
@@ -45,6 +49,9 @@ export const SECTION_CAP = {
   "/dashboard/committee": "manage_committee_members",
   "/dashboard/members/credentials": "manage_member_data",
   "/dashboard/events": "manage_activities",
+  // رسائل التواصل — صندوقُ ما يكتبه الزائر في «تواصل معنا». قدرةٌ **واحدة** لا بابٌ وفعل:
+  // من يرى بريد الزائر يردّ عليه، فلا معنى لقارئٍ لا يُجيب في غرفةٍ كلُّ عملها الجواب.
+  "/dashboard/contact": "manage_contact",
   "/dashboard/surveys": "manage_surveys",
   "/dashboard/elections": "manage_elections",
   "/dashboard/website/works": "manage_works",
@@ -57,7 +64,13 @@ export const SECTION_CAP = {
   // فالمفتاح واحدٌ للباب، والفارق بين رئيسٍ وكاتب داخل الغرفة لا عندها.
   "/dashboard/news": "write_news",
   "/dashboard/system/permissions": "manage_permissions",
+  // لوحة السلطة — حدودُ المناصب (من يُسنِد مَن، ومن لا تطوله يدُه، ومدى سلطة العضويّة).
+  // قفلُها قفلُ الصلاحيات: من يوزّع القدرات يرسم الحدود.
+  "/dashboard/system/authority": "manage_permissions",
   "/dashboard/analytics": "view_site_stats",
+  // أداةُ الرمز — لا سجلَّ لها ولا بيانات: تكتب نصًّا فتأخذ صورة. فقفلُها قدرةٌ خاصّة بها
+  // (`use_qr_generator`) لا مفتاحُ غرفةٍ أخرى — من يصنع الملصقات ليس بالضرورة من يدير الموقع.
+  "/dashboard/tools/qr": "use_qr_generator",
   "/dashboard/components": "manage_permissions",
 } as const;
 

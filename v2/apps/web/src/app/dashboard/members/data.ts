@@ -56,6 +56,16 @@ export type MemberRow = {
   canWarn: boolean;
   /** عدد إنذاراته السارية — يُقال في نافذة الإصدار («عليه اثنان من ثلاثة»). */
   warnCount: number;
+  /**
+   * وجوابٌ رابع: هل يبلغ القارئُ إصدارَ **شهادة خبرة** له (`can_issue_certificate`)؟
+   * والاقتراحان معه من القاعدة نفسها (`certificate_targets`) لا من هذه الشاشة: الاسمُ الذي
+   * سيُرسَم والمسمّى كاملًا — فلا تخترع الواجهةُ لقطةً تخالف ما تكتبه الدالّة.
+   */
+  canCertify: boolean;
+  certName: string | null;
+  certPosition: string | null;
+  /** شهاداته السارية — تحذيرُ النافذة من إصدارٍ ثانٍ. */
+  certCount: number;
   /** لجنتُه بمعرّفها — لقطةٌ تُكتب في الإنذار (اسمُها وحده لا يكفي للكتابة). */
   committeeId: number | null;
 };
@@ -90,7 +100,7 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
   // هويّة القارئ — لتُسأل القاعدةُ عمّن تبلغه سلطتُه. بلا هويّة لا مدّ (آمنٌ افتراضًا).
   const me = await getCurrentAdmin();
 
-  const [pRes, urRes, rRes, dRes, cRes, mdRes, reachRes, warnRes, limitRes] = await Promise.all([
+  const [pRes, urRes, rRes, dRes, cRes, mdRes, reachRes, warnRes, limitRes, certRes] = await Promise.all([
     sb.from("profiles").select("id, full_name, email, phone, avatar_url, gender, account_status, joined_date, termination_reason, terminated_at").order("joined_date", { ascending: false }),
     sb.from("user_roles").select("user_id, role_name, department_id, committee_id, assigned_at").eq("is_active", true),
     sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
@@ -101,9 +111,11 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
     // ومن يبلغهم إنذارُه — مرآةٌ ثانية للسؤال نفسه بفعلٍ آخر (`can_issue_warning`)
     me ? sb.rpc("members_i_may_warn", { p_actor: me.id }) : Promise.resolve({ data: null, error: null }),
     sb.rpc("warning_limit"),
+    // ومن تبلغهم شهادتُه — المرآة نفسها التي تقرؤها غرفة الشهادات، فالاقتراح واحدٌ في الموضعين
+    me ? sb.rpc("certificate_targets", { p_actor: me.id }) : Promise.resolve({ data: null, error: null }),
   ]);
 
-  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || mdRes.error || reachRes.error || warnRes.error;
+  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || mdRes.error || reachRes.error || warnRes.error || certRes.error;
   if (firstErr) return { members: [], warningLimit: 3, error: firstErr.message };
 
   const reach = new Map(
@@ -113,6 +125,12 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
   const warnable = new Map(
     ((warnRes.data ?? []) as Array<{ user_id: string; active_count: number }>)
       .map((r) => [r.user_id, r] as const),
+  );
+
+  const certifiable = new Map(
+    ((certRes.data ?? []) as Array<{
+      user_id: string; suggested_name: string; position_title: string | null; issued_count: number;
+    }>).map((r) => [r.user_id, r] as const),
   );
 
   const roleByName = new Map((rRes.data ?? []).map((r) => [r.role_name, r]));
@@ -176,6 +194,10 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
       canEdit: reach.get(p.id)?.may_edit ?? false,
       canWarn: warnable.has(p.id),
       warnCount: warnable.get(p.id)?.active_count ?? 0,
+      canCertify: certifiable.has(p.id),
+      certName: certifiable.get(p.id)?.suggested_name ?? null,
+      certPosition: certifiable.get(p.id)?.position_title ?? null,
+      certCount: certifiable.get(p.id)?.issued_count ?? 0,
       committeeId: br?.committee_id ?? null,
     };
   });

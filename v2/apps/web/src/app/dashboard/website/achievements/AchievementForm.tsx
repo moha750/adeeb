@@ -9,6 +9,7 @@ import { STAT_ICONS, STAT_ICON_CATEGORIES, DEFAULT_STAT_ICON, asIconKey, StatIco
 import { formatThousands as fmt } from "@/app/_components/format";
 import type { AchievementEditData } from "./data";
 import { createAchievement, updateAchievement, type AchievementInput } from "./actions";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 export function AchievementForm({ item }: { item?: AchievementEditData | null }) {
   const toast = useToast();
@@ -55,7 +56,7 @@ export function AchievementForm({ item }: { item?: AchievementEditData | null })
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › الإحصاءات › <b>{crumbLeaf}</b></div>
+          <Breadcrumb leaf={crumbLeaf} />
           <h1>{editing ? `تحرير: ${item.label}` : "إحصائيّة جديدة"}</h1>
         </div>
         <div className="form-head-actions">

@@ -27,6 +27,7 @@ import type { BookHeader, PageEditRow } from "../data";
 import {
   createPageUploadUrl, addPage, renamePage, deletePage, setPageHard, setCoverPage, reorderPages, setBookStatus,
 } from "../actions";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 const BUCKET = "library";
 
@@ -209,7 +210,7 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › المكتبة › <b>{book.title}</b></div>
+          <Breadcrumb leaf={book.title} />
           <h1>{book.title}</h1>
         </div>
         <div className="form-head-actions">

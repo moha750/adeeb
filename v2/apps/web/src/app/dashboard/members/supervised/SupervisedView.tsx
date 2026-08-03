@@ -8,6 +8,7 @@ import { MembersView } from "../MembersView";
 import type { MemberRow } from "../data";
 import { CommitteeCard } from "./CommitteeCard";
 import { committeesLabel, type MyCommittee, type MyUnit } from "./model";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 /**
  * «من أشرف عليهم» — شاشة المشرف: لجانُه وقيادتُها، وأعضاؤها.
@@ -42,7 +43,7 @@ export function SupervisedView({
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › أعضاء أديب › <b>من أشرف عليهم</b></div>
+          <Breadcrumb />
           <h1>من أشرف عليهم</h1>
         </div>
       </div>

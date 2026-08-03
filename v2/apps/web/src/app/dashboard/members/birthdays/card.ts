@@ -8,6 +8,8 @@
 // القالب في: apps/web/public/brand/birthday-template.png (مضبوط الآن). لتبديله لاحقًا استبدل الملفّ نفسه.
 // اسم العضو يُرسَم (DRAW_NAME=true) بحبر التصميم الغامق (يقرأ على البطاقة الفاتحة)، موضعه/حجمه في ثابت NAME.
 
+import { downloadBlob } from "@/lib/download";
+
 const TEMPLATE_SRC = "/brand/birthday-template.png";
 const LOGO_SRC = "/brand/logo-horizontal-white.svg";
 const PATTERN_SRC = "/brand/pattern-white.svg";
@@ -302,13 +304,5 @@ export async function renderBirthdayCard(row: { name: string; favoriteColor: str
 /** يولّد البطاقة ويُنزّلها ملفَّ PNG باسم العضو. */
 export async function downloadBirthdayCard(row: { name: string; favoriteColor: string | null }): Promise<void> {
   const blob = await renderBirthdayCard(row);
-  const safe = row.name.replace(/[\\/:*?"<>|]/g, "").trim() || "عضو";
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `تهنئة-${safe}.png`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  downloadBlob(blob, `تهنئة-${row.name.trim() || "عضو"}.png`);
 }

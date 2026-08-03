@@ -1,4 +1,5 @@
 import { Alert } from "@adeeb/design-system";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 /**
  * تنبيه «لا صلاحية» لصفحات الفعاليّات — يُعرض لمن لا يملك قدرة `manage_activities`
@@ -9,7 +10,7 @@ export function EventsDenied() {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › التفاعل › <b>الفعاليّات</b></div>
+          <Breadcrumb />
           <h1>الفعاليّات</h1>
         </div>
       </div>

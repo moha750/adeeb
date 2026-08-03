@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Alert, Badge, Button, Checkbox, Field, Select, Textarea } from "@adeeb/design-system";
 import {
@@ -29,6 +28,7 @@ import {
   moderatePublicComment, removeCover, removeGalleryImage, returnForEdits, saveNews,
   setCover, setNewsStatus, submitForReview, toggleFeatured,
 } from "../actions";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 const dt = (s: string | null) =>
   s ? new Intl.DateTimeFormat("ar-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }).format(new Date(s)) : "—";
@@ -176,9 +176,7 @@ export function NewsEditorView({
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">
-            <Link href="/dashboard/news">أديب › المحتوى › الأخبار</Link> › <b>{row.title}</b>
-          </div>
+          <Breadcrumb leaf={row.title} />
           <h1 style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             {row.title}
             <Badge tone={meta.tone} dot>{meta.label}</Badge>

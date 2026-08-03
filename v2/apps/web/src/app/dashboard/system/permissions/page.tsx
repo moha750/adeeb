@@ -4,11 +4,12 @@ import { getPermissionMatrix, getVacantPositions, getViewAsTargets } from "./dat
 import { PermissionsMatrix } from "./PermissionsMatrix";
 import { ViewAsPicker } from "./ViewAsPicker";
 import { VacantSeatPicker } from "./VacantSeatPicker";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 const Head = () => (
   <div className="ash-phead">
     <div>
-      <div className="ash-crumb">أديب › النظام › <b>الصلاحيات</b></div>
+      <Breadcrumb />
       <h1>لوحة الصلاحيات</h1>
     </div>
   </div>

@@ -42,6 +42,7 @@ export const NAV: NavGroup[] = [
       { label: "أعضاء سابقون", icon: "suspended", href: "/dashboard/members/suspended" },
       { label: "من أشرف عليهم", icon: "supervise", href: "/dashboard/members/supervised" },
       { label: "الإنذارات", icon: "warn", href: "/dashboard/members/warnings" },
+      { label: "شهادات الخبرة", icon: "certificate", href: "/dashboard/members/certificates" },
       { label: "أعياد الميلاد", icon: "cake", href: "/dashboard/members/birthdays" },
       { label: "هيكلة أديب", icon: "tree", href: "/dashboard/members/structure" },
       { label: "تعيين المناصب", icon: "assign", href: "/dashboard/members/assignments" },
@@ -54,6 +55,9 @@ export const NAV: NavGroup[] = [
       { label: "الفعاليّات", icon: "cal", href: "/dashboard/events" },
       { label: "الاستبيانات", icon: "clip", href: "/dashboard/surveys" },
       { label: "الانتخابات", icon: "vote", href: "/dashboard/elections" },
+      // رسائل التواصل — تفاعلٌ **وارد**: هذه أخواتُها تدعو الناسَ إلى النادي، وهي تحمل
+      // ما يقوله الناسُ للنادي. فمكانُها هنا لا في «المحتوى» (نشرٌ) ولا في «النظام» (إدارة).
+      { label: "رسائل التواصل", icon: "inbox", href: "/dashboard/contact" },
     ],
   },
   {
@@ -73,8 +77,14 @@ export const NAV: NavGroup[] = [
     head: "النظام",
     items: [
       { label: "الصلاحيات", icon: "gear", href: "/dashboard/system/permissions" },
+      { label: "السلطة", icon: "assign", href: "/dashboard/system/authority" },
       { label: "إحصائيّات الزوّار", icon: "chart", href: "/dashboard/analytics" },
     ],
+  },
+  {
+    // أدواتٌ لا غرفَ بيانات: تأخذ مُدخَلًا فتعطي ملفًّا، ولا تكتب في القاعدة شيئًا.
+    head: "أدوات",
+    items: [{ label: "مولّد الباركود", icon: "qr", href: "/dashboard/tools/qr" }],
   },
 ];
 

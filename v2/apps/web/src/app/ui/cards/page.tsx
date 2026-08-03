@@ -21,7 +21,7 @@ const MEMBER: MemberRow = {
   college: null, major: null, degree: null, degreeRaw: null, recordNo: null,
   twitter: null, instagram: null, tiktok: null, linkedin: null,
   endReason: null, endDate: "", endAgo: "", canEnd: true, canEdit: true,
-  canWarn: true, warnCount: 0, committeeId: null,
+  canWarn: true, warnCount: 0, canCertify: true, certName: null, certPosition: null, certCount: 0, committeeId: null,
 };
 
 // ٦ = صفّان تامّان · ٧ = يبقى واحد فيمتدّ · ٨ = يبقى اثنان فيقتسمان

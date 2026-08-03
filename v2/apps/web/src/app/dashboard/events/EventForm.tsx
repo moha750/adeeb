@@ -12,6 +12,7 @@ import { useToast } from "../_components/ToastProvider";
 import type { EventEditData, OrganizerOption } from "./data";
 import { AUDIENCE_OPTIONS, TYPE_OPTIONS, type ActivityType } from "./vocab";
 import { createEvent, updateEvent, uploadEventCover, type EventInput } from "./actions";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 export function EventForm({ event, organizers }: { event?: EventEditData | null; organizers: OrganizerOption[] }) {
   const toast = useToast();
@@ -123,7 +124,7 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › التفاعل › الفعاليّات › <b>{crumbLeaf}</b></div>
+          <Breadcrumb leaf={crumbLeaf} />
           <h1>{editing ? `تحرير: ${event.name}` : "فعاليّة جديدة"}</h1>
         </div>
         <div className="form-head-actions">

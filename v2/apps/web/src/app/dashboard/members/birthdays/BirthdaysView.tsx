@@ -11,6 +11,7 @@ import { EmptyState } from "../../_components/EmptyState";
 import { useToast } from "../../_components/ToastProvider";
 import type { BirthdayRow } from "./data";
 import { downloadBirthdayCard } from "./card";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 
@@ -196,7 +197,7 @@ export function BirthdaysView({
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › أعضاء أديب › <b>أعياد الميلاد</b></div>
+          <Breadcrumb />
           <h1>أعياد الميلاد</h1>
         </div>
         {/* النطاق يُقال حيث يُرى — فلا يُحسب الجزءُ كلًّا */}

@@ -5,6 +5,7 @@ import { BookEditorView } from "./BookEditorView";
 import { getLibraryManager } from "@/lib/library/authz";
 import { LibraryDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 export default async function BookEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/library");
@@ -20,7 +21,7 @@ export default async function BookEditorPage({ params }: { params: Promise<{ id:
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › المحتوى › المكتبة › <b>تحرير</b></div>
+            <Breadcrumb leaf="تحرير" />
             <h1>تحرير المنشور</h1>
           </div>
         </div>

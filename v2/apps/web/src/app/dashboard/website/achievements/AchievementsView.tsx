@@ -17,6 +17,7 @@ import { formatThousands as fmt } from "@/app/_components/format";
 import type { AchievementRow } from "./data";
 import { AchievementCard } from "./AchievementCard";
 import { deleteAchievement, moveAchievement } from "./actions";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 export function AchievementsView({ items }: { items: AchievementRow[] }) {
   const toast = useToast();
@@ -83,7 +84,7 @@ export function AchievementsView({ items }: { items: AchievementRow[] }) {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › الصفحة الرئيسية › <b>الإحصاءات</b></div>
+          <Breadcrumb />
           <h1>ملخص المسيرة</h1>
         </div>
         {createBtn}

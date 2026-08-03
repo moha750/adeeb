@@ -24,6 +24,7 @@ import {
 } from "./actions";
 import { StatusBadge } from "./StatusBadge";
 import { TypeBadge } from "./TypeBadge";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 type Phase = "draft" | "cancelled" | "upcoming" | "today" | "ended";
 type TabKey = "whatsapp" | "attendance" | "certificates" | "completed" | "dropped" | "all";
@@ -236,7 +237,7 @@ export function EventDetailView({ detail }: { detail: EventDetail }) {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › التفاعل › <Link href="/dashboard/events">الفعاليّات</Link> › <b>{detail.name}</b></div>
+          <Breadcrumb leaf={detail.name} />
           <h1>{detail.name}</h1>
         </div>
         <div className="form-head-actions">

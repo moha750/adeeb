@@ -84,11 +84,20 @@ function Body() {
  * معاينةٌ ناقصة. فالإطارُ يمسك المسارَ في حالةٍ محلّيّة: ضغطةُ الرابط تنقله إليه،
  * فتُختبر **الوجهةُ الحقيقيّة للتوجّه**: كيف ينتقل المؤشّرُ وكيف يستقرّ.
  */
-function PreviewFrame({ nav = NAV }: { nav?: { label: string; href: string }[] }) {
+function PreviewFrame({
+  nav = NAV,
+  headerClass,
+  phone,
+}: {
+  nav?: { label: string; href: string }[];
+  headerClass?: string;
+  /** إطارٌ بعرض الجوّال — الرأسُ يقيس نفسَه فينطوي، فيُرى اللوحُ بلا تضييق النافذة. */
+  phone?: boolean;
+}) {
   const [active, setActive] = useState("/news");
   return (
     <div
-      className="shdr-demo mt-4"
+      className={`shdr-demo mt-4${phone ? " shdr-demo-phone" : ""}`}
       onClickCapture={(e) => {
         const link = (e.target as HTMLElement).closest("a");
         if (!link) return;
@@ -100,7 +109,7 @@ function PreviewFrame({ nav = NAV }: { nav?: { label: string; href: string }[] }
     >
       <main className="amb-host">
         <Ambient />
-        <Header nav={nav} activeHref={active} />
+        <Header nav={nav} activeHref={active} className={headerClass} />
         <Body />
       </main>
     </div>
@@ -145,8 +154,9 @@ export default function HeaderGalleryPage() {
         <p className="mt-3 max-w-3xl leading-relaxed text-content-muted">
           <b>والضغطُ والتركيزُ لغةٌ واحدةٌ لكلّ عناصر الرأس</b> (الرابط · دخول · زرّ القائمة): الضغطُ
           انكماشةٌ خاطفة (0.96) تقول «وصلَت يدُك»، والتركيزُ حلقةُ الهوية{" "}
-          <code className="font-latin">--ring</code> بدل خطّ المتصفّح. و<b>لوحُ الجوّال لغةٌ أخرى</b> —
-          عمودٌ لا صفّ، فيُطفأ التظليلُ المائل ويُقال النشطُ بشعرةٍ رأسيّة في طرف الرابط.
+          <code className="font-latin">--ring</code> بدل خطّ المتصفّح. و<b>لوحُ الجوّال يقرأ القاعدة
+          نفسَها</b> — التظليلُ على <b>الكلمة</b> لا على الرابط، فيصحّ في الشريط (رابطٌ بمقاس كلمته)
+          وفي اللوح (صفٌّ يملأ العرض) بقاعدةٍ واحدةٍ بلا استثناء.
         </p>
 
         <PreviewFrame />
@@ -163,8 +173,14 @@ export default function HeaderGalleryPage() {
           الإطارُ التالي محشوٌّ بثمانية روابط عمدًا. <b>ضيِّق نافذةَ المتصفّح ووسِّعها</b> وراقب أواخرَ
           الروابط تدخل «المزيد» وتخرج منها.
         </p>
-        <PreviewFrame nav={STRESS_NAV} />
-
+        <h2 className="mt-16 font-display text-2xl font-black text-content">لوحُ الجوّال — بعرضه الحقيقيّ</h2>
+        <p className="mt-2 max-w-3xl leading-relaxed text-content-muted">
+          الإطارُ عرضُه <b>420px</b>، والرأسُ فيه <b>يقيس نفسَه</b> لا شاشتَك (<code className="font-latin">@container</code>{" "}
+          بدل <code className="font-latin">@media</code>) — فيجد نفسَه ضيّقًا فينطوي. اضغط زرَّ القائمة
+          هنا لترى اللوحَ على شاشة الحاسوب بلا أدواتِ مطوّرٍ ولا تضييقِ نافذة. وصفوفُه على
+          <b> تظليل القارئ</b> نفسِه الذي في الشريط — قاعدةٌ واحدةٌ للموضعين.
+        </p>
+        <PreviewFrame phone />
         <div className="pb-10" />
       </Container>
     </main>

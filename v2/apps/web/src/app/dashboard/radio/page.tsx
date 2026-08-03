@@ -4,6 +4,7 @@ import { RadioView } from "./RadioView";
 import { getRadioManager } from "@/lib/radio/authz";
 import { RadioDenied } from "./_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 export default async function RadioPage() {
   const denied = await denyUnless("/dashboard/radio");
@@ -22,7 +23,7 @@ export default async function RadioPage() {
       <>
         <div className="ash-phead">
           <div>
-            <div className="ash-crumb">أديب › المحتوى › <b>الإذاعة</b></div>
+            <Breadcrumb />
             <h1>إذاعة أدِيب</h1>
           </div>
         </div>

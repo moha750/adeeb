@@ -12,9 +12,11 @@ import { Pagination } from "../_components/Pagination";
 import { EmptyState } from "../_components/EmptyState";
 import { Modal } from "../_components/Modal";
 import { useToast } from "../_components/ToastProvider";
+import { downloadBlob } from "@/lib/download";
 import type { SurveyAggregates, QuestionAgg } from "@/lib/surveys/aggregate";
 import type { ResponseRow } from "./results-data";
 import { QUESTION_TYPE_LABEL, STATUS_META, type SurveyStatus } from "./vocab";
+import { Breadcrumb } from "../_shell/Breadcrumb";
 
 const fmtDur = (s: number | null): string => (s == null ? "—" : s < 60 ? `${s}ث` : `${Math.floor(s / 60)}د ${s % 60}ث`);
 
@@ -165,12 +167,7 @@ function exportCsv(agg: SurveyAggregates, responses: ResponseRow[]) {
   ].map(esc).join(","));
   const csv = "\uFEFF" + [header.map(esc).join(","), ...lines].join("\r\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${agg.title}_${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(blob, `${agg.title}_${new Date().toISOString().slice(0, 10)}.csv`, "نتائج-استبيان.csv");
 }
 
 export function ResultsView({ agg, responses }: { agg: SurveyAggregates; responses: ResponseRow[] }) {
@@ -232,7 +229,7 @@ export function ResultsView({ agg, responses }: { agg: SurveyAggregates; respons
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › التفاعل › الاستبيانات › <b>النتائج</b></div>
+          <Breadcrumb leaf="النتائج" />
           <h1>{agg.title}</h1>
         </div>
         <div className="form-head-actions">

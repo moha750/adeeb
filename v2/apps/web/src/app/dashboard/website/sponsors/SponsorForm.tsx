@@ -9,6 +9,7 @@ import {
 import { useToast } from "../../_components/ToastProvider";
 import type { SponsorEditData } from "./data";
 import { createSponsor, updateSponsor, uploadSponsorLogo, type SponsorInput } from "./actions";
+import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
   const toast = useToast();
@@ -68,7 +69,7 @@ export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
     <>
       <div className="ash-phead">
         <div>
-          <div className="ash-crumb">أديب › المحتوى › الرعاة › <b>{crumbLeaf}</b></div>
+          <Breadcrumb leaf={crumbLeaf} />
           <h1>{editing ? `تحرير: ${sponsor.name}` : "راعٍ جديد"}</h1>
         </div>
         <div className="form-head-actions">
