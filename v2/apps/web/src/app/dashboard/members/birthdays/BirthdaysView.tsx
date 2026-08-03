@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Accordion, Badge, Button, Stat, matchesSearch } from "@adeeb/design-system";
 import { Cake, CalendarDots, Confetti, DownloadSimple, MagnifyingGlass, UsersFour } from "@phosphor-icons/react";
 import { DataTable, type Column } from "../../_components/DataTable";
@@ -10,7 +10,7 @@ import { Avatar } from "../../_components/Avatar";
 import { EmptyState } from "../../_components/EmptyState";
 import { useToast } from "../../_components/ToastProvider";
 import type { BirthdayRow } from "./data";
-import { downloadBirthdayCard } from "./card";
+import { prewarmBirthdayCard, saveBirthdayCard } from "./card";
 import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
@@ -125,11 +125,16 @@ export function BirthdaysView({
   const safePage = Math.min(page, totalPages);
   const pageRows = soonRows.slice((safePage - 1) * pageSize, safePage * pageSize);
 
+  // تسخين القالب والخطّ عند فتح التبويب — فتُولَّد البطاقة فورًا عند النقرة ويبقى إذن اللمسة
+  // حيًّا لورقة المشاركة (وإلّا سقط الإذن وارتدّت إلى التنزيل). انظر prewarmBirthdayCard.
+  useEffect(() => { prewarmBirthdayCard(); }, []);
+
   const onDownload = async (r: Derived) => {
     setBusyId(r.id);
     try {
-      await downloadBirthdayCard({ name: r.name, favoriteColor: r.favoriteColor });
-      toast.success(`نُزّلت تهنئة «${r.name}».`);
+      const how = await saveBirthdayCard({ name: r.name, favoriteColor: r.favoriteColor });
+      if (how === "shared") toast.success(`تهنئة «${r.name}» جاهزة.`);
+      else if (how === "downloaded") toast.success(`نُزّلت تهنئة «${r.name}».`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "تعذّر توليد التهنئة.");
     } finally {
@@ -158,7 +163,7 @@ export function BirthdaysView({
     key: "card", header: "التهنئة", width: "150px", align: "end",
     render: (r) => (
       <Button variant="ghost" size="sm" loading={busyId === r.id} onClick={() => onDownload(r)}>
-        <DownloadSimple aria-hidden /> تنزيل
+        <DownloadSimple aria-hidden /> حفظ
       </Button>
     ),
   };

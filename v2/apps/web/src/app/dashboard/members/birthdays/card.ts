@@ -8,7 +8,7 @@
 // القالب في: apps/web/public/brand/birthday-template.png (مضبوط الآن). لتبديله لاحقًا استبدل الملفّ نفسه.
 // اسم العضو يُرسَم (DRAW_NAME=true) بحبر التصميم الغامق (يقرأ على البطاقة الفاتحة)، موضعه/حجمه في ثابت NAME.
 
-import { downloadBlob } from "@/lib/download";
+import { shareOrDownloadBlob, type SaveResult } from "@/lib/download";
 
 const TEMPLATE_SRC = "/brand/birthday-template.png";
 const LOGO_SRC = "/brand/logo-horizontal-white.svg";
@@ -301,8 +301,21 @@ export async function renderBirthdayCard(row: { name: string; favoriteColor: str
   });
 }
 
-/** يولّد البطاقة ويُنزّلها ملفَّ PNG باسم العضو. */
-export async function downloadBirthdayCard(row: { name: string; favoriteColor: string | null }): Promise<void> {
+/**
+ * يولّد البطاقة ويحفظها: ورقة مشاركة النظام في الهاتف (فيختار «حفظ الصورة» ⇒ الاستوديو)،
+ * وتنزيلٌ في الحاسب. يعيد ما وقع فعلًا ليصوغ النداء رسالته.
+ */
+export async function saveBirthdayCard(row: { name: string; favoriteColor: string | null }): Promise<SaveResult> {
   const blob = await renderBirthdayCard(row);
-  downloadBlob(blob, `تهنئة-${row.name.trim() || "عضو"}.png`);
+  return await shareOrDownloadBlob(blob, `تهنئة-${row.name.trim() || "عضو"}.png`);
+}
+
+/**
+ * يُسخّن ما يبطئ التوليد (القالب + خطّ الاسم) قبل النقرة. لماذا؟ لأنّ ورقة المشاركة
+ * تُشترَط بإذن لمسةٍ حيّ، وأوّل بطاقةٍ تجلب صورةً بحجم 1080×1920 وخطًّا — فيطول الانتظار
+ * ويسقط الإذن فترتدّ إلى التنزيل. التسخين يجعل التوليد شبه فوريّ فتُفتَح الورقة.
+ */
+export function prewarmBirthdayCard(): void {
+  void loadImage(TEMPLATE_SRC);
+  void loadNameFontB64();
 }

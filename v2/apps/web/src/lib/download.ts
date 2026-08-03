@@ -28,3 +28,46 @@ export function downloadBlob(blob: Blob, filename: string, fallback = "ملف"):
   a.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), REVOKE_AFTER_MS);
 }
+
+/* ── الحفظ في الاستوديو ───────────────────────────────────────────────────
+   لا تملك الويب بابًا يكتب في ألبوم الصور مباشرةً — لا في iOS ولا في أندرويد؛ فما ينزّله
+   المتصفّح يقع في «الملفّات». الطريق الوحيد هو **ورقة المشاركة** (`navigator.share`)
+   بملفٍّ حقيقيّ: يفتحها النظام فيظهر فيها «حفظ الصورة»/«حفظ في الصور» إلى جانب واتساب
+   وسواه، فيختار المستخدم الاستوديو. هكذا تفعل المواقع التي تحفظ في الاستوديو، لا بغيره.
+
+   وشرطان يحكمانها:
+   • الحاسب يبقى على التنزيل — ورقة مشاركة ويندوز لا تعرف استوديو، والتنزيل أصحّ هناك.
+   • الورقة تطلب «إذن لمسةٍ حيّ»؛ وقد يُنقض بعد انتظارٍ طويل (توليد البطاقة). فإن رُدّت
+     بـNotAllowedError ارتددنا إلى التنزيل — والإلغاء (AbortError) قرارُ مستخدمٍ لا عطب،
+     فلا يُنزَّل شيء بعده ولا يُبشَّر بنجاح. */
+
+export type SaveResult = "shared" | "downloaded" | "cancelled";
+
+/** ورقة المشاركة متاحة لهذا الملفّ؟ (الهاتف واللوح وحدهما.) */
+function canShareFile(file: File): boolean {
+  if (typeof navigator === "undefined" || typeof navigator.canShare !== "function") return false;
+  if (!window.matchMedia("(pointer: coarse)").matches) return false;
+  return navigator.canShare({ files: [file] });
+}
+
+/**
+ * يعرض الملفّ في ورقة مشاركة النظام (فيُحفظ في الاستوديو أو يُرسَل)، وإلّا ينزّله.
+ * ينبغي أن يُنادى من نقرةِ مستخدمٍ مباشرة — وكلّما طال التوليد قبله ضَعُف إذن اللمسة.
+ */
+export async function shareOrDownloadBlob(blob: Blob, filename: string, fallback = "ملف"): Promise<SaveResult> {
+  const name = safeName(filename, fallback);
+  const file = new File([blob], name, { type: blob.type || "application/octet-stream" });
+
+  if (canShareFile(file)) {
+    try {
+      await navigator.share({ files: [file] });
+      return "shared";
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") return "cancelled";
+      /* NotAllowedError أو أيّ عطبٍ آخر ⇒ التنزيل أدناه */
+    }
+  }
+
+  downloadBlob(blob, name, fallback);
+  return "downloaded";
+}
