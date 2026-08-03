@@ -14,7 +14,7 @@
 import { NextResponse } from "next/server";
 import { buildPkpass, missingEnv } from "@/app/wallet-preview/build";
 import { memberBySerial } from "@/app/wallet-preview/demo";
-import { authOk, getCard } from "@/app/wallet-preview/store";
+import { authOk, getCard, noteFetch } from "@/app/wallet-preview/store";
 
 export const runtime = "nodejs";
 
@@ -22,13 +22,24 @@ type Params = { params: Promise<{ passTypeId: string; serial: string }> };
 
 export async function GET(req: Request, { params }: Params): Promise<Response> {
   const { serial } = await params;
+  const since = req.headers.get("if-modified-since");
+  // بصمةُ الزائر تُقيَّد مع كلّ ردّ — انظر `noteFetch`.
+  const ua = (req.headers.get("user-agent") ?? "").slice(0, 40);
+
   if (!authOk(serial, req.headers.get("authorization"))) {
+    await noteFetch(serial, `401 · لا مصادقة · ${ua}`);
     return new NextResponse(null, { status: 401 });
   }
 
   const base = memberBySerial(serial);
-  if (!base) return new NextResponse(null, { status: 404 });
-  if (missingEnv().length > 0) return new NextResponse(null, { status: 500 });
+  if (!base) {
+    await noteFetch(serial, `404 · رقمٌ مجهول · ${ua}`);
+    return new NextResponse(null, { status: 404 });
+  }
+  if (missingEnv().length > 0) {
+    await noteFetch(serial, `500 · بيئةٌ ناقصة · ${ua}`);
+    return new NextResponse(null, { status: 500 });
+  }
 
   const card = await getCard(serial);
   const member = { ...base, stamps: card?.stamps ?? base.stamps, cycles: card?.cycles ?? base.cycles };
@@ -37,18 +48,23 @@ export async function GET(req: Request, { params }: Params): Promise<Response> {
   // تجعل نسخةً حديثةً تبدو أقدمَ من نفسها فتُعاد بلا داعٍ.
   const modified = new Date(card?.updatedAt ?? 0);
   modified.setMilliseconds(0);
-  const since = req.headers.get("if-modified-since");
   if (since) {
     const seen = new Date(since);
-    if (!Number.isNaN(seen.getTime()) && modified <= seen) return new NextResponse(null, { status: 304 });
+    if (!Number.isNaN(seen.getTime()) && modified <= seen) {
+      await noteFetch(serial, `304 · since=${since} · ${ua}`);
+      return new NextResponse(null, { status: 304 });
+    }
   }
 
   let archive: Buffer;
   try {
     archive = await buildPkpass(member, new URL(req.url).origin);
-  } catch {
+  } catch (e) {
+    await noteFetch(serial, `500 · ${e instanceof Error ? e.message.slice(0, 60) : "?"} · ${ua}`);
     return new NextResponse(null, { status: 500 });
   }
+
+  await noteFetch(serial, `200 · أختام=${member.stamps} · since=${since ?? "—"} · ${ua}`);
 
   return new NextResponse(new Uint8Array(archive), {
     headers: {

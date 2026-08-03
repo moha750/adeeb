@@ -88,6 +88,30 @@ export async function setCard(serial: string, stamps: number, cycles: number): P
 
 /* ── الأجهزة ────────────────────────────────────────────────────────────── */
 
+/**
+ * يحفظ ما تقوله أبل عن أعطال البطاقة (من `/w/v1/log`). كان يُكتب في سجلّ الخادم وحده
+ * فلا يُقرأ إلّا من لوحة Vercel — وصار صفوفًا تُستعلَم من حيث نشخّص.
+ */
+export async function appendLog(lines: string[]): Promise<void> {
+  const sb = service();
+  if (!sb || lines.length === 0) return;
+  await sb.from("wallet_preview_log").insert(lines.map((line) => ({ line: line.slice(0, 2000) })));
+}
+
+/**
+ * **مِجسُّ الجلب** (مؤقّت كأخيه): يسجّل مجيءَ الجهاز يطلب النسخة وبِمَ رددنا عليه.
+ * به تُقرأ آخرُ حلقةٍ في السلسلة — وهي الوحيدة التي بقيت مظلمةً بعد أن أثبت المِجسُّ
+ * الأوّل أنّ الدفعة تصل وأنّ الجهاز يستيقظ.
+ */
+export async function noteFetch(serial: string, note: string): Promise<void> {
+  const sb = service();
+  if (!sb) return;
+  await sb
+    .from("wallet_preview_cards")
+    .update({ last_fetch_at: new Date().toISOString(), last_fetch_note: note })
+    .eq("serial", serial);
+}
+
 /** يسجّل جهازًا لبطاقة. يرجع `true` إن كان تسجيلًا جديدًا (أبل تريد ٢٠١ لا ٢٠٠). */
 export async function registerDevice(deviceId: string, serial: string, pushToken: string): Promise<boolean> {
   const sb = service();
