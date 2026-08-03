@@ -151,16 +151,42 @@ export async function dropToken(pushToken: string): Promise<void> {
 }
 
 /**
+ * يفكّ وسمَ «ما بعد» إلى زمنٍ يُقارَن به — أو `null` إن لم يُفهَم (فتُرَدّ البطاقات كلُّها،
+ * وهو الجانب الآمن: تحديثٌ زائدٌ خيرٌ من تحديثٍ ضائع).
+ *
+ * **والوسمُ الذي نُصدره أرقامٌ صِرفة** (ميلي ثانية) — والسببُ عطبٌ كلّفنا جولات:
+ * كان الوسم زمنًا بصيغة ISO فيه `+00:00`، فيُعيده iOS **حرفيًّا في مُعامِل استعلام**،
+ * و`+` في مُعامِلات الاستعلام **تُقرأ مسافةً** (ترميز `x-www-form-urlencoded`). فيصلنا
+ * `…734 00:00` مشوَّهًا، فتُخفق المقارنة، فنجيب **٢٠٤ «لا جديد»** — والجهاز يطيع ولا
+ * يجلب. كلُّ السلسلة تعمل، والكسرُ في آخر حلقةٍ وأخفاها.
+ *
+ * **والدرس أعمُّ من هذا الموضع**: أيّ وسمٍ يعود إلينا في مُعامِل استعلام يجب أن يخلو من
+ * `+` و`&` و`=` والمسافة — أو يُرمَّز. والأرقام أسلمُ من الترميز، إذ لا تعتمد على أنّ
+ * الطرفَ الآخر يُرمّز صحيحًا.
+ */
+function parseSince(raw: string | null): string | null {
+  if (!raw) return null;
+  const t = raw.trim();
+  if (/^\d+$/.test(t)) return new Date(Number(t)).toISOString();
+  // وسمٌ قديمٌ من قبل الإصلاح: تُردّ المسافةُ الأخيرة إلى `+` قبل القراءة
+  const d = new Date(t.replace(/ (\d{2}:\d{2})$/, "+$1"));
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/**
  * أرقامُ بطاقاتٍ سجّلها هذا الجهاز وتغيّرت بعد `since` — جوابُ مسار «ما الذي تغيّر؟».
  * بلا `since` تُرَدّ كلُّها (أوّلُ سؤالٍ بعد التسجيل).
  */
 export async function changedFor(deviceId: string, since: string | null): Promise<{ serials: string[]; lastUpdated: string }> {
+  /** الوسمُ الصادر: أرقامٌ صِرفة لا محرفَ فيها يلتبس في مُعامِل استعلام — انظر `parseSince`. */
+  const tag = (iso: string): string => String(Date.parse(iso) || 0);
+
   const sb = service();
-  if (!sb) return { serials: [], lastUpdated: new Date(0).toISOString() };
+  if (!sb) return { serials: [], lastUpdated: "0" };
 
   const { data: regs } = await sb.from("wallet_preview_devices").select("serial").eq("device_id", deviceId);
   const serials = (regs ?? []).map((r) => r.serial);
-  if (serials.length === 0) return { serials: [], lastUpdated: new Date(0).toISOString() };
+  if (serials.length === 0) return { serials: [], lastUpdated: "0" };
 
   // **مِجسُّ تشخيصٍ لا سلوك**: وصولُ الجهاز إلى هنا يعني أنّ الدفعة بلغته وأنّه استيقظ.
   // فإن سكن العمود بعد دفعةٍ قبلتها أبل، فالعلّة في التسليم لا في خدمتنا.
@@ -172,10 +198,11 @@ export async function changedFor(deviceId: string, since: string | null): Promis
 
   let q = sb.from("wallet_preview_cards").select("serial, updated_at").in("serial", serials);
   // `since` وسمٌ معتِمٌ عند أبل: نحن من أعطيناه، ونحن من نفسّره — وهو زمنُ آخر تغيير.
-  if (since) q = q.gt("updated_at", since);
+  const sinceIso = parseSince(since);
+  if (sinceIso) q = q.gt("updated_at", sinceIso);
 
   const { data: cards } = await q;
   const rows = cards ?? [];
-  const lastUpdated = rows.reduce((max, c) => (c.updated_at > max ? c.updated_at : max), since ?? new Date(0).toISOString());
-  return { serials: rows.map((c) => c.serial), lastUpdated };
+  const newestIso = rows.reduce((max, c) => (c.updated_at > max ? c.updated_at : max), sinceIso ?? new Date(0).toISOString());
+  return { serials: rows.map((c) => c.serial), lastUpdated: tag(newestIso) };
 }
