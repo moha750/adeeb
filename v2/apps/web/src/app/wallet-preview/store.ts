@@ -138,6 +138,10 @@ export async function changedFor(deviceId: string, since: string | null): Promis
   const serials = (regs ?? []).map((r) => r.serial);
   if (serials.length === 0) return { serials: [], lastUpdated: new Date(0).toISOString() };
 
+  // **مِجسُّ تشخيصٍ لا سلوك**: وصولُ الجهاز إلى هنا يعني أنّ الدفعة بلغته وأنّه استيقظ.
+  // فإن سكن العمود بعد دفعةٍ قبلتها أبل، فالعلّة في التسليم لا في خدمتنا.
+  void sb.from("wallet_preview_devices").update({ last_poll_at: new Date().toISOString() }).eq("device_id", deviceId);
+
   let q = sb.from("wallet_preview_cards").select("serial, updated_at").in("serial", serials);
   // `since` وسمٌ معتِمٌ عند أبل: نحن من أعطيناه، ونحن من نفسّره — وهو زمنُ آخر تغيير.
   if (since) q = q.gt("updated_at", since);
