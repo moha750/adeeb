@@ -39,6 +39,7 @@ export { AuthShell, type AuthShellProps } from "./components/AuthShell";
 export { LogoLoader, type LogoLoaderProps } from "./components/LogoLoader";
 export { Reveal } from "./components/Reveal";
 export { Ambient } from "./components/Ambient";
+export { BurgerIcon } from "./components/BurgerIcon";
 export { Header } from "./components/Header";
 export { Footer } from "./components/Footer";
 export { Cursor, type CursorProps, type CursorVariant } from "./components/Cursor";

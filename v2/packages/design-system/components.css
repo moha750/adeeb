@@ -1527,6 +1527,21 @@
   padding: 14px;
   background: radial-gradient(1200px 440px at 100% -10%,
     color-mix(in oklab, var(--steel-500) 15%, var(--color-bg)), var(--color-bg));
+
+  /* ═══ سلّمُ حبر اللوح المذهّب — أربعةُ رموزٍ تُعلَن مرّةً وتقرؤها الأبناء ═══
+     السلّمُ رُفع درجةً كاملة (٢٠٢٦-٠٨-٠٣) بعد **قياسٍ** لا انطباع: أرضُ اللوح
+     مذهّبةٌ متوسّطةُ النغمة لا كحليّةٌ داكنة، فالأحبارُ المضبوطةُ للكحليّ ترسب عليها —
+     كانت `steel-200` عند **3.48** و`steel-300` عند **2.32** والعتبة 4.5. والعلاجُ في
+     الحبر لا في الحجاب: رفعُ الحجاب يُعتِم لوحًا أفتحَه المالكُ عمدًا.
+
+     **ومكانُه الهيكلُ لا اللوح** (٢٠٢٦-٠٨-٠٣): كان يُعلَن على `.ash-side`، فمن وقف
+     **فوق** اللوح وهو خارجَه لم يجد حبرَه — وبرغرُ الجوّال يفعل ذلك بالضبط. والسلّمُ
+     سلّمُ الهيكل أصلًا لا سلّمَ الشريط، فأُعلن حيث يراه الطرفان. */
+  --ash-ink: var(--steel-50);    /* الأسطع: العنوان · البند النشط */
+  --ash-ink-2: var(--steel-100); /* المتن: بنودُ التنقّل · رؤوسُ المجموعات (11px) */
+  --ash-ink-3: var(--steel-200); /* الثانويّ: رؤوسُ المجموعات · الأبناء */
+  --ash-veil: color-mix(in oklab, var(--steel-50) 9%, transparent);   /* لمسة */
+  --ash-veil-2: color-mix(in oklab, var(--steel-50) 16%, transparent); /* نشط/شارة */
 }
 
 /* ---- الشريط الجانبيّ العائم — «اللوحُ المذهّب» ----
@@ -1551,16 +1566,8 @@
   padding: 14px 0;
   overflow: visible; /* ليبرز مقبض التماس خارج الحافّة — والقصُّ على .ash-canvas */
   border-radius: var(--radius);
-  /* السلّمُ رُفع درجةً كاملة (٢٠٢٦-٠٨-٠٣) بعد **قياسٍ** لا انطباع: أرضُ اللوح
-     مذهّبةٌ متوسّطةُ النغمة لا كحليّةٌ داكنة، فالأحبارُ المضبوطةُ للكحليّ ترسب عليها —
-     كانت `steel-200` عند **3.48** و`steel-300` عند **2.32** والعتبة 4.5. والعلاجُ في
-     الحبر لا في الحجاب: رفعُ الحجاب يُعتِم لوحًا أفتحَه المالكُ عمدًا. */
-  --ash-ink: var(--steel-50);    /* الأسطع: العنوان · البند النشط */
-  --ash-ink-2: var(--steel-100); /* المتن: بنودُ التنقّل · رؤوسُ المجموعات (11px) */
-  --ash-ink-3: var(--steel-200); /* الثانويّ: رؤوسُ المجموعات · الأبناء */
-  --ash-veil: color-mix(in oklab, var(--steel-50) 9%, transparent);   /* لمسة */
-  --ash-veil-2: color-mix(in oklab, var(--steel-50) 16%, transparent); /* نشط/شارة */
-  --ash-gap: 4px;                /* التباعدُ بين بنود المجموعة (ونصفُه بين الأبناء) */
+  /* سلّمُ الحبر والحجاب أُعلن على `.ash` (الهيكل) — الوصفُ هناك */
+  --ash-gap: 4px;               /* التباعدُ بين بنود المجموعة (ونصفُه بين الأبناء) */
   --ash-name-size: 20px;         /* اسمُ اللوحة في الترويسة */
   --ash-rail-sz: 38px;           /* عمودُ المطويّ — مربّعٌ واحد يلبسه الرمزُ والزرُّ والبنودُ والتذييل */
   --ash-handle-y: 79px;          /* مركزُ مقبض الطيّ من قاع اللوح: 66 (حافّةُ التذييل العليا) + نصفُ قطرِه 13 — فيقف الدائرةُ كلُّها فوق التبويب لا نصفُها */
@@ -1971,15 +1978,43 @@
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
 }
+/* مُطلِقُ الدُرج — **أيقونةُ الرأس نفسُها لا شبيهتُها**: `.bic` بدائيّةُ المكتبة
+   (ثلاثةُ خطوطٍ متفاوتةٍ تنطبق فتصير ×)، وحالتُها من `aria-expanded` على هذا الزرّ.
+   والمقاسُ 40×40 هدفَ لمسٍ كزرّ الرأس — لا حجمَ الأيقونة (20px) الذي يُخطأ باللمس. */
 .ash-ham {
   display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px; height: 40px; flex: none;
   border: 0;
   background: transparent;
   color: var(--color-primary);
   cursor: pointer;
-  padding: 4px;
+  padding: 0;
+  /* **يعلو الدُرجَ فيُرى ×** (‏١٣٠١ = طبقةُ النافذة + 1): الدُرجُ ينزلق من اليمين
+     فوق الشريط العلويّ فيبتلع الزرَّ، والحجابُ فوقه — فتجري الحركةُ في الخفاء
+     ويصير الزرُّ يعلن `aria-expanded="true"` ولا يُنقَر. ورفعُه يجعل الأمرَ واحدًا:
+     زرٌّ واحد يفتح ويغلق، وأيقونتُه هي إشارةُ الحالة نفسُها.
+     ولا شيءَ يقصّه: `.ash-main` يقصّ فيضَه لكنّ الزرَّ داخل حدوده، وسلسلةُ آبائه
+     (`.ash` · `.ash-main` · `.ash-top`) بلا سياقِ تكديسٍ يحبس رقمَه. */
+  position: relative;
+  z-index: calc(var(--z-modal) + 1);
+  transition: color var(--dur-fast);
 }
-.ash-ham svg { width: 24px; height: 24px; }
+/* **ويلبس حبرَ اللوح حين يعلوه**: مفتوحًا يقف فوق أرضٍ مذهّبةٍ لا فوق سطحٍ فاتح،
+   فحبرُ العلامة (‏#274060) يرسب عليها. `--ash-ink` من `.ash` (ق: سلّمُ الحبر). */
+.ash-ham[aria-expanded="true"] { color: var(--ash-ink); }
+/* **واتّجاهُه معكوسٌ عن برغر الرأس** (قرار المالك ٢٠٢٦-٠٨-٠٣): الحركةُ واحدةٌ من
+   المصدر نفسِه، والمرآةُ وحدها تنقلب — تفاوتُ الأطوال يستند إلى **مبتدأ** السطر لا
+   منتهاه (‏`inset-inline: 0 auto`)، والأوسطُ يغادر إلى الجهة التي يستند إليها كي
+   يبقى خروجُه من الطرف المرصوص لا من الطرف المتفاوت. */
+.ash-ham .bic span { inset-inline: 0 auto; }
+.ash-ham[aria-expanded="true"] .bic span:nth-child(2) { translate: 22px 0; }
+.ash-ham:active { transform: scale(.96); }
+.ash-ham:focus-visible { outline: none; box-shadow: var(--ring); }
+@media (prefers-reduced-motion: reduce) {
+  .ash-ham:active { transform: none; }
+}
 /* الشريط الجانبيّ ثابت على سطح المكتب (بلا طيّ) — طابع SaaS احترافيّ نظيف.
    الهوية في العلويّ (منطقة لا تنطوي أبدًا) تحقيقًا لقاعدة: الهوية لا تختفي مهما كان. */
 /* الهويّة **مُطلِقُ قائمة الحساب** لا نصًّا ساكنًا: فتُعامَل معاملة الزرّ — سطحٌ يستجيب للمرور،
@@ -2090,7 +2125,7 @@
 @media (max-width: 860px) {
   .ash { padding: 0; gap: 0; }
   .ash-main { height: 100vh; border-radius: 0; border: 0; box-shadow: none; }
-  .ash-ham { display: block; }
+  .ash-ham { display: inline-flex; }
   /* الشريط يصير دُرجًا منزلقًا (الطيّ على الجوّال فقط) */
   .ash-side {
     position: fixed;
@@ -2107,6 +2142,12 @@
     transition: transform var(--dur) var(--ease-standard);
   }
   .ash.mob-open .ash-side { transform: translateX(0); }
+  /* **موضعُ البرغر محجوزٌ في ترويسة الدُرج**: الزرُّ يعلو اللوحَ مفتوحًا (لا يُقصّ ولا
+     يُبتلَع) فيقع على الرمز — 20px حشوُ الشريط العلويّ + 40px عرضُه + 6px متنفَّسًا،
+     فيُقرأ الصفُّ ترويسةً واحدة: زرٌّ فرمزٌ فاسم، وإن كان الزرُّ من طبقةٍ أخرى.
+     ورأسا الصفّين متحاذيان بحكم الحساب لا بالضبط: مركزُ الزرّ 33 (‏66÷2) ومركزُ
+     الرمز 35 (‏14 حشوَ اللوح + 2 + 19). */
+  .ash-brand { padding-inline-start: 66px; }
   .ash.mob-open .ash-scrim {
     display: block;
     position: fixed;
@@ -2129,7 +2170,8 @@
   .ash.rail .ash-rule { width: auto; margin-inline: 18px; }
   .ash.rail .ash-nav-head { width: auto; }
   .ash.rail .ash-name { display: block; }
-  .ash.rail .ash-brand { justify-content: flex-start; padding-inline: 18px; }
+  /* والحجزُ نفسُه في المطويّ — الريّل مُحيَّدٌ على الجوّال، فترويسته ترويسةُ الدُرج */
+  .ash.rail .ash-brand { justify-content: flex-start; padding-inline: 66px 18px; }
   .ash.rail .ash-rule { margin-inline: 18px; }
   .ash.rail .ash-nav-head { height: auto; padding: 14px 20px 6px; margin: 0; font-size: var(--ash-head-size); gap: 9px; }
   .ash.rail .ash-cta { gap: 8px; }
@@ -4617,15 +4659,19 @@ html:not(.js) .ldr-boot { display: none; }
 /* **الأيقونةُ تتحوّل ولا تُبدَّل**: ثلاثةُ خطوطٍ باقيةٍ في الشجرة — الطرفان ينطبقان
    على المنتصف ويستديران ±45° فيصيران ×، والأوسطُ ينكمش ويتلاشى.
    الرحلةُ 6px لأنّ الخطوط على 0 و6 و12 (المنتصف 6)، فالحسابُ من التوزيع لا رقمٌ
-   يُجرَّب. واللونُ `currentColor` فيتبع حبرَ الزرّ في كلّ حالاته. */
-.shdr-bic { position: relative; width: 20px; height: 14px; }
+   يُجرَّب. واللونُ `currentColor` فيتبع حبرَ الزرّ في كلّ حالاته.
+
+   **وهي بدائيّةٌ لا جزءٌ من الرأس** (‏`.bic` بلا بادئة `shdr-`): دُرجُ اللوحة
+   يستعملها كما يستعملها رأسُ الموقع، فحُرّرت حالتُها من زرٍّ بعينه — تُقرأ من
+   `[aria-expanded="true"]` على أيّ مُطلِقٍ حاوٍ. حركةٌ واحدة لا نسختان تفترقان. */
+.bic { position: relative; width: 20px; height: 14px; }
 /* **والخطوطُ متفاوتةُ الأطوال في السكون** (اعتُمد ٢٠٢٦-٠٨-٠٢ من ثلاثة توجّهاتٍ عُرِضت
    — أُعدم معه «الدورانُ الكامل» و«الارتداد»): ‏100% · 68% · 84% كقائمةٍ **مكتوبةٍ بيد
    لا مرسومةٍ بمسطرة**، فإذا فُتِحت تساوت ثمّ صارت ×. فالحركةُ تبدأ من الطول قبل
    الدوران، والسكونُ نفسُه يصير من نادي كلمة.
    وتُثبَّت عند **نهاية** السطر (`inset-inline: auto 0`) فيقع التفاوتُ في الجهة التي
    يقتضيها العربيّ — صُحّحت وجهتُها بملاحظة المالك. */
-.shdr-bic span {
+.bic span {
   position: absolute; inset-inline: auto 0; height: 2px;
   border-radius: var(--radius-full); background: currentColor;
   /* **مرحلتان لا لحظةٌ واحدة** — وهذا جوهرُ تحسين الحركة: كانت الخطوطُ تنطبق
@@ -4639,22 +4685,22 @@ html:not(.js) .ldr-boot { display: none; }
   transition: translate .28s var(--ease-standard) .22s, rotate .28s var(--ease-standard) 0s,
               opacity .2s linear .22s, width .28s var(--ease-standard) .22s;
 }
-.shdr-bic span:nth-child(1) { top: 0; width: 100%; }
-.shdr-bic span:nth-child(2) { top: 6px; width: 68%; }
-.shdr-bic span:nth-child(3) { top: 12px; width: 84%; }
+.bic span:nth-child(1) { top: 0; width: 100%; }
+.bic span:nth-child(2) { top: 6px; width: 68%; }
+.bic span:nth-child(3) { top: 12px; width: 84%; }
 /* المفتوح: يُقلَب التأخيرُ فتسبق الحركةُ الدوران */
-.shdr-burger[aria-expanded="true"] .shdr-bic span {
+[aria-expanded="true"] .bic span {
   transition: translate .28s var(--ease-standard) 0s, rotate .28s var(--ease-standard) .22s,
               opacity .2s linear 0s, width .28s var(--ease-standard) 0s;
 }
-.shdr-burger[aria-expanded="true"] .shdr-bic span { width: 100%; }
-.shdr-burger[aria-expanded="true"] .shdr-bic span:nth-child(1) { translate: 0 6px; rotate: 45deg; }
+[aria-expanded="true"] .bic span { width: 100%; }
+[aria-expanded="true"] .bic span:nth-child(1) { translate: 0 6px; rotate: 45deg; }
 /* **والأوسطُ يغادر ولا يذوب مكانه**: كان يتلاشى في موضعه (اختفاءٌ بلا سبب)، فصار
    ينزلق خارجَ الأيقونة — للخروج وجهةٌ تُقرأ، ولا يتزاحم مع الخطّين المنطبقين. */
-.shdr-burger[aria-expanded="true"] .shdr-bic span:nth-child(2) { translate: -22px 0; opacity: 0; }
-.shdr-burger[aria-expanded="true"] .shdr-bic span:nth-child(3) { translate: 0 -6px; rotate: -45deg; }
+[aria-expanded="true"] .bic span:nth-child(2) { translate: -22px 0; opacity: 0; }
+[aria-expanded="true"] .bic span:nth-child(3) { translate: 0 -6px; rotate: -45deg; }
 @media (prefers-reduced-motion: reduce) {
-  .shdr-bic span { transition: none; }
+  .bic span { transition: none; }
 }
 
 /* اللوحُ المنسدل: `grid-template-rows: 0fr→1fr` — انزلاقٌ بلا ارتفاعٍ محسوبٍ بجافاسكربت */
@@ -4730,7 +4776,7 @@ html:not(.js) .ldr-boot { display: none; }
 .dm-trigger, .mdl-x, .pag-arr, .pag-num, .acard-dots,
 .acard-ic, .ash-fic, .dt-dots, .ash-mark, .gal-num,
 .ash.rail .ash-cta, .ash.rail .ash-i, .ash.rail .ash-foot,
-.shdr-link, .shdr-burger {
+.shdr-link, .shdr-burger, .ash-ham {
   border-radius: var(--radius-sm);
 }
 /* الصغير جدًّا (checkbox ~22px) → --radius-xs (6) */

@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Button } from "@adeeb/design-system";
+import { BurgerIcon, Button } from "@adeeb/design-system";
 import { Avatar } from "../_components/Avatar";
 import { createClient } from "@/lib/supabase/client";
 import { navFor, type NavItem } from "./nav";
 import { NavProvider } from "./nav-context";
 import type { MyScope } from "@/lib/myScope";
-import { ICONS, IconBell, IconCaret, IconCaretDown, IconDashboard, IconLogout, IconMe, IconMenu, IconPlus } from "./icons";
+import { ICONS, IconBell, IconCaret, IconCaretDown, IconDashboard, IconLogout, IconMe, IconPlus } from "./icons";
 import { DropdownMenu } from "../_components/DropdownMenu";
 import { HelpCenter } from "./HelpCenter";
 import { stopViewAs } from "./view-as-actions";
@@ -165,7 +165,19 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
 
       <div className="ash-main">
         <header className="ash-top">
-          <button type="button" className="ash-ham" onClick={() => setMobOpen(true)} aria-label="فتح القائمة"><IconMenu /></button>
+          {/* البرغر **يقول حالتَه ولا يفتح فقط**: `aria-expanded` هو ما تقرأه أيقونةُ
+              المكتبة (`BurgerIcon`) فتنطبق خطوطُها وتستدير × كبرغر رأس الموقع — حركةٌ
+              واحدةٌ من مصدرٍ واحد. ولذلك صار **مبدّلًا** لا مُطلِقًا: زرٌّ يعلن أنّه
+              مفتوح ثمّ لا يُغلِق تناقضٌ في الوصف قبل أن يكون نقصًا في السلوك. */}
+          <button
+            type="button"
+            className="ash-ham"
+            aria-expanded={mobOpen}
+            aria-label={mobOpen ? "إغلاق القائمة" : "فتح القائمة"}
+            onClick={() => setMobOpen((v) => !v)}
+          >
+            <BurgerIcon />
+          </button>
           {/* الهويّة هي المُطلِق: تنقر «من أنت» فتجد «ما تفعله بحسابك». والشيفرون هو ما يحوّلها من
               صورةٍ إلى أداة — بدونه لا شيء في الشريط يقول إنّ هنا قائمةً تُفتح.
               السلوك كلّه (أسهم · ESC · نقر‑خارج · إرجاع التركيز · ARIA) من `DropdownMenu`. */}
