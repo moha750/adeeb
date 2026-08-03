@@ -1,9 +1,9 @@
 "use client";
 
 import { Button, Card } from "@adeeb/design-system";
-import { Plus, SignOut, X } from "@phosphor-icons/react";
+import { SignOut } from "@phosphor-icons/react";
 import { Avatar } from "../_components/Avatar";
-import type { UnitMember, Target } from "./model";
+import type { UnitMember } from "./model";
 
 /** «٣ لجان» لا «3 لجنة» — التمييز العربيّ يفرّق المفرد والمثنّى وجمعَي القلّة والكثرة. */
 export function committeesLabel(n: number): string {
@@ -15,14 +15,12 @@ export function committeesLabel(n: number): string {
 }
 
 /**
- * كرت عضو الوحدة (.ovcard) — **العينُ على الشخص لا على اللجنة**: مَن هو، وكم يحمل، وأيّ
- * لجانٍ بالضبط. الشرائحُ هي المحتوى نفسه لا زينةً حوله: كلّ شريحةٍ لجنةٌ يشرف عليها و«×»
- * يسحبها، وتحتها نداءٌ متقطّع يزيد لجنةً. وفي رأسه بابُ الإخراج من الوحدة — فعلٌ تنظيميّ
- * مستقلّ لا يقع أثرًا جانبيًّا لسحب آخر لجنة (كان كذلك قبل فصل الإشراف عن الانتماء).
+ * كرت عضو الإدارة (.ovcard) — **الانتماء وحده**: من هو، وكم يحمل، وبابُ إخراجه من الإدارة.
  *
- * **وفي اللجان التنفيذيّة** لا إشرافَ يُوزَّع، فيسقط النداءُ وشريطُ الشرائح ويبقى الشخصُ
- * وبابُ إخراجه — الكرت نفسه بلا نسخةٍ ثانية، لأنّ الغائب معطًى فارغٌ لا حالةٌ أخرى.
- * (`onAdd` اختياريّة: من لا يوزّع لا يُعرض له نداءُ التوزيع.)
+ * كان يحمل شرائحَ لجانه ونداءَ «إسناد لجنة»، فصار للتوزيع بابان (من الشخص ومن المقعد) وعينان
+ * تتناوبان على النطاق نفسه — وذاك ما شتّت. فانقسمت الشاشة قسمين (20260803): هنا الضمُّ
+ * والإخراج، وفي شبكة المقاعد التوزيعُ كلُّه. والعددُ باقٍ تحت الاسم **خبرًا لا مقبضًا**:
+ * يدلّ على من ضُمّ ولم يُوزَّع بعد.
  *
  * يبني على أساس `.acard` (السطح/الحدّ/الظلّ/الزاوية/النغمة — مصدرٌ واحد لا يُعاد حفره)،
  * ويقرأ رمزَي النغمة (`--card-t`/`--card-tx`) كأجزاء كرت المنصب فلا يحفر لونًا لكلّ حالة (ق٤).
@@ -30,22 +28,17 @@ export function committeesLabel(n: number): string {
 export function UnitMemberCard({
   member: s,
   subtitle,
-  onAdd,
-  onRemove,
   onExpel,
 }: {
   member: UnitMember;
-  /** سطرُ ما تحت الاسم — حِملُ الإشراف في الإدارات، وصفةُ العضو في اللجان. */
+  /** سطرُ ما تحت الاسم — حِملُ الإشراف خبرًا. */
   subtitle: string;
-  onAdd?: () => void;
-  onRemove: (c: Target) => void;
   onExpel: () => void;
 }) {
   return (
-    // النغمة تقول الحِمل لا الانتماء: بلا لجنةٍ = عضوٌ ينتظر توزيعًا، وهو عضوٌ في الوحدة
-    // على كلّ حال — إخراجُه فعلٌ آخر، بابُه الزرّ لا سحبُ آخر لجنة. ومن لا توزيعَ في وحدته
-    // لا «حِملَ» له فتبقى نغمتُه نغمةَ العلامة.
-    <Card tone={!onAdd || s.committees.length ? "brand" : "warning"} className="ovcard">
+    // النغمة تقول الحِمل لا الانتماء: بلا لجنةٍ = عضوٌ ينتظر توزيعًا، وهو عضوٌ في الإدارة
+    // على كلّ حال — إخراجُه فعلٌ آخر، بابُه الزرّ لا سحبُ آخر لجنة.
+    <Card tone={s.committees.length ? "brand" : "warning"} className="ovcard">
       <div className="ovcard-id">
         <Avatar name={s.name} src={s.avatar ?? undefined} gender={s.gender} size="sm" />
         <div className="ovcard-who">
@@ -57,35 +50,11 @@ export function UnitMemberCard({
           size="sm"
           className="ovcard-out"
           onClick={onExpel}
-          aria-label={`إخراج ${s.name} من الوحدة`}
+          aria-label={`إخراج ${s.name} من الإدارة`}
         >
           <SignOut weight="bold" aria-hidden /> إخراج
         </Button>
       </div>
-
-      {s.committees.length ? (
-        <div className="ovcard-coms">
-          {s.committees.map((c) => (
-            <span key={c.id} className="ovcard-com">
-              {c.name}
-              <button
-                type="button"
-                className="ovcard-com-x"
-                onClick={() => onRemove(c)}
-                aria-label={`سحب إشراف ${s.name} على ${c.name}`}
-              >
-                <X weight="bold" aria-hidden />
-              </button>
-            </span>
-          ))}
-        </div>
-      ) : null}
-
-      {onAdd ? (
-        <button type="button" className="ovcard-add" onClick={onAdd}>
-          <Plus weight="bold" aria-hidden /> إسناد لجنة
-        </button>
-      ) : null}
     </Card>
   );
 }

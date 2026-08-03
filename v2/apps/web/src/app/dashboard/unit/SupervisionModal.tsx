@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Select, type SelectOption } from "@adeeb/design-system";
-import { Buildings, SignOut, UserPlus } from "@phosphor-icons/react";
+import { SignOut, UserPlus } from "@phosphor-icons/react";
 import { Avatar } from "../_components/Avatar";
 import { Modal } from "../_components/Modal";
 import type { MemberOption } from "../members/assignments/AssignmentModal";
@@ -11,24 +11,18 @@ import type { UnitMember, Target, Unit } from "./model";
 type Person = Pick<UnitMember, "userId" | "name" | "avatar" | "gender">;
 
 /**
- * مقعدٌ مرشَّح في «إسناد لجنة» — المقعد لا اللجنة: يقول من يشغله الآن إن كان مشغولًا.
- * فالسؤال ليس «أيّ لجنةٍ لا يشرف عليها هو؟» بل «أيّ مقعدٍ يقبله؟» — والمشغول يقبله
- * باستبدالٍ مُعلَن، والقاعدة تردّ ما دونه (`OCCUPIED`).
- */
-export type JoinSlot = { committee: Target; holder: Person | null };
-
-/**
- * حالة المحرّر — **فعلان تنظيميّان وثلاثةٌ تشغيليّة**، وهذا هو الفصل نفسه ظاهرًا في الشاشة:
+ * حالة المحرّر — **فعلان تنظيميّان واثنان تشغيليّان**، وهذا هو انقسامُ الشاشة نفسه ظاهرًا:
  *   `recruit` ← ضمُّ عضوٍ إلى الإدارة (انتماء)      · `expel`  ← إخراجه منها
- *   `seat`    ← اللجنة معلومة ويُختار المشرف       · `join` ← المشرف معلوم ويُختار المقعد
- *   `remove`  ← سحب إشرافٍ قائم، والتأكيد وحده.
+ *   `seat`    ← اللجنة معلومة ويُختار المشرف       · `remove` ← سحب إشرافٍ قائم، والتأكيد وحده.
  * وسحبُ آخر لجنةٍ لم يعد يُخرج أحدًا من إدارته — لذلك سقط تحذيرُ «آخر لجنة».
+ *
+ * وسقط معه `join` (المشرفُ معلوم ويُختار المقعد) في 20260803: صار للتوزيع بابٌ واحدٌ هو
+ * المقعد، فلا فعلَ واحدٌ بمدخلين ولا سؤالٌ «من أين أُسنِد؟».
  */
 export type SupState =
   | { kind: "recruit" }
   | { kind: "expel"; member: Person; count: number }
   | { kind: "seat"; committee: Target; holder: Person | null }
-  | { kind: "join"; member: Person; slots: JoinSlot[] }
   | { kind: "remove"; member: Person; committee: Target };
 
 /**
@@ -60,24 +54,21 @@ export function SupervisionModal({
   onSubmit: () => void;
 }) {
   const isDanger = state?.kind === "remove" || state?.kind === "expel";
-  // المقعد المختار في «إسناد لجنة» — منه تُعرف شدّة الفعل: شاغرٌ إسناد، ومشغولٌ استبدال.
-  const slot = state?.kind === "join" ? state.slots.find((s) => String(s.committee.id) === pick) ?? null : null;
-  const isReplace = state?.kind === "seat" ? state.holder !== null : slot?.holder != null;
+  // شدّةُ الفعل من حال المقعد: شاغرٌ إسناد، ومشغولٌ استبدال.
+  const isReplace = state?.kind === "seat" && state.holder !== null;
   const tone = isDanger ? "danger" : isReplace ? "warning" : undefined;
 
   const title = !state
     ? ""
     : state.kind === "recruit"
-      ? `ضمّ عضو إلى ${unit.name}`
+      ? `تعيين عضو إداريّ في ${unit.name}`
       : state.kind === "expel"
         ? `إخراج ${state.member.name} من الإدارة`
         : state.kind === "remove"
           ? `سحب الإشراف على ${state.committee.name}`
-          : state.kind === "join"
-            ? `إسناد لجنة إلى ${state.member.name}`
-            : isReplace
-              ? `استبدال المشرف على ${state.committee.name}`
-              : `إسناد مشرف على ${state.committee.name}`;
+          : isReplace
+            ? `استبدال المشرف على ${state.committee.name}`
+            : `إسناد مشرف على ${state.committee.name}`;
 
   // الموضع الحاليّ تلميحًا — لمرشّحي الضمّ وحدهم: ضمُّهم نقلٌ من لجانهم، فيُقال من أين.
   // أمّا أعضاء الإدارة (بِركة التوزيع) فلا `held` لهم أصلًا — موضعهم هذه الإدارة، وقولُه
@@ -90,22 +81,6 @@ export function SupervisionModal({
       icon: <Avatar name={m.name} src={m.avatar ?? undefined} gender={m.gender} size="xs" />,
     }));
 
-  // الشاغرُ أوّلًا ثمّ المشغول، ورأسُ كلّ مجموعةٍ يقول ما يعنيه الاختيار — فلا يُفاجَأ
-  // القائد برسالة «المقعد مشغول» بعد الإرسال، ولا تختفي اللجنة كأنّها غير موجودة.
-  const committeeOptions: SelectOption[] =
-    state?.kind === "join"
-      ? [...state.slots]
-          .sort((a, b) => Number(a.holder !== null) - Number(b.holder !== null) || a.committee.id - b.committee.id)
-          .map((s) => ({
-            value: String(s.committee.id),
-            label: s.holder ? `${s.committee.name} — ${s.holder.name}` : s.committee.name,
-            group: s.holder ? "مقاعد مشغولة — تُستبدَل" : "مقاعد شاغرة",
-            icon: s.holder ? (
-              <Avatar name={s.holder.name} src={s.holder.avatar ?? undefined} gender={s.holder.gender} size="xs" />
-            ) : undefined,
-          }))
-      : [];
-
   // الشخص المعروض في رأس المتن: الشاغل الحاليّ (استبدال/سحب) أو صاحبُ الكرت
   const person: Person | null =
     !state ? null : state.kind === "seat" ? state.holder : state.kind === "recruit" ? null : state.member;
@@ -114,7 +89,7 @@ export function SupervisionModal({
   const confirmLabel =
     state?.kind === "expel" ? "إخراج من الإدارة"
       : state?.kind === "remove" ? "سحب الإشراف"
-        : state?.kind === "recruit" ? "ضمّ"
+        : state?.kind === "recruit" ? "تعيين"
           : isReplace ? "استبدال" : "إسناد";
 
   return (
@@ -167,7 +142,7 @@ export function SupervisionModal({
                   required
                 />
                 <p className="org-modal-warn">
-                  {`الضمُّ انتماءٌ لا توزيع: يصير عضوًا في ${unit.name} بلا لجنة، ثمّ تُسنِد إليه ما تشاء من مقاعد الإشراف.`}
+                  {`التعيينُ انتماءٌ لا توزيع: يصير عضوًا إداريًّا في ${unit.name} بلا لجنة، ثمّ تُسنِد إليه ما تشاء من مقاعد الإشراف.`}
                 </p>
               </>
             ) : (
@@ -189,33 +164,8 @@ export function SupervisionModal({
               />
             ) : (
               <p className="org-modal-warn">
-                لا عضو في {unit.name} بعد — ضُمّ عضوًا أوّلًا، فالتوزيع لا يقع إلّا على أعضائك.
+                لا عضو في {unit.name} بعد — عيّن عضوًا إداريًّا أوّلًا، فالتوزيع لا يقع إلّا على أعضائك.
               </p>
-            )
-          ) : null}
-
-          {state.kind === "join" ? (
-            state.slots.length ? (
-              <>
-                <Select
-                  label="اللجنة"
-                  icon={<Buildings weight="bold" />}
-                  searchable
-                  tone={tone}
-                  options={committeeOptions}
-                  value={pick}
-                  onValueChange={onPick}
-                  required
-                />
-                {slot?.holder ? (
-                  <p className="org-modal-warn">
-                    هذا المقعد يشغله {slot.holder.name} — والإسناد يُحلّ {state.member.name} محلّه، فيُسحب إشرافه
-                    على {slot.committee.name}.
-                  </p>
-                ) : null}
-              </>
-            ) : (
-              <p className="org-modal-warn">لا لجنة متبقّية — هذا المشرف يغطّي لجان المجلس التنفيذيّ كلّها.</p>
             )
           ) : null}
 

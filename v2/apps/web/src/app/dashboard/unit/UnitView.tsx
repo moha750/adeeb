@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Segmented, Stat } from "@adeeb/design-system";
+import { Button, ModalSectionHeading, Stat } from "@adeeb/design-system";
 import { ArrowsClockwise, Buildings, Trash, UserMinus, UserPlus, UsersFour } from "@phosphor-icons/react";
 import { EmptyState } from "../_components/EmptyState";
 import { useToast } from "../_components/ToastProvider";
@@ -20,8 +20,10 @@ import type { UnitMember, Target, Unit } from "./model";
  *   ضمُّ عضوٍ إلى الإدارة (انتماءٌ في `user_roles`) ثمّ توزيعُه على لجان التنفيذيّ (إشرافٌ في
  *   `committee_supervision`). كانا مدمجين فكان التوزيع تعيينًا خفيًّا.
  *
- * **وعينان على نطاقٍ واحد:** «حسب اللجنة» شبكةُ مقاعد فيُرى ما لم يُغطَّ · «حسب المشرف» كرتٌ
- * لكلّ عضوٍ بلجانه فيُرى مَن حُمِّل فوق طاقته.
+ * **وفعلان يعنيان قسمين لا عينين** (20260803): كانت الشاشةُ مبدّلًا بين «حسب اللجنة» و«حسب
+ * المشرف» — نطاقٌ واحدٌ يُعرض مرّتين، والتوزيعُ يقع من الجهتين، فشتّت. فصارت **قسمًا للانتماء**
+ * (أعضاء الإدارة: ضمٌّ وإخراج) فوق **قسمٍ للإشراف** (شبكةُ مقاعد اللجان: إسنادٌ واستبدالٌ
+ * وسحب). ترتيبُهما هو ترتيبُ الفعلين: لا يُوزَّع إلّا من ضُمّ.
  *
  * وكانت تخدم قائد اللجنة التنفيذيّة معه فتُقرضه ضمًّا وإخراجًا (20260801): صار للجنة تبويبُها
  * «لجنتي» عرضًا محضًا، وبقي هنا مَن يضمّ ويوزّع — فلا فرعَ يسأل «أإدارةٌ هذه أم لجنة».
@@ -43,7 +45,6 @@ export function UnitView({
 }) {
   const router = useRouter();
   const toast = useToast();
-  const [view, setView] = useState<"seat" | "person">("seat");
   const [modal, setModal] = useState<SupState | null>(null);
   const [pick, setPick] = useState("");
   const [busy, start] = useTransition();
@@ -92,27 +93,9 @@ export function UnitView({
     open({ kind: "remove", member: { userId: h.userId, name: h.name, avatar: h.avatar, gender: h.gender }, committee: seatOf(p) });
   };
 
-  // من كرت المشرف يُختار **مقعدٌ** لا لجنة: `seats` هي مصدر حالة المقاعد نفسه الذي تعرضه
-  // «حسب اللجنة» — فيُرى الشاغر والمشغول (ومعه شاغلُه) بدل إخفاء ما ليس له.
-  const openJoin = (s: UnitMember) =>
-    open({
-      kind: "join",
-      member: s,
-      slots: seats
-        .filter((p) => p.committeeId != null && !s.committees.some((x) => x.id === p.committeeId))
-        .map((p) => {
-          const h = seatHolder(p);
-          return {
-            committee: seatOf(p),
-            holder: h ? { userId: h.userId, name: h.name, avatar: h.avatar, gender: h.gender } : null,
-          };
-        }),
-    });
-
-  const openChipRemove = (s: UnitMember, c: Target) => open({ kind: "remove", member: s, committee: c });
   const openExpel = (s: UnitMember) => open({ kind: "expel", member: s, count: loadOf.get(s.userId) ?? 0 });
 
-  // إرسالٌ واحد يخدم الأفعال الخمسة — الفعل يُقرأ من الحالة، وبابُه يُقرأ من نوعه:
+  // إرسالٌ واحد يخدم الأفعال الأربعة — الفعل يُقرأ من الحالة، وبابُه يُقرأ من نوعه:
   // الانتماء إلى `assign/removePosition`، والإشراف إلى `assign/revokeSupervision`.
   const submit = () => {
     if (!modal) return;
@@ -134,14 +117,16 @@ export function UnitView({
       return;
     }
 
-    const userId = modal.kind === "seat" ? pick : modal.member.userId;
-    const committeeId = modal.kind === "seat" ? modal.committee.id : Number(pick);
-    // الاستبدال يُعلَن من الوجهتين بمعنًى واحد: المقعد مشغول. (تُصدّقه القاعدة بـ`OCCUPIED`.)
-    const replace =
-      modal.kind === "seat"
-        ? modal.holder !== null
-        : modal.slots.some((s) => s.committee.id === committeeId && s.holder !== null);
-    start(async () => done(await assignSupervision({ userId, committeeId, unitId: unit.id, replace })));
+    // والباقي مقعد: اللجنة معلومة ويُختار مشرفُها. والاستبدال يُعلَن حين يكون مشغولًا
+    // (تُصدّقه القاعدة بـ`OCCUPIED`).
+    start(async () =>
+      done(await assignSupervision({
+        userId: pick,
+        committeeId: modal.committee.id,
+        unitId: unit.id,
+        replace: modal.holder !== null,
+      })),
+    );
   };
 
   const seatActions = (p: Position): MenuGroup[] => [{
@@ -153,26 +138,47 @@ export function UnitView({
 
   return (
     <div className="asg">
-      {/* الإحصاءات تقول ما للإدارة من أمر: تُقاس بتغطيتها للجان، وبعدد من فيها. */}
+      {/* الإحصاءات تقول ما للإدارة من أمر: بعدد من فيها، وبتغطيتها للجان — بترتيب القسمين. */}
       <div className="stat-grid">
+        <Stat icon={<UsersFour weight="fill" />} value={stats.people} label="عضوًا في إدارتك" tone="brand" />
         <Stat icon={<Buildings weight="fill" />} value={stats.covered} label="لجنة مُغطّاة" tone="success" />
         <Stat icon={<UserMinus weight="fill" />} value={stats.vacant} label="لجنة بلا مشرف" tone="danger" />
-        <Stat icon={<UsersFour weight="fill" />} value={stats.people} label="عضوًا في إدارتك" tone="brand" />
       </div>
 
-      <div className="viewbar">
-        <Segmented
-          aria-label="طريقة العرض"
-          value={view}
-          onValueChange={(v) => setView(v as "seat" | "person")}
-          items={[{ value: "seat", label: "حسب اللجنة" }, { value: "person", label: "حسب المشرف" }]}
-        />
-        <Button variant="primary" size="md" onClick={() => open({ kind: "recruit" })}>
-          <UserPlus weight="bold" aria-hidden /> ضمّ عضو
-        </Button>
-      </div>
+      {/* القسم الأوّل — الانتماء: من هم أعضاء إدارتك، ضمًّا وإخراجًا. لا إشرافَ يُمسّ هنا. */}
+      <section className="asg-sec">
+        <div className="viewbar">
+          <ModalSectionHeading icon={<UsersFour weight="fill" />} title="أعضاء الإدارة" />
+          <Button variant="primary" size="md" onClick={() => open({ kind: "recruit" })}>
+            <UserPlus weight="bold" aria-hidden /> تعيين عضو إداريّ
+          </Button>
+        </div>
 
-      {view === "seat" ? (
+        {roster.length === 0 ? (
+          <EmptyState
+            variant="soft"
+            icon={<UsersFour weight="duotone" />}
+            title="لا عضو في إدارتك بعد"
+            description="ابدأ بتعيين عضوٍ إداريٍّ في الإدارة — ثمّ وزّع إشرافه من قسم اللجان أدناه."
+            action={<Button variant="primary" size="md" onClick={() => open({ kind: "recruit" })}>تعيين عضو إداريّ</Button>}
+          />
+        ) : (
+          <div className="card-grid">
+            {roster.map((s) => (
+              <UnitMemberCard
+                key={s.userId}
+                member={s}
+                subtitle={committeesLabel(s.committees.length)}
+                onExpel={() => openExpel(s)}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* القسم الثاني — الإشراف: مقعدُ إدارتك في كلّ لجنةٍ تنفيذيّة، وهو **بابُ التوزيع الوحيد**. */}
+      <section className="asg-sec">
+        <ModalSectionHeading icon={<Buildings weight="fill" />} title="توزيع الإشراف على اللجان" />
         <div className="card-grid">
           {seats.map((p) => (
             // البطلُ النطاق لا الدور: تسعُ لجانٍ ومقعدٌ واحدٌ مكرّر — فاسمُ الدور وشارتُه يسقطان
@@ -180,28 +186,7 @@ export function UnitView({
             <PositionCard key={p.key} position={p} hero="scope" actions={() => seatActions(p)} onAssign={() => openSeat(p)} />
           ))}
         </div>
-      ) : roster.length === 0 ? (
-        <EmptyState
-          variant="soft"
-          icon={<UsersFour weight="duotone" />}
-          title="لا عضو في إدارتك بعد"
-          description="ابدأ بضمّ عضوٍ إلى الإدارة — ثمّ وزّعه على ما تشاء من لجان المجلس التنفيذيّ."
-          action={<Button variant="primary" size="md" onClick={() => open({ kind: "recruit" })}>ضمّ عضو</Button>}
-        />
-      ) : (
-        <div className="card-grid">
-          {roster.map((s) => (
-            <UnitMemberCard
-              key={s.userId}
-              member={s}
-              subtitle={committeesLabel(s.committees.length)}
-              onAdd={() => openJoin(s)}
-              onRemove={(c) => openChipRemove(s, c)}
-              onExpel={() => openExpel(s)}
-            />
-          ))}
-        </div>
-      )}
+      </section>
 
       <SupervisionModal
         state={modal}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button, Container } from "@adeeb/design-system";
 import { UnitMemberCard, committeesLabel } from "../../dashboard/unit/UnitMemberCard";
-import { SupervisionModal, type JoinSlot, type SupState } from "../../dashboard/unit/SupervisionModal";
+import { SupervisionModal, type SupState } from "../../dashboard/unit/SupervisionModal";
 import type { MemberOption } from "../../dashboard/members/assignments/AssignmentModal";
 import type { UnitMember, Target, Unit } from "../../dashboard/unit/model";
 
@@ -32,14 +32,6 @@ const DEMO_MEMBERS: MemberOption[] = [
   { id: "3", name: "اريام رشيد الخلف" },
 ];
 
-// مقاعد «إسناد لجنة» — شاغرٌ ومشغولٌ معًا، فالمنسدلة تعرض المجموعتين لا الشاغر وحده
-const DEMO_SLOTS: JoinSlot[] = [
-  { committee: T(3, "لجنة التأليف"), holder: null },
-  { committee: T(5, "لجنة التصوير"), holder: null },
-  { committee: T(4, "لجنة السُفراء"), holder: { userId: "2", name: "نافل قاسي السبيعي", avatar: null, gender: null } },
-  { committee: T(6, "لجنة التصميم"), holder: { userId: "3", name: "اريام رشيد الخلف", avatar: null, gender: null } },
-];
-
 function Label({ children }: { children: React.ReactNode }) {
   return <p className="mb-4 font-latin text-xs font-bold uppercase tracking-[0.18em] text-content-muted">{children}</p>;
 }
@@ -58,38 +50,35 @@ export default function SupervisorsPage() {
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System · Unit Member Card</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">كرت عضو الوحدة</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
-          نظيرُ كرت المنصب بالعين المقلوبة، في تبويب «إدارتي»: هناك اللجنةُ هي البطل ومقعدُها
-          شاغرٌ أو مشغول، وهنا <b>الشخصُ</b> هو البطل وشرائحُ لجانه هي المحتوى — لأنّ العضو الإداريّ
-          يشرف على عدّة لجان، فسؤال «كم يحمل فلان؟» لا تجيبه شبكةُ المقاعد. النغمةُ تقول الحِمل:
-          <b> brand</b> = يشرف على لجان · <b>warning</b> = عضوٌ لم يُوزَّع بعد. ومن ضُمّ ولم يُوزَّع
-          يظهر بلا شرائح — الكرت نفسه بمعطًى فارغ لا نسخةٌ ثانية.
+          كرتُ <b>الانتماء</b> في قسم «أعضاء الإدارة» من تبويب «إدارتي»: من هو، وكم يحمل من لجان
+          خبرًا، وبابُ إخراجه. أمّا التوزيعُ فبابُه كرتُ المقعد في القسم الثاني وحده — كانت الشرائحُ
+          هنا تفعله أيضًا، ففعلٌ واحدٌ ببابين. النغمةُ تقول الحِمل: <b>brand</b> = يشرف على لجان ·{" "}
+          <b>warning</b> = عضوٌ لم يُوزَّع بعد.
           يبني على أساس <code className="font-latin">.acard</code> ونظام النغمة (ق٤/٥)، أنماطُه{" "}
           <code className="font-latin">.ovcard-*</code> بالمكتبة.
         </p>
 
         <div className="mt-12 space-y-12">
           <section>
-            <Label>إدارةٌ توزّع إشرافًا (حِملٌ ثقيل · مثنّى · مفرد · بلا لجنة)</Label>
+            <Label>أعضاء إدارة (حِملٌ ثقيل · مثنّى · مفرد · بلا لجنة)</Label>
             <div className="card-grid">
               {SAMPLE.map((s) => (
-                <UnitMemberCard key={s.userId} member={s} subtitle={committeesLabel(s.committees.length)} onAdd={noop} onRemove={noop} onExpel={noop} />
+                <UnitMemberCard key={s.userId} member={s} subtitle={committeesLabel(s.committees.length)} onExpel={noop} />
               ))}
             </div>
           </section>
 
           <section>
-            <Label>محرّر التوزيع — النافذة المنغّمة (ضمّ · إسناد · استبدال · إسناد لجنة · سحب · إخراج)</Label>
+            <Label>محرّر التوزيع — النافذة المنغّمة (تعيين · إسناد · استبدال · سحب · إخراج)</Label>
             <p className="mb-6 max-w-2xl text-content-muted">
-              فعلان تنظيميّان (ضمُّ عضوٍ إلى الإدارة وإخراجُه منها) وثلاثةٌ تشغيليّة بمجهولٍ واحدٍ لكلٍّ
-              منها: اللجنةُ معلومة فيُختار المشرف · المشرفُ معلوم فيُختار المقعد · الاثنان معلومان
-              فالتأكيدُ وحده. والنغمةُ تقول شدّة الفعل — يبني على
+              فعلان تنظيميّان (تعيينُ عضوٍ إداريٍّ في الإدارة وإخراجُه منها) واثنان تشغيليّان: اللجنةُ معلومة
+              فيُختار المشرف · والاثنان معلومان فالتأكيدُ وحده. والنغمةُ تقول شدّة الفعل — يبني على
               <code className="font-latin"> Modal</code> + القاعدة ٩.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Button onClick={() => open({ kind: "recruit" })}>ضمّ عضو (انتماء)</Button>
+              <Button onClick={() => open({ kind: "recruit" })}>تعيين عضو إداريّ (انتماء)</Button>
               <Button onClick={() => open({ kind: "seat", committee: T(1, "لجنة الفعاليات"), holder: null })}>إسناد (مقعد شاغر)</Button>
               <Button variant="warning" onClick={() => open({ kind: "seat", committee: T(1, "لجنة الفعاليات"), holder: person })}>استبدال المشرف</Button>
-              <Button variant="neutral" onClick={() => open({ kind: "join", member: person, slots: DEMO_SLOTS })}>إسناد لجنة (لمشرف)</Button>
               <Button variant="danger" onClick={() => open({ kind: "remove", member: person, committee: T(1, "لجنة الفعاليات") })}>سحب الإشراف</Button>
               <Button variant="danger" onClick={() => open({ kind: "expel", member: person, count: 4 })}>إخراج من الإدارة</Button>
             </div>

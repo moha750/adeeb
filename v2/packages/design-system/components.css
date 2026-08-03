@@ -3385,14 +3385,12 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .pcard-holders + .pcard-vacant { margin-top: 0; }
 
 /* ============================================================
-   كرت المشرف (.ovcard) — شخصٌ وحِمله في تبويب «توزيع الإشراف».
+   كرت عضو الإدارة (.ovcard) — **الانتماء** في قسم «أعضاء الإدارة» من تبويب «إدارتي».
    (الاسم من `overseer` كما في `hrOverseer`/`qaOverseer` بالنموذج — و`.scard-*` أدناه
    مساحةُ كرت الاستبيان، لا تُزاحَم.)
-   نظيرُ `.pcard` بالعين المقلوبة: هناك اللجنة هي البطل ومقعدُها شاغرٌ أو مشغول،
-   وهنا **الشخصُ** هو البطل وشرائحُ لجانه هي المحتوى — لأنّ العضو الإداريّ يشرف على
-   عدّة لجان، فسؤال «كم يحمل فلان؟» لا تجيبه شبكةُ المقاعد.
-   يبني على أساس `.acard` كأخيه، ويقرأ رمزَي النغمة (--card-t/--card-tx) فلا يحفر لونًا (ق٤ §٩١).
-   الشرائح كبسولات (ق٢: الشارات pill) و«×» دائرةٌ وظيفيّة (ق٢: 50% لا زاوية). */
+   هويّةٌ وحِملٌ خبرًا وبابُ إخراج — لا فعلَ إشرافٍ فيه: ذاك في شبكة المقاعد (`.pcard`)
+   وحدها، وهي القسم الثاني من الشاشة نفسها.
+   يبني على أساس `.acard` كأخيه، ويقرأ رمزَي النغمة (--card-t/--card-tx) فلا يحفر لونًا (ق٤ §٩١). */
 .ovcard { padding: 16px 18px; display: flex; flex-direction: column; gap: 11px; }
 .ovcard-id { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .ovcard-who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -3400,40 +3398,8 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .ovcard-count { font-size: 12.5px; font-weight: 600; color: var(--color-text-muted); }
 /* بابُ الإخراج من الإدارة — يُدفَع إلى طرف الرأس فلا يزاحم الاسم */
 .ovcard-out { margin-inline-start: auto; flex: 0 0 auto; }
-/* الشرائح تُدفَع لتملأ ما بين الهويّة والنداء، فتتراصّ النداءات عبر الصفّ رغم تفاوت العدد */
-.ovcard-coms { margin-bottom: auto; display: flex; flex-wrap: wrap; gap: 6px; }
-.ovcard-com {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding-block: 5px; padding-inline: 10px 5px;
-  border-radius: var(--radius-full);
-  border: 1px solid color-mix(in oklab, var(--card-t, var(--steel-500)) 28%, transparent);
-  background: color-mix(in oklab, var(--card-t, var(--steel-500)) 9%, transparent);
-  color: var(--card-tx, var(--steel-600));
-  font-size: 12.5px; font-weight: 700; line-height: 1.2;
-}
-.ovcard-com-x {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 18px; height: 18px; flex: 0 0 auto;
-  border: 0; border-radius: 50%;
-  background: color-mix(in oklab, var(--card-t, var(--steel-500)) 14%, transparent);
-  color: inherit; cursor: pointer; padding: 0;
-  transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
-}
-.ovcard-com-x:hover { background: var(--danger-600); color: var(--color-on-primary); }
-.ovcard-com-x svg { width: 11px; height: 11px; }
-/* نداءُ الزيادة — هدفٌ متقطّع بعرض الكرت، أخو `.pcard-vacant` شكلًا ونغمةً */
-.ovcard-add {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  width: 100%; padding: 10px 14px;
-  border-radius: var(--radius);
-  border: 1.5px dashed color-mix(in oklab, var(--card-t, var(--steel-500)) 40%, transparent);
-  background: color-mix(in oklab, var(--card-t, var(--steel-500)) 8%, transparent);
-  color: var(--card-tx, var(--steel-600));
-  font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
-  transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
-}
-.ovcard-add:hover { background: color-mix(in oklab, var(--card-t, var(--steel-500)) 15%, transparent); border-color: color-mix(in oklab, var(--card-t, var(--steel-500)) 60%, transparent); }
-.ovcard-add svg { width: 16px; height: 16px; flex: 0 0 auto; }
+/* (سقطت `.ovcard-coms/-com/-com-x/-add` في 20260803: انقسمت الشاشة قسمين، فصار التوزيع
+   في شبكة المقاعد وحدها، وبقي هذا الكرتُ للانتماء — هويّةٌ وحِملٌ خبرًا وبابُ إخراج.) */
 
 /* ============================================================
    كرت الاستبيان — **المنقسم** (اختاره المالك، معروضٌ في /ui/survey-card). يبني على `.acard`
@@ -3814,6 +3780,19 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .asgm-holder > span { min-width: 0; font-size: 13.5px; font-weight: 700; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* جذر تبويب تعيين المناصب — تكديس رأسيّ (مُرحَّل من globals إلى المكتبة كجذر `.org` للهيكلة) */
 .asg { display: flex; flex-direction: column; gap: 16px; }
+/* قسمٌ داخله — عنوانُ القسم (`.msh`) فوق شبكته، وبينهما فرجةٌ واحدة. العنوانُ يملك هامشه
+   السفليّ لأنّه يعيش وحده في مواضع أخرى؛ وهنا يملكه القسمُ فلا يُجمَع هامشٌ وفرجة. */
+.asg-sec { display: flex; flex-direction: column; gap: 12px; }
+.asg-sec > .msh, .asg-sec .viewbar > .msh { margin-bottom: 0; }
+/* عنوانٌ يقاسم صفَّه فعلًا: خطُّه المتلاشي يمتدّ إلى الفعل فلا يبقى شرطةً قصيرة بجواره،
+   وعنوانُه لا يتكسّر كلمتين — فالصفُّ الضيّق يُنزل الفعلَ بدل أن يهرس العنوان.
+   **والنموّ بنسبة 999:1** لا بمنع النموّ عن الفعل: هكذا يبقى الفعلُ بعرضه الطبيعيّ ما دام
+   يقاسم الصفّ (نصيبه من الفائض جزءٌ من ألف)، فإذا ضاق الصفُّ ونزل **وحده** امتدّ على عرضه
+   كاملًا — ق٦ بحرفها: الصفّ الأخير لا يترك فراغًا. بلا استعلام وسائط ولا عتبة مكتوبة:
+   الانتقالُ يقع حيث يضيق المحتوى فعلًا. */
+.viewbar > .msh { flex: 999 1 auto; min-width: 0; }
+.viewbar > .msh h3 { white-space: nowrap; }
+.viewbar:has(> .msh) > .abtn { flex: 1 1 auto; }
 
 /* (شريط المبدّل وتسميته المأيقَنة صارا `.viewbar`/`.seg-lbl` مع `.seg` — لا يخصّان الهيكلة.) */
 
