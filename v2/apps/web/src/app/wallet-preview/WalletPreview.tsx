@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Badge, Button, Card, CardBody, CardHeader, Container, SectionHeading, Segmented } from "@adeeb/design-system";
 import {
   ArrowCounterClockwise,
-  Check,
   DeviceMobile,
   Gift,
   Info,
@@ -32,45 +31,69 @@ function Fld({ f, kind }: { f: PassField; kind?: "head" }) {
   );
 }
 
+/** رابطُ سطح البطاقة — دالّةٌ في عدد الأختام لا غير، فلا يكذب رابطُه (`strip/route.ts`). */
+const stripUrl = (stamps: number): string => `/wallet-preview/strip?stamps=${stamps}`;
+
 /**
- * الأختام العشرة — نظيرُ `strip.png` الذي يُولَّد للمحفظة، بالتخطيط نفسه (صفّان).
- * قيمتُهما واحدة (`stamps`)، والفرق في الوسيط لا في البيانات.
+ * سطحُ البطاقة **بلا وميضٍ عند الختم**: العدّادُ يتغيّر فورًا، والصورةُ لا تُبدَّل حتى
+ * تكتمل الجديدةُ في الذاكرة — وإلّا ومض إطارٌ فارغٌ مكان السطح في كلّ ضغطة.
+ *
+ * وتسبق إلى الجارَين (`±1`) فيصير الختمُ التالي والتراجعُ بلا انتظارٍ أصلًا؛ والردُّ
+ * خالدُ التخزين، فلا يُطلَب مقاسٌ مرّتين.
  */
-function Stamps({ filled }: { filled: number }) {
-  return (
-    <div className="wp-stamps" role="img" aria-label={`${arNum(filled)} من ${arNum(GOAL)} مشاركات`}>
-      {Array.from({ length: GOAL }, (_, i) => (
-        <span key={i} className="wp-stamp" data-on={i < filled} data-last={i === GOAL - 1} aria-hidden>
-          <Check size={14} weight="bold" />
-        </span>
-      ))}
-    </div>
-  );
+function useStrip(stamps: number): string {
+  const [shown, setShown] = useState(stamps);
+
+  useEffect(() => {
+    let alive = true;
+    const img = new Image();
+    img.src = stripUrl(stamps);
+    const settle = () => {
+      if (alive) setShown(stamps);
+    };
+    // `decode` يفشل على صورةٍ لم تُحمَّل — والفشلُ يعرض القديمَ لا فراغًا، فيُعامَل معاملتَه.
+    void img.decode().then(settle, settle);
+
+    for (const n of [stamps - 1, stamps + 1]) {
+      if (n >= 0 && n <= GOAL) new Image().src = stripUrl(n);
+    }
+
+    return () => {
+      alive = false;
+    };
+  }, [stamps]);
+
+  return stripUrl(shown);
 }
 
 /**
- * البطاقة كما يعرضها Apple Wallet — **من `cardFace()` نفسِه** الذي يكتب `pass.json`.
- * فما يُرى هنا هو ما يصل الجهاز، لا محاكاةٌ تُشبهه (انظر رأس `pass.ts`).
+ * البطاقة **كما يرسمها Apple Wallet** — لا كما نتمنّاها:
+ *
+ * · الحقولُ من `cardFace()` نفسِه الذي يكتب `pass.json` (انظر رأس `pass.ts`).
+ * · والسطحُ **صورةُ `strip.png` عينُها** التي تدخل الحزمة — لا محاكاةٌ بـCSS تشبهها.
+ * · واللونُ مصمتٌ والخطُّ خطُّ النظام والرمزُ مربّعاتٌ سوداء، لأنّ ذلك ما يصل الجهاز.
+ *
+ * فما يُقرَّر على هذه الشاشة يُقرَّر على البطاقة الحقيقيّة، ولا مفاجأةَ عند الإضافة.
  */
 function WalletCard({ member }: { member: DemoMember }) {
   const [back, setBack] = useState(false);
-  /**
-   * تلألؤُ السطح — **صنفٌ يُشعله المرور وتُطفئه النهاية**، لا `:hover` في الورقة: خروجُ
-   * المؤشّر وسطَ العبور يبتر الشريطَ فيختفي فجأةً في منتصف البطاقة (انظر `card.css`).
-   */
-  const [sheen, setSheen] = useState(false);
   const face = cardFace(member);
-  const done = isComplete(member.stamps);
+  const strip = useStrip(member.stamps);
 
-  // الرمز يُبنى مرّةً لكلّ حمولة — بناؤه ليس رخيصًا ويُعاد الرسم عند كلّ ختم.
+  /**
+   * الرمز يُبنى مرّةً لكلّ حمولة — بناؤه ليس رخيصًا.
+   *
+   * **ومربّعاتٌ سوداء لا شكلُ أديب**: يرسمه iOS من `barcodes[]` بلا تخصيص، فرمزُنا
+   * السائل هنا وعدٌ لا يصل. (وهي القيمُ الافتراضيّة في `qrSvg` — تُكتب لتُقرأ قصدًا.)
+   */
   const qr = useMemo(
     () =>
       qrSvg({
         text: face.barcode,
-        size: 108,
-        dots: { shape: "fluid", paint: { kind: "solid", color: "var(--navy-800)" } },
-        eye: { shape: "rounded", color: null },
-        pupil: { shape: "rounded", color: null },
+        size: 100,
+        dots: { shape: "square", paint: { kind: "solid", color: "#000000" } },
+        eye: { shape: "square", color: null },
+        pupil: { shape: "square", color: null },
         bg: null,
       }),
     [face.barcode],
@@ -78,23 +101,14 @@ function WalletCard({ member }: { member: DemoMember }) {
 
   return (
     <div className="wp-stage">
-      <div
-        className={sheen ? "wp-flip is-sheen" : "wp-flip"}
-        data-face={back ? "back" : "front"}
-        onMouseEnter={() => setSheen(true)}
-        onAnimationEnd={(e) => {
-          // القلبُ نفسُه لا يُحرَّك بـ`animation`، لكن نبضةَ الختم الأخير تصعد إلى هنا —
-          // فلا يُطفَأ التلألؤ إلّا بنهايته هو.
-          if (e.animationName.startsWith("wp-sheen")) setSheen(false);
-        }}
-      >
+      <div className="wp-flip" data-face={back ? "back" : "front"}>
         <button
           type="button"
           className="wp-turn"
           onClick={() => setBack((b) => !b)}
           aria-label={back ? "عرض وجه البطاقة" : "عرض ظهر البطاقة"}
         >
-          {back ? <ArrowCounterClockwise size={15} weight="bold" /> : <Info size={15} weight="bold" />}
+          {back ? <ArrowCounterClockwise size={14} weight="bold" /> : <Info size={15} weight="bold" />}
         </button>
 
         <div className="wp-side" aria-hidden={back}>
@@ -107,34 +121,31 @@ function WalletCard({ member }: { member: DemoMember }) {
             ))}
           </div>
 
-          <Stamps filled={member.stamps} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="wp-strip" src={strip} alt={`${arNum(member.stamps)} من ${arNum(GOAL)} مشاركات`} />
 
-          {done ? (
-            <div className="wp-ready">
-              <Gift size={16} weight="fill" />
-              مكافأتك جاهزة — {REWARD.title}
+          <div className="wp-fields">
+            <div className="wp-row">
+              {face.secondaryFields.map((f) => (
+                <Fld key={f.key} f={f} />
+              ))}
             </div>
-          ) : null}
 
-          <div className="wp-row">
-            {face.secondaryFields.map((f) => (
-              <Fld key={f.key} f={f} />
-            ))}
+            <div className="wp-row wp-row--aux">
+              {face.auxiliaryFields.map((f) => (
+                <Fld key={f.key} f={f} />
+              ))}
+            </div>
           </div>
 
-          <div className="wp-row">
-            {face.auxiliaryFields.map((f) => (
-              <Fld key={f.key} f={f} />
-            ))}
-          </div>
-
-          {/* الرمز يُحقَن نصًّا: الـSVG داخل المستند فتُحَلّ فيه `var(--…)` من الرموز */}
+          {/* الرمز يُحقَن نصًّا — الـSVG داخل المستند فيُرسَم كما هو */}
           <div className="wp-code" dangerouslySetInnerHTML={{ __html: qr }} />
           <span className="wp-alt">{member.serial}</span>
         </div>
 
+        {/* ظهرُ البطاقة: حقولُ `backFields` وحدها على ورقةٍ بيضاء — لا عنوانَ فوقها، فأبل
+            لا تكتب على الظهر إلّا ما كتبناه فيه. */}
         <div className="wp-side wp-side--back" aria-hidden={!back}>
-          <span className="wp-back-h">ظهر البطاقة</span>
           {face.backFields.map((f) => (
             <div key={f.key} className="wp-back-f">
               <span className="wp-lab">{f.label}</span>
@@ -285,7 +296,10 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
           {/* ── البطاقة ── */}
           <div className="flex-[1_1_320px]">
             <WalletCard member={member} />
-            <p className="mt-3 text-center text-xs text-content-muted">اضغط الدائرة أسفل البطاقة لترى ظهرها</p>
+            <p className="mt-3 text-center text-xs text-content-muted">
+              هذه البطاقة كما يرسمها Apple Wallet — وسطحُها الصورةُ عينُها التي تدخل الملفّ.
+              اضغط الدائرة أسفل البطاقة لترى ظهرها.
+            </p>
           </div>
 
           {/* ── التحكّم ── */}

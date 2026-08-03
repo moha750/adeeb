@@ -1,18 +1,27 @@
 /* ============================================================
-   سطح بطاقة Apple Wallet — **محاكاةٌ لسطحٍ ليس لنا**.
+   بطاقةُ Apple Wallet — **كما يرسمها الجهاز، لا كما نتمنّاها**.
 
    القاعدة ١ تقول: لا تنسيقَ خارج المكتبة. وهذا الملفّ استثناءٌ **مُعلَنٌ ومُبرَّر**،
    لا ترقيعٌ صامت:
 
-   ١) ما يُرسَم هنا ليس مكوّنَ أديب بل **تخطيط PassKit** (ترويسة · حقلٌ رئيس · صفّان ·
+   ١) ما يُرسَم هنا ليس مكوّنَ أديب بل **تخطيط PassKit** (ترويسة · شريط · صفّان ·
       باركود) — تفرضه أبل ولا نملك تغييره. فوضعُه في `components.css` يُدخل المكتبةَ
       شكلًا لا يخصّها ولا يُعاد استعماله.
    ٢) هذا المجلّد **يُحذف** بعد العرض، فما فيه يموت معه. وصنفٌ يُترك في المكتبة بعد
       موت مستعمِله هو بالضبط ما يحرسه `pnpm check`.
    ٣) وله سابقةٌ في المستودع: `_story/story.css` مجاورةٌ لمكوّنها للسبب نفسه.
 
-   **ولا لونَ من خارج الرموز**: كلّ قيمةٍ هنا `var(--…)` من `tokens.css` — الاستثناء
-   في **موضع** الورقة لا في **مصدر** اللون.
+   **والمعاينةُ تحاكي الجهازَ ولا تُجمّله** (قرار المالك ٢٠٢٦-٠٨-٠٤): كان هنا سطحٌ
+   متدرّجٌ ونقشٌ وتلألؤٌ يعبر عند المرور، فحُذف كلُّه — لا لأنّه ساءَ بل لأنّ أبل لا
+   ترسمه. والسطحُ الآن **صورةُ `strip.png` عينُها** التي تدخل الحزمة (`/strip`)، فما على
+   الشاشة هو ما في الجيب.
+
+   **وثلاثةُ لوائح تخالف قانونَنا عمدًا، وهي عينُ الغرض**:
+   · **اللون** `backgroundColor` مصمتٌ واحد — لا تدرّجَ ولا زجاج.
+   · **الخطّ** خطُّ النظام لا خطُّنا: النصَّ يرسمه iOS بخطّه هو، فلو كتبناه بـ`Lyon`
+     لَعرضنا بطاقةً لا وجود لها.
+   · **المقاسات** بالنقطة كما تحدّدها أبل، لا من سلّم المسافات.
+   وما عدا ذلك من الرموز: كلُّ لونٍ هنا `var(--…)` من `tokens.css`.
    ============================================================ */
 
 /* ── اللوح ─────────────────────────────────────────────────────────────── */
@@ -34,240 +43,137 @@
 
 /* الوجهان يتراكبان: الأوّل يقود الارتفاع، والثاني مُطلَقٌ فوقه مقلوبًا سلفًا.
 
-   **والسطحُ سطحُ هويّةٍ لا لونٌ مصمت**: تدرّج `--grad-primary` نفسُه الذي يحمل هويّة
-   العضو في `.mcard-hero`، وفوقه بؤرةُ ضوءٍ في الزاوية العليا كشريط `.acard-banner`،
-   وخيطٌ داخليّ زجاجيّ يرسم حافّة البطاقة. ثلاثُ طبقاتٍ كلُّها من الرموز.
+   **والسطحُ لونٌ مصمتٌ لا غير** — هو `PASS_COLORS.background` نفسُه في `pass.ts`
+   (كحليّ‑700). كلُّ ما يُرى من تدرّجٍ وضوءٍ ونقشٍ يعيش **داخل الشريط** صورةً، لأنّ
+   `pass.json` لا يعرف من السطح إلّا هذا اللون الواحد.
 
-   **وهنا يفترق المعروضُ عن المحمول**: `pass.json` لا يعرف إلّا `backgroundColor`
-   واحدًا مصمتًا (كحليّ‑700) — فأبل لا ترسم تدرّجًا ولا نقشًا على سطح البطاقة. فما
-   يفترق هو **سطحُ البطاقة** وحده؛ أمّا الحقول والأختام والباركود فمن `cardFace()`
-   نفسِه، ولا يفترق منها شيء. وكحليّ‑700 هو تقريبًا منتصفُ هذا التدرّج، فالبطاقةُ في
-   الجهاز أهدأُ لا مختلفة. */
+   والحشوةُ صفرٌ هنا: الشريط سائبُ الحافّتين كما ترسمه أبل، ولكلّ قسمٍ حشوتُه. */
 .wp-side {
   position: relative;
   backface-visibility: hidden;
-  border-radius: var(--radius);
-  background:
-    radial-gradient(300px 190px at 86% -10%, color-mix(in oklab, var(--steel-300) 50%, transparent), transparent 70%),
-    var(--grad-primary);
+  border-radius: 12px;   /* زاويةُ بطاقة المحفظة — أصغرُ من `--radius` وليست منه */
+  background: var(--navy-700);
   color: var(--color-on-primary);
-  /* الظلُّ من السلّم، والخيطُ الداخليّ زجاجُ الهوية — حافّةٌ تُقرأ على الأسطح الفاتحة. */
-  box-shadow: var(--shadow-lg), inset 0 0 0 1px var(--glass-border);
-  padding: 16px;
+  box-shadow: var(--shadow-lg);
+  /* خطُّ الجهاز لا خطُّنا — انظر رأس الملفّ. */
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   display: flex;
   flex-direction: column;
-  gap: 14px;
   overflow: hidden;
 }
-
-/* المحتوى يعلو الطبقات المزخرِفة: النقشُ والتلألؤ عنصران **مُطلَقان**، والمُطلَقُ يُرسَم
-   فوق المحتوى المتدفّق مهما تقدّمه في الشيفرة — فيُرفَع المحتوى بـ`position` لا بأكثر. */
-.wp-side > * { position: relative; }
-
-/* نقشُ الهوية فوق التدرّج — **قاعدةً مرصوفةً لا زخرفةً عائمة**، وهي معالجةُ قسم
-   «كُن جزءًا من مجتمع أديب» في الهبوط حرفيًّا: شريطٌ بارتفاعٍ مقطوع يُرصَف أفقيًّا
-   (`repeat-x`) فيمتدّ من حافّةٍ إلى حافّة. والفرقُ عن الزخرفة المتوسّطة فرقُ نيّة: تلك
-   تُقرأ صورةً مقصوصةً في الوسط، وهذه تُقرأ **قاعدةَ البطاقة**.
-
-   **والارتفاعُ بالبكسل لا بنسبةٍ من العرض** (درسُ `.aauth-side::after`): النقش شريطٌ
-   عريض (1920×287)، فقياسُه بالعرض على بطاقةٍ ٣٤٠px يسحقه إلى خيطٍ لا يُقرأ — ويزداد
-   سحقًا كلّما ضاقت الشاشة. و٨٤px تُبقيه شريطًا واضحًا ثابتًا تحت الباركود لا فوقه. */
-.wp-side::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: url("/brand/pattern-white.svg") repeat-x center bottom / auto 84px;
-  opacity: .16;
-}
-
-/* تلألؤ البطاقة — شريطٌ زجاجيّ مائل يسكن خارج الإطار فلا يُرى، ويعبر السطح مرّةً عند
-   المرور: إيماءةُ «بطاقةٍ تُقلَّب في الضوء» كما في `.mcard-hero::after`. **ومُعلَّقٌ بصنفٍ
-   لا بـ`:hover`**: خروجُ المؤشّر وسط العبور يبتر الشريط فيختفي فجأةً في منتصف السطح؛
-   فالمرور يُشعله والبطاقةُ تُطفئه عند `animationend`. */
-.wp-side::after {
-  content: "";
-  position: absolute;
-  inset-block: -60%;
-  inline-size: 42%;
-  inset-inline-start: -60%;
-  transform: rotate(18deg);
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, var(--glass-bg-strong), transparent);
-}
-
-.wp-flip.is-sheen .wp-side::after { animation: wp-sheen 2.2s var(--ease-standard); }
-@keyframes wp-sheen { from { inset-inline-start: -60%; } to { inset-inline-start: 130%; } }
 
 .wp-side--back {
   position: absolute;
   inset: 0;
   transform: rotateY(180deg);
-  gap: 12px;
+  /* ظهرُ البطاقة في iOS **ورقةٌ بيضاء** لا استمرارٌ للسطح الملوّن. */
+  background: var(--color-surface);
+  color: var(--color-text);
   overflow-y: auto;
+  padding: 12px 16px;
   /* فراغٌ أسفلَ آخرِ سطرٍ بقدر مقبض القلب — وإلّا انزلق النصّ تحته عند التمرير. */
   padding-bottom: 48px;
 }
 
-/* **والظهرُ بلا نقشٍ ولا تلألؤ**: هو وحدَه سطحٌ يُمرَّر، والمُطلَقُ داخل حاويةٍ تُمرَّر
-   ينزلق مع محتواها — فيتحرّك النقشُ تحت النصّ بدل أن يثبت سطحًا. والتلألؤُ أسوأ: شريطُه
-   يسكن **خارج** الإطار، فيصير في حاويةٍ تُمرَّر فائضًا يُولّد شريطَ تمريرٍ أفقيًّا. يبقى
-   للظهر التدرّجُ وبؤرةُ الضوء — سطحُ الهويّة نفسُه بلا ما يخصّ وجهًا يُنظَر إليه. */
-.wp-side--back::before, .wp-side--back::after { content: none; }
-
 /* ── الترويسة ──────────────────────────────────────────────────────────── */
 
-/* خيطٌ زجاجيّ يفصل الترويسة عمّا تحتها — يُثبّت الشعارَ والعدّاد صفًّا واحدًا فوق سطحٍ
-   صار متدرّجًا، فلا يسبحان فيه. (وهو خيطُ `.wp-back-h` نفسُه، فوجها البطاقة متّسقان.) */
+/* شعارٌ في جهة البدء وحقلُ ترويسةٍ في جهة النهاية — وiOS يقلبها للعربيّة كما تُقلَب هنا. */
 .wp-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--glass-border);
+  padding: 10px 12px;
 }
 
-/* الشعار الأبيض بارتفاعٍ ثابتٍ وعرضٍ يتبع نسبتَه — كما تعرضه أبل في خانة الشعار.
-   و٤٢ لا ٣٠: الشعار يحمل اسمَ النادي مرسومًا تحته، ودونها لا يُقرأ الاسم. */
-.wp-logo { height: 42px; width: auto; }
+/* أبل تعرض `logo.png` بارتفاعٍ أقصاه ٥٠ نقطة — وشعارُنا يحمل اسمَ النادي مرسومًا تحته،
+   فدونَ الأربعين لا يُقرأ الاسم. */
+.wp-logo { height: 38px; width: auto; }
 
-/* ── الأختام العشرة ────────────────────────────────────────────────────── */
+/* ── الشريط ────────────────────────────────────────────────────────────── */
 
-/* صفّان متساويان مهما كان العدد — نفسُ تخطيط `strip.png` المولَّد للمحفظة. */
-.wp-stamps {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px 6px;
-  padding-block: 4px;
-}
-
-/* دائرةٌ وظيفيّة (ق٢): الفارغ طوقٌ خافت، والمختوم قرصٌ مصمت — فالفرق يُقرأ بالامتلاء
-   لا باللون، فتصحّ قراءتُه بلا تمييزٍ للألوان. */
-.wp-stamp {
-  aspect-ratio: 1;
-  /* سقفٌ للقرص وتوسيطٌ في خانته: بلا سقفٍ يتمدّد الختم بعرض الخُمس فيبتلع البطاقة. */
-  max-width: 44px;
-  justify-self: center;
-  border-radius: 50%;
-  border: 2px solid color-mix(in oklab, var(--color-on-primary) 42%, transparent);
-  /* غِشاوةٌ زجاجيّةٌ في الخانة الفارغة: السطحُ صار متدرّجًا، فطوقٌ بلا ملءٍ يذوب في
-     أفتح أطرافه. وهي خافتةٌ جدًّا (‏٪٨) فلا تُنازع فرقَ الامتلاء الذي عليه المدار. */
-  background: color-mix(in oklab, var(--color-on-primary) 8%, transparent);
-  display: grid;
-  place-items: center;
-  color: var(--navy-700);
-  transition: background var(--dur-fast), border-color var(--dur-fast), box-shadow var(--dur-fast), transform var(--dur-fast);
-}
-
-.wp-stamp > svg { opacity: 0; transform: scale(.6); transition: opacity var(--dur-fast), transform var(--dur-fast); }
-
-.wp-stamp[data-on="true"] {
-  background: var(--color-on-primary);
-  border-color: var(--color-on-primary);
-  /* هالةُ حالةٍ لا ظلُّ عمق (ق٥‑ب): الظلُّ الموسوم فولاذيٌّ فيُبتلع على الكحليّ، والهالة
-     البيضاء تُبعد القرصَ المختوم عن السطح فيتقدّم صفُّ ما تمّ على ما بقي. */
-  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-on-primary) 14%, transparent);
-}
-
-.wp-stamp[data-on="true"] > svg { opacity: 1; transform: none; }
-
-/* الختمُ الأخير حين تكتمل البطاقة ينبض نبضةً واحدة — إشارةُ «تمّت» لا زينة دائمة. */
-@keyframes wp-pop { 0% { transform: scale(1) } 45% { transform: scale(1.18) } 100% { transform: scale(1) } }
-.wp-stamp[data-last="true"][data-on="true"] { animation: wp-pop .5s ease; }
-
-@media (prefers-reduced-motion: reduce) {
-  .wp-stamp, .wp-stamp > svg { transition: none; }
-  .wp-stamp[data-last="true"][data-on="true"] { animation: none; }
-  .wp-flip.is-sheen .wp-side::after { animation: none; }
-}
-
-/* شريطُ «مكافأتك جاهزة» — يظهر مكان الحالة حين تكتمل. */
-.wp-ready {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  background: var(--color-on-primary);
-  color: var(--navy-800);
-  font-size: var(--text-sm);
-  font-weight: var(--fw-black);
+/* **صورةٌ واحدةٌ سائبةُ الحافّتين** بنسبة 375×144 التي تشترطها أبل لبطاقة المتجر — وهي
+   بعينها ما في الحزمة. والارتفاعُ من النسبة لا من رقمٍ نكتبه، فلا يقفز التخطيطُ قبل
+   وصولها. */
+.wp-strip {
+  display: block;
+  width: 100%;
+  aspect-ratio: 375 / 144;
 }
 
 /* ── الحقول ────────────────────────────────────────────────────────────── */
 
-/* التسمية فوق القيمة دائمًا — هكذا ترسمها أبل، صغيرةً باهتةً بحروفٍ متباعدةٍ للاتينيّ. */
-.wp-lab {
-  display: block;
-  font-size: 10.5px;
-  font-weight: var(--fw-bold);
-  color: var(--steel-200);              /* = labelColor في pass.json */
-  margin-bottom: 2px;
-}
-
-.wp-val {
-  display: block;
-  font-size: var(--text-sm);
-  font-weight: var(--fw-bold);
-  line-height: var(--leading-snug);
-}
-
-.wp-fld--head { text-align: end; }
-.wp-fld--head .wp-val { font-family: var(--font-latin); font-size: var(--text-2xl); font-weight: var(--fw-black); }
-
-.wp-fld--primary .wp-lab { font-size: 11px; }
-.wp-fld--primary .wp-val { font-family: var(--font-display); font-size: var(--text-3xl); font-weight: var(--fw-black); }
+.wp-fields { padding: 10px 12px 4px; }
 
 /* صفّان متقابلان: الأوّل يبدأ والثاني ينتهي — وهي محاذاةُ Wallet نفسها. */
 .wp-row {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  margin-bottom: 10px;
 }
 
 .wp-row > * { min-width: 0; flex: 1 1 0; }
 .wp-row > *:last-child { text-align: end; }
 
+/* التسمية فوق القيمة دائمًا — هكذا ترسمها أبل، صغيرةً باهتة. */
+.wp-lab {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--steel-200);              /* = labelColor في pass.json */
+  margin-bottom: 1px;
+}
+
+.wp-val {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+/* حقلُ الترويسة أكبرُ قليلًا ومُحاذًى إلى النهاية، والحقلُ المساعد أصغرُ من الثانويّ —
+   وهو سلّمُ أبل لا سلّمُنا. */
+/* **ولا `--font-latin` هنا ولا في رقم البطاقة**: خطُّنا يُرسَم في الصفحة ولا يُرسَل مع
+   الحزمة، فكتابةُ العدّاد به تَعِد بما لا يصل. يبقيان على خطّ النظام كسائر نصّ البطاقة. */
+.wp-fld--head { text-align: end; }
+.wp-fld--head .wp-val { font-size: 17px; font-weight: 700; }
+.wp-row--aux .wp-val { font-size: 13px; }
+
 /* ── الباركود ──────────────────────────────────────────────────────────── */
 
-/* أبيضُ صريحٌ تحت الرمز: الرمز يُقرأ بالتباين، والكحليّ يبتلعه.
-   وحلقةٌ زجاجيّةٌ حوله تجعله **لوحًا مركَّبًا** في السطح المتدرّج لا مستطيلًا ملقًى عليه. */
+/* لوحٌ أبيضُ في وسط أسفل البطاقة، ورقمُ البطاقة تحته — كما يعرضه iOS.
+   **والرمز مربّعاتٌ سوداء لا شكلَ أديب**: يرسمه الجهاز من `barcodes[]` ولا يقبل تخصيصًا،
+   فلو عرضنا هنا رمزنا السائل لَوعدنا بما لا يصل. */
 .wp-code {
   margin-top: auto;
   align-self: center;
-  background: var(--color-surface);
-  border-radius: var(--radius-sm);
-  padding: 8px;
+  background: #fff;
+  border-radius: 5px;
+  padding: 7px;
   line-height: 0;
-  box-shadow: 0 0 0 5px color-mix(in oklab, var(--color-on-primary) 10%, transparent);
 }
 
 .wp-alt {
   align-self: center;
-  font-family: var(--font-latin);
   font-size: 10px;
+  letter-spacing: .04em;
   color: var(--steel-200);
+  padding: 5px 0 12px;
 }
 
 /* ── الظهر ─────────────────────────────────────────────────────────────── */
 
-.wp-back-h {
-  font-family: var(--font-display);
-  font-size: var(--text-base);
-  font-weight: var(--fw-black);
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--glass-border);
-}
-
-.wp-back-f { padding-block: 6px; border-bottom: 1px solid var(--glass-border); }
+/* صفوفُ الظهر: تسميةٌ رماديّةٌ فوق قيمةٍ داكنة، يفصلها خيطٌ شعريّ — ورقةُ iOS نفسُها.
+   ولا عنوانَ فوقها: أبل لا تكتب على الظهر عنوانًا، تعرض الحقول وحدها. */
+.wp-back-f { padding-block: 9px; border-bottom: 1px solid var(--color-border); }
 .wp-back-f:last-child { border-bottom: 0; }
-.wp-back-f .wp-val { font-size: 12.5px; font-weight: var(--fw-medium); white-space: pre-line; }
+.wp-back-f .wp-lab { color: var(--color-text-muted); font-size: 11px; }
+.wp-back-f .wp-val { font-size: 13.5px; font-weight: 400; white-space: pre-line; }
 
 /* ── مقبض القلب ────────────────────────────────────────────────────────── */
 
-/* دائرةٌ وظيفيّة (ق٢) في زاوية البطاقة — الزجاج نفسُه المستعمَل فوق الأسطح المتدرّجة.
+/* دائرةٌ وظيفيّة (ق٢) في زاوية البطاقة — مقبضُ «ⓘ» الذي تُقلَب به البطاقة في المحفظة.
    **وموضعُها الزاوية السفلى لا العليا**: `inset-inline-start` في RTL هو **اليمين**، وهناك
    يبدأ الشعار — فكانت الدائرةُ تقع فوق «أَدِيب». والأسفلُ خالٍ في الوجهين. */
 .wp-turn {
@@ -275,16 +181,16 @@
   inset-block-end: 10px;
   inset-inline-start: 10px;
   z-index: 2;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   border-radius: 50%;
-  border: 1px solid var(--glass-border);
   /* **مصمتٌ لا زجاجيّ**: الظهرُ يُمرَّر، والزجاجُ يُنفِذ السطرَ المارَّ تحته فيُقرأ
      نصّان متراكبان. الزجاج يصلح فوق سطحٍ ساكن لا فوق محتوًى ينزلق. */
   background: var(--navy-800);
   color: var(--color-on-primary);
+  border: 0;
   cursor: pointer;
   transition: background var(--dur-fast);
 }
