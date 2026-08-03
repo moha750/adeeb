@@ -29,7 +29,13 @@ export type DemoMember = {
   id: string;
   name: string;
   gender: "male" | "female";
-  /** القسم واللجنة — يُرسَمان على البطاقة كما طلب المالك. */
+  /**
+   * القسم واللجنة — يُرسَمان على البطاقة كما طلب المالك، و**من الهيكلة الحقيقيّة**
+   * (`departments` · `committees`) لا من الخيال: البيانات وهميّةٌ والأسماءُ ليست.
+   *
+   * **وبلا لفظَي «قسم» و«لجنة»**: التسميةُ فوق القيمة تقولهما (`القسم` · `اللجنة`)،
+   * فكتابتُهما في القيمة تُقرأ «القسم: قسم التواصل المجتمعي».
+   */
   department: string;
   committee: string;
   /** المشاركات في الدورة الجارية (0…GOAL). */
@@ -49,8 +55,8 @@ export const MEMBERS: DemoMember[] = [
     id: "m1",
     name: "لمى صالح الدوسري",
     gender: "female",
-    department: "الإعلام",
-    committee: "السفراء والتصوير",
+    department: "التواصل المجتمعي",
+    committee: "السُفراء",
     stamps: 10,
     cycles: 2,
     serial: "ADEEB-CARD-2026-0117",
@@ -59,8 +65,8 @@ export const MEMBERS: DemoMember[] = [
     id: "m2",
     name: "عبدالله أحمد باجعيفر",
     gender: "male",
-    department: "الموارد البشرية",
-    committee: "التوظيف والتطوير",
+    department: "الإنتاج الإعلامي",
+    committee: "التصوير",
     stamps: 7,
     cycles: 1,
     serial: "ADEEB-CARD-2026-0233",
@@ -69,8 +75,8 @@ export const MEMBERS: DemoMember[] = [
     id: "m3",
     name: "ريّان محمد الحربي",
     gender: "male",
-    department: "الإعلام",
-    committee: "التصميم",
+    department: "صناعة المحتوى",
+    committee: "التأليف",
     stamps: 3,
     cycles: 0,
     serial: "ADEEB-CARD-2026-0341",
@@ -79,7 +85,7 @@ export const MEMBERS: DemoMember[] = [
     id: "m4",
     name: "جُمانة فهد القحطاني",
     gender: "female",
-    department: "الضمان والجودة",
+    department: "نظم المعلومات",
     committee: "التقارير والأرشفة",
     stamps: 0,
     cycles: 0,
