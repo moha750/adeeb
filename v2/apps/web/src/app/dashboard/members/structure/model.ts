@@ -17,7 +17,7 @@ export type RawDept = { id: number; name_ar: string | null; display_order: numbe
 export type RawCommittee = { id: number; committee_name_ar: string | null; department_id: number | null; council_id: string; leader_role_name: string; member_role_name: string; description: string | null; group_link: string | null };
 export type RawRole = { id: number; role_name: string; role_name_ar: string | null; council_type: string | null; is_elected: boolean | null; membership_kind: string; vote_weight: number; holder_uniqueness: string; home_committee_id: number | null; prerequisite_role_name: string | null };
 export type RawUserRole = { user_id: string; role_name: string; committee_id: number | null; department_id: number | null };
-export type RawProfile = { id: string; full_name: string | null; avatar_url: string | null; gender: string | null };
+export type RawProfile = { id: string; full_name: string | null; avatar_url: string | null; gender: string | null; account_status: string | null };
 // الإشراف: عضو إدارةٍ إداريّة (`unit_id`) يتابع لجنةً تنفيذيّة (`committee_id`) ليس **فيها**.
 // جدولٌ مستقلّ منذ 20260731 — كان صفَّ منصبٍ يكذب بأنّه عضوٌ في تلك اللجنة.
 export type RawSupervision = { committee_id: number; unit_id: number; supervisor_id: string };

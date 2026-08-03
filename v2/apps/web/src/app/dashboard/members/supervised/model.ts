@@ -27,7 +27,7 @@ export type MyCommittee = {
   deputy: Holder | null;
   /** مشرف الإدارة الأخرى على اللجنة نفسها — نظيرٌ لا تابع (لكلّ لجنةٍ مشرفان مستقلّان). */
   peer: { unitName: string; holder: Holder | null } | null;
-  /** أعضاء اللجنة العاديّون — عددًا وأفتارًا (لا سجلًّا؛ السجلّ في الجدول). */
+  /** أعضاء اللجنة العاديّون **الساريةُ عضويّتهم** — عددًا وأفتارًا (لا سجلًّا؛ السجلّ في الجدول). */
   members: Holder[];
 };
 
@@ -58,6 +58,17 @@ export function myCommittees(
   const deptName = new Map(departments.map((d) => [d.id, d.name_ar ?? `قسم #${d.id}`]));
   const profile = new Map(profiles.map((p) => [p.id, p]));
   const roleByName = new Map(roles.map((r) => [r.role_name, r]));
+
+  /**
+   * **الإشراف يتبع العضويّة السارية.** إنهاءُ العضوية يكتب الحالةَ في `profiles` ولا يمسّ
+   * `user_roles` (`_apply_termination`)، فالموقوف يبقى مُسنَدًا إلى لجنته — ولولا هذا الحدّ
+   * لبقي في قائمة من تشرف عليهم وفي عددهم كأنّه لم يغادر. والقيدُ هنا وحدَه (لا في الصفحة):
+   * الجدول يقرأ أعيان هذا النموذج، فالعدد والأفتار والصفوف يقولون شيئًا واحدًا.
+   *
+   * والقيادةُ لا تُرشَّح به: مقعدٌ مشغولٌ لا يُقال عنه «شاغر»، وحجبُ شاغله كذبٌ يزيد
+   * «لجنة تنقصها قيادة» بواحدة.
+   */
+  const serving = new Set(profiles.filter((p) => p.account_status === "active").map((p) => p.id));
 
   const titleOf = (roleName: string): string => {
     const r = roleByName.get(roleName);
@@ -124,7 +135,7 @@ export function myCommittees(
                 holder: peerRow ? holderOf(peerRow.supervisor_id, unitOwnerRole(comById.get(otherUnitId)), c.id) : null,
               },
         members: inside
-          .filter((ur) => ur.role_name === c.member_role_name)
+          .filter((ur) => ur.role_name === c.member_role_name && serving.has(ur.user_id))
           .map((ur) => holderOf(ur.user_id, ur.role_name, c.id)),
       };
     });
