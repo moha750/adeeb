@@ -140,7 +140,11 @@ export async function changedFor(deviceId: string, since: string | null): Promis
 
   // **مِجسُّ تشخيصٍ لا سلوك**: وصولُ الجهاز إلى هنا يعني أنّ الدفعة بلغته وأنّه استيقظ.
   // فإن سكن العمود بعد دفعةٍ قبلتها أبل، فالعلّة في التسليم لا في خدمتنا.
-  void sb.from("wallet_preview_devices").update({ last_poll_at: new Date().toISOString() }).eq("device_id", deviceId);
+  //
+  // **ويُنتظَر ولا يُترَك**: باني استعلامات Supabase كسولٌ — لا يُرسَل شيءٌ حتى يُستدعى
+  // `then`، فـ`void` عليه لا يُشغّله البتّة (وهو ما كتبتُه أوّلًا فبقي العمود فارغًا).
+  // ولو أُطلق بلا انتظارٍ لَقطعته الدالّة الخادميّة عند انتهائها.
+  await sb.from("wallet_preview_devices").update({ last_poll_at: new Date().toISOString() }).eq("device_id", deviceId);
 
   let q = sb.from("wallet_preview_cards").select("serial, updated_at").in("serial", serials);
   // `since` وسمٌ معتِمٌ عند أبل: نحن من أعطيناه، ونحن من نفسّره — وهو زمنُ آخر تغيير.
