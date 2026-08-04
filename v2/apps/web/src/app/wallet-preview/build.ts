@@ -85,9 +85,12 @@ export async function buildPkpass(member: DemoMember, origin: string): Promise<B
         "utf8",
       ),
     },
-    // الأيقونة **إلزاميّة** في المواصفة، والمقاسان ٢٩ و٥٨ (نقطةٌ وضِعفها).
+    // الأيقونة **إلزاميّة** في المواصفة: ٢٩ نقطةً، ومضاعفاها لشاشات الشبكيّة.
+    // **و`@3x` ليست ترفًا**: أيفونات الـPro شاشتُها ثلاثيّة، وبدونها يُكبّر iOS `@2x`
+    // فتخرج العلامةُ رخوةً في الإشعار — وهو أكثرُ موضعٍ تُرى فيه.
     { name: "icon.png", data: brandIcon(29) },
     { name: "icon@2x.png", data: brandIcon(58) },
+    { name: "icon@3x.png", data: brandIcon(87) },
     // شريط الأختام — 375×144 ومضاعفُه، كما تشترط أبل لبطاقة المتجر.
     { name: "strip.png", data: stampStrip(member.stamps, GOAL, 375) },
     { name: "strip@2x.png", data: stampStrip(member.stamps, GOAL, 750) },

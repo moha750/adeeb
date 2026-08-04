@@ -8,12 +8,12 @@
  * بـ`zlib` المدمج: ثلاث كتلٍ لا غير (IHDR · IDAT · IEND) بلون RGBA وبلا تشابك — أبسطُ
  * PNG صحيحٍ ممكن.
  *
- * > **والمرسوم في `brandIcon` مربّعُ علامةٍ لا شعار.** لا نخترع شكلًا لأديب من عندنا (نرسم
- * > بتدرّج الهوية وحده)؛ ومتى وُضع `public/brand/wallet/icon.png` وأخوه `@2x` استعملهما
- * > المولّد وأهمل هذا المرسوم — انظر `pkpass/route.ts`.
+ * > **وأيقونةُ البطاقة تحمل علامةَ أديب** (لا تدرّجًا عاريًا): قناتُها في `logo.ts`
+ * > مقصوصةً على العلامة وحدها دون الاسمين — انظر رأسَه.
  */
 
 import { deflateSync } from "node:zlib";
+import { LOGO_SIDE, logoAlpha } from "./logo";
 import { PATTERN_H, PATTERN_W, patternAlpha } from "./pattern";
 import { crc32 } from "./zip";
 
@@ -79,11 +79,19 @@ function over(rgba: Buffer, i: number, c: Rgb, a: number): void {
 
 /* ── مربّع العلامة ──────────────────────────────────────────────────────── */
 
+/** نسبةُ ضلعِ العلامة إلى ضلع الأيقونة — قِيست بالنظر إلى ٢٩ و٥٨ و٨٧ معًا (٠٫٦٢ ضاعت، و٠٫٨٦ تملأ). */
+const MARK_COVER = 0.86;
+
 /**
- * أيقونةُ البطاقة: مربّعٌ بزوايا مدوّرة بتدرّج الهوية (فولاذيّ‑400 ← كحليّ‑800 بزاوية 135°).
+ * أيقونةُ البطاقة: مربّعٌ بزوايا مدوّرة بتدرّج الهوية (فولاذيّ‑400 ← كحليّ‑800 بزاوية 135°)
+ * **وعليه علامةُ أديب بيضاء**.
  *
  * **والحوافّ مُنعَّمة بالمعاينة الفائقة** (٤×٤ عيّنة للبكسل): الزاوية المدوّرة بلا تنعيمٍ
  * تُقرأ مُسنَّنةً في ٢٩ بكسلًا، وهي المقاس الذي يُعرض فيه.
+ *
+ * **والعلامةُ تُصغَّر بمتوسّط الرقعة لا بأقرب عيّنة**: نسبتُها ١:٢٫٨ (نحيلةٌ طويلة)، فأخذُ
+ * بكسلٍ واحدٍ من كلّ رقعةٍ يقطّع خطوطها الرفيعة فتخرج نُقَطًا متناثرة. والمتوسّطُ يُبقيها
+ * متّصلةً باهتةً — عُوينت الطريقتان جنبًا إلى جنب، والفرقُ صارخٌ عند ٢٩.
  */
 export function brandIcon(size: number): Buffer {
   const rgba = Buffer.alloc(size * size * 4);
@@ -114,6 +122,30 @@ export function brandIcon(size: number): Buffer {
       rgba[i + 1] = Math.round(STEEL_400[1] + (NAVY_800[1] - STEEL_400[1]) * t);
       rgba[i + 2] = Math.round(STEEL_400[2] + (NAVY_800[2] - STEEL_400[2]) * t);
       rgba[i + 3] = Math.round((hits / (SS * SS)) * 255);
+    }
+  }
+
+  // العلامةُ بيضاءَ في القلب — مربّعُها موسَّطٌ، والمصدرُ موسَّطٌ فيه أصلًا (`logo.ts`).
+  const mark = logoAlpha();
+  const side = size * MARK_COVER;
+  const off = (size - side) / 2;
+  const k = LOGO_SIDE / side; // بكسلاتُ المصدر لكلّ بكسلٍ في الوجهة
+
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      // رقعةُ المصدر التي تقابل هذا البكسل، ومتوسّطُ شفّافيّتها
+      const sx0 = (x - off) * k;
+      const sy0 = (y - off) * k;
+      let sum = 0;
+      let n = 0;
+      for (let sy = Math.max(0, Math.floor(sy0)); sy < Math.min(LOGO_SIDE, Math.ceil(sy0 + k)); sy += 1) {
+        for (let sx = Math.max(0, Math.floor(sx0)); sx < Math.min(LOGO_SIDE, Math.ceil(sx0 + k)); sx += 1) {
+          sum += mark[sy * LOGO_SIDE + sx];
+          n += 1;
+        }
+      }
+      if (n === 0) continue;
+      over(rgba, (y * size + x) * 4, WHITE, sum / n / 255);
     }
   }
 

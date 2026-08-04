@@ -271,10 +271,9 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
       <Container>
         <SectionHeading eyebrow="معاينة" title="بطاقة ولاء أَدِيب" />
 
-        <Alert tone="warning" title="هذه معاينةٌ لا نظامٌ حيّ" icon={<Sparkle />} className="mb-8">
-          الحسابات والمشاركات والراعي في هذه الصفحة <b>وهميّةٌ كلُّها</b> — لا تمسّ عضويّةً ولا
-          سجلًّا في النادي، وتعيش في جدولين مؤقّتين يُحذفان مع الصفحة. غايتُها أن تُجرَّب البطاقة
-          وتُعرَض الفكرة قبل بنائها.
+        <Alert tone="warning" title="هذه مُجرد معاينةٌ" icon={<Sparkle />} className="mb-8">
+          الحسابات والمشاركات والراعي في هذه الصفحة <b>وهميّةٌ كلُّها</b> وليست حسابات ومعلومات
+          حقيقية
         </Alert>
 
         <div className="mb-8">
@@ -296,10 +295,34 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
           {/* ── البطاقة ── */}
           <div className="flex-[1_1_320px]">
             <WalletCard member={member} />
-            <p className="mt-3 text-center text-xs text-content-muted">
-              هذه البطاقة كما يرسمها Apple Wallet — وسطحُها الصورةُ عينُها التي تدخل الملفّ.
-              اضغط الدائرة أسفل البطاقة لترى ظهرها.
-            </p>
+
+            {/* الزرّ تحت البطاقة وبعرضها — `.wp-stage` نفسُه محدودٌ بـ340px ومركَّز، فيُحاذيه غلافُه */}
+            <div className="mx-auto mt-4 max-w-[340px]">
+              <Button className="w-full" onClick={addToWallet} loading={busy}>
+                <Wallet />
+                أضِف إلى Apple Wallet
+              </Button>
+
+              {passError ? (
+                <Alert tone="danger" title="لم تخرج البطاقة" className="mt-4">
+                  {passError.message}
+                  {passError.missing?.length ? (
+                    <ul className="mt-2 space-y-1">
+                      {passError.missing.map((m) => (
+                        <li key={m.name} className="text-xs">
+                          <code className="font-latin">{m.name}</code> — {m.need}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </Alert>
+              ) : null}
+
+              <p className="mt-3 text-center text-xs text-content-muted">
+                هذه البطاقة كما يرسمها Apple Wallet — وسطحُها الصورةُ عينُها التي تدخل الملفّ.
+                اضغط الدائرة أسفل البطاقة لترى ظهرها.
+              </p>
+            </div>
           </div>
 
           {/* ── التحكّم ── */}
@@ -379,7 +402,7 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
                 icon={<Storefront />}
                 title="مكافأة الراعي"
                 subtitle={REWARD.sponsor}
-                actions={<Badge tone="info" size="sm">راعٍ مُختلَقٌ للعرض</Badge>}
+                actions={<Badge tone="info" size="sm">راعٍ وهمي للعرض فقط</Badge>}
               />
               <CardBody>
                 <b className="block text-lg">{REWARD.title}</b>
@@ -399,28 +422,6 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
                 </div>
               </CardBody>
             </Card>
-
-            <div className="flex flex-wrap gap-3">
-              <Button onClick={addToWallet} loading={busy}>
-                <Wallet />
-                أضِف إلى Apple Wallet
-              </Button>
-            </div>
-
-            {passError ? (
-              <Alert tone="danger" title="لم تخرج البطاقة" className="mt-4">
-                {passError.message}
-                {passError.missing?.length ? (
-                  <ul className="mt-2 space-y-1">
-                    {passError.missing.map((m) => (
-                      <li key={m.name} className="text-xs">
-                        <code className="font-latin">{m.name}</code> — {m.need}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </Alert>
-            ) : null}
           </div>
         </div>
       </Container>
