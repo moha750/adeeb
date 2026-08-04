@@ -86,6 +86,8 @@ export async function POST(req: Request): Promise<Response> {
       serial: card.serial,
       stamps: card.stamps,
       cycles: card.cycles,
+      // زمنُ التغيير — به تعرف الصفحةُ أنّ هذا أحدثُ ممّا عندها (`useLiveCards`)
+      updatedAt: card.updatedAt,
       devices: tokens.length,
       pushed: results.filter((r) => r.status === 200).length,
       // الفاشلة وحدها تُعرَض — والناجحة يكفيها عددُها

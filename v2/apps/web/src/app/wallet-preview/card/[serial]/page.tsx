@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Alert, Container } from "@adeeb/design-system";
 import { memberBySerial } from "../../demo";
-import { getCard } from "../../store";
+import { getAllCards } from "../../store";
 import { ScanView } from "./ScanView";
 
 /**
@@ -47,13 +47,6 @@ export default async function ScanPage({ params }: { params: Promise<{ serial: s
     );
   }
 
-  const card = await getCard(holder.serial);
-
-  return (
-    <ScanView
-      holder={holder}
-      stamps={card?.stamps ?? holder.stamps}
-      cycles={card?.cycles ?? holder.cycles}
-    />
-  );
+  // الحالةُ كلُّها لا حالةُ هذه البطاقة وحدها: المتابعُ يقرأ الجدول دفعةً، فتُمرَّر كما هي.
+  return <ScanView holder={holder} initial={await getAllCards()} />;
 }

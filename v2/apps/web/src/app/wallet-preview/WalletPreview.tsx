@@ -17,6 +17,7 @@ import { downloadBlob } from "@/lib/download";
 import { qrSvg } from "@/lib/qr";
 import { GOAL, isComplete, MEMBERS, memberById, num, REWARD, score, statusText, type DemoMember } from "./demo";
 import { cardFace, type PassField } from "./pass";
+import { useLiveCards, type LiveCard } from "./useLiveCards";
 import "./card.css";
 
 /* ── أجزاء البطاقة ─────────────────────────────────────────────────────── */
@@ -174,42 +175,45 @@ const isApple = (): boolean =>
 /** خلاصةُ آخر مزامنة — تُعرَض كما قالها الخادم، فالدفعةُ الصامتة لا تُصدَّق بلا خبر. */
 type SyncState = { devices: number; pushed: number; failures: { status: number; reason?: string }[]; error?: string };
 
-export function WalletPreview({ initial }: { initial: Record<string, { stamps: number; cycles: number }> }) {
+export function WalletPreview({ initial }: { initial: Record<string, LiveCard> }) {
   const [memberId, setMemberId] = useState(MEMBERS[0].id);
   /**
-   * حالةُ التجربة لكلّ حساب — **مبدوءةٌ بما في القاعدة** لا بقيم `demo.ts`: البطاقة في
-   * الجوّال تقرأ من القاعدة، فلو بدأت الشاشةُ من البذرة لَاختلف الاثنان.
+   * حالةُ البطاقات — **من القاعدة لا من `demo.ts`**، و**متابَعةٌ لحظةً بلحظة**: من ختم في
+   * صفحة المسح رأيتَه هنا بلا تحديث (`useLiveCards`).
    */
-  const [state, setState] = useState<Record<string, { stamps: number; cycles: number }>>(() =>
-    Object.fromEntries(MEMBERS.map((m) => [m.id, initial[m.serial] ?? { stamps: m.stamps, cycles: m.cycles }])),
-  );
+  const { cards, merge } = useLiveCards(initial);
   const [busy, setBusy] = useState(false);
   const [claimed, setClaimed] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [sync, setSync] = useState<SyncState | null>(null);
   const [passError, setPassError] = useState<{ message: string; missing?: MissingEnv[] } | null>(null);
 
-  const member = { ...memberById(memberId), ...state[memberId] };
+  const base = memberById(memberId);
+  const live = cards[base.serial] ?? { stamps: base.stamps, cycles: base.cycles, updatedAt: "" };
+  const member = { ...base, stamps: live.stamps, cycles: live.cycles };
   const done = isComplete(member.stamps);
 
   /**
    * يكتب الحالة في القاعدة ثمّ يدفع نبضةً إلى الأجهزة المسجَّلة — **وهو ما يجعل البطاقة
-   * في الجيب تتغيّر**. يُنادى بعد كلّ تغييرٍ محلّيّ، والشاشةُ لا تنتظره فتبقى فوريّة.
+   * في الجيب تتغيّر**. وجوابُه يُدمَج كما يُدمَج جوابُ المتابعة: الأحدثُ يفوز.
    */
-  async function syncNow(id: string, stamps: number, cycles: number) {
+  async function syncNow(stamps: number, cycles: number) {
     setSyncing(true);
     try {
       const res = await fetch("/wallet-preview/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ member: id, stamps, cycles }),
+        body: JSON.stringify({ member: memberId, stamps, cycles }),
       });
-      const body = (await res.json()) as SyncState & { error?: string };
-      setSync(
-        res.ok
-          ? { devices: body.devices, pushed: body.pushed, failures: body.failures ?? [] }
-          : { devices: 0, pushed: 0, failures: [], error: body.error ?? "تعذّرت المزامنة." },
-      );
+      const body = (await res.json()) as SyncState & { error?: string; serial?: string; updatedAt?: string };
+      if (res.ok) {
+        setSync({ devices: body.devices, pushed: body.pushed, failures: body.failures ?? [] });
+        if (body.serial && body.updatedAt) {
+          merge({ [body.serial]: { stamps, cycles, updatedAt: body.updatedAt } });
+        }
+      } else {
+        setSync({ devices: 0, pushed: 0, failures: [], error: body.error ?? "تعذّرت المزامنة." });
+      }
     } catch {
       setSync({ devices: 0, pushed: 0, failures: [], error: "تعذّر الاتّصال بالخادم." });
     } finally {
@@ -217,20 +221,25 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
     }
   }
 
-  /** يضبط الأختام في المدى — كلّ أزرار التجربة تمرّ به فلا تخرج قيمةٌ عن حدّها. */
+  /**
+   * يضبط الأختام في المدى — كلّ أزرار التجربة تمرّ به فلا تخرج قيمةٌ عن حدّها.
+   *
+   * **ويُقدَّم الفعلُ على الشبكة**: تُرسَم الحالة الجديدة فورًا بزمنٍ محلّيّ، فلا تتلكّأ
+   * الضغطةُ ريثما يردّ الخادم. وجوابُه بعد حين يحمل زمنَه الحقيقيّ فيحلّ محلّه.
+   */
   function setStamps(next: number) {
     const stamps = Math.min(GOAL, Math.max(0, next));
     setClaimed(false);
-    setState((s) => ({ ...s, [memberId]: { ...s[memberId], stamps } }));
-    void syncNow(memberId, stamps, state[memberId].cycles);
+    merge({ [base.serial]: { stamps, cycles: live.cycles, updatedAt: new Date().toISOString() } });
+    void syncNow(stamps, live.cycles);
   }
 
   /** استلامُ المكافأة: **يصفّر العدّاد** ويزيد عدّاد البطاقات المكتملة. */
   function claim() {
-    const cycles = state[memberId].cycles + 1;
-    setState((s) => ({ ...s, [memberId]: { stamps: 0, cycles } }));
+    const cycles = live.cycles + 1;
     setClaimed(true);
-    void syncNow(memberId, 0, cycles);
+    merge({ [base.serial]: { stamps: 0, cycles, updatedAt: new Date().toISOString() } });
+    void syncNow(0, cycles);
   }
 
   /**

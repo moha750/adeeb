@@ -66,12 +66,21 @@ export async function getCard(serial: string): Promise<CardState | null> {
   return data ? { serial: data.serial, stamps: data.stamps, cycles: data.cycles, updatedAt: data.updated_at } : null;
 }
 
-/** كلُّ البطاقات دفعةً — تقرؤها الصفحة عند فتحها فتبدأ من حالة الخادم لا من البذرة. */
-export async function getAllCards(): Promise<Record<string, { stamps: number; cycles: number }>> {
+/**
+ * كلُّ البطاقات دفعةً — تقرؤها الصفحة عند فتحها فتبدأ من حالة الخادم لا من البذرة، ثمّ
+ * تسألها كلّ بضع ثوانٍ لتتبع الصفحةَ الأخرى (`state/route.ts`).
+ *
+ * **و`updatedAt` يُردّ معها لأنّه الحَكَم**: الصفحةُ تُقدّم فعلَ صاحبها فورًا (تفاؤلًا) ثمّ
+ * تسأل الخادم؛ فلولا زمنٌ تُقارَن به لَجاء جوابٌ متأخّرٌ يحمل حالةً أقدمَ فيمحو ما فعله
+ * للتوّ. فالأحدثُ يفوز، والقديمُ يُهمَل.
+ */
+export async function getAllCards(): Promise<Record<string, { stamps: number; cycles: number; updatedAt: string }>> {
   const sb = service();
   if (!sb) return {};
-  const { data } = await sb.from("wallet_preview_cards").select("serial, stamps, cycles");
-  return Object.fromEntries((data ?? []).map((c) => [c.serial, { stamps: c.stamps, cycles: c.cycles }]));
+  const { data } = await sb.from("wallet_preview_cards").select("serial, stamps, cycles, updated_at");
+  return Object.fromEntries(
+    (data ?? []).map((c) => [c.serial, { stamps: c.stamps, cycles: c.cycles, updatedAt: c.updated_at }]),
+  );
 }
 
 /** يكتب الحالة الجديدة. `updated_at` صريحٌ لأنّ `If-Modified-Since` يُقاس عليه. */

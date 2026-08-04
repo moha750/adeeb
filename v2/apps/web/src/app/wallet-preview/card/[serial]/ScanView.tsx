@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Alert, Badge, Button, Card, CardBody, CardHeader, Container } from "@adeeb/design-system";
 import { CheckCircle, Gift, Stamp, User, Warning } from "@phosphor-icons/react";
 import { GOAL, isComplete, num, REWARD, score, statusText, type DemoMember } from "../../demo";
+import { useLiveCards, type LiveCard } from "../../useLiveCards";
 
 /** جوابُ المزامنة كما يردّه الخادم — يُعرَض كما هو، فالدفعةُ الصامتة لا تُصدَّق بلا خبر. */
 type SyncResult = {
@@ -24,8 +25,13 @@ type SyncResult = {
  * **والحالةُ تُقرأ في الخادم عند كلّ فعل** (نرسل `action` لا رقمًا) — فماسحان في وقتٍ
  * واحدٍ لا يمحو أحدُهما ختمَ الآخر.
  */
-export function ScanView({ holder, stamps, cycles }: { holder: DemoMember; stamps: number; cycles: number }) {
-  const [state, setState] = useState({ stamps, cycles });
+export function ScanView({ holder, initial }: { holder: DemoMember; initial: Record<string, LiveCard> }) {
+  /**
+   * الحالة **متابَعةٌ لحظةً بلحظة**: من ختم في صفحة المعاينة (أو ماسحٌ آخر) رأيتَه هنا
+   * بلا تحديث — وهو ما يمنع ماسحًا من الختم على رقمٍ متقادمٍ أمام عينيه.
+   */
+  const { cards, merge } = useLiveCards(initial);
+  const state = cards[holder.serial] ?? { stamps: holder.stamps, cycles: holder.cycles, updatedAt: "" };
   const [busy, setBusy] = useState(false);
   /** ما تمّ آخرًا — **الفعلُ نفسُه لا يُشتقّ من الأرقام**: مقارنةُ الدورات بقيمة البداية
    *  تكذب بعد فعلين، فيُقال «خُتم» وقد سُلّمت المكافأة. */
@@ -34,9 +40,22 @@ export function ScanView({ holder, stamps, cycles }: { holder: DemoMember; stamp
 
   const complete = isComplete(state.stamps);
 
+  /**
+   * **الشاشةُ تسبق الشبكة**: يُرسَم أثرُ الضغطة فورًا ثمّ يُسأل الخادم — لأنّ ردَّه ينتظر
+   * دفعةَ APNs، فالانتظارُ عند بابٍ مزدحمٍ يُقرأ عطلًا لا بطئًا. وإن أخفق الطلبُ رُدَّت
+   * الحالةُ السابقة بزمنٍ جديد، فيفوز الرجوعُ على ما رُسم تفاؤلًا.
+   */
   async function act(action: "stamp" | "claim") {
+    const before = state;
+    const after =
+      action === "claim"
+        ? { stamps: 0, cycles: state.cycles + 1 }
+        : { stamps: Math.min(GOAL, state.stamps + 1), cycles: state.cycles };
+
     setBusy(true);
     setError(null);
+    merge({ [holder.serial]: { ...after, updatedAt: new Date().toISOString() } });
+
     try {
       const res = await fetch("/wallet-preview/sync", {
         method: "POST",
@@ -44,14 +63,17 @@ export function ScanView({ holder, stamps, cycles }: { holder: DemoMember; stamp
         body: JSON.stringify({ serial: holder.serial, action }),
         cache: "no-store",
       });
-      const body = (await res.json()) as SyncResult & { error?: string };
+      const body = (await res.json()) as SyncResult & { error?: string; updatedAt?: string };
       if (!res.ok) {
+        merge({ [holder.serial]: { ...before, updatedAt: new Date().toISOString() } });
         setError(body.error ?? "تعذّر إتمام العمليّة.");
         return;
       }
-      setState({ stamps: body.stamps, cycles: body.cycles });
+      // بزمنِ الخادم — فالمتابعُ يقارن به ولا يمحو ما جرى للتوّ (`useLiveCards`)
+      merge({ [holder.serial]: { stamps: body.stamps, cycles: body.cycles, updatedAt: body.updatedAt ?? new Date().toISOString() } });
       setDone({ act: action, res: body });
     } catch {
+      merge({ [holder.serial]: { ...before, updatedAt: new Date().toISOString() } });
       setError("تعذّر الاتّصال بالخادم.");
     } finally {
       setBusy(false);
@@ -64,7 +86,7 @@ export function ScanView({ holder, stamps, cycles }: { holder: DemoMember; stamp
         <div className="mx-auto max-w-md">
           <Alert tone="warning" title="معاينة" icon={<Warning />} className="mb-6" compact>
             بطاقةٌ وهميّةٌ لتجربة النظام. في النظام الحقيقيّ لا تُفتَح هذه الصفحة إلّا لمن يملك
-            قدرةَ الختم، ويُقيَّد كلُّ ختمٍ باسمه.
+            الصلاحية.
           </Alert>
 
           <Card className="mb-6">
