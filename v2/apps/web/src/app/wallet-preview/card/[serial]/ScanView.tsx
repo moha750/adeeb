@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Alert, Badge, Button, Card, CardBody, CardHeader, Container } from "@adeeb/design-system";
 import { CheckCircle, Gift, Stamp, User, Warning } from "@phosphor-icons/react";
-import { arNum, GOAL, isComplete, REWARD, statusText, type DemoMember } from "../../demo";
+import { num, GOAL, isComplete, REWARD, statusText, type DemoMember } from "../../demo";
 
 /** جوابُ المزامنة كما يردّه الخادم — يُعرَض كما هو، فالدفعةُ الصامتة لا تُصدَّق بلا خبر. */
 type SyncResult = {
@@ -62,20 +62,20 @@ export function ScanView({ holder, stamps, cycles }: { holder: DemoMember; stamp
     <main className="py-10">
       <Container>
         <div className="mx-auto max-w-md">
-          <Alert tone="warning" title="معاينة" icon={<Warning weight="fill" />} className="mb-6" compact>
+          <Alert tone="warning" title="معاينة" icon={<Warning />} className="mb-6" compact>
             بطاقةٌ وهميّةٌ لتجربة النظام. في النظام الحقيقيّ لا تُفتَح هذه الصفحة إلّا لمن يملك
             قدرةَ الختم، ويُقيَّد كلُّ ختمٍ باسمه.
           </Alert>
 
           <Card className="mb-6">
             <CardHeader
-              icon={<User weight="fill" />}
+              icon={<User />}
               title={holder.name}
               subtitle={`${holder.department} · ${holder.committee}`}
               actions={
                 <Badge tone={complete ? "success" : "info"}>
-                  <span className="font-latin">{arNum(state.stamps)}</span> /{" "}
-                  <span className="font-latin">{arNum(GOAL)}</span>
+                  <span className="font-latin">{num(state.stamps)}</span> /{" "}
+                  <span className="font-latin">{num(GOAL)}</span>
                 </Badge>
               }
             />
@@ -84,13 +84,13 @@ export function ScanView({ holder, stamps, cycles }: { holder: DemoMember; stamp
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={`/wallet-preview/strip?stamps=${state.stamps}`}
-                alt={`${arNum(state.stamps)} من ${arNum(GOAL)} مشاركات`}
+                alt={`${num(state.stamps)} من ${num(GOAL)} مشاركات`}
                 className="mb-4 block w-full rounded-[var(--radius-sm)]"
               />
 
               <p className="text-sm">
                 {statusText(state.stamps)} · بطاقاتٌ أكملها:{" "}
-                <span className="font-latin">{arNum(state.cycles)}</span>
+                <span className="font-latin">{num(state.cycles)}</span>
               </p>
               <p className="mt-1 font-latin text-xs text-content-muted">{holder.serial}</p>
             </CardBody>
@@ -99,19 +99,19 @@ export function ScanView({ holder, stamps, cycles }: { holder: DemoMember; stamp
           {/* الفعلُ واحدٌ يُشتقّ من الحالة — انظر رأس الملفّ */}
           {complete ? (
             <Card tone="success" className="mb-6">
-              <CardHeader icon={<Gift weight="fill" />} title="بطاقةٌ مكتملة" subtitle={REWARD.sponsor} />
+              <CardHeader icon={<Gift />} title="بطاقةٌ مكتملة" subtitle={REWARD.sponsor} />
               <CardBody>
                 <b className="block text-lg">{REWARD.title}</b>
                 <p className="mt-1 text-xs text-content-muted">{REWARD.terms}</p>
                 <Button variant="success" size="lg" className="mt-4 w-full" loading={busy} onClick={() => act("claim")}>
-                  <Gift weight="fill" />
+                  <Gift />
                   سلّم المكافأة وابدأ بطاقةً جديدة
                 </Button>
               </CardBody>
             </Card>
           ) : (
             <Button size="lg" className="mb-6 w-full" loading={busy} onClick={() => act("stamp")}>
-              <Stamp weight="fill" />
+              <Stamp />
               اختم حضوره
             </Button>
           )}
@@ -126,7 +126,7 @@ export function ScanView({ holder, stamps, cycles }: { holder: DemoMember; stamp
             <Alert
               tone="success"
               title={done.act === "claim" ? "سُلِّمت المكافأة" : "خُتم الحضور"}
-              icon={<CheckCircle weight="fill" />}
+              icon={<CheckCircle />}
             >
               {done.res.devices === 0 ? (
                 "حُفظ — ولا جهازَ أضاف هذه البطاقة إلى محفظته بعد."
@@ -134,7 +134,7 @@ export function ScanView({ holder, stamps, cycles }: { holder: DemoMember; stamp
                 <>تعذّر تنبيه جهازه: {done.res.failures[0].reason ?? done.res.failures[0].status}</>
               ) : (
                 <>
-                  دُفع إلى <span className="font-latin">{arNum(done.res.pushed)}</span>{" "}
+                  دُفع إلى <span className="font-latin">{num(done.res.pushed)}</span>{" "}
                   {done.res.pushed === 1 ? "جهاز" : "أجهزة"} — تتحدّث بطاقتُه خلال ثوانٍ
                 </>
               )}

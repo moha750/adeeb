@@ -15,7 +15,7 @@ import {
 } from "@phosphor-icons/react";
 import { downloadBlob } from "@/lib/download";
 import { qrSvg } from "@/lib/qr";
-import { arNum, GOAL, isComplete, MEMBERS, memberById, REWARD, statusText, type DemoMember } from "./demo";
+import { num, GOAL, isComplete, MEMBERS, memberById, REWARD, statusText, type DemoMember } from "./demo";
 import { cardFace, type PassField } from "./pass";
 import "./card.css";
 
@@ -108,7 +108,7 @@ function WalletCard({ member }: { member: DemoMember }) {
           onClick={() => setBack((b) => !b)}
           aria-label={back ? "عرض وجه البطاقة" : "عرض ظهر البطاقة"}
         >
-          {back ? <ArrowCounterClockwise size={14} weight="bold" /> : <Info size={15} weight="bold" />}
+          {back ? <ArrowCounterClockwise size={14} /> : <Info size={15} />}
         </button>
 
         <div className="wp-side" aria-hidden={back}>
@@ -122,7 +122,7 @@ function WalletCard({ member }: { member: DemoMember }) {
           </div>
 
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="wp-strip" src={strip} alt={`${arNum(member.stamps)} من ${arNum(GOAL)} مشاركات`} />
+          <img className="wp-strip" src={strip} alt={`${num(member.stamps)} من ${num(GOAL)} مشاركات`} />
 
           <div className="wp-fields">
             <div className="wp-row">
@@ -271,7 +271,7 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
       <Container>
         <SectionHeading eyebrow="معاينة" title="بطاقة ولاء أَدِيب" />
 
-        <Alert tone="warning" title="هذه معاينةٌ لا نظامٌ حيّ" icon={<Sparkle weight="fill" />} className="mb-8">
+        <Alert tone="warning" title="هذه معاينةٌ لا نظامٌ حيّ" icon={<Sparkle />} className="mb-8">
           الحسابات والمشاركات والراعي في هذه الصفحة <b>وهميّةٌ كلُّها</b> — لا تمسّ عضويّةً ولا
           سجلًّا في النادي، وتعيش في جدولين مؤقّتين يُحذفان مع الصفحة. غايتُها أن تُجرَّب البطاقة
           وتُعرَض الفكرة قبل بنائها.
@@ -306,42 +306,42 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
           <div className="flex-[2_1_420px]">
             <Card className="mb-6">
               <CardHeader
-                icon={<Plus weight="bold" />}
+                icon={<Plus />}
                 title="تحكّمٌ للتجربة"
                 subtitle="اختم مشاركاتٍ يدويًّا لترى البطاقة تمتلئ — في النظام الحقيقيّ يختمها حضورُ الفعاليّة"
                 actions={
                   <Badge tone={done ? "success" : "info"}>
-                    <span className="font-latin">{arNum(member.stamps)}</span> / <span className="font-latin">{arNum(GOAL)}</span>
+                    <span className="font-latin">{num(member.stamps)}</span> / <span className="font-latin">{num(GOAL)}</span>
                   </Badge>
                 }
               />
               <CardBody>
                 <div className="flex flex-wrap gap-3">
                   <Button size="sm" onClick={() => setStamps(member.stamps + 1)} disabled={done}>
-                    <Plus weight="bold" />
+                    <Plus />
                     اختم مشاركة
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => setStamps(member.stamps - 1)} disabled={member.stamps === 0}>
-                    <Minus weight="bold" />
+                    <Minus />
                     تراجَع
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => setStamps(GOAL - 1)}>
-                    اقفز إلى <span className="font-latin">{arNum(GOAL - 1)}</span>
+                    اقفز إلى <span className="font-latin">{num(GOAL - 1)}</span>
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => setStamps(0)}>
-                    <ArrowCounterClockwise weight="bold" />
+                    <ArrowCounterClockwise />
                     صفّر
                   </Button>
                 </div>
 
                 <p className="mt-4 text-xs text-content-muted">
                   {statusText(member.stamps)} · بطاقاتٌ أكملها:{" "}
-                  <span className="font-latin">{arNum(member.cycles)}</span>
+                  <span className="font-latin">{num(member.cycles)}</span>
                 </p>
 
                 {/* حالةُ الدفع — الدفعةُ الصامتة لا تُرى، فتُقال. */}
                 <p className="mt-2 flex items-center gap-2 text-xs">
-                  <DeviceMobile size={14} weight="fill" className="shrink-0 text-content-muted" />
+                  <DeviceMobile size={14} className="shrink-0 text-content-muted" />
                   {syncing ? (
                     <span className="text-content-muted">تُرسَل الآن…</span>
                   ) : sync?.error ? (
@@ -353,13 +353,13 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
                       </span>
                     ) : sync.failures.length > 0 ? (
                       <span className="text-danger">
-                        وصلت <span className="font-latin">{arNum(sync.pushed)}</span> من{" "}
-                        <span className="font-latin">{arNum(sync.devices)}</span> — أبل تقول:{" "}
+                        وصلت <span className="font-latin">{num(sync.pushed)}</span> من{" "}
+                        <span className="font-latin">{num(sync.devices)}</span> — أبل تقول:{" "}
                         {sync.failures[0].reason ?? sync.failures[0].status}
                       </span>
                     ) : (
                       <span className="text-success">
-                        دُفعت إلى <span className="font-latin">{arNum(sync.pushed)}</span>{" "}
+                        دُفعت إلى <span className="font-latin">{num(sync.pushed)}</span>{" "}
                         {sync.pushed === 1 ? "جهاز" : "أجهزة"} — تتحدّث البطاقة خلال ثوانٍ
                       </span>
                     )
@@ -375,7 +375,7 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
             {/* ── المكافأة ── */}
             <Card tone={done ? "success" : undefined} className="mb-6">
               <CardHeader
-                icon={<Storefront weight="fill" />}
+                icon={<Storefront />}
                 title="مكافأة الراعي"
                 subtitle={REWARD.sponsor}
                 actions={<Badge tone="info" size="sm">راعٍ مُختلَقٌ للعرض</Badge>}
@@ -391,8 +391,8 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
                     </Alert>
                   ) : (
                     <Button variant={done ? "success" : "ghost"} disabled={!done} onClick={claim}>
-                      <Gift weight="fill" />
-                      {done ? "سلّم المكافأة وصفّر البطاقة" : `تُصرَف عند المشاركة ${arNum(GOAL)}`}
+                      <Gift />
+                      {done ? "سلّم المكافأة وصفّر البطاقة" : `تُصرَف عند المشاركة ${num(GOAL)}`}
                     </Button>
                   )}
                 </div>
@@ -401,7 +401,7 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
 
             <div className="flex flex-wrap gap-3">
               <Button onClick={addToWallet} loading={busy}>
-                <Wallet weight="fill" />
+                <Wallet />
                 أضِف إلى Apple Wallet
               </Button>
             </div>
