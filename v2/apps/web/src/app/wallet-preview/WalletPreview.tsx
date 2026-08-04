@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Badge, Button, Card, CardBody, CardHeader, Container, SectionHeading, Segmented } from "@adeeb/design-system";
+import { Alert, Badge, Button, Card, CardBody, CardHeader, Container, LandingHeading, Segmented } from "@adeeb/design-system";
 import {
   ArrowCounterClockwise,
   DeviceMobile,
@@ -269,36 +269,42 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
   return (
     <main className="py-14">
       <Container>
-        <SectionHeading eyebrow="معاينة" title="بطاقة ولاء أَدِيب" />
+        {/* رأسُ صفحات أديب العلنيّة نفسُه («الرأس المُذهّب») — عينٌ كلمة وعنوانٌ كلمتان */}
+        <LandingHeading
+          eyebrow="معاينة"
+          title="بطاقة الولاء"
+          deck="بطاقةُ نادي أديب في محفظة جوّالك — تُختَم بكلّ مشاركة، وتُصرَف مكافأتُها عند الراعي."
+          align="center"
+        />
 
         <Alert tone="warning" title="هذه مُجرد معاينةٌ" icon={<Sparkle />} className="mb-8">
           الحسابات والمشاركات والراعي في هذه الصفحة <b>وهميّةٌ كلُّها</b> وليست حسابات ومعلومات
           حقيقية
         </Alert>
 
-        <div className="mb-8">
-          <Segmented
-            aria-label="الحساب الوهميّ"
-            value={memberId}
-            onValueChange={(v) => {
-              setMemberId(v);
-              setClaimed(false);
-              setPassError(null);
-              // خلاصةُ الدفع تخصّ بطاقةً بعينها — لا تُترَك معلّقةً فوق بطاقةٍ أخرى.
-              setSync(null);
-            }}
-            items={MEMBERS.map((m) => ({ value: m.id, label: m.name.split(" ")[0] }))}
-          />
-        </div>
-
         <div className="mb-8 flex flex-wrap items-start gap-8">
           {/* ── البطاقة ── */}
           <div className="flex-[1_1_320px]">
-            <WalletCard member={member} />
+            {/* عمودُ البطاقة كلُّه بعرضها: `.wp-stage` محدودٌ بـ340px ومركَّز، فالغلافُ يحاذيه
+                فيمتدّ المبدّلُ فوقها والزرُّ تحتها على طولها لا أوسع. */}
+            <div className="mx-auto max-w-[340px]">
+              <Segmented
+                className="wp-seg mb-4"
+                aria-label="الحساب الوهميّ"
+                value={memberId}
+                onValueChange={(v) => {
+                  setMemberId(v);
+                  setClaimed(false);
+                  setPassError(null);
+                  // خلاصةُ الدفع تخصّ بطاقةً بعينها — لا تُترَك معلّقةً فوق بطاقةٍ أخرى.
+                  setSync(null);
+                }}
+                items={MEMBERS.map((m) => ({ value: m.id, label: m.name.split(" ")[0] }))}
+              />
 
-            {/* الزرّ تحت البطاقة وبعرضها — `.wp-stage` نفسُه محدودٌ بـ340px ومركَّز، فيُحاذيه غلافُه */}
-            <div className="mx-auto mt-4 max-w-[340px]">
-              <Button className="w-full" onClick={addToWallet} loading={busy}>
+              <WalletCard member={member} />
+
+              <Button className="mt-4 w-full" onClick={addToWallet} loading={busy}>
                 <Wallet />
                 أضِف إلى Apple Wallet
               </Button>

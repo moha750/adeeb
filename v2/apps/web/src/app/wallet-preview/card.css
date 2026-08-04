@@ -33,6 +33,11 @@
   margin-inline: auto;
 }
 
+/* الشريط المقطعيّ فوق البطاقة **يمتدّ بعرضها**: `.seg` في المكتبة عرضُه محتواه لأنّه
+   تحكّمٌ يجاور غيرَه؛ وهنا يعلو البطاقةَ وحدَه فيُحاذيها، والأسماءُ تقتسمه بالسويّة. */
+.wp-seg { width: 100%; }
+.wp-seg .seg-item { flex: 1 1 0; }
+
 .wp-flip {
   position: relative;
   transform-style: preserve-3d;
