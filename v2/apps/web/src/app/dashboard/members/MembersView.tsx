@@ -43,8 +43,9 @@ const ACADEMIC_REQUIRED = [
 // النطاق مقصود: القسم والدور يملكهما `assignments/`، والبريد يملكه `credentials/` (هويّة مصادقة) — فلا يُحرَّران هنا.
 const memberSchema = z.object({
   name: z.string().trim().min(2, "الاسم مطلوب (حرفان على الأقلّ)"),
-  // الفارغ مقبول (العمود يقبل NULL)، وأيّ نصّ آخر يجب أن يطابق الصيغة — القاعدة تفرضها بقيد مقابل
-  phone: z.string().trim().refine((v) => !v || PHONE_RE.test(v), PHONE_HINT).optional(),
+  // **إجباريّ** (قرار المالك ٢٠٢٦-٠٨-٠٤): يُلزَم على بابَي الالتحاق، فلا يُفرَّغ بعدهما — لا من
+  // صاحبه في «الملف الشخصي» ولا من المدير هنا. والصيغة تفرضها القاعدة بقيد مقابل (`profiles_phone_check`).
+  phone: z.string().trim().min(1, "رقم الجوّال مطلوب").regex(PHONE_RE, PHONE_HINT),
   college: z.string().trim().optional(),
   degree: z.string().optional(), // الرمز الخام لا التسمية — القاعدة تحفظ الرمز
   major: z.string().trim().optional(),
@@ -184,18 +185,18 @@ function ProfileBody({ member }: { member: MemberRow }) {
       <div className="pvb-role">{[member.role, member.committee].filter(Boolean).join(" · ") || "غير متوفّر"}</div>
       <div className="pvb-badges"><Badge tone={MEMBER_STATUS[member.status].tone} variant="soft" dot live={member.status === "active"}>{MEMBER_STATUS[member.status].label}</Badge></div>
       <div className="pva-sections">
-        <Section icon={<IdentificationCard weight="fill" />} title="بيانات العضويّة">
+        <Section icon={<IdentificationCard />} title="بيانات العضويّة">
           <Cell label="الدور" icon={<Star />} value={member.role} />
           <Cell label="تاريخ الانضمام" icon={<CalendarBlank />} value={member.joined} />
           {member.dept ? <Cell full label="القسم" icon={<Buildings />} value={member.dept} /> : null}
           {member.committee ? <Cell full label="اللجنة" icon={<UsersThree />} value={member.committee} /> : null}
         </Section>
-        <Section icon={<AddressBook weight="fill" />} title="بيانات التواصل">
+        <Section icon={<AddressBook />} title="بيانات التواصل">
           <Cell full lat label="البريد الإلكترونيّ" icon={<Envelope />} value={member.email} />
           <Cell full lat label="رقم الجوّال" icon={<Phone />} value={member.phone} />
         </Section>
         {hasAcademic ? (
-          <Section icon={<Books weight="fill" />} title="البيانات الأكاديميّة">
+          <Section icon={<Books />} title="البيانات الأكاديميّة">
             {member.college ? <Cell full label="الكلّية" icon={<GraduationCap />} value={member.college} /> : null}
             {/* لا full={!major} بعد اليوم: .pva-grid تمدّ اليتيم في صفّه وحدها — القاعدة تُغني عن الترقيع */}
             <Cell label="الدرجة العلمية" icon={<Certificate />} value={member.degree} />
@@ -204,12 +205,12 @@ function ProfileBody({ member }: { member: MemberRow }) {
           </Section>
         ) : null}
         {socialCells.length > 0 ? (
-          <Section icon={<ShareNetwork weight="fill" />} title="التواصل الاجتماعيّ">
+          <Section icon={<ShareNetwork />} title="التواصل الاجتماعيّ">
             {socialCells}
           </Section>
         ) : null}
         {terminated ? (
-          <Section end icon={<Prohibit weight="fill" />} title="إنهاء العضويّة">
+          <Section end icon={<Prohibit />} title="إنهاء العضويّة">
             <Cell full label="سبب الإنهاء" icon={<WarningCircle />} value={member.endReason} />
             <Cell full label="تاريخ الإنهاء" icon={<CalendarX />} value={member.endDate} />
           </Section>
@@ -383,7 +384,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
   const emptyState = scope.length === 0 ? (
     <EmptyState
       variant="aurora"
-      icon={<UsersThree weight="duotone" />}
+      icon={<UsersThree />}
       title={`لا ${section.noun} بعد`}
       description={emptyNote ?? (mode === "reach" ? "لا أعضاء تحت إشرافك حاليًّا." : "لا أعضاء في هذا القسم حاليًّا.")}
       action={mayManageData ? <Button variant="primary" size="md" onClick={openAdd}><Plus size={18} />إضافة عضو</Button> : undefined}
@@ -391,7 +392,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
   ) : (
     <EmptyState
       variant="soft"
-      icon={<MagnifyingGlass weight="duotone" />}
+      icon={<MagnifyingGlass />}
       title="لا أعضاء مطابقون"
       description="لم نعثر على أعضاء يطابقون بحثك أو مرشّحاتك. جرّب تعديل المعايير."
       action={<Button variant="ghost" size="md" onClick={clearFilters}>مسح المرشّحات</Button>}
@@ -485,7 +486,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
 
       {lockedStatus === "active" ? (
         <div className="stat-grid" style={{ marginBottom: 18 }}>
-          <Stat icon={<UsersThree weight="fill" />} value={scope.length} label="عدد أعضاء أديب" />
+          <Stat icon={<UsersThree />} value={scope.length} label="عدد أعضاء أديب" />
         </div>
       ) : null}
 
@@ -601,12 +602,12 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
           <ProfileBody member={member} />
         ) : (
           <form id="member-form" className="mdl-grid" onSubmit={onSubmitMember} noValidate>
-            <ModalSectionHeading className="mdl-full" icon={<IdentificationBadge weight="fill" />} title="البيانات الأساسيّة" />
+            <ModalSectionHeading className="mdl-full" icon={<IdentificationBadge />} title="البيانات الأساسيّة" />
             <Field className="mdl-full" label="الاسم" icon={<User />} innerIcon={<PencilSimple />} placeholder="اكتب الاسم" error={editForm.formState.errors.name?.message} required {...editForm.register("name")} />
 
-            <ModalSectionHeading className="mdl-full" icon={<AddressBook weight="fill" />} title="بيانات التواصل" />
+            <ModalSectionHeading className="mdl-full" icon={<AddressBook />} title="بيانات التواصل" />
             {/* البريد هويّة مصادقة لا بيان تواصل: يُغيَّر من «بيانات الدخول» حيث يُزامَن مع auth.users — كتابته هنا وحده تفكّ المزامنة */}
-            <Field className="mdl-full" label="رقم الجوّال" type="tel" charset="digits" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" error={editForm.formState.errors.phone?.message} optional {...editForm.register("phone")} />
+            <Field className="mdl-full" label="رقم الجوّال" type="tel" charset="digits" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" error={editForm.formState.errors.phone?.message} required {...editForm.register("phone")} />
             <Field className="mdl-full" label="البريد الإلكترونيّ" type="email" charset="latin" disabled readOnly value={member?.email ?? ""} icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" helper="يُغيَّر من «بيانات الدخول»." />
 
             {member && member.degreeRaw == null ? (
@@ -615,7 +616,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
               </Alert>
             ) : null}
 
-            <ModalSectionHeading className="mdl-full" icon={<Books weight="fill" />} title="البيانات الأكاديميّة" />
+            <ModalSectionHeading className="mdl-full" icon={<Books />} title="البيانات الأكاديميّة" />
             <Controller
               control={editForm.control}
               name="degree"
@@ -643,7 +644,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
               </>
             ) : null}
 
-            <ModalSectionHeading className="mdl-full" icon={<ShareNetwork weight="fill" />} title="التواصل الاجتماعيّ" />
+            <ModalSectionHeading className="mdl-full" icon={<ShareNetwork />} title="التواصل الاجتماعيّ" />
             {/* الأربعة على نسق واحد فتُبنى من SOCIAL_KEYS — لا أربع نسخ تفترق يومًا.
                 onBlur يُطبّع ما لُصق فورًا (رابط ⇐ معرّف · @معرّف ⇐ معرّف)، فيرى المدير الصيغة المخزَّنة
                 لا ما كتبه. وما ليس معرّفًا لا يُطبَّع صامتًا: يبقى كما هو ويقول Zod سببه. */}
@@ -687,7 +688,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
             <div className="pvb-name">{reason.name}</div>
             <div className="pvb-role">{reason.endAgo ? `عضوية منتهية ${reason.endAgo}` : "عضوية منتهية"}</div>
             <div className="pva-sections">
-              <Section end icon={<Prohibit weight="fill" />} title="سبب إنهاء العضوية">
+              <Section end icon={<Prohibit />} title="سبب إنهاء العضوية">
                 <Cell full noCopy label="سبب الإنهاء" icon={<WarningCircle />} value={reason.endReason} />
                 <Cell full noCopy label="تاريخ الإنهاء" icon={<CalendarX />} value={reason.endDate} />
               </Section>
@@ -717,7 +718,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
           <Textarea
             className="mdl-full"
             label="سبب إنهاء العضوية"
-            icon={<Prohibit weight="fill" />}
+            icon={<Prohibit />}
             innerIcon={<NotePencil />}
             placeholder="مثال: انقطاع عن الحضور شهرين بلا عذر"
             rows={4}
@@ -733,7 +734,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
         open={restoring !== null}
         onClose={() => setRestoring(null)}
         tone="success"
-        icon={<ArrowCounterClockwise weight="bold" />}
+        icon={<ArrowCounterClockwise />}
         title="إعادة العضوية؟"
         text={restoring ? `يعود «${restoring.name}» عضوًا نشطًا، ويُمحى سبب الإنهاء وتاريخه.` : undefined}
         confirmLabel="إعادة العضوية"

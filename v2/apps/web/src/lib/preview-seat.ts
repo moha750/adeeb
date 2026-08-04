@@ -23,6 +23,13 @@ type Service = ReturnType<typeof createAdeebServiceClient>;
  */
 export const PREVIEW_EMAIL = "preview@adeeb.local";
 export const PREVIEW_NAME = "شاغل مؤقّت (معاينة)";
+/**
+ * رقمٌ محجوز للدُّمية — لا لأنّ لها هاتفًا، بل لأنّ `profiles.phone` صار `NOT NULL`
+ * (٢٠٢٦-٠٨-٠٤): الجوّال إجباريّ في القاعدة نفسها لا في التطبيق وحده. وفُضّل رقمٌ اصطلاحيّ
+ * على بندٍ في القيد يستثني الخاملين — ذاك بابٌ يفتحه كلّ من يضبط الحالة.
+ * والدُّمية `inactive` فتسقط من تبويبات الأعضاء الثلاثة، فلا يظهر هذا الرقم في كشفٍ لأحد.
+ */
+export const PREVIEW_PHONE = "0500000000";
 
 /**
  * نطاق المنصب — **مرآةُ `assign_position` في القاعدة** (كتلتا `v_needs_committee`
@@ -69,7 +76,7 @@ export async function ensurePreviewUser(sb: Service): Promise<{ id: string } | {
   await sb.auth.admin.updateUserById(id, { ban_duration: "876000h" });
 
   const { error: pErr } = await sb.from("profiles").insert({
-    id, full_name: PREVIEW_NAME, email: PREVIEW_EMAIL, account_status: "inactive",
+    id, full_name: PREVIEW_NAME, email: PREVIEW_EMAIL, account_status: "inactive", phone: PREVIEW_PHONE,
   });
   if (pErr) return { error: pErr.message };
   return { id };

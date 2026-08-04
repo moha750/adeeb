@@ -12,6 +12,11 @@ function Label({ children }: { children: React.ReactNode }) {
   return <p className="mb-4 font-latin text-xs font-bold uppercase tracking-[0.18em] text-content-muted">{children}</p>;
 }
 
+// عيّنةُ الصورة — نفسُ ما يعرضه معرضُ الأفتار (`/ui/avatar`) صورةً للعضو، فلا يفترق مَعرضان في العيّنة.
+// **وهي شفّافةُ الأطراف**: تُثبت أنّ الصورة تُعرض وتُقصّ، ولا تُثبت طلاءَ الأركان — فلو أردنا
+// شاهدًا على زاوية الصورة داخل الحلقة لزم بديلٌ مصمَتٌ يطلي المربّع كلَّه.
+const PHOTO = "/brand/pattern-circular.svg";
+
 /** محطّةٌ وهميّة مختصَرة — الافتراضات ثمّ ما يُهمّ العرض. */
 const S = (o: Partial<JourneyStop> & { key: string; title: string }): JourneyStop => ({
   kind: "role", scope: null, date: "١٦ يناير ٢٠٢٦", at: 0, current: false, ...o,
@@ -58,6 +63,24 @@ export default function MembershipGalleryPage() {
               chain={["المجلس التنفيذي", "قسم الإعلام والتسويق", "لجنة الإعلام"]}
               joined="3 سبتمبر 2024"
               duration="سنة و4 أشهر"
+            />
+          </section>
+
+          {/* بصورةٍ شخصيّة — الحالةُ الوحيدة التي كانت غائبةً عن المعرض كلِّه: عيّناتُه جميعًا
+              أيقونةُ جنسٍ أو أحرف، فلم يكن `.av-img` يُعرض هنا قطّ. وأفتارُ البطاقة مطوَّقٌ
+              بحلقةٍ بيضاء، فمسارُ الصورة وحدَه هو الذي يمسّ زاويتَها الداخليّة (الأفتار ناقصَ
+              الحلقة) — ولذلك ظهر خطؤها في اللوحة ولم يظهر في المعرض. */}
+          <section>
+            <Label>نشط · بصورةٍ شخصيّة (مسار <code className="font-latin">.av-img</code> داخل الحلقة)</Label>
+            <MembershipCard
+              name="ريم عبدالعزيز الشهري"
+              role="نائب"
+              status="active"
+              avatar={PHOTO}
+              gender="female"
+              chain={["المجلس التنفيذي", "قسم التطوير", "لجنة البرمجة"]}
+              joined="12 فبراير 2025"
+              duration="سنةٌ و5 أشهر"
             />
           </section>
 
@@ -108,7 +131,7 @@ export default function MembershipGalleryPage() {
           <section>
             <Label>المسيرة — محطّاتٌ متعدّدة، والقائمةُ الآن بنغمة النجاح وشارة «حاليّ»</Label>
             <Card>
-              <CardHeader variant="soft" icon={<Path weight="fill" />} title="مسيرتي في أديب" subtitle="انضمامك وما تلاه من مناصب — الأقدم أوّلًا" />
+              <CardHeader variant="soft" icon={<Path />} title="مسيرتي في أديب" subtitle="انضمامك وما تلاه من مناصب — الأقدم أوّلًا" />
               <CardBody><Journey stops={LONG} /></CardBody>
             </Card>
           </section>
@@ -116,7 +139,7 @@ export default function MembershipGalleryPage() {
           <section>
             <Label>المسيرة — منصبٌ ممتدّ: تسعةُ صفوفٍ تُجمَع محطّةً واحدة، ونطاقُها يلتفّ ولا يُبتَر</Label>
             <Card>
-              <CardHeader variant="soft" icon={<Path weight="fill" />} title="مسيرتي في أديب" />
+              <CardHeader variant="soft" icon={<Path />} title="مسيرتي في أديب" />
               <CardBody><Journey stops={WIDE} /></CardBody>
             </Card>
           </section>
@@ -124,7 +147,7 @@ export default function MembershipGalleryPage() {
           <section>
             <Label>المسيرة — محطّةٌ واحدة (لا خيطَ تحتها: المسيرة تنتهي ولا تُعلَّق)</Label>
             <Card>
-              <CardHeader variant="soft" icon={<IdentificationCard weight="fill" />} title="مسيرتي في أديب" />
+              <CardHeader variant="soft" icon={<IdentificationCard />} title="مسيرتي في أديب" />
               <CardBody><Journey stops={SHORT} /></CardBody>
             </Card>
           </section>

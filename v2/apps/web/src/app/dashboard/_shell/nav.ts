@@ -28,6 +28,8 @@ export const NAV: NavGroup[] = [
   {
     items: [
       { label: "عضويتي", icon: "me", href: "/dashboard" },
+      // «الملف الشخصي» — سجلُّك لا موقعُك: صورتُك وجوّالُك ودراستُك وحساباتُك، تُحرَّر بيدك.
+      { label: "الملف الشخصي", icon: "profile", href: "/dashboard/profile" },
       { label: "إدارتي", icon: "unit", href: "/dashboard/unit", seat: "unit" },
       { label: "قسمي", icon: "dept", href: "/dashboard/department", seat: "department" },
       { label: "لجنتي", icon: "users", href: "/dashboard/committee", seat: "committee" },
