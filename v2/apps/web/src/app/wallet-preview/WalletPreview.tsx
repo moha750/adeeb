@@ -273,7 +273,7 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
         <LandingHeading
           eyebrow="معاينة"
           title="بطاقة الولاء"
-          deck="بطاقةُ نادي أديب في محفظة جوّالك — تُختَم بكلّ مشاركة، وتُصرَف مكافأتُها عند الراعي."
+          deck="بطاقةُ أديب في محفظة جوّالك، تُختَم بكلّ مشاركة، وتُصرَف مكافأتُها عند الراعي."
           align="center"
         />
 
