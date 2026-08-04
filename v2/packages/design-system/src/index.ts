@@ -1,6 +1,7 @@
 // نقطة تصدير مكوّنات نظام تصميم أديب
 export { cn } from "./lib/cn";
 export { type FieldCharset } from "./lib/charset";
+export { CharsetWhisper, KeyboardGlyph, type CharsetWhisperProps } from "./components/CharsetWhisper";
 export { foldSearch, matchesSearch } from "./lib/search";
 export { Container } from "./components/Container";
 export { Button, type ButtonProps } from "./components/Button";
@@ -20,7 +21,7 @@ export { ColorField, type ColorFieldProps } from "./components/ColorField";
 export { Textarea, type TextareaProps } from "./components/Textarea";
 export { FieldMark } from "./components/FieldMark";
 export { Select, type SelectProps, type SelectOption } from "./components/Select";
-export { AnchoredPopover, type AnchoredPopoverProps, type PopoverAlign, type PopoverDismissReason } from "./components/AnchoredPopover";
+export { AnchoredPopover, type AnchoredPopoverProps, type PopoverAlign, type PopoverSide, type PopoverDismissReason } from "./components/AnchoredPopover";
 export { Segmented, type SegmentedProps, type SegmentedItem } from "./components/Segmented";
 export { OptionList, type OptionListProps, type OptionListItem } from "./components/OptionList";
 export { Matrix, type MatrixProps, type MatrixColumn, type MatrixRow, type MatrixGroup } from "./components/Matrix";
@@ -34,6 +35,7 @@ export { RadialHours, type RadialHoursProps, type RadialBar } from "./components
 export { HeatGrid, type HeatGridProps } from "./components/HeatGrid";
 export { Checkbox, Radio, Switch } from "./components/Choice";
 export { Alert, type AlertProps } from "./components/Alert";
+export { SaveBar, type SaveBarProps } from "./components/SaveBar";
 export { BookReader, type BookReaderProps, type BookReaderPage } from "./components/BookReader";
 export { AuthShell, type AuthShellProps } from "./components/AuthShell";
 export { LogoLoader, type LogoLoaderProps } from "./components/LogoLoader";

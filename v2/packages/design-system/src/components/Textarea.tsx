@@ -1,8 +1,9 @@
 "use client";
 
-import type { ReactNode, TextareaHTMLAttributes } from "react";
+import { useRef, type ReactNode, type TextareaHTMLAttributes } from "react";
 import { cn } from "../lib/cn";
-import { charsetGuard, type FieldCharset } from "../lib/charset";
+import { useCharsetGuard, type FieldCharset } from "../lib/charset";
+import { CharsetWhisper, KeyboardGlyph } from "./CharsetWhisper";
 import { FieldMark } from "./FieldMark";
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -33,7 +34,8 @@ export function Textarea({
   label, icon, innerIcon, placeholder, charset, error, success, helper, optional, required, className, dir, onBeforeInput, onChange, ...props
 }: TextareaProps) {
   const msg = error ?? helper;
-  const guard = charsetGuard<HTMLTextAreaElement>(charset, onBeforeInput, onChange);
+  const { guard, whisper, leaving, hush } = useCharsetGuard<HTMLTextAreaElement>(charset, onBeforeInput, onChange);
+  const wrapRef = useRef<HTMLDivElement>(null);
   return (
     <label className={cn("fld", error ? "err" : undefined, success && !error ? "ok" : undefined, className)}>
       <span className="fld-lbl">
@@ -41,8 +43,8 @@ export function Textarea({
         {label}
         <FieldMark optional={optional} required={required} />
       </span>
-      <div className="fld-wrap">
-        <span className="fld-iic" aria-hidden="true">{innerIcon}</span>
+      <div ref={wrapRef} className={cn("fld-wrap", whisper ? "fld-warn" : undefined)}>
+        <span className="fld-iic" aria-hidden="true">{whisper ? <KeyboardGlyph /> : innerIcon}</span>
         <textarea
           className="fld-in fld-area"
           placeholder={placeholder}
@@ -53,6 +55,7 @@ export function Textarea({
           {...guard}
         />
       </div>
+      <CharsetWhisper text={whisper} anchorRef={wrapRef} leaving={leaving} onHush={hush} />
       {msg ? <span className="fld-help">{msg}</span> : null}
     </label>
   );

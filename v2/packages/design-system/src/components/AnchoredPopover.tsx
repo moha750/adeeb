@@ -3,8 +3,13 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 
-/** محاذاة أفقيّة منطقيّة (تتبع اتجاه المستند): البداية = حافّة البداية، النهاية = حافّة النهاية. */
-export type PopoverAlign = "start" | "end";
+/**
+ * محاذاة أفقيّة منطقيّة (تتبع اتجاه المستند): البداية = حافّة البداية، النهاية = حافّة النهاية.
+ * و`center` **لا اتّجاه لها** — تتوسّط المُطلِق فتستوي في RTL وLTR (همسة الحقل).
+ */
+export type PopoverAlign = "start" | "end" | "center";
+/** الجهة المفضّلة عموديًّا — تُنقَض تلقائيًّا حين تضيق (القوائم أسفل، وهمسة الحقل فوق). */
+export type PopoverSide = "below" | "above";
 /** سبب الإغلاق: نقرٌ خارجيّ أم Escape — يُملي على المستهلك إعادة التركيز للمُطلِق من عدمها. */
 export type PopoverDismissReason = "pointer" | "escape";
 
@@ -16,6 +21,8 @@ export interface AnchoredPopoverProps {
   onDismiss: (reason: PopoverDismissReason) => void;
   /** المحاذاة الأفقيّة حين لا يُطابَق العرض (افتراضي: البداية). */
   align?: PopoverAlign;
+  /** الجهة المفضّلة عموديًّا (افتراضي: أسفل — سلوك القوائم كما كان). */
+  side?: PopoverSide;
   /** عرض اللوحة = عرض المُطلِق (حقل Select). حين true تُهمَل `align`. */
   matchWidth?: boolean;
   /** صنف الجلد البصريّ للوحة (asel-panel · dm-menu · tb-fs-panel). */
@@ -44,6 +51,7 @@ export function AnchoredPopover({
   anchorRef,
   onDismiss,
   align = "start",
+  side = "below",
   matchWidth = false,
   className,
   role,
@@ -84,18 +92,23 @@ export function AnchoredPopover({
     const GAP = 6;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    // عموديًّا: أسفل المُطلِق، ينقلب لأعلى عند ضيق الأسفل واتّساع الأعلى، ثمّ يُقصر داخل الشاشة
-    let top = a.bottom + GAP;
-    if (top + ph > vh - PAD && a.top - GAP - ph >= PAD) top = a.top - GAP - ph;
+    // عموديًّا: الجهة المفضّلة أوّلًا، وتنقلب للأخرى عند ضيقها واتّساع مقابلها، ثمّ تُقصر داخل الشاشة
+    const below = a.bottom + GAP;
+    const above = a.top - GAP - ph;
+    let top = side === "above" ? above : below;
+    if (side === "above" ? top < PAD && below + ph <= vh - PAD : top + ph > vh - PAD && above >= PAD) {
+      top = side === "above" ? below : above;
+    }
     top = Math.max(PAD, Math.min(top, vh - ph - PAD));
     // أفقيًّا: محاذاة منطقيّة تتبع اتجاه المستند (start في RTL = الحافّة اليمنى)، ثمّ قصر داخل الشاشة
     const rtl = getComputedStyle(anchor).direction === "rtl";
     const startLeft = rtl ? a.right - pw : a.left;
     const endLeft = rtl ? a.left : a.right - pw;
-    let left = matchWidth ? a.left : align === "end" ? endLeft : startLeft;
+    const centerLeft = a.left + (a.width - pw) / 2;
+    let left = matchWidth ? a.left : align === "end" ? endLeft : align === "center" ? centerLeft : startLeft;
     left = Math.max(PAD, Math.min(left, vw - pw - PAD));
     setPos({ top, left, width: matchWidth ? a.width : undefined });
-  }, [anchorRef, align, matchWidth]);
+  }, [anchorRef, align, side, matchWidth]);
 
   useLayoutEffect(() => {
     if (!open) {

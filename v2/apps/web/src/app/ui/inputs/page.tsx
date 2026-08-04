@@ -16,8 +16,8 @@ function ColorSwatches() {
   const [plate, setPlate] = useState("#ffffff");
   return (
     <div className="grid gap-5 sm:grid-cols-2">
-      <ColorField label="لون الحبر" icon={<Drop weight="fill" />} value={ink} onValueChange={setInk} required helper="اكتب الرقم، أو انقر مرساةً من الهوية." />
-      <ColorField label="لون الأرضيّة" icon={<PaintBucket weight="fill" />} value={plate} onValueChange={setPlate} presets={[]} optional helper="بلا مراسي — الصفّ يُخفى بتمرير presets فارغة." />
+      <ColorField label="لون الحبر" icon={<Drop />} value={ink} onValueChange={setInk} required helper="اكتب الرقم، أو انقر مرساةً من الهوية." />
+      <ColorField label="لون الأرضيّة" icon={<PaintBucket />} value={plate} onValueChange={setPlate} presets={[]} optional helper="بلا مراسي — الصفّ يُخفى بتمرير presets فارغة." />
     </div>
   );
 }
@@ -75,6 +75,17 @@ export default function InputsPage() {
               <Field label="اسم المستخدم" icon={<At />} innerIcon={<IdentificationBadge />} placeholder="@username" defaultValue="adeeb" success helper="متاح ✓" />
               <Field label="حقل معطّل" icon={<Prohibit />} innerIcon={<PencilSimple />} placeholder="—" defaultValue="غير متاح" disabled />
               <Field label="اسم وليّ الأمر" icon={<Asterisk />} innerIcon={<PencilSimple />} placeholder="الاسم الكامل" required helper="حقل إلزاميّ" />
+            </div>
+          </section>
+
+          <section>
+            <Label>همسة الطقم (بدّل لوحة المفاتيح للعربيّة واكتب في أيّهما — أو الصق نصًّا مختلطًا)</Label>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" required helper="طقم latin — لا يقبل العربيّة." />
+              <Field label="الرقم الأكاديميّ" charset="digits" icon={<Hash />} innerIcon={<PencilSimple />} placeholder="44xxxxxxx" required helper="طقم digits — أرقامٌ لاتينيّة فقط." />
+            </div>
+            <div className="mt-5">
+              <Textarea label="المعرّف على المنصّات" charset="latin" icon={<At />} innerIcon={<IdentificationBadge />} placeholder="@adeeb_club" rows={3} optional helper="الهمسة نفسها في النصّ المتعدّد." />
             </div>
           </section>
 

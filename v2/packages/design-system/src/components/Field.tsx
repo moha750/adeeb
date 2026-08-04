@@ -1,8 +1,9 @@
 "use client";
 
-import { forwardRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, useRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
 import { cn } from "../lib/cn";
-import { charsetGuard, type FieldCharset } from "../lib/charset";
+import { useCharsetGuard, type FieldCharset } from "../lib/charset";
+import { CharsetWhisper, KeyboardGlyph } from "./CharsetWhisper";
 import { FieldMark } from "./FieldMark";
 
 export interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -15,7 +16,7 @@ export interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   /** نصّ تلميحيّ داخل الحقل (placeholder) — **إلزاميّ** (مقدّس). */
   placeholder: string;
   /**
-   * طقم المحارف المقبول — يمنع الممنوع عند الكتابة واللصق، ويستلزم `dir="ltr"` تلقائيًّا (يُنقَض بتمرير `dir`).
+   * طقم المحارف المقبول — يمنع الممنوع عند الكتابة واللصق **ويهمس بسببه**، ويستلزم `dir="ltr"` تلقائيًّا (يُنقَض بتمرير `dir`).
    * `latin` = لا حروف عربيّة (بريد · معرّف · رابط) · `digits` = أرقام فقط (جوّال · رقم أكاديميّ).
    * يُترك فارغًا للحقول العربيّة (اسم · كلّية). و`type="password"` يستلزم `latin` تلقائيًّا (يُنقَض بتمرير طقم آخر).
    */
@@ -61,7 +62,8 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
   const hasEye = type === "password";
   /** كلمة المرور **لا تقبل العربيّة** (قرار المالك): الطقم يُشتقّ من النوع كما تُشتقّ العين، فلا يُكتب في كلّ نموذج — ويستلزم `dir="ltr"` معه. */
   const cs = charset ?? (hasEye ? "latin" : undefined);
-  const guard = charsetGuard<HTMLInputElement>(cs, onBeforeInput, onChange);
+  const { guard, whisper, leaving, hush } = useCharsetGuard<HTMLInputElement>(cs, onBeforeInput, onChange);
+  const wrapRef = useRef<HTMLDivElement>(null);
   return (
     <label className={cn("fld", error ? "err" : undefined, success && !error ? "ok" : undefined, className)}>
       <span className="fld-lbl">
@@ -69,8 +71,9 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
         {label}
         <FieldMark optional={optional} required={required} />
       </span>
-      <div className="fld-wrap">
-        <span className="fld-iic" aria-hidden="true">{innerIcon}</span>
+      <div ref={wrapRef} className={cn("fld-wrap", whisper ? "fld-warn" : undefined)}>
+        {/* أثناء الهمسة تُبدَّل الأيقونة الداخليّة بلوحة مفاتيح: الرسم يقول ما تقوله الهمسة، فيُفهم بلا قراءة */}
+        <span className="fld-iic" aria-hidden="true">{whisper ? <KeyboardGlyph /> : innerIcon}</span>
         <input
           ref={ref}
           className="fld-in"
@@ -95,6 +98,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
           </button>
         ) : null}
       </div>
+      <CharsetWhisper text={whisper} anchorRef={wrapRef} leaving={leaving} onHush={hush} />
       {msg ? <span className="fld-help">{msg}</span> : null}
     </label>
   );

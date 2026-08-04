@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useId, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ChangeEvent, type CSSProperties, type ReactNode } from "react";
 import { cn } from "../lib/cn";
-import { charsetGuard } from "../lib/charset";
+import { useCharsetGuard } from "../lib/charset";
+import { CharsetWhisper } from "./CharsetWhisper";
 import { FieldMark } from "./FieldMark";
 import { color } from "../../tokens";
 
@@ -79,7 +80,10 @@ export function ColorField({
     setDraft(raw);
     if (HEX.test(raw.trim())) onValueChange(normalize(raw));
   };
-  const guard = charsetGuard<HTMLInputElement>("latin", undefined, (e) => commit(e.target.value));
+  const { guard, whisper, leaving, hush } = useCharsetGuard<HTMLInputElement>("latin", undefined, (e: ChangeEvent<HTMLInputElement>) =>
+    commit(e.target.value),
+  );
+  const wrapRef = useRef<HTMLDivElement>(null);
   const current = normalize(value);
 
   return (
@@ -90,7 +94,7 @@ export function ColorField({
         <FieldMark optional={optional} required={required} />
       </label>
 
-      <div className="fld-wrap">
+      <div ref={wrapRef} className={cn("fld-wrap", whisper ? "fld-warn" : undefined)}>
         <label className="acf-sw" style={{ "--acf-c": current } as CSSProperties}>
           <input
             type="color"
@@ -113,6 +117,7 @@ export function ColorField({
           {...guard}
         />
       </div>
+      <CharsetWhisper text={whisper} anchorRef={wrapRef} leaving={leaving} onHush={hush} />
 
       {presets.length ? (
         <div className="acf-presets">
