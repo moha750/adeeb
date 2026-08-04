@@ -15,7 +15,7 @@ import {
 } from "@phosphor-icons/react";
 import { downloadBlob } from "@/lib/download";
 import { qrSvg } from "@/lib/qr";
-import { num, GOAL, isComplete, MEMBERS, memberById, REWARD, statusText, type DemoMember } from "./demo";
+import { GOAL, isComplete, MEMBERS, memberById, num, REWARD, score, statusText, type DemoMember } from "./demo";
 import { cardFace, type PassField } from "./pass";
 import "./card.css";
 
@@ -311,7 +311,8 @@ export function WalletPreview({ initial }: { initial: Record<string, { stamps: n
                 subtitle="اختم مشاركاتٍ يدويًّا لترى البطاقة تمتلئ — في النظام الحقيقيّ يختمها حضورُ الفعاليّة"
                 actions={
                   <Badge tone={done ? "success" : "info"}>
-                    <span className="font-latin">{num(member.stamps)}</span> / <span className="font-latin">{num(GOAL)}</span>
+                    {/* كتلةٌ واحدةٌ لا ثلاث — الفاصلُ المحاطُ بمسافتين ينقلب في الجملة العربيّة */}
+                    <span className="font-latin">{score(member.stamps)}</span>
                   </Badge>
                 }
               />

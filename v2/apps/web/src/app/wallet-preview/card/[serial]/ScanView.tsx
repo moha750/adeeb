@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Alert, Badge, Button, Card, CardBody, CardHeader, Container } from "@adeeb/design-system";
 import { CheckCircle, Gift, Stamp, User, Warning } from "@phosphor-icons/react";
-import { num, GOAL, isComplete, REWARD, statusText, type DemoMember } from "../../demo";
+import { GOAL, isComplete, num, REWARD, score, statusText, type DemoMember } from "../../demo";
 
 /** جوابُ المزامنة كما يردّه الخادم — يُعرَض كما هو، فالدفعةُ الصامتة لا تُصدَّق بلا خبر. */
 type SyncResult = {
@@ -74,8 +74,8 @@ export function ScanView({ holder, stamps, cycles }: { holder: DemoMember; stamp
               subtitle={`${holder.department} · ${holder.committee}`}
               actions={
                 <Badge tone={complete ? "success" : "info"}>
-                  <span className="font-latin">{num(state.stamps)}</span> /{" "}
-                  <span className="font-latin">{num(GOAL)}</span>
+                  {/* كتلةٌ واحدةٌ لا ثلاث — الفاصلُ المحاطُ بمسافتين ينقلب في الجملة العربيّة */}
+                  <span className="font-latin">{score(state.stamps)}</span>
                 </Badge>
               }
             />

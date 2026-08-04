@@ -13,7 +13,7 @@
  * ولذلك `primaryFields` **فارغة عمدًا**: أبل ترسمها **فوق** الشريط، فتحجب ما فيه.
  */
 
-import { num, GOAL, isComplete, statusText, type DemoMember } from "./demo";
+import { GOAL, isComplete, num, score, statusText, type DemoMember } from "./demo";
 
 /**
  * حقلٌ واحدٌ كما يعرّفه PassKit: مفتاحٌ وتسميةٌ وقيمة.
@@ -83,7 +83,7 @@ export function cardFace(m: DemoMember): CardFace {
       {
         key: "stamps",
         label: "المشاركات",
-        value: `${num(m.stamps)} / ${num(GOAL)}`,
+        value: score(m.stamps),
         // الحقلُ الوحيد الذي يحمل رسالةً — انظر `PassField`
         changeMessage: stampsMessage(m.stamps),
       },
