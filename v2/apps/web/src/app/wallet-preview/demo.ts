@@ -28,7 +28,6 @@ export const REWARD = {
 export type DemoMember = {
   id: string;
   name: string;
-  gender: "male" | "female";
   /**
    * القسم واللجنة — يُرسَمان على البطاقة كما طلب المالك، و**من الهيكلة الحقيقيّة**
    * (`departments` · `committees`) لا من الخيال: البيانات وهميّةٌ والأسماءُ ليست.
@@ -47,49 +46,39 @@ export type DemoMember = {
 };
 
 /**
- * أربعةُ حساباتٍ وهميّة تغطّي حالات البطاقة الأربع: **مكتملةٌ تنتظر الاستلام** ·
- * قاربت · في أوّلها · وفارغةٌ لم تبدأ.
+ * ثلاثةُ حساباتٍ وهميّة (بأسماء المالك ٢٠٢٦-٠٨-٠٤) تغطّي حالات البطاقة الثلاث:
+ * **مكتملةٌ تنتظر الاستلام** · في منتصفها · في أوّلها.
+ *
+ * **والأرقام التسلسليّة تثبت ولا تُولَّد من جديد**: البطاقة في المحفظة تُعرَّف برقمها، فلو
+ * بُدِّل لَبقيت في الجهاز بطاقةٌ يتيمةٌ لا يصلها تحديث. فالاسمُ يتغيّر والرقمُ يلزم مكانه.
  */
 export const MEMBERS: DemoMember[] = [
   {
     id: "m1",
-    name: "لمى صالح الدوسري",
-    gender: "female",
+    name: "بشائر",
     department: "التواصل المجتمعي",
-    committee: "السُفراء",
+    committee: "الفعاليات",
     stamps: 10,
     cycles: 2,
     serial: "ADEEB-CARD-2026-0117",
   },
   {
     id: "m2",
-    name: "عبدالله أحمد باجعيفر",
-    gender: "male",
-    department: "الإنتاج الإعلامي",
-    committee: "التصوير",
-    stamps: 7,
+    name: "محمد",
+    department: "نظم المعلومات",
+    committee: "البرمجة",
+    stamps: 6,
     cycles: 1,
     serial: "ADEEB-CARD-2026-0233",
   },
   {
     id: "m3",
-    name: "ريّان محمد الحربي",
-    gender: "male",
+    name: "حوراء",
     department: "صناعة المحتوى",
     committee: "التأليف",
-    stamps: 3,
+    stamps: 2,
     cycles: 0,
     serial: "ADEEB-CARD-2026-0341",
-  },
-  {
-    id: "m4",
-    name: "جُمانة فهد القحطاني",
-    gender: "female",
-    department: "نظم المعلومات",
-    committee: "التقارير والأرشفة",
-    stamps: 0,
-    cycles: 0,
-    serial: "ADEEB-CARD-2026-0402",
   },
 ];
 
