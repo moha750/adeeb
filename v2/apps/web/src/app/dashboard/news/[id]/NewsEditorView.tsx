@@ -180,7 +180,7 @@ export function NewsEditorView({
           <h1 style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             {row.title}
             <Badge tone={meta.tone} dot>{meta.label}</Badge>
-            {row.isFeatured ? <Star weight="fill" size={18} className="text-warning" aria-label="مميّز" /> : null}
+            {row.isFeatured ? <Star size={18} className="text-warning" aria-label="مميّز" /> : null}
           </h1>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -341,7 +341,7 @@ export function NewsEditorView({
                 ) : null}
               </div>
             ) : may("image_url") ? (
-              <EmptyState variant="soft" icon={<ImageIcon weight="duotone" />} title="بلا غلاف"
+              <EmptyState variant="soft" icon={<ImageIcon />} title="بلا غلاف"
                 description="الغلاف مطلوبٌ قبل النشر — يظهر في بطاقة الخبر وفي الصفحة الرئيسية."
                 action={<Button variant="primary" size="md" onClick={() => coverInput.current?.click()} loading={uploading > 0}>
                   <UploadSimple size={18} />رفع الغلاف
@@ -408,7 +408,7 @@ export function NewsEditorView({
               ))}
             </div>
           ) : (
-            <EmptyState variant="soft" icon={<UsersThree weight="duotone" />} title="بلا طاقم"
+            <EmptyState variant="soft" icon={<UsersThree />} title="بلا طاقم"
               description="كلّف كاتبًا — يُفتح له الخبر في غرفته، ويحرّر ما أسندتَه إليه وحده." />
           )}
         </div>
@@ -452,7 +452,7 @@ export function NewsEditorView({
               ))}
             </div>
           ) : (
-            <EmptyState variant="soft" icon={<ChatCircleDots weight="duotone" />} title="لا تعليقات"
+            <EmptyState variant="soft" icon={<ChatCircleDots />} title="لا تعليقات"
               description="غرفةٌ هادئة — اكتب أوّل ملاحظةٍ للطاقم." />
           )}
         </div>
@@ -491,7 +491,7 @@ export function NewsEditorView({
             ))}
           </div>
         ) : (
-          <EmptyState variant="soft" icon={<ChatCircleDots weight="duotone" />} title="لا تعليقات من الجمهور"
+          <EmptyState variant="soft" icon={<ChatCircleDots />} title="لا تعليقات من الجمهور"
             description="ما وصل تعليقٌ على هذا الخبر بعد." />
         )
       ) : null}
@@ -510,7 +510,7 @@ export function NewsEditorView({
             ))}
           </div>
         ) : (
-          <EmptyState variant="soft" icon={<ClockCounterClockwise weight="duotone" />} title="لا سجلّ بعد"
+          <EmptyState variant="soft" icon={<ClockCounterClockwise />} title="لا سجلّ بعد"
             description="يُكتب السجلّ عند كلّ تحوّلٍ في حالة الخبر." />
         )
       ) : null}
@@ -603,7 +603,7 @@ export function NewsEditorView({
         open={confirmCover}
         onClose={() => setConfirmCover(false)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف الغلاف؟"
         text="سيُحذف الملفّ من المخزن ولا يُسترجع. ولا يُنشَر الخبر بلا غلاف."
         confirmLabel="حذف"
@@ -618,7 +618,7 @@ export function NewsEditorView({
         open={killImage !== null}
         onClose={() => setKillImage(null)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف الصورة؟"
         text="سيُحذف الملفّ من المخزن ولا يُسترجع."
         confirmLabel="حذف"

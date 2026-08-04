@@ -173,7 +173,7 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
             {/* تعريفٌ بالخلفية الصوتية قبل بدء القصة — يخرج مع المؤشّر نفسه،
                 ويزول قبل ذلك متى صارت مسموعة (st-sound-live) */}
             <p className="st-cue-sound">
-              <SpeakerHigh weight="duotone" />
+              <SpeakerHigh />
               للحكـاية خلفيةٌ صوتيّة شغلها لتجربة أفضل
             </p>
             <span>مرِّر للأسفل</span>
@@ -228,7 +228,7 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
                   style={{ "--cg1": c.g[0], "--cg2": c.g[1] } as CSSProperties}
                 >
                   <div className="st-card-icon" aria-hidden="true">
-                    <c.Icon weight="duotone" />
+                    <c.Icon />
                   </div>
                   {/* رقم الملفّ المنتظَر — دليلٌ يزول من نفسه مع وصول الصورة */}
                   <span className="st-card-num" aria-hidden="true">
@@ -321,7 +321,7 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
                       {/* بطاقةٌ بديلة حتى وصول الصورة — بالإطار نفسه فلا يبدو الجدار ناقصًا.
                           بلا رقم: لا ترقيمَ للصور في هذا المشهد البتّة */}
                       <span className="st-shot-ph">
-                        <Icon weight="duotone" />
+                        <Icon />
                       </span>
                     </span>
                   </figure>
@@ -374,8 +374,8 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
           {/* مفتاح الصوت — في الزاوية التي أخلاها زرّ التخطّي حين تمركز، فلا
               يزاحمه ولا يزاحم شرطات الفصول. حالتُه في data-on يكتبها story.ts */}
           <button type="button" className="st-sound" data-on="0" aria-pressed="false" aria-label="الخلفية الصوتية">
-            <SpeakerHigh weight="duotone" className="st-sound-on" aria-hidden="true" />
-            <SpeakerSlash weight="duotone" className="st-sound-off" aria-hidden="true" />
+            <SpeakerHigh className="st-sound-on" aria-hidden="true" />
+            <SpeakerSlash className="st-sound-off" aria-hidden="true" />
             {/* الدعوة: حلقةٌ تنبض وتلميحةٌ تعرّف بالخلفية — تظهران بـdata-hint
                 الذي يكتبه story.ts عند أوّل تمرير، ولا تعودان بعد هدوئهما */}
             <span className="st-sound-ring" aria-hidden="true" />

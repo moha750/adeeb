@@ -49,9 +49,9 @@ export function SupervisedView({
       </div>
 
       <div className="stat-grid">
-        <Stat icon={<Buildings weight="fill" />} value={committees.length} label={committeesLabel(committees.length)} tone="brand" />
-        <Stat icon={<UsersFour weight="fill" />} value={people} label="عضوًا تحت إشرافك" tone="success" />
-        <Stat icon={<UserMinus weight="fill" />} value={gaps} label="لجنة تنقصها قيادة" tone={gaps ? "danger" : "success"} />
+        <Stat icon={<Buildings />} value={committees.length} label={committeesLabel(committees.length)} tone="brand" />
+        <Stat icon={<UsersFour />} value={people} label="عضوًا تحت إشرافك" tone="success" />
+        <Stat icon={<UserMinus />} value={gaps} label="لجنة تنقصها قيادة" tone={gaps ? "danger" : "success"} />
       </div>
 
       <Segmented
@@ -66,7 +66,7 @@ export function SupervisedView({
       ) : committees.length === 0 ? (
         <EmptyState
           variant="soft"
-          icon={<UsersFour weight="duotone" />}
+          icon={<UsersFour />}
           title="لا لجان تحت إشرافك بعد"
           description={
             unit

@@ -19,11 +19,11 @@ export function Person({ h, role, tone }: { h: Holder; role?: boolean; tone?: "g
 }
 
 // منصبٌ شاغر — إشارة danger صريحة (لا يُخفى: «المستشار» منصبٌ قائم بلا شاغل، وإخفاؤه يكذب).
-export const Vacant = ({ label }: { label: string }) => <span className="org-vacant"><Warning weight="fill" /> {label}</span>;
+export const Vacant = ({ label }: { label: string }) => <span className="org-vacant"><Warning /> {label}</span>;
 
 // زرّ تعديل البيانات الوصفيّة (وصف + رابط) — light للنسخة الزجاجيّة فوق ترويسة المجلس.
 export const MetaBtn = ({ onClick, light }: { onClick: () => void; light?: boolean }) => (
-  <button type="button" className={"org-meta" + (light ? " lt" : "")} onClick={onClick} aria-label="تعديل البيانات" title="تعديل الوصف والرابط"><PencilSimple weight="bold" /></button>
+  <button type="button" className={"org-meta" + (light ? " lt" : "")} onClick={onClick} aria-label="تعديل البيانات" title="تعديل الوصف والرابط"><PencilSimple /></button>
 );
 
 // المجلس هيئةٌ لا حاوية: مقاعده تُقرأ من القاعدة (roles.membership_kind='member')،
@@ -65,16 +65,16 @@ export function Committee({ c, q, open, onToggle, edit, onMeta }: {
     <div className="org-com">
       <div className="org-com-head">
         <button type="button" className="org-com-toggle" onClick={onToggle} aria-expanded={expanded}>
-          <CaretDown className={"org-caret" + (expanded ? " on" : "")} weight="bold" />
+          <CaretDown className={"org-caret" + (expanded ? " on" : "")} />
           <span className="org-com-name">{c.name}</span>
         </button>
         {c.leader ? (
           <span className="org-com-leader"><Avatar name={c.leader.name} src={c.leader.avatar ?? undefined} gender={c.leader.gender} size="xs" /><span>{c.leader.name}</span></span>
         ) : (
-          <span className="org-com-leader org-com-leaderless"><Warning weight="fill" /> بلا قائد</span>
+          <span className="org-com-leader org-com-leaderless"><Warning /> بلا قائد</span>
         )}
         {edit ? <MetaBtn onClick={onMeta} /> : null}
-        <Badge tone="neutral" variant="soft"><Users weight="fill" /> {c.total}</Badge>
+        <Badge tone="neutral" variant="soft"><Users /> {c.total}</Badge>
       </div>
       {expanded ? (
         <div className="org-com-body">

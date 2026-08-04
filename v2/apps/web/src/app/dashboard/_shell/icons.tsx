@@ -40,14 +40,16 @@ import {
   Certificate,
   QrCode,
   EnvelopeSimpleOpen,
+  UserCircle,
 } from "@phosphor-icons/react";
-import type { IconWeight } from "@phosphor-icons/react";
 
-// الوزن يُمرَّر لمن يحتاج استثناءً من سياق الشريط (duotone) — انظر `.ash-caret` في الهيكل
-type P = { className?: string; weight?: IconWeight };
+// بلا `weight`: الوزن من سياق الجذر وحده (`IconDefaults`) — لا استثناء لأيقونةٍ في الشريط
+type P = { className?: string };
 
 // عضويتي — بطاقة الهويّة: عضويّة صاحب الجلسة نفسه (حلّت محلّ بيت «نظرة عامة»)
 export const IconMe = (p: P) => <IdentificationBadge aria-hidden {...p} />;
+// الملف الشخصي — الشخص نفسُه لا بطاقتُه: بياناتُه وصورتُه، فيفترق عن «عضويتي» (موقعُه في الهيكل)
+export const IconProfile = (p: P) => <UserCircle aria-hidden {...p} />;
 export const IconUsers = (p: P) => <UsersThree aria-hidden {...p} />;
 export const IconClip = (p: P) => <ClipboardText aria-hidden {...p} />;
 export const IconDoc = (p: P) => <FileText aria-hidden {...p} />;
@@ -106,7 +108,7 @@ export const IconQr = (p: P) => <QrCode aria-hidden {...p} />;
 export const IconInbox = (p: P) => <EnvelopeSimpleOpen aria-hidden {...p} />;
 
 export const ICONS = {
-  me: IconMe, users: IconUsers, clip: IconClip, doc: IconDoc,
+  me: IconMe, profile: IconProfile, users: IconUsers, clip: IconClip, doc: IconDoc,
   cal: IconCal, globe: IconGlobe, gear: IconGear, chart: IconChart,
   vote: IconVote, book: IconBook, images: IconImages,
   stats: IconStats, handshake: IconHandshake, faq: IconFaq,

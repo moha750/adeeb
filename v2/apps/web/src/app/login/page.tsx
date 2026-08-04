@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
+// مدخلُ ssr خادميٌّ لا يقرأ سياقَ الأيقونات، فيُمرَّر الوزنُ من مصدره الواحد صراحةً.
+import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { AuthShell } from "@adeeb/design-system";
 import { LoginForm } from "./LoginForm";
 
@@ -23,7 +25,7 @@ export default function LoginPage() {
 
         {/* المخرج: عودةٌ إلى الموقع لمن حطّ هنا بلا حساب — نمطُ زرّ‑الرابط المتّبع في اللوحة */}
         <Link href="/" className="abtn abtn-ghost abtn-md aauth-back">
-          <ArrowRight size={18} />
+          <ArrowRight size={18} weight={ICON_WEIGHT} />
           العودة إلى الموقع
         </Link>
       </AuthShell>

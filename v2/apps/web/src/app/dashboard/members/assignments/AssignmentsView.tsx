@@ -84,16 +84,16 @@ export function AssignmentsView({ positions, members, anomalies }: { positions: 
   }];
 
   const empty = (
-    <EmptyState variant="soft" icon={<MagnifyingGlass weight="duotone" />} title="لا مناصب مطابقة"
+    <EmptyState variant="soft" icon={<MagnifyingGlass />} title="لا مناصب مطابقة"
       description="جرّب تعديل البحث أو المرشّحات." action={<Button variant="ghost" size="md" onClick={() => { setSearch(""); setFv({}); }}>مسح المرشّحات</Button>} />
   );
 
   return (
     <div className="asg">
       <div className="stat-grid">
-        <Stat icon={<Briefcase weight="fill" />} value={stats.total} label="منصبًا قياديًّا" tone="brand" />
-        <Stat icon={<UserCheck weight="fill" />} value={stats.filled} label="مشغولة" tone="success" />
-        <Stat icon={<UserMinus weight="fill" />} value={stats.vacant} label="شاغرة" tone="danger" />
+        <Stat icon={<Briefcase />} value={stats.total} label="منصبًا قياديًّا" tone="brand" />
+        <Stat icon={<UserCheck />} value={stats.filled} label="مشغولة" tone="success" />
+        <Stat icon={<UserMinus />} value={stats.vacant} label="شاغرة" tone="danger" />
       </div>
 
       {anomalies.length ? (

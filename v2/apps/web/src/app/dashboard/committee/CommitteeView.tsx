@@ -52,7 +52,7 @@ export function CommitteeView({
       {/* عددٌ واحد يكفي: القيادةُ والإشرافُ يُرَيان بأعيان شاغليهم في الكرت أدناه، فرقمٌ
           يعيدهما زينةٌ لا خبر (وشغورُ المقعد يقوله الكرت صريحًا). */}
       <div className="stat-grid">
-        <Stat icon={<UsersFour weight="fill" />} value={c.total} label="عضوًا في لجنتك" tone="brand" />
+        <Stat icon={<UsersFour />} value={c.total} label="عضوًا في لجنتك" tone="brand" />
       </div>
 
       <div className="viewbar">

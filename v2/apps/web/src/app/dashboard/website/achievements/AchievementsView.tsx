@@ -73,7 +73,7 @@ export function AchievementsView({ items }: { items: AchievementRow[] }) {
   const emptyState = (
     <EmptyState
       variant="aurora"
-      icon={<ChartBar weight="duotone" />}
+      icon={<ChartBar />}
       title="لا إحصاءات بعد"
       description="أضِف أوّل إحصائيّة — تظهر مباشرةً في «ملخص المسيرة» بحجمٍ يتناسب مع رقمها."
       action={createBtn}
@@ -91,7 +91,7 @@ export function AchievementsView({ items }: { items: AchievementRow[] }) {
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<ChartBar weight="fill" />} value={items.length} label="إحصاءات في الملخّص" />
+        <Stat icon={<ChartBar />} value={items.length} label="إحصاءات في الملخّص" />
       </div>
 
       <Toolbar view={view} onViewChange={changeView} />
@@ -119,7 +119,7 @@ export function AchievementsView({ items }: { items: AchievementRow[] }) {
         open={confirmKill !== null}
         onClose={() => setConfirmKill(null)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف الإحصائيّة؟"
         text={confirmKill ? `ستُحذف «${confirmKill.label}» من ملخّص المسيرة نهائيًّا. لا استرجاع بعده.` : undefined}
         confirmLabel="حذف"

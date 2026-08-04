@@ -82,7 +82,7 @@ export default function CardsPage() {
               </Card>
 
               <Card>
-                <CardHeader icon={<GraduationCap weight="duotone" aria-hidden />} title="تدريب معتمد" subtitle="شهادة حضور" />
+                <CardHeader icon={<GraduationCap aria-hidden />} title="تدريب معتمد" subtitle="شهادة حضور" />
                 <CardBody className="pt-3">
                   <p className="text-sm text-content-muted">برامج تدريبية نوعية بإشراف مختصّين وشهادات موثّقة.</p>
                 </CardBody>
@@ -110,15 +110,15 @@ export default function CardsPage() {
             </p>
             <div className="card-grid">
               <Card>
-                <CardHeader icon={<GraduationCap weight="duotone" aria-hidden />} title="chip — بقرص" subtitle="على سطح الكرت" />
+                <CardHeader icon={<GraduationCap aria-hidden />} title="chip — بقرص" subtitle="على سطح الكرت" />
                 <CardBody className="pt-3"><p className="text-sm text-content-muted">القرص المتدرّج على سطح الكرت الفاتح — هادئ.</p></CardBody>
               </Card>
               <Card>
-                <CardHeader variant="soft" icon={<GraduationCap weight="duotone" aria-hidden />} title="soft — منسّم" subtitle="تدرّج خفيف" />
+                <CardHeader variant="soft" icon={<GraduationCap aria-hidden />} title="soft — منسّم" subtitle="تدرّج خفيف" />
                 <CardBody className="pt-3"><p className="text-sm text-content-muted">تدرّجٌ قطريّ خفيفٌ من زوج الهوية (فولاذيّ→كحليّ) + شعرةٌ سفليّة، نصٌّ داكن — مميّزٌ وهادئ.</p></CardBody>
               </Card>
               <Card>
-                <CardHeader variant="solid" icon={<GraduationCap weight="duotone" aria-hidden />} title="solid — صلب" subtitle="شريطٌ ممتلئ" />
+                <CardHeader variant="solid" icon={<GraduationCap aria-hidden />} title="solid — صلب" subtitle="شريطٌ ممتلئ" />
                 <CardBody className="pt-3"><p className="text-sm text-content-muted">شريطٌ ممتلئٌ بتدرّج الهوية، نصٌّ أبيض وقرصٌ زجاجيّ — إبرازٌ قويّ.</p></CardBody>
               </Card>
             </div>

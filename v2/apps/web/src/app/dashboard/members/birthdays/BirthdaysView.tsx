@@ -171,7 +171,7 @@ export function BirthdaysView({
     key: "countdown", header: "قادم", width: "1.2fr",
     render: (r) =>
       r.isToday
-        ? <Badge tone="success" variant="soft" icon={<Confetti weight="fill" />}>{countdownText(0)}</Badge>
+        ? <Badge tone="success" variant="soft" icon={<Confetti />}>{countdownText(0)}</Badge>
         : <span className="txt">{countdownText(r.daysUntil)}</span>,
   };
   const soonColumns: Column<Derived>[] = [memberCol, dateCol, countdownCol, ageCol, downloadCol];
@@ -180,7 +180,7 @@ export function BirthdaysView({
   const emptyState = members.length === 0 ? (
     <EmptyState
       variant="aurora"
-      icon={<Cake weight="duotone" />}
+      icon={<Cake />}
       title={scope === "supervised" ? "لا مواليد في نطاق إشرافك" : "لا مواليد مسجّلة بعد"}
       description={
         scope === "supervised"
@@ -191,7 +191,7 @@ export function BirthdaysView({
   ) : (
     <EmptyState
       variant="soft"
-      icon={<MagnifyingGlass weight="duotone" />}
+      icon={<MagnifyingGlass />}
       title="لا أعضاء مطابقون"
       description="لم نعثر على من يطابق بحثك. جرّب اسمًا آخر."
       action={<Button variant="ghost" size="md" onClick={() => setSearch("")}>مسح البحث</Button>}
@@ -207,14 +207,14 @@ export function BirthdaysView({
         </div>
         {/* النطاق يُقال حيث يُرى — فلا يُحسب الجزءُ كلًّا */}
         {scope === "supervised" && (
-          <Badge tone="info" variant="soft" icon={<UsersFour weight="fill" />}>مواليد من تشرف عليهم</Badge>
+          <Badge tone="info" variant="soft" icon={<UsersFour />}>مواليد من تشرف عليهم</Badge>
         )}
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<Cake weight="fill" />} value={stats.todayCount} label="ميلاد اليوم" tone={stats.todayCount > 0 ? "success" : "brand"} />
-        <Stat icon={<Confetti weight="fill" />} value={stats.weekCount} label="خلال أسبوع" />
-        <Stat icon={<CalendarDots weight="fill" />} value={stats.monthCount} label={`مواليد هذا الشهر (${MONTHS[today.m0]})`} />
+        <Stat icon={<Cake />} value={stats.todayCount} label="ميلاد اليوم" tone={stats.todayCount > 0 ? "success" : "brand"} />
+        <Stat icon={<Confetti />} value={stats.weekCount} label="خلال أسبوع" />
+        <Stat icon={<CalendarDots />} value={stats.monthCount} label={`مواليد هذا الشهر (${MONTHS[today.m0]})`} />
       </div>
 
       <Toolbar

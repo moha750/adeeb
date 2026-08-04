@@ -228,10 +228,10 @@ export function QrToolView() {
       <div className="card-grid mt-4">
         {/* ── الضوابط ── */}
         <div className="flex flex-col gap-4">
-          <ChartPanel headerVariant="chip" icon={<QrCode weight="fill" />} title="ما يحمله الرمز">
+          <ChartPanel headerVariant="chip" icon={<QrCode />} title="ما يحمله الرمز">
             <Field
               label="الرابط أو النصّ"
-              icon={<LinkSimple weight="fill" />}
+              icon={<LinkSimple />}
               innerIcon={<Globe />}
               placeholder="https://adeeb.club/join"
               dir="ltr"
@@ -241,11 +241,11 @@ export function QrToolView() {
               required
             />
             <div className="mt-4">
-              <Select label="مقاس التنزيل" icon={<DownloadSimple weight="fill" />} options={SIZES} value={size} onValueChange={setSize} />
+              <Select label="مقاس التنزيل" icon={<DownloadSimple />} options={SIZES} value={size} onValueChange={setSize} />
             </div>
           </ChartPanel>
 
-          <ChartPanel headerVariant="chip" icon={<Drop weight="fill" />} title="الحبر والأرضيّة">
+          <ChartPanel headerVariant="chip" icon={<Drop />} title="الحبر والأرضيّة">
             <Switch
               row
               label="تدرّج بدل لونٍ صلب"
@@ -254,10 +254,10 @@ export function QrToolView() {
               onChange={(e) => setGradient(e.target.checked)}
             />
             <div className="mt-4 flex flex-col gap-4">
-              <ColorField label={gradient ? "اللون الأوّل" : "لون الحبر"} icon={<Drop weight="fill" />} value={ink} onValueChange={setInk} required />
+              <ColorField label={gradient ? "اللون الأوّل" : "لون الحبر"} icon={<Drop />} value={ink} onValueChange={setInk} required />
               {gradient ? (
                 <>
-                  <ColorField label="اللون الثاني" icon={<Sparkle weight="fill" />} value={ink2} onValueChange={setInk2} required />
+                  <ColorField label="اللون الثاني" icon={<Sparkle />} value={ink2} onValueChange={setInk2} required />
                   <Segmented
                     aria-label="نوع التدرّج"
                     items={[{ value: "linear", label: "خطّيّ" }, { value: "radial", label: "شعاعيّ" }]}
@@ -267,7 +267,7 @@ export function QrToolView() {
                   {gradKind === "linear" ? (
                     <Select
                       label="اتّجاه التدرّج"
-                      icon={<Sparkle weight="fill" />}
+                      icon={<Sparkle />}
                       options={[
                         { value: "0", label: "أفقيّ" },
                         { value: "90", label: "رأسيّ" },
@@ -288,7 +288,7 @@ export function QrToolView() {
                 checked={bare}
                 onChange={(e) => setBare(e.target.checked)}
               />
-              {!bare ? <ColorField label="لون الأرضيّة" icon={<PaintBucket weight="fill" />} value={bg} onValueChange={setBg} /> : null}
+              {!bare ? <ColorField label="لون الأرضيّة" icon={<PaintBucket />} value={bg} onValueChange={setBg} /> : null}
             </div>
 
             <div className="mt-4">
@@ -296,7 +296,7 @@ export function QrToolView() {
             </div>
           </ChartPanel>
 
-          <ChartPanel headerVariant="chip" icon={<Eye weight="fill" />} title="العيون">
+          <ChartPanel headerVariant="chip" icon={<Eye />} title="العيون">
             <div className="flex flex-col gap-4">
               <Switch
                 row
@@ -307,14 +307,14 @@ export function QrToolView() {
               />
               {eyeTinted ? (
                 <>
-                  <ColorField label="لون الطوق" icon={<Eye weight="fill" />} value={eyeColor} onValueChange={setEyeColor} />
-                  <ColorField label="لون البؤبؤ" icon={<Eye weight="fill" />} value={pupilColor} onValueChange={setPupilColor} />
+                  <ColorField label="لون الطوق" icon={<Eye />} value={eyeColor} onValueChange={setEyeColor} />
+                  <ColorField label="لون البؤبؤ" icon={<Eye />} value={pupilColor} onValueChange={setPupilColor} />
                 </>
               ) : null}
             </div>
           </ChartPanel>
 
-          <ChartPanel headerVariant="chip" icon={<ImageSquare weight="fill" />} title="الشعار في القلب">
+          <ChartPanel headerVariant="chip" icon={<ImageSquare />} title="الشعار في القلب">
             <div className="flex flex-col gap-3 items-start">
               {logo ? (
                 // eslint-disable-next-line @next/next/no-img-element -- صورةٌ مضمَّنة (data URL) لا أصلٌ ثابت
@@ -339,13 +339,13 @@ export function QrToolView() {
               {logoError ? <Alert tone="danger" title="تعذّر استعمال الشعار">{logoError}</Alert> : null}
               {logo ? (
                 <div className="w-full">
-                  <Select label="حجم الشعار" icon={<ImageSquare weight="fill" />} options={LOGO_SIZES} value={logoScale} onValueChange={setLogoScale} />
+                  <Select label="حجم الشعار" icon={<ImageSquare />} options={LOGO_SIZES} value={logoScale} onValueChange={setLogoScale} />
                 </div>
               ) : null}
             </div>
           </ChartPanel>
 
-          <ChartPanel headerVariant="chip" icon={<TextAa weight="fill" />} title="الإطار والنداء">
+          <ChartPanel headerVariant="chip" icon={<TextAa />} title="الإطار والنداء">
             <Switch
               row
               label="إطارٌ ونداء تحته"
@@ -357,7 +357,7 @@ export function QrToolView() {
               <div className="mt-4 flex flex-col gap-4">
                 <Field
                   label="نصّ النداء"
-                  icon={<TextAa weight="fill" />}
+                  icon={<TextAa />}
                   innerIcon={<Globe />}
                   placeholder="امسحني"
                   value={caption}
@@ -365,8 +365,8 @@ export function QrToolView() {
                   helper="اتركه فارغًا فيبقى الطوق بلا شريط."
                   optional
                 />
-                <ColorField label="لون الإطار" icon={<Square weight="fill" />} value={frameColor} onValueChange={setFrameColor} />
-                <ColorField label="لون النصّ" icon={<TextAa weight="fill" />} value={captionColor} onValueChange={setCaptionColor} />
+                <ColorField label="لون الإطار" icon={<Square />} value={frameColor} onValueChange={setFrameColor} />
+                <ColorField label="لون النصّ" icon={<TextAa />} value={captionColor} onValueChange={setCaptionColor} />
               </div>
             ) : null}
           </ChartPanel>
@@ -374,7 +374,7 @@ export function QrToolView() {
 
         {/* ── المعاينة ── */}
         <div>
-          <ChartPanel headerVariant="chip" icon={<QrCode weight="fill" />} title="المعاينة — ما تراه هو ما يُنزَّل">
+          <ChartPanel headerVariant="chip" icon={<QrCode />} title="المعاينة — ما تراه هو ما يُنزَّل">
             {preview.error ? (
               <Alert tone="warning" title="تعذّر توليد الرمز">{preview.error}</Alert>
             ) : preview.svg ? (
@@ -385,10 +385,10 @@ export function QrToolView() {
 
             <div className="mt-4 flex flex-wrap gap-2">
               <Button variant="primary" size="md" disabled={!preview.svg} onClick={() => void savePng()}>
-                <DownloadSimple weight="bold" /> تنزيل PNG
+                <DownloadSimple /> تنزيل PNG
               </Button>
               <Button variant="neutral" size="md" disabled={!preview.svg} onClick={saveSvg}>
-                <FileSvg weight="bold" /> تنزيل SVG
+                <FileSvg /> تنزيل SVG
               </Button>
             </div>
 

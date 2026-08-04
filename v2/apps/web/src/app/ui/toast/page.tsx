@@ -26,16 +26,16 @@ function Demo() {
         <Lab>success · error · info · warning</Lab>
         <div className="flex flex-wrap items-center gap-4">
           <Button variant="success" onClick={() => toast.success("حُفظت التغييرات بنجاح.")}>
-            <CheckCircle aria-hidden weight="fill" /> نجاح
+            <CheckCircle aria-hidden /> نجاح
           </Button>
           <Button variant="danger" onClick={() => toast.error("تعذّر حفظ التغييرات، حاول مرّة أخرى.")}>
-            <XCircle aria-hidden weight="fill" /> خطأ
+            <XCircle aria-hidden /> خطأ
           </Button>
           <Button variant="ghost" onClick={() => toast.info("لديك رسالة جديدة في صندوق الوارد.")}>
-            <Info aria-hidden weight="fill" /> معلومة
+            <Info aria-hidden /> معلومة
           </Button>
           <Button variant="warning" onClick={() => toast.warning("ستنتهي صلاحية الجلسة قريبًا.")}>
-            <Warning aria-hidden weight="fill" /> تحذير
+            <Warning aria-hidden /> تحذير
           </Button>
         </div>
       </Sec>
@@ -81,7 +81,7 @@ function Demo() {
               toast.error("الإشعار السادس — يدفع الأقدم خارج المكدّس.");
             }}
           >
-            <Stack aria-hidden weight="fill" /> أطلق ٦ دفعة واحدة
+            <Stack aria-hidden /> أطلق ٦ دفعة واحدة
           </Button>
         </div>
       </Sec>

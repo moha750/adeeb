@@ -50,20 +50,20 @@ export function ArticleView({ n }: { n: PublicNews }) {
         {n.summary ? <p className="mt-4 text-lg leading-relaxed text-content-muted">{n.summary}</p> : null}
         <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-content-muted">
           {n.dateLabel ? (
-            <span className="inline-flex items-center gap-1.5"><CalendarBlank weight="duotone" aria-hidden />{n.dateLabel}</span>
+            <span className="inline-flex items-center gap-1.5"><CalendarBlank aria-hidden />{n.dateLabel}</span>
           ) : null}
           {n.authors.length ? (
-            <span className="inline-flex items-center gap-1.5"><User weight="duotone" aria-hidden />{n.authors.join(" · ")}</span>
+            <span className="inline-flex items-center gap-1.5"><User aria-hidden />{n.authors.join(" · ")}</span>
           ) : null}
           <span className="inline-flex items-center gap-1.5">
-            <Clock weight="duotone" aria-hidden /><span className="font-latin">{n.readMinutes}</span> دقائق قراءة
+            <Clock aria-hidden /><span className="font-latin">{n.readMinutes}</span> دقائق قراءة
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <Eye weight="duotone" aria-hidden /><span className="font-latin">{n.views}</span> مشاهدة
+            <Eye aria-hidden /><span className="font-latin">{n.views}</span> مشاهدة
           </span>
           {n.likes ? (
             <span className="inline-flex items-center gap-1.5">
-              <Heart weight="duotone" aria-hidden /><span className="font-latin">{n.likes}</span> إعجاب
+              <Heart aria-hidden /><span className="font-latin">{n.likes}</span> إعجاب
             </span>
           ) : null}
         </div>
@@ -76,7 +76,7 @@ export function ArticleView({ n }: { n: PublicNews }) {
             {n.coverPhotographer ? (
               <CardFooter>
                 <span className="inline-flex items-center gap-1.5 text-sm text-content-muted">
-                  <Camera weight="duotone" aria-hidden />عدسة {n.coverPhotographer}
+                  <Camera aria-hidden />عدسة {n.coverPhotographer}
                 </span>
               </CardFooter>
             ) : null}
@@ -100,7 +100,7 @@ export function ArticleView({ n }: { n: PublicNews }) {
                 {n.galleryPhotographers[i] ? (
                   <CardBody className="pt-3">
                     <span className="inline-flex items-center gap-1.5 text-sm text-content-muted">
-                      <Camera weight="duotone" aria-hidden />عدسة {n.galleryPhotographers[i]}
+                      <Camera aria-hidden />عدسة {n.galleryPhotographers[i]}
                     </span>
                   </CardBody>
                 ) : null}

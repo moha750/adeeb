@@ -16,12 +16,12 @@ export function ActivityDetailView({ a }: { a: PublicActivity }) {
         <div className="flex flex-wrap items-center gap-3 text-content-muted text-sm">
           <Badge tone="neutral" variant="soft">{TYPE_META[a.type].label}</Badge>
           {a.targetGender ? <Badge tone="info" variant="soft">{AUDIENCE_LABEL[a.targetGender]}</Badge> : null}
-          <span className="inline-flex items-center gap-2"><CalendarBlank weight="duotone" aria-hidden />{a.dateLabel}</span>
-          {a.timeLabel ? <span className="inline-flex items-center gap-2"><Clock weight="duotone" aria-hidden />{a.timeLabel}</span> : null}
+          <span className="inline-flex items-center gap-2"><CalendarBlank aria-hidden />{a.dateLabel}</span>
+          {a.timeLabel ? <span className="inline-flex items-center gap-2"><Clock aria-hidden />{a.timeLabel}</span> : null}
           {a.location ? (
             a.locationUrl
-              ? <a href={a.locationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 underline"><MapPin weight="duotone" aria-hidden />{a.location}</a>
-              : <span className="inline-flex items-center gap-2"><MapPin weight="duotone" aria-hidden />{a.location}</span>
+              ? <a href={a.locationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 underline"><MapPin aria-hidden />{a.location}</a>
+              : <span className="inline-flex items-center gap-2"><MapPin aria-hidden />{a.location}</span>
           ) : null}
         </div>
         <h1 className="text-2xl md:text-3xl font-bold text-content">{a.name}</h1>

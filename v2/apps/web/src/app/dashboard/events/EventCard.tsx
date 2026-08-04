@@ -24,7 +24,7 @@ export function EventCard({ event, actions, tone, onOpen }: Props) {
       {event.coverImageUrl ? <CardMedia image={event.coverImageUrl} alt={event.name} /> : null}
       <CardHeader
         className="acard-header-clip"
-        icon={<CalendarBlank weight="duotone" aria-hidden />}
+        icon={<CalendarBlank aria-hidden />}
         title={event.name}
         subtitle={event.timeLabel ? `${event.dateLabel} · ${event.timeLabel}` : event.dateLabel}
         actions={
@@ -43,13 +43,13 @@ export function EventCard({ event, actions, tone, onOpen }: Props) {
           <TypeBadge type={event.type} />
           {event.location ? (
             <span className="inline-flex items-center gap-2 text-content-muted text-sm">
-              <MapPin weight="duotone" aria-hidden />
+              <MapPin aria-hidden />
               <span>{event.location}</span>
             </span>
           ) : null}
           {event.organizerName ? (
             <span className="inline-flex items-center gap-2 text-content-muted text-sm">
-              <UsersThree weight="duotone" aria-hidden />
+              <UsersThree aria-hidden />
               <span>{event.organizerName}</span>
             </span>
           ) : null}

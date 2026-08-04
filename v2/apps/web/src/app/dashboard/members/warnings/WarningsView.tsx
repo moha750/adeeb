@@ -138,9 +138,9 @@ export function WarningsView({ data }: { data: WarningsData }) {
   /** الشارة تقول رتبته أو إلغاءه — والرتبة تسقط عن الملغى لأنّه خرج من العدّ. */
   const stateBadge = (r: WarningRow) =>
     r.status === "cancelled" ? (
-      <Badge tone="neutral" variant="outline" icon={<Prohibit weight="fill" />}>ملغى</Badge>
+      <Badge tone="neutral" variant="outline" icon={<Prohibit />}>ملغى</Badge>
     ) : (
-      <Badge tone={toneOf(r.ordinal ?? 1, limit)} variant="soft" icon={<Warning weight="fill" />}>
+      <Badge tone={toneOf(r.ordinal ?? 1, limit)} variant="soft" icon={<Warning />}>
         {warningTitle(r.ordinal ?? 1)}
       </Badge>
     );
@@ -213,7 +213,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
   const emptyState = rows.length === 0 ? (
     <EmptyState
       variant="aurora"
-      icon={<ShieldWarning weight="duotone" />}
+      icon={<ShieldWarning />}
       title="لا إنذارات — والحمد لله"
       description={mayIssue
         ? "لم يصدر إنذارٌ على أحدٍ في نطاقك بعد. وحين يلزم، يُصدَر من هنا فيُسجَّل ويُبلَّغ صاحبه."
@@ -222,7 +222,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
   ) : (
     <EmptyState
       variant="soft"
-      icon={<MagnifyingGlass weight="duotone" />}
+      icon={<MagnifyingGlass />}
       title="لا نتائج مطابقة"
       description="لم نعثر على إنذارٍ يطابق بحثك أو مرشّحاتك."
       action={<Button variant="ghost" size="md" onClick={() => { setSearch(""); setFilters({}); }}>مسح البحث</Button>}
@@ -236,13 +236,13 @@ export function WarningsView({ data }: { data: WarningsData }) {
           <Breadcrumb />
           <h1>الإنذارات</h1>
         </div>
-        {mayIssue ? null : <Badge tone="info" variant="soft" icon={<Eye weight="fill" />}>اطّلاعٌ لا إصدار</Badge>}
+        {mayIssue ? null : <Badge tone="info" variant="soft" icon={<Eye />}>اطّلاعٌ لا إصدار</Badge>}
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<Warning weight="fill" />} value={stats.active} label="إنذارات سارية" tone={stats.active > 0 ? "warning" : "brand"} />
-        <Stat icon={<ShieldWarning weight="fill" />} value={stats.members} label="أعضاء عليهم إنذارات" />
-        <Stat icon={<UserMinus weight="fill" />} value={stats.atLimit} label={`بلغوا الحدّ (${limit})`} tone={stats.atLimit > 0 ? "danger" : "brand"} />
+        <Stat icon={<Warning />} value={stats.active} label="إنذارات سارية" tone={stats.active > 0 ? "warning" : "brand"} />
+        <Stat icon={<ShieldWarning />} value={stats.members} label="أعضاء عليهم إنذارات" />
+        <Stat icon={<UserMinus />} value={stats.atLimit} label={`بلغوا الحدّ (${limit})`} tone={stats.atLimit > 0 ? "danger" : "brand"} />
       </div>
 
       <Toolbar
@@ -359,7 +359,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
         ) : null}
         <Textarea
           label="سبب الإلغاء"
-          icon={<WarningOctagon weight="duotone" />}
+          icon={<WarningOctagon />}
           innerIcon={<NotePencil />}
           placeholder="لماذا يُلغى هذا الإنذار؟"
           value={cancelReason}

@@ -22,9 +22,9 @@ import type { AuthRole, MembershipAuthorityRow, PositionAuthorityRow } from "./d
 type View = "assign" | "take" | "membership";
 
 const VIEWS = [
-  { value: "assign", label: <span className="seg-lbl"><Crown weight="bold" /> الإسناد</span> },
-  { value: "take", label: <span className="seg-lbl"><HandGrabbing weight="bold" /> السحب</span> },
-  { value: "membership", label: <span className="seg-lbl"><UserMinus weight="bold" /> العضويّة</span> },
+  { value: "assign", label: <span className="seg-lbl"><Crown /> الإسناد</span> },
+  { value: "take", label: <span className="seg-lbl"><HandGrabbing /> السحب</span> },
+  { value: "membership", label: <span className="seg-lbl"><UserMinus /> العضويّة</span> },
 ];
 
 const SCOPES = [

@@ -92,7 +92,7 @@ export function WorksView({ works }: { works: WorkRow[] }) {
   const emptyState = (
     <EmptyState
       variant="aurora"
-      icon={<ImagesSquare weight="duotone" />}
+      icon={<ImagesSquare />}
       title="لا أعمال بعد"
       description="أضِف أوّل عمل — يظهر مباشرةً في معرض «أعمال وإبداعات» على الصفحة الرئيسية."
       action={createBtn}
@@ -110,7 +110,7 @@ export function WorksView({ works }: { works: WorkRow[] }) {
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<ImagesSquare weight="fill" />} value={works.length} label="أعمال في المعرض" />
+        <Stat icon={<ImagesSquare />} value={works.length} label="أعمال في المعرض" />
       </div>
 
       <Toolbar view={view} onViewChange={changeView} />
@@ -138,7 +138,7 @@ export function WorksView({ works }: { works: WorkRow[] }) {
         open={confirmKill !== null}
         onClose={() => setConfirmKill(null)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف العمل؟"
         text={confirmKill ? `سيُحذف «${confirmKill.title}» من المعرض نهائيًّا. لا استرجاع بعده.` : undefined}
         confirmLabel="حذف"

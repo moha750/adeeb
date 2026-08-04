@@ -75,11 +75,11 @@ export function HelpCenter() {
       >
         <div className="space-y-6">
           <section>
-            <ModalSectionHeading icon={<Compass weight="fill" />} title="أدلّة سريعة" />
+            <ModalSectionHeading icon={<Compass />} title="أدلّة سريعة" />
             <Accordion items={GUIDES} />
           </section>
           <section>
-            <ModalSectionHeading icon={<Question weight="fill" />} title="أسئلة شائعة" />
+            <ModalSectionHeading icon={<Question />} title="أسئلة شائعة" />
             <Accordion items={FAQS} />
           </section>
         </div>

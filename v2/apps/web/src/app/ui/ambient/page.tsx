@@ -1,5 +1,7 @@
 import { Ambient, Badge, Button, Card, CardBody, CardHeader, Container, LandingHeading } from "@adeeb/design-system";
 import { PenNib, Users, CalendarBlank, BookOpen } from "@phosphor-icons/react/dist/ssr";
+// مدخلُ ssr خادميٌّ لا يقرأ سياقَ الأيقونات، فيُمرَّر الوزنُ من مصدره الواحد صراحةً.
+import { ICON_WEIGHT } from "@/lib/iconWeight";
 
 /** بطاقةٌ من المكتبة — لِنرى كيف تجلس الأسطح البيضاء وحدودُها وظلالُها على الشفق. */
 function Demo({
@@ -60,19 +62,19 @@ export default function AmbientPage() {
             <LandingHeading eyebrow="معرض" title="أعمال وإبداعات" deck="نعرض ما تصنعه مواهبنا — من القصّة إلى اللوحة والتصميم." />
             <div className="card-grid mt-10">
               <Demo
-                icon={<PenNib aria-hidden />}
+                icon={<PenNib weight={ICON_WEIGHT} aria-hidden />}
                 title="قصّةٌ قصيرة"
                 subtitle="أدب"
                 body="نصٌّ من ورشة السرد، كُتب في جلسةٍ واحدة ونُقّح في ثلاث."
               />
               <Demo
-                icon={<BookOpen aria-hidden />}
+                icon={<BookOpen weight={ICON_WEIGHT} aria-hidden />}
                 title="إصدارٌ سنويّ"
                 subtitle="مكتبة"
                 body="مختاراتٌ من نتاج الأعضاء، تُطبع وتُقرأ في «إرثٌ يُروى»."
               />
               <Demo
-                icon={<Users aria-hidden />}
+                icon={<Users weight={ICON_WEIGHT} aria-hidden />}
                 title="لقاءٌ مفتوح"
                 subtitle="مجتمع"
                 body="مساءٌ يجتمع فيه الأعضاء حول نصٍّ واحد يقرؤه صاحبه."
@@ -86,7 +88,7 @@ export default function AmbientPage() {
             <LandingHeading eyebrow="فعاليات" title="برامجنا وأنشطتنا" deck="ورشٌ وبرامجُ نوعيّة على مدار العام." align="center" />
             <div className="card-grid mt-10">
               <Card tone="brand">
-                <CardHeader icon={<CalendarBlank aria-hidden />} title="ورشة السرد" subtitle="ثلاثة لقاءات" />
+                <CardHeader icon={<CalendarBlank weight={ICON_WEIGHT} aria-hidden />} title="ورشة السرد" subtitle="ثلاثة لقاءات" />
                 <CardBody>
                   <div className="flex flex-wrap gap-2">
                     <Badge tone="success">مفتوحة</Badge>
@@ -95,7 +97,7 @@ export default function AmbientPage() {
                 </CardBody>
               </Card>
               <Card>
-                <CardHeader icon={<CalendarBlank aria-hidden />} title="ملتقى الشعر" subtitle="أمسيةٌ واحدة" />
+                <CardHeader icon={<CalendarBlank weight={ICON_WEIGHT} aria-hidden />} title="ملتقى الشعر" subtitle="أمسيةٌ واحدة" />
                 <CardBody>
                   <div className="flex flex-wrap gap-2">
                     <Badge tone="warning">قريبًا</Badge>
@@ -112,13 +114,13 @@ export default function AmbientPage() {
             <LandingHeading eyebrow="فريق" title="أهل الدفّة" deck="المجلس الذي يقود النادي ويرعى مسيرته." align="center" />
             <div className="card-grid mt-10">
               <Demo
-                icon={<Users aria-hidden />}
+                icon={<Users weight={ICON_WEIGHT} aria-hidden />}
                 title="مجلسُ الإدارة"
                 subtitle="قيادة"
                 body="مَن يرسمون الخطّة ويحملون أمانتها إلى آخر الموسم."
               />
               <Demo
-                icon={<Users aria-hidden />}
+                icon={<Users weight={ICON_WEIGHT} aria-hidden />}
                 title="لجانُ العمل"
                 subtitle="تنفيذ"
                 body="الأيدي التي تصنع البرامج وتُخرجها إلى الناس."

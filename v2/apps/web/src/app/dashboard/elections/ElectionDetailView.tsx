@@ -126,9 +126,9 @@ export function ElectionDetailView({ election }: { election: ElectionDetail }) {
       ) : null}
 
       <div className="stat-grid" style={{ margin: "16px 0" }}>
-        <Stat icon={<UsersThree weight="fill" />} value={election.candidates.length} label="المرشّحون" />
-        <Stat icon={<CheckCircle weight="fill" />} value={approvedCount} label="المعتمَدون" tone="success" />
-        <Stat icon={<Scales weight="fill" />} value={election.votes} label="الأصوات" />
+        <Stat icon={<UsersThree />} value={election.candidates.length} label="المرشّحون" />
+        <Stat icon={<CheckCircle />} value={approvedCount} label="المعتمَدون" tone="success" />
+        <Stat icon={<Scales />} value={election.votes} label="الأصوات" />
       </div>
 
       {/* شريط أفعال الدورة — يعرض ما يصحّ على الحالة فقط؛ القاعدة الحكَم النهائيّ */}
@@ -159,7 +159,7 @@ export function ElectionDetailView({ election }: { election: ElectionDetail }) {
         getRowId={(c) => c.id}
         onRowClick={(c) => { setNote(""); setDetail(c); }}
         rowTone={(c) => (election.winnerCandidateId === c.id ? "success" : undefined)}
-        emptyState={<EmptyState variant="soft" icon={<UsersThree weight="duotone" />} title="لا مرشّحين بعد" description={phase === "candidacy" ? "حين يترشّح أعضاء النطاق، يظهرون هنا لمراجعتهم." : "لم يترشّح أحد في هذا الانتخاب."} />}
+        emptyState={<EmptyState variant="soft" icon={<UsersThree />} title="لا مرشّحين بعد" description={phase === "candidacy" ? "حين يترشّح أعضاء النطاق، يظهرون هنا لمراجعتهم." : "لم يترشّح أحد في هذا الانتخاب."} />}
       />
 
       {/* نافذة المرشّح — كلّ التفاعل هنا: البيان والملفّ والمراجعة/الإعلان */}
@@ -241,7 +241,7 @@ export function ElectionDetailView({ election }: { election: ElectionDetail }) {
         open={confirm !== null}
         onClose={() => setConfirm(null)}
         tone={confirm?.tone ?? "warning"}
-        icon={<StopCircle weight="bold" />}
+        icon={<StopCircle />}
         title={confirm?.title ?? ""}
         text={confirm?.text}
         confirmLabel={confirm?.confirmLabel ?? "تأكيد"}

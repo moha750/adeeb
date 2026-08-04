@@ -41,13 +41,13 @@ const hourBars = (hourly: Analytics["hourly"]) => {
 export function StatsView({ data, recent, days }: { data: Analytics; recent: RecentVisitor[]; days: number }) {
   const k = data.kpis;
   const kpis = useMemo(() => [
-    { icon: <Eye weight="fill" />, n: nf(k.pageviews), l: "زيارة (صفحة)" },
-    { icon: <Users weight="fill" />, n: nf(k.visitors), l: "زائر فريد" },
-    { icon: <ArrowUUpLeft weight="fill" />, n: nf(k.sessions), l: "جلسة" },
-    { icon: <Timer weight="fill" />, n: fmtDur(k.avg_seconds), l: "متوسّط المدّة" },
-    { icon: <ArrowBendUpLeft weight="fill" />, n: `${k.bounce_rate}٪`, l: "معدّل الارتداد" },
-    { icon: <Globe weight="fill" />, n: nf(k.countries), l: "دولة" },
-    { icon: <Robot weight="fill" />, n: nf(data.bots), l: "زيارة روبوت" },
+    { icon: <Eye />, n: nf(k.pageviews), l: "زيارة (صفحة)" },
+    { icon: <Users />, n: nf(k.visitors), l: "زائر فريد" },
+    { icon: <ArrowUUpLeft />, n: nf(k.sessions), l: "جلسة" },
+    { icon: <Timer />, n: fmtDur(k.avg_seconds), l: "متوسّط المدّة" },
+    { icon: <ArrowBendUpLeft />, n: `${k.bounce_rate}٪`, l: "معدّل الارتداد" },
+    { icon: <Globe />, n: nf(k.countries), l: "دولة" },
+    { icon: <Robot />, n: nf(data.bots), l: "زيارة روبوت" },
   ], [k, data.bots]);
 
   return (
@@ -75,20 +75,20 @@ export function StatsView({ data, recent, days }: { data: Analytics; recent: Rec
       </div>
 
       <div className="st-grid2">
-        <ChartPanel title="الأجهزة" icon={<DeviceMobile weight="fill" />}><Donut items={toSeries(data.devices)} centerLabel="زيارة" /></ChartPanel>
+        <ChartPanel title="الأجهزة" icon={<DeviceMobile />}><Donut items={toSeries(data.devices)} centerLabel="زيارة" /></ChartPanel>
         <ChartPanel title="المتصفّحات"><BarList items={toSeries(data.browsers)} tone={GOLD} /></ChartPanel>
       </div>
 
       <div className="st-grid2">
         <ChartPanel title="مصادر الزيارات"><BarList items={toSeries(data.referrers)} tone="var(--chart-4)"
-          empty={<EmptyState variant="soft" icon={<Globe weight="fill" aria-hidden />} title="زيارات مباشرة فقط" description="لا مصادر خارجيّة في هذه المدّة." />} /></ChartPanel>
+          empty={<EmptyState variant="soft" icon={<Globe aria-hidden />} title="زيارات مباشرة فقط" description="لا مصادر خارجيّة في هذه المدّة." />} /></ChartPanel>
         <ChartPanel title="التوزيع الساعيّ"><ColumnBars bars={hourBars(data.hourly)} /></ChartPanel>
       </div>
 
       <section>
         <h3 className="mb-3 text-[17px] font-extrabold text-content">أحدث الزوّار</h3>
         <DataTable columns={recentCols} rows={recent} getRowId={(v) => v.id}
-          emptyState={<EmptyState icon={<Users weight="fill" />} title="لا زوّار بعد" />} />
+          emptyState={<EmptyState icon={<Users />} title="لا زوّار بعد" />} />
       </section>
     </div>
   );

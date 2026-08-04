@@ -77,7 +77,7 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
       </div>
 
       <div className="form-build">
-        <ChartPanel headerVariant="chip" icon={<Sparkle weight="fill" />} title="تفاصيل العمل">
+        <ChartPanel headerVariant="chip" icon={<Sparkle />} title="تفاصيل العمل">
           <div className="form-grid">
             <Field className="form-full" label="عنوان العمل" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="مثال: قصيدة «حيثُ تُولَد الكلمة»" value={title} onChange={(e) => setTitle(e.target.value)} required />
             <Field label="التصنيف" icon={<Tag />} innerIcon={<PencilSimple />} placeholder="مثال: شعر · تصميم · قصّة" value={category} onChange={(e) => setCategory(e.target.value)} optional />
@@ -85,7 +85,7 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
           </div>
         </ChartPanel>
 
-        <ChartPanel headerVariant="chip" icon={<ImageIcon weight="fill" />} title="صورة العمل (مطلوبة)">
+        <ChartPanel headerVariant="chip" icon={<ImageIcon />} title="صورة العمل (مطلوبة)">
           <div className="flex flex-col gap-3 items-start">
             {image ? (
               // eslint-disable-next-line @next/next/no-img-element

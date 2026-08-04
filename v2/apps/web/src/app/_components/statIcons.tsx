@@ -101,11 +101,10 @@ export const STAT_ICON_CATEGORIES: { title: string; keys: string[] }[] = [
 
 /** يرسم أيقونة الإحصائيّة من مفتاحها — مسار العرض الوحيد للعرض والمنتقي والقائمة.
     (asIconKey و DEFAULT_STAT_ICON مُعادان من statIconKeys.ts — مصدر المفاتيح الخادميّ‑الآمن.) */
-export function StatIcon({ name, weight = "regular", className }: {
+export function StatIcon({ name, className }: {
   name?: string | null;
-  weight?: "thin" | "light" | "regular" | "bold" | "fill" | "duotone";
   className?: string;
 }) {
   const { Icon } = STAT_ICONS[asIconKey(name) ?? DEFAULT_STAT_ICON];
-  return <Icon weight={weight} className={className} aria-hidden />;
+  return <Icon className={className} aria-hidden />;
 }

@@ -179,7 +179,7 @@ export function DropdownMenu({
         onClick={() => (open ? close(false) : openMenu("none"))}
         onKeyDown={onTriggerKeyDown}
       >
-        {trigger ?? <DotsThreeOutlineVertical weight="bold" aria-hidden />}
+        {trigger ?? <DotsThreeOutlineVertical aria-hidden />}
       </button>
 
       <AnchoredPopover

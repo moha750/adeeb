@@ -158,7 +158,7 @@ export function RadioView({
       render: (s) => (
         <span className="txt" title={s.tagline ?? undefined}>
           <b>{s.title}</b>
-          {s.isFeatured ? <Star weight="fill" size={14} className="text-warning" style={{ marginInlineStart: 6, verticalAlign: "-2px" }} aria-label="مميّز" /> : null}
+          {s.isFeatured ? <Star size={14} className="text-warning" style={{ marginInlineStart: 6, verticalAlign: "-2px" }} aria-label="مميّز" /> : null}
           <span className="text-content-muted" dir="ltr" style={{ marginInlineStart: 8 }}>/{s.slug}</span>
         </span>
       ),
@@ -189,10 +189,10 @@ export function RadioView({
 
   const createBtn = <Button variant="primary" size="md" onClick={openCreate}><Plus size={18} />برنامج جديد</Button>;
   const emptyState = shows.length === 0 ? (
-    <EmptyState variant="aurora" icon={<MicrophoneStage weight="duotone" />} title="لا برامج بعد"
+    <EmptyState variant="aurora" icon={<MicrophoneStage />} title="لا برامج بعد"
       description="أنشئ أوّل برنامج — يُحفظ مسودّةً، ثمّ تفتحه لترفع شعاره وتضيف حلقاته." action={createBtn} />
   ) : filtering ? (
-    <EmptyState variant="soft" icon={<MagnifyingGlass weight="duotone" />} title="لا برامج مطابقة"
+    <EmptyState variant="soft" icon={<MagnifyingGlass />} title="لا برامج مطابقة"
       description="لم نعثر على برامج تطابق بحثك أو المرشّح."
       action={<Button variant="ghost" size="md" onClick={clearFilters}>مسح المرشّحات</Button>} />
   ) : null;
@@ -218,9 +218,9 @@ export function RadioView({
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<MicrophoneStage weight="fill" />} value={shows.length} label="إجمالي البرامج" />
-        <Stat icon={<Broadcast weight="fill" />} value={published} label="برامج منشورة" tone="success" />
-        <Stat icon={<Playlist weight="fill" />} value={episodes} label="إجمالي الحلقات" />
+        <Stat icon={<MicrophoneStage />} value={shows.length} label="إجمالي البرامج" />
+        <Stat icon={<Broadcast />} value={published} label="برامج منشورة" tone="success" />
+        <Stat icon={<Playlist />} value={episodes} label="إجمالي الحلقات" />
       </div>
 
       <Toolbar
@@ -285,7 +285,7 @@ export function RadioView({
         open={confirmKill !== null}
         onClose={() => setConfirmKill(null)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف البرنامج؟"
         text={confirmKill ? `سيُحذف «${confirmKill.title}» وكلّ حلقاته وملفّاته نهائيًّا. لا استرجاع بعده.` : undefined}
         confirmLabel="حذف"

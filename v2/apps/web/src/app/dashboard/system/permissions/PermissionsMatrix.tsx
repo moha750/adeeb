@@ -20,8 +20,8 @@ import { GridView } from "./GridView";
 type View = "panel" | "grid";
 
 const VIEWS = [
-  { value: "panel", label: <span className="seg-lbl"><ListChecks weight="bold" /> قائمة ولوح</span> },
-  { value: "grid", label: <span className="seg-lbl"><GridFour weight="bold" /> مصفوفة</span> },
+  { value: "panel", label: <span className="seg-lbl"><ListChecks /> قائمة ولوح</span> },
+  { value: "grid", label: <span className="seg-lbl"><GridFour /> مصفوفة</span> },
 ];
 
 export function PermissionsMatrix({

@@ -14,7 +14,7 @@ export function PublicActivityCard({ a }: { a: PublicActivity }) {
         {a.cover ? <CardMedia image={a.cover} alt={a.name} /> : null}
         <CardHeader
           className="acard-header-clip"
-          icon={<CalendarBlank weight="duotone" aria-hidden />}
+          icon={<CalendarBlank aria-hidden />}
           title={a.name}
           subtitle={a.timeLabel ? `${a.dateLabel} · ${a.timeLabel}` : a.dateLabel}
         />
@@ -27,7 +27,7 @@ export function PublicActivityCard({ a }: { a: PublicActivity }) {
             </div>
             {a.location ? (
               <span className="inline-flex items-center gap-2 text-content-muted text-sm">
-                <MapPin weight="duotone" aria-hidden />
+                <MapPin aria-hidden />
                 <span>{a.location}</span>
               </span>
             ) : null}

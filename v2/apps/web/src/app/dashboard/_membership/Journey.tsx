@@ -19,7 +19,7 @@ export function Journey({ stops }: { stops: readonly JourneyStop[] }) {
     <ol className="mjr">
       {stops.map((s) => (
         <li key={s.key} className={"mjr-i" + (s.current ? " on" : "")}>
-          <span className="mjr-dot">{s.kind === "join" ? <Flag weight="fill" aria-hidden /> : <Star weight="fill" aria-hidden />}</span>
+          <span className="mjr-dot">{s.kind === "join" ? <Flag aria-hidden /> : <Star aria-hidden />}</span>
           <div className="mjr-c">
             <div className="mjr-h">
               <b className="mjr-t">{s.title}</b>

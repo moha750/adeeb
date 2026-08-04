@@ -22,12 +22,12 @@ function FilterSelect({ def, value, onChange }: { def: FilterDef; value: string;
       <AnchoredPopover open={open} anchorRef={btnRef} onDismiss={() => setOpen(false)} align="start" className="tb-fs-panel" role="listbox">
         <button type="button" className={"tb-fs-opt" + (!value ? " sel" : "")} onClick={() => { onChange(""); setOpen(false); }}>
           <span className="tb-fs-txt">الكل</span>
-          <Check className="tb-fs-ck" weight="bold" aria-hidden />
+          <Check className="tb-fs-ck" aria-hidden />
         </button>
         {def.options.map((o) => (
           <button key={o.value} type="button" className={"tb-fs-opt" + (o.value === value ? " sel" : "")} onClick={() => { onChange(o.value); setOpen(false); }}>
             <span className="tb-fs-txt">{o.label}</span>
-            <Check className="tb-fs-ck" weight="bold" aria-hidden />
+            <Check className="tb-fs-ck" aria-hidden />
           </button>
         ))}
       </AnchoredPopover>
@@ -85,7 +85,7 @@ export function Toolbar({
       ))}
       {anyFilter && (
         <button type="button" className="tb-reset" onClick={onReset}>
-          <ArrowCounterClockwise weight="bold" aria-hidden />
+          <ArrowCounterClockwise aria-hidden />
           إعادة تعيين
         </button>
       )}

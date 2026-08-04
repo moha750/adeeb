@@ -192,7 +192,7 @@ export function EventsView({ events }: { events: EventRow[] }) {
   const emptyState = events.length === 0 ? (
     <EmptyState
       variant="aurora"
-      icon={<CalendarBlank weight="duotone" />}
+      icon={<CalendarBlank />}
       title="لا فعاليّات بعد"
       description="أنشئ أوّل فعاليّة — تُحفظ مسودّةً حتّى تنشرها."
       action={createBtn}
@@ -200,7 +200,7 @@ export function EventsView({ events }: { events: EventRow[] }) {
   ) : filtering ? (
     <EmptyState
       variant="soft"
-      icon={<MagnifyingGlass weight="duotone" />}
+      icon={<MagnifyingGlass />}
       title="لا فعاليّات مطابقة"
       description="لم نعثر على فعاليّات تطابق بحثك أو المرشّح."
       action={<Button variant="ghost" size="md" onClick={clearFilters}>مسح المرشّحات</Button>}
@@ -208,7 +208,7 @@ export function EventsView({ events }: { events: EventRow[] }) {
   ) : (
     <EmptyState
       variant="soft"
-      icon={<CalendarBlank weight="duotone" />}
+      icon={<CalendarBlank />}
       title={`لا فعاليّات في «${currentTab.label}»`}
       description={currentTab.empty}
       action={tab === "draft" || tab === "published" ? createBtn : undefined}
@@ -232,9 +232,9 @@ export function EventsView({ events }: { events: EventRow[] }) {
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<CalendarBlank weight="fill" />} value={events.length} label="إجمالي الفعاليّات" />
-        <Stat icon={<CalendarCheck weight="fill" />} value={upcoming} label="قادمة الآن" tone="success" />
-        <Stat icon={<UsersThree weight="fill" />} value={totalReserved} label="إجمالي الحجوزات" />
+        <Stat icon={<CalendarBlank />} value={events.length} label="إجمالي الفعاليّات" />
+        <Stat icon={<CalendarCheck />} value={upcoming} label="قادمة الآن" tone="success" />
+        <Stat icon={<UsersThree />} value={totalReserved} label="إجمالي الحجوزات" />
       </div>
 
       <div style={{ marginBottom: 14 }}>
@@ -296,7 +296,7 @@ export function EventsView({ events }: { events: EventRow[] }) {
         open={confirmKill !== null}
         onClose={() => setConfirmKill(null)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف الفعاليّة؟"
         text={confirmKill ? `سيُحذف «${confirmKill.name}» نهائيًّا. لا استرجاع بعده. (الفعاليّات ذات الحجوزات لا تُحذف — تُلغى.)` : undefined}
         confirmLabel="حذف"

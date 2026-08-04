@@ -136,7 +136,7 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
   const stateCol: Column<ContactRow> = {
     key: "state", header: "الحالة", width: "150px",
     render: (r) => (
-      <Badge tone={statusTone(r.status)} variant="soft" icon={r.status === "new" ? <Envelope weight="fill" /> : <EnvelopeOpen weight="fill" />}>
+      <Badge tone={statusTone(r.status)} variant="soft" icon={r.status === "new" ? <Envelope /> : <EnvelopeOpen />}>
         {statusLabel(r.status)}
       </Badge>
     ),
@@ -146,7 +146,7 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
     // العاديّة لا تُشار إليها: الشارة للاستثناء، وإلّا صار الشائعُ ضجيجًا.
     render: (r) => (r.priority === "normal"
       ? <span className="txt">—</span>
-      : <Badge tone={priorityTone(r.priority)} variant="outline" icon={<Flag weight="fill" />}>{priorityLabel(r.priority)}</Badge>),
+      : <Badge tone={priorityTone(r.priority)} variant="outline" icon={<Flag />}>{priorityLabel(r.priority)}</Badge>),
   };
   const dateCol: Column<ContactRow> = {
     key: "date", header: "التاريخ", width: "1fr",
@@ -190,14 +190,14 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
   const emptyState = rows.length === 0 ? (
     <EmptyState
       variant="aurora"
-      icon={<EnvelopeSimpleOpen weight="duotone" />}
+      icon={<EnvelopeSimpleOpen />}
       title="لا رسائل بعد"
       description="ما يكتبه الزائر في «تواصل معنا» بالصفحة الرئيسيّة يصل إلى هنا، فيُقرأ ويُردّ عليه من مكانه."
     />
   ) : (
     <EmptyState
       variant="soft"
-      icon={<MagnifyingGlass weight="duotone" />}
+      icon={<MagnifyingGlass />}
       title="لا نتائج مطابقة"
       description="لم نعثر على رسالةٍ تطابق بحثك أو مرشّحاتك."
       action={<Button variant="ghost" size="md" onClick={() => { setSearch(""); setFilters({}); }}>مسح البحث</Button>}
@@ -214,9 +214,9 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<Envelope weight="fill" />} value={stats.unread} label="رسائل جديدة" tone={stats.unread > 0 ? "warning" : "brand"} />
-        <Stat icon={<ChatCircleText weight="fill" />} value={stats.waiting} label="بانتظار الردّ" tone={stats.waiting > 0 ? "warning" : "brand"} />
-        <Stat icon={<PaperPlaneTilt weight="fill" />} value={stats.replied} label="أُجيب عنها" tone="success" />
+        <Stat icon={<Envelope />} value={stats.unread} label="رسائل جديدة" tone={stats.unread > 0 ? "warning" : "brand"} />
+        <Stat icon={<ChatCircleText />} value={stats.waiting} label="بانتظار الردّ" tone={stats.waiting > 0 ? "warning" : "brand"} />
+        <Stat icon={<PaperPlaneTilt />} value={stats.replied} label="أُجيب عنها" tone="success" />
       </div>
 
       <Toolbar
@@ -274,7 +274,7 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
         {detail ? (
           <>
             <div>
-              <Badge tone="info" variant="outline" icon={<Envelope weight="fill" />}>
+              <Badge tone="info" variant="outline" icon={<Envelope />}>
                 <bdi className="lat" dir="ltr">{detail.email}</bdi>
               </Badge>
             </div>
@@ -294,7 +294,7 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
 
             <Textarea
               label="الردّ"
-              icon={<PaperPlaneTilt weight="duotone" />}
+              icon={<PaperPlaneTilt />}
               innerIcon={<NotePencil />}
               placeholder="اكتب ردّك على الرسالة…"
               rows={5}
@@ -305,7 +305,7 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
 
             <Textarea
               label="ملاحظة داخليّة"
-              icon={<NotePencil weight="duotone" />}
+              icon={<NotePencil />}
               innerIcon={<NotePencil />}
               placeholder="لأهل اللوحة وحدهم — لا تُرسَل إلى أحد."
               rows={2}

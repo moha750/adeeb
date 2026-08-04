@@ -134,7 +134,7 @@ export function SupervisionModal({
               <>
                 <Select
                   label="العضو"
-                  icon={<UserPlus weight="bold" />}
+                  icon={<UserPlus />}
                   searchable
                   options={optionsOf(candidates)}
                   value={pick}
@@ -154,7 +154,7 @@ export function SupervisionModal({
             unitMembers.length ? (
               <Select
                 label={isReplace ? "المشرف الجديد" : "المشرف"}
-                icon={<UserPlus weight="bold" />}
+                icon={<UserPlus />}
                 searchable
                 tone={tone}
                 options={optionsOf(unitMembers)}
@@ -178,7 +178,7 @@ export function SupervisionModal({
 
           {state.kind === "expel" ? (
             <p className="org-modal-warn">
-              <SignOut weight="bold" aria-hidden /> يخرج من {unit.name} ويُطوى منصبه فيها
+              <SignOut aria-hidden /> يخرج من {unit.name} ويُطوى منصبه فيها
               {state.count ? `، ويُسحب معه إشرافه على ${committeesLabel(state.count)}` : ""}.
               وقد يُسحب ترشّحه الانتخابيّ إن كان قائمًا.
             </p>

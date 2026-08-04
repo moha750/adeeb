@@ -7,13 +7,13 @@ import { TYPE_META, type ActivityType } from "./vocab";
  * تفاديًا لقراءة الهويّة باللون؛ القاعدة ١٠). أيقونةٌ لكلّ نوع + نغمة محايدة موحّدة.
  */
 const TYPE_ICON: Record<ActivityType, React.ReactNode> = {
-  activity: <Confetti weight="duotone" aria-hidden />,
-  program: <Sparkle weight="duotone" aria-hidden />,
-  workshop: <Chalkboard weight="duotone" aria-hidden />,
-  course: <GraduationCap weight="duotone" aria-hidden />,
-  camp: <Tent weight="duotone" aria-hidden />,
-  exhibition: <Images weight="duotone" aria-hidden />,
-  dialogue: <ChatsCircle weight="duotone" aria-hidden />,
+  activity: <Confetti aria-hidden />,
+  program: <Sparkle aria-hidden />,
+  workshop: <Chalkboard aria-hidden />,
+  course: <GraduationCap aria-hidden />,
+  camp: <Tent aria-hidden />,
+  exhibition: <Images aria-hidden />,
+  dialogue: <ChatsCircle aria-hidden />,
 };
 
 export function TypeBadge({ type }: { type: ActivityType }) {

@@ -33,7 +33,7 @@ const Ic = {
   eye: <Eye aria-hidden />,
   edit: <PencilSimple aria-hidden />,
   trash: <Trash aria-hidden />,
-  users: <UsersThree weight="duotone" aria-hidden />,
+  users: <UsersThree aria-hidden />,
 };
 
 /* ── بيانات عيّنة للجدول والكرت ── */
@@ -321,7 +321,7 @@ export default function ComponentsGallery() {
               <CardFooter><span style={{ fontSize: 13, color: "var(--color-text-muted)" }}>+12 هذا الشهر</span><Badge tone="success" dot>+6٪</Badge></CardFooter>
             </Card>
             <Card variant="elevated" interactive>
-              <CardMedia><span style={{ width: 34, height: 34, color: "#fff", display: "inline-flex" }}><Sparkle weight="duotone" size={34} aria-hidden /></span></CardMedia>
+              <CardMedia><span style={{ width: 34, height: 34, color: "#fff", display: "inline-flex" }}><Sparkle size={34} aria-hidden /></span></CardMedia>
               <CardBody><h3 style={{ fontWeight: 700, marginBottom: 6 }}>بطاقة تفاعلية</h3><p style={{ fontSize: 13.5, color: "var(--color-text-muted)", lineHeight: 1.6 }}>مرّر المؤشّر لرؤية التكبير والحدّ الملوّن.</p></CardBody>
             </Card>
           </div>

@@ -66,7 +66,7 @@ export function AchievementForm({ item }: { item?: AchievementEditData | null })
       </div>
 
       <div className="form-build">
-        <ChartPanel headerVariant="chip" icon={<Sparkle weight="fill" />} title="الإحصائيّة">
+        <ChartPanel headerVariant="chip" icon={<Sparkle />} title="الإحصائيّة">
           <div className="form-grid">
             <Field className="form-full" label="اسم الإحصائيّة" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="مثال: ورش تدريبية · عضو · ظهور إعلامي" value={label} onChange={(e) => setLabel(e.target.value)} required />
             <Field type="number" charset="digits" label="الرقم" icon={<Hash />} innerIcon={<Hash />} placeholder="مثال: 350" value={count} onChange={(e) => setCount(e.target.value)} helper="حجم الكرت في الملخّص يتناسب مع الرقم." required />
@@ -81,7 +81,7 @@ export function AchievementForm({ item }: { item?: AchievementEditData | null })
           </div>
         </ChartPanel>
 
-        <ChartPanel headerVariant="chip" icon={<Shapes weight="fill" />} title="الأيقونة">
+        <ChartPanel headerVariant="chip" icon={<Shapes />} title="الأيقونة">
           <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-content-muted">
             <span>المختارة:</span>
             <span className="inline-flex items-center gap-1.5 rounded bg-secondary/10 px-2 py-1 text-content ring-1 ring-secondary/40">

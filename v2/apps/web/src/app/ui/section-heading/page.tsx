@@ -28,14 +28,14 @@ export default function SectionHeadingPage() {
           <section>
             <Lab>النغمة الافتراضيّة</Lab>
             <Panel>
-              <ModalSectionHeading icon={<AddressBook weight="fill" />} title="بيانات التواصل" />
+              <ModalSectionHeading icon={<AddressBook />} title="بيانات التواصل" />
             </Panel>
           </section>
 
           <section>
             <Lab>نغمة الخطر — للأقسام الهدّامة</Lab>
             <Panel>
-              <ModalSectionHeading icon={<Prohibit weight="fill" />} title="إنهاء العضويّة" tone="danger" />
+              <ModalSectionHeading icon={<Prohibit />} title="إنهاء العضويّة" tone="danger" />
             </Panel>
           </section>
 
@@ -43,10 +43,10 @@ export default function SectionHeadingPage() {
             <Lab>داخل شبكة نموذج — mdl-full ليمتدّ على الصفّ</Lab>
             <Panel>
               <div className="mdl-grid">
-                <ModalSectionHeading className="mdl-full" icon={<AddressBook weight="fill" />} title="بيانات التواصل" />
+                <ModalSectionHeading className="mdl-full" icon={<AddressBook />} title="بيانات التواصل" />
                 <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" />
                 <Field label="رقم الجوّال" type="tel" charset="digits" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" />
-                <ModalSectionHeading className="mdl-full" icon={<Books weight="fill" />} title="البيانات الأكاديميّة" />
+                <ModalSectionHeading className="mdl-full" icon={<Books />} title="البيانات الأكاديميّة" />
                 <Field className="mdl-full" label="الكلّية" icon={<Books />} innerIcon={<At />} placeholder="مثال: كلّية الآداب" />
               </div>
             </Panel>
@@ -55,9 +55,9 @@ export default function SectionHeadingPage() {
           <section>
             <Lab>عناوين متتالية — الخطّ يتلاشى بطول ما تبقّى من الصفّ</Lab>
             <Panel>
-              <ModalSectionHeading icon={<AddressBook weight="fill" />} title="بيانات التواصل" />
-              <ModalSectionHeading icon={<Books weight="fill" />} title="البيانات الأكاديميّة" />
-              <ModalSectionHeading icon={<ShareNetwork weight="fill" />} title="التواصل الاجتماعيّ" />
+              <ModalSectionHeading icon={<AddressBook />} title="بيانات التواصل" />
+              <ModalSectionHeading icon={<Books />} title="البيانات الأكاديميّة" />
+              <ModalSectionHeading icon={<ShareNetwork />} title="التواصل الاجتماعيّ" />
             </Panel>
           </section>
         </div>

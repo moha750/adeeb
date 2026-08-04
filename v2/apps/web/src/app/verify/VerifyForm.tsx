@@ -15,7 +15,7 @@ export function VerifyForm({ defaultCode }: { defaultCode?: string }) {
     <form method="get" action="/verify">
       <Field
         label="الرقم المرجعيّ"
-        icon={<Hash weight="duotone" />}
+        icon={<Hash />}
         innerIcon={<SealCheck />}
         placeholder="ADEEB-EXP-2026-0001-A1B2C3"
         name="code"

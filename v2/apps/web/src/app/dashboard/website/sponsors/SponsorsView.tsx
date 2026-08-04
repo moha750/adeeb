@@ -87,7 +87,7 @@ export function SponsorsView({ sponsors }: { sponsors: SponsorRow[] }) {
   const emptyState = (
     <EmptyState
       variant="aurora"
-      icon={<Handshake weight="duotone" />}
+      icon={<Handshake />}
       title="لا رعاة بعد"
       description="أضِف أوّل راعٍ — بشعاره ووسمه ورابطه. (القسم العلنيّ للرعاة يُبنى لاحقًا.)"
       action={createBtn}
@@ -105,7 +105,7 @@ export function SponsorsView({ sponsors }: { sponsors: SponsorRow[] }) {
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<Handshake weight="fill" />} value={sponsors.length} label="رعاة وشركاء" />
+        <Stat icon={<Handshake />} value={sponsors.length} label="رعاة وشركاء" />
       </div>
 
       <Toolbar view={view} onViewChange={changeView} />
@@ -133,7 +133,7 @@ export function SponsorsView({ sponsors }: { sponsors: SponsorRow[] }) {
         open={confirmKill !== null}
         onClose={() => setConfirmKill(null)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف الراعي؟"
         text={confirmKill ? `سيُحذف «${confirmKill.name}» نهائيًّا. لا استرجاع بعده.` : undefined}
         confirmLabel="حذف"

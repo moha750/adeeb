@@ -186,7 +186,7 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
 
   if (step === "booked" && booked) {
     return (
-      <Alert tone="success" title="حجزك مؤكّد" icon={<CheckCircle weight="fill" />}>
+      <Alert tone="success" title="حجزك مؤكّد" icon={<CheckCircle />}>
         <div className="flex flex-col gap-3">
           <span>احتفظنا بمقعدك. سنتواصل معك عبر واتساب لتأكيد الحضور.</span>
           {err ? <span className="text-danger text-sm">{err}</span> : null}

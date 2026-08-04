@@ -24,7 +24,7 @@ export function SponsorCard({ sponsor, order, actions, onOpen }: Props) {
     <Card interactive onClick={onOpen}>
       <CardHeader
         className="acard-header-clip"
-        icon={<Handshake weight="duotone" aria-hidden />}
+        icon={<Handshake aria-hidden />}
         title={sponsor.name}
         actions={
           <div className="flex items-center gap-2">

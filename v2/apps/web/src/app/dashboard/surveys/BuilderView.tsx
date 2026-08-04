@@ -226,7 +226,7 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
       </div>
 
       <div className="form-build">
-        <ChartPanel headerVariant="chip" icon={<Gear weight="fill" />} title="إعدادات الاستبيان">
+        <ChartPanel headerVariant="chip" icon={<Gear />} title="إعدادات الاستبيان">
           <div className="form-grid">
             <Field className="form-full" label="العنوان" icon={<ClipboardText />} innerIcon={<PencilSimple />} placeholder="مثال: تقييم فعاليّة الأمسية الأدبيّة" value={title} onChange={(e) => setTitle(e.target.value)} required />
             <Textarea className="form-full" label="الوصف" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="سطر يظهر تحت العنوان في صفحة الاستبيان" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} optional />
@@ -242,7 +242,7 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
           </div>
         </ChartPanel>
 
-        <ChartPanel headerVariant="chip" icon={<ChatCircleText weight="fill" />} title="الرسائل">
+        <ChartPanel headerVariant="chip" icon={<ChatCircleText />} title="الرسائل">
           <div className="form-grid">
             <Textarea label="رسالة الترحيب" icon={<HandWaving />} innerIcon={<ChatText />} placeholder="تظهر قبل الأسئلة" rows={2} value={welcome} onChange={(e) => setWelcome(e.target.value)} optional />
             <Textarea label="رسالة الشكر" icon={<Sparkle />} innerIcon={<ChatText />} placeholder="تظهر بعد الإرسال" rows={2} value={thankYou} onChange={(e) => setThankYou(e.target.value)} optional />
@@ -250,7 +250,7 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
           </div>
         </ChartPanel>
 
-        <ChartPanel headerVariant="chip" icon={<Question weight="fill" />} title={`الأسئلة (${questions.length})`}>
+        <ChartPanel headerVariant="chip" icon={<Question />} title={`الأسئلة (${questions.length})`}>
           {questions.length === 0 ? (
             <Alert tone="info" title="لا أسئلة بعد">أضِف سؤالًا واحدًا على الأقلّ قبل النشر.</Alert>
           ) : null}
@@ -339,7 +339,7 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
         open={confirmRemove !== null}
         onClose={() => setConfirmRemove(null)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف سؤال له إجابات؟"
         text={confirmRemove ? `للسؤال «${confirmRemove.text.slice(0, 60)}» ${confirmRemove.answers} إجابة مخزّنة — ستُحذف كلّها نهائيًّا عند الحفظ.` : undefined}
         confirmLabel="حذف السؤال وإجاباته"

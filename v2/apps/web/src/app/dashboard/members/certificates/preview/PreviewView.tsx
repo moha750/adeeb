@@ -88,7 +88,7 @@ export function PreviewView() {
           <Breadcrumb leaf="معاينة شهادة الخبرة" />
           <h1>معاينة شهادة الخبرة</h1>
         </div>
-        <Badge tone="info" variant="soft" icon={<CertIcon weight="fill" />}>عيّنةٌ لا سجلّ</Badge>
+        <Badge tone="info" variant="soft" icon={<CertIcon />}>عيّنةٌ لا سجلّ</Badge>
       </div>
 
       <Alert tone="info" title="ما تراه هو ما يُنزَّل">
@@ -103,7 +103,7 @@ export function PreviewView() {
       <div className="card-grid card-grid-1col mt-4">
         {SAMPLES.map((s) => (
           <Card key={s.label}>
-            <CardHeader variant="soft" icon={<CertIcon weight="fill" />} title={s.label} subtitle={s.note} />
+            <CardHeader variant="soft" icon={<CertIcon />} title={s.label} subtitle={s.note} />
             <CardBody>
               {images[s.label] ? (
                 // eslint-disable-next-line @next/next/no-img-element -- صورةٌ مولَّدةٌ في المتصفّح (blob) لا أصلٌ ثابت
@@ -113,7 +113,7 @@ export function PreviewView() {
               )}
               <div className="mt-4">
                 <Button variant="neutral" size="md" onClick={() => void downloadCertificate(s.c)}>
-                  <DownloadSimple weight="bold" /> تنزيل هذه العيّنة
+                  <DownloadSimple /> تنزيل هذه العيّنة
                 </Button>
               </div>
             </CardBody>

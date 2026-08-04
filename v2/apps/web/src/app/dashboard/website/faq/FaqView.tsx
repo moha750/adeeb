@@ -70,7 +70,7 @@ export function FaqView({ faqs }: { faqs: FaqRow[] }) {
   const emptyState = (
     <EmptyState
       variant="aurora"
-      icon={<Question weight="duotone" />}
+      icon={<Question />}
       title="لا أسئلة بعد"
       description="أضِف أوّل سؤال — يظهر مباشرةً في قسم «الأسئلة الشائعة» بالصفحة الرئيسية."
       action={createBtn}
@@ -88,7 +88,7 @@ export function FaqView({ faqs }: { faqs: FaqRow[] }) {
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<Question weight="fill" />} value={faqs.length} label="أسئلة منشورة" />
+        <Stat icon={<Question />} value={faqs.length} label="أسئلة منشورة" />
       </div>
 
       <Toolbar view={view} onViewChange={changeView} />
@@ -116,7 +116,7 @@ export function FaqView({ faqs }: { faqs: FaqRow[] }) {
         open={confirmKill !== null}
         onClose={() => setConfirmKill(null)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف السؤال؟"
         text={confirmKill ? `سيُحذف «${confirmKill.question}» نهائيًّا. لا استرجاع بعده.` : undefined}
         confirmLabel="حذف"

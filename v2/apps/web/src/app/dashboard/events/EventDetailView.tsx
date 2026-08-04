@@ -158,7 +158,7 @@ export function EventDetailView({ detail }: { detail: EventDetail }) {
     render: (r) => (
       <span className="txt inline-flex items-center gap-2">
         <bdi dir="ltr">{r.phone ?? "—"}</bdi>
-        {r.phone ? <Button variant="ghost-success" size="sm" onClick={() => openWa(r)} aria-label="مراسلة واتساب" title="مراسلة واتساب"><WhatsappLogo weight="fill" /></Button> : null}
+        {r.phone ? <Button variant="ghost-success" size="sm" onClick={() => openWa(r)} aria-label="مراسلة واتساب" title="مراسلة واتساب"><WhatsappLogo /></Button> : null}
       </span>
     ),
   };
@@ -249,12 +249,12 @@ export function EventDetailView({ detail }: { detail: EventDetail }) {
       <div className="flex flex-wrap items-center gap-3 text-content-muted text-sm" style={{ marginBottom: 14 }}>
         <TypeBadge type={detail.type} />
         {detail.targetGender ? <Badge tone="info" variant="soft">{AUDIENCE_LABEL[detail.targetGender]}</Badge> : null}
-        <span className="inline-flex items-center gap-2"><CalendarBlank weight="duotone" aria-hidden />{detail.dateLabel}</span>
-        {detail.timeLabel ? <span className="inline-flex items-center gap-2"><Clock weight="duotone" aria-hidden />{detail.timeLabel}</span> : null}
+        <span className="inline-flex items-center gap-2"><CalendarBlank aria-hidden />{detail.dateLabel}</span>
+        {detail.timeLabel ? <span className="inline-flex items-center gap-2"><Clock aria-hidden />{detail.timeLabel}</span> : null}
         {detail.location ? (
           detail.locationUrl
-            ? <a href={detail.locationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 underline"><MapPin weight="duotone" aria-hidden />{detail.location}</a>
-            : <span className="inline-flex items-center gap-2"><MapPin weight="duotone" aria-hidden />{detail.location}</span>
+            ? <a href={detail.locationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 underline"><MapPin aria-hidden />{detail.location}</a>
+            : <span className="inline-flex items-center gap-2"><MapPin aria-hidden />{detail.location}</span>
         ) : null}
         {seats ? (
           detail.unlimited
@@ -268,10 +268,10 @@ export function EventDetailView({ detail }: { detail: EventDetail }) {
       {focus ? <div style={{ marginBottom: 16 }}><Alert tone={focus.tone} title={focus.title}>{focus.text}</Alert></div> : null}
 
       {empty ? (
-        <EmptyState variant="soft" icon={<CalendarBlank weight="duotone" />} title="لا حجوزات بعد" description="ستظهر رحلة الحجوزات هنا فور أن يحجز أحدٌ مقعده." />
+        <EmptyState variant="soft" icon={<CalendarBlank />} title="لا حجوزات بعد" description="ستظهر رحلة الحجوزات هنا فور أن يحجز أحدٌ مقعده." />
       ) : (
         <>
-          <ChartPanel headerVariant="chip" icon={<CheckCircle weight="fill" />} title="مسار التقدّم" style={{ marginBottom: 18 }}>
+          <ChartPanel headerVariant="chip" icon={<CheckCircle />} title="مسار التقدّم" style={{ marginBottom: 18 }}>
             <BarList items={funnel} max={reg} />
             <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-content-muted" style={{ marginTop: 12 }}>
               <span>المتسرّبون —</span>
@@ -306,7 +306,7 @@ export function EventDetailView({ detail }: { detail: EventDetail }) {
             onSelectedChange={setSelected}
             rowActions={tab === "all" ? allActions : undefined}
             emptyState={
-              <EmptyState variant="soft" icon={<CheckCircle weight="duotone" />} title="لا أحد في هذه المرحلة" description="لا حجوزات تطابق هذا التبويب أو بحثك." />
+              <EmptyState variant="soft" icon={<CheckCircle />} title="لا أحد في هذه المرحلة" description="لا حجوزات تطابق هذا التبويب أو بحثك." />
             }
           />
         </>

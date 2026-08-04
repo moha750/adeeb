@@ -7,12 +7,12 @@ import type { PermCtl } from "./model";
 
 /** أيقونة كلّ فئة — دلاليّة لا زينة: رأسُ بطاقة الفئة. */
 const CATEGORY_ICON: Record<string, ReactNode> = {
-  admin: <ShieldCheck weight="fill" />,
-  membership: <UsersThree weight="fill" />,
-  activities: <CalendarCheck weight="fill" />,
-  surveys: <ClipboardText weight="fill" />,
-  elections: <Trophy weight="fill" />,
-  website: <Globe weight="fill" />,
+  admin: <ShieldCheck />,
+  membership: <UsersThree />,
+  activities: <CalendarCheck />,
+  surveys: <ClipboardText />,
+  elections: <Trophy />,
+  website: <Globe />,
 };
 
 /**

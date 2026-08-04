@@ -63,10 +63,10 @@ export default function ChartsPage() {
                 <p className="text-content-muted">محتوى الرسم هنا.</p>
               </ChartPanel>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <ChartPanel title="الأجهزة" icon={<DeviceMobile weight="fill" />}>
+                <ChartPanel title="الأجهزة" icon={<DeviceMobile />}>
                   <p className="text-content-muted">لوحةٌ بأيقونة.</p>
                 </ChartPanel>
-                <ChartPanel title="النموّ" icon={<ChartLineUp weight="fill" />}>
+                <ChartPanel title="النموّ" icon={<ChartLineUp />}>
                   <p className="text-content-muted">داخل شبكةٍ ثنائيّة.</p>
                 </ChartPanel>
               </div>
@@ -99,7 +99,7 @@ export default function ChartsPage() {
                 <BarList tone="var(--chart-2)" items={PAGES} />
               </ChartPanel>
               <ChartPanel title="قائمة فارغة">
-                <BarList items={[]} empty={<EmptyState variant="soft" icon={<ChartBar weight="fill" aria-hidden />} title="لا بيانات بعد" description="ستظهر القائمة حين تتوفّر بيانات." />} />
+                <BarList items={[]} empty={<EmptyState variant="soft" icon={<ChartBar aria-hidden />} title="لا بيانات بعد" description="ستظهر القائمة حين تتوفّر بيانات." />} />
               </ChartPanel>
             </div>
           </section>
@@ -108,7 +108,7 @@ export default function ChartsPage() {
             <Lab>حلقة — قطاعاتٌ بفجوة سطح، رقمٌ مركزيّ، وسقف ٦ فئات يُطوى ما بعدها في «أخرى»</Lab>
             <Term>Donut chart · Pie chart · Ring chart</Term>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <ChartPanel title="الأجهزة" icon={<DeviceMobile weight="fill" />}>
+              <ChartPanel title="الأجهزة" icon={<DeviceMobile />}>
                 <Donut items={DEVICES} centerLabel="زيارة" />
               </ChartPanel>
               <ChartPanel title="ثمان فئات — الطيّ في «أخرى»">
@@ -119,7 +119,7 @@ export default function ChartsPage() {
                 ]} />
               </ChartPanel>
               <ChartPanel title="حلقة فارغة — EmptyState">
-                <Donut items={[]} empty={<EmptyState variant="soft" icon={<ChartBar weight="fill" aria-hidden />} title="لا توزيع بعد" description="ستظهر الحلقة حين تتوفّر بيانات." />} />
+                <Donut items={[]} empty={<EmptyState variant="soft" icon={<ChartBar aria-hidden />} title="لا توزيع بعد" description="ستظهر الحلقة حين تتوفّر بيانات." />} />
               </ChartPanel>
             </div>
           </section>
@@ -127,12 +127,12 @@ export default function ChartsPage() {
           <section>
             <Lab>خريطة حراريّة ثنائيّة — يوم × ساعة، كثافةُ لونٍ واحد + الرقم في الخليّة (مرّر لترى التلميح)</Lab>
             <Term>Heatmap · Matrix / calendar heatmap · Punchcard chart</Term>
-            <ChartPanel title="الازدحام حسب اليوم والساعة" icon={<Clock weight="fill" />}>
+            <ChartPanel title="الازدحام حسب اليوم والساعة" icon={<Clock />}>
               <HeatGrid rows={DAYS_AR} cols={HOURS_LBL} values={HEAT} legendLow="أقلّ ازدحامًا" legendHigh="أكثر ازدحامًا" />
             </ChartPanel>
             <div className="mt-4">
               <ChartPanel title="خريطة فارغة — EmptyState">
-                <HeatGrid rows={[]} cols={[]} values={[]} empty={<EmptyState variant="soft" icon={<Clock weight="fill" aria-hidden />} title="لا نشاط بعد" description="ستظهر الخريطة حين تُسجَّل زيارات." />} />
+                <HeatGrid rows={[]} cols={[]} values={[]} empty={<EmptyState variant="soft" icon={<Clock aria-hidden />} title="لا نشاط بعد" description="ستظهر الخريطة حين تُسجَّل زيارات." />} />
               </ChartPanel>
             </div>
           </section>

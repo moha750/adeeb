@@ -63,9 +63,9 @@ export function DepartmentView({
       </div>
 
       <div className="stat-grid">
-        <Stat icon={<Buildings weight="fill" />} value={committees.length} label="لجنة في قسمك" tone="brand" />
-        <Stat icon={<UsersFour weight="fill" />} value={stats.people} label="عضوًا تحت قسمك" tone="success" />
-        <Stat icon={<UserMinus weight="fill" />} value={stats.gaps} label="لجنة تنقصها قيادة" tone={stats.gaps ? "danger" : "success"} />
+        <Stat icon={<Buildings />} value={committees.length} label="لجنة في قسمك" tone="brand" />
+        <Stat icon={<UsersFour />} value={stats.people} label="عضوًا تحت قسمك" tone="success" />
+        <Stat icon={<UserMinus />} value={stats.gaps} label="لجنة تنقصها قيادة" tone={stats.gaps ? "danger" : "success"} />
       </div>
 
       <div className="viewbar">
@@ -110,7 +110,7 @@ export function DepartmentView({
           {visible.length === 0 ? (
             <EmptyState
               variant="soft"
-              icon={<UsersFour weight="duotone" />}
+              icon={<UsersFour />}
               title={q ? "لا مطابقون في قسمك" : "لا لجان في قسمك بعد"}
               description={q ? "جرّب اسمًا آخر — البحث يشمل اللجان وقادتها ونوّابها وأعضاءها." : "تُنسَب اللجان إلى الأقسام في القاعدة، وتظهر هنا حالما تُنسَب أولاها."}
             />

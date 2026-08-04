@@ -15,7 +15,7 @@ export function PublicNewsCard({ n }: { n: PublicNews }) {
         {n.cover ? <CardMedia image={n.cover} alt={n.title} /> : null}
         <CardHeader
           className="acard-header-clip"
-          icon={<Newspaper weight="duotone" aria-hidden />}
+          icon={<Newspaper aria-hidden />}
           title={n.title}
           subtitle={n.authors.length ? `${n.dateLabel} · ${n.authors[0]}` : n.dateLabel}
         />
@@ -30,11 +30,11 @@ export function PublicNewsCard({ n }: { n: PublicNews }) {
             ) : null}
             <div className="flex flex-wrap items-center gap-3 text-sm text-content-muted">
               <span className="inline-flex items-center gap-1.5">
-                <Clock weight="duotone" aria-hidden />
+                <Clock aria-hidden />
                 <span className="font-latin">{n.readMinutes}</span> دقائق قراءة
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Eye weight="duotone" aria-hidden />
+                <Eye aria-hidden />
                 <span className="font-latin">{n.views}</span> مشاهدة
               </span>
             </div>

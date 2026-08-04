@@ -66,7 +66,7 @@ export function TreeView({ model }: { model: StructureModel }) {
         actions={
           <>
             <button type="button" className="org-btn" onClick={toggleAll}>{allOpen ? "طيّ الكلّ" : "توسيع الكلّ"}</button>
-            <button type="button" className={"org-btn org-editbtn" + (edit ? " on" : "")} onClick={() => setEdit((v) => !v)}><PencilSimple weight="bold" /> {edit ? "إنهاء التحرير" : "تحرير"}</button>
+            <button type="button" className={"org-btn org-editbtn" + (edit ? " on" : "")} onClick={() => setEdit((v) => !v)}><PencilSimple /> {edit ? "إنهاء التحرير" : "تحرير"}</button>
           </>
         }
       />

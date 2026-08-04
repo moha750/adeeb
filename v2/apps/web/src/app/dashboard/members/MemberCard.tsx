@@ -104,7 +104,7 @@ export function MemberCard({ member, onOpen, actions, onRestore, onReason, conta
           <div className="acard-foot-row">
             <Button variant="primary" size="md" onClick={onOpen}>الملف الشخصي</Button>
             <a className="abtn abtn-success abtn-md" href={contactHref} target="_blank" rel="noreferrer">
-              <WhatsappLogo weight="fill" aria-hidden /> التواصل
+              <WhatsappLogo aria-hidden /> التواصل
             </a>
           </div>
         ) : (

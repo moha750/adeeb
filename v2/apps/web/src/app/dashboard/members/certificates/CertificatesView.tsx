@@ -126,8 +126,8 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
       key: "state", header: "الحالة", width: "120px",
       render: (r) =>
         r.status === "revoked"
-          ? <Badge tone="danger" variant="soft" icon={<Prohibit weight="fill" />}>مبطَلة</Badge>
-          : <Badge tone="success" variant="soft" icon={<SealCheck weight="fill" />}>سارية</Badge>,
+          ? <Badge tone="danger" variant="soft" icon={<Prohibit />}>مبطَلة</Badge>
+          : <Badge tone="success" variant="soft" icon={<SealCheck />}>سارية</Badge>,
     },
     {
       key: "issuer", header: "المُصدِر", width: "1.2fr",
@@ -166,7 +166,7 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
   const emptyState = rows.length === 0 ? (
     <EmptyState
       variant="aurora"
-      icon={<Certificate weight="duotone" />}
+      icon={<Certificate />}
       title="لا شهادات بعد"
       description="من استحقّ شهادةَ خبرةٍ تُصدَر له من هنا، فتُرسَم على قالب النادي وتُحفظ برقمٍ مرجعيّ."
       action={<Button variant="primary" size="md" onClick={() => setIssuing(true)}><SealCheck aria-hidden /> إصدار شهادة</Button>}
@@ -174,7 +174,7 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
   ) : (
     <EmptyState
       variant="soft"
-      icon={<MagnifyingGlass weight="duotone" />}
+      icon={<MagnifyingGlass />}
       title="لا نتائج مطابقة"
       description="لم نعثر على شهادةٍ تطابق بحثك أو مرشّحاتك."
       action={<Button variant="ghost" size="md" onClick={() => { setSearch(""); setFilters({}); }}>مسح البحث</Button>}
@@ -188,13 +188,13 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
           <Breadcrumb />
           <h1>شهادات الخبرة</h1>
         </div>
-        <Badge tone="info" variant="soft" icon={<Certificate weight="fill" />}>{rows.length} شهادة</Badge>
+        <Badge tone="info" variant="soft" icon={<Certificate />}>{rows.length} شهادة</Badge>
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<SealCheck weight="fill" />} value={stats.valid} label="شهادات سارية" />
-        <Stat icon={<Users weight="fill" />} value={stats.holders} label="أعضاء نالوها" />
-        <Stat icon={<Prohibit weight="fill" />} value={stats.revoked} label="مبطَلة" tone={stats.revoked > 0 ? "warning" : "brand"} />
+        <Stat icon={<SealCheck />} value={stats.valid} label="شهادات سارية" />
+        <Stat icon={<Users />} value={stats.holders} label="أعضاء نالوها" />
+        <Stat icon={<Prohibit />} value={stats.revoked} label="مبطَلة" tone={stats.revoked > 0 ? "warning" : "brand"} />
       </div>
 
       <Toolbar
@@ -261,7 +261,7 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
         ) : null}
         <Textarea
           label="سبب الإبطال"
-          icon={<ChatCenteredText weight="duotone" />}
+          icon={<ChatCenteredText />}
           innerIcon={<NotePencil />}
           placeholder="لماذا أُبطلت؟ (خطأٌ في الاسم أو الفترة، أو صدرت لغير مستحقّ…)"
           value={reason}

@@ -157,7 +157,7 @@ export function LibraryView({ books }: { books: BookRow[] }) {
       render: (b) => (
         <span className="txt" title={b.summary ?? undefined}>
           <b>{b.title}</b>
-          {b.isFeatured ? <Star weight="fill" size={14} className="text-warning" style={{ marginInlineStart: 6, verticalAlign: "-2px" }} aria-label="مميّز" /> : null}
+          {b.isFeatured ? <Star size={14} className="text-warning" style={{ marginInlineStart: 6, verticalAlign: "-2px" }} aria-label="مميّز" /> : null}
           <span className="text-content-muted" dir="ltr" style={{ marginInlineStart: 8 }}>/{b.slug}</span>
         </span>
       ),
@@ -176,10 +176,10 @@ export function LibraryView({ books }: { books: BookRow[] }) {
 
   const createBtn = <Button variant="primary" size="md" onClick={openCreate}><Plus size={18} />منشور جديد</Button>;
   const emptyState = books.length === 0 ? (
-    <EmptyState variant="aurora" icon={<Books weight="duotone" />} title="لا منشورات بعد"
+    <EmptyState variant="aurora" icon={<Books />} title="لا منشورات بعد"
       description="أنشئ أوّل منشور — يُحفظ مسودّةً، ثمّ تفتحه لتضع صفحاته." action={createBtn} />
   ) : filtering ? (
-    <EmptyState variant="soft" icon={<MagnifyingGlass weight="duotone" />} title="لا منشورات مطابقة"
+    <EmptyState variant="soft" icon={<MagnifyingGlass />} title="لا منشورات مطابقة"
       description="لم نعثر على منشورات تطابق بحثك أو المرشّح."
       action={<Button variant="ghost" size="md" onClick={clearFilters}>مسح المرشّحات</Button>} />
   ) : null;
@@ -199,9 +199,9 @@ export function LibraryView({ books }: { books: BookRow[] }) {
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<Books weight="fill" />} value={books.length} label="إجمالي المنشورات" />
-        <Stat icon={<Megaphone weight="fill" />} value={published} label="منشورة" tone="success" />
-        <Stat icon={<BookOpen weight="fill" />} value={totalPagesCount} label="إجمالي الصفحات" />
+        <Stat icon={<Books />} value={books.length} label="إجمالي المنشورات" />
+        <Stat icon={<Megaphone />} value={published} label="منشورة" tone="success" />
+        <Stat icon={<BookOpen />} value={totalPagesCount} label="إجمالي الصفحات" />
       </div>
 
       <Toolbar
@@ -258,7 +258,7 @@ export function LibraryView({ books }: { books: BookRow[] }) {
         open={confirmKill !== null}
         onClose={() => setConfirmKill(null)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف المنشور؟"
         text={confirmKill ? `سيُحذف «${confirmKill.title}» وكلّ صفحاته نهائيًّا. لا استرجاع بعده.` : undefined}
         confirmLabel="حذف"

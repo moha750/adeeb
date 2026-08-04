@@ -272,7 +272,7 @@ export function ShowEditorView({
             getRowId={(e) => e.id}
             rowActions={epMenu}
             emptyState={
-              <EmptyState variant="aurora" icon={<Playlist weight="duotone" />} title="لا حلقات بعد"
+              <EmptyState variant="aurora" icon={<Playlist />} title="لا حلقات بعد"
                 description="أنشئ الحلقة الأولى — تُحفظ مسودّةً، ثمّ ترفع صوتها فتُقرأ مدّته آليًّا، ثمّ تنشرها."
                 action={<Button variant="primary" size="md" onClick={openCreateEp}><Plus size={18} />حلقة جديدة</Button>} />
             }
@@ -292,7 +292,7 @@ export function ShowEditorView({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={show.logoUrl} alt={`شعار ${show.title}`} className="h-28 w-28 rounded object-cover" />
               ) : (
-                <UploadSimple size={30} weight="duotone" className="text-content-muted" />
+                <UploadSimple size={30} className="text-content-muted" />
               )}
               <div className="text-content-muted text-sm">
                 شعار البرنامج — مربّع ٣٠٠٠×٣٠٠٠ (لا يقلّ عن ١٤٠٠، وإلّا رفضته المنصّات). اسحبه هنا أو اختره من جهازك.
@@ -405,7 +405,7 @@ export function ShowEditorView({
         open={confirmKill !== null}
         onClose={() => setConfirmKill(null)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف الحلقة؟"
         text={confirmKill ? `ستُحذف «${confirmKill.title}» وملفّها الصوتيّ نهائيًّا. لا استرجاع بعده.` : undefined}
         confirmLabel="حذف"

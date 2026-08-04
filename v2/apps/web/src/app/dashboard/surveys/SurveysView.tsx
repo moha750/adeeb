@@ -314,7 +314,7 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
     // لا استبيانات في المنظومة كلّها — دعوة الإنشاء الكبيرة
     <EmptyState
       variant="aurora"
-      icon={<ClipboardText weight="duotone" />}
+      icon={<ClipboardText />}
       title="لا استبيانات بعد"
       description="أنشئ أوّل استبيان وشاركه بالرابط أو مع الأعضاء."
       action={<Button variant="primary" size="md" onClick={() => router.push("/dashboard/surveys/new")}><Plus size={18} />استبيان جديد</Button>}
@@ -323,7 +323,7 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
     // التبويب الحاليّ بلا مطابقة — فإن طابقت تبويباتٌ أخرى أرشدنا إليها بنقرةٍ بدل «لا نتائج» عمياء
     <EmptyState
       variant="soft"
-      icon={<MagnifyingGlass weight="duotone" />}
+      icon={<MagnifyingGlass />}
       title={otherTabMatches.length ? "لا نتائج في هذا التبويب" : "لا استبيانات مطابقة"}
       description={otherTabMatches.length ? "لكنّ بحثك طابق في تبويباتٍ أخرى:" : "لم نعثر على استبيانات تطابق بحثك أو المرشّح."}
       action={
@@ -345,7 +345,7 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
     // التبويب نفسه فارغ — رسالته الخاصّة (مع دعوة الإنشاء في تبويبَي العمل)
     <EmptyState
       variant="soft"
-      icon={<ClipboardText weight="duotone" />}
+      icon={<ClipboardText />}
       title={`لا استبيانات في «${currentTab.label}»`}
       description={currentTab.empty}
       action={currentTab.canCreate ? <Button variant="primary" size="md" onClick={() => router.push("/dashboard/surveys/new")}><Plus size={18} />استبيان جديد</Button> : undefined}
@@ -369,9 +369,9 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<ClipboardText weight="fill" />} value={kept.length} label="إجمالي الاستبيانات" />
-        <Stat icon={<CheckCircle weight="fill" />} value={active} label="نشط الآن" tone="success" />
-        <Stat icon={<ChatCenteredDots weight="fill" />} value={totalResponses} label="مشاركة مكتملة" />
+        <Stat icon={<ClipboardText />} value={kept.length} label="إجمالي الاستبيانات" />
+        <Stat icon={<CheckCircle />} value={active} label="نشط الآن" tone="success" />
+        <Stat icon={<ChatCenteredDots />} value={totalResponses} label="مشاركة مكتملة" />
       </div>
 
       {/* تبويبات دورة الحياة — بديل مرشّح الحالة: مساحة العمل (نشطة/مسودّات/منتهية) منفصلة
@@ -444,7 +444,7 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
         open={confirmKill !== null}
         onClose={() => setConfirmKill(null)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف نهائيّ؟"
         text={confirmKill ? `سيُحذف «${confirmKill.title}» نهائيًّا مع ${confirmKill.responses} مشاركة وكلّ إجاباتها. لا استرجاع بعدها.` : undefined}
         confirmLabel="حذف نهائيّ"

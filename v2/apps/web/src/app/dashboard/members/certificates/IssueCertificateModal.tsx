@@ -171,7 +171,7 @@ export function IssueCertificateModal({
     >
       <Select
         label="العضو"
-        icon={<UserCircle weight="duotone" />}
+        icon={<UserCircle />}
         options={memberOptions}
         value={userId}
         onValueChange={setUserId}
@@ -195,7 +195,7 @@ export function IssueCertificateModal({
 
       <Field
         label="الاسم كما يُرسَم"
-        icon={<IdentificationCard weight="duotone" />}
+        icon={<IdentificationCard />}
         innerIcon={<UserCircle />}
         placeholder="الاسم الثلاثيّ"
         value={name}
@@ -206,7 +206,7 @@ export function IssueCertificateModal({
 
       <Field
         label="المسمّى كاملًا"
-        icon={<Certificate weight="duotone" />}
+        icon={<Certificate />}
         innerIcon={<NotePencil />}
         placeholder="عضو لجنة السفراء والتصوير"
         value={position}

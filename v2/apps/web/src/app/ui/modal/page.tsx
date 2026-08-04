@@ -58,19 +58,19 @@ type Tone = "danger" | "warning" | "success";
 // نغمات نافذة التأكيد: أيقونة + عنوان + نصّ + تسمية الزرّ لكلّ نغمة
 const CONFIRM: Record<Tone, { icon: React.ReactNode; title: string; text: string; confirmLabel: string }> = {
   danger: {
-    icon: <Trash weight="bold" />,
+    icon: <Trash />,
     title: "حذف العنصر؟",
     text: "سيُحذف هذا العنصر نهائيًّا ولا يمكن استرجاعه بعد التأكيد.",
     confirmLabel: "حذف نهائيّ",
   },
   warning: {
-    icon: <Warning weight="bold" />,
+    icon: <Warning />,
     title: "تعليق الحساب؟",
     text: "سيُعلَّق الحساب مؤقّتًا ولن يتمكّن صاحبه من الدخول حتّى تُلغي التعليق.",
     confirmLabel: "تعليق",
   },
   success: {
-    icon: <CheckCircle weight="bold" />,
+    icon: <CheckCircle />,
     title: "تمّ الإرسال بنجاح",
     text: "وصلت رسالتك إلى المستلم، وستصلك نسخة على بريدك الإلكترونيّ.",
     confirmLabel: "تمام",
@@ -216,7 +216,7 @@ export default function ModalPage() {
               open={notice}
               onClose={() => setNotice(false)}
               tone="success"
-              icon={<CheckCircle weight="bold" />}
+              icon={<CheckCircle />}
               title="حُفظت التغييرات"
               text="جرى حفظ كلّ تعديلاتك بنجاح."
               confirmLabel="تمام"
@@ -299,7 +299,11 @@ export default function ModalPage() {
               title="محمد بن إسماعيل"
               size="md"
               className="pvb-modal"
-              hero={<Avatar name="محمد بن إسماعيل" size="2xl" status="online" className="pvb-av" />}
+              hero={
+                // بصورةٍ لا بأحرف: `.pvb-av` مطوَّقٌ بحلقةٍ بيضاء، والصورةُ وحدَها تُظهر زاويتَها
+                // الداخليّة (الأفتار ناقصَ الحلقة) — والأحرفُ لا تلامس الأركان فتُخفي خطأها.
+                <Avatar name="محمد بن إسماعيل" src="/brand/pattern-circular.svg" size="2xl" status="online" className="pvb-av" />
+              }
               footer={
                 <>
                   <Button variant="ghost" size="md" onClick={() => setProfile(false)}>إغلاق</Button>
@@ -312,30 +316,30 @@ export default function ModalPage() {
               <div className="pvb-badges"><Badge tone="success" variant="soft" dot live>نشط</Badge></div>
 
               <div className="pva-sections">
-                <PSec icon={<Books weight="fill" />} title="البيانات الأكاديميّة">
+                <PSec icon={<Books />} title="البيانات الأكاديميّة">
                   <PCell full label="الكلّيّة" icon={<GraduationCap />} value="كلّيّة الحاسب والمعلومات" />
                   <PCell label="التخصّص" icon={<BookOpen />} value="هندسة البرمجيّات" />
                   <PCell label="الدرجة العلميّة" icon={<Certificate />} value="بكالوريوس" />
                   <PCell full lat label="الرقم الأكاديميّ" icon={<IdentificationCard />} value="٤٤١٠٢٣٥٧" />
                 </PSec>
-                <PSec icon={<IdentificationCard weight="fill" />} title="بيانات العضويّة">
+                <PSec icon={<IdentificationCard />} title="بيانات العضويّة">
                   <PCell label="الدور" icon={<Star />} value="عضو" />
                   <PCell label="اللجنة" icon={<UsersThree />} value="لجنة الإعلام" />
                   <PCell label="القسم" icon={<Buildings />} value="الإعلام" />
                   <PCell label="تاريخ الانضمام" icon={<CalendarBlank />} value="١٢ يناير ٢٠٢٥" />
                 </PSec>
-                <PSec icon={<AddressBook weight="fill" />} title="التواصل">
+                <PSec icon={<AddressBook />} title="التواصل">
                   <PCell full lat label="البريد الإلكترونيّ" icon={<Envelope />} value="mohammad@adeeb.club" />
                   <PCell full lat label="رقم الجوّال" icon={<Phone />} value="٠٥٠١٢٣٤٥٦٧" />
                 </PSec>
-                <PSec icon={<ShareNetwork weight="fill" />} title="التواصل الاجتماعيّ">
+                <PSec icon={<ShareNetwork />} title="التواصل الاجتماعيّ">
                   <PCell lat label="إكس (تويتر)" icon={<XLogo />} value="@mohammad" />
                   <PCell lat label="إنستغرام" icon={<InstagramLogo />} value="@mohammad" />
                   <PCell lat label="تيك‑توك" icon={<TiktokLogo />} value="@mohammad" />
                   <PCell lat label="لينكدإن" icon={<LinkedinLogo />} value="mohammad-ismael" />
                 </PSec>
                 {/* شرطيّ في الإنتاج (للموقوفين) — معروض هنا لاستعراض نغمة الخطر */}
-                <PSec end icon={<Prohibit weight="fill" />} title="إنهاء العضويّة">
+                <PSec end icon={<Prohibit />} title="إنهاء العضويّة">
                   <PCell full label="سبب الإنهاء" icon={<WarningCircle />} value="مخالفة لائحة العضويّة" />
                   <PCell full label="تاريخ الإنهاء" icon={<CalendarX />} value="٣ مارس ٢٠٢٦" />
                 </PSec>
@@ -364,7 +368,7 @@ export default function ModalPage() {
               <div className="pva-sections">
                 {/* خليّتان عاديّتان لا تصميم خاصّ: قسم الإنهاء يجعل القيمة تلتفّ كاملةً أصلًا
                     (`.pva-sec--end .pva-val`)، فالسبب يُعرض كأيّ قيمة — بأيقونته وتسميته. */}
-                <PSec end icon={<Prohibit weight="fill" />} title="سبب إنهاء العضوية">
+                <PSec end icon={<Prohibit />} title="سبب إنهاء العضوية">
                   <PCell full noCopy label="سبب الإنهاء" icon={<WarningCircle />} value={DEMO_REASON} />
                   <PCell full noCopy label="تاريخ الإنهاء" icon={<CalendarX />} value="٢ يوليو ٢٠٢٦" />
                 </PSec>

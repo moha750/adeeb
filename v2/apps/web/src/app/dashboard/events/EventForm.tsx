@@ -134,7 +134,7 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
       </div>
 
       <div className="form-build">
-        <ChartPanel headerVariant="chip" icon={<Sparkle weight="fill" />} title="تفاصيل الفعاليّة">
+        <ChartPanel headerVariant="chip" icon={<Sparkle />} title="تفاصيل الفعاليّة">
           <div className="form-grid">
             <Field className="form-full" label="اسم الفعاليّة" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="مثال: أمسية شعريّة" value={name} onChange={(e) => setName(e.target.value)} required />
             <Select label="نوع الفعاليّة" icon={<Sparkle />} options={TYPE_OPTIONS} value={type} onValueChange={(v) => setType(v as ActivityType)} required />
@@ -145,7 +145,7 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
           </div>
         </ChartPanel>
 
-        <ChartPanel headerVariant="chip" icon={<CalendarBlank weight="fill" />} title="الموعد والمقاعد">
+        <ChartPanel headerVariant="chip" icon={<CalendarBlank />} title="الموعد والمقاعد">
           <div className="form-grid">
             <Field className="form-full" type="date" label="التاريخ" icon={<CalendarBlank />} innerIcon={<CalendarDots />} placeholder="اختر التاريخ" value={date} onChange={(e) => setDate(e.target.value)} required />
             <Field type="time" label="وقت البداية" icon={<Clock />} innerIcon={<HourglassMedium />} placeholder="—" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
@@ -162,7 +162,7 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
           </div>
         </ChartPanel>
 
-        <ChartPanel headerVariant="chip" icon={<ImageIcon weight="fill" />} title="صورة الغلاف (اختياريّة)">
+        <ChartPanel headerVariant="chip" icon={<ImageIcon />} title="صورة الغلاف (اختياريّة)">
           <div className="flex flex-col gap-3 items-start">
             {cover ? (
               <img src={cover} alt="غلاف الفعاليّة" className="w-full max-h-56 object-cover rounded" />

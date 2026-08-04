@@ -102,7 +102,7 @@ export function AssignmentModal({
           {isAssign ? (
             <Select
               label={isReplace ? "الشاغل الجديد" : "العضو"}
-              icon={<UserPlus weight="bold" />}
+              icon={<UserPlus />}
               searchable
               tone={tone}
               options={memberOptions}

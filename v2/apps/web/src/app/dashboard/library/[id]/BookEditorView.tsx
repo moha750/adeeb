@@ -58,14 +58,14 @@ function SortablePage({ page, menu }: { page: PageEditRow; menu: MenuGroup[] }) 
           {...attributes}
           {...listeners}
         >
-          <DotsSixVertical weight="bold" />
+          <DotsSixVertical />
         </button>
         <div className="absolute top-1 end-1">
           <DropdownMenu groups={menu} ariaLabel="إجراءات الصفحة" triggerClassName="dm-trigger rounded-sm border border-line bg-surface" />
         </div>
         {(page.isCover || page.isHard) ? (
           <div className="absolute bottom-1 start-1 flex gap-1">
-            {page.isCover ? <Badge tone="warning" size="sm" icon={<Star weight="fill" />}>غلاف</Badge> : null}
+            {page.isCover ? <Badge tone="warning" size="sm" icon={<Star />}>غلاف</Badge> : null}
             {page.isHard ? <Badge tone="neutral" size="sm">دفّة</Badge> : null}
           </div>
         ) : null}
@@ -230,7 +230,7 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
         onDrop={(e) => { e.preventDefault(); onFiles(e.dataTransfer.files); }}
         className="rounded border-2 border-dashed border-line bg-surface-2 p-8 flex flex-col items-center gap-3 text-center"
       >
-        <UploadSimple size={30} weight="duotone" className="text-content-muted" />
+        <UploadSimple size={30} className="text-content-muted" />
         <div className="text-content-muted text-sm">اسحب صور الصفحات هنا، أو اخترها من جهازك — تُرتَّب بترتيب اختيارها، وتُعيد ترتيبها بالسحب.</div>
         <Button variant="ghost" size="md" onClick={() => fileRef.current?.click()} loading={uploading > 0}>
           <UploadSimple size={18} />اختر الصفحات
@@ -241,7 +241,7 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
 
       <div className="mt-4">
         {pages.length === 0 ? (
-          <EmptyState variant="soft" icon={<Books weight="duotone" />} title="لا صفحات بعد" description="ارفع صور صفحات المنشور لتظهر هنا مرتّبةً." />
+          <EmptyState variant="soft" icon={<Books />} title="لا صفحات بعد" description="ارفع صور صفحات المنشور لتظهر هنا مرتّبةً." />
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             <SortableContext items={pages.map((p) => p.id)} strategy={rectSortingStrategy}>
@@ -281,7 +281,7 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
         open={confirmDel !== null}
         onClose={() => setConfirmDel(null)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف الصفحة؟"
         text={confirmDel ? `ستُحذف الصفحة رقم ${confirmDel.pageNumber} وصورتها نهائيًّا.` : undefined}
         confirmLabel="حذف"

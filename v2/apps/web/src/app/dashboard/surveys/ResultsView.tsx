@@ -250,8 +250,8 @@ export function ResultsView({ agg, responses }: { agg: SurveyAggregates; respons
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<ChatCenteredDots weight="fill" />} value={agg.totals.responses} label="مشاركة مكتملة" />
-        <Stat icon={<ChartBar weight="fill" />} value={agg.questions.length} label="سؤال" />
+        <Stat icon={<ChatCenteredDots />} value={agg.totals.responses} label="مشاركة مكتملة" />
+        <Stat icon={<ChartBar />} value={agg.questions.length} label="سؤال" />
       </div>
 
       <div className="tabs tabs-segmented" role="tablist" style={{ marginBottom: 18 }}>
@@ -266,7 +266,7 @@ export function ResultsView({ agg, responses }: { agg: SurveyAggregates; respons
         agg.totals.responses === 0 ? (
           <EmptyState
             variant="aurora"
-            icon={<ChatCenteredDots weight="duotone" />}
+            icon={<ChatCenteredDots />}
             title="لا مشاركات بعد"
             description="حين تصل أوّل مشاركة تظهر النتائج هنا."
           />
@@ -280,23 +280,23 @@ export function ResultsView({ agg, responses }: { agg: SurveyAggregates; respons
           {agg.totals.responses === 0 ? (
             <EmptyState
               variant="aurora"
-              icon={<ChatCenteredDots weight="duotone" />}
+              icon={<ChatCenteredDots />}
               title="لا مشاركات بعد"
               description="حين تصل أوّل مشاركة تظهر التحليلات هنا."
             />
           ) : (
             <>
               <div className="stat-grid">
-                <Stat icon={<Eye weight="fill" />} value={agg.totals.views} label="مشاهدة للصفحة" />
-                <Stat icon={<ClockCountdown weight="fill" />} value={fmtDur(agg.totals.avgSeconds)} label="متوسّط وقت الإجابة" />
-                <Stat icon={<Percent weight="fill" />} value={analytics.conv == null ? "—" : `${analytics.conv}٪`} label="معدّل تحويل تقريبيّ" />
-                <Stat icon={<CalendarBlank weight="fill" />} value={analytics.last} label="آخر مشاركة" />
+                <Stat icon={<Eye />} value={agg.totals.views} label="مشاهدة للصفحة" />
+                <Stat icon={<ClockCountdown />} value={fmtDur(agg.totals.avgSeconds)} label="متوسّط وقت الإجابة" />
+                <Stat icon={<Percent />} value={analytics.conv == null ? "—" : `${analytics.conv}٪`} label="معدّل تحويل تقريبيّ" />
+                <Stat icon={<CalendarBlank />} value={analytics.last} label="آخر مشاركة" />
               </div>
               <ChartPanel title="المشاركات عبر الزمن">
                 <AreaChart seriesA="مشاركة" data={analytics.over} />
               </ChartPanel>
               <div className="st-grid2">
-                <ChartPanel title="الأجهزة" icon={<DeviceMobile weight="fill" />}>
+                <ChartPanel title="الأجهزة" icon={<DeviceMobile />}>
                   <Donut items={analytics.devices} centerLabel="مشاركة" empty="لا بيانات جهاز." />
                 </ChartPanel>
                 <ChartPanel title="توزيع أوقات الإجابة">
@@ -321,7 +321,7 @@ export function ResultsView({ agg, responses }: { agg: SurveyAggregates; respons
             emptyState={
               <EmptyState
                 variant={responses.length ? "soft" : "aurora"}
-                icon={responses.length ? <MagnifyingGlass weight="duotone" /> : <ChatCenteredDots weight="duotone" />}
+                icon={responses.length ? <MagnifyingGlass /> : <ChatCenteredDots />}
                 title={responses.length ? "لا مشاركات مطابقة" : "لا مشاركات بعد"}
                 description={responses.length ? "لم نعثر على مجيب بهذا الاسم." : "حين تصل أوّل مشاركة تظهر هنا."}
               />

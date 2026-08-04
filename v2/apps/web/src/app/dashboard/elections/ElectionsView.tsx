@@ -126,7 +126,7 @@ export function ElectionsView({ elections, createOptions }: { elections: Electio
   const emptyState = elections.length === 0 ? (
     <EmptyState
       variant="aurora"
-      icon={<Scales weight="duotone" />}
+      icon={<Scales />}
       title="لا انتخابات بعد"
       description="افتح أوّل انتخابٍ لمنصبٍ منتخَبٍ شاغر، فيظهر هنا بمرشّحيه وأصواته."
       action={createCta}
@@ -134,7 +134,7 @@ export function ElectionsView({ elections, createOptions }: { elections: Electio
   ) : filtering ? (
     <EmptyState
       variant="soft"
-      icon={<MagnifyingGlass weight="duotone" />}
+      icon={<MagnifyingGlass />}
       title="لا انتخابات مطابقة"
       description="لم نعثر على انتخابات تطابق بحثك أو المرشّح."
       action={<Button variant="ghost" size="md" onClick={clearFilters}>مسح المرشّحات</Button>}
@@ -142,7 +142,7 @@ export function ElectionsView({ elections, createOptions }: { elections: Electio
   ) : (
     <EmptyState
       variant="soft"
-      icon={<Scales weight="duotone" />}
+      icon={<Scales />}
       title={`لا انتخابات في «${currentTab.label}»`}
       description={currentTab.empty}
       action={tab === "live" ? createCta : undefined}
@@ -164,9 +164,9 @@ export function ElectionsView({ elections, createOptions }: { elections: Electio
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<Scales weight="fill" />} value={elections.length} label="إجمالي الانتخابات" />
-        <Stat icon={<Megaphone weight="fill" />} value={liveCount} label="جارية الآن" tone="success" />
-        <Stat icon={<Trophy weight="fill" />} value={completedCount} label="مكتملة" />
+        <Stat icon={<Scales />} value={elections.length} label="إجمالي الانتخابات" />
+        <Stat icon={<Megaphone />} value={liveCount} label="جارية الآن" tone="success" />
+        <Stat icon={<Trophy />} value={completedCount} label="مكتملة" />
       </div>
 
       <div style={{ marginBottom: 14 }}>

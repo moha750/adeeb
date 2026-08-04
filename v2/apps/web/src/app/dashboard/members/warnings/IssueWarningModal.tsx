@@ -234,7 +234,7 @@ export function IssueWarningModal({
       >
         <Select
           label="العضو"
-          icon={<UserCircle weight="duotone" />}
+          icon={<UserCircle />}
           options={memberOptions}
           value={userId}
           // تبديلُ العضو يبدّل أرضيّة التاريخ، فيسقط ما اختير قبله
@@ -255,7 +255,7 @@ export function IssueWarningModal({
 
         <Select
           label="تصنيف المخالفة"
-          icon={<Tag weight="duotone" />}
+          icon={<Tag />}
           options={categoryOptions}
           value={category}
           onValueChange={setCategory}
@@ -265,7 +265,7 @@ export function IssueWarningModal({
 
         <Textarea
           label="سبب الإنذار"
-          icon={<ChatCenteredText weight="duotone" />}
+          icon={<ChatCenteredText />}
           innerIcon={<NotePencil />}
           placeholder="اكتب ما وقع بدقّة — هذا النصّ يُطبع في الخطاب ويُرسَل للعضو."
           value={reason}
@@ -277,7 +277,7 @@ export function IssueWarningModal({
 
         <Field
           label="تاريخ الواقعة"
-          icon={<CalendarBlank weight="duotone" />}
+          icon={<CalendarBlank />}
           innerIcon={<User />}
           placeholder="اختر التاريخ"
           type="date"
@@ -303,7 +303,7 @@ export function IssueWarningModal({
         open={confirm}
         onClose={() => setConfirm(false)}
         tone="danger"
-        icon={<Warning weight="fill" />}
+        icon={<Warning />}
         title={`هذا هو ${warningTitle(nextOrdinal)}`}
         text={`بتسجيله يبلغ ${target?.name ?? "العضو"} حدَّ الإنذارات (${limit})، فتُسحب عضويّته فورًا. لا رجوع بضغطة.`}
         confirmLabel={`سجّل ${ordinalWord(nextOrdinal)} واسحب العضويّة`}

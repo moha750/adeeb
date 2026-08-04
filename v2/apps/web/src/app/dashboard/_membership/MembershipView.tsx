@@ -63,7 +63,7 @@ export function MembershipView({ membership: m }: { membership: Membership }) {
         <Card>
           <CardHeader
             variant="soft"
-            icon={<Binoculars weight="fill" />}
+            icon={<Binoculars />}
             title="لجانٌ تشرف عليها"
             subtitle="تكليفٌ من إدارتك — يدور ويتبدّل، ولا يجعلك عضوًا فيها"
           />
@@ -82,7 +82,7 @@ export function MembershipView({ membership: m }: { membership: Membership }) {
         <Card>
           <CardHeader
             variant="soft"
-            icon={<ShieldWarning weight="fill" />}
+            icon={<ShieldWarning />}
             title="إنذاراتي"
             subtitle={`${dots(m.warnings.length, m.warningLimit)} · ${remainingText(m.warnings.length, m.warningLimit)}`}
           />
@@ -106,7 +106,7 @@ export function MembershipView({ membership: m }: { membership: Membership }) {
         <Card>
           <CardHeader
             variant="soft"
-            icon={<CertificateIcon weight="fill" />}
+            icon={<CertificateIcon />}
             title="شهاداتي"
             subtitle="شهادات الخبرة الصادرة لك — نزّلها متى احتجتها"
           />
@@ -132,13 +132,13 @@ export function MembershipView({ membership: m }: { membership: Membership }) {
       ) : null}
 
       <Card>
-        <CardHeader variant="soft" icon={<Path weight="fill" />} title="مسيرتي في أديب" subtitle="انضمامك وما تلاه من مناصب" />
+        <CardHeader variant="soft" icon={<Path />} title="مسيرتي في أديب" subtitle="انضمامك وما تلاه من مناصب" />
         <CardBody>
           {m.journey.length ? (
             <Journey stops={m.journey} />
           ) : (
             <EmptyState
-              icon={<Signpost weight="duotone" />}
+              icon={<Signpost />}
               title="لا محطّات بعد"
               description="لم يُسجَّل لك تاريخ انضمامٍ ولا تعيينٌ في منصب."
             />

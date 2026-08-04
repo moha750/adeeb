@@ -19,7 +19,7 @@ export function FaqCard({ faq, order, actions, onOpen }: Props) {
   return (
     <Card interactive onClick={onOpen}>
       <CardHeader
-        icon={<Question weight="duotone" aria-hidden />}
+        icon={<Question aria-hidden />}
         title={faq.question}
         actions={
           actions.length > 0 ? (

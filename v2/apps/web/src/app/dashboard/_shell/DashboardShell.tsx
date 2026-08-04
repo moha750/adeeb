@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { IconContext } from "@phosphor-icons/react";
 import { BurgerIcon, Button } from "@adeeb/design-system";
 import { Avatar } from "../_components/Avatar";
 import { createClient } from "@/lib/supabase/client";
@@ -124,54 +123,48 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
             والمعكوسُ مصنوعٌ لهذا («يُعكَس ما يختفي على الداكن»). */}
         <Button variant="inverse" className="ash-cta"><IconPlus /><span>إجراء سريع</span></Button>
 
-        {/* الوزن صفةُ **المكان** لا صفةُ كلّ أيقونةٍ على حدة: بنودُ الخريطة تُرسم duotone —
-            طبقةٌ خافتةٌ تملأ الشكل خلف خطّه فيثقُل حضورُها على اللوح المذهّب. سياقٌ واحد
-            هنا يكفي، فلا يُرصَّع `weight` في ثلاثين مكوّنًا. والكروم خارج الشريط (الجرس ·
-            القائمة · الخروج) يبقى على وزنه — لم يُطلَب. */}
-        <IconContext.Provider value={{ weight: "duotone", color: "currentColor", size: "1em", mirrored: false }}>
-          <nav className="ash-nav" ref={navRef}>
-            {nav.map((g, gi) => (
-              <div className="ash-group" key={g.head ?? gi}>
-                {g.head ? <div className="ash-nav-head">{g.head}</div> : null}
-                {g.items.map((it) => {
-                  const Icon = ICONS[it.icon];
-                  if (!it.children) {
-                    return (
-                      <Link key={it.label} href={it.href!} className={"ash-i" + (isActive(pathname, it.href) ? " on" : "")}>
-                        <Icon /><span className="lbl">{it.label}</span>
-                        {it.badge ? <em className="ash-b">{it.badge}</em> : null}
-                      </Link>
-                    );
-                  }
-                  const isOpen = open.has(it.label);
+        {/* الوزن صفةُ **الموقع** لا صفةُ مكانٍ ولا أيقونةٍ على حدة: سياقُ الجذر
+            (`IconDefaults` في `app/layout.tsx`) يرسم أيقونات أديب كلَّها duotone —
+            فلا سياقَ محلّيّ هنا ولا `weight` مرصَّع في بندٍ ولا شيفرون. */}
+        <nav className="ash-nav" ref={navRef}>
+          {nav.map((g, gi) => (
+            <div className="ash-group" key={g.head ?? gi}>
+              {g.head ? <div className="ash-nav-head">{g.head}</div> : null}
+              {g.items.map((it) => {
+                const Icon = ICONS[it.icon];
+                if (!it.children) {
                   return (
-                    <div key={it.label}>
-                      <button type="button" className={"ash-i" + (isOpen ? " open" : "")} onClick={() => toggle(it.label)}>
-                        {/* الشيفرون يُستثنى من duotone: الوزنُ المزدوج يملؤه فيصير مثلّثًا مصمتًا،
-                            وهو إشارةُ اتّجاهٍ لا أيقونةَ معنى — يبقى خطًّا رفيعًا */}
-                        <Icon /><span className="lbl">{it.label}</span><IconCaret className="ash-caret" weight="regular" />
-                      </button>
-                      <div className="ash-sub">
-                        <div className="ash-sub-in">
-                          {it.children.map((c) => (
-                            <Link key={c.href} href={c.href} className={"ash-s" + (isActive(pathname, c.href) ? " on" : "")}>
-                              <span className="lbl">{c.label}</span>
-                              {c.badge ? <em className="ash-b">{c.badge}</em> : null}
-                            </Link>
-                          ))}
-                        </div>
+                    <Link key={it.label} href={it.href!} className={"ash-i" + (isActive(pathname, it.href) ? " on" : "")}>
+                      <Icon /><span className="lbl">{it.label}</span>
+                      {it.badge ? <em className="ash-b">{it.badge}</em> : null}
+                    </Link>
+                  );
+                }
+                const isOpen = open.has(it.label);
+                return (
+                  <div key={it.label}>
+                    <button type="button" className={"ash-i" + (isOpen ? " open" : "")} onClick={() => toggle(it.label)}>
+                      <Icon /><span className="lbl">{it.label}</span><IconCaret className="ash-caret" />
+                    </button>
+                    <div className="ash-sub">
+                      <div className="ash-sub-in">
+                        {it.children.map((c) => (
+                          <Link key={c.href} href={c.href} className={"ash-s" + (isActive(pathname, c.href) ? " on" : "")}>
+                            <span className="lbl">{c.label}</span>
+                            {c.badge ? <em className="ash-b">{c.badge}</em> : null}
+                          </Link>
+                        ))}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            ))}
-          </nav>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
 
-          {/* مركز المساعدة داخل السياق: طوقُ النجاة بندٌ في الشريط كسائر البنود.
-              وأيقونتا نافذته تحملان `weight="fill"` صراحةً، والخاصّةُ تغلب السياق. */}
-          <HelpCenter />
-        </IconContext.Provider>
+        {/* مركز المساعدة: طوقُ النجاة بندٌ في الشريط كسائر البنود. */}
+        <HelpCenter />
       </aside>
 
       <div className="ash-main">

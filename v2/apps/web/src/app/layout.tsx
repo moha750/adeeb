@@ -6,6 +6,7 @@ import "@adeeb/design-system/tokens.css";
 import "./globals.css";
 import "@adeeb/design-system/components.css";
 import { BootSplash } from "./_components/BootSplash";
+import { IconDefaults } from "./_components/IconDefaults";
 
 // `metadataBase` أصلُ كلّ رابطٍ نسبيّ في الوسوم (OG وcanonical وrobots) — بدونه تُبنى
 // روابط OG نسبيّةً فلا تُقرأ خارج الموقع. والنطاق من البيئة ليبقى صحيحًا في المعاينات.
@@ -34,7 +35,8 @@ export default function RootLayout({
             يجهز الموقع. وهي غير `loading.tsx` — تلك للتنقّل داخل الموقع لا للدخول إليه.
             وموضعُها بعد سكربت `js` مباشرةً: الصنفُ شرطُ ظهورها (حارسُ «بلا جافاسكربت»). */}
         <BootSplash />
-        {children}
+        {/* وزنُ الأيقونات يُعلَن مرّةً للموقع كلّه — انظر `IconDefaults` */}
+        <IconDefaults>{children}</IconDefaults>
       </body>
     </html>
   );

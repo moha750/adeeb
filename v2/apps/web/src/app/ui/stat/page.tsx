@@ -29,19 +29,19 @@ export default function StatPage() {
           <section>
             <Lab>النغمات الأربع</Lab>
             <div className="stat-grid">
-              <Stat icon={<UsersThree weight="fill" />} value="800" label="إجمالي الأعضاء" tone="brand" />
-              <Stat icon={<UserCheck weight="fill" />} value="42" label="مشغولة" tone="success" />
-              <Stat icon={<Briefcase weight="fill" />} value="7" label="قيد المراجعة" tone="warning" />
-              <Stat icon={<UserMinus weight="fill" />} value="5" label="شاغرة" tone="danger" />
+              <Stat icon={<UsersThree />} value="800" label="إجمالي الأعضاء" tone="brand" />
+              <Stat icon={<UserCheck />} value="42" label="مشغولة" tone="success" />
+              <Stat icon={<Briefcase />} value="7" label="قيد المراجعة" tone="warning" />
+              <Stat icon={<UserMinus />} value="5" label="شاغرة" tone="danger" />
             </div>
           </section>
 
           <section>
             <Lab>مع مؤشّر اتّجاه — الشارة تُمرَّر في trend</Lab>
             <div className="stat-grid">
-              <Stat icon={<UsersThree weight="fill" />} value="800" label="إجمالي الأعضاء" tone="brand"
+              <Stat icon={<UsersThree />} value="800" label="إجمالي الأعضاء" tone="brand"
                 trend={<Badge tone="success" variant="soft" size="sm" icon={chevUp}>12%</Badge>} />
-              <Stat icon={<Eye weight="fill" />} value="1,204" label="زيارة" tone="brand"
+              <Stat icon={<Eye />} value="1,204" label="زيارة" tone="brand"
                 trend={<Badge tone="danger" variant="soft" size="sm" icon={chevDown}>3%</Badge>} />
             </div>
           </section>
@@ -49,17 +49,17 @@ export default function StatPage() {
           <section>
             <Lab>سلوك الشبكة — ثلاثة كحدّ أقصى، واليتيم يمتدّ على الصفّ</Lab>
             <div className="stat-grid">
-              <Stat icon={<Bank weight="fill" />} value="3" label="مجالس" />
-              <Stat icon={<Buildings weight="fill" />} value="8" label="أقسام" />
-              <Stat icon={<UsersThree weight="fill" />} value="23" label="لجان" />
-              <Stat icon={<UserCircle weight="fill" />} value="180" label="عضوًا نشطًا" />
+              <Stat icon={<Bank />} value="3" label="مجالس" />
+              <Stat icon={<Buildings />} value="8" label="أقسام" />
+              <Stat icon={<UsersThree />} value="23" label="لجان" />
+              <Stat icon={<UserCircle />} value="180" label="عضوًا نشطًا" />
             </div>
           </section>
 
           <section>
             <Lab>كرت وحيد — يملأ الصفّ</Lab>
             <div className="stat-grid">
-              <Stat icon={<UsersThree weight="fill" />} value="180" label="عدد أعضاء أديب" />
+              <Stat icon={<UsersThree />} value="180" label="عدد أعضاء أديب" />
             </div>
           </section>
         </div>

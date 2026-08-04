@@ -140,24 +140,24 @@ export function UnitView({
     <div className="asg">
       {/* الإحصاءات تقول ما للإدارة من أمر: بعدد من فيها، وبتغطيتها للجان — بترتيب القسمين. */}
       <div className="stat-grid">
-        <Stat icon={<UsersFour weight="fill" />} value={stats.people} label="عضوًا في إدارتك" tone="brand" />
-        <Stat icon={<Buildings weight="fill" />} value={stats.covered} label="لجنة مُغطّاة" tone="success" />
-        <Stat icon={<UserMinus weight="fill" />} value={stats.vacant} label="لجنة بلا مشرف" tone="danger" />
+        <Stat icon={<UsersFour />} value={stats.people} label="عضوًا في إدارتك" tone="brand" />
+        <Stat icon={<Buildings />} value={stats.covered} label="لجنة مُغطّاة" tone="success" />
+        <Stat icon={<UserMinus />} value={stats.vacant} label="لجنة بلا مشرف" tone="danger" />
       </div>
 
       {/* القسم الأوّل — الانتماء: من هم أعضاء إدارتك، ضمًّا وإخراجًا. لا إشرافَ يُمسّ هنا. */}
       <section className="asg-sec">
         <div className="viewbar">
-          <ModalSectionHeading icon={<UsersFour weight="fill" />} title="أعضاء الإدارة" />
+          <ModalSectionHeading icon={<UsersFour />} title="أعضاء الإدارة" />
           <Button variant="primary" size="md" onClick={() => open({ kind: "recruit" })}>
-            <UserPlus weight="bold" aria-hidden /> تعيين عضو إداريّ
+            <UserPlus aria-hidden /> تعيين عضو إداريّ
           </Button>
         </div>
 
         {roster.length === 0 ? (
           <EmptyState
             variant="soft"
-            icon={<UsersFour weight="duotone" />}
+            icon={<UsersFour />}
             title="لا عضو في إدارتك بعد"
             description="ابدأ بتعيين عضوٍ إداريٍّ في الإدارة — ثمّ وزّع إشرافه من قسم اللجان أدناه."
             action={<Button variant="primary" size="md" onClick={() => open({ kind: "recruit" })}>تعيين عضو إداريّ</Button>}
@@ -178,7 +178,7 @@ export function UnitView({
 
       {/* القسم الثاني — الإشراف: مقعدُ إدارتك في كلّ لجنةٍ تنفيذيّة، وهو **بابُ التوزيع الوحيد**. */}
       <section className="asg-sec">
-        <ModalSectionHeading icon={<Buildings weight="fill" />} title="توزيع الإشراف على اللجان" />
+        <ModalSectionHeading icon={<Buildings />} title="توزيع الإشراف على اللجان" />
         <div className="card-grid">
           {seats.map((p) => (
             // البطلُ النطاق لا الدور: تسعُ لجانٍ ومقعدٌ واحدٌ مكرّر — فاسمُ الدور وشارتُه يسقطان

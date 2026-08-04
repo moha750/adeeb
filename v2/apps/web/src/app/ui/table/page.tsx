@@ -234,7 +234,7 @@ export default function TablePage() {
               emptyState={
                 <EmptyState
                   variant="aurora"
-                  icon={<UsersThree weight="duotone" />}
+                  icon={<UsersThree />}
                   title="لا أعضاء بعد"
                   description="لا أعضاء في هذا القسم حاليًّا."
                   action={<Button variant="primary" size="md"><Plus size={18} />إضافة عضو</Button>}

@@ -52,7 +52,7 @@ export function UnitMemberCard({
           onClick={onExpel}
           aria-label={`إخراج ${s.name} من الإدارة`}
         >
-          <SignOut weight="bold" aria-hidden /> إخراج
+          <SignOut aria-hidden /> إخراج
         </Button>
       </div>
     </Card>

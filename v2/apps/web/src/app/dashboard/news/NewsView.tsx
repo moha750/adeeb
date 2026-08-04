@@ -151,7 +151,7 @@ export function NewsView({
         <span className="txt" title={n.summary ?? undefined}>
           <b>{n.title}</b>
           {n.isFeatured ? (
-            <Star weight="fill" size={14} className="text-warning" style={{ marginInlineStart: 6, verticalAlign: "-2px" }} aria-label="مميّز" />
+            <Star size={14} className="text-warning" style={{ marginInlineStart: 6, verticalAlign: "-2px" }} aria-label="مميّز" />
           ) : null}
           <span className="text-content-muted" style={{ marginInlineStart: 8 }}>
             {CATEGORY_META[n.category].label}
@@ -229,7 +229,7 @@ export function NewsView({
   const emptyState = rows.length === 0 ? (
     <EmptyState
       variant="aurora"
-      icon={<Newspaper weight="duotone" />}
+      icon={<Newspaper />}
       title={isChief ? "لا أخبار بعد" : "لا تكاليف لك"}
       description={isChief
         ? "أنشئ أوّل خبر — يُحفظ مسودّةً، ثمّ تكلّف كاتبه وتراجعه قبل النشر."
@@ -239,7 +239,7 @@ export function NewsView({
   ) : filtered.length === 0 ? (
     <EmptyState
       variant="soft"
-      icon={<MagnifyingGlass weight="duotone" />}
+      icon={<MagnifyingGlass />}
       title="لا أخبار مطابقة"
       description={filtering ? "لم نعثر على أخبار تطابق بحثك أو المرشّح." : "لا خبر في هذه المرحلة الآن."}
       action={filtering ? <Button variant="ghost" size="md" onClick={clearFilters}>مسح المرشّحات</Button> : undefined}
@@ -280,12 +280,12 @@ export function NewsView({
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<Newspaper weight="fill" />} value={rows.length} label={isChief ? "إجمالي الأخبار" : "تكاليفي"} />
-        <Stat icon={<ClipboardText weight="fill" />} value={inFlight} label="قيد العمل" tone="brand" />
-        <Stat icon={<PaperPlaneTilt weight="fill" />} value={awaiting} label={isChief ? "تنتظر مراجعتك" : "رفعتها للمراجعة"} tone="warning" />
-        <Stat icon={<Megaphone weight="fill" />} value={published} label="منشور" tone="success" />
+        <Stat icon={<Newspaper />} value={rows.length} label={isChief ? "إجمالي الأخبار" : "تكاليفي"} />
+        <Stat icon={<ClipboardText />} value={inFlight} label="قيد العمل" tone="brand" />
+        <Stat icon={<PaperPlaneTilt />} value={awaiting} label={isChief ? "تنتظر مراجعتك" : "رفعتها للمراجعة"} tone="warning" />
+        <Stat icon={<Megaphone />} value={published} label="منشور" tone="success" />
         {isChief && pendingComments ? (
-          <Stat icon={<ChatCircleDots weight="fill" />} value={pendingComments} label="تعليقات تنتظر الإقرار" tone="warning" />
+          <Stat icon={<ChatCircleDots />} value={pendingComments} label="تعليقات تنتظر الإقرار" tone="warning" />
         ) : null}
       </div>
 
@@ -348,7 +348,7 @@ export function NewsView({
         open={confirmKill !== null}
         onClose={() => setConfirmKill(null)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف الخبر؟"
         text={confirmKill ? `سيُحذف «${confirmKill.title}» وتكاليفه وتعليقاته وصوره نهائيًّا. لا استرجاع بعده.` : undefined}
         confirmLabel="حذف"

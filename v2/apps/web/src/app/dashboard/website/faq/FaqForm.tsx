@@ -48,7 +48,7 @@ export function FaqForm({ faq }: { faq?: FaqEditData | null }) {
       </div>
 
       <div className="form-build">
-        <ChartPanel headerVariant="chip" icon={<Question weight="fill" />} title="السؤال والإجابة">
+        <ChartPanel headerVariant="chip" icon={<Question />} title="السؤال والإجابة">
           <div className="form-grid">
             <Field className="form-full" label="السؤال" icon={<Question />} innerIcon={<PencilSimple />} placeholder="مثال: كيف أنضمّ إلى النادي؟" value={question} onChange={(e) => setQuestion(e.target.value)} required />
             <Textarea className="form-full" label="الإجابة" icon={<TextT />} innerIcon={<ChatText />} placeholder="اكتب إجابةً واضحةً ومختصرة" rows={5} value={answer} onChange={(e) => setAnswer(e.target.value)} required />

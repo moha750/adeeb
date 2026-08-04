@@ -14,9 +14,9 @@ import type { StructureModel } from "./model";
 type View = "lineage" | "spine" | "cascade";
 
 const VIEWS = [
-  { value: "lineage", label: <span className="seg-lbl"><TreeStructure weight="bold" /> الأنساب</span> },
-  { value: "spine", label: <span className="seg-lbl"><ListDashes weight="bold" /> المِحوَر</span> },
-  { value: "cascade", label: <span className="seg-lbl"><Columns weight="bold" /> الأعمدة</span> },
+  { value: "lineage", label: <span className="seg-lbl"><TreeStructure /> الأنساب</span> },
+  { value: "spine", label: <span className="seg-lbl"><ListDashes /> المِحوَر</span> },
+  { value: "cascade", label: <span className="seg-lbl"><Columns /> الأعمدة</span> },
 ];
 
 export function StructureView({ model }: { model: StructureModel }) {
@@ -24,10 +24,10 @@ export function StructureView({ model }: { model: StructureModel }) {
 
   const s = model.stats;
   const stats = [
-    { n: s.councils, l: "مجالس", icon: <Bank weight="fill" /> },
-    { n: s.administrations, l: "إدارات", icon: <Bank weight="fill" /> },
-    { n: s.departments, l: "أقسام", icon: <Buildings weight="fill" /> },
-    { n: s.committees, l: "لجان", icon: <UsersThree weight="fill" /> },
+    { n: s.councils, l: "مجالس", icon: <Bank /> },
+    { n: s.administrations, l: "إدارات", icon: <Bank /> },
+    { n: s.departments, l: "أقسام", icon: <Buildings /> },
+    { n: s.committees, l: "لجان", icon: <UsersThree /> },
   ];
 
   return (

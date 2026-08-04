@@ -132,7 +132,7 @@ export default function ToolbarPage() {
               bulkActions={
                 <>
                   <button type="button" className="tb-ba">تغيير الحالة</button>
-                  <button type="button" className="tb-ba"><Export weight="bold" /> تصدير</button>
+                  <button type="button" className="tb-ba"><Export /> تصدير</button>
                   <button type="button" className="tb-ba dg" onClick={() => setSelected(0)}>حذف</button>
                 </>
               }

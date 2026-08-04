@@ -58,7 +58,7 @@ export function ScheduleLine({ survey, className }: { survey: SurveyRow; classNa
   if (!win) {
     return (
       <span className={`flex min-w-0 items-center gap-1.5 text-content-muted ${className ?? ""}`}>
-        <CalendarBlank weight="duotone" aria-hidden className="shrink-0" />
+        <CalendarBlank aria-hidden className="shrink-0" />
         <span className="truncate">أُنشئ {survey.created}</span>
       </span>
     );
@@ -71,7 +71,7 @@ export function ScheduleLine({ survey, className }: { survey: SurveyRow; classNa
 
   return (
     <span className={`flex min-w-0 items-center gap-1.5 text-content-muted ${className ?? ""}`} title={title}>
-      <CalendarBlank weight="duotone" aria-hidden className="shrink-0" />
+      <CalendarBlank aria-hidden className="shrink-0" />
       <span className="truncate">{primary}</span>
     </span>
   );

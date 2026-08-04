@@ -79,7 +79,7 @@ export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
       </div>
 
       <div className="form-build">
-        <ChartPanel headerVariant="chip" icon={<Sparkle weight="fill" />} title="تفاصيل الراعي">
+        <ChartPanel headerVariant="chip" icon={<Sparkle />} title="تفاصيل الراعي">
           <div className="form-grid">
             <Field className="form-full" label="اسم الراعي" icon={<Buildings />} innerIcon={<PencilSimple />} placeholder="مثال: مؤسّسة كذا" value={name} onChange={(e) => setName(e.target.value)} required />
             <Field label="الوسم" icon={<SealCheck />} innerIcon={<PencilSimple />} placeholder="مثال: راعٍ ذهبيّ · شريك استراتيجيّ" value={badge} onChange={(e) => setBadge(e.target.value)} optional />
@@ -88,7 +88,7 @@ export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
           </div>
         </ChartPanel>
 
-        <ChartPanel headerVariant="chip" icon={<ImageIcon weight="fill" />} title="الشعار (مطلوب)">
+        <ChartPanel headerVariant="chip" icon={<ImageIcon />} title="الشعار (مطلوب)">
           <div className="flex flex-col gap-3 items-start">
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element

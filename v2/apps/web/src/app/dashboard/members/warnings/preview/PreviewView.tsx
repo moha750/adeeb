@@ -77,7 +77,7 @@ export function PreviewView() {
           <Breadcrumb leaf="معاينة الخطاب" />
           <h1>معاينة الخطاب</h1>
         </div>
-        <Badge tone="info" variant="soft" icon={<ShieldWarning weight="fill" />}>عيّنةٌ لا سجلّ</Badge>
+        <Badge tone="info" variant="soft" icon={<ShieldWarning />}>عيّنةٌ لا سجلّ</Badge>
       </div>
 
       <Alert tone="info" title="ما تراه هو ما يُنزَّل">
@@ -100,7 +100,7 @@ export function PreviewView() {
           <Card key={c.value}>
             <CardHeader
               variant="soft"
-              icon={<Warning weight="fill" />}
+              icon={<Warning />}
               title={c.label}
               subtitle={ordinal >= 3 ? "بالغُ الحدّ — يُعلن سحب العضويّة" : `${warningTitle(ordinal)} — يقول ما بقي`}
             />
