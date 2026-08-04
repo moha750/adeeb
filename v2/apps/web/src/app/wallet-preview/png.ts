@@ -163,18 +163,6 @@ export function brandIcon(size: number): Buffer {
     }
   }
 
-  // ⚠️ **مؤقّت — تجربةُ تشخيصٍ تُنزَع بعد الجواب.** قرصٌ أبيضُ صارخٌ لا تُخطئه العين:
-  // إن تغيّر مربّعُ الإشعار في الجهاز فهو `icon.png`، وإن بقي على حاله فليس أيقونتَنا
-  // أصلًا — ولا سبيل عندئذٍ إلى وضع العلامة فيه.
-  const cx = (size - 1) / 2;
-  const rad = size * 0.3;
-  for (let y = 0; y < size; y += 1) {
-    for (let x = 0; x < size; x += 1) {
-      const d = Math.hypot(x - cx, y - cx);
-      if (d <= rad) over(rgba, (y * size + x) * 4, WHITE, 1);
-    }
-  }
-
   return encodePng(size, size, rgba);
 }
 
