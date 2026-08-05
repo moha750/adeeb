@@ -4,13 +4,16 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Button, Card, CardBody, CardHeader, Field, Modal } from "@adeeb/design-system";
+import { Alert, Badge, Button, Card, CardBody, CardFooter, CardHeader, Field, Modal } from "@adeeb/design-system";
 import { At, Desktop, Envelope, Key, Lock, ShieldCheck, SignOut } from "@phosphor-icons/react";
 import { DataTable, type Column } from "../_components/DataTable";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
 import { EmptyState } from "../_components/EmptyState";
 import { useToast } from "../_components/ToastProvider";
+import { TurnstileWidget } from "@/app/_components/Turnstile";
 import { changeMyEmail, changeMyPassword, signOutEverywhere } from "./actions";
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 import type { MySession, MySettings } from "./data";
 
 /** يطابق `PASSWORD_MIN` في الفعل الخادميّ و`password_min_length` في إعداد المصادقة. */
@@ -47,6 +50,9 @@ export function SettingsView({ settings }: { settings: MySettings }) {
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
   const [passErr, setPassErr] = useState<string | null>(null);
+  // تبديلُ كلمة المرور يُثبت الحاليّة **بدخولٍ حقيقيّ** — وبابُ الدخول مدروع، فتلزمه ودجةٌ كشاشة الدخول
+  const [tsToken, setTsToken] = useState<string | null>(null);
+  const [tsReset, setTsReset] = useState(0);
 
   const [mailOpen, setMailOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -62,7 +68,8 @@ export function SettingsView({ settings }: { settings: MySettings }) {
     if (next.length < PASSWORD_MIN) { setPassErr(`كلمة المرور الجديدة ${PASSWORD_MIN} محارف على الأقلّ.`); return; }
     if (next !== confirm) { setPassErr("التأكيد لا يطابق الجديدة."); return; }
     startAction(async () => {
-      const r = await changeMyPassword({ current, next });
+      const r = await changeMyPassword({ current, next, captchaToken: tsToken ?? undefined });
+      setTsReset((n) => n + 1); // الرمزُ يُستهلك بالمحاولة — يُجدَّد للتالية
       if (r.ok) { toast.success(r.message); closePass(); } else setPassErr(r.message);
     });
   };
@@ -91,13 +98,13 @@ export function SettingsView({ settings }: { settings: MySettings }) {
           variant="soft"
           icon={<ShieldCheck />}
           title="الدخول والأمان"
-          subtitle="بريدُ دخولك ومفتاحُه — لا يتغيّران إلّا بإثبات"
+          subtitle="بريدُ دخولك ومفتاحُه، لا يتغيّران إلّا بإثبات"
         />
         <CardBody>
           <div className="viewbar">
             <span>
               <b className="txt lat"><bdi dir="ltr">{settings.email}</bdi></b>
-              <span className="fld-help"> بريدُ دخولك — تغييرُه يحتاج تأكيدًا من العنوان الجديد.</span>
+              <span className="fld-help"> بريدُ دخولك، تغييرُه يحتاج تأكيدًا من العنوان الجديد.</span>
             </span>
             <Button variant="ghost" size="sm" onClick={() => setMailOpen(true)}>
               <Envelope size={16} aria-hidden /> تغيير البريد
@@ -120,32 +127,35 @@ export function SettingsView({ settings }: { settings: MySettings }) {
           variant="soft"
           icon={<Desktop />}
           title="أجهزتك وجلساتك"
-          subtitle="كلّ جهازٍ فُتحت منه جلسةٌ لحسابك — راجِعها، وما أنكرتَه فأنهِ الجلسات كلّها"
+          subtitle="كلّ جهازٍ فُتحت منه جلسةٌ لحسابك، راجِعها، وما أنكرتَه فأنهِ الجلسات كلّها"
         />
-        <CardBody>
-          {settings.sessionsError ? (
+        {/* الجدولُ ابنُ الكرت مباشرةً لا ابنُ متنه — فيبلغ حافّتيه ويخلع إطارَه (قانونُ «سطحٌ مؤطَّرٌ
+            لا يحمل سطحًا مؤطَّرًا»). كان في المتن بإطارٍ كامل: سطحُه المصمت يثقب تدرّجَ Aurora في
+            الكرت، وحدُّه يرسم إطارًا ثانيًا داخل الأوّل. والفعلُ نزل إلى تذييل الكرت — موضعُه. */}
+        {settings.sessionsError ? (
+          <CardBody>
             <Alert tone="danger" title="تعذّر قراءة جلساتك">{settings.sessionsError}</Alert>
-          ) : (
-            <DataTable
-              columns={sessionColumns}
-              rows={settings.sessions}
-              getRowId={(s) => s.id}
-              emptyState={
-                <EmptyState
-                  icon={<Desktop />}
-                  title="لا جلسات"
-                  description="لا جلسةَ مسجّلة لحسابك الآن."
-                />
-              }
-            />
-          )}
-          <div className="viewbar">
-            <span className="fld-help">يخرج حسابُك من كلّ الأجهزة — ومنها هذا، فتعود إلى الدخول.</span>
-            <Button variant="ghost-danger" size="sm" onClick={() => setOutOpen(true)}>
-              <SignOut size={16} aria-hidden /> الخروج من كلّ الأجهزة
-            </Button>
-          </div>
-        </CardBody>
+          </CardBody>
+        ) : (
+          <DataTable
+            columns={sessionColumns}
+            rows={settings.sessions}
+            getRowId={(s) => s.id}
+            emptyState={
+              <EmptyState
+                icon={<Desktop />}
+                title="لا جلسات"
+                description="لا جلسةَ مسجّلة لحسابك الآن."
+              />
+            }
+          />
+        )}
+        <CardFooter>
+          <span className="fld-help">يخرج حسابُك من كلّ الأجهزة، ومنها هذا، فتعود إلى الدخول.</span>
+          <Button variant="ghost-danger" size="sm" onClick={() => setOutOpen(true)}>
+            <SignOut size={16} aria-hidden /> الخروج من كلّ الأجهزة
+          </Button>
+        </CardFooter>
       </Card>
 
       {/* ── تغيير كلمة المرور ── */}
@@ -170,6 +180,11 @@ export function SettingsView({ settings }: { settings: MySettings }) {
             placeholder={`${PASSWORD_MIN} محارف على الأقلّ`} value={next} onChange={(e) => setNext(e.target.value)} required />
           <Field className="mdl-full" label="تأكيد الجديدة" type="password" icon={<Lock />} innerIcon={<Key />}
             placeholder="أعِد كتابتها" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+          {TURNSTILE_SITE_KEY ? (
+            <div className="mdl-full">
+              <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
+            </div>
+          ) : null}
           {passErr ? <Alert className="mdl-full" tone="danger">{passErr}</Alert> : null}
         </div>
       </Modal>
@@ -205,7 +220,7 @@ export function SettingsView({ settings }: { settings: MySettings }) {
         tone="danger"
         icon={<SignOut />}
         title="الخروج من كلّ الأجهزة؟"
-        text="تُنهى جلساتُك كلّها — ومنها هذه، فتعود إلى صفحة الدخول. ولن يتغيّر شيءٌ من بياناتك."
+        text="تُنهى جلساتُك كلّها، ومنها هذه، فتعود إلى صفحة الدخول. ولن يتغيّر شيءٌ من بياناتك."
         confirmLabel="أنهِ الجلسات"
         loading={busy}
         onConfirm={submitSignOut}

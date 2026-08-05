@@ -27,7 +27,9 @@ async function origin(): Promise<string> {
   return `${proto}://${host}`;
 }
 
-export async function changeMyPassword(input: { current: string; next: string }): Promise<SettingsResult> {
+export async function changeMyPassword(
+  input: { current: string; next: string; captchaToken?: string },
+): Promise<SettingsResult> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return { ok: false, message: "جلستك غير صالحة." };
@@ -36,12 +38,24 @@ export async function changeMyPassword(input: { current: string; next: string })
   const next = input.next ?? "";
   if (!current) return { ok: false, message: "أدخِل كلمة المرور الحاليّة." };
   if (next.length < PASSWORD_MIN) return { ok: false, message: `كلمة المرور الجديدة ${PASSWORD_MIN} محارف على الأقلّ.` };
-  if (next === current) return { ok: false, message: "الجديدة هي الحاليّة نفسها — اختر غيرها." };
+  if (next === current) return { ok: false, message: "الجديدة هي الحاليّة نفسها. اختر غيرها." };
 
   // **إثباتُ الحاليّة قبل الجديدة**: الجلسة المفتوحة على جهازٍ متروك لا تكفي إذنًا لتبديل
   // المفتاح. والتحقّق بمحاولة دخولٍ حقيقيّة — لا تُقارَن كلماتُ المرور في كودنا أبدًا.
-  const { error: authErr } = await supabase.auth.signInWithPassword({ email: user.email, password: current });
-  if (authErr) return { ok: false, message: "كلمة المرور الحاليّة غير صحيحة." };
+  //
+  // **ولذلك يلزمها رمزُ درع**: هي دخولٌ حقيقيّ عند GoTrue (`/token`)، وقد صار مدروعًا
+  // (٢٠٢٦-٠٨-٠٥). فالنافذةُ تحمل ودجةَ Turnstile كشاشة الدخول — ولولا ذلك لَردّ الخادمُ
+  // «كلمة المرور الحاليّة غير صحيحة» وهي صحيحة، فيتّهم العضوُ نفسَه بخطأٍ ليس منه.
+  const { error: authErr } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: current,
+    options: { captchaToken: input.captchaToken },
+  });
+  if (authErr) {
+    return authErr.message.toLowerCase().includes("captcha")
+      ? { ok: false, message: "تعذّر التأكّد أنّك لست روبوتًا — أعِد المحاولة." }
+      : { ok: false, message: "كلمة المرور الحاليّة غير صحيحة." };
+  }
 
   const { error } = await supabase.auth.updateUser({ password: next });
   if (error) return { ok: false, message: `تعذّر تغيير كلمة المرور: ${error.message}` };
