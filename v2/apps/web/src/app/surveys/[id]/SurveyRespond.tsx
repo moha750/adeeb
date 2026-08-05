@@ -8,7 +8,7 @@ import {
 import { PencilSimple, Question, Star } from "@/app/_components/glyphs";
 import type { QuestionType } from "@/app/dashboard/surveys/vocab";
 import { submitSurveyResponse } from "./actions";
-import { TurnstileWidget } from "./Turnstile";
+import { TurnstileWidget } from "@/app/_components/Turnstile";
 
 // مفتاح Turnstile العامّ — يُدمَج وقت البناء (NEXT_PUBLIC). غيابه (تجربةٌ محليّة بلا إعداد) يُسقط الدرع بلا كسر.
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { safeNext } from "@/lib/safeNext";
 
 /**
  * **بابُ العودة من قوقل/أبل** — يبدّل الرمزَ المؤقّت بجلسةٍ ثمّ يسوق العضوَ إلى وجهته.
@@ -11,12 +12,6 @@ import { createClient } from "@/lib/supabase/server";
  * `error_description`، ولو مُرِّرت إلى الشاشة لصار الرابطُ يكتب فيها ما يشاء. فتُترجَم إلى
  * **رمزٍ من قائمةٍ مغلقة** وتُقرأ عبارتُه من `lib/authErrors.ts` — مصدرِ نصوص المصادقة الواحد.
  */
-
-/** المسارات الداخليّة وحدها — نظيرُ `safeNext` في `LoginForm` (منعُ إعادة التوجيه المفتوح). */
-function safeNext(raw: string | null): string {
-  if (raw && raw.startsWith("/") && !raw.startsWith("//")) return raw;
-  return "/dashboard";
-}
 
 /** رمزٌ من قائمةٍ مغلقة، أو `null` إن لم يكن في الرابط رفضٌ أصلًا. */
 function rejection(params: URLSearchParams): string | null {

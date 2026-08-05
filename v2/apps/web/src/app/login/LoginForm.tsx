@@ -7,13 +7,11 @@ import { Alert, Button, Divider, Field } from "@adeeb/design-system";
 import { At, Envelope, Key, Lock } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { toArabicAuthError } from "@/lib/authErrors";
+import { safeNext } from "@/lib/safeNext";
+import { TurnstileWidget } from "@/app/_components/Turnstile";
 import { OAuthButtons } from "./OAuthButtons";
 
-// منع إعادة التوجيه المفتوح: نقبل المسارات الداخلية فقط
-function safeNext(raw: string | null): string {
-  if (raw && raw.startsWith("/") && !raw.startsWith("//")) return raw;
-  return "/dashboard";
-}
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 export function LoginForm() {
   const router = useRouter();
@@ -29,14 +27,25 @@ export function LoginForm() {
     return code ? toArabicAuthError(code) : null;
   });
   const [pending, start] = useTransition();
+  // درعُ الباب — الرمزُ يُستهلك مرّةً، فيُعاد ضبطُ الودجة بعد كلّ محاولةٍ فاشلة
+  const [tsToken, setTsToken] = useState<string | null>(null);
+  const [tsReset, setTsReset] = useState(0);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null);
     start(async () => {
       const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
-      if (error) { setErr(toArabicAuthError(error.message)); return; }
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: pw,
+        options: { captchaToken: tsToken ?? undefined },
+      });
+      if (error) {
+        setErr(toArabicAuthError(error.message));
+        setTsReset((n) => n + 1);
+        return;
+      }
       router.replace(next);
       router.refresh();
     });
@@ -74,6 +83,10 @@ export function LoginForm() {
       />
 
       <Link href="/forgot-password" className="aauth-link">نسيت كلمة المرور؟</Link>
+
+      {TURNSTILE_SITE_KEY ? (
+        <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
+      ) : null}
 
       <Button type="submit" variant="primary" size="lg" loading={pending} disabled={!canSubmit} className="aauth-submit">
         تسجيل الدخول

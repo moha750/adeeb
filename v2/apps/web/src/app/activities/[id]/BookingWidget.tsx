@@ -6,7 +6,10 @@ import {
   At, Envelope, Hash, IdentificationBadge, Key, MapPin, Phone, User, UsersThree } from "@phosphor-icons/react";
 import { CheckCircle, PencilSimple } from "@/app/_components/glyphs";
 import { createClient } from "@/lib/supabase/client";
+import { TurnstileWidget } from "@/app/_components/Turnstile";
 import { AUDIENCE_LABEL, GENDER_OPTIONS } from "@/lib/activities";
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 type Step = "loading" | "email" | "otp" | "profile" | "ready" | "booked" | "unavailable";
 
@@ -59,6 +62,10 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
   const [reason, setReason] = useState("");
   const [showCancel, setShowCancel] = useState(false);
   const [booked, setBooked] = useState<Booked | null>(null);
+  // درعُ إرسال الرمز — هذا أوسعُ أبواب البريد في الموقع (يُرسل لأيّ عنوانٍ يُكتب)، فلا يُترك
+  // بلا حارس. والرمزُ يُستهلك مرّةً، فيُعاد ضبطُ الودجة بعد كلّ إرسال.
+  const [tsToken, setTsToken] = useState<string | null>(null);
+  const [tsReset, setTsReset] = useState(0);
 
   // النمط المشترك: أيّ جنسٍ متاحٌ ما دام في الإجمالي متّسع؛ المقسّم: لكلّ جنسٍ سقفُه
   const genderAvailable = (g: "male" | "female") => {
@@ -117,8 +124,12 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
     setErr(null);
     if (!email.trim()) { setErr("أدخل بريدك الإلكترونيّ."); return; }
     setBusy(true);
-    const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true } });
+    const { error } = await sb.auth.signInWithOtp({
+      email: email.trim(),
+      options: { shouldCreateUser: true, captchaToken: tsToken ?? undefined },
+    });
     setBusy(false);
+    setTsReset((n) => n + 1);
     if (error) { setErr(authError(error.message)); return; }
     setNotice("أرسلنا رمزًا إلى بريدك. أدخِله أدناه.");
     setStep("otp");
@@ -227,6 +238,9 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
         <>
           <p className="text-sm text-content-muted">أدخل بريدك ليصلك رمز تأكيد — بلا كلمة مرور.</p>
           <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          {TURNSTILE_SITE_KEY ? (
+            <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
+          ) : null}
           <Button variant="primary" size="md" loading={busy} onClick={sendOtp}>إرسال الرمز</Button>
         </>
       ) : null}
@@ -234,6 +248,10 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
       {step === "otp" ? (
         <>
           <Field label="رمز التأكيد" charset="digits" icon={<Key />} innerIcon={<Hash />} placeholder="______" inputMode="numeric" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value)} required />
+          {/* الدرعُ باقٍ ههنا لأجل «إعادة الإرسال» — إرسالٌ آخر يحتاج رمزًا آخر. */}
+          {TURNSTILE_SITE_KEY ? (
+            <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
+          ) : null}
           <div className="flex items-center gap-2">
             <Button variant="primary" size="md" loading={busy} onClick={verify}>تأكيد</Button>
             <Button variant="ghost" size="md" onClick={sendOtp} disabled={busy}>إعادة الإرسال</Button>

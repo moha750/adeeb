@@ -7,6 +7,9 @@ import { At, Envelope } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { toArabicAuthError, waitSeconds } from "@/lib/authErrors";
 import { markResetSent } from "@/lib/resetWindow";
+import { TurnstileWidget } from "@/app/_components/Turnstile";
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 /**
  * طلبُ رابط استعادة — الردُّ **محايدٌ عمدًا**: نجاحٌ واحدٌ سواءٌ أكان البريد مسجّلًا أم لا،
@@ -26,6 +29,9 @@ export function ForgotForm() {
   /** المعروض أحمرَ لأنّ الطلب رُفض لا لأنّه نجح — يختفي وحده حين يبلغ العدّاد صفرًا. */
   const [waiting, setWaiting] = useState(false);
   const [pending, start] = useTransition();
+  // درعُ الباب — الرمزُ يُستهلك مرّةً، فيُعاد ضبطُ الودجة بعد كلّ إرسالٍ نجح أو ردّ
+  const [tsToken, setTsToken] = useState<string | null>(null);
+  const [tsReset, setTsReset] = useState(0);
 
   /** العدّاد يمنع الطلبَ قبل أوانه بدل أن يُرسله فيُردّ بخطأ حدّ الوتيرة. */
   useEffect(() => {
@@ -40,7 +46,9 @@ export function ForgotForm() {
       const supabase = createClient();
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/reset-password`,
+        captchaToken: tsToken ?? undefined,
       });
+      setTsReset((n) => n + 1);
       if (error) {
         // مهلةُ الوتيرة تُقاد بالعدّاد نفسه فيتحرّك رقمُها؛ وما سواها نصٌّ ثابت.
         const wait = waitSeconds(error.message);
@@ -80,6 +88,11 @@ export function ForgotForm() {
           لتعيين كلمة مرورٍ جديدة. الرابط صالح {LINK_TTL_MIN} دقائق ولمرّةٍ واحدة. لم تجده؟ تحقّق من
           مجلّد المهملات، أو راجع البريد أعلاه.
         </Alert>
+
+        {/* الدرعُ يبقى بعد الإرسال: إعادةُ الإرسال بريدٌ آخر، فتحتاج رمزًا آخر. */}
+        {TURNSTILE_SITE_KEY ? (
+          <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
+        ) : null}
 
         {/* «يعمل الآن» بـ loading، و«غير متاح» بـ disabled — القاعدة ٧، ويجتمعان بلا تعارض */}
         <Button
@@ -125,6 +138,10 @@ export function ForgotForm() {
         onChange={(e) => setEmail(e.target.value)}
         required
       />
+
+      {TURNSTILE_SITE_KEY ? (
+        <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
+      ) : null}
 
       <Button
         type="submit"

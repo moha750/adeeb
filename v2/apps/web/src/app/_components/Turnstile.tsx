@@ -1,7 +1,13 @@
 "use client";
 
-// درع Turnstile — تحقّقٌ خفيّ (Managed) يُنتج «رمزًا» يتحقّق منه الخادم قبل قبول الإرسال.
+// درع Turnstile — تحقّقٌ خفيّ (Managed) يُنتج «رمزًا» لا يُقبل الإرسالُ بغيره.
 // عرضٌ صريح (explicit) كي نمسك دورة حياة الرمز: نجاح/انتهاء/خطأ، وإعادةُ ضبطٍ بعد محاولةٍ فاشلة (الرمز يُستهلك مرّة).
+//
+// **ومن يتحقّق من الرمز يختلف بالباب** — وهذا سببُ سكناه ههنا لا في شاشةٍ بعينها:
+//   • الاستبيان: **فعلٌ خادميّ لنا** يسأل Cloudflare بنفسه (`surveys/[id]/actions.ts`).
+//   • أبوابُ المصادقة (دخول · استعادة · رمزُ الحجز): **GoTrue** يسأل Cloudflare بنفسه، فيُمرَّر
+//     الرمزُ إليه في `options.captchaToken` ولا نتحقّق منه نحن. وحمايتُه أصدق: الحارسُ عند
+//     الطرَف نفسِه، فلا يُلتَفّ عليه بنداءٍ مباشرٍ بالمفتاح العلنيّ.
 import { useEffect, useRef } from "react";
 
 declare global {
@@ -29,7 +35,9 @@ export function TurnstileWidget({
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const onTokenRef = useRef(onToken);
-  onTokenRef.current = onToken;
+  // تحديثُ المرجع **في أثر** لا في الرسم: الكتابةُ أثناء الرسم أثرٌ جانبيّ يمنعه React.
+  // وموضعُه قبل أثر التركيب مقصود — الآثارُ تجري بترتيبها، فيصل النداءُ محدَّثًا قبل أن يُركَّب.
+  useEffect(() => { onTokenRef.current = onToken; });
 
   useEffect(() => {
     let cancelled = false;
